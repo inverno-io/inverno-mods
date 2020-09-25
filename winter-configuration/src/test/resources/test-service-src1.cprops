@@ -19,3 +19,7 @@ datasource.password = "password"
 [ node="node1", zone="US", environment="production" ] {
 	datasource.url = "jdbc:h2:file:/opt/1/node1-us-production"
 }
+
+[ environment="testUnset" ] {
+	datasource.password = unset
+}

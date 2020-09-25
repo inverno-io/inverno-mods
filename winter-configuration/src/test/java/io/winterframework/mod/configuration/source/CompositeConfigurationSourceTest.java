@@ -20,7 +20,7 @@ public class CompositeConfigurationSourceTest {
 	}
 	
 	@Test
-	public void testCompositeConfigurationSource2() throws URISyntaxException {
+	public void testCompositeConfigurationSource() throws URISyntaxException {
 		SystemPropertiesConfigurationSource src0 = new SystemPropertiesConfigurationSource();
 		ConfigurationPropertyFileConfigurationSource src1 = new ConfigurationPropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-service-src1.cprops").toURI()));
 		ConfigurationPropertyFileConfigurationSource src2 = new ConfigurationPropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-service-src2.cprops").toURI()));
@@ -161,4 +161,41 @@ public class CompositeConfigurationSourceTest {
 		Assertions.assertEquals("NameSysProp", current.getResult().get().valueAsString().get());
 	}
 
+	@Test
+	public void testCompositeConfigurationSourceUnset() throws URISyntaxException {
+		SystemPropertiesConfigurationSource src0 = new SystemPropertiesConfigurationSource();
+		ConfigurationPropertyFileConfigurationSource src1 = new ConfigurationPropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-service-src1.cprops").toURI()));
+		ConfigurationPropertyFileConfigurationSource src2 = new ConfigurationPropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-service-src2.cprops").toURI()));
+		
+		CompositeConfigurationSource src = new CompositeConfigurationSource(List.of(src0, src2, src1));
+		
+		List<CompositeConfigurationQueryResult> results = src
+			.get("datasource.password").and()
+			.get("datasource.password").withParameters("environment", "testUnset")
+			.execute().block();
+		
+		/*results.stream().forEach(queryResult -> {
+			System.out.println(queryResult.getQuery() + " -> " + queryResult.getResult().orElse(null));
+		});*/
+		
+		Assertions.assertEquals(2, results.size());
+		
+		Iterator<CompositeConfigurationQueryResult> resultIterator = results.iterator();
+		
+		CompositeConfigurationQueryResult current = resultIterator.next();
+		
+		Assertions.assertEquals("datasource.password", current.getQuery().getName());
+		Assertions.assertTrue(current.getQuery().getParameters().isEmpty());
+		Assertions.assertTrue(current.getResult().isPresent());
+		Assertions.assertEquals("datasource.password", current.getResult().get().getKey().getName());
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
+		Assertions.assertTrue(current.getResult().get().isPresent());
+		Assertions.assertEquals("password", current.getResult().get().valueAsString().get());
+		
+		current = resultIterator.next();
+		
+		Assertions.assertEquals("datasource.password", current.getQuery().getName());
+		Assertions.assertEquals(Map.of("environment","testUnset"), current.getQuery().getParameters());
+		Assertions.assertFalse(current.getResult().isPresent());
+	}
 }

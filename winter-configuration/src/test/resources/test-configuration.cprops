@@ -29,3 +29,6 @@ plip.plap {
 		}
 	"""
 }
+
+testNull = null
+testUnset = unset

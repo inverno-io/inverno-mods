@@ -279,8 +279,8 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		private void consumeResults(Iterator<? extends ConfigurationQueryResult<?,?>> results) {
 			for(int i=0;i<this.counter;i++) {
 				results.next().getResult().ifPresent(result -> {
-					if(this.strategy.isSuperseded(this.queryKey, this.queryResult.orElse(null), result)) {
-						this.queryResult = Optional.of(result);
+					if(!this.resolved && this.strategy.isSuperseded(this.queryKey, this.queryResult.orElse(null), result)) {
+						this.queryResult = result.isUnset() ? Optional.empty() : Optional.of(result);
 						this.resolved = this.strategy.isResolved(this.queryKey, result);
 					}
 				});

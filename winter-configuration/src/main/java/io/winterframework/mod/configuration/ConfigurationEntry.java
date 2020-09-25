@@ -43,6 +43,8 @@ public interface ConfigurationEntry<A extends ConfigurationKey, B extends Config
 	
 	B getSource();
 	
+	boolean isUnset();
+	
 	boolean isPresent();
 	
 	boolean isEmpty();

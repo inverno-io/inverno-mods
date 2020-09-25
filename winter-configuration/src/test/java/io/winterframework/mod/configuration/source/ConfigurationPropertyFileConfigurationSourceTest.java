@@ -88,7 +88,32 @@ public class ConfigurationPropertyFileConfigurationSourceTest {
 				"			table = [\"abc,\"bcd\"]\n" + 
 				"		}\n" + 
 				"	", current.getResult().get().valueAsString().get());
-		
-		
 	}
+	
+	@Test
+	public void testNull() throws URISyntaxException {
+		ConfigurationPropertyFileConfigurationSource src = new ConfigurationPropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
+		List<HashConfigurationQueryResult<String, ConfigurationPropertyFileConfigurationSource>> results = src
+			.get("testNull")
+			.execute()
+			.block();
+		
+		Assertions.assertEquals(1, results.size());
+		Assertions.assertTrue(results.get(0).getResult().isPresent());
+		Assertions.assertFalse(results.get(0).getResult().get().valueAsString().isPresent());
+	}
+	
+	@Test
+	public void testUnset() throws URISyntaxException {
+		ConfigurationPropertyFileConfigurationSource src = new ConfigurationPropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
+		List<HashConfigurationQueryResult<String, ConfigurationPropertyFileConfigurationSource>> results = src
+			.get("testUnset")
+			.execute()
+			.block();
+		
+		Assertions.assertEquals(1, results.size());
+		Assertions.assertTrue(results.get(0).getResult().isPresent());
+		Assertions.assertTrue(results.get(0).getResult().get().isUnset());
+	}
+	
 }

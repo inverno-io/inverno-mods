@@ -25,6 +25,7 @@ package io.winterframework.mod.configuration.internal.parser.option;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import io.winterframework.mod.configuration.ConfigurationEntry;
 import io.winterframework.mod.configuration.ConfigurationKey;
@@ -73,6 +74,9 @@ TOKEN:
 
 	/* null */
 	|  < NULL: "null" >
+	
+	/* unset */
+	|  < UNSET: "unset" >
 	
 	/* PUNCTUATOR */
 	| < LBRACK: "[" >
@@ -801,12 +805,17 @@ ConfigurationKey StartKey():
 ConfigurationEntry<ConfigurationKey, A> Option():
 {
 	ConfigurationKey key;
-	String value;
+	Optional<String> value;
 }
 {
 	key = Key() < EQ > value = Value()
 	{
-	  return new GenericConfigurationEntry<ConfigurationKey, A, String>(key, value, winter_source, winter_converter);
+		if(value != null) {
+			return new GenericConfigurationEntry<ConfigurationKey, A, String>(key, value.orElse(null), winter_source, winter_converter);
+		}
+		else {
+			return new GenericConfigurationEntry<ConfigurationKey, A, String>(key, winter_source, true);
+		}
 	}
 }
 
@@ -887,19 +896,20 @@ Object ParameterValue() :
 	}
 }
 
-String Value():
+Optional<String> Value():
 {
 	Token t;
-	String value;
+	Optional<String> value;
 }
 {
 	(
-		  t = < INTEGER_LITERAL > { value = t.image; }
-		| t = < FLOATING_POINT_LITERAL > { value = t.image; }
-		| t = < STRING_LITERAL > { value = t.image.substring(1, t.image.length()-1); }
-		| t = < TRUE > { value = t.image; }
-		| t = < FALSE > { value = t.image; }
-		| t = < NULL > { value = null; }
+		  t = < INTEGER_LITERAL > { value = Optional.of(t.image); }
+		| t = < FLOATING_POINT_LITERAL > { value = Optional.of(t.image); }
+		| t = < STRING_LITERAL > { value = Optional.of(t.image.substring(1, t.image.length()-1)); }
+		| t = < TRUE > { value = Optional.of(t.image); }
+		| t = < FALSE > { value = Optional.of(t.image); }
+		| t = < NULL > { value = Optional.empty(); }
+		| t = < UNSET > { value = null; }
 	)
 	{
 		return value;

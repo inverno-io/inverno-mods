@@ -52,6 +52,8 @@ public class GenericConfigurationEntry<A extends ConfigurationKey, B extends Con
 	
 	protected ValueConverter<C> converter;
 	
+	protected boolean unset;
+	
 	public GenericConfigurationEntry(A key, C value, B source, ValueConverter<C> converter) {
 		if(converter == null) {
 			throw new NullPointerException("Converter can't be null");
@@ -60,6 +62,12 @@ public class GenericConfigurationEntry<A extends ConfigurationKey, B extends Con
 		this.value = value;
 		this.source = source;
 		this.converter = converter;
+	}
+	
+	public GenericConfigurationEntry(A key, B source, boolean unset) {
+		this.key = key;
+		this.source = source;
+		this.unset = unset;
 	}
 	
 	@Override
@@ -81,7 +89,12 @@ public class GenericConfigurationEntry<A extends ConfigurationKey, B extends Con
 	public boolean isEmpty() {
 		return this.value == null;
 	}
-
+	
+	@Override
+	public boolean isUnset() {
+		return this.unset;
+	}
+	
 	@Override
 	public <T> Optional<T> valueAs(Class<T> type) {
 		return Optional.ofNullable(this.value != null ? this.converter.to(this.value, type) : null);
