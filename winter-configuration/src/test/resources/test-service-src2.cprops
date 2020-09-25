@@ -1,0 +1,15 @@
+[ environment="test" ] {
+	datasource.url = "jdbc:h2:file:/opt/2/test"
+}
+
+[ zone="US", environment="production" ] {
+	datasource.url = "jdbc:h2:file:/opt/2/us-production"
+}
+
+[ node="node1", zone="EU", environment="production" ] {
+	datasource.url = "jdbc:h2:file:/opt/2/node1-eu-production"
+}
+
+[ node="node2", zone="EU", environment="production" ] {
+	datasource.url = "jdbc:h2:file:/opt/2/node2-eu-production"
+}
