@@ -1,0 +1,21 @@
+datasource.url = "jdbc:h2:file:/opt/1/default"
+datasource.user = "user"
+datasource.password = "password"
+
+[ environment="local" ] {
+	datasource.url = "jdbc:h2:file:/opt/1/local"
+}
+
+[ environment="test" ] {
+	name = "Name1"
+	datasource.url = "jdbc:h2:file:/opt/1/test"
+}
+
+[ environment="production" ] {
+	datasource.url = "jdbc:h2:file:/opt/1/production"
+	datasource.password = "password_prod"
+}
+
+[ node="node1", zone="US", environment="production" ] {
+	datasource.url = "jdbc:h2:file:/opt/1/node1-us-production"
+}

@@ -1,0 +1,24 @@
+some_url = "https://localhost:8443/default"
+some_int = 1
+some_array = "a,b,c,d"
+
+[environment = "test"] {
+	some_url = "https://localhost:8443/test"
+	some_int = 2
+	some_array = "a,b,c"
+	some_list = "d,e,f"
+	nested2.nested2_string = "nested2_test"
+	nested.nested_nested.nested_nested_string = "nested_nested_test"
+}
+
+[node="node1", environment = "test"] {
+	some_url = "https://localhost:8443/test/node1"
+	some_int = 3
+	string_with_default = "node1_test"
+	nested.nested_string = "nested_node1_test"
+	some_collection = "g,h,i"
+	some_set = "j,k,l,j,k,l"
+	some_list = "m, n, o"
+	nested2.nested2_float = 1.25
+	nested.nested_nested.nested_nested_string = "nested_nested_node1_test"
+}

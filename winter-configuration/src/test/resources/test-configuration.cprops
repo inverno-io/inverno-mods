@@ -1,0 +1,31 @@
+[test=5, tutu="plop"] {
+	tata.toto=563
+}
+
+# Comment on tata
+tata {
+	[tutu="plop"] {
+		toto = 65432	
+	}
+}
+
+url="https://localhost:8443"
+table="a,b,c"
+
+[ context="text_block" ] {
+	text_block = """
+		Hey 
+		   This is 
+				a 
+			text 		block
+	"""
+}
+
+plip.plap {
+	json = """
+		{
+			"title":"Some json",
+			table = ["abc,"bcd"]
+		}
+	"""
+}
