@@ -37,7 +37,9 @@ public class CompositeConfigurationSourceTest {
 			.get("datasource.url").withParameters("zone", "ASIA", "environment", "undefined").and()
 			.get("undefined").and()
 			.get("name").withParameters("environment", "test")
-			.execute().block();
+			.execute()
+			.collectList()
+			.block();
 		
 		/*results.stream().forEach(queryResult -> {
 			System.out.println(queryResult.getQuery() + " -> " + queryResult.getResult().orElse(null));
@@ -172,7 +174,9 @@ public class CompositeConfigurationSourceTest {
 		List<CompositeConfigurationQueryResult> results = src
 			.get("datasource.password").and()
 			.get("datasource.password").withParameters("environment", "testUnset")
-			.execute().block();
+			.execute()
+			.collectList()
+			.block();
 		
 		/*results.stream().forEach(queryResult -> {
 			System.out.println(queryResult.getQuery() + " -> " + queryResult.getResult().orElse(null));

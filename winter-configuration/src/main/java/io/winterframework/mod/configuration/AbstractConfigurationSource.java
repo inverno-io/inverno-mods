@@ -24,6 +24,9 @@ public abstract class AbstractConfigurationSource<A extends ConfigurationQuery<A
 	protected ValueConverter<D> converter;
 	
 	public AbstractConfigurationSource(ValueConverter<D> converter) {
+		if(converter == null) {
+			throw new NullPointerException("Converter can't be null");
+		}
 		this.converter = converter;
 	}
 	

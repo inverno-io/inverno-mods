@@ -16,7 +16,6 @@
 package io.winterframework.mod.configuration.source;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -34,6 +33,7 @@ import io.winterframework.mod.configuration.internal.AbstractHashConfigurationSo
 import io.winterframework.mod.configuration.internal.GenericConfigurationEntry;
 import io.winterframework.mod.configuration.internal.parser.option.ConfigurationOptionParser;
 import io.winterframework.mod.configuration.internal.parser.option.ParseException;
+import io.winterframework.mod.configuration.internal.parser.option.StringProvider;
 import reactor.core.publisher.Mono;
 
 /**
@@ -61,8 +61,8 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 				
 				return Mono.just(properties.entrySet().stream().map(entry -> {
 						try {
-							ConfigurationOptionParser<PropertyFileConfigurationSource> parser = new ConfigurationOptionParser<>(new StringReader(entry.getKey().toString()));
-							return new GenericConfigurationEntry<ConfigurationKey, PropertyFileConfigurationSource, String>( parser.StartKey(), entry.getValue().toString(), this, this.converter);
+							ConfigurationOptionParser<PropertyFileConfigurationSource> parser = new ConfigurationOptionParser<>(new StringProvider(entry.getKey().toString()));
+							return new GenericConfigurationEntry<ConfigurationKey, PropertyFileConfigurationSource, String>( parser.StartKey(), entry.getValue().toString(), this);
 						} 
 						catch (ParseException e) {
 							LOGGER.warn(() -> "Ignoring property " + entry.getKey() + " after parsing error: " + e.getMessage());
@@ -74,9 +74,9 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 				);
 			}
 			catch(IOException e) {
-				LOGGER.warn(() -> "Ignoring property file " + this.propertyFile.getFileName().toString() + " after I/O error: " + e.getMessage());
+				LOGGER.warn(() -> "Invalid property file " + this.propertyFile.getFileName().toString() + " after I/O error: " + e.getMessage());
+				return Mono.error(e);
 			}
-			return Mono.empty();
 		});
 	}
 }

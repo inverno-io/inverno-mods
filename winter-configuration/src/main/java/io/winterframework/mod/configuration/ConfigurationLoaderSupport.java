@@ -54,6 +54,7 @@ public abstract class ConfigurationLoaderSupport<A,B,C extends ConfigurationLoad
 				.get(this.properties)
 				.withParameters(this.parameters)
 				.execute()
+				.collectList()
 				.map(this.resultsToConfigurer)
 				.map(configurer -> (this.configurer != null ? configurer.andThen(this.configurer) : configurer))
 				.map(this.configurationCreator);

@@ -27,6 +27,7 @@ import io.winterframework.mod.configuration.ConfigurationEntry;
 import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.converter.StringValueConverter;
 import io.winterframework.mod.configuration.internal.AbstractHashConfigurationSource;
+import io.winterframework.mod.configuration.internal.parser.properties.StreamProvider;
 import io.winterframework.mod.configuration.internal.parser.properties.ConfigurationPropertiesParser;
 import io.winterframework.mod.configuration.internal.parser.properties.ParseException;
 import reactor.core.publisher.Mono;
@@ -53,18 +54,18 @@ public class ConfigurationPropertyFileConfigurationSource extends AbstractHashCo
 	protected Mono<List<ConfigurationEntry<ConfigurationKey, ConfigurationPropertyFileConfigurationSource>>> load() {
 		return Mono.defer(() -> {
 			try {
-				ConfigurationPropertiesParser<ConfigurationPropertyFileConfigurationSource> parser = new ConfigurationPropertiesParser<>(Files.newInputStream(this.propertyFile));
+				ConfigurationPropertiesParser<ConfigurationPropertyFileConfigurationSource> parser = new ConfigurationPropertiesParser<>(new StreamProvider(Files.newInputStream(this.propertyFile)));
 				parser.setConfigurationSource(this);
-				parser.setValueConverter(this.converter);
 				return Mono.just(parser.StartConfigurationProperties());
 			} 
 			catch (IOException e) {
-				LOGGER.warn(() -> "Ignoring configuration property file: " + this.propertyFile.getFileName() + " after I/O error: " + e.getMessage());
+				LOGGER.warn(() -> "Invalid configuration property file " + this.propertyFile.getFileName() + " after I/O error: " + e.getMessage());
+				return Mono.error(e);
 			} 
 			catch (ParseException e) {
-				LOGGER.warn(() -> "Ignoring configuration property file " + this.propertyFile.getFileName() + " after parsing error: " + e.getMessage());
+				LOGGER.warn(() -> "Invalid configuration property file " + this.propertyFile.getFileName() + " after parsing error: " + e.getMessage());
+				return Mono.error(e);
 			}
-			return Mono.empty();
 		});
 	}
 }

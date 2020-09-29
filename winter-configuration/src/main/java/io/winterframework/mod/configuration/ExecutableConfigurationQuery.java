@@ -15,9 +15,9 @@
  */
 package io.winterframework.mod.configuration;
 
-import java.util.List;
+import org.apache.commons.text.StringEscapeUtils;
 
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 /**
  * @author jkuhn
@@ -33,6 +33,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 		
 		private Parameter(String name, Object value) {
 			this.name = name;
+			if(!(value instanceof Number || value instanceof Boolean || value instanceof Character || value instanceof CharSequence)) {
+				throw new IllegalArgumentException("Parameter value can only be a number, a boolean, a character or a string");
+			}
 			this.value = value;
 		}
 		
@@ -73,6 +76,20 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 			} else if (!value.equals(other.value))
 				return false;
 			return true;
+		}
+		
+		@Override
+		public String toString() {
+			StringBuilder str = new StringBuilder();
+			str.append(this.name)
+				.append("=");
+			if(this.value instanceof Number || this.value instanceof Boolean) {
+				str.append(this.value);
+			}
+			else {
+				str.append("\"").append(StringEscapeUtils.escapeJava(this.value.toString())).append("\"");
+			}
+			return this.name + "=" + (this.value instanceof Number ? this.value : "\"" + StringEscapeUtils.escapeJava(this.value.toString()) +"\""); 
 		}
 	}
 	
@@ -124,5 +141,5 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	
 	A and();
 	
-	Mono<List<C>> execute();
+	Flux<C> execute();
 }

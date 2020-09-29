@@ -25,5 +25,5 @@ public interface ConfigurationQueryResult<A extends ConfigurationKey, B extends 
 
 	A getQuery();
 	
-	Optional<B> getResult();
+	Optional<B> getResult() throws ConfigurationSourceException;
 }

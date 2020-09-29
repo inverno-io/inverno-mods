@@ -28,6 +28,7 @@ import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationQuery;
 import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
 import io.winterframework.mod.configuration.ValueConverter;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -55,7 +56,7 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		
 		private LinkedHashMap<String, Object> parameters;
 		
-		public HashConfigurationQuery(HashExecutableConfigurationQuery<A, B> executableQuery) {
+		private HashConfigurationQuery(HashExecutableConfigurationQuery<A, B> executableQuery) {
 			this.executableQuery = executableQuery;
 			this.names = new LinkedList<>();
 			this.parameters = new LinkedHashMap<>();
@@ -78,7 +79,7 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		private LinkedList<HashConfigurationQuery<A, B>> queries;
 		
 		@SuppressWarnings("unchecked")
-		public HashExecutableConfigurationQuery(AbstractHashConfigurationSource<A, B> source) {
+		private HashExecutableConfigurationQuery(AbstractHashConfigurationSource<A, B> source) {
 			this.source = (B)source;
 			this.queries = new LinkedList<>();
 		}
@@ -108,21 +109,27 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		}
 
 		@Override
-		public Mono<List<HashConfigurationQueryResult<A, B>>> execute() {
-			return this.source.load().switchIfEmpty(Mono.just(List.of()))
+		public Flux<HashConfigurationQueryResult<A, B>> execute() {
+			return this.source.load()
 				.map(entries -> entries.stream().collect(Collectors.toMap(entry -> new GenericConfigurationKey(entry.getKey().getName(), entry.getKey().getParameters()), Function.identity())))
-				.map(indexedEntries -> this.queries.stream()
+				.flatMapMany(indexedEntries -> Flux.fromStream(this.queries.stream()
 					.flatMap(query -> query.names.stream().map(name -> new GenericConfigurationKey(name, query.parameters)))
-					.map(key -> new HashConfigurationQueryResult<>(key, indexedEntries.get(key)))
-					.collect(Collectors.toList())
+					.map(key -> new HashConfigurationQueryResult<>(key, indexedEntries.get(key))))
+				)
+				.onErrorResume(ex -> true, ex -> Flux.fromStream(this.queries.stream()
+					.flatMap(query -> query.names.stream().map(name -> new HashConfigurationQueryResult<>(new GenericConfigurationKey(name, query.parameters), this.source, ex))))
 				);
 		}
 	}
 	
 	public static class HashConfigurationQueryResult<A, B extends AbstractHashConfigurationSource<A,B>> extends GenericConfigurationQueryResult<ConfigurationKey, ConfigurationEntry<ConfigurationKey, B>> {
 
-		public HashConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationEntry<ConfigurationKey, B> queryResult) {
+		private HashConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationEntry<ConfigurationKey, B> queryResult) {
 			super(queryKey, queryResult);
+		}
+		
+		public HashConfigurationQueryResult(ConfigurationKey queryKey, B source, Throwable error) {
+			super(queryKey, source, error);
 		}
 	}
 }

@@ -25,6 +25,7 @@ public class PropertyFileConfigurationSourceTest {
 			.get("tata.toto").withParameters("tutu", "plop").and()
 			.get("url", "table")
 			.execute()
+			.collectList()
 			.block();
 		
 		Assertions.assertEquals(4, results.size());

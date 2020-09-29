@@ -17,6 +17,7 @@ options {
   BUILD_TOKEN_MANAGER = true;
   SANITY_CHECK = true;
   FORCE_LA_CHECK = false;
+  JAVA_TEMPLATE_TYPE="modern";
 }
  
 PARSER_BEGIN(ConfigurationPropertiesParser) 
@@ -28,20 +29,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import io.winterframework.mod.configuration.AbstractConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationEntry;
 import io.winterframework.mod.configuration.ConfigurationKey;
-import io.winterframework.mod.configuration.ValueConverter;
-import io.winterframework.mod.configuration.converter.StringValueConverter;
-import io.winterframework.mod.configuration.internal.AbstractHashConfigurationSource;
 import io.winterframework.mod.configuration.internal.GenericConfigurationEntry;
 import io.winterframework.mod.configuration.internal.GenericConfigurationKey;
 
-@SuppressWarnings({ "unchecked", "unused" })
-public class ConfigurationPropertiesParser<A extends AbstractHashConfigurationSource<String, A>> {
+@SuppressWarnings({ "unchecked" })
+public class ConfigurationPropertiesParser<A extends AbstractConfigurationSource<?,?,?,String>> {
 
 	private A winter_source;
-
-	private ValueConverter<String> winter_converter = new StringValueConverter();
 
 	public A getConfigurationSource() {
 		return this.winter_source;
@@ -49,14 +46,6 @@ public class ConfigurationPropertiesParser<A extends AbstractHashConfigurationSo
 
 	public void setConfigurationSource(A source) {
 		this.winter_source = source;
-	}
-
-	public ValueConverter<String> getValueConverter() {
-		return this.winter_converter;
-	}
-
-	public void setValueConverter(ValueConverter<String> converter) {
-		this.winter_converter = converter;
 	}
 }
 PARSER_END(ConfigurationPropertiesParser)
@@ -840,11 +829,16 @@ List<ConfigurationEntry<ConfigurationKey, A>> Declaration(String propertyName, M
 	ConfigurationEntry<ConfigurationKey, A> entry;
 }
 {
-	LOOKAHEAD(Property()) entry = Property(propertyName, parameters) { return List.of(entry); }
-	|
-	entries = PropertyBlock(propertyName, parameters) { return entries; }
-	|
-	entries = ConfigurationBlock(propertyName, parameters) { return entries; }
+	(
+		LOOKAHEAD(Property()) entry = Property(propertyName, parameters) { entries = List.of(entry); }
+		|
+		entries = PropertyBlock(propertyName, parameters)
+		|
+		entries = ConfigurationBlock(propertyName, parameters)
+	)
+	{
+		return entries;
+	}
 }
 
 ConfigurationEntry<ConfigurationKey, A> Property(String propertyName, Map<String, Object> parameters):
@@ -856,10 +850,10 @@ ConfigurationEntry<ConfigurationKey, A> Property(String propertyName, Map<String
 	name = PropertyName() < EQ > value = PropertyValue() (< LINE_END > | < EOF >)
 	{
 		if(value != null) {
-	    	return new GenericConfigurationEntry<ConfigurationKey, A, String>(new GenericConfigurationKey(propertyName != null ? propertyName + "." + name : name, parameters), value.orElse(null), winter_source, winter_converter);
+	    	return new GenericConfigurationEntry<ConfigurationKey, A, String>(new GenericConfigurationKey(propertyName != null ? propertyName + "." + name : name, parameters), value.orElse(null), winter_source);
 	    }
 	    else {
-	    	return new GenericConfigurationEntry<ConfigurationKey, A, String>(new GenericConfigurationKey(propertyName != null ? propertyName + "." + name : name, parameters), winter_source, true);
+	    	return new GenericConfigurationEntry<ConfigurationKey, A, String>(new GenericConfigurationKey(propertyName != null ? propertyName + "." + name : name, parameters), winter_source);
 	    }
 	}
 }

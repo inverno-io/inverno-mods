@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.winterframework.mod.configuration.ConfigurationLoadException;
+import io.winterframework.mod.configuration.ConfigurationLoaderException;
 import io.winterframework.mod.configuration.ConfigurationQuery;
 import io.winterframework.mod.configuration.ConfigurationQueryResult;
 import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
@@ -58,6 +58,7 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 		}
 		
 		return configurationQuery.execute()
+			.collectList()
 			.map(results -> {
 				Map<String, Object> entries = new HashMap<>();
 				Iterator<? extends ConfigurationQueryResult<?,?>> resultsIterator = results.iterator();
@@ -89,7 +90,7 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 			});
 	}
 	
-	private ExecutableConfigurationQuery<?, ?, ?> visitConfigurationType(Class<?> configurationType, String prefix, ConfigurationQuery<?,?,?> configurationQuery, List<ConfigurationProxyQuery> accumulator) throws ConfigurationLoadException, IllegalArgumentException {
+	private ExecutableConfigurationQuery<?, ?, ?> visitConfigurationType(Class<?> configurationType, String prefix, ConfigurationQuery<?,?,?> configurationQuery, List<ConfigurationProxyQuery> accumulator) throws ConfigurationLoaderException, IllegalArgumentException {
 		ExecutableConfigurationQuery<?,?,?> exectuableConfigurationQuery = null;
 		for(Method method : configurationType.getMethods()) {
 			if(method.getParameters().length == 0) {
@@ -98,7 +99,7 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 					query = new ConfigurationProxyQuery(prefix, method);
 				} 
 				catch (ClassNotFoundException e) {
-					throw new ConfigurationLoadException("Error while loading configuration " + configurationType.getCanonicalName() + ": " + e.getMessage());
+					throw new ConfigurationLoaderException("Error while loading configuration " + configurationType.getCanonicalName() + ": " + e.getMessage());
 				}
 				accumulator.add(query);
 				if(query.nested) {

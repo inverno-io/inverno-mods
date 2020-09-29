@@ -21,7 +21,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import io.winterframework.mod.configuration.AbstractConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationEntry;
@@ -29,7 +28,7 @@ import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationQuery;
 import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
 import io.winterframework.mod.configuration.ValueConverter;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 /**
  * @author jkuhn
@@ -110,17 +109,13 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 		}
 
 		@Override
-		public Mono<List<PropertyConfigurationQueryResult<A, B>>> execute() {
-			return Mono.defer(() -> Mono.just(
-				this.queries.stream()
-					.flatMap(query -> query.names.stream().map(name -> new GenericConfigurationKey(name, query.parameters)))
-					.map(key -> new PropertyConfigurationQueryResult<>(key, 
-							Optional.ofNullable(this.source.propertyAccessor.apply(key.getName()))
-							.map(value -> new GenericConfigurationEntry<ConfigurationKey, B, A>(key, value, this.source, this.source.converter))
-							.orElse(null)
-						)
+		public Flux<PropertyConfigurationQueryResult<A, B>> execute() {
+			return Flux.fromStream(this.queries.stream().flatMap(query -> query.names.stream().map(name -> new GenericConfigurationKey(name, query.parameters)))
+				.map(key -> new PropertyConfigurationQueryResult<>(key, 
+						Optional.ofNullable(this.source.propertyAccessor.apply(key.getName()))
+						.map(value -> new GenericConfigurationEntry<ConfigurationKey, B, A>(key, value, this.source))
+						.orElse(null)
 					)
-					.collect(Collectors.toList())
 				)
 			);
 		}
@@ -128,7 +123,7 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 	
 	public static class PropertyConfigurationQueryResult<A, B extends AbstractPropertiesConfigurationSource<A,B>> extends GenericConfigurationQueryResult<ConfigurationKey, ConfigurationEntry<ConfigurationKey, B>> {
 
-		public PropertyConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationEntry<ConfigurationKey, B> queryResult) {
+		private PropertyConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationEntry<ConfigurationKey, B> queryResult) {
 			super(queryKey, queryResult);
 		}
 	}

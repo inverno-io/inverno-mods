@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.configuration.source;
 
-import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +29,7 @@ import io.winterframework.mod.configuration.converter.StringValueConverter;
 import io.winterframework.mod.configuration.internal.AbstractHashConfigurationSource;
 import io.winterframework.mod.configuration.internal.parser.option.ConfigurationOptionParser;
 import io.winterframework.mod.configuration.internal.parser.option.ParseException;
+import io.winterframework.mod.configuration.internal.parser.option.StringProvider;
 import reactor.core.publisher.Mono;
 
 /**
@@ -54,9 +54,8 @@ public class CommandLineConfigurationSource extends AbstractHashConfigurationSou
 	protected Mono<List<ConfigurationEntry<ConfigurationKey, CommandLineConfigurationSource>>> load() {
 		return Mono.defer(() -> Mono.just(this.args.stream()
 				.map(option -> {
-					ConfigurationOptionParser<CommandLineConfigurationSource> parser = new ConfigurationOptionParser<>(new StringReader(option));
+					ConfigurationOptionParser<CommandLineConfigurationSource> parser = new ConfigurationOptionParser<>(new StringProvider(option));
 					parser.setConfigurationSource(this);
-					parser.setValueConverter(this.converter);
 					try {
 						return parser.StartOption();
 					} 

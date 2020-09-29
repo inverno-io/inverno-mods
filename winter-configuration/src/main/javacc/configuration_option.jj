@@ -17,6 +17,7 @@ options {
   BUILD_TOKEN_MANAGER = true;
   SANITY_CHECK = true;
   FORCE_LA_CHECK = false;
+  JAVA_TEMPLATE_TYPE="modern";
 }
 
 PARSER_BEGIN(ConfigurationOptionParser) 
@@ -27,35 +28,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import io.winterframework.mod.configuration.AbstractConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationEntry;
 import io.winterframework.mod.configuration.ConfigurationKey;
-import io.winterframework.mod.configuration.ValueConverter;
-import io.winterframework.mod.configuration.converter.StringValueConverter;
-import io.winterframework.mod.configuration.internal.AbstractHashConfigurationSource;
 import io.winterframework.mod.configuration.internal.GenericConfigurationEntry;
 import io.winterframework.mod.configuration.internal.GenericConfigurationKey;
 
-@SuppressWarnings({ "unchecked", "unused" })
-public class ConfigurationOptionParser<A extends AbstractHashConfigurationSource<String, A>> {
+@SuppressWarnings({ "unchecked" })
+public class ConfigurationOptionParser<A extends AbstractConfigurationSource<?,?,?,String>> {
 
 	private A winter_source;
 
-	private ValueConverter<String> winter_converter = new StringValueConverter();
-
+	public ConfigurationOptionParser(A source) {
+		this.winter_source = source;
+	}
+	
 	public A getConfigurationSource() {
 		return this.winter_source;
 	}
 
 	public void setConfigurationSource(A source) {
 		this.winter_source = source;
-	}
-
-	public ValueConverter<String> getValueConverter() {
-		return this.winter_converter;
-	}
-
-	public void setValueConverter(ValueConverter<String> converter) {
-		this.winter_converter = converter;
 	}
 }
 PARSER_END(ConfigurationOptionParser)
@@ -79,6 +72,8 @@ TOKEN:
 	|  < UNSET: "unset" >
 	
 	/* PUNCTUATOR */
+	| < LBRACE: "{" >
+	| < RBRACE: "}" >
 	| < LBRACK: "[" >
 	| < RBRACK: "]" >
 	| < DOT: "." >
@@ -802,6 +797,18 @@ ConfigurationKey StartKey():
 	}
 }
 
+Optional<String> StartValueRevision():
+{
+	Optional<String> value;
+}
+{
+	< INTEGER_LITERAL > < LBRACE > value = Value() < RBRACE >
+	<EOF>
+	{
+	  return value;
+	}
+}
+
 ConfigurationEntry<ConfigurationKey, A> Option():
 {
 	ConfigurationKey key;
@@ -811,10 +818,10 @@ ConfigurationEntry<ConfigurationKey, A> Option():
 	key = Key() < EQ > value = Value()
 	{
 		if(value != null) {
-			return new GenericConfigurationEntry<ConfigurationKey, A, String>(key, value.orElse(null), winter_source, winter_converter);
+			return new GenericConfigurationEntry<ConfigurationKey, A, String>(key, value.orElse(null), winter_source);
 		}
 		else {
-			return new GenericConfigurationEntry<ConfigurationKey, A, String>(key, winter_source, true);
+			return new GenericConfigurationEntry<ConfigurationKey, A, String>(key, winter_source);
 		}
 	}
 }
