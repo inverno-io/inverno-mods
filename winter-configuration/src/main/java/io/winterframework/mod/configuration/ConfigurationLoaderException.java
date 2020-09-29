@@ -19,26 +19,26 @@ package io.winterframework.mod.configuration;
  * @author jkuhn
  *
  */
-public class ConfigurationLoadException extends RuntimeException {
+public class ConfigurationLoaderException extends RuntimeException {
 
 	private static final long serialVersionUID = -5014607379551608990L;
 
-	public ConfigurationLoadException() {
+	public ConfigurationLoaderException() {
 	}
 
-	public ConfigurationLoadException(String message) {
+	public ConfigurationLoaderException(String message) {
 		super(message);
 	}
 
-	public ConfigurationLoadException(Throwable cause) {
+	public ConfigurationLoaderException(Throwable cause) {
 		super(cause);
 	}
 
-	public ConfigurationLoadException(String message, Throwable cause) {
+	public ConfigurationLoaderException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-	public ConfigurationLoadException(String message, Throwable cause, boolean enableSuppression,
+	public ConfigurationLoaderException(String message, Throwable cause, boolean enableSuppression,
 			boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}

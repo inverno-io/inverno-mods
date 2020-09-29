@@ -28,6 +28,7 @@ public class ConfigurationPropertyFileConfigurationSourceTest {
 			.get("text_block").withParameters("context", "text_block").and()
 			.get("plip.plap.json")
 			.execute()
+			.collectList()
 			.block();
 		
 		Assertions.assertEquals(6, results.size());
@@ -96,6 +97,7 @@ public class ConfigurationPropertyFileConfigurationSourceTest {
 		List<HashConfigurationQueryResult<String, ConfigurationPropertyFileConfigurationSource>> results = src
 			.get("testNull")
 			.execute()
+			.collectList()
 			.block();
 		
 		Assertions.assertEquals(1, results.size());
@@ -109,6 +111,7 @@ public class ConfigurationPropertyFileConfigurationSourceTest {
 		List<HashConfigurationQueryResult<String, ConfigurationPropertyFileConfigurationSource>> results = src
 			.get("testUnset")
 			.execute()
+			.collectList()
 			.block();
 		
 		Assertions.assertEquals(1, results.size());

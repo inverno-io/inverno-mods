@@ -20,6 +20,8 @@ import java.util.Optional;
 import io.winterframework.mod.configuration.ConfigurationEntry;
 import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationQueryResult;
+import io.winterframework.mod.configuration.ConfigurationSource;
+import io.winterframework.mod.configuration.ConfigurationSourceException;
 
 /**
  * @author jkuhn
@@ -29,10 +31,18 @@ public class GenericConfigurationQueryResult<A extends ConfigurationKey, B exten
 
 	protected A queryKey;
 	protected Optional<B> queryResult;
+	protected Throwable error;
+	protected ConfigurationSource<?,?,?> errorSource;
 	
 	public GenericConfigurationQueryResult(A queryKey, B queryResult) {
 		this.queryKey = queryKey;
 		this.queryResult = Optional.ofNullable(queryResult);
+	}
+	
+	public GenericConfigurationQueryResult(A queryKey, ConfigurationSource<?,?,?> source, Throwable error) {
+		this.queryKey = queryKey;
+		this.errorSource = source;
+		this.error = error;
 	}
 	
 	@Override
@@ -41,7 +51,10 @@ public class GenericConfigurationQueryResult<A extends ConfigurationKey, B exten
 	}
 
 	@Override
-	public Optional<B> getResult() {
+	public Optional<B> getResult() throws ConfigurationSourceException {
+		if(this.error != null) {
+			throw new ConfigurationSourceException(this.errorSource, this.error);
+		}
 		return this.queryResult;
 	}
 }

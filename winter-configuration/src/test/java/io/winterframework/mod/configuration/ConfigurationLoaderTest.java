@@ -15,6 +15,11 @@ import io.winterframework.mod.configuration.source.ConfigurationPropertyFileConf
 
 public class ConfigurationLoaderTest {
 
+	static {
+		System.setProperty("org.apache.logging.log4j.simplelog.level", "DEBUG");
+		System.setProperty("org.apache.logging.log4j.simplelog.logFile", "system.out");
+	}
+	
 	@Test
 	public void testLoad() throws URISyntaxException, MalformedURLException {
 		ConfigurationPropertyFileConfigurationSource src = new ConfigurationPropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-loader.cprops").toURI()));

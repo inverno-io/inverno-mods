@@ -17,10 +17,10 @@ package io.winterframework.mod.configuration.source;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -29,11 +29,12 @@ import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationQuery;
 import io.winterframework.mod.configuration.ConfigurationQueryResult;
 import io.winterframework.mod.configuration.ConfigurationSource;
+import io.winterframework.mod.configuration.ConfigurationSourceException;
 import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
 import io.winterframework.mod.configuration.internal.GenericConfigurationKey;
 import io.winterframework.mod.configuration.internal.GenericConfigurationQueryResult;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 /**
  * @author jkuhn
@@ -86,12 +87,12 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		}
 		
 		@SuppressWarnings("unchecked")
-		public Mono<List<ConfigurationQueryResult<?,?>>> execute() {
+		public Flux<ConfigurationQueryResult<?,?>> execute() {
 			if(this.executableQueryWrapper != null) {
 				return this.executableQueryWrapper.query.execute();
 			}
 			else {
-				return Mono.just(List.of());
+				return Flux.empty();
 			}
 		}
 		
@@ -149,7 +150,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		}
 
 		@Override
-		public Mono execute() {
+		public Flux execute() {
 			throw new IllegalStateException("You can't execute a query provided to a composite configuration strategy.");
 		}
 	}
@@ -214,37 +215,32 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		}
 
 		@Override
-		public Mono<List<CompositeConfigurationQueryResult>> execute() {
-			return Mono.defer(() -> {
-				return Mono.just(this.queries.stream()
-						.flatMap(query -> query.names.stream().map(name -> new CompositeConfigurationQueryResult(this.source.strategy, new GenericConfigurationKey(name, query.parameters))))
-						.collect(Collectors.toList())
-					)
-					.zipWhen(results -> {
-						Mono<List<CompositeConfigurationQueryResult>> resultMono = Mono.just(results);
-						for(ConfigurationSource<?,?,?> source : this.source.sources) {
-							SourceConfigurationQueryWrapper wrappedQuery = new SourceConfigurationQueryWrapper(source);
-							resultMono = resultMono
-								.map(l -> l.stream()
-									.filter(result -> !result.isResolved())
-									.map(result -> {
-										wrappedQuery.reset();
-										result.populateSourceQuery(wrappedQuery);
-										return result;
-									})
-									.collect(Collectors.toList())
-								)
-								.zipWhen(result -> wrappedQuery.execute()).map(tuple -> {
-									Iterator<? extends ConfigurationQueryResult<?,?>> sourceResultIterator = tuple.getT2().iterator();
-									for(CompositeConfigurationQueryResult queryResult : tuple.getT1()) {
-										queryResult.consumeResults(sourceResultIterator);
-									}
-									return tuple.getT1();
-								});
-						}
-						return resultMono;
+		public Flux<CompositeConfigurationQueryResult> execute() {
+			return Mono.just(this.queries.stream()
+				.flatMap(query -> query.names.stream().map(name -> new CompositeConfigurationQueryResult(this.source.strategy, new GenericConfigurationKey(name, query.parameters))))
+				.collect(Collectors.toList())
+			)
+			.flatMapMany(results -> {
+				return Flux.fromIterable(this.source.sources)
+					.flatMap(source -> {
+						SourceConfigurationQueryWrapper wrappedQuery = new SourceConfigurationQueryWrapper(source);
+						List<CompositeConfigurationQueryResult> unresolvedResults = results.stream().filter(result -> !result.isResolved()).collect(Collectors.toList());
+						unresolvedResults.forEach(result -> {
+							wrappedQuery.reset();
+							result.populateSourceQuery(wrappedQuery);
+						});
+						
+						ListIterator<CompositeConfigurationQueryResult> unresolvedResultsIterator = unresolvedResults.listIterator();
+						return wrappedQuery.execute()
+							.map(sourceResult -> {
+								CompositeConfigurationQueryResult currentResult = unresolvedResultsIterator.next();
+								if(!currentResult.consumeResult(sourceResult)) {
+									unresolvedResultsIterator.previous();
+								}
+								return currentResult;
+							});
 					})
-					.map(Tuple2::getT1);
+					.distinct();
 			});
 		}
 	}
@@ -258,7 +254,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		private boolean resolved;
 		
 		private CompositeConfigurationQueryResult(CompositeConfigurationStrategy strategy, ConfigurationKey queryKey) {
-			super(queryKey, null);
+			super(queryKey, (ConfigurationEntry<?,?>)null);
 			this.strategy = strategy;
 		}
 		
@@ -276,15 +272,38 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 			return executableQueryWrapper;
 		}
 		
-		private void consumeResults(Iterator<? extends ConfigurationQueryResult<?,?>> results) {
-			for(int i=0;i<this.counter;i++) {
-				results.next().getResult().ifPresent(result -> {
-					if(!this.resolved && this.strategy.isSuperseded(this.queryKey, this.queryResult.orElse(null), result)) {
-						this.queryResult = result.isUnset() ? Optional.empty() : Optional.of(result);
-						this.resolved = this.strategy.isResolved(this.queryKey, result);
-					}
-				});
+		private int consumeCounter = 0;
+		
+		private boolean consumeResult(ConfigurationQueryResult<?,?> result) {
+			if(this.consumeCounter == 0) {
+				this.consumeCounter = this.counter;
 			}
+			if(this.consumeCounter > 0) {
+				try {
+					result.getResult().ifPresent(entry -> {
+						if(!this.resolved && this.strategy.isSuperseded(this.queryKey, this.queryResult.orElse(null), entry)) {
+							this.queryResult = entry.isUnset() ? Optional.empty() : Optional.of(entry);
+							this.resolved = this.strategy.isResolved(this.queryKey, entry);
+						}
+					});
+				} 
+				catch (ConfigurationSourceException e) {
+					// We have two choices:
+					// - set the a failed query result which can possibly be overridden by subsequent sources
+					// - report the failure and resume the defaulting mechanism 
+					// The issue is that we don't know whether the error is related to an invalid value or an unreachable configuration source, in the latter case, we can't assume 
+					// We should delegate this to the strategy so it can decide what to do
+					// if the strategy does not ignore failure then if an error occur the result is set to fail otherwise the failed result is ingored and the process continue 
+					if(!this.strategy.ignoreOnFailure(e)) {
+						this.error = e.getCause();
+						this.errorSource = e.getSource();
+					}
+				}
+				finally {
+					this.consumeCounter--;
+				}
+			}
+			return this.consumeCounter == 0;
 		}
 	}
 }

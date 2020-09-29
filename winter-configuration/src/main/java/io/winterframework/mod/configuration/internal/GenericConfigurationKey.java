@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import io.winterframework.mod.configuration.ConfigurationKey;
+import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
 
 /**
  * @author jkuhn
@@ -86,6 +87,6 @@ public class GenericConfigurationKey implements ConfigurationKey {
 
 	@Override
 	public String toString() {
-		return this.name + "[" + this.parameters.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue().toString()).collect(Collectors.joining(",")) + "]";
+		return this.name + "[" + this.parameters.entrySet().stream().map(e -> ExecutableConfigurationQuery.parameter(e.getKey(), e.getValue()).toString()).collect(Collectors.joining(",")) + "]";
 	}
 }

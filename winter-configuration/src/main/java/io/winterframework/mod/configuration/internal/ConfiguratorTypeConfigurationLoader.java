@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import io.winterframework.mod.configuration.ConfigurationLoadException;
+import io.winterframework.mod.configuration.ConfigurationLoaderException;
 import io.winterframework.mod.configuration.ConfigurationQuery;
 import io.winterframework.mod.configuration.ConfigurationQueryResult;
 import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
@@ -55,6 +55,7 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends  AbstractReflecti
 			return Mono.just(null);
 		}
 		return configurationQuery.execute()
+			.collectList()
 			.map(results -> this.createConfigurer(this.configuratorType, configuratorQueries, results))
 			.map(configurationCreator);
 	}
@@ -108,7 +109,7 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends  AbstractReflecti
 		};
 	}
 	
-	private ExecutableConfigurationQuery<?, ?, ?> visitConfiguratorType(Class<?> configuratorType, String prefix, ConfigurationQuery<?,?,?> configurationQuery, List<ConfiguratorQuery> accumulator) throws ConfigurationLoadException, IllegalArgumentException {
+	private ExecutableConfigurationQuery<?, ?, ?> visitConfiguratorType(Class<?> configuratorType, String prefix, ConfigurationQuery<?,?,?> configurationQuery, List<ConfiguratorQuery> accumulator) throws ConfigurationLoaderException, IllegalArgumentException {
 		ExecutableConfigurationQuery<?,?,?> exectuableConfigurationQuery = null;
 		for(Method method : configuratorType.getMethods()) {
 			if(method.getParameters().length == 1 && method.getReturnType().equals(configuratorType)) {
@@ -117,7 +118,7 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends  AbstractReflecti
 					configuratorQuery = new ConfiguratorQuery(prefix, method);
 				} 
 				catch (ClassNotFoundException e) {
-					throw new ConfigurationLoadException("Error while loading configuration with configurator " + configuratorType.getCanonicalName() + ": " + e.getMessage());
+					throw new ConfigurationLoaderException("Error while loading configuration with configurator " + configuratorType.getCanonicalName() + ": " + e.getMessage());
 				}
 				accumulator.add(configuratorQuery);
 				if(configuratorQuery.nested) {

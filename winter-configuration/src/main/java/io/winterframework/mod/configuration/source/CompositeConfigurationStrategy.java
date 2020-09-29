@@ -18,6 +18,7 @@ package io.winterframework.mod.configuration.source;
 import io.winterframework.mod.configuration.ConfigurationEntry;
 import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationQuery;
+import io.winterframework.mod.configuration.ConfigurationSourceException;
 import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
 
 /**
@@ -26,6 +27,8 @@ import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
  */
 public interface CompositeConfigurationStrategy {
 
+	boolean ignoreOnFailure(ConfigurationSourceException error);
+	
 	boolean isSuperseded(ConfigurationKey queryKey, ConfigurationEntry<?,?> oldResult, ConfigurationEntry<?,?> newResult);
 
 	boolean isResolved(ConfigurationKey queryKey, ConfigurationEntry<?,?> result);

@@ -25,6 +25,7 @@ public class SystemPropertiesConfigurationSourceTest {
 			.get("tata.toto").withParameters("tutu", "plop").and()
 			.get("url", "table")
 			.execute()
+			.collectList()
 			.block();
 		
 		results.stream().forEach(queryResult -> {

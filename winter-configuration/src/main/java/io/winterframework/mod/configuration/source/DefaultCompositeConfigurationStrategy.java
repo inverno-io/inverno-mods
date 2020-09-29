@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import io.winterframework.mod.configuration.ConfigurationEntry;
 import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationQuery;
+import io.winterframework.mod.configuration.ConfigurationSourceException;
 import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
 import io.winterframework.mod.configuration.ExecutableConfigurationQuery.Parameter;
 
@@ -30,6 +31,11 @@ import io.winterframework.mod.configuration.ExecutableConfigurationQuery.Paramet
  */
 public class DefaultCompositeConfigurationStrategy implements CompositeConfigurationStrategy {
 
+	@Override
+	public boolean ignoreOnFailure(ConfigurationSourceException error) {
+		return true;
+	}
+	
 	@Override
 	public boolean isSuperseded(ConfigurationKey queryKey, ConfigurationEntry<?, ?> oldResult, ConfigurationEntry<?, ?> newResult) {
 		if(newResult == null) {

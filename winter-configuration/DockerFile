@@ -1,0 +1,10 @@
+FROM openjdk:14.0.2
+
+COPY target/dependency/* /opt/winter-configuration/jmods
+
+COPY ./target/*.jar /opt/winter-configuration/jmods
+
+WORKDIR /opt/winter-configuration/
+
+CMD [ "java", "-p", "jmods/", "--module", "io.winterframework.mod.configuration/io.winterframework.mod.configuration.app.ConfigurationApp" ]
+
