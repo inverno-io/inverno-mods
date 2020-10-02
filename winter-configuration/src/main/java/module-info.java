@@ -9,7 +9,7 @@ module io.winterframework.mod.configuration {
 	requires org.apache.commons.text;
 	
 	exports io.winterframework.mod.configuration;
-	exports io.winterframework.mod.configuration.converter;
+	exports io.winterframework.mod.configuration.codec;
 	exports io.winterframework.mod.configuration.source;
 	
 	provides io.winterframework.core.compiler.spi.plugin.CompilerPlugin with io.winterframework.mod.configuration.internal.compiler.ConfigurationCompilerPlugin;

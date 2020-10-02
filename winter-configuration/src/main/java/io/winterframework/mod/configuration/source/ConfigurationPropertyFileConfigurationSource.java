@@ -23,9 +23,10 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import io.winterframework.mod.configuration.ConfigurationEntry;
+import io.winterframework.mod.configuration.ConfigurationProperty;
+import io.winterframework.mod.configuration.ValueDecoder;
+import io.winterframework.mod.configuration.codec.StringValueDecoder;
 import io.winterframework.mod.configuration.ConfigurationKey;
-import io.winterframework.mod.configuration.converter.StringValueConverter;
 import io.winterframework.mod.configuration.internal.AbstractHashConfigurationSource;
 import io.winterframework.mod.configuration.internal.parser.properties.StreamProvider;
 import io.winterframework.mod.configuration.internal.parser.properties.ConfigurationPropertiesParser;
@@ -42,16 +43,17 @@ public class ConfigurationPropertyFileConfigurationSource extends AbstractHashCo
 	
 	private Path propertyFile;
 	
-	/**
-	 * @param converter
-	 */
 	public ConfigurationPropertyFileConfigurationSource(Path propertyFile) {
-		super(new StringValueConverter());
+		this(propertyFile, new StringValueDecoder());
+	}
+	
+	public ConfigurationPropertyFileConfigurationSource(Path propertyFile, ValueDecoder<String> decoder) {
+		super(decoder);
 		this.propertyFile = propertyFile;
 	}
 
 	@Override
-	protected Mono<List<ConfigurationEntry<ConfigurationKey, ConfigurationPropertyFileConfigurationSource>>> load() {
+	protected Mono<List<ConfigurationProperty<ConfigurationKey, ConfigurationPropertyFileConfigurationSource>>> load() {
 		return Mono.defer(() -> {
 			try {
 				ConfigurationPropertiesParser<ConfigurationPropertyFileConfigurationSource> parser = new ConfigurationPropertiesParser<>(new StreamProvider(Files.newInputStream(this.propertyFile)));

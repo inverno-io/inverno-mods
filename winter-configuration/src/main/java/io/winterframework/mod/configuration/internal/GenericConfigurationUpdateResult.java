@@ -15,46 +15,41 @@
  */
 package io.winterframework.mod.configuration.internal;
 
-import java.util.Optional;
-
-import io.winterframework.mod.configuration.ConfigurationProperty;
 import io.winterframework.mod.configuration.ConfigurationKey;
-import io.winterframework.mod.configuration.ConfigurationQueryResult;
 import io.winterframework.mod.configuration.ConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationSourceException;
+import io.winterframework.mod.configuration.ConfigurationUpdateResult;
 
 /**
  * @author jkuhn
  *
  */
-public class GenericConfigurationQueryResult<A extends ConfigurationKey, B extends ConfigurationProperty<?,?>> implements ConfigurationQueryResult<A, B> {
+public class GenericConfigurationUpdateResult<A extends ConfigurationKey> implements ConfigurationUpdateResult<A> {
 
-	protected A queryKey;
-	protected Optional<B> queryResult;
+	protected A updateKey;
 	protected Throwable error;
 	protected ConfigurationSource<?,?,?> errorSource;
 	
-	public GenericConfigurationQueryResult(A queryKey, B queryResult) {
-		this.queryKey = queryKey;
-		this.queryResult = Optional.ofNullable(queryResult);
+	public GenericConfigurationUpdateResult(A updateKey) {
+		this.updateKey = updateKey;
 	}
 	
-	public GenericConfigurationQueryResult(A queryKey, ConfigurationSource<?,?,?> source, Throwable error) {
-		this.queryKey = queryKey;
+	public GenericConfigurationUpdateResult(A updateKey, ConfigurationSource<?,?,?> source, Throwable error) {
+		this.updateKey = updateKey;
 		this.errorSource = source;
 		this.error = error;
 	}
 	
 	@Override
-	public A getQueryKey() {
-		return this.queryKey;
+	public A getUpdateKey() {
+		return this.updateKey;
 	}
 
 	@Override
-	public Optional<B> getResult() throws ConfigurationSourceException {
+	public void check() throws ConfigurationSourceException {
 		if(this.error != null) {
 			throw new ConfigurationSourceException(this.errorSource, this.error);
 		}
-		return this.queryResult;
 	}
+
 }

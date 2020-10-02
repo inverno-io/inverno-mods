@@ -15,12 +15,12 @@
  */
 package io.winterframework.mod.configuration.internal;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import io.winterframework.mod.configuration.ConfigurationKey;
-import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
 
 /**
  * @author jkuhn
@@ -30,18 +30,18 @@ public class GenericConfigurationKey implements ConfigurationKey {
 
 	protected String name;
 	
-	protected Map<String, Object> parameters;
+	protected Collection<Parameter> parameters;
 	
 	public GenericConfigurationKey(String name) {
 		this(name, null);
 	}
 	
-	public GenericConfigurationKey(String name, Map<String, Object> parameters) {
+	public GenericConfigurationKey(String name, Collection<Parameter> parameters) {
 		if(name == null || name.equals("")) {
 			throw new IllegalArgumentException("Name can't be null or empty");
 		}
 		this.name = name;
-		this.parameters = parameters != null ? Collections.unmodifiableMap(parameters) : Map.of();
+		this.parameters = parameters != null ? Collections.unmodifiableCollection(parameters) : List.of();
 	}
 	
 	@Override
@@ -50,7 +50,7 @@ public class GenericConfigurationKey implements ConfigurationKey {
 	}
 	
 	@Override
-	public Map<String, Object> getParameters() {
+	public Collection<Parameter> getParameters() {
 		return this.parameters;
 	}
 
@@ -59,7 +59,7 @@ public class GenericConfigurationKey implements ConfigurationKey {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((parameters == null) ? 0 : parameters.hashCode());
+		result = prime * result + ((parameters == null) ? 0 : this.parameters.stream().collect(Collectors.toMap(Parameter::getKey, Parameter::getValue)).hashCode());
 		return result;
 	}
 
@@ -80,13 +80,13 @@ public class GenericConfigurationKey implements ConfigurationKey {
 		if (parameters == null) {
 			if (other.parameters != null)
 				return false;
-		} else if (!parameters.equals(other.parameters))
+		} else if (parameters.size() != other.parameters.size() || !parameters.containsAll(other.parameters))
 			return false;
 		return true;
 	}
 
 	@Override
 	public String toString() {
-		return this.name + "[" + this.parameters.entrySet().stream().map(e -> ExecutableConfigurationQuery.parameter(e.getKey(), e.getValue()).toString()).collect(Collectors.joining(",")) + "]";
+		return this.name + (this.parameters.isEmpty() ? "" : "[" + this.parameters.stream().map(Parameter::toString).collect(Collectors.joining(",")) + "]");
 	}
 }

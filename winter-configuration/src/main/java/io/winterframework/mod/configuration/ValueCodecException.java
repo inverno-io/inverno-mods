@@ -19,27 +19,27 @@ package io.winterframework.mod.configuration;
  * @author jkuhn
  *
  */
-public class ConversionException extends RuntimeException {
+public class ValueCodecException extends RuntimeException {
 
 	private static final long serialVersionUID = -6804673345487857625L;
 
-	public ConversionException() {
+	public ValueCodecException() {
 		super();
 	}
 
-	public ConversionException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public ValueCodecException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public ConversionException(String message, Throwable cause) {
+	public ValueCodecException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-	public ConversionException(String message) {
+	public ValueCodecException(String message) {
 		super(message);
 	}
 
-	public ConversionException(Throwable cause) {
+	public ValueCodecException(Throwable cause) {
 		super(cause);
 	}
 }

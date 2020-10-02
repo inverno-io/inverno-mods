@@ -21,9 +21,9 @@ import java.util.Optional;
  * @author jkuhn
  *
  */
-public interface ConfigurationQueryResult<A extends ConfigurationKey, B extends ConfigurationEntry<?,?>> {
+public interface ConfigurationQueryResult<A extends ConfigurationKey, B extends ConfigurationProperty<?,?>> {
 
-	A getQuery();
+	A getQueryKey();
 	
 	Optional<B> getResult() throws ConfigurationSourceException;
 }

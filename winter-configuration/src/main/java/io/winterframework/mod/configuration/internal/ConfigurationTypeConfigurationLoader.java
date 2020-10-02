@@ -60,33 +60,33 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 		return configurationQuery.execute()
 			.collectList()
 			.map(results -> {
-				Map<String, Object> entries = new HashMap<>();
+				Map<String, Object> properties = new HashMap<>();
 				Iterator<? extends ConfigurationQueryResult<?,?>> resultsIterator = results.iterator();
 				for(ConfigurationProxyQuery proxyQuery : proxyQueries) {
 					if(proxyQuery.nested) {
-						entries.put(proxyQuery.name, Proxy.newProxyInstance(proxyQuery.type.getClassLoader(), new Class[] {proxyQuery.type}, new ConfigurationProxyInvocationHandler(entries, proxyQuery.name))); 
+						properties.put(proxyQuery.name, Proxy.newProxyInstance(proxyQuery.type.getClassLoader(), new Class[] {proxyQuery.type}, new ConfigurationProxyInvocationHandler(properties, proxyQuery.name))); 
 					}
 					else {
 						resultsIterator.next().getResult().ifPresent(result -> {
 							if(proxyQuery.array) {
-								entries.put(proxyQuery.name, result.valueAsArrayOf(proxyQuery.componentType).orElse(null));
+								properties.put(proxyQuery.name, result.valueAsArrayOf(proxyQuery.componentType).orElse(null));
 							}
 							else if(proxyQuery.collection) {
-								entries.put(proxyQuery.name, result.valueAsCollectionOf(proxyQuery.componentType).orElse(null));
+								properties.put(proxyQuery.name, result.valueAsCollectionOf(proxyQuery.componentType).orElse(null));
 							}
 							else if(proxyQuery.list) {
-								entries.put(proxyQuery.name, result.valueAsListOf(proxyQuery.componentType).orElse(null));
+								properties.put(proxyQuery.name, result.valueAsListOf(proxyQuery.componentType).orElse(null));
 							}
 							else if(proxyQuery.set) {
-								entries.put(proxyQuery.name, result.valueAsSetOf(proxyQuery.componentType).orElse(null));
+								properties.put(proxyQuery.name, result.valueAsSetOf(proxyQuery.componentType).orElse(null));
 							}
 							else {
-								entries.put(proxyQuery.name, result.valueAs(proxyQuery.type).orElse(null));
+								properties.put(proxyQuery.name, result.valueAs(proxyQuery.type).orElse(null));
 							}
 						});
 					}
 				}
-				return (A)Proxy.newProxyInstance(configurationType.getClassLoader(), new Class[] {configurationType}, new ConfigurationProxyInvocationHandler(entries, ""));
+				return (A)Proxy.newProxyInstance(configurationType.getClassLoader(), new Class[] {configurationType}, new ConfigurationProxyInvocationHandler(properties, ""));
 			});
 	}
 	
@@ -157,24 +157,24 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 	
 	private static class ConfigurationProxyInvocationHandler implements InvocationHandler {
 
-		private Map<String, Object> entries;
+		private Map<String, Object> properties;
 		
 		private String prefix;
 		
-		public ConfigurationProxyInvocationHandler(Map<String, Object> entries, String prefix) {
-			this.entries = entries;
+		public ConfigurationProxyInvocationHandler(Map<String, Object> properties, String prefix) {
+			this.properties = properties;
 			this.prefix = prefix;
 		}
 		
 		@Override
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-			String entryName = method.getName();
+			String propertyName = method.getName();
 			if(this.prefix != null && this.prefix != "") {
-				entryName = this.prefix + "." + entryName;
+				propertyName = this.prefix + "." + propertyName;
 			}
 			
-			if(this.entries.containsKey(entryName)) {
-				return this.entries.get(entryName);
+			if(this.properties.containsKey(propertyName)) {
+				return this.properties.get(propertyName);
 			}
 			else if(method.isDefault()) {
 				return MethodHandles.lookup()

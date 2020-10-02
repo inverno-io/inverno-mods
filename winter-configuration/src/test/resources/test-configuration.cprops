@@ -1,5 +1,5 @@
 [test=5, tutu="plop"] {
-	tata.toto=563
+	tata.toto="563"
 }
 
 # Comment on tata
@@ -11,6 +11,7 @@ tata {
 
 url="https://localhost:8443"
 table="a,b,c"
+some_string="abc\ndef"
 
 [ context="text_block" ] {
 	text_block = """

@@ -26,11 +26,12 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import io.winterframework.mod.configuration.ConfigurationEntry;
+import io.winterframework.mod.configuration.ConfigurationProperty;
+import io.winterframework.mod.configuration.ValueDecoder;
+import io.winterframework.mod.configuration.codec.StringValueDecoder;
 import io.winterframework.mod.configuration.ConfigurationKey;
-import io.winterframework.mod.configuration.converter.StringValueConverter;
 import io.winterframework.mod.configuration.internal.AbstractHashConfigurationSource;
-import io.winterframework.mod.configuration.internal.GenericConfigurationEntry;
+import io.winterframework.mod.configuration.internal.GenericConfigurationProperty;
 import io.winterframework.mod.configuration.internal.parser.option.ConfigurationOptionParser;
 import io.winterframework.mod.configuration.internal.parser.option.ParseException;
 import io.winterframework.mod.configuration.internal.parser.option.StringProvider;
@@ -47,13 +48,16 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	private Path propertyFile;
 	
 	public PropertyFileConfigurationSource(Path propertyFile) {
-		super(new StringValueConverter());
-		
+		this(propertyFile, new StringValueDecoder());
+	}
+	
+	public PropertyFileConfigurationSource(Path propertyFile, ValueDecoder<String> decoder) {
+		super(decoder);
 		this.propertyFile = propertyFile;
 	}
 
 	@Override
-	protected Mono<List<ConfigurationEntry<ConfigurationKey, PropertyFileConfigurationSource>>> load() {
+	protected Mono<List<ConfigurationProperty<ConfigurationKey, PropertyFileConfigurationSource>>> load() {
 		return Mono.defer(() -> {
 			try {
 				Properties properties = new Properties();
@@ -62,7 +66,7 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 				return Mono.just(properties.entrySet().stream().map(entry -> {
 						try {
 							ConfigurationOptionParser<PropertyFileConfigurationSource> parser = new ConfigurationOptionParser<>(new StringProvider(entry.getKey().toString()));
-							return new GenericConfigurationEntry<ConfigurationKey, PropertyFileConfigurationSource, String>( parser.StartKey(), entry.getValue().toString(), this);
+							return new GenericConfigurationProperty<ConfigurationKey, PropertyFileConfigurationSource, String>( parser.StartKey(), entry.getValue().toString(), this);
 						} 
 						catch (ParseException e) {
 							LOGGER.warn(() -> "Ignoring property " + entry.getKey() + " after parsing error: " + e.getMessage());

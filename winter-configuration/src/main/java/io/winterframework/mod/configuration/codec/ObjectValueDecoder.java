@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.configuration.converter;
+package io.winterframework.mod.configuration.codec;
 
 import java.io.File;
 import java.lang.reflect.Array;
@@ -35,29 +35,29 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import io.winterframework.mod.configuration.ConversionException;
-import io.winterframework.mod.configuration.ValueConverter;
+import io.winterframework.mod.configuration.ValueCodecException;
+import io.winterframework.mod.configuration.ValueDecoder;
 
 /**
  * @author jkuhn
  *
  */
-public class ObjectValueConverter implements ValueConverter<Object> {
+public class ObjectValueDecoder implements ValueDecoder<Object> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T to(Object value, Class<T> type) throws ConversionException {
+	public <T> T to(Object value, Class<T> type) throws ValueCodecException {
 		if(type.isAssignableFrom(value.getClass())) {
 			return (T)value;
 		}
 		else {
-			throw new ConversionException(value + " can't be converted to the requested type: " + type.getCanonicalName());
+			throw new ValueCodecException(value + " can't be decoded to the requested type: " + type.getCanonicalName());
 		}
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> Collection<T> toCollectionOf(Object value, Class<T> type) throws ConversionException {
+	public <T> Collection<T> toCollectionOf(Object value, Class<T> type) throws ValueCodecException {
 		if(Collection.class.isAssignableFrom(value.getClass())) {
 			Iterator<?> valueIterator = ((Collection<?>)value).iterator();
 			if(valueIterator.hasNext()) {
@@ -65,19 +65,19 @@ public class ObjectValueConverter implements ValueConverter<Object> {
 					return (Collection<T>)value;
 				}
 				else {
-					throw new ConversionException(value + " is not a collection of " + type.getCanonicalName());
+					throw new ValueCodecException(value + " is not a collection of " + type.getCanonicalName());
 				}
 			}
 			return (Collection<T>)value;
 		}
 		else {
-			throw new ConversionException(value + " is not a collection");
+			throw new ValueCodecException(value + " is not a collection");
 		}
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> List<T> toListOf(Object value, Class<T> type) throws ConversionException {
+	public <T> List<T> toListOf(Object value, Class<T> type) throws ValueCodecException {
 		Collection<T> valueCollection = this.toCollectionOf(value, type);
 		if(List.class.isAssignableFrom(valueCollection.getClass())) {
 			return (List<T>)value;
@@ -89,7 +89,7 @@ public class ObjectValueConverter implements ValueConverter<Object> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> Set<T> toSetOf(Object value, Class<T> type) throws ConversionException {
+	public <T> Set<T> toSetOf(Object value, Class<T> type) throws ValueCodecException {
 		Collection<T> valueCollection = this.toCollectionOf(value, type);
 		if(List.class.isAssignableFrom(valueCollection.getClass())) {
 			return (Set<T>)value;
@@ -101,7 +101,7 @@ public class ObjectValueConverter implements ValueConverter<Object> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T[] toArrayOf(Object value, Class<T> type) throws ConversionException {
+	public <T> T[] toArrayOf(Object value, Class<T> type) throws ValueCodecException {
 		if(value.getClass().isArray()) {
 			if(value.getClass().getComponentType().equals(type)) {
 				return (T[])value;
@@ -114,121 +114,126 @@ public class ObjectValueConverter implements ValueConverter<Object> {
 				return array;
 			}
 			else {
-				throw new ConversionException(value + " can't be converted to an array of " + type.getCanonicalName());
+				throw new ValueCodecException(value + " can't be decoded to an array of " + type.getCanonicalName());
 			}
 		}
 		else {
-			throw new ConversionException(value + " is not an array");
+			throw new ValueCodecException(value + " is not an array");
 		}
 	}
 
 	@Override
-	public Byte toByte(Object value) throws ConversionException {
+	public Byte toByte(Object value) throws ValueCodecException {
 		return this.to(value, Byte.class);
 	}
 
 	@Override
-	public Short toShort(Object value) throws ConversionException {
+	public Short toShort(Object value) throws ValueCodecException {
 		return this.to(value, Short.class);
 	}
 
 	@Override
-	public Integer toInteger(Object value) throws ConversionException {
+	public Integer toInteger(Object value) throws ValueCodecException {
 		return this.to(value, Integer.class);
 	}
 
 	@Override
-	public Long toLong(Object value) throws ConversionException {
+	public Long toLong(Object value) throws ValueCodecException {
 		return this.to(value, Long.class);
 	}
 
 	@Override
-	public Float toFloat(Object value) throws ConversionException {
+	public Float toFloat(Object value) throws ValueCodecException {
 		return this.to(value, Float.class);
 	}
 
 	@Override
-	public Double toDouble(Object value) throws ConversionException {
+	public Double toDouble(Object value) throws ValueCodecException {
 		return this.to(value, Double.class);
 	}
 
 	@Override
-	public Character toCharacter(Object value) throws ConversionException {
+	public Character toCharacter(Object value) throws ValueCodecException {
 		return this.to(value, Character.class);
 	}
 
 	@Override
-	public Boolean toBoolean(Object value) throws ConversionException {
+	public Boolean toBoolean(Object value) throws ValueCodecException {
 		return this.to(value, Boolean.class);
+	}
+	
+	@Override
+	public String toString(Object value) throws ValueCodecException {
+		return this.to(value, String.class);
 	}
 
 	@Override
-	public BigInteger toBigInteger(Object value) throws ConversionException {
+	public BigInteger toBigInteger(Object value) throws ValueCodecException {
 		return this.to(value, BigInteger.class);
 	}
 
 	@Override
-	public BigDecimal toBigDecimal(Object value) throws ConversionException {
+	public BigDecimal toBigDecimal(Object value) throws ValueCodecException {
 		return this.to(value, BigDecimal.class);
 	}
 
 	@Override
-	public LocalDate toLocalDate(Object value) throws ConversionException {
+	public LocalDate toLocalDate(Object value) throws ValueCodecException {
 		return this.to(value, LocalDate.class);
 	}
 
 	@Override
-	public LocalDateTime toLocalDateTime(Object value) throws ConversionException {
+	public LocalDateTime toLocalDateTime(Object value) throws ValueCodecException {
 		return this.to(value, LocalDateTime.class);
 	}
 
 	@Override
-	public ZonedDateTime toZonedDateTime(Object value) throws ConversionException {
+	public ZonedDateTime toZonedDateTime(Object value) throws ValueCodecException {
 		return this.to(value, ZonedDateTime.class);
 	}
 
 	@Override
-	public Currency toCurrency(Object value) throws ConversionException {
+	public Currency toCurrency(Object value) throws ValueCodecException {
 		return this.to(value, Currency.class);
 	}
 
 	@Override
-	public Locale toLocale(Object value) throws ConversionException {
+	public Locale toLocale(Object value) throws ValueCodecException {
 		return this.to(value, Locale.class);
 	}
 
 	@Override
-	public File toFile(Object value) throws ConversionException {
+	public File toFile(Object value) throws ValueCodecException {
 		return this.to(value, File.class);
 	}
 
 	@Override
-	public Path toPath(Object value) throws ConversionException {
+	public Path toPath(Object value) throws ValueCodecException {
 		return this.to(value, Path.class);
 	}
 
 	@Override
-	public URI toURI(Object value) throws ConversionException {
+	public URI toURI(Object value) throws ValueCodecException {
 		return this.to(value, URI.class);
 	}
 
 	@Override
-	public URL toURL(Object value) throws ConversionException {
+	public URL toURL(Object value) throws ValueCodecException {
 		return this.to(value, URL.class);
 	}
 
 	@Override
-	public Pattern toPattern(Object value) throws ConversionException {
+	public Pattern toPattern(Object value) throws ValueCodecException {
 		return this.to(value, Pattern.class);
 	}
 
 	@Override
-	public InetAddress toInetAddress(Object value) throws ConversionException {
+	public InetAddress toInetAddress(Object value) throws ValueCodecException {
 		return this.to(value, InetAddress.class);
 	}
 
 	@Override
-	public Class<?> toClass(Object value) throws ConversionException {
+	public Class<?> toClass(Object value) throws ValueCodecException {
 		return this.to(value, Class.class);
 	}
 

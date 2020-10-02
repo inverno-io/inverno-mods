@@ -15,7 +15,7 @@
  */
 package io.winterframework.mod.configuration;
 
-import io.winterframework.mod.configuration.ExecutableConfigurationQuery.Parameter;
+import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
 
 /**
  * @author jkuhn

@@ -186,7 +186,7 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			TypeMirror consumerType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(Consumer.class.getCanonicalName()).asType());
 			WildcardType unknownWildcardType = context.getTypeUtils().getWildcardType(null, null);
 			TypeMirror configurationSourceType = context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement(ConfigurationSource.class.getCanonicalName()), unknownWildcardType, unknownWildcardType, unknownWildcardType);
-			TypeMirror parameterType = context.getElementUtils().getTypeElement("io.winterframework.mod.configuration.ExecutableConfigurationQuery.Parameter").asType();
+			TypeMirror parameterType = context.getElementUtils().getTypeElement("io.winterframework.mod.configuration.ConfigurationKey.Parameter").asType();
 			
 			StringBuilder configurationBeanClass = new StringBuilder().append(context.indent(0)).append("@").append(context.getTypeName(beanAnnotationType)).append("(name = \"").append(configurationInfo.getQualifiedName().getBeanName()).append("\")\n");
 			configurationBeanClass.append(context.indent(0)).append("@").append(context.getTypeName(wrapperAnnotationType)).append("\n");
@@ -267,7 +267,7 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			return new StringBuilder().append(context.indent(0)).append("\"").append(context.getConfiguration().getQualifiedName().getModuleQName()).append(".").append(configurationPropertyInfo.getQualifiedName().getBeanName()).append("\"");
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURATION_PROPERTY_CONFIGURER) {
-			StringBuilder result = new StringBuilder().append(context.indent(0)).append("results.get(").append(context.getResultIndex().getAndIncrement()).append(").getResult().ifPresent(entry -> ").append(context.getConfiguration().getQualifiedName().normalize()).append("_configurator.").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append("(entry.");
+			StringBuilder result = new StringBuilder().append(context.indent(0)).append("results.get(").append(context.getResultIndex().getAndIncrement()).append(").getResult().ifPresent(property -> ").append(context.getConfiguration().getQualifiedName().normalize()).append("_configurator.").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append("(property.");
 			
 			if(configurationPropertyInfo.getType().getKind() == TypeKind.ARRAY) {
 				result.append("valueAsArrayOf(").append(context.getTypeName(((ArrayType)configurationPropertyInfo.getType()).getComponentType())).append(".class).orElse(null)");
