@@ -16,18 +16,20 @@
 package io.winterframework.mod.configuration.internal;
 
 import java.util.Arrays;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.winterframework.mod.configuration.AbstractConfigurationSource;
-import io.winterframework.mod.configuration.ConfigurationEntry;
 import io.winterframework.mod.configuration.ConfigurationKey;
+import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
+import io.winterframework.mod.configuration.ConfigurationProperty;
 import io.winterframework.mod.configuration.ConfigurationQuery;
 import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
-import io.winterframework.mod.configuration.ValueConverter;
+import io.winterframework.mod.configuration.ValueDecoder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -37,11 +39,11 @@ import reactor.core.publisher.Mono;
  */
 public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashConfigurationSource<A, B>> extends AbstractConfigurationSource<AbstractHashConfigurationSource.HashConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashExecutableConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashConfigurationQueryResult<A, B>, A> {
 	
-	public AbstractHashConfigurationSource(ValueConverter<A> converter) {
-		super(converter);
+	public AbstractHashConfigurationSource(ValueDecoder<A> decoder) {
+		super(decoder);
 	}
 	
-	protected abstract Mono<List<ConfigurationEntry<ConfigurationKey, B>>> load();
+	protected abstract Mono<List<ConfigurationProperty<ConfigurationKey, B>>> load();
 	
 	@Override
 	public HashExecutableConfigurationQuery<A, B> get(String... names) throws IllegalArgumentException {
@@ -54,18 +56,18 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		
 		private List<String> names;
 		
-		private LinkedHashMap<String, Object> parameters;
+		private LinkedList<Parameter> parameters;
 		
 		private HashConfigurationQuery(HashExecutableConfigurationQuery<A, B> executableQuery) {
 			this.executableQuery = executableQuery;
 			this.names = new LinkedList<>();
-			this.parameters = new LinkedHashMap<>();
+			this.parameters = new LinkedList<>();
 		}
 		
 		@Override
 		public HashExecutableConfigurationQuery<A, B> get(String... names) {
 			if(names == null || names.length == 0) {
-				throw new IllegalArgumentException("You can't query an empty list of configuration entries");
+				throw new IllegalArgumentException("You can't query an empty list of configuration properties");
 			}
 			this.names.addAll(Arrays.asList(names));
 			return this.executableQuery;
@@ -91,18 +93,20 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		}
 		
 		@Override
-		public ExecutableConfigurationQuery<HashConfigurationQuery<A, B>, HashExecutableConfigurationQuery<A, B>, HashConfigurationQueryResult<A, B>> withParameters(Parameter... parameters) throws IllegalArgumentException {
+		public HashExecutableConfigurationQuery<A, B> withParameters(Parameter... parameters) throws IllegalArgumentException {
 			if(parameters != null && parameters.length > 0) {
 				HashConfigurationQuery<A, B> currentQuery = this.queries.peekLast();
+				Set<String> parameterKeys = new HashSet<>();
 				currentQuery.parameters.clear();
-				String duplicateParameters = "";
+				List<String> duplicateParameters = new LinkedList<>();
 				for(Parameter parameter : parameters) {
-					if(currentQuery.parameters.put(parameter.getName(), parameter.getValue()) != null) {
-						duplicateParameters += parameter.getName();
+					currentQuery.parameters.add(parameter);
+					if(!parameterKeys.add(parameter.getKey())) {
+						duplicateParameters.add(parameter.getKey());
 					}
 				}
-				if(duplicateParameters != null && duplicateParameters.length() > 0) {
-					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters);
+				if(duplicateParameters != null && duplicateParameters.size() > 0) {
+					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
 				}
 			}
 			return this;
@@ -111,10 +115,10 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		@Override
 		public Flux<HashConfigurationQueryResult<A, B>> execute() {
 			return this.source.load()
-				.map(entries -> entries.stream().collect(Collectors.toMap(entry -> new GenericConfigurationKey(entry.getKey().getName(), entry.getKey().getParameters()), Function.identity())))
-				.flatMapMany(indexedEntries -> Flux.fromStream(this.queries.stream()
+				.map(properties -> properties.stream().collect(Collectors.toMap(property -> new GenericConfigurationKey(property.getKey().getName(), property.getKey().getParameters()), Function.identity())))
+				.flatMapMany(indexedProperties -> Flux.fromStream(this.queries.stream()
 					.flatMap(query -> query.names.stream().map(name -> new GenericConfigurationKey(name, query.parameters)))
-					.map(key -> new HashConfigurationQueryResult<>(key, indexedEntries.get(key))))
+					.map(key -> new HashConfigurationQueryResult<>(key, indexedProperties.get(key))))
 				)
 				.onErrorResume(ex -> true, ex -> Flux.fromStream(this.queries.stream()
 					.flatMap(query -> query.names.stream().map(name -> new HashConfigurationQueryResult<>(new GenericConfigurationKey(name, query.parameters), this.source, ex))))
@@ -122,9 +126,9 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		}
 	}
 	
-	public static class HashConfigurationQueryResult<A, B extends AbstractHashConfigurationSource<A,B>> extends GenericConfigurationQueryResult<ConfigurationKey, ConfigurationEntry<ConfigurationKey, B>> {
+	public static class HashConfigurationQueryResult<A, B extends AbstractHashConfigurationSource<A,B>> extends GenericConfigurationQueryResult<ConfigurationKey, ConfigurationProperty<ConfigurationKey, B>> {
 
-		private HashConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationEntry<ConfigurationKey, B> queryResult) {
+		private HashConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationProperty<ConfigurationKey, B> queryResult) {
 			super(queryKey, queryResult);
 		}
 		

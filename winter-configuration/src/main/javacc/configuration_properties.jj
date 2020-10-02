@@ -24,18 +24,17 @@ PARSER_BEGIN(ConfigurationPropertiesParser)
 package io.winterframework.mod.configuration.internal.parser.properties;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import io.winterframework.mod.configuration.AbstractConfigurationSource;
-import io.winterframework.mod.configuration.ConfigurationEntry;
+import io.winterframework.mod.configuration.ConfigurationProperty;
 import io.winterframework.mod.configuration.ConfigurationKey;
-import io.winterframework.mod.configuration.internal.GenericConfigurationEntry;
+import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
+import io.winterframework.mod.configuration.internal.GenericConfigurationProperty;
 import io.winterframework.mod.configuration.internal.GenericConfigurationKey;
 
-@SuppressWarnings({ "unchecked" })
 public class ConfigurationPropertiesParser<A extends AbstractConfigurationSource<?,?,?,String>> {
 
 	private A winter_source;
@@ -808,12 +807,12 @@ TOKEN : /* IDENTIFIERS */
 	>
 }
 
-List<ConfigurationEntry<ConfigurationKey, A>> StartConfigurationProperties():
+List<ConfigurationProperty<ConfigurationKey, A>> StartConfigurationProperties():
 {
 	String propertyName = null;
-	Map<String, Object> parameters = Map.of();
-	List<ConfigurationEntry<ConfigurationKey, A>> current;
-	List<ConfigurationEntry<ConfigurationKey, A>> result = new ArrayList<>();
+	Collection<Parameter> parameters = List.of();
+	List<ConfigurationProperty<ConfigurationKey, A>> current;
+	List<ConfigurationProperty<ConfigurationKey, A>> result = new ArrayList<>();
 }
 {
 	( current = Declaration(propertyName, parameters) { result.addAll(current); } | < LINE_END > )*
@@ -823,10 +822,10 @@ List<ConfigurationEntry<ConfigurationKey, A>> StartConfigurationProperties():
 	}
 }
 
-List<ConfigurationEntry<ConfigurationKey, A>> Declaration(String propertyName, Map<String, Object> parameters):
+List<ConfigurationProperty<ConfigurationKey, A>> Declaration(String propertyName, Collection<Parameter> parameters):
 {
-	List<ConfigurationEntry<ConfigurationKey, A>> entries;
-	ConfigurationEntry<ConfigurationKey, A> entry;
+	List<ConfigurationProperty<ConfigurationKey, A>> entries;
+	ConfigurationProperty<ConfigurationKey, A> entry;
 }
 {
 	(
@@ -841,7 +840,7 @@ List<ConfigurationEntry<ConfigurationKey, A>> Declaration(String propertyName, M
 	}
 }
 
-ConfigurationEntry<ConfigurationKey, A> Property(String propertyName, Map<String, Object> parameters):
+ConfigurationProperty<ConfigurationKey, A> Property(String propertyName, Collection<Parameter> parameters):
 {
 	String name;
 	Optional<String> value;
@@ -850,20 +849,20 @@ ConfigurationEntry<ConfigurationKey, A> Property(String propertyName, Map<String
 	name = PropertyName() < EQ > value = PropertyValue() (< LINE_END > | < EOF >)
 	{
 		if(value != null) {
-	    	return new GenericConfigurationEntry<ConfigurationKey, A, String>(new GenericConfigurationKey(propertyName != null ? propertyName + "." + name : name, parameters), value.orElse(null), winter_source);
+	    	return new GenericConfigurationProperty<ConfigurationKey, A, String>(new GenericConfigurationKey(propertyName != null ? propertyName + "." + name : name, parameters), value.orElse(null), winter_source);
 	    }
 	    else {
-	    	return new GenericConfigurationEntry<ConfigurationKey, A, String>(new GenericConfigurationKey(propertyName != null ? propertyName + "." + name : name, parameters), winter_source);
+	    	return new GenericConfigurationProperty<ConfigurationKey, A, String>(new GenericConfigurationKey(propertyName != null ? propertyName + "." + name : name, parameters), winter_source);
 	    }
 	}
 }
 
-List<ConfigurationEntry<ConfigurationKey, A>> PropertyBlock(String propertyName, Map<String, Object> parameters):
+List<ConfigurationProperty<ConfigurationKey, A>> PropertyBlock(String propertyName, Collection<Parameter> parameters):
 {
 	String newName = propertyName != null ? propertyName + "." : "";
 	String name;
-	List<ConfigurationEntry<ConfigurationKey, A>> current;
-	List<ConfigurationEntry<ConfigurationKey, A>> result = new ArrayList<>();
+	List<ConfigurationProperty<ConfigurationKey, A>> current;
+	List<ConfigurationProperty<ConfigurationKey, A>> result = new ArrayList<>();
 }
 {
 	name = PropertyName() { newName += name; } < LBRACE > ( current = Declaration(newName, parameters) { result.addAll(current); } | < LINE_END > )* < RBRACE >
@@ -905,33 +904,33 @@ Optional<String> PropertyValue():
 	}
 }
 
-List<ConfigurationEntry<ConfigurationKey, A>> ConfigurationBlock(String propertyName, Map<String, Object> parameters):
+List<ConfigurationProperty<ConfigurationKey, A>> ConfigurationBlock(String propertyName, Collection<Parameter> parameters):
 {
-	Map<String, Object> newParameters;
-	Map<String, Object> mergedParameters = new HashMap< >(parameters);
-	List<ConfigurationEntry<ConfigurationKey, A>> current;
-	List<ConfigurationEntry<ConfigurationKey, A>> result = new ArrayList<>();
+	Collection<Parameter> newParameters;
+	List<Parameter> mergedParameters = new ArrayList<>(parameters);
+	List<ConfigurationProperty<ConfigurationKey, A>> current;
+	List<ConfigurationProperty<ConfigurationKey, A>> result = new ArrayList<>();
 }
 {
-	newParameters = ParameterList() { mergedParameters.putAll(newParameters); } ( < LINE_END > )* < LBRACE > ( current = Declaration(propertyName, mergedParameters) { result.addAll(current); } | < LINE_END > )* < RBRACE >
+	newParameters = ParameterList() { mergedParameters.addAll(newParameters); } ( < LINE_END > )* < LBRACE > ( current = Declaration(propertyName, mergedParameters) { result.addAll(current); } | < LINE_END > )* < RBRACE >
 	{
 		return result;
 	}
 }
 
-Map<String, Object> ParameterList():
+Collection<Parameter> ParameterList():
 {
-	Map.Entry<String, Object> p;
-	List<Map.Entry<String, Object>> parameterList = new ArrayList<>();
+	Parameter p;
+	List<Parameter> parameterList = new ArrayList<>();
 }
 {
 	<  LBRACK > p = Parameter() { parameterList.add(p); } ( LOOKAHEAD(2) < COMMA > p = Parameter() { parameterList.add(p); })* < RBRACK >
 	{
-	  return Map.ofEntries(parameterList.toArray(new Map.Entry[parameterList.size()]));
+	  return parameterList;
 	}
 }
 
-Map.Entry<String, Object> Parameter():
+Parameter Parameter():
 {
 	String parameterName;
 	Object parameterValue;
@@ -939,7 +938,7 @@ Map.Entry<String, Object> Parameter():
 {
 	parameterName = ParameterName() < EQ > parameterValue = ParameterValue()
 	{
-	  return Map.entry(parameterName, parameterValue);
+	  return Parameter.of(parameterName, parameterValue);
 	}
 }
 

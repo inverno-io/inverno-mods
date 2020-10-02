@@ -4,11 +4,11 @@ import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
 import io.winterframework.mod.configuration.source.CompositeConfigurationSource.CompositeConfigurationQueryResult;
 
 public class CompositeConfigurationSourceTest {
@@ -50,115 +50,115 @@ public class CompositeConfigurationSourceTest {
 		Iterator<CompositeConfigurationQueryResult> resultIterator = results.iterator();
 		
 		CompositeConfigurationQueryResult current = resultIterator.next(); // datasource.url[node=node1,zone=US,environment=production] -> datasource.url[node=node1,environment=production,zone=US] = jdbc:h2:file:/opt/1/node1-us-production
-		Assertions.assertEquals("datasource.url", current.getQuery().getName());
-		Assertions.assertEquals(Map.of("node","node1","zone","US","environment","production"), current.getQuery().getParameters());
+		Assertions.assertEquals("datasource.url", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("node","node1"), Parameter.of("zone","US"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("datasource.url", current.getResult().get().getKey().getName());
-		Assertions.assertEquals(Map.of("node","node1","zone","US","environment","production"), current.getResult().get().getKey().getParameters());
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("node","node1"), Parameter.of("zone","US"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals("jdbc:h2:file:/opt/1/node1-us-production", current.getResult().get().valueAsString().get());
 		
 		current = resultIterator.next(); // datasource.user[node=node1,zone=US,environment=production] -> datasource.user[] = user
-		Assertions.assertEquals("datasource.user", current.getQuery().getName());
-		Assertions.assertEquals(Map.of("node","node1","zone","US","environment","production"), current.getQuery().getParameters());
+		Assertions.assertEquals("datasource.user", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("node","node1"), Parameter.of("zone","US"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("datasource.user", current.getResult().get().getKey().getName());
-		Assertions.assertEquals(Map.of(), current.getResult().get().getKey().getParameters());
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals("user", current.getResult().get().valueAsString().get());
 		
 		current = resultIterator.next(); // datasource.password[node=node1,zone=US,environment=production] -> datasource.password[environment=production] = password_prod
-		Assertions.assertEquals("datasource.password", current.getQuery().getName());
-		Assertions.assertEquals(Map.of("node","node1","zone","US","environment","production"), current.getQuery().getParameters());
+		Assertions.assertEquals("datasource.password", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("node","node1"), Parameter.of("zone","US"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("datasource.password", current.getResult().get().getKey().getName());
-		Assertions.assertEquals(Map.of("environment","production"), current.getResult().get().getKey().getParameters());
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals("password_prod", current.getResult().get().valueAsString().get());
 		
 		current = resultIterator.next(); // datasource.url[node=node2,zone=EU,environment=production] -> datasource.url[node=node2,environment=production,zone=EU] = jdbc:h2:file:/opt/2/node2-eu-production
-		Assertions.assertEquals("datasource.url", current.getQuery().getName());
-		Assertions.assertEquals(Map.of("node","node2","zone","EU","environment","production"), current.getQuery().getParameters());
+		Assertions.assertEquals("datasource.url", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("node","node2"), Parameter.of("zone","EU"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("datasource.url", current.getResult().get().getKey().getName());
-		Assertions.assertEquals(Map.of("node","node2","zone","EU","environment","production"), current.getResult().get().getKey().getParameters());
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("node","node2"), Parameter.of("zone","EU"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals("jdbc:h2:file:/opt/2/node2-eu-production", current.getResult().get().valueAsString().get());
 		
 		current = resultIterator.next(); // datasource.url[zone=EU,environment=production] -> datasource.url[environment=production] = jdbc:h2:file:/opt/1/production
-		Assertions.assertEquals("datasource.url", current.getQuery().getName());
-		Assertions.assertEquals(Map.of("zone","EU","environment","production"), current.getQuery().getParameters());
+		Assertions.assertEquals("datasource.url", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("zone","EU"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("datasource.url", current.getResult().get().getKey().getName());
-		Assertions.assertEquals(Map.of("environment","production"), current.getResult().get().getKey().getParameters());
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals("jdbc:h2:file:/opt/1/production", current.getResult().get().valueAsString().get());
 		
 		current = resultIterator.next(); // datasource.user[zone=EU,environment=production] -> datasource.user[] = user
-		Assertions.assertEquals("datasource.user", current.getQuery().getName());
-		Assertions.assertEquals(Map.of("zone","EU","environment","production"), current.getQuery().getParameters());
+		Assertions.assertEquals("datasource.user", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("zone","EU"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("datasource.user", current.getResult().get().getKey().getName());
-		Assertions.assertEquals(Map.of(), current.getResult().get().getKey().getParameters());
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals("user", current.getResult().get().valueAsString().get());
 		
 		current = resultIterator.next(); // datasource.password[zone=EU,environment=production] -> datasource.password[environment=production] = password_prod
-		Assertions.assertEquals("datasource.password", current.getQuery().getName());
-		Assertions.assertEquals(Map.of("zone","EU","environment","production"), current.getQuery().getParameters());
+		Assertions.assertEquals("datasource.password", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("zone","EU"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("datasource.password", current.getResult().get().getKey().getName());
-		Assertions.assertEquals(Map.of("environment","production"), current.getResult().get().getKey().getParameters());
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals("password_prod", current.getResult().get().valueAsString().get());
 		
 		current = resultIterator.next(); // datasource.url[zone=US,environment=production] -> datasource.url[zone=US,environment=production] = jdbc:h2:file:/opt/2/us-production
-		Assertions.assertEquals("datasource.url", current.getQuery().getName());
-		Assertions.assertEquals(Map.of("zone","US","environment","production"), current.getQuery().getParameters());
+		Assertions.assertEquals("datasource.url", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("zone","US"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("datasource.url", current.getResult().get().getKey().getName());
-		Assertions.assertEquals(Map.of("zone","US","environment","production"), current.getResult().get().getKey().getParameters());
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("zone","US"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals("jdbc:h2:file:/opt/2/us-production", current.getResult().get().valueAsString().get());
 		
 		current = resultIterator.next(); // datasource.url[zone=EU,environment=test] -> datasource.url[environment=test] = jdbc:h2:file:/opt/2/test
-		Assertions.assertEquals("datasource.url", current.getQuery().getName());
-		Assertions.assertEquals(Map.of("zone","EU","environment","test"), current.getQuery().getParameters());
+		Assertions.assertEquals("datasource.url", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("zone","EU"), Parameter.of("environment","test"))));
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("datasource.url", current.getResult().get().getKey().getName());
-		Assertions.assertEquals(Map.of("environment","test"), current.getResult().get().getKey().getParameters());
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("environment","test"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals("jdbc:h2:file:/opt/2/test", current.getResult().get().valueAsString().get());
 		
 		current = resultIterator.next(); // datasource.url[zone=EU,environment=local] -> datasource.url[environment=local] = jdbc:h2:file:/opt/1/local
 		Assertions.assertTrue(current.getResult().isPresent());
-		Assertions.assertEquals("datasource.url", current.getQuery().getName());
-		Assertions.assertEquals(Map.of("zone","EU","environment","local"), current.getQuery().getParameters());
+		Assertions.assertEquals("datasource.url", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("zone","EU"), Parameter.of("environment","local"))));
 		Assertions.assertEquals("datasource.url", current.getResult().get().getKey().getName());
-		Assertions.assertEquals(Map.of("environment","local"), current.getResult().get().getKey().getParameters());
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("environment","local"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals("jdbc:h2:file:/opt/1/local", current.getResult().get().valueAsString().get());
 		
 		current = resultIterator.next(); // datasource.url[zone=ASIA,environment=undefined] -> datasource.url[] = jdbc:h2:file:/opt/1/default
-		Assertions.assertEquals("datasource.url", current.getQuery().getName());
-		Assertions.assertEquals(Map.of("zone","ASIA","environment","undefined"), current.getQuery().getParameters());
+		Assertions.assertEquals("datasource.url", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("zone","ASIA"), Parameter.of("environment","undefined"))));
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("datasource.url", current.getResult().get().getKey().getName());
-		Assertions.assertEquals(Map.of(), current.getResult().get().getKey().getParameters());
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals("jdbc:h2:file:/opt/1/default", current.getResult().get().valueAsString().get());
 		
 		current = resultIterator.next(); // undefined[] -> null
-		Assertions.assertEquals("undefined", current.getQuery().getName());
-		Assertions.assertEquals(Map.of(), current.getQuery().getParameters());
+		Assertions.assertEquals("undefined", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().isEmpty());
 		Assertions.assertTrue(!current.getResult().isPresent());
 		
 		current = resultIterator.next(); // name[environment=test] -> name[environment=test] = NameEnv
-		Assertions.assertEquals("name", current.getQuery().getName());
-		Assertions.assertEquals(Map.of("environment","test"), current.getQuery().getParameters());
+		Assertions.assertEquals("name", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("environment","test"))));
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("name", current.getResult().get().getKey().getName());
-		Assertions.assertEquals(Map.of("environment","test"), current.getResult().get().getKey().getParameters());
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("environment","test"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals("NameSysProp", current.getResult().get().valueAsString().get());
 	}
@@ -188,8 +188,8 @@ public class CompositeConfigurationSourceTest {
 		
 		CompositeConfigurationQueryResult current = resultIterator.next();
 		
-		Assertions.assertEquals("datasource.password", current.getQuery().getName());
-		Assertions.assertTrue(current.getQuery().getParameters().isEmpty());
+		Assertions.assertEquals("datasource.password", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().isEmpty());
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("datasource.password", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
@@ -198,8 +198,8 @@ public class CompositeConfigurationSourceTest {
 		
 		current = resultIterator.next();
 		
-		Assertions.assertEquals("datasource.password", current.getQuery().getName());
-		Assertions.assertEquals(Map.of("environment","testUnset"), current.getQuery().getParameters());
+		Assertions.assertEquals("datasource.password", current.getQueryKey().getName());
+		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("environment","testUnset"))));
 		Assertions.assertFalse(current.getResult().isPresent());
 	}
 }

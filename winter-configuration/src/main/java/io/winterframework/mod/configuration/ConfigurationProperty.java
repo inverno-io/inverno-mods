@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
  * @author jkuhn
  *
  */
-public interface ConfigurationEntry<A extends ConfigurationKey, B extends ConfigurationSource<?, ?, ?>> {
+public interface ConfigurationProperty<A extends ConfigurationKey, B extends ConfigurationSource<?, ?, ?>> {
 	
 	A getKey();
 	

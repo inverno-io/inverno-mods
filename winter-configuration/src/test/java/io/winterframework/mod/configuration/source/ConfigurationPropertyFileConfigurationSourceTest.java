@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
 import io.winterframework.mod.configuration.internal.AbstractHashConfigurationSource.HashConfigurationQueryResult;
 
 public class ConfigurationPropertyFileConfigurationSourceTest {
@@ -26,30 +27,27 @@ public class ConfigurationPropertyFileConfigurationSourceTest {
 			.get("tata.toto").withParameters("tutu", "plop").and()
 			.get("url", "table").and()
 			.get("text_block").withParameters("context", "text_block").and()
-			.get("plip.plap.json")
+			.get("plip.plap.json").and()
+			.get("some_string")
 			.execute()
 			.collectList()
 			.block();
 		
-		Assertions.assertEquals(6, results.size());
+		Assertions.assertEquals(7, results.size());
 		
 		Iterator<HashConfigurationQueryResult<String, ConfigurationPropertyFileConfigurationSource>> resultIterator = results.iterator();
 		
 		HashConfigurationQueryResult<String, ConfigurationPropertyFileConfigurationSource> current = resultIterator.next();
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
-		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsKey("test"));
-		Assertions.assertEquals(5, current.getResult().get().getKey().getParameters().get("test"));
-		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsKey("tutu"));
-		Assertions.assertEquals("plop", current.getResult().get().getKey().getParameters().get("tutu"));
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("test", 5), Parameter.of("tutu", "plop"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals(563, current.getResult().get().valueAsInteger().get());
 		
 		current = resultIterator.next();
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
-		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsKey("tutu"));
-		Assertions.assertEquals("plop", current.getResult().get().getKey().getParameters().get("tutu"));
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("tutu", "plop"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals(65432, current.getResult().get().valueAsInteger().get());
 		
@@ -68,8 +66,7 @@ public class ConfigurationPropertyFileConfigurationSourceTest {
 		current = resultIterator.next();
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("text_block", current.getResult().get().getKey().getName());
-		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsKey("context"));
-		Assertions.assertEquals("text_block", current.getResult().get().getKey().getParameters().get("context"));
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("context", "text_block"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals("\n" + 
 				"		Hey \n" + 
@@ -89,6 +86,13 @@ public class ConfigurationPropertyFileConfigurationSourceTest {
 				"			table = [\"abc,\"bcd\"]\n" + 
 				"		}\n" + 
 				"	", current.getResult().get().valueAsString().get());
+		
+		current = resultIterator.next();
+		Assertions.assertTrue(current.getResult().isPresent());
+		Assertions.assertEquals("some_string", current.getResult().get().getKey().getName());
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
+		Assertions.assertTrue(current.getResult().get().isPresent());
+		Assertions.assertEquals("abc\ndef", current.getResult().get().valueAsString().get());
 	}
 	
 	@Test

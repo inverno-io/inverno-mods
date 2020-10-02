@@ -15,7 +15,8 @@
  */
 package io.winterframework.mod.configuration.source;
 
-import io.winterframework.mod.configuration.converter.StringValueConverter;
+import io.winterframework.mod.configuration.ValueDecoder;
+import io.winterframework.mod.configuration.codec.StringValueDecoder;
 import io.winterframework.mod.configuration.internal.AbstractPropertiesConfigurationSource;
 
 /**
@@ -25,6 +26,10 @@ import io.winterframework.mod.configuration.internal.AbstractPropertiesConfigura
 public class SystemEnvironmentConfigurationSource extends AbstractPropertiesConfigurationSource<String, SystemEnvironmentConfigurationSource> {
 	
 	public SystemEnvironmentConfigurationSource() {
-		super(new StringValueConverter(), System::getenv);
+		this(new StringValueDecoder());
+	}
+	
+	public SystemEnvironmentConfigurationSource(ValueDecoder<String> decoder) {
+		super(System::getenv, decoder);
 	}
 }

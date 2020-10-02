@@ -48,9 +48,9 @@ import reactor.core.publisher.Mono;
 public class TestConfiguration extends AbstractConfigurationWinterTest {
 	
 	private static final String CLASS_ConfigurationSource = "io.winterframework.mod.configuration.ConfigurationSource";
-	private static final String CLASS_ExecutableConfigurationQuery = "io.winterframework.mod.configuration.ExecutableConfigurationQuery";
+	private static final String CLASS_ConfigurationKey_Parameter = "io.winterframework.mod.configuration.ConfigurationKey$Parameter";
 	private static final String CLASS_CommandLineConfigurationSource = "io.winterframework.mod.configuration.source.CommandLineConfigurationSource";
-	private static final String CLASS_PropertiesConfigurationSource = "io.winterframework.mod.configuration.source.PropertiesConfigurationSource";
+	private static final String CLASS_MapConfigurationSource = "io.winterframework.mod.configuration.source.MapConfigurationSource";
 	
 	private static final String MODULEA = "io.winterframework.mod.test.config.moduleA";
 	private static final String MODULEB = "io.winterframework.mod.test.config.moduleB";
@@ -569,7 +569,7 @@ public class TestConfiguration extends AbstractConfigurationWinterTest {
 			Map.entry("io.winterframework.mod.test.config.moduleC.configC.configA.param1", "bbbb")
 		);
 		
-		Object source = moduleLoader.loadClass("io.winterframework.mod.configuration", CLASS_PropertiesConfigurationSource).getDeclaredConstructor(Map.class).newInstance(properties);
+		Object source = moduleLoader.loadClass("io.winterframework.mod.configuration", CLASS_MapConfigurationSource).getDeclaredConstructor(Map.class).newInstance(properties);
 		configCLoaderClass.getMethod("withSource", moduleLoader.loadClass("io.winterframework.mod.configuration", CLASS_ConfigurationSource)).invoke(configCLoader, source);
 		
 		Method monoBlock = moduleLoader.loadClass("reactor.core", "reactor.core.publisher.Mono").getMethod("block");
@@ -606,7 +606,7 @@ public class TestConfiguration extends AbstractConfigurationWinterTest {
 			Map.entry("io.winterframework.mod.test.config.moduleC.configC.configA.param1", "bbbb")
 		);
 		
-		Object source = moduleLoader.loadClass("io.winterframework.mod.configuration", CLASS_PropertiesConfigurationSource).getDeclaredConstructor(Map.class).newInstance(properties);
+		Object source = moduleLoader.loadClass("io.winterframework.mod.configuration", CLASS_MapConfigurationSource).getDeclaredConstructor(Map.class).newInstance(properties);
 		configCLoaderClass.getMethod("withSource", moduleLoader.loadClass("io.winterframework.mod.configuration", CLASS_ConfigurationSource)).invoke(configCLoader, source);
 		
 		Consumer<Object> configCConfigurer = configurator -> {
@@ -651,8 +651,8 @@ public class TestConfiguration extends AbstractConfigurationWinterTest {
 		Object source = moduleLoader.loadClass("io.winterframework.mod.configuration", CLASS_CommandLineConfigurationSource).getDeclaredConstructor(String[].class).newInstance((Object)args);
 		configCLoaderClass.getMethod("withSource", moduleLoader.loadClass("io.winterframework.mod.configuration", CLASS_ConfigurationSource)).invoke(configCLoader, source);
 		
-		Class<?> executableConfigurationQueryClass = moduleLoader.loadClass("io.winterframework.mod.configuration", CLASS_ExecutableConfigurationQuery);
-		Object parameter = executableConfigurationQueryClass.getMethod("parameter", String.class, Object.class).invoke(null, "env", "prod");
+		Class<?> ConfigurationQueryParameterClass = moduleLoader.loadClass("io.winterframework.mod.configuration", CLASS_ConfigurationKey_Parameter);
+		Object parameter = ConfigurationQueryParameterClass.getMethod("of", String.class, Object.class).invoke(null, "env", "prod");
 		
 		Object parameters = Array.newInstance(parameter.getClass(), 1);
 		Array.set(parameters, 0, parameter);

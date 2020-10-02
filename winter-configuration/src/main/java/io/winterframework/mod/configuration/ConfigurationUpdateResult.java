@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.configuration.source;
-
-import java.util.Map;
-
-import io.winterframework.mod.configuration.converter.ObjectValueConverter;
-import io.winterframework.mod.configuration.internal.AbstractPropertiesConfigurationSource;
+package io.winterframework.mod.configuration;
 
 /**
  * @author jkuhn
  *
  */
-public class PropertiesConfigurationSource extends AbstractPropertiesConfigurationSource<Object, PropertiesConfigurationSource> {
+public interface ConfigurationUpdateResult<A extends ConfigurationKey> {
 
-	public PropertiesConfigurationSource(Map<String, Object> properties) {
-		super(new ObjectValueConverter(), properties::get);
-	}
+	A getUpdateKey();
+	
+	void check() throws ConfigurationSourceException;
 }

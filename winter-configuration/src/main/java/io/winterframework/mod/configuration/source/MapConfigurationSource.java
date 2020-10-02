@@ -15,21 +15,23 @@
  */
 package io.winterframework.mod.configuration.source;
 
+import java.util.Map;
+
 import io.winterframework.mod.configuration.ValueDecoder;
-import io.winterframework.mod.configuration.codec.StringValueDecoder;
+import io.winterframework.mod.configuration.codec.ObjectValueDecoder;
 import io.winterframework.mod.configuration.internal.AbstractPropertiesConfigurationSource;
 
 /**
  * @author jkuhn
  *
  */
-public class SystemPropertiesConfigurationSource extends AbstractPropertiesConfigurationSource<String, SystemPropertiesConfigurationSource> {
-	
-	public SystemPropertiesConfigurationSource() {
-		this(new StringValueDecoder());
+public class MapConfigurationSource extends AbstractPropertiesConfigurationSource<Object, MapConfigurationSource> {
+
+	public MapConfigurationSource(Map<String, Object> properties) {
+		this(properties, new ObjectValueDecoder());
 	}
 	
-	public SystemPropertiesConfigurationSource(ValueDecoder<String> decoder) {
-		super(System::getProperty, decoder);
+	public MapConfigurationSource(Map<String, Object> properties, ValueDecoder<Object> decoder) {
+		super(properties::get, decoder);
 	}
 }

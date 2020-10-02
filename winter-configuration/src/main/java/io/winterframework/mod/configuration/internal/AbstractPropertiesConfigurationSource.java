@@ -16,18 +16,21 @@
 package io.winterframework.mod.configuration.internal;
 
 import java.util.Arrays;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import io.winterframework.mod.configuration.AbstractConfigurationSource;
-import io.winterframework.mod.configuration.ConfigurationEntry;
 import io.winterframework.mod.configuration.ConfigurationKey;
+import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
+import io.winterframework.mod.configuration.ConfigurationProperty;
 import io.winterframework.mod.configuration.ConfigurationQuery;
 import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
-import io.winterframework.mod.configuration.ValueConverter;
+import io.winterframework.mod.configuration.ValueDecoder;
 import reactor.core.publisher.Flux;
 
 /**
@@ -38,8 +41,8 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 
 	protected Function<String, A> propertyAccessor;
 	
-	public AbstractPropertiesConfigurationSource(ValueConverter<A> converter, Function<String, A> propertyAccessor) {
-		super(converter);
+	public AbstractPropertiesConfigurationSource(Function<String, A> propertyAccessor, ValueDecoder<A> decoder) {
+		super(decoder);
 		this.propertyAccessor = propertyAccessor;
 	}
 	
@@ -52,20 +55,20 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 		
 		private List<String> names;
 		
-		private LinkedHashMap<String, Object> parameters;
+		private LinkedList<Parameter> parameters;
 		
 		private PropertyExecutableConfigurationQuery<A, B> executableQuery;
 		
 		private PropertyConfigurationQuery(PropertyExecutableConfigurationQuery<A, B> executableQuery) {
 			this.executableQuery = executableQuery;
 			this.names = new LinkedList<>();
-			this.parameters = new LinkedHashMap<>();
+			this.parameters = new LinkedList<>();
 		}
 		
 		@Override
 		public PropertyExecutableConfigurationQuery<A, B> get(String... names) throws IllegalArgumentException {
 			if(names == null || names.length == 0) {
-				throw new IllegalArgumentException("You can't query an empty list of configuration entries");
+				throw new IllegalArgumentException("You can't query an empty list of configuration properties");
 			}
 			this.names.addAll(Arrays.asList(names));
 			return this.executableQuery;
@@ -85,18 +88,20 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 		}
 		
 		@Override
-		public ExecutableConfigurationQuery<PropertyConfigurationQuery<A, B>, PropertyExecutableConfigurationQuery<A, B>, PropertyConfigurationQueryResult<A, B>> withParameters(Parameter... parameters) throws IllegalArgumentException {
+		public PropertyExecutableConfigurationQuery<A, B> withParameters(Parameter... parameters) throws IllegalArgumentException {
 			if(parameters != null && parameters.length > 0) {
 				PropertyConfigurationQuery<A, B> currentQuery = this.queries.peekLast();
+				Set<String> parameterKeys = new HashSet<>();
 				currentQuery.parameters.clear();
-				String duplicateParameters = "";
+				List<String> duplicateParameters = new LinkedList<>();
 				for(Parameter parameter : parameters) {
-					if(currentQuery.parameters.put(parameter.getName(), parameter.getValue()) != null) {
-						duplicateParameters += parameter.getName();
+					currentQuery.parameters.add(parameter);
+					if(!parameterKeys.add(parameter.getKey())) {
+						duplicateParameters.add(parameter.getKey());
 					}
 				}
-				if(duplicateParameters != null && duplicateParameters.length() > 0) {
-					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters);
+				if(duplicateParameters != null && duplicateParameters.size() > 0) {
+					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
 				}
 			}
 			return this;
@@ -113,7 +118,7 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 			return Flux.fromStream(this.queries.stream().flatMap(query -> query.names.stream().map(name -> new GenericConfigurationKey(name, query.parameters)))
 				.map(key -> new PropertyConfigurationQueryResult<>(key, 
 						Optional.ofNullable(this.source.propertyAccessor.apply(key.getName()))
-						.map(value -> new GenericConfigurationEntry<ConfigurationKey, B, A>(key, value, this.source))
+						.map(value -> new GenericConfigurationProperty<ConfigurationKey, B, A>(key, value, this.source))
 						.orElse(null)
 					)
 				)
@@ -121,9 +126,9 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 		}
 	}
 	
-	public static class PropertyConfigurationQueryResult<A, B extends AbstractPropertiesConfigurationSource<A,B>> extends GenericConfigurationQueryResult<ConfigurationKey, ConfigurationEntry<ConfigurationKey, B>> {
+	public static class PropertyConfigurationQueryResult<A, B extends AbstractPropertiesConfigurationSource<A,B>> extends GenericConfigurationQueryResult<ConfigurationKey, ConfigurationProperty<ConfigurationKey, B>> {
 
-		private PropertyConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationEntry<ConfigurationKey, B> queryResult) {
+		private PropertyConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationProperty<ConfigurationKey, B> queryResult) {
 			super(queryKey, queryResult);
 		}
 	}

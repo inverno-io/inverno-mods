@@ -15,28 +15,15 @@
  */
 package io.winterframework.mod.configuration;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
-
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
-import io.winterframework.mod.configuration.internal.ConfigurationTypeConfigurationLoader;
-import io.winterframework.mod.configuration.internal.ConfiguratorTypeConfigurationLoader;
-import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 /**
  * @author jkuhn
  *
  */
-public interface ConfigurationLoader<A, B extends ConfigurationLoader<A, B>> {
+public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B extends ExecutableConfigurationUpdate<A, B, C>, C extends ConfigurationUpdateResult<?>> {
 
-	static <E> ConfigurationLoader<E, ?> withConfiguration(Class<E> configurationType) {
-		return new ConfigurationTypeConfigurationLoader<>(configurationType);
-	}
-	
-	static <E,F> ConfigurationLoader<E, ?> withConfigurator(Class<F> configuratorType, Function<Consumer<F>, E> configurationCreator) {
-		return new ConfiguratorTypeConfigurationLoader<>(configuratorType, configurationCreator);
-	}
-	
 	default B withParameters(String k1, Object v1) throws IllegalArgumentException {
 		return this.withParameters(Parameter.of(k1, v1));
 	}
@@ -79,7 +66,7 @@ public interface ConfigurationLoader<A, B extends ConfigurationLoader<A, B>> {
 	
 	B withParameters(Parameter... parameters) throws IllegalArgumentException;
 	
-	B withSource(ConfigurationSource<?, ?, ?> source);
+	A and();
 	
-	Mono<A> load();
+	Flux<C> execute();
 }

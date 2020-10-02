@@ -19,22 +19,22 @@ package io.winterframework.mod.configuration;
  * @author jkuhn
  *
  */
-public abstract class AbstractConfigurationSource<A extends ConfigurationQuery<A, B, C>, B extends ExecutableConfigurationQuery<A, B, C>, C extends ConfigurationQueryResult<?,?> ,D> implements ConfigurationSource<A, B, C> {
+public abstract class AbstractConfigurationSource<A extends ConfigurationQuery<A, B, C>, B extends ExecutableConfigurationQuery<A, B, C>, C extends ConfigurationQueryResult<?,?>, D> implements ConfigurationSource<A, B, C> {
 
-	protected ValueConverter<D> converter;
+	protected ValueDecoder<D> decoder;
 	
-	public AbstractConfigurationSource(ValueConverter<D> converter) {
-		if(converter == null) {
-			throw new NullPointerException("Converter can't be null");
+	public AbstractConfigurationSource(ValueDecoder<D> decoder) {
+		if(decoder == null) {
+			throw new NullPointerException("Value decoder can't be null");
 		}
-		this.converter = converter;
+		this.decoder = decoder;
 	}
 	
-	public ValueConverter<D> getConverter() {
-		return converter;
+	public ValueDecoder<D> getDecoder() {
+		return decoder;
 	}
 
-	public void setConverter(ValueConverter<D> converter) {
-		this.converter = converter;
+	public void setDecoder(ValueDecoder<D> decoder) {
+		this.decoder = decoder;
 	}
 }

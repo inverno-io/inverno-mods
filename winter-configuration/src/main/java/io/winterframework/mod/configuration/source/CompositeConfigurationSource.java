@@ -17,15 +17,17 @@ package io.winterframework.mod.configuration.source;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.winterframework.mod.configuration.ConfigurationEntry;
 import io.winterframework.mod.configuration.ConfigurationKey;
+import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
+import io.winterframework.mod.configuration.ConfigurationProperty;
 import io.winterframework.mod.configuration.ConfigurationQuery;
 import io.winterframework.mod.configuration.ConfigurationQueryResult;
 import io.winterframework.mod.configuration.ConfigurationSource;
@@ -161,18 +163,18 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		
 		private List<String> names;
 		
-		private LinkedHashMap<String, Object> parameters;
+		private LinkedList<Parameter> parameters;
 		
 		private CompositeConfigurationQuery(CompositeExecutableConfigurationQuery executableQuery) {
 			this.executableQuery = executableQuery;
 			this.names = new LinkedList<>();
-			this.parameters = new LinkedHashMap<>();
+			this.parameters = new LinkedList<>();
 		}
 		
 		@Override
 		public CompositeExecutableConfigurationQuery get(String... names) throws IllegalArgumentException {
 			if(names == null || names.length == 0) {
-				throw new IllegalArgumentException("You can't query an empty list of configuration entries");
+				throw new IllegalArgumentException("You can't query an empty list of configuration properties");
 			}
 			this.names.addAll(Arrays.asList(names));
 			return this.executableQuery;
@@ -197,18 +199,20 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		}
 		
 		@Override
-		public ExecutableConfigurationQuery<CompositeConfigurationQuery, CompositeExecutableConfigurationQuery, CompositeConfigurationQueryResult> withParameters(Parameter... parameters) throws IllegalArgumentException {
+		public CompositeExecutableConfigurationQuery withParameters(Parameter... parameters) throws IllegalArgumentException {
 			if(parameters != null && parameters.length > 0) {
 				CompositeConfigurationQuery currentQuery = this.queries.peekLast();
+				Set<String> parameterKeys = new HashSet<>();
 				currentQuery.parameters.clear();
-				String duplicateParameters = "";
+				List<String> duplicateParameters = new LinkedList<>();
 				for(Parameter parameter : parameters) {
-					if(currentQuery.parameters.put(parameter.getName(), parameter.getValue()) != null) {
-						duplicateParameters += parameter.getName();
+					currentQuery.parameters.add(parameter);
+					if(!parameterKeys.add(parameter.getKey())) {
+						duplicateParameters.add(parameter.getKey());
 					}
 				}
-				if(duplicateParameters != null && duplicateParameters.length() > 0) {
-					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters);
+				if(duplicateParameters != null && duplicateParameters.size() > 0) {
+					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
 				}
 			}
 			return this;
@@ -245,7 +249,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		}
 	}
 	
-	public static class CompositeConfigurationQueryResult extends GenericConfigurationQueryResult<ConfigurationKey, ConfigurationEntry<?, ?>> {
+	public static class CompositeConfigurationQueryResult extends GenericConfigurationQueryResult<ConfigurationKey, ConfigurationProperty<?, ?>> {
 
 		private CompositeConfigurationStrategy strategy;
 		
@@ -254,7 +258,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		private boolean resolved;
 		
 		private CompositeConfigurationQueryResult(CompositeConfigurationStrategy strategy, ConfigurationKey queryKey) {
-			super(queryKey, (ConfigurationEntry<?,?>)null);
+			super(queryKey, (ConfigurationProperty<?,?>)null);
 			this.strategy = strategy;
 		}
 		
@@ -280,10 +284,10 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 			}
 			if(this.consumeCounter > 0) {
 				try {
-					result.getResult().ifPresent(entry -> {
-						if(!this.resolved && this.strategy.isSuperseded(this.queryKey, this.queryResult.orElse(null), entry)) {
-							this.queryResult = entry.isUnset() ? Optional.empty() : Optional.of(entry);
-							this.resolved = this.strategy.isResolved(this.queryKey, entry);
+					result.getResult().ifPresent(property -> {
+						if(!this.resolved && this.strategy.isSuperseded(this.queryKey, this.queryResult.orElse(null), property)) {
+							this.queryResult = property.isUnset() ? Optional.empty() : Optional.of(property);
+							this.resolved = this.strategy.isResolved(this.queryKey, property);
 						}
 					});
 				} 
@@ -294,7 +298,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 					// The issue is that we don't know whether the error is related to an invalid value or an unreachable configuration source, in the latter case, we can't assume 
 					// We should delegate this to the strategy so it can decide what to do
 					// if the strategy does not ignore failure then if an error occur the result is set to fail otherwise the failed result is ingored and the process continue 
-					if(!this.strategy.ignoreOnFailure(e)) {
+					if(!this.strategy.ignoreFailure(e)) {
 						this.error = e.getCause();
 						this.errorSource = e.getSource();
 					}

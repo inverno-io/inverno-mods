@@ -24,17 +24,17 @@ PARSER_BEGIN(ConfigurationOptionParser)
 package io.winterframework.mod.configuration.internal.parser.option;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import io.winterframework.mod.configuration.AbstractConfigurationSource;
-import io.winterframework.mod.configuration.ConfigurationEntry;
+import io.winterframework.mod.configuration.ConfigurationProperty;
 import io.winterframework.mod.configuration.ConfigurationKey;
-import io.winterframework.mod.configuration.internal.GenericConfigurationEntry;
+import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
+import io.winterframework.mod.configuration.internal.GenericConfigurationProperty;
 import io.winterframework.mod.configuration.internal.GenericConfigurationKey;
 
-@SuppressWarnings({ "unchecked" })
 public class ConfigurationOptionParser<A extends AbstractConfigurationSource<?,?,?,String>> {
 
 	private A winter_source;
@@ -773,9 +773,9 @@ TOKEN : /* IDENTIFIERS */
 	>
 }
 
-ConfigurationEntry<ConfigurationKey, A> StartOption():
+ConfigurationProperty<ConfigurationKey, A> StartOption():
 {
-	ConfigurationEntry<ConfigurationKey, A> entry;
+	ConfigurationProperty<ConfigurationKey, A> entry;
 }
 {
 	entry = Option()
@@ -809,7 +809,7 @@ Optional<String> StartValueRevision():
 	}
 }
 
-ConfigurationEntry<ConfigurationKey, A> Option():
+ConfigurationProperty<ConfigurationKey, A> Option():
 {
 	ConfigurationKey key;
 	Optional<String> value;
@@ -818,10 +818,10 @@ ConfigurationEntry<ConfigurationKey, A> Option():
 	key = Key() < EQ > value = Value()
 	{
 		if(value != null) {
-			return new GenericConfigurationEntry<ConfigurationKey, A, String>(key, value.orElse(null), winter_source);
+			return new GenericConfigurationProperty<ConfigurationKey, A, String>(key, value.orElse(null), winter_source);
 		}
 		else {
-			return new GenericConfigurationEntry<ConfigurationKey, A, String>(key, winter_source);
+			return new GenericConfigurationProperty<ConfigurationKey, A, String>(key, winter_source);
 		}
 	}
 }
@@ -829,7 +829,7 @@ ConfigurationEntry<ConfigurationKey, A> Option():
 ConfigurationKey Key():
 {
 	String name;
-	Map<String, Object> parameters = Map.of();
+	Collection<Parameter> parameters = List.of();
 }
 {
 	name = Name() [ parameters = ParameterList() ]
@@ -850,19 +850,19 @@ String Name():
 	}
 }
 
-Map<String, Object> ParameterList():
+Collection<Parameter> ParameterList():
 {
-	Map.Entry<String, Object> p;
-	List<Map.Entry<String, Object>> parameterList = new ArrayList<>();
+	Parameter p;
+	List<Parameter> parameterList = new ArrayList<>();
 }
 {
 	<  LBRACK > p = Parameter() { parameterList.add(p); } ( LOOKAHEAD(2) < COMMA > p = Parameter() { parameterList.add(p); })* < RBRACK >
 	{
-	  return Map.ofEntries(parameterList.toArray(new Map.Entry[parameterList.size()]));
+	  return parameterList;
 	}
 }
 
-Map.Entry<String, Object> Parameter():
+Parameter Parameter():
 {
 	String parameterName;
 	Object parameterValue;
@@ -870,7 +870,7 @@ Map.Entry<String, Object> Parameter():
 {
 	parameterName = ParameterName() < EQ > parameterValue = ParameterValue()
 	{
-	  return Map.entry(parameterName, parameterValue);
+	  return Parameter.of(parameterName, parameterValue);
 	}
 }
 

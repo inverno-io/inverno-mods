@@ -68,7 +68,7 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends  AbstractReflecti
 				try {
 					if (configuratorQuery.nested) {
 						int configuratorsFrom = ++i;
-						int entriesFrom = j;
+						int propertiesFrom = j;
 						boolean empty = true;
 						for (int k = 0; k < configuratorQuery.nestedCount; k++) {
 							i++;
@@ -78,9 +78,9 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends  AbstractReflecti
 							}
 						}
 						int configuratorsTo = i--;
-						int entriesTo = j--;
+						int propertiesTo = j--;
 						if (!empty) {
-							configuratorQuery.method.invoke(configurator, this.createConfigurer(configuratorQuery.type, configuratorQueries.subList(configuratorsFrom, configuratorsTo), results.subList(entriesFrom, entriesTo)));
+							configuratorQuery.method.invoke(configurator, this.createConfigurer(configuratorQuery.type, configuratorQueries.subList(configuratorsFrom, configuratorsTo), results.subList(propertiesFrom, propertiesTo)));
 						}
 					} 
 					else if (results.get(j).getResult().isPresent()) {

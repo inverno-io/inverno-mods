@@ -23,9 +23,10 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import io.winterframework.mod.configuration.ConfigurationEntry;
+import io.winterframework.mod.configuration.ConfigurationProperty;
+import io.winterframework.mod.configuration.ValueDecoder;
+import io.winterframework.mod.configuration.codec.StringValueDecoder;
 import io.winterframework.mod.configuration.ConfigurationKey;
-import io.winterframework.mod.configuration.converter.StringValueConverter;
 import io.winterframework.mod.configuration.internal.AbstractHashConfigurationSource;
 import io.winterframework.mod.configuration.internal.parser.option.ConfigurationOptionParser;
 import io.winterframework.mod.configuration.internal.parser.option.ParseException;
@@ -42,8 +43,12 @@ public class CommandLineConfigurationSource extends AbstractHashConfigurationSou
 	
 	private List<String> args;
 	
-	public CommandLineConfigurationSource(String... args) {
-		super(new StringValueConverter());
+	public CommandLineConfigurationSource(String[] args) {
+		this(args, new StringValueDecoder());
+	}
+	
+	public CommandLineConfigurationSource(String[] args, ValueDecoder<String> decoder) {
+		super(decoder);
 		this.args = Arrays.stream(args)
 			.filter(arg -> arg.startsWith("--"))
 			.map(arg -> arg.substring(2))
@@ -51,7 +56,7 @@ public class CommandLineConfigurationSource extends AbstractHashConfigurationSou
 	}
 	
 	@Override
-	protected Mono<List<ConfigurationEntry<ConfigurationKey, CommandLineConfigurationSource>>> load() {
+	protected Mono<List<ConfigurationProperty<ConfigurationKey, CommandLineConfigurationSource>>> load() {
 		return Mono.defer(() -> Mono.just(this.args.stream()
 				.map(option -> {
 					ConfigurationOptionParser<CommandLineConfigurationSource> parser = new ConfigurationOptionParser<>(new StringProvider(option));
