@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisClient;
@@ -14,7 +15,7 @@ import io.winterframework.mod.configuration.source.RedisConfigurationSource.Redi
 import io.winterframework.mod.configuration.source.RedisConfigurationSource.RedisConfigurationQueryResult;
 import io.winterframework.mod.configuration.source.RedisConfigurationSource.RedisExecutableConfigurationQuery;
 
-//@Disabled
+@Disabled
 public class RedisConfigurationSourceTest {
 
 	static {
