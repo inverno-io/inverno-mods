@@ -14,7 +14,7 @@ import io.winterframework.mod.configuration.internal.AbstractHashConfigurationSo
 public class CommandLineConfigurationSourceTest {
 
 	static {
-		System.setProperty("org.apache.logging.log4j.simplelog.level", "DEBUG");
+		System.setProperty("org.apache.logging.log4j.simplelog.level", "INFO");
 		System.setProperty("org.apache.logging.log4j.simplelog.logFile", "system.out");
 	}
 	
@@ -40,6 +40,10 @@ public class CommandLineConfigurationSourceTest {
 			.collectList()
 			.block();
 
+		results.stream().forEach(queryResult -> {
+			System.out.println(queryResult.getQueryKey() + " -> " + queryResult.getResult().orElse(null));
+		});
+		
 		// cast test
 		/*ConfigurationSource<?,?,?> src2 = src;
 		List<? extends ConfigurationQueryResult<?,?>> l = src2.get("a", "b").withParameters("a", "b").and().get("c").withParameters("d","e").execute().block();

@@ -14,7 +14,7 @@ import io.winterframework.mod.configuration.source.CompositeConfigurationSource.
 public class CompositeConfigurationSourceTest {
 
 	static {
-		System.setProperty("org.apache.logging.log4j.simplelog.level", "DEBUG");
+		System.setProperty("org.apache.logging.log4j.simplelog.level", "INFO");
 		System.setProperty("org.apache.logging.log4j.simplelog.logFile", "system.out");
 		System.setProperty("name", "NameSysProp");
 	}
@@ -41,9 +41,9 @@ public class CompositeConfigurationSourceTest {
 			.collectList()
 			.block();
 		
-		/*results.stream().forEach(queryResult -> {
-			System.out.println(queryResult.getQuery() + " -> " + queryResult.getResult().orElse(null));
-		});*/
+		results.stream().forEach(queryResult -> {
+			System.out.println(queryResult.getQueryKey() + " -> " + queryResult.getResult().orElse(null));
+		});
 		
 		Assertions.assertEquals(13, results.size());
 		

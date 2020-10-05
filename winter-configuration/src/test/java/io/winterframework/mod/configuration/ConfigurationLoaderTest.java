@@ -16,7 +16,7 @@ import io.winterframework.mod.configuration.source.ConfigurationPropertyFileConf
 public class ConfigurationLoaderTest {
 
 	static {
-		System.setProperty("org.apache.logging.log4j.simplelog.level", "DEBUG");
+		System.setProperty("org.apache.logging.log4j.simplelog.level", "INFO");
 		System.setProperty("org.apache.logging.log4j.simplelog.logFile", "system.out");
 	}
 	
