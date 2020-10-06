@@ -32,6 +32,7 @@ import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import io.lettuce.core.KeyValue;
 import io.lettuce.core.Limit;
 import io.lettuce.core.Range;
 import io.lettuce.core.Range.Boundary;
@@ -100,13 +101,13 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	protected Mono<RedisConfigurationMetaData> getMetaData(List<Parameter> metaDataParameters) {
 		String metaDataKey = asMetaDataKey(metaDataParameters);
 		return this.commands.hgetall(metaDataKey)
-			.filter(data -> !data.isEmpty())
+			.collectMap(KeyValue::getKey, KeyValue::getValue)
 			.doOnNext(data -> {
 				if(!data.containsKey(METADATA_FIELD_WORKING_REVISION)) {
 					throw new IllegalStateException("Invalid meta data found for key " + metaDataKey + ": Missing " + METADATA_FIELD_WORKING_REVISION);
 				}
 			})
-			.map(metaData -> new RedisConfigurationMetaData(metaDataParameters, metaData));
+			.map(data -> new RedisConfigurationMetaData(metaDataParameters, data));
 	}
 	
 	private Mono<RedisConfigurationMetaData> getMetaData(List<Parameter> parameters, List<List<String>> metaDataParameterSets) {

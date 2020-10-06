@@ -469,7 +469,33 @@ public class RedisConfigurationSourceTest {
 	}
 	
 	@Test
-	public void testPerf() throws IllegalArgumentException, URISyntaxException {
+	public void testSinglePerf() {
+		RedisClient client = RedisClient.create("redis://localhost:6379");
+
+		try {
+			RedisConfigurationSource source = new RedisConfigurationSource(client);
+			source.set("prop1", "val").execute().blockLast();
+			
+			int count = 1000;
+			int total = 0;
+			for(int i = 0;i < count;i++) {
+				long t0 = System.nanoTime();
+				source.get("prop1").execute().blockLast().getResult().get().valueAsString().get();
+				total += System.nanoTime() - t0;
+			}
+			double avgPerf = (total / count);
+			System.out.println("AVG: " + (total / count));
+			
+			Assertions.assertEquals(600000, avgPerf, 200000);
+		}
+		finally {
+			client.connect().reactive().flushall().block();
+			client.shutdown();
+		}
+	}
+	
+	@Test
+	public void testHeavyPerf() throws IllegalArgumentException, URISyntaxException {
 		RedisClient client = RedisClient.create("redis://localhost:6379");
 
 		try {
@@ -528,7 +554,7 @@ public class RedisConfigurationSourceTest {
 				total += (System.nanoTime() - t0);
 			}
 			double avgPerf = (total / count);
-			System.out.println("PERF: " + (total / count));
+			System.out.println("AVG: " + (total / count));
 			
 			Assertions.assertEquals(100000000, avgPerf, 20000000);
 		}
