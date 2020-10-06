@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import io.lettuce.core.RedisClient;
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
+import io.winterframework.mod.configuration.ConfigurationUpdate.SpecialValue;
 import io.winterframework.mod.configuration.source.RedisConfigurationSource.RedisConfigurationKey;
 import io.winterframework.mod.configuration.source.RedisConfigurationSource.RedisConfigurationQueryResult;
 import io.winterframework.mod.configuration.source.RedisConfigurationSource.RedisExecutableConfigurationQuery;
@@ -461,6 +462,52 @@ public class RedisConfigurationSourceTest {
 			catch (IllegalStateException e) {
 				Assertions.assertEquals("A conflict of MetaData has been detected when considering parameters [app=\"someApp\", customer=\"cust1\"]", e.getMessage());
 			}
+		}
+		finally {
+			client.connect().reactive().flushall().block();
+			client.shutdown();
+		}
+	}
+	
+	@Test
+	public void testUnset() {
+		RedisClient client = RedisClient.create("redis://localhost:6379");
+
+		try {
+			RedisConfigurationSource source = new RedisConfigurationSource(client);
+			
+			source.set("prop1", SpecialValue.UNSET)
+				.execute()
+				.collectList()
+				.block();
+
+			RedisConfigurationQueryResult result = source.get("prop1")
+				.execute().blockLast();
+			
+			Assertions.assertTrue(result.getResult().get().isUnset());
+		}
+		finally {
+			client.connect().reactive().flushall().block();
+			client.shutdown();
+		}
+	}
+	
+	@Test
+	public void testNull() {
+		RedisClient client = RedisClient.create("redis://localhost:6379");
+
+		try {
+			RedisConfigurationSource source = new RedisConfigurationSource(client);
+			
+			source.set("prop1", SpecialValue.NULL)
+				.execute()
+				.collectList()
+				.block();
+
+			RedisConfigurationQueryResult result = source.get("prop1")
+				.execute().blockLast();
+			
+			Assertions.assertFalse(result.getResult().get().isPresent());
 		}
 		finally {
 			client.connect().reactive().flushall().block();
