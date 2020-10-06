@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,12 +45,12 @@ import reactor.core.publisher.Mono;
  */
 public class CompositeConfigurationSource implements ConfigurationSource<CompositeConfigurationSource.CompositeConfigurationQuery, CompositeConfigurationSource.CompositeExecutableConfigurationQuery, CompositeConfigurationSource.CompositeConfigurationQueryResult> {
 
-	private List<ConfigurationSource<?,?,?>> sources;
+	protected List<ConfigurationSource<?,?,?>> sources;
 	
 	private CompositeConfigurationStrategy strategy;
 	
 	public CompositeConfigurationSource(List<ConfigurationSource<?,?,?>> sources) {
-		this.sources = sources != null ? Collections.unmodifiableList(sources) : List.of();
+		this.sources = sources != null ? sources.stream().filter(Objects::nonNull).collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList)) : List.of();
 		this.strategy = new DefaultCompositeConfigurationStrategy();
 	}
 	
