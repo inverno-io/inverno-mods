@@ -41,6 +41,7 @@ import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.winterframework.mod.configuration.AbstractConfigurableConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
+import io.winterframework.mod.configuration.ConfigurationUpdate.SpecialValue;
 import io.winterframework.mod.configuration.ConfigurationProperty;
 import io.winterframework.mod.configuration.ConfigurationQuery;
 import io.winterframework.mod.configuration.ConfigurationSource;
@@ -576,17 +577,26 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 						
 						String redisKey = asPropertyKey(updateKey);
 						int workingRevision = updateKey.getMetaData().get().getWorkingRevision().get();
-						String redisEncodedValue;
-						try {
-							redisEncodedValue = workingRevision + "{\"" + this.source.encoder.from(valueEntry.getValue()) + "\"}";
-						} 
-						catch (ValueCodecException e) {
-							return Mono.just(new RedisConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey.toString() + " at revision " + updateKey.revision, e)));
+						StringBuilder redisEncodedValue = new StringBuilder().append(workingRevision).append("{");
+						if(valueEntry.getValue() == null) {
+							redisEncodedValue.append("null");
 						}
+						if(valueEntry.getValue() instanceof SpecialValue) {
+							redisEncodedValue.append(valueEntry.getValue().toString().toLowerCase());
+						}
+						else {
+							try {
+								redisEncodedValue.append("\"").append(this.source.encoder.from(valueEntry.getValue())).append("\"");
+							} 
+							catch (ValueCodecException e) {
+								return Mono.just(new RedisConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey.toString() + " at revision " + updateKey.revision, e)));
+							}
+						}
+						redisEncodedValue.append("}");
 						
 						this.source.commands.multi().subscribe();
 						this.source.commands.zremrangebyscore(redisKey, Range.from(Boundary.including(workingRevision), Boundary.including(workingRevision))).subscribe();
-						this.source.commands.zadd(redisKey, workingRevision, redisEncodedValue).subscribe();
+						this.source.commands.zadd(redisKey, workingRevision, redisEncodedValue.toString()).subscribe();
 						
 						return this.source.commands.exec()
 							.map(transactionResult -> {

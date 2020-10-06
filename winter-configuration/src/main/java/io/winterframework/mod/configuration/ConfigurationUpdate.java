@@ -23,6 +23,11 @@ import java.util.Map;
  */
 public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B extends ExecutableConfigurationUpdate<A, B, C>, C extends ConfigurationUpdateResult<?>> {
 
+	public static enum SpecialValue {
+		UNSET,
+		NULL
+	}
+	
 	default B set(String name1, Object value1) throws IllegalArgumentException {
 		return this.set(Map.of(name1, value1));
 	}
