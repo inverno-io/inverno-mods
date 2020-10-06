@@ -16,6 +16,7 @@
 package io.winterframework.mod.configuration.source;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -47,6 +48,8 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	
 	private Path propertyFile;
 	
+	private InputStream propertyInput;
+	
 	public PropertyFileConfigurationSource(Path propertyFile) {
 		this(propertyFile, new StringValueDecoder());
 	}
@@ -55,13 +58,22 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 		super(decoder);
 		this.propertyFile = propertyFile;
 	}
+	
+	public PropertyFileConfigurationSource(InputStream propertyInput) {
+		this(propertyInput, new StringValueDecoder());
+	}
+	
+	public PropertyFileConfigurationSource(InputStream propertyInput, ValueDecoder<String> decoder) {
+		super(decoder);
+		this.propertyInput = propertyInput;
+	}
 
 	@Override
 	protected Mono<List<ConfigurationProperty<ConfigurationKey, PropertyFileConfigurationSource>>> load() {
 		return Mono.defer(() -> {
-			try {
+			try(InputStream input = this.propertyFile != null ? Files.newInputStream(this.propertyFile) : this.propertyInput) {
 				Properties properties = new Properties();
-				properties.load(Files.newInputStream(this.propertyFile));
+				properties.load(input);
 				
 				return Mono.just(properties.entrySet().stream().map(entry -> {
 						try {
