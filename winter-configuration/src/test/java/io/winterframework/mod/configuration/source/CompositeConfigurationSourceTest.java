@@ -56,7 +56,7 @@ public class CompositeConfigurationSourceTest {
 		Assertions.assertEquals("datasource.url", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("node","node1"), Parameter.of("zone","US"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("jdbc:h2:file:/opt/1/node1-us-production", current.getResult().get().valueAsString().get());
+		Assertions.assertEquals("jdbc:h2:file:/opt/1/node1-us-production", current.getResult().get().asString().get());
 		
 		current = resultIterator.next(); // datasource.user[node=node1,zone=US,environment=production] -> datasource.user[] = user
 		Assertions.assertEquals("datasource.user", current.getQueryKey().getName());
@@ -65,7 +65,7 @@ public class CompositeConfigurationSourceTest {
 		Assertions.assertEquals("datasource.user", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("user", current.getResult().get().valueAsString().get());
+		Assertions.assertEquals("user", current.getResult().get().asString().get());
 		
 		current = resultIterator.next(); // datasource.password[node=node1,zone=US,environment=production] -> datasource.password[environment=production] = password_prod
 		Assertions.assertEquals("datasource.password", current.getQueryKey().getName());
@@ -74,7 +74,7 @@ public class CompositeConfigurationSourceTest {
 		Assertions.assertEquals("datasource.password", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("password_prod", current.getResult().get().valueAsString().get());
+		Assertions.assertEquals("password_prod", current.getResult().get().asString().get());
 		
 		current = resultIterator.next(); // datasource.url[node=node2,zone=EU,environment=production] -> datasource.url[node=node2,environment=production,zone=EU] = jdbc:h2:file:/opt/2/node2-eu-production
 		Assertions.assertEquals("datasource.url", current.getQueryKey().getName());
@@ -83,7 +83,7 @@ public class CompositeConfigurationSourceTest {
 		Assertions.assertEquals("datasource.url", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("node","node2"), Parameter.of("zone","EU"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("jdbc:h2:file:/opt/2/node2-eu-production", current.getResult().get().valueAsString().get());
+		Assertions.assertEquals("jdbc:h2:file:/opt/2/node2-eu-production", current.getResult().get().asString().get());
 		
 		current = resultIterator.next(); // datasource.url[zone=EU,environment=production] -> datasource.url[environment=production] = jdbc:h2:file:/opt/1/production
 		Assertions.assertEquals("datasource.url", current.getQueryKey().getName());
@@ -92,7 +92,7 @@ public class CompositeConfigurationSourceTest {
 		Assertions.assertEquals("datasource.url", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("jdbc:h2:file:/opt/1/production", current.getResult().get().valueAsString().get());
+		Assertions.assertEquals("jdbc:h2:file:/opt/1/production", current.getResult().get().asString().get());
 		
 		current = resultIterator.next(); // datasource.user[zone=EU,environment=production] -> datasource.user[] = user
 		Assertions.assertEquals("datasource.user", current.getQueryKey().getName());
@@ -101,7 +101,7 @@ public class CompositeConfigurationSourceTest {
 		Assertions.assertEquals("datasource.user", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("user", current.getResult().get().valueAsString().get());
+		Assertions.assertEquals("user", current.getResult().get().asString().get());
 		
 		current = resultIterator.next(); // datasource.password[zone=EU,environment=production] -> datasource.password[environment=production] = password_prod
 		Assertions.assertEquals("datasource.password", current.getQueryKey().getName());
@@ -110,7 +110,7 @@ public class CompositeConfigurationSourceTest {
 		Assertions.assertEquals("datasource.password", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("password_prod", current.getResult().get().valueAsString().get());
+		Assertions.assertEquals("password_prod", current.getResult().get().asString().get());
 		
 		current = resultIterator.next(); // datasource.url[zone=US,environment=production] -> datasource.url[zone=US,environment=production] = jdbc:h2:file:/opt/2/us-production
 		Assertions.assertEquals("datasource.url", current.getQueryKey().getName());
@@ -119,7 +119,7 @@ public class CompositeConfigurationSourceTest {
 		Assertions.assertEquals("datasource.url", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("zone","US"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("jdbc:h2:file:/opt/2/us-production", current.getResult().get().valueAsString().get());
+		Assertions.assertEquals("jdbc:h2:file:/opt/2/us-production", current.getResult().get().asString().get());
 		
 		current = resultIterator.next(); // datasource.url[zone=EU,environment=test] -> datasource.url[environment=test] = jdbc:h2:file:/opt/2/test
 		Assertions.assertEquals("datasource.url", current.getQueryKey().getName());
@@ -128,7 +128,7 @@ public class CompositeConfigurationSourceTest {
 		Assertions.assertEquals("datasource.url", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("environment","test"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("jdbc:h2:file:/opt/2/test", current.getResult().get().valueAsString().get());
+		Assertions.assertEquals("jdbc:h2:file:/opt/2/test", current.getResult().get().asString().get());
 		
 		current = resultIterator.next(); // datasource.url[zone=EU,environment=local] -> datasource.url[environment=local] = jdbc:h2:file:/opt/1/local
 		Assertions.assertTrue(current.getResult().isPresent());
@@ -137,7 +137,7 @@ public class CompositeConfigurationSourceTest {
 		Assertions.assertEquals("datasource.url", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("environment","local"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("jdbc:h2:file:/opt/1/local", current.getResult().get().valueAsString().get());
+		Assertions.assertEquals("jdbc:h2:file:/opt/1/local", current.getResult().get().asString().get());
 		
 		current = resultIterator.next(); // datasource.url[zone=ASIA,environment=undefined] -> datasource.url[] = jdbc:h2:file:/opt/1/default
 		Assertions.assertEquals("datasource.url", current.getQueryKey().getName());
@@ -146,7 +146,7 @@ public class CompositeConfigurationSourceTest {
 		Assertions.assertEquals("datasource.url", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("jdbc:h2:file:/opt/1/default", current.getResult().get().valueAsString().get());
+		Assertions.assertEquals("jdbc:h2:file:/opt/1/default", current.getResult().get().asString().get());
 		
 		current = resultIterator.next(); // undefined[] -> null
 		Assertions.assertEquals("undefined", current.getQueryKey().getName());
@@ -160,7 +160,7 @@ public class CompositeConfigurationSourceTest {
 		Assertions.assertEquals("name", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("environment","test"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("NameSysProp", current.getResult().get().valueAsString().get());
+		Assertions.assertEquals("NameSysProp", current.getResult().get().asString().get());
 	}
 
 	@Test
@@ -194,7 +194,7 @@ public class CompositeConfigurationSourceTest {
 		Assertions.assertEquals("datasource.password", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("password", current.getResult().get().valueAsString().get());
+		Assertions.assertEquals("password", current.getResult().get().asString().get());
 		
 		current = resultIterator.next();
 		

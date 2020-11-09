@@ -59,25 +59,25 @@ public class CommandLineConfigurationSourceTest {
 		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("test", 5), Parameter.of("tutu", "plop"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals(563, current.getResult().get().valueAsInteger().get());
+		Assertions.assertEquals(563, current.getResult().get().asInteger().get());
 		
 		current = resultIterator.next();
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("tutu", "plop"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals(65432, current.getResult().get().valueAsInteger().get());
+		Assertions.assertEquals(65432, current.getResult().get().asInteger().get());
 		
 		current = resultIterator.next();
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("url", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals(new URI("https://localhost:8443"), current.getResult().get().valueAsURI().get());
+		Assertions.assertEquals(new URI("https://localhost:8443"), current.getResult().get().asURI().get());
 		
 		current = resultIterator.next();
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("table", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertArrayEquals(new String[] {"a","b","c"}, current.getResult().get().valueAsArrayOf(String.class).get());
+		Assertions.assertArrayEquals(new String[] {"a","b","c"}, current.getResult().get().asArrayOf(String.class).get());
 	}
 }

@@ -85,19 +85,19 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends  AbstractReflecti
 					} 
 					else if (results.get(j).getResult().isPresent()) {
 						if(configuratorQuery.array) {
-							configuratorQuery.method.invoke(configurator, new Object[] {results.get(j).getResult().get().valueAsArrayOf(configuratorQuery.componentType).orElse(null)});
+							configuratorQuery.method.invoke(configurator, new Object[] {results.get(j).getResult().get().asArrayOf(configuratorQuery.componentType).orElse(null)});
 						}
 						else if(configuratorQuery.collection) {
-							configuratorQuery.method.invoke(configurator, new Object[] {results.get(j).getResult().get().valueAsCollectionOf(configuratorQuery.componentType).orElse(null)});
+							configuratorQuery.method.invoke(configurator, new Object[] {results.get(j).getResult().get().asCollectionOf(configuratorQuery.componentType).orElse(null)});
 						}
 						else if(configuratorQuery.list) {
-							configuratorQuery.method.invoke(configurator, new Object[] {results.get(j).getResult().get().valueAsListOf(configuratorQuery.componentType).orElse(null)});
+							configuratorQuery.method.invoke(configurator, new Object[] {results.get(j).getResult().get().asListOf(configuratorQuery.componentType).orElse(null)});
 						}
 						else if(configuratorQuery.set) {
-							configuratorQuery.method.invoke(configurator, new Object[] {results.get(j).getResult().get().valueAsSetOf(configuratorQuery.componentType).orElse(null)});
+							configuratorQuery.method.invoke(configurator, new Object[] {results.get(j).getResult().get().asSetOf(configuratorQuery.componentType).orElse(null)});
 						}
 						else {
-							Optional<?> arg = results.get(j).getResult().get().valueAs(configuratorQuery.type);
+							Optional<?> arg = results.get(j).getResult().get().as(configuratorQuery.type);
 							configuratorQuery.method.invoke(configurator, new Object[] {arg.isPresent() ? arg.get() : ConfiguratorTypeConfigurationLoader.getDefaultValue(configuratorQuery.type)});
 						}
 					}
