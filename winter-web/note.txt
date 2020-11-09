@@ -1,0 +1,65 @@
+- rendre les nested bean first class citizen
+	- @NestedBean permet d'utiliser la valeur de retour d'une methode "<Type> method();" définie sur un bean dans l'injection de dépendance 
+	- ca peut etre dangereux si on fait n'importe quoi:
+		- il n'y a aucun controle sur l'instance qui est renvoyée (singleton ou non)
+		- il n'y a pas de lifecycle -> pas de possibilités de releaser des resources 
+	- tester un nestedbean qui est un générique: E nestedBean() ou E est précisé dans le providing bean
+
+- générer des beans lors de la compilation
+	- à chaque round les processors sont invoqués
+	- on peut alors générer des beans avec un processor différent du module compiler
+	- ce qu'il faut c'est générer la classe du module qu'une fois qu'il n'y a plus de nouveaux beans générés, tester lors du process si on a des nouveau beans si non on génère la classe module 
+	1. Creer un service dans une dependance et voir si le compilateur peut la récupérer (en gros dans le module path on a un service est-ce que le compilateur défini dans le processor module path peut le voir)
+		- il faut mettre tout dans le processor module path
+		- puisque Maven utilise le processor path, il faut creer des provider configuration files
+	2. créer un systeme de plugin pour le compilateur (comme un annotation processor mais permettant de controler ce qui se passe et notamment ce qui est généré)
+		- on load les plugin à la création (constructeur) du ModuleAnnotationProcessor
+		- les annotations supportées sont données par les plugins (en plus de Module et Bean)
+		- chaque plugin matche une annotation
+		- round 1:
+			- on cree le ModuleGenerator et on le popule avec ce que nous donne le RoundEnv
+			- on execute les plugins
+				- en input on donne les elements annotés par l'annotation supportée et un pluginContext
+					- le plugincontext expose Types et Elements
+					- le plugincontext permet de creer des bean et des socket bean à partir des éléments soumis
+				- en output, on récupère un ensemble de BeanInfo un peu particulier
+			- un plugin est exécuté une seule fois
+			- si les plugins n'ont rien créé de nouveau on genere le next round du moduleGenerator, si non on laisse le compilateur enchainer les round
+		- round 2:
+			- on a pu générer des nouveau beans, dans ce cas il faut les traiter et les ajouter aux modules correspondant
+	3. créer un annotation processor et voir comment m'exécuter: maven dep? config du compiler plugin? module path?
+
+	4. tester avec une compilation de 2 modules en meme temps dont un dépend de l'autre
+		- quand on fait createSourceFile comment il sait a quel module ca correspond??? si c'est les originating element on est bon sinon je ne vois pas...
+
+
+- sortir la configuration du root et la bouger dans la configuration 
+	- @Configuration
+	- creer un annotation processor qui cree un bean par configuration
+		- vérifie que la configuration est correct (interface, méthode Value property()...)
+		- cree une classe ConfigLoader implements Supplier<Config>
+			- en inner class: cree GeneratedConfig et ConfigConfigurator
+			- en inner class: un socket bean Consumer<ConfigConfigurator>
+			- une socket optionnelle pour un configurer Consumer<ConfigConfigurator>
+			- une socket optionnelle pour une ConfigurationSource (si on a pas de source on renvoie la config par défaut issu du configurer si il existe)
+			- une socket optionnelle avec une liste de parameters à utiliser lors d'une query a la conf
+		- cette classe doit être exposée dans le module si on veut pouvoir cascader les configurations
+			- le plus simple est de générer le configurationLoader dans le même package que la config: si il est exporté tous les éléments de la config sont accessibles
+			- comment cascader?
+				- si dans modA j'ai une configA avec une nested configB pour modB, quelle socket exposer?
+				- si j'expose une socket configB je suis en conflit avec le ConfigBLoader dans modB
+				- si j'expose une socket Consumer<ConfigBConfigurator>, ce que je fais de base à partir du moment ou j'ai un ConfigLoader, je ne peux rien en faire parceque les type ne matche pas ConfigB != Consumer<ConfigBConfigurator>
+				- il manque un outil ici:
+					- il faudrait pouvoir dire utilise ce socket bean à la place de cet autre bean si le socket bean existe
+						- ceci compromet les wire explicites, on pourrait faire un alias pour les conserver mais ca compliquerait grandement la compréhension des choses
+			- je peux exposer un autre bean dans le configloader pour configurer configB
+				- je sais que c'est une nested configuration 
+				- j'expose un bean de type Consumer<ConfigBConfigurator> correspondant au consumer que j'utilise lors du chargement de configA
+					- le problème avec cette approche c'est que dans modA on aura l'illusion d'avoir la meme config que dans modB ce qui n'est pas vrai, on veut que la confB créée dans modA soit la configuration qu'on aura dans modB, on veut un override complet du loader (pas simplement un écrasement de valeurs)
+				- il faudrait créer un bean qui est a la fois un module bean et a la fois un socket bean
+					- on aurait alors fatalement une socket optionnelle: si on précise rien, on utilise le bean
+						- configSocket.orElse(this.config.get())
+					- dans le module on aurait alors un socket bean et un module bean avec le même nom et obligatoirement du même type (equals pas isassignable)
+					- c'est obligatoirement un singleton puisque la socket sera un singleton (on ne l'injecte qu'une seule fois)
+					- le wiring se ferait normalement avec un seul des deux en l'occurence le module bean pour correctement spotter les cycle (on injecte rien dans la socket contrairement au module bean)
+					- la liste des bean dans lesquels la socket est wired doit également être correcte: il faut lancer le process en remplacant les occurences du module bean par la socket

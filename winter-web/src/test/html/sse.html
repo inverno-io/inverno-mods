@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript">
+
+const evtSource = new EventSource("https://127.0.0.1:8443");
+
+evtSource.onmessage = function(event) {
+	const newElement = document.createElement("li");
+	const events = document.getElementById("events");
+	newElement.innerHTML = "message: " + event.data;
+	events.appendChild(newElement);
+}
+
+</script>
+</head>
+<body>
+
+<div id="events"></div>
+
+</body>
+</html>

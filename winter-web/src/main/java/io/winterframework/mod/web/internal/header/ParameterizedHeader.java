@@ -1,0 +1,81 @@
+/*
+ * Copyright 2020 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.winterframework.mod.web.internal.header;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import io.winterframework.mod.web.AbstractHeaderBuilder;
+
+/**
+ * @author jkuhn
+ *
+ */
+public class ParameterizedHeader extends GenericHeader {
+
+	public static abstract class AbstractBuilder<A extends ParameterizedHeader, B extends AbstractBuilder<A, B>> extends AbstractHeaderBuilder<A, B> {
+		
+		protected String parameterizedValue;
+		
+		protected Map<String, String> parameters;
+		
+		@SuppressWarnings("unchecked")
+		public B parameterizedValue(String parameterizedValue) {
+			this.parameterizedValue = parameterizedValue;
+			return (B)this;
+		}
+
+		@SuppressWarnings("unchecked")
+		public B parameter(String name, String value) {
+			if(this.parameters == null) {
+				this.parameters = new LinkedHashMap<>();
+			}
+			this.parameters.put(name, value);
+			return (B)this;
+		}
+	}
+	
+	public static class Builder extends ParameterizedHeader.AbstractBuilder<ParameterizedHeader, Builder> {
+
+		@Override
+		public ParameterizedHeader build() {
+			return new ParameterizedHeader(this.headerName, this.headerValue, this.parameterizedValue, this.parameters);
+		}
+	}
+	
+	protected Map<String, String> parameters;
+	
+	protected String parameterizedValue;
+	
+	protected ParameterizedHeader(String name, String value, String parameterizedValue, Map<String, String> parameters) {
+		super(name, value);
+		this.parameters = parameters != null ? new HashMap<>(parameters) : new HashMap<>();
+		this.parameterizedValue = parameterizedValue;
+	}
+	
+	public String getParameterizedValue() {
+		return this.parameterizedValue;
+	}
+	
+	public Map<String, String> getParameters() {
+		if(this.parameters != null) {
+			return Collections.unmodifiableMap(this.parameters);
+		}
+		return Map.of();
+	}
+}

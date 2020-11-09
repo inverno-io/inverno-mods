@@ -1,0 +1,147 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>io.winterframework.mod</groupId>
+		<artifactId>winter-modules</artifactId>
+		<version>1.0.0-SNAPSHOT</version>
+	</parent>
+	<artifactId>winter-web</artifactId>
+
+	<name>io.winterframework.mod.web</name>
+	<description>Winter web module</description>
+
+	<dependencies>
+		<dependency>
+			<groupId>io.winterframework</groupId>
+			<artifactId>winter-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.winterframework.mod</groupId>
+			<artifactId>winter-configuration</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>io.netty</groupId> -->
+<!-- 			<artifactId>netty-all</artifactId> -->
+<!-- 			<version>4.1.51.Final</version> -->
+<!-- 		</dependency> -->
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-transport-native-epoll</artifactId>
+			<classifier>linux-x86_64</classifier>
+	    </dependency>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-codec-http2</artifactId>
+		</dependency>
+		<!-- <dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-tcnative-boringssl-static</artifactId>
+		</dependency> -->
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-launcher</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-commons</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-params</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.8.1</version>
+					<configuration>
+						<compilerArgs>
+							<arg>-Awinter.verbose=true</arg>
+							<arg>-Awinter.debug=true</arg>
+						</compilerArgs>
+						<annotationProcessorPaths>
+							<path>
+								<groupId>io.winterframework</groupId>
+								<artifactId>winter-core-compiler</artifactId>
+								<version>${version.winter}</version>
+							</path>
+							<path>
+								<groupId>io.winterframework.mod</groupId>
+								<artifactId>winter-configuration</artifactId>
+								<version>${project.version}</version>
+							</path>
+						</annotationProcessorPaths>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		<plugins>
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>io.winterframework.mod.web.app.App</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<profiles>
+		<profile>
+			<id>native</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.graalvm.nativeimage</groupId>
+						<artifactId>native-image-maven-plugin</artifactId>
+						<version>20.1.0</version>
+						<configuration>
+							<buildArgs>--no-server --no-fallback --enable-all-security-services --allow-incomplete-classpath -H:+TraceClassInitialization -H:+ReportExceptionStackTraces</buildArgs>
+							<imageName>${project.artifactId}</imageName>
+						</configuration>
+						<executions>
+							<execution>
+								<phase>package</phase>
+								<goals>
+									<goal>native-image</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+</project>
