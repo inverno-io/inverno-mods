@@ -21,6 +21,7 @@
 
 	<modules>
 		<module>winter-configuration</module>
+		<module>winter-web</module>
 		<module>winter-modules-test</module>
 	</modules>
 </project>

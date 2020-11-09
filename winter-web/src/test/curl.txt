@@ -1,0 +1,4 @@
+curl -i -v --insecure -X POST -H "toto:\"d\ fdf\"" -H "toto:abc" --form "toto=tata" --http1.1 https://127.0.0.1:8443
+curl -i -v --insecure -X GET --http1.1 https://127.0.0.1:8443
+curl -i -v --insecure -X GET --http1.1 "https://127.0.0.1:8443?toto=a&tata=b"
+

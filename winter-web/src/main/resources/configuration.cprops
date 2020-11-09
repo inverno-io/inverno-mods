@@ -1,0 +1,4 @@
+io.winterframework.mod.web.webConfiguration {
+	key_store = "src/main/resources/cert.jks"
+	key_store_password = "password"
+}
