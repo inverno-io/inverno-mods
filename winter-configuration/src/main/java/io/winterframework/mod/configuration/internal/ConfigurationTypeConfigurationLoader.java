@@ -69,19 +69,19 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 					else {
 						resultsIterator.next().getResult().ifPresent(result -> {
 							if(proxyQuery.array) {
-								properties.put(proxyQuery.name, result.valueAsArrayOf(proxyQuery.componentType).orElse(null));
+								properties.put(proxyQuery.name, result.asArrayOf(proxyQuery.componentType).orElse(null));
 							}
 							else if(proxyQuery.collection) {
-								properties.put(proxyQuery.name, result.valueAsCollectionOf(proxyQuery.componentType).orElse(null));
+								properties.put(proxyQuery.name, result.asCollectionOf(proxyQuery.componentType).orElse(null));
 							}
 							else if(proxyQuery.list) {
-								properties.put(proxyQuery.name, result.valueAsListOf(proxyQuery.componentType).orElse(null));
+								properties.put(proxyQuery.name, result.asListOf(proxyQuery.componentType).orElse(null));
 							}
 							else if(proxyQuery.set) {
-								properties.put(proxyQuery.name, result.valueAsSetOf(proxyQuery.componentType).orElse(null));
+								properties.put(proxyQuery.name, result.asSetOf(proxyQuery.componentType).orElse(null));
 							}
 							else {
-								properties.put(proxyQuery.name, result.valueAs(proxyQuery.type).orElse(null));
+								properties.put(proxyQuery.name, result.as(proxyQuery.type).orElse(null));
 							}
 						});
 					}

@@ -89,142 +89,142 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	}
 	
 	@Override
-	public <T> Optional<T> valueAs(Class<T> type) {
+	public <T> Optional<T> as(Class<T> type) {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().to(this.value, type) : null);
 	}
 	
 	@Override
-	public <T> Optional<Collection<T>> valueAsCollectionOf(Class<T> type) {
+	public <T> Optional<Collection<T>> asCollectionOf(Class<T> type) {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toCollectionOf(this.value, type) : null);
 	}
 	
 	@Override
-	public <T> Optional<List<T>> valueAsListOf(Class<T> type) {
+	public <T> Optional<List<T>> asListOf(Class<T> type) {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toListOf(this.value, type) : null);
 	}
 
 	@Override
-	public <T> Optional<Set<T>> valueAsSetOf(Class<T> type) {
+	public <T> Optional<Set<T>> asSetOf(Class<T> type) {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toSetOf(this.value, type) : null);
 	}
 	
 	@Override
-	public <T> Optional<T[]> valueAsArrayOf(Class<T> type) {
+	public <T> Optional<T[]> asArrayOf(Class<T> type) {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toArrayOf(this.value, type) : null);
 	}
 
 	@Override
-	public Optional<Byte> valueAsByte() {
+	public Optional<Byte> asByte() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toByte(this.value) : null);
 	}
 
 	@Override
-	public Optional<Short> valueAsShort() {
+	public Optional<Short> asShort() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toShort(this.value) : null);
 	}
 
 	@Override
-	public Optional<Integer> valueAsInteger() {
+	public Optional<Integer> asInteger() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toInteger(this.value) : null);
 	}
 
 	@Override
-	public Optional<Long> valueAsLong() {
+	public Optional<Long> asLong() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toLong(this.value) : null);
 	}
 
 	@Override
-	public Optional<Float> valueAsFloat() {
+	public Optional<Float> asFloat() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toFloat(this.value) : null);
 	}
 
 	@Override
-	public Optional<Double> valueAsDouble() {
+	public Optional<Double> asDouble() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toDouble(this.value) : null);
 	}
 
 	@Override
-	public Optional<Character> valueAsCharacter() {
+	public Optional<Character> asCharacter() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toCharacter(this.value) : null);
 	}
 
 	@Override
-	public Optional<String> valueAsString() {
+	public Optional<String> asString() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toString(this.value) : null);
 	}
 
 	@Override
-	public Optional<Boolean> valueAsBoolean() {
+	public Optional<Boolean> asBoolean() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toBoolean(this.value) : null);
 	}
 
 	@Override
-	public Optional<BigInteger> valueAsBigInteger() {
+	public Optional<BigInteger> asBigInteger() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toBigInteger(this.value) : null);
 	}
 
 	@Override
-	public Optional<BigDecimal> valueAsBigDecimal() {
+	public Optional<BigDecimal> asBigDecimal() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toBigDecimal(this.value) : null);
 	}
 
 	@Override
-	public Optional<LocalDate> valueAsLocalDate() {
+	public Optional<LocalDate> asLocalDate() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toLocalDate(this.value) : null);
 	}
 
 	@Override
-	public Optional<LocalDateTime> valueAsLocalDateTime() {
+	public Optional<LocalDateTime> asLocalDateTime() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toLocalDateTime(this.value) : null);
 	}
 
 	@Override
-	public Optional<ZonedDateTime> valueAsZonedDateTime() {
+	public Optional<ZonedDateTime> asZonedDateTime() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toZonedDateTime(this.value) : null);
 	}
 
 	@Override
-	public Optional<Currency> valueAsCurrency() {
+	public Optional<Currency> asCurrency() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toCurrency(this.value) : null);
 	}
 
 	@Override
-	public Optional<Locale> valueAsLocale() {
+	public Optional<Locale> asLocale() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toLocale(this.value) : null);
 	}
 
 	@Override
-	public Optional<File> valueAsFile() {
+	public Optional<File> asFile() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toFile(this.value) : null);
 	}
 
 	@Override
-	public Optional<Path> valueAsPath() {
+	public Optional<Path> asPath() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toPath(this.value) : null);
 	}
 
 	@Override
-	public Optional<URI> valueAsURI() {
+	public Optional<URI> asURI() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toURI(this.value) : null);
 	}
 
 	@Override
-	public Optional<URL> valueAsURL() {
+	public Optional<URL> asURL() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toURL(this.value) : null);
 	}
 
 	@Override
-	public Optional<Pattern> valueAsPattern() {
+	public Optional<Pattern> asPattern() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toPattern(this.value) : null);
 	}
 
 	@Override
-	public Optional<InetAddress> valueAsInetAddress() {
+	public Optional<InetAddress> asInetAddress() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toInetAddress(this.value) : null);
 	}
 
 	@Override
-	public Optional<Class<?>> valueAsClass() {
+	public Optional<Class<?>> asClass() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().toClass(this.value) : null);
 	}
 	

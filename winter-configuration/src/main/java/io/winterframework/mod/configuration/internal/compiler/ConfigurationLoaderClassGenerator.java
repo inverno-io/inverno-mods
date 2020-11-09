@@ -270,42 +270,42 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			StringBuilder result = new StringBuilder().append(context.indent(0)).append("results.get(").append(context.getResultIndex().getAndIncrement()).append(").getResult().ifPresent(property -> ").append(context.getConfiguration().getQualifiedName().normalize()).append("_configurator.").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append("(property.");
 			
 			if(configurationPropertyInfo.getType().getKind() == TypeKind.ARRAY) {
-				result.append("valueAsArrayOf(").append(context.getTypeName(((ArrayType)configurationPropertyInfo.getType()).getComponentType())).append(".class).orElse(null)");
+				result.append("asArrayOf(").append(context.getTypeName(((ArrayType)configurationPropertyInfo.getType()).getComponentType())).append(".class).orElse(null)");
 			}
 			else if(context.getTypeUtils().isSameType(context.getCollectionType(), context.getTypeUtils().erasure(configurationPropertyInfo.getType()))) {
-				result.append("valueAsCollectionOf(").append(context.getTypeName(((DeclaredType)configurationPropertyInfo.getType()).getTypeArguments().get(0))).append(".class).orElse(null)");
+				result.append("asCollectionOf(").append(context.getTypeName(((DeclaredType)configurationPropertyInfo.getType()).getTypeArguments().get(0))).append(".class).orElse(null)");
 			}
 			else if(context.getTypeUtils().isSameType(context.getListType(), context.getTypeUtils().erasure(configurationPropertyInfo.getType()))) {
-				result.append("valueAsListOf(").append(context.getTypeName(((DeclaredType)configurationPropertyInfo.getType()).getTypeArguments().get(0))).append(".class).orElse(null)");
+				result.append("asListOf(").append(context.getTypeName(((DeclaredType)configurationPropertyInfo.getType()).getTypeArguments().get(0))).append(".class).orElse(null)");
 			}
 			else if(context.getTypeUtils().isSameType(context.getSetType(), context.getTypeUtils().erasure(configurationPropertyInfo.getType()))) {
-				result.append("valueAsSetOf(").append(context.getTypeName(((DeclaredType)configurationPropertyInfo.getType()).getTypeArguments().get(0))).append(".class).orElse(null)");
+				result.append("asSetOf(").append(context.getTypeName(((DeclaredType)configurationPropertyInfo.getType()).getTypeArguments().get(0))).append(".class).orElse(null)");
 			}
 			else if(configurationPropertyInfo.getType() instanceof PrimitiveType) {
 				// boolean, byte, short, int, long, char, float, and double.
 				switch(configurationPropertyInfo.getType().getKind()) {
-					case BOOLEAN: result.append("valueAsBoolean().orElseGet(() -> (new boolean[1])[0])");
+					case BOOLEAN: result.append("asBoolean().orElseGet(() -> (new boolean[1])[0])");
 						break;
-					case BYTE: result.append("valueAsByte().orElseGet(() -> (new byte[1])[0])");
+					case BYTE: result.append("asByte().orElseGet(() -> (new byte[1])[0])");
 						break;
-					case SHORT: result.append("valueAsShort().orElseGet(() -> (new short[1])[0])");
+					case SHORT: result.append("asShort().orElseGet(() -> (new short[1])[0])");
 						break;
-					case INT: result.append("valueAsInteger().orElseGet(() -> (new int[1])[0])");
+					case INT: result.append("asInteger().orElseGet(() -> (new int[1])[0])");
 						break;
-					case LONG: result.append("valueAsLong().orElseGet(() -> (new long[1])[0])");
+					case LONG: result.append("asLong().orElseGet(() -> (new long[1])[0])");
 						break;
-					case CHAR: result.append("valueAsCharacter().orElseGet(() -> (new char[1])[0])");
+					case CHAR: result.append("asCharacter().orElseGet(() -> (new char[1])[0])");
 						break;
-					case FLOAT: result.append("valueAsFloat().orElseGet(() -> (new float[1])[0])");
+					case FLOAT: result.append("asFloat().orElseGet(() -> (new float[1])[0])");
 						break;
-					case DOUBLE: result.append("valueAsDouble().orElseGet(() -> (new double[1])[0])");
+					case DOUBLE: result.append("asDouble().orElseGet(() -> (new double[1])[0])");
 						break;
 					default:
 						throw new IllegalStateException("Unsupported primitive type: " + configurationPropertyInfo.getType());
 				}
 			}
 			else {
-				result.append("valueAs(").append(context.getTypeName(configurationPropertyInfo.getType())).append(".class).orElse(null)");
+				result.append("as(").append(context.getTypeName(configurationPropertyInfo.getType())).append(".class).orElse(null)");
 			}
 			result.append("));");
 			return result;

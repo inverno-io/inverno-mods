@@ -49,59 +49,59 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	
 	boolean isEmpty();
 	
-	<T> Optional<T> valueAs(Class<T> type);
+	<T> Optional<T> as(Class<T> type);
 	
-	<T> Optional<T[]> valueAsArrayOf(Class<T> type);
+	<T> Optional<T[]> asArrayOf(Class<T> type);
 	
-	<T> Optional<Collection<T>> valueAsCollectionOf(Class<T> type);
+	<T> Optional<Collection<T>> asCollectionOf(Class<T> type);
 	
-	<T> Optional<List<T>> valueAsListOf(Class<T> type);
+	<T> Optional<List<T>> asListOf(Class<T> type);
 	
-	<T> Optional<Set<T>> valueAsSetOf(Class<T> type);
+	<T> Optional<Set<T>> asSetOf(Class<T> type);
 	
-	Optional<Byte> valueAsByte();
+	Optional<Byte> asByte();
 	
-	Optional<Short> valueAsShort();
+	Optional<Short> asShort();
 	
-	Optional<Integer> valueAsInteger();
+	Optional<Integer> asInteger();
 	
-	Optional<Long> valueAsLong();
+	Optional<Long> asLong();
 	
-	Optional<Float> valueAsFloat();
+	Optional<Float> asFloat();
 	
-	Optional<Double> valueAsDouble();
+	Optional<Double> asDouble();
 	
-	Optional<Character> valueAsCharacter();
+	Optional<Character> asCharacter();
 	
-	Optional<String> valueAsString();
+	Optional<String> asString();
 	
-	Optional<Boolean> valueAsBoolean();
+	Optional<Boolean> asBoolean();
 	
-	Optional<BigInteger> valueAsBigInteger();
+	Optional<BigInteger> asBigInteger();
 	
-	Optional<BigDecimal> valueAsBigDecimal();
+	Optional<BigDecimal> asBigDecimal();
 	
-	Optional<LocalDate> valueAsLocalDate();
+	Optional<LocalDate> asLocalDate();
 	
-	Optional<LocalDateTime> valueAsLocalDateTime();
+	Optional<LocalDateTime> asLocalDateTime();
 	
-	Optional<ZonedDateTime> valueAsZonedDateTime();
+	Optional<ZonedDateTime> asZonedDateTime();
 	
-	Optional<Currency> valueAsCurrency();
+	Optional<Currency> asCurrency();
 	
-	Optional<Locale> valueAsLocale();
+	Optional<Locale> asLocale();
 	
-	Optional<File> valueAsFile();
+	Optional<File> asFile();
 	
-	Optional<Path> valueAsPath();
+	Optional<Path> asPath();
 	
-	Optional<URI> valueAsURI();
+	Optional<URI> asURI();
 	
-	Optional<URL> valueAsURL();
+	Optional<URL> asURL();
 	
-	Optional<Pattern> valueAsPattern();
+	Optional<Pattern> asPattern();
 	
-	Optional<InetAddress> valueAsInetAddress();
+	Optional<InetAddress> asInetAddress();
 	
-	Optional<Class<?>> valueAsClass();
+	Optional<Class<?>> asClass();
 }
