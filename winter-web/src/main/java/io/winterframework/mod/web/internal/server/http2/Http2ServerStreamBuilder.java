@@ -86,7 +86,7 @@ public class Http2ServerStreamBuilder extends AbstractHttpServerExchangeBuilder<
 				GenericResponse response = new GenericResponse(this.headerService);
 				
 				Http2ServerStream<RequestBody> postServerStream = new Http2ServerStream<>(request, response, this.stream, context, this.encoder);
-				postServerStream.setHandler(this.findHandler(request, context));
+				postServerStream.setHandler(this.findHandler(request));
 				
 				return postServerStream;
 			}

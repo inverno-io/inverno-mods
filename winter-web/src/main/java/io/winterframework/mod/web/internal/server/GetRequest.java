@@ -7,6 +7,7 @@ import java.net.SocketAddress;
 import java.util.Optional;
 
 import io.netty.buffer.ByteBuf;
+import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.RequestHeaders;
 import reactor.core.publisher.FluxSink;
 
@@ -14,15 +15,15 @@ import reactor.core.publisher.FluxSink;
  * @author jkuhn
  *
  */
-public class GetRequest extends AbstractRequest<Void> {
+public class GetRequest extends AbstractRequest {
 
 	public GetRequest(SocketAddress remoteAddress, RequestHeaders requestHeaders, GenericRequestParameters requestParameters) {
 		super(remoteAddress, requestHeaders, requestParameters);
 	}
 
 	@Override
-	public Void body() {
-		return null;
+	public Optional<RequestBody> body() {
+		return Optional.empty();
 	}
 
 	@Override
