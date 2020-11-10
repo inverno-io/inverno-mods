@@ -30,13 +30,13 @@ import io.winterframework.mod.web.internal.server.GenericResponseHeaders;
  * @author jkuhn
  *
  */
-public class Http1xServerExchange<A> extends AbstractHttpServerExchange<A> {
+public class Http1xServerExchange<A> extends AbstractHttpServerExchange {
 
 	private boolean manageChunked;
 	
 	private Consumer<HttpResponse> headersConfigurer;
 	
-	public Http1xServerExchange(AbstractRequest<A> request, GenericResponse response, ChannelHandlerContext context) {
+	public Http1xServerExchange(AbstractRequest request, GenericResponse response, ChannelHandlerContext context) {
 		super(request, response, context);
 		
 		this.headersConfigurer = httpResponse -> {

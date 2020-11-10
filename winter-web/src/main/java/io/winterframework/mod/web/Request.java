@@ -35,7 +35,7 @@ public interface Request<A> {
 	
 	// TODO path parameters
 	
-	A body();
+	Optional<A> body();
 	
 	default <E> Request<E> map(Function<A, E> bodyMapper) {
 		
@@ -66,11 +66,11 @@ public interface Request<A> {
 			}
 
 			@Override
-			public E body() {
+			public Optional<E> body() {
 				if(this.body == null) {
-					this.body = Optional.ofNullable(bodyMapper.apply(sourceRequest.body()));
+					this.body = sourceRequest.body().map(bodyMapper::apply);
 				}
-				return this.body.get();
+				return this.body;
 			}
 		};
 	}

@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import io.netty.buffer.ByteBuf;
 import io.winterframework.mod.web.Request;
+import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.RequestCookies;
 import io.winterframework.mod.web.RequestHeaders;
 import io.winterframework.mod.web.RequestParameters;
@@ -17,7 +18,7 @@ import reactor.core.publisher.FluxSink;
  * @author jkuhn
  *
  */
-public abstract class AbstractRequest<A> implements Request<A> {
+public abstract class AbstractRequest implements Request<RequestBody> {
 
 	private SocketAddress remoteAddress;
 	private RequestHeaders requestHeaders;

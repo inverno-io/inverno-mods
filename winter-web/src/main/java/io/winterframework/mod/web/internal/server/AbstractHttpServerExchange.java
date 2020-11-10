@@ -5,6 +5,7 @@ package io.winterframework.mod.web.internal.server;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.RequestHandler;
 import io.winterframework.mod.web.ResponseBody;
 import reactor.core.publisher.BaseSubscriber;
@@ -14,18 +15,18 @@ import reactor.core.publisher.Mono;
  * @author jkuhn
  *
  */
-public abstract class AbstractHttpServerExchange<A> extends BaseSubscriber<ByteBuf> implements HttpServerExchange<A> {
+public abstract class AbstractHttpServerExchange extends BaseSubscriber<ByteBuf> implements HttpServerExchange {
 
-	protected AbstractRequest<A> request;
+	protected AbstractRequest request;
 	protected GenericResponse response;
 	protected ChannelHandlerContext context;
 	
-	protected RequestHandler<A, ResponseBody> handler;
+	protected RequestHandler<RequestBody, ResponseBody> handler;
 	
 	// TODO this can definitely be used for stats
 	private Mono<Void> exchangeMono;
 	
-	public AbstractHttpServerExchange(AbstractRequest<A> request, GenericResponse response, ChannelHandlerContext context) {
+	public AbstractHttpServerExchange(AbstractRequest request, GenericResponse response, ChannelHandlerContext context) {
 		this.request = request;
 		this.response = response;
 		this.context = context;
@@ -37,17 +38,17 @@ public abstract class AbstractHttpServerExchange<A> extends BaseSubscriber<ByteB
 	}
 
 	@Override
-	public RequestHandler<A, ResponseBody> getHandler() {
+	public RequestHandler<RequestBody, ResponseBody> getHandler() {
 		return this.handler;
 	}
 
 	@Override
-	public void setHandler(RequestHandler<A, ResponseBody> handler) {
+	public void setHandler(RequestHandler<RequestBody, ResponseBody> handler) {
 		this.handler = handler;
 	}
 
 	@Override
-	public AbstractRequest<?> request() {
+	public AbstractRequest request() {
 		return this.request;
 	}
 
@@ -65,7 +66,7 @@ public abstract class AbstractHttpServerExchange<A> extends BaseSubscriber<ByteB
 		this.exchangeMono = Mono.create(emitter -> {
 			Mono.just(this.response)
 				.map(response -> {
-					RequestHandler<A, ResponseBody> handler = this.handler;
+					RequestHandler<RequestBody, ResponseBody> handler = this.handler;
 					if(handler == null) {
 						// There's no route to handle the request => 404
 						// We should decide what to do: the handler might not throw exception now but in

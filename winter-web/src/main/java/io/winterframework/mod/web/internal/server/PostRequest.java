@@ -20,7 +20,7 @@ import reactor.core.publisher.FluxSink;
  * @author jkuhn
  *
  */
-public class PostRequest extends AbstractRequest<RequestBody> {
+public class PostRequest extends AbstractRequest {
 
 	private GenericRequestBody requestBody;
 	
@@ -50,8 +50,8 @@ public class PostRequest extends AbstractRequest<RequestBody> {
 	}
 
 	@Override
-	public GenericRequestBody body() {
-		return this.requestBody;
+	public Optional<RequestBody> body() {
+		return Optional.of(this.requestBody);
 	}
 
 	@Override

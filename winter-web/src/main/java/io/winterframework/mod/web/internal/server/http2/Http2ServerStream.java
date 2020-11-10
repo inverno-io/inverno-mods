@@ -20,14 +20,14 @@ import io.winterframework.mod.web.internal.server.GenericResponse;
  * @author jkuhn
  *
  */
-public class Http2ServerStream<A> extends AbstractHttpServerExchange<A> {
+public class Http2ServerStream<A> extends AbstractHttpServerExchange {
 
 	private Http2Stream stream;
 	private Http2ConnectionEncoder encoder;
 	
 	private Consumer<Http2Headers> headersConfigurer;
 
-	public Http2ServerStream(AbstractRequest<A> request, GenericResponse response, Http2Stream stream, ChannelHandlerContext context, Http2ConnectionEncoder encoder) {
+	public Http2ServerStream(AbstractRequest request, GenericResponse response, Http2Stream stream, ChannelHandlerContext context, Http2ConnectionEncoder encoder) {
 		super(request, response, context);
 		this.stream = stream;
 		this.encoder = encoder;

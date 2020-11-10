@@ -18,6 +18,7 @@ import io.winterframework.mod.web.Part;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.internal.RequestBodyDecoder;
 import io.winterframework.mod.web.internal.server.AbstractHttpServerExchangeBuilder;
+import io.winterframework.mod.web.internal.server.GenericRequestBody;
 import io.winterframework.mod.web.internal.server.GenericRequestParameters;
 import io.winterframework.mod.web.internal.server.GenericResponse;
 import io.winterframework.mod.web.internal.server.GetRequest;
@@ -58,8 +59,8 @@ public class Http1xServerExchangeBuilder extends AbstractHttpServerExchangeBuild
 				PostRequest request = new PostRequest(context.channel().remoteAddress(), requestHeaders, requestParameters, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, true);
 				GenericResponse response = new GenericResponse(this.headerService);
 				
-				Http1xServerExchange<RequestBody> postServerStream = new Http1xServerExchange<>(request, response, context);
-				postServerStream.setHandler(this.findHandler(request, context));
+				Http1xServerExchange<GenericRequestBody> postServerStream = new Http1xServerExchange<>(request, response, context);
+				postServerStream.setHandler(this.findHandler(request));
 				
 				return postServerStream;
 			}
@@ -67,7 +68,7 @@ public class Http1xServerExchangeBuilder extends AbstractHttpServerExchangeBuild
 				GetRequest request = new GetRequest(context.channel().remoteAddress(), requestHeaders, requestParameters);
 				GenericResponse response = new GenericResponse(this.headerService);
 				
-				Http1xServerExchange<Void> getServerStream = new Http1xServerExchange<>(request, response, context);
+				Http1xServerExchange<RequestBody> getServerStream = new Http1xServerExchange<>(request, response, context);
 				getServerStream.setHandler(this.findHandler(request));
 				
 				return getServerStream;
