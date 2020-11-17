@@ -21,7 +21,7 @@ public abstract class AbstractHttpServerExchange extends BaseSubscriber<ByteBuf>
 	protected GenericResponse response;
 	protected ChannelHandlerContext context;
 	
-	protected RequestHandler<RequestBody, ResponseBody> handler;
+	protected RequestHandler<RequestBody, Void, ResponseBody> handler;
 	
 	// TODO this can definitely be used for stats
 	private Mono<Void> exchangeMono;
@@ -38,12 +38,12 @@ public abstract class AbstractHttpServerExchange extends BaseSubscriber<ByteBuf>
 	}
 
 	@Override
-	public RequestHandler<RequestBody, ResponseBody> getHandler() {
+	public RequestHandler<RequestBody, Void, ResponseBody> getHandler() {
 		return this.handler;
 	}
 
 	@Override
-	public void setHandler(RequestHandler<RequestBody, ResponseBody> handler) {
+	public void setHandler(RequestHandler<RequestBody, Void, ResponseBody> handler) {
 		this.handler = handler;
 	}
 
@@ -66,7 +66,7 @@ public abstract class AbstractHttpServerExchange extends BaseSubscriber<ByteBuf>
 		this.exchangeMono = Mono.create(emitter -> {
 			Mono.just(this.response)
 				.map(response -> {
-					RequestHandler<RequestBody, ResponseBody> handler = this.handler;
+					RequestHandler<RequestBody, Void, ResponseBody> handler = this.handler;
 					if(handler == null) {
 						// There's no route to handle the request => 404
 						// We should decide what to do: the handler might not throw exception now but in

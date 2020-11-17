@@ -18,7 +18,7 @@ import reactor.core.publisher.FluxSink;
  * @author jkuhn
  *
  */
-public abstract class AbstractRequest implements Request<RequestBody> {
+public abstract class AbstractRequest implements Request<RequestBody, Void> {
 
 	private SocketAddress remoteAddress;
 	private RequestHeaders requestHeaders;
@@ -52,5 +52,10 @@ public abstract class AbstractRequest implements Request<RequestBody> {
 		return this.remoteAddress;
 	}
 
+	@Override
+	public Void context() {
+		return null;
+	}
+	
 	public abstract Optional<FluxSink<ByteBuf>> data();
 }

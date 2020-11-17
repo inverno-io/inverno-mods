@@ -3,6 +3,7 @@
  */
 package io.winterframework.mod.web.internal.server;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
@@ -11,21 +12,30 @@ import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.winterframework.mod.web.HeaderService;
+import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.Part;
 import io.winterframework.mod.web.Request;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.RequestHandler;
+import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.internal.Charsets;
 import io.winterframework.mod.web.internal.RequestBodyDecoder;
+import io.winterframework.mod.web.lab.router.BaseContext;
+import io.winterframework.mod.web.lab.router.base.GenericBaseRouter;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -47,16 +57,229 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 	
 	public abstract Mono<A> build(ChannelHandlerContext context);
 	
-	protected RequestHandler<RequestBody, ResponseBody> findHandler(Request<RequestBody> request) {
+	protected RequestHandler<RequestBody, Void, ResponseBody> findHandler(Request<RequestBody, Void> request) {
 		if(request.headers().getMethod() == Method.POST) {
 			return multipartEcho();
 		}
 		else {
 			return printRequest();
 		}
+		
+		/*if(handler == null) {
+			handler = this.webRouter();
+		}
+		return handler;*/
 	}
 	
-	private RequestHandler<RequestBody, ResponseBody> simple() {
+	private static RequestHandler<RequestBody, Void, ResponseBody> handler;
+	
+	private RequestHandler<RequestBody, Void, ResponseBody> webRouter() {
+		return new GenericBaseRouter(this.headerService)
+			.route().path("/toto", true).method(Method.GET).handler(this.simple().map(this::handlerAdapter))
+			.route().path("/tata", true).method(Method.POST).handler(this.echo().map(this::handlerAdapter))
+			.route().path("/json", true).method(Method.POST).handler(this.json().map(this::handlerAdapter))
+			.route().path("/toto/{param1}/tata/{param2}", true).handler(this.a().map(this::handlerAdapter))
+			.route().path("/toto/titi/tata/{param2}", true).handler(this.b().map(this::handlerAdapter))
+			.route().path("/toto/{param1}/tata/titi", true).handler(this.c().map(this::handlerAdapter));
+	}
+	
+	private RequestHandler<RequestBody, Void, ResponseBody> webRouter2() {
+		return new GenericBaseRouter(this.headerService)
+			.route().path("/toto", true).method(Method.POST).consumes("application/json").handler(this.echo().map(this::handlerAdapter))
+			.route().path("/toto", true).method(Method.POST).consumes("text/*").handler(this.printRequest().map(this::handlerAdapter));
+	}
+	
+	private RequestHandler<RequestBody, Void, ResponseBody> webRouter3() {
+		return new GenericBaseRouter(this.headerService)
+			.route().path("/toto", true).method(Method.GET).produces("application/json").handler(
+				(request, response) -> {
+					response.headers(headers -> headers.contentType("application/json")).body().data().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("{\"toto\":5}", Charsets.DEFAULT))));
+				}
+			)
+			.route().path("/toto", true).method(Method.GET).produces("text/plain").handler(
+				(request, response) -> {
+					response.headers(headers -> headers.contentType("text/plain")).body().data().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("toto 5", Charsets.DEFAULT))));
+				}
+			)
+			.route().path("/tata", true).method(Method.POST).consumes("application/json").produces("application/json").handler(
+				(request, response) -> {
+					response.headers(headers -> headers.contentType("application/json")).body().data().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("{\"toto\":5}", Charsets.DEFAULT))));
+				}
+			);
+	}
+	
+	private RequestHandler<RequestBody, BaseContext, ResponseBody> handlerAdapter(RequestHandler<RequestBody, Void, ResponseBody> handler) {
+		return handler.map(h -> (request, response) -> h.handle(request.map(Function.identity(), ign -> null), response));
+	}
+	
+	public static class JsonRequest {
+		private String field1;
+		
+		private String field2;
+
+		public String getField1() {
+			return field1;
+		}
+
+		public void setField1(String field1) {
+			this.field1 = field1;
+		}
+
+		public String getField2() {
+			return field2;
+		}
+
+		public void setField2(String field2) {
+			this.field2 = field2;
+		}
+	}
+	
+	public static class JsonResponse {
+		private String message;
+		
+		public String getMessage() {
+			return message;
+		}
+		
+		public void setMessage(String message) {
+			this.message = message;
+		}
+	}
+	
+	public static class EntityResponseBody<T> {
+		
+		private Response<ResponseBody> response;
+		
+		private T entity;
+		
+		private EntityResponseBody(Response<ResponseBody> response) {
+			this.response = response;
+		}
+		
+		public Response<EntityResponseBody<T>> entity(T entity) {
+			this.entity = entity;
+			return this.response.map(ign -> this);
+		}
+		
+		private T getEntity() {
+			return entity;
+		}
+	}
+	
+	private ObjectMapper mapper = new ObjectMapper();
+	
+	private RequestHandler<RequestBody, Void, ResponseBody> json() {
+		
+		Function<JsonRequest, JsonResponse> handler0 = request -> {
+			JsonResponse response = new JsonResponse();
+			response.setMessage("Received request with field1 " + request.field1 + " and field2 " + request.field2);
+			return response;
+		};
+		
+		RequestHandler<JsonRequest, Void, EntityResponseBody<JsonResponse>> handler1 = (request, response) -> {
+			response.headers(headers -> headers.contentType("application/json")).body().entity(handler0.apply(request.body().get())); 
+		};
+		
+		return handler1.map(handler -> 
+			 (request, response) -> {
+				 
+				if(request.headers().<Headers.ContentType>get(Headers.CONTENT_TYPE).get().getMediaType().equals("application/json")) {
+					// convert json
+				}
+				else if(request.headers().<Headers.ContentType>get(Headers.CONTENT_TYPE).get().getMediaType().equals("application/xml")) {
+					// convert xml
+				}
+				 
+				response.body().data().data(
+					request.body().get().data().data()
+						.reduce(new ByteArrayOutputStream(), (out, chunk) -> {
+							try {
+								chunk.getBytes(chunk.readerIndex(), out, chunk.readableBytes());
+							} 
+							catch (IOException e) {
+								throw Exceptions.propagate(e);
+							}
+							return out;
+						})
+						.map(ByteArrayOutputStream::toByteArray)
+						.map(bytes -> {
+							try {
+								return this.mapper.readValue(bytes, JsonRequest.class);
+							}
+							catch (IOException e) {
+								throw Exceptions.propagate(e);
+							}
+						})
+						.map(jsonRequest -> {
+							Request<JsonRequest, Void> entityRequest = request.map(ign -> jsonRequest, Function.identity());
+							Response<EntityResponseBody<JsonResponse>> entityResponse = response.map(body -> {
+								return new EntityResponseBody<>(response);
+							});
+							handler.handle(entityRequest, entityResponse);
+							
+							// response entity can come in an asynchronous way so we must delegate the whole process to the other handler
+							// if we want to chain things we need to use publishers
+							// handler1 is actually synchronous since there are no publisher accessible in handler1
+							
+							return entityResponse.body().getEntity();
+						})
+						.flatMap(jsonResponse -> {
+							try {
+								return Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.mapper.writeValueAsBytes(jsonResponse))));
+							} 
+							catch (JsonProcessingException e) {
+								throw Exceptions.propagate(e);
+							}
+						})
+					);
+		});
+	}
+	
+	private RequestHandler<RequestBody, Void, ResponseBody> hello() {
+		return (request, response) -> response
+			.headers(headers -> headers
+				.status(200)
+				.contentType("text/html; charset=\"UTF-8\"")
+			)
+			.body().data().data(
+				Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("<html><head><title>Winter Web</title></head><body><h1>Hello</h1></body></html>", Charsets.UTF_8)))
+			);
+	}
+	
+	private RequestHandler<RequestBody, Void, ResponseBody> a() {
+		return (request, response) -> response
+			.headers(headers -> headers
+				.status(200)
+				.contentType("text/plain; charset=\"UTF-8\"")
+			)
+			.body().data().data(
+				Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("= A =", Charsets.UTF_8)))
+			);
+	}
+	
+	private RequestHandler<RequestBody, Void, ResponseBody> b() {
+		return (request, response) -> response
+			.headers(headers -> headers
+				.status(200)
+				.contentType("text/plain; charset=\"UTF-8\"")
+			)
+			.body().data().data(
+				Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("= B =", Charsets.UTF_8)))
+			);
+	}
+	
+	private RequestHandler<RequestBody, Void, ResponseBody> c() {
+		return (request, response) -> response
+			.headers(headers -> headers
+				.status(200)
+				.contentType("text/plain; charset=\"UTF-8\"")
+			)
+			.body().data().data(
+				Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("= C =", Charsets.UTF_8)))
+			);
+	}
+	
+	private RequestHandler<RequestBody, Void, ResponseBody> simple() {
 		return (request, response) -> response
 			.headers(headers -> headers
 				.status(200)
@@ -68,7 +291,7 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 			);
 	}
 	
-	private RequestHandler<RequestBody, ResponseBody> interval() {
+	private RequestHandler<RequestBody, Void, ResponseBody> interval() {
 		return (request, response) -> {
 			response.headers(headers -> {
 				headers.status(200)
@@ -149,7 +372,7 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 		};
 	}
 	
-	private RequestHandler<RequestBody, ResponseBody> urlEncoded() {
+	private RequestHandler<RequestBody, Void, ResponseBody> urlEncoded() {
 		return (request, response) -> response
 			.headers(headers -> headers
 				.status(200)
@@ -171,7 +394,7 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 	
 	
 		
-	private RequestHandler<RequestBody, ResponseBody> echo() {
+	private RequestHandler<RequestBody, Void, ResponseBody> echo() {
 		return (request, response) -> {
 			response
 				.headers(headers -> headers.status(200).contentType("text/plain"))
@@ -182,7 +405,7 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 		};
 	}
 	
-	private RequestHandler<RequestBody, ResponseBody> multipartEcho() {
+	private RequestHandler<RequestBody, Void, ResponseBody> multipartEcho() {
 		return (request, response) -> {
 			Flux<ByteBuf> responseData = request.body()
 				.map(body -> body.multipart().parts().flatMapSequential(part -> {
@@ -226,7 +449,7 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 	// TODO we should provide a specific FilePart with adhoc methods to manipulate the File data flux or some utilities to make this simpler (especially regarding error handling, size limits...): a Part to Mono<File> mapper would be interesting as it would allow to chain the flux to the response data
 	// TODO progressive upload can also be done: sse can do the trick but we should see other client side tricks for this as well
 	// TODO it seems the size of the resulting file doesn't match the source why?
-	private RequestHandler<RequestBody, ResponseBody> multipartSaveFile() {
+	private RequestHandler<RequestBody, Void, ResponseBody> multipartSaveFile() {
 		return (request, response) -> 
 			request.body().ifPresentOrElse(
 				body -> body.multipart().parts().filter(p -> p.getFilename().isPresent()).subscribe(
@@ -283,7 +506,7 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 		);
 	}
 	
-	private RequestHandler<RequestBody, ResponseBody> echoParameters() {
+	private RequestHandler<RequestBody, Void, ResponseBody> echoParameters() {
 		return (request, response) -> response
 			.headers(headers -> headers
 				.status(200)
@@ -296,7 +519,7 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 			);
 	}
 	
-	private RequestHandler<RequestBody, ResponseBody> stream() {
+	private RequestHandler<RequestBody, Void, ResponseBody> stream() {
 		return (request, response) -> response
 			.headers(headers -> headers
 				.status(200)
@@ -315,7 +538,7 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 			);
 	}
 	
-	private RequestHandler<RequestBody, ResponseBody> sse() {
+	private RequestHandler<RequestBody, Void, ResponseBody> sse() {
 		return (request, response) -> response
 			.body().sse().events(
 				Flux.interval(Duration.ofSeconds(1))
@@ -330,7 +553,7 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 			);
 	}
 	
-	private RequestHandler<RequestBody, ResponseBody> sse2() {
+	private RequestHandler<RequestBody, Void, ResponseBody> sse2() {
 		return (request, response) -> response
 			.body().sse().events(
 				Flux.range(0, 10)
@@ -346,7 +569,7 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 			);
 	}
 	
-	private RequestHandler<RequestBody, ResponseBody> printRequest() {
+	private RequestHandler<RequestBody, Void, ResponseBody> printRequest() {
 		return (request, response) -> {
 			ByteBuf buf = Unpooled.unreleasableBuffer(Unpooled.buffer(256));
 			
@@ -388,7 +611,7 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 		};
 	}
 	
-	private RequestHandler<RequestBody, ResponseBody> printRequestSetCookie() {
+	private RequestHandler<RequestBody, Void, ResponseBody> printRequestSetCookie() {
 		return printRequest().map(handler -> (request, response) -> {
 				response.cookies(cookies -> cookies.addCookie("test-cookie", "123465"));
 				handler.handle(request, response);
@@ -396,13 +619,13 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 		);
 	}
 	
-	private RequestHandler<RequestBody, ResponseBody> printRequestSetCookie2() {
-		return printRequest().andThen(
+	private RequestHandler<RequestBody, Void, ResponseBody> printRequestSetCookie2() {
+		return printRequest().doAfter(
 				(request, response) -> response.cookies(cookies -> cookies.addCookie("test-cookie", "123465"))
 		);
 	}
 	
-	private RequestHandler<RequestBody, ResponseBody> setCookie() {
+	private RequestHandler<RequestBody, Void, ResponseBody> setCookie() {
 		return (request, response) -> response
 			.headers(headers -> headers.status(200).contentType("text/plain"))
 			.cookies(cookies -> cookies.addCookie("test-cookie", "123465"))

@@ -18,7 +18,7 @@ import io.winterframework.mod.web.Headers;
 public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetCookie, SetCookieCodec.SetCookie.Builder> {
 
 	public SetCookieCodec() {
-		super(SetCookieCodec.SetCookie.Builder::new, Set.of(Headers.SET_COOKIE), DEFAULT_DELIMITER, true, true, true, true, false);
+		super(SetCookieCodec.SetCookie.Builder::new, Set.of(Headers.SET_COOKIE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, true, true, true, true, false, false);
 	}
 	
 	@Override

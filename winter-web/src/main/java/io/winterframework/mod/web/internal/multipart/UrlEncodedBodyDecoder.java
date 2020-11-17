@@ -15,21 +15,22 @@
  */
 package io.winterframework.mod.web.internal.multipart;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.List;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpConstants;
-import io.netty.handler.codec.http.QueryStringDecoder;
 import io.netty.util.CharsetUtil;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
+import io.winterframework.mod.web.Headers.ContentType;
 import io.winterframework.mod.web.MediaTypes;
 import io.winterframework.mod.web.Parameter;
-import io.winterframework.mod.web.Headers.ContentType;
 import io.winterframework.mod.web.internal.Charsets;
 import io.winterframework.mod.web.internal.RequestBodyDecoder;
 import io.winterframework.mod.web.internal.header.ContentDispositionCodec;
@@ -218,9 +219,13 @@ public class UrlEncodedBodyDecoder implements RequestBodyDecoder<Parameter> {
 	
 	private String decodeComponent(String value, Charset charset) throws MalformedBodyException {
 		try {
-			return QueryStringDecoder.decodeComponent(value, charset);
+			return URLDecoder.decode(value, Charsets.UTF_8.toString()); // RFC-3986 2
+//			return QueryStringDecoder.decodeComponent(value, charset);
 		} 
 		catch (IllegalArgumentException e) {
+			throw new MalformedBodyException(e);
+		} 
+		catch (UnsupportedEncodingException e) {
 			throw new MalformedBodyException(e);
 		}
 	}

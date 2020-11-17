@@ -23,16 +23,25 @@ import java.util.function.Function;
  *
  */
 @FunctionalInterface
-public interface RequestHandler<A, B> {
+public interface RequestHandler<A, B, C> {
 
-	void handle(Request<A> request, Response<B> response);
+	void handle(Request<A, B> request, Response<C> response);
 	
-	default <U, V> RequestHandler<U, V> map(Function<RequestHandler<A, B>, RequestHandler<U, V>> mapper) {
+	default <T, U, V, W extends RequestHandler<T, U, V>> W map(Function<? super RequestHandler<A, B, C>, ? extends W> mapper) {
 		Objects.requireNonNull(mapper);
 		return mapper.apply(this);
 	}
 	
-	default RequestHandler<A, B> andThen(RequestHandler<A, B> after) {
+	default RequestHandler<A, B, C> doBefore(RequestHandler<A, B, C> after) {
+		Objects.requireNonNull(after);
+
+        return (request, response) -> {
+            this.handle(request, response);
+            after.handle(request, response);
+        };
+	}
+	
+	default RequestHandler<A, B, C> doAfter(RequestHandler<A, B, C> after) {
 		Objects.requireNonNull(after);
 
         return (request, response) -> {

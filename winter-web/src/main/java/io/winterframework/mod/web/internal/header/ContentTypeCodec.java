@@ -10,7 +10,9 @@ import java.util.Set;
 
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
+import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
+import io.winterframework.mod.web.Headers.MediaRange;
 
 /**
  * @author jkuhn
@@ -20,7 +22,7 @@ import io.winterframework.mod.web.Headers;
 public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.ContentType, ContentTypeCodec.ContentType.Builder> {
 	
 	public ContentTypeCodec() {
-		super(ContentTypeCodec.ContentType.Builder::new, Set.of(Headers.CONTENT_TYPE), DEFAULT_DELIMITER, false, false, false, false, true);
+		super(ContentTypeCodec.ContentType.Builder::new, Set.of(Headers.CONTENT_TYPE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, false);
 	}
 	
 	@Override
@@ -38,7 +40,7 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 		}
 		if(!parameters.isEmpty()) {
 			parameters.entrySet().stream().forEach(e -> {
-				result.append(this.delimiter).append(e.getKey()).append("=").append(e.getValue());
+				result.append(this.parameterDelimiter).append(e.getKey()).append("=").append(e.getValue());
 			});
 		}
 		return result.toString();
@@ -47,20 +49,22 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 	public static final class ContentType extends ParameterizedHeader implements Headers.ContentType {
 		
 		private String mediaType;
+		private String type;
+		private String subType;
 		private String boundary;
 		private Charset charset;
 		
-		public ContentType(String mediaType, Charset charset, String boundary) {
-			super(Headers.CONTENT_TYPE, null, mediaType, new HashMap<>());
-			this.setMediaType(mediaType);
+		public ContentType(String mediaType, Charset charset, String boundary, Map<String, String> parameters) {
+			super(Headers.CONTENT_TYPE, null, mediaType, parameters);
+			this.setMediaType(mediaType.toLowerCase());
 			this.setCharset(charset);
 			this.setBoundary(boundary);
 		}
 		
-		private ContentType(String headerName, String headerValue, String mediaType, String boundary, Charset charset, Map<String, String> parameters) {
-			super(headerName, headerValue, mediaType, parameters);
+		private ContentType(String headerName, String headerValue, String parameterizedValue, Map<String, String> parameters, String boundary, Charset charset) {
+			super(headerName, headerValue, parameterizedValue, parameters);
 			
-			this.mediaType = mediaType;
+			this.setMediaType(parameterizedValue.toLowerCase());
 			this.boundary = boundary;
 			this.charset = charset;
 		}
@@ -72,8 +76,33 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 		public void setMediaType(String mediaType) {
 			this.mediaType = mediaType;
 			this.parameterizedValue = mediaType;
+			
+			String[] splitMediaType = mediaType.split("/");
+			if(splitMediaType.length != 2) {
+				// TODO Not Acceptable
+				throw new RuntimeException("Not Acceptable: invalid content type");
+			}
+			
+			this.type = splitMediaType[0];
+			this.subType = splitMediaType[1];
+			
+			if(!HeaderService.isToken(this.type) || !HeaderService.isToken(this.subType)) {
+				// TODO Not Acceptable
+				throw new RuntimeException("Not Acceptable: invalid content type");
+			}
 		}
 		
+		@Override
+		public String getType() {
+			return this.type;
+		}
+		
+		@Override
+		public String getSubType() {
+			return this.subType;
+		}
+		
+		@Override
 		public String getBoundary() {
 			return boundary;
 		}
@@ -88,6 +117,7 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 			}
 		}
 
+		@Override
 		public Charset getCharset() {
 			return charset;
 		}
@@ -100,6 +130,11 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 			else {
 				this.parameters.remove(CHARSET);
 			}
+		}
+		
+		@Override
+		public MediaRange toMediaRange() {
+			return new GenericMediaRange(this.type, this.subType, 1, this.parameters);
 		}
 		
 		public static final class Builder extends ParameterizedHeader.AbstractBuilder<ContentType, Builder> {
@@ -121,7 +156,7 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 			
 			@Override
 			public ContentType build() {
-				return new ContentType(this.headerName, this.headerValue, this.parameterizedValue, this.boundary, this.charset, this.parameters);
+				return new ContentType(this.headerName, this.headerValue, this.parameterizedValue, this.parameters, this.boundary, this.charset);
 			}
 		}
 	}

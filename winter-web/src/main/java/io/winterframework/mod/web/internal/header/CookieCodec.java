@@ -3,6 +3,7 @@
  */
 package io.winterframework.mod.web.internal.header;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,7 +24,7 @@ import io.winterframework.mod.web.internal.server.GenericCookie;
 public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, CookieCodec.Cookie.Builder> {
 
 	public CookieCodec() {
-		super(CookieCodec.Cookie.Builder::new, Set.of(Headers.COOKIE), DEFAULT_DELIMITER, true, true, false, false, false);
+		super(CookieCodec.Cookie.Builder::new, Set.of(Headers.COOKIE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, true, true, false, false, false, false);
 	}
 	
 	@Override
@@ -35,10 +36,9 @@ public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, Co
 		
 		private Map<String, List<io.winterframework.mod.web.Cookie>> pairs;
 		
-		private Cookie(String headerName, String headerValue, Map<String, List<io.winterframework.mod.web.Cookie>> pairs, Map<String, String> parameters) {
+		private Cookie(String headerName, String headerValue, Map<String, String> parameters, Map<String, List<io.winterframework.mod.web.Cookie>> pairs) {
 			super(Headers.COOKIE, headerValue, null, parameters);
-			
-			this.pairs = pairs;
+			this.pairs = pairs != null ? Collections.unmodifiableMap(pairs) : Map.of();
 		}
 		
 		@Override
@@ -48,10 +48,13 @@ public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, Co
 
 		public static final class Builder extends ParameterizedHeader.AbstractBuilder<Cookie, Builder> {
 
-			private Map<String, List<io.winterframework.mod.web.Cookie>> pairs = new HashMap<>();
+			private Map<String, List<io.winterframework.mod.web.Cookie>> pairs;
 
 			@Override
 			public Builder parameter(String name, String value) {
+				if(this.pairs == null) {
+					this.pairs = new HashMap<>();
+				}
 				if(!this.pairs.containsKey(name)) {
 					this.pairs.put(name, new LinkedList<>());
 				}
@@ -61,7 +64,7 @@ public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, Co
 			
 			@Override
 			public Cookie build() {
-				return new Cookie(this.headerName, this.headerValue, this.pairs, this.parameters);
+				return new Cookie(this.headerName, this.headerValue, this.parameters, this.pairs);
 			}
 		}
 	}

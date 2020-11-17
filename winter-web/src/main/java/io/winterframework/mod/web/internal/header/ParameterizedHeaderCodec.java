@@ -25,6 +25,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpConstants;
 import io.netty.util.CharsetUtil;
 import io.winterframework.mod.web.AbstractHeaderCodec;
+import io.winterframework.mod.web.HeaderService;
 
 /**
  * @author jkuhn
@@ -32,9 +33,13 @@ import io.winterframework.mod.web.AbstractHeaderCodec;
  */
 public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends ParameterizedHeader.AbstractBuilder<A, B>> extends AbstractHeaderCodec<A, B> {
 
-	public static final char DEFAULT_DELIMITER = ';';
+	public static final char DEFAULT_PARAMETER_DELIMITER = ';';
 	
-	protected final char delimiter;
+	public static final char DEFAULT_VALUE_DELIMITER = ',';
+	
+	protected final char parameterDelimiter;
+	
+	protected final char valueDelimiter;
 	
 	private final boolean allowEmptyValue; 
 	
@@ -46,15 +51,19 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 	
 	private final boolean allowQuotedValue;
 	
-	public ParameterizedHeaderCodec(Supplier<B> builderSupplier, Set<String> supportedHeaderNames, char delimiter, boolean allowEmptyValue, boolean expectNoValue, boolean allowFlagParameter, boolean allowSpaceInValue, boolean allowQuotedValue) {
+	private final boolean allowMultiple;
+	
+	public ParameterizedHeaderCodec(Supplier<B> builderSupplier, Set<String> supportedHeaderNames, char parameterDelimiter, char valueDelimiter, boolean allowEmptyValue, boolean expectNoValue, boolean allowFlagParameter, boolean allowSpaceInValue, boolean allowQuotedValue, boolean allowMultiple) {
 		super(builderSupplier, supportedHeaderNames);
 		
-		this.delimiter = delimiter;
+		this.parameterDelimiter = parameterDelimiter;
+		this.valueDelimiter = valueDelimiter;
 		this.allowEmptyValue = allowEmptyValue;
 		this.expectNoValue = expectNoValue;
 		this.allowFlagParameter = allowFlagParameter;
 		this.allowSpaceInValue = allowSpaceInValue;
 		this.allowQuotedValue = allowQuotedValue;
+		this.allowMultiple = allowMultiple;
 		
 		if(!this.allowEmptyValue && this.expectNoValue) {
 			throw new IllegalArgumentException("Can't expect no value and not allow empty value");
@@ -87,6 +96,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 		String parameterName = null;
 		boolean quoted = false;
 		boolean blankValue = true;
+		boolean endSingle = false;
 		while(buffer.isReadable()) {
 			byte nextByte = buffer.readByte();
 			if(nextByte == HttpConstants.CR) {
@@ -98,7 +108,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						}
 						builder.headerValue(buffer.getCharSequence(readerIndex, buffer.readerIndex() - 2 - readerIndex, charset).toString());
 						end = true;
-						break;
+//						break;
 					}
 					else {
 						buffer.readerIndex(readerIndex);
@@ -115,7 +125,64 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 				}
 				builder.headerValue(buffer.getCharSequence(readerIndex, buffer.readerIndex() - 1 - readerIndex, charset).toString());
 				end = true;
-				break;
+//				break;
+			}
+			else if(nextByte == this.valueDelimiter && this.allowMultiple && !quoted) {
+				if(endIndex == null) {
+					endIndex = buffer.readerIndex() - 1;
+				}
+				endSingle = true;
+			}
+			
+			if(end || endSingle) {
+				if(!value) {
+					if(startIndex == null) {
+						buffer.readerIndex(readerIndex);
+						throw new IllegalArgumentException("Malformed Header");
+					}
+					if(this.expectNoValue) {
+						buffer.readerIndex(readerIndex);
+						throw new IllegalArgumentException("Malformed Header: expect no value");
+					}
+					builder.parameterizedValue(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString());
+				}
+				else if(parameterName != null) {
+					if(startIndex == null) {
+						buffer.readerIndex(readerIndex);
+						throw new IllegalArgumentException("Malformed Header");
+					}
+					builder.parameter(parameterName, buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString());
+				}
+				else if(startIndex != null) {
+					if(endIndex == null) {
+						endIndex = buffer.readerIndex() - 1;
+					}
+					if(startIndex == endIndex) {
+						buffer.readerIndex(readerIndex);
+						throw new IllegalArgumentException("Malformed Header");
+					}
+					if(!this.allowFlagParameter) {
+						buffer.readerIndex(readerIndex);
+						throw new IllegalArgumentException("Malformed Header: flag parameter not allowed");
+					}
+					builder.parameter(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), null);
+				}
+				
+				if(end) {
+					return builder.build();
+				}
+				else {
+					// consider next value
+					value = false;
+					end = false;
+					startIndex = null;
+					endIndex = null;
+					parameterName = null;
+					quoted = false;
+					blankValue = true;
+					endSingle = false;
+					continue;
+				}
 			}
 			
 			if(!value) {
@@ -219,7 +286,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					else if(Character.isWhitespace(nextByte)) {
 						endIndex = buffer.readerIndex() - 1;
 					}
-					else if(!HeaderServiceImpl.isTokenCharacter(nextByte)) {
+					else if(!HeaderService.isTokenCharacter(nextByte)) {
 						buffer.readerIndex(readerIndex);
 						throw new IllegalArgumentException("Malformed Header: invalid token character");
 					}
@@ -248,7 +315,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						continue;
 					}
 					
-					if(nextByte == this.delimiter) {
+					if(nextByte == this.parameterDelimiter) {
 						if(endIndex == null) {
 							endIndex = buffer.readerIndex() - 1;
 						}
@@ -292,7 +359,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 			}
 		}
 		
-		if(end) {
+		/*if(end) {
 			if(!value) {
 				if(startIndex == null) {
 					buffer.readerIndex(readerIndex);
@@ -326,12 +393,12 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 				builder.parameter(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), null);
 			}
 			return builder.build();
-		}
+		}*/
 		// We need more bytes
 		buffer.readerIndex(readerIndex);
 		return null;
 	}
-
+	
 	@Override
 	public String encode(A headerField) {
 		StringBuilder result = new StringBuilder();
@@ -348,7 +415,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 		Map<String, String> parameters = headerField.getParameters();
 		if(!parameters.isEmpty()) {
 			parameters.entrySet().stream().forEach(e -> {
-				result.append(this.delimiter).append(e.getKey()).append("=").append(e.getValue());
+				result.append(this.parameterDelimiter).append(e.getKey()).append("=").append(e.getValue());
 			});
 		}
 		return result.toString();

@@ -161,7 +161,7 @@ public class HeaderServiceImpl implements HeaderService {
 				 buffer.readerIndex(readerIndex);
 				 throw new IllegalArgumentException("Malformed Header: white space");
 			 }
-			 else if(!isTokenCharacter(nextByte)) {
+			 else if(!HeaderService.isTokenCharacter(nextByte)) {
 				 buffer.readerIndex(readerIndex);
 				 buffer.readerIndex(readerIndex);
 				 throw new IllegalArgumentException("Malformed Header: " + (buffer.readerIndex()-1) + " " +buffer.toString(Charsets.UTF_8) + " " + String.valueOf(Character.toChars(nextByte)));
@@ -169,23 +169,5 @@ public class HeaderServiceImpl implements HeaderService {
 		}
 		buffer.readerIndex(readerIndex);
 		return null;
-	}
-	
-	public static boolean isTokenCharacter(byte codePoint) {
-		return Character.isLetterOrDigit(codePoint) || 
-				codePoint == '!' || 
-				codePoint == '#' ||
-				codePoint == '$' ||
-				codePoint == '%' ||
-				codePoint == '\'' ||
-				codePoint == '*' ||
-				codePoint == '+' ||
-				codePoint == '-' ||
-				codePoint == '.' ||
-				codePoint == '^' ||
-				codePoint == '_' ||
-				codePoint == '`' ||
-				codePoint == '|' ||
-				codePoint == '~';
 	}
 }

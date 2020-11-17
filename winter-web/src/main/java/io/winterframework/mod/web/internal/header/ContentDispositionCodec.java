@@ -8,6 +8,7 @@ import java.util.Set;
 
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
+import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
 
 /**
@@ -19,7 +20,7 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 	
 	
 	public ContentDispositionCodec() {
-		super(ContentDispositionCodec.ContentDisposition.Builder::new, Set.of(Headers.CONTENT_DISPOSITION), DEFAULT_DELIMITER, false, false, false, false, true);
+		super(ContentDispositionCodec.ContentDisposition.Builder::new, Set.of(Headers.CONTENT_DISPOSITION), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, false);
 	}
 
 	public static final class ContentDisposition extends ParameterizedHeader implements Headers.ContentDisposition {
@@ -42,13 +43,13 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 		private ContentDisposition(String headerName, 
 				String headerValue, 
 				String dispositionType, 
+				Map<String, String> parameters,
 				String partName, 
 				String filename,
 				String creationDateTime, 
 				String modificationDatetime, 
 				String readDateTime, 
-				Integer size,
-				Map<String, String> parameters) {
+				Integer size) {
 			super(Headers.CONTENT_DISPOSITION, headerValue, dispositionType, parameters);
 			
 			this.dispositionType = dispositionType;
@@ -58,6 +59,11 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 			this.modificationDatetime = modificationDatetime;
 			this.readDateTime = readDateTime;
 			this.size = size;
+			
+			if(!HeaderService.isToken(this.dispositionType)) { 
+				// TODO Not Acceptable
+				throw new RuntimeException("Not Acceptable: invalid disposition type");
+			}
 		}
 		
 		public String getDispositionType() {
@@ -122,7 +128,7 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 			
 			@Override
 			public ContentDisposition build() {
-				return new ContentDisposition(this.headerName, this.headerValue, this.parameterizedValue, this.partName, this.filename, this.creationDateTime, this.modificationDatetime, this.readDateTime, this.size, this.parameters);
+				return new ContentDisposition(this.headerName, this.headerValue, this.parameterizedValue, this.parameters, this.partName, this.filename, this.creationDateTime, this.modificationDatetime, this.readDateTime, this.size);
 			}
 		}
 	}

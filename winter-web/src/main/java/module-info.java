@@ -4,6 +4,7 @@ module io.winterframework.mod.web {
 	requires io.winterframework.mod.configuration;
 	
 	requires org.apache.logging.log4j;
+	requires com.fasterxml.jackson.databind;
 	
 	requires jdk.unsupported;
 	requires transitive reactor.core;
@@ -19,4 +20,7 @@ module io.winterframework.mod.web {
 	
 	exports io.winterframework.mod.web;
 	exports io.winterframework.mod.web.app;
+	
+	// Test
+	exports io.winterframework.mod.web.internal.server;
 }

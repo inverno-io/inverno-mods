@@ -23,7 +23,7 @@ import java.util.function.Function;
  * @author jkuhn
  *
  */
-public interface Request<A> {
+public interface Request<A, B> {
 
 	RequestHeaders headers();
 	
@@ -37,13 +37,17 @@ public interface Request<A> {
 	
 	Optional<A> body();
 	
-	default <E> Request<E> map(Function<A, E> bodyMapper) {
+	B context();
+	
+	default <E, F> Request<E, F> map(Function<? super A, ? extends E> bodyMapper, Function<? super B, ? extends F> contextMapper) {
 		
-		Request<A> sourceRequest = this;
+		Request<A, B> sourceRequest = this;
 		
-		return new Request<E>() {
+		return new Request<E, F>() {
 			
 			private Optional<E> body;
+			
+			private Optional<? extends F> context;
 
 			@Override
 			public RequestHeaders headers() {
@@ -71,6 +75,14 @@ public interface Request<A> {
 					this.body = sourceRequest.body().map(bodyMapper::apply);
 				}
 				return this.body;
+			}
+			
+			@Override
+			public F context() {
+				if(this.context == null) {
+					this.context = Optional.ofNullable(contextMapper.apply(sourceRequest.context()));
+				}
+				return this.context.get();
 			}
 		};
 	}
