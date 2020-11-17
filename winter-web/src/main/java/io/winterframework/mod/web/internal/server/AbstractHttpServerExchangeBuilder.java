@@ -58,17 +58,17 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 	public abstract Mono<A> build(ChannelHandlerContext context);
 	
 	protected RequestHandler<RequestBody, Void, ResponseBody> findHandler(Request<RequestBody, Void> request) {
-		if(request.headers().getMethod() == Method.POST) {
+		/*if(request.headers().getMethod() == Method.POST) {
 			return multipartEcho();
 		}
 		else {
-			return printRequest();
-		}
+			return simple();
+		}*/
 		
-		/*if(handler == null) {
-			handler = this.webRouter();
+		if(handler == null) {
+			handler = this.webRouter3();
 		}
-		return handler;*/
+		return handler;
 	}
 	
 	private static RequestHandler<RequestBody, Void, ResponseBody> handler;

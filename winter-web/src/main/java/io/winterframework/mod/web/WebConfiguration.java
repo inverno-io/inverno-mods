@@ -17,6 +17,18 @@ public interface WebConfiguration {
 		return "JKS";
 	}
 
+	default int accept_backlog() {
+		return 1024;
+	}
+	
+	default boolean tcp_keep_alive() {
+		return false;
+	}
+	
+	default boolean tcp_no_delay() {
+		return true;
+	}
+	
 	String key_store();
 
 	String key_store_password();

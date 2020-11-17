@@ -58,10 +58,12 @@ public class WebServer {
 			this.childGroup = new NioEventLoopGroup();
 		}
 
+		// Vertx does not rely on netty's pool, this reduces memory footprint, @see io.vertx.core.net.impl.PartialPooledByteBufAllocator
 		ServerBootstrap serverBootstrap = new ServerBootstrap();
 		serverBootstrap
 			.option(ChannelOption.SO_BACKLOG, 1024)
-			.childOption(ChannelOption.SO_KEEPALIVE, true)
+			.childOption(ChannelOption.SO_KEEPALIVE, false)
+			.childOption(ChannelOption.TCP_NODELAY, true)
 			.group(this.acceptorGroup, this.childGroup)
 			.childHandler(this.channelInitializer);
 		

@@ -214,40 +214,41 @@ public final class Headers {
 			Map<String, String> parameters = this.getParameters();
 			float weight = this.getWeight();
 			int score = 0;
-			// wildcards
+			
+			// 1. weight
+			score += 1000 * weight;
+			
+			// 2. wildcards
 			if(type.equals("*")) {
 				if(subType.equals("*")) {
 					// */*
-					score += 0 * 10000;
+					score += 0 * 10;
 				}
 				else {
 					// */b
-					score += 1 * 10000;
+					score += 1 * 10;
 				}
 			}
 			else {
 				if(subType.equals("*")) {
 					// a/*
-					score += 2 * 10000;
+					score += 2 * 10;
 				}
 				else {
 					// a/b
-					score += 3 * 10000;
+					score += 3 * 10;
 				}
 			}
 			
-			// parameters
+			// 3. parameters
 			for(Entry<String, String> e : parameters.entrySet()) {
 				if(e.getValue() == null) {
-					score += 1 * 1000;
+					score += 1 * 1;
 				}
 				else {
-					score += 2 * 1000;
+					score += 2 * 1;
 				}
 			}
-			
-			// weight
-			score += 1000 * weight;
 			
 			return score;
 		}
