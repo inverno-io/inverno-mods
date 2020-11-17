@@ -2,3 +2,6 @@ curl -i -v --insecure -X POST -H "toto:\"d\ fdf\"" -H "toto:abc" --form "toto=ta
 curl -i -v --insecure -X GET --http1.1 https://127.0.0.1:8443
 curl -i -v --insecure -X GET --http1.1 "https://127.0.0.1:8443?toto=a&tata=b"
 
+curl -i -v --insecure -d '{"field1":"value1", "field2":"value2"}' -H "Content-Type: application/json" -X POST https://localhost:8443/tata
+
+curl -i -v --insecure -X POST -d '{"field1":"value1", "field2":"value2"}' -H "Content-Type: application/json" https://localhost:8443

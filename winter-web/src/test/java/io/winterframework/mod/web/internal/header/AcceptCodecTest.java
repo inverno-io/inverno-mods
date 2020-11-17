@@ -1,0 +1,81 @@
+/*
+ * Copyright 2020 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.winterframework.mod.web.internal.header;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.Test;
+
+import io.winterframework.mod.web.Headers;
+import io.winterframework.mod.web.internal.Charsets;
+
+/**
+ * 
+ * @author jkuhn
+ *
+ */
+public class AcceptCodecTest {
+
+	@Test
+	public void testAcceptCodec() {
+		// application/*;q=1, text/*;q=0.8, */*;q=0.2, audio/basic, audio/*;q=0.6, application/json, text/html
+		
+		Map<String, String> m1 = Map.of("tata", "toto", "titi", "tutu");
+		Map<String, String> m2 = new LinkedHashMap<>();
+		m2.put("tata", "toto");
+		m2.put("titi", "tutu");
+		
+		System.out.println(m1.equals(m2));
+		
+		List<Headers.MediaRange> ranges = new ArrayList<>();
+		
+		ranges.add(new GenericMediaRange("application/*", 1.0f, Map.of()));
+		ranges.add(new GenericMediaRange("text/*", 0.8f, Map.of()));
+		ranges.add(new GenericMediaRange("*/*", 0.2f, Map.of()));
+		ranges.add(new GenericMediaRange("audio/basic", 1.0f, Map.of()));
+		ranges.add(new GenericMediaRange("audio/basic", 1.0f, Map.of("toto", "tata")));
+		ranges.add(new GenericMediaRange("audio/*", 0.6f, Map.of()));
+		ranges.add(new GenericMediaRange("application/json", 1.0f, Map.of()));
+		ranges.add(new GenericMediaRange("text/html", 1.0f, Map.of()));
+		
+		Collections.sort(ranges, Headers.MediaRange.COMPARATOR);
+		
+		ranges.forEach(range -> {
+			System.out.println(range.getType() + "/" + range.getSubType() + " = " + range.getWeight() + " - " + range.getParameters());
+		});
+		
+		Map<Headers.MediaRange, String> rangeMap = new LinkedHashMap<>();
+		
+		rangeMap.put(new GenericMediaRange("text/html", 1.0f, Map.of()), "text/html");
+		rangeMap.put(new GenericMediaRange("application/*", 1.0f, Map.of()), "application/*");
+		rangeMap.put(new GenericMediaRange("*/json", 1.0f, Map.of()), "*/json");
+		rangeMap.put(new GenericMediaRange("text/plain", 1.0f, Map.of()), "text/plain");
+		rangeMap.put(new GenericMediaRange("*/*", 1.0f, Map.of()), "*/*");
+		rangeMap.put(new GenericMediaRange("application/json", 1.0f, Map.of()), "application/json");
+		rangeMap.put(new GenericMediaRange("text/*", 1.0f, Map.of()), "text/*");
+
+		rangeMap = rangeMap.entrySet().stream().sorted(Comparator.comparing(Entry::getKey, Headers.MediaRange.COMPARATOR)).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a,b) -> a, LinkedHashMap::new));
+		System.out.println(rangeMap.values());
+	}
+
+}

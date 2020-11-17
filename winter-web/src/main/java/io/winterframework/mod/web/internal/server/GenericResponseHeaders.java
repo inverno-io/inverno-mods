@@ -147,6 +147,7 @@ public class GenericResponseHeaders implements ResponseHeaders {
 	@Override
 	public ResponseHeaders contentType(String contentType) {
 		this.requireNonWritten();
+		// TODO here I know I'll get a ContentTypeCodec.ContentType but that's not guaranteed...
 		this.contentTypeHeader = this.headerService.decode(Headers.CONTENT_TYPE, contentType);
 		if(this.contentTypeHeader.getCharset() == null) {
 			this.contentTypeHeader.setCharset(this.charset);

@@ -16,9 +16,9 @@
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
         <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Contrôleur Boucle" enabled="true">
           <boolProp name="LoopController.continue_forever">false</boolProp>
-          <stringProp name="LoopController.loops">20</stringProp>
+          <stringProp name="LoopController.loops">500</stringProp>
         </elementProp>
-        <stringProp name="ThreadGroup.num_threads">1000</stringProp>
+        <stringProp name="ThreadGroup.num_threads">100</stringProp>
         <stringProp name="ThreadGroup.ramp_time">0</stringProp>
         <boolProp name="ThreadGroup.scheduler">false</boolProp>
         <stringProp name="ThreadGroup.duration"></stringProp>
@@ -32,15 +32,7 @@
             <collectionProp name="Arguments.arguments">
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">-----------------------------41716138319688775731431041856&#xd;
-Content-Disposition: form-data; name=&quot;toto&quot;&#xd;
-&#xd;
-a&#xd;
------------------------------41716138319688775731431041856&#xd;
-Content-Disposition: form-data; name=&quot;tata&quot;&#xd;
-&#xd;
-b&#xd;
------------------------------41716138319688775731431041856--</stringProp>
+                <stringProp name="Argument.value">{&quot;field1&quot;:&quot;value4&quot;, &quot;field2&quot;:&quot;value8&quot;}</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>
@@ -50,7 +42,7 @@ b&#xd;
           <stringProp name="HTTP2Request.response_timeout"></stringProp>
           <stringProp name="HTTP2Request.protocol">https</stringProp>
           <stringProp name="HTTP2Request.contentEncoding"></stringProp>
-          <stringProp name="HTTP2Request.path">/</stringProp>
+          <stringProp name="HTTP2Request.path">/json</stringProp>
           <stringProp name="HTTP2Sampler.method">POST</stringProp>
           <boolProp name="HTTP2Request.follow_redirects">true</boolProp>
           <boolProp name="HTTP2Request.auto_redirects">false</boolProp>
@@ -62,7 +54,7 @@ b&#xd;
             <collectionProp name="HeaderManager.headers">
               <elementProp name="" elementType="Header">
                 <stringProp name="Header.name">content-type</stringProp>
-                <stringProp name="Header.value">multipart/form-data; boundary=---------------------------41716138319688775731431041856</stringProp>
+                <stringProp name="Header.value">application/json</stringProp>
               </elementProp>
             </collectionProp>
           </HeaderManager>

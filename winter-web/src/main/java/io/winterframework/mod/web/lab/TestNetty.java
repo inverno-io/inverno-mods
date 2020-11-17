@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.web.lab.sandbox;
+package io.winterframework.mod.web.lab;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;

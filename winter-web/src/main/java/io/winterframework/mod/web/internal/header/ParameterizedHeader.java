@@ -62,8 +62,8 @@ public class ParameterizedHeader extends GenericHeader {
 	
 	protected String parameterizedValue;
 	
-	protected ParameterizedHeader(String name, String value, String parameterizedValue, Map<String, String> parameters) {
-		super(name, value);
+	protected ParameterizedHeader(String headerName, String headerValue, String parameterizedValue, Map<String, String> parameters) {
+		super(headerName, headerValue);
 		this.parameters = parameters != null ? new HashMap<>(parameters) : new HashMap<>();
 		this.parameterizedValue = parameterizedValue;
 	}
@@ -77,5 +77,36 @@ public class ParameterizedHeader extends GenericHeader {
 			return Collections.unmodifiableMap(this.parameters);
 		}
 		return Map.of();
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((parameterizedValue == null) ? 0 : parameterizedValue.hashCode());
+		result = prime * result + ((parameters == null) ? 0 : parameters.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ParameterizedHeader other = (ParameterizedHeader) obj;
+		if (parameterizedValue == null) {
+			if (other.parameterizedValue != null)
+				return false;
+		} else if (!parameterizedValue.equals(other.parameterizedValue))
+			return false;
+		if (parameters == null) {
+			if (other.parameters != null)
+				return false;
+		} else if (!parameters.equals(other.parameters))
+			return false;
+		return true;
 	}
 }

@@ -4,8 +4,13 @@
 package io.winterframework.mod.web;
 
 import java.nio.charset.Charset;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * @author jkuhn
@@ -13,6 +18,7 @@ import java.util.Map;
  */
 public final class Headers {
 
+	public static final String ACCEPT = "accept";
 	public static final String CONTENT_DISPOSITION = "content-disposition";
 	public static final String CONTENT_TYPE = "content-type";
 	public static final String CONTENT_LENGTH = "content-length";
@@ -44,9 +50,17 @@ public final class Headers {
 		
 		String getMediaType();
 		
+		String getType();
+		
+		String getSubType();
+		
 		String getBoundary();
 
 		Charset getCharset();
+		
+		Map<String, String> getParameters();
+		
+		MediaRange toMediaRange();
 	}
 	
 	/**
@@ -120,5 +134,163 @@ public final class Headers {
 	public static interface Cookie extends Header {
 		
 		public Map<String, List<io.winterframework.mod.web.Cookie>> getPairs();
+	}
+	
+	/**
+	 * https://tools.ietf.org/html/rfc7231#section-5.3.2
+	 * 
+	 * @author jkuhn
+	 *
+	 */
+	public static interface Accept extends Header {
+		
+		List<MediaRange> getMediaRanges();
+		
+		default Optional<Headers.ContentType> findBestMatch(Collection<Headers.ContentType> contentTypes) {
+			return this.findBestMatch(contentTypes, Function.identity());
+		}
+		
+		default <T> Optional<T> findBestMatch(Collection<T> items, Function<T, Headers.ContentType> contentTypeExtractor) {
+			for(MediaRange mediaRange : this.getMediaRanges()) {
+				for(T item : items) {
+					if(mediaRange.matches(contentTypeExtractor.apply(item))) {
+						return Optional.of(item);
+					}
+				}
+			}
+			return Optional.empty();
+		}
+	}
+	
+	public static interface MediaRange {
+		
+		public static final Comparator<MediaRange> COMPARATOR = (r1, r2) -> r2.getScore() - r1.getScore();
+		
+		String getMediaType();
+		
+		String getType();
+		
+		String getSubType();
+		
+		float getWeight();
+		
+		Map<String, String> getParameters();
+		
+		default boolean matches(Headers.ContentType contentType) {
+			String requestType = contentType.getType();
+			String requestSubType = contentType.getSubType();
+			Map<String, String> requestParameters = contentType.getParameters();
+
+			String consumeType = this.getType();
+			String consumeSubType = this.getSubType();
+			Map<String, String> consumeParameters = this.getParameters();
+
+			if(requestType.equals("*")) {
+				if(requestSubType.equals("*")) {
+					// we can stop here: any match as long as parameters match
+					return consumeParameters.isEmpty() || consumeParameters.equals(requestParameters);
+				}
+				else {
+					return (consumeSubType.equals("*") || consumeSubType.equals(requestSubType)) && 
+						(consumeParameters.isEmpty() || consumeParameters.equals(requestParameters));
+				}
+			}
+			else {
+				if(requestSubType.equals("*")) {
+					return (consumeType.equals("*") || consumeType.equals(requestType)) && 
+						(consumeParameters.isEmpty() || consumeParameters.equals(requestParameters));
+				}
+				else {
+					return (consumeType.equals("*") || consumeType.equals(requestType)) && 
+						(consumeSubType.equals("*") || consumeSubType.equals(requestSubType)) && 
+						(consumeParameters.isEmpty() || consumeParameters.equals(requestParameters));
+				}
+			}
+		}
+		
+		default int getScore() {
+			String type = this.getType();
+			String subType = this.getSubType();
+			Map<String, String> parameters = this.getParameters();
+			float weight = this.getWeight();
+			int score = 0;
+			// wildcards
+			if(type.equals("*")) {
+				if(subType.equals("*")) {
+					// */*
+					score += 0 * 10000;
+				}
+				else {
+					// */b
+					score += 1 * 10000;
+				}
+			}
+			else {
+				if(subType.equals("*")) {
+					// a/*
+					score += 2 * 10000;
+				}
+				else {
+					// a/b
+					score += 3 * 10000;
+				}
+			}
+			
+			// parameters
+			for(Entry<String, String> e : parameters.entrySet()) {
+				if(e.getValue() == null) {
+					score += 1 * 1000;
+				}
+				else {
+					score += 2 * 1000;
+				}
+			}
+			
+			// weight
+			score += 1000 * weight;
+			
+			return score;
+		}
+		
+		static Optional<MediaRange> findFirstMatch(Headers.ContentType contentType, List<MediaRange> mediaRanges) {
+			return findFirstMatch(contentType, mediaRanges, Function.identity());
+		}
+		
+		static <T> Optional<T> findFirstMatch(Headers.ContentType contentType, Collection<T> items, Function<T, MediaRange> mediaRangeExtractor) {
+			String requestType = contentType.getType();
+			String requestSubType = contentType.getSubType();
+			Map<String, String> requestParameters = contentType.getParameters();
+
+			return items.stream()
+				.filter(item -> {
+					MediaRange range = mediaRangeExtractor.apply(item);
+					String consumeType = range.getType();
+					String consumeSubType = range.getSubType();
+					Map<String, String> consumeParameters = range.getParameters();
+
+					if(requestType.equals("*")) {
+						if(requestSubType.equals("*")) {
+							// we can stop here: any match as long as parameters match
+							return consumeParameters.isEmpty() || consumeParameters.equals(requestParameters);
+						}
+						else {
+							return (consumeSubType.equals("*") || consumeSubType.equals(requestSubType)) && 
+								(consumeParameters.isEmpty() || consumeParameters.equals(requestParameters));
+						}
+					}
+					else {
+						if(requestSubType.equals("*")) {
+							return (consumeType.equals("*") || consumeType.equals(requestType)) && 
+								(consumeParameters.isEmpty() || consumeParameters.equals(requestParameters));
+						}
+						else {
+							return (consumeType.equals("*") || consumeType.equals(requestType)) && 
+								(consumeSubType.equals("*") || consumeSubType.equals(requestSubType)) && 
+								(consumeParameters.isEmpty() || consumeParameters.equals(requestParameters));
+						}
+					}
+				})
+				.findFirst();
+		}
 	}
 }

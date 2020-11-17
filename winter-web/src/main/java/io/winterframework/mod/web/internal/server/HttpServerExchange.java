@@ -19,11 +19,11 @@ public interface HttpServerExchange {
 	
 	ChannelHandlerContext getContext();
 
-	RequestHandler<RequestBody, ResponseBody> getHandler();
+	RequestHandler<RequestBody, Void, ResponseBody> getHandler();
 
-	void setHandler(RequestHandler<RequestBody, ResponseBody> handler);
+	void setHandler(RequestHandler<RequestBody, Void, ResponseBody> handler);
 
-	Request<RequestBody> request();
+	Request<RequestBody, Void> request();
 	
 	Response<ResponseBody> response();
 	
