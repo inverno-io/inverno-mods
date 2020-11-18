@@ -12,7 +12,6 @@ import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
-import io.winterframework.mod.web.Headers.MediaRange;
 
 /**
  * @author jkuhn
@@ -63,7 +62,6 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 		
 		private ContentType(String headerName, String headerValue, String parameterizedValue, Map<String, String> parameters, String boundary, Charset charset) {
 			super(headerName, headerValue, parameterizedValue, parameters);
-			
 			this.setMediaType(parameterizedValue.toLowerCase());
 			this.boundary = boundary;
 			this.charset = charset;
@@ -83,8 +81,8 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 				throw new RuntimeException("Not Acceptable: invalid content type");
 			}
 			
-			this.type = splitMediaType[0];
-			this.subType = splitMediaType[1];
+			this.setType(splitMediaType[0]);
+			this.setSubType(splitMediaType[1]);
 			
 			if(!HeaderService.isToken(this.type) || !HeaderService.isToken(this.subType)) {
 				// TODO Not Acceptable
@@ -97,9 +95,25 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 			return this.type;
 		}
 		
+		private void setType(String type) {
+			if(!HeaderService.isToken(type)) {
+				// TODO Not Acceptable
+				throw new RuntimeException("Not Acceptable: invalid media type");
+			}
+			this.type = type;
+		}
+		
 		@Override
 		public String getSubType() {
 			return this.subType;
+		}
+		
+		private void setSubType(String subType) {
+			if(!HeaderService.isToken(subType)) {
+				// TODO Not Acceptable
+				throw new RuntimeException("Not Acceptable: invalid media type");
+			}
+			this.subType = subType;
 		}
 		
 		@Override
@@ -133,8 +147,8 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 		}
 		
 		@Override
-		public MediaRange toMediaRange() {
-			return new GenericMediaRange(this.type, this.subType, 1, this.parameters);
+		public Headers.Accept.MediaRange toMediaRange() {
+			return new AcceptCodec.Accept.MediaRange(this.type, this.subType, 1, this.parameters);
 		}
 		
 		public static final class Builder extends ParameterizedHeader.AbstractBuilder<ContentType, Builder> {

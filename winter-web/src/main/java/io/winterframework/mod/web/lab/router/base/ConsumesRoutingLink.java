@@ -22,12 +22,12 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Request;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
+import io.winterframework.mod.web.internal.header.AcceptCodec;
 import io.winterframework.mod.web.lab.router.BaseContext;
 import io.winterframework.mod.web.lab.router.BaseRoute;
 
@@ -37,13 +37,13 @@ import io.winterframework.mod.web.lab.router.BaseRoute;
  */
 public class ConsumesRoutingLink extends RoutingLink<ConsumesRoutingLink> {
 
-	private HeaderService headerService;
+	private AcceptCodec acceptCodec;
 	
-	private Map<Headers.MediaRange, RoutingLink<?>> handlers;
+	private Map<Headers.Accept.MediaRange, RoutingLink<?>> handlers;
 	
-	public ConsumesRoutingLink(HeaderService headerService) {
-		super(() -> new ConsumesRoutingLink(headerService));
-		this.headerService = headerService;
+	public ConsumesRoutingLink(AcceptCodec acceptCodec) {
+		super(() -> new ConsumesRoutingLink(acceptCodec));
+		this.acceptCodec = acceptCodec;
 		this.handlers = new LinkedHashMap<>();
 	}
 
@@ -55,7 +55,7 @@ public class ConsumesRoutingLink extends RoutingLink<ConsumesRoutingLink> {
 		
 		if(route.getConsumes() != null && !route.getConsumes().isEmpty()) {
 			route.getConsumes().stream()
-				.map(consume -> this.headerService.<Headers.Accept>decode(Headers.ACCEPT, consume).getMediaRanges().get(0)) // TODO what happens if I have no range? 
+				.map(consume -> this.acceptCodec.decode(Headers.ACCEPT, consume).getMediaRanges().get(0)) // TODO what happens if I have no range? if I have more than one?
 				.forEach(mediaRange -> {
 					if(this.handlers.containsKey(mediaRange)) {
 						this.handlers.get(mediaRange).addRoute(route);
@@ -64,7 +64,7 @@ public class ConsumesRoutingLink extends RoutingLink<ConsumesRoutingLink> {
 						this.handlers.put(mediaRange, this.nextLink.createNextLink().addRoute(route));
 					}
 				});
-			this.handlers = this.handlers.entrySet().stream().sorted(Comparator.comparing(Entry::getKey, Headers.MediaRange.COMPARATOR)).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a,b) -> a, LinkedHashMap::new));
+			this.handlers = this.handlers.entrySet().stream().sorted(Comparator.comparing(Entry::getKey, Headers.Accept.MediaRange.COMPARATOR)).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a,b) -> a, LinkedHashMap::new));
 		}
 		else {
 			this.nextLink.addRoute(route);
@@ -77,7 +77,7 @@ public class ConsumesRoutingLink extends RoutingLink<ConsumesRoutingLink> {
 		Optional<Headers.ContentType> contentTypeHeader = request.headers().<Headers.ContentType>get(Headers.CONTENT_TYPE);
 		
 		Optional<RoutingLink<?>> handler = contentTypeHeader
-			.flatMap(contentType -> Headers.MediaRange.findFirstMatch(contentType, this.handlers.entrySet(), Entry::getKey).map(Entry::getValue));
+			.flatMap(contentType -> Headers.Accept.MediaRange.findFirstMatch(contentType, this.handlers.entrySet(), Entry::getKey).map(Entry::getValue));
 		
 		if(handler.isPresent()) {
 			handler.get().handle(request, response);

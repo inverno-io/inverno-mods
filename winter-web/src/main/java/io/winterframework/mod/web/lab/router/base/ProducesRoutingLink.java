@@ -22,12 +22,12 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Request;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
+import io.winterframework.mod.web.internal.header.ContentTypeCodec;
 import io.winterframework.mod.web.lab.router.BaseContext;
 import io.winterframework.mod.web.lab.router.BaseRoute;
 
@@ -37,20 +37,20 @@ import io.winterframework.mod.web.lab.router.BaseRoute;
  */
 public class ProducesRoutingLink extends RoutingLink<ProducesRoutingLink> {
 
-	private HeaderService headerService;
+	private ContentTypeCodec contentTypeCodec;
 	
 	private Map<Headers.ContentType, RoutingLink<?>> handlers;
 	
-	public ProducesRoutingLink(HeaderService headerService) {
-		super(() -> new ProducesRoutingLink(headerService));
-		this.headerService = headerService;
+	public ProducesRoutingLink(ContentTypeCodec contentTypeCodec) {
+		super(() -> new ProducesRoutingLink(contentTypeCodec));
+		this.contentTypeCodec = contentTypeCodec;
 		this.handlers = new LinkedHashMap<>();
 	}
 
 	@Override
 	public ProducesRoutingLink addRoute(BaseRoute<RequestBody, BaseContext, ResponseBody> route) {
 		if(route.getProduces() != null && !route.getProduces().isEmpty()) {
-			route.getProduces().stream().map(produce -> this.headerService.<Headers.ContentType>decode(Headers.CONTENT_TYPE, produce))
+			route.getProduces().stream().map(produce -> this.contentTypeCodec.decode(Headers.CONTENT_TYPE, produce))
 				.forEach(contentType -> {
 					if(this.handlers.containsKey(contentType)) {
 						this.handlers.get(contentType).addRoute(route);
@@ -59,7 +59,7 @@ public class ProducesRoutingLink extends RoutingLink<ProducesRoutingLink> {
 						this.handlers.put(contentType, this.nextLink.createNextLink().addRoute(route));
 					}
 				});
-			this.handlers = this.handlers.entrySet().stream().sorted(Comparator.comparing(e -> e.getKey().toMediaRange(), Headers.MediaRange.COMPARATOR)).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a,b) -> a, LinkedHashMap::new));
+			this.handlers = this.handlers.entrySet().stream().sorted(Comparator.comparing(e -> e.getKey().toMediaRange(), Headers.Accept.MediaRange.COMPARATOR)).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a,b) -> a, LinkedHashMap::new));
 		}
 		else {
 			this.nextLink.addRoute(route);
@@ -69,8 +69,7 @@ public class ProducesRoutingLink extends RoutingLink<ProducesRoutingLink> {
 	
 	@Override
 	public void handle(Request<RequestBody, BaseContext> request, Response<ResponseBody> response) {
-		// TODO we should consider all Accept headers
-		Optional<Headers.Accept> acceptHeader = request.headers().<Headers.Accept>get(Headers.ACCEPT);
+		Optional<Headers.Accept> acceptHeader = Headers.Accept.merge(request.headers().<Headers.Accept>getAll(Headers.ACCEPT));
 		if(acceptHeader.isPresent()) {
 			acceptHeader
 				.flatMap(accept -> accept.findBestMatch(this.handlers.entrySet(), Entry::getKey).map(Entry::getValue))
@@ -78,12 +77,19 @@ public class ProducesRoutingLink extends RoutingLink<ProducesRoutingLink> {
 				.handle(request, response);
 		}
 		else {
-			if(this.handlers.isEmpty()) {
+			// */*: client accepts anything, we should try the next link and fallback to the first handler (if any) in case no subsequent handler was found
+			try {
+				// By default we fallback on the next link
 				this.nextLink.handle(request, response);
 			}
-			else {
-				// */* so we take the first one
-				this.handlers.entrySet().iterator().next().getValue().handle(request, response);
+			catch(RoutingException e) {
+				// If we have 
+				if(e.getStatus() == 404 && !this.handlers.isEmpty()) {
+					this.handlers.entrySet().iterator().next().getValue().handle(request, response);
+				}
+				else {
+					throw e;
+				}
 			}
 		}
 	}
