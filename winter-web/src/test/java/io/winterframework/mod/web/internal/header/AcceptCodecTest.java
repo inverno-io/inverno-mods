@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import io.winterframework.mod.web.Headers;
-import io.winterframework.mod.web.internal.Charsets;
+import io.winterframework.mod.web.Headers.AcceptLanguage;
 
 /**
  * 
@@ -47,35 +47,41 @@ public class AcceptCodecTest {
 		
 		System.out.println(m1.equals(m2));
 		
-		List<Headers.MediaRange> ranges = new ArrayList<>();
+		List<AcceptCodec.Accept.MediaRange> ranges = new ArrayList<>();
 		
-		ranges.add(new GenericMediaRange("application/*", 1.0f, Map.of()));
-		ranges.add(new GenericMediaRange("text/*", 0.8f, Map.of()));
-		ranges.add(new GenericMediaRange("*/*", 0.2f, Map.of()));
-		ranges.add(new GenericMediaRange("audio/basic", 1.0f, Map.of()));
-		ranges.add(new GenericMediaRange("audio/basic", 1.0f, Map.of("toto", "tata")));
-		ranges.add(new GenericMediaRange("audio/*", 0.6f, Map.of()));
-		ranges.add(new GenericMediaRange("application/json", 1.0f, Map.of()));
-		ranges.add(new GenericMediaRange("text/html", 1.0f, Map.of()));
+		ranges.add(new AcceptCodec.Accept.MediaRange("application/*", 1.0f, Map.of()));
+		ranges.add(new AcceptCodec.Accept.MediaRange("text/*", 0.8f, Map.of()));
+		ranges.add(new AcceptCodec.Accept.MediaRange("*/*", 0.2f, Map.of()));
+		ranges.add(new AcceptCodec.Accept.MediaRange("audio/basic", 1.0f, Map.of()));
+		ranges.add(new AcceptCodec.Accept.MediaRange("audio/basic", 1.0f, Map.of("toto", "tata")));
+		ranges.add(new AcceptCodec.Accept.MediaRange("audio/*", 0.6f, Map.of()));
+		ranges.add(new AcceptCodec.Accept.MediaRange("application/json", 1.0f, Map.of()));
+		ranges.add(new AcceptCodec.Accept.MediaRange("text/html", 1.0f, Map.of()));
 		
-		Collections.sort(ranges, Headers.MediaRange.COMPARATOR);
+		Collections.sort(ranges, AcceptCodec.Accept.MediaRange.COMPARATOR);
 		
 		ranges.forEach(range -> {
 			System.out.println(range.getType() + "/" + range.getSubType() + " = " + range.getWeight() + " - " + range.getParameters());
 		});
 		
-		Map<Headers.MediaRange, String> rangeMap = new LinkedHashMap<>();
+		Map<AcceptCodec.Accept.MediaRange, String> rangeMap = new LinkedHashMap<>();
 		
-		rangeMap.put(new GenericMediaRange("text/html", 1.0f, Map.of()), "text/html");
-		rangeMap.put(new GenericMediaRange("application/*", 1.0f, Map.of()), "application/*");
-		rangeMap.put(new GenericMediaRange("*/json", 1.0f, Map.of()), "*/json");
-		rangeMap.put(new GenericMediaRange("text/plain", 1.0f, Map.of()), "text/plain");
-		rangeMap.put(new GenericMediaRange("*/*", 1.0f, Map.of()), "*/*");
-		rangeMap.put(new GenericMediaRange("application/json", 1.0f, Map.of()), "application/json");
-		rangeMap.put(new GenericMediaRange("text/*", 1.0f, Map.of()), "text/*");
+		rangeMap.put(new AcceptCodec.Accept.MediaRange("text/html", 1.0f, Map.of()), "text/html");
+		rangeMap.put(new AcceptCodec.Accept.MediaRange("application/*", 1.0f, Map.of()), "application/*");
+		rangeMap.put(new AcceptCodec.Accept.MediaRange("*/json", 1.0f, Map.of()), "*/json");
+		rangeMap.put(new AcceptCodec.Accept.MediaRange("text/plain", 1.0f, Map.of()), "text/plain");
+		rangeMap.put(new AcceptCodec.Accept.MediaRange("*/*", 1.0f, Map.of()), "*/*");
+		rangeMap.put(new AcceptCodec.Accept.MediaRange("application/json", 1.0f, Map.of()), "application/json");
+		rangeMap.put(new AcceptCodec.Accept.MediaRange("text/*", 1.0f, Map.of()), "text/*");
 
-		rangeMap = rangeMap.entrySet().stream().sorted(Comparator.comparing(Entry::getKey, Headers.MediaRange.COMPARATOR)).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a,b) -> a, LinkedHashMap::new));
+		rangeMap = rangeMap.entrySet().stream().sorted(Comparator.comparing(Entry::getKey, AcceptCodec.Accept.MediaRange.COMPARATOR)).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a,b) -> a, LinkedHashMap::new));
 		System.out.println(rangeMap.values());
+		
+		AcceptLanguageCodec acceptLanguageCodec = new AcceptLanguageCodec(false);
+		
+		AcceptLanguage allLanguage = acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, "*");
+		AcceptLanguage frLanguage = acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, "fr");
+		
 	}
 
 }

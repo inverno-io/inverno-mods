@@ -72,6 +72,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 	
 	@Override
 	public A decode(String name, String rawValue) {
+		// TODO create a simpler ByteBuf backed by a byte array
 		ByteBuf buffer = Unpooled.copiedBuffer(rawValue, CharsetUtil.UTF_8);
 		buffer.writeByte(HttpConstants.LF);
 		try {

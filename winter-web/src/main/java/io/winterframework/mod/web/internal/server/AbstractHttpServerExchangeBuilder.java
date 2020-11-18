@@ -74,7 +74,7 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 	private static RequestHandler<RequestBody, Void, ResponseBody> handler;
 	
 	private RequestHandler<RequestBody, Void, ResponseBody> webRouter() {
-		return new GenericBaseRouter(this.headerService)
+		return new GenericBaseRouter()
 			.route().path("/toto", true).method(Method.GET).handler(this.simple().map(this::handlerAdapter))
 			.route().path("/tata", true).method(Method.POST).handler(this.echo().map(this::handlerAdapter))
 			.route().path("/json", true).method(Method.POST).handler(this.json().map(this::handlerAdapter))
@@ -84,13 +84,13 @@ public abstract class AbstractHttpServerExchangeBuilder<A extends HttpServerExch
 	}
 	
 	private RequestHandler<RequestBody, Void, ResponseBody> webRouter2() {
-		return new GenericBaseRouter(this.headerService)
+		return new GenericBaseRouter()
 			.route().path("/toto", true).method(Method.POST).consumes("application/json").handler(this.echo().map(this::handlerAdapter))
 			.route().path("/toto", true).method(Method.POST).consumes("text/*").handler(this.printRequest().map(this::handlerAdapter));
 	}
 	
 	private RequestHandler<RequestBody, Void, ResponseBody> webRouter3() {
-		return new GenericBaseRouter(this.headerService)
+		return new GenericBaseRouter()
 			.route().path("/toto", true).method(Method.GET).produces("application/json").handler(
 				(request, response) -> {
 					response.headers(headers -> headers.contentType("application/json")).body().data().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("{\"toto\":5}", Charsets.DEFAULT))));

@@ -18,16 +18,11 @@ package io.winterframework.mod.web.lab.router.base;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.netty.buffer.Unpooled;
-import io.winterframework.core.annotation.Bean;
-import io.winterframework.core.annotation.Wrapper;
-import io.winterframework.core.annotation.Bean.Strategy;
-import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.Request;
@@ -46,28 +41,15 @@ import reactor.core.publisher.Mono;
  *
  */
 //@Bean(strategy = Strategy.SINGLETON)
-//@Wrapper
-public class TestRouter implements Supplier<RequestHandler<RequestBody, Void, ResponseBody>> {
+public class TestRouter extends GenericBaseRouter {
 
-	private HeaderService headerService;
-	
-	/**
-	 * 
-	 */
-	public TestRouter(HeaderService headerService) {
-		this.headerService = headerService;
-	}
-
-	@Override
-	public RequestHandler<RequestBody, Void, ResponseBody> get() {
-		System.out.println("=== create ===");
-		return new GenericBaseRouter(this.headerService)
-				.route().path("/toto", true).method(Method.GET).handler(this.simple().map(this::handlerAdapter))
-				.route().path("/tata", true).method(Method.POST).handler(this.echo().map(this::handlerAdapter))
-				.route().path("/json", true).method(Method.POST).handler(this.json().map(this::handlerAdapter))
-				.route().path("/toto/{param1}/tata/{param2}", true).handler(this.a().map(this::handlerAdapter))
-				.route().path("/toto/titi/tata/{param2}", true).handler(this.b().map(this::handlerAdapter))
-				.route().path("/toto/{param1}/tata/titi", true).handler(this.c().map(this::handlerAdapter));
+	public TestRouter() {
+		this.route().path("/toto", true).method(Method.GET).handler(this.simple().map(this::handlerAdapter))
+			.route().path("/tata", true).method(Method.POST).handler(this.echo().map(this::handlerAdapter))
+			.route().path("/json", true).method(Method.POST).handler(this.json().map(this::handlerAdapter))
+			.route().path("/toto/{param1}/tata/{param2}", true).handler(this.a().map(this::handlerAdapter))
+			.route().path("/toto/titi/tata/{param2}", true).handler(this.b().map(this::handlerAdapter))
+			.route().path("/toto/{param1}/tata/titi", true).handler(this.c().map(this::handlerAdapter));
 	}
 
 	private RequestHandler<RequestBody, BaseContext, ResponseBody> handlerAdapter(RequestHandler<RequestBody, Void, ResponseBody> handler) {

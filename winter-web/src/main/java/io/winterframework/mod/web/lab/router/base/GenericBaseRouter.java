@@ -20,12 +20,14 @@ import java.io.PrintStream;
 import java.util.function.Function;
 
 import io.netty.buffer.Unpooled;
-import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Request;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.RequestHandler;
 import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
+import io.winterframework.mod.web.internal.header.AcceptCodec;
+import io.winterframework.mod.web.internal.header.AcceptLanguageCodec;
+import io.winterframework.mod.web.internal.header.ContentTypeCodec;
 import io.winterframework.mod.web.lab.router.BaseContext;
 import io.winterframework.mod.web.lab.router.BaseRoute;
 import io.winterframework.mod.web.lab.router.BaseRouter;
@@ -41,16 +43,14 @@ public class GenericBaseRouter implements BaseRouter<RequestBody, BaseContext, R
 	
 	private RequestHandler<RequestBody, RoutingException, ResponseBody> errorHandler;
 	
-	/**
-	 * 
-	 */
-	public GenericBaseRouter(HeaderService headerService) {
+	public GenericBaseRouter() {
 		this.firstLink = new PathRoutingLink();
 		this.firstLink
 			.connect(new PathPatternRoutingLink())
 			.connect(new MethodRoutingLink())
-			.connect(new ConsumesRoutingLink(headerService))
-			.connect(new ProducesRoutingLink(headerService))
+			.connect(new ConsumesRoutingLink(new AcceptCodec(false)))
+			.connect(new ProducesRoutingLink(new ContentTypeCodec()))
+			.connect(new LanguageRoutingLink(new AcceptLanguageCodec(false)))
 			.connect(new LastRoutingLink());
 		
 		this.errorHandler = (request, response) -> {
