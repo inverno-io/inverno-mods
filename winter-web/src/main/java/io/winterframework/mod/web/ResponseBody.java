@@ -29,18 +29,31 @@ public interface ResponseBody {
 
 	Response<Void> empty();
 	
-	// We can only call one of data().data and events once
-	ResponseBody.Data data();
+	// We can only call one of these once
+	ResponseBody.Raw raw();
 	
 	ResponseBody.Sse<ByteBuf> sse();
 	
-	public static interface Data {
-		Response<ResponseBody.Data> data(Publisher<ByteBuf> data);
+	ResponseBody.Resource resource();
+	
+	public static interface Raw {
+		
+		Response<ResponseBody.Raw> data(Publisher<ByteBuf> data);
+		
+		Response<ResponseBody.Raw> data(String data);
+		
+		Response<ResponseBody.Raw> data(byte[] data);
 	}
 	
 	public static interface Sse<T> {
+		
 		Response<ResponseBody.Sse<T>> events(Publisher<ServerSentEvent<T>> events);
 		
 		ServerSentEvent<T> create(Consumer<ServerSentEvent.Configurator<T>> configurer);
+	}
+	
+	public static interface Resource {
+		
+		Response<ResponseBody.Resource> data(io.winterframework.mod.commons.resource.Resource resource);
 	}
 }

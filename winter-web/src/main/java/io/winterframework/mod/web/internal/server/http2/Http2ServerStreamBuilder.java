@@ -29,8 +29,11 @@ import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.Part;
 import io.winterframework.mod.web.RequestBody;
+import io.winterframework.mod.web.RequestHandler;
+import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.internal.RequestBodyDecoder;
 import io.winterframework.mod.web.internal.server.AbstractHttpServerExchangeBuilder;
+import io.winterframework.mod.web.internal.server.AbstractRequest;
 import io.winterframework.mod.web.internal.server.GenericRequestParameters;
 import io.winterframework.mod.web.internal.server.GenericResponse;
 import io.winterframework.mod.web.internal.server.GetRequest;
@@ -42,14 +45,14 @@ import reactor.core.publisher.Mono;
  *
  */
 @Bean(strategy = Strategy.PROTOTYPE, visibility = Visibility.PRIVATE)
-public class Http2ServerStreamBuilder extends AbstractHttpServerExchangeBuilder<Http2ServerStream<?>> {
+public class Http2ServerStreamBuilder extends AbstractHttpServerExchangeBuilder<Http2ServerStream> {
 
 	private Http2Stream stream;
 	private Http2Headers headers;
 	private Http2ConnectionEncoder encoder;
 	
-	public Http2ServerStreamBuilder(HeaderService headerService, RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, RequestBodyDecoder<Part> multipartBodyDecoder) {
-		super(headerService, urlEncodedBodyDecoder, multipartBodyDecoder);
+	public Http2ServerStreamBuilder(RequestHandler<RequestBody, ResponseBody, Void> rootHandler, RequestHandler<Void, ResponseBody, Throwable> errorHandler, HeaderService headerService, RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, RequestBodyDecoder<Part> multipartBodyDecoder) {
+		super(rootHandler, errorHandler, headerService, urlEncodedBodyDecoder, multipartBodyDecoder);
 	}
 
 	public Http2ServerStreamBuilder stream(Http2Stream stream) {
@@ -67,7 +70,7 @@ public class Http2ServerStreamBuilder extends AbstractHttpServerExchangeBuilder<
 		return this;
 	}
 	
-	public Mono<Http2ServerStream<?>> build(ChannelHandlerContext context) {
+	public Mono<Http2ServerStream> build(ChannelHandlerContext context) {
 		Objects.requireNonNull(this.stream, "Missing stream");
 		Objects.requireNonNull(this.headers, "Missing request headers");
 		Objects.requireNonNull(this.headers, "Missing Http2 encoder");
@@ -75,30 +78,18 @@ public class Http2ServerStreamBuilder extends AbstractHttpServerExchangeBuilder<
 		return Mono.fromSupplier(() -> {
 			Http2RequestHeaders requestHeaders = new Http2RequestHeaders(this.headerService, headers);
 			GenericRequestParameters requestParameters = new GenericRequestParameters(requestHeaders.getPath());
-			// TODO Cookie decoder
-			// TODO path parameter decoder
-			
 			Method method = requestHeaders.getMethod();
 			
-			// It is maybe better to find the handler here
+			AbstractRequest request;
 			if(method == Method.POST || method == Method.PUT || method == Method.PATCH) {
-				PostRequest request = new PostRequest(context.channel().remoteAddress(), requestHeaders, requestParameters, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, false);
-				GenericResponse response = new GenericResponse(this.headerService);
-				
-				Http2ServerStream<RequestBody> postServerStream = new Http2ServerStream<>(request, response, this.stream, context, this.encoder);
-				postServerStream.setHandler(this.findHandler(request));
-				
-				return postServerStream;
+				request = new PostRequest(context.channel().remoteAddress(), requestHeaders, requestParameters, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, false);
 			}
 			else {
-				GetRequest request = new GetRequest(context.channel().remoteAddress(), requestHeaders, requestParameters);
-				GenericResponse response = new GenericResponse(this.headerService);
-				
-				Http2ServerStream<Void> getServerStream = new Http2ServerStream<>(request, response, this.stream, context, this.encoder);
-				getServerStream.setHandler(this.findHandler(request));
-				
-				return getServerStream;
+				request = new GetRequest(context.channel().remoteAddress(), requestHeaders, requestParameters);
 			}
+			GenericResponse response = new GenericResponse(this.headerService);
+			
+			return new Http2ServerStream(context, this.rootHandler, this.errorHandler, request, response, this.stream, this.encoder);
 		});
 	}
 }

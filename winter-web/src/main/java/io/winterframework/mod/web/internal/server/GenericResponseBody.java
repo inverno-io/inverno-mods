@@ -15,6 +15,7 @@
  */
 package io.winterframework.mod.web.internal.server;
 
+import java.io.IOException;
 import java.util.function.Consumer;
 
 import org.reactivestreams.Publisher;
@@ -22,7 +23,8 @@ import org.reactivestreams.Publisher;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpConstants;
-import io.winterframework.mod.web.MediaTypes;
+import io.winterframework.mod.commons.resource.MediaTypes;
+import io.winterframework.mod.web.InternalServerErrorException;
 import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.ServerSentEvent;
@@ -46,8 +48,9 @@ public class GenericResponseBody implements ResponseBody {
 	private MonoSink<Flux<ByteBuf>> dataEmitter;
 	private Flux<ByteBuf> data;
 	
-	private GenericDataResponseBody dataBody;
-	private GenericSseResponseBody sseBody;
+	private GenericRawBody dataBody;
+	private GenericSseBody sseBody;
+	private GenericResourceBody resourceBody;
 	
 	private boolean dataSet;
 	
@@ -90,7 +93,8 @@ public class GenericResponseBody implements ResponseBody {
 				if(this.chunkCount == 0) {
 					this.response.getHeaders().size(0);
 				}
-			});
+			})
+			.doOnError(t -> t.printStackTrace());
 		}
 		this.dataSet = true;
 	}
@@ -118,9 +122,9 @@ public class GenericResponseBody implements ResponseBody {
 	}
 
 	@Override
-	public Data data() {
+	public Raw raw() {
 		if(this.dataBody == null) {
-			this.dataBody = new GenericDataResponseBody();
+			this.dataBody = new GenericRawBody();
 		}
 		return this.dataBody;
 	}
@@ -128,21 +132,39 @@ public class GenericResponseBody implements ResponseBody {
 	@Override
 	public Sse<ByteBuf> sse() {
 		if(this.sseBody == null) {
-			this.sseBody = new GenericSseResponseBody();
+			this.sseBody = new GenericSseBody();
 		}
 		return this.sseBody;
 	}
 	
-	private class GenericDataResponseBody implements ResponseBody.Data {
+	@Override
+	public Resource resource() {
+		if(this.resourceBody == null) {
+			this.resourceBody = new GenericResourceBody();
+		}
+		return this.resourceBody;
+	}
+	
+	private class GenericRawBody implements ResponseBody.Raw {
 
 		@Override
-		public Response<Data> data(Publisher<ByteBuf> data) {
+		public Response<Raw> data(Publisher<ByteBuf> data) {
 			GenericResponseBody.this.setData(Flux.from(data));
-			return GenericResponseBody.this.response.<ResponseBody.Data>map(responseBody -> responseBody.data());
+			return GenericResponseBody.this.response.<ResponseBody.Raw>map(responseBody -> responseBody.raw());
+		}
+		
+		@Override
+		public Response<Raw> data(String data) {
+			return this.data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(data, Charsets.UTF_8))));
+		}
+		
+		@Override
+		public Response<Raw> data(byte[] data) {
+			return this.data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(data))));
 		}
 	}
 
-	private class GenericSseResponseBody implements ResponseBody.Sse<ByteBuf> {
+	private class GenericSseBody implements ResponseBody.Sse<ByteBuf> {
 
 		@Override
 		public Response<Sse<ByteBuf>> events(Publisher<ServerSentEvent<ByteBuf>> events) {
@@ -205,6 +227,46 @@ public class GenericResponseBody implements ResponseBody {
 			GenericServerSentEvent sse = new GenericServerSentEvent();
 			configurer.accept(sse);
 			return sse;
+		}
+	}
+	
+	private class GenericResourceBody implements ResponseBody.Resource {
+
+		@Override
+		public Response<Resource> data(io.winterframework.mod.commons.resource.Resource resource) {
+			// Http2 doesn't support FileRegion so we have to read the resource and send it to the response data flux
+			try {
+				GenericResponseBody.this.response.headers(h -> {
+					if(GenericResponseBody.this.response.getHeaders().getSize() == null) {
+						Long size;
+						try {
+							size = resource.size();
+							if(size != null) {
+								h.size(size);
+							}
+						} 
+						catch (IOException e) {
+							// TODO maybe a debug log?
+						}
+					}
+					
+					if(GenericResponseBody.this.response.getHeaders().getContentType() == null) {
+						try {
+							String mediaType = resource.getMediaType();
+							if(mediaType != null) {
+								h.contentType(mediaType);
+							}
+						} catch (IOException e) {
+							// TODO maybe a debug log? 
+						}
+					}
+				});
+				GenericResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable")));
+			} 
+			catch (IOException e) {
+				throw new InternalServerErrorException("Error while reading resource " + resource, e);
+			}
+			return GenericResponseBody.this.response.<ResponseBody.Resource>map(responseBody -> responseBody.resource());
 		}
 	}
 }

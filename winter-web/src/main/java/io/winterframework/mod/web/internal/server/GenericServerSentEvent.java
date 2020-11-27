@@ -6,7 +6,10 @@ package io.winterframework.mod.web.internal.server;
 import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.winterframework.mod.web.ServerSentEvent;
+import io.winterframework.mod.web.internal.Charsets;
+import reactor.core.publisher.Mono;
 
 /**
  * @author jkuhn
@@ -44,6 +47,16 @@ public class GenericServerSentEvent implements ServerSentEvent<ByteBuf>, ServerS
 	public Configurator<ByteBuf> data(Publisher<ByteBuf> data) {
 		this.data = data;
 		return this;
+	}
+	
+	@Override
+	public Configurator<ByteBuf> data(byte[] data) {
+		return this.data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(data))));
+	}
+	
+	@Override
+	public Configurator<ByteBuf> data(String data) {
+		return this.data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(data, Charsets.UTF_8))));
 	}
 
 	@Override

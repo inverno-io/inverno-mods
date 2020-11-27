@@ -25,6 +25,8 @@ import java.util.function.Function;
  */
 public interface Response<A> {
 	
+	boolean isHeadersWritten();
+	
 	Response<A> headers(Consumer<ResponseHeaders> headersConfigurer) throws IllegalStateException;
 	
 	Response<A> cookies(Consumer<ResponseCookies> cookiesConfigurer);
@@ -37,6 +39,11 @@ public interface Response<A> {
 		return new Response<E>() {
 			
 			private Optional<E> body;
+			
+			@Override
+			public boolean isHeadersWritten() {
+				return sourceResponse.isHeadersWritten();
+			}
 
 			@Override
 			public Response<E> headers(Consumer<ResponseHeaders> headersConfigurer) throws IllegalStateException {

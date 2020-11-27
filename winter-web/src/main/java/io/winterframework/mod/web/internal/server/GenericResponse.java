@@ -58,6 +58,11 @@ public class GenericResponse implements Response<ResponseBody> {
 	}
 	
 	@Override
+	public boolean isHeadersWritten() {
+		return this.responseHeaders.isWritten();
+	}
+	
+	@Override
 	public GenericResponse headers(Consumer<ResponseHeaders> headersConfigurer) {
 		headersConfigurer.accept(this.responseHeaders);
 		return this;

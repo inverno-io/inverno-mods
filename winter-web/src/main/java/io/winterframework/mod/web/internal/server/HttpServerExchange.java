@@ -19,9 +19,9 @@ public interface HttpServerExchange {
 	
 	ChannelHandlerContext getContext();
 
-	RequestHandler<RequestBody, Void, ResponseBody> getHandler();
-
-	void setHandler(RequestHandler<RequestBody, Void, ResponseBody> handler);
+	RequestHandler<RequestBody, ResponseBody, Void> getRootHandler();
+	
+	RequestHandler<Void, ResponseBody, Throwable> getErrorHandler();
 
 	Request<RequestBody, Void> request();
 	

@@ -40,5 +40,9 @@ public interface ServerSentEvent<A> {
 		Configurator<A> event(String event);
 		
 		Configurator<A> data(Publisher<A> data);
+		
+		Configurator<A> data(String data);
+		
+		Configurator<A> data(byte[] data);
 	}
 }

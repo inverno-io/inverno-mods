@@ -3,7 +3,6 @@ package io.winterframework.mod.web.internal.server.http2;
 import java.util.function.Supplier;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http2.Http2Connection;
 import io.netty.handler.codec.http2.Http2ConnectionDecoder;
@@ -15,7 +14,6 @@ import io.netty.handler.codec.http2.Http2FrameListener;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
-import io.netty.util.CharsetUtil;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
 import io.winterframework.core.annotation.Bean;
@@ -28,7 +26,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 
 	private Supplier<Http2ServerStreamBuilder> http2ServerStreamBuilderSupplier;
 	
-	private IntObjectMap<Http2ServerStream<?>> serverStreams;
+	private IntObjectMap<Http2ServerStream> serverStreams;
 	
     public Http2ChannelHandler(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings, Supplier<Http2ServerStreamBuilder> http2ServerStreamBuilderSupplier) {
         super(decoder, encoder, initialSettings);
@@ -61,7 +59,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
         // TODO flow control?
         int processed = data.readableBytes() + padding;
         
-        Http2ServerStream<?> serverStream = this.serverStreams.get(streamId);
+        Http2ServerStream serverStream = this.serverStreams.get(streamId);
     	if(serverStream != null) {
     		serverStream.request().data().ifPresent(emitter -> emitter.next(data));
             if(endOfStream) {
@@ -85,32 +83,25 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
     @Override
     public void onHeadersRead(ChannelHandlerContext ctx, int streamId, Http2Headers headers, int padding, boolean endOfStream) throws Http2Exception {
 //        System.out.println("onHeaderReads(2) " + streamId + " - " + endOfStream + " - " + this.hashCode());
-        if(headers.path().toString().equalsIgnoreCase("/favicon.ico")){
-            ByteBuf message = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("NoImages", CharsetUtil.UTF_8));
-            encoder().writeData(ctx,streamId, message, 0, endOfStream, ctx.newPromise());
-        }
-        else {
-        	if(!this.serverStreams.containsKey(streamId)) {
-        		this.http2ServerStreamBuilderSupplier.get()
-    				.stream(this.connection().stream(streamId))
-    				.headers(headers)
-    				.encoder(this.encoder())
-    				.build(ctx)
-    				.flatMap(serverStream -> {
-    					return serverStream.init()
-    						.doOnSubscribe(subscription -> {
-    							this.serverStreams.put(streamId, serverStream);
-    							if(endOfStream) {
-       			                	serverStream.request().data().ifPresent(emitter -> emitter.complete());
-       			                }
-    						});
-    				}).subscribe();
-        	}
-        	else {
-        		// TODO HTTP trailers...
-        	}
-        }
-    	
+    	if(!this.serverStreams.containsKey(streamId)) {
+    		this.http2ServerStreamBuilderSupplier.get()
+				.stream(this.connection().stream(streamId))
+				.headers(headers)
+				.encoder(this.encoder())
+				.build(ctx)
+				.flatMap(serverStream -> serverStream.init()
+					.doOnSubscribe(subscription -> {
+						this.serverStreams.put(streamId, serverStream);
+						if(endOfStream) {
+		                	serverStream.request().data().ifPresent(emitter -> emitter.complete());
+		                }
+					})
+				).subscribe();
+    	}
+    	else {
+    		// TODO HTTP trailers...
+    	}
+
     	/*Http2Headers responseHeaders = new DefaultHttp2Headers();
     	responseHeaders.status("200");
     	encoder().writeHeaders(ctx, streamId, responseHeaders, padding, true, ctx.newPromise());
@@ -134,7 +125,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
     @Override
     public void onRstStreamRead(ChannelHandlerContext ctx, int streamId, long errorCode) throws Http2Exception {
 //        System.out.println("onRstStreamRead()");
-    	Http2ServerStream<?> serverStream = this.serverStreams.remove(streamId);
+    	Http2ServerStream serverStream = this.serverStreams.remove(streamId);
     	if(serverStream != null) {
     		serverStream.dispose();
     	}
@@ -203,7 +194,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	@Override
 	public void onStreamClosed(Http2Stream stream) {
 //		System.out.println("Stream closed");
-		Http2ServerStream<?> serverStream = this.serverStreams.remove(stream.id());
+		Http2ServerStream serverStream = this.serverStreams.remove(stream.id());
     	if(serverStream != null) {
     		serverStream.dispose();
     	}
