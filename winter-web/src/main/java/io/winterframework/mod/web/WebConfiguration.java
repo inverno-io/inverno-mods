@@ -29,6 +29,14 @@ public interface WebConfiguration {
 		return true;
 	}
 	
+	default boolean ssl_enabled() {
+		return false;
+	}
+	
+	default boolean h2c_enabled() {
+		return false;
+	}
+	
 	String key_store();
 
 	String key_store_password();

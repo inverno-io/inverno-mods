@@ -10,7 +10,7 @@ import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.core.annotation.Lazy;
-import io.winterframework.mod.web.internal.server.http11.Http1xChannelHandler;
+import io.winterframework.mod.web.internal.server.http1x.Http1xChannelHandler;
 import io.winterframework.mod.web.internal.server.http2.Http2ChannelHandler;
 
 @Bean(visibility = Visibility.PRIVATE)

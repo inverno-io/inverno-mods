@@ -30,6 +30,7 @@ import io.winterframework.mod.web.Header;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.ResponseHeaders;
+import io.winterframework.mod.web.Status;
 import io.winterframework.mod.web.internal.header.ContentTypeCodec;
 import io.winterframework.mod.web.internal.header.GenericHeader;
 
@@ -57,8 +58,8 @@ public class GenericResponseHeaders implements ResponseHeaders {
 	
 	public GenericResponseHeaders(HeaderService headerService) {
 		this.headerService = headerService;
-		this.status = 200;
-		this.statusHeader = new GenericHeader(Headers.PSEUDO_STATUS, "200");
+		this.status = Status.OK.getCode();
+		this.statusHeader = new GenericHeader(Headers.PSEUDO_STATUS, Integer.toString(this.status));
 		this.headers = new LinkedList<>();
 	}
 	
@@ -134,6 +135,14 @@ public class GenericResponseHeaders implements ResponseHeaders {
 		if(this.written) {
 			throw new IllegalStateException("Headers have been already written");
 		}
+	}
+	
+	@Override
+	public ResponseHeaders status(Status status) {
+		this.requireNonWritten();
+		this.status = status.getCode();
+		this.statusHeader.setHeaderValue(Integer.toString(this.status));
+		return this;
 	}
 	
 	@Override

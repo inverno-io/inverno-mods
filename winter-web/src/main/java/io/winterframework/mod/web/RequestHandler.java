@@ -25,7 +25,7 @@ import java.util.function.Function;
 @FunctionalInterface
 public interface RequestHandler<A, B, C> {
 
-	void handle(Request<A, B> request, Response<C> response);
+	void handle(Request<A, C> request, Response<B> response) throws WebException;
 	
 	default <T, U, V, W extends RequestHandler<T, U, V>> W map(Function<? super RequestHandler<A, B, C>, ? extends W> mapper) {
 		Objects.requireNonNull(mapper);

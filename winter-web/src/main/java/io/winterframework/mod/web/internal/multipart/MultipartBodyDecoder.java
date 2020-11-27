@@ -28,16 +28,16 @@ import io.netty.handler.codec.http.HttpConstants;
 import io.netty.util.CharsetUtil;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
+import io.winterframework.mod.commons.resource.MediaTypes;
 import io.winterframework.mod.web.Header;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
-import io.winterframework.mod.web.MediaTypes;
 import io.winterframework.mod.web.Part;
 import io.winterframework.mod.web.internal.Charsets;
 import io.winterframework.mod.web.internal.RequestBodyDecoder;
 import io.winterframework.mod.web.internal.header.ContentDispositionCodec;
 import io.winterframework.mod.web.internal.header.ContentTypeCodec;
-import io.winterframework.mod.web.internal.header.HeaderServiceImpl;
+import io.winterframework.mod.web.internal.header.GenericHeaderService;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -59,7 +59,7 @@ public class MultipartBodyDecoder implements RequestBodyDecoder<Part> {
 	}
 	
 	public static void main(String[] args) {
-		HeaderService headerService = new HeaderServiceImpl(List.of(new ContentTypeCodec(), new ContentDispositionCodec()));
+		HeaderService headerService = new GenericHeaderService(List.of(new ContentTypeCodec(), new ContentDispositionCodec()));
 		
 		MultipartBodyDecoder decoder = new MultipartBodyDecoder(headerService);
 		

@@ -39,6 +39,14 @@ public interface Request<A, B> {
 	
 	B context();
 	
+	default <E> Request<E, B> mapBody(Function<? super A, ? extends E> bodyMapper) {
+		return this.map(bodyMapper, Function.identity());
+	}
+	
+	default <E> Request<A, E> mapContext(Function<? super B, ? extends E> contextMapper) {
+		return this.map(Function.identity(), contextMapper);
+	}
+	
 	default <E, F> Request<E, F> map(Function<? super A, ? extends E> bodyMapper, Function<? super B, ? extends F> contextMapper) {
 		
 		Request<A, B> sourceRequest = this;

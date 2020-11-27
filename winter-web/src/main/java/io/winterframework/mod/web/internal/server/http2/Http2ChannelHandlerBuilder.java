@@ -8,7 +8,7 @@ import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.winterframework.core.annotation.Lazy;
 
-// TODO we have an issue here: apparently the builder is referenced in the resulting handler => the prototypewrapperbean weak hashmap is never cleaned which is more than problematic...
+// TODO we have an issue here: apparently the builder is referenced somehow in the resulting handler => the prototypewrapperbean weak hashmap is never cleaned which is more than problematic...
 // This is too bad...
 //@Bean(strategy = Strategy.PROTOTYPE, visibility = Visibility.PRIVATE)
 //@Wrapper
@@ -30,6 +30,10 @@ public class Http2ChannelHandlerBuilder extends AbstractHttp2ConnectionHandlerBu
 	@Override
 	protected Http2ChannelHandler build(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings) throws Exception {
 		Http2ChannelHandler handler = new Http2ChannelHandler(decoder, encoder, initialSettings, this.http2ServerStreamBuilderSupplier);
+		
+		// TODO HTTP/2 configuration
+		initialSettings.maxConcurrentStreams(100);
+		
 		this.frameListener(handler);
 		return handler;
 	}

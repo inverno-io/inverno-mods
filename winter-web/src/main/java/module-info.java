@@ -20,7 +20,11 @@ module io.winterframework.mod.web {
 	
 	exports io.winterframework.mod.web;
 	exports io.winterframework.mod.web.app;
+	exports io.winterframework.mod.web.router;
 	
 	// Test
-	exports io.winterframework.mod.web.internal.server;
+//	exports io.winterframework.mod.web.internal.server;
+	
+	// To be externalized
+	exports io.winterframework.mod.commons.resource;
 }

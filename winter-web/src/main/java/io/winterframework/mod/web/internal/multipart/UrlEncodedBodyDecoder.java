@@ -26,16 +26,16 @@ import io.netty.handler.codec.http.HttpConstants;
 import io.netty.util.CharsetUtil;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
+import io.winterframework.mod.commons.resource.MediaTypes;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Headers.ContentType;
-import io.winterframework.mod.web.MediaTypes;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.internal.Charsets;
 import io.winterframework.mod.web.internal.RequestBodyDecoder;
 import io.winterframework.mod.web.internal.header.ContentDispositionCodec;
 import io.winterframework.mod.web.internal.header.ContentTypeCodec;
-import io.winterframework.mod.web.internal.header.HeaderServiceImpl;
+import io.winterframework.mod.web.internal.header.GenericHeaderService;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -59,7 +59,7 @@ public class UrlEncodedBodyDecoder implements RequestBodyDecoder<Parameter> {
 			System.out.println("'" + e.getKey() + "' = " + e.getValue().stream().map(v -> "'" + v + "'").collect(Collectors.joining(", ")));
 		});*/
 		
-		HeaderService headerService = new HeaderServiceImpl(List.of(new ContentTypeCodec(), new ContentDispositionCodec()));
+		HeaderService headerService = new GenericHeaderService(List.of(new ContentTypeCodec(), new ContentDispositionCodec()));
 		Headers.ContentType contentType = headerService.<Headers.ContentType>decode("content-type: application/x-www-form-urlencoded");
 		
 		UrlEncodedBodyDecoder decoder = new UrlEncodedBodyDecoder();

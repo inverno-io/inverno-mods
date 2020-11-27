@@ -1,22 +1,14 @@
 package io.winterframework.mod.web.lab;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
-import io.netty.buffer.Unpooled;
 import io.winterframework.mod.web.Cookie;
-import io.winterframework.mod.web.Header;
-import io.winterframework.mod.web.Request;
 import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.RequestCookies;
 import io.winterframework.mod.web.RequestHandler;
-import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
-import io.winterframework.mod.web.internal.Charsets;
-import reactor.core.publisher.Mono;
 
 public class TestHandler {
 
@@ -115,7 +107,7 @@ public class TestHandler {
 	}
 	
 	// This what the server expect
-	public static void addRequestHandler(RequestHandler<RequestBody, Void, ResponseBody> handler) {
+	public static void addRequestHandler(RequestHandler<RequestBody, ResponseBody, Void> handler) {
 		
 	}
 
@@ -207,19 +199,19 @@ public class TestHandler {
 	
 	public static void bodyMapping() {
 		
-		RequestHandler<Toto, Void, ResponseBody> h1 = (request, response) -> {};
-		RequestHandler<RequestBody, Void, ResponseBody> h11 = h1.map(h -> (request, response) -> h.handle(request.map(TestHandler::decode, Function.identity()), response));
+		RequestHandler<Toto, ResponseBody, Void> h1 = (request, response) -> {};
+		RequestHandler<RequestBody, ResponseBody, Void> h11 = h1.map(h -> (request, response) -> h.handle(request.map(TestHandler::decode, Function.identity()), response));
 		
-		RequestHandler<RequestBody, Void, ResponseEntity<Toto>> h2 = (request, response) -> {
+		RequestHandler<RequestBody, ResponseEntity<Toto>, Void> h2 = (request, response) -> {
 			response.body().value(new Toto("abc"));
 		};
-		RequestHandler<RequestBody, Void, ResponseBody> h22 = h2.map(h -> (request, response) -> h.handle(request, response.map(ResponseEntity::new)));
+		RequestHandler<RequestBody, ResponseBody, Void> h22 = h2.map(h -> (request, response) -> h.handle(request, response.map(ResponseEntity::new)));
 		
 		// Put it together
-		RequestHandler<Toto, Void, ResponseEntity<Tata>> h3 = (request, response) -> {
+		RequestHandler<Toto, ResponseEntity<Tata>, Void> h3 = (request, response) -> {
 			response.body().value(new Tata("Response to: " + request.body().map(toto -> toto.getField()).orElse("")));
 		};
-		RequestHandler<RequestBody, Void, ResponseBody> h33 = h3.map(h -> (request, response) -> h.handle(request.map(TestHandler::decode, Function.identity()), response.map(ResponseEntity::new)));
+		RequestHandler<RequestBody, ResponseBody, Void> h33 = h3.map(h -> (request, response) -> h.handle(request.map(TestHandler::decode, Function.identity()), response.map(ResponseEntity::new)));
 		//h1.map(TestHandler::<Toto>decoderHandler);
 		
 		addRequestHandler(h3.map(h -> (request, response) -> h.handle(request.map(TestHandler::decode, Function.identity()), response.map(ResponseEntity::new))));
@@ -227,10 +219,10 @@ public class TestHandler {
 	
 	public static void requestInterceptor() {
 		// This is what I want to have as a base for my application handler
-		RequestHandler<RequestBody, ApplicationContext, ResponseBody> applicationHandler = (request, response) -> {};
+		RequestHandler<RequestBody, ResponseBody, ApplicationContext> applicationHandler = (request, response) -> {};
 		
 		// This is what is expected by the server
-		RequestHandler<RequestBody, Void, ResponseBody> serverHandler = (request, response) -> {};
+		RequestHandler<RequestBody, ResponseBody, Void> serverHandler = (request, response) -> {};
 		
 		// I want to be able to invoke as many pre/post processors handlers I want in between 
 		// These processors must all have the same input output signatures otherwise we don't have enough flexibility to compose them
@@ -238,7 +230,7 @@ public class TestHandler {
 		
 		// I must got from the applicationHandler to the serverHandler
 		
-		Function<RequestHandler<RequestBody, AttributeContext, ResponseBody>, RequestHandler<RequestBody, Void, ResponseBody>> attributeContextInterceptor = handler -> {
+		Function<RequestHandler<RequestBody, ResponseBody, AttributeContext>, RequestHandler<RequestBody, ResponseBody, Void>> attributeContextInterceptor = handler -> {
 			return (request, response) -> {
 				Function<Void, AttributeContext> attributeContextMapper = noContext -> {
 					return new AttributeContext() {
@@ -281,7 +273,7 @@ public class TestHandler {
 		
 		// TODO this is where we should create something: we can create various kind of interceptors to change the context, request body or response body
 		// An interceptor is typically (request, response, handler) -> {...} where handler is the wrapped handler and return a RequestHandler
-		Function<RequestHandler<RequestBody, AttributeContext, ResponseBody>, RequestHandler<RequestBody, AttributeContext, ResponseBody>> authenticationInterceptor = handler -> {
+		Function<RequestHandler<RequestBody, ResponseBody, AttributeContext>, RequestHandler<RequestBody, ResponseBody, AttributeContext>> authenticationInterceptor = handler -> {
 			return (request, response) -> {
 				request.headers().get("Authorization")
 					.flatMap(authorization -> authenticate(authorization.getHeaderValue()))
@@ -303,7 +295,7 @@ public class TestHandler {
 			};
 		};
 		
-		Function<RequestHandler<RequestBody, AttributeContext, ResponseBody>, RequestHandler<RequestBody, AttributeContext, ResponseBody>> sessionInterceptor = handler -> {
+		Function<RequestHandler<RequestBody, ResponseBody, AttributeContext>, RequestHandler<RequestBody, ResponseBody, AttributeContext>> sessionInterceptor = handler -> {
 			return (request, response) -> {
 				request.cookies().get("SESSION")
 					.map(Cookie::getValue)
@@ -316,7 +308,7 @@ public class TestHandler {
 		// This typically requires an interceptorBuilder of some sort 
 		final String permission = "somePermission"; 
 		
-		Function<RequestHandler<RequestBody, AttributeContext, ResponseBody>, RequestHandler<RequestBody, AttributeContext, ResponseBody>> authorizationInterceptor = handler -> {
+		Function<RequestHandler<RequestBody,ResponseBody, AttributeContext>, RequestHandler<RequestBody, ResponseBody, AttributeContext>> authorizationInterceptor = handler -> {
 			return (request, response) -> {
 				// We should have an interceptor factory 
 				if(request.context().<SecurityContext>getAttribute("SECURITY").hasPermission(permission)) { // This could throw NPE
@@ -330,7 +322,7 @@ public class TestHandler {
 			};
 		};
 		
-		Function<RequestHandler<RequestBody, ApplicationContext, ResponseBody>, RequestHandler<RequestBody, AttributeContext, ResponseBody>> attributeContextToApplicationContext = handler -> {
+		Function<RequestHandler<RequestBody, ResponseBody, ApplicationContext>, RequestHandler<RequestBody, ResponseBody, AttributeContext>> attributeContextToApplicationContext = handler -> {
 			return (request, response) -> {
 				
 				Function<AttributeContext, ApplicationContext> applicationContextMapper = attributeContext -> {

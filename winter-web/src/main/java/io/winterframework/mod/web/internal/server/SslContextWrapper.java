@@ -27,12 +27,13 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import io.winterframework.core.annotation.Bean;
+import io.winterframework.core.annotation.Bean.Strategy;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.web.WebConfiguration;
 import io.winterframework.core.annotation.Init;
 import io.winterframework.core.annotation.Wrapper;
 
-@Bean(visibility = Visibility.PRIVATE)
+@Bean(visibility = Visibility.PRIVATE, strategy = Strategy.PROTOTYPE)
 @Wrapper
 public class SslContextWrapper implements Supplier<SslContext> {
 

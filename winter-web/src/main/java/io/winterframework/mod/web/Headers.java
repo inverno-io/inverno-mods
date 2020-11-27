@@ -21,11 +21,13 @@ public final class Headers {
 
 	public static final String ACCEPT = "accept";
 	public static final String ACCEPT_LANGUAGE = "accept-language";
+	public static final String ALLOW = "allow";
 	public static final String CONTENT_DISPOSITION = "content-disposition";
 	public static final String CONTENT_TYPE = "content-type";
 	public static final String CONTENT_LENGTH = "content-length";
 	public static final String COOKIE = "cookie";
 	public static final String HOST = "host";
+	public static final String RETRY_AFTER = "retry-after";
 	public static final String SET_COOKIE = "set-cookie";
 	public static final String TRANSFER_ENCODING = "transfer-encoding";
 	
@@ -148,15 +150,15 @@ public final class Headers {
 		
 		List<MediaRange> getMediaRanges();
 		
-		default Optional<Headers.ContentType> findBestMatch(Collection<Headers.ContentType> contentTypes) {
+		default Optional<AcceptMatch<MediaRange, Headers.ContentType>> findBestMatch(Collection<Headers.ContentType> contentTypes) {
 			return this.findBestMatch(contentTypes, Function.identity());
 		}
 		
-		default <T> Optional<T> findBestMatch(Collection<T> items, Function<T, Headers.ContentType> contentTypeExtractor) {
+		default <T> Optional<AcceptMatch<MediaRange, T>> findBestMatch(Collection<T> items, Function<T, Headers.ContentType> contentTypeExtractor) {
 			for(MediaRange mediaRange : this.getMediaRanges()) {
 				for(T item : items) {
 					if(mediaRange.matches(contentTypeExtractor.apply(item))) {
-						return Optional.of(item);
+						return Optional.of(new AcceptMatch<>(mediaRange, item));
 					}
 				}
 			}
@@ -286,11 +288,11 @@ public final class Headers {
 				return score;
 			}
 			
-			static Optional<MediaRange> findFirstMatch(Headers.ContentType contentType, List<MediaRange> mediaRanges) {
+			static Optional<AcceptMatch<MediaRange, Headers.ContentType>> findFirstMatch(Headers.ContentType contentType, List<MediaRange> mediaRanges) {
 				return findFirstMatch(contentType, mediaRanges, Function.identity());
 			}
 			
-			static <T> Optional<T> findFirstMatch(Headers.ContentType contentType, Collection<T> items, Function<T, MediaRange> mediaRangeExtractor) {
+			static <T> Optional<AcceptMatch<T, Headers.ContentType>> findFirstMatch(Headers.ContentType contentType, Collection<T> items, Function<T, MediaRange> mediaRangeExtractor) {
 				String requestType = contentType.getType();
 				String requestSubType = contentType.getSubType();
 				Map<String, String> requestParameters = contentType.getParameters();
@@ -324,8 +326,29 @@ public final class Headers {
 							}
 						}
 					})
-					.findFirst();
+					.findFirst()
+					.map(item -> new AcceptMatch<>(item, contentType));
 			}
+		}
+	}
+	
+	public static class AcceptMatch<A, B> {
+		
+		private A source;
+		
+		private B target;
+		
+		private AcceptMatch(A source, B target) {
+			this.source = source;
+			this.target = target;
+		}
+		
+		public A getSource() {
+			return this.source;
+		}
+		
+		public B getTarget() {
+			return this.target;
 		}
 	}
 	
@@ -340,15 +363,15 @@ public final class Headers {
 		
 		List<LanguageRange> getLanguageRanges();
 		
-		default Optional<Headers.AcceptLanguage.LanguageRange> findBestMatch(Collection<Headers.AcceptLanguage.LanguageRange> languageRanges) {
+		default Optional<AcceptMatch<LanguageRange, LanguageRange>> findBestMatch(Collection<Headers.AcceptLanguage.LanguageRange> languageRanges) {
 			return this.findBestMatch(languageRanges, Function.identity());
 		}
 		
-		default <T> Optional<T> findBestMatch(Collection<T> items, Function<T, Headers.AcceptLanguage.LanguageRange> languageRangeExtractor) {
+		default <T> Optional<AcceptMatch<LanguageRange,T>> findBestMatch(Collection<T> items, Function<T, Headers.AcceptLanguage.LanguageRange> languageRangeExtractor) {
 			for(LanguageRange languageRange : this.getLanguageRanges()) {
 				for(T item : items) {
 					if(languageRange.matches(languageRangeExtractor.apply(item))) {
-						return Optional.of(item);
+						return Optional.of(new AcceptMatch<>(languageRange, item));
 					}
 				}
 			}
@@ -447,11 +470,11 @@ public final class Headers {
 				return score;
 			}
 			
-			static Optional<LanguageRange> findFirstMatch(LanguageRange languageRange, List<LanguageRange> languageRanges) {
+			static Optional<AcceptMatch<LanguageRange, LanguageRange>> findFirstMatch(LanguageRange languageRange, List<LanguageRange> languageRanges) {
 				return findFirstMatch(languageRange, languageRanges, Function.identity());
 			}
 			
-			static <T> Optional<T> findFirstMatch(LanguageRange languageRange, Collection<T> items, Function<T, LanguageRange> languageRangeExtractor) {
+			static <T> Optional<AcceptMatch<T, LanguageRange>> findFirstMatch(LanguageRange languageRange, Collection<T> items, Function<T, LanguageRange> languageRangeExtractor) {
 				String requestPrimarySubTag = languageRange.getPrimarySubTag();
 				String requestSecondarySubTag = languageRange.getSecondarySubTag();
 
@@ -477,7 +500,8 @@ public final class Headers {
 							}
 						}
 					})
-					.findFirst();
+					.findFirst()
+					.map(item -> new AcceptMatch<>(item, languageRange));
 			}
 		}
 	}

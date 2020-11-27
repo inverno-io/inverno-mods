@@ -5,13 +5,21 @@ package io.winterframework.mod.web.internal.server.http2;
 
 import java.util.function.Consumer;
 
+import org.reactivestreams.Subscription;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
+import io.winterframework.mod.web.RequestBody;
+import io.winterframework.mod.web.RequestHandler;
+import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.internal.server.AbstractHttpServerExchange;
 import io.winterframework.mod.web.internal.server.AbstractRequest;
 import io.winterframework.mod.web.internal.server.GenericResponse;
@@ -20,15 +28,15 @@ import io.winterframework.mod.web.internal.server.GenericResponse;
  * @author jkuhn
  *
  */
-public class Http2ServerStream<A> extends AbstractHttpServerExchange {
+public class Http2ServerStream extends AbstractHttpServerExchange {
 
-	private Http2Stream stream;
-	private Http2ConnectionEncoder encoder;
+	private final Http2Stream stream;
+	private final Http2ConnectionEncoder encoder;
 	
-	private Consumer<Http2Headers> headersConfigurer;
+	private final Consumer<Http2Headers> headersConfigurer;
 
-	public Http2ServerStream(AbstractRequest request, GenericResponse response, Http2Stream stream, ChannelHandlerContext context, Http2ConnectionEncoder encoder) {
-		super(request, response, context);
+	public Http2ServerStream(ChannelHandlerContext context, RequestHandler<RequestBody, ResponseBody, Void> rootHandler, RequestHandler<Void, ResponseBody, Throwable> errorHandler, AbstractRequest request, GenericResponse response, Http2Stream stream, Http2ConnectionEncoder encoder) {
+		super(context, rootHandler, errorHandler, request, response);
 		this.stream = stream;
 		this.encoder = encoder;
 		
@@ -42,17 +50,35 @@ public class Http2ServerStream<A> extends AbstractHttpServerExchange {
 	}
 	
 	@Override
+	protected void hookOnSubscribe(Subscription subscription) {
+		request(1);
+	}
+	
+	@Override
 	protected void hookOnNext(ByteBuf value) {
 		if(!this.response.getHeaders().isWritten()) {
 			Http2Headers responseHeaders = new DefaultHttp2Headers();
-			/*this.response.getHeaders().getAll().values().stream()
-				.flatMap(List::stream)
-				.forEach(header -> responseHeaders.add(header.getHeaderName(), header.getHeaderValue()));*/
 			this.headersConfigurer.accept(responseHeaders);
 			this.encoder.writeHeaders(this.context, this.stream.id(), responseHeaders, 0, false, this.context.newPromise());
 			this.response.getHeaders().setWritten(true);
 		}
-		this.encoder.writeData(this.context, this.stream.id(), value, 0, false, this.context.newPromise());
+		// TODO implement back pressure with the flow controller
+		/*this.encoder.flowController().listener(new Listener() {
+			
+			@Override
+			public void writabilityChanged(Http2Stream stream) {
+				
+			}
+		});*/
+		
+		ChannelPromise prm = this.context.newPromise();
+		prm.addListener(new GenericFutureListener<Future<Void>>() {
+			public void operationComplete(Future<Void> future) throws Exception {
+				request(1);
+			};
+		});
+		
+		this.encoder.writeData(this.context, this.stream.id(), value, 0, false, prm);
 		this.context.channel().flush();
 	}
 	
@@ -72,9 +98,6 @@ public class Http2ServerStream<A> extends AbstractHttpServerExchange {
 	protected void hookOnComplete() {
 		if(!this.response.getHeaders().isWritten()) {
 			Http2Headers responseHeaders = new DefaultHttp2Headers();
-			/*this.response.getHeaders().getAll().values().stream()
-				.flatMap(List::stream)
-				.forEach(header -> responseHeaders.add(header.getHeaderName(), header.getHeaderValue()));*/
 			this.headersConfigurer.accept(responseHeaders);
 			this.encoder.writeHeaders(this.context, this.stream.id(), responseHeaders, 0, true, this.context.newPromise());
 			this.response.getHeaders().setWritten(true);

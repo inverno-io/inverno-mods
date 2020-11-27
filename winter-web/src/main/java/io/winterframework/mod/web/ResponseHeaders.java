@@ -23,7 +23,7 @@ import java.nio.charset.Charset;
  */
 public interface ResponseHeaders {
 
-	boolean isWritten();
+	ResponseHeaders status(Status status);
 	
 	ResponseHeaders status(int status);
 	

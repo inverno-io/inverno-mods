@@ -16,7 +16,6 @@
 package io.winterframework.mod.commons.converter;
 
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
