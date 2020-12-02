@@ -53,7 +53,29 @@ public class ErrorHandler implements Supplier<ExchangeHandler<Void, ResponseBody
 			.route().produces(MediaTypes.APPLICATION_JSON).error(WebException.class).handler(webExceptionHandler_json())
 			.route().produces(MediaTypes.APPLICATION_JSON).handler(this.throwableHandler_json())
 			.route().produces(MediaTypes.TEXT_HTML).error(WebException.class).handler(this.webExceptionHandler_html())
-			.route().produces(MediaTypes.TEXT_HTML).handler(this.throwableHandler_html());
+			.route().produces(MediaTypes.TEXT_HTML).handler(this.throwableHandler_html())
+			.route().error(WebException.class).handler(this.webExceptionHandler())
+			.route().handler(this.throwableHandler());
+	}
+	
+	private ErrorExchangeHandler<ResponseBody, WebException> webExceptionHandler() {
+		return exchange -> {
+			if(exchange.getError() instanceof MethodNotAllowedException) {
+				exchange.response().headers(headers -> headers.add(Headers.ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
+			}
+			else if(exchange.getError() instanceof ServiceUnavailableException) {
+				((ServiceUnavailableException)exchange.getError()).getRetryAfter().ifPresent(retryAfter -> {
+					exchange.response().headers(headers -> headers.add(Headers.RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
+				});
+			}
+			exchange.response().headers(h -> h.status(exchange.getError().getStatusCode())).body().empty();
+		};
+	}
+	
+	private ErrorExchangeHandler<ResponseBody, Throwable> throwableHandler() {
+		return exchange -> {
+			this.webExceptionHandler().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
+		};
 	}
 	
 	private ErrorExchangeHandler<ResponseBody, WebException> webExceptionHandler_json() {
@@ -65,8 +87,31 @@ public class ErrorHandler implements Supplier<ExchangeHandler<Void, ResponseBody
 			error.append("{");
 			error.append("\"status\":\"").append(Integer.toString(exchange.getError().getStatusCode())).append("\",");
 			error.append("\"path\":\"").append(exchange.request().headers().getPath()).append("\",");
-			error.append("\"error\":\"").append(exchange.getError().getStatusReasonPhrase()).append("\",");
-			error.append("\"message\":\"").append(exchange.getError().getMessage()).append("\",");
+			error.append("\"error\":\"").append(exchange.getError().getStatusReasonPhrase()).append("\"");
+			
+			if(exchange.getError() instanceof MethodNotAllowedException) {
+				exchange.response().headers(headers -> headers.add(Headers.ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
+				error.append(",\"allowedMethods\":[");
+				error.append(((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(method -> "\"" + method + "\"").collect(Collectors.joining(", ")));
+				error.append("]");
+			}
+			else if(exchange.getError() instanceof NotAcceptableException) {
+				((NotAcceptableException)exchange.getError()).getAcceptableMediaTypes().ifPresent(acceptableMediaTypes -> {
+					error.append(",\"accept\":[");
+					error.append(acceptableMediaTypes.stream().map(acceptableMediaType -> "\"" + acceptableMediaType + "\"").collect(Collectors.joining(", ")));
+					error.append("]");
+				});
+			}
+			else if(exchange.getError() instanceof ServiceUnavailableException) {
+				((ServiceUnavailableException)exchange.getError()).getRetryAfter().ifPresent(retryAfter -> {
+					exchange.response().headers(headers -> headers.add(Headers.RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
+					error.append(",\"retryAfter\":\"").append(retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)).append("\"");
+				});
+			}
+			
+			if(exchange.getError().getMessage() != null) {
+				error.append(",\"message\":\"").append(exchange.getError().getMessage()).append("\"");
+			}
 			error.append("}");
 			
 			exchange.response().headers(h -> h.status(exchange.getError().getStatusCode()).contentType(MediaTypes.APPLICATION_JSON)).body().raw().data(errorOut.toByteArray());
@@ -100,7 +145,7 @@ public class ErrorHandler implements Supplier<ExchangeHandler<Void, ResponseBody
 			else if(exchange.getError() instanceof NotAcceptableException) {
 				((NotAcceptableException)exchange.getError()).getAcceptableMediaTypes().ifPresent(acceptableMediaTypes -> {
 					error.append("<p>");
-					error.append("Acceptable Content Types:");
+					error.append("Accept:");
 					error.append("<ul>");
 					acceptableMediaTypes.stream().forEach(acceptableMediaType -> error.append("<li>").append(acceptableMediaType).append("</li>"));
 					error.append("</ul>");
