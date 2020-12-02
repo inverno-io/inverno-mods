@@ -45,9 +45,9 @@ public class GenericWebRouteExtractor implements WebRouteExtractor<RequestBody, 
 	
 	private Method method;
 	
-	private String consumes;
+	private String consume;
 	
-	private String produces;
+	private String produce;
 	
 	private String language;
 	
@@ -98,22 +98,22 @@ public class GenericWebRouteExtractor implements WebRouteExtractor<RequestBody, 
 		return null;
 	}
 	
-	private String getConsumes() {
-		if(this.consumes != null) {
-			return this.consumes;
+	private String getConsume() {
+		if(this.consume != null) {
+			return this.consume;
 		}
 		else if(parent != null) {
-			return this.parent.getConsumes();
+			return this.parent.getConsume();
 		}
 		return null;
 	}
 	
-	private String getProduces() {
-		if(this.produces != null) {
-			return this.produces;
+	private String getProduce() {
+		if(this.produce != null) {
+			return this.produce;
 		}
 		else if(parent != null) {
-			return this.parent.getProduces();
+			return this.parent.getProduce();
 		}
 		return null;
 	}
@@ -167,14 +167,14 @@ public class GenericWebRouteExtractor implements WebRouteExtractor<RequestBody, 
 	@Override
 	public GenericWebRouteExtractor consumes(String mediaType) {
 		GenericWebRouteExtractor childExtractor = new GenericWebRouteExtractor(this);
-		childExtractor.consumes = mediaType;
+		childExtractor.consume = mediaType;
 		return childExtractor;
 	}
 
 	@Override
 	public GenericWebRouteExtractor produces(String mediaType) {
 		GenericWebRouteExtractor childExtractor = new GenericWebRouteExtractor(this);
-		childExtractor.produces = mediaType;
+		childExtractor.produce = mediaType;
 		return childExtractor;
 	}
 
@@ -193,15 +193,16 @@ public class GenericWebRouteExtractor implements WebRouteExtractor<RequestBody, 
 	}
 
 	@Override
-	public void handler(ExchangeHandler<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> handler) {
+	public void handler(ExchangeHandler<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> handler, boolean disabled) {
 		if(handler != null) {
 			GenericWebRoute route = new GenericWebRoute(this.getRouter());
+			route.setDisabled(disabled);
 			
 			String path = this.getPath();
 			PathPattern pathPattern = this.getPathPattern();
 			Method method = this.getMethod();
-			String consumes = this.getConsumes();
-			String produces = this.getProduces();
+			String consume = this.getConsume();
+			String produce = this.getProduce();
 			String language = this.getLanguage();
 			
 			if(path != null) {
@@ -212,16 +213,16 @@ public class GenericWebRouteExtractor implements WebRouteExtractor<RequestBody, 
 				route.setPathPattern(pathPattern);
 			}
 			if(method != null) {
-				route.setMethods(Set.of(method));
+				route.setMethod(method);
 			}
-			if(consumes != null) {
-				route.setConsumes(Set.of(consumes));
+			if(consume != null) {
+				route.setConsume(consume);
 			}
-			if(produces != null) {
-				route.setProduces(Set.of(produces));
+			if(produce != null) {
+				route.setProduce(produce);
 			}
 			if(language != null) {
-				route.setLanguages(Set.of(language));
+				route.setLanguage(language);
 			}
 			route.setHandler(handler);
 			this.addRoute(route);

@@ -58,13 +58,15 @@ abstract class RoutingLink<A, B, C extends Exchange<A, B>, D extends RoutingLink
 		}
 	}
 	
-	public abstract D addRoute(E route);
+	public abstract D setRoute(E route);
+
+	public abstract void enableRoute(E route);
+	
+	public abstract void disableRoute(E route);
 	
 	public abstract void removeRoute(E route);
 	
 	public abstract boolean hasRoute();
 	
-//	public abstract void enableRoute(E route);
-	
-//	public abstract void disableRoute(E route);
+	public abstract boolean isDisabled();
 }

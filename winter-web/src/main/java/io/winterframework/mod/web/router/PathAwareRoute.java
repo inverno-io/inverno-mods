@@ -38,6 +38,4 @@ public interface PathAwareRoute<A, B, C extends Exchange<A, B>> extends Route<A,
 	String getPath();
 	
 	PathPattern getPathPattern();
-	
-	boolean isMatchTrailingSlash();
 }

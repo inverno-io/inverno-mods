@@ -38,7 +38,7 @@ public class GenericErrorRouteExtractor implements ErrorRouteExtractor {
 	
 	private Class<? extends Throwable> error;
 	
-	private String produces;
+	private String produce;
 	
 	private String language;
 	
@@ -69,12 +69,12 @@ public class GenericErrorRouteExtractor implements ErrorRouteExtractor {
 		return null;
 	}
 	
-	private String getProduces() {
-		if(this.produces != null) {
-			return this.produces;
+	private String getProduce() {
+		if(this.produce != null) {
+			return this.produce;
 		}
 		else if(parent != null) {
-			return this.parent.getProduces();
+			return this.parent.getProduce();
 		}
 		return null;
 	}
@@ -121,7 +121,7 @@ public class GenericErrorRouteExtractor implements ErrorRouteExtractor {
 	@Override
 	public ErrorRouteExtractor produces(String mediaType) {
 		GenericErrorRouteExtractor childExtractor = new GenericErrorRouteExtractor(this);
-		childExtractor.produces = mediaType;
+		childExtractor.produce = mediaType;
 		return childExtractor;
 	}
 
@@ -133,22 +133,23 @@ public class GenericErrorRouteExtractor implements ErrorRouteExtractor {
 	}
 
 	@Override
-	public void handler(ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> handler) {
+	public void handler(ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> handler, boolean disabled) {
 		if(handler != null) {
 			GenericErrorRoute route = new GenericErrorRoute(this.getRouter());
+			route.setDisabled(disabled);
 	
 			Class<? extends Throwable> error = this.getError();
-			String produces = this.getProduces();
+			String produce = this.getProduce();
 			String language = this.getLanguage();
 			
 			if(error != null) {
-				route.setErrors(Set.of(error));
+				route.setError(error);
 			}
-			if(produces != null) {
-				route.setProduces(Set.of(produces));
+			if(produce != null) {
+				route.setProduce(produce);
 			}
 			if(language != null) {
-				route.setLanguages(Set.of(language));
+				route.setLanguage(language);
 			}
 			route.setHandler(handler);
 			this.addRoute(route);

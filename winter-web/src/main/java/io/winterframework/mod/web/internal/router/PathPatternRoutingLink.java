@@ -43,20 +43,50 @@ class PathPatternRoutingLink<A, B, C extends Exchange<A, B>, D extends PathAware
 	}
 
 	@Override
-	public PathPatternRoutingLink<A, B, C, D> addRoute(D route) {
+	public PathPatternRoutingLink<A, B, C, D> setRoute(D route) {
 		PathAwareRoute.PathPattern pathPattern = route.getPathPattern();
 		if(pathPattern != null) {
 			if(this.handlers.containsKey(pathPattern)) {
-				this.handlers.get(pathPattern).addRoute(route);
+				this.handlers.get(pathPattern).setRoute(route);
 			}
 			else {
-				this.handlers.put(pathPattern, this.nextLink.createNextLink().addRoute(route));
+				this.handlers.put(pathPattern, this.nextLink.createNextLink().setRoute(route));
 			}
 		}
 		else {
-			this.nextLink.addRoute(route);
+			this.nextLink.setRoute(route);
 		}
 		return this;
+	}
+	
+	@Override
+	public void enableRoute(D route) {
+		PathAwareRoute.PathPattern pathPattern = route.getPathPattern();
+		if(pathPattern != null) {
+			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(pathPattern);
+			if(handler != null) {
+				handler.enableRoute(route);
+			}
+			// route doesn't exist so let's do nothing
+		}
+		else {
+			this.nextLink.enableRoute(route);
+		}
+	}
+	
+	@Override
+	public void disableRoute(D route) {
+		PathAwareRoute.PathPattern pathPattern = route.getPathPattern();
+		if(pathPattern != null) {
+			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(pathPattern);
+			if(handler != null) {
+				handler.disableRoute(route);
+			}
+			// route doesn't exist so let's do nothing
+		}
+		else {
+			this.nextLink.disableRoute(route);
+		}
 	}
 	
 	@Override
@@ -81,6 +111,11 @@ class PathPatternRoutingLink<A, B, C extends Exchange<A, B>, D extends PathAware
 	@Override
 	public boolean hasRoute() {
 		return !this.handlers.isEmpty() || this.nextLink.hasRoute();
+	}
+	
+	@Override
+	public boolean isDisabled() {
+		return this.handlers.values().stream().allMatch(RoutingLink::isDisabled) && this.nextLink.isDisabled();
 	}
 	
 	@SuppressWarnings("unchecked")

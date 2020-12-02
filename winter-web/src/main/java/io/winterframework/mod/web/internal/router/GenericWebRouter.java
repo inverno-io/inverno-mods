@@ -43,7 +43,6 @@ public class GenericWebRouter implements WebRouter<RequestBody, ResponseBody, We
 		AcceptLanguageCodec acceptLanguageCodec = new AcceptLanguageCodec(false);
 		
 		this.firstLink = new PathRoutingLink<>();
-		
 		this.firstLink
 			.connect(new PathPatternRoutingLink<>())
 			.connect(new MethodRoutingLink<>())
@@ -53,8 +52,16 @@ public class GenericWebRouter implements WebRouter<RequestBody, ResponseBody, We
 			.connect(new HandlerRoutingLink<>());
 	}
 
-	void addRoute(WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> route) {
-		this.firstLink.addRoute(route);
+	void setRoute(WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> route) {
+		this.firstLink.setRoute(route);
+	}
+	
+	void enableRoute(WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> route) {
+		this.firstLink.enableRoute(route);
+	}
+	
+	void disableRoute(WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> route) {
+		this.firstLink.disableRoute(route);
 	}
 
 	void removeRoute(WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> route) {

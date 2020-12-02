@@ -15,8 +15,6 @@
  */
 package io.winterframework.mod.web.router;
 
-import java.util.Set;
-
 import io.winterframework.mod.web.Exchange;
 
 /**
@@ -25,7 +23,7 @@ import io.winterframework.mod.web.Exchange;
  */
 public interface AcceptAwareRoute<A, B, C extends Exchange<A, B>> extends Route<A, B, C> {
 
-	Set<String> getProduces();
+	String getProduce();
 	
-	Set<String> getLanguages();
+	String getLanguage();
 }

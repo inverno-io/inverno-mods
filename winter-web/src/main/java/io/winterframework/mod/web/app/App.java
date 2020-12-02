@@ -52,7 +52,7 @@ public class App {
 	public static void main(String[] args) throws IllegalStateException, IOException {
 		Application.with(new Web.Builder()
 			.setAppConfigurationsource(new ApplicationConfigurationSource(App.class.getModule(), args))
-			.setRootHandler(configuration3())
+			.setRootHandler(configuration0())
 //			.setErrorHandler(error())
 		).run();
 	}
@@ -97,7 +97,7 @@ public class App {
 	}
 	
 	private static WebRouter<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> configuration3() {
-		return Router.web()
+		WebRouter<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> router = Router.web()
 			.route().path("/toto", true).method(Method.GET).produces("application/json").handler(
 				exchange -> {
 					exchange.response().headers(headers -> headers.contentType("application/json")).body().raw().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("{\"toto\":5}", Charsets.DEFAULT))));
@@ -113,11 +113,24 @@ public class App {
 					exchange.response().headers(headers -> headers.contentType("application/json")).body().raw().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("{\"toto\":5}", Charsets.DEFAULT))));
 				}
 			)
+			.route().path("/tutu", true).method(Method.GET).handler(
+					exchange -> {
+					exchange.response().headers(headers -> headers.contentType("application/json")).body().raw().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("{\"toto\":5}", Charsets.DEFAULT))));
+				}
+			)
 			.route().path("/error", true).method(Method.GET).handler(
 					exchange -> {
 					throw new ServiceUnavailableException(120);
 				}
 			);
+		
+//		Set<WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>>> findRoutes = router.route().path("/toto", true).findRoutes();
+		
+//		router.route().path("/toto", true).disable();
+		
+//		Set<WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>>> routes = router.getRoutes();
+		
+		return router;
 	}
 	
 	private static WebRouter<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> configuration4() {

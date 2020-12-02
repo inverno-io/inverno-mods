@@ -13,16 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.web.router;
+package io.winterframework.mod.web.internal.router;
 
-import io.winterframework.mod.web.Exchange;
-import io.winterframework.mod.web.Method;
+import io.winterframework.mod.web.NotFoundException;
 
 /**
  * @author jkuhn
  *
  */
-public interface MethodAwareRoute<A, B, C extends Exchange<A, B>> extends Route<A, B, C> {
+public class RouteNotFoundException extends NotFoundException {
 
-	Method getMethod();
+	private static final long serialVersionUID = 5440809816503439777L;
+
+	public RouteNotFoundException() {
+	}
+
+	public RouteNotFoundException(String message) {
+		super(message);
+	}
+
+	public RouteNotFoundException(Throwable cause) {
+		super(cause);
+	}
+
+	public RouteNotFoundException(String message, Throwable cause) {
+		super(message, cause);
+	}
 }

@@ -19,16 +19,14 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.Headers;
-import io.winterframework.mod.web.NotFoundException;
-import io.winterframework.mod.web.WebException;
 import io.winterframework.mod.web.Headers.AcceptLanguage.LanguageRange;
 import io.winterframework.mod.web.Headers.AcceptMatch;
+import io.winterframework.mod.web.WebException;
 import io.winterframework.mod.web.internal.header.AcceptLanguageCodec;
 import io.winterframework.mod.web.router.AcceptAwareRoute;
 
@@ -49,39 +47,63 @@ class LanguageRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 	}
 
 	@Override
-	public LanguageRoutingLink<A, B, C, D> addRoute(D route) {
-		Set<String> languages = route.getLanguages();
-		if(languages != null && !languages.isEmpty()) {
-			languages.stream()
-				.map(language -> this.acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, language).getLanguageRanges().get(0)) // TODO what happens if I have no range? if I have more than one?
-				.forEach(languageRange -> {
-					if(languageRange.getLanguageTag().equals("*")) {
-						this.nextLink.addRoute(route);
-					}
-					else if(this.handlers.containsKey(languageRange)) {
-						this.handlers.get(languageRange).addRoute(route);
-					}
-					else {
-						this.handlers.put(languageRange, this.nextLink.createNextLink().addRoute(route));
-					}
-				});
+	public LanguageRoutingLink<A, B, C, D> setRoute(D route) {
+		String language = route.getLanguage();
+		if(language != null) {
+			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
+			if(languageRange.getLanguageTag().equals("*")) {
+				this.nextLink.setRoute(route);
+			}
+			else if(this.handlers.containsKey(languageRange)) {
+				this.handlers.get(languageRange).setRoute(route);
+			}
+			else {
+				this.handlers.put(languageRange, this.nextLink.createNextLink().setRoute(route));
+			}
 			this.handlers = this.handlers.entrySet().stream().sorted(Comparator.comparing(Entry::getKey, Headers.AcceptLanguage.LanguageRange.COMPARATOR)).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a,b) -> a, LinkedHashMap::new));
 		}
 		else {
-			this.nextLink.addRoute(route);
+			this.nextLink.setRoute(route);
 		}
 		return this;
 	}
 	
 	@Override
-	public void removeRoute(D route) {
-		Set<String> languages = route.getLanguages();
-		if(languages != null && !languages.isEmpty()) {
-			// We can only remove single route
-			if(languages.size() > 1) {
-				throw new IllegalArgumentException("Multiple accept languages found in route, can only remove a single route");
+	public void enableRoute(D route) {
+		String language = route.getLanguage();
+		if(language != null) {
+			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
+			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(languageRange);
+			if(handler != null) {
+				handler.enableRoute(route);
 			}
-			String language = languages.iterator().next();
+			// route doesn't exist so let's do nothing
+		}
+		else {
+			this.nextLink.enableRoute(route);
+		}
+	}
+	
+	@Override
+	public void disableRoute(D route) {
+		String language = route.getLanguage();
+		if(language != null) {
+			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
+			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(languageRange);
+			if(handler != null) {
+				handler.disableRoute(route);
+			}
+			// route doesn't exist so let's do nothing
+		}
+		else {
+			this.nextLink.disableRoute(route);
+		}
+	}
+	
+	@Override
+	public void removeRoute(D route) {
+		String language = route.getLanguage();
+		if(language != null) {
 			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
 			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(languageRange);
 			if(handler != null) {
@@ -101,6 +123,11 @@ class LanguageRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 	@Override
 	public boolean hasRoute() {
 		return !this.handlers.isEmpty() || this.nextLink.hasRoute();
+	}
+	
+	@Override
+	public boolean isDisabled() {
+		return this.handlers.values().stream().allMatch(RoutingLink::isDisabled) && this.nextLink.isDisabled();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -131,13 +158,13 @@ class LanguageRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 						this.nextLink.handle(exchange);
 						return;
 					}
-					catch(NotFoundException e) {
+					catch(RouteNotFoundException | DisabledRouteException e1) {
 						// There's no default handler defined, we can take the best match
 						try {
 							bestMatch.getTarget().getValue().handle(exchange);
 							return;
 						} 
-						catch (NotFoundException e1) {
+						catch (RouteNotFoundException | DisabledRouteException e2) {
 							// continue with the next best match
 							continue;
 						}
@@ -148,37 +175,19 @@ class LanguageRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 						bestMatch.getTarget().getValue().handle(exchange);
 						return;
 					} 
-					catch (WebException e) {
+					catch (RouteNotFoundException | DisabledRouteException e) {
 						// continue with the next best match
 						continue;
 					}
 				}
 			}
+			// Here we can possibly invoke the next link twice but in that case a
+			// RouteNotFoundException or DisabledRouteException is thrown so there shouldn't
+			// be complex processing involved.
 			this.nextLink.handle(exchange);
-			
-//			Headers.AcceptLanguage.merge(exchange.request().headers().<Headers.AcceptLanguage>getAll(Headers.ACCEPT_LANGUAGE))
-//				.orElse(this.acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, "*"))
-//				.findBestMatch(this.handlers.entrySet(), Entry::getKey)
-//				.ifPresentOrElse(
-//					bestMatch -> {
-//						if(bestMatch.getSource().getLanguageTag().equals("*")) {
-//							try {
-//								this.nextLink.handle(exchange);
-//							}
-//							catch(NotFoundException e) {
-//								// There's no default handler defined
-//								bestMatch.getTarget().getValue().handle(exchange);
-//							}
-//						}
-//						else {
-//							bestMatch.getTarget().getValue().handle(exchange);
-//						}
-//					},
-//					() -> {
-//						this.nextLink.handle(exchange);
-//					});
 		}
 		else {
+			// Unlike produces we have to try our best to provide a response even if it doesn't match the accept-language header
 			this.nextLink.handle(exchange);
 		}
 	}

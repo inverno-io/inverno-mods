@@ -15,9 +15,6 @@
  */
 package io.winterframework.mod.web.internal.router;
 
-import java.util.Collections;
-import java.util.Set;
-
 import io.winterframework.mod.web.ErrorExchange;
 import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.ResponseBody;
@@ -29,15 +26,17 @@ import io.winterframework.mod.web.router.ErrorRoute;
  */
 public class GenericErrorRoute implements ErrorRoute {
 
-	protected GenericErrorRouter router;
+	private GenericErrorRouter router;
+	
+	private boolean disabled;
 
-	protected Set<Class<? extends Throwable>> errors;
+	private Class<? extends Throwable> error;
 	
-	protected Set<String> produces;
+	private String produce;
 	
-	protected Set<String> languages;
+	private String language;
 	
-	protected ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> handler;
+	private ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> handler;
 	
 	public GenericErrorRoute(GenericErrorRouter router) {
 		this.router = router;
@@ -45,12 +44,23 @@ public class GenericErrorRoute implements ErrorRoute {
 
 	@Override
 	public void enable() {
-		// TODO
+		this.router.enableRoute(this);
+		this.disabled = false;
 	}
 
 	@Override
 	public void disable() {
-		// TODO
+		this.router.disableRoute(this);
+		this.disabled = true;
+	}
+	
+	@Override
+	public boolean isDisabled() {
+		return this.disabled;
+	}
+	
+	public void setDisabled(boolean disabled) {
+		this.disabled = disabled;
 	}
 
 	@Override
@@ -63,30 +73,30 @@ public class GenericErrorRoute implements ErrorRoute {
 	}
 	
 	@Override
-	public Set<Class<? extends Throwable>> getErrors() {
-		return this.errors != null ? Collections.unmodifiableSet(this.errors) : Set.of();
+	public Class<? extends Throwable> getError() {
+		return this.error;
 	}
 	
-	public void setErrors(Set<Class<? extends Throwable>> errors) {
-		this.errors = errors;
-	}
-	
-	@Override
-	public Set<String> getLanguages() {
-		return this.languages != null ? Collections.unmodifiableSet(this.languages) : Set.of();
-	}
-	
-	public void setLanguages(Set<String> languages) {
-		this.languages = languages;
+	public void setError(Class<? extends Throwable> error) {
+		this.error = error;
 	}
 	
 	@Override
-	public Set<String> getProduces() {
-		return this.produces != null ? Collections.unmodifiableSet(this.produces) : Set.of();
+	public String getLanguage() {
+		return this.language;
 	}
 	
-	public void setProduces(Set<String> produces) {
-		this.produces = produces;
+	public void setLanguage(String language) {
+		this.language = language;
+	}
+	
+	@Override
+	public String getProduce() {
+		return this.produce;
+	}
+	
+	public void setProduce(String produce) {
+		this.produce = produce;
 	}
 	
 	@Override

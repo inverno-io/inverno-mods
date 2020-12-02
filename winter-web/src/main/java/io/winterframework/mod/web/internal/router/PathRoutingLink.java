@@ -39,34 +39,54 @@ class PathRoutingLink<A, B, C extends Exchange<A, B>, D extends PathAwareRoute<A
 	}
 	
 	@Override
-	public PathRoutingLink<A, B, C, D> addRoute(D route) {
+	public PathRoutingLink<A, B, C, D> setRoute(D route) {
 		String path = route.getPath();
 		if(path != null && route.getPathPattern() == null) {
 			// Exact match
-			
-			this.addRoute(path, route);
-			if(route.isMatchTrailingSlash()) {
-				// We want to match either ... or .../
-				if(path.endsWith("/")) {
-					this.addRoute(path.substring(0, path.length() - 1), route);
-				}
-				else {
-					this.addRoute(path + "/", route);
-				}
-			}
+			this.setRoute(path, route);
 		}
 		else {
-			this.nextLink.addRoute(route);
+			this.nextLink.setRoute(route);
 		}
 		return this;
 	}
 	
-	private void addRoute(String path, D route) {
+	private void setRoute(String path, D route) {
 		if(this.handlers.containsKey(path)) {
-			this.handlers.get(path).addRoute(route);
+			this.handlers.get(path).setRoute(route);
 		}
 		else {
-			this.handlers.put(path, this.nextLink.createNextLink().addRoute(route));
+			this.handlers.put(path, this.nextLink.createNextLink().setRoute(route));
+		}
+	}
+	
+	@Override
+	public void enableRoute(D route) {
+		String path = route.getPath();
+		if(path != null && route.getPathPattern() == null) {
+			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(path);
+			if(handler != null) {
+				handler.enableRoute(route);
+			}
+			// route doesn't exist so let's do nothing
+		}
+		else {
+			this.nextLink.enableRoute(route);
+		}
+	}
+	
+	@Override
+	public void disableRoute(D route) {
+		String path = route.getPath();
+		if(path != null && route.getPathPattern() == null) {
+			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(path);
+			if(handler != null) {
+				handler.disableRoute(route);
+			}
+			// route doesn't exist so let's do nothing
+		}
+		else {
+			this.nextLink.disableRoute(route);
 		}
 	}
 	
@@ -92,6 +112,11 @@ class PathRoutingLink<A, B, C extends Exchange<A, B>, D extends PathAwareRoute<A
 	@Override
 	public boolean hasRoute() {
 		return !this.handlers.isEmpty() || this.nextLink.hasRoute();
+	}
+	
+	@Override
+	public boolean isDisabled() {
+		return this.handlers.values().stream().allMatch(RoutingLink::isDisabled) && this.nextLink.isDisabled();
 	}
 	
 	@SuppressWarnings("unchecked")

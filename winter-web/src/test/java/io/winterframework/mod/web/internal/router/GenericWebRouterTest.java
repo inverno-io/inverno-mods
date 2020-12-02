@@ -2,6 +2,7 @@ package io.winterframework.mod.web.internal.router;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -12,13 +13,14 @@ import io.winterframework.mod.commons.resource.MediaTypes;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.ResponseBody;
+import io.winterframework.mod.web.router.Route;
 import io.winterframework.mod.web.router.WebExchange;
 import io.winterframework.mod.web.router.WebRoute;
 
-class GenericWebRouterTest {
+public class GenericWebRouterTest {
 
 	@Test
-	void testGetRoutes() {
+	public void testGetRoutes() {
 		GenericWebRouter router = new GenericWebRouter();
 		router
 			.route().consumes(MediaTypes.APPLICATION_JSON).consumes(MediaTypes.TEXT_HTML).handler(exhange -> {})
@@ -47,32 +49,32 @@ class GenericWebRouterTest {
 		Assertions.assertEquals(12, routes.size());
 		
 		GenericWebRoute route1 = new GenericWebRoute(router);
-		route1.setConsumes(Set.of(MediaTypes.APPLICATION_JSON));
+		route1.setConsume(MediaTypes.APPLICATION_JSON);
 		
 		GenericWebRoute route2 = new GenericWebRoute(router);
-		route2.setConsumes(Set.of(MediaTypes.TEXT_HTML));
+		route2.setConsume(MediaTypes.TEXT_HTML);
 		
 		GenericWebRoute route3 = new GenericWebRoute(router);
-		route3.setMethods(Set.of(Method.GET));
-		route3.setLanguages(Set.of("fr-FR"));
+		route3.setMethod(Method.GET);
+		route3.setLanguage("fr-FR");
 		
 		GenericWebRoute route4 = new GenericWebRoute(router);
-		route4.setMethods(Set.of(Method.GET));
-		route4.setLanguages(Set.of("en-US"));
+		route4.setMethod(Method.GET);
+		route4.setLanguage("en-US");
 		
 		GenericWebRoute route5 = new GenericWebRoute(router);
-		route5.setMethods(Set.of(Method.POST));
-		route5.setLanguages(Set.of("fr-FR"));
+		route5.setMethod(Method.POST);
+		route5.setLanguage("fr-FR");
 		
 		GenericWebRoute route6 = new GenericWebRoute(router);
-		route6.setMethods(Set.of(Method.POST));
-		route6.setLanguages(Set.of("en-US"));
+		route6.setMethod(Method.POST);
+		route6.setLanguage("en-US");
 		
 		GenericWebRoute route7 = new GenericWebRoute(router);
-		route7.setProduces(Set.of(MediaTypes.APPLICATION_JSON));
+		route7.setProduce(MediaTypes.APPLICATION_JSON);
 		
 		GenericWebRoute route8 = new GenericWebRoute(router);
-		route8.setProduces(Set.of(MediaTypes.TEXT_HTML));
+		route8.setProduce(MediaTypes.TEXT_HTML);
 		
 		GenericWebRoute route9 = new GenericWebRoute(router);
 		route9.setPath("/hello");
@@ -100,7 +102,7 @@ class GenericWebRouterTest {
 	}
 	
 	@Test
-	void testFindRoutes() {
+	public void testFindRoutes() {
 		GenericWebRouter router = new GenericWebRouter();
 		router
 			.route().consumes(MediaTypes.APPLICATION_JSON).consumes(MediaTypes.TEXT_HTML).handler(exhange -> {})
@@ -112,15 +114,15 @@ class GenericWebRouterTest {
 			.route().path("/hello/{param1}/{param2:[a-b]*}").handler(exchange -> {});
 		
 		GenericWebRoute route1 = new GenericWebRoute(router);
-		route1.setConsumes(Set.of(MediaTypes.APPLICATION_JSON));
+		route1.setConsume(MediaTypes.APPLICATION_JSON);
 		
 		GenericWebRoute route2 = new GenericWebRoute(router);
-		route2.setMethods(Set.of(Method.GET));
-		route2.setLanguages(Set.of("fr-FR"));
+		route2.setMethod(Method.GET);
+		route2.setLanguage("fr-FR");
 		
 		GenericWebRoute route3 = new GenericWebRoute(router);
-		route3.setMethods(Set.of(Method.POST));
-		route3.setLanguages(Set.of("fr-FR"));
+		route3.setMethod(Method.POST);
+		route3.setLanguage("fr-FR");
 		
 		Set<WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>>> routes = router.route().language("fr-FR").findRoutes();
 		Assertions.assertEquals(2, routes.size());
@@ -139,7 +141,7 @@ class GenericWebRouterTest {
 	}
 	
 	@Test
-	void testRouteRemove() {
+	public void testRouteRemove() {
 		GenericWebRouter router = new GenericWebRouter();
 		router
 			.route().consumes(MediaTypes.APPLICATION_JSON).consumes(MediaTypes.TEXT_HTML).handler(exhange -> {})
@@ -159,6 +161,39 @@ class GenericWebRouterTest {
 		
 		routes = router.getRoutes();
 		Assertions.assertEquals(11, routes.size());
+	}
+	
+	@Test
+	public void testRouteEnableDisable() {
+		GenericWebRouter router = new GenericWebRouter();
+		router
+			.route().consumes(MediaTypes.APPLICATION_JSON).consumes(MediaTypes.TEXT_HTML).handler(exhange -> {})
+			.route().method(Method.GET).method(Method.POST).language("fr-FR").language("en-US").handler(exhange -> {})
+			.route().produces(MediaTypes.APPLICATION_JSON).handler(exhange -> {})
+			.route().produces(MediaTypes.TEXT_HTML).handler(exhange -> {})
+			.route().path("/hello", true).handler(exchange -> {})
+			.route().path("/hello/{param1}").handler(exchange -> {})
+			.route().path("/hello/{param1}/{param2:[a-b]*}").handler(exchange -> {});
+		
+		Set<WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>>> routes = router.getRoutes();
+		Assertions.assertEquals(12, routes.size());
+		
+		routes = router.route().consumes(MediaTypes.APPLICATION_JSON).findRoutes();
+		WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> disabledRoute = routes.iterator().next();
+		disabledRoute.disable();
+		
+		routes = router.getRoutes();
+		Assertions.assertEquals(12, routes.size());
+		
+		Optional<WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>>> disabledRouteOptional = routes.stream().filter(Route::isDisabled).findFirst();
+		Assertions.assertTrue(disabledRouteOptional.isPresent());
+		Assertions.assertEquals(disabledRoute, disabledRouteOptional.get());
+		
+		disabledRoute.enable();
+		
+		routes = router.getRoutes();
+		Assertions.assertEquals(12, routes.size());
+		Assertions.assertTrue(routes.stream().noneMatch(Route::isDisabled));
 	}
 
 }
