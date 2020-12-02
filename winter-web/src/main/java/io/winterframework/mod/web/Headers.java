@@ -4,6 +4,7 @@
 package io.winterframework.mod.web;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -163,6 +164,22 @@ public final class Headers {
 				}
 			}
 			return Optional.empty();
+		}
+		
+		default List<AcceptMatch<MediaRange, Headers.ContentType>> findAllMatch(Collection<Headers.ContentType> contentTypes) {
+			return this.findAllMatch(contentTypes, Function.identity());
+		}
+		
+		default <T> List<AcceptMatch<MediaRange, T>> findAllMatch(Collection<T> items, Function<T, Headers.ContentType> contentTypeExtractor) {
+			List<AcceptMatch<MediaRange, T>> result = new ArrayList<>();
+			for(MediaRange mediaRange : this.getMediaRanges()) {
+				for(T item : items) {
+					if(mediaRange.matches(contentTypeExtractor.apply(item))) {
+						result.add(new AcceptMatch<>(mediaRange, item));
+					}
+				}
+			}
+			return result;
 		}
 		
 		static Optional<Accept> merge(List<Accept> acceptHeaders) {
@@ -376,6 +393,22 @@ public final class Headers {
 				}
 			}
 			return Optional.empty();
+		}
+		
+		default List<AcceptMatch<LanguageRange, LanguageRange>> findAllMatch(Collection<Headers.AcceptLanguage.LanguageRange> languageRanges) {
+			return this.findAllMatch(languageRanges, Function.identity());
+		}
+		
+		default <T> List<AcceptMatch<LanguageRange,T>> findAllMatch(Collection<T> items, Function<T, Headers.AcceptLanguage.LanguageRange> languageRangeExtractor) {
+			List<AcceptMatch<LanguageRange,T>> result = new ArrayList<>();
+			for(LanguageRange languageRange : this.getLanguageRanges()) {
+				for(T item : items) {
+					if(languageRange.matches(languageRangeExtractor.apply(item))) {
+						result.add(new AcceptMatch<>(languageRange, item));
+					}
+				}
+			}
+			return result;
 		}
 		
 		static Optional<AcceptLanguage> merge(List<AcceptLanguage> acceptLanguageHeaders) {

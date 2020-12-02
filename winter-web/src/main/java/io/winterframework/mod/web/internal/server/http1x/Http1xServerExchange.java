@@ -18,10 +18,12 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.winterframework.mod.commons.resource.MediaTypes;
+import io.winterframework.mod.web.ErrorExchange;
+import io.winterframework.mod.web.Exchange;
+import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.Header;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.RequestHandler;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.internal.Charsets;
 import io.winterframework.mod.web.internal.server.AbstractHttpServerExchange;
@@ -39,7 +41,7 @@ public class Http1xServerExchange extends AbstractHttpServerExchange {
 	
 	private Consumer<HttpResponse> headersConfigurer;
 	
-	public Http1xServerExchange(ChannelHandlerContext context, RequestHandler<RequestBody, ResponseBody, Void> rootHandler, RequestHandler<Void, ResponseBody, Throwable> errorHandler, AbstractRequest request, GenericResponse response) {
+	public Http1xServerExchange(ChannelHandlerContext context, ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, AbstractRequest request, GenericResponse response) {
 		super(context, rootHandler, errorHandler, request, response);
 		
 		this.headersConfigurer = httpResponse -> {

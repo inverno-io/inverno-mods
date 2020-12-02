@@ -22,12 +22,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.RequestHandler;
 import io.winterframework.mod.web.ResponseBody;
-import io.winterframework.mod.web.router.WebContext;
+import io.winterframework.mod.web.router.WebExchange;
+import io.winterframework.mod.web.router.WebExchangeHandler;
 import io.winterframework.mod.web.router.WebRoute;
 import io.winterframework.mod.web.router.WebRouteManager;
 import io.winterframework.mod.web.router.WebRouter;
@@ -36,7 +38,7 @@ import io.winterframework.mod.web.router.WebRouter;
  * @author jkuhn
  *
  */
-class GenericWebRouteManager implements WebRouteManager<RequestBody, ResponseBody, WebContext> {
+class GenericWebRouteManager implements WebRouteManager<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> {
 
 	private GenericWebRouter router;
 	
@@ -49,26 +51,52 @@ class GenericWebRouteManager implements WebRouteManager<RequestBody, ResponseBod
 	
 	@Override
 	public GenericWebRouter enable() {
-		this.route.enable();
+		this.findRoutes().stream().forEach(route -> route.enable());
 		return this.router;
 	}
 
 	@Override
 	public GenericWebRouter disable() {
-		this.route.disable();
+		this.findRoutes().stream().forEach(route -> route.disable());
 		return this.router;
 	}
 
 	@Override
 	public GenericWebRouter remove() {
-		this.route.remove();
+		this.findRoutes().stream().forEach(route -> route.remove());
 		return this.router;
 	}
 
 	@Override
-	public List<WebRoute<RequestBody, ResponseBody, WebContext>> findRoutes() {
-		// TODO Auto-generated method stub
-		return null;
+	public Set<WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>>> findRoutes() {
+		// TODO Implement filtering in the route extractor
+		return this.router.getRoutes().stream().filter(route -> {
+			// We want all routes that share the same criteria as the one defined in this route manager
+			if(this.route.path != null && !this.route.path.equals(route.getPath())) {
+				return false;
+			}
+			if(this.route.methods != null && !this.route.methods.isEmpty()) {
+				if(route.getMethods() == null || route.getMethods().isEmpty() || !this.route.methods.containsAll(route.getMethods())) {
+					return false;
+				}
+			}
+			if(this.route.consumes != null && !this.route.consumes.isEmpty()) {
+				if(route.getConsumes() == null || route.getConsumes().isEmpty() || !this.route.consumes.containsAll(route.getConsumes())) {
+					return false;
+				}
+			}
+			if(this.route.produces != null && !this.route.produces.isEmpty()) {
+				if(route.getProduces() == null || route.getProduces().isEmpty() || !this.route.produces.containsAll(route.getProduces())) {
+					return false;
+				}
+			}
+			if(this.route.languages != null && !this.route.languages.isEmpty()) {
+				if(route.getLanguages() == null || route.getLanguages().isEmpty() || !this.route.languages.containsAll(route.getLanguages())) {
+					return false;
+				}
+			}
+			return true;
+		}).collect(Collectors.toSet());
 	}
 
 	@Override
@@ -162,7 +190,7 @@ class GenericWebRouteManager implements WebRouteManager<RequestBody, ResponseBod
 			routePathPatternBuilder.insert(0, "^");
 			routePathPatternBuilder.append("$");
 			
-			this.route.pathPattern = new GenericWebRoute.PathPattern(Pattern.compile(routePathPatternBuilder.toString()), pathParameterNames);
+			this.route.pathPattern = new GenericWebRoute.GenericPathPattern(path, Pattern.compile(routePathPatternBuilder.toString()), pathParameterNames);
 		}
 		else {
 			this.route.pathPattern = null;
@@ -210,10 +238,22 @@ class GenericWebRouteManager implements WebRouteManager<RequestBody, ResponseBod
 		return this;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public WebRouter<RequestBody, ResponseBody, WebContext> handler(RequestHandler<RequestBody, ResponseBody, WebContext> handler) {
+	public WebRouter<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> handler(ExchangeHandler<? super RequestBody, ? super ResponseBody, ? super WebExchange<RequestBody, ResponseBody>> handler) {
 		Objects.requireNonNull(handler);
-		this.route.handler = handler;
+		// This will work since we consider lower bounded types
+		this.route.handler = (ExchangeHandler<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>>) handler;
+		this.router.addRoute(this.route);
+		return this.router;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public WebRouter<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> handler(WebExchangeHandler<? super RequestBody, ? super ResponseBody> handler) {
+		Objects.requireNonNull(handler);
+		// This will work since we consider lower bounded types
+		this.route.handler = (WebExchangeHandler<RequestBody, ResponseBody>) handler;
 		this.router.addRoute(this.route);
 		return this.router;
 	}

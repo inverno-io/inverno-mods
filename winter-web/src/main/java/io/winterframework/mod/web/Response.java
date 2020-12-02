@@ -33,7 +33,7 @@ public interface Response<A> {
 	
 	A body();
 	
-	default <E> Response<E> map(Function<A, E> bodyMapper) {
+	default <E> Response<E> map(Function<? super A, ? extends E> bodyMapper) {
 		Response<A> sourceResponse = this;
 		
 		return new Response<E>() {

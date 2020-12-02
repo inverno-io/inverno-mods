@@ -239,16 +239,24 @@ public class PathResource extends AbstractAsyncResource {
 	@Override
 	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) throws IOException {
 		return this.openWritableByteChannel(append, createParents)
-			.map(channel -> data.concatMap(
-				chunk -> Mono.<Integer>create(sink -> {
+			.map(channel -> data
+				.concatMap(chunk -> Mono.<Integer>create(sink -> {
 						try {
 							sink.success(channel.write(chunk.nioBuffer()));
 						} 
 						catch (IOException e) {
 							sink.error(e);
 						}
-					}).subscribeOn(Schedulers.fromExecutor(this.getExecutor()))
+					})
+					.subscribeOn(Schedulers.fromExecutor(this.getExecutor()))
 				)
+				.doOnTerminate(() -> {
+					try {
+						channel.close();
+					}
+					catch (IOException e) {
+					}
+				})
 			);
 	}
 

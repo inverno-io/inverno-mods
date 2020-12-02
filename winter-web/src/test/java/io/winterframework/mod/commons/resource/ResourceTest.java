@@ -19,6 +19,9 @@ import java.util.concurrent.Executors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import io.netty.buffer.ByteBuf;
+import reactor.core.publisher.Flux;
+
 public class ResourceTest {
 
 	private void writeResource(Resource resource) throws IOException {
@@ -189,7 +192,7 @@ public class ResourceTest {
 	}
 	
 	@Test
-	public void testReactive() throws IllegalArgumentException, IOException {
+	public void testReactiveRead() throws IllegalArgumentException, IOException {
 		Path srcFile = Paths.get("src/test/resources/soufriere.png");
 		Path tgtFile = Paths.get("target/tmp/soufriere.png");
 		FileChannel out = FileChannel.open(tgtFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
@@ -213,6 +216,29 @@ public class ResourceTest {
 				})
 				.blockLast();
 			});
+		}
+		Assertions.assertEquals(Files.size(srcFile), Files.size(tgtFile));
+		FileChannel srcChannel = FileChannel.open(srcFile, StandardOpenOption.READ);
+		FileChannel tgtChannel = FileChannel.open(tgtFile, StandardOpenOption.READ);
+		ByteBuffer srcBuffer = ByteBuffer.allocate(8192);
+		ByteBuffer tgtBuffer = ByteBuffer.allocate(8192);
+		while(srcChannel.read(srcBuffer) != -1 && tgtChannel.read(tgtBuffer) != -1) {
+			Assertions.assertEquals(srcBuffer, tgtBuffer);
+			srcBuffer.clear();
+			tgtBuffer.clear();
+		}
+		Files.delete(tgtFile);
+	}
+	
+	@Test
+	public void testReactiveWrite() throws IllegalArgumentException, IOException {
+		Path srcFile = Paths.get("src/test/resources/soufriere.png");
+		Path tgtFile = Paths.get("target/tmp/soufriere.png");
+		try(PathResource srcResource = new PathResource(srcFile);
+			PathResource tgtResource = new PathResource(tgtFile)) {
+			
+			Flux<ByteBuf> srcData = srcResource.read().get();
+			tgtResource.write(srcData).get().blockLast();
 		}
 		Assertions.assertEquals(Files.size(srcFile), Files.size(tgtFile));
 		FileChannel srcChannel = FileChannel.open(srcFile, StandardOpenOption.READ);

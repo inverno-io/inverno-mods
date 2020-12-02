@@ -15,8 +15,11 @@
  */
 package io.winterframework.mod.web.router;
 
+import java.util.Set;
+
+import io.winterframework.mod.web.Exchange;
+import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.RequestHandler;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.internal.router.GenericErrorRouter;
 import io.winterframework.mod.web.internal.router.GenericWebRouter;
@@ -25,9 +28,9 @@ import io.winterframework.mod.web.internal.router.GenericWebRouter;
  * @author jkuhn
  *
  */
-public interface Router<A, B, C, D extends Router<A, B, C, D, E, F, G, H, I>, E extends RouteManager<A, B, C, D, E, F, G, H, I>, F extends Route<A, B, C>, G, H, I> extends RequestHandler<G, H, I> {
+public interface Router<A, B, C extends Exchange<A, B>, D extends Router<A, B, C, D, E, F, G, H, I>, E extends RouteManager<A, B, C, D, E, F, G, H, I>, F extends Route<A, B, C>, G, H, I extends Exchange<G, H>> extends ExchangeHandler<G, H, I> {
 	
-	static WebRouter<RequestBody, ResponseBody, WebContext> web() {
+	static WebRouter<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> web() {
 		return new GenericWebRouter();
 	}
 	
@@ -36,6 +39,8 @@ public interface Router<A, B, C, D extends Router<A, B, C, D, E, F, G, H, I>, E 
 	}
 	
 	E route();
+	
+	Set<F> getRoutes();
 	
 	// interceptors?
 }

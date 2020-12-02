@@ -5,8 +5,12 @@ package io.winterframework.mod.web.internal.server;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.winterframework.mod.web.ErrorExchange;
+import io.winterframework.mod.web.Exchange;
+import io.winterframework.mod.web.ExchangeHandler;
+import io.winterframework.mod.web.Request;
 import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.RequestHandler;
+import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Mono;
@@ -19,8 +23,10 @@ import reactor.core.scheduler.Schedulers;
 public abstract class AbstractHttpServerExchange extends BaseSubscriber<ByteBuf> implements HttpServerExchange {
 
 	protected final ChannelHandlerContext context;
-	protected final RequestHandler<RequestBody, ResponseBody, Void> rootHandler;
-	protected final RequestHandler<Void, ResponseBody, Throwable> errorHandler;
+	
+	protected final ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler;
+	
+	protected final ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler;
 	
 	protected final AbstractRequest request;
 	protected final GenericResponse response;
@@ -28,7 +34,7 @@ public abstract class AbstractHttpServerExchange extends BaseSubscriber<ByteBuf>
 	// TODO this can definitely be used for stats
 	private Mono<Void> exchangeMono;
 	
-	public AbstractHttpServerExchange(ChannelHandlerContext context, RequestHandler<RequestBody, ResponseBody, Void> rootHandler, RequestHandler<Void, ResponseBody, Throwable> errorHandler, AbstractRequest request, GenericResponse response) {
+	public AbstractHttpServerExchange(ChannelHandlerContext context, ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, AbstractRequest request, GenericResponse response) {
 		this.context = context;
 		this.rootHandler = rootHandler;
 		this.errorHandler = errorHandler;
@@ -42,12 +48,12 @@ public abstract class AbstractHttpServerExchange extends BaseSubscriber<ByteBuf>
 	}
 
 	@Override
-	public RequestHandler<RequestBody, ResponseBody, Void> getRootHandler() {
+	public ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> getRootHandler() {
 		return this.rootHandler;
 	}
 	
 	@Override
-	public RequestHandler<Void, ResponseBody, Throwable> getErrorHandler() {
+	public ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> getErrorHandler() {
 		return this.errorHandler;
 	}
 
@@ -82,11 +88,11 @@ public abstract class AbstractHttpServerExchange extends BaseSubscriber<ByteBuf>
 					//   - if response headers were already sent, we need to see what http plans for this => RESET
 					
 					try {
-						this.rootHandler.handle(this.request, response);
+						this.rootHandler.handle(this);
 					}
 					catch(Throwable t) {
 						// We could also set the flux on error and call the error handler
-						this.errorHandler.handle(this.request.map(body -> null, ign -> t), response);
+						this.errorHandler.handle(new GenericErrorExchange(t));
 					}
 					
 					return response;
@@ -112,5 +118,29 @@ public abstract class AbstractHttpServerExchange extends BaseSubscriber<ByteBuf>
 	@Override
 	public boolean isDisposed() {
 		return this.exchangeMono != null && super.isDisposed();
+	}
+	
+	private class GenericErrorExchange implements ErrorExchange<ResponseBody, Throwable> {
+
+		private Throwable error;
+		
+		public GenericErrorExchange(Throwable error) {
+			this.error = error;
+		}
+		
+		@Override
+		public Request<Void> request() {
+			return AbstractHttpServerExchange.this.request.map(ign -> null);
+		}
+
+		@Override
+		public Response<ResponseBody> response() {
+			return AbstractHttpServerExchange.this.response;
+		}
+
+		@Override
+		public Throwable getError() {
+			return this.error;
+		}
 	}
 }

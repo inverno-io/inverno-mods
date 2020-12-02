@@ -13,32 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.web;
+package io.winterframework.mod.web.router;
 
-import io.netty.buffer.ByteBuf;
-import reactor.core.publisher.Flux;
+import java.util.Set;
+
+import io.winterframework.mod.web.Exchange;
 
 /**
  * @author jkuhn
  *
  */
-public interface RequestBody {
-	
-	RequestBody.Raw raw();
-	
-	RequestBody.Multipart multipart();
-	
-	RequestBody.UrlEncoded urlEncoded();
-	
-	public static interface Raw {
-		Flux<ByteBuf> data();
-	}
-	
-	public static interface Multipart {
-		Flux<Part> parts();
-	}
-	
-	public static interface UrlEncoded {
-		Flux<Parameter> parameters();
-	}
+public interface ErrorAwareRoute<A, B, C extends Exchange<A, B>> extends Route<A, B, C> {
+
+	Set<Class<? extends Throwable>> getErrors();
 }

@@ -15,15 +15,16 @@
  */
 package io.winterframework.mod.web.internal.router;
 
-import io.winterframework.mod.web.Request;
+import java.util.Set;
+
+import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.WebException;
 import io.winterframework.mod.web.internal.header.AcceptCodec;
 import io.winterframework.mod.web.internal.header.AcceptLanguageCodec;
 import io.winterframework.mod.web.internal.header.ContentTypeCodec;
-import io.winterframework.mod.web.router.WebContext;
+import io.winterframework.mod.web.router.WebExchange;
 import io.winterframework.mod.web.router.WebRoute;
 import io.winterframework.mod.web.router.WebRouteManager;
 import io.winterframework.mod.web.router.WebRouter;
@@ -32,9 +33,9 @@ import io.winterframework.mod.web.router.WebRouter;
  * @author jkuhn
  *
  */
-public class GenericWebRouter implements WebRouter<RequestBody, ResponseBody, WebContext> {
+public class GenericWebRouter implements WebRouter<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> {
 
-	private RoutingLink<RequestBody, ResponseBody, WebContext, ?, WebRoute<RequestBody, ResponseBody, WebContext>> firstLink;
+	private RoutingLink<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>, ?, WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>>> firstLink;
 	
 	public GenericWebRouter() {
 		AcceptCodec acceptCodec = new AcceptCodec(false);
@@ -52,29 +53,28 @@ public class GenericWebRouter implements WebRouter<RequestBody, ResponseBody, We
 			.connect(new HandlerRoutingLink<>());
 	}
 
-	@Override
-	public WebRouteManager<RequestBody, ResponseBody, WebContext> route() {
-		return new GenericWebRouteManager(this);
-	}
-
-	void addRoute(WebRoute<RequestBody, ResponseBody, WebContext> route) {
+	void addRoute(WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> route) {
 		this.firstLink.addRoute(route);
 	}
 
-	void disableRoute(WebRoute<RequestBody, ResponseBody, WebContext> route) {
-		
-	}
-
-	void enableRoute(WebRoute<RequestBody, ResponseBody, WebContext> route) {
-		
-	}
-
-	void removeRoute(WebRoute<RequestBody, ResponseBody, WebContext> route) {
-		
+	void removeRoute(WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> route) {
+		this.firstLink.removeRoute(route);
 	}
 	
 	@Override
-	public void handle(Request<RequestBody, Void> request, Response<ResponseBody> response) throws WebException {
-		this.firstLink.handle(request.mapContext(ign -> new GenericWebContext()), response);
+	public Set<WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>>> getRoutes() {
+		GenericWebRouteExtractor routeExtractor = new GenericWebRouteExtractor(this);
+		this.firstLink.extractRoute(routeExtractor);
+		return routeExtractor.getRoutes();
+	}
+	
+	@Override
+	public WebRouteManager<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> route() {
+		return new GenericWebRouteManager(this);
+	}
+
+	@Override
+	public void handle(Exchange<RequestBody, ResponseBody> exchange) throws WebException {
+		this.firstLink.handle(new GenericWebExchange(exchange));
 	}
 }

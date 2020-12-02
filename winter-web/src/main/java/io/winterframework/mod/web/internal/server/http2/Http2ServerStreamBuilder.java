@@ -24,12 +24,14 @@ import io.netty.handler.codec.http2.Http2Stream;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Strategy;
 import io.winterframework.core.annotation.Bean.Visibility;
+import io.winterframework.mod.web.ErrorExchange;
+import io.winterframework.mod.web.Exchange;
+import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.Part;
 import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.RequestHandler;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.internal.RequestBodyDecoder;
 import io.winterframework.mod.web.internal.server.AbstractHttpServerExchangeBuilder;
@@ -51,7 +53,7 @@ public class Http2ServerStreamBuilder extends AbstractHttpServerExchangeBuilder<
 	private Http2Headers headers;
 	private Http2ConnectionEncoder encoder;
 	
-	public Http2ServerStreamBuilder(RequestHandler<RequestBody, ResponseBody, Void> rootHandler, RequestHandler<Void, ResponseBody, Throwable> errorHandler, HeaderService headerService, RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, RequestBodyDecoder<Part> multipartBodyDecoder) {
+	public Http2ServerStreamBuilder(ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, HeaderService headerService, RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, RequestBodyDecoder<Part> multipartBodyDecoder) {
 		super(rootHandler, errorHandler, headerService, urlEncodedBodyDecoder, multipartBodyDecoder);
 	}
 

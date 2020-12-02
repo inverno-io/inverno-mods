@@ -15,15 +15,16 @@
  */
 package io.winterframework.mod.web.router;
 
-import java.util.Set;
-
+import io.winterframework.mod.web.ErrorExchange;
 import io.winterframework.mod.web.ResponseBody;
 
 /**
  * @author jkuhn
  *
  */
-public interface ErrorRoute extends AcceptAwareRoute<Void, ResponseBody, Throwable>, Route<Void, ResponseBody, Throwable> {
+public interface ErrorRoute extends 
+	ErrorAwareRoute<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>>, 
+	AcceptAwareRoute<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>>, 
+	Route<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> {
 
-	Set<Class<? extends Throwable>> getErrors();
 }

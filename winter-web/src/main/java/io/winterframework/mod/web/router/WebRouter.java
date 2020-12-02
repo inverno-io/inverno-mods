@@ -15,6 +15,7 @@
  */
 package io.winterframework.mod.web.router;
 
+import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.ResponseBody;
 
@@ -22,6 +23,6 @@ import io.winterframework.mod.web.ResponseBody;
  * @author jkuhn
  *
  */
-public interface WebRouter<A, B, C extends WebContext> extends Router<A, B, C, WebRouter<A, B, C>, WebRouteManager<A, B, C>, WebRoute<A, B, C>, RequestBody, ResponseBody, Void> {
+public interface WebRouter<A, B, C extends WebExchange<A, B>> extends Router<A, B, C, WebRouter<A, B, C>, WebRouteManager<A, B, C>, WebRoute<A, B, C>, RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> {
 
 }

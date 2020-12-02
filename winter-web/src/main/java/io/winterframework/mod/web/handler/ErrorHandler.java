@@ -25,12 +25,14 @@ import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Overridable;
 import io.winterframework.core.annotation.Wrapper;
 import io.winterframework.mod.commons.resource.MediaTypes;
+import io.winterframework.mod.web.ErrorExchange;
+import io.winterframework.mod.web.ErrorExchangeHandler;
+import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.InternalServerErrorException;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.MethodNotAllowedException;
 import io.winterframework.mod.web.NotAcceptableException;
-import io.winterframework.mod.web.RequestHandler;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.ServiceUnavailableException;
 import io.winterframework.mod.web.WebException;
@@ -43,20 +45,106 @@ import io.winterframework.mod.web.router.Router;
 @Bean
 @Wrapper
 @Overridable 
-public class ErrorHandler implements Supplier<RequestHandler<Void, ResponseBody, Throwable>> {
+public class ErrorHandler implements Supplier<ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>>> {
 
 	@Override
-	public RequestHandler<Void, ResponseBody, Throwable> get() {
+	public ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> get() {
 		return Router.error()
-			.route().produces(MediaTypes.APPLICATION_JSON).error(WebException.class).handler(this.webExceptionHandler_json().map(ErrorHandler::handlerAdapter))
-			.route().produces(MediaTypes.APPLICATION_JSON).handler(this.throwableHandler_json().map(ErrorHandler::handlerAdapter))
-			.route().produces(MediaTypes.TEXT_HTML).error(WebException.class).handler(this.webExceptionHandler_html().map(ErrorHandler::handlerAdapter))
-			.route().produces(MediaTypes.TEXT_HTML).handler(this.throwableHandler_html().map(ErrorHandler::handlerAdapter));
+			.route().produces(MediaTypes.APPLICATION_JSON).error(WebException.class).handler(webExceptionHandler_json())
+			.route().produces(MediaTypes.APPLICATION_JSON).handler(this.throwableHandler_json())
+			.route().produces(MediaTypes.TEXT_HTML).error(WebException.class).handler(this.webExceptionHandler_html())
+			.route().produces(MediaTypes.TEXT_HTML).handler(this.throwableHandler_html());
 	}
 	
-	@SuppressWarnings("unchecked")
-	private static <T> RequestHandler<Void, ResponseBody, Throwable> handlerAdapter(RequestHandler<Void, ResponseBody, T> handler) {
-		return handler.map(h -> (request, response) -> h.handle(request.mapContext(e -> (T)e), response));
+	private ErrorExchangeHandler<ResponseBody, WebException> webExceptionHandler_json() {
+		// {"timestamp":"2020-11-20T16:10:33.829+00:00","path":"/tertjer","status":404,"error":"Not Found","message":null,"requestId":"115fe3c6-3"}
+		return exchange -> {
+			ByteArrayOutputStream errorOut = new ByteArrayOutputStream();
+			PrintStream error = new PrintStream(errorOut);
+			
+			error.append("{");
+			error.append("\"status\":\"").append(Integer.toString(exchange.getError().getStatusCode())).append("\",");
+			error.append("\"path\":\"").append(exchange.request().headers().getPath()).append("\",");
+			error.append("\"error\":\"").append(exchange.getError().getStatusReasonPhrase()).append("\",");
+			error.append("\"message\":\"").append(exchange.getError().getMessage()).append("\",");
+			error.append("}");
+			
+			exchange.response().headers(h -> h.status(exchange.getError().getStatusCode()).contentType(MediaTypes.APPLICATION_JSON)).body().raw().data(errorOut.toByteArray());
+		};
+	}
+	
+	private ErrorExchangeHandler<ResponseBody, Throwable> throwableHandler_json() {
+		return exchange -> {
+			this.webExceptionHandler_json().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
+		};
+	}
+	
+	private ErrorExchangeHandler<ResponseBody, WebException> webExceptionHandler_html() {
+		return exchange -> {
+			String status = Integer.toString(exchange.getError().getStatusCode());
+			
+			ByteArrayOutputStream errorOut = new ByteArrayOutputStream();
+			PrintStream error = new PrintStream(errorOut);
+			error.append("<html><head><title>").append(status).append(" ").append(exchange.getError().getStatusReasonPhrase()).append("</title></head><body style=\"font-family: arial,sans-serif;padding:30px;max-width: 1280px;margin: auto;\">");
+			error.append("<h1 style=\"font-size: 3em;\"><span style=\"color:red;\">").append(status).append("</span> ").append(exchange.getError().getStatusReasonPhrase()).append("</h1>");
+			
+			if(exchange.getError() instanceof MethodNotAllowedException) {
+				exchange.response().headers(headers -> headers.add(Headers.ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
+				error.append("<p>");
+				error.append("Allowed Methods:");
+				error.append("<ul>");
+				((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().forEach(allowedMethod -> error.append("<li>").append(allowedMethod.toString()).append("</li>"));
+				error.append("</ul>");
+				error.append("</p>");
+			}
+			else if(exchange.getError() instanceof NotAcceptableException) {
+				((NotAcceptableException)exchange.getError()).getAcceptableMediaTypes().ifPresent(acceptableMediaTypes -> {
+					error.append("<p>");
+					error.append("Acceptable Content Types:");
+					error.append("<ul>");
+					acceptableMediaTypes.stream().forEach(acceptableMediaType -> error.append("<li>").append(acceptableMediaType).append("</li>"));
+					error.append("</ul>");
+					error.append("</p>");
+				});
+			}
+			else if(exchange.getError() instanceof ServiceUnavailableException) {
+				((ServiceUnavailableException)exchange.getError()).getRetryAfter().ifPresent(retryAfter -> {
+					error.append("<p>");
+					error.append("Retry After: ").append(retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME));
+					exchange.response().headers(headers -> headers.add(Headers.RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
+					error.append("</p>");
+				});
+			}
+			
+			if(exchange.getError().getMessage() != null) {
+				error.append("<p>").append(exchange.getError().getMessage()).append("</p>");
+			}
+			
+			error.append("<pre style=\"color:#444444;background-color: #F7F7F7;border:1px solid #E7E7E7;border-radius: 3px;box-shadow: rgba(0, 0, 0, 0.1) 2px 2px 10px;padding:20px;overflow:auto;\">");
+			exchange.getError().printStackTrace(new PrintStream(error));
+			error.append("</pre>");
+			error.append("<footer style=\"text-align:center;color: #444444;\">");
+			error.append("<p><small>This is a whitelabel error page, providing a specific error handler is recommended.</small></p>");
+			error.append("</footer>");
+			error.append("</body>");
+			
+			exchange.response().headers(headers -> headers.status(exchange.getError().getStatusCode()).contentType(MediaTypes.TEXT_HTML)).body().raw().data(errorOut.toByteArray());
+		};
+	}
+	
+	private ErrorExchangeHandler<ResponseBody, Throwable> throwableHandler_html() {
+		return exchange -> {
+			this.webExceptionHandler_html().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
+		};
+	}
+	
+	/*@Override
+	public RequestHandler<Void, ResponseBody, Throwable> get() {
+		return Router.error()
+			.route().produces(MediaTypes.APPLICATION_JSON).error(WebException.class).handler(this.webExceptionHandler_json())
+			.route().produces(MediaTypes.APPLICATION_JSON).handler(this.throwableHandler_json())
+			.route().produces(MediaTypes.TEXT_HTML).error(WebException.class).handler(this.webExceptionHandler_html())
+			.route().produces(MediaTypes.TEXT_HTML).handler(this.throwableHandler_html());
 	}
 	
 	private RequestHandler<Void, ResponseBody, Throwable> throwableHandler_html() {
@@ -139,5 +227,5 @@ public class ErrorHandler implements Supplier<RequestHandler<Void, ResponseBody,
 			
 			response.headers(h -> h.status(request.context().getStatusCode()).contentType(MediaTypes.APPLICATION_JSON)).body().raw().data(errorOut.toByteArray());
 		};
-	}
+	}*/
 }

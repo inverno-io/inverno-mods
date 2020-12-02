@@ -15,30 +15,10 @@
  */
 package io.winterframework.mod.web;
 
-import io.netty.buffer.ByteBuf;
-import reactor.core.publisher.Flux;
-
 /**
  * @author jkuhn
  *
  */
-public interface RequestBody {
-	
-	RequestBody.Raw raw();
-	
-	RequestBody.Multipart multipart();
-	
-	RequestBody.UrlEncoded urlEncoded();
-	
-	public static interface Raw {
-		Flux<ByteBuf> data();
-	}
-	
-	public static interface Multipart {
-		Flux<Part> parts();
-	}
-	
-	public static interface UrlEncoded {
-		Flux<Parameter> parameters();
-	}
+public interface ErrorExchangeHandler<A, B extends Throwable> extends ExchangeHandler<Void, A, ErrorExchange<A, B>> {
+
 }

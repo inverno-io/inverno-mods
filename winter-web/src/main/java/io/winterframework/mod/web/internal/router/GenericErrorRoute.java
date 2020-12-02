@@ -18,7 +18,8 @@ package io.winterframework.mod.web.internal.router;
 import java.util.Collections;
 import java.util.Set;
 
-import io.winterframework.mod.web.RequestHandler;
+import io.winterframework.mod.web.ErrorExchange;
+import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.router.ErrorRoute;
 
@@ -36,30 +37,29 @@ public class GenericErrorRoute implements ErrorRoute {
 	
 	protected Set<String> languages;
 	
-	protected RequestHandler<Void, ResponseBody, Throwable> handler;
+	protected ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> handler;
 	
 	public GenericErrorRoute(GenericErrorRouter router) {
 		this.router = router;
 	}
 
 	@Override
-	public RequestHandler<Void, ResponseBody, Throwable> getHandler() {
-		return this.handler;
-	}
-
-	@Override
 	public void enable() {
-		this.router.enableRoute(this);
+		// TODO
 	}
 
 	@Override
 	public void disable() {
-		this.router.disableRoute(this);
+		// TODO
 	}
 
 	@Override
 	public void remove() {
 		this.router.removeRoute(this);
+	}
+	
+	public void setHandler(ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> handler) {
+		this.handler = handler;
 	}
 	
 	@Override
@@ -87,5 +87,10 @@ public class GenericErrorRoute implements ErrorRoute {
 	
 	public void setProduces(Set<String> produces) {
 		this.produces = produces;
+	}
+	
+	@Override
+	public ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> getHandler() {
+		return this.handler;
 	}
 }

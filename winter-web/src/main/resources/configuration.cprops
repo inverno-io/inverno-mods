@@ -1,5 +1,5 @@
 io.winterframework.mod.web.webConfiguration {
-	ssl_enabled = false
+	ssl_enabled = true
 	key_store = "src/main/resources/cert.jks"
 	key_store_password = "password"
 }

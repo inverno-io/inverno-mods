@@ -23,12 +23,12 @@ import io.winterframework.core.v1.Application;
 import io.winterframework.mod.commons.resource.FileResource;
 import io.winterframework.mod.configuration.ConfigurationSource;
 import io.winterframework.mod.configuration.source.ApplicationConfigurationSource;
+import io.winterframework.mod.web.Exchange;
+import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.Parameter;
-import io.winterframework.mod.web.Request;
 import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.RequestHandler;
 import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.ServiceUnavailableException;
@@ -38,7 +38,7 @@ import io.winterframework.mod.web.handler.StaticHandler;
 import io.winterframework.mod.web.internal.Charsets;
 import io.winterframework.mod.web.router.ErrorRouter;
 import io.winterframework.mod.web.router.Router;
-import io.winterframework.mod.web.router.WebContext;
+import io.winterframework.mod.web.router.WebExchange;
 import io.winterframework.mod.web.router.WebRouter;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
@@ -52,88 +52,84 @@ public class App {
 	public static void main(String[] args) throws IllegalStateException, IOException {
 		Application.with(new Web.Builder()
 			.setAppConfigurationsource(new ApplicationConfigurationSource(App.class.getModule(), args))
-			.setRootHandler(configuration4())
+			.setRootHandler(configuration3())
 //			.setErrorHandler(error())
 		).run();
 	}
 	
 	private static ErrorRouter error() {
 		return Router.error()
-			.route().handler((request, response) -> {
-				response
+			.route().handler(exchange -> {
+				exchange.response()
 					.headers(h -> h.status(Status.INTERNAL_SERVER_ERROR).contentType("application/json"))
-					.body().raw().data("{\"type\":\"" + request.context().getClass() + "\",\"message\":\"" + request.context().getMessage() + "\"}");
+					.body().raw().data("{\"type\":\"" + exchange.getError().getClass() + "\",\"message\":\"" + exchange.getError().getMessage() + "\"}");
 			});
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> exampleServer() {
-		return (request, response) -> {
-			response.headers(h -> h.contentType("text/plain")).body().raw().data("This is an example server.\n");
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> exampleServer() {
+		return exchange -> {
+			exchange.response().headers(h -> h.contentType("text/plain")).body().raw().data("This is an example server.\n");
 		};
 	}
 	
-	private static WebRouter<RequestBody, ResponseBody, WebContext> configuration0() {
+	private static WebRouter<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> configuration0() {
 		return Router.web()
 			.route()
 				.path("/hello", true)
 				.method(Method.GET)
-				.handler( (request, response) -> response.headers(h -> h.contentType("text/plain")).body().raw().data("This is an example server.\n"));
+				.handler( exchange -> exchange.response().headers(h -> h.contentType("text/plain")).body().raw().data("This is an example server.\n"));
 	}
 	
-	private static WebRouter<RequestBody, ResponseBody, WebContext> configuration1() {
+	private static WebRouter<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> configuration1() {
 		return Router.web()
-			.route().path("/toto", true).method(Method.GET).handler(simple().map(App::handlerAdapter))
-			.route().path("/tata", true).method(Method.POST).handler(echo().map(App::handlerAdapter))
-			.route().path("/json", true).method(Method.POST).handler(json(new ObjectMapper()).map(App::handlerAdapter))
-			.route().path("/toto/{param1}/tata/{param2}", true).handler(a().map(App::handlerAdapter))
-			.route().path("/toto/titi/tata/{param2}", true).handler(b().map(App::handlerAdapter))
-			.route().path("/toto/{param1}/tata/titi", true).handler(c().map(App::handlerAdapter));
+			.route().path("/toto", true).method(Method.GET).handler(simple())
+			.route().path("/tata", true).method(Method.POST).handler(echo())
+			.route().path("/json", true).method(Method.POST).handler(json(new ObjectMapper()))
+			.route().path("/toto/{param1}/tata/{param2}", true).handler(a())
+			.route().path("/toto/titi/tata/{param2}", true).handler(b())
+			.route().path("/toto/{param1}/tata/titi", true).handler(c());
 	}
 	
-	private static WebRouter<RequestBody, ResponseBody, WebContext> configuration2() {
+	private static WebRouter<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> configuration2() {
 		return Router.web()
-			.route().path("/toto", true).method(Method.POST).consumes("application/json").handler(echo().map(App::handlerAdapter))
-			.route().path("/toto", true).method(Method.POST).consumes("text/*").handler(printRequest().map(App::handlerAdapter));
+			.route().path("/toto", true).method(Method.POST).consumes("application/json").handler(echo())
+			.route().path("/toto", true).method(Method.POST).consumes("text/*").handler(printRequest());
 	}
 	
-	private static WebRouter<RequestBody, ResponseBody, WebContext> configuration3() {
+	private static WebRouter<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> configuration3() {
 		return Router.web()
 			.route().path("/toto", true).method(Method.GET).produces("application/json").handler(
-				(request, response) -> {
-					response.headers(headers -> headers.contentType("application/json")).body().raw().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("{\"toto\":5}", Charsets.DEFAULT))));
+				exchange -> {
+					exchange.response().headers(headers -> headers.contentType("application/json")).body().raw().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("{\"toto\":5}", Charsets.DEFAULT))));
 				}
 			)
 			.route().path("/toto", true).method(Method.GET).produces("text/plain").handler(
-				(request, response) -> {
-					response.headers(headers -> headers.contentType("text/plain")).body().raw().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("toto 5", Charsets.DEFAULT))));
+				exchange -> {
+					exchange.response().headers(headers -> headers.contentType("text/plain")).body().raw().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("toto 5", Charsets.DEFAULT))));
 				}
 			)
 			.route().path("/tata", true).method(Method.POST).consumes("application/json").produces("application/json").handler(
-				(request, response) -> {
-					response.headers(headers -> headers.contentType("application/json")).body().raw().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("{\"toto\":5}", Charsets.DEFAULT))));
+					exchange -> {
+					exchange.response().headers(headers -> headers.contentType("application/json")).body().raw().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("{\"toto\":5}", Charsets.DEFAULT))));
 				}
 			)
 			.route().path("/error", true).method(Method.GET).handler(
-				(request, response) -> {
+					exchange -> {
 					throw new ServiceUnavailableException(120);
 				}
 			);
 	}
 	
-	private static WebRouter<RequestBody, ResponseBody, WebContext> configuration4() {
+	private static WebRouter<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> configuration4() {
 		return Router.web()
 			.route()
 				.path("/static/{.*}", true)
 				.method(Method.GET)
-				.handler(new StaticHandler(new FileResource("src/test/resources"), "/static/").map(App::handlerAdapter));
-	}
-
-	private static RequestHandler<RequestBody, ResponseBody, WebContext> handlerAdapter(RequestHandler<RequestBody, ResponseBody, Void> handler) {
-		return handler.map(h -> (request, response) -> h.handle(request.map(Function.identity(), ign -> null), response));
+				.handler(new StaticHandler(new FileResource("src/test/resources"), "/static/"));
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> hello() {
-		return (request, response) -> response
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> hello() {
+		return exchange -> exchange.response()
 			.headers(headers -> headers
 				.status(200)
 				.contentType("text/html; charset=\"UTF-8\"")
@@ -143,8 +139,8 @@ public class App {
 			);
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> simple() {
-		return (request, response) -> response
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> simple() {
+		return exchange -> exchange.response()
 			.headers(headers -> headers
 				.status(200)
 				.contentType("text/plain; charset=\"UTF-8\"")
@@ -155,19 +151,17 @@ public class App {
 			);
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> echo() {
-		return (request, response) -> {
-			response
-				.headers(headers -> headers.status(200).contentType("text/plain"))
-				.body().raw().data(request.body()
-					.map(body -> body.data().data().doOnNext(chunk -> chunk.retain()))	
-					.orElse(Flux.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("=== Empty ===", Charsets.UTF_8))))
-				);
-		};
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> echo() {
+		return exchange -> exchange.response()
+			.headers(headers -> headers.status(200).contentType("text/plain"))
+			.body().raw().data(exchange.request().body()
+				.map(body -> body.raw().data().doOnNext(chunk -> chunk.retain()))	
+				.orElse(Flux.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("=== Empty ===", Charsets.UTF_8))))
+			);
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> a() {
-		return (request, response) -> response
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> a() {
+		return exchange -> exchange.response()
 			.headers(headers -> headers
 				.status(200)
 				.contentType("text/plain; charset=\"UTF-8\"")
@@ -177,8 +171,8 @@ public class App {
 			);
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> b() {
-		return (request, response) -> response
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> b() {
+		return exchange -> exchange.response()
 			.headers(headers -> headers
 				.status(200)
 				.contentType("text/plain; charset=\"UTF-8\"")
@@ -188,8 +182,8 @@ public class App {
 			);
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> c() {
-		return (request, response) -> response
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> c() {
+		return exchange -> exchange.response()
 			.headers(headers -> headers
 				.status(200)
 				.contentType("text/plain; charset=\"UTF-8\"")
@@ -199,19 +193,19 @@ public class App {
 			);
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> interval() {
-		return (request, response) -> {
-			response.headers(headers -> {
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> interval() {
+		return exchange -> {
+			exchange.response().headers(headers -> {
 				headers.status(200)
 					.contentType("text/plain; charset=\"UTF-8\"")
 					.add("test", "1235");
 			});
 			
-			request.body().ifPresentOrElse(
-				body ->	body.data().data().subscribe(
+			exchange.request().body().ifPresentOrElse(
+				body ->	body.raw().data().subscribe(
 					buffer -> {
 						System.out.println("=================================");
-				        System.out.println(buffer.toString(Optional.ofNullable(request.headers().getCharset()).orElse(Charsets.UTF_8)));
+				        System.out.println(buffer.toString(Optional.ofNullable(exchange.request().headers().getCharset()).orElse(Charsets.UTF_8)));
 				        System.out.println("=================================");
 					},
 					ex -> {
@@ -223,7 +217,7 @@ public class App {
 							//response.body().empty();						
 							//response.body().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Server Response : Version - HTTP/2", Charsets.UTF_8))));
 						
-						response.body().raw().data(Flux.interval(Duration.ofMillis(500)).map(index -> Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Response " + index + ", \r\n", Charsets.UTF_8))));
+						exchange.response().body().raw().data(Flux.interval(Duration.ofMillis(500)).map(index -> Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Response " + index + ", \r\n", Charsets.UTF_8))));
 						
 //						response.body().data().data(Flux.just(
 //								Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Response A, \r\n", Charsets.UTF_8)),
@@ -275,21 +269,21 @@ public class App {
 //							}).start();
 //						}));
 					}),
-				() -> response.body().raw().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("=== Empty ===", Charsets.UTF_8))))
+				() -> exchange.response().body().raw().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("=== Empty ===", Charsets.UTF_8))))
 			);
 		};
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> urlEncoded() {
-		return (request, response) -> response
-			.headers(headers -> headers
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> urlEncoded() {
+		return exchange -> exchange.response(
+	)		.headers(headers -> headers
 				.status(200)
 				.contentType("text/plain")
 				.charset(Charsets.UTF_8)
 			)
 			.body().raw()
 			.data(
-				request.body()
+				exchange.request().body()
 					.map(body -> body.urlEncoded()
 						.parameters()
 						.collectList()
@@ -300,9 +294,9 @@ public class App {
 			);
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> multipartEcho() {
-		return (request, response) -> {
-			Flux<ByteBuf> responseData = request.body()
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> multipartEcho() {
+		return exchange -> {
+			Flux<ByteBuf> responseData = exchange.request().body()
 				.map(body -> body.multipart().parts().flatMapSequential(part -> {
 					ByteBuf buf = Unpooled.unreleasableBuffer(Unpooled.buffer(256));
 					
@@ -331,7 +325,7 @@ public class App {
 				}))
 				.orElse(Flux.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("=== Empty ===", Charsets.UTF_8))));
 			
-			response
+			exchange.response()
 				.headers(headers -> headers
 					.status(200)
 					.contentType("text/plain")
@@ -345,9 +339,9 @@ public class App {
 	// TODO we should provide a specific FilePart with adhoc methods to manipulate the File data flux or some utilities to make this simpler (especially regarding error handling, size limits...): a Part to Mono<File> mapper would be interesting as it would allow to chain the flux to the response data
 	// TODO progressive upload can also be done: sse can do the trick but we should see other client side tricks for this as well
 	// TODO it seems the size of the resulting file doesn't match the source why?
-	private static RequestHandler<RequestBody, ResponseBody, Void> multipartSaveFile() {
-		return (request, response) -> 
-			request.body().ifPresentOrElse(
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> multipartSaveFile() {
+		return exchange -> 
+			exchange.request().body().ifPresentOrElse(
 				body -> body.multipart().parts().filter(p -> p.getFilename().isPresent()).subscribe(
 					filePart -> {
 						try {
@@ -380,30 +374,30 @@ public class App {
 						}
 					},
 					ex -> {
-						response
-						.headers(headers -> headers
-							.status(500)
-							.contentType("text/plain")
-							.charset(Charsets.UTF_8)
-						)
-						.body().empty();
+						exchange.response()
+							.headers(headers -> headers
+								.status(500)
+								.contentType("text/plain")
+								.charset(Charsets.UTF_8)
+							)
+							.body().empty();
 					},
 					() -> {
-						response
-						.headers(headers -> headers
-							.status(200)
-							.contentType("text/plain")
-							.charset(Charsets.UTF_8)
-						)
-						.body().empty();
+						exchange.response()
+							.headers(headers -> headers
+								.status(200)
+								.contentType("text/plain")
+								.charset(Charsets.UTF_8)
+							)
+							.body().empty();
 					}
 				),
-			() -> response.body().raw().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("=== Empty ===", Charsets.UTF_8))))
+			() -> exchange.response().body().raw().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("=== Empty ===", Charsets.UTF_8))))
 		);
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> echoParameters() {
-		return (request, response) -> response
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> echoParameters() {
+		return exchange -> exchange.response()
 			.headers(headers -> headers
 				.status(200)
 				.contentType("text/plain; charset=UTF-8")
@@ -411,12 +405,12 @@ public class App {
 			)
 			.body().raw().data(
 				//Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Received parameters: " + request.parameters().getAll().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue().stream().map(Parameter::getValue).collect(Collectors.joining(", "))).collect(Collectors.joining(", ")), Charsets.UTF_8)))
-				Mono.just(Unpooled.copiedBuffer("Received parameters: " + request.parameters().getAll().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue().stream().map(Parameter::getValue).collect(Collectors.joining(", "))).collect(Collectors.joining(", ")), Charsets.UTF_8))
+				Mono.just(Unpooled.copiedBuffer("Received parameters: " + exchange.request().parameters().getAll().entrySet().stream().map(e -> e.getKey() + "=" + e.getValue().stream().map(Parameter::getValue).collect(Collectors.joining(", "))).collect(Collectors.joining(", ")), Charsets.UTF_8))
 			);
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> stream() {
-		return (request, response) -> response
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> stream() {
+		return exchange -> exchange.response()
 			.headers(headers -> headers
 				.status(200)
 				.contentType("text/plain; charset=\"UTF-8\"")
@@ -434,11 +428,11 @@ public class App {
 			);
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> sse() {
-		return (request, response) -> response
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> sse() {
+		return exchange -> exchange.response()
 			.body().sse().events(
 				Flux.interval(Duration.ofSeconds(1))
-					.map(sequence -> response.body().sse().create(configurator -> configurator
+					.map(sequence -> exchange.response().body().sse().create(configurator -> configurator
 							.id(Long.toString(sequence))
 							.event("periodic-event")
 							.comment("some comment \n on mutliple lines")
@@ -449,11 +443,11 @@ public class App {
 			);
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> sse2() {
-		return (request, response) -> response
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> sse2() {
+		return exchange -> exchange.response()
 			.body().sse().events(
 				Flux.range(0, 10)
-					.map(sequence -> response.body().sse().create(configurator -> configurator
+					.map(sequence -> exchange.response().body().sse().create(configurator -> configurator
 							.id(Long.toString(sequence))
 							.event("periodic-event")
 							.comment("some comment")
@@ -465,19 +459,19 @@ public class App {
 			);
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> printRequest() {
-		return (request, response) -> {
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> printRequest() {
+		return exchange -> {
 			ByteBuf buf = Unpooled.unreleasableBuffer(Unpooled.buffer(256));
 			
-			buf.writeCharSequence("authority: " + request.headers().getAuthority() + "\n", Charsets.UTF_8);
-			buf.writeCharSequence("path: " + request.headers().getPath() + "\n", Charsets.UTF_8);
-			buf.writeCharSequence("method: " + request.headers().getMethod() + "\n", Charsets.UTF_8);
-			buf.writeCharSequence("scheme: " + request.headers().getScheme() + "\n", Charsets.UTF_8);
-			buf.writeCharSequence("content-type: " + request.headers().getContentType() + "\n", Charsets.UTF_8);
-			buf.writeCharSequence("charset: " + request.headers().getCharset() + "\n", Charsets.UTF_8);
-			buf.writeCharSequence("size: " + request.headers().getSize() + "\n", Charsets.UTF_8);
+			buf.writeCharSequence("authority: " + exchange.request().headers().getAuthority() + "\n", Charsets.UTF_8);
+			buf.writeCharSequence("path: " + exchange.request().headers().getPath() + "\n", Charsets.UTF_8);
+			buf.writeCharSequence("method: " + exchange.request().headers().getMethod() + "\n", Charsets.UTF_8);
+			buf.writeCharSequence("scheme: " + exchange.request().headers().getScheme() + "\n", Charsets.UTF_8);
+			buf.writeCharSequence("content-type: " + exchange.request().headers().getContentType() + "\n", Charsets.UTF_8);
+			buf.writeCharSequence("charset: " + exchange.request().headers().getCharset() + "\n", Charsets.UTF_8);
+			buf.writeCharSequence("size: " + exchange.request().headers().getSize() + "\n", Charsets.UTF_8);
 			String headers = "headers:\n";
-			headers += request.headers().getAll().entrySet().stream()
+			headers += exchange.request().headers().getAll().entrySet().stream()
 				.flatMap(e -> {
 					return e.getValue().stream();
 				})
@@ -486,19 +480,19 @@ public class App {
 			buf.writeCharSequence(headers + "\n", Charsets.UTF_8);
 			
 			String cookies = "cookies:\n";
-			cookies += request.cookies().getAll().entrySet().stream()
+			cookies += exchange.request().cookies().getAll().entrySet().stream()
 				.flatMap(e -> e.getValue().stream())
 				.map(c -> "  - " + c.getName() + "=" + c.getValue())
 				.collect(Collectors.joining("\n"));
 			buf.writeCharSequence(cookies + "\n", Charsets.UTF_8);
 			
 			String parameters = "parameters:\n";
-			parameters += request.parameters().getAll().entrySet().stream()
+			parameters += exchange.request().parameters().getAll().entrySet().stream()
 				.map(e -> "  - " + e.getKey() + "=" + e.getValue().stream().map(Parameter::getValue).collect(Collectors.joining(", ")))
 				.collect(Collectors.joining("\n"));
 			buf.writeCharSequence(parameters + "\n", Charsets.UTF_8);
 			
-			response.headers(configurator -> configurator
+			exchange.response().headers(configurator -> configurator
 					.status(200)
 					.contentType("text/plain")
 					.charset(Charsets.DEFAULT)
@@ -507,22 +501,22 @@ public class App {
 		};
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> printRequestSetCookie() {
-		return printRequest().map(handler -> (request, response) -> {
-				response.cookies(cookies -> cookies.addCookie("test-cookie", "123465"));
-				handler.handle(request, response);
-			}
-		);
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> printRequestSetCookieBefore() {
+		return printRequest().map(handler -> exchange -> {
+			exchange.response().cookies(cookies -> cookies.addCookie("test-cookie", "123465"));
+			handler.handle(exchange);
+		});
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> printRequestSetCookie2() {
-		return printRequest().doAfter(
-				(request, response) -> response.cookies(cookies -> cookies.addCookie("test-cookie", "123465"))
-		);
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> printRequestSetCookieAfter() {
+		return printRequest().map(handler -> exchange -> {
+			handler.handle(exchange);
+			exchange.response().cookies(cookies -> cookies.addCookie("test-cookie", "123465"));
+		});
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> setCookie() {
-		return (request, response) -> response
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> setCookie() {
+		return exchange -> exchange.response()
 			.headers(headers -> headers.status(200).contentType("text/plain"))
 			.cookies(cookies -> cookies.addCookie("test-cookie", "123465"))
 			.body().raw().data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Set cookie", Charsets.DEFAULT))));
@@ -582,7 +576,7 @@ public class App {
 		}
 	}
 	
-	private static RequestHandler<RequestBody, ResponseBody, Void> json(ObjectMapper mapper) {
+	private static ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> json(ObjectMapper mapper) {
 		
 		Function<JsonRequest, JsonResponse> handler0 = request -> {
 			JsonResponse response = new JsonResponse();
@@ -590,63 +584,61 @@ public class App {
 			return response;
 		};
 		
-		RequestHandler<JsonRequest, EntityResponseBody<JsonResponse>, Void> handler1 = (request, response) -> {
-			response.headers(headers -> headers.contentType("application/json")).body().entity(handler0.apply(request.body().get())); 
+		ExchangeHandler<JsonRequest, EntityResponseBody<JsonResponse>, Exchange<JsonRequest, EntityResponseBody<JsonResponse>>> handler1 = exchange -> {
+			exchange.response().headers(headers -> headers.contentType("application/json")).body().entity(handler0.apply(exchange.request().body().get())); 
 		};
 		
-		return handler1.map(handler -> 
-			 (request, response) -> {
-				 
-				if(request.headers().<Headers.ContentType>get(Headers.CONTENT_TYPE).get().getMediaType().equals("application/json")) {
+		/*RequestHandler<JsonRequest, EntityResponseBody<JsonResponse>, Void> handler1 = (request, response) -> {
+			response.headers(headers -> headers.contentType("application/json")).body().entity(handler0.apply(request.body().get())); 
+		};*/
+		
+		return handler1.map(handler -> {
+			return exchange -> {
+				if(exchange.request().headers().<Headers.ContentType>get(Headers.CONTENT_TYPE).get().getMediaType().equals("application/json")) {
 					// convert json
 				}
-				else if(request.headers().<Headers.ContentType>get(Headers.CONTENT_TYPE).get().getMediaType().equals("application/xml")) {
+				else if(exchange.request().headers().<Headers.ContentType>get(Headers.CONTENT_TYPE).get().getMediaType().equals("application/xml")) {
 					// convert xml
 				}
-				 
-				response.body().raw().data(
-					request.body().get().data().data()
-						.reduce(new ByteArrayOutputStream(), (out, chunk) -> {
-							try {
-								chunk.getBytes(chunk.readerIndex(), out, chunk.readableBytes());
-							} 
-							catch (IOException e) {
-								throw Exceptions.propagate(e);
-							}
-							return out;
-						})
-						.map(ByteArrayOutputStream::toByteArray)
-						.map(bytes -> {
-							try {
-								return mapper.readValue(bytes, JsonRequest.class);
-							}
-							catch (IOException e) {
-								throw Exceptions.propagate(e);
-							}
-						})
-						.map(jsonRequest -> {
-							Request<JsonRequest, Void> entityRequest = request.map(ign -> jsonRequest, Function.identity());
-							Response<EntityResponseBody<JsonResponse>> entityResponse = response.map(body -> {
-								return new EntityResponseBody<>(response);
-							});
-							handler.handle(entityRequest, entityResponse);
-							
-							// response entity can come in an asynchronous way so we must delegate the whole process to the other handler
-							// if we want to chain things we need to use publishers
-							// handler1 is actually synchronous since there are no publisher accessible in handler1
-							
-							return entityResponse.body().getEntity();
-						})
-						.flatMap(jsonResponse -> {
-							try {
-								return Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(mapper.writeValueAsBytes(jsonResponse))));
-							} 
-							catch (JsonProcessingException e) {
-								throw Exceptions.propagate(e);
-							}
-						})
-					);
+				
+				
+				exchange.response().body().raw().data(exchange.request().body().get().raw().data()
+					.reduce(new ByteArrayOutputStream(), (out, chunk) -> {
+						try {
+							chunk.getBytes(chunk.readerIndex(), out, chunk.readableBytes());
+						} 
+						catch (IOException e) {
+							throw Exceptions.propagate(e);
+						}
+						return out;
+					})
+					.map(ByteArrayOutputStream::toByteArray)
+					.map(bytes -> {
+						try {
+							return mapper.readValue(bytes, JsonRequest.class);
+						}
+						catch (IOException e) {
+							throw Exceptions.propagate(e);
+						}
+					}).map(jsonRequest -> {
+						EntityResponseBody<JsonResponse> entityJsonResponse = new EntityResponseBody<>(exchange.response());
+						handler.handle(exchange.map(ign -> jsonRequest, body -> entityJsonResponse));
+						
+						// response entity can come in an asynchronous way so we must delegate the whole process to the other handler
+						// if we want to chain things we need to use publishers
+						// handler1 is actually synchronous since there are no publisher accessible in handler1
+						
+						return entityJsonResponse.getEntity();
+					}).flatMap(jsonResponse -> {
+						try {
+							return Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(mapper.writeValueAsBytes(jsonResponse))));
+						} 
+						catch (JsonProcessingException e) {
+							throw Exceptions.propagate(e);
+						}
+					})
+				);
+			};
 		});
 	}
-	
 }

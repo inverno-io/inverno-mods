@@ -15,10 +15,9 @@
  */
 package io.winterframework.mod.web.internal.router;
 
+import io.winterframework.mod.web.Exchange;
+import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.NotFoundException;
-import io.winterframework.mod.web.Request;
-import io.winterframework.mod.web.RequestHandler;
-import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.WebException;
 import io.winterframework.mod.web.router.Route;
 
@@ -26,9 +25,9 @@ import io.winterframework.mod.web.router.Route;
  * @author jkuhn
  *
  */
-class HandlerRoutingLink<A, B, C, D extends Route<A, B, C>> extends RoutingLink<A, B, C, HandlerRoutingLink<A, B, C, D>, D> { // extends RoutingLink<HandlerRoutingLink> {
+class HandlerRoutingLink<A, B, C extends Exchange<A, B>, D extends Route<A, B, C>> extends RoutingLink<A, B, C, HandlerRoutingLink<A, B, C, D>, D> {
 
-	private RequestHandler<A, B, C> requestHandler;
+	private ExchangeHandler<A, B, C> handler;
 	
 	public HandlerRoutingLink() {
 		super(HandlerRoutingLink::new);
@@ -36,16 +35,32 @@ class HandlerRoutingLink<A, B, C, D extends Route<A, B, C>> extends RoutingLink<
 	
 	public HandlerRoutingLink<A, B, C, D> addRoute(D route) {
 		// Should throw a duplicate exception if the handler is already set?
-		// Let's trust Winter compiler for duplicate detection and override handlers at runtime
-		this.requestHandler = route.getHandler();
+		// Let's trust Winter compiler for duplicate detection and override the handler at runtime
+		this.handler = route.getHandler();
 		return this;
 	}
-
+	
 	@Override
-	public void handle(Request<A, C> request, Response<B> response) throws WebException {
-		if(this.requestHandler == null) {
+	public <F extends RouteExtractor<A, B, C, D>> void extractRoute(F extractor) {
+		super.extractRoute(extractor);
+		extractor.handler(this.handler);
+	}
+	
+	@Override
+	public void removeRoute(D route) {
+		this.handler = null;
+	}
+	
+	@Override
+	public boolean hasRoute() {
+		return this.handler != null;
+	}
+	
+	@Override
+	public void handle(C exchange) throws WebException {
+		if(this.handler == null) {
 			throw new NotFoundException();
 		}
-		this.requestHandler.handle(request, response);
+		this.handler.handle(exchange);
 	}
 }

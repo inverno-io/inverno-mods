@@ -17,13 +17,14 @@ package io.winterframework.mod.web.router;
 
 import java.util.Set;
 
+import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.Method;
 
 /**
  * @author jkuhn
  *
  */
-public interface MethodAwareRoute<A, B, C> extends Route<A, B, C> {
+public interface MethodAwareRoute<A, B, C extends Exchange<A, B>> extends Route<A, B, C> {
 
 	Set<Method> getMethods();
 }

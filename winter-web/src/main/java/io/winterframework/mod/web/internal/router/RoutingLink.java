@@ -17,17 +17,15 @@ package io.winterframework.mod.web.internal.router;
 
 import java.util.function.Supplier;
 
-import io.winterframework.mod.web.Request;
-import io.winterframework.mod.web.RequestHandler;
-import io.winterframework.mod.web.Response;
-import io.winterframework.mod.web.WebException;
+import io.winterframework.mod.web.Exchange;
+import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.router.Route;
 
 /**
  * @author jkuhn
  *
  */
-abstract class RoutingLink<A, B, C, D extends RoutingLink<A, B, C, D, E>, E extends Route<A, B, C>> implements RequestHandler<A, B, C> {
+abstract class RoutingLink<A, B, C extends Exchange<A, B>, D extends RoutingLink<A, B, C, D, E>, E extends Route<A, B, C>> implements ExchangeHandler<A, B, C> {
 
 	protected RoutingLink<A, B, C, ?, E> nextLink;
 	
@@ -54,8 +52,19 @@ abstract class RoutingLink<A, B, C, D extends RoutingLink<A, B, C, D, E>, E exte
 		return nextLink;
 	}
 
+	public <F extends RouteExtractor<A, B, C, E>> void extractRoute(F extractor) {
+		if(this.nextLink != null) {
+			this.nextLink.extractRoute(extractor);
+		}
+	}
+	
 	public abstract D addRoute(E route);
 	
-	@Override
-	public abstract void handle(Request<A, C> request, Response<B> response) throws WebException;
+	public abstract void removeRoute(E route);
+	
+	public abstract boolean hasRoute();
+	
+//	public abstract void enableRoute(E route);
+	
+//	public abstract void disableRoute(E route);
 }

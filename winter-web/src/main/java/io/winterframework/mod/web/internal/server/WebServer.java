@@ -76,13 +76,12 @@ public class WebServer {
 
 		InetSocketAddress serverAddress = new InetSocketAddress(this.configuration.server_host(), this.configuration.server_port());
 		this.serverChannelFuture = serverBootstrap.bind(serverAddress).sync();
-
 		String scheme = this.configuration.ssl_enabled() ? "https://" : "http://";
 		if (this.serverChannelFuture.isSuccess()) {
-			this.logger.info(() -> "Web Server listening on " + scheme + serverAddress.toString());
+			this.logger.info(() -> "Web Server listening on " + scheme + serverAddress.getHostString() + ":" + serverAddress.getPort());
 		}
 		else {
-			throw new RuntimeException("Can't start Web server on " + scheme + serverAddress.toString(), this.serverChannelFuture.cause());
+			throw new RuntimeException("Can't start Web server on " + scheme + serverAddress.getHostString() + ":" + serverAddress.getPort(), this.serverChannelFuture.cause());
 		}
 	}
 

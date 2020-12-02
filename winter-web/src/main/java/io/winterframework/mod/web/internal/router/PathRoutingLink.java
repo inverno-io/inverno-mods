@@ -21,8 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import io.winterframework.mod.web.BadRequestException;
-import io.winterframework.mod.web.Request;
-import io.winterframework.mod.web.Response;
+import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.WebException;
 import io.winterframework.mod.web.router.PathAwareRoute;
 
@@ -30,8 +29,8 @@ import io.winterframework.mod.web.router.PathAwareRoute;
  * @author jkuhn
  *
  */
-class PathRoutingLink<A, B, C, D extends PathAwareRoute<A, B, C>> extends RoutingLink<A, B, C, PathRoutingLink<A, B, C, D>, D> {
-
+class PathRoutingLink<A, B, C extends Exchange<A, B>, D extends PathAwareRoute<A, B, C>> extends RoutingLink<A, B, C, PathRoutingLink<A, B, C, D>, D> {
+	
 	private Map<String, RoutingLink<A, B, C, ?, D>> handlers;
 	
 	public PathRoutingLink() {
@@ -41,16 +40,18 @@ class PathRoutingLink<A, B, C, D extends PathAwareRoute<A, B, C>> extends Routin
 	
 	@Override
 	public PathRoutingLink<A, B, C, D> addRoute(D route) {
-		if(route.getPath() != null && route.getPathPattern() == null) {
+		String path = route.getPath();
+		if(path != null && route.getPathPattern() == null) {
 			// Exact match
-			this.addRoute(route.getPath(), route);
+			
+			this.addRoute(path, route);
 			if(route.isMatchTrailingSlash()) {
 				// We want to match either ... or .../
-				if(route.getPath().endsWith("/")) {
-					this.addRoute(route.getPath().substring(0, route.getPath().length() - 1), route);
+				if(path.endsWith("/")) {
+					this.addRoute(path.substring(0, path.length() - 1), route);
 				}
 				else {
-					this.addRoute(route.getPath() + "/", route);
+					this.addRoute(path + "/", route);
 				}
 			}
 		}
@@ -70,19 +71,55 @@ class PathRoutingLink<A, B, C, D extends PathAwareRoute<A, B, C>> extends Routin
 	}
 	
 	@Override
-	public void handle(Request<A, C> request, Response<B> response) throws WebException {
+	public void removeRoute(D route) {
+		String path = route.getPath();
+		if(path != null && route.getPathPattern() == null) {
+			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(path);
+			if(handler != null) {
+				handler.removeRoute(route);
+				if(!handler.hasRoute()) {
+					// The link has no more routes, we can remove it for good 
+					this.handlers.remove(path);
+				}
+			}
+			// route doesn't exist so let's do nothing
+		}
+		else {
+			this.nextLink.removeRoute(route);
+		}
+	}
+	
+	@Override
+	public boolean hasRoute() {
+		return !this.handlers.isEmpty() || this.nextLink.hasRoute();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <F extends RouteExtractor<A, B, C, D>> void extractRoute(F extractor) {
+		if(!(extractor instanceof PathAwareRouteExtractor)) {
+			throw new IllegalArgumentException("Route extractor is not path aware");
+		}
+		this.handlers.entrySet().stream().forEach(e -> {
+			e.getValue().extractRoute(((PathAwareRouteExtractor<A, B, C, D, ?>)extractor).path(e.getKey()));
+		});
+		super.extractRoute(extractor);
+	}
+
+	@Override
+	public void handle(C exchange) throws WebException {
 		String normalizedPath;
 		try {
-			normalizedPath = new URI(request.headers().getPath()).normalize().getPath().toString();
+			normalizedPath = new URI(exchange.request().headers().getPath()).normalize().getPath().toString();
 		} 
 		catch (URISyntaxException e) {
 			throw new BadRequestException("Bad URI", e);
 		}
 		
-		RoutingLink<A, B, C, ?, D> requestHandler = this.handlers.get(normalizedPath);
-		if(requestHandler == null) {
-			requestHandler = this.nextLink;
+		RoutingLink<A, B, C, ?, D> handler = this.handlers.get(normalizedPath);
+		if(handler == null) {
+			handler = this.nextLink;
 		}
-		requestHandler.handle(request, response);
+		handler.handle(exchange);
 	}
 }

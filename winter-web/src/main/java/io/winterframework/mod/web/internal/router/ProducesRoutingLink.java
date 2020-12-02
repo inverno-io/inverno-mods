@@ -16,17 +16,18 @@
 package io.winterframework.mod.web.internal.router;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Headers.AcceptMatch;
 import io.winterframework.mod.web.NotAcceptableException;
 import io.winterframework.mod.web.NotFoundException;
-import io.winterframework.mod.web.Request;
-import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.WebException;
 import io.winterframework.mod.web.internal.header.AcceptCodec;
 import io.winterframework.mod.web.internal.header.ContentTypeCodec;
@@ -36,7 +37,7 @@ import io.winterframework.mod.web.router.AcceptAwareRoute;
  * @author jkuhn
  *
  */
-class ProducesRoutingLink<A, B, C, D extends AcceptAwareRoute<A, B, C>> extends RoutingLink<A, B, C, ProducesRoutingLink<A, B, C, D>, D> {
+class ProducesRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareRoute<A, B, C>> extends RoutingLink<A, B, C, ProducesRoutingLink<A, B, C, D>, D> {
 
 	private AcceptCodec acceptCodec;
 	
@@ -53,8 +54,9 @@ class ProducesRoutingLink<A, B, C, D extends AcceptAwareRoute<A, B, C>> extends 
 
 	@Override
 	public ProducesRoutingLink<A, B, C, D> addRoute(D route) {
-		if(route.getProduces() != null && !route.getProduces().isEmpty()) {
-			route.getProduces().stream().map(produce -> this.contentTypeCodec.decode(Headers.CONTENT_TYPE, produce))
+		Set<String> produces = route.getProduces();
+		if(produces != null && !produces.isEmpty()) {
+			produces.stream().map(produce -> this.contentTypeCodec.decode(Headers.CONTENT_TYPE, produce))
 				.forEach(contentType -> {
 					if(this.handlers.containsKey(contentType)) {
 						this.handlers.get(contentType).addRoute(route);
@@ -72,52 +74,113 @@ class ProducesRoutingLink<A, B, C, D extends AcceptAwareRoute<A, B, C>> extends 
 	}
 	
 	@Override
-	public void handle(Request<A, C> request, Response<B> response) throws WebException {
+	public void removeRoute(D route) {
+		Set<String> produces = route.getProduces();
+		if(produces != null && !produces.isEmpty()) {
+			// We can only remove single route
+			if(produces.size() > 1) {
+				throw new IllegalArgumentException("Multiple content types found in route, can only remove a single route");
+			}
+			String produce = produces.iterator().next();
+			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.CONTENT_TYPE, produce);
+			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(contentType);
+			if(handler != null) {
+				handler.removeRoute(route);
+				if(!handler.hasRoute()) {
+					// The link has no more routes, we can remove it for good 
+					this.handlers.remove(contentType);
+				}
+			}
+			// route doesn't exist so let's do nothing
+		}
+		else {
+			this.nextLink.removeRoute(route);
+		}
+	}
+	
+	@Override
+	public boolean hasRoute() {
+		return !this.handlers.isEmpty() || this.nextLink.hasRoute();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <F extends RouteExtractor<A, B, C, D>> void extractRoute(F extractor) {
+		super.extractRoute(extractor);
+		if(!(extractor instanceof AcceptAwareRouteExtractor)) {
+			throw new IllegalArgumentException("Route extractor is not accept aware");
+		}
+		this.handlers.entrySet().stream().forEach(e -> {
+			e.getValue().extractRoute(((AcceptAwareRouteExtractor<A, B, C, D, ?>)extractor).produces(e.getKey().getMediaType()));
+		});
+	}
+	
+	@Override
+	public void handle(C exchange) throws WebException {
 		if(!this.handlers.isEmpty()) {
-			AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, C, ?, D>>> bestMatch = Headers.Accept.merge(request.headers().<Headers.Accept>getAll(Headers.ACCEPT))
-				.orElse(this.acceptCodec.decode(Headers.ACCEPT, "*/*")) // If there's no accept header we fallback to */*
-				.findBestMatch(this.handlers.entrySet(), Entry::getKey)
-				.orElseThrow(() -> new NotAcceptableException(this.handlers.keySet().stream().map(Headers.ContentType::getMediaType).collect(Collectors.toSet())));
+			Iterator<AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, C, ?, D>>>> acceptMatchesIterator = Headers.Accept.merge(exchange.request().headers().<Headers.Accept>getAll(Headers.ACCEPT))
+				.orElse(this.acceptCodec.decode(Headers.ACCEPT, "*/*"))
+				.findAllMatch(this.handlers.entrySet(), Entry::getKey)
+				.iterator();
 			
-			if(bestMatch.getSource().getMediaType().equals("*/*")) {
-				// First check if the next link can handle the request since this is the default
-				try {
-					this.nextLink.handle(request, response);
-				}
-				catch(NotFoundException e) {
-					// There's no default handler defined
-					bestMatch.getTarget().getValue().handle(request, response);
-				}
+			if(!acceptMatchesIterator.hasNext()) {
+				throw new NotAcceptableException(this.handlers.keySet().stream().map(Headers.ContentType::getMediaType).collect(Collectors.toSet()));
 			}
-			else {
-				bestMatch.getTarget().getValue().handle(request, response);
-			}
-		}
-		else {
-			this.nextLink.handle(request, response);
-		}
-		
-		/*Optional<Headers.Accept> acceptHeader = Headers.Accept.merge(request.headers().<Headers.Accept>getAll(Headers.ACCEPT));
-		if(acceptHeader.isPresent() && !this.handlers.isEmpty()) {
-			acceptHeader
-				.flatMap(accept -> accept.findBestMatch(this.handlers.entrySet(), Entry::getKey).map(AcceptMatch::getTarget).map(Entry::getValue))
-				.orElseThrow(() -> new NotAcceptableException(this.handlers.keySet().stream().map(Headers.ContentType::getMediaType).collect(Collectors.toSet())))
-				.handle(request, response);
-		}
-		else {
-			// client accepts anything, we should try the next link and fallback to the first handler (if any) in case no subsequent handler was found
-			try {
-				// By default we fallback on the next link
-				this.nextLink.handle(request, response);
-			}
-			catch(NotFoundException e) {
-				if(!this.handlers.isEmpty()) {
-					this.handlers.entrySet().iterator().next().getValue().handle(request, response);
+			
+			while(acceptMatchesIterator.hasNext()) {
+				AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, C, ?, D>>> bestMatch = acceptMatchesIterator.next();
+				if(bestMatch.getSource().getMediaType().equals("*/*")) {
+					// First check if the next link can handle the request since this is the default
+					try {
+						this.nextLink.handle(exchange);
+						return;
+					}
+					catch(NotFoundException e) {
+						// There's no default handler defined, we can take the best match
+						try {
+							bestMatch.getTarget().getValue().handle(exchange);
+							return;
+						}
+						catch(NotFoundException e2) {
+							// continue with the next best match
+							continue;
+						}
+					}
 				}
 				else {
-					throw e;
+					try {
+						bestMatch.getTarget().getValue().handle(exchange);
+						return;
+					}
+					catch(NotFoundException e) {
+						// continue with the next best match
+						continue;
+					}
 				}
 			}
-		}*/
+			throw new NotFoundException();
+			
+//			AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, C, ?, D>>> bestMatch = Headers.Accept.merge(exchange.request().headers().<Headers.Accept>getAll(Headers.ACCEPT))
+//				.orElse(this.acceptCodec.decode(Headers.ACCEPT, "*/*")) // If there's no accept header we fallback to */*
+//				.findBestMatch(this.handlers.entrySet(), Entry::getKey)
+//				.orElseThrow(() -> new NotAcceptableException(this.handlers.keySet().stream().map(Headers.ContentType::getMediaType).collect(Collectors.toSet())));
+//			
+//			if(bestMatch.getSource().getMediaType().equals("*/*")) {
+//				// First check if the next link can handle the request since this is the default
+//				try {
+//					this.nextLink.handle(exchange);
+//				}
+//				catch(NotFoundException e) {
+//					// There's no default handler defined
+//					bestMatch.getTarget().getValue().handle(exchange);
+//				}
+//			}
+//			else {
+//				bestMatch.getTarget().getValue().handle(exchange);
+//			}
+		}
+		else {
+			this.nextLink.handle(exchange);
+		}
 	}
 }

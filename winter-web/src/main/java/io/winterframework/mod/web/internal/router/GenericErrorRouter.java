@@ -15,8 +15,9 @@
  */
 package io.winterframework.mod.web.internal.router;
 
-import io.winterframework.mod.web.Request;
-import io.winterframework.mod.web.Response;
+import java.util.Set;
+
+import io.winterframework.mod.web.ErrorExchange;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.WebException;
 import io.winterframework.mod.web.internal.header.AcceptCodec;
@@ -32,7 +33,7 @@ import io.winterframework.mod.web.router.ErrorRouter;
  */
 public class GenericErrorRouter implements ErrorRouter {
 
-	private RoutingLink<Void, ResponseBody, Throwable, ?, ErrorRoute> firstLink;
+	private RoutingLink<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>, ?, ErrorRoute> firstLink;
 	
 	public GenericErrorRouter() {
 		AcceptCodec acceptCodec = new AcceptCodec(false);
@@ -53,22 +54,21 @@ public class GenericErrorRouter implements ErrorRouter {
 	void addRoute(ErrorRoute route) {
 		this.firstLink.addRoute(route);
 	}
-	
-	void disableRoute(ErrorRoute route) {
-		
-	}
-
-	void enableRoute(ErrorRoute route) {
-		
-	}
 
 	void removeRoute(ErrorRoute route) {
-		
+		this.firstLink.removeRoute(route);
 	}
-
+	
 	@Override
-	public void handle(Request<Void, Throwable> request, Response<ResponseBody> response) throws WebException {
-		ErrorRouter.super.handle(request, response);
-		this.firstLink.handle(request, response);
+	public Set<ErrorRoute> getRoutes() {
+		GenericErrorRouteExtractor routeExtractor = new GenericErrorRouteExtractor(this);
+		this.firstLink.extractRoute(routeExtractor);
+		return routeExtractor.getRoutes();
+	}
+	
+	@Override
+	public void handle(ErrorExchange<ResponseBody, Throwable> exchange) throws WebException {
+		ErrorRouter.super.handle(exchange);
+		this.firstLink.handle(exchange);
 	}
 }

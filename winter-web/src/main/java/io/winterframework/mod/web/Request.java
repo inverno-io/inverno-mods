@@ -23,7 +23,7 @@ import java.util.function.Function;
  * @author jkuhn
  *
  */
-public interface Request<A, B> {
+public interface Request<A> {
 
 	RequestHeaders headers();
 	
@@ -37,60 +37,38 @@ public interface Request<A, B> {
 	
 	Optional<A> body();
 	
-	B context();
-	
-	default <E> Request<E, B> mapBody(Function<? super A, ? extends E> bodyMapper) {
-		return this.map(bodyMapper, Function.identity());
-	}
-	
-	default <E> Request<A, E> mapContext(Function<? super B, ? extends E> contextMapper) {
-		return this.map(Function.identity(), contextMapper);
-	}
-	
-	default <E, F> Request<E, F> map(Function<? super A, ? extends E> bodyMapper, Function<? super B, ? extends F> contextMapper) {
-		
-		Request<A, B> sourceRequest = this;
-		
-		return new Request<E, F>() {
+	default <E> Request<E> map(Function<? super A, ? extends E> bodyMapper) {
+		Request<A> thisRequest = this;
+		return new Request<E>() {
 			
 			private Optional<E> body;
 			
-			private Optional<? extends F> context;
-
 			@Override
 			public RequestHeaders headers() {
-				return sourceRequest.headers();
+				return thisRequest.headers();
 			}
 
 			@Override
 			public RequestParameters parameters() {
-				return sourceRequest.parameters();
+				return thisRequest.parameters();
 			}
 
 			@Override
 			public RequestCookies cookies() {
-				return sourceRequest.cookies();
+				return thisRequest.cookies();
 			}
 
 			@Override
 			public SocketAddress getRemoteAddress() {
-				return sourceRequest.getRemoteAddress();
+				return thisRequest.getRemoteAddress();
 			}
 
 			@Override
 			public Optional<E> body() {
 				if(this.body == null) {
-					this.body = sourceRequest.body().map(bodyMapper::apply);
+					this.body = thisRequest.body().map(bodyMapper::apply);
 				}
 				return this.body;
-			}
-			
-			@Override
-			public F context() {
-				if(this.context == null) {
-					this.context = Optional.ofNullable(contextMapper.apply(sourceRequest.context()));
-				}
-				return this.context.get();
 			}
 		};
 	}

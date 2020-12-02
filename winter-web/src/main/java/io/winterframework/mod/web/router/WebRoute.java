@@ -19,6 +19,11 @@ package io.winterframework.mod.web.router;
  * @author jkuhn
  *
  */
-public interface WebRoute<A, B, C extends WebContext> extends PathAwareRoute<A, B, C>, MethodAwareRoute<A, B, C>, ContentAwareRoute<A, B, C>, AcceptAwareRoute<A, B, C>, Route<A, B, C> {
+public interface WebRoute<A, B, C extends WebExchange<A, B>> extends 
+	PathAwareRoute<A, B, C>, 
+	MethodAwareRoute<A, B, C>, 
+	ContentAwareRoute<A, B, C>, 
+	AcceptAwareRoute<A, B, C>, 
+	Route<A, B, C> {
 
 }

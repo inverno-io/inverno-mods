@@ -13,32 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.web;
+package io.winterframework.mod.web.internal.router;
 
-import io.netty.buffer.ByteBuf;
-import reactor.core.publisher.Flux;
+import io.winterframework.mod.web.router.WebExchange;
+import io.winterframework.mod.web.router.WebRoute;
 
 /**
  * @author jkuhn
  *
  */
-public interface RequestBody {
+public interface WebRouteExtractor<A, B, C extends WebExchange<A, B>, D extends WebRoute<A, B, C>, E extends WebRouteExtractor<A, B, C, D, E>> extends 
+	PathAwareRouteExtractor<A, B, C, D, E>,
+	MethodAwareRouteExtractor<A, B, C, D, E>,
+	ContentAwareRouteExtractor<A, B, C, D, E>,
+	AcceptAwareRouteExtractor<A, B, C, D, E>,
+	RouteExtractor<A, B, C, D> {
 	
-	RequestBody.Raw raw();
-	
-	RequestBody.Multipart multipart();
-	
-	RequestBody.UrlEncoded urlEncoded();
-	
-	public static interface Raw {
-		Flux<ByteBuf> data();
-	}
-	
-	public static interface Multipart {
-		Flux<Part> parts();
-	}
-	
-	public static interface UrlEncoded {
-		Flux<Parameter> parameters();
-	}
 }

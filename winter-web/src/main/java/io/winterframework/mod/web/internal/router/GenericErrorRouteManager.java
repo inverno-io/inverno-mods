@@ -16,10 +16,13 @@
 package io.winterframework.mod.web.internal.router;
 
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import io.winterframework.mod.web.RequestHandler;
+import io.winterframework.mod.web.ErrorExchange;
+import io.winterframework.mod.web.ErrorExchangeHandler;
+import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.router.ErrorRoute;
 import io.winterframework.mod.web.router.ErrorRouteManager;
@@ -42,30 +45,48 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 
 	@Override
 	public ErrorRouter enable() {
-		this.route.enable();
+		this.findRoutes().stream().forEach(route -> route.enable());
 		return this.router;
 	}
 
 	@Override
 	public ErrorRouter disable() {
-		this.route.disable();
+		this.findRoutes().stream().forEach(route -> route.disable());
 		return this.router;
 	}
 
 	@Override
 	public ErrorRouter remove() {
-		this.route.remove();
+		this.findRoutes().stream().forEach(route -> route.remove());
 		return this.router;
 	}
 
 	@Override
-	public List<ErrorRoute> findRoutes() {
-		// TODO Auto-generated method stub
-		return null;
+	public Set<ErrorRoute> findRoutes() {
+		// TODO Implement filtering in the route extractor
+		return this.router.getRoutes().stream().filter(route -> {
+			// We want all routes that share the same criteria as the one defined in this route manager
+			if(this.route.errors != null && !this.route.errors.isEmpty()) {
+				if(route.getErrors() == null || route.getErrors().isEmpty() || !this.route.errors.containsAll(route.getErrors())) {
+					return false;
+				}
+			}
+			if(this.route.produces != null && !this.route.produces.isEmpty()) {
+				if(route.getProduces() == null || route.getProduces().isEmpty() || !this.route.produces.containsAll(route.getProduces())) {
+					return false;
+				}
+			}
+			if(this.route.languages != null && !this.route.languages.isEmpty()) {
+				if(route.getLanguages() == null || route.getLanguages().isEmpty() || !this.route.languages.containsAll(route.getLanguages())) {
+					return false;
+				}
+			}
+			return true;
+		}).collect(Collectors.toSet());
 	}
 
 	@Override
-	public <T extends Throwable> ErrorRouteManager error(Class<T> error) throws IllegalArgumentException {
+	public ErrorRouteManager error(Class<? extends Throwable> error) throws IllegalArgumentException {
 		if(this.route.errors == null) {
 			this.route.errors = new LinkedHashSet<>();
 		}
@@ -91,10 +112,21 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 		return this;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public ErrorRouter handler(RequestHandler<Void, ResponseBody, Throwable> handler) {
+	public ErrorRouter handler(ExchangeHandler<? super Void, ? super ResponseBody, ? super ErrorExchange<ResponseBody, Throwable>> handler) {
 		Objects.requireNonNull(handler);
-		this.route.handler = handler;
+		this.route.handler = (ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>>) handler;
+		this.router.addRoute(this.route);
+		return this.router;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public ErrorRouter handler(ErrorExchangeHandler<ResponseBody, ? extends Throwable> handler) {
+		Objects.requireNonNull(handler);
+		// This might throw a class cast exception if the handler is not associated with corresponding class types
+		this.route.handler = (ErrorExchangeHandler<ResponseBody, Throwable>) handler;
 		this.router.addRoute(this.route);
 		return this.router;
 	}
