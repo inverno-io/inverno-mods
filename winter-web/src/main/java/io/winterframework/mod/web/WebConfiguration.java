@@ -10,7 +10,7 @@ public interface WebConfiguration {
 	}
 
 	default int server_port() {
-		return 8443;
+		return 8080;
 	}
 	
 	default String key_store_type() {
