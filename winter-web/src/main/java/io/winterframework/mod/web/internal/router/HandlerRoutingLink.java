@@ -17,7 +17,6 @@ package io.winterframework.mod.web.internal.router;
 
 import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.ExchangeHandler;
-import io.winterframework.mod.web.NotFoundException;
 import io.winterframework.mod.web.WebException;
 import io.winterframework.mod.web.router.Route;
 
@@ -29,13 +28,13 @@ class HandlerRoutingLink<A, B, C extends Exchange<A, B>, D extends Route<A, B, C
 
 	private ExchangeHandler<A, B, C> handler;
 	
+	private boolean disabled;
+	
 	public HandlerRoutingLink() {
 		super(HandlerRoutingLink::new);
 	}
 	
-	public HandlerRoutingLink<A, B, C, D> addRoute(D route) {
-		// Should throw a duplicate exception if the handler is already set?
-		// Let's trust Winter compiler for duplicate detection and override the handler at runtime
+	public HandlerRoutingLink<A, B, C, D> setRoute(D route) {
 		this.handler = route.getHandler();
 		return this;
 	}
@@ -43,7 +42,21 @@ class HandlerRoutingLink<A, B, C extends Exchange<A, B>, D extends Route<A, B, C
 	@Override
 	public <F extends RouteExtractor<A, B, C, D>> void extractRoute(F extractor) {
 		super.extractRoute(extractor);
-		extractor.handler(this.handler);
+		extractor.handler(this.handler, this.disabled);
+	}
+	
+	@Override
+	public void enableRoute(D route) {
+		if(this.handler != null) {
+			this.disabled = false;
+		}
+	}
+	
+	@Override
+	public void disableRoute(D route) {
+		if(this.handler != null) {
+			this.disabled = true;
+		}
 	}
 	
 	@Override
@@ -57,9 +70,17 @@ class HandlerRoutingLink<A, B, C extends Exchange<A, B>, D extends Route<A, B, C
 	}
 	
 	@Override
+	public boolean isDisabled() {
+		return this.disabled;
+	}
+	
+	@Override
 	public void handle(C exchange) throws WebException {
 		if(this.handler == null) {
-			throw new NotFoundException();
+			throw new RouteNotFoundException();
+		}
+		if(this.disabled) {
+			throw new DisabledRouteException();
 		}
 		this.handler.handle(exchange);
 	}

@@ -15,10 +15,8 @@
  */
 package io.winterframework.mod.web.internal.router;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import io.winterframework.mod.web.ExchangeHandler;
@@ -36,20 +34,20 @@ class GenericWebRoute implements WebRoute<RequestBody, ResponseBody, WebExchange
 
 	private GenericWebRouter router;
 	
-	protected String path;
-	protected WebRoute.PathPattern pathPattern;
+	private boolean disabled;
 	
-	protected Set<Method> methods;
+	private String path;
+	private WebRoute.PathPattern pathPattern;
 	
-	protected Set<String> produces;
+	private Method method;
 	
-	protected Set<String> consumes;
+	private String produce;
 	
-	protected Set<String> languages;
-
-	protected boolean matchTrailingSlash;
+	private String consume;
 	
-	protected ExchangeHandler<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> handler;
+	private String language;
+	
+	private ExchangeHandler<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> handler;
 	
 	public GenericWebRoute(GenericWebRouter router) {
 		this.router = router;
@@ -57,21 +55,28 @@ class GenericWebRoute implements WebRoute<RequestBody, ResponseBody, WebExchange
 
 	@Override
 	public void enable() {
-		// TODO
+		this.router.enableRoute(this);
+		this.disabled = false;
 	}
 	
 	@Override
 	public void disable() {
-		// TODO
+		this.router.disableRoute(this);
+		this.disabled = true;
+	}
+	
+	@Override
+	public boolean isDisabled() {
+		return this.disabled;
+	}
+	
+	public void setDisabled(boolean disabled) {
+		this.disabled = disabled;
 	}
 	
 	@Override
 	public void remove() {
 		this.router.removeRoute(this);
-	}
-	
-	public void setHandler(ExchangeHandler<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> handler) {
-		this.handler = handler;
 	}
 	
 	@Override
@@ -93,48 +98,39 @@ class GenericWebRoute implements WebRoute<RequestBody, ResponseBody, WebExchange
 	}
 
 	@Override
-	public boolean isMatchTrailingSlash() {
-		return this.matchTrailingSlash;
-	}
-
-	public void setMatchTrailingSlash(boolean matchTrailingSlash) {
-		this.matchTrailingSlash = matchTrailingSlash;
+	public Method getMethod() {
+		return this.method;
 	}
 	
-	@Override
-	public Set<Method> getMethods() {
-		return this.methods != null ? Collections.unmodifiableSet(this.methods) : Set.of();
-	}
-	
-	public void setMethods(Set<Method> methods) {
-		this.methods = methods;
+	public void setMethod(Method method) {
+		this.method = method;
 	}
 
 	@Override
-	public Set<String> getConsumes() {
-		return this.consumes != null ? Collections.unmodifiableSet(this.consumes) : Set.of();
+	public String getConsume() {
+		return this.consume;
 	}
 	
-	public void setConsumes(Set<String> consumes) {
-		this.consumes = consumes;
+	public void setConsume(String consume) {
+		this.consume = consume;
 	}
 
 	@Override
-	public Set<String> getProduces() {
-		return this.produces != null ? Collections.unmodifiableSet(this.produces) : Set.of();
+	public String getProduce() {
+		return this.produce;
 	}
 	
-	public void setProduces(Set<String> produces) {
-		this.produces = produces;
+	public void setProduce(String produce) {
+		this.produce = produce;
 	}
 	
 	@Override
-	public Set<String> getLanguages() {
-		return this.languages != null ? Collections.unmodifiableSet(this.languages) : Set.of();
+	public String getLanguage() {
+		return this.language;
 	}
 	
-	public void setLanguages(Set<String> languages) {
-		this.languages = languages;
+	public void setLanguage(String language) {
+		this.language = language;
 	}
 	
 	@Override
@@ -142,16 +138,20 @@ class GenericWebRoute implements WebRoute<RequestBody, ResponseBody, WebExchange
 		return this.handler;
 	}
 	
+	public void setHandler(ExchangeHandler<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> handler) {
+		this.handler = handler;
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((consumes == null) ? 0 : consumes.hashCode());
-		result = prime * result + ((languages == null) ? 0 : languages.hashCode());
-		result = prime * result + ((methods == null) ? 0 : methods.hashCode());
+		result = prime * result + ((consume == null) ? 0 : consume.hashCode());
+		result = prime * result + ((language == null) ? 0 : language.hashCode());
+		result = prime * result + ((method == null) ? 0 : method.hashCode());
 		result = prime * result + ((path == null) ? 0 : path.hashCode());
 		result = prime * result + ((pathPattern == null) ? 0 : pathPattern.hashCode());
-		result = prime * result + ((produces == null) ? 0 : produces.hashCode());
+		result = prime * result + ((produce == null) ? 0 : produce.hashCode());
 		return result;
 	}
 
@@ -164,20 +164,20 @@ class GenericWebRoute implements WebRoute<RequestBody, ResponseBody, WebExchange
 		if (getClass() != obj.getClass())
 			return false;
 		GenericWebRoute other = (GenericWebRoute) obj;
-		if (consumes == null) {
-			if (other.consumes != null)
+		if (consume == null) {
+			if (other.consume != null)
 				return false;
-		} else if (!consumes.equals(other.consumes))
+		} else if (!consume.equals(other.consume))
 			return false;
-		if (languages == null) {
-			if (other.languages != null)
+		if (language == null) {
+			if (other.language != null)
 				return false;
-		} else if (!languages.equals(other.languages))
+		} else if (!language.equals(other.language))
 			return false;
-		if (methods == null) {
-			if (other.methods != null)
+		if (method == null) {
+			if (other.method != null)
 				return false;
-		} else if (!methods.equals(other.methods))
+		} else if (!method.equals(other.method))
 			return false;
 		if (path == null) {
 			if (other.path != null)
@@ -189,10 +189,10 @@ class GenericWebRoute implements WebRoute<RequestBody, ResponseBody, WebExchange
 				return false;
 		} else if (!pathPattern.equals(other.pathPattern))
 			return false;
-		if (produces == null) {
-			if (other.produces != null)
+		if (produce == null) {
+			if (other.produce != null)
 				return false;
-		} else if (!produces.equals(other.produces))
+		} else if (!produce.equals(other.produce))
 			return false;
 		return true;
 	}

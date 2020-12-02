@@ -51,8 +51,16 @@ public class GenericErrorRouter implements ErrorRouter {
 		return new GenericErrorRouteManager(this);
 	}
 	
-	void addRoute(ErrorRoute route) {
-		this.firstLink.addRoute(route);
+	void setRoute(ErrorRoute route) {
+		this.firstLink.setRoute(route);
+	}
+	
+	void enableRoute(ErrorRoute route) {
+		this.firstLink.enableRoute(route);
+	}
+	
+	void disableRoute(ErrorRoute route) {
+		this.firstLink.disableRoute(route);
 	}
 
 	void removeRoute(ErrorRoute route) {

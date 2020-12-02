@@ -20,7 +20,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.winterframework.mod.web.Exchange;
@@ -48,37 +47,61 @@ class ConsumesRoutingLink<A, B, C extends Exchange<A, B>, D extends ContentAware
 	}
 
 	@Override
-	public ConsumesRoutingLink<A, B, C, D> addRoute(D route) {
+	public ConsumesRoutingLink<A, B, C, D> setRoute(D route) {
 		// Note if someone defines a route with a GET like method and a consumed media type, consumes will be ignored because such request does not provide content types headers
-		Set<String> consumes = route.getConsumes();
-		if(consumes != null && !consumes.isEmpty()) {
-			consumes.stream()
-				.map(consume -> this.acceptCodec.decode(Headers.ACCEPT, consume).getMediaRanges().get(0)) // TODO what happens if I have no range?
-				.forEach(mediaRange -> {
-					if(this.handlers.containsKey(mediaRange)) {
-						this.handlers.get(mediaRange).addRoute(route);
-					}
-					else {
-						this.handlers.put(mediaRange, this.nextLink.createNextLink().addRoute(route));
-					}
-				});
+		String consume = route.getConsume();
+		if(consume != null) {
+			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.ACCEPT, consume).getMediaRanges().get(0);
+			if(this.handlers.containsKey(mediaRange)) {
+				this.handlers.get(mediaRange).setRoute(route);
+			}
+			else {
+				this.handlers.put(mediaRange, this.nextLink.createNextLink().setRoute(route));
+			}
 			this.handlers = this.handlers.entrySet().stream().sorted(Comparator.comparing(Entry::getKey, Headers.Accept.MediaRange.COMPARATOR)).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a,b) -> a, LinkedHashMap::new));
 		}
 		else {
-			this.nextLink.addRoute(route);
+			this.nextLink.setRoute(route);
 		}
 		return this;
 	}
 	
 	@Override
-	public void removeRoute(D route) {
-		Set<String> consumes = route.getConsumes();
-		if(consumes != null && !consumes.isEmpty()) {
-			// We can only remove single route
-			if(consumes.size() > 1) {
-				throw new IllegalArgumentException("Multiple accept media ranges found in route, can only remove a single route");
+	public void enableRoute(D route) {
+		String consume = route.getConsume();
+		if(consume != null) {
+			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.ACCEPT, consume).getMediaRanges().get(0);
+			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(mediaRange);
+			if(handler != null) {
+				handler.enableRoute(route);
 			}
-			String consume = consumes.iterator().next();
+			// route doesn't exist so let's do nothing
+		}
+		else {
+			this.nextLink.enableRoute(route);
+		}
+	}
+	
+	@Override
+	public void disableRoute(D route) {
+		String consume = route.getConsume();
+		if(consume != null) {
+			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.ACCEPT, consume).getMediaRanges().get(0);
+			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(mediaRange);
+			if(handler != null) {
+				handler.disableRoute(route);
+			}
+			// route doesn't exist so let's do nothing
+		}
+		else {
+			this.nextLink.disableRoute(route);
+		}
+	}
+	
+	@Override
+	public void removeRoute(D route) {
+		String consume = route.getConsume();
+		if(consume != null) {
 			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.ACCEPT, consume).getMediaRanges().get(0);
 			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(mediaRange);
 			if(handler != null) {
@@ -98,6 +121,11 @@ class ConsumesRoutingLink<A, B, C extends Exchange<A, B>, D extends ContentAware
 	@Override
 	public boolean hasRoute() {
 		return !this.handlers.isEmpty() || this.nextLink.hasRoute();
+	}
+	
+	@Override
+	public boolean isDisabled() {
+		return this.handlers.values().stream().allMatch(RoutingLink::isDisabled) && this.nextLink.isDisabled();
 	}
 	
 	@SuppressWarnings("unchecked")

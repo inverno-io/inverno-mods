@@ -28,7 +28,9 @@ public interface WebRouteManager<A, B, C extends WebExchange<A, B>> extends Rout
 	
 	WebRouter<A, B, C> handler(WebExchangeHandler<? super A, ? super B> handler);
 	
-	WebRouteManager<A, B, C> path(String path) throws IllegalArgumentException;
+	default WebRouteManager<A, B, C> path(String path) throws IllegalArgumentException {
+		return this.path(path, false);
+	}
 		
 	WebRouteManager<A, B, C> path(String path, boolean matchTrailingslash) throws IllegalArgumentException;
 	

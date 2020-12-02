@@ -29,6 +29,8 @@ public interface Route<A, B, C extends Exchange<A, B>> {
 	void enable();
 	
 	void disable();
+
+	boolean isDisabled();
 	
 	void remove();
 }

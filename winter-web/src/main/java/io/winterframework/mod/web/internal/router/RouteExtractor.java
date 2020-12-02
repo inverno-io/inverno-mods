@@ -27,7 +27,7 @@ import io.winterframework.mod.web.router.Route;
  */
 public interface RouteExtractor<A, B, C extends Exchange<A, B>, D extends Route<A, B, C>> {
 
-	void handler(ExchangeHandler<A, B, C> handler);
+	void handler(ExchangeHandler<A, B, C> handler, boolean disabled);
 	
 	Set<D> getRoutes();
 }

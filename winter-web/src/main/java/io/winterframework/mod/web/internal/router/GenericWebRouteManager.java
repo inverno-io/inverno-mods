@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue.Consumer;
 import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.RequestBody;
@@ -42,11 +43,23 @@ class GenericWebRouteManager implements WebRouteManager<RequestBody, ResponseBod
 
 	private GenericWebRouter router;
 	
-	private GenericWebRoute route;
+//	private GenericWebRoute route;
+	
+	private Set<String> paths;
+	private WebRoute.PathPattern pathPattern;
+	
+	private Set<Method> methods;
+	
+	private Set<String> consumes;
+	
+	private Set<String> produces;
+	
+	private Set<String> languages;
+
+	private ExchangeHandler<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> handler;
 	
 	public GenericWebRouteManager(GenericWebRouter router) {
 		this.router = router;
-		this.route = new GenericWebRoute(this.router);
 	}
 	
 	@Override
@@ -72,26 +85,26 @@ class GenericWebRouteManager implements WebRouteManager<RequestBody, ResponseBod
 		// TODO Implement filtering in the route extractor
 		return this.router.getRoutes().stream().filter(route -> {
 			// We want all routes that share the same criteria as the one defined in this route manager
-			if(this.route.path != null && !this.route.path.equals(route.getPath())) {
+			if(this.paths != null && !this.paths.contains(route.getPath())) {
 				return false;
 			}
-			if(this.route.methods != null && !this.route.methods.isEmpty()) {
-				if(route.getMethods() == null || route.getMethods().isEmpty() || !this.route.methods.containsAll(route.getMethods())) {
+			if(this.methods != null && !this.methods.isEmpty()) {
+				if(route.getMethod() == null || !this.methods.contains(route.getMethod())) {
 					return false;
 				}
 			}
-			if(this.route.consumes != null && !this.route.consumes.isEmpty()) {
-				if(route.getConsumes() == null || route.getConsumes().isEmpty() || !this.route.consumes.containsAll(route.getConsumes())) {
+			if(this.consumes != null && !this.consumes.isEmpty()) {
+				if(route.getConsume() == null || !this.consumes.contains(route.getConsume())) {
 					return false;
 				}
 			}
-			if(this.route.produces != null && !this.route.produces.isEmpty()) {
-				if(route.getProduces() == null || route.getProduces().isEmpty() || !this.route.produces.containsAll(route.getProduces())) {
+			if(this.produces != null && !this.produces.isEmpty()) {
+				if(route.getProduce() == null || !this.produces.contains(route.getProduce())) {
 					return false;
 				}
 			}
-			if(this.route.languages != null && !this.route.languages.isEmpty()) {
-				if(route.getLanguages() == null || route.getLanguages().isEmpty() || !this.route.languages.containsAll(route.getLanguages())) {
+			if(this.languages != null && !this.languages.isEmpty()) {
+				if(route.getLanguage() == null || !this.languages.contains(route.getLanguage())) {
 					return false;
 				}
 			}
@@ -100,18 +113,11 @@ class GenericWebRouteManager implements WebRouteManager<RequestBody, ResponseBod
 	}
 
 	@Override
-	public GenericWebRouteManager path(String path) throws IllegalArgumentException {
-		return this.path(path, false);
-	}
-	
-	@Override
 	public GenericWebRouteManager path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
 		Objects.requireNonNull(path);
 		if(!path.startsWith("/")) {
 			throw new IllegalArgumentException("Path must be absolute");
 		}
-		this.route.matchTrailingSlash = matchTrailingSlash;
-		this.route.path = path;
 		
 		List<String> pathParameterNames = new ArrayList<>();
 		
@@ -183,58 +189,72 @@ class GenericWebRouteManager implements WebRouteManager<RequestBody, ResponseBod
 		
 		if(pathParameterNames.size() > 0) {
 			// We have a regex path
-			if(this.route.matchTrailingSlash) {
+			if(matchTrailingSlash) {
 				routePathPatternBuilder.append("/?");
 			}
 			
 			routePathPatternBuilder.insert(0, "^");
 			routePathPatternBuilder.append("$");
 			
-			this.route.pathPattern = new GenericWebRoute.GenericPathPattern(path, Pattern.compile(routePathPatternBuilder.toString()), pathParameterNames);
+			this.paths = Set.of(path);
+			this.pathPattern = new GenericWebRoute.GenericPathPattern(path, Pattern.compile(routePathPatternBuilder.toString()), pathParameterNames);
 		}
 		else {
-			this.route.pathPattern = null;
+			this.paths = new HashSet<>();
+			this.paths.add(path);
+			if(matchTrailingSlash) {
+				if(path.endsWith("/")) {
+					this.paths.add(path.substring(0, path.length() - 1));
+				}
+				else {
+					this.paths.add(path + "/");
+				}
+			}
+			else {
+				this.paths = Set.of(path);
+			}
+			this.pathPattern = null;
 		}
 		return this;
 	}
-	
+
 	@Override
 	public GenericWebRouteManager method(Method method) {
 		Objects.requireNonNull(method);
-		if(this.route.methods == null) {
-			this.route.methods = new HashSet<>();
+		if(this.methods == null) {
+			this.methods = new HashSet<>();
 		}
-		this.route.methods.add(method);
+		this.methods.add(method);
 		return this;
 	}
 	
 	@Override
 	public GenericWebRouteManager consumes(String mediaType) {
 		Objects.requireNonNull(mediaType);
-		if(this.route.consumes == null) {
-			this.route.consumes = new LinkedHashSet<>();
+		if(this.consumes == null) {
+			this.consumes = new LinkedHashSet<>();
 		}
-		this.route.consumes.add(mediaType);
+		this.consumes.add(mediaType);
 		return this;
 	}
 	
 	@Override
 	public GenericWebRouteManager produces(String mediaType) {
 		Objects.requireNonNull(mediaType);
-		if(this.route.produces == null) {
-			this.route.produces = new LinkedHashSet<>();
+		if(this.produces == null) {
+			this.produces = new LinkedHashSet<>();
 		}
-		this.route.produces.add(mediaType);
+		this.produces.add(mediaType);
 		return this;
 	}
 	
 	@Override
 	public GenericWebRouteManager language(String language) {
 		Objects.requireNonNull(language);
-		if(this.route.languages == null) {
-			this.route.languages = new LinkedHashSet<>();
+		if(this.languages == null) {
+			this.languages = new LinkedHashSet<>();
 		}
-		this.route.languages.add(language);
+		this.languages.add(language);
 		return this;
 	}
 
@@ -243,8 +263,8 @@ class GenericWebRouteManager implements WebRouteManager<RequestBody, ResponseBod
 	public WebRouter<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> handler(ExchangeHandler<? super RequestBody, ? super ResponseBody, ? super WebExchange<RequestBody, ResponseBody>> handler) {
 		Objects.requireNonNull(handler);
 		// This will work since we consider lower bounded types
-		this.route.handler = (ExchangeHandler<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>>) handler;
-		this.router.addRoute(this.route);
+		this.handler = (ExchangeHandler<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>>) handler;
+		this.commit();
 		return this.router;
 	}
 
@@ -253,8 +273,74 @@ class GenericWebRouteManager implements WebRouteManager<RequestBody, ResponseBod
 	public WebRouter<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> handler(WebExchangeHandler<? super RequestBody, ? super ResponseBody> handler) {
 		Objects.requireNonNull(handler);
 		// This will work since we consider lower bounded types
-		this.route.handler = (WebExchangeHandler<RequestBody, ResponseBody>) handler;
-		this.router.addRoute(this.route);
+		this.handler = (WebExchangeHandler<RequestBody, ResponseBody>) handler;
+		this.commit();
 		return this.router;
+	}
+	
+	private void commit() {
+		Consumer<GenericWebRoute> languagesCommitter = route -> {
+			if(this.languages != null && !this.languages.isEmpty()) {
+				for(String language : this.languages) {
+					route.setLanguage(language);
+					route.setHandler(this.handler);
+					this.router.setRoute(route);
+				}
+			}
+			else {
+				route.setHandler(this.handler);
+				this.router.setRoute(route);
+			}
+		};
+		
+		Consumer<GenericWebRoute> producesCommitter = route -> {
+			if(this.produces != null && !this.produces.isEmpty()) {
+				for(String produce : this.produces) {
+					route.setProduce(produce);
+					languagesCommitter.accept(route);
+				}
+			}
+			else {
+				languagesCommitter.accept(route);
+			}
+		};
+		
+		Consumer<GenericWebRoute> consumesCommitter = route -> {
+			if(this.consumes != null && !this.consumes.isEmpty()) {
+				for(String consume : this.consumes) {
+					route.setConsume(consume);
+					producesCommitter.accept(route);
+				}
+			}
+			else {
+				producesCommitter.accept(route);
+			}
+		};
+		
+		Consumer<GenericWebRoute> methodsCommitter = route -> {
+			if(this.methods != null && !this.methods.isEmpty()) {
+				for(Method method : this.methods) {
+					route.setMethod(method);
+					consumesCommitter.accept(route);
+				}
+			}
+			else {
+				consumesCommitter.accept(route);
+			}
+		};
+		
+		Consumer<GenericWebRoute> pathCommitter = route -> {
+			if(this.paths != null && !this.paths.isEmpty()) {
+				for(String path : this.paths) {
+					route.setPath(path);
+					route.setPathPattern(this.pathPattern);
+					methodsCommitter.accept(route);
+				}
+			}
+			else {
+				methodsCommitter.accept(route);
+			}
+		};
+		pathCommitter.accept(new GenericWebRoute(this.router));
 	}
 }

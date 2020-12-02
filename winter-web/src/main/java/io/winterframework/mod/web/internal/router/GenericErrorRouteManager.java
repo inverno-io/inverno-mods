@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.netty.util.internal.shaded.org.jctools.queues.MessagePassingQueue.Consumer;
 import io.winterframework.mod.web.ErrorExchange;
 import io.winterframework.mod.web.ErrorExchangeHandler;
 import io.winterframework.mod.web.ExchangeHandler;
@@ -36,11 +37,16 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 
 	private GenericErrorRouter router;
 	
-	private GenericErrorRoute route;
+	private Set<Class<? extends Throwable>> errors;
+	
+	private Set<String> produces;
+	
+	private Set<String> languages;
+	
+	private ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> handler;
 	
 	public GenericErrorRouteManager(GenericErrorRouter router) {
 		this.router = router;
-		this.route = new GenericErrorRoute(router);
 	}
 
 	@Override
@@ -66,18 +72,18 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 		// TODO Implement filtering in the route extractor
 		return this.router.getRoutes().stream().filter(route -> {
 			// We want all routes that share the same criteria as the one defined in this route manager
-			if(this.route.errors != null && !this.route.errors.isEmpty()) {
-				if(route.getErrors() == null || route.getErrors().isEmpty() || !this.route.errors.containsAll(route.getErrors())) {
+			if(this.errors != null && !this.errors.isEmpty()) {
+				if(route.getError() == null || !this.errors.contains(route.getError())) {
 					return false;
 				}
 			}
-			if(this.route.produces != null && !this.route.produces.isEmpty()) {
-				if(route.getProduces() == null || route.getProduces().isEmpty() || !this.route.produces.containsAll(route.getProduces())) {
+			if(this.produces != null && !this.produces.isEmpty()) {
+				if(route.getProduce() == null || !this.produces.contains(route.getProduce())) {
 					return false;
 				}
 			}
-			if(this.route.languages != null && !this.route.languages.isEmpty()) {
-				if(route.getLanguages() == null || route.getLanguages().isEmpty() || !this.route.languages.containsAll(route.getLanguages())) {
+			if(this.languages != null && !this.languages.isEmpty()) {
+				if(route.getLanguage() == null || !this.languages.contains(route.getLanguage())) {
 					return false;
 				}
 			}
@@ -87,28 +93,28 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 
 	@Override
 	public ErrorRouteManager error(Class<? extends Throwable> error) throws IllegalArgumentException {
-		if(this.route.errors == null) {
-			this.route.errors = new LinkedHashSet<>();
+		if(this.errors == null) {
+			this.errors = new LinkedHashSet<>();
 		}
-		this.route.errors.add(error);
+		this.errors.add(error);
 		return this;
 	}
 
 	@Override
 	public ErrorRouteManager produces(String mediaType) {
-		if(this.route.produces == null) {
-			this.route.produces = new LinkedHashSet<>();
+		if(this.produces == null) {
+			this.produces = new LinkedHashSet<>();
 		}
-		this.route.produces.add(mediaType);
+		this.produces.add(mediaType);
 		return this;
 	}
 
 	@Override
 	public ErrorRouteManager language(String language) {
-		if(this.route.languages == null) {
-			this.route.languages = new LinkedHashSet<>();
+		if(this.languages == null) {
+			this.languages = new LinkedHashSet<>();
 		}
-		this.route.languages.add(language);
+		this.languages.add(language);
 		return this;
 	}
 
@@ -116,8 +122,8 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 	@Override
 	public ErrorRouter handler(ExchangeHandler<? super Void, ? super ResponseBody, ? super ErrorExchange<ResponseBody, Throwable>> handler) {
 		Objects.requireNonNull(handler);
-		this.route.handler = (ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>>) handler;
-		this.router.addRoute(this.route);
+		this.handler = (ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>>) handler;
+		this.commit();
 		return this.router;
 	}
 	
@@ -126,8 +132,49 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 	public ErrorRouter handler(ErrorExchangeHandler<ResponseBody, ? extends Throwable> handler) {
 		Objects.requireNonNull(handler);
 		// This might throw a class cast exception if the handler is not associated with corresponding class types
-		this.route.handler = (ErrorExchangeHandler<ResponseBody, Throwable>) handler;
-		this.router.addRoute(this.route);
+		this.handler = (ErrorExchangeHandler<ResponseBody, Throwable>) handler;
+		this.commit();
 		return this.router;
+	}
+	
+	private void commit() {
+		Consumer<GenericErrorRoute> languagesCommitter = route -> {
+			if(this.languages != null && !this.languages.isEmpty()) {
+				for(String language : this.languages) {
+					route.setLanguage(language);
+					route.setHandler(this.handler);
+					this.router.setRoute(route);
+				}
+			}
+			else {
+				route.setHandler(this.handler);
+				this.router.setRoute(route);
+			}
+		};
+		
+		Consumer<GenericErrorRoute> producesCommitter = route -> {
+			if(this.produces != null && !this.produces.isEmpty()) {
+				for(String produce : this.produces) {
+					route.setProduce(produce);
+					languagesCommitter.accept(route);
+				}
+			}
+			else {
+				languagesCommitter.accept(route);
+			}
+		};
+		
+		Consumer<GenericErrorRoute> errorsCommitter = route -> {
+			if(this.errors != null && !this.errors.isEmpty()) {
+				for(Class<? extends Throwable> error : this.errors) {
+					route.setError(error);
+					producesCommitter.accept(route);
+				}
+			}
+			else {
+				producesCommitter.accept(route);
+			}
+		};
+		errorsCommitter.accept(new GenericErrorRoute(this.router));
 	}
 }
