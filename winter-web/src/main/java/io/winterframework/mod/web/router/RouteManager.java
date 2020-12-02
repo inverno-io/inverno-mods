@@ -15,17 +15,20 @@
  */
 package io.winterframework.mod.web.router;
 
-import java.util.List;
+import java.util.Set;
 
-import io.winterframework.mod.web.RequestHandler;
+import io.winterframework.mod.web.Exchange;
+import io.winterframework.mod.web.ExchangeHandler;
 
 /**
  * @author jkuhn
  *
  */
-public interface RouteManager<A, B, C, D extends Router<A, B, C, D, E, F, G, H, I>, E extends RouteManager<A, B, C, D, E, F, G, H, I>, F extends Route<A, B, C>, G, H, I> {
+public interface RouteManager<A, B, C extends Exchange<A, B>, D extends Router<A, B, C, D, E, F, G, H, I>, E extends RouteManager<A, B, C, D, E, F, G, H, I>, F extends Route<A, B, C>, G, H, I extends Exchange<G, H>> {
 
-	D handler(RequestHandler<A, B, C> handler);
+//	D handler(RequestHandler<A, B, C> handler);
+	
+	D handler(ExchangeHandler<? super A, ? super B, ? super C> handler);
 	
 	// TODO These can be tricky because a manager can actually target sets of routes
 	// - is it always possible to remove/disable routes which are part of a wider set of routes?
@@ -35,5 +38,5 @@ public interface RouteManager<A, B, C, D extends Router<A, B, C, D, E, F, G, H, 
 	
 	D remove();
 	
-	List<F> findRoutes();
+	Set<F> findRoutes();
 }

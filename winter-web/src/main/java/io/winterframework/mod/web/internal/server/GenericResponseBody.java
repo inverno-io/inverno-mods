@@ -48,9 +48,9 @@ public class GenericResponseBody implements ResponseBody {
 	private MonoSink<Flux<ByteBuf>> dataEmitter;
 	private Flux<ByteBuf> data;
 	
-	private GenericRawBody dataBody;
-	private GenericSseBody sseBody;
-	private GenericResourceBody resourceBody;
+	private GenericRawResponseBody dataBody;
+	private GenericSseResponseBody sseBody;
+	private GenericResourceResponseBody resourceBody;
 	
 	private boolean dataSet;
 	
@@ -60,7 +60,7 @@ public class GenericResponseBody implements ResponseBody {
 	
 	private void setData(Flux<ByteBuf> data) {
 		if(this.dataSet) {
-			throw new IllegalStateException("Response data already submitted");
+			throw new IllegalStateException("Response data already posted");
 		}
 		if(this.dataEmitter != null) {
 			this.dataEmitter.success(data);
@@ -124,7 +124,7 @@ public class GenericResponseBody implements ResponseBody {
 	@Override
 	public Raw raw() {
 		if(this.dataBody == null) {
-			this.dataBody = new GenericRawBody();
+			this.dataBody = new GenericRawResponseBody();
 		}
 		return this.dataBody;
 	}
@@ -132,7 +132,7 @@ public class GenericResponseBody implements ResponseBody {
 	@Override
 	public Sse<ByteBuf> sse() {
 		if(this.sseBody == null) {
-			this.sseBody = new GenericSseBody();
+			this.sseBody = new GenericSseResponseBody();
 		}
 		return this.sseBody;
 	}
@@ -140,12 +140,12 @@ public class GenericResponseBody implements ResponseBody {
 	@Override
 	public Resource resource() {
 		if(this.resourceBody == null) {
-			this.resourceBody = new GenericResourceBody();
+			this.resourceBody = new GenericResourceResponseBody();
 		}
 		return this.resourceBody;
 	}
 	
-	private class GenericRawBody implements ResponseBody.Raw {
+	private class GenericRawResponseBody implements ResponseBody.Raw {
 
 		@Override
 		public Response<Raw> data(Publisher<ByteBuf> data) {
@@ -164,7 +164,7 @@ public class GenericResponseBody implements ResponseBody {
 		}
 	}
 
-	private class GenericSseBody implements ResponseBody.Sse<ByteBuf> {
+	private class GenericSseResponseBody implements ResponseBody.Sse<ByteBuf> {
 
 		@Override
 		public Response<Sse<ByteBuf>> events(Publisher<ServerSentEvent<ByteBuf>> events) {
@@ -230,7 +230,7 @@ public class GenericResponseBody implements ResponseBody {
 		}
 	}
 	
-	private class GenericResourceBody implements ResponseBody.Resource {
+	private class GenericResourceResponseBody implements ResponseBody.Resource {
 
 		@Override
 		public Response<Resource> data(io.winterframework.mod.commons.resource.Resource resource) {

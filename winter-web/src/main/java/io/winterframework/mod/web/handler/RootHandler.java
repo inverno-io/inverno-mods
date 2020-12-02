@@ -22,12 +22,12 @@ import java.util.function.Supplier;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Overridable;
 import io.winterframework.core.annotation.Wrapper;
+import io.winterframework.mod.web.Exchange;
+import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.RequestHandler;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.Status;
 import io.winterframework.mod.web.router.Router;
-import io.winterframework.mod.web.router.WebContext;
 
 /**
  * @author jkuhn
@@ -36,7 +36,7 @@ import io.winterframework.mod.web.router.WebContext;
 @Bean
 @Wrapper
 @Overridable 
-public class RootHandler implements Supplier<RequestHandler<RequestBody, ResponseBody, Void>> {
+public class RootHandler implements Supplier<ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>>> {
 
 	private byte[] favicon;
 	
@@ -54,22 +54,24 @@ public class RootHandler implements Supplier<RequestHandler<RequestBody, Respons
 	}
 	
 	@Override
-	public RequestHandler<RequestBody, ResponseBody, Void> get() {
+	public ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> get() {
 		return Router.web()
 			.route().path("/favicon.ico").handler(this.faviconHandler())
 			.route().handler(this.defaultHandler());
 	}
 	
-	private RequestHandler<RequestBody, ResponseBody, WebContext> faviconHandler() {
-		return (request, response) -> {
-			response.headers(headers -> headers.status(Status.OK).contentType("image/svg+xml"))
+	private ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> faviconHandler() {
+		return exchange -> {
+			exchange.response()
+				.headers(headers -> headers.status(Status.OK).contentType("image/svg+xml"))
 				.body().raw().data(this.getFavicon());
 		};
 	}
 	
-	private RequestHandler<RequestBody, ResponseBody, WebContext> defaultHandler() {
-		return (request, response) -> {
-			response.headers(headers -> headers.status(Status.OK).contentType("text/html"))
+	private ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> defaultHandler() {
+		return exchange -> {
+			exchange.response()
+				.headers(headers -> headers.status(Status.OK).contentType("text/html"))
 				.body().raw().data("<html><head><title>Winter</title></head><body><h1>Hello</h1></body></html>");
 		};
 	}

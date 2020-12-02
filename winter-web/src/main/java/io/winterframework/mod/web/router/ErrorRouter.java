@@ -15,8 +15,7 @@
  */
 package io.winterframework.mod.web.router;
 
-import io.winterframework.mod.web.Request;
-import io.winterframework.mod.web.Response;
+import io.winterframework.mod.web.ErrorExchange;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.WebException;
 
@@ -24,13 +23,13 @@ import io.winterframework.mod.web.WebException;
  * @author jkuhn
  *
  */
-public interface ErrorRouter extends Router<Void, ResponseBody, Throwable, ErrorRouter, ErrorRouteManager, ErrorRoute, Void, ResponseBody, Throwable> {
-
+public interface ErrorRouter extends Router<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>, ErrorRouter, ErrorRouteManager, ErrorRoute, Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> {
+	
 	@Override
-	default void handle(Request<Void, Throwable> request, Response<ResponseBody> response) throws WebException {
-		if(response.isHeadersWritten()) {
+	default void handle(ErrorExchange<ResponseBody, Throwable> exchange) throws WebException {
+		if(exchange.response().isHeadersWritten()) {
 			// TODO exchange interrupted exception?
-			throw new RuntimeException(request.context());
+			throw new RuntimeException(exchange.getError());
 		}
 	}
 }

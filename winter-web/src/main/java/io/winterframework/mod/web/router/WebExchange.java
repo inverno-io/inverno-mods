@@ -13,32 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.web;
+package io.winterframework.mod.web.router;
 
-import io.netty.buffer.ByteBuf;
-import reactor.core.publisher.Flux;
+import java.util.Map;
+import java.util.Optional;
+
+import io.winterframework.mod.web.Exchange;
 
 /**
  * @author jkuhn
  *
  */
-public interface RequestBody {
+public interface WebExchange<A, B> extends Exchange<A, B> {
+
+	void setAttribute(String name, Object value);
 	
-	RequestBody.Raw raw();
+	void removeAttribute(String name);
 	
-	RequestBody.Multipart multipart();
+	<T> Optional<T> getAttribute(String name);
 	
-	RequestBody.UrlEncoded urlEncoded();
+	Map<String, Object> getAttributes();
 	
-	public static interface Raw {
-		Flux<ByteBuf> data();
-	}
-	
-	public static interface Multipart {
-		Flux<Part> parts();
-	}
-	
-	public static interface UrlEncoded {
-		Flux<Parameter> parameters();
-	}
+	// TODO we could return a PathParameter object here so we can expose some basic value conversion
+	Map<String, String> getPathParameters();
 }

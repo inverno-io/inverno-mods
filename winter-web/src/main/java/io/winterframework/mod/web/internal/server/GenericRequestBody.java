@@ -34,7 +34,7 @@ public class GenericRequestBody implements RequestBody {
 	private Flux<ByteBuf> data;
 	private Optional<Headers.ContentType> contentType;
 	
-	private RequestBody.Data dataBody;
+	private RequestBody.Raw rawBody;
 	private RequestBody.UrlEncoded urlEncodedBody;
 	private RequestBody.Multipart multipartBody;
 	
@@ -49,19 +49,19 @@ public class GenericRequestBody implements RequestBody {
 	}
 	
 	@Override
-	public RequestBody.Data data() {
+	public RequestBody.Raw raw() {
 		if(this.urlEncodedBody != null || this.multipartBody != null) {
 			throw new IllegalStateException("You can't mix regular post request with multipart"); // TODO find proper message
 		}
-		if(this.dataBody == null) {
-			this.dataBody = new GenericDataRequestBody();
+		if(this.rawBody == null) {
+			this.rawBody = new GenericRawRequestBody();
 		}
-		return this.dataBody;
+		return this.rawBody;
 	}
 
 	@Override
 	public RequestBody.Multipart multipart() {
-		if(this.dataBody != null || this.urlEncodedBody != null) {
+		if(this.rawBody != null || this.urlEncodedBody != null) {
 			throw new IllegalStateException("You can't mix regular post request with multipart"); // TODO find proper message
 		}
 		if(this.multipartBody == null) {
@@ -72,7 +72,7 @@ public class GenericRequestBody implements RequestBody {
 
 	@Override
 	public RequestBody.UrlEncoded urlEncoded() {
-		if(this.dataBody != null || this.multipartBody != null) {
+		if(this.rawBody != null || this.multipartBody != null) {
 			throw new IllegalStateException("You can't mix regular post request with multipart"); // TODO find proper message
 		}
 		if(this.urlEncodedBody == null) {
@@ -81,7 +81,7 @@ public class GenericRequestBody implements RequestBody {
 		return this.urlEncodedBody;
 	}
 	
-	private class GenericDataRequestBody implements RequestBody.Data {
+	private class GenericRawRequestBody implements RequestBody.Raw {
 
 		@Override
 		public Flux<ByteBuf> data() {

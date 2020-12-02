@@ -23,30 +23,12 @@ import java.util.function.Function;
  *
  */
 @FunctionalInterface
-public interface RequestHandler<A, B, C> {
+public interface ExchangeHandler<A, B, C extends Exchange<A, B>> {
 
-	void handle(Request<A, C> request, Response<B> response) throws WebException;
+	void handle(C exchange) throws WebException;
 	
-	default <T, U, V, W extends RequestHandler<T, U, V>> W map(Function<? super RequestHandler<A, B, C>, ? extends W> mapper) {
+	default <E, F, G extends Exchange<E,F>, H extends ExchangeHandler<E, F, G>> H map(Function<? super ExchangeHandler<A, B, C>, ? extends H> mapper) {
 		Objects.requireNonNull(mapper);
 		return mapper.apply(this);
-	}
-	
-	default RequestHandler<A, B, C> doBefore(RequestHandler<A, B, C> after) {
-		Objects.requireNonNull(after);
-
-        return (request, response) -> {
-            this.handle(request, response);
-            after.handle(request, response);
-        };
-	}
-	
-	default RequestHandler<A, B, C> doAfter(RequestHandler<A, B, C> after) {
-		Objects.requireNonNull(after);
-
-        return (request, response) -> {
-            this.handle(request, response);
-            after.handle(request, response);
-        };
 	}
 }

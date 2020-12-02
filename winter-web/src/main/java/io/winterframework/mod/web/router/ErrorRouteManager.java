@@ -15,15 +15,19 @@
  */
 package io.winterframework.mod.web.router;
 
+import io.winterframework.mod.web.ErrorExchange;
+import io.winterframework.mod.web.ErrorExchangeHandler;
 import io.winterframework.mod.web.ResponseBody;
 
 /**
  * @author jkuhn
  *
  */
-public interface ErrorRouteManager extends RouteManager<Void, ResponseBody, Throwable, ErrorRouter, ErrorRouteManager, ErrorRoute, Void, ResponseBody, Throwable> {
+public interface ErrorRouteManager extends RouteManager<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>, ErrorRouter, ErrorRouteManager, ErrorRoute, Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> {
 
-	<T extends Throwable> ErrorRouteManager error(Class<T> error) throws IllegalArgumentException;
+	ErrorRouter handler(ErrorExchangeHandler<ResponseBody, ? extends Throwable> handler);
+	
+	ErrorRouteManager error(Class<? extends Throwable> error) throws IllegalArgumentException;
 	
 	ErrorRouteManager produces(String mediaType);
 	

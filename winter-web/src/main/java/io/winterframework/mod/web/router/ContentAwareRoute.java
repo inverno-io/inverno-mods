@@ -17,11 +17,13 @@ package io.winterframework.mod.web.router;
 
 import java.util.Set;
 
+import io.winterframework.mod.web.Exchange;
+
 /**
  * @author jkuhn
  *
  */
-public interface ContentAwareRoute<A, B, C> extends Route<A, B, C> {
+public interface ContentAwareRoute<A, B, C extends Exchange<A, B>> extends Route<A, B, C> {
 
 	Set<String> getConsumes();
 }

@@ -17,8 +17,10 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
+import io.winterframework.mod.web.ErrorExchange;
+import io.winterframework.mod.web.Exchange;
+import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.RequestHandler;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.internal.server.AbstractHttpServerExchange;
 import io.winterframework.mod.web.internal.server.AbstractRequest;
@@ -35,7 +37,7 @@ public class Http2ServerStream extends AbstractHttpServerExchange {
 	
 	private final Consumer<Http2Headers> headersConfigurer;
 
-	public Http2ServerStream(ChannelHandlerContext context, RequestHandler<RequestBody, ResponseBody, Void> rootHandler, RequestHandler<Void, ResponseBody, Throwable> errorHandler, AbstractRequest request, GenericResponse response, Http2Stream stream, Http2ConnectionEncoder encoder) {
+	public Http2ServerStream(ChannelHandlerContext context, ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, AbstractRequest request, GenericResponse response, Http2Stream stream, Http2ConnectionEncoder encoder) {
 		super(context, rootHandler, errorHandler, request, response);
 		this.stream = stream;
 		this.encoder = encoder;

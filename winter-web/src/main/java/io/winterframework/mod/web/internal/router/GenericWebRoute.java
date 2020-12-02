@@ -21,23 +21,23 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.RequestHandler;
 import io.winterframework.mod.web.ResponseBody;
-import io.winterframework.mod.web.router.WebContext;
+import io.winterframework.mod.web.router.WebExchange;
 import io.winterframework.mod.web.router.WebRoute;
 
 /**
  * @author jkuhn
  *
  */
-class GenericWebRoute implements WebRoute<RequestBody, ResponseBody, WebContext> {
+class GenericWebRoute implements WebRoute<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> {
 
 	private GenericWebRouter router;
 	
 	protected String path;
-	protected PathPattern pathPattern;
+	protected WebRoute.PathPattern pathPattern;
 	
 	protected Set<Method> methods;
 	
@@ -49,7 +49,7 @@ class GenericWebRoute implements WebRoute<RequestBody, ResponseBody, WebContext>
 
 	protected boolean matchTrailingSlash;
 	
-	protected RequestHandler<RequestBody, ResponseBody, WebContext> handler;
+	protected ExchangeHandler<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> handler;
 	
 	public GenericWebRoute(GenericWebRouter router) {
 		this.router = router;
@@ -57,12 +57,12 @@ class GenericWebRoute implements WebRoute<RequestBody, ResponseBody, WebContext>
 
 	@Override
 	public void enable() {
-		this.router.enableRoute(this);
+		// TODO
 	}
 	
 	@Override
 	public void disable() {
-		this.router.disableRoute(this);
+		// TODO
 	}
 	
 	@Override
@@ -70,15 +70,10 @@ class GenericWebRoute implements WebRoute<RequestBody, ResponseBody, WebContext>
 		this.router.removeRoute(this);
 	}
 	
-	@Override
-	public RequestHandler<RequestBody, ResponseBody, WebContext> getHandler() {
-		return this.handler;
-	}
-	
-	public void setHandler(RequestHandler<RequestBody, ResponseBody, WebContext> handler) {
+	public void setHandler(ExchangeHandler<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> handler) {
 		this.handler = handler;
 	}
-
+	
 	@Override
 	public String getPath() {
 		return this.path;
@@ -89,11 +84,11 @@ class GenericWebRoute implements WebRoute<RequestBody, ResponseBody, WebContext>
 	}
 
 	@Override
-	public PathPattern getPathPattern() {
+	public WebRoute.PathPattern getPathPattern() {
 		return this.pathPattern;
 	}
 	
-	public void setPathPattern(PathPattern pathPattern) {
+	public void setPathPattern(WebRoute.PathPattern pathPattern) {
 		this.pathPattern = pathPattern;
 	}
 
@@ -142,17 +137,85 @@ class GenericWebRoute implements WebRoute<RequestBody, ResponseBody, WebContext>
 		this.languages = languages;
 	}
 	
-	public static class PathPattern implements WebRoute.PathPattern {
+	@Override
+	public ExchangeHandler<RequestBody, ResponseBody, WebExchange<RequestBody, ResponseBody>> getHandler() {
+		return this.handler;
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((consumes == null) ? 0 : consumes.hashCode());
+		result = prime * result + ((languages == null) ? 0 : languages.hashCode());
+		result = prime * result + ((methods == null) ? 0 : methods.hashCode());
+		result = prime * result + ((path == null) ? 0 : path.hashCode());
+		result = prime * result + ((pathPattern == null) ? 0 : pathPattern.hashCode());
+		result = prime * result + ((produces == null) ? 0 : produces.hashCode());
+		return result;
+	}
 
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		GenericWebRoute other = (GenericWebRoute) obj;
+		if (consumes == null) {
+			if (other.consumes != null)
+				return false;
+		} else if (!consumes.equals(other.consumes))
+			return false;
+		if (languages == null) {
+			if (other.languages != null)
+				return false;
+		} else if (!languages.equals(other.languages))
+			return false;
+		if (methods == null) {
+			if (other.methods != null)
+				return false;
+		} else if (!methods.equals(other.methods))
+			return false;
+		if (path == null) {
+			if (other.path != null)
+				return false;
+		} else if (!path.equals(other.path))
+			return false;
+		if (pathPattern == null) {
+			if (other.pathPattern != null)
+				return false;
+		} else if (!pathPattern.equals(other.pathPattern))
+			return false;
+		if (produces == null) {
+			if (other.produces != null)
+				return false;
+		} else if (!produces.equals(other.produces))
+			return false;
+		return true;
+	}
+
+	public static class GenericPathPattern implements WebRoute.PathPattern {
+
+		private String path;
+		
 		private Pattern pathPattern;
 		
 		private List<String> pathParameterNames;
 		
-		public PathPattern(Pattern pathPattern, List<String> pathParameterNames) {
+		public GenericPathPattern(String path, Pattern pathPattern, List<String> pathParameterNames) {
 			Objects.requireNonNull(pathPattern);
 			Objects.requireNonNull(pathParameterNames);
+			this.path = path;
 			this.pathPattern = pathPattern;
 			this.pathParameterNames = pathParameterNames;
+		}
+		
+		@Override
+		public String getPath() {
+			return this.path;
 		}
 
 		@Override
@@ -181,7 +244,7 @@ class GenericWebRoute implements WebRoute<RequestBody, ResponseBody, WebContext>
 				return false;
 			if (getClass() != obj.getClass())
 				return false;
-			PathPattern other = (PathPattern) obj;
+			GenericPathPattern other = (GenericPathPattern) obj;
 			if (pathPattern == null) {
 				if (other.pathPattern != null)
 					return false;

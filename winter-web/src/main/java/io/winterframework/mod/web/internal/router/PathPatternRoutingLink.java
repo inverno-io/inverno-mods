@@ -25,17 +25,15 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 
 import io.winterframework.mod.web.BadRequestException;
-import io.winterframework.mod.web.Request;
-import io.winterframework.mod.web.Response;
+import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.WebException;
 import io.winterframework.mod.web.router.PathAwareRoute;
-import io.winterframework.mod.web.router.WebContext;
 
 /**
  * @author jkuhn
  *
  */
-class PathPatternRoutingLink<A, B, C extends WebContext, D extends PathAwareRoute<A, B, C>> extends RoutingLink<A, B, C, PathPatternRoutingLink<A, B, C, D>, D> {
+class PathPatternRoutingLink<A, B, C extends Exchange<A, B>, D extends PathAwareRoute<A, B, C>> extends RoutingLink<A, B, C, PathPatternRoutingLink<A, B, C, D>, D> {
 
 	private Map<PathAwareRoute.PathPattern, RoutingLink<A, B, C, ?, D>> handlers;
 	
@@ -46,8 +44,8 @@ class PathPatternRoutingLink<A, B, C extends WebContext, D extends PathAwareRout
 
 	@Override
 	public PathPatternRoutingLink<A, B, C, D> addRoute(D route) {
-		if(route.getPathPattern() != null) {
-			PathAwareRoute.PathPattern pathPattern = route.getPathPattern();
+		PathAwareRoute.PathPattern pathPattern = route.getPathPattern();
+		if(pathPattern != null) {
 			if(this.handlers.containsKey(pathPattern)) {
 				this.handlers.get(pathPattern).addRoute(route);
 			}
@@ -60,38 +58,43 @@ class PathPatternRoutingLink<A, B, C extends WebContext, D extends PathAwareRout
 		}
 		return this;
 	}
-
+	
 	@Override
-	public void handle(Request<A, C> request, Response<B> response) throws WebException {
-		String normalizedPath;
-		try {
-			normalizedPath = new URI(request.headers().getPath()).normalize().getPath().toString();
-		} 
-		catch (URISyntaxException e) {
-			throw new BadRequestException("Bad URI", e);
-		}
-		
-		// TODO If we have more than one, we need to prioritize them or we need to fail depending on a routing strategy
-		// - we can choose to trust the Winter compiler to detect conflicts and have a defaulting behavior at runtime
-		// - we can choose to make this behavior configurable
-		Optional<RoutingLink<A, B, C, ?, D>> handler = this.handlers.entrySet().stream()
-			.map(e -> this.matches(normalizedPath, e.getKey(), e.getValue()))
-			.filter(Objects::nonNull)
-			.sorted(Comparator.reverseOrder())
-			.findFirst()
-			.map(match -> {
-				((GenericWebContext)request.context()).setPathParameters(match.getPathParameters());
-				return match.getHandler();
-			});
-		
-		if(handler.isPresent()) {
-			handler.get().handle(request, response);
+	public void removeRoute(D route) {
+		PathAwareRoute.PathPattern pathPattern = route.getPathPattern();
+		if(pathPattern != null) {
+			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(pathPattern);
+			if(handler != null) {
+				handler.removeRoute(route);
+				if(!handler.hasRoute()) {
+					// The link has no more routes, we can remove it for good 
+					this.handlers.remove(pathPattern);
+				}
+			}
+			// route doesn't exist so let's do nothing
 		}
 		else {
-			this.nextLink.handle(request, response);
+			this.nextLink.removeRoute(route);
 		}
 	}
 	
+	@Override
+	public boolean hasRoute() {
+		return !this.handlers.isEmpty() || this.nextLink.hasRoute();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <F extends RouteExtractor<A, B, C, D>> void extractRoute(F extractor) {
+		if(!(extractor instanceof PathAwareRouteExtractor)) {
+			throw new IllegalArgumentException("Route extractor is not path aware");
+		}
+		this.handlers.entrySet().stream().forEach(e -> {
+			e.getValue().extractRoute(((PathAwareRouteExtractor<A, B, C, D, ?>)extractor).pathPattern(e.getKey()));
+		});
+		super.extractRoute(extractor);
+	}
+
 	private PathPatternMatch<A, B, C, D> matches(String path, PathAwareRoute.PathPattern pathPattern, RoutingLink<A, B, C, ?, D> handler) {
 		Matcher matcher = pathPattern.getPattern().matcher(path);
 		if(matcher.matches()) {
@@ -100,7 +103,7 @@ class PathPatternRoutingLink<A, B, C extends WebContext, D extends PathAwareRout
 		return null;
 	}
 	
-	private static class PathPatternMatch<A, B, C extends WebContext, D extends PathAwareRoute<A, B, C>> implements Comparable<PathPatternMatch<A, B, C, D>> {
+	private static class PathPatternMatch<A, B, C extends Exchange<A, B>, D extends PathAwareRoute<A, B, C>> implements Comparable<PathPatternMatch<A, B, C, D>> {
 		
 		private Matcher matcher;
 		
@@ -179,6 +182,39 @@ class PathPatternRoutingLink<A, B, C extends WebContext, D extends PathAwareRout
 				return -1;
 			}
 			return 0;
+		}
+	}
+
+	@Override
+	public void handle(C exchange) throws WebException {
+		String normalizedPath;
+		try {
+			normalizedPath = new URI(exchange.request().headers().getPath()).normalize().getPath().toString();
+		} 
+		catch (URISyntaxException e) {
+			throw new BadRequestException("Bad URI", e);
+		}
+		
+		// TODO If we have more than one, we need to prioritize them or we need to fail depending on a routing strategy
+		// - we can choose to trust the Winter compiler to detect conflicts and have a defaulting behavior at runtime
+		// - we can choose to make this behavior configurable
+		Optional<RoutingLink<A, B, C, ?, D>> handler = this.handlers.entrySet().stream()
+			.map(e -> this.matches(normalizedPath, e.getKey(), e.getValue()))
+			.filter(Objects::nonNull)
+			.sorted(Comparator.reverseOrder())
+			.findFirst()
+			.map(match -> {
+				if(exchange instanceof GenericWebExchange) {
+					((GenericWebExchange)exchange).setPathParameters(match.getPathParameters());
+				}
+				return match.getHandler();
+			});
+		
+		if(handler.isPresent()) {
+			handler.get().handle(exchange);
+		}
+		else {
+			this.nextLink.handle(exchange);
 		}
 	}
 }

@@ -21,12 +21,11 @@ import java.net.URISyntaxException;
 
 import io.winterframework.mod.commons.resource.Resource;
 import io.winterframework.mod.web.BadRequestException;
+import io.winterframework.mod.web.Exchange;
+import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.InternalServerErrorException;
 import io.winterframework.mod.web.NotFoundException;
-import io.winterframework.mod.web.Request;
 import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.RequestHandler;
-import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.WebException;
 
@@ -34,7 +33,7 @@ import io.winterframework.mod.web.WebException;
  * @author jkuhn
  *
  */
-public class StaticHandler implements RequestHandler<RequestBody, ResponseBody, Void> {
+public class StaticHandler implements ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> {
 
 	private Resource baseResource;
 	
@@ -49,8 +48,8 @@ public class StaticHandler implements RequestHandler<RequestBody, ResponseBody, 
 	}
 	
 	@Override
-	public void handle(Request<RequestBody, Void> request, Response<ResponseBody> response) throws WebException {
-		String resourceRelativePath = request.headers().getPath().substring(this.basePath.length());
+	public void handle(Exchange<RequestBody, ResponseBody> exchange) throws WebException {
+		String resourceRelativePath = exchange.request().headers().getPath().substring(this.basePath.length());
 		if(resourceRelativePath.startsWith("/")) {
 			resourceRelativePath = resourceRelativePath.substring(1);
 		}
@@ -68,10 +67,10 @@ public class StaticHandler implements RequestHandler<RequestBody, ResponseBody, 
 			if(exists == null) {
 				// In case of file resources we should always be able to determine existence
 				// For other resources we can still try, worst case scenario: internal server error
-				response.body().resource().data(this.baseResource.resolve(resourceRelativePath));
+				exchange.response().body().resource().data(this.baseResource.resolve(resourceRelativePath));
 			}
 			else if(exists) {
-				response.body().resource().data(this.baseResource.resolve(resourceRelativePath));
+				exchange.response().body().resource().data(this.baseResource.resolve(resourceRelativePath));
 			}
 			else {
 				throw new NotFoundException();

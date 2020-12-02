@@ -1,0 +1,157 @@
+/*
+ * Copyright 2020 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.winterframework.mod.web.internal.router;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import io.winterframework.mod.web.ErrorExchange;
+import io.winterframework.mod.web.ExchangeHandler;
+import io.winterframework.mod.web.ResponseBody;
+import io.winterframework.mod.web.router.ErrorRoute;
+
+/**
+ * @author jkuhn
+ *
+ */
+public class GenericErrorRouteExtractor implements ErrorRouteExtractor {
+
+	private GenericErrorRouter router;
+	
+	private GenericErrorRouteExtractor parent;
+	
+	private Set<ErrorRoute> routes;
+	
+	private Class<? extends Throwable> error;
+	
+	private String produces;
+	
+	private String language;
+	
+	public GenericErrorRouteExtractor(GenericErrorRouter router) {
+		this.router = router;
+	}
+
+	private GenericErrorRouteExtractor(GenericErrorRouteExtractor parent) {
+		this.parent = parent;
+	}
+	
+	private GenericErrorRouter getRouter() {
+		if(this.parent != null) {
+			return this.parent.getRouter();
+		}
+		else {
+			return this.router;
+		}
+	}
+	
+	private Class<? extends Throwable> getError() {
+		if(this.error != null) {
+			return this.error;
+		}
+		else if(parent != null) {
+			return this.parent.getError();
+		}
+		return null;
+	}
+	
+	private String getProduces() {
+		if(this.produces != null) {
+			return this.produces;
+		}
+		else if(parent != null) {
+			return this.parent.getProduces();
+		}
+		return null;
+	}
+	
+	private String getLanguage() {
+		if(this.language != null) {
+			return this.language;
+		}
+		else if(parent != null) {
+			return this.parent.getLanguage();
+		}
+		return null;
+	}
+	
+	private void addRoute(ErrorRoute route) {
+		if(this.parent != null) {
+			this.parent.addRoute(route);
+		}
+		else {
+			if(this.routes == null) {
+				this.routes = new HashSet<>();
+			}
+			this.routes.add(route);
+		}
+	}
+	
+	@Override
+	public Set<ErrorRoute> getRoutes() {
+		if(this.parent != null) {
+			return this.parent.getRoutes();			
+		}
+		else {
+			return Collections.unmodifiableSet(this.routes);
+		}
+	}
+	
+	@Override
+	public ErrorRouteExtractor error(Class<? extends Throwable> error) {
+		GenericErrorRouteExtractor childExtractor = new GenericErrorRouteExtractor(this);
+		childExtractor.error = error;
+		return childExtractor;
+	}
+	
+	@Override
+	public ErrorRouteExtractor produces(String mediaType) {
+		GenericErrorRouteExtractor childExtractor = new GenericErrorRouteExtractor(this);
+		childExtractor.produces = mediaType;
+		return childExtractor;
+	}
+
+	@Override
+	public ErrorRouteExtractor language(String language) {
+		GenericErrorRouteExtractor childExtractor = new GenericErrorRouteExtractor(this);
+		childExtractor.language = language;
+		return childExtractor;
+	}
+
+	@Override
+	public void handler(ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> handler) {
+		if(handler != null) {
+			GenericErrorRoute route = new GenericErrorRoute(this.getRouter());
+	
+			Class<? extends Throwable> error = this.getError();
+			String produces = this.getProduces();
+			String language = this.getLanguage();
+			
+			if(error != null) {
+				route.setErrors(Set.of(error));
+			}
+			if(produces != null) {
+				route.setProduces(Set.of(produces));
+			}
+			if(language != null) {
+				route.setLanguages(Set.of(language));
+			}
+			route.setHandler(handler);
+			this.addRoute(route);
+		}
+	}	
+}

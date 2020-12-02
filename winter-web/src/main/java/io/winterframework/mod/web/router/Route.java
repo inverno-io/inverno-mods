@@ -15,15 +15,16 @@
  */
 package io.winterframework.mod.web.router;
 
-import io.winterframework.mod.web.RequestHandler;
+import io.winterframework.mod.web.Exchange;
+import io.winterframework.mod.web.ExchangeHandler;
 
 /**
  * @author jkuhn
  *
  */
-public interface Route<A, B, C> {
+public interface Route<A, B, C extends Exchange<A, B>> {
 
-	RequestHandler<A, B, C> getHandler();
+	ExchangeHandler<A, B, C> getHandler();
 	
 	void enable();
 	

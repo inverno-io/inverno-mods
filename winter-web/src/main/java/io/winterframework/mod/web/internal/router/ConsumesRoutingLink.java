@@ -20,12 +20,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Headers.AcceptMatch;
-import io.winterframework.mod.web.Request;
-import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.UnsupportedMediaTypeException;
 import io.winterframework.mod.web.WebException;
 import io.winterframework.mod.web.internal.header.AcceptCodec;
@@ -35,7 +35,7 @@ import io.winterframework.mod.web.router.ContentAwareRoute;
  * @author jkuhn
  *
  */
-class ConsumesRoutingLink<A, B, C, D extends ContentAwareRoute<A, B, C>> extends RoutingLink<A, B, C, ConsumesRoutingLink<A, B, C, D>, D> {// extends RoutingLink<RequestBody, ResponseBody, WebContext, ConsumesRoutingLink, WebRoute<RequestBody, ResponseBody, WebContext>> {
+class ConsumesRoutingLink<A, B, C extends Exchange<A, B>, D extends ContentAwareRoute<A, B, C>> extends RoutingLink<A, B, C, ConsumesRoutingLink<A, B, C, D>, D> {
 
 	private AcceptCodec acceptCodec;
 	
@@ -50,8 +50,9 @@ class ConsumesRoutingLink<A, B, C, D extends ContentAwareRoute<A, B, C>> extends
 	@Override
 	public ConsumesRoutingLink<A, B, C, D> addRoute(D route) {
 		// Note if someone defines a route with a GET like method and a consumed media type, consumes will be ignored because such request does not provide content types headers
-		if(route.getConsumes() != null && !route.getConsumes().isEmpty()) {
-			route.getConsumes().stream()
+		Set<String> consumes = route.getConsumes();
+		if(consumes != null && !consumes.isEmpty()) {
+			consumes.stream()
 				.map(consume -> this.acceptCodec.decode(Headers.ACCEPT, consume).getMediaRanges().get(0)) // TODO what happens if I have no range?
 				.forEach(mediaRange -> {
 					if(this.handlers.containsKey(mediaRange)) {
@@ -70,17 +71,59 @@ class ConsumesRoutingLink<A, B, C, D extends ContentAwareRoute<A, B, C>> extends
 	}
 	
 	@Override
-	public void handle(Request<A, C> request, Response<B> response) throws WebException {
-		Optional<Headers.ContentType> contentTypeHeader = request.headers().<Headers.ContentType>get(Headers.CONTENT_TYPE);
+	public void removeRoute(D route) {
+		Set<String> consumes = route.getConsumes();
+		if(consumes != null && !consumes.isEmpty()) {
+			// We can only remove single route
+			if(consumes.size() > 1) {
+				throw new IllegalArgumentException("Multiple accept media ranges found in route, can only remove a single route");
+			}
+			String consume = consumes.iterator().next();
+			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.ACCEPT, consume).getMediaRanges().get(0);
+			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(mediaRange);
+			if(handler != null) {
+				handler.removeRoute(route);
+				if(!handler.hasRoute()) {
+					// The link has no more routes, we can remove it for good 
+					this.handlers.remove(mediaRange);
+				}
+			}
+			// route doesn't exist so let's do nothing
+		}
+		else {
+			this.nextLink.removeRoute(route);
+		}
+	}
+	
+	@Override
+	public boolean hasRoute() {
+		return !this.handlers.isEmpty() || this.nextLink.hasRoute();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <F extends RouteExtractor<A, B, C, D>> void extractRoute(F extractor) {
+		if(!(extractor instanceof ContentAwareRouteExtractor)) {
+			throw new IllegalArgumentException("Route extractor is not content aware");
+		}
+		this.handlers.entrySet().stream().forEach(e -> {
+			e.getValue().extractRoute(((ContentAwareRouteExtractor<A, B, C, D, ?>)extractor).consumes(e.getKey().getMediaType()));
+		});
+		super.extractRoute(extractor);
+	}
+	
+	@Override
+	public void handle(C exchange) throws WebException {
+		Optional<Headers.ContentType> contentTypeHeader = exchange.request().headers().<Headers.ContentType>get(Headers.CONTENT_TYPE);
 		
 		Optional<RoutingLink<A, B, C, ?, D>> handler = contentTypeHeader
 			.flatMap(contentType -> Headers.Accept.MediaRange.findFirstMatch(contentType, this.handlers.entrySet(), Entry::getKey).map(AcceptMatch::getSource).map(Entry::getValue));
 		
 		if(handler.isPresent()) {
-			handler.get().handle(request, response);
+			handler.get().handle(exchange);
 		}
 		else if(this.handlers.isEmpty() || !contentTypeHeader.isPresent()) {
-			this.nextLink.handle(request, response);
+			this.nextLink.handle(exchange);
 		}
 		else {
 			throw new UnsupportedMediaTypeException();

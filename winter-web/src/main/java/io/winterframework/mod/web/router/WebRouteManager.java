@@ -15,6 +15,7 @@
  */
 package io.winterframework.mod.web.router;
 
+import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.ResponseBody;
@@ -23,7 +24,9 @@ import io.winterframework.mod.web.ResponseBody;
  * @author jkuhn
  *
  */
-public interface WebRouteManager<A, B, C extends WebContext> extends RouteManager<A, B, C, WebRouter<A, B, C>, WebRouteManager<A, B, C>, WebRoute<A, B, C>, RequestBody, ResponseBody, Void> {
+public interface WebRouteManager<A, B, C extends WebExchange<A, B>> extends RouteManager<A, B, C, WebRouter<A, B, C>, WebRouteManager<A, B, C>, WebRoute<A, B, C>, RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> {
+	
+	WebRouter<A, B, C> handler(WebExchangeHandler<? super A, ? super B> handler);
 	
 	WebRouteManager<A, B, C> path(String path) throws IllegalArgumentException;
 		

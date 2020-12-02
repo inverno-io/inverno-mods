@@ -18,13 +18,17 @@ package io.winterframework.mod.web.router;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import io.winterframework.mod.web.Exchange;
+
 /**
  * @author jkuhn
  *
  */
-public interface PathAwareRoute<A, B, C> extends Route<A, B, C> {
+public interface PathAwareRoute<A, B, C extends Exchange<A, B>> extends Route<A, B, C> {
 
 	static interface PathPattern {
+		
+		String getPath();
 
 		Pattern getPattern();
 		
