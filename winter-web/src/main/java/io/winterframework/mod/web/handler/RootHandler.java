@@ -22,9 +22,9 @@ import java.util.function.Supplier;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Overridable;
 import io.winterframework.core.annotation.Wrapper;
-import io.winterframework.mod.commons.resource.ClasspathResource;
 import io.winterframework.mod.commons.resource.Resource;
 import io.winterframework.mod.commons.resource.ResourceException;
+import io.winterframework.mod.commons.resource.ResourceService;
 import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.NotFoundException;
@@ -42,7 +42,11 @@ import io.winterframework.mod.web.router.Router;
 @Overridable 
 public class RootHandler implements Supplier<ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>>> {
 
-	private static final URI FAVICON_URI = URI.create("classpath:/winter_favicon.svg");
+	private ResourceService resourceService;
+	
+	public RootHandler(ResourceService resourceService) {
+		this.resourceService = resourceService;
+	}
 	
 	@Override
 	public ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> get() {
@@ -53,16 +57,8 @@ public class RootHandler implements Supplier<ExchangeHandler<RequestBody, Respon
 	
 	private ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> faviconHandler() {
 		return exchange -> {
-			try(Resource favicon = new ClasspathResource(FAVICON_URI)) {
-				Boolean exists = favicon.exists();
-				if(exists == null || exists) {
-					exchange.response()
-						.headers(headers -> headers.status(Status.OK).contentType("image/svg+xml"))
-						.body().resource().data(favicon);
-				}
-				else {
-					throw new NotFoundException();
-				}
+			try(Resource favicon = this.resourceService.get(URI.create("classpath:/winter_favicon.svg"))) {
+				exchange.response().body().resource().data(favicon);
 			} 
 			catch (IllegalArgumentException | ResourceException | IOException e) {
 				throw new NotFoundException();

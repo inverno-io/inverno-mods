@@ -25,6 +25,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpConstants;
 import io.winterframework.mod.commons.resource.MediaTypes;
 import io.winterframework.mod.web.InternalServerErrorException;
+import io.winterframework.mod.web.NotFoundException;
 import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.ServerSentEvent;
@@ -264,8 +265,17 @@ public class GenericResponseBody implements ResponseBody {
 		public Response<Resource> data(io.winterframework.mod.commons.resource.Resource resource) {
 			// Http2 doesn't support FileRegion so we have to read the resource and send it to the response data flux
 			try {
-				this.populateHeaders(resource);
-				GenericResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable")));
+				Boolean exists = resource.exists();
+				if(exists == null || exists) {
+					// In case of file resources we should always be able to determine existence
+					// For other resources with a null exists we can still try, worst case scenario: 
+					// internal server error
+					this.populateHeaders(resource);
+					GenericResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable")));
+				}
+				else {
+					throw new NotFoundException();
+				}
 			} 
 			catch (IOException e) {
 				throw new InternalServerErrorException("Error while reading resource " + resource, e);

@@ -53,7 +53,6 @@ public class StaticHandler implements ExchangeHandler<RequestBody, ResponseBody,
 		if(resourceRelativePath.startsWith("/")) {
 			resourceRelativePath = resourceRelativePath.substring(1);
 		}
-		
 		try {
 			URI resourceUri = new URI(resourceRelativePath).normalize();
 			if(resourceUri.isAbsolute()) {
@@ -62,16 +61,8 @@ public class StaticHandler implements ExchangeHandler<RequestBody, ResponseBody,
 			if(resourceUri.getPath().startsWith(".")) {
 				throw new NotFoundException();
 			}
-			Resource requestedResource = this.baseResource.resolve(resourceRelativePath);
-			Boolean exists = requestedResource.exists();
-			if(exists == null || exists) {
-				// In case of file resources we should always be able to determine existence
-				// For other resources with a null exists we can still try, worst case scenario: 
-				// internal server error
-				exchange.response().body().resource().data(this.baseResource.resolve(resourceRelativePath));
-			}
-			else {
-				throw new NotFoundException();
+			try(Resource requestedResource = this.baseResource.resolve(resourceUri)) {
+				exchange.response().body().resource().data(requestedResource);
 			}
 		} 
 		catch (URISyntaxException | IOException e) {
