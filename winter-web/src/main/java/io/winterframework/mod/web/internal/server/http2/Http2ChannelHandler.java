@@ -21,6 +21,7 @@ import io.winterframework.core.annotation.Bean.Strategy;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.core.annotation.Lazy;
 import io.winterframework.core.annotation.Wrapper;
+import io.winterframework.mod.web.WebConfiguration;
 
 public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2FrameListener, Http2Connection.Listener {
 
@@ -224,15 +225,18 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	@Wrapper
 	public static class Htt2ChannelHandlerWrapper implements Supplier<Http2ChannelHandler> {
 
+		private WebConfiguration configuration;
+		
 		private Supplier<Http2ServerStreamBuilder> http2ServerStreamBuilderSupplier;
 		
-		public Htt2ChannelHandlerWrapper(@Lazy Supplier<Http2ServerStreamBuilder> http2ServerStreamBuilderSupplier) {
+		public Htt2ChannelHandlerWrapper(WebConfiguration configuration, @Lazy Supplier<Http2ServerStreamBuilder> http2ServerStreamBuilderSupplier) {
 			this.http2ServerStreamBuilderSupplier = http2ServerStreamBuilderSupplier;
+			this.configuration = configuration;
 		}
 		
 		@Override
 		public Http2ChannelHandler get() {
-			return new Http2ChannelHandlerBuilder(this.http2ServerStreamBuilderSupplier).build();
+			return new Http2ChannelHandlerBuilder(this.configuration, this.http2ServerStreamBuilderSupplier).build();
 		}
 		
 	}
