@@ -6,6 +6,7 @@ import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
 import io.netty.handler.ssl.SslContext;
 import io.winterframework.core.annotation.Bean;
@@ -42,7 +43,7 @@ public class WebChannelInitializer extends ChannelInitializer<SocketChannel> {
 			this.sslContext = sslContextSupplier.get();			
 		}
 	}
-
+	
 	@Override
 	protected void initChannel(SocketChannel ch) throws Exception {
 		if(this.configuration.ssl_enabled()) {
@@ -51,12 +52,13 @@ public class WebChannelInitializer extends ChannelInitializer<SocketChannel> {
 		}
 		else {
 			if(this.configuration.h2c_enabled()) {
-				ch.pipeline().addLast(new H2cUpgradeHandler(this.http2ChannelHandlerSupplier), this.http11ChannelHandlerSupplier.get());
+				ch.pipeline().addLast(new H2cUpgradeHandler(this.configuration, this.http2ChannelHandlerSupplier));
+				ch.pipeline().addLast(this.http11ChannelHandlerSupplier.get());
 			}
 			else {
-				ch.pipeline().addLast(new HttpServerCodec(), this.http11ChannelHandlerSupplier.get());
+				ch.pipeline().addLast(new HttpServerCodec());
+				ch.pipeline().addLast(this.http11ChannelHandlerSupplier.get());
 			}
-			
 		}
 	}
 }

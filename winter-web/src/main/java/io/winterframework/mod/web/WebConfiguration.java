@@ -46,4 +46,29 @@ public interface WebConfiguration {
 	String[] ssl_ciphers_includes();
 	
 	String[] ssl_ciphers_excludes();
+	
+	
+	default Long http2_header_table_size() {
+		return null;
+	}
+	
+	default Boolean http2_push_enabled() {
+		return null;
+	}
+	
+	default Integer http2_max_concurrent_streams() {
+		return 100;
+	}
+	
+	default Integer http2_initial_window_size() {
+		return null;
+	}
+	
+	default Integer http2_max_frame_size() {
+		return null;
+	}
+	
+	default Integer http2_max_header_list_size() {
+		return null;
+	}
 }
