@@ -39,6 +39,8 @@ public interface Resource extends Closeable {
 	
 	URI getURI();
 	
+	boolean isFile() throws IOException;
+	
 	Boolean exists() throws IOException;
 
 	FileTime lastModified() throws IOException;

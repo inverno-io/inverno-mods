@@ -52,7 +52,7 @@ public class App {
 	public static void main(String[] args) throws IllegalStateException, IOException {
 		Application.with(new Web.Builder()
 			.setAppConfigurationsource(new ApplicationConfigurationSource(App.class.getModule(), args))
-			.setRootHandler(configuration0())
+//			.setRootHandler(configuration4())
 //			.setErrorHandler(error())
 		).run();
 	}

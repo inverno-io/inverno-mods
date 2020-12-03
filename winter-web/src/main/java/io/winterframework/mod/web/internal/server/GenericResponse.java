@@ -33,11 +33,11 @@ public class GenericResponse implements Response<ResponseBody> {
 
 	// I need access to the headers, cookies (which is actually set-cookie: header) and body publishers
 	
-	private GenericResponseHeaders responseHeaders; 
+	protected GenericResponseHeaders responseHeaders; 
 
-	private GenericResponseCookies responseCookies;
+	protected GenericResponseCookies responseCookies;
 	
-	private GenericResponseBody responseBody;
+	protected GenericResponseBody responseBody;
 	
 	public GenericResponse(HeaderService headerService) {
 		this.responseHeaders = new GenericResponseHeaders(headerService);

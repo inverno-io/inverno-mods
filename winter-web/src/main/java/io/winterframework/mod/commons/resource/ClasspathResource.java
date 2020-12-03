@@ -38,6 +38,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	public static final String SCHEME_CLASSPATH = "classpath";
 	
 	private Optional<Resource> resource;
+	private boolean isFile;
 	
 	private URI uri;
 	
@@ -101,7 +102,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 		}
 	}
 	
-	private Optional<Resource> resolveResource() throws IllegalArgumentException, IOException {
+	private Optional<Resource> resolve() throws IOException {
 		if(this.resource == null) {
 			URL url;
 			if(this.clazz != null) {
@@ -157,16 +158,18 @@ public class ClasspathResource extends AbstractAsyncResource {
 	
 	@Override
 	public String getFilename() throws IOException {
-		if(this.resolveResource().isPresent()) {
-			return this.resolveResource().get().getFilename();
+		Optional<Resource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().getFilename();
 		}
 		return null;
 	}
 
 	@Override
 	public String getMediaType() throws IOException {
-		if(this.resolveResource().isPresent()) {
-			return this.resolveResource().get().getMediaType();
+		Optional<Resource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().getMediaType();
 		}
 		return null;
 	}
@@ -178,32 +181,45 @@ public class ClasspathResource extends AbstractAsyncResource {
 	
 	@Override
 	public Boolean exists() throws IOException {
-		if(this.resolveResource().isPresent()) {
-			return this.resolveResource().get().exists();
+		Optional<Resource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().exists();
+		}
+		return false;
+	}
+	
+	@Override
+	public boolean isFile() throws IOException {
+		Optional<Resource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().isFile();
 		}
 		return false;
 	}
 	
 	@Override
 	public Long size() throws IOException {
-		if(this.resolveResource().isPresent()) {
-			return this.resolveResource().get().size();
+		Optional<Resource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().size();
 		}
 		return null;
 	}
 	
 	@Override
 	public FileTime lastModified() throws IOException {
-		if(this.resolveResource().isPresent()) {
-			return this.resolveResource().get().lastModified();
+		Optional<Resource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().lastModified();
 		}
 		return null;
 	}
 	
 	@Override
 	public Optional<ReadableByteChannel> openReadableByteChannel() throws IOException {
-		if(this.resolveResource().isPresent()) {
-			return this.resolveResource().get().openReadableByteChannel();
+		Optional<Resource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().openReadableByteChannel();
 		}
 		return Optional.empty();
 	}
@@ -215,8 +231,9 @@ public class ClasspathResource extends AbstractAsyncResource {
 	
 	@Override
 	public Optional<Flux<ByteBuf>> read() throws IOException {
-		if(this.resolveResource().isPresent()) {
-			return this.resolveResource().get().read();
+		Optional<Resource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().read();
 		}
 		return Optional.empty();
 	}
@@ -233,8 +250,9 @@ public class ClasspathResource extends AbstractAsyncResource {
 
 	@Override
 	public void close() throws IOException {
-		if(this.resolveResource().isPresent()) {
-			this.resolveResource().get().close();
+		Optional<Resource> r = this.resolve();
+		if(r.isPresent()) {
+			r.get().close();
 		}
 	}
 	

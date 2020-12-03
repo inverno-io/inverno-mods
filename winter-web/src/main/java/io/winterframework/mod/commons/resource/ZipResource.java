@@ -116,18 +116,18 @@ public class ZipResource extends AbstractAsyncResource {
 	
 	@Override
 	public String getFilename() throws IOException {
-		Optional<PathResource> pr = this.resolve();
-		if(pr.isPresent()) {
-			return pr.get().getFilename();
+		Optional<PathResource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().getFilename();
 		}
 		return null;
 	}
 	
 	@Override
 	public String getMediaType() throws IOException {
-		Optional<PathResource> pr = this.resolve();
-		if(pr.isPresent()) {
-			return pr.get().getMediaType();
+		Optional<PathResource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().getMediaType();
 		}
 		return null;
 	}
@@ -139,36 +139,45 @@ public class ZipResource extends AbstractAsyncResource {
 	
 	@Override
 	public Boolean exists() throws IOException {
-		Optional<PathResource> pr = this.resolve();
-		if(pr.isPresent()) {
-			return pr.get().exists();
+		Optional<PathResource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().exists();
+		}
+		return false;
+	}
+	
+	@Override
+	public boolean isFile() throws IOException {
+		Optional<PathResource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().isFile();
 		}
 		return false;
 	}
 
 	@Override
 	public FileTime lastModified() throws IOException {
-		Optional<PathResource> pr = this.resolve();
-		if(pr.isPresent()) {
-			return pr.get().lastModified();
+		Optional<PathResource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().lastModified();
 		}
 		return null;
 	}
 	
 	@Override
 	public Long size() throws IOException {
-		Optional<PathResource> pr = this.resolve();
-		if(pr.isPresent()) {
-			return pr.get().size();
+		Optional<PathResource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().size();
 		}
 		return null;
 	}
 
 	@Override
 	public Optional<ReadableByteChannel> openReadableByteChannel() throws IOException {
-		Optional<PathResource> pr = this.resolve();
-		if(pr.isPresent()) {
-			return pr.get().openReadableByteChannel();
+		Optional<PathResource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().openReadableByteChannel();
 		}
 		return Optional.empty();
 	}
@@ -179,9 +188,9 @@ public class ZipResource extends AbstractAsyncResource {
 			if(createParents) {
 				Files.createDirectories(Paths.get(this.zipUri).getParent());
 			}
-			Optional<PathResource> pr = this.resolve();
-			if(pr.isPresent()) {
-				return pr.get().openWritableByteChannel(append, createParents);
+			Optional<PathResource> r = this.resolve();
+			if(r.isPresent()) {
+				return r.get().openWritableByteChannel(append, createParents);
 			}
 			return Optional.empty();
 		} 
@@ -192,27 +201,27 @@ public class ZipResource extends AbstractAsyncResource {
 	
 	@Override
 	public Optional<Flux<ByteBuf>> read() throws IOException {
-		Optional<PathResource> pr = this.resolve();
-		if(pr.isPresent()) {
-			return pr.get().read();
+		Optional<PathResource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().read();
 		}
 		return Optional.empty();
 	}
 	
 	@Override
 	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) throws IOException {
-		Optional<PathResource> pr = this.resolve();
-		if(pr.isPresent()) {
-			return pr.get().write(data);
+		Optional<PathResource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().write(data);
 		}
 		return Optional.empty();
 	}
 
 	@Override
 	public boolean delete() throws IOException {
-		Optional<PathResource> pr = this.resolve();
-		if(pr.isPresent()) {
-			return pr.get().delete();
+		Optional<PathResource> r = this.resolve();
+		if(r.isPresent()) {
+			return r.get().delete();
 		}
 		return false;
 	}
@@ -220,9 +229,9 @@ public class ZipResource extends AbstractAsyncResource {
 	@Override
 	public void close() throws IOException {
 		try {
-			Optional<PathResource> pr = this.resolve();
-			if(pr.isPresent()) {
-				pr.get().close();
+			Optional<PathResource> r = this.resolve();
+			if(r.isPresent()) {
+				r.get().close();
 			}
 		}
 		finally {

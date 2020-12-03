@@ -40,25 +40,24 @@ import reactor.core.publisher.MonoSink;
  */
 public class GenericResponseBody implements ResponseBody {
 	
-	private GenericResponse response;
+	protected GenericResponse response;
 	
-	private long size;
-	private long chunkCount;
-
+	protected ResponseBody.Raw dataBody;
+	protected ResponseBody.Sse<ByteBuf> sseBody;
+	protected ResponseBody.Resource resourceBody;
+	
 	private MonoSink<Flux<ByteBuf>> dataEmitter;
 	private Flux<ByteBuf> data;
 	
-	private GenericRawResponseBody dataBody;
-	private GenericSseResponseBody sseBody;
-	private GenericResourceResponseBody resourceBody;
-	
+	private long size;
+	private long chunkCount;
 	private boolean dataSet;
 	
 	public GenericResponseBody(GenericResponse response) {
 		this.response = response;
 	}
 	
-	private void setData(Flux<ByteBuf> data) {
+	protected final void setData(Flux<ByteBuf> data) {
 		if(this.dataSet) {
 			throw new IllegalStateException("Response data already posted");
 		}
@@ -90,7 +89,7 @@ public class GenericResponseBody implements ResponseBody {
 				return l;
 			})
 			.doOnComplete(() -> {
-				if(this.chunkCount == 0) {
+				if(this.chunkCount == 0 && this.response.getHeaders().getSize() == null) {
 					this.response.getHeaders().size(0);
 				}
 			})
@@ -145,7 +144,7 @@ public class GenericResponseBody implements ResponseBody {
 		return this.resourceBody;
 	}
 	
-	private class GenericRawResponseBody implements ResponseBody.Raw {
+	protected class GenericRawResponseBody implements ResponseBody.Raw {
 
 		@Override
 		public Response<Raw> data(Publisher<ByteBuf> data) {
@@ -164,7 +163,7 @@ public class GenericResponseBody implements ResponseBody {
 		}
 	}
 
-	private class GenericSseResponseBody implements ResponseBody.Sse<ByteBuf> {
+	protected class GenericSseResponseBody implements ResponseBody.Sse<ByteBuf> {
 
 		@Override
 		public Response<Sse<ByteBuf>> events(Publisher<ServerSentEvent<ByteBuf>> events) {
@@ -230,37 +229,42 @@ public class GenericResponseBody implements ResponseBody {
 		}
 	}
 	
-	private class GenericResourceResponseBody implements ResponseBody.Resource {
+	protected class GenericResourceResponseBody implements ResponseBody.Resource {
 
+		protected void populateHeaders(io.winterframework.mod.commons.resource.Resource resource) {
+			GenericResponseBody.this.response.headers(h -> {
+				if(GenericResponseBody.this.response.getHeaders().getSize() == null) {
+					Long size;
+					try {
+						size = resource.size();
+						if(size != null) {
+							h.size(size);
+						}
+					} 
+					catch (IOException e) {
+						// TODO maybe a debug log?
+					}
+				}
+				
+				if(GenericResponseBody.this.response.getHeaders().getContentType() == null) {
+					try {
+						String mediaType = resource.getMediaType();
+						if(mediaType != null) {
+							h.contentType(mediaType);
+						}
+					} 
+					catch (IOException e) {
+						// TODO maybe a debug log? 
+					}
+				}
+			});
+		}
+		
 		@Override
 		public Response<Resource> data(io.winterframework.mod.commons.resource.Resource resource) {
 			// Http2 doesn't support FileRegion so we have to read the resource and send it to the response data flux
 			try {
-				GenericResponseBody.this.response.headers(h -> {
-					if(GenericResponseBody.this.response.getHeaders().getSize() == null) {
-						Long size;
-						try {
-							size = resource.size();
-							if(size != null) {
-								h.size(size);
-							}
-						} 
-						catch (IOException e) {
-							// TODO maybe a debug log?
-						}
-					}
-					
-					if(GenericResponseBody.this.response.getHeaders().getContentType() == null) {
-						try {
-							String mediaType = resource.getMediaType();
-							if(mediaType != null) {
-								h.contentType(mediaType);
-							}
-						} catch (IOException e) {
-							// TODO maybe a debug log? 
-						}
-					}
-				});
+				this.populateHeaders(resource);
 				GenericResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable")));
 			} 
 			catch (IOException e) {

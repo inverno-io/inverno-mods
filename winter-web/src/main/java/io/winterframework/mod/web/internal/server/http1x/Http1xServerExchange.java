@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.HttpResponse;
@@ -28,7 +27,6 @@ import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.internal.Charsets;
 import io.winterframework.mod.web.internal.server.AbstractHttpServerExchange;
 import io.winterframework.mod.web.internal.server.AbstractRequest;
-import io.winterframework.mod.web.internal.server.GenericResponse;
 import io.winterframework.mod.web.internal.server.GenericResponseHeaders;
 
 /**
@@ -41,7 +39,7 @@ public class Http1xServerExchange extends AbstractHttpServerExchange {
 	
 	private Consumer<HttpResponse> headersConfigurer;
 	
-	public Http1xServerExchange(ChannelHandlerContext context, ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, AbstractRequest request, GenericResponse response) {
+	public Http1xServerExchange(ChannelHandlerContext context, ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, AbstractRequest request, Http1xResponse response) {
 		super(context, rootHandler, errorHandler, request, response);
 		
 		this.headersConfigurer = httpResponse -> {
@@ -114,14 +112,18 @@ public class Http1xServerExchange extends AbstractHttpServerExchange {
 		try {
 			GenericResponseHeaders headers = this.response.getHeaders();
 			if(!headers.isWritten()) {
-				HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+				HttpResponse response = new DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
 				this.headersConfigurer.accept(response);
 				this.context.write(response, this.context.newPromise());
 				headers.setWritten(true);
 			}
-			else {
-				this.context.write(LastHttpContent.EMPTY_LAST_CONTENT, this.context.newPromise());
-			}
+			Http1xResponse http1xResponse = (Http1xResponse)this.response;
+			http1xResponse.body().getFileRegion().ifPresent(fileRegion -> {
+				// TODO split the file region to handle large files
+				// Sending a large file may also stale the pipeline
+				this.context.write(fileRegion);
+			});
+			this.context.write(LastHttpContent.EMPTY_LAST_CONTENT, this.context.newPromise());
 			this.context.channel().flush();
 		}
 		catch(Exception e) {
