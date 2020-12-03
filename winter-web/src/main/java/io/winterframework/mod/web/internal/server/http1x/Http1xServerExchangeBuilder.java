@@ -6,6 +6,7 @@ package io.winterframework.mod.web.internal.server.http1x;
 import java.util.Objects;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.ssl.SslHandler;
 import io.winterframework.core.annotation.Bean;
@@ -24,7 +25,6 @@ import io.winterframework.mod.web.internal.RequestBodyDecoder;
 import io.winterframework.mod.web.internal.server.AbstractHttpServerExchangeBuilder;
 import io.winterframework.mod.web.internal.server.AbstractRequest;
 import io.winterframework.mod.web.internal.server.GenericRequestParameters;
-import io.winterframework.mod.web.internal.server.GenericResponse;
 import io.winterframework.mod.web.internal.server.GetRequest;
 import io.winterframework.mod.web.internal.server.PostRequest;
 import reactor.core.publisher.Mono;
@@ -62,7 +62,11 @@ public class Http1xServerExchangeBuilder extends AbstractHttpServerExchangeBuild
 			else {
 				request = new GetRequest(context.channel().remoteAddress(), requestHeaders, requestParameters);
 			}
-			GenericResponse response = new GenericResponse(this.headerService);
+//			GenericResponse response = new GenericResponse(this.headerService);
+			
+			// TODO once the server is running this should always be the case?
+			boolean supportsFileRegion = context.pipeline().get(SslHandler.class) == null && context.pipeline().get(HttpContentCompressor.class) == null;
+			Http1xResponse response = new Http1xResponse(this.headerService, supportsFileRegion);
 			
 			return new Http1xServerExchange(context, this.rootHandler, this.errorHandler, request, response);
 		});

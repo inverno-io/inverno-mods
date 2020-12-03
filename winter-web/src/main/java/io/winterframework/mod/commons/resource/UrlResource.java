@@ -90,6 +90,11 @@ public class UrlResource extends AbstractAsyncResource {
 	public Boolean exists() throws IOException {
 		return null;
 	}
+	
+	@Override
+	public boolean isFile() throws IOException {
+		return false;
+	}
 
 	@Override
 	public FileTime lastModified() throws IOException {

@@ -64,12 +64,10 @@ public class StaticHandler implements ExchangeHandler<RequestBody, ResponseBody,
 			}
 			Resource requestedResource = this.baseResource.resolve(resourceRelativePath);
 			Boolean exists = requestedResource.exists();
-			if(exists == null) {
+			if(exists == null || exists) {
 				// In case of file resources we should always be able to determine existence
-				// For other resources we can still try, worst case scenario: internal server error
-				exchange.response().body().resource().data(this.baseResource.resolve(resourceRelativePath));
-			}
-			else if(exists) {
+				// For other resources with a null exists we can still try, worst case scenario: 
+				// internal server error
 				exchange.response().body().resource().data(this.baseResource.resolve(resourceRelativePath));
 			}
 			else {

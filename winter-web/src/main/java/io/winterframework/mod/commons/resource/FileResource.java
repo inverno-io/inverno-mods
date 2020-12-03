@@ -95,6 +95,11 @@ public class FileResource extends AbstractAsyncResource {
 	public Boolean exists() throws IOException {
 		return this.pathResource.exists();
 	}
+	
+	@Override
+	public boolean isFile() throws IOException {
+		return this.pathResource.isFile();
+	}
 
 	@Override
 	public FileTime lastModified() throws IOException {

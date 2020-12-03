@@ -16,14 +16,18 @@
 package io.winterframework.mod.web.handler;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URI;
 import java.util.function.Supplier;
 
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Overridable;
 import io.winterframework.core.annotation.Wrapper;
+import io.winterframework.mod.commons.resource.ClasspathResource;
+import io.winterframework.mod.commons.resource.Resource;
+import io.winterframework.mod.commons.resource.ResourceException;
 import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.ExchangeHandler;
+import io.winterframework.mod.web.NotFoundException;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.Status;
@@ -38,20 +42,7 @@ import io.winterframework.mod.web.router.Router;
 @Overridable 
 public class RootHandler implements Supplier<ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>>> {
 
-	private byte[] favicon;
-	
-	private byte[] getFavicon() {
-		if(this.favicon == null) {
-			try(InputStream faviconInput = this.getClass().getClassLoader().getResourceAsStream("winter_favicon.svg")) {
-				this.favicon = faviconInput.readAllBytes();
-			} 
-			catch (IOException e) {
-				// TODO proper error handling
-				e.printStackTrace();
-			}
-		}
-		return this.favicon;
-	}
+	private static final URI FAVICON_URI = URI.create("classpath:/winter_favicon.svg");
 	
 	@Override
 	public ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> get() {
@@ -62,9 +53,20 @@ public class RootHandler implements Supplier<ExchangeHandler<RequestBody, Respon
 	
 	private ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> faviconHandler() {
 		return exchange -> {
-			exchange.response()
-				.headers(headers -> headers.status(Status.OK).contentType("image/svg+xml"))
-				.body().raw().data(this.getFavicon());
+			try(Resource favicon = new ClasspathResource(FAVICON_URI)) {
+				Boolean exists = favicon.exists();
+				if(exists == null || exists) {
+					exchange.response()
+						.headers(headers -> headers.status(Status.OK).contentType("image/svg+xml"))
+						.body().resource().data(favicon);
+				}
+				else {
+					throw new NotFoundException();
+				}
+			} 
+			catch (IllegalArgumentException | ResourceException | IOException e) {
+				throw new NotFoundException();
+			}
 		};
 	}
 	

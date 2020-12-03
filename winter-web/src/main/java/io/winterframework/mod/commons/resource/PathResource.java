@@ -70,6 +70,13 @@ public class PathResource extends AbstractAsyncResource {
 	public Boolean exists() throws IOException {
 		return Files.exists(this.path);
 	}
+	
+	@Override
+	public boolean isFile() throws IOException {
+		// We can always return a file channel with a path so yes this is a file
+		// However it doesn't mean the resource actually exist
+		return true;
+	}
 
 	@Override
 	public Long size() throws IOException {
