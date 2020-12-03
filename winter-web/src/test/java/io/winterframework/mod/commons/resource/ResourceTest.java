@@ -3,23 +3,37 @@ package io.winterframework.mod.commons.resource;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.mockftpserver.fake.FakeFtpServer;
+import org.mockftpserver.fake.UserAccount;
+import org.mockftpserver.fake.filesystem.DirectoryEntry;
+import org.mockftpserver.fake.filesystem.FileEntry;
+import org.mockftpserver.fake.filesystem.FileSystem;
+import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import reactor.core.publisher.Flux;
 
 public class ResourceTest {
@@ -169,8 +183,7 @@ public class ResourceTest {
 	
 	@Test
 	public void testUrl() throws URISyntaxException, IOException {
-		File testFile = new File("src/test/resources/test.txt");
-		try (Resource resource = new UrlResource(testFile.toURI())) {
+		try (Resource resource = new UrlResource(new File("src/test/resources/test.txt").toURI())) {
 			resource.openReadableByteChannel().ifPresent(ch -> {
 				try (ByteArrayOutputStream out = new ByteArrayOutputStream();
 					ch;) {
@@ -205,6 +218,9 @@ public class ResourceTest {
 					} 
 					catch (IOException e) {
 						throw new RuntimeException(e);
+					}
+					finally {
+						chunk.release();
 					}
 				}).doOnComplete(() -> {
 					try {
@@ -251,5 +267,42 @@ public class ResourceTest {
 			tgtBuffer.clear();
 		}
 		Files.delete(tgtFile);
+	}
+	
+	@Test
+	public void testUrlRead() throws IllegalArgumentException, IOException {
+		try (Resource resource = new UrlResource(new File("src/test/resources/test.txt").toURI())) {
+			String content = resource.read().get()
+				.map(chunk -> {
+					String s = chunk.toString(Charset.defaultCharset());
+					chunk.release();
+					return s;
+				})
+				.collect(Collectors.joining())
+				.block();
+			Assertions.assertEquals("This is a test", content);
+		}
+	}
+	
+	@Test
+	public void testUrlWrite() throws IllegalArgumentException, IOException, URISyntaxException {
+		FakeFtpServer fakeFtpServer = new FakeFtpServer();
+		fakeFtpServer.setServerControlPort(0);
+		fakeFtpServer.addUserAccount(new UserAccount("user", "password", "/data"));
+		FileSystem fileSystem = new UnixFakeFileSystem();
+		fileSystem.add(new DirectoryEntry("/data"));
+		fileSystem.add(new FileEntry("/data/foobar.txt", "abcdef 1234567890"));
+        fakeFtpServer.setFileSystem(fileSystem);
+        fakeFtpServer.start();
+        
+        try (Resource resource = new UrlResource(new URI(String.format("ftp://user:password@localhost:%d/test.txt", fakeFtpServer.getServerControlPort())))) {
+			int bytesWritten = resource.write(Flux.just(Unpooled.copiedBuffer("This is a write test", Charset.defaultCharset()))).get().collect(Collectors.summingInt(Integer::intValue)).block();
+			Assertions.assertEquals(20, bytesWritten);
+			Assertions.assertTrue(fileSystem.exists("/data/test.txt"));
+			Assertions.assertEquals(20, fileSystem.getEntry("/data/test.txt").getSize());
+		}
+		finally {
+			fakeFtpServer.stop();
+		}
 	}
 }

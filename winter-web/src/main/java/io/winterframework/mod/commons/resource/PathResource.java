@@ -17,7 +17,6 @@ package io.winterframework.mod.commons.resource;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -31,8 +30,6 @@ import java.util.Objects;
 import java.util.Optional;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -43,10 +40,6 @@ import reactor.core.scheduler.Schedulers;
  */
 public class PathResource extends AbstractAsyncResource {
 	
-	public static final int DEFAULT_READ_BUFFER_CAPACITY = 8192;
-	
-	private int readBufferCapacity = DEFAULT_READ_BUFFER_CAPACITY;
-
 	private Path path;
 	
 	public PathResource(Path path) {
@@ -56,10 +49,6 @@ public class PathResource extends AbstractAsyncResource {
 	protected PathResource(Path path, MediaTypeService mediaTypeService) {
 		super(mediaTypeService);
 		this.path = Objects.requireNonNull(path.normalize());
-	}
-	
-	public void setReadBufferCapacity(int readBufferCapacity) {
-		this.readBufferCapacity = readBufferCapacity;
 	}
 	
 	@Override
@@ -128,49 +117,11 @@ public class PathResource extends AbstractAsyncResource {
 		}
 	}
 	
-	private static class EndOfFileException extends RuntimeException {
-
-		private static final long serialVersionUID = -959922787939538588L;
-		
-	}
-	
-	// 10148354
-	@Override
+	// Following implementation is using AsyncrhonousFileChannel
+	// This seem less performant than the default reactiv implementation
+	/*@Override
 	public Optional<Flux<ByteBuf>> read() throws IOException {
-		return this.openReadableByteChannel().map(channel -> {
-			return Flux.generate(
-				() -> Long.valueOf(0),	
-				(position, sink) -> {
-					sink.next(position);
-					return position + this.readBufferCapacity;
-				}
-			)
-			.map(position -> {
-				ByteBuffer data = ByteBuffer.allocate(this.readBufferCapacity);
-				try {
-					if(channel.read(data) == -1) {
-						throw new EndOfFileException();
-					}
-				}
-				catch (IOException e) {
-					throw Exceptions.propagate(e);
-				}
-				data.flip();
-				return Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(data));
-			})
-			.onErrorResume(EndOfFileException.class, ex -> Mono.empty())
-			.doOnTerminate(() -> {
-				try {
-					channel.close();
-				}
-				catch (IOException e) {
-				}
-			})
-			.subscribeOn(Schedulers.fromExecutor(this.getExecutor()));
-		});
-		
-		
-		/*if(Files.isReadable(this.path)) {
+		if(Files.isReadable(this.path)) {
 			return Optional.of(Flux.create(emitter -> {
 				AsynchronousFileChannel channel;
 				try {
@@ -233,8 +184,8 @@ public class PathResource extends AbstractAsyncResource {
 				}
 			}));
 		}
-		return Optional.empty();*/
-	}
+		return Optional.empty();
+	}*/
 	
 	@Override
 	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) throws IOException {

@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownServiceException;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -27,16 +28,13 @@ import java.nio.file.attribute.FileTime;
 import java.util.Objects;
 import java.util.Optional;
 
-import io.netty.buffer.ByteBuf;
-import reactor.core.publisher.Flux;
-
 /**
  * Highly non-performing
  * 
  * @author jkuhn
  *
  */
-public class UrlResource extends AbstractResource {
+public class UrlResource extends AbstractAsyncResource {
 
 	private URI uri;
 	
@@ -121,7 +119,13 @@ public class UrlResource extends AbstractResource {
 	public Optional<ReadableByteChannel> openReadableByteChannel() throws IOException {
 		Optional<URLConnection> c = this.resolve();
 		if(c.isPresent()) {
-			return Optional.of(Channels.newChannel(c.get().getInputStream()));
+			try {
+				return Optional.of(Channels.newChannel(c.get().getInputStream()));
+			}
+			catch (UnknownServiceException e) {
+				// The URL is not readable
+				return Optional.empty();
+			}
 		}
 		return Optional.empty();
 	}
@@ -130,23 +134,15 @@ public class UrlResource extends AbstractResource {
 	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) throws IOException {
 		Optional<URLConnection> c = this.resolve();
 		if(c.isPresent()) {
-			return Optional.of(Channels.newChannel(c.get().getOutputStream()));
+			try {
+				return Optional.of(Channels.newChannel(c.get().getOutputStream()));
+			}
+			catch (UnknownServiceException e) {
+				// The URL is not writable
+				return Optional.empty();
+			}
 		}
 		return Optional.empty();
-	}
-
-	@Override
-	public Optional<Flux<ByteBuf>> read() throws IOException {
-		// TODO We'll have to use an ExecutorService to make it non blocking
-		// Using chunkedStream could ease things
-		
-		return null;
-	}
-	
-	@Override
-	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) throws IOException {
-		// TODO same as read()
-		return null;
 	}
 	
 	@Override

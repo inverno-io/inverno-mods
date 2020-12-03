@@ -80,6 +80,12 @@
 			<artifactId>junit-jupiter-engine</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.mockftpserver</groupId>
+			<artifactId>MockFtpServer</artifactId>
+			<version>2.7.1</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	
 	<build>
