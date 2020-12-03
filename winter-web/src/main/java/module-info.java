@@ -1,6 +1,7 @@
 @io.winterframework.core.annotation.Module
 module io.winterframework.mod.web {
 	requires io.winterframework.core;
+	requires io.winterframework.mod.commons;
 	requires io.winterframework.mod.configuration;
 	
 	requires org.apache.logging.log4j;
@@ -24,7 +25,4 @@ module io.winterframework.mod.web {
 	
 	// Test
 //	exports io.winterframework.mod.web.internal.server;
-	
-	// To be externalized
-	exports io.winterframework.mod.commons.resource;
 }
