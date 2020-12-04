@@ -20,9 +20,26 @@
 	</properties>
 
 	<modules>
+		<module>winter-commons</module>
 		<module>winter-configuration</module>
 		<module>winter-modules-test</module>
-		<module>winter-resource</module>
 		<module>winter-web</module>
 	</modules>
+	
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.8.1</version>
+					<configuration>
+						<compilerArgs>
+							<arg>-Awinter.verbose=true</arg>
+							<arg>-Awinter.debug=true</arg>
+						</compilerArgs>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
 </project>
