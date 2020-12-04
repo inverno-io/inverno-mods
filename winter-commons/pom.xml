@@ -58,28 +58,4 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	
-	<build>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.8.1</version>
-					<configuration>
-						<compilerArgs>
-							<arg>-Awinter.verbose=true</arg>
-							<arg>-Awinter.debug=true</arg>
-						</compilerArgs>
-						<annotationProcessorPaths>
-							<path>
-								<groupId>io.winterframework</groupId>
-								<artifactId>winter-core-compiler</artifactId>
-								<version>${version.winter}</version>
-							</path>
-						</annotationProcessorPaths>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement>
-	</build>
 </project>
