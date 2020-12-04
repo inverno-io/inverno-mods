@@ -12,6 +12,8 @@ import io.winterframework.mod.web.Request;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
+import io.winterframework.mod.web.Status;
+import io.winterframework.mod.web.WebException;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -28,6 +30,8 @@ public abstract class AbstractHttpServerExchange extends BaseSubscriber<ByteBuf>
 	
 	protected final ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler;
 	
+	private final ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> lastResortErrorHandler;
+	
 	protected final AbstractRequest request;
 	protected final GenericResponse response;
 	
@@ -40,6 +44,19 @@ public abstract class AbstractHttpServerExchange extends BaseSubscriber<ByteBuf>
 		this.errorHandler = errorHandler;
 		this.request = request;
 		this.response = response;
+		
+		this.lastResortErrorHandler = exchange -> {
+			if(exchange.response().isHeadersWritten()) {
+				// TODO exchange interrupted exception?
+				throw new RuntimeException(exchange.getError());
+			}
+			if(exchange.getError() instanceof WebException) {
+				exchange.response().headers(h -> h.status(((WebException)exchange.getError()).getStatusCode())).body().empty();
+			}
+			else {
+				exchange.response().headers(h -> h.status(Status.INTERNAL_SERVER_ERROR)).body().empty();
+			}
+		};
 	}
 	
 	@Override
@@ -90,11 +107,16 @@ public abstract class AbstractHttpServerExchange extends BaseSubscriber<ByteBuf>
 					try {
 						this.rootHandler.handle(this);
 					}
-					catch(Throwable t) {
-						// We could also set the flux on error and call the error handler
-						this.errorHandler.handle(new GenericErrorExchange(t));
+					catch(Throwable t1) {
+						GenericErrorExchange errorExchange = new GenericErrorExchange(t1);
+						// TODO We could also set the flux on error and call the error handler
+						try {
+							this.errorHandler.handle(errorExchange);
+						} 
+						catch (Throwable t2) {
+							this.lastResortErrorHandler.handle(errorExchange);
+						}
 					}
-					
 					return response;
 				})
 				// apparently this seems to work after all 
