@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.netty.handler.codec.http.HttpConstants;
 import io.winterframework.mod.web.Header;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
@@ -42,7 +41,7 @@ public class GenericResponseHeaders implements ResponseHeaders {
 
 	private HeaderService headerService;
 
-	private Charset charset = HttpConstants.DEFAULT_CHARSET;
+	private Charset charset;
 	
 	private LinkedList<Header> headers;
 
