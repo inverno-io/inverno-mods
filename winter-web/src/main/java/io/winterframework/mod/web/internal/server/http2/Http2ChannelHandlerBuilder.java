@@ -20,6 +20,7 @@ public class Http2ChannelHandlerBuilder extends AbstractHttp2ConnectionHandlerBu
 	
 	public Http2ChannelHandlerBuilder(WebConfiguration configuration, @Lazy Supplier<Http2ServerStreamBuilder> http2ServerStreamBuilderSupplier) {
 		//this.frameLogger(new Http2FrameLogger(LogLevel.INFO, Http2ConnectionAndFrameHandler.class));
+		this.http2ServerStreamBuilderSupplier = http2ServerStreamBuilderSupplier;
 		
 		Http2Settings initialSettings = this.initialSettings();
 		

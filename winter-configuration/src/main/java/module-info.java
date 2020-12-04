@@ -12,5 +12,8 @@ module io.winterframework.mod.configuration {
 	exports io.winterframework.mod.configuration.codec;
 	exports io.winterframework.mod.configuration.source;
 	
+	// TODO Hash configuration query result is not visible...
+	exports io.winterframework.mod.configuration.internal;
+	
 	provides io.winterframework.core.compiler.spi.plugin.CompilerPlugin with io.winterframework.mod.configuration.internal.compiler.ConfigurationCompilerPlugin;
 }

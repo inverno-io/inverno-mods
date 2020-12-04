@@ -50,6 +50,12 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 //    	System.out.println("Channel inactive");
     }
     
+    @Override
+    public void onError(ChannelHandlerContext ctx, boolean outbound, Throwable cause) {
+    	super.onError(ctx, outbound, cause);
+    	ctx.close();
+    }
+    
     /**
      * If receive a frame with end-of-stream set, send a pre-canned response.
      */

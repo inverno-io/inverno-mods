@@ -1,9 +1,0 @@
-io.winterframework.mod.web.webConfiguration {
-	ssl_enabled = false
-	server_port = 8080
-	h2c_enabled = true
-#	ssl_enabled = true
-#	server_port = 8443
-	key_store = "src/main/resources/cert.jks"
-	key_store_password = "password"
-}

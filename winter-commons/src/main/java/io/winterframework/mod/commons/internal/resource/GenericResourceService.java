@@ -34,7 +34,7 @@ import io.winterframework.mod.commons.resource.ResourceService;
  * @author jkuhn
  *
  */
-@Bean
+@Bean(name = "resourceService")
 public class GenericResourceService implements @Provide ResourceService {
 
 	private Map<String, ResourceProvider<?>> providers;

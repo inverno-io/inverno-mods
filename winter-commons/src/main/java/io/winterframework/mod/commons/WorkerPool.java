@@ -16,15 +16,24 @@
 package io.winterframework.mod.commons;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 import io.winterframework.core.annotation.Bean;
+import io.winterframework.core.annotation.Overridable;
+import io.winterframework.core.annotation.Wrapper;
 
 /**
  * @author jkuhn
  *
  */
 @Bean
-public interface WorkerPool extends Supplier<ExecutorService> {
+@Wrapper
+@Overridable
+public class WorkerPool implements Supplier<ExecutorService> {
 
+	@Override
+	public ExecutorService get() {
+		return Executors.newCachedThreadPool();
+	}
 }
