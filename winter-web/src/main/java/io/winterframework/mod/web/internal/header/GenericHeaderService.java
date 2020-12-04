@@ -12,10 +12,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpConstants;
 import io.winterframework.core.annotation.Bean;
+import io.winterframework.mod.web.Charsets;
 import io.winterframework.mod.web.Header;
 import io.winterframework.mod.web.HeaderCodec;
 import io.winterframework.mod.web.HeaderService;
-import io.winterframework.mod.web.internal.Charsets;
 
 /**
  * @author jkuhn

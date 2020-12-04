@@ -24,12 +24,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.netty.handler.codec.http2.Http2Headers;
+import io.winterframework.mod.web.Charsets;
 import io.winterframework.mod.web.Header;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.RequestHeaders;
-import io.winterframework.mod.web.internal.Charsets;
 
 /**
  * @author jkuhn

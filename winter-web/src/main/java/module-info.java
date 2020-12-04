@@ -1,7 +1,7 @@
-@io.winterframework.core.annotation.Module
+@io.winterframework.core.annotation.Module(excludes = {"io.winterframework.mod.commons"})
 module io.winterframework.mod.web {
 	requires io.winterframework.core;
-	requires io.winterframework.mod.commons;
+	requires transitive io.winterframework.mod.commons;
 	requires io.winterframework.mod.configuration;
 	
 	requires org.apache.logging.log4j;
@@ -20,9 +20,6 @@ module io.winterframework.mod.web {
 	requires io.netty.handler;
 	
 	exports io.winterframework.mod.web;
-	exports io.winterframework.mod.web.app;
+	exports io.winterframework.mod.web.handler;
 	exports io.winterframework.mod.web.router;
-	
-	// Test
-//	exports io.winterframework.mod.web.internal.server;
 }

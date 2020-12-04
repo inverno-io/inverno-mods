@@ -114,44 +114,5 @@
 				</plugin>
 			</plugins>
 		</pluginManagement>
-		<plugins>
-			<plugin>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifest>
-							<mainClass>io.winterframework.mod.web.app.App</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
-			</plugin>
-		</plugins>
 	</build>
-
-	<profiles>
-		<profile>
-			<id>native</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.graalvm.nativeimage</groupId>
-						<artifactId>native-image-maven-plugin</artifactId>
-						<version>20.1.0</version>
-						<configuration>
-							<buildArgs>--no-server --no-fallback --enable-all-security-services --allow-incomplete-classpath -H:+TraceClassInitialization -H:+ReportExceptionStackTraces</buildArgs>
-							<imageName>${project.artifactId}</imageName>
-						</configuration>
-						<executions>
-							<execution>
-								<phase>package</phase>
-								<goals>
-									<goal>native-image</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
 </project>

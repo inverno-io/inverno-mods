@@ -7,8 +7,8 @@ import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.winterframework.mod.web.Charsets;
 import io.winterframework.mod.web.ServerSentEvent;
-import io.winterframework.mod.web.internal.Charsets;
 import reactor.core.publisher.Mono;
 
 /**

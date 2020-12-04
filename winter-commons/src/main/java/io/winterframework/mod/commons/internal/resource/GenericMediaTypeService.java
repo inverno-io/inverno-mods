@@ -29,7 +29,7 @@ import io.winterframework.mod.commons.resource.MediaTypeService;
  * @author jkuhn
  *
  */
-@Bean
+@Bean(name = "mediaService")
 public class GenericMediaTypeService implements @Provide MediaTypeService {
 
 	@Override
