@@ -17,7 +17,6 @@ package io.winterframework.mod.web.internal.server.http1x;
 
 import java.nio.charset.Charset;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.reactivestreams.Subscription;
 
@@ -203,7 +202,7 @@ public class Http1xExchange extends AbstractExchange {
 
 		@Override
 		protected void hookOnNext(FileRegion fileRegion) {
-			if(Http1xExchange.this.contextExecutor.inEventLoop()) {
+			Http1xExchange.this.scheduleOnEventLoop(() -> {
 				Http1xExchange.this.write(fileRegion, Http1xExchange.this.context.newPromise().addListener(future -> {
 					if(future.isSuccess()) {
 						this.request(1);
@@ -213,36 +212,17 @@ public class Http1xExchange extends AbstractExchange {
 						this.cancel();
 					}
 				}));
-			}
-			else {
-				Http1xExchange.this.contextExecutor.schedule(() -> {
-					Http1xExchange.this.write(fileRegion, Http1xExchange.this.context.newPromise().addListener(future -> {
-						if(future.isSuccess()) {
-							this.request(1);
-						}
-						else {
-							// TODO log/report error
-							// What happen if we throw an exception here
-							this.cancel();
-						}
-					}));
-				}, 0, TimeUnit.MILLISECONDS);
-			}
+			});
 		}
 		
 		@Override
 		protected void hookOnComplete() {
-			if(Http1xExchange.this.contextExecutor.inEventLoop()) {
+			Http1xExchange.this.scheduleOnEventLoop(() -> {
 				// TODO if not keep alive we should close the connection here
-				Http1xExchange.this.write(LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.voidPromise());
-				Http1xExchange.this.context.flush();
-			}
-			else {
-				Http1xExchange.this.contextExecutor.schedule(() -> {
-					Http1xExchange.this.write(LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.voidPromise());
-				}, 0, TimeUnit.MILLISECONDS);
-			}
-			Http1xExchange.this.exchangeSubscriber.onExchangeComplete();
+				Http1xExchange.this.write(LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.newPromise().addListener(future -> {
+					Http1xExchange.this.exchangeSubscriber.onExchangeComplete();
+				}));
+			});
 		}
 	}
 }

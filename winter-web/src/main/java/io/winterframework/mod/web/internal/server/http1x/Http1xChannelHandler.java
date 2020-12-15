@@ -51,7 +51,6 @@ public class Http1xChannelHandler extends ChannelDuplexHandler {
 	private Http1xExchange requestingExchange;
 	private Http1xExchange respondingExchange;
 	private Sinks.Many<Http1xExchange> exchangeSink;
-//	private BaseSubscriber<Http1xExchange> exchangeSubscriber;
 	private ChannelExchangeSubscriber exchangeSubscriber;
 	
 	private ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler;
