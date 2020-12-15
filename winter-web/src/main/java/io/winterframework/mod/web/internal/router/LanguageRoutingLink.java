@@ -144,8 +144,11 @@ class LanguageRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 	
 	@Override
 	public void handle(C exchange) throws WebException {
-		if(!this.handlers.isEmpty()) {
-			Iterator<AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, B, C, ?, D>>>> acceptMatchesIterator = Headers.AcceptLanguage.merge(exchange.request().headers().<Headers.AcceptLanguage>getAll(Headers.ACCEPT_LANGUAGE))
+		if(this.handlers.isEmpty()) {
+			this.nextLink.handle(exchange);
+		}
+		else {
+			Iterator<AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, B, C, ?, D>>>> acceptMatchesIterator = Headers.AcceptLanguage.merge(exchange.request().headers().<Headers.AcceptLanguage>getAllHeader(Headers.ACCEPT_LANGUAGE))
 				.orElse(this.acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, "*"))
 				.findAllMatch(this.handlers.entrySet(), Entry::getKey)
 				.iterator();
@@ -184,10 +187,6 @@ class LanguageRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 			// Here we can possibly invoke the next link twice but in that case a
 			// RouteNotFoundException or DisabledRouteException is thrown so there shouldn't
 			// be complex processing involved.
-			this.nextLink.handle(exchange);
-		}
-		else {
-			// Unlike produces we have to try our best to provide a response even if it doesn't match the accept-language header
 			this.nextLink.handle(exchange);
 		}
 	}

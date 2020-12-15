@@ -17,43 +17,51 @@ package io.winterframework.mod.web.internal.server;
 
 import java.util.function.Consumer;
 
+import org.reactivestreams.Publisher;
+
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.ResponseCookies;
 import io.winterframework.mod.web.ResponseHeaders;
-import reactor.core.publisher.Flux;
 
 /**
  * @author jkuhn
  *
  */
-public class GenericResponse implements Response<ResponseBody> {
+public class AbstractResponse implements Response<ResponseBody> {
 
-	// I need access to the headers, cookies (which is actually set-cookie: header) and body publishers
+	protected ChannelHandlerContext context;
 	
-	protected GenericResponseHeaders responseHeaders; 
+	protected HeaderService headerService;
+	
+	protected AbstractResponseHeaders responseHeaders; 
 
 	protected GenericResponseCookies responseCookies;
 	
 	protected GenericResponseBody responseBody;
 	
-	public GenericResponse(HeaderService headerService) {
-		this.responseHeaders = new GenericResponseHeaders(headerService);
-		this.responseCookies = new GenericResponseCookies(headerService);
+	public AbstractResponse(ChannelHandlerContext context, HeaderService headerService, AbstractResponseHeaders responseHeaders) {
+		this.context = context;
+		this.headerService = headerService;
+		this.responseHeaders = responseHeaders;
 		this.responseBody = new GenericResponseBody(this);
 	}
 	
-	public Flux<ByteBuf> data() {
+	public Publisher<ByteBuf> data() {
 		return this.responseBody.getData();
 	}
 
-	public GenericResponseHeaders getHeaders() {
+	public AbstractResponseHeaders getHeaders() {
 		return this.responseHeaders;
 	}
 	
 	public GenericResponseCookies getCookies() {
+		if(this.responseCookies == null) {
+			this.responseCookies = new GenericResponseCookies(this.headerService);
+		}
 		return this.responseCookies;
 	}
 	
@@ -63,13 +71,13 @@ public class GenericResponse implements Response<ResponseBody> {
 	}
 	
 	@Override
-	public GenericResponse headers(Consumer<ResponseHeaders> headersConfigurer) {
+	public AbstractResponse headers(Consumer<ResponseHeaders> headersConfigurer) {
 		headersConfigurer.accept(this.responseHeaders);
 		return this;
 	}
 
 	@Override
-	public GenericResponse cookies(Consumer<ResponseCookies> cookiesConfigurer) {
+	public AbstractResponse cookies(Consumer<ResponseCookies> cookiesConfigurer) {
 		cookiesConfigurer.accept(this.responseCookies);
 		return this;
 	}

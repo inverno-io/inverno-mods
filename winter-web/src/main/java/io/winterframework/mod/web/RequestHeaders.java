@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.web;
 
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,17 +36,13 @@ public interface RequestHeaders {
 
 	String getContentType();
 	
-	Charset getCharset();
-	
 	Long getSize();
-	
-	// TODO add more common request headers
 	
 	Set<String> getNames();
 	
-	<T extends Header> Optional<T> get(String name);
+	<T extends Header> Optional<T> getHeader(String name);
 	
-	<T extends Header> List<T> getAll(String name);
+	<T extends Header> List<T> getAllHeader(String name);
 	
-	Map<String, List<? extends Header>> getAll();
+	Map<String, List<Header>> getAllHeader();
 }

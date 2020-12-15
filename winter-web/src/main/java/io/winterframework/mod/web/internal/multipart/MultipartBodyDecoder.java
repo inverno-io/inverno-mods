@@ -137,7 +137,7 @@ public class MultipartBodyDecoder implements RequestBodyDecoder<Part> {
 				System.out.println("name: " + part.getName());
 				part.getFilename().ifPresent(filename -> System.out.println("filename: " + filename));
 				System.out.println("headers: ");
-				System.out.println(part.headers().getAll().entrySet().stream()
+				System.out.println(part.headers().getAllHeader().entrySet().stream()
 					.flatMap(e -> {
 						return e.getValue().stream();
 					})

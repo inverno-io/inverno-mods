@@ -23,7 +23,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.netty.handler.codec.http.HttpConstants;
 import io.winterframework.mod.web.Header;
 import io.winterframework.mod.web.PartHeaders;
 
@@ -35,8 +34,6 @@ class GenericPartHeaders implements PartHeaders {
 
 	private String contentType;
 	
-	private Charset charset;
-	
 	private Long size;
 	
 	private Map<String, List<? extends Header>> headers;
@@ -44,18 +41,12 @@ class GenericPartHeaders implements PartHeaders {
 	public GenericPartHeaders(Map<String, List<Header>> headers, String contentType, Charset charset, Long size) {
 		this.headers = headers != null ? Collections.unmodifiableMap(headers) : Map.of();
 		this.contentType = contentType;
-		this.charset = charset != null ? charset : HttpConstants.DEFAULT_CHARSET;
 		this.size = size;
 	}
 	
 	@Override
 	public String getContentType() {
 		return this.contentType;
-	}
-
-	@Override
-	public Charset getCharset() {
-		return this.charset;
 	}
 
 	@Override
@@ -70,7 +61,7 @@ class GenericPartHeaders implements PartHeaders {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T extends Header> Optional<T> get(String name) {
+	public <T extends Header> Optional<T> getHeader(String name) {
 		return Optional.ofNullable(this.headers.get(name)).map(headers -> {
 			if(!headers.isEmpty()) {
 				return (T)headers.get(0);
@@ -81,7 +72,7 @@ class GenericPartHeaders implements PartHeaders {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends Header> List<T> getAll(String name) {
+	public <T extends Header> List<T> getAllHeader(String name) {
 		if(this.headers.containsKey(name)) {
 			return this.headers.get(name).stream().map(header -> (T)header).collect(Collectors.toList());
 		}
@@ -89,7 +80,7 @@ class GenericPartHeaders implements PartHeaders {
 	}
 
 	@Override
-	public Map<String, List<? extends Header>> getAll() {
+	public Map<String, List<? extends Header>> getAllHeader() {
 		return this.headers;
 	}
 }

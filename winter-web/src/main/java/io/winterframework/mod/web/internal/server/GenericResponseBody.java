@@ -25,6 +25,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpConstants;
 import io.winterframework.mod.commons.resource.MediaTypes;
 import io.winterframework.mod.web.Charsets;
+import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.InternalServerErrorException;
 import io.winterframework.mod.web.NotFoundException;
 import io.winterframework.mod.web.Response;
@@ -41,32 +42,54 @@ import reactor.core.publisher.MonoSink;
  */
 public class GenericResponseBody implements ResponseBody {
 	
-	protected GenericResponse response;
+	private static final String SSE_CONTENT_TYPE = MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8";
+	
+	protected AbstractResponse response;
 	
 	protected ResponseBody.Raw dataBody;
 	protected ResponseBody.Sse<ByteBuf> sseBody;
 	protected ResponseBody.Resource resourceBody;
 	
-	private MonoSink<Flux<ByteBuf>> dataEmitter;
-	private Flux<ByteBuf> data;
+	private MonoSink<Publisher<ByteBuf>> dataEmitter;
+//	private Flux<ByteBuf> data;
+	
+	private Publisher<ByteBuf> data;
 	
 	private long size;
 	private long chunkCount;
 	private boolean dataSet;
 	
-	public GenericResponseBody(GenericResponse response) {
+	public GenericResponseBody(AbstractResponse response) {
 		this.response = response;
 	}
 	
-	protected final void setData(Flux<ByteBuf> data) {
+	protected final void setData(Publisher<ByteBuf> data) {
 		if(this.dataSet) {
 			throw new IllegalStateException("Response data already posted");
 		}
 		if(this.dataEmitter != null) {
 			this.dataEmitter.success(data);
 		}
+		if(data instanceof Mono) {
+			this.data = ((Mono<ByteBuf>)data).doOnNext(chunk -> {
+				this.chunkCount = 1;
+				this.size = chunk.readableBytes();
+				Long contentLength = this.response.getHeaders().getSize();
+				if(contentLength == null) {
+					this.response.getHeaders().size(this.size);
+				}
+				else if(this.size != contentLength){
+					throw new IllegalStateException("Response content length doesn't match the actual response size");
+				}
+			})
+			.doOnSuccess(ign -> {
+				if(this.chunkCount == 0 && this.response.getHeaders().getSize() == null) {
+					this.response.getHeaders().size(0);
+				}
+			});
+		}
 		else {
-			this.data = data.bufferUntil(s -> {
+			this.data = Flux.from(data).bufferUntil(s -> {
 				this.chunkCount++;
 				this.size += s.readableBytes();
 				return this.chunkCount >= 2;
@@ -91,17 +114,24 @@ public class GenericResponseBody implements ResponseBody {
 			})
 			.doOnComplete(() -> {
 				if(this.chunkCount == 0 && this.response.getHeaders().getSize() == null) {
+					// Response has no content
 					this.response.getHeaders().size(0);
 				}
-			})
-			.doOnError(t -> t.printStackTrace());
+			});
 		}
-		this.dataSet = true;
 	}
-
-	public Flux<ByteBuf> getData() {
+	
+	/*public Flux<ByteBuf> getData() {
 		if(this.data == null) {
 			this.setData(Flux.switchOnNext(Mono.<Flux<ByteBuf>>create(emitter -> this.dataEmitter = emitter)));
+			this.dataSet = false;
+		}
+		return this.data;
+	}*/
+	
+	public Publisher<ByteBuf> getData() {
+		if(this.data == null) {
+			this.setData(Flux.switchOnNext(Mono.<Publisher<ByteBuf>>create(emitter -> this.dataEmitter = emitter)));
 			this.dataSet = false;
 		}
 		return this.data;
@@ -117,7 +147,7 @@ public class GenericResponseBody implements ResponseBody {
 
 	@Override
 	public Response<Void> empty() {
-		this.setData(Flux.empty());
+		this.setData(Mono.empty());
 		return this.response.<Void>map(responseBody -> null);
 	}
 
@@ -149,7 +179,7 @@ public class GenericResponseBody implements ResponseBody {
 
 		@Override
 		public Response<Raw> data(Publisher<ByteBuf> data) {
-			GenericResponseBody.this.setData(Flux.from(data));
+			GenericResponseBody.this.setData(data);
 			return GenericResponseBody.this.response.<ResponseBody.Raw>map(responseBody -> responseBody.raw());
 		}
 		
@@ -169,8 +199,7 @@ public class GenericResponseBody implements ResponseBody {
 		@Override
 		public Response<Sse<ByteBuf>> events(Publisher<ServerSentEvent<ByteBuf>> events) {
 			GenericResponseBody.this.response.headers(headers -> headers
-				.contentType(MediaTypes.TEXT_EVENT_STREAM)
-				.charset(Charsets.UTF_8)
+				.contentType(GenericResponseBody.SSE_CONTENT_TYPE)
 			);
 			
 			GenericResponseBody.this.setData(Flux.from(events)
@@ -189,6 +218,7 @@ public class GenericResponseBody implements ResponseBody {
 					Flux<ByteBuf> sseData = Flux.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(sseMetaData, Charsets.UTF_8)));
 					
 					if(sse.getData() != null) {
+						// TODO We need to merge things a little bit 
 						// We need to make create a new "data:..." line if we encounter an end of line...
 						sseData = sseData
 							.concatWith(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("data:", Charsets.UTF_8))))
@@ -247,7 +277,7 @@ public class GenericResponseBody implements ResponseBody {
 					}
 				}
 				
-				if(GenericResponseBody.this.response.getHeaders().getContentType() == null) {
+				if(GenericResponseBody.this.response.getHeaders().getCharSequence(Headers.CONTENT_TYPE) == null) {
 					try {
 						String mediaType = resource.getMediaType();
 						if(mediaType != null) {

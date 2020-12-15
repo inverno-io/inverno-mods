@@ -15,8 +15,6 @@
  */
 package io.winterframework.mod.web;
 
-import java.nio.charset.Charset;
-
 /**
  * @author jkuhn
  *
@@ -31,11 +29,11 @@ public interface ResponseHeaders {
 	
 	ResponseHeaders contentType(String contentType);
 	
-	ResponseHeaders charset(Charset charset);
-	
 	ResponseHeaders size(long size);
 	
 	ResponseHeaders add(String name, String value);
+	
+	ResponseHeaders add(CharSequence name, CharSequence value);
 	
 	ResponseHeaders add(Header... headers);
 }

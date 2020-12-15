@@ -222,34 +222,40 @@ class PathPatternRoutingLink<A, B, C extends Exchange<A, B>, D extends PathAware
 
 	@Override
 	public void handle(C exchange) throws WebException {
-		String normalizedPath;
-		try {
-			normalizedPath = new URI(exchange.request().headers().getPath()).normalize().getPath().toString();
-		} 
-		catch (URISyntaxException e) {
-			throw new BadRequestException("Bad URI", e);
-		}
-		
-		// TODO If we have more than one, we need to prioritize them or we need to fail depending on a routing strategy
-		// - we can choose to trust the Winter compiler to detect conflicts and have a defaulting behavior at runtime
-		// - we can choose to make this behavior configurable
-		Optional<RoutingLink<A, B, C, ?, D>> handler = this.handlers.entrySet().stream()
-			.map(e -> this.matches(normalizedPath, e.getKey(), e.getValue()))
-			.filter(Objects::nonNull)
-			.sorted(Comparator.reverseOrder())
-			.findFirst()
-			.map(match -> {
-				if(exchange instanceof GenericWebExchange) {
-					((GenericWebExchange)exchange).setPathParameters(match.getPathParameters());
-				}
-				return match.getHandler();
-			});
-		
-		if(handler.isPresent()) {
-			handler.get().handle(exchange);
+		if(this.handlers.isEmpty()) {
+			this.nextLink.handle(exchange);
 		}
 		else {
-			this.nextLink.handle(exchange);
+			// TODO this is done twice after the pathroutinglink...
+			String normalizedPath;
+			try {
+				normalizedPath = new URI(exchange.request().headers().getPath()).normalize().getPath().toString();
+			} 
+			catch (URISyntaxException e) {
+				throw new BadRequestException("Bad URI", e);
+			}
+			
+			// TODO If we have more than one, we need to prioritize them or we need to fail depending on a routing strategy
+			// - we can choose to trust the Winter compiler to detect conflicts and have a defaulting behavior at runtime
+			// - we can choose to make this behavior configurable
+			Optional<RoutingLink<A, B, C, ?, D>> handler = this.handlers.entrySet().stream()
+				.map(e -> this.matches(normalizedPath, e.getKey(), e.getValue()))
+				.filter(Objects::nonNull)
+				.sorted(Comparator.reverseOrder())
+				.findFirst()
+				.map(match -> {
+					if(exchange instanceof GenericWebExchange) {
+						((GenericWebExchange)exchange).setPathParameters(match.getPathParameters());
+					}
+					return match.getHandler();
+				});
+			
+			if(handler.isPresent()) {
+				handler.get().handle(exchange);
+			}
+			else {
+				this.nextLink.handle(exchange);
+			}
 		}
 	}
 }

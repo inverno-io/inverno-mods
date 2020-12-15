@@ -19,13 +19,15 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.util.Optional;
 
+import org.reactivestreams.Publisher;
+
 import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.FileRegion;
 import io.winterframework.mod.web.InternalServerErrorException;
 import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
-import io.winterframework.mod.web.internal.server.GenericResponse;
 import io.winterframework.mod.web.internal.server.GenericResponseBody;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 
 /**
@@ -34,25 +36,24 @@ import reactor.core.publisher.Flux;
  */
 class Http1xResponseBody extends GenericResponseBody {
 
-	private boolean supportsFileRegion;
+	private static final int MAX_FILE_REGION_SIZE = 1024 * 1024;
 	
-	private FileRegion fileRegion;
+	private Publisher<FileRegion> fileRegionData;
 	
 	/**
 	 * @param response
 	 */
-	public Http1xResponseBody(GenericResponse response, boolean supportsFileRegion) {
+	public Http1xResponseBody(Http1xResponse response) {
 		super(response);
-		this.supportsFileRegion = supportsFileRegion;
 	}
 	
-	public Optional<FileRegion> getFileRegion() {
-		return Optional.ofNullable(this.fileRegion);
+	public Optional<Publisher<FileRegion>> getFileRegionData() {
+		return Optional.ofNullable(this.fileRegionData);
 	}
 	
 	@Override
 	public Resource resource() {
-		if(!supportsFileRegion) {
+		if(!((Http1xResponse)this.response).supportsFileRegion()) {
 			return super.resource();
 		}
 		else {
@@ -67,15 +68,34 @@ class Http1xResponseBody extends GenericResponseBody {
 
 		@Override
 		public Response<Resource> data(io.winterframework.mod.commons.resource.Resource resource) {
-			// Http2 doesn't support FileRegion so we have to read the resource and send it to the response data flux
-			
 //			fileregion is supported when we are not using ssl and we do not compress content
 			try {
 				if(resource.isFile()) {
 					// We need to create the file region and then send an empty response
 					// The Http1xServerExchange should then complete and check whether there is a file region or not
 					this.populateHeaders(resource);
-					Http1xResponseBody.this.fileRegion = new DefaultFileRegion((FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable")), 0l, resource.size().longValue());
+					
+					FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable"));
+					long size = resource.size();
+					int count = (int)Math.ceil((float)size / (float)MAX_FILE_REGION_SIZE);
+					
+					// We need to add an extra element in order to control when the flux terminates so we can properly close the file channel
+					Http1xResponseBody.this.fileRegionData = Flux.range(0, count + 1) 
+						.filter(index -> index < count)
+						.map(index -> {
+							long position = index * MAX_FILE_REGION_SIZE;
+							FileRegion region = new DefaultFileRegion(fileChannel, position, Math.min(size - position, MAX_FILE_REGION_SIZE));
+							region.retain();
+							return region;
+						})
+						.doFinally(sgn -> {
+							try {
+								fileChannel.close();
+							} 
+							catch (IOException e) {
+								Exceptions.propagate(e);
+							}
+						});
 					Http1xResponseBody.this.setData(Flux.empty());
 				}
 				else {
@@ -86,40 +106,6 @@ class Http1xResponseBody extends GenericResponseBody {
 				throw new InternalServerErrorException("Error while reading resource " + resource, e);
 			}
 			return Http1xResponseBody.this.response.<ResponseBody.Resource>map(responseBody -> responseBody.resource());
-			
-			/*try {
-				Http1xResponseBody.this.response.headers(h -> {
-					if(Http1xResponseBody.this.response.getHeaders().getSize() == null) {
-						Long size;
-						try {
-							size = resource.size();
-							if(size != null) {
-								h.size(size);
-							}
-						} 
-						catch (IOException e) {
-							// TODO maybe a debug log?
-						}
-					}
-					
-					if(Http1xResponseBody.this.response.getHeaders().getContentType() == null) {
-						try {
-							String mediaType = resource.getMediaType();
-							if(mediaType != null) {
-								h.contentType(mediaType);
-							}
-						} 
-						catch (IOException e) {
-							// TODO maybe a debug log? 
-						}
-					}
-				});
-				Http1xResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable")));
-			} 
-			catch (IOException e) {
-				throw new InternalServerErrorException("Error while reading resource " + resource, e);
-			}
-			return Http1xResponseBody.this.response.<ResponseBody.Resource>map(responseBody -> responseBody.resource());*/
 		}
 	}
 }

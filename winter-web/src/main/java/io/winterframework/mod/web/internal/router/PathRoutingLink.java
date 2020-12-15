@@ -133,18 +133,23 @@ class PathRoutingLink<A, B, C extends Exchange<A, B>, D extends PathAwareRoute<A
 
 	@Override
 	public void handle(C exchange) throws WebException {
-		String normalizedPath;
-		try {
-			normalizedPath = new URI(exchange.request().headers().getPath()).normalize().getPath().toString();
-		} 
-		catch (URISyntaxException e) {
-			throw new BadRequestException("Bad URI", e);
+		if(this.handlers.isEmpty()) {
+			this.nextLink.handle(exchange);
 		}
-		
-		RoutingLink<A, B, C, ?, D> handler = this.handlers.get(normalizedPath);
-		if(handler == null) {
-			handler = this.nextLink;
+		else {
+			String normalizedPath;
+			try {
+				normalizedPath = new URI(exchange.request().headers().getPath()).normalize().getPath().toString();
+			} 
+			catch (URISyntaxException e) {
+				throw new BadRequestException("Bad URI", e);
+			}
+			
+			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(normalizedPath);
+			if(handler == null) {
+				handler = this.nextLink;
+			}
+			handler.handle(exchange);
 		}
-		handler.handle(exchange);
 	}
 }

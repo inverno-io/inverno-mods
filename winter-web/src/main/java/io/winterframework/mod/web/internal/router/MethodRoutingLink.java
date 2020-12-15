@@ -142,15 +142,20 @@ class MethodRoutingLink<A, B, C extends Exchange<A, B>, D extends MethodAwareRou
 	
 	@Override
 	public void handle(C exchange) throws WebException {
-		RoutingLink<A, B, C, ?, D> handler = this.enabledHandlers.get(exchange.request().headers().getMethod());
-		if(handler != null) {
-			handler.handle(exchange);
-		}
-		else if(this.enabledHandlers.isEmpty()) {
+		if(this.handlers.isEmpty()) {
 			this.nextLink.handle(exchange);
 		}
 		else {
-			throw new MethodNotAllowedException(this.handlers.keySet());
+			RoutingLink<A, B, C, ?, D> handler = this.enabledHandlers.get(exchange.request().headers().getMethod());
+			if(handler != null) {
+				handler.handle(exchange);
+			}
+			else if(this.enabledHandlers.isEmpty()) {
+				this.nextLink.handle(exchange);
+			}
+			else {
+				throw new MethodNotAllowedException(this.handlers.keySet());
+			}
 		}
 	}
 }

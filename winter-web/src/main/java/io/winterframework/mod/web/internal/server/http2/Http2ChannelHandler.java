@@ -1,7 +1,5 @@
 package io.winterframework.mod.web.internal.server.http2;
 
-import java.util.function.Supplier;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http2.Http2Connection;
@@ -16,22 +14,44 @@ import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
-import io.winterframework.core.annotation.Bean;
-import io.winterframework.core.annotation.Bean.Strategy;
-import io.winterframework.core.annotation.Bean.Visibility;
-import io.winterframework.core.annotation.Lazy;
-import io.winterframework.core.annotation.Wrapper;
-import io.winterframework.mod.web.WebConfiguration;
+import io.winterframework.mod.web.ErrorExchange;
+import io.winterframework.mod.web.Exchange;
+import io.winterframework.mod.web.ExchangeHandler;
+import io.winterframework.mod.web.HeaderService;
+import io.winterframework.mod.web.Parameter;
+import io.winterframework.mod.web.Part;
+import io.winterframework.mod.web.RequestBody;
+import io.winterframework.mod.web.ResponseBody;
+import io.winterframework.mod.web.internal.RequestBodyDecoder;
+import io.winterframework.mod.web.internal.server.AbstractExchange.ExchangeSubscriber;
 
 public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2FrameListener, Http2Connection.Listener {
 
-	private Supplier<Http2ServerStreamBuilder> http2ServerStreamBuilderSupplier;
+	private ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler; 
+	private ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler; 
+	private HeaderService headerService;
+	private RequestBodyDecoder<Parameter> urlEncodedBodyDecoder;
+	private RequestBodyDecoder<Part> multipartBodyDecoder;
 	
-	private IntObjectMap<Http2ServerStream> serverStreams;
+	private IntObjectMap<Http2Exchange> serverStreams;
 	
-    public Http2ChannelHandler(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings, Supplier<Http2ServerStreamBuilder> http2ServerStreamBuilderSupplier) {
+    public Http2ChannelHandler(
+    		Http2ConnectionDecoder decoder, 
+    		Http2ConnectionEncoder encoder, 
+    		Http2Settings initialSettings, 
+    		ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, 
+			ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, 
+			HeaderService headerService, 
+			RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, 
+			RequestBodyDecoder<Part> multipartBodyDecoder) {
         super(decoder, encoder, initialSettings);
-        this.http2ServerStreamBuilderSupplier = http2ServerStreamBuilderSupplier;
+        
+        this.rootHandler = rootHandler;
+        this.errorHandler = errorHandler;
+        this.headerService = headerService;
+        this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
+        this.multipartBodyDecoder = multipartBodyDecoder;
+        
         this.serverStreams = new IntObjectHashMap<>();
         this.connection().addListener(this);
     }
@@ -66,11 +86,11 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
         // TODO flow control?
         int processed = data.readableBytes() + padding;
         
-        Http2ServerStream serverStream = this.serverStreams.get(streamId);
+        Http2Exchange serverStream = this.serverStreams.get(streamId);
     	if(serverStream != null) {
-    		serverStream.request().data().ifPresent(emitter -> emitter.next(data));
+    		serverStream.request().data().ifPresent(sink -> sink.tryEmitNext(data));
             if(endOfStream) {
-            	serverStream.request().data().ifPresent(emitter -> emitter.complete());
+            	serverStream.request().data().ifPresent(sink -> sink.tryEmitComplete());
             }
     	}
     	else {
@@ -91,19 +111,24 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
     public void onHeadersRead(ChannelHandlerContext ctx, int streamId, Http2Headers headers, int padding, boolean endOfStream) throws Http2Exception {
 //        System.out.println("onHeaderReads(2) " + streamId + " - " + endOfStream + " - " + this.hashCode());
     	if(!this.serverStreams.containsKey(streamId)) {
-    		this.http2ServerStreamBuilderSupplier.get()
-				.stream(this.connection().stream(streamId))
-				.headers(headers)
-				.encoder(this.encoder())
-				.build(ctx)
-				.flatMap(serverStream -> serverStream.init()
-					.doOnSubscribe(subscription -> {
-						this.serverStreams.put(streamId, serverStream);
-						if(endOfStream) {
-		                	serverStream.request().data().ifPresent(emitter -> emitter.complete());
-		                }
-					})
-				).subscribe();
+			Http2RequestHeaders requestHeaders = new Http2RequestHeaders(this.headerService, headers);
+			Http2Request request = new Http2Request(ctx, requestHeaders, this.urlEncodedBodyDecoder, this.multipartBodyDecoder);
+			Http2Response response = new Http2Response(ctx, this.headerService);
+			
+			Http2Exchange streamExchange = new Http2Exchange(ctx, this.rootHandler, this.errorHandler, request, response, this.connection().stream(streamId), this.encoder());
+    		
+			this.serverStreams.put(streamId, streamExchange);
+			if(endOfStream) {
+				streamExchange.request().data().ifPresent(sink -> sink.tryEmitComplete());
+            }
+			streamExchange.start(ExchangeSubscriber.DEFAULT);
+			
+			/*streamExchange.init().doOnSubscribe(subscription -> {
+				this.serverStreams.put(streamId, streamExchange);
+				if(endOfStream) {
+					streamExchange.request().data().ifPresent(sink -> sink.tryEmitComplete());
+                }
+			}).subscribe();*/
     	}
     	else {
     		// TODO HTTP trailers...
@@ -132,7 +157,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
     @Override
     public void onRstStreamRead(ChannelHandlerContext ctx, int streamId, long errorCode) throws Http2Exception {
 //        System.out.println("onRstStreamRead()");
-    	Http2ServerStream serverStream = this.serverStreams.remove(streamId);
+    	Http2Exchange serverStream = this.serverStreams.remove(streamId);
     	if(serverStream != null) {
     		serverStream.dispose();
     	}
@@ -201,7 +226,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	@Override
 	public void onStreamClosed(Http2Stream stream) {
 //		System.out.println("Stream closed");
-		Http2ServerStream serverStream = this.serverStreams.remove(stream.id());
+		Http2Exchange serverStream = this.serverStreams.remove(stream.id());
     	if(serverStream != null) {
     		serverStream.dispose();
     	}
@@ -225,25 +250,5 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	@Override
 	public void onGoAwayReceived(int lastStreamId, long errorCode, ByteBuf debugData) {
 //		System.out.println("Stream go away received");		
-	}
-	
-	@Bean(strategy = Strategy.PROTOTYPE, visibility = Visibility.PRIVATE)
-	@Wrapper
-	public static class Htt2ChannelHandlerWrapper implements Supplier<Http2ChannelHandler> {
-
-		private WebConfiguration configuration;
-		
-		private Supplier<Http2ServerStreamBuilder> http2ServerStreamBuilderSupplier;
-		
-		public Htt2ChannelHandlerWrapper(WebConfiguration configuration, @Lazy Supplier<Http2ServerStreamBuilder> http2ServerStreamBuilderSupplier) {
-			this.http2ServerStreamBuilderSupplier = http2ServerStreamBuilderSupplier;
-			this.configuration = configuration;
-		}
-		
-		@Override
-		public Http2ChannelHandler get() {
-			return new Http2ChannelHandlerBuilder(this.configuration, this.http2ServerStreamBuilderSupplier).build();
-		}
-		
 	}
 }

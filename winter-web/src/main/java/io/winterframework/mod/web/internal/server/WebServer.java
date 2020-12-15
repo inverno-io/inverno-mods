@@ -16,11 +16,12 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.core.annotation.Destroy;
@@ -46,32 +47,49 @@ public class WebServer {
 		this.configuration = configuration;
 		this.channelInitializer = channelInitializer;
 	}
-
+	
 	@Init
 	public void start() throws CertificateException, InterruptedException, IOException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException {
-		if(Epoll.isAvailable()) {
-			this.acceptorGroup = new EpollEventLoopGroup(1);
-			this.childGroup = new EpollEventLoopGroup();
-		}
-		else {
-			this.acceptorGroup = new NioEventLoopGroup(1);
-			this.childGroup = new NioEventLoopGroup();
-		}
-
+		
 		ServerBootstrap serverBootstrap = new ServerBootstrap();
 		serverBootstrap
-			.option(ChannelOption.SO_BACKLOG, 1024)
-			.childOption(ChannelOption.SO_KEEPALIVE, false)
-			.childOption(ChannelOption.TCP_NODELAY, true)
-//			.childOption(ChannelOption.ALLOCATOR, PartialPooledByteBufAllocator.INSTANCE) // Vertx does not rely on netty's pool, this might reduce memory footprint, @see io.vertx.core.net.impl.PartialPooledByteBufAllocator
+/*			.option(ChannelOption.SO_BACKLOG, 1024)
+			.option(ChannelOption.SO_REUSEADDR, true)
+			.option(EpollChannelOption.SO_REUSEPORT, true)
+//			.childOption(ChannelOption.SO_KEEPALIVE, false)
+//			.childOption(ChannelOption.TCP_NODELAY, true)
+			.childOption(ChannelOption.SO_REUSEADDR, true)
+			.childOption(ChannelOption.ALLOCATOR, PartialPooledByteBufAllocator.INSTANCE) // Vertx does not rely on netty's pool, this might reduce memory footprint, @see io.vertx.core.net.impl.PartialPooledByteBufAllocator
 			.group(this.acceptorGroup, this.childGroup)
-			.childHandler(this.channelInitializer);
+			.childHandler(this.channelInitializer);*/
+		
+//		.option(ChannelOption.SO_BACKLOG, 1024)
+		.option(ChannelOption.SO_REUSEADDR, true)
+		.option(EpollChannelOption.SO_REUSEPORT, false)
+		.childOption(ChannelOption.SO_KEEPALIVE, false)
+		.childOption(ChannelOption.TCP_NODELAY, true)
+		.childOption(EpollChannelOption.TCP_QUICKACK, false)
+		.childOption(EpollChannelOption.TCP_CORK, false)
+		.childOption(ChannelOption.ALLOCATOR, WebServerByteBufAllocator.INSTANCE) // Vertx does not rely on netty's pool, this might reduce memory footprint, @see io.vertx.core.net.impl.PartialPooledByteBufAllocator
+		.childHandler(this.channelInitializer);
 		
 		if(Epoll.isAvailable()) {
-			serverBootstrap.channel(EpollServerSocketChannel.class);
+			DefaultThreadFactory threadFactory = new DefaultThreadFactory("epoll-webserver", false, 5);
+			this.acceptorGroup = new EpollEventLoopGroup(1, threadFactory);
+			this.childGroup = new EpollEventLoopGroup(8, threadFactory);
+			
+			serverBootstrap
+				.group(this.acceptorGroup, this.childGroup)
+				.channel(EpollServerSocketChannel.class);
 		}
 		else {
-			serverBootstrap.channel(NioServerSocketChannel.class);
+			DefaultThreadFactory threadFactory = new DefaultThreadFactory("nio-webserver", false, 5);
+			this.acceptorGroup = new NioEventLoopGroup(1, threadFactory);
+			this.childGroup = new NioEventLoopGroup(8, threadFactory);
+			
+			serverBootstrap
+				.group(this.acceptorGroup, this.childGroup)
+				.channel(EpollServerSocketChannel.class);
 		}
 
 		InetSocketAddress serverAddress = new InetSocketAddress(this.configuration.server_host(), this.configuration.server_port());
@@ -86,9 +104,10 @@ public class WebServer {
 	}
 
 	@Destroy
-	public void stop() {
+	public void stop() throws InterruptedException {
+//		this.serverChannelFuture.channel().closeFuture().sync();
 		this.serverChannelFuture.channel().close();
-		this.acceptorGroup.shutdownGracefully().syncUninterruptibly();
-		this.childGroup.shutdownGracefully().syncUninterruptibly();
+		this.acceptorGroup.shutdownGracefully().sync();
+		this.childGroup.shutdownGracefully().sync();
 	}
 }

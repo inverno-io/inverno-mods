@@ -23,7 +23,7 @@ public class GenericRequestCookies implements RequestCookies {
 	private Map<String, List<Cookie>> pairs; 
 	
 	public GenericRequestCookies(RequestHeaders requestHeaders) {
-		this.pairs = requestHeaders.<Headers.Cookie>getAll(Headers.COOKIE)
+		this.pairs = requestHeaders.<Headers.Cookie>getAllHeader(Headers.COOKIE)
 			.stream()
 			.flatMap(cookieHeader -> cookieHeader.getPairs().values().stream().flatMap(List::stream))
 			.collect(Collectors.groupingBy(Cookie::getName));

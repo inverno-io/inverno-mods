@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.web.internal.server.http2;
 
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,7 +23,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.netty.handler.codec.http2.Http2Headers;
-import io.winterframework.mod.web.Charsets;
 import io.winterframework.mod.web.Header;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
@@ -46,39 +44,34 @@ public class Http2RequestHeaders implements RequestHeaders {
 		this.headers = headers;
 	}
 	
-	private String getHeader(String name) {
+	private String getHeaderValue(String name) {
 		CharSequence header = this.headers.get(name);
 		return header != null ? header.toString() : null;
 	}
 
 	@Override
 	public String getAuthority() {
-		return this.getHeader(Headers.PSEUDO_AUTHORITY);
+		return this.getHeaderValue(Headers.PSEUDO_AUTHORITY);
 	}
 
 	@Override
 	public String getPath() {
-		return this.getHeader(Headers.PSEUDO_PATH);
+		return this.getHeaderValue(Headers.PSEUDO_PATH);
 	}
 
 	@Override
 	public Method getMethod() {
-		return Method.valueOf(this.getHeader(Headers.PSEUDO_METHOD));
+		return Method.valueOf(this.getHeaderValue(Headers.PSEUDO_METHOD));
 	}
 
 	@Override
 	public String getScheme() {
-		return this.getHeader(Headers.PSEUDO_SCHEME);
+		return this.getHeaderValue(Headers.PSEUDO_SCHEME);
 	}
 
 	@Override
 	public String getContentType() {
-		return this.getHeader(Headers.CONTENT_TYPE);
-	}
-
-	@Override
-	public Charset getCharset() {
-		return this.<Headers.ContentType>get(Headers.CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
+		return this.getHeaderValue(Headers.CONTENT_TYPE);
 	}
 
 	@Override
@@ -92,17 +85,18 @@ public class Http2RequestHeaders implements RequestHeaders {
 	}
 
 	@Override
-	public <T extends Header> Optional<T> get(String name) {
-		return this.<T>getAll(name).stream().findFirst();
+	public <T extends Header> Optional<T> getHeader(String name) {
+		return this.<T>getAllHeader(name).stream().findFirst();
 	}
 	
 	@Override
-	public <T extends Header> List<T> getAll(String name) {
+	public <T extends Header> List<T> getAllHeader(String name) {
 		return this.headers.getAll(name).stream().map(value -> this.HeaderService.<T>decode(name, value.toString())).collect(Collectors.toList());
 	}
 	
 	@Override
-	public Map<String, List<? extends Header>> getAll() {
-		return this.headers.names().stream().map(CharSequence::toString).collect(Collectors.toMap(Function.identity(), this::<Header>getAll));
+	public Map<String, List<Header>> getAllHeader() {
+		// TODO optimize see Http1xRequestHeader
+		return this.headers.names().stream().map(CharSequence::toString).collect(Collectors.toMap(Function.identity(), this::<Header>getAllHeader));
 	}
 }

@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.web.internal.server.http1x;
+package io.winterframework.mod.web.internal.server.http2;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.HttpContentCompressor;
-import io.netty.handler.ssl.SslHandler;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.internal.server.AbstractResponse;
 
@@ -25,27 +23,18 @@ import io.winterframework.mod.web.internal.server.AbstractResponse;
  * @author jkuhn
  *
  */
-class Http1xResponse extends AbstractResponse {
+public class Http2Response extends AbstractResponse {
 
 	/**
 	 * @param headerService
+	 * @param responseHeaders
 	 */
-	public Http1xResponse(ChannelHandlerContext context, HeaderService headerService) {
-		super(context, headerService, new Http1xResponseHeaders(headerService));
-		this.responseBody = new Http1xResponseBody(this);
+	public Http2Response(ChannelHandlerContext context, HeaderService headerService) {
+		super(context, headerService, new Http2ResponseHeaders(headerService));
 	}
-	
-	protected boolean supportsFileRegion() {
-		return this.context.pipeline().get(SslHandler.class) == null && this.context.pipeline().get(HttpContentCompressor.class) == null;
-	}
-	
+
 	@Override
-	public Http1xResponseHeaders getHeaders() {
-		return (Http1xResponseHeaders)super.getHeaders();
-	}
-	
-	@Override
-	public Http1xResponseBody body() {
-		return (Http1xResponseBody)super.body();
+	public Http2ResponseHeaders getHeaders() {
+		return (Http2ResponseHeaders)super.getHeaders();
 	}
 }
