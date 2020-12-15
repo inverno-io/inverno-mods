@@ -142,19 +142,24 @@ class ConsumesRoutingLink<A, B, C extends Exchange<A, B>, D extends ContentAware
 	
 	@Override
 	public void handle(C exchange) throws WebException {
-		Optional<Headers.ContentType> contentTypeHeader = exchange.request().headers().<Headers.ContentType>get(Headers.CONTENT_TYPE);
-		
-		Optional<RoutingLink<A, B, C, ?, D>> handler = contentTypeHeader
-			.flatMap(contentType -> Headers.Accept.MediaRange.findFirstMatch(contentType, this.handlers.entrySet(), Entry::getKey).map(AcceptMatch::getSource).map(Entry::getValue));
-		
-		if(handler.isPresent()) {
-			handler.get().handle(exchange);
-		}
-		else if(this.handlers.isEmpty() || !contentTypeHeader.isPresent()) {
+		if(this.handlers.isEmpty()) {
 			this.nextLink.handle(exchange);
 		}
 		else {
-			throw new UnsupportedMediaTypeException();
+			Optional<Headers.ContentType> contentTypeHeader = exchange.request().headers().<Headers.ContentType>getHeader(Headers.CONTENT_TYPE);
+			
+			Optional<RoutingLink<A, B, C, ?, D>> handler = contentTypeHeader
+				.flatMap(contentType -> Headers.Accept.MediaRange.findFirstMatch(contentType, this.handlers.entrySet(), Entry::getKey).map(AcceptMatch::getSource).map(Entry::getValue));
+			
+			if(handler.isPresent()) {
+				handler.get().handle(exchange);
+			}
+			else if(this.handlers.isEmpty() || !contentTypeHeader.isPresent()) {
+				this.nextLink.handle(exchange);
+			}
+			else {
+				throw new UnsupportedMediaTypeException();
+			}
 		}
 	}
 }

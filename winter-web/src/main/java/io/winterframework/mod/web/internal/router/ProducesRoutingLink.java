@@ -155,54 +155,59 @@ class ProducesRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 	
 	@Override
 	public void handle(C exchange) throws WebException {
-		Headers.Accept accept = Headers.Accept.merge(exchange.request().headers().<Headers.Accept>getAll(Headers.ACCEPT))
-			.orElse(this.acceptCodec.decode(Headers.ACCEPT, "*/*"));
-		
-		if(!this.enabledHandlers.isEmpty()) {
-			Iterator<AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, C, ?, D>>>> acceptMatchesIterator = accept
-				.findAllMatch(this.enabledHandlers.entrySet(), Entry::getKey)
-				.iterator();
+		if(this.handlers.isEmpty()) {
+			this.nextLink.handle(exchange);
+		}
+		else {
+			Headers.Accept accept = Headers.Accept.merge(exchange.request().headers().<Headers.Accept>getAllHeader(Headers.ACCEPT))
+				.orElse(this.acceptCodec.decode(Headers.ACCEPT, "*/*"));
 			
-			while(acceptMatchesIterator.hasNext()) {
-				AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, C, ?, D>>> bestMatch = acceptMatchesIterator.next();
-				if(bestMatch.getSource().getMediaType().equals("*/*")) {
-					// First check if the next link can handle the request since this is the default
-					try {
-						this.nextLink.handle(exchange);
-						return;
+			if(!this.enabledHandlers.isEmpty()) {
+				Iterator<AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, C, ?, D>>>> acceptMatchesIterator = accept
+					.findAllMatch(this.enabledHandlers.entrySet(), Entry::getKey)
+					.iterator();
+				
+				while(acceptMatchesIterator.hasNext()) {
+					AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, C, ?, D>>> bestMatch = acceptMatchesIterator.next();
+					if(bestMatch.getSource().getMediaType().equals("*/*")) {
+						// First check if the next link can handle the request since this is the default
+						try {
+							this.nextLink.handle(exchange);
+							return;
+						}
+						catch(RouteNotFoundException | DisabledRouteException e1) {
+							// There's no default handler defined, we can take the best match
+							try {
+								bestMatch.getTarget().getValue().handle(exchange);
+								return;
+							}
+							catch(RouteNotFoundException | DisabledRouteException e2) {
+								// continue with the next best match
+								continue;
+							}
+						}
 					}
-					catch(RouteNotFoundException | DisabledRouteException e1) {
-						// There's no default handler defined, we can take the best match
+					else {
 						try {
 							bestMatch.getTarget().getValue().handle(exchange);
 							return;
 						}
-						catch(RouteNotFoundException | DisabledRouteException e2) {
+						catch(RouteNotFoundException | DisabledRouteException e) {
 							// continue with the next best match
 							continue;
 						}
 					}
 				}
-				else {
-					try {
-						bestMatch.getTarget().getValue().handle(exchange);
-						return;
-					}
-					catch(RouteNotFoundException | DisabledRouteException e) {
-						// continue with the next best match
-						continue;
-					}
-				}
+				// We haven't found any route that can handle the request
+				throw new NotAcceptableException(this.handlers.keySet().stream().map(Headers.ContentType::getMediaType).collect(Collectors.toSet()));
 			}
-			// We haven't found any route that can handle the request
-			throw new NotAcceptableException(this.handlers.keySet().stream().map(Headers.ContentType::getMediaType).collect(Collectors.toSet()));
-		}
-		else if(accept.getMediaRanges().stream().anyMatch(mediaRange -> mediaRange.getMediaType().equals("*/*"))) {
-			// We delegate to next link only if */* is accepted
-			this.nextLink.handle(exchange);
-		}
-		else {
-			throw new NotAcceptableException();
+			else if(accept.getMediaRanges().stream().anyMatch(mediaRange -> mediaRange.getMediaType().equals("*/*"))) {
+				// We delegate to next link only if */* is accepted
+				this.nextLink.handle(exchange);
+			}
+			else {
+				throw new NotAcceptableException();
+			}
 		}
 	}
 }

@@ -14,6 +14,7 @@ module io.winterframework.mod.web {
 	requires io.netty.common;
 	requires io.netty.transport;
 	requires io.netty.transport.epoll;
+	requires io.netty.transport.unix.common;
 	requires io.netty.codec;
 	requires io.netty.codec.http;
 	requires io.netty.codec.http2;

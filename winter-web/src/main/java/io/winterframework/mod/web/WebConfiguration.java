@@ -6,7 +6,7 @@ import io.winterframework.mod.configuration.Configuration;
 public interface WebConfiguration {
 
 	default String server_host() {
-		return "localhost";
+		return "0.0.0.0";
 	}
 
 	default int server_port() {
