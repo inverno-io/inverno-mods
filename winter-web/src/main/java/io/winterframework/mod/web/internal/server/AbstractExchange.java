@@ -101,43 +101,39 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		this.response.data().subscribe(this);
 	}
 	
-	@Override
-	protected final void hookOnNext(ByteBuf value) {
+	protected final void scheduleOnEventLoop(Runnable runnable) {
 		if(this.contextExecutor.inEventLoop()) {
-			this.doHookOnNext(value);
+			runnable.run();
 		}
 		else {
 			this.contextExecutor.schedule(() -> {
-				this.doHookOnNext(value);
+				runnable.run();
 			}, 0, TimeUnit.MILLISECONDS);
 		}
+	}
+	
+	@Override
+	protected final void hookOnNext(ByteBuf value) {
+		this.scheduleOnEventLoop(() -> {
+			this.doHookOnNext(value);
+		});
 	}
 	
 	protected abstract void doHookOnNext(ByteBuf value);
 	
 	protected final void hookOnError(Throwable throwable) {
-		if(this.contextExecutor.inEventLoop()) {
+		this.scheduleOnEventLoop(() -> {
 			this.doHookOnError(throwable);
-		}
-		else {
-			this.contextExecutor.schedule(() -> {
-				this.doHookOnError(throwable);
-			}, 0, TimeUnit.MILLISECONDS);
-		}
+		});
 	}
 	
 	protected abstract void doHookOnError(Throwable throwable);
 	
 	@Override
 	protected final void hookOnComplete() {
-		if(this.contextExecutor.inEventLoop()) {
+		this.scheduleOnEventLoop(() -> {
 			this.doHookOnComplete();
-		}
-		else {
-			this.contextExecutor.schedule(() -> {
-				this.doHookOnComplete();
-			}, 0, TimeUnit.MILLISECONDS);
-		}
+		});
 	}
 	
 	protected abstract void doHookOnComplete();

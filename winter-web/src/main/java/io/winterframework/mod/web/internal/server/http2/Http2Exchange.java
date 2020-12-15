@@ -57,7 +57,7 @@ public class Http2Exchange extends AbstractExchange {
 			if(!this.response.getHeaders().isWritten()) {
 				Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.getHeaders();
 				this.headersConfigurer.accept(headers);
-				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getHttpHeaders(), 0, false, this.context.newPromise());
+				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getHttpHeaders(), 0, false, this.context.voidPromise());
 				this.response.getHeaders().setWritten(true);
 			}
 			// TODO implement back pressure with the flow controller
@@ -103,11 +103,11 @@ public class Http2Exchange extends AbstractExchange {
 			if(!this.response.getHeaders().isWritten()) {
 				Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.getHeaders();
 				this.headersConfigurer.accept(headers);
-				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getHttpHeaders(), 0, true, this.context.newPromise());
+				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getHttpHeaders(), 0, true, this.context.voidPromise());
 				this.response.getHeaders().setWritten(true);
 			}
 			else {
-				this.encoder.writeData(this.context, this.stream.id(), Unpooled.EMPTY_BUFFER, 0, true, this.context.newPromise());
+				this.encoder.writeData(this.context, this.stream.id(), Unpooled.EMPTY_BUFFER, 0, true, this.context.voidPromise());
 			}
 			this.context.channel().flush();
 			this.exchangeSubscriber.onExchangeComplete();
