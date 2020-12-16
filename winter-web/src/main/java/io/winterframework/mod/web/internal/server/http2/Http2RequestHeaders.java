@@ -37,15 +37,15 @@ public class Http2RequestHeaders implements RequestHeaders {
 
 	private HeaderService HeaderService;
 	
-	private Http2Headers headers;
+	private Http2Headers httpHeaders;
 	
 	public Http2RequestHeaders(HeaderService HeaderService, Http2Headers headers) {
 		this.HeaderService = HeaderService;
-		this.headers = headers;
+		this.httpHeaders = headers;
 	}
 	
 	private String getHeaderValue(String name) {
-		CharSequence header = this.headers.get(name);
+		CharSequence header = this.httpHeaders.get(name);
 		return header != null ? header.toString() : null;
 	}
 
@@ -76,12 +76,12 @@ public class Http2RequestHeaders implements RequestHeaders {
 
 	@Override
 	public Long getSize() {
-		return this.headers.getLong(Headers.CONTENT_LENGTH);
+		return this.httpHeaders.getLong(Headers.CONTENT_LENGTH);
 	}
 	
 	@Override
 	public Set<String> getNames() {
-		return this.headers.names().stream().map(CharSequence::toString).collect(Collectors.toSet());
+		return this.httpHeaders.names().stream().map(CharSequence::toString).collect(Collectors.toSet());
 	}
 
 	@Override
@@ -91,12 +91,17 @@ public class Http2RequestHeaders implements RequestHeaders {
 	
 	@Override
 	public <T extends Header> List<T> getAllHeader(String name) {
-		return this.headers.getAll(name).stream().map(value -> this.HeaderService.<T>decode(name, value.toString())).collect(Collectors.toList());
+		return this.httpHeaders.getAll(name).stream().map(value -> this.HeaderService.<T>decode(name, value.toString())).collect(Collectors.toList());
 	}
 	
 	@Override
 	public Map<String, List<Header>> getAllHeader() {
 		// TODO optimize see Http1xRequestHeader
-		return this.headers.names().stream().map(CharSequence::toString).collect(Collectors.toMap(Function.identity(), this::<Header>getAllHeader));
+		return this.httpHeaders.names().stream().map(CharSequence::toString).collect(Collectors.toMap(Function.identity(), this::<Header>getAllHeader));
+	}
+	
+	@Override
+	public boolean contains(String name, String value) {
+		return this.httpHeaders.contains(name, value);
 	}
 }

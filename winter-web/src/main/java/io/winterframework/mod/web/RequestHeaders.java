@@ -45,4 +45,6 @@ public interface RequestHeaders {
 	<T extends Header> List<T> getAllHeader(String name);
 	
 	Map<String, List<Header>> getAllHeader();
+	
+	boolean contains(String name, String value);
 }

@@ -23,6 +23,7 @@ public final class Headers {
 	public static final String ACCEPT = "accept";
 	public static final String ACCEPT_LANGUAGE = "accept-language";
 	public static final String ALLOW = "allow";
+	public static final String CONNECTION = "connection";
 	public static final String CONTENT_DISPOSITION = "content-disposition";
 	public static final String CONTENT_TYPE = "content-type";
 	public static final String CONTENT_LENGTH = "content-length";

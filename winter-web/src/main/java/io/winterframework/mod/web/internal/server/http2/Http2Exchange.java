@@ -52,7 +52,12 @@ public class Http2Exchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected void doHookOnNext(ByteBuf value) {
+	protected void onNextSingle(ByteBuf value) {
+		this.onNextMany(value);
+	}
+	
+	@Override
+	protected void onNextMany(ByteBuf value) {
 		try {
 			if(!this.response.getHeaders().isWritten()) {
 				Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.getHeaders();
@@ -85,7 +90,7 @@ public class Http2Exchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected void doHookOnError(Throwable throwable) {
+	protected void onCompleteWithError(Throwable throwable) {
 		// TODO
 		// either we have written headers or we have not
 		// What kind of error can be sent if we have already sent a 200 OK in the response headers
@@ -98,7 +103,17 @@ public class Http2Exchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected void doHookOnComplete() {
+	protected void onCompleteEmpty() {
+		this.onCompleteMany();
+	}
+	
+	@Override
+	protected void onCompleteSingle() {
+		this.onCompleteMany();
+	}
+	
+	@Override
+	protected void onCompleteMany() {
 		try {
 			if(!this.response.getHeaders().isWritten()) {
 				Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.getHeaders();
@@ -116,5 +131,4 @@ public class Http2Exchange extends AbstractExchange {
 			this.exchangeSubscriber.onExchangeError(e);
 		}
 	}
-	
 }

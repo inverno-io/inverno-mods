@@ -107,4 +107,9 @@ public class Http1xRequestHeaders implements RequestHeaders {
 	public Map<String, List<Header>> getAllHeader() {
 		return this.httpHeaders.entries().stream().map(e -> (Header)this.headerService.decode(e.getKey(), e.getValue())).collect(Collectors.groupingBy(h -> h.getHeaderName()));
 	}
+	
+	@Override
+	public boolean contains(String name, String value) {
+		return this.httpHeaders.contains(name, value, true);
+	}
 }

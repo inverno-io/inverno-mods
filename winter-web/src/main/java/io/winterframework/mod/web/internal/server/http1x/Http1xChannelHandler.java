@@ -90,23 +90,35 @@ public class Http1xChannelHandler extends ChannelDuplexHandler {
 	private static final String TEXT_PLAIN = "text/plain";
 	
 	@Override
-	public void channelRead(ChannelHandlerContext chctx, Object msg) {
+	public void channelRead(ChannelHandlerContext ctx, Object msg) {
 		if(msg instanceof HttpRequest) {
-			Http1xResponseHeaders headers = new Http1xResponseHeaders(this.headerService);
-			headers
-				.add(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN)
-				.add(HttpHeaderNames.CONTENT_LENGTH, PLAINTEXT_CLHEADER_VALUE);
+			HttpRequest httpRequest = (HttpRequest)msg;
+			if(httpRequest.decoderResult() != DecoderResult.SUCCESS) {
+				this.onDecoderError(ctx, httpRequest);
+				return;
+			}
+			Http1xRequest request = new Http1xRequest(ctx, new Http1xRequestHeaders(ctx, httpRequest, this.headerService), this.urlEncodedBodyDecoder, this.multipartBodyDecoder);
+			Http1xResponse response = new Http1xResponse(ctx, this.headerService);
+			this.requestingExchange = new Http1xExchange(ctx, this.rootHandler, this.errorHandler, request, response);
 			
-			final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, STATIC_PLAINTEXT_BYTEBUF.duplicate(), headers.getHttpHeaders(), EmptyHttpHeaders.INSTANCE);
+			this.requestingExchange.start(ExchangeSubscriber.DEFAULT);
 			
-			chctx.write(response, chctx.voidPromise());
+//			Http1xResponseHeaders headers = response.getHeaders();
+//			headers
+//				.add(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN)
+//				.add(HttpHeaderNames.CONTENT_LENGTH, PLAINTEXT_CLHEADER_VALUE);
+//			
+//			final FlatFullHttpResponse httpResponse = new FlatFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, headers.getHttpHeaders(), STATIC_PLAINTEXT_BYTEBUF.duplicate(), EmptyHttpHeaders.INSTANCE);
+////			final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, STATIC_PLAINTEXT_BYTEBUF.duplicate(), headers.getHttpHeaders(), EmptyHttpHeaders.INSTANCE);
+//			
+//			ctx.write(httpResponse, ctx.voidPromise());
 		}
 	}*/
 	
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
 		this.exchangeSubscriber = new ChannelExchangeSubscriber();
-		this.exchangeSink = Sinks.many().unicast().onBackpressureBuffer();
+		this.exchangeSink = Sinks.many().unicast().onBackpressureBuffer(); // => this cost ~3000tps
 		this.exchangeSink.asFlux().subscribe(this.exchangeSubscriber);
 	}
 	
@@ -181,6 +193,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler {
 			this.requestingExchange.onReadComplete();
 			this.requestingExchange = null;
 		}
+		// TODO do we need flush?
 		ctx.flush();
 	}
 
@@ -234,6 +247,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler {
 			exchange.start(this);
 		}
 		
+		@Override
 		protected void hookFinally(reactor.core.publisher.SignalType type) {
 			if(respondingExchange != null) {
 				respondingExchange.dispose();

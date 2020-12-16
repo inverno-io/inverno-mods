@@ -111,10 +111,8 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
     public void onHeadersRead(ChannelHandlerContext ctx, int streamId, Http2Headers headers, int padding, boolean endOfStream) throws Http2Exception {
 //        System.out.println("onHeaderReads(2) " + streamId + " - " + endOfStream + " - " + this.hashCode());
     	if(!this.serverStreams.containsKey(streamId)) {
-			Http2RequestHeaders requestHeaders = new Http2RequestHeaders(this.headerService, headers);
-			Http2Request request = new Http2Request(ctx, requestHeaders, this.urlEncodedBodyDecoder, this.multipartBodyDecoder);
+			Http2Request request = new Http2Request(ctx, new Http2RequestHeaders(this.headerService, headers), this.urlEncodedBodyDecoder, this.multipartBodyDecoder);
 			Http2Response response = new Http2Response(ctx, this.headerService);
-			
 			Http2Exchange streamExchange = new Http2Exchange(ctx, this.rootHandler, this.errorHandler, request, response, this.connection().stream(streamId), this.encoder());
     		
 			this.serverStreams.put(streamId, streamExchange);
