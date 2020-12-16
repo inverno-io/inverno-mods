@@ -3,8 +3,6 @@
  */
 package io.winterframework.mod.web.internal.server;
 
-import java.util.concurrent.TimeUnit;
-
 import org.reactivestreams.Subscription;
 
 import io.netty.buffer.ByteBuf;
@@ -13,6 +11,7 @@ import io.netty.util.concurrent.EventExecutor;
 import io.winterframework.mod.web.ErrorExchange;
 import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.ExchangeHandler;
+import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Request;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.Response;
@@ -28,12 +27,19 @@ import reactor.core.publisher.BaseSubscriber;
 public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implements Exchange<RequestBody, ResponseBody> {
 
 	protected final ChannelHandlerContext context;
-	
 	protected final EventExecutor contextExecutor;
 	
 	protected final ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler;
-	
 	protected final ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler;
+	
+	protected final AbstractRequest request;
+	protected final AbstractResponse response;
+
+	protected ExchangeSubscriber exchangeSubscriber;
+	
+	private int transferedLength;
+	private int chunkCount;
+	private ByteBuf firstChunk;
 	
 	protected static final ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> LAST_RESORT_ERROR_HANDLER = exchange -> {
 		if(exchange.response().isHeadersWritten()) {
@@ -47,9 +53,6 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			exchange.response().headers(h -> h.status(Status.INTERNAL_SERVER_ERROR)).body().empty();
 		}
 	};
-	
-	protected final AbstractRequest request;
-	protected final AbstractResponse response;
 	
 	public AbstractExchange(ChannelHandlerContext context, ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, AbstractRequest request, AbstractResponse response) {
 		this.context = context;
@@ -78,7 +81,9 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		return this.errorHandler;
 	}
 	
-	protected ExchangeSubscriber exchangeSubscriber;
+	public long getTransferedLength() {
+		return this.transferedLength;
+	}
 	
 	public void start(ExchangeSubscriber exchangeSubscriber) {
 		if(this.exchangeSubscriber != null) {
@@ -101,42 +106,70 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		this.response.data().subscribe(this);
 	}
 	
-	protected final void scheduleOnEventLoop(Runnable runnable) {
+	protected final void executeInEventLoop(Runnable runnable) {
 		if(this.contextExecutor.inEventLoop()) {
 			runnable.run();
 		}
 		else {
-			this.contextExecutor.schedule(() -> {
-				runnable.run();
-			}, 0, TimeUnit.MILLISECONDS);
+			this.contextExecutor.execute(runnable);
 		}
 	}
 	
 	@Override
 	protected final void hookOnNext(ByteBuf value) {
-		this.scheduleOnEventLoop(() -> {
-			this.doHookOnNext(value);
-		});
+		this.chunkCount++;
+		if(this.chunkCount == 1) {
+			this.transferedLength = value.readableBytes();
+			this.firstChunk = value;
+		}
+		else {
+			this.transferedLength += value.readableBytes();
+			if(this.firstChunk != null) {
+				this.executeInEventLoop(() -> this.onNextMany(this.firstChunk));
+				this.firstChunk = null;
+			}
+			this.executeInEventLoop(() -> this.onNextMany(value));
+		}
 	}
 	
-	protected abstract void doHookOnNext(ByteBuf value);
+	protected abstract void onNextSingle(ByteBuf value);
+	
+	protected abstract void onNextMany(ByteBuf value);
 	
 	protected final void hookOnError(Throwable throwable) {
-		this.scheduleOnEventLoop(() -> {
-			this.doHookOnError(throwable);
-		});
+		this.executeInEventLoop(() -> this.onCompleteWithError(throwable));
 	}
 	
-	protected abstract void doHookOnError(Throwable throwable);
+	protected abstract void onCompleteWithError(Throwable throwable);
 	
 	@Override
 	protected final void hookOnComplete() {
-		this.scheduleOnEventLoop(() -> {
-			this.doHookOnComplete();
-		});
+		if(this.firstChunk != null) {
+			// single chunk response
+			if(this.response.getHeaders().getCharSequence(Headers.CONTENT_LENGTH) == null) {
+				this.response.getHeaders().size(this.transferedLength);
+			}
+			this.executeInEventLoop(() -> this.onNextSingle(this.firstChunk));
+			this.executeInEventLoop(this::onCompleteSingle);
+			this.firstChunk = null;
+		}
+		else if(this.chunkCount == 0) {
+			// empty response
+			if(this.response.getHeaders().getCharSequence(Headers.CONTENT_LENGTH) == null) {
+				this.response.getHeaders().size(0);
+			}
+			this.executeInEventLoop(this::onCompleteEmpty);
+		}
+		else {
+			this.executeInEventLoop(this::onCompleteMany);
+		}
 	}
 	
-	protected abstract void doHookOnComplete();
+	protected abstract void onCompleteEmpty();
+	
+	protected abstract void onCompleteSingle();
+	
+	protected abstract void onCompleteMany();
 	
 	private class GenericErrorExchange implements ErrorExchange<ResponseBody, Throwable> {
 

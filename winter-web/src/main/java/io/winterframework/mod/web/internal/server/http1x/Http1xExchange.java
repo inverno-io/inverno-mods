@@ -43,7 +43,6 @@ import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.internal.netty.FlatFullHttpResponse;
 import io.winterframework.mod.web.internal.netty.FlatHttpResponse;
 import io.winterframework.mod.web.internal.server.AbstractExchange;
-import io.winterframework.mod.web.internal.server.AbstractRequest;
 import io.winterframework.mod.web.internal.server.GenericResponseCookies;
 import reactor.core.publisher.BaseSubscriber;
 
@@ -59,8 +58,11 @@ public class Http1xExchange extends AbstractExchange {
 	
 	private boolean flush;
 	
-	public Http1xExchange(ChannelHandlerContext context, ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, AbstractRequest request, Http1xResponse response) {
+	public Http1xExchange(ChannelHandlerContext context, ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, Http1xRequest request, Http1xResponse response) {
 		super(context, rootHandler, errorHandler, request, response);
+		if(!request.isKeepAlive()) {
+			response.getHeaders().add(Headers.CONNECTION, "close");
+		}
 	}
 	
 	public void onReadComplete() {
@@ -87,51 +89,56 @@ public class Http1xExchange extends AbstractExchange {
 	}
 
 	private HttpResponse createHttpResponse(Http1xResponseHeaders headers, GenericResponseCookies cookies) {
-		cookies.getAll().stream()
-			.forEach(header -> {
-				headers.add(header.getHeaderName(), header.getHeaderValue());
-			});
+		for(Headers.SetCookie cookie : cookies.getAll()) {
+			headers.add(cookie.getHeaderName(), cookie.getHeaderValue());
+		}
 		return new FlatHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(headers.getStatus()), headers.getHttpHeaders(), false);
 	}
 	
 	private HttpResponse createFullHttpResponse(Http1xResponseHeaders headers, GenericResponseCookies cookies, ByteBuf content) {
-		cookies.getAll().stream()
-			.forEach(header -> {
-				headers.add(header.getHeaderName(), header.getHeaderValue());
-			});
+		for(Headers.SetCookie cookie : cookies.getAll()) {
+			headers.add(cookie.getHeaderName(), cookie.getHeaderValue());
+		}
 		return new FlatFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(headers.getStatus()), headers.getHttpHeaders(), content, EmptyHttpHeaders.INSTANCE);
 	}
 	
 	@Override
-	protected void doHookOnNext(ByteBuf value) {
+	protected void onNextSingle(ByteBuf value) {
+		try {
+			// Response has one chunk => send a FullHttpResponse
+			Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.getHeaders();
+			this.write(this.createFullHttpResponse(headers, this.response.getCookies(), value), this.context.voidPromise());
+			headers.setWritten(true);
+		}
+		// TODO what happen when an error is thrown
+		finally {
+			this.exchangeSubscriber.onExchangeNext(value);
+		}
+	}
+	
+	@Override
+	protected void onNextMany(ByteBuf value) {
 		try {
 			Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.getHeaders();
-			if(this.response.body().getChunkCount() == 1) {
-				// Response has one chunk => send a FullHttpResponse
-				this.write(this.createFullHttpResponse(headers, this.response.getCookies(), value), this.context.voidPromise());
+			if(!headers.isWritten()) {
+				List<String> transferEncodings = headers.getAllString(Headers.TRANSFER_ENCODING);
+				if(headers.getSize() == null && !transferEncodings.contains("chunked")) {
+					headers.add(Headers.TRANSFER_ENCODING, "chunked");
+					// TODO accessing the string and using a region matches for TEXT_EVENT_STREAM might be more efficient
+					this.manageChunked = headers.getContentType().map(contentType -> contentType.getMediaType().equals(MediaTypes.TEXT_EVENT_STREAM)).orElse(false);
+				}
+				this.write(this.createHttpResponse(headers, this.response.getCookies()), this.context.voidPromise());
 				headers.setWritten(true);
 			}
+			if(this.manageChunked) {
+				// We must handle chunked transfer encoding
+				ByteBuf chunked_header = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(Integer.toHexString(value.readableBytes()) + "\r\n", Charsets.orDefault(this.getCharset())));
+				ByteBuf chunked_trailer = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("\r\n", Charsets.orDefault(this.getCharset())));
+				
+				this.write(new DefaultHttpContent(Unpooled.wrappedBuffer(chunked_header, value, chunked_trailer)), this.context.voidPromise());
+			}
 			else {
-				if(!headers.isWritten()) {
-					List<String> transferEncodings = headers.getAllString(Headers.TRANSFER_ENCODING);
-					if(headers.getSize() == null && !transferEncodings.contains("chunked")) {
-						headers.add(Headers.TRANSFER_ENCODING, "chunked");
-						// TODO accessing the string and using a region matches for TEXT_EVENT_STREAM might be more efficient
-						this.manageChunked = headers.getContentType().map(contentType -> contentType.getMediaType().equals(MediaTypes.TEXT_EVENT_STREAM)).orElse(false);
-					}
-					this.write(this.createHttpResponse(headers, this.response.getCookies()), this.context.voidPromise());
-					headers.setWritten(true);
-				}
-				if(this.manageChunked) {
-					// We must handle chunked transfer encoding
-					ByteBuf chunked_header = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(Integer.toHexString(value.readableBytes()) + "\r\n", Charsets.orDefault(this.getCharset())));
-					ByteBuf chunked_trailer = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("\r\n", Charsets.orDefault(this.getCharset())));
-					
-					this.write(new DefaultHttpContent(Unpooled.wrappedBuffer(chunked_header, value, chunked_trailer)), this.context.voidPromise());
-				}
-				else {
-					this.write(new DefaultHttpContent(value), this.context.voidPromise());
-				}
+				this.write(new DefaultHttpContent(value), this.context.voidPromise());
 			}
 		}
 		// TODO what happen when an error is thrown
@@ -141,7 +148,7 @@ public class Http1xExchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected void doHookOnError(Throwable throwable) {
+	protected void onCompleteWithError(Throwable throwable) {
 		// TODO
 		// either we have written headers or we have not
 		// What kind of error can be sent if we have already sent a 200 OK in the response headers
@@ -154,43 +161,37 @@ public class Http1xExchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected void doHookOnComplete() {
-		try {
-			long chunkCount = this.response.body().getChunkCount();
-			if(chunkCount == 1) {
+	protected void onCompleteEmpty() {
+		// empty response or file region
+		Http1xResponse http1xResponse = (Http1xResponse)this.response;
+		Http1xResponseHeaders headers = http1xResponse.getHeaders();
+		
+		http1xResponse.body().getFileRegionData().ifPresentOrElse(
+			fileRegionData -> {
+				// Headers are not written here since we have an empty response
+				this.write(this.createHttpResponse(headers, this.response.getCookies()), this.context.voidPromise());
+				headers.setWritten(true);
+				fileRegionData.subscribe(new FileRegionDataSubscriber());
+			},
+			() -> {
+				// just write headers in a fullHttpResponse
+				// Headers are not written here since we have an empty response
+				this.write(this.createFullHttpResponse(headers, this.response.getCookies(), Unpooled.buffer(0)), this.context.voidPromise());
+				headers.setWritten(true);
 				this.exchangeSubscriber.onExchangeComplete();
 			}
-			else if(chunkCount == 0) {
-				// empty response or file region
-				Http1xResponse http1xResponse = (Http1xResponse)this.response;
-				Http1xResponseHeaders headers = http1xResponse.getHeaders();
-				
-				http1xResponse.body().getFileRegionData().ifPresentOrElse(
-					fileRegionData -> {
-						if(!headers.isWritten()) { // This should always be true since we have an empty response
-							this.write(this.createHttpResponse(headers, this.response.getCookies()), this.context.voidPromise());
-							headers.setWritten(true);
-						}
-						fileRegionData.subscribe(new FileRegionDataSubscriber());
-					},
-					() -> {
-						// just write headers in a fullHttpResponse
-						if(!headers.isWritten()) {
-							this.write(this.createFullHttpResponse(headers, this.response.getCookies(), Unpooled.buffer(0)), this.context.voidPromise());
-							headers.setWritten(true);
-						}
-						this.exchangeSubscriber.onExchangeComplete();
-					}
-				);
-			}
-			else {
-				this.write(LastHttpContent.EMPTY_LAST_CONTENT, this.context.voidPromise());
-				this.exchangeSubscriber.onExchangeComplete();
-			}
-		}
-		catch(Exception e) {
-			this.exchangeSubscriber.onExchangeError(e);
-		} 
+		);
+	}
+	
+	@Override
+	protected void onCompleteSingle() {
+		this.exchangeSubscriber.onExchangeComplete();
+	}
+	
+	@Override
+	protected void onCompleteMany() {
+		this.write(LastHttpContent.EMPTY_LAST_CONTENT, this.context.voidPromise());
+		this.exchangeSubscriber.onExchangeComplete();
 	}
 	
 	private class FileRegionDataSubscriber extends BaseSubscriber<FileRegion> {
@@ -202,7 +203,7 @@ public class Http1xExchange extends AbstractExchange {
 
 		@Override
 		protected void hookOnNext(FileRegion fileRegion) {
-			Http1xExchange.this.scheduleOnEventLoop(() -> {
+			Http1xExchange.this.executeInEventLoop(() -> {
 				Http1xExchange.this.write(fileRegion, Http1xExchange.this.context.newPromise().addListener(future -> {
 					if(future.isSuccess()) {
 						this.request(1);
@@ -217,7 +218,7 @@ public class Http1xExchange extends AbstractExchange {
 		
 		@Override
 		protected void hookOnComplete() {
-			Http1xExchange.this.scheduleOnEventLoop(() -> {
+			Http1xExchange.this.executeInEventLoop(() -> {
 				// TODO if not keep alive we should close the connection here
 				Http1xExchange.this.write(LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.newPromise().addListener(future -> {
 					Http1xExchange.this.exchangeSubscriber.onExchangeComplete();

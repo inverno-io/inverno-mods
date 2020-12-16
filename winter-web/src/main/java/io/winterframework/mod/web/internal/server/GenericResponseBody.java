@@ -51,12 +51,8 @@ public class GenericResponseBody implements ResponseBody {
 	protected ResponseBody.Resource resourceBody;
 	
 	private MonoSink<Publisher<ByteBuf>> dataEmitter;
-//	private Flux<ByteBuf> data;
-	
 	private Publisher<ByteBuf> data;
 	
-	private long size;
-	private long chunkCount;
 	private boolean dataSet;
 	
 	public GenericResponseBody(AbstractResponse response) {
@@ -70,64 +66,8 @@ public class GenericResponseBody implements ResponseBody {
 		if(this.dataEmitter != null) {
 			this.dataEmitter.success(data);
 		}
-		if(data instanceof Mono) {
-			this.data = ((Mono<ByteBuf>)data).doOnNext(chunk -> {
-				this.chunkCount = 1;
-				this.size = chunk.readableBytes();
-				Long contentLength = this.response.getHeaders().getSize();
-				if(contentLength == null) {
-					this.response.getHeaders().size(this.size);
-				}
-				else if(this.size != contentLength){
-					throw new IllegalStateException("Response content length doesn't match the actual response size");
-				}
-			})
-			.doOnSuccess(ign -> {
-				if(this.chunkCount == 0 && this.response.getHeaders().getSize() == null) {
-					this.response.getHeaders().size(0);
-				}
-			});
-		}
-		else {
-			this.data = Flux.from(data).bufferUntil(s -> {
-				this.chunkCount++;
-				this.size += s.readableBytes();
-				return this.chunkCount >= 2;
-			})
-			.flatMapIterable(l -> {
-				Long contentLength = this.response.getHeaders().getSize();
-				if(this.chunkCount < 2) {
-					// Response has one chunk...
-					if(contentLength == null) {
-						// ...and no content length
-						this.response.getHeaders().size(this.size);
-					}
-					else if(this.size != contentLength){
-						// ...and the content length doesn't match the actual size
-						throw new IllegalStateException("Response content length doesn't match the actual response size");
-					}
-				}
-				else if(contentLength != null && contentLength < this.size) {
-					throw new IllegalStateException("Response content length exceeded");
-				}
-				return l;
-			})
-			.doOnComplete(() -> {
-				if(this.chunkCount == 0 && this.response.getHeaders().getSize() == null) {
-					// Response has no content
-					this.response.getHeaders().size(0);
-				}
-			});
-		}
+		this.data = data;
 	}
-	
-	/*public Flux<ByteBuf> getData() {
-		if(this.data == null) {
-			this.setData(Flux.switchOnNext(Mono.<Flux<ByteBuf>>create(emitter -> this.dataEmitter = emitter)));
-			this.dataSet = false;
-		}
-		return this.data;
-	}*/
 	
 	public Publisher<ByteBuf> getData() {
 		if(this.data == null) {
@@ -135,14 +75,6 @@ public class GenericResponseBody implements ResponseBody {
 			this.dataSet = false;
 		}
 		return this.data;
-	}
-	
-	public long getChunkCount() {
-		return this.chunkCount;
-	}
-	
-	public long getSize() {
-		return this.size;
 	}
 
 	@Override
