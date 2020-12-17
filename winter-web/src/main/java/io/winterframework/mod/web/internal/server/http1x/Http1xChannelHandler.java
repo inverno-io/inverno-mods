@@ -127,9 +127,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 				this.onDecoderError(ctx, httpRequest);
 				return;
 			}
-			Http1xRequest request = new Http1xRequest(ctx, new Http1xRequestHeaders(ctx, httpRequest, this.headerService), this.urlEncodedBodyDecoder, this.multipartBodyDecoder);
-			Http1xResponse response = new Http1xResponse(ctx, this.headerService);
-			this.requestingExchange = new Http1xExchange(ctx, this.rootHandler, this.errorHandler, request, response, this);
+			this.requestingExchange = new Http1xExchange(ctx, httpRequest, this, this.headerService, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.rootHandler, this.errorHandler);
 			if(this.exchangeQueue == null) {
 				this.exchangeQueue = this.requestingExchange;
 				this.requestingExchange.start(this);
@@ -255,7 +253,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	
 	@Override
 	public void exchangeComplete(ChannelHandlerContext ctx) {
-		if(((Http1xRequest)this.respondingExchange.request()).isKeepAlive()) {
+		if(this.respondingExchange.keepAlive) {
 			if(this.respondingExchange.next != null) {
 				this.respondingExchange.next.start(this);
 			}
