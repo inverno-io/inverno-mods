@@ -424,6 +424,21 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		return names;
 	}
 
+	private boolean contains0(CharSequence name, CharSequence value, boolean ignoreCase) {
+		int hashCode = AsciiString.hashCode(name);
+		int bucketIndex = hashCode & 0x0000000F;
+		HeaderNode current = buckets[bucketIndex];
+		while (current != null) {
+			CharSequence key = current.key;
+			if (current.hashCode == hashCode && (name == key || AsciiString.contentEqualsIgnoreCase(name, key))) {
+				CharSequence currentValue = current.getValue();
+				return currentValue == value || (ignoreCase && AsciiString.contentEqualsIgnoreCase(currentValue, value)) || AsciiString.contentEquals(currentValue, value);
+			}
+			current = current.bucketNext;
+		}
+		return false;
+	}
+	
 	@Override
 	public boolean contains(String name) {
 		return this.get0(name) != null;
@@ -432,6 +447,16 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	@Override
 	public boolean contains(CharSequence name) {
 		return this.get0(name) != null;
+	}
+	
+	@Override
+	public boolean contains(CharSequence name, CharSequence value, boolean ignoreCase) {
+		return this.contains0(name, value, ignoreCase);
+	}
+	
+	@Override
+	public boolean contains(String name, String value, boolean ignoreCase) {
+		return this.contains0(name, value, ignoreCase);
 	}
 	
 	@Override

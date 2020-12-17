@@ -73,13 +73,13 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public Http1xResponseHeaders contentType(String contentType) {
-		this.add(Headers.CONTENT_TYPE, contentType);
+		this.add(Headers.NAME_CONTENT_TYPE, contentType);
 		return this;
 	}
 	
 	@Override
 	public Http1xResponseHeaders size(long size) {
-		this.httpHeaders.setLong((CharSequence)Headers.CONTENT_LENGTH, size);
+		this.httpHeaders.setLong((CharSequence)Headers.NAME_CONTENT_LENGTH, size);
 		return this;
 	}
 
@@ -115,17 +115,17 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public Optional<ContentType> getContentType() {
-		return this.get(Headers.CONTENT_TYPE);
+		return this.get(Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
 	public String getContentTypeString() {
-		return this.httpHeaders.get((CharSequence)Headers.CONTENT_TYPE);
+		return this.httpHeaders.get((CharSequence)Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
 	public CharSequence getContentTypeCharSequence() {
-		return this.httpHeaders.getCharSequence((CharSequence)Headers.CONTENT_TYPE);
+		return this.httpHeaders.getCharSequence((CharSequence)Headers.NAME_CONTENT_TYPE);
 	}
 	
 	@Override
@@ -180,7 +180,7 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public Long getSize() {
-		return this.httpHeaders.getLong((CharSequence)Headers.CONTENT_LENGTH);
+		return this.httpHeaders.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
 	}
 
 	@Override

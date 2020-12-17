@@ -51,32 +51,32 @@ public class Http2RequestHeaders implements RequestHeaders {
 
 	@Override
 	public String getAuthority() {
-		return this.getHeaderValue(Headers.PSEUDO_AUTHORITY);
+		return this.getHeaderValue(Headers.NAME_PSEUDO_AUTHORITY);
 	}
 
 	@Override
 	public String getPath() {
-		return this.getHeaderValue(Headers.PSEUDO_PATH);
+		return this.getHeaderValue(Headers.NAME_PSEUDO_PATH);
 	}
 
 	@Override
 	public Method getMethod() {
-		return Method.valueOf(this.getHeaderValue(Headers.PSEUDO_METHOD));
+		return Method.valueOf(this.getHeaderValue(Headers.NAME_PSEUDO_METHOD));
 	}
 
 	@Override
 	public String getScheme() {
-		return this.getHeaderValue(Headers.PSEUDO_SCHEME);
+		return this.getHeaderValue(Headers.NAME_PSEUDO_SCHEME);
 	}
 
 	@Override
 	public String getContentType() {
-		return this.getHeaderValue(Headers.CONTENT_TYPE);
+		return this.getHeaderValue(Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
 	public Long getSize() {
-		return this.httpHeaders.getLong(Headers.CONTENT_LENGTH);
+		return this.httpHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
 	}
 	
 	@Override

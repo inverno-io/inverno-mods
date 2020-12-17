@@ -87,7 +87,7 @@ public class Http2Exchange extends AbstractExchange {
 		}
 		// TODO errors
 		finally {
-			this.exchangeSubscriber.onExchangeNext(value);
+			this.exchangeSubscriber.exchangeNext(this.context, value);
 		}
 	}
 	
@@ -101,7 +101,7 @@ public class Http2Exchange extends AbstractExchange {
 		// - if closed => client side have probably ended the stream (RST_STREAM or close connection)
 		// - if not closed => we should send a 5xx error or other based on the exception
 		throwable.printStackTrace();
-		this.exchangeSubscriber.onExchangeError(throwable);
+		this.exchangeSubscriber.exchangeError(this.context, throwable);
 	}
 	
 	@Override
@@ -138,8 +138,8 @@ public class Http2Exchange extends AbstractExchange {
 		}
 		// TODO errors
 		finally {
-			this.exchangeSubscriber.onExchangeNext(value);
-			this.exchangeSubscriber.onExchangeComplete();
+			this.exchangeSubscriber.exchangeNext(this.context, value);
+			this.exchangeSubscriber.exchangeComplete(this.context);
 		}
 	}
 	
@@ -156,10 +156,10 @@ public class Http2Exchange extends AbstractExchange {
 				this.encoder.writeData(this.context, this.stream.id(), Unpooled.EMPTY_BUFFER, 0, true, this.context.voidPromise());
 			}
 			this.context.channel().flush();
-			this.exchangeSubscriber.onExchangeComplete();
+			this.exchangeSubscriber.exchangeComplete(this.context);
 		} 
 		catch (Exception e) {
-			this.exchangeSubscriber.onExchangeError(e);
+			this.exchangeSubscriber.exchangeError(this.context, e);
 		}
 	}
 }

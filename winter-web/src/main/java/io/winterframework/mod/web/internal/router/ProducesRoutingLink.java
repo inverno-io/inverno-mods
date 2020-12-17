@@ -60,7 +60,7 @@ class ProducesRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 	public ProducesRoutingLink<A, B, C, D> setRoute(D route) {
 		String produce = route.getProduce();
 		if(produce != null) {
-			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.CONTENT_TYPE, produce);
+			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, produce);
 			if(this.handlers.containsKey(contentType)) {
 				this.handlers.get(contentType).setRoute(route);
 			}
@@ -80,7 +80,7 @@ class ProducesRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 	public void enableRoute(D route) {
 		String produce = route.getProduce();
 		if(produce != null) {
-			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.CONTENT_TYPE, produce);
+			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, produce);
 			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(contentType);
 			if(handler != null) {
 				handler.enableRoute(route);
@@ -97,7 +97,7 @@ class ProducesRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 	public void disableRoute(D route) {
 		String produce = route.getProduce();
 		if(produce != null) {
-			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.CONTENT_TYPE, produce);
+			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, produce);
 			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(contentType);
 			if(handler != null) {
 				handler.disableRoute(route);
@@ -114,7 +114,7 @@ class ProducesRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 	public void removeRoute(D route) {
 		String produce = route.getProduce();
 		if(produce != null) {
-			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.CONTENT_TYPE, produce);
+			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, produce);
 			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(contentType);
 			if(handler != null) {
 				handler.removeRoute(route);
@@ -159,8 +159,8 @@ class ProducesRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 			this.nextLink.handle(exchange);
 		}
 		else {
-			Headers.Accept accept = Headers.Accept.merge(exchange.request().headers().<Headers.Accept>getAllHeader(Headers.ACCEPT))
-				.orElse(this.acceptCodec.decode(Headers.ACCEPT, "*/*"));
+			Headers.Accept accept = Headers.Accept.merge(exchange.request().headers().<Headers.Accept>getAllHeader(Headers.NAME_ACCEPT))
+				.orElse(this.acceptCodec.decode(Headers.NAME_ACCEPT, "*/*"));
 			
 			if(!this.enabledHandlers.isEmpty()) {
 				Iterator<AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, C, ?, D>>>> acceptMatchesIterator = accept

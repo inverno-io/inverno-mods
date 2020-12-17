@@ -20,25 +20,29 @@ import java.util.stream.Collectors;
  */
 public final class Headers {
 
-	public static final String ACCEPT = "accept";
-	public static final String ACCEPT_LANGUAGE = "accept-language";
-	public static final String ALLOW = "allow";
-	public static final String CONNECTION = "connection";
-	public static final String CONTENT_DISPOSITION = "content-disposition";
-	public static final String CONTENT_TYPE = "content-type";
-	public static final String CONTENT_LENGTH = "content-length";
-	public static final String COOKIE = "cookie";
-	public static final String HOST = "host";
-	public static final String RETRY_AFTER = "retry-after";
-	public static final String SET_COOKIE = "set-cookie";
-	public static final String TRANSFER_ENCODING = "transfer-encoding";
+	/* Header Names */
+	public static final String NAME_ACCEPT = "accept";
+	public static final String NAME_ACCEPT_LANGUAGE = "accept-language";
+	public static final String NAME_ALLOW = "allow";
+	public static final String NAME_CONNECTION = "connection";
+	public static final String NAME_CONTENT_DISPOSITION = "content-disposition";
+	public static final String NAME_CONTENT_TYPE = "content-type";
+	public static final String NAME_CONTENT_LENGTH = "content-length";
+	public static final String NAME_COOKIE = "cookie";
+	public static final String NAME_HOST = "host";
+	public static final String NAME_RETRY_AFTER = "retry-after";
+	public static final String NAME_SET_COOKIE = "set-cookie";
+	public static final String NAME_TRANSFER_ENCODING = "transfer-encoding";
 	
 	// HTTP/2 pseudo headers
-	public static final String PSEUDO_AUTHORITY = ":authority";
-	public static final String PSEUDO_METHOD = ":method";
-	public static final String PSEUDO_PATH = ":path";
-	public static final String PSEUDO_SCHEME = ":scheme";
-	public static final String PSEUDO_STATUS = ":status";
+	public static final String NAME_PSEUDO_AUTHORITY = ":authority";
+	public static final String NAME_PSEUDO_METHOD = ":method";
+	public static final String NAME_PSEUDO_PATH = ":path";
+	public static final String NAME_PSEUDO_SCHEME = ":scheme";
+	public static final String NAME_PSEUDO_STATUS = ":status";
+	
+	/* Header Values */
+	public static final String VALUE_CLOSE = "close";
 	
 	private Headers() {}
 	
@@ -195,7 +199,7 @@ public final class Headers {
 
 					@Override
 					public String getHeaderName() {
-						return Headers.ACCEPT;
+						return Headers.NAME_ACCEPT;
 					}
 
 					@Override
@@ -424,7 +428,7 @@ public final class Headers {
 
 					@Override
 					public String getHeaderName() {
-						return Headers.ACCEPT;
+						return Headers.NAME_ACCEPT;
 					}
 
 					@Override

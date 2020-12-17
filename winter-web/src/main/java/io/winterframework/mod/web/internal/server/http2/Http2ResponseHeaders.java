@@ -76,14 +76,14 @@ public class Http2ResponseHeaders implements AbstractResponseHeaders {
 	@Override
 	public Http2ResponseHeaders contentType(String contentType) {
 		this.requireNonWritten();
-		this.httpHeaders.set(Headers.CONTENT_TYPE, contentType);
+		this.httpHeaders.set(Headers.NAME_CONTENT_TYPE, contentType);
 		return this;
 	}
 
 	@Override
 	public Http2ResponseHeaders size(long size) {
 		this.requireNonWritten();
-		this.httpHeaders.setLong(Headers.CONTENT_LENGTH, size);
+		this.httpHeaders.setLong(Headers.NAME_CONTENT_LENGTH, size);
 		return this;
 	}
 
@@ -121,17 +121,17 @@ public class Http2ResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public Optional<ContentType> getContentType() {
-		return this.get(Headers.CONTENT_TYPE);
+		return this.get(Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
 	public String getContentTypeString() {
-		return this.getString(Headers.CONTENT_TYPE);
+		return this.getString(Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
 	public CharSequence getContentTypeCharSequence() {
-		return this.getCharSequence(Headers.CONTENT_TYPE);
+		return this.getCharSequence(Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
@@ -195,7 +195,7 @@ public class Http2ResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public Long getSize() {
-		return this.httpHeaders.getLong(Headers.CONTENT_LENGTH);
+		return this.httpHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
 	}
 
 	@Override

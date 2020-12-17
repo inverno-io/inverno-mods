@@ -61,11 +61,11 @@ public class ErrorHandler implements Supplier<ExchangeHandler<Void, ResponseBody
 	private ErrorExchangeHandler<ResponseBody, WebException> webExceptionHandler() {
 		return exchange -> {
 			if(exchange.getError() instanceof MethodNotAllowedException) {
-				exchange.response().headers(headers -> headers.add(Headers.ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
+				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
 			}
 			else if(exchange.getError() instanceof ServiceUnavailableException) {
 				((ServiceUnavailableException)exchange.getError()).getRetryAfter().ifPresent(retryAfter -> {
-					exchange.response().headers(headers -> headers.add(Headers.RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
+					exchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
 				});
 			}
 			exchange.response().headers(h -> h.status(exchange.getError().getStatusCode())).body().empty();
@@ -90,7 +90,7 @@ public class ErrorHandler implements Supplier<ExchangeHandler<Void, ResponseBody
 			error.append("\"error\":\"").append(exchange.getError().getStatusReasonPhrase()).append("\"");
 			
 			if(exchange.getError() instanceof MethodNotAllowedException) {
-				exchange.response().headers(headers -> headers.add(Headers.ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
+				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
 				error.append(",\"allowedMethods\":[");
 				error.append(((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(method -> "\"" + method + "\"").collect(Collectors.joining(", ")));
 				error.append("]");
@@ -104,7 +104,7 @@ public class ErrorHandler implements Supplier<ExchangeHandler<Void, ResponseBody
 			}
 			else if(exchange.getError() instanceof ServiceUnavailableException) {
 				((ServiceUnavailableException)exchange.getError()).getRetryAfter().ifPresent(retryAfter -> {
-					exchange.response().headers(headers -> headers.add(Headers.RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
+					exchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
 					error.append(",\"retryAfter\":\"").append(retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)).append("\"");
 				});
 			}
@@ -134,7 +134,7 @@ public class ErrorHandler implements Supplier<ExchangeHandler<Void, ResponseBody
 			error.append("<h1 style=\"font-size: 3em;\"><span style=\"color:red;\">").append(status).append("</span> ").append(exchange.getError().getStatusReasonPhrase()).append("</h1>");
 			
 			if(exchange.getError() instanceof MethodNotAllowedException) {
-				exchange.response().headers(headers -> headers.add(Headers.ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
+				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
 				error.append("<p>");
 				error.append("Allowed Methods:");
 				error.append("<ul>");
@@ -156,7 +156,7 @@ public class ErrorHandler implements Supplier<ExchangeHandler<Void, ResponseBody
 				((ServiceUnavailableException)exchange.getError()).getRetryAfter().ifPresent(retryAfter -> {
 					error.append("<p>");
 					error.append("Retry After: ").append(retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME));
-					exchange.response().headers(headers -> headers.add(Headers.RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
+					exchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
 					error.append("</p>");
 				});
 			}

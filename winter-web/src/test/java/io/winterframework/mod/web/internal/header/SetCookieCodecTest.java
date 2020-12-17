@@ -34,7 +34,7 @@ public class SetCookieCodecTest {
 		
 		SetCookieCodec codec = new SetCookieCodec();
 		
-		Headers.SetCookie cookie = codec.decode(Headers.SET_COOKIE, setCookieValue);
+		Headers.SetCookie cookie = codec.decode(Headers.NAME_SET_COOKIE, setCookieValue);
 		
 		Assertions.assertEquals("toto", cookie.getName());
 		Assertions.assertEquals("tata", cookie.getValue());
@@ -52,7 +52,7 @@ public class SetCookieCodecTest {
 		
 		SetCookieCodec codec = new SetCookieCodec();
 		
-		SetCookieCodec.SetCookie cookie = codec.decode(Headers.SET_COOKIE, setCookieValue);
+		SetCookieCodec.SetCookie cookie = codec.decode(Headers.NAME_SET_COOKIE, setCookieValue);
 		
 		Assertions.assertEquals("set-cookie: toto=tata; Expires=Thu, 05-Nov-2020 13:00:04 GMT; Max-Age=123; Domain=localhost; Path=/; Secure; HttpOnly", codec.encode(cookie));
 	}

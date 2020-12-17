@@ -41,7 +41,7 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 	}
 	
 	public AcceptCodec(boolean allowMultiple) {
-		super(AcceptCodec.Accept.Builder::new, Set.of(Headers.ACCEPT), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, allowMultiple);
+		super(AcceptCodec.Accept.Builder::new, Set.of(Headers.NAME_ACCEPT), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, allowMultiple);
 	}
 	
 	@Override

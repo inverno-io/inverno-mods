@@ -51,7 +51,7 @@ class ConsumesRoutingLink<A, B, C extends Exchange<A, B>, D extends ContentAware
 		// Note if someone defines a route with a GET like method and a consumed media type, consumes will be ignored because such request does not provide content types headers
 		String consume = route.getConsume();
 		if(consume != null) {
-			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.ACCEPT, consume).getMediaRanges().get(0);
+			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.NAME_ACCEPT, consume).getMediaRanges().get(0);
 			if(this.handlers.containsKey(mediaRange)) {
 				this.handlers.get(mediaRange).setRoute(route);
 			}
@@ -70,7 +70,7 @@ class ConsumesRoutingLink<A, B, C extends Exchange<A, B>, D extends ContentAware
 	public void enableRoute(D route) {
 		String consume = route.getConsume();
 		if(consume != null) {
-			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.ACCEPT, consume).getMediaRanges().get(0);
+			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.NAME_ACCEPT, consume).getMediaRanges().get(0);
 			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(mediaRange);
 			if(handler != null) {
 				handler.enableRoute(route);
@@ -86,7 +86,7 @@ class ConsumesRoutingLink<A, B, C extends Exchange<A, B>, D extends ContentAware
 	public void disableRoute(D route) {
 		String consume = route.getConsume();
 		if(consume != null) {
-			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.ACCEPT, consume).getMediaRanges().get(0);
+			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.NAME_ACCEPT, consume).getMediaRanges().get(0);
 			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(mediaRange);
 			if(handler != null) {
 				handler.disableRoute(route);
@@ -102,7 +102,7 @@ class ConsumesRoutingLink<A, B, C extends Exchange<A, B>, D extends ContentAware
 	public void removeRoute(D route) {
 		String consume = route.getConsume();
 		if(consume != null) {
-			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.ACCEPT, consume).getMediaRanges().get(0);
+			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.NAME_ACCEPT, consume).getMediaRanges().get(0);
 			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(mediaRange);
 			if(handler != null) {
 				handler.removeRoute(route);
@@ -146,7 +146,7 @@ class ConsumesRoutingLink<A, B, C extends Exchange<A, B>, D extends ContentAware
 			this.nextLink.handle(exchange);
 		}
 		else {
-			Optional<Headers.ContentType> contentTypeHeader = exchange.request().headers().<Headers.ContentType>getHeader(Headers.CONTENT_TYPE);
+			Optional<Headers.ContentType> contentTypeHeader = exchange.request().headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE);
 			
 			Optional<RoutingLink<A, B, C, ?, D>> handler = contentTypeHeader
 				.flatMap(contentType -> Headers.Accept.MediaRange.findFirstMatch(contentType, this.handlers.entrySet(), Entry::getKey).map(AcceptMatch::getSource).map(Entry::getValue));

@@ -15,8 +15,10 @@
  */
 package io.winterframework.mod.web.internal.server.http1x;
 
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.DecoderResult;
@@ -43,7 +45,7 @@ import io.winterframework.mod.web.internal.server.AbstractExchange;
  * @author jkuhn
  *
  */
-public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1xConnectionEncoder, Http1xExchange.ExchangeSubscriber {
+public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1xConnectionEncoder, AbstractExchange.Handler {
 
 	private Http1xExchange requestingExchange;
 	private Http1xExchange respondingExchange;
@@ -247,24 +249,23 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	}
 	
 	@Override
-	public void onExchangeStart(AbstractExchange exchange) {
+	public void exchangeStart(ChannelHandlerContext ctx, AbstractExchange exchange) {
 		this.respondingExchange = (Http1xExchange)exchange;
 	}
 	
 	@Override
-	public void onExchangeError(Throwable t) {
-		// TODO do something useful with the error
-		this.onExchangeComplete();
-	}
-	
-	@Override
-	public void onExchangeComplete() {
-		if(this.respondingExchange.next != null) {
-			this.respondingExchange.next.start(this);
+	public void exchangeComplete(ChannelHandlerContext ctx) {
+		if(((Http1xRequest)this.respondingExchange.request()).isKeepAlive()) {
+			if(this.respondingExchange.next != null) {
+				this.respondingExchange.next.start(this);
+			}
+			else {
+				this.exchangeQueue = null;
+				this.respondingExchange = null;
+			}
 		}
 		else {
-			this.exchangeQueue = null;
-			this.respondingExchange = null;
+			ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
 		}
 	}
 }

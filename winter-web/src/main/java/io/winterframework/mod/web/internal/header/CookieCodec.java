@@ -24,7 +24,7 @@ import io.winterframework.mod.web.internal.server.GenericCookie;
 public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, CookieCodec.Cookie.Builder> {
 
 	public CookieCodec() {
-		super(CookieCodec.Cookie.Builder::new, Set.of(Headers.COOKIE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, true, true, false, false, false, false);
+		super(CookieCodec.Cookie.Builder::new, Set.of(Headers.NAME_COOKIE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, true, true, false, false, false, false);
 	}
 	
 	@Override
@@ -37,7 +37,7 @@ public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, Co
 		private Map<String, List<io.winterframework.mod.web.Cookie>> pairs;
 		
 		private Cookie(String headerName, String headerValue, Map<String, String> parameters, Map<String, List<io.winterframework.mod.web.Cookie>> pairs) {
-			super(Headers.COOKIE, headerValue, null, parameters);
+			super(Headers.NAME_COOKIE, headerValue, null, parameters);
 			this.pairs = pairs != null ? Collections.unmodifiableMap(pairs) : Map.of();
 		}
 		

@@ -23,7 +23,7 @@ import io.winterframework.mod.web.Part;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.internal.RequestBodyDecoder;
-import io.winterframework.mod.web.internal.server.AbstractExchange.ExchangeSubscriber;
+import io.winterframework.mod.web.internal.server.AbstractExchange;
 
 public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2FrameListener, Http2Connection.Listener {
 
@@ -119,7 +119,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 			if(endOfStream) {
 				streamExchange.request().data().ifPresent(sink -> sink.tryEmitComplete());
             }
-			streamExchange.start(ExchangeSubscriber.DEFAULT);
+			streamExchange.start(AbstractExchange.Handler.DEFAULT);
 			
 			/*streamExchange.init().doOnSubscribe(subscription -> {
 				this.serverStreams.put(streamId, streamExchange);

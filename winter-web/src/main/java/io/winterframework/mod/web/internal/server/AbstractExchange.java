@@ -35,7 +35,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	protected final AbstractRequest request;
 	protected final AbstractResponse response;
 
-	protected ExchangeSubscriber exchangeSubscriber;
+	protected Handler exchangeSubscriber;
 	
 	private int transferedLength;
 	private int chunkCount;
@@ -85,7 +85,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		return this.transferedLength;
 	}
 	
-	public void start(ExchangeSubscriber exchangeSubscriber) {
+	public void start(Handler exchangeSubscriber) {
 		if(this.exchangeSubscriber != null) {
 			throw new IllegalStateException("Exchange already started");
 		}
@@ -118,7 +118,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	@Override
 	protected final void hookOnSubscribe(Subscription subscription) {
 		this.onStart(subscription);
-		this.exchangeSubscriber.onExchangeStart(this);
+		this.exchangeSubscriber.exchangeStart(this.context, this);
 	}
 	
 	protected void onStart(Subscription subscription) {
@@ -154,14 +154,14 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	protected final void hookOnComplete() {
 		if(this.firstChunk != null) {
 			// single chunk response
-			if(this.response.getHeaders().getCharSequence(Headers.CONTENT_LENGTH) == null) {
+			if(this.response.getHeaders().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
 				this.response.getHeaders().size(this.transferedLength);
 			}
 			this.executeInEventLoop(() -> this.onCompleteSingle(this.firstChunk));
 		}
 		else if(this.chunkCount == 0) {
 			// empty response
-			if(this.response.getHeaders().getCharSequence(Headers.CONTENT_LENGTH) == null) {
+			if(this.response.getHeaders().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
 				this.response.getHeaders().size(0);
 			}
 			this.executeInEventLoop(this::onCompleteEmpty);
@@ -201,23 +201,23 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 	}
 	
-	public static interface ExchangeSubscriber {
+	public static interface Handler {
 		
-		static ExchangeSubscriber DEFAULT = new ExchangeSubscriber() {};
+		static Handler DEFAULT = new Handler() {};
 		
-		default void onExchangeStart(AbstractExchange exchange) {
+		default void exchangeStart(ChannelHandlerContext ctx, AbstractExchange exchange) {
 			
 		}
 
-		default void onExchangeNext(ByteBuf t) {
+		default void exchangeNext(ChannelHandlerContext ctx, ByteBuf t) {
 			
 		}
 
-		default void onExchangeError(Throwable t) {
-			this.onExchangeComplete();
+		default void exchangeError(ChannelHandlerContext ctx, Throwable t) {
+			this.exchangeComplete(ctx);
 		}
 
-		default void onExchangeComplete() {
+		default void exchangeComplete(ChannelHandlerContext ctx) {
 			
 		}
 	}

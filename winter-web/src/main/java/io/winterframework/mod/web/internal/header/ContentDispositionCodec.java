@@ -20,7 +20,7 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 	
 	
 	public ContentDispositionCodec() {
-		super(ContentDispositionCodec.ContentDisposition.Builder::new, Set.of(Headers.CONTENT_DISPOSITION), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, false);
+		super(ContentDispositionCodec.ContentDisposition.Builder::new, Set.of(Headers.NAME_CONTENT_DISPOSITION), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, false);
 	}
 
 	public static final class ContentDisposition extends ParameterizedHeader implements Headers.ContentDisposition {
@@ -50,7 +50,7 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 				String modificationDatetime, 
 				String readDateTime, 
 				Integer size) {
-			super(Headers.CONTENT_DISPOSITION, headerValue, dispositionType, parameters);
+			super(Headers.NAME_CONTENT_DISPOSITION, headerValue, dispositionType, parameters);
 			
 			this.dispositionType = dispositionType;
 			this.partName = partName;

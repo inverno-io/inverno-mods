@@ -54,7 +54,7 @@ public class Http1xRequestHeaders implements RequestHeaders {
 	
 	@Override
 	public String getAuthority() {
-		return this.httpHeaders.get((CharSequence)Headers.HOST);
+		return this.httpHeaders.get((CharSequence)Headers.NAME_HOST);
 	}
 
 	@Override
@@ -80,12 +80,12 @@ public class Http1xRequestHeaders implements RequestHeaders {
 
 	@Override
 	public String getContentType() {
-		return this.httpHeaders.get((CharSequence)Headers.CONTENT_TYPE);
+		return this.httpHeaders.get((CharSequence)Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
 	public Long getSize() {
-		return this.httpHeaders.getLong((CharSequence)Headers.CONTENT_LENGTH);
+		return this.httpHeaders.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
 	}
 
 	@Override

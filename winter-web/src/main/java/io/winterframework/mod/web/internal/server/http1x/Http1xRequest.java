@@ -34,7 +34,7 @@ public class Http1xRequest extends AbstractRequest {
 	public Http1xRequest(ChannelHandlerContext context, RequestHeaders requestHeaders, RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, RequestBodyDecoder<Part> multipartBodyDecoder) {
 		super(context, requestHeaders, urlEncodedBodyDecoder, multipartBodyDecoder, true);
 		
-		this.keepAlive = !requestHeaders.contains(Headers.CONNECTION, "close");
+		this.keepAlive = !requestHeaders.contains(Headers.NAME_CONNECTION, Headers.VALUE_CLOSE);
 	}
 	
 	public boolean isKeepAlive() {
