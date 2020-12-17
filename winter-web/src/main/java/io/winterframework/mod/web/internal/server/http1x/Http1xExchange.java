@@ -29,6 +29,7 @@ import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
@@ -38,12 +39,17 @@ import io.winterframework.mod.web.Charsets;
 import io.winterframework.mod.web.ErrorExchange;
 import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.ExchangeHandler;
+import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
+import io.winterframework.mod.web.Parameter;
+import io.winterframework.mod.web.Part;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.ResponseBody;
+import io.winterframework.mod.web.internal.RequestBodyDecoder;
 import io.winterframework.mod.web.internal.netty.FlatFullHttpResponse;
 import io.winterframework.mod.web.internal.netty.FlatHttpResponse;
 import io.winterframework.mod.web.internal.server.AbstractExchange;
+import io.winterframework.mod.web.internal.server.GenericErrorExchange;
 import io.winterframework.mod.web.internal.server.GenericResponseCookies;
 import reactor.core.publisher.BaseSubscriber;
 
@@ -53,22 +59,35 @@ import reactor.core.publisher.BaseSubscriber;
  */
 public class Http1xExchange extends AbstractExchange {
 
+	private HeaderService headerService;
+	
 	private boolean manageChunked;
 	private Charset charset;
 	
 	private Http1xConnectionEncoder encoder;
 	
 	Http1xExchange next;
+	boolean keepAlive;
 	
 	public Http1xExchange(
 			ChannelHandlerContext context, 
+			HttpRequest httpRequest,
+			Http1xConnectionEncoder encoder,
+			HeaderService headerService,
+			RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, 
+			RequestBodyDecoder<Part> multipartBodyDecoder,
 			ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, 
-			ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, 
-			Http1xRequest request, 
-			Http1xResponse response,
-			Http1xConnectionEncoder encoder) {
-		super(context, rootHandler, errorHandler, request, response);
+			ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler
+		) {
+		super(context, rootHandler, errorHandler, new Http1xRequest(context, new Http1xRequestHeaders(context, httpRequest, headerService), urlEncodedBodyDecoder, multipartBodyDecoder), new Http1xResponse(context, headerService));
 		this.encoder = encoder;
+		this.headerService = headerService;
+		this.keepAlive = !httpRequest.headers().contains(Headers.NAME_CONNECTION, Headers.VALUE_CLOSE, true);
+	}
+	
+	@Override
+	protected ErrorExchange<ResponseBody, Throwable> createErrorExchange(Throwable error) {
+		return new GenericErrorExchange(this.request, new Http1xResponse(this.context, this.headerService), error);
 	}
 	
 	private Charset getCharset() {
@@ -82,7 +101,7 @@ public class Http1xExchange extends AbstractExchange {
 	}
 	
 	private void preProcessHttpHeaders(HttpResponseStatus status, HttpHeaders httpHeaders, GenericResponseCookies cookies) {
-		if(!((Http1xRequest)this.request).isKeepAlive()) {
+		if(!this.keepAlive) {
 			httpHeaders.set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
 		}
 		if(status == HttpResponseStatus.NOT_MODIFIED) {
@@ -135,7 +154,7 @@ public class Http1xExchange extends AbstractExchange {
 		}
 		// TODO what happen when an error is thrown
 		finally {
-			this.exchangeSubscriber.exchangeNext(this.context, value);
+			this.handler.exchangeNext(this.context, value);
 		}
 	}
 	
@@ -149,7 +168,7 @@ public class Http1xExchange extends AbstractExchange {
 		// - if closed => client side have probably ended the stream (RST_STREAM or close connection)
 		// - if not closed => we should send a 5xx error or other based on the exception
 		throwable.printStackTrace();
-		this.exchangeSubscriber.exchangeError(this.context, throwable);
+		this.handler.exchangeError(this.context, throwable);
 	}
 	
 	@Override
@@ -170,7 +189,7 @@ public class Http1xExchange extends AbstractExchange {
 				// Headers are not written here since we have an empty response
 				this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, this.response.getCookies(), Unpooled.buffer(0)), this.context.voidPromise());
 				headers.setWritten(true);
-				this.exchangeSubscriber.exchangeComplete(this.context);
+				this.handler.exchangeComplete(this.context);
 			}
 		);
 	}
@@ -185,15 +204,15 @@ public class Http1xExchange extends AbstractExchange {
 		}
 		// TODO what happen when an error is thrown
 		finally {
-			this.exchangeSubscriber.exchangeNext(this.context, value);
-			this.exchangeSubscriber.exchangeComplete(this.context);
+			this.handler.exchangeNext(this.context, value);
+			this.handler.exchangeComplete(this.context);
 		}
 	}
 	
 	@Override
 	protected void onCompleteMany() {
 		this.encoder.writeFrame(this.context, LastHttpContent.EMPTY_LAST_CONTENT, this.context.voidPromise());
-		this.exchangeSubscriber.exchangeComplete(this.context);
+		this.handler.exchangeComplete(this.context);
 	}
 	
 	private class FileRegionDataSubscriber extends BaseSubscriber<FileRegion> {
@@ -209,11 +228,11 @@ public class Http1xExchange extends AbstractExchange {
 				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, fileRegion, Http1xExchange.this.context.newPromise().addListener(future -> {
 					if(future.isSuccess()) {
 						// TODO here we put null as next value because we don't have access to the actual buffer, can we do better?
-						Http1xExchange.this.exchangeSubscriber.exchangeNext(Http1xExchange.this.context, null);
+						Http1xExchange.this.handler.exchangeNext(Http1xExchange.this.context, null);
 						this.request(1);
 					}
 					else {
-						Http1xExchange.this.exchangeSubscriber.exchangeError(Http1xExchange.this.context, future.cause());
+						Http1xExchange.this.handler.exchangeError(Http1xExchange.this.context, future.cause());
 						// TODO does this triggers onComplete?
 						this.cancel();
 					}
@@ -226,7 +245,7 @@ public class Http1xExchange extends AbstractExchange {
 			Http1xExchange.this.executeInEventLoop(() -> {
 				// TODO if not keep alive we should close the connection here
 				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.newPromise().addListener(future -> {
-					Http1xExchange.this.exchangeSubscriber.exchangeComplete(Http1xExchange.this.context);
+					Http1xExchange.this.handler.exchangeComplete(Http1xExchange.this.context);
 				}));
 			});
 		}

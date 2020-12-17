@@ -12,17 +12,21 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
+import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.winterframework.mod.web.ErrorExchange;
 import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.ExchangeHandler;
+import io.winterframework.mod.web.HeaderService;
+import io.winterframework.mod.web.Parameter;
+import io.winterframework.mod.web.Part;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.ResponseBody;
+import io.winterframework.mod.web.internal.RequestBodyDecoder;
 import io.winterframework.mod.web.internal.server.AbstractExchange;
-import io.winterframework.mod.web.internal.server.AbstractRequest;
-import io.winterframework.mod.web.internal.server.AbstractResponse;
+import io.winterframework.mod.web.internal.server.GenericErrorExchange;
 
 /**
  * @author jkuhn
@@ -32,25 +36,35 @@ public class Http2Exchange extends AbstractExchange {
 
 	private final Http2Stream stream;
 	private final Http2ConnectionEncoder encoder;
+	private final HeaderService headerService;
 	
 	private final Consumer<Http2ResponseHeaders> headersConfigurer;
 
 	public Http2Exchange(
 			ChannelHandlerContext context, 
-			ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, 
-			ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, 
-			AbstractRequest request, 
-			AbstractResponse response, 
 			Http2Stream stream, 
-			Http2ConnectionEncoder encoder) {
-		super(context, rootHandler, errorHandler, request, response);
+			Http2Headers httpHeaders, 
+			Http2ConnectionEncoder encoder,
+			HeaderService headerService,
+			RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, 
+			RequestBodyDecoder<Part> multipartBodyDecoder,
+			ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, 
+			ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler
+		) {
+		super(context, rootHandler, errorHandler, new Http2Request(context, new Http2RequestHeaders(headerService, httpHeaders), urlEncodedBodyDecoder, multipartBodyDecoder), new Http2Response(context, headerService));
 		this.stream = stream;
 		this.encoder = encoder;
+		this.headerService = headerService;
 		
 		this.headersConfigurer = http2Headers -> {
 			this.response.getCookies().getAll().stream()
 				.forEach(header -> http2Headers.add(header.getHeaderName(), header.getHeaderValue()));
 		};
+	}
+	
+	@Override
+	protected ErrorExchange<ResponseBody, Throwable> createErrorExchange(Throwable error) {
+		return new GenericErrorExchange(this.request, new Http2Response(this.context, this.headerService), error);
 	}
 	
 	@Override
@@ -87,7 +101,7 @@ public class Http2Exchange extends AbstractExchange {
 		}
 		// TODO errors
 		finally {
-			this.exchangeSubscriber.exchangeNext(this.context, value);
+			this.handler.exchangeNext(this.context, value);
 		}
 	}
 	
@@ -101,7 +115,7 @@ public class Http2Exchange extends AbstractExchange {
 		// - if closed => client side have probably ended the stream (RST_STREAM or close connection)
 		// - if not closed => we should send a 5xx error or other based on the exception
 		throwable.printStackTrace();
-		this.exchangeSubscriber.exchangeError(this.context, throwable);
+		this.handler.exchangeError(this.context, throwable);
 	}
 	
 	@Override
@@ -138,8 +152,8 @@ public class Http2Exchange extends AbstractExchange {
 		}
 		// TODO errors
 		finally {
-			this.exchangeSubscriber.exchangeNext(this.context, value);
-			this.exchangeSubscriber.exchangeComplete(this.context);
+			this.handler.exchangeNext(this.context, value);
+			this.handler.exchangeComplete(this.context);
 		}
 	}
 	
@@ -156,10 +170,10 @@ public class Http2Exchange extends AbstractExchange {
 				this.encoder.writeData(this.context, this.stream.id(), Unpooled.EMPTY_BUFFER, 0, true, this.context.voidPromise());
 			}
 			this.context.channel().flush();
-			this.exchangeSubscriber.exchangeComplete(this.context);
+			this.handler.exchangeComplete(this.context);
 		} 
 		catch (Exception e) {
-			this.exchangeSubscriber.exchangeError(this.context, e);
+			this.handler.exchangeError(this.context, e);
 		}
 	}
 }

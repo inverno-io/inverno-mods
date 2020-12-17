@@ -16,7 +16,6 @@
 package io.winterframework.mod.web.internal.server.http1x;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.Part;
 import io.winterframework.mod.web.RequestHeaders;
@@ -29,15 +28,7 @@ import io.winterframework.mod.web.internal.server.AbstractRequest;
  */
 public class Http1xRequest extends AbstractRequest {
 
-	private boolean keepAlive;
-	
 	public Http1xRequest(ChannelHandlerContext context, RequestHeaders requestHeaders, RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, RequestBodyDecoder<Part> multipartBodyDecoder) {
 		super(context, requestHeaders, urlEncodedBodyDecoder, multipartBodyDecoder, true);
-		
-		this.keepAlive = !requestHeaders.contains(Headers.NAME_CONNECTION, Headers.VALUE_CLOSE);
-	}
-	
-	public boolean isKeepAlive() {
-		return keepAlive;
 	}
 }

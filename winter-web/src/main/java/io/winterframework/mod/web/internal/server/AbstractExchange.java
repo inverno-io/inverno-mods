@@ -12,9 +12,7 @@ import io.winterframework.mod.web.ErrorExchange;
 import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.ExchangeHandler;
 import io.winterframework.mod.web.Headers;
-import io.winterframework.mod.web.Request;
 import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.Status;
 import io.winterframework.mod.web.WebException;
@@ -33,13 +31,15 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	protected final ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler;
 	
 	protected final AbstractRequest request;
-	protected final AbstractResponse response;
+	protected AbstractResponse response;
 
-	protected Handler exchangeSubscriber;
+	protected Handler handler;
 	
 	private int transferedLength;
 	private int chunkCount;
 	private ByteBuf firstChunk;
+	
+	private ErrorSubscriber errorSubscriber;
 	
 	protected static final ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> LAST_RESORT_ERROR_HANDLER = exchange -> {
 		if(exchange.response().isHeadersWritten()) {
@@ -85,22 +85,42 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		return this.transferedLength;
 	}
 	
-	public void start(Handler exchangeSubscriber) {
-		if(this.exchangeSubscriber != null) {
+	@Override
+	public void dispose() {
+		if(this.errorSubscriber != null) {
+			this.errorSubscriber.dispose();
+		}
+		else {
+			super.dispose();
+		}
+	}
+	
+	@Override
+	public boolean isDisposed() {
+		return this.errorSubscriber != null ? this.errorSubscriber.isDisposed() : super.isDisposed();
+	}
+	
+	public void start(Handler handler) {
+		if(this.handler != null) {
 			throw new IllegalStateException("Exchange already started");
 		}
-		this.exchangeSubscriber = exchangeSubscriber;
+		this.handler = handler;
+		this.handler.exchangeStart(this.context, this);
 		try {
 			this.rootHandler.handle(this);
 		}
 		catch(Throwable t1) {
-			GenericErrorExchange errorExchange = new GenericErrorExchange(t1);
-			// TODO We could also set the flux on error and call the error handler
+			// We need to create a new error exchange each time we try to handle the error in order to have a fresh response 
+			ErrorExchange<ResponseBody, Throwable> errorExchange = this.createErrorExchange(t1);
 			try {
 				this.errorHandler.handle(errorExchange);
 			} 
 			catch (Throwable t2) {
+				errorExchange = this.createErrorExchange(t1);
 				LAST_RESORT_ERROR_HANDLER.handle(errorExchange);
+			}
+			finally {
+				this.response = (AbstractResponse) errorExchange.response();
 			}
 		}
 		this.response.data().subscribe(this);
@@ -115,10 +135,11 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 	}
 	
+	protected abstract ErrorExchange<ResponseBody, Throwable> createErrorExchange(Throwable error);
+	
 	@Override
 	protected final void hookOnSubscribe(Subscription subscription) {
 		this.onStart(subscription);
-		this.exchangeSubscriber.exchangeStart(this.context, this);
 	}
 	
 	protected void onStart(Subscription subscription) {
@@ -145,7 +166,30 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	protected abstract void onNextMany(ByteBuf value);
 	
 	protected final void hookOnError(Throwable throwable) {
-		this.executeInEventLoop(() -> this.onCompleteWithError(throwable));
+		// if headers are already written => close the connection nothing we can do
+		// if headers are not already written => we should invoke the error handler
+		// what we need is to continue processing
+		// - create a new Response for the error
+		// - reset this exchange => transferedLength, chunkCount must be reset
+		// - invoke the error handler (potentially the fallback error handler) with a new ErrorExchange 
+		
+		ErrorExchange<ResponseBody, Throwable> errorExchange = this.createErrorExchange(throwable);
+		try {
+			this.errorHandler.handle(errorExchange);
+		} 
+		catch (Throwable t2) {
+			// TODO we should probably log the error handler error
+			errorExchange = this.createErrorExchange(throwable);
+			LAST_RESORT_ERROR_HANDLER.handle(errorExchange);
+		}
+		finally {
+			this.response = (AbstractResponse) errorExchange.response();
+		}
+
+		this.executeInEventLoop(() -> {
+			this.errorSubscriber = new ErrorSubscriber(throwable);
+			this.response.data().subscribe(this.errorSubscriber);
+		});
 	}
 	
 	protected abstract void onCompleteWithError(Throwable throwable);
@@ -177,30 +221,6 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	protected abstract void onCompleteMany();
 	
-	private class GenericErrorExchange implements ErrorExchange<ResponseBody, Throwable> {
-
-		private Throwable error;
-		
-		public GenericErrorExchange(Throwable error) {
-			this.error = error;
-		}
-		
-		@Override
-		public Request<Void> request() {
-			return AbstractExchange.this.request.map(ign -> null);
-		}
-
-		@Override
-		public Response<ResponseBody> response() {
-			return AbstractExchange.this.response;
-		}
-
-		@Override
-		public Throwable getError() {
-			return this.error;
-		}
-	}
-	
 	public static interface Handler {
 		
 		static Handler DEFAULT = new Handler() {};
@@ -219,6 +239,32 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 
 		default void exchangeComplete(ChannelHandlerContext ctx) {
 			
+		}
+	}
+	
+	private final class ErrorSubscriber extends BaseSubscriber<ByteBuf> {
+		
+		private Throwable originalError;
+		
+		public ErrorSubscriber(Throwable originalError) {
+			this.originalError = originalError;
+		}
+		
+		@Override
+		protected void hookOnNext(ByteBuf value) {
+			AbstractExchange.this.hookOnNext(value);
+		}
+		
+		@Override
+		protected void hookOnError(Throwable throwable) {
+			// If we get there it means we can no longer process anything
+			// TODO we should probably log the error handler error
+			AbstractExchange.this.executeInEventLoop(() -> AbstractExchange.this.onCompleteWithError(this.originalError));
+		}
+		
+		@Override
+		protected void hookOnComplete() {
+			AbstractExchange.this.hookOnComplete();
 		}
 	}
 }
