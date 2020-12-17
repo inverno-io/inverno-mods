@@ -22,9 +22,7 @@ import org.reactivestreams.Subscription;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
 import io.netty.channel.FileRegion;
 import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
@@ -53,28 +51,23 @@ import reactor.core.publisher.BaseSubscriber;
 public class Http1xExchange extends AbstractExchange {
 
 	private boolean manageChunked;
-	
 	private Charset charset;
 	
-	private boolean flush;
+	private Http1xConnectionEncoder encoder;
 	
-	public Http1xExchange(ChannelHandlerContext context, ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, Http1xRequest request, Http1xResponse response) {
+	Http1xExchange next;
+	
+	public Http1xExchange(
+			ChannelHandlerContext context, 
+			ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, 
+			ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, 
+			Http1xRequest request, 
+			Http1xResponse response,
+			Http1xConnectionEncoder encoder) {
 		super(context, rootHandler, errorHandler, request, response);
+		this.encoder = encoder;
 		if(!request.isKeepAlive()) {
 			response.getHeaders().add(Headers.CONNECTION, "close");
-		}
-	}
-	
-	public void onReadComplete() {
-		this.flush = true;
-	}
-	
-	private ChannelFuture write(Object msg, ChannelPromise promise) {
-		if(this.flush) {
-			return this.context.writeAndFlush(msg, promise);
-		}
-		else {
-			return this.context.write(msg, promise);
 		}
 	}
 	
@@ -103,20 +96,6 @@ public class Http1xExchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected void onNextSingle(ByteBuf value) {
-		try {
-			// Response has one chunk => send a FullHttpResponse
-			Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.getHeaders();
-			this.write(this.createFullHttpResponse(headers, this.response.getCookies(), value), this.context.voidPromise());
-			headers.setWritten(true);
-		}
-		// TODO what happen when an error is thrown
-		finally {
-			this.exchangeSubscriber.onExchangeNext(value);
-		}
-	}
-	
-	@Override
 	protected void onNextMany(ByteBuf value) {
 		try {
 			Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.getHeaders();
@@ -127,7 +106,7 @@ public class Http1xExchange extends AbstractExchange {
 					// TODO accessing the string and using a region matches for TEXT_EVENT_STREAM might be more efficient
 					this.manageChunked = headers.getContentType().map(contentType -> contentType.getMediaType().equals(MediaTypes.TEXT_EVENT_STREAM)).orElse(false);
 				}
-				this.write(this.createHttpResponse(headers, this.response.getCookies()), this.context.voidPromise());
+				this.encoder.writeFrame(this.context, this.createHttpResponse(headers, this.response.getCookies()), this.context.voidPromise());
 				headers.setWritten(true);
 			}
 			if(this.manageChunked) {
@@ -135,10 +114,10 @@ public class Http1xExchange extends AbstractExchange {
 				ByteBuf chunked_header = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(Integer.toHexString(value.readableBytes()) + "\r\n", Charsets.orDefault(this.getCharset())));
 				ByteBuf chunked_trailer = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("\r\n", Charsets.orDefault(this.getCharset())));
 				
-				this.write(new DefaultHttpContent(Unpooled.wrappedBuffer(chunked_header, value, chunked_trailer)), this.context.voidPromise());
+				this.encoder.writeFrame(this.context, new DefaultHttpContent(Unpooled.wrappedBuffer(chunked_header, value, chunked_trailer)), this.context.voidPromise());
 			}
 			else {
-				this.write(new DefaultHttpContent(value), this.context.voidPromise());
+				this.encoder.writeFrame(this.context, new DefaultHttpContent(value), this.context.voidPromise());
 			}
 		}
 		// TODO what happen when an error is thrown
@@ -169,14 +148,14 @@ public class Http1xExchange extends AbstractExchange {
 		http1xResponse.body().getFileRegionData().ifPresentOrElse(
 			fileRegionData -> {
 				// Headers are not written here since we have an empty response
-				this.write(this.createHttpResponse(headers, this.response.getCookies()), this.context.voidPromise());
+				this.encoder.writeFrame(this.context, this.createHttpResponse(headers, this.response.getCookies()), this.context.voidPromise());
 				headers.setWritten(true);
 				fileRegionData.subscribe(new FileRegionDataSubscriber());
 			},
 			() -> {
 				// just write headers in a fullHttpResponse
 				// Headers are not written here since we have an empty response
-				this.write(this.createFullHttpResponse(headers, this.response.getCookies(), Unpooled.buffer(0)), this.context.voidPromise());
+				this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, this.response.getCookies(), Unpooled.buffer(0)), this.context.voidPromise());
 				headers.setWritten(true);
 				this.exchangeSubscriber.onExchangeComplete();
 			}
@@ -184,13 +163,23 @@ public class Http1xExchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected void onCompleteSingle() {
-		this.exchangeSubscriber.onExchangeComplete();
+	protected void onCompleteSingle(ByteBuf value) {
+		try {
+			// Response has one chunk => send a FullHttpResponse
+			Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.getHeaders();
+			this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, this.response.getCookies(), value), this.context.voidPromise());
+			headers.setWritten(true);
+		}
+		// TODO what happen when an error is thrown
+		finally {
+			this.exchangeSubscriber.onExchangeNext(value);
+			this.exchangeSubscriber.onExchangeComplete();
+		}
 	}
 	
 	@Override
 	protected void onCompleteMany() {
-		this.write(LastHttpContent.EMPTY_LAST_CONTENT, this.context.voidPromise());
+		this.encoder.writeFrame(this.context, LastHttpContent.EMPTY_LAST_CONTENT, this.context.voidPromise());
 		this.exchangeSubscriber.onExchangeComplete();
 	}
 	
@@ -204,7 +193,7 @@ public class Http1xExchange extends AbstractExchange {
 		@Override
 		protected void hookOnNext(FileRegion fileRegion) {
 			Http1xExchange.this.executeInEventLoop(() -> {
-				Http1xExchange.this.write(fileRegion, Http1xExchange.this.context.newPromise().addListener(future -> {
+				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, fileRegion, Http1xExchange.this.context.newPromise().addListener(future -> {
 					if(future.isSuccess()) {
 						this.request(1);
 					}
@@ -220,7 +209,7 @@ public class Http1xExchange extends AbstractExchange {
 		protected void hookOnComplete() {
 			Http1xExchange.this.executeInEventLoop(() -> {
 				// TODO if not keep alive we should close the connection here
-				Http1xExchange.this.write(LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.newPromise().addListener(future -> {
+				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.newPromise().addListener(future -> {
 					Http1xExchange.this.exchangeSubscriber.onExchangeComplete();
 				}));
 			});

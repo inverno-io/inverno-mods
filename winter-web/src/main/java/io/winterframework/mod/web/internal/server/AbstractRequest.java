@@ -49,7 +49,6 @@ public abstract class AbstractRequest implements Request<RequestBody> {
 	protected GenericRequestCookies requestCookies;
 	
 	private GenericRequestBody requestBody;
-//	private FluxSink<ByteBuf> data;
 	private Sinks.Many<ByteBuf> data;
 	
 	public AbstractRequest(ChannelHandlerContext context, RequestHeaders requestHeaders, RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, RequestBodyDecoder<Part> multipartBodyDecoder, boolean releaseData) {
@@ -91,8 +90,8 @@ public abstract class AbstractRequest implements Request<RequestBody> {
 		Method method = this.headers().getMethod();
 		if(method == Method.POST || method == Method.PUT || method == Method.PATCH) {
 			if(this.requestBody == null) {
-				// TODO deal with backpressure using a cusotm queue: if the queue reach a given threshold we should suspend the read on the channel: this.context.channel().config().setAutoRead(false)
-				// and resume when this flux is actually consumed
+				// TODO deal with backpressure using a custom queue: if the queue reach a given threshold we should suspend the read on the channel: this.context.channel().config().setAutoRead(false)
+				// and resume when this flux is actually consumed (doOnRequest? this might impact performance but here )
 				// TODO it might happen that a handler doesn't subscribe to the request data flux at all as a result we should basically complete the request sink once the response has been sent in order to drop next contents
 				this.data = Sinks.many().unicast().onBackpressureBuffer();
 				

@@ -116,6 +116,16 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	}
 	
 	@Override
+	protected final void hookOnSubscribe(Subscription subscription) {
+		this.onStart(subscription);
+		this.exchangeSubscriber.onExchangeStart(this);
+	}
+	
+	protected void onStart(Subscription subscription) {
+		subscription.request(Long.MAX_VALUE);
+	}
+	
+	@Override
 	protected final void hookOnNext(ByteBuf value) {
 		this.chunkCount++;
 		if(this.chunkCount == 1) {
@@ -132,8 +142,6 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 	}
 	
-	protected abstract void onNextSingle(ByteBuf value);
-	
 	protected abstract void onNextMany(ByteBuf value);
 	
 	protected final void hookOnError(Throwable throwable) {
@@ -149,9 +157,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			if(this.response.getHeaders().getCharSequence(Headers.CONTENT_LENGTH) == null) {
 				this.response.getHeaders().size(this.transferedLength);
 			}
-			this.executeInEventLoop(() -> this.onNextSingle(this.firstChunk));
-			this.executeInEventLoop(this::onCompleteSingle);
-			this.firstChunk = null;
+			this.executeInEventLoop(() -> this.onCompleteSingle(this.firstChunk));
 		}
 		else if(this.chunkCount == 0) {
 			// empty response
@@ -167,7 +173,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	protected abstract void onCompleteEmpty();
 	
-	protected abstract void onCompleteSingle();
+	protected abstract void onCompleteSingle(ByteBuf value);
 	
 	protected abstract void onCompleteMany();
 	
@@ -199,7 +205,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		
 		static ExchangeSubscriber DEFAULT = new ExchangeSubscriber() {};
 		
-		default void onExchangeSubscribe(Subscription s) {
+		default void onExchangeStart(AbstractExchange exchange) {
 			
 		}
 
