@@ -15,9 +15,8 @@
  */
 package io.winterframework.mod.web.internal.server.http1x;
 
-import org.reactivestreams.Subscription;
-
 import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.DecoderResult;
@@ -38,26 +37,27 @@ import io.winterframework.mod.web.Part;
 import io.winterframework.mod.web.RequestBody;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.internal.RequestBodyDecoder;
-import io.winterframework.mod.web.internal.server.AbstractExchange.ExchangeSubscriber;
-import reactor.core.publisher.BaseSubscriber;
-import reactor.core.publisher.Sinks;
+import io.winterframework.mod.web.internal.server.AbstractExchange;
 
 /**
  * @author jkuhn
  *
  */
-public class Http1xChannelHandler extends ChannelDuplexHandler {
+public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1xConnectionEncoder, Http1xExchange.ExchangeSubscriber {
 
 	private Http1xExchange requestingExchange;
 	private Http1xExchange respondingExchange;
-	private Sinks.Many<Http1xExchange> exchangeSink;
-	private ChannelExchangeSubscriber exchangeSubscriber;
+	
+	private Http1xExchange exchangeQueue;
 	
 	private ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler;
 	private ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler; 
 	private HeaderService headerService;
 	private RequestBodyDecoder<Parameter> urlEncodedBodyDecoder; 
 	private RequestBodyDecoder<Part> multipartBodyDecoder;
+	
+	private boolean read;
+	private boolean flush;
 	
 	public Http1xChannelHandler(
 			ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, 
@@ -116,15 +116,9 @@ public class Http1xChannelHandler extends ChannelDuplexHandler {
 	}*/
 	
 	@Override
-	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-		this.exchangeSubscriber = new ChannelExchangeSubscriber();
-		this.exchangeSink = Sinks.many().unicast().onBackpressureBuffer(); // => this cost ~3000tps
-		this.exchangeSink.asFlux().subscribe(this.exchangeSubscriber);
-	}
-	
-	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 //		System.out.println("Channel read");
+		this.read = true;
 		if(msg instanceof HttpRequest) {
 			HttpRequest httpRequest = (HttpRequest)msg;
 			if(httpRequest.decoderResult() != DecoderResult.SUCCESS) {
@@ -133,8 +127,15 @@ public class Http1xChannelHandler extends ChannelDuplexHandler {
 			}
 			Http1xRequest request = new Http1xRequest(ctx, new Http1xRequestHeaders(ctx, httpRequest, this.headerService), this.urlEncodedBodyDecoder, this.multipartBodyDecoder);
 			Http1xResponse response = new Http1xResponse(ctx, this.headerService);
-			this.requestingExchange = new Http1xExchange(ctx, this.rootHandler, this.errorHandler, request, response);
-			this.exchangeSink.tryEmitNext(this.requestingExchange);
+			this.requestingExchange = new Http1xExchange(ctx, this.rootHandler, this.errorHandler, request, response, this);
+			if(this.exchangeQueue == null) {
+				this.exchangeQueue = this.requestingExchange;
+				this.requestingExchange.start(this);
+			}
+			else {
+				this.exchangeQueue.next = this.requestingExchange;
+				this.exchangeQueue = this.requestingExchange;
+			}
 		}
 		else if(this.requestingExchange != null) {
 			if(msg == LastHttpContent.EMPTY_LAST_CONTENT) {
@@ -157,6 +158,21 @@ public class Http1xChannelHandler extends ChannelDuplexHandler {
 			// received all the data in that case we have to dismiss the content and wait
 			// for the next request
 			((HttpContent)msg).release();
+		}
+	}
+	
+	@Override
+	public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+//		System.out.println("Channel read complete");
+		if(this.read) {
+			this.read = false;
+			if(this.flush) {
+				ctx.flush();
+				this.flush = false;
+			}
+		}
+		if(this.requestingExchange != null) {
+			this.requestingExchange = null;
 		}
 	}
 
@@ -187,17 +203,6 @@ public class Http1xChannelHandler extends ChannelDuplexHandler {
 	}
 	
 	@Override
-	public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-//		System.out.println("Channel read complete");
-		if(this.requestingExchange != null) {
-			this.requestingExchange.onReadComplete();
-			this.requestingExchange = null;
-		}
-		// TODO do we need flush?
-		ctx.flush();
-	}
-
-	@Override
 	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 //		System.out.println("User Event triggered");
 		// TODO idle
@@ -219,8 +224,9 @@ public class Http1xChannelHandler extends ChannelDuplexHandler {
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 //		System.out.println("channel inactive");
-		this.exchangeSubscriber.dispose();
-		this.exchangeSink.tryEmitComplete();
+		if(this.respondingExchange != null) {
+			this.respondingExchange.dispose();
+		}
 	}
 
 	@Override
@@ -229,29 +235,36 @@ public class Http1xChannelHandler extends ChannelDuplexHandler {
 //		System.out.println("Channel writability changed");
 	}
 	
-	private final class ChannelExchangeSubscriber extends BaseSubscriber<Http1xExchange> implements ExchangeSubscriber {
-		
-		public void onExchangeComplete() {
-			respondingExchange = null;
-			this.request(1);
+	@Override
+	public ChannelFuture writeFrame(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+		if(this.read) {
+			this.flush = true;
+			return ctx.write(msg, promise);
 		}
-		
-		@Override
-		protected void hookOnSubscribe(Subscription subscription) {
-			this.request(1);
+		else {
+			return ctx.writeAndFlush(msg, promise);
 		}
-		
-		@Override
-		protected void hookOnNext(Http1xExchange exchange) {
-			respondingExchange = exchange;
-			exchange.start(this);
+	}
+	
+	@Override
+	public void onExchangeStart(AbstractExchange exchange) {
+		this.respondingExchange = (Http1xExchange)exchange;
+	}
+	
+	@Override
+	public void onExchangeError(Throwable t) {
+		// TODO do something useful with the error
+		this.onExchangeComplete();
+	}
+	
+	@Override
+	public void onExchangeComplete() {
+		if(this.respondingExchange.next != null) {
+			this.respondingExchange.next.start(this);
 		}
-		
-		@Override
-		protected void hookFinally(reactor.core.publisher.SignalType type) {
-			if(respondingExchange != null) {
-				respondingExchange.dispose();
-			}
-		};
+		else {
+			this.exchangeQueue = null;
+			this.respondingExchange = null;
+		}
 	}
 }

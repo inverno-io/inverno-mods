@@ -35,7 +35,14 @@ public class Http2Exchange extends AbstractExchange {
 	
 	private final Consumer<Http2ResponseHeaders> headersConfigurer;
 
-	public Http2Exchange(ChannelHandlerContext context, ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, AbstractRequest request, AbstractResponse response, Http2Stream stream, Http2ConnectionEncoder encoder) {
+	public Http2Exchange(
+			ChannelHandlerContext context, 
+			ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, 
+			ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, 
+			AbstractRequest request, 
+			AbstractResponse response, 
+			Http2Stream stream, 
+			Http2ConnectionEncoder encoder) {
 		super(context, rootHandler, errorHandler, request, response);
 		this.stream = stream;
 		this.encoder = encoder;
@@ -47,13 +54,8 @@ public class Http2Exchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected void hookOnSubscribe(Subscription subscription) {
-		request(1);
-	}
-	
-	@Override
-	protected void onNextSingle(ByteBuf value) {
-		this.onNextMany(value);
+	protected void onStart(Subscription subscription) {
+		subscription.request(1);
 	}
 	
 	@Override
@@ -108,8 +110,37 @@ public class Http2Exchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected void onCompleteSingle() {
-		this.onCompleteMany();
+	protected void onCompleteSingle(ByteBuf value) {
+		try {
+			if(!this.response.getHeaders().isWritten()) {
+				Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.getHeaders();
+				this.headersConfigurer.accept(headers);
+				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getHttpHeaders(), 0, false, this.context.voidPromise());
+				this.response.getHeaders().setWritten(true);
+			}
+			// TODO implement back pressure with the flow controller
+			/*this.encoder.flowController().listener(new Listener() {
+				
+				@Override
+				public void writabilityChanged(Http2Stream stream) {
+					
+				}
+			});*/
+			
+			ChannelPromise prm = this.context.newPromise();
+			prm.addListener(new GenericFutureListener<Future<Void>>() {
+				public void operationComplete(Future<Void> future) throws Exception {
+					request(1);
+				};
+			});
+			this.encoder.writeData(this.context, this.stream.id(), value, 0, true, prm);
+			this.context.channel().flush();
+		}
+		// TODO errors
+		finally {
+			this.exchangeSubscriber.onExchangeNext(value);
+			this.exchangeSubscriber.onExchangeComplete();
+		}
 	}
 	
 	@Override
