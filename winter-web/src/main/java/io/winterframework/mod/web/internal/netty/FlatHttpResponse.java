@@ -50,17 +50,13 @@ public class FlatHttpResponse implements HttpResponse, HttpContent {
 		this.version = version;
 		this.headers = headers;
 		this.content = content;
-		this.empty = false;
+		this.empty = content.readableBytes() == 0;
 	}
 
 	public boolean isEmpty() {
 		return empty;
 	}
 	
-	public void setEmpty(boolean empty) {
-		this.empty = empty;
-	}
-
 	@Override
 	public HttpVersion getProtocolVersion() {
 		return this.version;

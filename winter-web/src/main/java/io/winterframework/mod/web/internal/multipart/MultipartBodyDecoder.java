@@ -287,12 +287,12 @@ public class MultipartBodyDecoder implements RequestBodyDecoder<Part> {
 		}
 		
 		// We have all headers, we can create the part
-		Headers.ContentDisposition partContentDispositionHeader = context.<Headers.ContentDisposition>getDecodedHeader(Headers.CONTENT_DISPOSITION);
+		Headers.ContentDisposition partContentDispositionHeader = context.<Headers.ContentDisposition>getDecodedHeader(Headers.NAME_CONTENT_DISPOSITION);
 		if(partContentDispositionHeader == null || partContentDispositionHeader.getPartName() == null) {
 			throw new MalformedBodyException("Missing content disposition");
 		}
 		
-		Headers.ContentType partContentTypeHeader = context.<Headers.ContentType>getDecodedHeader(Headers.CONTENT_TYPE);
+		Headers.ContentType partContentTypeHeader = context.<Headers.ContentType>getDecodedHeader(Headers.NAME_CONTENT_TYPE);
 		
 		if(partContentTypeHeader != null && partContentTypeHeader.getMediaType().equalsIgnoreCase(MediaTypes.MULTIPART_MIXED)) {
 			context.startMultipartMixed(partContentTypeHeader);
@@ -312,7 +312,7 @@ public class MultipartBodyDecoder implements RequestBodyDecoder<Part> {
 			}
 			Charset partCharset = partContentTypeHeader != null && partContentTypeHeader.getCharset() != null ? partContentTypeHeader.getCharset() : context.contentType.getCharset();
 			
-			Header partContentLengthHeader = context.<Header>getDecodedHeader(Headers.CONTENT_LENGTH);
+			Header partContentLengthHeader = context.<Header>getDecodedHeader(Headers.NAME_CONTENT_LENGTH);
 			Long partSize = partContentLengthHeader != null ? Long.parseLong(partContentLengthHeader.getHeaderValue()) : null;
 			
 			context.startPart(new GenericPart(partName, partFilename, context.getAllDecodedHeaders(), partContentType, partCharset, partSize));

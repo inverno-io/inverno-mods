@@ -18,7 +18,7 @@ import io.winterframework.mod.web.Headers;
 public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetCookie, SetCookieCodec.SetCookie.Builder> {
 
 	public SetCookieCodec() {
-		super(SetCookieCodec.SetCookie.Builder::new, Set.of(Headers.SET_COOKIE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, true, true, true, true, false, false);
+		super(SetCookieCodec.SetCookie.Builder::new, Set.of(Headers.NAME_SET_COOKIE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, true, true, true, true, false, false);
 	}
 	
 	@Override
@@ -59,11 +59,11 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		private Boolean httpOnly;
 		
 		public SetCookie() {
-			super(Headers.SET_COOKIE, null, null, null);
+			super(Headers.NAME_SET_COOKIE, null, null, null);
 		}
 		
 		private SetCookie(String headerName, String headerValue, String name, String value, String expires, Integer maxAge, String domain, String path, Boolean secure, Boolean httpOnly, Map<String, String> parameters) {
-			super(Headers.SET_COOKIE, headerValue, null, parameters);
+			super(Headers.NAME_SET_COOKIE, headerValue, null, parameters);
 			
 			this.name = name;
 			this.value = value;

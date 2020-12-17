@@ -38,7 +38,7 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 	}
 	
 	public AcceptLanguageCodec(boolean allowMultiple) {
-		super(AcceptLanguageCodec.AcceptLanguage.Builder::new, Set.of(Headers.ACCEPT_LANGUAGE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, allowMultiple);
+		super(AcceptLanguageCodec.AcceptLanguage.Builder::new, Set.of(Headers.NAME_ACCEPT_LANGUAGE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, allowMultiple);
 	}
 	
 	@Override

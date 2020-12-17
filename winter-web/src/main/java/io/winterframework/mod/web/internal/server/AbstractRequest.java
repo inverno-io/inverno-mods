@@ -105,7 +105,7 @@ public abstract class AbstractRequest implements Request<RequestBody> {
 				}
 				
 				this.requestBody = new GenericRequestBody(
-					this.headers().<Headers.ContentType>getHeader(Headers.CONTENT_TYPE),
+					this.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE),
 					urlEncodedBodyDecoder, 
 					multipartBodyDecoder, 
 					requestBodyData

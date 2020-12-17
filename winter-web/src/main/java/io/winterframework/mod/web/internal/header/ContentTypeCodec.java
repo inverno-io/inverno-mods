@@ -21,7 +21,7 @@ import io.winterframework.mod.web.Headers;
 public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.ContentType, ContentTypeCodec.ContentType.Builder> {
 	
 	public ContentTypeCodec() {
-		super(ContentTypeCodec.ContentType.Builder::new, Set.of(Headers.CONTENT_TYPE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, false);
+		super(ContentTypeCodec.ContentType.Builder::new, Set.of(Headers.NAME_CONTENT_TYPE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, false);
 	}
 	
 	@Override
@@ -54,7 +54,7 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 		private Charset charset;
 		
 		public ContentType(String mediaType, Charset charset, String boundary, Map<String, String> parameters) {
-			super(Headers.CONTENT_TYPE, null, mediaType, parameters);
+			super(Headers.NAME_CONTENT_TYPE, null, mediaType, parameters);
 			this.setMediaType(mediaType.toLowerCase());
 			this.setCharset(charset);
 			this.setBoundary(boundary);

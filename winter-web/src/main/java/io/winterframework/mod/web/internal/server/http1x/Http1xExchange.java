@@ -26,6 +26,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.FileRegion;
 import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
@@ -66,33 +69,43 @@ public class Http1xExchange extends AbstractExchange {
 			Http1xConnectionEncoder encoder) {
 		super(context, rootHandler, errorHandler, request, response);
 		this.encoder = encoder;
-		if(!request.isKeepAlive()) {
-			response.getHeaders().add(Headers.CONNECTION, "close");
-		}
 	}
 	
 	private Charset getCharset() {
 		if(this.response.isHeadersWritten()) {
-			return this.response().getHeaders().<Headers.ContentType>get(Headers.CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
+			return this.response().getHeaders().<Headers.ContentType>get(Headers.NAME_CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
 		}
 		if(this.charset == null) {
-			this.charset = this.response().getHeaders().<Headers.ContentType>get(Headers.CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
+			this.charset = this.response().getHeaders().<Headers.ContentType>get(Headers.NAME_CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
 		}
 		return this.charset;
 	}
-
-	private HttpResponse createHttpResponse(Http1xResponseHeaders headers, GenericResponseCookies cookies) {
-		for(Headers.SetCookie cookie : cookies.getAll()) {
-			headers.add(cookie.getHeaderName(), cookie.getHeaderValue());
+	
+	private void preProcessHttpHeaders(HttpResponseStatus status, HttpHeaders httpHeaders, GenericResponseCookies cookies) {
+		if(!((Http1xRequest)this.request).isKeepAlive()) {
+			httpHeaders.set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
 		}
-		return new FlatHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(headers.getStatus()), headers.getHttpHeaders(), false);
+		if(status == HttpResponseStatus.NOT_MODIFIED) {
+			httpHeaders.remove(HttpHeaderNames.TRANSFER_ENCODING);
+			httpHeaders.remove(HttpHeaderNames.CONTENT_LENGTH);
+		}
+		for(Headers.SetCookie cookie : cookies.getAll()) {
+			httpHeaders.add(cookie.getHeaderName(), cookie.getHeaderValue());
+		}
+	}
+	
+	private HttpResponse createHttpResponse(Http1xResponseHeaders headers, GenericResponseCookies cookies) {
+		HttpResponseStatus status = HttpResponseStatus.valueOf(headers.getStatus());
+		HttpHeaders httpHeaders = headers.getHttpHeaders();
+		this.preProcessHttpHeaders(status, httpHeaders, cookies);
+		return new FlatHttpResponse(HttpVersion.HTTP_1_1, status, httpHeaders, false);
 	}
 	
 	private HttpResponse createFullHttpResponse(Http1xResponseHeaders headers, GenericResponseCookies cookies, ByteBuf content) {
-		for(Headers.SetCookie cookie : cookies.getAll()) {
-			headers.add(cookie.getHeaderName(), cookie.getHeaderValue());
-		}
-		return new FlatFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.valueOf(headers.getStatus()), headers.getHttpHeaders(), content, EmptyHttpHeaders.INSTANCE);
+		HttpResponseStatus status = HttpResponseStatus.valueOf(headers.getStatus());
+		HttpHeaders httpHeaders = headers.getHttpHeaders();
+		this.preProcessHttpHeaders(status, httpHeaders, cookies);
+		return new FlatFullHttpResponse(HttpVersion.HTTP_1_1, status, httpHeaders, content, EmptyHttpHeaders.INSTANCE);
 	}
 	
 	@Override
@@ -100,9 +113,9 @@ public class Http1xExchange extends AbstractExchange {
 		try {
 			Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.getHeaders();
 			if(!headers.isWritten()) {
-				List<String> transferEncodings = headers.getAllString(Headers.TRANSFER_ENCODING);
+				List<String> transferEncodings = headers.getAllString(Headers.NAME_TRANSFER_ENCODING);
 				if(headers.getSize() == null && !transferEncodings.contains("chunked")) {
-					headers.add(Headers.TRANSFER_ENCODING, "chunked");
+					headers.add(Headers.NAME_TRANSFER_ENCODING, "chunked");
 					// TODO accessing the string and using a region matches for TEXT_EVENT_STREAM might be more efficient
 					this.manageChunked = headers.getContentType().map(contentType -> contentType.getMediaType().equals(MediaTypes.TEXT_EVENT_STREAM)).orElse(false);
 				}
@@ -122,7 +135,7 @@ public class Http1xExchange extends AbstractExchange {
 		}
 		// TODO what happen when an error is thrown
 		finally {
-			this.exchangeSubscriber.onExchangeNext(value);
+			this.exchangeSubscriber.exchangeNext(this.context, value);
 		}
 	}
 	
@@ -136,7 +149,7 @@ public class Http1xExchange extends AbstractExchange {
 		// - if closed => client side have probably ended the stream (RST_STREAM or close connection)
 		// - if not closed => we should send a 5xx error or other based on the exception
 		throwable.printStackTrace();
-		this.exchangeSubscriber.onExchangeError(throwable);
+		this.exchangeSubscriber.exchangeError(this.context, throwable);
 	}
 	
 	@Override
@@ -157,7 +170,7 @@ public class Http1xExchange extends AbstractExchange {
 				// Headers are not written here since we have an empty response
 				this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, this.response.getCookies(), Unpooled.buffer(0)), this.context.voidPromise());
 				headers.setWritten(true);
-				this.exchangeSubscriber.onExchangeComplete();
+				this.exchangeSubscriber.exchangeComplete(this.context);
 			}
 		);
 	}
@@ -172,15 +185,15 @@ public class Http1xExchange extends AbstractExchange {
 		}
 		// TODO what happen when an error is thrown
 		finally {
-			this.exchangeSubscriber.onExchangeNext(value);
-			this.exchangeSubscriber.onExchangeComplete();
+			this.exchangeSubscriber.exchangeNext(this.context, value);
+			this.exchangeSubscriber.exchangeComplete(this.context);
 		}
 	}
 	
 	@Override
 	protected void onCompleteMany() {
 		this.encoder.writeFrame(this.context, LastHttpContent.EMPTY_LAST_CONTENT, this.context.voidPromise());
-		this.exchangeSubscriber.onExchangeComplete();
+		this.exchangeSubscriber.exchangeComplete(this.context);
 	}
 	
 	private class FileRegionDataSubscriber extends BaseSubscriber<FileRegion> {
@@ -195,10 +208,13 @@ public class Http1xExchange extends AbstractExchange {
 			Http1xExchange.this.executeInEventLoop(() -> {
 				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, fileRegion, Http1xExchange.this.context.newPromise().addListener(future -> {
 					if(future.isSuccess()) {
+						// TODO here we put null as next value because we don't have access to the actual buffer, can we do better?
+						Http1xExchange.this.exchangeSubscriber.exchangeNext(Http1xExchange.this.context, null);
 						this.request(1);
 					}
 					else {
-						// TODO log/report error
+						Http1xExchange.this.exchangeSubscriber.exchangeError(Http1xExchange.this.context, future.cause());
+						// TODO does this triggers onComplete?
 						this.cancel();
 					}
 				}));
@@ -210,7 +226,7 @@ public class Http1xExchange extends AbstractExchange {
 			Http1xExchange.this.executeInEventLoop(() -> {
 				// TODO if not keep alive we should close the connection here
 				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.newPromise().addListener(future -> {
-					Http1xExchange.this.exchangeSubscriber.onExchangeComplete();
+					Http1xExchange.this.exchangeSubscriber.exchangeComplete(Http1xExchange.this.context);
 				}));
 			});
 		}

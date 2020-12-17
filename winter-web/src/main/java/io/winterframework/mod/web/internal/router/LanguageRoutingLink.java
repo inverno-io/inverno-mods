@@ -50,7 +50,7 @@ class LanguageRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 	public LanguageRoutingLink<A, B, C, D> setRoute(D route) {
 		String language = route.getLanguage();
 		if(language != null) {
-			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
+			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
 			if(languageRange.getLanguageTag().equals("*")) {
 				this.nextLink.setRoute(route);
 			}
@@ -72,7 +72,7 @@ class LanguageRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 	public void enableRoute(D route) {
 		String language = route.getLanguage();
 		if(language != null) {
-			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
+			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
 			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(languageRange);
 			if(handler != null) {
 				handler.enableRoute(route);
@@ -88,7 +88,7 @@ class LanguageRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 	public void disableRoute(D route) {
 		String language = route.getLanguage();
 		if(language != null) {
-			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
+			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
 			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(languageRange);
 			if(handler != null) {
 				handler.disableRoute(route);
@@ -104,7 +104,7 @@ class LanguageRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 	public void removeRoute(D route) {
 		String language = route.getLanguage();
 		if(language != null) {
-			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
+			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
 			RoutingLink<A, B, C, ?, D> handler = this.handlers.get(languageRange);
 			if(handler != null) {
 				handler.removeRoute(route);
@@ -148,8 +148,8 @@ class LanguageRoutingLink<A, B, C extends Exchange<A, B>, D extends AcceptAwareR
 			this.nextLink.handle(exchange);
 		}
 		else {
-			Iterator<AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, B, C, ?, D>>>> acceptMatchesIterator = Headers.AcceptLanguage.merge(exchange.request().headers().<Headers.AcceptLanguage>getAllHeader(Headers.ACCEPT_LANGUAGE))
-				.orElse(this.acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, "*"))
+			Iterator<AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, B, C, ?, D>>>> acceptMatchesIterator = Headers.AcceptLanguage.merge(exchange.request().headers().<Headers.AcceptLanguage>getAllHeader(Headers.NAME_ACCEPT_LANGUAGE))
+				.orElse(this.acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, "*"))
 				.findAllMatch(this.handlers.entrySet(), Entry::getKey)
 				.iterator();
 			

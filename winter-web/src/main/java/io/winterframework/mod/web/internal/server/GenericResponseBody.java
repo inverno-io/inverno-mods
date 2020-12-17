@@ -209,7 +209,7 @@ public class GenericResponseBody implements ResponseBody {
 					}
 				}
 				
-				if(GenericResponseBody.this.response.getHeaders().getCharSequence(Headers.CONTENT_TYPE) == null) {
+				if(GenericResponseBody.this.response.getHeaders().getCharSequence(Headers.NAME_CONTENT_TYPE) == null) {
 					try {
 						String mediaType = resource.getMediaType();
 						if(mediaType != null) {

@@ -79,8 +79,8 @@ public class AcceptCodecTest {
 		
 		AcceptLanguageCodec acceptLanguageCodec = new AcceptLanguageCodec(false);
 		
-		AcceptLanguage allLanguage = acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, "*");
-		AcceptLanguage frLanguage = acceptLanguageCodec.decode(Headers.ACCEPT_LANGUAGE, "fr");
+		AcceptLanguage allLanguage = acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, "*");
+		AcceptLanguage frLanguage = acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, "fr");
 		
 	}
 
