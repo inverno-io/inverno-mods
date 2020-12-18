@@ -3,17 +3,12 @@
  */
 package io.winterframework.mod.web.internal.server.http2;
 
-import org.reactivestreams.Subscription;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import io.winterframework.mod.web.ErrorExchange;
 import io.winterframework.mod.web.Exchange;
 import io.winterframework.mod.web.ExchangeHandler;
@@ -59,11 +54,6 @@ public class Http2Exchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected void onStart(Subscription subscription) {
-		subscription.request(1);
-	}
-	
-	@Override
 	protected void onNextMany(ByteBuf value) {
 		try {
 			if(!this.response.getHeaders().isWritten()) {
@@ -80,13 +70,7 @@ public class Http2Exchange extends AbstractExchange {
 				}
 			});*/
 			
-			ChannelPromise prm = this.context.newPromise();
-			prm.addListener(new GenericFutureListener<Future<Void>>() {
-				public void operationComplete(Future<Void> future) throws Exception {
-					request(1);
-				};
-			});
-			this.encoder.writeData(this.context, this.stream.id(), value, 0, false, prm);
+			this.encoder.writeData(this.context, this.stream.id(), value, 0, false, this.context.voidPromise());
 			this.context.channel().flush();
 		}
 		// TODO errors

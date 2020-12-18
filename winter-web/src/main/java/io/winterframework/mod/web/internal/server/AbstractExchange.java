@@ -126,17 +126,16 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		this.response.data().subscribe(this);
 	}
 	
-	protected final void executeInEventLoop(Runnable runnable) {
+	protected void executeInEventLoop(Runnable runnable) {
 		if(this.contextExecutor.inEventLoop()) {
 			runnable.run();
+			this.request(1);
 		}
 		else {
-			// We need to pause the publisher here so we can handle error properly 
-			this.request(0);
 			this.contextExecutor.execute(() -> {
 				try {
 					runnable.run();
-					this.requestUnbounded();
+					this.request(1);
 				}
 				catch (Throwable throwable) {
 					this.cancel();
@@ -154,7 +153,8 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	}
 	
 	protected void onStart(Subscription subscription) {
-		subscription.request(Long.MAX_VALUE);
+//		subscription.request(Long.MAX_VALUE);
+		subscription.request(2);
 	}
 	
 	@Override
@@ -167,9 +167,10 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		else {
 			this.transferedLength += value.readableBytes();
 			if(this.firstChunk != null) {
+				final ByteBuf previousChunk = this.firstChunk;
+				this.firstChunk = null;
 				this.executeInEventLoop(() -> {
-					this.onNextMany(this.firstChunk);
-					this.firstChunk = null;
+					this.onNextMany(previousChunk);
 				});
 			}
 			this.executeInEventLoop(() -> this.onNextMany(value));
