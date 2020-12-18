@@ -76,7 +76,7 @@ public abstract class AbstractResponse implements Response<ResponseBody> {
 	@Override
 	public AbstractResponse headers(Consumer<ResponseHeaders> headersConfigurer) {
 		if(this.isHeadersWritten()) {
-			throw new IllegalStateException("Headers have been already written");
+			throw new IllegalStateException("Headers already written");
 		}
 		headersConfigurer.accept(this.responseHeaders);
 		return this;
@@ -84,6 +84,9 @@ public abstract class AbstractResponse implements Response<ResponseBody> {
 
 	@Override
 	public AbstractResponse cookies(Consumer<ResponseCookies> cookiesConfigurer) {
+		if(this.isHeadersWritten()) {
+			throw new IllegalStateException("Headers already written");
+		}
 		if(this.responseCookies == null) {
 			this.responseCookies = new GenericResponseCookies(this.headerService, this.responseHeaders);
 		}

@@ -33,8 +33,6 @@ public interface Request<A> {
 	
 	SocketAddress getRemoteAddress();
 	
-	// TODO path parameters
-	
 	Optional<A> body();
 	
 	default <E> Request<E> map(Function<? super A, ? extends E> bodyMapper) {

@@ -66,7 +66,7 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public Http1xResponseHeaders contentType(String contentType) {
-		this.internalHeaders.set((CharSequence)Headers.NAME_CONTENT_LENGTH, contentType);
+		this.internalHeaders.set((CharSequence)Headers.NAME_CONTENT_TYPE, contentType);
 		return this;
 	}
 	

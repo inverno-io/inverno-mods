@@ -27,11 +27,11 @@ public interface Response<A> {
 	
 	boolean isHeadersWritten();
 	
-	Response<A> headers(Consumer<ResponseHeaders> headersConfigurer);
+	Response<A> headers(Consumer<ResponseHeaders> headersConfigurer) throws IllegalStateException;
 	
 	Response<A> trailers(Consumer<ResponseTrailers> trailersConfigurer);
 	
-	Response<A> cookies(Consumer<ResponseCookies> cookiesConfigurer);
+	Response<A> cookies(Consumer<ResponseCookies> cookiesConfigurer) throws IllegalStateException;
 	
 	A body();
 	

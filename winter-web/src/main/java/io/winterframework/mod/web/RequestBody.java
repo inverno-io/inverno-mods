@@ -24,11 +24,11 @@ import reactor.core.publisher.Flux;
  */
 public interface RequestBody {
 	
-	RequestBody.Raw raw();
+	RequestBody.Raw raw() throws IllegalStateException;
 	
-	RequestBody.Multipart multipart();
+	RequestBody.Multipart multipart() throws IllegalStateException;
 	
-	RequestBody.UrlEncoded urlEncoded();
+	RequestBody.UrlEncoded urlEncoded() throws IllegalStateException;
 	
 	public static interface Raw {
 		Flux<ByteBuf> data();
