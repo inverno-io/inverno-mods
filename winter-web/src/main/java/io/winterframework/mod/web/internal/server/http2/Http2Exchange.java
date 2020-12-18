@@ -3,8 +3,6 @@
  */
 package io.winterframework.mod.web.internal.server.http2;
 
-import java.util.function.Consumer;
-
 import org.reactivestreams.Subscription;
 
 import io.netty.buffer.ByteBuf;
@@ -38,8 +36,6 @@ public class Http2Exchange extends AbstractExchange {
 	private final Http2ConnectionEncoder encoder;
 	private final HeaderService headerService;
 	
-	private final Consumer<Http2ResponseHeaders> headersConfigurer;
-
 	public Http2Exchange(
 			ChannelHandlerContext context, 
 			Http2Stream stream, 
@@ -55,11 +51,6 @@ public class Http2Exchange extends AbstractExchange {
 		this.stream = stream;
 		this.encoder = encoder;
 		this.headerService = headerService;
-		
-		this.headersConfigurer = http2Headers -> {
-			this.response.getCookies().getAll().stream()
-				.forEach(header -> http2Headers.add(header.getHeaderName(), header.getHeaderValue()));
-		};
 	}
 	
 	@Override
@@ -77,8 +68,7 @@ public class Http2Exchange extends AbstractExchange {
 		try {
 			if(!this.response.getHeaders().isWritten()) {
 				Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.getHeaders();
-				this.headersConfigurer.accept(headers);
-				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getHttpHeaders(), 0, false, this.context.voidPromise());
+				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getInternalHeaders(), 0, false, this.context.voidPromise());
 				this.response.getHeaders().setWritten(true);
 			}
 			// TODO implement back pressure with the flow controller
@@ -125,55 +115,32 @@ public class Http2Exchange extends AbstractExchange {
 	
 	@Override
 	protected void onCompleteSingle(ByteBuf value) {
-		try {
-			if(!this.response.getHeaders().isWritten()) {
-				Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.getHeaders();
-				this.headersConfigurer.accept(headers);
-				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getHttpHeaders(), 0, false, this.context.voidPromise());
-				this.response.getHeaders().setWritten(true);
-			}
-			// TODO implement back pressure with the flow controller
-			/*this.encoder.flowController().listener(new Listener() {
-				
-				@Override
-				public void writabilityChanged(Http2Stream stream) {
-					
-				}
-			});*/
-			
-			ChannelPromise prm = this.context.newPromise();
-			prm.addListener(new GenericFutureListener<Future<Void>>() {
-				public void operationComplete(Future<Void> future) throws Exception {
-					request(1);
-				};
-			});
-			this.encoder.writeData(this.context, this.stream.id(), value, 0, true, prm);
-			this.context.channel().flush();
+		if(!this.response.getHeaders().isWritten()) {
+			Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.getHeaders();
+			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getInternalHeaders(), 0, false, this.context.voidPromise());
+			this.response.getHeaders().setWritten(true);
 		}
-		// TODO errors
-		finally {
-			this.handler.exchangeNext(this.context, value);
-			this.handler.exchangeComplete(this.context);
+		Http2ResponseTrailers trailers = (Http2ResponseTrailers)this.response.getTrailers();
+		this.encoder.writeData(this.context, this.stream.id(), value, 0, trailers != null, this.context.voidPromise());
+		if(trailers != null) {
+			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getInternalTrailers(), 0, true, this.context.voidPromise());	
 		}
+		this.context.channel().flush();
+		this.handler.exchangeNext(this.context, value);
+		this.handler.exchangeComplete(this.context);
 	}
 	
 	@Override
 	protected void onCompleteMany() {
-		try {
-			if(!this.response.getHeaders().isWritten()) {
-				Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.getHeaders();
-				this.headersConfigurer.accept(headers);
-				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getHttpHeaders(), 0, true, this.context.voidPromise());
-				this.response.getHeaders().setWritten(true);
-			}
-			else {
-				this.encoder.writeData(this.context, this.stream.id(), Unpooled.EMPTY_BUFFER, 0, true, this.context.voidPromise());
-			}
-			this.context.channel().flush();
-			this.handler.exchangeComplete(this.context);
-		} 
-		catch (Exception e) {
-			this.handler.exchangeError(this.context, e);
+		if(!this.response.getHeaders().isWritten()) {
+			Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.getHeaders();
+			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getInternalHeaders(), 0, true, this.context.voidPromise());
+			this.response.getHeaders().setWritten(true);
 		}
+		else {
+			this.encoder.writeData(this.context, this.stream.id(), Unpooled.EMPTY_BUFFER, 0, true, this.context.voidPromise());
+		}
+		this.context.channel().flush();
+		this.handler.exchangeComplete(this.context);
 	}
 }

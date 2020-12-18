@@ -3,15 +3,13 @@
  */
 package io.winterframework.mod.web.internal.server;
 
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.ResponseCookies;
-import io.winterframework.mod.web.SetCookie.Configurator;
+import io.winterframework.mod.web.SetCookie;
 import io.winterframework.mod.web.internal.header.SetCookieCodec;
 
 /**
@@ -20,25 +18,25 @@ import io.winterframework.mod.web.internal.header.SetCookieCodec;
  */
 public class GenericResponseCookies implements ResponseCookies {
 
-	private HeaderService headerService;
+	private final HeaderService headerService;
 	
-	private List<SetCookieCodec.SetCookie> cookies;
+	private final AbstractResponseHeaders responseHeaders;
 	
-	public GenericResponseCookies(HeaderService headerService) {
+	public GenericResponseCookies(HeaderService headerService, AbstractResponseHeaders responseHeaders) {
 		this.headerService = headerService;
-		this.cookies = new LinkedList<>();
+		this.responseHeaders = responseHeaders;
 	}
 	
 	public List<Headers.SetCookie> getAll() {
-		return Collections.unmodifiableList(this.cookies);
+		return this.responseHeaders.getAll(Headers.NAME_SET_COOKIE);
 	}
 	
 	@Override
-	public ResponseCookies addCookie(Consumer<Configurator> configurer) {
+	public ResponseCookies addCookie(Consumer<SetCookie.Configurator> configurer) {
 		SetCookieCodec.SetCookie setCookie = new SetCookieCodec.SetCookie();
 		configurer.accept(setCookie);
 		setCookie.setHeaderValue(this.headerService.encodeValue(setCookie));
-		this.cookies.add(setCookie);
+		this.responseHeaders.add(setCookie);
 		return this;
 	}
 }

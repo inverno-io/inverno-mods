@@ -252,6 +252,16 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	}
 	
 	@Override
+	public void exchangeError(ChannelHandlerContext ctx, Throwable t) {
+		// If we get there it means we weren't able to properly handle the error before
+		// so we have to close the connection
+		if(flush) {
+			ctx.flush();
+		}
+		ctx.close();
+	}
+	
+	@Override
 	public void exchangeComplete(ChannelHandlerContext ctx) {
 		if(this.respondingExchange.keepAlive) {
 			if(this.respondingExchange.next != null) {

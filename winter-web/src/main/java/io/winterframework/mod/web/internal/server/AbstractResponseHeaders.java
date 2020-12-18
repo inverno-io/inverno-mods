@@ -60,7 +60,7 @@ public interface AbstractResponseHeaders extends ResponseHeaders {
 	
 	Set<String> getNames();
 	
-	Long getSize();
+	Long getContentLength();
 	
 	int getStatus();
 }

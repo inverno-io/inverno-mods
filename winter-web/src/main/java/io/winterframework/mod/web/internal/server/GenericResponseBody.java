@@ -196,12 +196,12 @@ public class GenericResponseBody implements ResponseBody {
 
 		protected void populateHeaders(io.winterframework.mod.commons.resource.Resource resource) {
 			GenericResponseBody.this.response.headers(h -> {
-				if(GenericResponseBody.this.response.getHeaders().getSize() == null) {
+				if(GenericResponseBody.this.response.getHeaders().getContentLength() == null) {
 					Long size;
 					try {
 						size = resource.size();
 						if(size != null) {
-							h.size(size);
+							h.contentLength(size);
 						}
 					} 
 					catch (IOException e) {

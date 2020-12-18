@@ -15,10 +15,15 @@
  */
 package io.winterframework.mod.web.internal.server.http1x;
 
+import java.util.function.Consumer;
+
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.ssl.SslHandler;
 import io.winterframework.mod.web.HeaderService;
+import io.winterframework.mod.web.Response;
+import io.winterframework.mod.web.ResponseBody;
+import io.winterframework.mod.web.ResponseTrailers;
 import io.winterframework.mod.web.internal.server.AbstractResponse;
 
 /**
@@ -40,8 +45,22 @@ class Http1xResponse extends AbstractResponse {
 	}
 	
 	@Override
+	public Response<ResponseBody> trailers(Consumer<ResponseTrailers> trailersConfigurer) {
+		if(this.responseTrailers == null) {
+			this.responseTrailers = new Http1xResponseTrailers();
+		}
+		trailersConfigurer.accept(this.responseTrailers);
+		return this;
+	}
+	
+	@Override
 	public Http1xResponseHeaders getHeaders() {
-		return (Http1xResponseHeaders)super.getHeaders();
+		return (Http1xResponseHeaders)this.responseHeaders;
+	}
+	
+	@Override
+	public Http1xResponseTrailers getTrailers() {
+		return (Http1xResponseTrailers)this.responseTrailers;
 	}
 	
 	@Override

@@ -40,7 +40,7 @@ public class Http1xRequestHeaders implements RequestHeaders {
 	private final ChannelHandlerContext context;
 	private final HeaderService headerService;
 	private final HttpRequest httpRequest;
-	private final LinkedHttpHeaders httpHeaders;
+	private final LinkedHttpHeaders internalHeaders;
 	
 	private Method method;
 	private String scheme;
@@ -48,13 +48,17 @@ public class Http1xRequestHeaders implements RequestHeaders {
 	public Http1xRequestHeaders(ChannelHandlerContext context, HttpRequest httpRequest, HeaderService headerService) {
 		this.context = context;
 		this.httpRequest = httpRequest;
-		this.httpHeaders = (LinkedHttpHeaders)httpRequest.headers();
+		this.internalHeaders = (LinkedHttpHeaders)httpRequest.headers();
 		this.headerService = headerService;
+	}
+	
+	LinkedHttpHeaders getInternalHeaders() {
+		return this.internalHeaders;
 	}
 	
 	@Override
 	public String getAuthority() {
-		return this.httpHeaders.get((CharSequence)Headers.NAME_HOST);
+		return this.internalHeaders.get((CharSequence)Headers.NAME_HOST);
 	}
 
 	@Override
@@ -80,36 +84,36 @@ public class Http1xRequestHeaders implements RequestHeaders {
 
 	@Override
 	public String getContentType() {
-		return this.httpHeaders.get((CharSequence)Headers.NAME_CONTENT_TYPE);
+		return this.internalHeaders.get((CharSequence)Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
-	public Long getSize() {
-		return this.httpHeaders.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
+	public Long getContentLength() {
+		return this.internalHeaders.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
 	}
 
 	@Override
 	public Set<String> getNames() {
-		return this.httpHeaders.names();
+		return this.internalHeaders.names();
 	}
 
 	@Override
 	public <T extends Header> Optional<T> getHeader(String name) {
-		return Optional.ofNullable(this.httpHeaders.get((CharSequence)name)).map(value -> this.headerService.decode(name, value));
+		return Optional.ofNullable(this.internalHeaders.get((CharSequence)name)).map(value -> this.headerService.decode(name, value));
 	}
 
 	@Override
 	public <T extends Header> List<T> getAllHeader(String name) {
-		return this.httpHeaders.getAll((CharSequence)name).stream().map(value -> this.headerService.<T>decode(name, value)).collect(Collectors.toList());
+		return this.internalHeaders.getAll((CharSequence)name).stream().map(value -> this.headerService.<T>decode(name, value)).collect(Collectors.toList());
 	}
 
 	@Override
 	public Map<String, List<Header>> getAllHeader() {
-		return this.httpHeaders.entries().stream().map(e -> (Header)this.headerService.decode(e.getKey(), e.getValue())).collect(Collectors.groupingBy(h -> h.getHeaderName()));
+		return this.internalHeaders.entries().stream().map(e -> (Header)this.headerService.decode(e.getKey(), e.getValue())).collect(Collectors.groupingBy(h -> h.getHeaderName()));
 	}
 	
 	@Override
 	public boolean contains(String name, String value) {
-		return this.httpHeaders.contains(name, value, true);
+		return this.internalHeaders.contains(name, value, true);
 	}
 }

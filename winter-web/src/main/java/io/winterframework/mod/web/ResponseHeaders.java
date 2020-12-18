@@ -29,7 +29,7 @@ public interface ResponseHeaders {
 	
 	ResponseHeaders contentType(String contentType);
 	
-	ResponseHeaders size(long size);
+	ResponseHeaders contentLength(long length);
 	
 	ResponseHeaders add(String name, String value);
 	

@@ -26,18 +26,20 @@ import io.winterframework.mod.web.Response;
 import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.ResponseCookies;
 import io.winterframework.mod.web.ResponseHeaders;
+import io.winterframework.mod.web.ResponseTrailers;
 
 /**
  * @author jkuhn
  *
  */
-public class AbstractResponse implements Response<ResponseBody> {
+public abstract class AbstractResponse implements Response<ResponseBody> {
 
 	protected ChannelHandlerContext context;
 	
 	protected HeaderService headerService;
 	
 	protected AbstractResponseHeaders responseHeaders; 
+	protected ResponseTrailers responseTrailers;
 
 	protected GenericResponseCookies responseCookies;
 	
@@ -57,11 +59,12 @@ public class AbstractResponse implements Response<ResponseBody> {
 	public AbstractResponseHeaders getHeaders() {
 		return this.responseHeaders;
 	}
+
+	public ResponseTrailers getTrailers() {
+		return this.responseTrailers;
+	}
 	
 	public GenericResponseCookies getCookies() {
-		if(this.responseCookies == null) {
-			this.responseCookies = new GenericResponseCookies(this.headerService);
-		}
 		return this.responseCookies;
 	}
 	
@@ -72,12 +75,18 @@ public class AbstractResponse implements Response<ResponseBody> {
 	
 	@Override
 	public AbstractResponse headers(Consumer<ResponseHeaders> headersConfigurer) {
+		if(this.isHeadersWritten()) {
+			throw new IllegalStateException("Headers have been already written");
+		}
 		headersConfigurer.accept(this.responseHeaders);
 		return this;
 	}
 
 	@Override
 	public AbstractResponse cookies(Consumer<ResponseCookies> cookiesConfigurer) {
+		if(this.responseCookies == null) {
+			this.responseCookies = new GenericResponseCookies(this.headerService, this.responseHeaders);
+		}
 		cookiesConfigurer.accept(this.responseCookies);
 		return this;
 	}

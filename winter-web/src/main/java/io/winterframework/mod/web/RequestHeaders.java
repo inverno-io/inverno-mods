@@ -36,7 +36,7 @@ public interface RequestHeaders {
 
 	String getContentType();
 	
-	Long getSize();
+	Long getContentLength();
 	
 	Set<String> getNames();
 	
