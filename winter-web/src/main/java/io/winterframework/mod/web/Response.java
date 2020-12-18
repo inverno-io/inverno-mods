@@ -27,7 +27,9 @@ public interface Response<A> {
 	
 	boolean isHeadersWritten();
 	
-	Response<A> headers(Consumer<ResponseHeaders> headersConfigurer) throws IllegalStateException;
+	Response<A> headers(Consumer<ResponseHeaders> headersConfigurer);
+	
+	Response<A> trailers(Consumer<ResponseTrailers> trailersConfigurer);
 	
 	Response<A> cookies(Consumer<ResponseCookies> cookiesConfigurer);
 	
@@ -48,6 +50,12 @@ public interface Response<A> {
 			@Override
 			public Response<E> headers(Consumer<ResponseHeaders> headersConfigurer) throws IllegalStateException {
 				sourceResponse.headers(headersConfigurer);
+				return this;
+			}
+			
+			@Override
+			public Response<E> trailers(Consumer<ResponseTrailers> trailersConfigurer) {
+				sourceResponse.trailers(trailersConfigurer);
 				return this;
 			}
 

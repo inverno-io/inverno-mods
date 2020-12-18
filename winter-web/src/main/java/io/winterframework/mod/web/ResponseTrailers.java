@@ -15,26 +15,15 @@
  */
 package io.winterframework.mod.web;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
 /**
  * @author jkuhn
  *
  */
-public interface PartHeaders {
-
-	String getContentType();
+public interface ResponseTrailers {
 	
-	Long getContentLength();
+	ResponseTrailers add(String name, String value);
 	
-	Set<String> getNames();
+	ResponseTrailers add(CharSequence name, CharSequence value);
 	
-	<T extends Header> Optional<T> getHeader(String name);
-	
-	<T extends Header> List<T> getAllHeader(String name);
-	
-	Map<String, List<? extends Header>> getAllHeader();
+	ResponseTrailers add(Header... trailers);
 }

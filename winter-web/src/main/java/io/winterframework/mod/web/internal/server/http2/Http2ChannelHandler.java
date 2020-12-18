@@ -6,6 +6,7 @@ import io.netty.handler.codec.http2.Http2Connection;
 import io.netty.handler.codec.http2.Http2ConnectionDecoder;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2ConnectionHandler;
+import io.netty.handler.codec.http2.Http2Error;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Flags;
 import io.netty.handler.codec.http2.Http2FrameListener;
@@ -110,32 +111,24 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
     @Override
     public void onHeadersRead(ChannelHandlerContext ctx, int streamId, Http2Headers headers, int padding, boolean endOfStream) throws Http2Exception {
 //        System.out.println("onHeaderReads(2) " + streamId + " - " + endOfStream + " - " + this.hashCode());
-    	if(!this.serverStreams.containsKey(streamId)) {
+    	Http2Exchange exchange = this.serverStreams.get(streamId);
+    	if(exchange == null) {
 			Http2Exchange streamExchange = new Http2Exchange(ctx, this.connection().stream(streamId), headers, this.encoder(), this.headerService, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.rootHandler, this.errorHandler);
 			this.serverStreams.put(streamId, streamExchange);
 			if(endOfStream) {
 				streamExchange.request().data().ifPresent(sink -> sink.tryEmitComplete());
             }
-			streamExchange.start(AbstractExchange.Handler.DEFAULT);
-			
-			/*streamExchange.init().doOnSubscribe(subscription -> {
-				this.serverStreams.put(streamId, streamExchange);
-				if(endOfStream) {
-					streamExchange.request().data().ifPresent(sink -> sink.tryEmitComplete());
-                }
-			}).subscribe();*/
+			streamExchange.start(new AbstractExchange.Handler() {
+				@Override
+				public void exchangeError(ChannelHandlerContext ctx, Throwable t) {
+					Http2ChannelHandler.this.resetStream(ctx, streamId, Http2Error.INTERNAL_ERROR.code(), ctx.voidPromise());
+				}
+			});
     	}
     	else {
-    		// TODO HTTP trailers...
+    		// Continuation frame
+    		((Http2RequestHeaders)exchange.request().headers()).getHttpHeaders().add(headers);
     	}
-
-    	/*Http2Headers responseHeaders = new DefaultHttp2Headers();
-    	responseHeaders.status("200");
-    	encoder().writeHeaders(ctx, streamId, responseHeaders, padding, true, ctx.newPromise());
-    	
-    	ByteBuf message = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Server Response : Version - HTTP/2", CharsetUtil.UTF_8));
-        encoder().writeData(ctx, streamId, message, padding, endOfStream, ctx.newPromise());
-        ctx.channel().flush();*/
     }
     
     @Override
@@ -246,4 +239,5 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	public void onGoAwayReceived(int lastStreamId, long errorCode, ByteBuf debugData) {
 //		System.out.println("Stream go away received");		
 	}
+	
 }

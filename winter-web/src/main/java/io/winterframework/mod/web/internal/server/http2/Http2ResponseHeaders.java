@@ -41,24 +41,18 @@ public class Http2ResponseHeaders implements AbstractResponseHeaders {
 
 	private final HeaderService headerService;
 	
-	private final Http2Headers httpHeaders;
+	private final Http2Headers internalHeaders;
 	
 	private boolean written;
 	
 	public Http2ResponseHeaders(HeaderService headerService) {
 		this.headerService = headerService;
-		this.httpHeaders = new DefaultHttp2Headers();
-		this.httpHeaders.set(PseudoHeaderName.STATUS.value(), "200");
+		this.internalHeaders = new DefaultHttp2Headers();
+		this.internalHeaders.set(PseudoHeaderName.STATUS.value(), "200");
 	}
 	
-	Http2Headers getHttpHeaders() {
-		return this.httpHeaders;
-	}
-	
-	private void requireNonWritten() {
-		if(this.written) {
-			throw new IllegalStateException("Headers have been already written");
-		}
+	Http2Headers getInternalHeaders() {
+		return this.internalHeaders;
 	}
 
 	@Override
@@ -68,43 +62,38 @@ public class Http2ResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public Http2ResponseHeaders status(int status) {
-		this.requireNonWritten();
-		this.httpHeaders.setInt(PseudoHeaderName.STATUS.value(), status);
+		this.internalHeaders.setInt(PseudoHeaderName.STATUS.value(), status);
 		return this;
 	}
 
 	@Override
 	public Http2ResponseHeaders contentType(String contentType) {
-		this.requireNonWritten();
-		this.httpHeaders.set(Headers.NAME_CONTENT_TYPE, contentType);
+		this.internalHeaders.set(Headers.NAME_CONTENT_TYPE, contentType);
 		return this;
 	}
 
 	@Override
-	public Http2ResponseHeaders size(long size) {
-		this.requireNonWritten();
-		this.httpHeaders.setLong(Headers.NAME_CONTENT_LENGTH, size);
+	public Http2ResponseHeaders contentLength(long contentLength) {
+		this.internalHeaders.setLong(Headers.NAME_CONTENT_LENGTH, contentLength);
 		return this;
 	}
 
 	@Override
 	public Http2ResponseHeaders add(String name, String value) {
-		this.requireNonWritten();
-		this.httpHeaders.add(name, value);
+		this.internalHeaders.add(name, value);
 		return this;
 	}
 
 	@Override
 	public Http2ResponseHeaders add(CharSequence name, CharSequence value) {
-		this.requireNonWritten();
-		this.httpHeaders.add(name, value);
+		this.internalHeaders.add(name, value);
 		return this;
 	}
 
 	@Override
 	public Http2ResponseHeaders add(Header... headers) {
 		for(Header header : headers) {
-			this.httpHeaders.add(header.getHeaderName(), header.getHeaderValue());
+			this.internalHeaders.add(header.getHeaderName(), header.getHeaderValue());
 		}
 		return this;
 	}
@@ -141,13 +130,13 @@ public class Http2ResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public String getString(String name) {
-		CharSequence value = this.httpHeaders.get(name);
+		CharSequence value = this.internalHeaders.get(name);
 		return value != null ? value.toString() : null;
 	}
 
 	@Override
 	public CharSequence getCharSequence(String name) {
-		return this.httpHeaders.get(name);
+		return this.internalHeaders.get(name);
 	}
 
 	@Override
@@ -157,12 +146,12 @@ public class Http2ResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public List<String> getAllString(String name) {
-		return this.httpHeaders.getAll(name).stream().map(CharSequence::toString).collect(Collectors.toList());
+		return this.internalHeaders.getAll(name).stream().map(CharSequence::toString).collect(Collectors.toList());
 	}
 
 	@Override
 	public List<CharSequence> getAllCharSequence(String name) {
-		return this.httpHeaders.getAll(name);
+		return this.internalHeaders.getAll(name);
 	}
 
 	@Override
@@ -173,7 +162,7 @@ public class Http2ResponseHeaders implements AbstractResponseHeaders {
 	@Override
 	public List<Entry<String, String>> getAllString() {
 		List<Entry<String, String>> result = new LinkedList<>();
-		this.httpHeaders.forEach(e -> {
+		this.internalHeaders.forEach(e -> {
 			result.add(Map.entry(e.getKey().toString(), e.getValue().toString()));
 		});
 		return result;
@@ -182,7 +171,7 @@ public class Http2ResponseHeaders implements AbstractResponseHeaders {
 	@Override
 	public List<Entry<CharSequence, CharSequence>> getAllCharSequence() {
 		List<Entry<CharSequence, CharSequence>> result = new LinkedList<>();
-		this.httpHeaders.forEach(e -> {
+		this.internalHeaders.forEach(e -> {
 			result.add(Map.entry(e.getKey(), e.getValue()));
 		});
 		return result;
@@ -190,16 +179,16 @@ public class Http2ResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public Set<String> getNames() {
-		return this.httpHeaders.names().stream().map(CharSequence::toString).collect(Collectors.toSet());
+		return this.internalHeaders.names().stream().map(CharSequence::toString).collect(Collectors.toSet());
 	}
 
 	@Override
-	public Long getSize() {
-		return this.httpHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
+	public Long getContentLength() {
+		return this.internalHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
 	}
 
 	@Override
 	public int getStatus() {
-		return this.httpHeaders.getInt(PseudoHeaderName.STATUS.value());
+		return this.internalHeaders.getInt(PseudoHeaderName.STATUS.value());
 	}
 }

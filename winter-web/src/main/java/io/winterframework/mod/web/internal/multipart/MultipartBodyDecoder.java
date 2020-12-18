@@ -313,9 +313,9 @@ public class MultipartBodyDecoder implements RequestBodyDecoder<Part> {
 			Charset partCharset = partContentTypeHeader != null && partContentTypeHeader.getCharset() != null ? partContentTypeHeader.getCharset() : context.contentType.getCharset();
 			
 			Header partContentLengthHeader = context.<Header>getDecodedHeader(Headers.NAME_CONTENT_LENGTH);
-			Long partSize = partContentLengthHeader != null ? Long.parseLong(partContentLengthHeader.getHeaderValue()) : null;
+			Long partContentLength = partContentLengthHeader != null ? Long.parseLong(partContentLengthHeader.getHeaderValue()) : null;
 			
-			context.startPart(new GenericPart(partName, partFilename, context.getAllDecodedHeaders(), partContentType, partCharset, partSize));
+			context.startPart(new GenericPart(partName, partFilename, context.getAllDecodedHeaders(), partContentType, partCharset, partContentLength));
 			
 			return this::data;
 		}

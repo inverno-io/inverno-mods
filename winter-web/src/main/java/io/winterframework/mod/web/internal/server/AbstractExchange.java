@@ -36,15 +36,14 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	protected Handler handler;
 	
 	private int transferedLength;
-	private int chunkCount;
+	protected int chunkCount;
 	private ByteBuf firstChunk;
 	
 	private ErrorSubscriber errorSubscriber;
 	
 	protected static final ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> LAST_RESORT_ERROR_HANDLER = exchange -> {
 		if(exchange.response().isHeadersWritten()) {
-			// TODO exchange interrupted exception?
-			throw new RuntimeException(exchange.getError());
+			throw new IllegalStateException("Headers already written", exchange.getError());
 		}
 		if(exchange.getError() instanceof WebException) {
 			exchange.response().headers(h -> h.status(((WebException)exchange.getError()).getStatusCode())).body().empty();
@@ -109,14 +108,15 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		try {
 			this.rootHandler.handle(this);
 		}
-		catch(Throwable t1) {
+		catch(Throwable throwable) {
 			// We need to create a new error exchange each time we try to handle the error in order to have a fresh response 
-			ErrorExchange<ResponseBody, Throwable> errorExchange = this.createErrorExchange(t1);
+			ErrorExchange<ResponseBody, Throwable> errorExchange = this.createErrorExchange(throwable);
 			try {
 				this.errorHandler.handle(errorExchange);
 			} 
-			catch (Throwable t2) {
-				errorExchange = this.createErrorExchange(t1);
+			catch (Throwable t) {
+				// TODO we should probably log the error handler error
+				errorExchange = this.createErrorExchange(throwable);
 				LAST_RESORT_ERROR_HANDLER.handle(errorExchange);
 			}
 			finally {
@@ -131,7 +131,18 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			runnable.run();
 		}
 		else {
-			this.contextExecutor.execute(runnable);
+			// We need to pause the publisher here so we can handle error properly 
+			this.request(0);
+			this.contextExecutor.execute(() -> {
+				try {
+					runnable.run();
+					this.requestUnbounded();
+				}
+				catch (Throwable throwable) {
+					this.cancel();
+					this.hookOnError(throwable);
+				}
+			});
 		}
 	}
 	
@@ -156,8 +167,10 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		else {
 			this.transferedLength += value.readableBytes();
 			if(this.firstChunk != null) {
-				this.executeInEventLoop(() -> this.onNextMany(this.firstChunk));
-				this.firstChunk = null;
+				this.executeInEventLoop(() -> {
+					this.onNextMany(this.firstChunk);
+					this.firstChunk = null;
+				});
 			}
 			this.executeInEventLoop(() -> this.onNextMany(value));
 		}
@@ -172,24 +185,33 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		// - create a new Response for the error
 		// - reset this exchange => transferedLength, chunkCount must be reset
 		// - invoke the error handler (potentially the fallback error handler) with a new ErrorExchange 
-		
-		ErrorExchange<ResponseBody, Throwable> errorExchange = this.createErrorExchange(throwable);
-		try {
-			this.errorHandler.handle(errorExchange);
-		} 
-		catch (Throwable t2) {
-			// TODO we should probably log the error handler error
-			errorExchange = this.createErrorExchange(throwable);
-			LAST_RESORT_ERROR_HANDLER.handle(errorExchange);
+		if(this.response.isHeadersWritten()) {
+			this.executeInEventLoop(() -> { 
+				this.onCompleteWithError(throwable);
+			});
 		}
-		finally {
-			this.response = (AbstractResponse) errorExchange.response();
+		else {
+			this.transferedLength = 0;
+			this.chunkCount = 0;
+			this.firstChunk = null;
+			ErrorExchange<ResponseBody, Throwable> errorExchange = this.createErrorExchange(throwable);
+			try {
+				this.errorHandler.handle(errorExchange);
+			} 
+			catch (Throwable t) {
+				// TODO we should probably log the error handler error
+				errorExchange = this.createErrorExchange(throwable);
+				LAST_RESORT_ERROR_HANDLER.handle(errorExchange);
+			}
+			finally {
+				this.response = (AbstractResponse) errorExchange.response();
+			}
+	
+			this.executeInEventLoop(() -> {
+				this.errorSubscriber = new ErrorSubscriber(throwable);
+				this.response.data().subscribe(this.errorSubscriber);
+			});
 		}
-
-		this.executeInEventLoop(() -> {
-			this.errorSubscriber = new ErrorSubscriber(throwable);
-			this.response.data().subscribe(this.errorSubscriber);
-		});
 	}
 	
 	protected abstract void onCompleteWithError(Throwable throwable);
@@ -199,14 +221,14 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		if(this.firstChunk != null) {
 			// single chunk response
 			if(this.response.getHeaders().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
-				this.response.getHeaders().size(this.transferedLength);
+				this.response.getHeaders().contentLength(this.transferedLength);
 			}
 			this.executeInEventLoop(() -> this.onCompleteSingle(this.firstChunk));
 		}
 		else if(this.chunkCount == 0) {
 			// empty response
 			if(this.response.getHeaders().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
-				this.response.getHeaders().size(0);
+				this.response.getHeaders().contentLength(0);
 			}
 			this.executeInEventLoop(this::onCompleteEmpty);
 		}
@@ -259,7 +281,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		protected void hookOnError(Throwable throwable) {
 			// If we get there it means we can no longer process anything
 			// TODO we should probably log the error handler error
-			AbstractExchange.this.executeInEventLoop(() -> AbstractExchange.this.onCompleteWithError(this.originalError));
+			AbstractExchange.this.onCompleteWithError(this.originalError);
 		}
 		
 		@Override

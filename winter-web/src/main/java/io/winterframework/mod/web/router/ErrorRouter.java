@@ -28,8 +28,7 @@ public interface ErrorRouter extends Router<Void, ResponseBody, ErrorExchange<Re
 	@Override
 	default void handle(ErrorExchange<ResponseBody, Throwable> exchange) throws WebException {
 		if(exchange.response().isHeadersWritten()) {
-			// TODO exchange interrupted exception?
-			throw new RuntimeException(exchange.getError());
+			throw new IllegalStateException("Headers already written", exchange.getError());
 		}
 	}
 }

@@ -32,6 +32,8 @@ public final class Headers {
 	public static final String NAME_HOST = "host";
 	public static final String NAME_RETRY_AFTER = "retry-after";
 	public static final String NAME_SET_COOKIE = "set-cookie";
+	public static final String NAME_TE = "te";
+	public static final String NAME_TRAILER = "trailer";
 	public static final String NAME_TRANSFER_ENCODING = "transfer-encoding";
 	
 	// HTTP/2 pseudo headers
@@ -43,6 +45,7 @@ public final class Headers {
 	
 	/* Header Values */
 	public static final String VALUE_CLOSE = "close";
+	public static final String VALUE_TRAILERS = "trailers";
 	
 	private Headers() {}
 	

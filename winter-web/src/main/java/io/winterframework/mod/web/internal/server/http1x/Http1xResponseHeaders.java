@@ -36,7 +36,7 @@ import io.winterframework.mod.web.internal.server.AbstractResponseHeaders;
  */
 public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
-	private final LinkedHttpHeaders httpHeaders;
+	private final LinkedHttpHeaders internalHeaders;
 	
 	private final HeaderService headerService;
 	
@@ -46,17 +46,11 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 	
 	public Http1xResponseHeaders(HeaderService headerService) {
 		this.headerService = headerService;
-		this.httpHeaders = new LinkedHttpHeaders();
+		this.internalHeaders = new LinkedHttpHeaders();
 	}
 	
-	HttpHeaders getHttpHeaders() {
-		return this.httpHeaders;
-	}
-	
-	private void requireNonWritten() {
-		if(this.written) {
-			throw new IllegalStateException("Headers have been already written");
-		}
+	HttpHeaders getInternalHeaders() {
+		return this.internalHeaders;
 	}
 
 	@Override
@@ -66,38 +60,38 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public Http1xResponseHeaders status(int status) {
-		requireNonWritten();
 		this.status = status;
 		return this;
 	}
 
 	@Override
 	public Http1xResponseHeaders contentType(String contentType) {
-		this.add(Headers.NAME_CONTENT_TYPE, contentType);
+		this.internalHeaders.set((CharSequence)Headers.NAME_CONTENT_LENGTH, contentType);
 		return this;
 	}
 	
 	@Override
-	public Http1xResponseHeaders size(long size) {
-		this.httpHeaders.setLong((CharSequence)Headers.NAME_CONTENT_LENGTH, size);
+	public Http1xResponseHeaders contentLength(long contentLength) {
+		this.internalHeaders.setLong((CharSequence)Headers.NAME_CONTENT_LENGTH, contentLength);
 		return this;
 	}
 
 	@Override
 	public Http1xResponseHeaders add(String name, String value) {
-		this.httpHeaders.addCharSequence((CharSequence)name, (CharSequence)value);
+		this.internalHeaders.addCharSequence((CharSequence)name, (CharSequence)value);
 		return this;
 	}
 	
+	@Override
 	public Http1xResponseHeaders add(CharSequence name, CharSequence value) {
-		this.httpHeaders.addCharSequence(name, value);
+		this.internalHeaders.addCharSequence(name, value);
 		return this;
 	}
 
 	@Override
 	public Http1xResponseHeaders add(Header... headers) {
 		for(Header header : headers) {
-			this.httpHeaders.addCharSequence((CharSequence)header.getHeaderName(), (CharSequence)header.getHeaderValue());
+			this.internalHeaders.addCharSequence((CharSequence)header.getHeaderName(), (CharSequence)header.getHeaderValue());
 		}
 		return this;
 	}
@@ -120,12 +114,12 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public String getContentTypeString() {
-		return this.httpHeaders.get((CharSequence)Headers.NAME_CONTENT_TYPE);
+		return this.internalHeaders.get((CharSequence)Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
 	public CharSequence getContentTypeCharSequence() {
-		return this.httpHeaders.getCharSequence((CharSequence)Headers.NAME_CONTENT_TYPE);
+		return this.internalHeaders.getCharSequence((CharSequence)Headers.NAME_CONTENT_TYPE);
 	}
 	
 	@Override
@@ -135,12 +129,12 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 	
 	@Override
 	public String getString(String name) {
-		return this.httpHeaders.get((CharSequence)name);
+		return this.internalHeaders.get((CharSequence)name);
 	}
 	
 	@Override
 	public CharSequence getCharSequence(String name) {
-		return this.httpHeaders.getCharSequence((CharSequence)name);
+		return this.internalHeaders.getCharSequence((CharSequence)name);
 	}
 
 	@Override
@@ -150,12 +144,12 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public List<String> getAllString(String name) {
-		return this.httpHeaders.getAll((CharSequence)name);
+		return this.internalHeaders.getAll((CharSequence)name);
 	}
 	
 	@Override
 	public List<CharSequence> getAllCharSequence(String name) {
-		return this.httpHeaders.getAllCharSequence((CharSequence)name);
+		return this.internalHeaders.getAllCharSequence((CharSequence)name);
 	}
 	
 	@Override
@@ -165,22 +159,22 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public List<Map.Entry<String, String>> getAllString() {
-		return this.httpHeaders.entries();
+		return this.internalHeaders.entries();
 	}
 	
 	@Override
 	public List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence() {
-		return this.httpHeaders.entriesCharSequence();
+		return this.internalHeaders.entriesCharSequence();
 	}
 	
 	@Override
 	public Set<String> getNames() {
-		return this.httpHeaders.names();
+		return this.internalHeaders.names();
 	}
 
 	@Override
-	public Long getSize() {
-		return this.httpHeaders.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
+	public Long getContentLength() {
+		return this.internalHeaders.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
 	}
 
 	@Override

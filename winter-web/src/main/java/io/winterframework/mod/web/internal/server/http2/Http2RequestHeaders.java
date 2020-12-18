@@ -44,6 +44,10 @@ public class Http2RequestHeaders implements RequestHeaders {
 		this.httpHeaders = headers;
 	}
 	
+	Http2Headers getHttpHeaders() {
+		return this.httpHeaders;
+	}
+	
 	private String getHeaderValue(String name) {
 		CharSequence header = this.httpHeaders.get(name);
 		return header != null ? header.toString() : null;
@@ -75,7 +79,7 @@ public class Http2RequestHeaders implements RequestHeaders {
 	}
 
 	@Override
-	public Long getSize() {
+	public Long getContentLength() {
 		return this.httpHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
 	}
 	

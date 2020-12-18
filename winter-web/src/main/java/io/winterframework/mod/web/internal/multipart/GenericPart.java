@@ -42,14 +42,14 @@ class GenericPart implements Part {
 	private Flux<ByteBuf> data;
 	private FluxSink<ByteBuf> dataEmitter;
 	
-	public GenericPart(String name, Map<String, List<Header>> headers, String contentType, Charset charset, Long size) {
-		this(name, null, headers, contentType, charset, size);
+	public GenericPart(String name, Map<String, List<Header>> headers, String contentType, Charset charset, Long contentLength) {
+		this(name, null, headers, contentType, charset, contentLength);
 	}
 	
-	public GenericPart(String name, String filename, Map<String, List<Header>> headers, String contentType, Charset charset, Long size) {
+	public GenericPart(String name, String filename, Map<String, List<Header>> headers, String contentType, Charset charset, Long contentLength) {
 		this.name = name;
 		this.filename = filename;
-		this.partHeaders = new GenericPartHeaders(headers, contentType, charset, size);
+		this.partHeaders = new GenericPartHeaders(headers, contentType, charset, contentLength);
 		
 		this.data = Flux.<ByteBuf>create(emitter -> {
 			this.dataEmitter = emitter;

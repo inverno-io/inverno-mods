@@ -34,14 +34,14 @@ class GenericPartHeaders implements PartHeaders {
 
 	private String contentType;
 	
-	private Long size;
+	private Long contentLength;
 	
 	private Map<String, List<? extends Header>> headers;
 	
-	public GenericPartHeaders(Map<String, List<Header>> headers, String contentType, Charset charset, Long size) {
+	public GenericPartHeaders(Map<String, List<Header>> headers, String contentType, Charset charset, Long contentLength) {
 		this.headers = headers != null ? Collections.unmodifiableMap(headers) : Map.of();
 		this.contentType = contentType;
-		this.size = size;
+		this.contentLength = contentLength;
 	}
 	
 	@Override
@@ -50,8 +50,8 @@ class GenericPartHeaders implements PartHeaders {
 	}
 
 	@Override
-	public Long getSize() {
-		return this.size;
+	public Long getContentLength() {
+		return this.contentLength;
 	}
 
 	@Override
