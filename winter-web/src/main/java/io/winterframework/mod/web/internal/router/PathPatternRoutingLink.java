@@ -238,6 +238,7 @@ class PathPatternRoutingLink<A, B, C extends Exchange<A, B>, D extends PathAware
 			// TODO If we have more than one, we need to prioritize them or we need to fail depending on a routing strategy
 			// - we can choose to trust the Winter compiler to detect conflicts and have a defaulting behavior at runtime
 			// - we can choose to make this behavior configurable
+			// ==> for the time being let's just take the first one
 			Optional<RoutingLink<A, B, C, ?, D>> handler = this.handlers.entrySet().stream()
 				.map(e -> this.matches(normalizedPath, e.getKey(), e.getValue()))
 				.filter(Objects::nonNull)

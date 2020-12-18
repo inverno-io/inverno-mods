@@ -92,7 +92,6 @@ public abstract class AbstractRequest implements Request<RequestBody> {
 			if(this.requestBody == null) {
 				// TODO deal with backpressure using a custom queue: if the queue reach a given threshold we should suspend the read on the channel: this.context.channel().config().setAutoRead(false)
 				// and resume when this flux is actually consumed (doOnRequest? this might impact performance but here )
-				// TODO it might happen that a handler doesn't subscribe to the request data flux at all as a result we should basically complete the request sink once the response has been sent in order to drop next contents
 				this.data = Sinks.many().unicast().onBackpressureBuffer();
 				
 				Flux<ByteBuf> requestBodyData = this.data.asFlux();

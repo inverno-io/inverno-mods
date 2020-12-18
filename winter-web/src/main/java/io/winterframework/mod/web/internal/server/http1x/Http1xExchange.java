@@ -145,8 +145,12 @@ public class Http1xExchange extends AbstractExchange {
 				List<String> transferEncodings = headers.getAllString(Headers.NAME_TRANSFER_ENCODING);
 				if(headers.getContentLength() == null && !transferEncodings.contains("chunked")) {
 					headers.add(Headers.NAME_TRANSFER_ENCODING, "chunked");
+					
+					String contentType = headers.getString(Headers.NAME_CONTENT_TYPE);
+					this.manageChunked = contentType != null && contentType.regionMatches(true, 0, MediaTypes.TEXT_EVENT_STREAM, 0, MediaTypes.TEXT_EVENT_STREAM.length());
+					
 					// TODO accessing the string and using a region matches for TEXT_EVENT_STREAM might be more efficient
-					this.manageChunked = headers.getContentType().map(contentType -> contentType.getMediaType().equals(MediaTypes.TEXT_EVENT_STREAM)).orElse(false);
+//					this.manageChunked = headers.getContentType().map(contentType -> contentType.getMediaType().equals(MediaTypes.TEXT_EVENT_STREAM)).orElse(false);
 				}
 				this.encoder.writeFrame(this.context, this.createHttpResponse(headers, (Http1xResponseTrailers)this.response.getTrailers()), this.context.voidPromise());
 				headers.setWritten(true);
@@ -155,7 +159,6 @@ public class Http1xExchange extends AbstractExchange {
 				// We must handle chunked transfer encoding
 				ByteBuf chunked_header = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(Integer.toHexString(value.readableBytes()) + "\r\n", Charsets.orDefault(this.getCharset())));
 				ByteBuf chunked_trailer = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("\r\n", Charsets.orDefault(this.getCharset())));
-				
 				this.encoder.writeFrame(this.context, new DefaultHttpContent(Unpooled.wrappedBuffer(chunked_header, value, chunked_trailer)), this.context.voidPromise());
 			}
 			else {

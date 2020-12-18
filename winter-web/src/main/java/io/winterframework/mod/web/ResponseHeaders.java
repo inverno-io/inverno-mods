@@ -25,8 +25,6 @@ public interface ResponseHeaders {
 	
 	ResponseHeaders status(int status);
 	
-	// TODO add common response headers
-	
 	ResponseHeaders contentType(String contentType);
 	
 	ResponseHeaders contentLength(long length);

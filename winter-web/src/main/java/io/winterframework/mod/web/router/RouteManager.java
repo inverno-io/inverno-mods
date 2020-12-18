@@ -26,12 +26,8 @@ import io.winterframework.mod.web.ExchangeHandler;
  */
 public interface RouteManager<A, B, C extends Exchange<A, B>, D extends Router<A, B, C, D, E, F, G, H, I>, E extends RouteManager<A, B, C, D, E, F, G, H, I>, F extends Route<A, B, C>, G, H, I extends Exchange<G, H>> {
 
-//	D handler(RequestHandler<A, B, C> handler);
-	
 	D handler(ExchangeHandler<? super A, ? super B, ? super C> handler);
-	
-	// TODO These can be tricky because a manager can actually target sets of routes
-	// - is it always possible to remove/disable routes which are part of a wider set of routes?
+
 	D enable();
 	
 	D disable();

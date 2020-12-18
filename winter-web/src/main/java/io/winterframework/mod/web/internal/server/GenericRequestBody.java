@@ -51,7 +51,7 @@ public class GenericRequestBody implements RequestBody {
 	@Override
 	public RequestBody.Raw raw() {
 		if(this.urlEncodedBody != null || this.multipartBody != null) {
-			throw new IllegalStateException("You can't mix regular post request with multipart"); // TODO find proper message
+			throw new IllegalStateException("Request body decoder already exist");
 		}
 		if(this.rawBody == null) {
 			this.rawBody = new GenericRawRequestBody();
@@ -62,7 +62,7 @@ public class GenericRequestBody implements RequestBody {
 	@Override
 	public RequestBody.Multipart multipart() {
 		if(this.rawBody != null || this.urlEncodedBody != null) {
-			throw new IllegalStateException("You can't mix regular post request with multipart"); // TODO find proper message
+			throw new IllegalStateException("Request body decoder already exist");
 		}
 		if(this.multipartBody == null) {
 			this.multipartBody = new GenericMultipartRequestBody(this.multipartBodyDecoder.decode(this.data, this.contentType.orElse(null)));
@@ -73,7 +73,7 @@ public class GenericRequestBody implements RequestBody {
 	@Override
 	public RequestBody.UrlEncoded urlEncoded() {
 		if(this.rawBody != null || this.multipartBody != null) {
-			throw new IllegalStateException("You can't mix regular post request with multipart"); // TODO find proper message
+			throw new IllegalStateException("Request body decoder already exist");
 		}
 		if(this.urlEncodedBody == null) {
 			this.urlEncodedBody = new GenericUrlEncodedRequestBody(this.urlEncodedBodyDecoder.decode(this.data, this.contentType.orElse(null)));

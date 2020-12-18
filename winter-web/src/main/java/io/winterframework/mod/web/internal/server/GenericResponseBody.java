@@ -150,8 +150,6 @@ public class GenericResponseBody implements ResponseBody {
 					Flux<ByteBuf> sseData = Flux.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(sseMetaData, Charsets.UTF_8)));
 					
 					if(sse.getData() != null) {
-						// TODO We need to merge things a little bit 
-						// We need to make create a new "data:..." line if we encounter an end of line...
 						sseData = sseData
 							.concatWith(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("data:", Charsets.UTF_8))))
 							.concatWith(Flux.from(sse.getData())

@@ -134,7 +134,7 @@ class GenericWebRouteManager implements WebRouteManager<RequestBody, ResponseBod
 				if(startIndex != null) {
 					pathParameterNames.add(null);
 					routePathPatternBuilder.append('(');
-					// TODO we could validate here that we have a valid valid URI segment
+					// TODO we could validate here that we have a valid URI segment
 					routePathPatternBuilder.append(Pattern.quote(new String(pathBytes, startIndex, i - startIndex)));
 					routePathPatternBuilder.append(')');
 				}
