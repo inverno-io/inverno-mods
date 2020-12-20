@@ -52,7 +52,6 @@ public class Http1xResponseEncoder extends HttpResponseEncoder {
 	@Override
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
 		this.context = WebServerByteBufAllocator.forceDirectAllocator(ctx);
-//		this.context = ctx;
 		super.handlerAdded(ctx);
 	}
 

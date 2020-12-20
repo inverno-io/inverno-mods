@@ -50,28 +50,16 @@ public class WebServer {
 	
 	@Init
 	public void start() throws CertificateException, InterruptedException, IOException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException {
-		
 		ServerBootstrap serverBootstrap = new ServerBootstrap();
 		serverBootstrap
-/*			.option(ChannelOption.SO_BACKLOG, 1024)
 			.option(ChannelOption.SO_REUSEADDR, true)
-			.option(EpollChannelOption.SO_REUSEPORT, true)
-//			.childOption(ChannelOption.SO_KEEPALIVE, false)
-//			.childOption(ChannelOption.TCP_NODELAY, true)
-			.childOption(ChannelOption.SO_REUSEADDR, true)
-			.childOption(ChannelOption.ALLOCATOR, PartialPooledByteBufAllocator.INSTANCE) // Vertx does not rely on netty's pool, this might reduce memory footprint, @see io.vertx.core.net.impl.PartialPooledByteBufAllocator
-			.group(this.acceptorGroup, this.childGroup)
-			.childHandler(this.channelInitializer);*/
-		
-//		.option(ChannelOption.SO_BACKLOG, 1024)
-		.option(ChannelOption.SO_REUSEADDR, true)
-		.option(EpollChannelOption.SO_REUSEPORT, false)
-		.childOption(ChannelOption.SO_KEEPALIVE, false)
-		.childOption(ChannelOption.TCP_NODELAY, true)
-		.childOption(EpollChannelOption.TCP_QUICKACK, false)
-		.childOption(EpollChannelOption.TCP_CORK, false)
-		.childOption(ChannelOption.ALLOCATOR, WebServerByteBufAllocator.INSTANCE) // Vertx does not rely on netty's pool, this might reduce memory footprint, @see io.vertx.core.net.impl.PartialPooledByteBufAllocator
-		.childHandler(this.channelInitializer);
+			.option(EpollChannelOption.SO_REUSEPORT, false)
+			.childOption(ChannelOption.SO_KEEPALIVE, false)
+			.childOption(ChannelOption.TCP_NODELAY, true)
+			.childOption(EpollChannelOption.TCP_QUICKACK, false)
+			.childOption(EpollChannelOption.TCP_CORK, false)
+			.childOption(ChannelOption.ALLOCATOR, WebServerByteBufAllocator.INSTANCE)
+			.childHandler(this.channelInitializer);
 		
 		if(Epoll.isAvailable()) {
 			DefaultThreadFactory threadFactory = new DefaultThreadFactory("epoll-webserver", false, 5);
