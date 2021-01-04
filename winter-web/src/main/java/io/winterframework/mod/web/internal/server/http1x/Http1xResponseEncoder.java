@@ -73,14 +73,6 @@ public class Http1xResponseEncoder extends HttpResponseEncoder {
 
 	@Override
 	protected boolean isContentAlwaysEmpty(HttpResponse msg) {
-//		return super.isContentAlwaysEmpty(msg);
-		// TODO can I know when the content is empty?
-//		return super.isContentAlwaysEmpty(msg);
-		// In HttpServerCodec this is tracked via a FIFO queue of HttpMethod
-		// here we track it in the assembled response as we don't use HttpServerCodec
-//		return (msg instanceof AssembledHttpResponse && ((AssembledHttpResponse) msg).head())
-//				|| super.isContentAlwaysEmpty(msg);
-		
 		return (msg instanceof FlatHttpResponse && ((FlatHttpResponse) msg).isEmpty()) || super.isContentAlwaysEmpty(msg);
 	}
 
