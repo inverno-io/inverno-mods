@@ -73,7 +73,6 @@ public class Http2Exchange extends AbstractExchange {
 			this.encoder.writeData(this.context, this.stream.id(), value, 0, false, this.context.voidPromise());
 			this.context.channel().flush();
 		}
-		// TODO errors
 		finally {
 			this.handler.exchangeNext(this.context, value);
 		}
@@ -81,13 +80,6 @@ public class Http2Exchange extends AbstractExchange {
 	
 	@Override
 	protected void onCompleteWithError(Throwable throwable) {
-		// TODO
-		// either we have written headers or we have not
-		// What kind of error can be sent if we have already sent a 200 OK in the response headers
-		
-		// The stream can be opened or closed here:
-		// - if closed => client side have probably ended the stream (RST_STREAM or close connection)
-		// - if not closed => we should send a 5xx error or other based on the exception
 		throwable.printStackTrace();
 		this.handler.exchangeError(this.context, throwable);
 	}
