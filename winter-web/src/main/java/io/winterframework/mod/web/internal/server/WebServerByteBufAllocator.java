@@ -38,6 +38,7 @@ import io.netty.util.concurrent.EventExecutor;
  * @author jkuhn
  *
  */
+@Deprecated
 public final class WebServerByteBufAllocator implements ByteBufAllocator {
 	
 	private static final ByteBufAllocator POOLED = new PooledByteBufAllocator(true);

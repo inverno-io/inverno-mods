@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.commons;
-
-import io.winterframework.core.annotation.NestedBean;
-import io.winterframework.mod.commons.net.NetConfiguration;
-import io.winterframework.mod.configuration.Configuration;
+package io.winterframework.mod.commons.net;
 
 /**
  * @author jkuhn
  *
  */
-@Configuration
-public interface CommonsConfiguration {
+public interface NetConfiguration {
+
+	default boolean reuse_address() {
+		return true;
+	};
 	
-	@NestedBean
-	default NetConfiguration net() {
-		return new NetConfiguration() {};
+	default boolean reuse_port() {
+		return true;
+	}
+	
+	default boolean keep_alive() {
+		return false;
+	}
+	
+	default boolean tcp_no_delay() {
+		return true;
+	}
+	
+	default boolean tcp_quickack() {
+		return false;
+	}
+	
+	default boolean tcp_cork() {
+		return false;
+	}
+	
+	default boolean prefer_native_transport() {
+		return true;
+	}
+	
+	default int root_event_loop_group_size() {
+		return Runtime.getRuntime().availableProcessors();
 	}
 }

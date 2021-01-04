@@ -18,13 +18,33 @@
 			<artifactId>winter-core</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>io.netty</groupId>
-			<artifactId>netty-buffer</artifactId>
-	    </dependency>
+			<groupId>io.winterframework.mod</groupId>
+			<artifactId>winter-configuration</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-core</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-buffer</artifactId>
+	    </dependency>
+	    <dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-transport</artifactId>
+	    </dependency>
+	    <dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-transport-native-epoll</artifactId>
+			<optional>true</optional>
+	    </dependency>
+	    <dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-transport-native-kqueue</artifactId>
+			<optional>true</optional>
+	    </dependency>
 		
 		<dependency>
 			<groupId>org.junit.platform</groupId>
@@ -58,4 +78,24 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.8.1</version>
+					<configuration>
+						<annotationProcessorPaths combine.children="append">
+							<path>
+								<groupId>io.winterframework.mod</groupId>
+								<artifactId>winter-configuration</artifactId>
+								<version>${project.version}</version>
+							</path>
+						</annotationProcessorPaths>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
 </project>

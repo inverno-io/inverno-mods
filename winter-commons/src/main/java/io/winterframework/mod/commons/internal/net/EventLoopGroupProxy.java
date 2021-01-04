@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.commons;
+package io.winterframework.mod.commons.internal.net;
 
-import io.winterframework.core.annotation.NestedBean;
-import io.winterframework.mod.commons.net.NetConfiguration;
-import io.winterframework.mod.configuration.Configuration;
+import java.util.concurrent.Executor;
+
+import io.netty.channel.EventLoop;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultithreadEventLoopGroup;
 
 /**
  * @author jkuhn
  *
  */
-@Configuration
-public interface CommonsConfiguration {
+public class EventLoopGroupProxy extends MultithreadEventLoopGroup {
 	
-	@NestedBean
-	default NetConfiguration net() {
-		return new NetConfiguration() {};
+	public EventLoopGroupProxy(int nThreads, EventLoopGroup rootEventLoopGroup) {
+		super(nThreads, (Executor)null, rootEventLoopGroup);
+	}
+
+	@Override
+	protected EventLoop newChild(Executor executor, Object... args) throws Exception {
+		return ((EventLoopGroup)args[0]).next();
 	}
 }
