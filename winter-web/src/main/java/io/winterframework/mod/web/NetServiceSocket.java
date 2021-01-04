@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.commons;
+package io.winterframework.mod.web;
 
-import io.winterframework.core.annotation.NestedBean;
-import io.winterframework.mod.commons.net.NetConfiguration;
-import io.winterframework.mod.configuration.Configuration;
+import java.util.function.Supplier;
+
+import io.winterframework.core.annotation.Bean;
+import io.winterframework.mod.commons.net.NetService;
 
 /**
  * @author jkuhn
  *
  */
-@Configuration
-public interface CommonsConfiguration {
-	
-	@NestedBean
-	default NetConfiguration net() {
-		return new NetConfiguration() {};
-	}
+@Bean(name = "netService")
+public interface NetServiceSocket extends Supplier<NetService> {
+
 }
