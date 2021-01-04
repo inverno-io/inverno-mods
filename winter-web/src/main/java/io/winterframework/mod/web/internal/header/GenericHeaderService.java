@@ -143,7 +143,6 @@ public class GenericHeaderService implements HeaderService {
 				 continue;
 			 }
 			 
-			 
 			 if(startIndex == null) {
 				 startIndex = buffer.readerIndex() - 1;
 			 }
@@ -152,19 +151,19 @@ public class GenericHeaderService implements HeaderService {
 				 endIndex = buffer.readerIndex() - 1;
 				 if(startIndex == endIndex) {
 					 buffer.readerIndex(readerIndex);
-					 throw new IllegalArgumentException("Malformed Header: empty name");
+					 throw new MalformedHeaderException("Malformed Header: empty name");
 				 }
 				 return buffer.slice(startIndex, endIndex - startIndex).toString(charset).toLowerCase();
 			 }
 			 else if(Character.isWhitespace(nextByte)) {
 				 // There's a white space between the header name and the colon
 				 buffer.readerIndex(readerIndex);
-				 throw new IllegalArgumentException("Malformed Header: white space");
+				 throw new MalformedHeaderException("Malformed Header: white space");
 			 }
 			 else if(!HeaderService.isTokenCharacter(nextByte)) {
 				 buffer.readerIndex(readerIndex);
 				 buffer.readerIndex(readerIndex);
-				 throw new IllegalArgumentException("Malformed Header: " + (buffer.readerIndex()-1) + " " +buffer.toString(Charsets.UTF_8) + " " + String.valueOf(Character.toChars(nextByte)));
+				 throw new MalformedHeaderException("Malformed Header: " + (buffer.readerIndex()-1) + " " + buffer.toString(Charsets.UTF_8) + " " + String.valueOf(Character.toChars(nextByte)));
 			 }
 		}
 		buffer.readerIndex(readerIndex);

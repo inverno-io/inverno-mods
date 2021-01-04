@@ -18,7 +18,6 @@ import io.winterframework.mod.web.Headers;
 @Bean(visibility = Visibility.PRIVATE)
 public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDispositionCodec.ContentDisposition, ContentDispositionCodec.ContentDisposition.Builder> {
 	
-	
 	public ContentDispositionCodec() {
 		super(ContentDispositionCodec.ContentDisposition.Builder::new, Set.of(Headers.NAME_CONTENT_DISPOSITION), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, false);
 	}
@@ -61,8 +60,7 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 			this.size = size;
 			
 			if(!HeaderService.isToken(this.dispositionType)) { 
-				// TODO Not Acceptable
-				throw new RuntimeException("Not Acceptable: invalid disposition type");
+				throw new MalformedHeaderException("Invalid content disposition type");
 			}
 		}
 		

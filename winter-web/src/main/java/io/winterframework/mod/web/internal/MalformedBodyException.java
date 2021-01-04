@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,28 @@
  */
 package io.winterframework.mod.web.internal;
 
-import io.netty.buffer.ByteBuf;
-import io.winterframework.mod.web.Headers;
-import reactor.core.publisher.Flux;
+import io.winterframework.mod.web.BadRequestException;
 
 /**
  * @author jkuhn
  *
  */
-public interface RequestBodyDecoder<A> {
+public class MalformedBodyException extends BadRequestException {
 
-	Flux<A> decode(Flux<ByteBuf> data, Headers.ContentType contentType);
+	private static final long serialVersionUID = 1083960865494661237L;
+
+	public MalformedBodyException() {
+	}
+
+	public MalformedBodyException(String message) {
+		super(message);
+	}
+
+	public MalformedBodyException(Throwable cause) {
+		super(cause);
+	}
+
+	public MalformedBodyException(String message, Throwable cause) {
+		super(message, cause);
+	}
 }
