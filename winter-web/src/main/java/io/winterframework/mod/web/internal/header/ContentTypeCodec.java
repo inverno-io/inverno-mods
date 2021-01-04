@@ -12,6 +12,7 @@ import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
+import io.winterframework.mod.web.UnsupportedMediaTypeException;
 
 /**
  * @author jkuhn
@@ -77,16 +78,14 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 			
 			String[] splitMediaType = mediaType.split("/");
 			if(splitMediaType.length != 2) {
-				// TODO Not Acceptable
-				throw new RuntimeException("Not Acceptable: invalid content type");
+				throw new UnsupportedMediaTypeException("Invalid content type");
 			}
 			
 			this.setType(splitMediaType[0]);
 			this.setSubType(splitMediaType[1]);
 			
 			if(!HeaderService.isToken(this.type) || !HeaderService.isToken(this.subType)) {
-				// TODO Not Acceptable
-				throw new RuntimeException("Not Acceptable: invalid content type");
+				throw new UnsupportedMediaTypeException("Invalid content type");
 			}
 		}
 		
@@ -97,8 +96,7 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 		
 		private void setType(String type) {
 			if(!HeaderService.isToken(type)) {
-				// TODO Not Acceptable
-				throw new RuntimeException("Not Acceptable: invalid media type");
+				throw new UnsupportedMediaTypeException("Invalid content type");
 			}
 			this.type = type;
 		}
@@ -110,8 +108,7 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 		
 		private void setSubType(String subType) {
 			if(!HeaderService.isToken(subType)) {
-				// TODO Not Acceptable
-				throw new RuntimeException("Not Acceptable: invalid media type");
+				throw new UnsupportedMediaTypeException("Invalid content type");
 			}
 			this.subType = subType;
 		}

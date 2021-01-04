@@ -24,6 +24,7 @@ import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.BeanSocket;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.web.Headers;
+import io.winterframework.mod.web.NotAcceptableException;
 
 /**
  * @author jkuhn
@@ -91,8 +92,7 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 					this.setPrimarySubTag(splitLanguageTag[0]);
 				}
 				else {
-					// TODO => Not Acceptable
-					throw new RuntimeException("Not Acceptable: empty language tag");
+					throw new NotAcceptableException("Empty language tag");
 				}
 				
 				this.score = Headers.AcceptLanguage.LanguageRange.super.getScore();
@@ -114,13 +114,11 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 					for(byte b : primarySubTag.getBytes()) {
 						size++;
 						if( !((b >= 0x41 && b <= 0x5A) || (b >= 0x61 && b <= 0x7A)) || size > 8) {
-							// TODO Not Acceptable
-							throw new RuntimeException("Not Acceptable: invalid language tag");
+							throw new NotAcceptableException("Invalid language tag");
 						}
 					}
 					if(size == 0) {
-						// TODO Not Acceptable
-						throw new RuntimeException("Not Acceptable: invalid language tag");
+						throw new NotAcceptableException("Invalid language tag");
 					}
 				}
 				this.primarySubTag = primarySubTag;
@@ -133,20 +131,17 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 			
 			private void setSecondarySubTag(String secondarySubTag) {
 				if(this.primarySubTag.equals("*")) {
-					// TODO Not Acceptable
-					throw new RuntimeException("Not Acceptable: invalid language tag");
+					throw new NotAcceptableException("Invalid language tag");
 				}
 				byte size = 0;
 				for(byte b : secondarySubTag.getBytes()) {
 					size++;
 					if( !((b >= 0x41 && b <= 0x5A) || (b >= 0x61 && b <= 0x7A) || Character.isDigit(b)) || size > 8) {
-						// TODO Not Acceptable
-						throw new RuntimeException("Not Acceptable: invalid language tag");
+						throw new NotAcceptableException("Invalid language tag");
 					}
 				}
 				if(size == 0) {
-					// TODO Not Acceptable
-					throw new RuntimeException("Not Acceptable: invalid language tag");
+					throw new NotAcceptableException("Invalid language tag");
 				}
 				this.secondarySubTag = secondarySubTag;
 			}
@@ -219,8 +214,7 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 				if(name.equals("q")) {
 					this.weight = (int)(Float.parseFloat(value) * 1000) / 1000f;
 					if(this.weight == 0) {
-						// TODO 0 => Not Acceptable
-						throw new RuntimeException("Not Acceptable: 0 weight");
+						throw new NotAcceptableException("Invalid weight: " + weight);
 					}
 				}
 				// TODO ignore or report a malformed header?

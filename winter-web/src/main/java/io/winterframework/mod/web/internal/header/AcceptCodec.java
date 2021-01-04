@@ -27,6 +27,7 @@ import io.winterframework.core.annotation.BeanSocket;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
+import io.winterframework.mod.web.NotAcceptableException;
 
 /**
  * @author jkuhn
@@ -127,8 +128,7 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 					this.setSubType("*");
 				}
 				else {
-					// TODO => Not Acceptable
-					throw new RuntimeException("Not Acceptable: empty media type");
+					throw new NotAcceptableException("Empty media type");
 				}
 			}
 			
@@ -139,8 +139,7 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 			
 			private void setType(String type) {
 				if(!type.equals("*") && !HeaderService.isToken(type)) {
-					// TODO Not Acceptable
-					throw new RuntimeException("Not Acceptable: invalid media type");
+					throw new NotAcceptableException("Invalid media Type: " + type);
 				}
 				this.type = type;
 			}
@@ -152,8 +151,7 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 			
 			private void setSubType(String subType) {
 				if(!subType.equals("*") && !HeaderService.isToken(subType)) {
-					// TODO Not Acceptable
-					throw new RuntimeException("Not Acceptable: invalid media type");
+					throw new NotAcceptableException("Invalid media Type: " + type);
 				}
 				this.subType = subType;
 			}
@@ -237,8 +235,7 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 				if(name.equals("q")) {
 					this.weight = Float.parseFloat(value);
 					if(this.weight == 0) {
-						// TODO 0 => Not Acceptable
-						throw new RuntimeException("Not Acceptable: 0 weight");
+						throw new NotAcceptableException("Invalid weight: " + weight);
 					}
 				}
 				else {

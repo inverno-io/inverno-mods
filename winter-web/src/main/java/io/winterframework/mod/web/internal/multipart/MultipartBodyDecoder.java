@@ -34,6 +34,7 @@ import io.winterframework.mod.web.Header;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Part;
+import io.winterframework.mod.web.internal.MalformedBodyException;
 import io.winterframework.mod.web.internal.RequestBodyDecoder;
 import io.winterframework.mod.web.internal.header.ContentDispositionCodec;
 import io.winterframework.mod.web.internal.header.ContentTypeCodec;
@@ -268,14 +269,6 @@ public class MultipartBodyDecoder implements RequestBodyDecoder<Part> {
 	}
 	
 	private DecoderTask headers(ByteBuf buffer, BodyDataSubscriber context) throws MalformedBodyException {
-		// - if current form data is null, create one based on the content disposition
-		// - emit current form data => we need the emitter
-		
-		// We need to parse all headers before emit the form part
-		// headers should be kept in the context
-		
-		// between each header we must check that we do not have an empty line
-		
 		while(!this.skipOneLine(buffer)) {
 			Header headerField = this.httpHeaderFieldService.decode(buffer, context.contentType.getCharset());
 			if(headerField != null) {
@@ -322,17 +315,6 @@ public class MultipartBodyDecoder implements RequestBodyDecoder<Part> {
 	}
 	
 	private DecoderTask data(ByteBuf buffer, BodyDataSubscriber context) {
-		// - consume buffer until we hit boundary
-		// - when consuming emit data to the current form data flux => we need an emitter
-//		System.out.println("data");
-		
-		// loop on bytes
-		// - if \r\n we can start check for boundary: delimiterIndex = 0 and delimiterReaderIndex = currentIndex - 2
-		// - if we reach end of buffer and delimiterIndex != null we must return null and set buffer reader index to delimiterReaderIndex
-		// - 
-
-		// We emit retainedSlice() buffer which must be released in the Part implementation 
-		
 		String delimiter = context.getDelimiter();
 		
 		int readerIndex = buffer.readerIndex();
@@ -592,10 +574,6 @@ public class MultipartBodyDecoder implements RequestBodyDecoder<Part> {
 					this.task = currentTask;
 				}
 			}
-			/*catch (MalformedBodyException e) {
-				this.emitter.error(e);
-				this.cancel();
-			}*/ 
 			catch (Exception e) {
 				this.emitter.error(e);
 				this.cancel();
@@ -607,7 +585,6 @@ public class MultipartBodyDecoder implements RequestBodyDecoder<Part> {
 					this.keepBuffer.writeBytes(buffer);
 				}
 				else {
-//					this.keepBuffer = value.alloc().buffer(buffer.readableBytes());
 					this.keepBuffer = Unpooled.unreleasableBuffer(Unpooled.buffer(buffer.readableBytes()));
 					this.keepBuffer.writeBytes(buffer);
 				}
@@ -628,11 +605,7 @@ public class MultipartBodyDecoder implements RequestBodyDecoder<Part> {
 		protected void hookFinally(SignalType type) {
 			if(this.keepBuffer != null) {
 				this.keepBuffer.release();
-//				System.out.println("release " + count.incrementAndGet() + " " + this.keepBuffer.refCnt());
 				this.keepBuffer = null;
-			}
-			else {
-//				System.out.println("finally " + count.incrementAndGet());
 			}
 		}
 	}

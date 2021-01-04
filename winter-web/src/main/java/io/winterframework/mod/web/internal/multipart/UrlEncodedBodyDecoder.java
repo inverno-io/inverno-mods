@@ -32,6 +32,7 @@ import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Headers.ContentType;
 import io.winterframework.mod.web.Parameter;
+import io.winterframework.mod.web.internal.MalformedBodyException;
 import io.winterframework.mod.web.internal.RequestBodyDecoder;
 import io.winterframework.mod.web.internal.header.ContentDispositionCodec;
 import io.winterframework.mod.web.internal.header.ContentTypeCodec;
@@ -130,24 +131,6 @@ public class UrlEncodedBodyDecoder implements RequestBodyDecoder<Parameter> {
 						throw new MalformedBodyException("Bad end of line");
 					}
 				}
-				/*if(!buffer.isReadable()) {
-					buffer.readerIndex(buffer.readerIndex() - 1);
-					break;
-				}
-				else if (buffer.readByte() == HttpConstants.LF) {
-					endIndex = buffer.readerIndex() - 2;
-					if (parameterName != null) {
-						return new UrlEncodedParameter(this.decodeComponent(parameterName, charset), this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), false, true);
-					} 
-					else if (startIndex != null) {
-						return new UrlEncodedParameter(this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), "", false, true);
-					}
-					return new UrlEncodedParameter("", "", true, true);
-				} 
-				else {
-					buffer.readerIndex(readerIndex);
-					throw new MalformedBodyException("Bad end of line");
-				}*/
 			} 
 			else if (nextByte == HttpConstants.LF) {
 				endIndex = buffer.readerIndex() - 1;
@@ -220,7 +203,6 @@ public class UrlEncodedBodyDecoder implements RequestBodyDecoder<Parameter> {
 	private String decodeComponent(String value, Charset charset) throws MalformedBodyException {
 		try {
 			return URLDecoder.decode(value, Charsets.UTF_8.toString()); // RFC-3986 2
-//			return QueryStringDecoder.decodeComponent(value, charset);
 		} 
 		catch (IllegalArgumentException e) {
 			throw new MalformedBodyException(e);
@@ -303,10 +285,6 @@ public class UrlEncodedBodyDecoder implements RequestBodyDecoder<Parameter> {
 					}
 				}
 			}
-			/*catch(MalformedBodyException e) {
-				this.emitter.error(e);
-				this.cancel();
-			}*/
 			catch(Exception e) {
 				this.emitter.error(e);
 				this.cancel();

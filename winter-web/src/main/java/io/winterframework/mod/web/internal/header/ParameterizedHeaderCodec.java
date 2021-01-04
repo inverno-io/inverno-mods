@@ -113,7 +113,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					}
 					else {
 						buffer.readerIndex(readerIndex);
-						throw new IllegalArgumentException("Malformed Header: Bad end of line");
+						throw new MalformedHeaderException(name + ": Bad end of line");
 					}
 				}
 				else {
@@ -139,18 +139,18 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 				if(!value) {
 					if(startIndex == null) {
 						buffer.readerIndex(readerIndex);
-						throw new IllegalArgumentException("Malformed Header");
+						throw new MalformedHeaderException(name);
 					}
 					if(this.expectNoValue) {
 						buffer.readerIndex(readerIndex);
-						throw new IllegalArgumentException("Malformed Header: expect no value");
+						throw new MalformedHeaderException(name + ": expect no value");
 					}
 					builder.parameterizedValue(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString());
 				}
 				else if(parameterName != null) {
 					if(startIndex == null) {
 						buffer.readerIndex(readerIndex);
-						throw new IllegalArgumentException("Malformed Header");
+						throw new MalformedHeaderException(name);
 					}
 					builder.parameter(parameterName, buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString());
 				}
@@ -160,11 +160,11 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					}
 					if(startIndex == endIndex) {
 						buffer.readerIndex(readerIndex);
-						throw new IllegalArgumentException("Malformed Header");
+						throw new MalformedHeaderException(name);
 					}
 					if(!this.allowFlagParameter) {
 						buffer.readerIndex(readerIndex);
-						throw new IllegalArgumentException("Malformed Header: flag parameter not allowed");
+						throw new MalformedHeaderException(name + ": flag parameters not allowed");
 					}
 					builder.parameter(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), null);
 				}
@@ -197,7 +197,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 				if(nextByte == ';') {
 					if(this.expectNoValue) {
 						buffer.readerIndex(readerIndex);
-						throw new IllegalArgumentException("Malformed Header: expect no value");
+						throw new MalformedHeaderException(name + ": expect no value");
 					}
 					if(endIndex == null) {
 						endIndex = buffer.readerIndex() - 1;
@@ -205,7 +205,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					if(startIndex == endIndex) {
 						if(!this.allowEmptyValue) {
 							buffer.readerIndex(readerIndex);
-							throw new IllegalArgumentException("Malformed Header: empty value not allowed");
+							throw new MalformedHeaderException(name + ": empty value not allowed");
 						}
 						else {
 							builder.parameterizedValue("");
@@ -220,7 +220,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 				else if(nextByte == '=') {
 					if(!this.allowEmptyValue) {
 						buffer.readerIndex(readerIndex);
-						throw new IllegalArgumentException("Malformed Header: empty value not allowed");
+						throw new MalformedHeaderException(name + ": empty value not allowed");
 					}
 					if(endIndex == null) {
 						endIndex = buffer.readerIndex() - 1;
@@ -244,7 +244,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					// There's a space inside the value 
 					if(!this.allowSpaceInValue) {
 						buffer.readerIndex(readerIndex);
-						throw new IllegalArgumentException("Malformed Header: space not allowed in value");
+						throw new MalformedHeaderException(name + ": space not allowed in value");
 					}
 					endIndex = null;
 				}
@@ -263,7 +263,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						}
 						if(startIndex == endIndex) {
 							buffer.readerIndex(readerIndex);
-							throw new IllegalArgumentException("Malformed Header");
+							throw new MalformedHeaderException(name);
 						}
 						parameterName = buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString();
 						startIndex = endIndex = null;
@@ -274,11 +274,11 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						}
 						if(startIndex == endIndex) {
 							buffer.readerIndex(readerIndex);
-							throw new IllegalArgumentException("Malformed Header");
+							throw new MalformedHeaderException(name);
 						}
 						if(!this.allowFlagParameter) {
 							buffer.readerIndex(readerIndex);
-							throw new IllegalArgumentException("Malformed Header: flag parameter not allowed");
+							throw new MalformedHeaderException(name + ": flag parameter not allowed");
 						}
 						builder.parameter(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), null);
 						parameterName = null;
@@ -289,12 +289,12 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					}
 					else if(!HeaderService.isTokenCharacter(nextByte)) {
 						buffer.readerIndex(readerIndex);
-						throw new IllegalArgumentException("Malformed Header: invalid token character");
+						throw new MalformedHeaderException(name + ": invalid token character");
 					}
 					else if(endIndex != null) {
 						// There's a space inside the name 
 						buffer.readerIndex(readerIndex);
-						throw new IllegalArgumentException("Malformed Header");
+						throw new MalformedHeaderException(name);
 					}
 				}
 				else {
@@ -322,7 +322,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						}
 						if(startIndex == endIndex) {
 							buffer.readerIndex(readerIndex);
-							throw new IllegalArgumentException("Malformed Header");
+							throw new MalformedHeaderException(name);
 						}
 						builder.parameter(parameterName, buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString());
 						parameterName = null;
@@ -349,7 +349,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						// There's a space inside the value 
 						if(!this.allowSpaceInValue) {
 							buffer.readerIndex(readerIndex);
-							throw new IllegalArgumentException("Malformed Header: space not allowed in value");
+							throw new MalformedHeaderException(name + ": space not allowed in value");
 						}
 						endIndex = null;
 					}
@@ -359,42 +359,6 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 				}
 			}
 		}
-		
-		/*if(end) {
-			if(!value) {
-				if(startIndex == null) {
-					buffer.readerIndex(readerIndex);
-					throw new IllegalArgumentException("Malformed Header");
-				}
-				if(this.expectNoValue) {
-					buffer.readerIndex(readerIndex);
-					throw new IllegalArgumentException("Malformed Header: expect no value");
-				}
-				builder.parameterizedValue(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString());
-			}
-			else if(parameterName != null) {
-				if(startIndex == null) {
-					buffer.readerIndex(readerIndex);
-					throw new IllegalArgumentException("Malformed Header");
-				}
-				builder.parameter(parameterName, buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString());
-			}
-			else if(startIndex != null) {
-				if(endIndex == null) {
-					endIndex = buffer.readerIndex() - 1;
-				}
-				if(startIndex == endIndex) {
-					buffer.readerIndex(readerIndex);
-					throw new IllegalArgumentException("Malformed Header");
-				}
-				if(!this.allowFlagParameter) {
-					buffer.readerIndex(readerIndex);
-					throw new IllegalArgumentException("Malformed Header: flag parameter not allowed");
-				}
-				builder.parameter(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), null);
-			}
-			return builder.build();
-		}*/
 		// We need more bytes
 		buffer.readerIndex(readerIndex);
 		return null;

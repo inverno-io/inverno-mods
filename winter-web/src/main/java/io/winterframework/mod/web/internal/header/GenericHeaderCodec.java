@@ -62,7 +62,7 @@ public class GenericHeaderCodec extends AbstractHeaderCodec<GenericHeader, Gener
 						 endIndex = buffer.readerIndex() - 2;
 						 if(startIndex == endIndex) {
 							 buffer.readerIndex(readerIndex);
-							 throw new IllegalArgumentException("Malformed Header");
+							 throw new MalformedHeaderException("Malformed Header: " + name);
 						 }
 						 return builder.headerValue(buffer.slice(startIndex, endIndex - startIndex).toString(charset)).build();
 					 }
