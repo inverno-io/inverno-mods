@@ -29,11 +29,6 @@ import java.nio.file.attribute.FileTime;
 import java.util.Objects;
 import java.util.Optional;
 
-import io.netty.buffer.ByteBuf;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
-
 /**
  * @author jkuhn
  *
@@ -125,7 +120,7 @@ public class PathResource extends AbstractAsyncResource {
 	}
 	
 	// Following implementation is using AsyncrhonousFileChannel
-	// This seem less performant than the default reactiv implementation
+	// This seem less performant than the reactive implementation
 	/*@Override
 	public Optional<Flux<ByteBuf>> read() throws IOException {
 		if(Files.isReadable(this.path)) {
@@ -193,30 +188,6 @@ public class PathResource extends AbstractAsyncResource {
 		}
 		return Optional.empty();
 	}*/
-	
-	@Override
-	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) throws IOException {
-		return this.openWritableByteChannel(append, createParents)
-			.map(channel -> data
-				.concatMap(chunk -> Mono.<Integer>create(sink -> {
-						try {
-							sink.success(channel.write(chunk.nioBuffer()));
-						} 
-						catch (IOException e) {
-							sink.error(e);
-						}
-					})
-					.subscribeOn(Schedulers.fromExecutor(this.getExecutor()))
-				)
-				.doOnTerminate(() -> {
-					try {
-						channel.close();
-					}
-					catch (IOException e) {
-					}
-				})
-			);
-	}
 
 	@Override
 	public boolean delete() throws IOException {

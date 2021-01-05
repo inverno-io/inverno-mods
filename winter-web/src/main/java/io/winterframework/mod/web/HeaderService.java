@@ -78,18 +78,18 @@ public interface HeaderService {
 	 * https://tools.ietf.org/html/rfc7230#section-3.2
 	 * https://tools.ietf.org/html/rfc5234#appendix-B.1
 	 */
-	public static boolean isValueCharacter(char character) {
-		return character > 32 && character < 127;
+	public static boolean isContentCharacter(char character) {
+		return (character > 31 && character < 127) || character == 9;
 	}
 	
-	public static boolean isValue(String value) {
+	public static boolean isContent(String value) {
 		if(value == null || value.length() == 0) {
 			return false;
 		}
 		
 		byte[] valueBytes = value.getBytes();
 		for(int i=0;i<valueBytes.length;i++) {
-			if(!isValueCharacter(value.charAt(i))) {
+			if(!isContentCharacter(value.charAt(i))) {
 				return false;
 			}
 		}

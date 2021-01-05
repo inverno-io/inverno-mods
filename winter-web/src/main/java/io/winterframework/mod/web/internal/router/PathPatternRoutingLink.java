@@ -156,8 +156,9 @@ class PathPatternRoutingLink<A, B, C extends Exchange<A, B>, D extends PathAware
 			Map<String, String> pathParameters = new HashMap<>();
 			int matcherIndex = 0;
 			for(String pathParameterName : this.pathPattern.getPathParameterNames()) {
-				if(pathParameterName != null && !pathParameterName.equals(":"))
-				pathParameters.put(pathParameterName.substring(1), this.matcher.group(++matcherIndex));
+				if(pathParameterName != null && !pathParameterName.equals(":")) {
+					pathParameters.put(pathParameterName.substring(1), this.matcher.group(++matcherIndex));
+				}
 			}
 			return pathParameters;
 		}

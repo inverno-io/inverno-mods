@@ -134,7 +134,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 				}
 				endSingle = true;
 			}
-			else if(!HeaderService.isValueCharacter((char)nextByte)) {
+			else if(!HeaderService.isContentCharacter((char)nextByte)) {
 				throw new MalformedHeaderException(name + ": Invalid character " + (char)nextByte);
 			}
 			

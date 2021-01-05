@@ -91,10 +91,16 @@ public abstract class AbstractRequest implements Request<RequestBody> {
 		if(method == Method.POST || method == Method.PUT || method == Method.PATCH) {
 			if(this.requestBody == null) {
 				// TODO deal with backpressure using a custom queue: if the queue reach a given threshold we should suspend the read on the channel: this.context.channel().config().setAutoRead(false)
-				// and resume when this flux is actually consumed (doOnRequest? this might impact performance but here )
+				// and resume when this flux is actually consumed (doOnRequest? this might impact performance)
 				this.data = Sinks.many().unicast().onBackpressureBuffer();
 				
 				Flux<ByteBuf> requestBodyData = this.data.asFlux();
+				
+				// TODO we might not need to do this after all and prefer delegate the release of the buffer to the subscriber, however:
+				// - HTTP2 release buffers
+				// - HTTP1x does not release buffers
+				// => we must then do something else:
+				// - retain the buffer in case of http2
 				if(releaseData) {
 					requestBodyData = requestBodyData.flatMap(chunk -> {
 						return Flux.just(chunk).doFinally(sgn -> {

@@ -72,7 +72,7 @@ public class GenericHeaderCodec extends AbstractHeaderCodec<GenericHeader, Gener
 					endIndex = buffer.readerIndex() - 1;
 					return builder.headerValue(buffer.slice(startIndex, endIndex - startIndex).toString(charset)).build();
 				}
-				else if(!HeaderService.isValueCharacter((char)nextByte)) {
+				else if(!HeaderService.isContentCharacter((char)nextByte)) {
 					throw new MalformedHeaderException(name + ": Invalid character " + (char)nextByte);
 				}
 			}

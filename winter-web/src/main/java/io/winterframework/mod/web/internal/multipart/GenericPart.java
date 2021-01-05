@@ -53,10 +53,12 @@ class GenericPart implements Part {
 		
 		this.data = Flux.<ByteBuf>create(emitter -> {
 			this.dataEmitter = emitter;
-		})
-		.flatMap(chunk -> {
-			return Flux.just(chunk).doFinally(sgn -> chunk.release());
 		});
+		// I don't need to do that after all, I just delegate the release to the subscriber
+		// If there is no subscriber retained buffer are not created anyway
+		/*.flatMap(chunk -> {
+			return Flux.just(chunk).doFinally(sgn -> chunk.release());
+		});*/
 	}
 	
 	public Optional<FluxSink<ByteBuf>> getDataEmitter() {
