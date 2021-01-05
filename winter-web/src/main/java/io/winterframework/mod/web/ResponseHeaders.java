@@ -29,8 +29,6 @@ public interface ResponseHeaders {
 	
 	ResponseHeaders contentLength(long length);
 	
-	ResponseHeaders add(String name, String value);
-	
 	ResponseHeaders add(CharSequence name, CharSequence value);
 	
 	ResponseHeaders add(Header... headers);

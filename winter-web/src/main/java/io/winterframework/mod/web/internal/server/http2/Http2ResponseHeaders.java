@@ -79,12 +79,6 @@ public class Http2ResponseHeaders implements AbstractResponseHeaders {
 	}
 
 	@Override
-	public Http2ResponseHeaders add(String name, String value) {
-		this.internalHeaders.add(name, value);
-		return this;
-	}
-
-	@Override
 	public Http2ResponseHeaders add(CharSequence name, CharSequence value) {
 		this.internalHeaders.add(name, value);
 		return this;

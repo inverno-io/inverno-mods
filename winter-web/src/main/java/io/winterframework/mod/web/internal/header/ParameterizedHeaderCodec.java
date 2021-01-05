@@ -134,6 +134,9 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 				}
 				endSingle = true;
 			}
+			else if(!HeaderService.isValueCharacter((char)nextByte)) {
+				throw new MalformedHeaderException(name + ": Invalid character " + (char)nextByte);
+			}
 			
 			if(end || endSingle) {
 				if(!value) {
@@ -287,9 +290,9 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					else if(Character.isWhitespace(nextByte)) {
 						endIndex = buffer.readerIndex() - 1;
 					}
-					else if(!HeaderService.isTokenCharacter(nextByte)) {
+					else if(!HeaderService.isTokenCharacter((char)nextByte)) {
 						buffer.readerIndex(readerIndex);
-						throw new MalformedHeaderException(name + ": invalid token character");
+						throw new MalformedHeaderException(name + ": invalid character " + (char)nextByte);
 					}
 					else if(endIndex != null) {
 						// There's a space inside the name 
