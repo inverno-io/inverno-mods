@@ -21,7 +21,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -34,7 +33,7 @@ import io.netty.handler.codec.http.multipart.FileUpload;
 import io.netty.handler.codec.http.multipart.HttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
-import io.netty.util.CharsetUtil;
+import io.winterframework.mod.commons.resource.FileResource;
 
 /**
  * @author jkuhn
@@ -44,10 +43,11 @@ public class TestNetty {
 
 	/**
 	 * @param args
+	 * @throws IOException 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		
-		String multipart = "-----------------------------41716138319688775731431041856\n"
+		/*String multipart = "-----------------------------41716138319688775731431041856\n"
 				+ "Content-Disposition: form-data; name=\"toto\"\n"
 				+ "Content-Length: 1\n"
 				+ "\n"
@@ -72,19 +72,30 @@ public class TestNetty {
 				+ "-----------------------------41716138319688775731431041856--\n"
 				+ "";
 		
-		ByteBuf data = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(multipart, CharsetUtil.UTF_8));
+		ByteBuf data = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(multipart, CharsetUtil.UTF_8));*/
 
 		HttpDataFactory httpDataFactory = new DefaultHttpDataFactory(true);
         HttpRequest httpRequest = new DefaultHttpRequest(
                 io.netty.handler.codec.http.HttpVersion.HTTP_1_1,
                 HttpMethod.POST,
                 "/");
-        httpRequest.headers().add(HttpHeaderNames.CONTENT_TYPE, "multipart/form-data; boundary=---------------------------41716138319688775731431041856");
+        httpRequest.headers().add(HttpHeaderNames.CONTENT_TYPE, "multipart/form-data; boundary=------------------------f490929f7758651e");
+        
+        
+        
+        
         
         HttpPostRequestDecoder decoder = new HttpPostRequestDecoder(httpDataFactory, httpRequest);
         decoder.setDiscardThreshold(0);
         
-        decoder.offer(new DefaultHttpContent(data));
+//        decoder.offer(new DefaultHttpContent(data));
+        
+        try(FileResource resource = new FileResource("src/test/resources/file_multipart.txt")) {
+        	for(ByteBuf data : resource.read().get().collectList().block()) {
+        		decoder.offer(new DefaultHttpContent(data));
+        	}
+        }
+        
         decoder.offer(LastHttpContent.EMPTY_LAST_CONTENT);
         
         try {

@@ -20,25 +20,19 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpConstants;
-import io.netty.util.CharsetUtil;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.commons.resource.MediaTypes;
-import io.winterframework.mod.web.Charsets;
 import io.winterframework.mod.web.Header;
 import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Part;
 import io.winterframework.mod.web.internal.MalformedBodyException;
 import io.winterframework.mod.web.internal.RequestBodyDecoder;
-import io.winterframework.mod.web.internal.header.ContentDispositionCodec;
-import io.winterframework.mod.web.internal.header.ContentTypeCodec;
-import io.winterframework.mod.web.internal.header.GenericHeaderService;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -53,132 +47,10 @@ import reactor.core.publisher.SignalType;
 @Bean(visibility = Visibility.PRIVATE)
 public class MultipartBodyDecoder implements RequestBodyDecoder<Part> {
 	
-	private HeaderService httpHeaderFieldService;
+	private HeaderService headerService;
 	
-	public MultipartBodyDecoder(HeaderService httpHeaderFieldService) {
-		this.httpHeaderFieldService = httpHeaderFieldService;
-	}
-	
-	public static void main(String[] args) {
-		HeaderService headerService = new GenericHeaderService(List.of(new ContentTypeCodec(), new ContentDispositionCodec()));
-		
-		MultipartBodyDecoder decoder = new MultipartBodyDecoder(headerService);
-		
-		/*String multipart = "-----------------------------41716138319688775731431041856\n"
-				+ "Content-Disposition: form-data; name=\"toto\"\n"
-				+ "\n"
-				+ "a\n"
-				+ "-----------------------------41716138319688775731431041856\n"
-				+ "Content-Disposition: form-data; name=\"tata\"\n"
-				+ "\n"
-				+ "b\n"
-				+ "-----------------------------41716138319688775731431041856\n"
-				+ "Content-Disposition: form-data; name=\"somefile\"; filename=\"Toto.java\"\n"
-				+ "Content-Type: text/x-java\n"
-				+ "\n"
-				+ "public class Toto {\n"
-				+ "\n"
-				+ "	public static void main(String[] args) {\n"
-				+ "		String toto = \"toto\";\n"
-				+ "		String tata = \"tata\";\n"
-				+ "		System.out.println(\"Hello \" + toto + \" \" + tata);\n"
-				+ "	}\n"
-				+ "}\n"
-				+ "\n"
-				+ "-----------------------------41716138319688775731431041856--\n"
-				+ "";*/
-		
-		String multipart = "-----------------------------41716138319688775731431041856\n"
-				+ "Content-Disposition: form-data; name=\"toto\"\n"
-				+ "\n"
-				+ "a\n"
-				+ "-----------------------------41716138319688775731431041856\n"
-				+ "Content-Disposition: form-data; name=\"tata\"\n"
-				+ "Content-Type: multipart/mixed; boundary=---------------------------1234\n"
-				+ "\n"
-				+ "-----------------------------1234\n"
-				+ "Content-Disposition: form-data; name=\"file1\"; filename=\"Toto.java\"\n"
-				+ "Content-Type: text/x-java\n"
-				+ "\n"
-				+ "public class Toto {\n"
-				+ "\n"
-				+ "}\n"
-				+ "-----------------------------1234\n"
-				+ "Content-Disposition: form-data; name=\"file2\"; filename=\"Tata.java\"\n"
-				+ "Content-Type: text/x-java\n"
-				+ "\n"
-				+ "public class Tata {}\n"
-				+ "-----------------------------1234--\n"
-				+ "-----------------------------41716138319688775731431041856\n"
-				+ "Content-Disposition: form-data; name=\"tata\"\n"
-				+ "\n"
-				+ "b\n"
-				+ "-----------------------------41716138319688775731431041856\n"
-				+ "Content-Disposition: form-data; name=\"somefile\"; filename=\"Toto.java\"\n"
-				+ "Content-Type: text/x-java\n"
-				+ "\n"
-				+ "public class Toto {\n"
-				+ "\n"
-				+ "	public static void main(String[] args) {\n"
-				+ "		String toto = \"toto\";\n"
-				+ "		String tata = \"tata\";\n"
-				+ "		System.out.println(\"Hello \" + toto + \" \" + tata);\n"
-				+ "	}\n"
-				+ "}\n"
-				+ "\n"
-				+ "-----------------------------41716138319688775731431041856--";
-		
-		ByteBuf buffer = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(multipart, CharsetUtil.UTF_8));
-
-		Headers.ContentType contentType = headerService.<Headers.ContentType>decode("content-type: multipart/form-data; boundary=---------------------------41716138319688775731431041856; charset=UTF-8");
-		
-		decoder.decode(Flux.just(buffer), contentType)
-			.subscribe(part -> {
-				System.out.println("================================================================================");
-				System.out.println("name: " + part.getName());
-				part.getFilename().ifPresent(filename -> System.out.println("filename: " + filename));
-				System.out.println("headers: ");
-				System.out.println(part.headers().getAllHeader().entrySet().stream()
-					.flatMap(e -> {
-						return e.getValue().stream();
-					})
-					.map(h -> "  - " + headerService.encode(h))
-					.collect(Collectors.joining("\n"))
-				);
-				System.out.print("data: \n[");
-				part.data().subscribe(
-					chunk -> {
-						System.out.print(chunk.toString(Charsets.UTF_8));
-					},
-					ex -> {
-						
-					},
-					() -> {
-						System.out.println("]\n================================================================================");
-					}
-				);
-			},
-			ex -> {
-				ex.printStackTrace();
-			},
-			() -> {
-				
-			});
-		
-		
-		/*long total = 0, min = Long.MAX_VALUE, max = 0;
-		int count = 100000;
-		for(int i=0;i<count;i++) {
-			buffer.resetReaderIndex();
-			long t0 = System.nanoTime();
-			decoder.decode(Flux.just(buffer), contentType)
-				.collectList().block();
-			long te = System.nanoTime();
-			total += te - t0;
-			min = Math.min(min, te-t0);
-			max = Math.max(max, te-t0);
-		}
-		System.out.println("AVG: " + (total / count) + ", MIN: " + min + ", MAX: " + max);*/
+	public MultipartBodyDecoder(HeaderService headerService) {
+		this.headerService = headerService;
 	}
 	
 	public Flux<Part> decode(Flux<ByteBuf> data, Headers.ContentType contentType) {
@@ -270,7 +142,7 @@ public class MultipartBodyDecoder implements RequestBodyDecoder<Part> {
 	
 	private DecoderTask headers(ByteBuf buffer, BodyDataSubscriber context) throws MalformedBodyException {
 		while(!this.skipOneLine(buffer)) {
-			Header headerField = this.httpHeaderFieldService.decode(buffer, context.contentType.getCharset());
+			Header headerField = this.headerService.decode(buffer, context.contentType.getCharset());
 			if(headerField != null) {
 				context.addDecodedHeader(headerField);
 			}
@@ -361,16 +233,8 @@ public class MultipartBodyDecoder implements RequestBodyDecoder<Part> {
 		
 		if(context.getPart().getDataEmitter().isPresent()) {
 			FluxSink<ByteBuf> partDataEmitter = context.getPart().getDataEmitter().get();
-			if(delimiterIndex != null) {
-				buffer.readerIndex(delimiterReaderIndex);
-				if(readerIndex < delimiterReaderIndex) {
-					partDataEmitter.next(buffer.retainedSlice(readerIndex, delimiterReaderIndex - readerIndex));
-				}
-			}
-			else {
-				if(readerIndex < buffer.readerIndex()) {
-					partDataEmitter.next(buffer.retainedSlice(readerIndex, buffer.readerIndex() - readerIndex));
-				}
+			if(readerIndex < buffer.readerIndex()) {
+				partDataEmitter.next(buffer.retainedSlice(readerIndex, buffer.readerIndex() - readerIndex));
 			}
 		}
 		return null;

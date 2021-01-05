@@ -39,9 +39,7 @@ public class StaticHandler implements ExchangeHandler<RequestBody, ResponseBody,
 	
 	private String basePath;
 	
-	// TODO the resource path should be determine by a path parameter
-	// - we can set the context of this handler to be a WebContext
-	// - we can set the context of this handler to be a String and let the user provide the path
+	// TODO the resource path could be determined by a path parameter
 	public StaticHandler(Resource baseResource, String basePath) {
 		this.baseResource = baseResource;
 		this.basePath = basePath;
