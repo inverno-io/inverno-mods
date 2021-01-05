@@ -41,31 +41,55 @@ public interface HeaderService {
 	
 	<T extends Header> void encodeValue(T headerField, ByteBuf buffer, Charset charset);
 	
-	public static boolean isTokenCharacter(byte codePoint) {
-		return Character.isLetterOrDigit(codePoint) || 
-				codePoint == '!' || 
-				codePoint == '#' ||
-				codePoint == '$' ||
-				codePoint == '%' ||
-				codePoint == '\'' ||
-				codePoint == '*' ||
-				codePoint == '+' ||
-				codePoint == '-' ||
-				codePoint == '.' ||
-				codePoint == '^' ||
-				codePoint == '_' ||
-				codePoint == '`' ||
-				codePoint == '|' ||
-				codePoint == '~';
+	/*
+	 * https://tools.ietf.org/html/rfc7230#section-3.2.6
+	 */
+	public static boolean isTokenCharacter(char character) {
+		return Character.isLetterOrDigit(character) || 
+				character == '!' || 
+				character == '#' ||
+				character == '$' ||
+				character == '%' ||
+				character == '\'' ||
+				character == '*' ||
+				character == '+' ||
+				character == '-' ||
+				character == '.' ||
+				character == '^' ||
+				character == '_' ||
+				character == '`' ||
+				character == '|' ||
+				character == '~';
 	}
 	
-	public static boolean isToken(String token) {
-		if(token.length() == 0) {
+	public static boolean isToken(String value) {
+		if(value == null || value.length() == 0) {
 			return false;
 		}
-		byte[] tokenBytes = token.getBytes();
-		for(int i=0;i<tokenBytes.length;i++) {
-			if(!isTokenCharacter(tokenBytes[i])) {
+		for(int i=0;i<value.length();i++) {
+			if(!isTokenCharacter(value.charAt(i))) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/*
+	 * https://tools.ietf.org/html/rfc7230#section-3.2
+	 * https://tools.ietf.org/html/rfc5234#appendix-B.1
+	 */
+	public static boolean isValueCharacter(char character) {
+		return character > 32 && character < 127;
+	}
+	
+	public static boolean isValue(String value) {
+		if(value == null || value.length() == 0) {
+			return false;
+		}
+		
+		byte[] valueBytes = value.getBytes();
+		for(int i=0;i<valueBytes.length;i++) {
+			if(!isValueCharacter(value.charAt(i))) {
 				return false;
 			}
 		}

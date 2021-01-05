@@ -21,6 +21,7 @@ import java.util.Set;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpConstants;
 import io.winterframework.mod.web.AbstractHeaderCodec;
+import io.winterframework.mod.web.HeaderService;
 
 /**
  * @author jkuhn
@@ -46,32 +47,35 @@ public class GenericHeaderCodec extends AbstractHeaderCodec<GenericHeader, Gener
 		Integer startIndex = null;
 		Integer endIndex = null;
 		while(buffer.isReadable()) {
-			 byte nextByte = buffer.readByte();
-			 
-			 if(startIndex == null && Character.isWhitespace(nextByte)) {
-				 continue;
-			 }
-			 else {
-				 if(startIndex == null) {
+			byte nextByte = buffer.readByte();
+			
+			if(startIndex == null && Character.isWhitespace(nextByte)) {
+				continue;
+			}
+			else {
+				if(startIndex == null) {
 					 startIndex = buffer.readerIndex() - 1;
-				 }
-				 
-				 if(nextByte == HttpConstants.CR) {
-					 if(buffer.getByte(buffer.readerIndex()) == HttpConstants.LF) {
-						 buffer.readByte();
-						 endIndex = buffer.readerIndex() - 2;
-						 if(startIndex == endIndex) {
-							 buffer.readerIndex(readerIndex);
-							 throw new MalformedHeaderException("Malformed Header: " + name);
-						 }
-						 return builder.headerValue(buffer.slice(startIndex, endIndex - startIndex).toString(charset)).build();
-					 }
-				 }
-				 else if(nextByte == HttpConstants.LF) {
-					 endIndex = buffer.readerIndex() - 1;
-					 return builder.headerValue(buffer.slice(startIndex, endIndex - startIndex).toString(charset)).build();
-				 }
-			 }
+				}
+				
+				if(nextByte == HttpConstants.CR) {
+					if(buffer.getByte(buffer.readerIndex()) == HttpConstants.LF) {
+						buffer.readByte();
+						endIndex = buffer.readerIndex() - 2;
+						if(startIndex == endIndex) {
+							buffer.readerIndex(readerIndex);
+							throw new MalformedHeaderException(name);
+						}
+						return builder.headerValue(buffer.slice(startIndex, endIndex - startIndex).toString(charset)).build();
+					}
+				}
+				else if(nextByte == HttpConstants.LF) {
+					endIndex = buffer.readerIndex() - 1;
+					return builder.headerValue(buffer.slice(startIndex, endIndex - startIndex).toString(charset)).build();
+				}
+				else if(!HeaderService.isValueCharacter((char)nextByte)) {
+					throw new MalformedHeaderException(name + ": Invalid character " + (char)nextByte);
+				}
+			}
 		}
 		buffer.readerIndex(readerIndex);
 		// TODO returning null might not be the proper way to tell that we don't have enough data...

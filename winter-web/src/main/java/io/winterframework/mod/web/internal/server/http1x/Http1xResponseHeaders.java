@@ -75,12 +75,6 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 		this.internalHeaders.setLong((CharSequence)Headers.NAME_CONTENT_LENGTH, contentLength);
 		return this;
 	}
-
-	@Override
-	public Http1xResponseHeaders add(String name, String value) {
-		this.internalHeaders.addCharSequence((CharSequence)name, (CharSequence)value);
-		return this;
-	}
 	
 	@Override
 	public Http1xResponseHeaders add(CharSequence name, CharSequence value) {

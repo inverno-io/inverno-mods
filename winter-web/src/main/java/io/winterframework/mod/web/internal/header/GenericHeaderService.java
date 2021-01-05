@@ -170,9 +170,9 @@ public class GenericHeaderService implements HeaderService {
 			 else if(Character.isWhitespace(nextByte)) {
 				 // There's a white space between the header name and the colon
 				 buffer.readerIndex(readerIndex);
-				 throw new MalformedHeaderException("Malformed Header: white space");
+				 throw new MalformedHeaderException("Malformed Header: name can't contain white space");
 			 }
-			 else if(!HeaderService.isTokenCharacter(nextByte)) {
+			 else if(!HeaderService.isTokenCharacter((char)nextByte)) {
 				 buffer.readerIndex(readerIndex);
 				 buffer.readerIndex(readerIndex);
 				 throw new MalformedHeaderException("Malformed Header: " + (buffer.readerIndex()-1) + " " + buffer.toString(Charsets.UTF_8) + " " + String.valueOf(Character.toChars(nextByte)));
