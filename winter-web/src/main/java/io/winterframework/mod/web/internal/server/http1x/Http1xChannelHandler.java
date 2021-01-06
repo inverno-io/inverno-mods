@@ -171,9 +171,6 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 				this.flush = false;
 			}
 		}
-		/*if(this.requestingExchange != null) {
-			this.requestingExchange = null;
-		}*/
 	}
 
 	private void onDecoderError(ChannelHandlerContext ctx, HttpObject httpObject) {
