@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.commons.resource;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Set;
 
@@ -35,7 +34,7 @@ public class FileResourceProvider extends AbstractResourceProvider<FileResource>
 	}
 	
 	@Override
-	public FileResource get(URI uri) throws IllegalArgumentException, ResourceException, IOException {
+	public FileResource get(URI uri) throws IllegalArgumentException, ResourceException {
 		return new FileResource(uri, this.mediaTypeService);
 	}
 

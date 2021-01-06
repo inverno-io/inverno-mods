@@ -16,11 +16,11 @@
 package io.winterframework.mod.commons.resource;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.UnknownServiceException;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -42,35 +42,50 @@ public class UrlResource extends AbstractAsyncResource {
 	
 	private Optional<URLConnection> connection;
 	
-	public UrlResource(URI uri) throws IOException {
+	public UrlResource(URI uri) {
 		this(uri, null);
 	}
 	
-	public UrlResource(URL url) throws IOException, URISyntaxException {
+	public UrlResource(URL url) throws IllegalArgumentException {
 		this(url, null);
 	}
 	
-	protected UrlResource(URI uri, MediaTypeService mediaTypeService) throws IOException {
+	protected UrlResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
 		this.uri = Objects.requireNonNull(uri.normalize());
-		this.url = this.uri.toURL();
+		try {
+			this.url = this.uri.toURL();
+		} 
+		catch (MalformedURLException e) {
+			throw new IllegalArgumentException("Invalid URI", e);
+		}
 	}
 	
-	protected UrlResource(URL url, MediaTypeService mediaTypeService) throws IOException, URISyntaxException {
+	protected UrlResource(URL url, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
 		this.url = Objects.requireNonNull(url);
-		this.uri = url.toURI();
+		try {
+			this.uri = url.toURI();
+		}
+		catch (URISyntaxException e) {
+			throw new IllegalArgumentException("Invalid URL", e);
+		}
 	}
 
-	private Optional<URLConnection> resolve() throws IOException {
+	private Optional<URLConnection> resolve() {
 		if(this.connection == null) {
-			this.connection = Optional.of(this.url.openConnection());
+			try {
+				this.connection = Optional.of(this.url.openConnection());
+			}
+			catch (IOException e) {
+				throw new ResourceException(e);
+			}
 		}
 		return this.connection;
 	}
 	
 	@Override
-	public String getFilename() throws IOException {
+	public String getFilename() {
 		String path = this.uri.getSchemeSpecificPart();
 		int lastSlashIndex = this.uri.getPath().lastIndexOf("/");
 		if(lastSlashIndex != -1) {
@@ -87,17 +102,17 @@ public class UrlResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public Boolean exists() throws IOException {
+	public Boolean exists() {
 		return null;
 	}
 	
 	@Override
-	public boolean isFile() throws IOException {
+	public boolean isFile() {
 		return false;
 	}
 
 	@Override
-	public FileTime lastModified() throws IOException {
+	public FileTime lastModified() {
 		Optional<URLConnection> c = this.resolve();
 		if(c.isPresent()) {
 			long lastModified = c.get().getLastModified();
@@ -109,7 +124,7 @@ public class UrlResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Long size() throws IOException {
+	public Long size() {
 		Optional<URLConnection> c = this.resolve();
 		if(c.isPresent()) {
 			long contentLength = c.get().getContentLengthLong();
@@ -121,29 +136,31 @@ public class UrlResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public Optional<ReadableByteChannel> openReadableByteChannel() throws IOException {
+	public Optional<ReadableByteChannel> openReadableByteChannel() {
 		Optional<URLConnection> c = this.resolve();
 		if(c.isPresent()) {
 			try {
 				return Optional.of(Channels.newChannel(c.get().getInputStream()));
 			}
-			catch (UnknownServiceException e) {
+			catch (IOException e) {
 				// The URL is not readable
+				// TODO log debug
 				return Optional.empty();
-			}
+			} 
 		}
 		return Optional.empty();
 	}
 
 	@Override
-	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) throws IOException {
+	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) {
 		Optional<URLConnection> c = this.resolve();
 		if(c.isPresent()) {
 			try {
 				return Optional.of(Channels.newChannel(c.get().getOutputStream()));
 			}
-			catch (UnknownServiceException e) {
+			catch (IOException e) {
 				// The URL is not writable
+				// TODO log debug
 				return Optional.empty();
 			}
 		}
@@ -151,16 +168,16 @@ public class UrlResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public boolean delete() throws IOException {
+	public boolean delete() {
 		return false;
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 	}
 	
 	@Override
-	public Resource resolve(URI uri) throws IOException {
+	public Resource resolve(URI uri) {
 		return new UrlResource(this.uri.resolve(uri.normalize()), this.getMediaTypeService());
 	}
 }

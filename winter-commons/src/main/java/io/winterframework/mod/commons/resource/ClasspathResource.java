@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.commons.resource;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -44,29 +43,29 @@ public class ClasspathResource extends AbstractAsyncResource {
 	private Class<?> clazz;
 	private ClassLoader classLoader;
 	
-	public ClasspathResource(URI uri) throws IllegalArgumentException, IOException {
+	public ClasspathResource(URI uri) throws IllegalArgumentException {
 		this(uri, (MediaTypeService)null);
 	}
 	
-	public ClasspathResource(URI uri, Class<?> clazz) throws IllegalArgumentException, IOException {
+	public ClasspathResource(URI uri, Class<?> clazz) throws IllegalArgumentException {
 		this(uri, clazz, null);
 	}
 
-	public ClasspathResource(URI uri, ClassLoader classLoader) throws IllegalArgumentException, IOException {
+	public ClasspathResource(URI uri, ClassLoader classLoader) throws IllegalArgumentException {
 		this(uri, classLoader, null);
 	}
 	
-	protected ClasspathResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException, IOException {
+	protected ClasspathResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		this(uri, Thread.currentThread().getContextClassLoader(), mediaTypeService);
 	}
 	
-	protected ClasspathResource(URI uri, Class<?> clazz, MediaTypeService mediaTypeService) throws IllegalArgumentException, IOException {
+	protected ClasspathResource(URI uri, Class<?> clazz, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
 		this.uri = this.checkUri(uri);
 		this.clazz = Objects.requireNonNull(clazz);
 	}
 	
-	protected ClasspathResource(URI uri, ClassLoader classLoader, MediaTypeService mediaTypeService) throws IllegalArgumentException, IOException {
+	protected ClasspathResource(URI uri, ClassLoader classLoader, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
 		this.uri = this.checkUri(uri);
 		if(!this.uri.getScheme().equals(SCHEME_CLASSPATH)) {
@@ -101,7 +100,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 		}
 	}
 	
-	private Optional<Resource> resolve() throws IOException {
+	private Optional<Resource> resolve() {
 		if(this.resource == null) {
 			URL url;
 			if(this.clazz != null) {
@@ -156,7 +155,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public String getFilename() throws IOException {
+	public String getFilename() {
 		Optional<Resource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().getFilename();
@@ -165,7 +164,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public String getMediaType() throws IOException {
+	public String getMediaType() {
 		Optional<Resource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().getMediaType();
@@ -179,7 +178,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Boolean exists() throws IOException {
+	public Boolean exists() {
 		Optional<Resource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().exists();
@@ -188,7 +187,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public boolean isFile() throws IOException {
+	public boolean isFile() {
 		Optional<Resource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().isFile();
@@ -197,7 +196,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Long size() throws IOException {
+	public Long size() {
 		Optional<Resource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().size();
@@ -206,7 +205,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public FileTime lastModified() throws IOException {
+	public FileTime lastModified() {
 		Optional<Resource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().lastModified();
@@ -215,7 +214,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Optional<ReadableByteChannel> openReadableByteChannel() throws IOException {
+	public Optional<ReadableByteChannel> openReadableByteChannel() {
 		Optional<Resource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().openReadableByteChannel();
@@ -224,12 +223,12 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) throws IOException {
+	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) {
 		return Optional.empty();
 	}
 	
 	@Override
-	public Optional<Flux<ByteBuf>> read() throws IOException {
+	public Optional<Flux<ByteBuf>> read() {
 		Optional<Resource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().read();
@@ -243,20 +242,25 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public boolean delete() throws IOException {
+	public boolean delete() {
 		throw new UnsupportedOperationException("Can't delete a classpath resource");
 	}
 
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		Optional<Resource> r = this.resolve();
 		if(r.isPresent()) {
-			r.get().close();
+			try {
+				r.get().close();
+			} 
+			catch (Exception e) {
+				throw new ResourceException(e);
+			}
 		}
 	}
 	
 	@Override
-	public Resource resolve(URI uri) throws IllegalArgumentException, IOException {
+	public Resource resolve(URI uri) throws IllegalArgumentException {
 		URI resolvedUri = this.uri.resolve(uri.normalize());
 		ClasspathResource resolvedResource;
 		if(this.clazz != null) {

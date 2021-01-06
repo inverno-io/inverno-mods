@@ -24,6 +24,7 @@ import java.nio.file.Paths;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Provide;
 import io.winterframework.mod.commons.resource.MediaTypeService;
+import io.winterframework.mod.commons.resource.ResourceException;
 
 /**
  * @author jkuhn
@@ -33,22 +34,27 @@ import io.winterframework.mod.commons.resource.MediaTypeService;
 public class GenericMediaTypeService implements @Provide MediaTypeService {
 
 	@Override
-	public String getForExtension(String extension) throws IOException {
+	public String getForExtension(String extension) {
 		return this.getForPath(Paths.get("." + extension));
 	}
 
 	@Override
-	public String getForFilename(String filename) throws IOException {
+	public String getForFilename(String filename) {
 		return this.getForPath(Paths.get(filename));
 	}
 
 	@Override
-	public String getForPath(Path path) throws IOException {
-		return Files.probeContentType(path);
+	public String getForPath(Path path) {
+		try {
+			return Files.probeContentType(path);
+		} 
+		catch (IOException e) {
+			throw new ResourceException("Unable to determine resource media type", e);
+		}
 	}
 
 	@Override
-	public String getForUri(URI uri) throws IOException {
+	public String getForUri(URI uri) {
 		return this.getForPath(Paths.get(uri.getSchemeSpecificPart()));
 	}
 }

@@ -82,7 +82,7 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 	}
 	
 	@Override
-	public Optional<Flux<ByteBuf>> read() throws IOException {
+	public Optional<Flux<ByteBuf>> read() {
 		return this.openReadableByteChannel().map(channel -> {
 			return Flux.generate(
 				() -> Long.valueOf(0),	
@@ -117,7 +117,7 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 	}
 	
 	@Override
-	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) throws IOException {
+	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) {
 		return this.openWritableByteChannel(append, createParents)
 			.map(channel -> data
 				.concatMap(chunk -> Mono.<Integer>create(sink -> {

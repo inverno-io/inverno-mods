@@ -15,8 +15,6 @@
  */
 package io.winterframework.mod.commons.resource;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.ReadableByteChannel;
@@ -31,51 +29,59 @@ import reactor.core.publisher.Flux;
  * @author jkuhn
  *
  */
-public interface Resource extends Closeable {
+public interface Resource extends AutoCloseable {
 
-	String getFilename() throws IOException;
+	String getFilename() throws ResourceException;
 	
-	String getMediaType() throws IOException;
+	String getMediaType() throws ResourceException;
 	
 	URI getURI();
 	
-	boolean isFile() throws IOException;
+	boolean isFile() throws ResourceException;
 	
-	Boolean exists() throws IOException;
+	Boolean exists() throws ResourceException;
 
-	FileTime lastModified() throws IOException;
+	FileTime lastModified() throws ResourceException;
 	
-	Long size() throws IOException;
+	Long size() throws ResourceException;
 	
-	Optional<ReadableByteChannel> openReadableByteChannel() throws IOException;
+	Optional<ReadableByteChannel> openReadableByteChannel() throws ResourceException;
 	
-	default Optional<WritableByteChannel> openWritableByteChannel() throws IOException {
+	default Optional<WritableByteChannel> openWritableByteChannel() throws ResourceException {
 		return this.openWritableByteChannel(false);
 	}
 	
-	default Optional<WritableByteChannel> openWritableByteChannel(boolean append) throws IOException {
+	default Optional<WritableByteChannel> openWritableByteChannel(boolean append) throws ResourceException {
 		return this.openWritableByteChannel(append, true);
 	}
 	
-	Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) throws IOException;
+	Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) throws ResourceException;
 	
-	Optional<Flux<ByteBuf>> read() throws IOException;
+	Optional<Flux<ByteBuf>> read() throws ResourceException;
 	
-	default Optional<Flux<Integer>> write(Flux<ByteBuf> data) throws IOException {
+	default Optional<Flux<Integer>> write(Flux<ByteBuf> data) throws ResourceException {
 		return this.write(data, false);
 	}
 	
-	default Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append) throws IOException {
+	default Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append) throws ResourceException {
 		return this.write(data, append, true);
 	}
 	
-	Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) throws IOException;
+	Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) throws ResourceException;
 	
-	boolean delete() throws IOException;
+	boolean delete() throws ResourceException;
 	
-	Resource resolve(URI uri) throws IOException;
+	Resource resolve(URI uri) throws ResourceException;
 	
-	default Resource resolve(String path) throws URISyntaxException, IOException {
-		return this.resolve(new URI(path));
+	default Resource resolve(String path) throws ResourceException {
+		try {
+			return this.resolve(new URI(path));
+		} 
+		catch (URISyntaxException e) {
+			throw new IllegalArgumentException(e);
+		}
 	}
+	
+	@Override
+	void close();
 }

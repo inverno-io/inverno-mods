@@ -20,7 +20,6 @@ import java.net.URI;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
-import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,12 +46,12 @@ public class PathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public String getFilename() throws IOException {
+	public String getFilename() {
 		return this.path.getFileName().toString();
 	}
 	
 	@Override
-	public String getMediaType() throws IOException {
+	public String getMediaType() {
 		return this.getMediaTypeService().getForPath(this.path);
 	}
 	
@@ -62,37 +61,44 @@ public class PathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Boolean exists() throws IOException {
+	public Boolean exists() {
 		return Files.exists(this.path);
 	}
 	
 	@Override
-	public boolean isFile() throws IOException {
+	public boolean isFile() {
 		// We can always return a file channel with a path so yes this is a file
 		// However it doesn't mean the resource actually exist
 		return true;
 	}
 
 	@Override
-	public Long size() throws IOException {
-		return Files.size(this.path);
+	public Long size() {
+		try {
+			return Files.size(this.path);
+		} 
+		catch (IOException e) {
+			// TODO log debug
+			return null;
+		}
 	}
 	
 	@Override
-	public Optional<ReadableByteChannel> openReadableByteChannel() throws IOException {
+	public Optional<ReadableByteChannel> openReadableByteChannel() {
 		try {
 			if(Files.isReadable(this.path)) {
 				return Optional.of(FileChannel.open(this.path, StandardOpenOption.READ));
 			}
 			return Optional.empty();
 		}
-		catch(FileSystemException e) {
+		catch(IOException e) {
+			// TODO log debug
 			return Optional.empty();
 		}
 	}
 
 	@Override
-	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) throws IOException {
+	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) {
 		try {
 			if(createParents) {
 				Files.createDirectories(this.path.getParent());
@@ -104,17 +110,19 @@ public class PathResource extends AbstractAsyncResource {
 				return Optional.of(FileChannel.open(this.path, StandardOpenOption.WRITE, StandardOpenOption.CREATE));
 			}
 		}
-		catch (FileSystemException e) {
+		catch (IOException e) {
+			// TODO log debug
 			return Optional.empty();
 		}
 	}
 	
 	@Override
-	public FileTime lastModified() throws IOException {
+	public FileTime lastModified() {
 		try {
 			return Files.getLastModifiedTime(this.path);
 		}
-		catch (FileSystemException e) {
+		catch (IOException e) {
+			// TODO log debug
 			return null;
 		}
 	}
@@ -190,22 +198,23 @@ public class PathResource extends AbstractAsyncResource {
 	}*/
 
 	@Override
-	public boolean delete() throws IOException {
+	public boolean delete() {
 		try {
 			return Files.deleteIfExists(this.path);
 		}
-		catch (FileSystemException e) {
+		catch (IOException e) {
+			// TODO log debug
 			return false;
 		}
 	}
 	
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		
 	}
 	
 	@Override
-	public Resource resolve(URI uri) throws IOException {
+	public Resource resolve(URI uri) {
 		PathResource resolvedResource = new PathResource(Paths.get(this.getURI().resolve(uri.normalize())), this.getMediaTypeService());
 		resolvedResource.setExecutor(this.getExecutor());
 		return resolvedResource;

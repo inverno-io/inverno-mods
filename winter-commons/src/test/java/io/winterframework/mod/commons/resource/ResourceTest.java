@@ -3,6 +3,7 @@ package io.winterframework.mod.commons.resource;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -33,7 +34,7 @@ import reactor.core.publisher.Flux;
 
 public class ResourceTest {
 
-	private void writeResource(Resource resource) throws IOException {
+	private void writeResource(Resource resource){
 		Assertions.assertFalse(resource.exists());
 		Assertions.assertNull(resource.lastModified());
 		resource.openWritableByteChannel().ifPresent(ch -> {
@@ -51,7 +52,7 @@ public class ResourceTest {
 		});
 	}
 	
-	private void readResource(Resource resource) throws IOException {
+	private void readResource(Resource resource) {
 		Assertions.assertTrue(resource.exists());
 		Assertions.assertNotNull(resource.lastModified());
 		Assertions.assertTrue(System.currentTimeMillis() - resource.lastModified().toMillis() < 1000);
@@ -75,14 +76,14 @@ public class ResourceTest {
 		});
 	}
 	
-	private void deleteResource(Resource resource) throws IOException {
+	private void deleteResource(Resource resource) {
 		Assertions.assertTrue(resource.exists());
 		Assertions.assertTrue(resource.delete());
 		Assertions.assertFalse(resource.exists());
 	}
 	
 	@Test
-	public void testFile() throws URISyntaxException, IOException {
+	public void testFile() throws URISyntaxException {
 		String pathname = "target/tmp/ign/test.txt";
 		File file = new File(pathname);
 		URI uri = file.toURI();
@@ -105,7 +106,7 @@ public class ResourceTest {
 	}
 	
 	@Test
-	public void testZip() throws URISyntaxException, IOException {
+	public void testZip() throws URISyntaxException {
 		File zipFile = new File("target/tmp/test.zip");
 		URI uri = new URI("zip:" + zipFile.toURI() +"!/ign/test.txt");
 		try  {
@@ -127,7 +128,7 @@ public class ResourceTest {
 	}
 
 	@Test
-	public void testJar() throws URISyntaxException, IOException {
+	public void testJar() throws URISyntaxException {
 		File jarFile = new File("target/tmp/test.jar");
 		URI uri = new URI("jar:" + jarFile.toURI() +"!/ign/test.txt");
 		try  {
@@ -149,7 +150,7 @@ public class ResourceTest {
 	}
 	
 	@Test
-	public void testClasspath() throws URISyntaxException, IOException {
+	public void testClasspath() throws URISyntaxException, MalformedURLException {
 		File testJar = new File("src/test/resources/test.jar");
 		ClassLoader cl = new URLClassLoader(new URL[] {testJar.toURI().toURL()});
 		URI uri = new URI("classpath:/ign/test.txt");
@@ -177,7 +178,7 @@ public class ResourceTest {
 	}
 	
 	@Test
-	public void testUrl() throws URISyntaxException, IOException {
+	public void testUrl() throws URISyntaxException {
 		try (Resource resource = new UrlResource(new File("src/test/resources/test.txt").toURI())) {
 			resource.openReadableByteChannel().ifPresent(ch -> {
 				try (ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -265,7 +266,7 @@ public class ResourceTest {
 	}
 	
 	@Test
-	public void testUrlRead() throws IllegalArgumentException, IOException {
+	public void testUrlRead() throws IllegalArgumentException {
 		try (Resource resource = new UrlResource(new File("src/test/resources/test.txt").toURI())) {
 			String content = resource.read().get()
 				.map(chunk -> {
@@ -280,7 +281,7 @@ public class ResourceTest {
 	}
 	
 	@Test
-	public void testUrlWrite() throws IllegalArgumentException, IOException, URISyntaxException {
+	public void testUrlWrite() throws IllegalArgumentException, URISyntaxException {
 		FakeFtpServer fakeFtpServer = new FakeFtpServer();
 		fakeFtpServer.setServerControlPort(0);
 		fakeFtpServer.addUserAccount(new UserAccount("user", "password", "/data"));

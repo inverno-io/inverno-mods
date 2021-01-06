@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.commons.resource;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Set;
 
@@ -35,7 +34,7 @@ public class JarResourceProvider extends AbstractResourceProvider<JarResource> i
 	}
 	
 	@Override
-	public JarResource get(URI uri) throws IllegalArgumentException, ResourceException, IOException {
+	public JarResource get(URI uri) throws IllegalArgumentException, ResourceException {
 		return new JarResource(uri, this.mediaTypeService);
 	}
 

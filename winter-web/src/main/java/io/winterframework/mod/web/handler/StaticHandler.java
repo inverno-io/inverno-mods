@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.web.handler;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -63,7 +62,7 @@ public class StaticHandler implements ExchangeHandler<RequestBody, ResponseBody,
 				exchange.response().body().resource().data(requestedResource);
 			}
 		} 
-		catch (URISyntaxException | IOException e) {
+		catch (URISyntaxException e) {
 			throw new InternalServerErrorException(e);
 		}
 	}
