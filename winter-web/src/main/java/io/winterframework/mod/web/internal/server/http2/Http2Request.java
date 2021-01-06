@@ -29,6 +29,6 @@ import io.winterframework.mod.web.internal.server.AbstractRequest;
 public class Http2Request extends AbstractRequest {
 
 	public Http2Request(ChannelHandlerContext context, RequestHeaders requestHeaders, RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, RequestBodyDecoder<Part> multipartBodyDecoder) {
-		super(context, requestHeaders, urlEncodedBodyDecoder, multipartBodyDecoder, false);
+		super(context, requestHeaders, urlEncodedBodyDecoder, multipartBodyDecoder);
 	}
 }
