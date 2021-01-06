@@ -16,7 +16,6 @@
 package io.winterframework.mod.commons.resource;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -77,12 +76,12 @@ public class FileResource extends AbstractAsyncResource {
 		return uri.normalize();
 	}
 	@Override
-	public String getFilename() throws IOException {
+	public String getFilename() {
 		return this.pathResource.getFilename();
 	}
 	
 	@Override
-	public String getMediaType() throws IOException {
+	public String getMediaType() {
 		return this.pathResource.getMediaType();
 	}
 	
@@ -92,57 +91,57 @@ public class FileResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Boolean exists() throws IOException {
+	public Boolean exists() {
 		return this.pathResource.exists();
 	}
 	
 	@Override
-	public boolean isFile() throws IOException {
+	public boolean isFile() {
 		return this.pathResource.isFile();
 	}
 
 	@Override
-	public FileTime lastModified() throws IOException {
+	public FileTime lastModified() {
 		return this.pathResource.lastModified();
 	}
 	
 	@Override
-	public Long size() throws IOException {
+	public Long size() {
 		return this.pathResource.size();
 	}
 
 	@Override
-	public Optional<ReadableByteChannel> openReadableByteChannel() throws IOException {
+	public Optional<ReadableByteChannel> openReadableByteChannel() {
 		return this.pathResource.openReadableByteChannel();
 	}
 
 	@Override
-	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) throws IOException {
+	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) {
 		return this.pathResource.openWritableByteChannel(append, createParents);
 	}
 
 	@Override
-	public Optional<Flux<ByteBuf>> read() throws IOException {
+	public Optional<Flux<ByteBuf>> read() {
 		return this.pathResource.read();
 	}
 	
 	@Override
-	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) throws IOException {
+	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) {
 		return this.pathResource.write(data, append, createParents);
 	}
 	
 	@Override
-	public boolean delete() throws IOException {
+	public boolean delete() {
 		return this.pathResource.delete();
 	}
 	
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		this.pathResource.close();
 	}
 	
 	@Override
-	public Resource resolve(URI uri) throws IOException {
+	public Resource resolve(URI uri) {
 		FileResource resolvedResource = new FileResource(this.getURI().resolve(uri.normalize()), this.getMediaTypeService());
 		resolvedResource.setExecutor(this.getExecutor());
 		return resolvedResource;

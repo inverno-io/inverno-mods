@@ -53,6 +53,7 @@ class Http1xResponseBody extends GenericResponseBody {
 	
 	@Override
 	public Resource resource() {
+		// fileregion is supported when we are not using ssl and we do not compress content
 		if(!((Http1xResponse)this.response).supportsFileRegion()) {
 			return super.resource();
 		}
@@ -68,42 +69,37 @@ class Http1xResponseBody extends GenericResponseBody {
 
 		@Override
 		public Response<Resource> data(io.winterframework.mod.commons.resource.Resource resource) {
-//			fileregion is supported when we are not using ssl and we do not compress content
-			try {
-				if(resource.isFile()) {
-					// We need to create the file region and then send an empty response
-					// The Http1xServerExchange should then complete and check whether there is a file region or not
-					this.populateHeaders(resource);
-					
-					FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable"));
-					long size = resource.size();
-					int count = (int)Math.ceil((float)size / (float)MAX_FILE_REGION_SIZE);
-					
-					// We need to add an extra element in order to control when the flux terminates so we can properly close the file channel
-					Http1xResponseBody.this.fileRegionData = Flux.range(0, count + 1) 
-						.filter(index -> index < count)
-						.map(index -> {
-							long position = index * MAX_FILE_REGION_SIZE;
-							FileRegion region = new DefaultFileRegion(fileChannel, position, Math.min(size - position, MAX_FILE_REGION_SIZE));
-							region.retain();
-							return region;
-						})
-						.doFinally(sgn -> {
-							try {
-								fileChannel.close();
-							} 
-							catch (IOException e) {
-								Exceptions.propagate(e);
-							}
-						});
-					Http1xResponseBody.this.setData(Flux.empty());
-				}
-				else {
-					super.data(resource);
-				}
-			} 
-			catch (IOException e) {
-				throw new InternalServerErrorException("Error while reading resource " + resource, e);
+
+			if(resource.isFile()) {
+				// We need to create the file region and then send an empty response
+				// The Http1xServerExchange should then complete and check whether there is a file region or not
+				this.populateHeaders(resource);
+				
+				FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable"));
+				long size = resource.size();
+				int count = (int)Math.ceil((float)size / (float)MAX_FILE_REGION_SIZE);
+				
+				// We need to add an extra element in order to control when the flux terminates so we can properly close the file channel
+				Http1xResponseBody.this.fileRegionData = Flux.range(0, count + 1) 
+					.filter(index -> index < count)
+					.map(index -> {
+						long position = index * MAX_FILE_REGION_SIZE;
+						FileRegion region = new DefaultFileRegion(fileChannel, position, Math.min(size - position, MAX_FILE_REGION_SIZE));
+						region.retain();
+						return region;
+					})
+					.doFinally(sgn -> {
+						try {
+							fileChannel.close();
+						} 
+						catch (IOException e) {
+							Exceptions.propagate(e);
+						}
+					});
+				Http1xResponseBody.this.setData(Flux.empty());
+			}
+			else {
+				super.data(resource);
 			}
 			return Http1xResponseBody.this.response.<ResponseBody.Resource>map(responseBody -> responseBody.resource());
 		}

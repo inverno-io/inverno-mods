@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.commons.resource;
 
-import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 
@@ -25,11 +24,11 @@ import java.nio.file.Path;
  */
 public interface MediaTypeService {
 	
-	String getForExtension(String extension) throws IOException;
+	String getForExtension(String extension);
 	
-	String getForFilename(String filename) throws IOException;
+	String getForFilename(String filename);
 	
-	String getForPath(Path path) throws IOException;
+	String getForPath(Path path);
 	
-	String getForUri(URI uri) throws IOException;
+	String getForUri(URI uri);
 }

@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.commons.resource;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Set;
 
@@ -25,7 +24,7 @@ import java.util.Set;
  */
 public interface ResourceProvider<A extends Resource> {
 	
-	A get(URI uri) throws IllegalArgumentException, ResourceException, IOException;
+	A get(URI uri) throws IllegalArgumentException, ResourceException;
 	
 	Set<String> getSupportedSchemes();
 }

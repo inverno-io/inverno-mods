@@ -21,7 +21,6 @@ import java.net.URISyntaxException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystemException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -54,19 +53,19 @@ public class ZipResource extends AbstractAsyncResource {
 	
 	private boolean closed;
 	
-	public ZipResource(URI uri) throws IOException {
+	public ZipResource(URI uri) {
 		this(uri, (MediaTypeService)null);
 	}
 	
-	protected ZipResource(URI uri, String scheme) throws IOException {
+	protected ZipResource(URI uri, String scheme) {
 		this(uri, scheme, null);
 	}
 	
-	protected ZipResource(URI uri, MediaTypeService mediaTypeService) throws IOException {
+	protected ZipResource(URI uri, MediaTypeService mediaTypeService) {
 		this(uri, SCHEME_ZIP, mediaTypeService);
 	}
 	
-	protected ZipResource(URI uri, String scheme, MediaTypeService mediaTypeService) throws IOException {
+	protected ZipResource(URI uri, String scheme, MediaTypeService mediaTypeService) {
 		super(mediaTypeService);
 		if(!Objects.requireNonNull(uri).getScheme().equals(scheme)) {
 			throw new IllegalArgumentException("Not a " + scheme + " uri");
@@ -96,7 +95,7 @@ public class ZipResource extends AbstractAsyncResource {
 		}
 	}
 	
-	private Optional<PathResource> resolve() throws IOException {
+	private Optional<PathResource> resolve() {
 		if(this.closed) {
 			throw new ClosedResourceException();
 		}
@@ -107,7 +106,8 @@ public class ZipResource extends AbstractAsyncResource {
 				resolvedResource.setExecutor(this.getExecutor());
 				this.pathResource = Optional.of(resolvedResource);
 			} 
-			catch (FileSystemException e) {
+			catch (IOException e) {
+				// TODO log debug
 				return Optional.empty();
 			}
 		}
@@ -115,7 +115,7 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public String getFilename() throws IOException {
+	public String getFilename() {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().getFilename();
@@ -124,7 +124,7 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public String getMediaType() throws IOException {
+	public String getMediaType() {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().getMediaType();
@@ -138,7 +138,7 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Boolean exists() throws IOException {
+	public Boolean exists() {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().exists();
@@ -147,7 +147,7 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public boolean isFile() throws IOException {
+	public boolean isFile() {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().isFile();
@@ -156,7 +156,7 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public FileTime lastModified() throws IOException {
+	public FileTime lastModified() {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().lastModified();
@@ -165,7 +165,7 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Long size() throws IOException {
+	public Long size() {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().size();
@@ -174,7 +174,7 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public Optional<ReadableByteChannel> openReadableByteChannel() throws IOException {
+	public Optional<ReadableByteChannel> openReadableByteChannel() {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().openReadableByteChannel();
@@ -183,7 +183,7 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) throws IOException {
+	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) {
 		try {
 			if(createParents) {
 				Files.createDirectories(Paths.get(this.zipUri).getParent());
@@ -194,13 +194,14 @@ public class ZipResource extends AbstractAsyncResource {
 			}
 			return Optional.empty();
 		} 
-		catch (FileSystemException e) {
+		catch (IOException e) {
+			// TODO log debug
 			return Optional.empty();
 		}
 	}
 	
 	@Override
-	public Optional<Flux<ByteBuf>> read() throws IOException {
+	public Optional<Flux<ByteBuf>> read() {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().read();
@@ -209,7 +210,7 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) throws IOException {
+	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().write(data);
@@ -218,7 +219,7 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public boolean delete() throws IOException {
+	public boolean delete() {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().delete();
@@ -227,7 +228,7 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public void close() throws IOException {
+	public void close() {
 		try {
 			Optional<PathResource> r = this.resolve();
 			if(r.isPresent()) {
@@ -237,6 +238,9 @@ public class ZipResource extends AbstractAsyncResource {
 		finally {
 			try {
 				this.fileSystem.close();
+			} 
+			catch (IOException e) {
+				throw new ResourceException(e);
 			}
 			finally {
 				this.closed = true;
@@ -245,7 +249,7 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Resource resolve(URI uri) throws IOException {
+	public Resource resolve(URI uri) {
 		ZipResource resolvedResource = new ZipResource(this.uri.resolve(uri.normalize()), this.getMediaTypeService());
 		resolvedResource.setExecutor(this.getExecutor());
 		return resolvedResource;

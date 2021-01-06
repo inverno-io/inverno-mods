@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.commons.resource;
 
-import java.io.IOException;
 import java.net.URI;
 
 /**
@@ -24,16 +23,16 @@ import java.net.URI;
  */
 public class JarResource extends ZipResource {
 
-	public JarResource(URI uri) throws IOException {
+	public JarResource(URI uri) {
 		this(uri, null);
 	}
 	
-	protected JarResource(URI uri, MediaTypeService mediaTypeService) throws IOException {
+	protected JarResource(URI uri, MediaTypeService mediaTypeService) {
 		super(uri, SCHEME_JAR, mediaTypeService);
 	}
 	
 	@Override
-	public Resource resolve(URI uri) throws IOException {
+	public Resource resolve(URI uri) {
 		JarResource resolvedResource = new JarResource(this.getURI().resolve(uri.normalize()), this.getMediaTypeService());
 		resolvedResource.setExecutor(this.getExecutor());
 		return resolvedResource;

@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.web.internal.server;
 
-import java.io.IOException;
 import java.util.function.Consumer;
 
 import org.reactivestreams.Publisher;
@@ -195,27 +194,16 @@ public class GenericResponseBody implements ResponseBody {
 		protected void populateHeaders(io.winterframework.mod.commons.resource.Resource resource) {
 			GenericResponseBody.this.response.headers(h -> {
 				if(GenericResponseBody.this.response.getHeaders().getContentLength() == null) {
-					Long size;
-					try {
-						size = resource.size();
-						if(size != null) {
-							h.contentLength(size);
-						}
-					} 
-					catch (IOException e) {
-						// TODO maybe a debug log?
+					Long size = resource.size();
+					if(size != null) {
+						h.contentLength(size);
 					}
 				}
 				
 				if(GenericResponseBody.this.response.getHeaders().getCharSequence(Headers.NAME_CONTENT_TYPE) == null) {
-					try {
-						String mediaType = resource.getMediaType();
-						if(mediaType != null) {
-							h.contentType(mediaType);
-						}
-					} 
-					catch (IOException e) {
-						// TODO maybe a debug log? 
+					String mediaType = resource.getMediaType();
+					if(mediaType != null) {
+						h.contentType(mediaType);
 					}
 				}
 			});
@@ -224,21 +212,16 @@ public class GenericResponseBody implements ResponseBody {
 		@Override
 		public Response<Resource> data(io.winterframework.mod.commons.resource.Resource resource) {
 			// Http2 doesn't support FileRegion so we have to read the resource and send it to the response data flux
-			try {
-				Boolean exists = resource.exists();
-				if(exists == null || exists) {
-					// In case of file resources we should always be able to determine existence
-					// For other resources with a null exists we can still try, worst case scenario: 
-					// internal server error
-					this.populateHeaders(resource);
-					GenericResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable")));
-				}
-				else {
-					throw new NotFoundException();
-				}
-			} 
-			catch (IOException e) {
-				throw new InternalServerErrorException("Error while reading resource " + resource, e);
+			Boolean exists = resource.exists();
+			if(exists == null || exists) {
+				// In case of file resources we should always be able to determine existence
+				// For other resources with a null exists we can still try, worst case scenario: 
+				// internal server error
+				this.populateHeaders(resource);
+				GenericResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable")));
+			}
+			else {
+				throw new NotFoundException();
 			}
 			return GenericResponseBody.this.response.<ResponseBody.Resource>map(responseBody -> responseBody.resource());
 		}

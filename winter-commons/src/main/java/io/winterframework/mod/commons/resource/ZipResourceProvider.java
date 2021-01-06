@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.commons.resource;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Set;
 
@@ -35,7 +34,7 @@ public class ZipResourceProvider extends AbstractResourceProvider<ZipResource> i
 	}
 	
 	@Override
-	public ZipResource get(URI uri) throws IllegalArgumentException, ResourceException, IOException {
+	public ZipResource get(URI uri) throws IllegalArgumentException, ResourceException {
 		return new ZipResource(uri, this.mediaTypeService);
 	}
 

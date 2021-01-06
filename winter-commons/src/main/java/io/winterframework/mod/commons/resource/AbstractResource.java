@@ -15,8 +15,6 @@
  */
 package io.winterframework.mod.commons.resource;
 
-import java.io.IOException;
-
 import io.winterframework.mod.commons.internal.resource.GenericMediaTypeService;
 
 /**
@@ -53,7 +51,7 @@ public abstract class AbstractResource implements Resource {
 	}
 	
 	@Override
-	public String getMediaType() throws IOException {
+	public String getMediaType() {
 		return this.getMediaTypeService().getForUri(this.getURI());
 	}
 }

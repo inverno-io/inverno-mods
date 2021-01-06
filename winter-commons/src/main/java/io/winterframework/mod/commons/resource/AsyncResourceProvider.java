@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.commons.resource;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.ExecutorService;
 
@@ -25,7 +24,7 @@ import java.util.concurrent.ExecutorService;
  */
 public interface AsyncResourceProvider<A extends AsyncResource> extends ResourceProvider<A> {
 
-	default A get(URI uri, ExecutorService executor) throws IllegalArgumentException, ResourceException, IOException {
+	default A get(URI uri, ExecutorService executor) throws IllegalArgumentException, ResourceException {
 		A resource = this.get(uri);
 		resource.setExecutor(executor);
 		return resource;
