@@ -90,6 +90,14 @@ public class Http1xExchange extends AbstractExchange {
 	}
 	
 	@Override
+	public void dispose() {
+		super.dispose();
+		if(this.next != null) {
+			this.next.dispose();
+		}
+	}
+	
+	@Override
 	protected ErrorExchange<ResponseBody, Throwable> createErrorExchange(Throwable error) {
 		return new GenericErrorExchange(this.request, new Http1xResponse(this.context, this.headerService), error);
 	}

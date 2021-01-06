@@ -29,6 +29,7 @@ import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.Status;
 import io.winterframework.mod.web.WebException;
 import reactor.core.publisher.BaseSubscriber;
+import reactor.core.publisher.SignalType;
 
 /**
  * @author jkuhn
@@ -104,6 +105,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		else {
 			super.dispose();
 		}
+		this.request.dispose();
 	}
 	
 	@Override
@@ -255,6 +257,11 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	protected abstract void onCompleteSingle(ByteBuf value);
 	
 	protected abstract void onCompleteMany();
+
+	@Override
+	protected void hookFinally(SignalType type) {
+		this.request.dispose();
+	}
 	
 	public static interface Handler {
 		

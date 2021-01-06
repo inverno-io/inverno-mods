@@ -15,12 +15,16 @@
  */
 package io.winterframework.mod.web.internal.server.http1x;
 
+import java.util.Optional;
+
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.Part;
 import io.winterframework.mod.web.RequestHeaders;
 import io.winterframework.mod.web.internal.RequestBodyDecoder;
 import io.winterframework.mod.web.internal.server.AbstractRequest;
+import reactor.core.publisher.Sinks.Many;
 
 /**
  * @author jkuhn
@@ -29,6 +33,17 @@ import io.winterframework.mod.web.internal.server.AbstractRequest;
 public class Http1xRequest extends AbstractRequest {
 
 	public Http1xRequest(ChannelHandlerContext context, RequestHeaders requestHeaders, RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, RequestBodyDecoder<Part> multipartBodyDecoder) {
-		super(context, requestHeaders, urlEncodedBodyDecoder, multipartBodyDecoder, true);
+		super(context, requestHeaders, urlEncodedBodyDecoder, multipartBodyDecoder);
+	}
+	
+	@Override
+	public Optional<Many<ByteBuf>> data() {
+		// In order to support pipelining we must always create the data sink even if
+		// it might not be consumed by the exchange handler
+		// This comes from the fact that the exchange is only started after the previous
+		// exchange has completed, which means we can receive data before we actually
+		// invoke the exchange handler which is supposed to create the body
+		this.body();
+		return super.data();
 	}
 }
