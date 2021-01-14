@@ -15,8 +15,8 @@
  */
 package io.winterframework.mod.web.internal.header;
 
-import io.winterframework.mod.web.AbstractHeaderBuilder;
-import io.winterframework.mod.web.Header;
+import io.winterframework.mod.web.header.AbstractHeaderBuilder;
+import io.winterframework.mod.web.header.Header;
 
 /**
  * @author jkuhn

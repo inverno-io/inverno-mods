@@ -18,11 +18,11 @@ package io.winterframework.mod.web.internal.server;
 import java.util.List;
 import java.util.function.Consumer;
 
-import io.winterframework.mod.web.HeaderService;
-import io.winterframework.mod.web.Headers;
-import io.winterframework.mod.web.ResponseCookies;
 import io.winterframework.mod.web.SetCookie;
+import io.winterframework.mod.web.header.HeaderService;
+import io.winterframework.mod.web.header.Headers;
 import io.winterframework.mod.web.internal.header.SetCookieCodec;
+import io.winterframework.mod.web.server.ResponseCookies;
 
 /**
  * @author jkuhn
@@ -40,7 +40,7 @@ public class GenericResponseCookies implements ResponseCookies {
 	}
 	
 	public List<Headers.SetCookie> getAll() {
-		return this.responseHeaders.getAll(Headers.NAME_SET_COOKIE);
+		return this.responseHeaders.getAllHeader(Headers.NAME_SET_COOKIE);
 	}
 	
 	@Override

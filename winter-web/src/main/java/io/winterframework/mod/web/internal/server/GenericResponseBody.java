@@ -22,15 +22,14 @@ import org.reactivestreams.Publisher;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpConstants;
-import io.winterframework.mod.commons.resource.MediaTypes;
+import io.winterframework.mod.base.resource.MediaTypes;
 import io.winterframework.mod.web.Charsets;
-import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.InternalServerErrorException;
 import io.winterframework.mod.web.NotFoundException;
-import io.winterframework.mod.web.Response;
-import io.winterframework.mod.web.ResponseBody;
-import io.winterframework.mod.web.ServerSentEvent;
-import io.winterframework.mod.web.ServerSentEvent.Configurator;
+import io.winterframework.mod.web.header.Headers;
+import io.winterframework.mod.web.server.ResponseBody;
+import io.winterframework.mod.web.server.ServerSentEvent;
+import io.winterframework.mod.web.server.ServerSentEvent.Configurator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
@@ -77,9 +76,8 @@ public class GenericResponseBody implements ResponseBody {
 	}
 
 	@Override
-	public Response<Void> empty() {
+	public void empty() {
 		this.setData(Mono.empty());
-		return this.response.<Void>map(responseBody -> null);
 	}
 
 	@Override
@@ -109,26 +107,25 @@ public class GenericResponseBody implements ResponseBody {
 	protected class GenericRawResponseBody implements ResponseBody.Raw {
 
 		@Override
-		public Response<Raw> data(Publisher<ByteBuf> data) {
+		public void data(Publisher<ByteBuf> data) {
 			GenericResponseBody.this.setData(data);
-			return GenericResponseBody.this.response.<ResponseBody.Raw>map(responseBody -> responseBody.raw());
 		}
 		
 		@Override
-		public Response<Raw> data(String data) {
-			return this.data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(data, Charsets.UTF_8))));
+		public void data(String data) {
+			this.data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(data, Charsets.UTF_8))));
 		}
 		
 		@Override
-		public Response<Raw> data(byte[] data) {
-			return this.data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(data))));
+		public void data(byte[] data) {
+			this.data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(data))));
 		}
 	}
 
 	protected class GenericSseResponseBody implements ResponseBody.Sse<ByteBuf> {
 
 		@Override
-		public Response<Sse<ByteBuf>> events(Publisher<ServerSentEvent<ByteBuf>> events) {
+		public void events(Publisher<ServerSentEvent<ByteBuf>> events) {
 			GenericResponseBody.this.response.headers(headers -> headers
 				.contentType(GenericResponseBody.SSE_CONTENT_TYPE)
 			);
@@ -177,8 +174,6 @@ public class GenericResponseBody implements ResponseBody {
 					sseData = sseData.concatWith(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("\r\n\r\n", Charsets.UTF_8))));
 					return sseData;
 				}));
-			
-			return GenericResponseBody.this.response.<ResponseBody.Sse<ByteBuf>>map(responseBody -> responseBody.sse());
 		}
 
 		@Override
@@ -191,16 +186,16 @@ public class GenericResponseBody implements ResponseBody {
 	
 	protected class GenericResourceResponseBody implements ResponseBody.Resource {
 
-		protected void populateHeaders(io.winterframework.mod.commons.resource.Resource resource) {
+		protected void populateHeaders(io.winterframework.mod.base.resource.Resource resource) {
 			GenericResponseBody.this.response.headers(h -> {
-				if(GenericResponseBody.this.response.getHeaders().getContentLength() == null) {
+				if(GenericResponseBody.this.response.headers().getContentLength() == null) {
 					Long size = resource.size();
 					if(size != null) {
 						h.contentLength(size);
 					}
 				}
 				
-				if(GenericResponseBody.this.response.getHeaders().getCharSequence(Headers.NAME_CONTENT_TYPE) == null) {
+				if(GenericResponseBody.this.response.headers().getCharSequence(Headers.NAME_CONTENT_TYPE) == null) {
 					String mediaType = resource.getMediaType();
 					if(mediaType != null) {
 						h.contentType(mediaType);
@@ -210,7 +205,7 @@ public class GenericResponseBody implements ResponseBody {
 		}
 		
 		@Override
-		public Response<Resource> data(io.winterframework.mod.commons.resource.Resource resource) {
+		public void data(io.winterframework.mod.base.resource.Resource resource) {
 			// Http2 doesn't support FileRegion so we have to read the resource and send it to the response data flux
 			Boolean exists = resource.exists();
 			if(exists == null || exists) {
@@ -223,7 +218,6 @@ public class GenericResponseBody implements ResponseBody {
 			else {
 				throw new NotFoundException();
 			}
-			return GenericResponseBody.this.response.<ResponseBody.Resource>map(responseBody -> responseBody.resource());
 		}
 	}
 }

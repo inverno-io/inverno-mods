@@ -15,10 +15,19 @@
  */
 package io.winterframework.mod.web.internal.server.http2;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.Set;
+
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Headers;
-import io.winterframework.mod.web.Header;
-import io.winterframework.mod.web.ResponseTrailers;
+import io.winterframework.mod.web.header.Header;
+import io.winterframework.mod.web.header.HeaderService;
+import io.winterframework.mod.web.server.ResponseTrailers;
 
 /**
  * @author jkuhn
@@ -28,18 +37,15 @@ public class Http2ResponseTrailers implements ResponseTrailers {
 
 	private final Http2Headers internalTrailers;
 	
-	public Http2ResponseTrailers() {
+	private final HeaderService headerService;
+	
+	public Http2ResponseTrailers(HeaderService headerService) {
 		this.internalTrailers = new DefaultHttp2Headers();
+		this.headerService = headerService;
 	}
 
 	Http2Headers getInternalTrailers() {
 		return this.internalTrailers;
-	}
-	
-	@Override
-	public ResponseTrailers add(String name, String value) {
-		this.internalTrailers.add(name, value);
-		return this;
 	}
 
 	@Override
@@ -54,5 +60,75 @@ public class Http2ResponseTrailers implements ResponseTrailers {
 			this.internalTrailers.add(trailer.getHeaderName(), trailer.getHeaderValue());
 		}
 		return this;
+	}
+
+	@Override
+	public ResponseTrailers set(CharSequence name, CharSequence value) {
+		this.internalTrailers.set(name, value);
+		return this;
+	}
+
+	@Override
+	public ResponseTrailers set(Header... trailers) {
+		for(Header trailer : trailers) {
+			this.internalTrailers.set(trailer.getHeaderName(), trailer.getHeaderValue());
+		}
+		return this;
+	}
+
+	@Override
+	public ResponseTrailers remove(CharSequence... names) {
+		for(CharSequence name : names) {
+			this.internalTrailers.remove(name);
+		}
+		return this;
+	}
+
+	@Override
+	public Set<String> getNames() {
+		return this.internalTrailers.names().stream().map(CharSequence::toString).collect(Collectors.toSet());
+	}
+
+	@Override
+	public Optional<String> get(CharSequence name) {
+		return Optional.of(this.internalTrailers.get(name)).map(Object::toString);
+	}
+
+	@Override
+	public List<String> getAll(CharSequence name) {
+		return this.internalTrailers.getAll(name).stream().map(CharSequence::toString).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<Entry<String, String>> getAll() {
+		List<Entry<String, String>> result = new LinkedList<>();
+		this.internalTrailers.forEach(e -> {
+			result.add(Map.entry(e.getKey().toString(), e.getValue().toString()));
+		});
+		return result;
+	}
+
+	@Override
+	public <T extends Header> Optional<T> getHeader(CharSequence name) {
+		return this.get(name).map(value -> this.headerService.decode(name.toString(), value));
+	}
+
+	@Override
+	public <T extends Header> List<T> getAllHeader(CharSequence name) {
+		return this.internalTrailers.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value.toString())).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<Header> getAllHeader() {
+		List<Header> result = new LinkedList<>();
+		this.internalTrailers.forEach(e -> {
+			result.add(this.headerService.<Header>decode(e.getKey().toString(), e.getValue().toString()));
+		});
+		return result;
+	}
+
+	@Override
+	public boolean contains(CharSequence name, CharSequence value) {
+		return this.internalTrailers.contains(name, value, true);
 	}
 }

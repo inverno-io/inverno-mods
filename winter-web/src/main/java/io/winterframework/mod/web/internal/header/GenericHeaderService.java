@@ -19,15 +19,16 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpConstants;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.mod.web.Charsets;
-import io.winterframework.mod.web.Header;
-import io.winterframework.mod.web.HeaderCodec;
-import io.winterframework.mod.web.HeaderService;
+import io.winterframework.mod.web.header.Header;
+import io.winterframework.mod.web.header.HeaderCodec;
+import io.winterframework.mod.web.header.HeaderService;
 
 /**
  * @author jkuhn
@@ -88,22 +89,24 @@ public class GenericHeaderService implements HeaderService {
 			return null;
 		}
 		
-		T result = (T)this.getCodec(name).decode(name, buffer, charsetOrDefault);
+		T result = this.<T>getHeaderCodec(name).orElse((HeaderCodec<T>)this.defaultCodec).decode(name, buffer, charsetOrDefault);
 		if(result == null) {
 			buffer.readerIndex(readerIndex);
 		}
 		return result;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Header> String encode(T headerField) {
-		return this.getCodec(headerField.getHeaderName()).encode(headerField);
+		return this.<T>getHeaderCodec(headerField.getHeaderName()).orElse((HeaderCodec<T>)this.defaultCodec).encode(headerField);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Header> void encode(T headerField, ByteBuf buffer, Charset charset) {
 		Charset charsetOrDefault = Charsets.orDefault(charset);
-		this.getCodec(headerField.getHeaderName()).encode(headerField, buffer, charsetOrDefault);
+		this.<T>getHeaderCodec(headerField.getHeaderName()).orElse((HeaderCodec<T>)this.defaultCodec).encode(headerField, buffer, charsetOrDefault);
 	}
 
 	@Override
@@ -121,27 +124,25 @@ public class GenericHeaderService implements HeaderService {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Header> T decode(String name, ByteBuf buffer, Charset charset) {
-		return (T)this.getCodec(name).decode(name, buffer, charset);
+		return this.<T>getHeaderCodec(name).orElse((HeaderCodec<T>)this.defaultCodec).decode(name, buffer, charset);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Header> String encodeValue(T headerField) {
-		return this.getCodec(headerField.getHeaderName()).encodeValue(headerField);
+		return this.<T>getHeaderCodec(headerField.getHeaderName()).orElse((HeaderCodec<T>)this.defaultCodec).encodeValue(headerField);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Header> void encodeValue(T headerField, ByteBuf buffer, Charset charset) {
 		Charset charsetOrDefault = Charsets.orDefault(charset);
-		this.getCodec(headerField.getHeaderName()).encodeValue(headerField, buffer, charsetOrDefault);
+		this.<T>getHeaderCodec(headerField.getHeaderName()).orElse((HeaderCodec<T>)this.defaultCodec).encodeValue(headerField, buffer, charsetOrDefault);
 	}
 	
 	@SuppressWarnings("unchecked")
-	private <T extends Header> HeaderCodec<T> getCodec(String name) {
-		HeaderCodec<?> codec = this.codecs.get(name);
-		if(codec == null) {
-			codec = this.defaultCodec;
-		}
-		return (HeaderCodec<T>) codec;
+	public <T extends Header> Optional<HeaderCodec<T>> getHeaderCodec(String name) {
+		return Optional.ofNullable((HeaderCodec<T>)this.codecs.get(name));
 	}
 	
 	private String readName(ByteBuf buffer, Charset charset) {

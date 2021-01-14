@@ -15,34 +15,33 @@
  */
 package io.winterframework.mod.web.internal.server;
 
-import io.winterframework.mod.web.ErrorExchange;
-import io.winterframework.mod.web.Request;
-import io.winterframework.mod.web.Response;
-import io.winterframework.mod.web.ResponseBody;
+import io.winterframework.mod.web.server.ErrorExchange;
+import io.winterframework.mod.web.server.Request;
+import io.winterframework.mod.web.server.Response;
 
 /**
  * @author jkuhn
  *
  */
-public class GenericErrorExchange implements ErrorExchange<ResponseBody, Throwable> {
+public class GenericErrorExchange implements ErrorExchange<Throwable> {
 
-	private final Request<Void> request;
+	private final Request request;
 	private final AbstractResponse response;
 	private final Throwable error;
 	
 	public GenericErrorExchange(AbstractRequest request, AbstractResponse response, Throwable error) {
-		this.request = request.map(ign -> null);
+		this.request = request;
 		this.response = response;
 		this.error = error;
 	}
 
 	@Override
-	public Request<Void> request() {
+	public Request request() {
 		return this.request;
 	}
 
 	@Override
-	public Response<ResponseBody> response() {
+	public Response response() {
 		return this.response;
 	}
 
@@ -50,5 +49,4 @@ public class GenericErrorExchange implements ErrorExchange<ResponseBody, Throwab
 	public Throwable getError() {
 		return this.error;
 	}
-
 }

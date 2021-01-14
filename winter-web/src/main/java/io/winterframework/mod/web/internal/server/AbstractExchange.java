@@ -20,14 +20,12 @@ import org.reactivestreams.Subscription;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.EventExecutor;
-import io.winterframework.mod.web.ErrorExchange;
-import io.winterframework.mod.web.Exchange;
-import io.winterframework.mod.web.ExchangeHandler;
-import io.winterframework.mod.web.Headers;
-import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.Status;
 import io.winterframework.mod.web.WebException;
+import io.winterframework.mod.web.header.Headers;
+import io.winterframework.mod.web.server.ErrorExchange;
+import io.winterframework.mod.web.server.Exchange;
+import io.winterframework.mod.web.server.ExchangeHandler;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.SignalType;
 
@@ -35,13 +33,13 @@ import reactor.core.publisher.SignalType;
  * @author jkuhn
  *
  */
-public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implements Exchange<RequestBody, ResponseBody> {
+public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implements Exchange {
 
 	protected final ChannelHandlerContext context;
 	protected final EventExecutor contextExecutor;
 	
-	protected final ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler;
-	protected final ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler;
+	protected final ExchangeHandler<Exchange> rootHandler;
+	protected final ExchangeHandler<ErrorExchange<Throwable>> errorHandler;
 	
 	protected final AbstractRequest request;
 	protected AbstractResponse response;
@@ -54,7 +52,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	private ErrorSubscriber errorSubscriber;
 	
-	protected static final ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> LAST_RESORT_ERROR_HANDLER = exchange -> {
+	protected static final ExchangeHandler<ErrorExchange<Throwable>> LAST_RESORT_ERROR_HANDLER = exchange -> {
 		if(exchange.response().isHeadersWritten()) {
 			throw new IllegalStateException("Headers already written", exchange.getError());
 		}
@@ -66,7 +64,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 	};
 	
-	public AbstractExchange(ChannelHandlerContext context, ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, AbstractRequest request, AbstractResponse response) {
+	public AbstractExchange(ChannelHandlerContext context, ExchangeHandler<Exchange> rootHandler, ExchangeHandler<ErrorExchange<Throwable>> errorHandler, AbstractRequest request, AbstractResponse response) {
 		this.context = context;
 		this.contextExecutor = this.context.executor();
 		this.rootHandler = rootHandler;
@@ -85,11 +83,11 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		return this.response;
 	}
 
-	public ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> getRootHandler() {
+	public ExchangeHandler<Exchange> getRootHandler() {
 		return this.rootHandler;
 	}
 	
-	public ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> getErrorHandler() {
+	public ExchangeHandler<ErrorExchange<Throwable>> getErrorHandler() {
 		return this.errorHandler;
 	}
 	
@@ -124,7 +122,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 		catch(Throwable throwable) {
 			// We need to create a new error exchange each time we try to handle the error in order to have a fresh response 
-			ErrorExchange<ResponseBody, Throwable> errorExchange = this.createErrorExchange(throwable);
+			ErrorExchange<Throwable> errorExchange = this.createErrorExchange(throwable);
 			try {
 				this.errorHandler.handle(errorExchange);
 			} 
@@ -159,7 +157,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 	}
 	
-	protected abstract ErrorExchange<ResponseBody, Throwable> createErrorExchange(Throwable error);
+	protected abstract ErrorExchange<Throwable> createErrorExchange(Throwable error);
 	
 	@Override
 	protected final void hookOnSubscribe(Subscription subscription) {
@@ -209,7 +207,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			this.transferedLength = 0;
 			this.chunkCount = 0;
 			this.firstChunk = null;
-			ErrorExchange<ResponseBody, Throwable> errorExchange = this.createErrorExchange(throwable);
+			ErrorExchange<Throwable> errorExchange = this.createErrorExchange(throwable);
 			try {
 				this.errorHandler.handle(errorExchange);
 			} 
@@ -235,15 +233,15 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	protected final void hookOnComplete() {
 		if(this.firstChunk != null) {
 			// single chunk response
-			if(this.response.getHeaders().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
-				this.response.getHeaders().contentLength(this.transferedLength);
+			if(this.response.headers().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
+				this.response.headers().contentLength(this.transferedLength);
 			}
 			this.executeInEventLoop(() -> this.onCompleteSingle(this.firstChunk));
 		}
 		else if(this.chunkCount == 0) {
 			// empty response
-			if(this.response.getHeaders().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
-				this.response.getHeaders().contentLength(0);
+			if(this.response.headers().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
+				this.response.headers().contentLength(0);
 			}
 			this.executeInEventLoop(this::onCompleteEmpty);
 		}

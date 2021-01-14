@@ -26,8 +26,8 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
-import io.winterframework.mod.web.Headers;
-import io.winterframework.mod.web.Headers.AcceptLanguage;
+import io.winterframework.mod.web.header.Headers;
+import io.winterframework.mod.web.header.Headers.AcceptLanguage;
 
 /**
  * 
@@ -39,14 +39,6 @@ public class AcceptCodecTest {
 	@Test
 	public void testAcceptCodec() {
 		// application/*;q=1, text/*;q=0.8, */*;q=0.2, audio/basic, audio/*;q=0.6, application/json, text/html
-		
-		Map<String, String> m1 = Map.of("tata", "toto", "titi", "tutu");
-		Map<String, String> m2 = new LinkedHashMap<>();
-		m2.put("tata", "toto");
-		m2.put("titi", "tutu");
-		
-		System.out.println(m1.equals(m2));
-		
 		List<AcceptCodec.Accept.MediaRange> ranges = new ArrayList<>();
 		
 		ranges.add(new AcceptCodec.Accept.MediaRange("application/*", 1.0f, Map.of()));
@@ -60,9 +52,9 @@ public class AcceptCodecTest {
 		
 		Collections.sort(ranges, AcceptCodec.Accept.MediaRange.COMPARATOR);
 		
-		ranges.forEach(range -> {
+		/*ranges.forEach(range -> {
 			System.out.println(range.getType() + "/" + range.getSubType() + " = " + range.getWeight() + " - " + range.getParameters());
-		});
+		});*/
 		
 		Map<AcceptCodec.Accept.MediaRange, String> rangeMap = new LinkedHashMap<>();
 		
@@ -75,12 +67,13 @@ public class AcceptCodecTest {
 		rangeMap.put(new AcceptCodec.Accept.MediaRange("text/*", 1.0f, Map.of()), "text/*");
 
 		rangeMap = rangeMap.entrySet().stream().sorted(Comparator.comparing(Entry::getKey, AcceptCodec.Accept.MediaRange.COMPARATOR)).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a,b) -> a, LinkedHashMap::new));
-		System.out.println(rangeMap.values());
 		
 		AcceptLanguageCodec acceptLanguageCodec = new AcceptLanguageCodec(false);
 		
 		AcceptLanguage allLanguage = acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, "*");
 		AcceptLanguage frLanguage = acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, "fr");
+		
+		// TODO
 		
 	}
 

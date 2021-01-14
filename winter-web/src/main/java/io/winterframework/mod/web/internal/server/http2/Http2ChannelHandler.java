@@ -30,16 +30,14 @@ import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
-import io.winterframework.mod.web.ErrorExchange;
-import io.winterframework.mod.web.Exchange;
-import io.winterframework.mod.web.ExchangeHandler;
-import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Parameter;
-import io.winterframework.mod.web.Part;
-import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.ResponseBody;
-import io.winterframework.mod.web.internal.RequestBodyDecoder;
+import io.winterframework.mod.web.header.HeaderService;
 import io.winterframework.mod.web.internal.server.AbstractExchange;
+import io.winterframework.mod.web.internal.server.multipart.MultipartDecoder;
+import io.winterframework.mod.web.server.ErrorExchange;
+import io.winterframework.mod.web.server.Exchange;
+import io.winterframework.mod.web.server.ExchangeHandler;
+import io.winterframework.mod.web.server.Part;
 import reactor.core.publisher.Sinks.EmitResult;
 
 /**
@@ -49,20 +47,20 @@ import reactor.core.publisher.Sinks.EmitResult;
  */
 public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2FrameListener, Http2Connection.Listener {
 
-	private ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler;
-	private ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler;
+	private ExchangeHandler<Exchange> rootHandler;
+	private ExchangeHandler<ErrorExchange<Throwable>> errorHandler;
 	private HeaderService headerService;
-	private RequestBodyDecoder<Parameter> urlEncodedBodyDecoder;
-	private RequestBodyDecoder<Part> multipartBodyDecoder;
+	private MultipartDecoder<Parameter> urlEncodedBodyDecoder;
+	private MultipartDecoder<Part> multipartBodyDecoder;
 
 	private IntObjectMap<Http2Exchange> serverStreams;
 
 	public Http2ChannelHandler(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder,
 			Http2Settings initialSettings,
-			ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler,
-			ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler,
-			HeaderService headerService, RequestBodyDecoder<Parameter> urlEncodedBodyDecoder,
-			RequestBodyDecoder<Part> multipartBodyDecoder) {
+			ExchangeHandler<Exchange> rootHandler,
+			ExchangeHandler<ErrorExchange<Throwable>> errorHandler,
+			HeaderService headerService, MultipartDecoder<Parameter> urlEncodedBodyDecoder,
+			MultipartDecoder<Part> multipartBodyDecoder) {
 		super(decoder, encoder, initialSettings);
 
 		this.rootHandler = rootHandler;

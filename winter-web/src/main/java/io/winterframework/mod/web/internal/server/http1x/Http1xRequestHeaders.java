@@ -16,7 +16,7 @@
 package io.winterframework.mod.web.internal.server.http1x;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,12 +24,12 @@ import java.util.stream.Collectors;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.ssl.SslHandler;
-import io.winterframework.mod.web.Header;
-import io.winterframework.mod.web.HeaderService;
-import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Method;
-import io.winterframework.mod.web.RequestHeaders;
+import io.winterframework.mod.web.header.Header;
+import io.winterframework.mod.web.header.HeaderService;
+import io.winterframework.mod.web.header.Headers;
 import io.winterframework.mod.web.internal.netty.LinkedHttpHeaders;
+import io.winterframework.mod.web.server.RequestHeaders;
 
 /**
  * @author jkuhn
@@ -98,22 +98,37 @@ public class Http1xRequestHeaders implements RequestHeaders {
 	}
 
 	@Override
-	public <T extends Header> Optional<T> getHeader(String name) {
-		return Optional.ofNullable(this.internalHeaders.get((CharSequence)name)).map(value -> this.headerService.decode(name, value));
-	}
-
-	@Override
-	public <T extends Header> List<T> getAllHeader(String name) {
-		return this.internalHeaders.getAll((CharSequence)name).stream().map(value -> this.headerService.<T>decode(name, value)).collect(Collectors.toList());
-	}
-
-	@Override
-	public Map<String, List<Header>> getAllHeader() {
-		return this.internalHeaders.entries().stream().map(e -> (Header)this.headerService.decode(e.getKey(), e.getValue())).collect(Collectors.groupingBy(h -> h.getHeaderName()));
+	public Optional<String> get(CharSequence name) {
+		return Optional.ofNullable(this.internalHeaders.get(name));
 	}
 	
 	@Override
-	public boolean contains(String name, String value) {
+	public List<String> getAll(CharSequence name) {
+		return this.internalHeaders.getAll(name);
+	}
+	
+	@Override
+	public List<Entry<String, String>> getAll() {
+		return this.internalHeaders.entries();
+	}
+	
+	@Override
+	public <T extends Header> Optional<T> getHeader(CharSequence name) {
+		return this.get(name).map(value -> this.headerService.decode(name.toString(), value));
+	}
+
+	@Override
+	public <T extends Header> List<T> getAllHeader(CharSequence name) {
+		return this.internalHeaders.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value)).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<Header> getAllHeader() {
+		return this.internalHeaders.entries().stream().map(e -> (Header)this.headerService.decode(e.getKey(), e.getValue())).collect(Collectors.toList());
+	}
+	
+	@Override
+	public boolean contains(CharSequence name, CharSequence value) {
 		return this.internalHeaders.contains(name, value, true);
 	}
 }

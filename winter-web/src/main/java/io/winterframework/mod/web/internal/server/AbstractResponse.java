@@ -21,18 +21,17 @@ import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.winterframework.mod.web.HeaderService;
-import io.winterframework.mod.web.Response;
-import io.winterframework.mod.web.ResponseBody;
-import io.winterframework.mod.web.ResponseCookies;
-import io.winterframework.mod.web.ResponseHeaders;
-import io.winterframework.mod.web.ResponseTrailers;
+import io.winterframework.mod.web.header.HeaderService;
+import io.winterframework.mod.web.server.Response;
+import io.winterframework.mod.web.server.ResponseCookies;
+import io.winterframework.mod.web.server.ResponseHeaders;
+import io.winterframework.mod.web.server.ResponseTrailers;
 
 /**
  * @author jkuhn
  *
  */
-public abstract class AbstractResponse implements Response<ResponseBody> {
+public abstract class AbstractResponse implements Response {
 
 	protected ChannelHandlerContext context;
 	
@@ -55,14 +54,6 @@ public abstract class AbstractResponse implements Response<ResponseBody> {
 	public Publisher<ByteBuf> data() {
 		return this.responseBody.getData();
 	}
-
-	public AbstractResponseHeaders getHeaders() {
-		return this.responseHeaders;
-	}
-
-	public ResponseTrailers getTrailers() {
-		return this.responseTrailers;
-	}
 	
 	public GenericResponseCookies getCookies() {
 		return this.responseCookies;
@@ -74,6 +65,11 @@ public abstract class AbstractResponse implements Response<ResponseBody> {
 	}
 	
 	@Override
+	public AbstractResponseHeaders headers() {
+		return this.responseHeaders;
+	}
+	
+	@Override
 	public AbstractResponse headers(Consumer<ResponseHeaders> headersConfigurer) {
 		if(this.isHeadersWritten()) {
 			throw new IllegalStateException("Headers already written");
@@ -82,6 +78,11 @@ public abstract class AbstractResponse implements Response<ResponseBody> {
 		return this;
 	}
 
+	@Override
+	public ResponseTrailers trailers() {
+		return this.responseTrailers;
+	}
+	
 	@Override
 	public AbstractResponse cookies(Consumer<ResponseCookies> cookiesConfigurer) {
 		if(this.isHeadersWritten()) {

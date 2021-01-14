@@ -20,16 +20,16 @@ import java.util.Optional;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.Parameter;
-import io.winterframework.mod.web.Part;
-import io.winterframework.mod.web.Request;
-import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.RequestCookies;
-import io.winterframework.mod.web.RequestHeaders;
-import io.winterframework.mod.web.RequestParameters;
-import io.winterframework.mod.web.internal.RequestBodyDecoder;
+import io.winterframework.mod.web.header.Headers;
+import io.winterframework.mod.web.internal.server.multipart.MultipartDecoder;
+import io.winterframework.mod.web.server.Part;
+import io.winterframework.mod.web.server.Request;
+import io.winterframework.mod.web.server.RequestBody;
+import io.winterframework.mod.web.server.RequestCookies;
+import io.winterframework.mod.web.server.RequestHeaders;
+import io.winterframework.mod.web.server.RequestParameters;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
@@ -37,20 +37,20 @@ import reactor.core.publisher.Sinks;
  * @author jkuhn
  *
  */
-public abstract class AbstractRequest implements Request<RequestBody> {
+public abstract class AbstractRequest implements Request {
 
 	protected final ChannelHandlerContext context;
 	protected final RequestHeaders requestHeaders;
-	protected final RequestBodyDecoder<Parameter> urlEncodedBodyDecoder;
-	protected final RequestBodyDecoder<Part> multipartBodyDecoder;
+	protected final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
+	protected final MultipartDecoder<Part> multipartBodyDecoder;
 	
 	protected GenericRequestParameters requestParameters;
 	protected GenericRequestCookies requestCookies;
 	
-	private GenericRequestBody requestBody;
+	private Optional<RequestBody> requestBody;
 	private Sinks.Many<ByteBuf> data;
 	
-	public AbstractRequest(ChannelHandlerContext context, RequestHeaders requestHeaders, RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, RequestBodyDecoder<Part> multipartBodyDecoder) {
+	public AbstractRequest(ChannelHandlerContext context, RequestHeaders requestHeaders, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
 		this.context = context;
 		this.requestHeaders = requestHeaders;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
@@ -85,27 +85,29 @@ public abstract class AbstractRequest implements Request<RequestBody> {
 	
 	@Override
 	public Optional<RequestBody> body() {
-		Method method = this.headers().getMethod();
-		if(method == Method.POST || method == Method.PUT || method == Method.PATCH) {
-			if(this.requestBody == null) {
-				// TODO deal with backpressure using a custom queue: if the queue reach a given threshold we should suspend the read on the channel: this.context.channel().config().setAutoRead(false)
-				// and resume when this flux is actually consumed (doOnRequest? this might impact performance)
-				this.data = Sinks.many().unicast().onBackpressureBuffer();
-				Flux<ByteBuf> requestBodyData = this.data.asFlux()
-					.doOnDiscard(ByteBuf.class, ByteBuf::release);
-				
-				this.requestBody = new GenericRequestBody(
-					this.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE),
-					this.urlEncodedBodyDecoder, 
-					this.multipartBodyDecoder, 
-					requestBodyData
-				);
+		if(this.requestBody == null) {
+			Method method = this.headers().getMethod();
+			if(method == Method.POST || method == Method.PUT || method == Method.PATCH) {
+				if(this.requestBody == null) {
+					// TODO deal with backpressure using a custom queue: if the queue reach a given threshold we should suspend the read on the channel: this.context.channel().config().setAutoRead(false)
+					// and resume when this flux is actually consumed (doOnRequest? this might impact performance)
+					this.data = Sinks.many().unicast().onBackpressureBuffer();
+					Flux<ByteBuf> requestBodyData = this.data.asFlux()
+						.doOnDiscard(ByteBuf.class, ByteBuf::release);
+					
+					this.requestBody = Optional.of(new GenericRequestBody(
+						this.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE),
+						this.urlEncodedBodyDecoder, 
+						this.multipartBodyDecoder, 
+						requestBodyData
+					));
+				}
 			}
-			return Optional.of(this.requestBody);
+			else {
+				this.requestBody = Optional.empty();
+			}
 		}
-		else {
-			return Optional.empty();
-		}
+		return this.requestBody;
 	}
 
 	public Optional<Sinks.Many<ByteBuf>> data() {

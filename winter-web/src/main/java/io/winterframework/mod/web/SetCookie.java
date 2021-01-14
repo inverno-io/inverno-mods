@@ -20,6 +20,16 @@ package io.winterframework.mod.web;
  *
  */
 public interface SetCookie extends Cookie {
+	
+	Integer getMaxAge();
+	
+	String getDomain();
+	
+	String getPath();
+	
+	Boolean isSecure();
+	
+	Boolean isHttpOnly();
 
 	public static interface Configurator {
 
@@ -37,14 +47,4 @@ public interface SetCookie extends Cookie {
 		
 		Configurator httpOnly(boolean httpOnly);
 	}
-	
-	Integer getMaxAge();
-	
-	String getDomain();
-	
-	String getPath();
-	
-	Boolean isSecure();
-	
-	Boolean isHttpOnly();
 }

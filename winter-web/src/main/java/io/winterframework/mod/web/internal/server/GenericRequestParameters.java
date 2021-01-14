@@ -26,8 +26,7 @@ import java.util.stream.Collectors;
 
 import io.netty.handler.codec.http.QueryStringDecoder;
 import io.winterframework.mod.web.Parameter;
-import io.winterframework.mod.web.RequestParameters;
-import io.winterframework.mod.web.internal.GenericParameter;
+import io.winterframework.mod.web.server.RequestParameters;
 
 /**
  * @author jkuhn

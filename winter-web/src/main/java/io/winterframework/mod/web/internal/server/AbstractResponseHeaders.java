@@ -17,12 +17,8 @@ package io.winterframework.mod.web.internal.server;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 
-import io.winterframework.mod.web.Header;
-import io.winterframework.mod.web.Headers;
-import io.winterframework.mod.web.ResponseHeaders;
+import io.winterframework.mod.web.server.ResponseHeaders;
 
 /**
  * @author jkuhn
@@ -34,33 +30,13 @@ public interface AbstractResponseHeaders extends ResponseHeaders {
 	
 	void setWritten(boolean written);
 
-	Optional<Headers.ContentType> getContentType();
-	
-	String getContentTypeString();
-	
 	CharSequence getContentTypeCharSequence();
 	
-	<T extends Header> Optional<T> get(String name);
+	CharSequence getCharSequence(CharSequence name);
+	
+	List<CharSequence> getAllCharSequence(CharSequence name);
 
-	String getString(String name);
-	
-	CharSequence getCharSequence(String name);
-	
-	<T extends Header> List<T> getAll(String name);
-	
-	List<String> getAllString(String name);
-	
-	List<CharSequence> getAllCharSequence(String name);
-
-	List<Header> getAll();
-	
-	List<Map.Entry<String, String>> getAllString();
-	
 	List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence();
 	
-	Set<String> getNames();
-	
 	Long getContentLength();
-	
-	int getStatus();
 }

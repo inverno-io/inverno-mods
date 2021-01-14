@@ -20,10 +20,12 @@
 	</properties>
 
 	<modules>
-		<module>winter-commons</module>
+		<module>winter-base</module>
+		<module>winter-boot</module>
 		<module>winter-configuration</module>
 		<module>winter-modules-test</module>
 		<module>winter-web</module>
+		<module>winter-web-router</module>
 	</modules>
 	
 	<build>

@@ -20,8 +20,8 @@ import java.util.Set;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpConstants;
-import io.winterframework.mod.web.AbstractHeaderCodec;
-import io.winterframework.mod.web.HeaderService;
+import io.winterframework.mod.web.header.AbstractHeaderCodec;
+import io.winterframework.mod.web.header.HeaderService;
 
 /**
  * @author jkuhn

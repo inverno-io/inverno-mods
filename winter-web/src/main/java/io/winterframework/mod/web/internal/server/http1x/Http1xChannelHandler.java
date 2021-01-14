@@ -30,16 +30,14 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
-import io.winterframework.mod.web.ErrorExchange;
-import io.winterframework.mod.web.Exchange;
-import io.winterframework.mod.web.ExchangeHandler;
-import io.winterframework.mod.web.HeaderService;
 import io.winterframework.mod.web.Parameter;
-import io.winterframework.mod.web.Part;
-import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.ResponseBody;
-import io.winterframework.mod.web.internal.RequestBodyDecoder;
+import io.winterframework.mod.web.header.HeaderService;
 import io.winterframework.mod.web.internal.server.AbstractExchange;
+import io.winterframework.mod.web.internal.server.multipart.MultipartDecoder;
+import io.winterframework.mod.web.server.ErrorExchange;
+import io.winterframework.mod.web.server.Exchange;
+import io.winterframework.mod.web.server.ExchangeHandler;
+import io.winterframework.mod.web.server.Part;
 
 /**
  * @author jkuhn
@@ -52,21 +50,21 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	
 	private Http1xExchange exchangeQueue;
 	
-	private ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler;
-	private ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler; 
+	private ExchangeHandler<Exchange> rootHandler;
+	private ExchangeHandler<ErrorExchange<Throwable>> errorHandler; 
 	private HeaderService headerService;
-	private RequestBodyDecoder<Parameter> urlEncodedBodyDecoder; 
-	private RequestBodyDecoder<Part> multipartBodyDecoder;
+	private MultipartDecoder<Parameter> urlEncodedBodyDecoder; 
+	private MultipartDecoder<Part> multipartBodyDecoder;
 	
 	private boolean read;
 	private boolean flush;
 	
 	public Http1xChannelHandler(
-			ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, 
-			ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler, 
+			ExchangeHandler<Exchange> rootHandler, 
+			ExchangeHandler<ErrorExchange<Throwable>> errorHandler, 
 			HeaderService headerService, 
-			RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, 
-			RequestBodyDecoder<Part> multipartBodyDecoder) {
+			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
+			MultipartDecoder<Part> multipartBodyDecoder) {
 		this.rootHandler = rootHandler;
 		this.errorHandler = errorHandler;
 		this.headerService = headerService;
