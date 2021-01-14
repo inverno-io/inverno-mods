@@ -18,7 +18,7 @@ package io.winterframework.mod.configuration.source;
 import java.util.Map;
 
 import io.winterframework.mod.base.converter.PrimitiveDecoder;
-import io.winterframework.mod.configuration.internal.AbstractPropertiesConfigurationSource;
+import io.winterframework.mod.configuration.AbstractPropertiesConfigurationSource;
 import io.winterframework.mod.configuration.internal.ObjectDecoder;
 
 /**
