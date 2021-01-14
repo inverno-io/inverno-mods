@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
-import io.winterframework.mod.web.Headers;
+import io.winterframework.mod.web.header.Headers;
 import io.winterframework.mod.web.internal.server.GenericCookie;
 
 /**

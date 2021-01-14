@@ -24,8 +24,6 @@ import org.reactivestreams.Publisher;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.FileRegion;
 import io.winterframework.mod.web.InternalServerErrorException;
-import io.winterframework.mod.web.Response;
-import io.winterframework.mod.web.ResponseBody;
 import io.winterframework.mod.web.internal.server.GenericResponseBody;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
@@ -68,7 +66,7 @@ class Http1xResponseBody extends GenericResponseBody {
 	private class Http1xResourceResponseBody extends GenericResponseBody.GenericResourceResponseBody {
 
 		@Override
-		public Response<Resource> data(io.winterframework.mod.commons.resource.Resource resource) {
+		public void data(io.winterframework.mod.base.resource.Resource resource) {
 
 			if(resource.isFile()) {
 				// We need to create the file region and then send an empty response
@@ -101,7 +99,6 @@ class Http1xResponseBody extends GenericResponseBody {
 			else {
 				super.data(resource);
 			}
-			return Http1xResponseBody.this.response.<ResponseBody.Resource>map(responseBody -> responseBody.resource());
 		}
 	}
 }

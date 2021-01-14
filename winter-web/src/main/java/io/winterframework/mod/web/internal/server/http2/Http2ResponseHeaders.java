@@ -26,12 +26,12 @@ import java.util.stream.Collectors;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Headers.PseudoHeaderName;
-import io.winterframework.mod.web.Header;
-import io.winterframework.mod.web.HeaderService;
-import io.winterframework.mod.web.Headers;
-import io.winterframework.mod.web.Headers.ContentType;
 import io.winterframework.mod.web.Status;
+import io.winterframework.mod.web.header.Header;
+import io.winterframework.mod.web.header.HeaderService;
+import io.winterframework.mod.web.header.Headers;
 import io.winterframework.mod.web.internal.server.AbstractResponseHeaders;
+import io.winterframework.mod.web.server.ResponseHeaders;
 
 /**
  * @author jkuhn
@@ -93,6 +93,28 @@ public class Http2ResponseHeaders implements AbstractResponseHeaders {
 	}
 
 	@Override
+	public ResponseHeaders set(CharSequence name, CharSequence value) {
+		this.internalHeaders.set(name, value);
+		return this;
+	}
+	
+	@Override
+	public ResponseHeaders set(Header... headers) {
+		for(Header header : headers) {
+			this.internalHeaders.set(header.getHeaderName(), header.getHeaderValue());
+		}
+		return this;
+	}
+	
+	@Override
+	public ResponseHeaders remove(CharSequence... names) {
+		for(CharSequence name : names) {
+			this.internalHeaders.remove(name);
+		}
+		return this;
+	}
+	
+	@Override
 	public boolean isWritten() {
 		return this.written;
 	}
@@ -101,72 +123,75 @@ public class Http2ResponseHeaders implements AbstractResponseHeaders {
 	public void setWritten(boolean written) {
 		this.written = written;
 	}
-
+	
 	@Override
-	public Optional<ContentType> getContentType() {
-		return this.get(Headers.NAME_CONTENT_TYPE);
+	public Optional<String> getContentType() {
+		return Optional.ofNullable(this.internalHeaders.get(Headers.NAME_CONTENT_TYPE).toString());
 	}
 
 	@Override
-	public String getContentTypeString() {
-		return this.getString(Headers.NAME_CONTENT_TYPE);
+	public Optional<Headers.ContentType> getContentTypeHeader() {
+		return this.getHeader(Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
 	public CharSequence getContentTypeCharSequence() {
-		return this.getCharSequence(Headers.NAME_CONTENT_TYPE);
+		return this.internalHeaders.get(Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
-	public <T extends Header> Optional<T> get(String name) {
-		return Optional.ofNullable(this.getString(name)).map(value -> this.headerService.decode(name, value));
+	public Optional<String> get(CharSequence name) {
+		return Optional.ofNullable(this.internalHeaders.get(name)).map(Object::toString);
 	}
-
+	
 	@Override
-	public String getString(String name) {
-		CharSequence value = this.internalHeaders.get(name);
-		return value != null ? value.toString() : null;
-	}
-
-	@Override
-	public CharSequence getCharSequence(String name) {
+	public CharSequence getCharSequence(CharSequence name) {
 		return this.internalHeaders.get(name);
 	}
-
+	
 	@Override
-	public <T extends Header> List<T> getAll(String name) {
-		return this.getAllString(name).stream().map(value -> this.headerService.<T>decode(name, value)).collect(Collectors.toList());
-	}
-
-	@Override
-	public List<String> getAllString(String name) {
+	public List<String> getAll(CharSequence name) {
 		return this.internalHeaders.getAll(name).stream().map(CharSequence::toString).collect(Collectors.toList());
 	}
-
+	
 	@Override
-	public List<CharSequence> getAllCharSequence(String name) {
+	public List<CharSequence> getAllCharSequence(CharSequence name) {
 		return this.internalHeaders.getAll(name);
 	}
-
+	
 	@Override
-	public List<Header> getAll() {
-		return this.getAllString().stream().map(e -> this.headerService.<Header>decode(e.getKey(), e.getValue())).collect(Collectors.toList());
-	}
-
-	@Override
-	public List<Entry<String, String>> getAllString() {
+	public List<Entry<String, String>> getAll() {
 		List<Entry<String, String>> result = new LinkedList<>();
 		this.internalHeaders.forEach(e -> {
 			result.add(Map.entry(e.getKey().toString(), e.getValue().toString()));
 		});
 		return result;
 	}
-
+	
 	@Override
 	public List<Entry<CharSequence, CharSequence>> getAllCharSequence() {
 		List<Entry<CharSequence, CharSequence>> result = new LinkedList<>();
 		this.internalHeaders.forEach(e -> {
 			result.add(Map.entry(e.getKey(), e.getValue()));
+		});
+		return result;
+	}
+	
+	@Override
+	public <T extends Header> Optional<T> getHeader(CharSequence name) {
+		return this.get(name).map(value -> this.headerService.decode(name.toString(), value));
+	}
+	
+	@Override
+	public <T extends Header> List<T> getAllHeader(CharSequence name) {
+		return this.internalHeaders.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value.toString())).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<Header> getAllHeader() {
+		List<Header> result = new LinkedList<>();
+		this.internalHeaders.forEach(e -> {
+			result.add(this.headerService.<Header>decode(e.getKey().toString(), e.getValue().toString()));
 		});
 		return result;
 	}
@@ -184,5 +209,10 @@ public class Http2ResponseHeaders implements AbstractResponseHeaders {
 	@Override
 	public int getStatus() {
 		return this.internalHeaders.getInt(PseudoHeaderName.STATUS.value());
+	}
+
+	@Override
+	public boolean contains(CharSequence name, CharSequence value) {
+		return this.internalHeaders.contains(name, value, true);
 	}
 }

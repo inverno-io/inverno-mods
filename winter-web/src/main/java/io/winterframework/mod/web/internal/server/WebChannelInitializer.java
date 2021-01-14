@@ -26,7 +26,7 @@ import io.netty.handler.ssl.SslContext;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.core.annotation.Lazy;
-import io.winterframework.mod.commons.net.NetService;
+import io.winterframework.mod.base.net.NetService;
 import io.winterframework.mod.web.WebConfiguration;
 import io.winterframework.mod.web.internal.server.http1x.Http1xChannelHandler;
 import io.winterframework.mod.web.internal.server.http1x.Http1xRequestDecoder;

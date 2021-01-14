@@ -22,9 +22,9 @@ import java.util.Set;
 
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
-import io.winterframework.mod.web.HeaderService;
-import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.UnsupportedMediaTypeException;
+import io.winterframework.mod.web.header.HeaderService;
+import io.winterframework.mod.web.header.Headers;
 
 /**
  * @author jkuhn

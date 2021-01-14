@@ -18,11 +18,11 @@ package io.winterframework.mod.web.internal.server;
 import java.util.Optional;
 
 import io.netty.buffer.ByteBuf;
-import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Parameter;
-import io.winterframework.mod.web.Part;
-import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.internal.RequestBodyDecoder;
+import io.winterframework.mod.web.header.Headers;
+import io.winterframework.mod.web.internal.server.multipart.MultipartDecoder;
+import io.winterframework.mod.web.server.Part;
+import io.winterframework.mod.web.server.RequestBody;
 import reactor.core.publisher.Flux;
 
 /**
@@ -38,10 +38,10 @@ public class GenericRequestBody implements RequestBody {
 	private RequestBody.UrlEncoded urlEncodedBody;
 	private RequestBody.Multipart multipartBody;
 	
-	private RequestBodyDecoder<Parameter> urlEncodedBodyDecoder;
-	private RequestBodyDecoder<Part> multipartBodyDecoder;
+	private MultipartDecoder<Parameter> urlEncodedBodyDecoder;
+	private MultipartDecoder<Part> multipartBodyDecoder;
 
-	public GenericRequestBody(Optional<Headers.ContentType> contentType, RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, RequestBodyDecoder<Part> multipartBodyDecoder, Flux<ByteBuf> data) {
+	public GenericRequestBody(Optional<Headers.ContentType> contentType, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder, Flux<ByteBuf> data) {
 		this.contentType = contentType;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
@@ -50,9 +50,10 @@ public class GenericRequestBody implements RequestBody {
 	
 	@Override
 	public RequestBody.Raw raw() {
-		if(this.urlEncodedBody != null || this.multipartBody != null) {
-			throw new IllegalStateException("Request body decoder already exist");
-		}
+		// This is not required as the data flux is a unicast flux, an illegalstateexception will be thrown if multiple subscriptions are made
+//		if(this.urlEncodedBody != null || this.multipartBody != null) {
+//			throw new IllegalStateException("Request body decoder already exist");
+//		}
 		if(this.rawBody == null) {
 			this.rawBody = new GenericRawRequestBody();
 		}
@@ -61,9 +62,9 @@ public class GenericRequestBody implements RequestBody {
 
 	@Override
 	public RequestBody.Multipart multipart() {
-		if(this.rawBody != null || this.urlEncodedBody != null) {
-			throw new IllegalStateException("Request body decoder already exist");
-		}
+//		if(this.rawBody != null || this.urlEncodedBody != null) {
+//			throw new IllegalStateException("Request body decoder already exist");
+//		}
 		if(this.multipartBody == null) {
 			this.multipartBody = new GenericMultipartRequestBody(this.multipartBodyDecoder.decode(this.data, this.contentType.orElse(null)));
 		}
@@ -72,9 +73,9 @@ public class GenericRequestBody implements RequestBody {
 
 	@Override
 	public RequestBody.UrlEncoded urlEncoded() {
-		if(this.rawBody != null || this.multipartBody != null) {
-			throw new IllegalStateException("Request body decoder already exist");
-		}
+//		if(this.rawBody != null || this.multipartBody != null) {
+//			throw new IllegalStateException("Request body decoder already exist");
+//		}
 		if(this.urlEncodedBody == null) {
 			this.urlEncodedBody = new GenericUrlEncodedRequestBody(this.urlEncodedBodyDecoder.decode(this.data, this.contentType.orElse(null)));
 		}

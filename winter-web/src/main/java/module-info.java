@@ -19,10 +19,10 @@
  * @author jkuhn
  *
  */
-@io.winterframework.core.annotation.Module(excludes = {"io.winterframework.mod.commons"})
+@io.winterframework.core.annotation.Module
 module io.winterframework.mod.web {
 	requires io.winterframework.core;
-	requires transitive io.winterframework.mod.commons;
+	requires transitive io.winterframework.mod.base;
 	requires io.winterframework.mod.configuration;
 	
 	requires org.apache.logging.log4j;
@@ -33,15 +33,15 @@ module io.winterframework.mod.web {
 	requires transitive org.reactivestreams;
 	requires transitive io.netty.buffer;
 	requires io.netty.common;
-	requires io.netty.transport;
-	requires io.netty.transport.epoll;
-	requires io.netty.transport.unix.common;
 	requires io.netty.codec;
 	requires io.netty.codec.http;
 	requires io.netty.codec.http2;
 	requires io.netty.handler;
 	
 	exports io.winterframework.mod.web;
-	exports io.winterframework.mod.web.handler;
-	exports io.winterframework.mod.web.router;
+	exports io.winterframework.mod.web.header;
+	exports io.winterframework.mod.web.server;
+	exports io.winterframework.mod.web.server.handler;
+	
+	exports io.winterframework.mod.web.internal.header to io.winterframework.mod.web.router;
 }

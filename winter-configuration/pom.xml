@@ -17,6 +17,11 @@
 			<groupId>io.winterframework</groupId>
 			<artifactId>winter-core-compiler</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>io.winterframework.mod</groupId>
+			<artifactId>winter-base</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 		
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
@@ -35,7 +40,6 @@
 			<artifactId>lettuce-core</artifactId>
 			<optional>true</optional>
 		</dependency>
-		
 		
 		<dependency>
 			<groupId>org.junit.platform</groupId>

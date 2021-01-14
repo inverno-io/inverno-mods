@@ -67,7 +67,6 @@ public interface WebConfiguration {
 	
 	String[] ssl_ciphers_excludes();
 	
-	
 	default Long http2_header_table_size() {
 		return null;
 	}

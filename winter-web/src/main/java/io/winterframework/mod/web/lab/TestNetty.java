@@ -33,7 +33,7 @@ import io.netty.handler.codec.http.multipart.FileUpload;
 import io.netty.handler.codec.http.multipart.HttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
-import io.winterframework.mod.commons.resource.FileResource;
+import io.winterframework.mod.base.resource.FileResource;
 
 /**
  * @author jkuhn

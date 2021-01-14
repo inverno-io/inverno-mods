@@ -35,23 +35,21 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
-import io.winterframework.mod.commons.resource.MediaTypes;
+import io.winterframework.mod.base.resource.MediaTypes;
 import io.winterframework.mod.web.Charsets;
-import io.winterframework.mod.web.ErrorExchange;
-import io.winterframework.mod.web.Exchange;
-import io.winterframework.mod.web.ExchangeHandler;
-import io.winterframework.mod.web.HeaderService;
-import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Parameter;
-import io.winterframework.mod.web.Part;
-import io.winterframework.mod.web.RequestBody;
-import io.winterframework.mod.web.ResponseBody;
-import io.winterframework.mod.web.internal.RequestBodyDecoder;
+import io.winterframework.mod.web.header.HeaderService;
+import io.winterframework.mod.web.header.Headers;
 import io.winterframework.mod.web.internal.netty.FlatFullHttpResponse;
 import io.winterframework.mod.web.internal.netty.FlatHttpResponse;
 import io.winterframework.mod.web.internal.netty.FlatLastHttpContent;
 import io.winterframework.mod.web.internal.server.AbstractExchange;
 import io.winterframework.mod.web.internal.server.GenericErrorExchange;
+import io.winterframework.mod.web.internal.server.multipart.MultipartDecoder;
+import io.winterframework.mod.web.server.ErrorExchange;
+import io.winterframework.mod.web.server.Exchange;
+import io.winterframework.mod.web.server.ExchangeHandler;
+import io.winterframework.mod.web.server.Part;
 import reactor.core.publisher.BaseSubscriber;
 
 /**
@@ -76,10 +74,10 @@ public class Http1xExchange extends AbstractExchange {
 			HttpRequest httpRequest,
 			Http1xConnectionEncoder encoder,
 			HeaderService headerService,
-			RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, 
-			RequestBodyDecoder<Part> multipartBodyDecoder,
-			ExchangeHandler<RequestBody, ResponseBody, Exchange<RequestBody, ResponseBody>> rootHandler, 
-			ExchangeHandler<Void, ResponseBody, ErrorExchange<ResponseBody, Throwable>> errorHandler
+			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
+			MultipartDecoder<Part> multipartBodyDecoder,
+			ExchangeHandler<Exchange> rootHandler, 
+			ExchangeHandler<ErrorExchange<Throwable>> errorHandler
 		) {
 		super(context, rootHandler, errorHandler, new Http1xRequest(context, new Http1xRequestHeaders(context, httpRequest, headerService), urlEncodedBodyDecoder, multipartBodyDecoder), new Http1xResponse(context, headerService));
 		this.encoder = encoder;
@@ -98,16 +96,16 @@ public class Http1xExchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected ErrorExchange<ResponseBody, Throwable> createErrorExchange(Throwable error) {
+	protected ErrorExchange<Throwable> createErrorExchange(Throwable error) {
 		return new GenericErrorExchange(this.request, new Http1xResponse(this.context, this.headerService), error);
 	}
 	
 	private Charset getCharset() {
 		if(this.response.isHeadersWritten()) {
-			return this.response().getHeaders().<Headers.ContentType>get(Headers.NAME_CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
+			return this.response().headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
 		}
 		if(this.charset == null) {
-			this.charset = this.response().getHeaders().<Headers.ContentType>get(Headers.NAME_CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
+			this.charset = this.response().headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
 		}
 		return this.charset;
 	}
@@ -148,15 +146,14 @@ public class Http1xExchange extends AbstractExchange {
 	@Override
 	protected void onNextMany(ByteBuf value) {
 		try {
-			Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.getHeaders();
+			Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.headers();
 			if(!headers.isWritten()) {
-				List<String> transferEncodings = headers.getAllString(Headers.NAME_TRANSFER_ENCODING);
+				List<String> transferEncodings = headers.getAll(Headers.NAME_TRANSFER_ENCODING);
 				if(headers.getContentLength() == null && !transferEncodings.contains("chunked")) {
 					headers.add(Headers.NAME_TRANSFER_ENCODING, "chunked");
-					String contentType = headers.getString(Headers.NAME_CONTENT_TYPE);
-					this.manageChunked = contentType != null && contentType.regionMatches(true, 0, MediaTypes.TEXT_EVENT_STREAM, 0, MediaTypes.TEXT_EVENT_STREAM.length());
+					headers.get(Headers.NAME_CONTENT_TYPE).ifPresent(contentType -> this.manageChunked = contentType.regionMatches(true, 0, MediaTypes.TEXT_EVENT_STREAM, 0, MediaTypes.TEXT_EVENT_STREAM.length()));
 				}
-				this.encoder.writeFrame(this.context, this.createHttpResponse(headers, (Http1xResponseTrailers)this.response.getTrailers()), this.context.voidPromise());
+				this.encoder.writeFrame(this.context, this.createHttpResponse(headers, (Http1xResponseTrailers)this.response.trailers()), this.context.voidPromise());
 				headers.setWritten(true);
 			}
 			if(this.manageChunked) {
@@ -184,12 +181,12 @@ public class Http1xExchange extends AbstractExchange {
 	protected void onCompleteEmpty() {
 		// empty response or file region
 		Http1xResponse http1xResponse = (Http1xResponse)this.response;
-		Http1xResponseHeaders headers = http1xResponse.getHeaders();
+		Http1xResponseHeaders headers = http1xResponse.headers();
 		
 		http1xResponse.body().getFileRegionData().ifPresentOrElse(
 			fileRegionData -> {
 				// Headers are not written here since we have an empty response
-				this.encoder.writeFrame(this.context, this.createHttpResponse(headers, http1xResponse.getTrailers()), this.context.voidPromise());
+				this.encoder.writeFrame(this.context, this.createHttpResponse(headers, http1xResponse.trailers()), this.context.voidPromise());
 				headers.setWritten(true);
 				fileRegionData.subscribe(new FileRegionDataSubscriber());
 			},
@@ -206,7 +203,7 @@ public class Http1xExchange extends AbstractExchange {
 	@Override
 	protected void onCompleteSingle(ByteBuf value) {
 		// Response has one chunk => send a FullHttpResponse
-		Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.getHeaders();
+		Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.headers();
 		this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, value), this.context.voidPromise());
 		headers.setWritten(true);
 		this.handler.exchangeNext(this.context, value);
@@ -215,8 +212,8 @@ public class Http1xExchange extends AbstractExchange {
 	
 	@Override
 	protected void onCompleteMany() {
-		Http1xResponseTrailers trailers = (Http1xResponseTrailers)this.response.getTrailers();
-		if(this.response.getTrailers() != null) {
+		Http1xResponseTrailers trailers = (Http1xResponseTrailers)this.response.trailers();
+		if(trailers != null) {
 			this.encoder.writeFrame(this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, trailers.getInternalTrailers()), this.context.voidPromise());
 		}
 		else {

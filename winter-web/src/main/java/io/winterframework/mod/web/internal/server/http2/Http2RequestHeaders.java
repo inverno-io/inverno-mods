@@ -15,19 +15,20 @@
  */
 package io.winterframework.mod.web.internal.server.http2;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.netty.handler.codec.http2.Http2Headers;
-import io.winterframework.mod.web.Header;
-import io.winterframework.mod.web.HeaderService;
-import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.Method;
-import io.winterframework.mod.web.RequestHeaders;
+import io.winterframework.mod.web.header.Header;
+import io.winterframework.mod.web.header.HeaderService;
+import io.winterframework.mod.web.header.Headers;
+import io.winterframework.mod.web.server.RequestHeaders;
 
 /**
  * @author jkuhn
@@ -35,21 +36,21 @@ import io.winterframework.mod.web.RequestHeaders;
  */
 public class Http2RequestHeaders implements RequestHeaders {
 
-	private HeaderService HeaderService;
+	private HeaderService headerService;
 	
-	private Http2Headers httpHeaders;
+	private Http2Headers internalHeaders;
 	
 	public Http2RequestHeaders(HeaderService HeaderService, Http2Headers headers) {
-		this.HeaderService = HeaderService;
-		this.httpHeaders = headers;
+		this.headerService = HeaderService;
+		this.internalHeaders = headers;
 	}
 	
 	Http2Headers getHttpHeaders() {
-		return this.httpHeaders;
+		return this.internalHeaders;
 	}
 	
 	private String getHeaderValue(String name) {
-		CharSequence header = this.httpHeaders.get(name);
+		CharSequence header = this.internalHeaders.get(name);
 		return header != null ? header.toString() : null;
 	}
 
@@ -80,32 +81,54 @@ public class Http2RequestHeaders implements RequestHeaders {
 
 	@Override
 	public Long getContentLength() {
-		return this.httpHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
+		return this.internalHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
 	}
 	
 	@Override
 	public Set<String> getNames() {
-		return this.httpHeaders.names().stream().map(CharSequence::toString).collect(Collectors.toSet());
+		return this.internalHeaders.names().stream().map(CharSequence::toString).collect(Collectors.toSet());
+	}
+	
+	@Override
+	public Optional<String> get(CharSequence name) {
+		return Optional.ofNullable(this.internalHeaders.get(name)).map(Object::toString);
+	}
+	
+	@Override
+	public List<String> getAll(CharSequence name) {
+		return this.internalHeaders.getAll(name).stream().map(CharSequence::toString).collect(Collectors.toList());
+	}
+	
+	@Override
+	public List<Entry<String, String>> getAll() {
+		List<Entry<String, String>> result = new LinkedList<>();
+		this.internalHeaders.forEach(e -> {
+			result.add(Map.entry(e.getKey().toString(), e.getValue().toString()));
+		});
+		return result;
 	}
 
 	@Override
-	public <T extends Header> Optional<T> getHeader(String name) {
+	public <T extends Header> Optional<T> getHeader(CharSequence name) {
 		return this.<T>getAllHeader(name).stream().findFirst();
 	}
 	
 	@Override
-	public <T extends Header> List<T> getAllHeader(String name) {
-		return this.httpHeaders.getAll(name).stream().map(value -> this.HeaderService.<T>decode(name, value.toString())).collect(Collectors.toList());
+	public <T extends Header> List<T> getAllHeader(CharSequence name) {
+		return this.internalHeaders.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value.toString())).collect(Collectors.toList());
 	}
 	
 	@Override
-	public Map<String, List<Header>> getAllHeader() {
-		// TODO optimize see Http1xRequestHeader
-		return this.httpHeaders.names().stream().map(CharSequence::toString).collect(Collectors.toMap(Function.identity(), this::<Header>getAllHeader));
+	public List<Header> getAllHeader() {
+		List<Header> result = new LinkedList<>();
+		this.internalHeaders.forEach(e -> {
+			result.add(this.headerService.<Header>decode(e.getKey().toString(), e.getValue().toString()));
+		});
+		return result;
 	}
 	
 	@Override
-	public boolean contains(String name, String value) {
-		return this.httpHeaders.contains(name, value);
+	public boolean contains(CharSequence name, CharSequence value) {
+		return this.internalHeaders.contains(name, value, true);
 	}
 }

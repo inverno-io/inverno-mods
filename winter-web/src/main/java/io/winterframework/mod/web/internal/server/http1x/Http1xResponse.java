@@ -20,11 +20,10 @@ import java.util.function.Consumer;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.ssl.SslHandler;
-import io.winterframework.mod.web.HeaderService;
-import io.winterframework.mod.web.Response;
-import io.winterframework.mod.web.ResponseBody;
-import io.winterframework.mod.web.ResponseTrailers;
+import io.winterframework.mod.web.header.HeaderService;
 import io.winterframework.mod.web.internal.server.AbstractResponse;
+import io.winterframework.mod.web.server.Response;
+import io.winterframework.mod.web.server.ResponseTrailers;
 
 /**
  * @author jkuhn
@@ -32,11 +31,14 @@ import io.winterframework.mod.web.internal.server.AbstractResponse;
  */
 class Http1xResponse extends AbstractResponse {
 
+	private final HeaderService headerService;
+	
 	/**
 	 * @param headerService
 	 */
 	public Http1xResponse(ChannelHandlerContext context, HeaderService headerService) {
 		super(context, headerService, new Http1xResponseHeaders(headerService));
+		this.headerService = headerService;
 		this.responseBody = new Http1xResponseBody(this);
 	}
 	
@@ -45,21 +47,21 @@ class Http1xResponse extends AbstractResponse {
 	}
 	
 	@Override
-	public Response<ResponseBody> trailers(Consumer<ResponseTrailers> trailersConfigurer) {
+	public Response trailers(Consumer<ResponseTrailers> trailersConfigurer) {
 		if(this.responseTrailers == null) {
-			this.responseTrailers = new Http1xResponseTrailers();
+			this.responseTrailers = new Http1xResponseTrailers(this.headerService);
 		}
 		trailersConfigurer.accept(this.responseTrailers);
 		return this;
 	}
 	
 	@Override
-	public Http1xResponseHeaders getHeaders() {
+	public Http1xResponseHeaders headers() {
 		return (Http1xResponseHeaders)this.responseHeaders;
 	}
 	
 	@Override
-	public Http1xResponseTrailers getTrailers() {
+	public Http1xResponseTrailers trailers() {
 		return (Http1xResponseTrailers)this.responseTrailers;
 	}
 	

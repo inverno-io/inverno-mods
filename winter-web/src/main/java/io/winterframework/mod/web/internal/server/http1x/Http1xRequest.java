@@ -20,10 +20,10 @@ import java.util.Optional;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.winterframework.mod.web.Parameter;
-import io.winterframework.mod.web.Part;
-import io.winterframework.mod.web.RequestHeaders;
-import io.winterframework.mod.web.internal.RequestBodyDecoder;
 import io.winterframework.mod.web.internal.server.AbstractRequest;
+import io.winterframework.mod.web.internal.server.multipart.MultipartDecoder;
+import io.winterframework.mod.web.server.Part;
+import io.winterframework.mod.web.server.RequestHeaders;
 import reactor.core.publisher.Sinks.Many;
 
 /**
@@ -32,7 +32,7 @@ import reactor.core.publisher.Sinks.Many;
  */
 public class Http1xRequest extends AbstractRequest {
 
-	public Http1xRequest(ChannelHandlerContext context, RequestHeaders requestHeaders, RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, RequestBodyDecoder<Part> multipartBodyDecoder) {
+	public Http1xRequest(ChannelHandlerContext context, RequestHeaders requestHeaders, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
 		super(context, requestHeaders, urlEncodedBodyDecoder, multipartBodyDecoder);
 	}
 	

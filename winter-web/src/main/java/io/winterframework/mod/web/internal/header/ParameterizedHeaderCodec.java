@@ -24,8 +24,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpConstants;
 import io.netty.util.CharsetUtil;
-import io.winterframework.mod.web.AbstractHeaderCodec;
-import io.winterframework.mod.web.HeaderService;
+import io.winterframework.mod.web.header.AbstractHeaderCodec;
+import io.winterframework.mod.web.header.HeaderService;
 
 /**
  * @author jkuhn
@@ -281,7 +281,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						}
 						if(!this.allowFlagParameter) {
 							buffer.readerIndex(readerIndex);
-							throw new MalformedHeaderException(name + ": flag parameter not allowed");
+							throw new MalformedHeaderException(name + ": flag parameters not allowed");
 						}
 						builder.parameter(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), null);
 						parameterName = null;

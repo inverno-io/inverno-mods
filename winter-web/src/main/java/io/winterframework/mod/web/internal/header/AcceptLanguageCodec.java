@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.BeanSocket;
 import io.winterframework.core.annotation.Bean.Visibility;
-import io.winterframework.mod.web.Headers;
 import io.winterframework.mod.web.NotAcceptableException;
+import io.winterframework.mod.web.header.Headers;
 
 /**
  * @author jkuhn

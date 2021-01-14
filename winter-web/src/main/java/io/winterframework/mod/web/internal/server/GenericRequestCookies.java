@@ -22,9 +22,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.winterframework.mod.web.Cookie;
-import io.winterframework.mod.web.Headers;
-import io.winterframework.mod.web.RequestCookies;
-import io.winterframework.mod.web.RequestHeaders;
+import io.winterframework.mod.web.header.Headers;
+import io.winterframework.mod.web.server.RequestCookies;
+import io.winterframework.mod.web.server.RequestHeaders;
 
 /**
  * @author jkuhn

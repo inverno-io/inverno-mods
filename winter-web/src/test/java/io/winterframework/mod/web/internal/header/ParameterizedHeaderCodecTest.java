@@ -61,18 +61,18 @@ public class ParameterizedHeaderCodecTest {
 		
 		try {
 			codec.decode("toto", ";tata=132");
-			Assertions.fail("Expect " + IllegalArgumentException.class.getName());
+			Assertions.fail("Expect " + MalformedHeaderException.class.getName());
 		}
-		catch(IllegalArgumentException e) {
-			Assertions.assertEquals("Malformed Header: empty value not allowed", e.getMessage());
+		catch(MalformedHeaderException e) {
+			Assertions.assertEquals("toto: empty value not allowed", e.getMessage());
 		}
 		
 		try {
 			codec.decode("toto", "tata=132");
-			Assertions.fail("Expect " + IllegalArgumentException.class.getName());
+			Assertions.fail("Expect " + MalformedHeaderException.class.getName());
 		}
-		catch(IllegalArgumentException e) {
-			Assertions.assertEquals("Malformed Header: empty value not allowed", e.getMessage());
+		catch(MalformedHeaderException e) {
+			Assertions.assertEquals("toto: empty value not allowed", e.getMessage());
 		}
 	}
 	
@@ -87,28 +87,27 @@ public class ParameterizedHeaderCodecTest {
 		
 		try {
 			codec.decode("toto", "value;tata=132");
-			Assertions.fail("Expect " + IllegalArgumentException.class.getName());
+			Assertions.fail("Expect " + MalformedHeaderException.class.getName());
 		}
-		catch(IllegalArgumentException e) {
-			Assertions.assertEquals("Malformed Header: expect no value", e.getMessage());
+		catch(MalformedHeaderException e) {
+			Assertions.assertEquals("toto: expect no value", e.getMessage());
 		}
 		
 		try {
 			codec.decode("toto", ";tata=132");
-			Assertions.fail("Expect " + IllegalArgumentException.class.getName());
+			Assertions.fail("Expect " + MalformedHeaderException.class.getName());
 		}
-		catch(IllegalArgumentException e) {
-			Assertions.assertEquals("Malformed Header: expect no value", e.getMessage());
+		catch(MalformedHeaderException e) {
+			Assertions.assertEquals("toto: expect no value", e.getMessage());
 		}
 		
 		try {
 			codec.decode("toto", "value");
-			Assertions.fail("Expect " + IllegalArgumentException.class.getName());
+			Assertions.fail("Expect " + MalformedHeaderException.class.getName());
 		}
-		catch(IllegalArgumentException e) {
-			Assertions.assertEquals("Malformed Header: expect no value", e.getMessage());
+		catch(MalformedHeaderException e) {
+			Assertions.assertEquals("toto: expect no value", e.getMessage());
 		}
-		
 		
 		try {
 			new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ',', false, true, false, false, false, false);
@@ -155,34 +154,34 @@ public class ParameterizedHeaderCodecTest {
 		
 		try {
 			codec.decode("toto", "value;flag;tata=132;");
-			Assertions.fail("Expect " + IllegalArgumentException.class.getName());
+			Assertions.fail("Expect " + MalformedHeaderException.class.getName());
 		} 
-		catch (IllegalArgumentException e) {
-			Assertions.assertEquals("Malformed Header: flag parameter not allowed", e.getMessage());
+		catch (MalformedHeaderException e) {
+			Assertions.assertEquals("toto: flag parameters not allowed", e.getMessage());
 		}
 		
 		try {
 			codec.decode("toto", "value;flag;tata=132");
-			Assertions.fail("Expect " + IllegalArgumentException.class.getName());
+			Assertions.fail("Expect " + MalformedHeaderException.class.getName());
 		} 
-		catch (IllegalArgumentException e) {
-			Assertions.assertEquals("Malformed Header: flag parameter not allowed", e.getMessage());
+		catch (MalformedHeaderException e) {
+			Assertions.assertEquals("toto: flag parameters not allowed", e.getMessage());
 		}
 		
 		try {
 			codec.decode("toto", "value;tata=132;flag;");
-			Assertions.fail("Expect " + IllegalArgumentException.class.getName());
+			Assertions.fail("Expect " + MalformedHeaderException.class.getName());
 		} 
-		catch (IllegalArgumentException e) {
-			Assertions.assertEquals("Malformed Header: flag parameter not allowed", e.getMessage());
+		catch (MalformedHeaderException e) {
+			Assertions.assertEquals("toto: flag parameters not allowed", e.getMessage());
 		}
 		
 		try {
 			codec.decode("toto", "value;tata=132;flag");
-			Assertions.fail("Expect " + IllegalArgumentException.class.getName());
+			Assertions.fail("Expect " + MalformedHeaderException.class.getName());
 		} 
-		catch (IllegalArgumentException e) {
-			Assertions.assertEquals("Malformed Header: flag parameter not allowed", e.getMessage());
+		catch (MalformedHeaderException e) {
+			Assertions.assertEquals("toto: flag parameters not allowed", e.getMessage());
 		}
 	}
 
@@ -213,10 +212,10 @@ public class ParameterizedHeaderCodecTest {
 		
 		try {
 			codec.decode("toto", "  value   ;titi=abc;tata=  132  ;toto=1 3 6;tutu= 4 6 9  ;   ");
-			Assertions.fail("Expect " + IllegalArgumentException.class.getName());
+			Assertions.fail("Expect " + MalformedHeaderException.class.getName());
 		} 
-		catch (Exception e) {
-			Assertions.assertEquals("Malformed Header: space not allowed in value", e.getMessage());
+		catch (MalformedHeaderException e) {
+			Assertions.assertEquals("toto: space not allowed in value", e.getMessage());
 		}
 		
 		header = codec.decode("toto", "  value   ;titi=abc;tata=  132  ;toto=136;tutu= 469  ");
@@ -226,10 +225,10 @@ public class ParameterizedHeaderCodecTest {
 		
 		try {
 			codec.decode("toto", "  value d  ;titi=abc;tata=  132  ;toto=136;tutu= 469  ");
-			Assertions.fail("Expect " + IllegalArgumentException.class.getName());
+			Assertions.fail("Expect " + MalformedHeaderException.class.getName());
 		} 
-		catch (Exception e) {
-			Assertions.assertEquals("Malformed Header: space not allowed in value", e.getMessage());
+		catch (MalformedHeaderException e) {
+			Assertions.assertEquals("toto: space not allowed in value", e.getMessage());
 		}
 		
 		codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ',', false, false, false, false, true, false);
@@ -256,9 +255,8 @@ public class ParameterizedHeaderCodecTest {
 			Assertions.fail("Expect " + IllegalArgumentException.class.getName());
 		} 
 		catch (Exception e) {
-			Assertions.assertEquals("Malformed Header: space not allowed in value", e.getMessage());
+			Assertions.assertEquals("toto: space not allowed in value", e.getMessage());
 		}
-		
 		
 		header = codec.decode("toto", "  value   ;titi=abc;tata=  \"132\"  ;toto=136;tutu= \"4 6 9  \"  ");
 		

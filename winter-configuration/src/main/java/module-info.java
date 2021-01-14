@@ -1,5 +1,6 @@
 module io.winterframework.mod.configuration {
 	requires io.winterframework.core.compiler;
+	requires io.winterframework.mod.base;
 	
 	requires jdk.unsupported;
 	requires transitive reactor.core;

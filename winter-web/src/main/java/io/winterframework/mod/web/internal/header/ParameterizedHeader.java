@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import io.winterframework.mod.web.AbstractHeaderBuilder;
+import io.winterframework.mod.web.header.AbstractHeaderBuilder;
 
 /**
  * @author jkuhn

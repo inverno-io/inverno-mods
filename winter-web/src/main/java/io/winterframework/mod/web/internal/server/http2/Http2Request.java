@@ -17,10 +17,10 @@ package io.winterframework.mod.web.internal.server.http2;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.winterframework.mod.web.Parameter;
-import io.winterframework.mod.web.Part;
-import io.winterframework.mod.web.RequestHeaders;
-import io.winterframework.mod.web.internal.RequestBodyDecoder;
 import io.winterframework.mod.web.internal.server.AbstractRequest;
+import io.winterframework.mod.web.internal.server.multipart.MultipartDecoder;
+import io.winterframework.mod.web.server.Part;
+import io.winterframework.mod.web.server.RequestHeaders;
 
 /**
  * @author jkuhn
@@ -28,7 +28,7 @@ import io.winterframework.mod.web.internal.server.AbstractRequest;
  */
 public class Http2Request extends AbstractRequest {
 
-	public Http2Request(ChannelHandlerContext context, RequestHeaders requestHeaders, RequestBodyDecoder<Parameter> urlEncodedBodyDecoder, RequestBodyDecoder<Part> multipartBodyDecoder) {
+	public Http2Request(ChannelHandlerContext context, RequestHeaders requestHeaders, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
 		super(context, requestHeaders, urlEncodedBodyDecoder, multipartBodyDecoder);
 	}
 }
