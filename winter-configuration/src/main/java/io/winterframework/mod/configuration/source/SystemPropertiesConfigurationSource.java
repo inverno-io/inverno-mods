@@ -17,7 +17,7 @@ package io.winterframework.mod.configuration.source;
 
 import io.winterframework.mod.base.converter.PrimitiveDecoder;
 import io.winterframework.mod.base.converter.StringConverter;
-import io.winterframework.mod.configuration.internal.AbstractPropertiesConfigurationSource;
+import io.winterframework.mod.configuration.AbstractPropertiesConfigurationSource;
 
 /**
  * @author jkuhn

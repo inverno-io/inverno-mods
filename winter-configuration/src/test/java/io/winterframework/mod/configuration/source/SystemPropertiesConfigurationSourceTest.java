@@ -8,8 +8,8 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import io.winterframework.mod.configuration.AbstractPropertiesConfigurationSource.PropertyConfigurationQueryResult;
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
-import io.winterframework.mod.configuration.internal.AbstractPropertiesConfigurationSource.PropertyConfigurationQueryResult;
 
 public class SystemPropertiesConfigurationSourceTest {
 

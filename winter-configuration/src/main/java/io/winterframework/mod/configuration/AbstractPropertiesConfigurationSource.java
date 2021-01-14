@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.configuration.internal;
+package io.winterframework.mod.configuration;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -25,12 +25,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.winterframework.mod.base.converter.PrimitiveDecoder;
-import io.winterframework.mod.configuration.AbstractConfigurationSource;
-import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
-import io.winterframework.mod.configuration.ConfigurationProperty;
-import io.winterframework.mod.configuration.ConfigurationQuery;
-import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
+import io.winterframework.mod.configuration.internal.GenericConfigurationKey;
+import io.winterframework.mod.configuration.internal.GenericConfigurationProperty;
+import io.winterframework.mod.configuration.internal.GenericConfigurationQueryResult;
 import reactor.core.publisher.Flux;
 
 /**

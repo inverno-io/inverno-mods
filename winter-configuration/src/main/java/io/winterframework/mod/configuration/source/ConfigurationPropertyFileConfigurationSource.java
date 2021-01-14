@@ -26,9 +26,9 @@ import org.apache.logging.log4j.Logger;
 
 import io.winterframework.mod.base.converter.PrimitiveDecoder;
 import io.winterframework.mod.base.converter.StringConverter;
+import io.winterframework.mod.configuration.AbstractHashConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationProperty;
-import io.winterframework.mod.configuration.internal.AbstractHashConfigurationSource;
 import io.winterframework.mod.configuration.internal.parser.properties.ConfigurationPropertiesParser;
 import io.winterframework.mod.configuration.internal.parser.properties.ParseException;
 import io.winterframework.mod.configuration.internal.parser.properties.StreamProvider;
