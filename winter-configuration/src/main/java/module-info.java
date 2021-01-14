@@ -10,7 +10,6 @@ module io.winterframework.mod.configuration {
 	requires org.apache.commons.text;
 	
 	exports io.winterframework.mod.configuration;
-	exports io.winterframework.mod.configuration.codec;
 	exports io.winterframework.mod.configuration.source;
 	
 	// TODO Hash configuration query result is not visible...

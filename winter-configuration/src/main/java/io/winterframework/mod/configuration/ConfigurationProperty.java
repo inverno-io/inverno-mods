@@ -25,7 +25,6 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.Currency;
 import java.util.List;
 import java.util.Locale;
@@ -52,8 +51,6 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	<T> Optional<T> as(Class<T> type);
 	
 	<T> Optional<T[]> asArrayOf(Class<T> type);
-	
-	<T> Optional<Collection<T>> asCollectionOf(Class<T> type);
 	
 	<T> Optional<List<T>> asListOf(Class<T> type);
 	

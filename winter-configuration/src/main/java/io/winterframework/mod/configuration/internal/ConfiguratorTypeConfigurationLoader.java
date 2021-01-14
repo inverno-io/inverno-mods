@@ -87,10 +87,7 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends  AbstractReflecti
 						if(configuratorQuery.array) {
 							configuratorQuery.method.invoke(configurator, new Object[] {results.get(j).getResult().get().asArrayOf(configuratorQuery.componentType).orElse(null)});
 						}
-						else if(configuratorQuery.collection) {
-							configuratorQuery.method.invoke(configurator, new Object[] {results.get(j).getResult().get().asCollectionOf(configuratorQuery.componentType).orElse(null)});
-						}
-						else if(configuratorQuery.list) {
+						else if(configuratorQuery.collection || configuratorQuery.list) {
 							configuratorQuery.method.invoke(configurator, new Object[] {results.get(j).getResult().get().asListOf(configuratorQuery.componentType).orElse(null)});
 						}
 						else if(configuratorQuery.set) {

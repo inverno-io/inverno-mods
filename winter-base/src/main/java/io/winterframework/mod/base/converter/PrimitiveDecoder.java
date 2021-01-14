@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  * @author jkuhn
  *
  */
-public interface PrimitiveDecoder<From> {
+public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 
 	Byte decodeByte(From data) throws ConverterException;
 	

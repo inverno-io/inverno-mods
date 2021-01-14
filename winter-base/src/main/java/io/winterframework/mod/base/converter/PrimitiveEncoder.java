@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
  * @author jkuhn
  *
  */
-public interface PrimitiveEncoder<To> {
+public interface PrimitiveEncoder<To> extends Encoder<Object, To> {
 
 	To encode(Byte value) throws ConverterException;
 

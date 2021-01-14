@@ -15,26 +15,28 @@
  */
 package io.winterframework.mod.configuration;
 
+import io.winterframework.mod.base.converter.PrimitiveDecoder;
+
 /**
  * @author jkuhn
  *
  */
 public abstract class AbstractConfigurationSource<A extends ConfigurationQuery<A, B, C>, B extends ExecutableConfigurationQuery<A, B, C>, C extends ConfigurationQueryResult<?,?>, D> implements ConfigurationSource<A, B, C> {
 
-	protected ValueDecoder<D> decoder;
+	protected PrimitiveDecoder<D> decoder;
 	
-	public AbstractConfigurationSource(ValueDecoder<D> decoder) {
+	public AbstractConfigurationSource(PrimitiveDecoder<D> decoder) {
 		if(decoder == null) {
 			throw new NullPointerException("Value decoder can't be null");
 		}
 		this.decoder = decoder;
 	}
 	
-	public ValueDecoder<D> getDecoder() {
+	public PrimitiveDecoder<D> getDecoder() {
 		return decoder;
 	}
 
-	public void setDecoder(ValueDecoder<D> decoder) {
+	public void setDecoder(PrimitiveDecoder<D> decoder) {
 		this.decoder = decoder;
 	}
 }

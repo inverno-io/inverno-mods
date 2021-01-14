@@ -298,19 +298,13 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	}
 	
 	@Override
-	public <T> Flux<T> decodeMany(Publisher<String> data, Class<T> type) {
-		if(type.equals(Integer.class)) {
-			return Flux.from(data).flatMapIterable(s -> this.decodeToList(s, type));
-		}
-		return null;
-	}
-
-	@Override
 	public <T> Mono<T> decodeOne(Publisher<String> data, Class<T> type) {
-		if(type.equals(Integer.class)) {
-			return Flux.from(data).reduce(new StringBuilder(), (acc, val) -> acc.append(val)).map(s -> this.decode(s.toString(), type));
-		}
-		return null;
+		return Flux.from(data).reduce(new StringBuilder(), (acc, val) -> acc.append(val)).map(s -> this.decode(s.toString(), type));
+	}
+	
+	@Override
+	public <T> Flux<T> decodeMany(Publisher<String> data, Class<T> type) {
+		return Flux.from(data).flatMapIterable(s -> this.decodeToList(s, type));
 	}
 	
 	@SuppressWarnings("unchecked")

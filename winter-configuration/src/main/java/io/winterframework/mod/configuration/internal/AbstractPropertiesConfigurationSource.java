@@ -24,13 +24,13 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import io.winterframework.mod.base.converter.PrimitiveDecoder;
 import io.winterframework.mod.configuration.AbstractConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
 import io.winterframework.mod.configuration.ConfigurationProperty;
 import io.winterframework.mod.configuration.ConfigurationQuery;
 import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
-import io.winterframework.mod.configuration.ValueDecoder;
 import reactor.core.publisher.Flux;
 
 /**
@@ -41,7 +41,7 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 
 	protected Function<String, A> propertyAccessor;
 	
-	public AbstractPropertiesConfigurationSource(Function<String, A> propertyAccessor, ValueDecoder<A> decoder) {
+	public AbstractPropertiesConfigurationSource(Function<String, A> propertyAccessor, PrimitiveDecoder<A> decoder) {
 		super(decoder);
 		this.propertyAccessor = propertyAccessor;
 	}
