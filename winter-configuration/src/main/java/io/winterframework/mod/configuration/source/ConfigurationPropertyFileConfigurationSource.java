@@ -24,14 +24,14 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import io.winterframework.mod.configuration.ConfigurationProperty;
-import io.winterframework.mod.configuration.ValueDecoder;
-import io.winterframework.mod.configuration.codec.StringValueDecoder;
+import io.winterframework.mod.base.converter.PrimitiveDecoder;
+import io.winterframework.mod.base.converter.StringConverter;
 import io.winterframework.mod.configuration.ConfigurationKey;
+import io.winterframework.mod.configuration.ConfigurationProperty;
 import io.winterframework.mod.configuration.internal.AbstractHashConfigurationSource;
-import io.winterframework.mod.configuration.internal.parser.properties.StreamProvider;
 import io.winterframework.mod.configuration.internal.parser.properties.ConfigurationPropertiesParser;
 import io.winterframework.mod.configuration.internal.parser.properties.ParseException;
+import io.winterframework.mod.configuration.internal.parser.properties.StreamProvider;
 import reactor.core.publisher.Mono;
 
 /**
@@ -47,19 +47,19 @@ public class ConfigurationPropertyFileConfigurationSource extends AbstractHashCo
 	private InputStream propertyInput;
 	
 	public ConfigurationPropertyFileConfigurationSource(Path propertyFile) {
-		this(propertyFile, new StringValueDecoder());
+		this(propertyFile, new StringConverter());
 	}
 	
-	public ConfigurationPropertyFileConfigurationSource(Path propertyFile, ValueDecoder<String> decoder) {
+	public ConfigurationPropertyFileConfigurationSource(Path propertyFile, PrimitiveDecoder<String> decoder) {
 		super(decoder);
 		this.propertyFile = propertyFile;
 	}
 
 	public ConfigurationPropertyFileConfigurationSource(InputStream propertyInput) {
-		this(propertyInput, new StringValueDecoder());
+		this(propertyInput, new StringConverter());
 	}
 	
-	public ConfigurationPropertyFileConfigurationSource(InputStream propertyInput, ValueDecoder<String> decoder) {
+	public ConfigurationPropertyFileConfigurationSource(InputStream propertyInput, PrimitiveDecoder<String> decoder) {
 		super(decoder);
 		this.propertyInput = propertyInput;
 	}

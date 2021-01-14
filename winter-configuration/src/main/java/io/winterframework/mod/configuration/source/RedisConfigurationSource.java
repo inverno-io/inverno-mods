@@ -38,21 +38,20 @@ import io.lettuce.core.Range;
 import io.lettuce.core.Range.Boundary;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
+import io.winterframework.mod.base.converter.ConverterException;
+import io.winterframework.mod.base.converter.PrimitiveDecoder;
+import io.winterframework.mod.base.converter.PrimitiveEncoder;
+import io.winterframework.mod.base.converter.StringConverter;
 import io.winterframework.mod.configuration.AbstractConfigurableConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
-import io.winterframework.mod.configuration.ConfigurationUpdate.SpecialValue;
 import io.winterframework.mod.configuration.ConfigurationProperty;
 import io.winterframework.mod.configuration.ConfigurationQuery;
 import io.winterframework.mod.configuration.ConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationUpdate;
+import io.winterframework.mod.configuration.ConfigurationUpdate.SpecialValue;
 import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
 import io.winterframework.mod.configuration.ExecutableConfigurationUpdate;
-import io.winterframework.mod.configuration.ValueCodecException;
-import io.winterframework.mod.configuration.ValueDecoder;
-import io.winterframework.mod.configuration.ValueEncoder;
-import io.winterframework.mod.configuration.codec.StringValueDecoder;
-import io.winterframework.mod.configuration.codec.StringValueEncoder;
 import io.winterframework.mod.configuration.internal.GenericConfigurationKey;
 import io.winterframework.mod.configuration.internal.GenericConfigurationProperty;
 import io.winterframework.mod.configuration.internal.GenericConfigurationQueryResult;
@@ -75,10 +74,10 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	private RedisReactiveCommands<String, String> commands;
 	
 	public RedisConfigurationSource(RedisClient redisClient) {
-		this(redisClient, new StringValueEncoder(), new StringValueDecoder());
+		this(redisClient, new StringConverter(), new StringConverter());
 	}
 	
-	public RedisConfigurationSource(RedisClient redisClient, ValueEncoder<String> encoder, ValueDecoder<String> decoder) {
+	public RedisConfigurationSource(RedisClient redisClient, PrimitiveEncoder<String> encoder, PrimitiveDecoder<String> decoder) {
 		super(encoder, decoder);
 		this.commands = redisClient.connect().reactive();
 	}
@@ -586,9 +585,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 						}
 						else {
 							try {
-								redisEncodedValue.append("\"").append(this.source.encoder.from(valueEntry.getValue())).append("\"");
+								redisEncodedValue.append("\"").append(this.source.encoder.encode(valueEntry.getValue())).append("\"");
 							} 
-							catch (ValueCodecException e) {
+							catch (ConverterException e) {
 								return Mono.just(new RedisConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey.toString() + " at revision " + updateKey.revision, e)));
 							}
 						}

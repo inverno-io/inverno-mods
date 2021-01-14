@@ -17,9 +17,9 @@ package io.winterframework.mod.configuration.source;
 
 import java.util.Map;
 
-import io.winterframework.mod.configuration.ValueDecoder;
-import io.winterframework.mod.configuration.codec.ObjectValueDecoder;
+import io.winterframework.mod.base.converter.PrimitiveDecoder;
 import io.winterframework.mod.configuration.internal.AbstractPropertiesConfigurationSource;
+import io.winterframework.mod.configuration.internal.ObjectDecoder;
 
 /**
  * @author jkuhn
@@ -28,10 +28,10 @@ import io.winterframework.mod.configuration.internal.AbstractPropertiesConfigura
 public class MapConfigurationSource extends AbstractPropertiesConfigurationSource<Object, MapConfigurationSource> {
 
 	public MapConfigurationSource(Map<String, Object> properties) {
-		this(properties, new ObjectValueDecoder());
+		this(properties, new ObjectDecoder());
 	}
 	
-	public MapConfigurationSource(Map<String, Object> properties, ValueDecoder<Object> decoder) {
+	public MapConfigurationSource(Map<String, Object> properties, PrimitiveDecoder<Object> decoder) {
 		super(properties::get, decoder);
 	}
 }

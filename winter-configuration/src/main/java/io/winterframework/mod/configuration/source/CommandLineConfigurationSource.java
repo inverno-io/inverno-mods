@@ -23,10 +23,10 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import io.winterframework.mod.configuration.ConfigurationProperty;
-import io.winterframework.mod.configuration.ValueDecoder;
-import io.winterframework.mod.configuration.codec.StringValueDecoder;
+import io.winterframework.mod.base.converter.PrimitiveDecoder;
+import io.winterframework.mod.base.converter.StringConverter;
 import io.winterframework.mod.configuration.ConfigurationKey;
+import io.winterframework.mod.configuration.ConfigurationProperty;
 import io.winterframework.mod.configuration.internal.AbstractHashConfigurationSource;
 import io.winterframework.mod.configuration.internal.parser.option.ConfigurationOptionParser;
 import io.winterframework.mod.configuration.internal.parser.option.ParseException;
@@ -44,10 +44,10 @@ public class CommandLineConfigurationSource extends AbstractHashConfigurationSou
 	private List<String> args;
 	
 	public CommandLineConfigurationSource(String[] args) {
-		this(args, new StringValueDecoder());
+		this(args, new StringConverter());
 	}
 	
-	public CommandLineConfigurationSource(String[] args, ValueDecoder<String> decoder) {
+	public CommandLineConfigurationSource(String[] args, PrimitiveDecoder<String> decoder) {
 		super(decoder);
 		this.args = Arrays.stream(args)
 			.filter(arg -> arg.startsWith("--"))
