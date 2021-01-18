@@ -173,6 +173,7 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange> {
 		if(startIndex != null) {
 			if(inPathParam) {
 				// error unfinished pattern
+				throw new IllegalArgumentException("Invalid path: " + path);
 			}
 			else {
 				if(pathParameterNames.size() > 0) {

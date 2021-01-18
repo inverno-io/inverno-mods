@@ -13,24 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.winterframework.mod.boot.internal.converter;
+
+import java.util.Set;
+
+import io.netty.buffer.ByteBuf;
+import io.winterframework.core.annotation.Bean;
+import io.winterframework.mod.base.converter.ByteBufConverter;
+import io.winterframework.mod.base.converter.MediaTypeConverter;
+import io.winterframework.mod.base.resource.MediaTypes;
 
 /**
- * 
  * @author jkuhn
  *
  */
-module io.winterframework.mod.base {
-	requires org.apache.commons.text;
-	
-	requires transitive reactor.core;
-	requires transitive org.reactivestreams;
-	
-	requires io.netty.common;
-	requires transitive io.netty.buffer;
-	requires transitive io.netty.transport;
-	
-	exports io.winterframework.mod.base;
-	exports io.winterframework.mod.base.net;
-	exports io.winterframework.mod.base.resource;
-	exports io.winterframework.mod.base.converter;
+@Bean( name = "textPlainMediaTypeConverter" )
+public class TextMediaTypeConverter extends ByteBufConverter implements MediaTypeConverter<ByteBuf, Object> {
+
+	@Override
+	public Set<String> getSupportedMediaTypes() {
+		return Set.of(MediaTypes.TEXT_PLAIN);
+	}
+
 }

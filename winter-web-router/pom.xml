@@ -15,6 +15,10 @@
 	<dependencies>
 		<dependency>
 			<groupId>io.winterframework</groupId>
+			<artifactId>winter-core-compiler</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.winterframework</groupId>
 			<artifactId>winter-core</artifactId>
 		</dependency>
 		<dependency>
