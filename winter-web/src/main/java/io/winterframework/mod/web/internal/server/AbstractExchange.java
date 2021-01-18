@@ -47,8 +47,9 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	protected Handler handler;
 	
 	private int transferedLength;
-	protected int chunkCount;
-	private ByteBuf firstChunk;
+	
+	protected boolean single;
+	private ByteBuf singleChunk;
 	
 	private ErrorSubscriber errorSubscriber;
 	
@@ -135,6 +136,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				this.response = (AbstractResponse) errorExchange.response();
 			}
 		}
+		this.single = this.response.isSingle();
 		this.response.data().subscribe(this);
 	}
 	
@@ -169,26 +171,19 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	}
 	
 	protected void onStart(Subscription subscription) {
-//		subscription.request(Long.MAX_VALUE);
-		subscription.request(2);
+		subscription.request(Long.MAX_VALUE);
 	}
 	
 	@Override
 	protected final void hookOnNext(ByteBuf value) {
-		this.chunkCount++;
-		if(this.chunkCount == 1) {
-			this.transferedLength = value.readableBytes();
-			this.firstChunk = value;
+		this.transferedLength += value.readableBytes();
+		if(this.single && this.singleChunk == null) {
+			if(this.single && this.response.headers().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
+				this.response.headers().contentLength(this.transferedLength);
+			}
+			this.singleChunk = value;
 		}
 		else {
-			this.transferedLength += value.readableBytes();
-			if(this.firstChunk != null) {
-				final ByteBuf previousChunk = this.firstChunk;
-				this.firstChunk = null;
-				this.executeInEventLoop(() -> {
-					this.onNextMany(previousChunk);
-				}, 0);
-			}
 			this.executeInEventLoop(() -> this.onNextMany(value));
 		}
 	}
@@ -209,8 +204,6 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 		else {
 			this.transferedLength = 0;
-			this.chunkCount = 0;
-			this.firstChunk = null;
 			ErrorExchange<Throwable> errorExchange = this.createErrorExchange(throwable);
 			try {
 				this.errorHandler.handle(errorExchange);
@@ -235,19 +228,15 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	@Override
 	protected final void hookOnComplete() {
-		if(this.firstChunk != null) {
-			// single chunk response
-			if(this.response.headers().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
-				this.response.headers().contentLength(this.transferedLength);
-			}
-			this.executeInEventLoop(() -> this.onCompleteSingle(this.firstChunk));
-		}
-		else if(this.chunkCount == 0) {
-			// empty response
+		if(this.transferedLength == 0) {
 			if(this.response.headers().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
 				this.response.headers().contentLength(0);
 			}
 			this.executeInEventLoop(this::onCompleteEmpty);
+		}
+		else if(this.singleChunk != null) {
+			// single chunk response
+			this.executeInEventLoop(() -> this.onCompleteSingle(this.singleChunk));
 		}
 		else {
 			this.executeInEventLoop(this::onCompleteMany);
