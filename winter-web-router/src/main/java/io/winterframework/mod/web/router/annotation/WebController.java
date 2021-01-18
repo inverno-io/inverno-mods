@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.winterframework.mod.web.router.annotation;
+
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.SOURCE;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
 
 /**
- * 
  * @author jkuhn
  *
  */
-module io.winterframework.mod.base {
-	requires org.apache.commons.text;
+@Retention(SOURCE)
+@Target(TYPE)
+public @interface WebController {
+
+	String[] path() default {};
 	
-	requires transitive reactor.core;
-	requires transitive org.reactivestreams;
-	
-	requires io.netty.common;
-	requires transitive io.netty.buffer;
-	requires transitive io.netty.transport;
-	
-	exports io.winterframework.mod.base;
-	exports io.winterframework.mod.base.net;
-	exports io.winterframework.mod.base.resource;
-	exports io.winterframework.mod.base.converter;
+	String[] value() default {};
 }

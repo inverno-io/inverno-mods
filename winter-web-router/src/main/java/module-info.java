@@ -22,6 +22,8 @@
 @io.winterframework.core.annotation.Module(excludes = {"io.winterframework.mod.web"})
 module io.winterframework.mod.web.router {
 	requires io.winterframework.core;
+	requires io.winterframework.core.compiler;
+	
 	requires transitive io.winterframework.mod.base;
 	requires transitive io.winterframework.mod.web;
 	
@@ -29,4 +31,5 @@ module io.winterframework.mod.web.router {
 	requires org.reactivestreams;
 	
 	exports io.winterframework.mod.web.router;
+	exports io.winterframework.mod.web.router.annotation;
 }

@@ -90,10 +90,10 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 			return null;
 		}
 		if(data.getClass().isArray()) {
-			return this.encode((Object[])data);
+			return this.encodeArray((Object[])data);
 		}
 		if(Collection.class.isAssignableFrom(data.getClass())) {
-			return this.encode((Collection<?>)data);
+			return this.encodeCollection((Collection<?>)data);
 		}
 		if(Byte.class.equals(data.getClass())) {
 			return this.encode((Byte)data);
@@ -167,14 +167,18 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 		throw new ConverterException("Data can't be encoded");
 	}
 
+	private <T extends Object> String encodeCollection(Collection<T> data) {
+		return data != null ? data.stream().map(this::encode).collect(Collectors.joining(this.arrayListSeparator)) : null;
+	}
+	
 	@Override
 	public <T extends Object> String encodeList(List<T> data) {
-		return data != null ? data.stream().map(this::encode).collect(Collectors.joining(this.arrayListSeparator)) : null;
+		return this.encodeCollection(data);
 	}
 
 	@Override
 	public <T extends Object> String encodeSet(Set<T> data) {
-		return data != null ? data.stream().map(this::encode).collect(Collectors.joining(this.arrayListSeparator)) : null;
+		return this.encodeCollection(data);
 	}
 
 	@Override
@@ -194,7 +198,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 
 	@Override
 	public String encode(Integer value) throws ConverterException {
-		return value != null ?  value.toString() : null;
+		return value != null ? value.toString() : null;
 	}
 
 	@Override
@@ -525,7 +529,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public LocalDateTime decodeLocalDateTime(String data) throws ConverterException {
 		try {
-			return LocalDateTime.parse(data);
+			return LocalDateTime.parse(StringEscapeUtils.unescapeJava(data));
 		} 
 		catch (DateTimeParseException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
