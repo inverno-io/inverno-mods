@@ -25,7 +25,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpConstants;
 import io.winterframework.core.annotation.Bean;
-import io.winterframework.mod.web.Charsets;
+import io.winterframework.mod.base.Charsets;
 import io.winterframework.mod.web.header.Header;
 import io.winterframework.mod.web.header.HeaderCodec;
 import io.winterframework.mod.web.header.HeaderService;
