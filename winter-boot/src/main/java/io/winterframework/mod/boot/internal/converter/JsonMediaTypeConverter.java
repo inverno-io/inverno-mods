@@ -36,10 +36,10 @@ import reactor.core.publisher.Flux;
 @Bean( name = "jsonMediaTypeConverter")
 public class JsonMediaTypeConverter extends AbstractJsonMediaTypeConverter implements @Provide MediaTypeConverter<ByteBuf, Object> {
 	
-	private static final ByteBuf JSON_ARRAY_START = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(new byte[] {'['}));
-	private static final ByteBuf JSON_ARRAY_SEPARATOR = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(new byte[] {','}));
-	private static final ByteBuf JSON_ARRAY_END = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(new byte[] {']'}));
-
+	private static final ByteBuf JSON_ARRAY_START = Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(new byte[] {'['}));
+	private static final ByteBuf JSON_ARRAY_SEPARATOR = Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(new byte[] {','}));
+	private static final ByteBuf JSON_ARRAY_END = Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(new byte[] {']'}));
+	
 	public JsonMediaTypeConverter(Converter<ByteBuf, Object> jsonByteBufConverter) {
 		super(jsonByteBufConverter);
 	}
@@ -74,7 +74,6 @@ public class JsonMediaTypeConverter extends AbstractJsonMediaTypeConverter imple
 				};
 			}
 		};
-		
-		return ((Flux<ByteBuf>)super.encodeMany(data)).zipWithIterable(separators, (value, separator) -> Unpooled.copiedBuffer(separator, value)).concatWithValues(JSON_ARRAY_END);
+		return ((Flux<ByteBuf>)super.encodeMany(data)).zipWithIterable(separators, (value, separator) -> Unpooled.wrappedBuffer(separator, value)).concatWithValues(JSON_ARRAY_END.duplicate());
 	}
 }
