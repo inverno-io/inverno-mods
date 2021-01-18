@@ -139,15 +139,19 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	}
 	
 	protected void executeInEventLoop(Runnable runnable) {
+		this.executeInEventLoop(runnable, 1);
+	}
+	
+	protected void executeInEventLoop(Runnable runnable, int request) {
 		if(this.contextExecutor.inEventLoop()) {
 			runnable.run();
-			this.request(1);
+			this.request(request);
 		}
 		else {
 			this.contextExecutor.execute(() -> {
 				try {
 					runnable.run();
-					this.request(1);
+					this.request(request);
 				}
 				catch (Throwable throwable) {
 					this.cancel();
@@ -183,7 +187,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				this.firstChunk = null;
 				this.executeInEventLoop(() -> {
 					this.onNextMany(previousChunk);
-				});
+				}, 0);
 			}
 			this.executeInEventLoop(() -> this.onNextMany(value));
 		}
