@@ -50,6 +50,10 @@ public abstract class AbstractResponse implements Response {
 		this.responseHeaders = responseHeaders;
 		this.responseBody = new GenericResponseBody(this);
 	}
+
+	public boolean isSingle() {
+		return this.responseBody.isSingle();
+	}
 	
 	public Publisher<ByteBuf> data() {
 		return this.responseBody.getData();

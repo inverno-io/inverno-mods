@@ -56,6 +56,7 @@ public final class Headers {
 	public static final String NAME_PSEUDO_STATUS = ":status";
 	
 	/* Header Values */
+	public static final String VALUE_CHUNKED = "chunked";
 	public static final String VALUE_CLOSE = "close";
 	public static final String VALUE_TRAILERS = "trailers";
 	

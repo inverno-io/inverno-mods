@@ -139,18 +139,13 @@ public class Http1xExchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected void onStart(Subscription subscription) {
-		super.onStart(subscription);
-	}
-	
-	@Override
 	protected void onNextMany(ByteBuf value) {
 		try {
 			Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.headers();
 			if(!headers.isWritten()) {
 				List<String> transferEncodings = headers.getAll(Headers.NAME_TRANSFER_ENCODING);
-				if(headers.getContentLength() == null && !transferEncodings.contains("chunked")) {
-					headers.add(Headers.NAME_TRANSFER_ENCODING, "chunked");
+				if(headers.getContentLength() == null && !transferEncodings.contains(Headers.VALUE_CHUNKED)) {
+					headers.set(Headers.NAME_TRANSFER_ENCODING, Headers.VALUE_CHUNKED);
 					headers.get(Headers.NAME_CONTENT_TYPE).ifPresent(contentType -> this.manageChunked = contentType.regionMatches(true, 0, MediaTypes.TEXT_EVENT_STREAM, 0, MediaTypes.TEXT_EVENT_STREAM.length()));
 				}
 				this.encoder.writeFrame(this.context, this.createHttpResponse(headers, (Http1xResponseTrailers)this.response.trailers()), this.context.voidPromise());

@@ -52,6 +52,7 @@ public class GenericResponseBody implements ResponseBody {
 	private Publisher<ByteBuf> data;
 	
 	private boolean dataSet;
+	private boolean single;
 	
 	public GenericResponseBody(AbstractResponse response) {
 		this.response = response;
@@ -60,6 +61,9 @@ public class GenericResponseBody implements ResponseBody {
 	protected final void setData(Publisher<ByteBuf> data) {
 		if(this.dataSet) {
 			throw new IllegalStateException("Response data already posted");
+		}
+		if(data instanceof Mono) {
+			this.single = true;
 		}
 		if(this.dataEmitter != null) {
 			this.dataEmitter.success(data);
@@ -75,6 +79,10 @@ public class GenericResponseBody implements ResponseBody {
 		return this.data;
 	}
 
+	public boolean isSingle() {
+		return this.single;
+	}
+	
 	@Override
 	public void empty() {
 		this.setData(Mono.empty());
