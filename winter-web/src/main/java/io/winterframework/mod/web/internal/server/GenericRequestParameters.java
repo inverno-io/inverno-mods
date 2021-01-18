@@ -44,7 +44,7 @@ public class GenericRequestParameters implements RequestParameters {
 
 	private QueryStringDecoder getQueryStringDecoder() {
 		if(this.queryStringDecoder == null) {
-			this.queryStringDecoder = new QueryStringDecoder(path);
+			this.queryStringDecoder = new QueryStringDecoder(this.path);
 		}
 		return this.queryStringDecoder;
 	}
@@ -56,13 +56,7 @@ public class GenericRequestParameters implements RequestParameters {
 	
 	@Override
 	public Optional<Parameter> get(String name) {
-		Optional.ofNullable(this.getQueryStringDecoder().parameters().get(name)).map(p -> {
-			if(!p.isEmpty()) {
-				return new GenericParameter(name, p.get(0));
-			}
-			return p;
-		});
-		return null;
+		return Optional.ofNullable(this.getQueryStringDecoder().parameters().get(name)).filter(p -> !p.isEmpty()).map(p -> new GenericParameter(name, p.get(0)));
 	}
 	
 	@Override
