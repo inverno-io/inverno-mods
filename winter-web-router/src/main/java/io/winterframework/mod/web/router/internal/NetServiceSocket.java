@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.winterframework.mod.web.router.internal;
+
+import java.util.function.Supplier;
+
+import io.winterframework.core.annotation.Bean;
+import io.winterframework.mod.base.net.NetService;
 
 /**
- * 
  * @author jkuhn
  *
  */
-@io.winterframework.core.annotation.Module
-module io.winterframework.mod.web.router {
-	requires io.winterframework.core;
-	requires io.winterframework.core.compiler;
-	
-	requires transitive io.winterframework.mod.base;
-	requires io.winterframework.mod.configuration;
-	requires transitive io.winterframework.mod.web;
-	
-	requires reactor.core;
-	requires org.reactivestreams;
-	
-	exports io.winterframework.mod.web.router;
-	exports io.winterframework.mod.web.router.annotation;
+@Bean(name = "netService")
+public interface NetServiceSocket extends Supplier<NetService> {
+
 }
