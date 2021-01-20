@@ -19,6 +19,7 @@ import java.util.function.Supplier;
 
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.HeaderService;
 import io.winterframework.mod.web.internal.server.multipart.MultipartDecoder;
@@ -37,6 +38,7 @@ public class Http1xChannelHandlerFactory implements Supplier<Http1xChannelHandle
 	private ExchangeHandler<Exchange> rootHandler;
 	private ExchangeHandler<ErrorExchange<Throwable>> errorHandler;
 	private HeaderService headerService;
+	private ObjectConverter<String> parameterConverter;
 	private MultipartDecoder<Parameter> urlEncodedBodyDecoder; 
 	private MultipartDecoder<Part> multipartBodyDecoder;
 	
@@ -44,18 +46,20 @@ public class Http1xChannelHandlerFactory implements Supplier<Http1xChannelHandle
 			ExchangeHandler<Exchange> rootHandler, 
 			ExchangeHandler<ErrorExchange<Throwable>> errorHandler, 
 			HeaderService headerService, 
+			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder) {
 		
 		this.rootHandler = rootHandler;
 		this.errorHandler = errorHandler;
 		this.headerService = headerService;
+		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
 	}
 
 	@Override
 	public Http1xChannelHandler get() {
-		return new Http1xChannelHandler(this.rootHandler, this.errorHandler, this.headerService, this.urlEncodedBodyDecoder, this.multipartBodyDecoder);
+		return new Http1xChannelHandler(this.rootHandler, this.errorHandler, this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder);
 	}
 }

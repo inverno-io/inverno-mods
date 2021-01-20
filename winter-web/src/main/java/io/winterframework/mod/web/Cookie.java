@@ -19,6 +19,9 @@ package io.winterframework.mod.web;
  * @author jkuhn
  *
  */
-public interface Cookie extends Parameter {
+public interface Cookie {
+
+	String getName();
 	
+	String getValue();
 }

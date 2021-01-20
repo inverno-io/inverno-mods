@@ -36,6 +36,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.winterframework.mod.base.Charsets;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.base.resource.MediaTypes;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.HeaderService;
@@ -58,12 +59,12 @@ import reactor.core.publisher.BaseSubscriber;
  */
 public class Http1xExchange extends AbstractExchange {
 
-	private HeaderService headerService;
+	private final Http1xConnectionEncoder encoder;
+	private final HeaderService headerService;
+	private final ObjectConverter<String> parameterConverter;
 	
 	private boolean manageChunked;
 	private Charset charset;
-	
-	private Http1xConnectionEncoder encoder;
 	
 	Http1xExchange next;
 	boolean keepAlive;
@@ -74,14 +75,17 @@ public class Http1xExchange extends AbstractExchange {
 			HttpRequest httpRequest,
 			Http1xConnectionEncoder encoder,
 			HeaderService headerService,
+			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder,
 			ExchangeHandler<Exchange> rootHandler, 
 			ExchangeHandler<ErrorExchange<Throwable>> errorHandler
 		) {
-		super(context, rootHandler, errorHandler, new Http1xRequest(context, new Http1xRequestHeaders(context, httpRequest, headerService), urlEncodedBodyDecoder, multipartBodyDecoder), new Http1xResponse(context, headerService));
+		super(context, rootHandler, errorHandler, new Http1xRequest(context, new Http1xRequestHeaders(context, httpRequest, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http1xResponse(context, headerService, parameterConverter));
 		this.encoder = encoder;
 		this.headerService = headerService;
+		this.parameterConverter = parameterConverter;
+		
 		this.keepAlive = !httpRequest.headers().contains(Headers.NAME_CONNECTION, Headers.VALUE_CLOSE, true);
 		String te = httpRequest.headers().get(Headers.NAME_TE);
 		this.trailers = te != null && te.contains(Headers.VALUE_TRAILERS);
@@ -97,7 +101,7 @@ public class Http1xExchange extends AbstractExchange {
 	
 	@Override
 	protected ErrorExchange<Throwable> createErrorExchange(Throwable error) {
-		return new GenericErrorExchange(this.request, new Http1xResponse(this.context, this.headerService), error);
+		return new GenericErrorExchange(this.request, new Http1xResponse(this.context, this.headerService, this.parameterConverter), error);
 	}
 	
 	private Charset getCharset() {

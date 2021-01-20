@@ -24,7 +24,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Provide;
-import io.winterframework.mod.base.converter.Converter;
+import io.winterframework.mod.base.converter.ReactiveConverter;
 import io.winterframework.mod.base.converter.MediaTypeConverter;
 import io.winterframework.mod.base.resource.MediaTypes;
 import reactor.core.publisher.Flux;
@@ -34,13 +34,13 @@ import reactor.core.publisher.Flux;
  *
  */
 @Bean( name = "jsonMediaTypeConverter")
-public class JsonMediaTypeConverter extends AbstractJsonMediaTypeConverter implements @Provide MediaTypeConverter<ByteBuf, Object> {
+public class JsonMediaTypeConverter extends AbstractJsonMediaTypeConverter implements @Provide MediaTypeConverter<ByteBuf> {
 	
 	private static final ByteBuf JSON_ARRAY_START = Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(new byte[] {'['}));
 	private static final ByteBuf JSON_ARRAY_SEPARATOR = Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(new byte[] {','}));
 	private static final ByteBuf JSON_ARRAY_END = Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(new byte[] {']'}));
 	
-	public JsonMediaTypeConverter(Converter<ByteBuf, Object> jsonByteBufConverter) {
+	public JsonMediaTypeConverter(ReactiveConverter<ByteBuf, Object> jsonByteBufConverter) {
 		super(jsonByteBufConverter);
 	}
 	

@@ -17,7 +17,7 @@ package io.winterframework.mod.configuration.source;
 
 import java.util.Map;
 
-import io.winterframework.mod.base.converter.PrimitiveDecoder;
+import io.winterframework.mod.base.converter.SplittablePrimitiveDecoder;
 import io.winterframework.mod.configuration.AbstractPropertiesConfigurationSource;
 import io.winterframework.mod.configuration.internal.ObjectDecoder;
 
@@ -31,7 +31,7 @@ public class MapConfigurationSource extends AbstractPropertiesConfigurationSourc
 		this(properties, new ObjectDecoder());
 	}
 	
-	public MapConfigurationSource(Map<String, Object> properties, PrimitiveDecoder<Object> decoder) {
+	public MapConfigurationSource(Map<String, Object> properties, SplittablePrimitiveDecoder<Object> decoder) {
 		super(properties::get, decoder);
 	}
 }

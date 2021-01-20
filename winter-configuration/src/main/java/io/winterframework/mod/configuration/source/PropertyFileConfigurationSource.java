@@ -27,12 +27,12 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import io.winterframework.mod.base.converter.PrimitiveDecoder;
-import io.winterframework.mod.base.converter.StringConverter;
+import io.winterframework.mod.base.converter.SplittablePrimitiveDecoder;
 import io.winterframework.mod.configuration.AbstractHashConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationProperty;
 import io.winterframework.mod.configuration.internal.GenericConfigurationProperty;
+import io.winterframework.mod.configuration.internal.JavaStringConverter;
 import io.winterframework.mod.configuration.internal.parser.option.ConfigurationOptionParser;
 import io.winterframework.mod.configuration.internal.parser.option.ParseException;
 import io.winterframework.mod.configuration.internal.parser.option.StringProvider;
@@ -51,19 +51,19 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	private InputStream propertyInput;
 	
 	public PropertyFileConfigurationSource(Path propertyFile) {
-		this(propertyFile, new StringConverter());
+		this(propertyFile, new JavaStringConverter());
 	}
 	
-	public PropertyFileConfigurationSource(Path propertyFile, PrimitiveDecoder<String> decoder) {
+	public PropertyFileConfigurationSource(Path propertyFile, SplittablePrimitiveDecoder<String> decoder) {
 		super(decoder);
 		this.propertyFile = propertyFile;
 	}
 	
 	public PropertyFileConfigurationSource(InputStream propertyInput) {
-		this(propertyInput, new StringConverter());
+		this(propertyInput, new JavaStringConverter());
 	}
 	
-	public PropertyFileConfigurationSource(InputStream propertyInput, PrimitiveDecoder<String> decoder) {
+	public PropertyFileConfigurationSource(InputStream propertyInput, SplittablePrimitiveDecoder<String> decoder) {
 		super(decoder);
 		this.propertyInput = propertyInput;
 	}

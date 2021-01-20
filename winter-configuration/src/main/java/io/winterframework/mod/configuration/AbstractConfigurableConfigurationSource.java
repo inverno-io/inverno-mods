@@ -15,8 +15,8 @@
  */
 package io.winterframework.mod.configuration;
 
-import io.winterframework.mod.base.converter.PrimitiveDecoder;
-import io.winterframework.mod.base.converter.PrimitiveEncoder;
+import io.winterframework.mod.base.converter.JoinablePrimitiveEncoder;
+import io.winterframework.mod.base.converter.SplittablePrimitiveDecoder;
 
 /**
  * @author jkuhn
@@ -25,9 +25,9 @@ import io.winterframework.mod.base.converter.PrimitiveEncoder;
 public abstract class AbstractConfigurableConfigurationSource<A extends ConfigurationQuery<A, B, C>, B extends ExecutableConfigurationQuery<A, B, C>, C extends ConfigurationQueryResult<?,?>, D extends ConfigurationUpdate<D, E, F>, E extends ExecutableConfigurationUpdate<D, E, F>, F extends ConfigurationUpdateResult<?>, G>
 		extends AbstractConfigurationSource<A, B, C, G> implements ConfigurableConfigurationSource<A, B, C, D, E, F> {
 
-	protected PrimitiveEncoder<G> encoder;
+	protected JoinablePrimitiveEncoder<G> encoder;
 	
-	public AbstractConfigurableConfigurationSource(PrimitiveEncoder<G> encoder, PrimitiveDecoder<G> decoder) {
+	public AbstractConfigurableConfigurationSource(JoinablePrimitiveEncoder<G> encoder, SplittablePrimitiveDecoder<G> decoder) {
 		super(decoder);
 		if(encoder == null) {
 			throw new NullPointerException("Value encoder can't be null");
@@ -35,11 +35,11 @@ public abstract class AbstractConfigurableConfigurationSource<A extends Configur
 		this.encoder = encoder;
 	}
 	
-	public PrimitiveEncoder<G> getEncoder() {
+	public JoinablePrimitiveEncoder<G> getEncoder() {
 		return encoder;
 	}
 
-	public void setEncoder(PrimitiveEncoder<G> encoder) {
+	public void setEncoder(JoinablePrimitiveEncoder<G> encoder) {
 		this.encoder = encoder;
 	}
 }

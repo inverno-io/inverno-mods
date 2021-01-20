@@ -26,7 +26,7 @@ public interface Request {
 
 	RequestHeaders headers();
 	
-	RequestParameters parameters();
+	QueryParameters queryParameters();
 	
 	RequestCookies cookies();
 	

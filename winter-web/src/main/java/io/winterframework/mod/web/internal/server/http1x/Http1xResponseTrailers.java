@@ -22,9 +22,12 @@ import java.util.Optional;
 import java.util.Set;
 
 import io.netty.handler.codec.http.HttpHeaders;
+import io.winterframework.mod.base.converter.ObjectConverter;
+import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.Header;
 import io.winterframework.mod.web.header.HeaderService;
 import io.winterframework.mod.web.internal.netty.LinkedHttpHeaders;
+import io.winterframework.mod.web.internal.server.GenericParameter;
 import io.winterframework.mod.web.server.ResponseTrailers;
 
 /**
@@ -33,12 +36,15 @@ import io.winterframework.mod.web.server.ResponseTrailers;
  */
 public class Http1xResponseTrailers implements ResponseTrailers {
 
+	private final HeaderService headerService;
+	private final ObjectConverter<String> parameterConverter;
+	
 	private final LinkedHttpHeaders internalTrailers;
 	
-	private final HeaderService headerService;
-	
-	public Http1xResponseTrailers(HeaderService headerService) {
+	public Http1xResponseTrailers(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
+		this.parameterConverter = parameterConverter;
+		
 		this.internalTrailers = new LinkedHttpHeaders();
 	}
 
@@ -81,6 +87,11 @@ public class Http1xResponseTrailers implements ResponseTrailers {
 		}
 		return this;
 	}
+	
+	@Override
+	public boolean contains(CharSequence name, CharSequence value) {
+		return this.internalTrailers.contains(name, value, true);
+	}
 
 	@Override
 	public Set<String> getNames() {
@@ -118,7 +129,17 @@ public class Http1xResponseTrailers implements ResponseTrailers {
 	}
 
 	@Override
-	public boolean contains(CharSequence name, CharSequence value) {
-		return this.internalTrailers.contains(name, value, true);
+	public Optional<Parameter> getParameter(CharSequence name) {
+		return this.get(name).map(value -> new GenericParameter(this.parameterConverter, name.toString(), value));
+	}
+	
+	@Override
+	public List<Parameter> getAllParameter(CharSequence name) {
+		return this.getAll(name).stream().map(value -> new GenericParameter(this.parameterConverter, name.toString(), value)).collect(Collectors.toList());
+	}
+	
+	@Override
+	public List<Parameter> getAllParameter() {
+		return this.getAll().stream().map(e -> new GenericParameter(this.parameterConverter, e.getKey(), e.getValue())).collect(Collectors.toList());
 	}
 }

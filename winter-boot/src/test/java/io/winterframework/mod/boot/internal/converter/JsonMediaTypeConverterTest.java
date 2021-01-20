@@ -40,7 +40,7 @@ public class JsonMediaTypeConverterTest {
 	private static final JsonMediaTypeConverter CONVERTER = new JsonMediaTypeConverter(new JacksonByteBufConverter(new ObjectMapper()));
 	
 	@Test
-	void testEncodeMany() throws IOException {
+	public void testEncodeMany() throws IOException {
 		Flux<Person> in = Flux.just(new Person("John", "Smith", 42));
 		
 		Publisher<ByteBuf> out = CONVERTER.encodeMany(in);
@@ -79,7 +79,7 @@ public class JsonMediaTypeConverterTest {
 	}
 
 	@Test
-	void testGetSupportedMediaTypes() {
+	public void testGetSupportedMediaTypes() {
 		Set<String> supportedMediaTypes = CONVERTER.getSupportedMediaTypes();
 		Assertions.assertEquals(1, supportedMediaTypes.size());
 		Assertions.assertTrue(supportedMediaTypes.containsAll(Set.of(MediaTypes.APPLICATION_JSON)));

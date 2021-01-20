@@ -20,8 +20,6 @@ import org.reactivestreams.Subscription;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.EventExecutor;
-import io.winterframework.mod.web.Status;
-import io.winterframework.mod.web.WebException;
 import io.winterframework.mod.web.header.Headers;
 import io.winterframework.mod.web.server.ErrorExchange;
 import io.winterframework.mod.web.server.Exchange;
@@ -53,17 +51,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	private ErrorSubscriber errorSubscriber;
 	
-	protected static final ExchangeHandler<ErrorExchange<Throwable>> LAST_RESORT_ERROR_HANDLER = exchange -> {
-		if(exchange.response().isHeadersWritten()) {
-			throw new IllegalStateException("Headers already written", exchange.getError());
-		}
-		if(exchange.getError() instanceof WebException) {
-			exchange.response().headers(h -> h.status(((WebException)exchange.getError()).getStatusCode())).body().empty();
-		}
-		else {
-			exchange.response().headers(h -> h.status(Status.INTERNAL_SERVER_ERROR)).body().empty();
-		}
-	};
+	protected static final ExchangeHandler<ErrorExchange<Throwable>> LAST_RESORT_ERROR_HANDLER = new GenericErrorHandler();
 	
 	public AbstractExchange(ChannelHandlerContext context, ExchangeHandler<Exchange> rootHandler, ExchangeHandler<ErrorExchange<Throwable>> errorHandler, AbstractRequest request, AbstractResponse response) {
 		this.context = context;
@@ -197,6 +185,9 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		// - create a new Response for the error
 		// - reset this exchange => transferedLength, chunkCount must be reset
 		// - invoke the error handler (potentially the fallback error handler) with a new ErrorExchange 
+		
+		throwable.printStackTrace();
+		
 		if(this.response.isHeadersWritten()) {
 			this.executeInEventLoop(() -> { 
 				this.onCompleteWithError(throwable);

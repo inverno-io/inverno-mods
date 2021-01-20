@@ -16,29 +16,26 @@
 package io.winterframework.mod.base.converter;
 
 import java.io.File;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.UnknownHostException;
-import java.nio.file.InvalidPathException;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.Collection;
 import java.util.Currency;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import org.reactivestreams.Publisher;
 
@@ -49,21 +46,41 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
+ * Decode/Encode primitive objects from/to their respective String representation serialized in ByteBuf.
+ * 
  * @author jkuhn
  *
  */
-public class ByteBufConverter implements Converter<ByteBuf, Object>, PrimitiveDecoder<ByteBuf>, PrimitiveEncoder<ByteBuf> {
+public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, ObjectConverter<ByteBuf> {
 
+	private static final ByteBuf EMPTY_LAST_CHUNK = Unpooled.unreleasableBuffer(Unpooled.EMPTY_BUFFER);
+	
+	private static final Mono<ByteBuf> LAST_CHUNK_PUBLISHER = Mono.just(EMPTY_LAST_CHUNK);
+	
 	private static final byte DEFAULT_ARRAY_LIST_SEPARATOR = ',';
+	
+	private ObjectConverter<String> stringConverter;
 	
 	private byte arrayListSeparator;
 	
-	public ByteBufConverter() {
-		this(DEFAULT_ARRAY_LIST_SEPARATOR);
+	private Charset charset;
+	
+	public ByteBufConverter(ObjectConverter<String> stringConverter) {
+		this(stringConverter, Charsets.DEFAULT, DEFAULT_ARRAY_LIST_SEPARATOR);
 	}
 	
-	public ByteBufConverter(byte arrayListSeparator) {
+	public ByteBufConverter(ObjectConverter<String> stringConverter, Charset charset, byte arrayListSeparator) {
+		this.stringConverter = stringConverter;
+		this.charset = charset;
 		this.arrayListSeparator = arrayListSeparator;
+	}
+
+	public Charset getCharset() {
+		return charset;
+	}
+	
+	public void setCharset(Charset charset) {
+		this.charset = charset;
 	}
 	
 	public byte getArrayListSeparator() {
@@ -74,6 +91,280 @@ public class ByteBufConverter implements Converter<ByteBuf, Object>, PrimitiveDe
 		this.arrayListSeparator = arrayListSeparator;
 	}
 	
+	@Override
+	public <T> Mono<T> decodeOne(Publisher<ByteBuf> data, Class<T> type) {
+		return Flux.from(data).reduceWith(() -> Unpooled.unreleasableBuffer(Unpooled.buffer()), (acc, chunk) -> {
+			try {
+				return acc.writeBytes(chunk);
+			}
+			finally {
+				chunk.release();
+			}
+		}).map(buffer -> this.decode(buffer, type));
+	}
+
+	@Override
+	public <T> Flux<T> decodeMany(Publisher<ByteBuf> data, Class<T> type) {
+		return Flux.concat(data, LAST_CHUNK_PUBLISHER).scanWith(
+				() -> new ObjectScanner<>(type),
+				(scanner, chunk) -> {
+					if(chunk == EMPTY_LAST_CHUNK) {
+						scanner.endOfInput();
+					}
+					else {
+						scanner.feedInput(chunk);
+					}
+					return scanner;
+				}
+			)
+			.skip(1)
+			.concatMap(scanner -> {
+				List<T> objects = new LinkedList<>();
+				T object = null;
+				while( (object = scanner.nextObject()) != null) {
+					objects.add(object);
+				}
+				return Flux.fromIterable(objects);
+			});
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T decode(ByteBuf data, Class<T> type) {
+		if(data == null) {
+			return null;
+		}
+		if (ByteBuf.class.equals(type)) {
+			return (T) data;
+		}
+		if(type.isArray()) {
+			return (T)this.decodeToArray(data, type.getComponentType());
+		}
+		try {
+			return this.stringConverter.decode(data.toString(this.charset), type);
+		}
+		finally {
+			data.release();
+		}
+	}
+
+	private <T> void decodeToCollection(ByteBuf data, Class<T> type, Collection<T> result) {
+		ObjectScanner<T> scanner = new ObjectScanner<>(type);
+		scanner.feedInput(data);
+		scanner.endOfInput();
+		
+		T object = null;
+		while( (object = scanner.nextObject()) != null) {
+			result.add(object);
+		}
+	}
+	
+	@Override
+	public <T> List<T> decodeToList(ByteBuf data, Class<T> type) {
+		List<T> result = new LinkedList<>();
+		this.decodeToCollection(data, type, result);
+		return result;
+	}
+
+	@Override
+	public <T> Set<T> decodeToSet(ByteBuf data, Class<T> type) {
+		Set<T> result = new HashSet<>();
+		this.decodeToCollection(data, type, result);
+		return result;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T[] decodeToArray(ByteBuf data, Class<T> type) {
+		List<T> result = new LinkedList<>();
+		this.decodeToCollection(data, type, result);
+		return result.toArray((T[]) Array.newInstance(type, result.size()));
+	}
+	
+	@Override
+	public Byte decodeByte(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeByte(data.toString(this.charset));
+	}
+
+	@Override
+	public Short decodeShort(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeShort(data.toString(this.charset));
+	}
+
+	@Override
+	public Integer decodeInteger(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeInteger(data.toString(this.charset));
+	}
+
+	@Override
+	public Long decodeLong(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeLong(data.toString(this.charset));
+	}
+
+	@Override
+	public Float decodeFloat(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeFloat(data.toString(this.charset));
+	}
+
+	@Override
+	public Double decodeDouble(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeDouble(data.toString(this.charset));
+	}
+
+	@Override
+	public Character decodeCharacter(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeCharacter(data.toString(this.charset));
+	}
+
+	@Override
+	public Boolean decodeBoolean(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeBoolean(data.toString(this.charset));
+	}
+
+	@Override
+	public String decodeString(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeString(data.toString(this.charset));
+	}
+
+	@Override
+	public BigInteger decodeBigInteger(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeBigInteger(data.toString(this.charset));
+	}
+
+	@Override
+	public BigDecimal decodeBigDecimal(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeBigDecimal(data.toString(this.charset));
+	}
+
+	@Override
+	public LocalDate decodeLocalDate(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeLocalDate(data.toString(this.charset));
+	}
+
+	@Override
+	public LocalDateTime decodeLocalDateTime(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeLocalDateTime(data.toString(this.charset));
+	}
+
+	@Override
+	public ZonedDateTime decodeZonedDateTime(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeZonedDateTime(data.toString(this.charset));
+	}
+
+	@Override
+	public Currency decodeCurrency(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeCurrency(data.toString(this.charset));
+	}
+
+	@Override
+	public Locale decodeLocale(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeLocale(data.toString(this.charset));
+	}
+
+	@Override
+	public File decodeFile(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeFile(data.toString(this.charset));
+	}
+
+	@Override
+	public Path decodePath(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodePath(data.toString(this.charset));
+	}
+
+	@Override
+	public URI decodeURI(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeURI(data.toString(this.charset));
+	}
+
+	@Override
+	public URL decodeURL(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeURL(data.toString(this.charset));
+	}
+
+	@Override
+	public Pattern decodePattern(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodePattern(data.toString(this.charset));
+	}
+
+	@Override
+	public InetAddress decodeInetAddress(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeInetAddress(data.toString(this.charset));
+	}
+
+	@Override
+	public Class<?> decodeClass(ByteBuf data) throws ConverterException {
+		if(data == null) {
+			return null;
+		}
+		return this.stringConverter.decodeClass(data.toString(this.charset));
+	}
+
 	@Override
 	public <T> Publisher<ByteBuf> encodeOne(Mono<T> data) {
 		return data.map(this::encode);
@@ -89,85 +380,16 @@ public class ByteBufConverter implements Converter<ByteBuf, Object>, PrimitiveDe
 		if(data == null) {
 			return null;
 		}
+		if(ByteBuf.class.isAssignableFrom(data.getClass())) {
+			return (ByteBuf)data;
+		}
 		if(data.getClass().isArray()) {
 			return this.encodeArray((Object[])data);
 		}
 		if(Collection.class.isAssignableFrom(data.getClass())) {
 			return this.encodeCollection((Collection<?>)data);
 		}
-		if(ByteBuf.class.isAssignableFrom(data.getClass())) {
-			return (ByteBuf)data;
-		}
-		if(Byte.class.equals(data.getClass())) {
-			return this.encode((Byte)data);
-		}
-		if(Short.class.equals(data.getClass())) {
-			return this.encode((Short)data);
-		}
-		if(Integer.class.equals(data.getClass())) {
-			return this.encode((Integer)data);
-		}
-		if(Long.class.equals(data.getClass())) {
-			return this.encode((Long)data);
-		}
-		if(Float.class.equals(data.getClass())) {
-			return this.encode((Float)data);
-		}
-		if(Double.class.equals(data.getClass())) {
-			return this.encode((Double)data);
-		}
-		if(Character.class.equals(data.getClass())) {
-			return this.encode((Character)data);
-		}
-		if(Boolean.class.equals(data.getClass())) {
-			return this.encode((Boolean)data);
-		}
-		if(String.class.isAssignableFrom(data.getClass())) {
-			return this.encode((String)data);
-		}
-		if(BigInteger.class.equals(data.getClass())) {
-			return this.encode((BigInteger)data);
-		}
-		if(BigDecimal.class.equals(data.getClass())) {
-			return this.encode((BigDecimal)data);
-		}
-		if(LocalDate.class.equals(data.getClass())) {
-			return this.encode((LocalDate)data);
-		}
-		if(LocalDateTime.class.equals(data.getClass())) {
-			return this.encode((LocalDateTime)data);
-		}
-		if(ZonedDateTime.class.equals(data.getClass())) {
-			return this.encode((ZonedDateTime)data);
-		}
-		if(Currency.class.equals(data.getClass())) {
-			return this.encode((Currency)data);
-		}		
-		if(Locale.class.equals(data.getClass())) {
-			return this.encode((Locale)data);
-		}
-		if(File.class.equals(data.getClass())) {
-			return this.encode((File)data);
-		}
-		if(Path.class.equals(data.getClass())) {
-			return this.encode((Path)data);
-		}
-		if(URI.class.equals(data.getClass())) {
-			return this.encode((URI)data);
-		}
-		if(URL.class.equals(data.getClass())) {
-			return this.encode((URL)data);
-		}
-		if(Pattern.class.equals(data.getClass())) {
-			return this.encode((Pattern)data);
-		}
-		if(InetAddress.class.equals(data.getClass())) {
-			return this.encode((InetAddress)data);
-		}
-		if(Class.class.equals(data.getClass())) {
-			return this.encode((Class<?>)data);
-		}
-		throw new ConverterException("Data can't be encoded");
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(data), this.charset));
 	}
 	
 	private <T> ByteBuf encodeCollection(Collection<T> data) {
@@ -203,543 +425,278 @@ public class ByteBufConverter implements Converter<ByteBuf, Object>, PrimitiveDe
 		}
 		return Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(buffers));
 	}
-
+	
 	@Override
 	public ByteBuf encode(Byte value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(Short value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(Integer value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(Long value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(Float value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(Double value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(Character value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(Boolean value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(String value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(BigInteger value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(BigDecimal value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(LocalDate value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(LocalDateTime value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(ZonedDateTime value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(Currency value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(Locale value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(File value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.getPath(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(Path value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(URI value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(URL value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.toString(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(Pattern value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.pattern(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(InetAddress value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.getCanonicalHostName(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
 	@Override
 	public ByteBuf encode(Class<?> value) throws ConverterException {
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value.getCanonicalName(), Charsets.DEFAULT));
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
-	
-	@Override
-	public <T> Mono<T> decodeOne(Publisher<ByteBuf> data, Class<T> type) {
-		return Flux.from(data).reduceWith(() -> Unpooled.unreleasableBuffer(Unpooled.buffer()), (acc, chunk) -> {
+
+	private class ObjectScanner<T> {
+		
+		private Class<T> type;
+		
+		private boolean endOfInput;
+		
+		private int inputIndex;
+		private ByteBuf inputBuffer;
+		private ByteBuf keepBuffer;
+		
+		public ObjectScanner(Class<T> type) {
+			this.type = type;
+		}
+		
+		public void feedInput(ByteBuf chunk) {
+			if(this.inputBuffer != null) {
+				throw new IllegalStateException("Undecoded bytes remaining");
+			}
+			
+			if(this.keepBuffer != null && this.keepBuffer.isReadable()) {
+				this.inputBuffer = Unpooled.wrappedBuffer(this.keepBuffer, chunk);
+			}
+			else {
+				this.inputBuffer = chunk;
+			}
+			this.inputIndex= this.inputBuffer.readerIndex();
+		}
+		
+		public void endOfInput() {
+			this.endOfInput = true;
+		}
+		
+		public T nextObject() {
+			if(this.inputBuffer == null) {
+				if(this.endOfInput && this.keepBuffer != null && this.keepBuffer.isReadable()) {
+					try {
+						return ByteBufConverter.this.decode(this.keepBuffer, this.type);
+					}
+					finally {
+						this.keepBuffer.release();
+						this.keepBuffer = null;
+					}
+				}
+				return null;
+			}
+			
+			while(this.inputBuffer.isReadable()) {
+				byte nextByte = this.inputBuffer.readByte();
+				if(nextByte == ByteBufConverter.this.arrayListSeparator) {
+					T object = ByteBufConverter.this.decode(this.inputBuffer.retainedSlice(this.inputIndex, this.inputBuffer.readerIndex() - this.inputIndex -1), this.type);
+					this.inputIndex = this.inputBuffer.readerIndex();
+					return object;
+				}
+			}
+			
 			try {
-				return acc.writeBytes(chunk);
+				if(this.inputIndex < this.inputBuffer.readerIndex()) {
+					if(this.endOfInput) {
+						try {
+							return ByteBufConverter.this.decode(this.inputBuffer.retainedSlice(this.inputIndex, this.inputBuffer.readerIndex() - this.inputIndex), this.type);
+						}
+						finally {
+							if(this.keepBuffer != null) {
+								this.keepBuffer.release();
+								this.keepBuffer = null;
+							}
+						}
+					}
+					else {
+						if(this.keepBuffer != null) {
+							this.keepBuffer.discardReadBytes();
+						}
+						else {
+							this.keepBuffer = Unpooled.unreleasableBuffer(Unpooled.buffer(this.inputBuffer.readerIndex() - this.inputIndex));
+						}
+						this.keepBuffer.writeBytes(this.inputBuffer.slice(this.inputIndex, this.inputBuffer.readerIndex() - this.inputIndex));
+					}
+				}
+				else {
+					this.keepBuffer.clear();
+				}
+				return null;
 			}
 			finally {
-				chunk.release();
+				this.inputBuffer.release();
+				this.inputBuffer = null;
 			}
-		}).map(buffer -> this.decode(buffer, type));
-	}
-
-	@Override
-	public <T> Flux<T> decodeMany(Publisher<ByteBuf> data, Class<T> type) {
-		return Flux.from(data).flatMapIterable(s -> this.decodeToList(s, type));
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> T decode(ByteBuf data, Class<T> type) {
-		if (type.isInstance(data)) {
-			return (T) data;
-		}
-		if(type.isArray()) {
-			return (T)this.decodeToArray(data, type.getComponentType());
-		}
-		if(String.class.equals(type)) {
-			return (T) data;
-		}
-		if(Boolean.class.equals(type) || Boolean.TYPE.equals(type)) {
-			return (T) this.decodeBoolean(data);
-		} 
-		if(Character.class.equals(type) || Character.TYPE.equals(type)) {
-			return (T) this.decodeCharacter(data);
-		} 
-		if(Integer.class.equals(type) || Integer.TYPE.equals(type)) {
-			return (T) this.decodeInteger(data);
-		} 
-		if(Long.class.equals(type) || Long.TYPE.equals(type)) {
-			return (T) this.decodeLong(data);
-		} 
-		if(Byte.class.equals(type) || Byte.TYPE.equals(type)) {
-			return (T) this.decodeByte(data);
-		} 
-		if(Short.class.equals(type) || Short.TYPE.equals(type)) {
-			return (T) this.decodeShort(data);
-		} 
-		if(Float.class.equals(type) || Float.TYPE.equals(type)) {
-			return (T) this.decodeFloat(data);
-		} 
-		if(Double.class.equals(type) || Double.TYPE.equals(type)) {
-			return (T) this.decodeDouble(data);
-		} 
-		if(BigInteger.class.equals(type)) {
-			return (T) this.decodeBigInteger(data);
-		} 
-		if(BigDecimal.class.equals(type)) {
-			return (T) this.decodeBigDecimal(data);
-		} 
-		if(LocalDate.class.equals(type)) {
-			return (T) this.decodeLocalDate(data);
-		} 
-		if(LocalDateTime.class.equals(type)) {
-			return (T) this.decodeLocalDateTime(data);
-		} 
-		if(ZonedDateTime.class.equals(type)) {
-			return (T) this.decodeZonedDateTime(data);
-		} 
-		if(File.class.equals(type)) {
-			return (T) this.decodeFile(data);
-		} 
-		if(Path.class.equals(type)) {
-			return (T) this.decodePath(data);
-		} 
-		if(URI.class.equals(type)) {
-			return (T) this.decodeURI(data);
-		} 
-		if(URL.class.equals(type)) {
-			return (T) this.decodeURL(data);
-		} 
-		if(Pattern.class.equals(type)) {
-			return (T) this.decodePattern(data);
-		} 
-		if(Locale.class.equals(type)) {
-			return (T) this.decodeLocale(data);
-		} 
-		if(type.isEnum()) {
-			return (T) this.decodeEnum(data, type.asSubclass(Enum.class));
-		} 
-		if(type.equals(Class.class)) {
-			return (T) this.decodeClass(data);
-		} 
-		if(InetAddress.class.isAssignableFrom(type)) {
-			return (T) this.decodeInetAddress(data);
-		}
-		
-		throw new ConverterException(data + " can't be decoded to the requested type: " + type.getCanonicalName());
-	}
-
-	@Override
-	public <T> List<T> decodeToList(ByteBuf data, Class<T> type) {
-		// We must split the buffer base on the separator
-		
-		
-		
-		return null;
-	}
-
-	@Override
-	public <T> Set<T> decodeToSet(ByteBuf data, Class<T> type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public <T> T[] decodeToArray(ByteBuf data, Class<T> type) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Byte decodeByte(ByteBuf data) throws ConverterException {
-		try {
-			return Byte.valueOf(data.toString(Charsets.DEFAULT));
-		}
-		catch (NumberFormatException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public Short decodeShort(ByteBuf data) throws ConverterException {
-		try {
-			return Short.valueOf(data.toString(Charsets.DEFAULT));
-		}
-		catch (NumberFormatException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public Integer decodeInteger(ByteBuf data) throws ConverterException {
-		try {
-			return Integer.valueOf(data.toString(Charsets.DEFAULT));
-		}
-		catch (NumberFormatException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public Long decodeLong(ByteBuf data) throws ConverterException {
-		try {
-			return Long.valueOf(data.toString(Charsets.DEFAULT));
-		}
-		catch (NumberFormatException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public Float decodeFloat(ByteBuf data) throws ConverterException {
-		try {
-			return Float.valueOf(data.toString(Charsets.DEFAULT));
-		}
-		catch (NumberFormatException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public Double decodeDouble(ByteBuf data) throws ConverterException {
-		try {
-			return Double.valueOf(data.toString(Charsets.DEFAULT));
-		} 
-		catch (NumberFormatException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public Character decodeCharacter(ByteBuf data) throws ConverterException {
-		try {
-			String value = data.toString(Charsets.DEFAULT);
-			if(value.length() == 1) {
-				return value.charAt(0);
-			}
-			throw new ConverterException(data + " can't be decoded to the requested type");
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public Boolean decodeBoolean(ByteBuf data) throws ConverterException {
-		try {
-			return Boolean.valueOf(data.toString(Charsets.DEFAULT));
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public String decodeString(ByteBuf data) throws ConverterException {
-		try {
-			return data.toString(Charsets.DEFAULT);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public BigInteger decodeBigInteger(ByteBuf data) throws ConverterException {
-		try {
-			return new BigInteger(data.toString(Charsets.DEFAULT));
-		} 
-		catch (NumberFormatException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public BigDecimal decodeBigDecimal(ByteBuf data) throws ConverterException {
-		try {
-			return new BigDecimal(data.toString(Charsets.DEFAULT));
-		}
-		catch (NumberFormatException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public LocalDate decodeLocalDate(ByteBuf data) throws ConverterException {
-		try {
-			return LocalDate.parse(data.toString(Charsets.DEFAULT));
-		} 
-		catch (Exception e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public LocalDateTime decodeLocalDateTime(ByteBuf data) throws ConverterException {
-		try {
-			return LocalDateTime.parse(data.toString(Charsets.DEFAULT));
-		} 
-		catch (DateTimeParseException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public ZonedDateTime decodeZonedDateTime(ByteBuf data) throws ConverterException {
-		try {
-			return ZonedDateTime.parse(data.toString(Charsets.DEFAULT));
-		} 
-		catch (DateTimeParseException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public Currency decodeCurrency(ByteBuf data) throws ConverterException {
-		try {
-			return Currency.getInstance(data.toString(Charsets.DEFAULT));
-		} 
-		catch (IllegalArgumentException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public Locale decodeLocale(ByteBuf data) throws ConverterException {
-		try {
-			String[] elements = data.toString(Charsets.DEFAULT).split("_");
-	        if(elements.length >= 1 && (elements[0].length() == 2 || elements[0].length() == 0)) {
-	            return new Locale(elements[0], elements.length >= 2 ? elements[1] : "", elements.length >= 3 ? elements[2] : "");
-	        }
-	        throw new ConverterException(data + " can't be decoded to the requested type");
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public File decodeFile(ByteBuf data) throws ConverterException {
-		try {
-			return new File(data.toString(Charsets.DEFAULT));
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public Path decodePath(ByteBuf data) throws ConverterException {
-		try {
-			return Paths.get(data.toString(Charsets.DEFAULT));
-		} 
-		catch (InvalidPathException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public URI decodeURI(ByteBuf data) throws ConverterException {
-		try {
-			return new URI(data.toString(Charsets.DEFAULT));
-		} 
-		catch (URISyntaxException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public URL decodeURL(ByteBuf data) throws ConverterException {
-		try {
-			return new URL(data.toString(Charsets.DEFAULT));
-		} 
-		catch (MalformedURLException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public Pattern decodePattern(ByteBuf data) throws ConverterException {
-		try {
-			return Pattern.compile(data.toString(Charsets.DEFAULT));
-		} 
-		catch (PatternSyntaxException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public InetAddress decodeInetAddress(ByteBuf data) throws ConverterException {
-		try {
-			return InetAddress.getByName(data.toString(Charsets.DEFAULT));
-		} 
-		catch (UnknownHostException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-
-	@Override
-	public Class<?> decodeClass(ByteBuf data) throws ConverterException {
-		try {
-			return Class.forName(data.toString(Charsets.DEFAULT));
-		} 
-		catch (ClassNotFoundException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
-		}
-	}
-	
-	private <T extends Enum<T>> T decodeEnum(ByteBuf data, Class<T> type) {
-		try {
-			return Enum.valueOf(type, data.toString(Charsets.DEFAULT));
-		} 
-		catch (IllegalArgumentException e) {
-			throw new ConverterException(data + " can't be decoded to the requested type", e);
-		}
-		finally {
-			data.release();
 		}
 	}
 }

@@ -19,8 +19,10 @@ import java.util.Set;
 
 import io.netty.buffer.ByteBuf;
 import io.winterframework.core.annotation.Bean;
+import io.winterframework.core.annotation.Provide;
 import io.winterframework.mod.base.converter.ByteBufConverter;
 import io.winterframework.mod.base.converter.MediaTypeConverter;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.base.resource.MediaTypes;
 
 /**
@@ -28,11 +30,14 @@ import io.winterframework.mod.base.resource.MediaTypes;
  *
  */
 @Bean( name = "textPlainMediaTypeConverter" )
-public class TextMediaTypeConverter extends ByteBufConverter implements MediaTypeConverter<ByteBuf, Object> {
+public class TextMediaTypeConverter extends ByteBufConverter implements @Provide MediaTypeConverter<ByteBuf> {
 
+	public TextMediaTypeConverter(ObjectConverter<String> parameterConverter) {
+		super(parameterConverter);
+	}
+	
 	@Override
 	public Set<String> getSupportedMediaTypes() {
 		return Set.of(MediaTypes.TEXT_PLAIN);
 	}
-
 }

@@ -15,25 +15,11 @@
  */
 package io.winterframework.mod.base.converter;
 
-import java.util.List;
-import java.util.Set;
-
-import org.reactivestreams.Publisher;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
 /**
  * @author jkuhn
  *
  */
 public interface Encoder<From, To> {
 
-	<T extends From> Publisher<To> encodeOne(Mono<T> data);
-	<T extends From> Publisher<To> encodeMany(Flux<T> data);
-	
-	<T extends From> To encode(T data);
-	<T extends From> To encodeList(List<T> data);
-	<T extends From> To encodeSet(Set<T> data);
-	<T extends From> To encodeArray(T[] data);
+	<T extends From> To encode(T data) throws ConverterException;
 }

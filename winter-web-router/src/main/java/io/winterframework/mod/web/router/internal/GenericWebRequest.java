@@ -18,12 +18,13 @@ package io.winterframework.mod.web.router.internal;
 import java.net.SocketAddress;
 import java.util.Optional;
 
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.router.WebRequest;
 import io.winterframework.mod.web.router.WebRequestBody;
+import io.winterframework.mod.web.server.QueryParameters;
 import io.winterframework.mod.web.server.Request;
 import io.winterframework.mod.web.server.RequestCookies;
 import io.winterframework.mod.web.server.RequestHeaders;
-import io.winterframework.mod.web.server.RequestParameters;
 
 /**
  * @author jkuhn
@@ -33,13 +34,18 @@ public class GenericWebRequest implements WebRequest {
 
 	private Request request;
 	
+	private GenericPathParameters pathParameters;
+	
 	private Optional<WebRequestBody> webRequestBody;
 	
 	private BodyConversionService bodyConversionService;
 	
-	public GenericWebRequest(Request request, BodyConversionService bodyConversionService) {
+	private ObjectConverter<String> parameterConverter;
+	
+	public GenericWebRequest(Request request, BodyConversionService bodyConversionService, ObjectConverter<String> parameterConverter) {
 		this.request = request;
 		this.bodyConversionService = bodyConversionService;
+		this.parameterConverter = parameterConverter;
 	}
 
 	@Override
@@ -48,10 +54,18 @@ public class GenericWebRequest implements WebRequest {
 	}
 
 	@Override
-	public RequestParameters parameters() {
-		return this.request.parameters();
+	public QueryParameters queryParameters() {
+		return this.request.queryParameters();
 	}
 
+	@Override
+	public GenericPathParameters pathParameters() {
+		if(this.pathParameters == null) {
+			this.pathParameters = new GenericPathParameters(this.parameterConverter);
+		}
+		return this.pathParameters;
+	}
+	
 	@Override
 	public RequestCookies cookies() {
 		return this.request.cookies();

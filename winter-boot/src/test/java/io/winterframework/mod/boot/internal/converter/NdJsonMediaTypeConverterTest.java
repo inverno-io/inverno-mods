@@ -16,7 +16,6 @@
 package io.winterframework.mod.boot.internal.converter;
 
 import java.nio.charset.Charset;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -50,7 +49,7 @@ public class NdJsonMediaTypeConverterTest {
 	}
 
 	@Test
-	void testEncodeMany() {
+	public void testEncodeMany() {
 		Flux<Person> in = Flux.just(new Person("John", "Smith", 42), new Person("Jane", "Smith", 40), new Person("Junior", "Smith", 10));
 		
 		Publisher<ByteBuf> out = CONVERTER.encodeMany(in);
@@ -73,7 +72,7 @@ public class NdJsonMediaTypeConverterTest {
 		Assertions.assertEquals("{\"firstname\":\"John\",\"name\":\"Smith\",\"age\":42}\n", out.toString(Charset.defaultCharset()));
 	}
 
-	@Test
+	/*@Test
 	public void testEncodeList() {
 		List<Person> in = List.of(new Person("John", "Smith", 42), new Person("Jane", "Smith", 40), new Person("Junior", "Smith", 10));
 		
@@ -98,7 +97,7 @@ public class NdJsonMediaTypeConverterTest {
 		ByteBuf out = CONVERTER.encodeArray(in);
 		
 		Assertions.assertEquals("[{\"firstname\":\"John\",\"name\":\"Smith\",\"age\":42},{\"firstname\":\"Jane\",\"name\":\"Smith\",\"age\":40},{\"firstname\":\"Junior\",\"name\":\"Smith\",\"age\":10}]\n", out.toString(Charset.defaultCharset()));
-	}
+	}*/
 
 	@Test
 	public void testGetSupportedMediaTypes() {

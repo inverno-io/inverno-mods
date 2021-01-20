@@ -24,10 +24,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.netty.handler.codec.http2.Http2Headers;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.Method;
+import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.Header;
 import io.winterframework.mod.web.header.HeaderService;
 import io.winterframework.mod.web.header.Headers;
+import io.winterframework.mod.web.internal.server.GenericParameter;
 import io.winterframework.mod.web.server.RequestHeaders;
 
 /**
@@ -36,13 +39,16 @@ import io.winterframework.mod.web.server.RequestHeaders;
  */
 public class Http2RequestHeaders implements RequestHeaders {
 
-	private HeaderService headerService;
+	private final Http2Headers internalHeaders;
 	
-	private Http2Headers internalHeaders;
+	private final HeaderService headerService;
 	
-	public Http2RequestHeaders(HeaderService HeaderService, Http2Headers headers) {
-		this.headerService = HeaderService;
+	private final ObjectConverter<String> parameterConverter;
+	
+	public Http2RequestHeaders(Http2Headers headers, HeaderService HeaderService, ObjectConverter<String> parameterConverter) {
 		this.internalHeaders = headers;
+		this.headerService = HeaderService;
+		this.parameterConverter = parameterConverter;
 	}
 	
 	Http2Headers getHttpHeaders() {
@@ -85,6 +91,11 @@ public class Http2RequestHeaders implements RequestHeaders {
 	}
 	
 	@Override
+	public boolean contains(CharSequence name, CharSequence value) {
+		return this.internalHeaders.contains(name, value, true);
+	}
+	
+	@Override
 	public Set<String> getNames() {
 		return this.internalHeaders.names().stream().map(CharSequence::toString).collect(Collectors.toSet());
 	}
@@ -110,7 +121,7 @@ public class Http2RequestHeaders implements RequestHeaders {
 
 	@Override
 	public <T extends Header> Optional<T> getHeader(CharSequence name) {
-		return this.<T>getAllHeader(name).stream().findFirst();
+		return this.get(name).map(value -> this.headerService.decode(name.toString(), value));
 	}
 	
 	@Override
@@ -128,7 +139,21 @@ public class Http2RequestHeaders implements RequestHeaders {
 	}
 	
 	@Override
-	public boolean contains(CharSequence name, CharSequence value) {
-		return this.internalHeaders.contains(name, value, true);
+	public Optional<Parameter> getParameter(CharSequence name) {
+		return this.get(name).map(value -> new GenericParameter(this.parameterConverter, name.toString(), value));
+	}
+
+	@Override
+	public List<Parameter> getAllParameter(CharSequence name) {
+		return this.internalHeaders.getAll(name).stream().map(value -> new GenericParameter(this.parameterConverter, name.toString(), value.toString())).collect(Collectors.toList());
+	}
+	
+	@Override
+	public List<Parameter> getAllParameter() {
+		List<Parameter> result = new LinkedList<>();
+		this.internalHeaders.forEach(e -> {
+			result.add(new GenericParameter(this.parameterConverter, e.getValue().toString(), e.getValue().toString()));
+		});
+		return result;
 	}
 }

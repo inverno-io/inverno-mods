@@ -15,14 +15,11 @@
  */
 package io.winterframework.mod.boot.internal.converter;
 
-import java.util.List;
-import java.util.Set;
-
 import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
-import io.winterframework.mod.base.converter.Converter;
 import io.winterframework.mod.base.converter.MediaTypeConverter;
+import io.winterframework.mod.base.converter.ReactiveConverter;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -30,11 +27,11 @@ import reactor.core.publisher.Mono;
  * @author jkuhn
  *
  */
-abstract class AbstractJsonMediaTypeConverter implements MediaTypeConverter<ByteBuf, Object> {
+abstract class AbstractJsonMediaTypeConverter implements MediaTypeConverter<ByteBuf> {
 
-	private Converter<ByteBuf, Object> jsonByteBufConverter;
+	private ReactiveConverter<ByteBuf, Object> jsonByteBufConverter;
 	
-	public AbstractJsonMediaTypeConverter(Converter<ByteBuf, Object> jsonByteBufConverter) {
+	public AbstractJsonMediaTypeConverter(ReactiveConverter<ByteBuf, Object> jsonByteBufConverter) {
 		this.jsonByteBufConverter = jsonByteBufConverter;
 	}
 	
@@ -53,8 +50,7 @@ abstract class AbstractJsonMediaTypeConverter implements MediaTypeConverter<Byte
 		return this.jsonByteBufConverter.decode(data, type);
 	}
 
-	@Override
-	public <T> List<T> decodeToList(ByteBuf data, Class<T> type) {
+	/*public <T> List<T> decodeToList(ByteBuf data, Class<T> type) {
 		return this.jsonByteBufConverter.decodeToList(data, type);
 	}
 
@@ -66,7 +62,7 @@ abstract class AbstractJsonMediaTypeConverter implements MediaTypeConverter<Byte
 	@Override
 	public <T> T[] decodeToArray(ByteBuf data, Class<T> type) {
 		return this.jsonByteBufConverter.decodeToArray(data, type);
-	}
+	}*/
 
 	@Override
 	public <T> Publisher<ByteBuf> encodeOne(Mono<T> data) {
@@ -83,7 +79,7 @@ abstract class AbstractJsonMediaTypeConverter implements MediaTypeConverter<Byte
 		return this.jsonByteBufConverter.encode(data);
 	}
 
-	@Override
+	/*@Override
 	public <T> ByteBuf encodeList(List<T> data) {
 		return this.jsonByteBufConverter.encodeList(data);
 	}
@@ -96,6 +92,5 @@ abstract class AbstractJsonMediaTypeConverter implements MediaTypeConverter<Byte
 	@Override
 	public <T> ByteBuf encodeArray(T[] data) {
 		return this.jsonByteBufConverter.encodeArray(data);
-	}
-
+	}*/
 }

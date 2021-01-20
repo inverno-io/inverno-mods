@@ -39,7 +39,4 @@ public interface WebExchange extends Exchange {
 	<T> Optional<T> getAttribute(String name);
 	
 	Map<String, Object> getAttributes();
-	
-	// TODO we could return a PathParameter object here so we can expose some basic value conversion
-	Map<String, String> getPathParameters();
 }

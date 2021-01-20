@@ -21,6 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.HeaderService;
 import io.winterframework.mod.web.internal.server.AbstractExchange;
@@ -40,6 +41,7 @@ public class Http2Exchange extends AbstractExchange {
 	private final Http2Stream stream;
 	private final Http2ConnectionEncoder encoder;
 	private final HeaderService headerService;
+	private final ObjectConverter<String> parameterConverter;
 	
 	public Http2Exchange(
 			ChannelHandlerContext context, 
@@ -47,20 +49,22 @@ public class Http2Exchange extends AbstractExchange {
 			Http2Headers httpHeaders, 
 			Http2ConnectionEncoder encoder,
 			HeaderService headerService,
+			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder,
 			ExchangeHandler<Exchange> rootHandler, 
 			ExchangeHandler<ErrorExchange<Throwable>> errorHandler
 		) {
-		super(context, rootHandler, errorHandler, new Http2Request(context, new Http2RequestHeaders(headerService, httpHeaders), urlEncodedBodyDecoder, multipartBodyDecoder), new Http2Response(context, headerService));
+		super(context, rootHandler, errorHandler, new Http2Request(context, new Http2RequestHeaders(httpHeaders, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http2Response(context, headerService, parameterConverter));
 		this.stream = stream;
 		this.encoder = encoder;
 		this.headerService = headerService;
+		this.parameterConverter = parameterConverter;
 	}
 	
 	@Override
 	protected ErrorExchange<Throwable> createErrorExchange(Throwable error) {
-		return new GenericErrorExchange(this.request, new Http2Response(this.context, this.headerService), error);
+		return new GenericErrorExchange(this.request, new Http2Response(this.context, this.headerService, this.parameterConverter), error);
 	}
 	
 	@Override

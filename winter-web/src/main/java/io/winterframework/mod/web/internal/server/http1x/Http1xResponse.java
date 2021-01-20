@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.ssl.SslHandler;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.header.HeaderService;
 import io.winterframework.mod.web.internal.server.AbstractResponse;
 import io.winterframework.mod.web.server.Response;
@@ -32,13 +33,15 @@ import io.winterframework.mod.web.server.ResponseTrailers;
 class Http1xResponse extends AbstractResponse {
 
 	private final HeaderService headerService;
+	private final ObjectConverter<String> parameterConverter;
 	
 	/**
 	 * @param headerService
 	 */
-	public Http1xResponse(ChannelHandlerContext context, HeaderService headerService) {
-		super(context, headerService, new Http1xResponseHeaders(headerService));
+	public Http1xResponse(ChannelHandlerContext context, HeaderService headerService, ObjectConverter<String> parameterConverter) {
+		super(context, headerService, new Http1xResponseHeaders(headerService, parameterConverter));
 		this.headerService = headerService;
+		this.parameterConverter = parameterConverter;
 		this.responseBody = new Http1xResponseBody(this);
 	}
 	
@@ -49,7 +52,7 @@ class Http1xResponse extends AbstractResponse {
 	@Override
 	public Response trailers(Consumer<ResponseTrailers> trailersConfigurer) {
 		if(this.responseTrailers == null) {
-			this.responseTrailers = new Http1xResponseTrailers(this.headerService);
+			this.responseTrailers = new Http1xResponseTrailers(this.headerService, this.parameterConverter);
 		}
 		trailersConfigurer.accept(this.responseTrailers);
 		return this;

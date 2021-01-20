@@ -24,6 +24,7 @@ import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.WebConfiguration;
 import io.winterframework.mod.web.header.HeaderService;
@@ -44,6 +45,7 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 	private ExchangeHandler<Exchange> rootHandler; 
 	private ExchangeHandler<ErrorExchange<Throwable>> errorHandler;
 	private HeaderService headerService;
+	private ObjectConverter<String> parameterConverter;
 	private MultipartDecoder<Parameter> urlEncodedBodyDecoder;
 	private MultipartDecoder<Part> multipartBodyDecoder;
 	
@@ -52,12 +54,14 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 			ExchangeHandler<Exchange> rootHandler, 
 			ExchangeHandler<ErrorExchange<Throwable>> errorHandler, 
 			HeaderService headerService, 
+			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder) {
 		this.configuration = configuration;
 		this.rootHandler = rootHandler;
 		this.errorHandler = errorHandler;
 		this.headerService = headerService;
+		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
 	}
@@ -95,6 +99,7 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 				initialSettings,
 				Http2ChannelHandlerFactory.this.rootHandler, Http2ChannelHandlerFactory.this.errorHandler,
 				Http2ChannelHandlerFactory.this.headerService,
+				Http2ChannelHandlerFactory.this.parameterConverter,
 				Http2ChannelHandlerFactory.this.urlEncodedBodyDecoder,
 				Http2ChannelHandlerFactory.this.multipartBodyDecoder
 			);

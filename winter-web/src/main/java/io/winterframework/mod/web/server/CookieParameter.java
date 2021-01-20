@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,13 @@
  */
 package io.winterframework.mod.web.server;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
+import io.winterframework.mod.web.Cookie;
 import io.winterframework.mod.web.Parameter;
 
 /**
  * @author jkuhn
  *
  */
-public interface RequestParameters {
+public interface CookieParameter extends Cookie, Parameter {
 
-	Set<String> getNames();
-	
-	Optional<Parameter> get(String name);
-	
-	List<Parameter> getAll(String name);
-	
-	Map<String, List<Parameter>> getAll();
 }

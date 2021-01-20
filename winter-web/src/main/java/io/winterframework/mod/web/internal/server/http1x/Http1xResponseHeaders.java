@@ -22,12 +22,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.netty.handler.codec.http.HttpHeaders;
+import io.winterframework.mod.base.converter.ObjectConverter;
+import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.Status;
 import io.winterframework.mod.web.header.Header;
 import io.winterframework.mod.web.header.HeaderService;
 import io.winterframework.mod.web.header.Headers;
 import io.winterframework.mod.web.internal.netty.LinkedHttpHeaders;
 import io.winterframework.mod.web.internal.server.AbstractResponseHeaders;
+import io.winterframework.mod.web.internal.server.GenericParameter;
 import io.winterframework.mod.web.server.ResponseHeaders;
 
 /**
@@ -36,16 +39,19 @@ import io.winterframework.mod.web.server.ResponseHeaders;
  */
 public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
-	private final LinkedHttpHeaders internalHeaders;
-	
 	private final HeaderService headerService;
+	private final ObjectConverter<String> parameterConverter;
+	
+	private final LinkedHttpHeaders internalHeaders;
 	
 	private int status = 200;
 	
 	private boolean written;
 	
-	public Http1xResponseHeaders(HeaderService headerService) {
+	public Http1xResponseHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
+		this.parameterConverter = parameterConverter;
+		
 		this.internalHeaders = new LinkedHttpHeaders();
 	}
 	
@@ -180,6 +186,21 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 	@Override
 	public List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence() {
 		return this.internalHeaders.entriesCharSequence();
+	}
+	
+	@Override
+	public Optional<Parameter> getParameter(CharSequence name) {
+		return this.get(name).map(value -> new GenericParameter(this.parameterConverter, name.toString(), value));
+	}
+	
+	@Override
+	public List<Parameter> getAllParameter(CharSequence name) {
+		return this.internalHeaders.getAll(name).stream().map(value -> new GenericParameter(this.parameterConverter, name.toString(), value)).collect(Collectors.toList());
+	}
+	
+	@Override
+	public List<Parameter> getAllParameter() {
+		return this.internalHeaders.entries().stream().map(e -> new GenericParameter(this.parameterConverter, e.getKey(), e.getValue())).collect(Collectors.toList());
 	}
 	
 	@Override

@@ -422,34 +422,41 @@ public class MultipartBodyDecoder implements MultipartDecoder<Part> {
 		
 		@Override
 		protected void hookOnNext(ByteBuf value) {
-			final ByteBuf buffer;
-			if(this.keepBuffer != null && this.keepBuffer.isReadable()) {
-				buffer = Unpooled.wrappedBuffer(this.keepBuffer, value);
-			}
-			else {
-				buffer = value;
-			}
-			
 			try {
-				DecoderTask currentTask = this.task;
-				while( (currentTask = currentTask.run(buffer, this)) != null) {
-					this.task = currentTask;
-				}
-			}
-			catch (Exception e) {
-				this.emitter.error(e);
-				this.cancel();
-			}
-			
-			if(buffer.isReadable()) {
-				if(this.keepBuffer != null) {
-					this.keepBuffer.discardReadBytes();
-					this.keepBuffer.writeBytes(buffer);
+				final ByteBuf buffer;
+				if(this.keepBuffer != null && this.keepBuffer.isReadable()) {
+					buffer = Unpooled.wrappedBuffer(this.keepBuffer, value);
 				}
 				else {
-					this.keepBuffer = Unpooled.unreleasableBuffer(Unpooled.buffer(buffer.readableBytes()));
-					this.keepBuffer.writeBytes(buffer);
+					buffer = value;
 				}
+				
+				try {
+					DecoderTask currentTask = this.task;
+					while( (currentTask = currentTask.run(buffer, this)) != null) {
+						this.task = currentTask;
+					}
+				}
+				catch (Exception e) {
+					this.emitter.error(e);
+					this.cancel();
+				}
+				
+				if(buffer.isReadable()) {
+					if(this.keepBuffer != null) {
+						this.keepBuffer.discardReadBytes();
+						this.keepBuffer.writeBytes(buffer);
+					}
+					else {
+						this.keepBuffer = Unpooled.unreleasableBuffer(Unpooled.buffer(buffer.readableBytes()));
+						this.keepBuffer.writeBytes(buffer);
+					}
+				}
+			}
+			finally {
+				// TODO This hasn't been tested
+				// In case there are remaining bytes, these are not released so we must release them in some ways
+				value.release();
 			}
 		}
 		

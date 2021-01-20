@@ -52,7 +52,7 @@ public class StaticHandler implements WebExchangeHandler<WebExchange> {
 	@Override
 	public void handle(WebExchange exchange) throws WebException {
 		try {
-			URI resourceUri = new URI(exchange.getPathParameters().get(this.pathParameterName)).normalize();
+			URI resourceUri = new URI(exchange.request().pathParameters().get(this.pathParameterName).orElseThrow(() -> new BadRequestException(this.pathParameterName + " is empty")).getValue()).normalize();
 			if(resourceUri.isAbsolute()) {
 				throw new BadRequestException("Resource can't be absolute");
 			}

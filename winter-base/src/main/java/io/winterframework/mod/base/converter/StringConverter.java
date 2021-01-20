@@ -42,22 +42,15 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
-import org.apache.commons.text.StringEscapeUtils;
-import org.reactivestreams.Publisher;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
 /**
  * @author jkuhn
  *
  */
-public class StringConverter implements Converter<String, Object>, PrimitiveDecoder<String>, PrimitiveEncoder<String> {
+public class StringConverter implements ObjectConverter<String> {
 
-	private static final String DEFAULT_ARRAY_LIST_SEPARATOR = ",";
-	
+	public static final String DEFAULT_ARRAY_LIST_SEPARATOR = ",";
 	private String arrayListSeparator;
-
+	
 	public StringConverter() {
 		this(DEFAULT_ARRAY_LIST_SEPARATOR);
 	}
@@ -75,17 +68,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	}
 	
 	@Override
-	public <T extends Object> Publisher<String> encodeOne(Mono<T> data) {
-		return data.map(this::encode);
-	}
-
-	@Override
-	public <T extends Object> Publisher<String> encodeMany(Flux<T> data) {
-		return data.map(this::encode);
-	}
-
-	@Override
-	public String encode(Object data) {
+	public <T> String encode(T data) {
 		if(data == null) {
 			return null;
 		}
@@ -119,13 +102,13 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 		if(Boolean.class.equals(data.getClass())) {
 			return this.encode((Boolean)data);
 		}
-		if(String.class.isAssignableFrom(data.getClass())) {
+		if(String.class.equals(data.getClass())) {
 			return this.encode((String)data);
 		}
-		if(BigInteger.class.equals(data.getClass())) {
+		if(BigInteger.class.isAssignableFrom(data.getClass())) {
 			return this.encode((BigInteger)data);
 		}
-		if(BigDecimal.class.equals(data.getClass())) {
+		if(BigDecimal.class.isAssignableFrom(data.getClass())) {
 			return this.encode((BigDecimal)data);
 		}
 		if(LocalDate.class.equals(data.getClass())) {
@@ -143,10 +126,10 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 		if(Locale.class.equals(data.getClass())) {
 			return this.encode((Locale)data);
 		}
-		if(File.class.equals(data.getClass())) {
+		if(File.class.isAssignableFrom(data.getClass())) {
 			return this.encode((File)data);
 		}
-		if(Path.class.equals(data.getClass())) {
+		if(Path.class.isAssignableFrom(data.getClass())) {
 			return this.encode((Path)data);
 		}
 		if(URI.class.equals(data.getClass())) {
@@ -158,34 +141,41 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 		if(Pattern.class.equals(data.getClass())) {
 			return this.encode((Pattern)data);
 		}
-		if(InetAddress.class.equals(data.getClass())) {
+		if(InetAddress.class.isAssignableFrom(data.getClass())) {
 			return this.encode((InetAddress)data);
 		}
 		if(Class.class.equals(data.getClass())) {
 			return this.encode((Class<?>)data);
 		}
-		throw new ConverterException("Data can't be encoded");
+		throw new ConverterException("Can't encode " + data.getClass().getCanonicalName() + " to " + String.class.getCanonicalName());
 	}
-
-	private <T extends Object> String encodeCollection(Collection<T> data) {
-		return data != null ? data.stream().map(this::encode).collect(Collectors.joining(this.arrayListSeparator)) : null;
+	
+	private <T> String encodeCollection(Collection<T> data) {
+		return data.stream().map(this::encode).collect(Collectors.joining(String.valueOf(this.arrayListSeparator)));
 	}
 	
 	@Override
-	public <T extends Object> String encodeList(List<T> data) {
+	public <T> String encodeList(List<T> data) {
 		return this.encodeCollection(data);
 	}
 
 	@Override
-	public <T extends Object> String encodeSet(Set<T> data) {
+	public <T> String encodeSet(Set<T> data) {
 		return this.encodeCollection(data);
 	}
 
 	@Override
-	public <T extends Object> String encodeArray(T[] data) {
-		return data != null ? Arrays.stream(data).map(this::encode).collect(Collectors.joining(this.arrayListSeparator)) : null;
+	public <T> String encodeArray(T[] data) {
+		StringBuilder result = new StringBuilder();
+		for(int i = 0;i<data.length;i++) {
+			result.append(this.encode(data[i]));
+			if(i < data.length - 1) {
+				result.append(this.arrayListSeparator);
+			}
+		}
+		return result.toString();
 	}
-
+	
 	@Override
 	public String encode(Byte value) throws ConverterException {
 		return value != null ? value.toString() : null;
@@ -218,17 +208,17 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 
 	@Override
 	public String encode(Character value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.toString()) : null;
+		return value != null ? value.toString() : null;
 	}
 
 	@Override
 	public String encode(Boolean value) throws ConverterException {
 		return value != null ? value.toString() : null;
 	}
-	
+
 	@Override
 	public String encode(String value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.toString()) : null;
+		return value;
 	}
 
 	@Override
@@ -243,57 +233,57 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 
 	@Override
 	public String encode(LocalDate value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.toString()) : null;
+		return value != null ? value.toString() : null;
 	}
 
 	@Override
 	public String encode(LocalDateTime value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.toString()) : null;
+		return value != null ? value.toString() : null;
 	}
 
 	@Override
 	public String encode(ZonedDateTime value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.toString()) : null;
+		return value != null ? value.toString() : null;
 	}
 
 	@Override
 	public String encode(Currency value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.toString()) : null;
+		return value != null ? value.toString() : null;
 	}
 
 	@Override
 	public String encode(Locale value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.toString()) : null;
+		return value != null ? value.toString() : null;
 	}
 
 	@Override
 	public String encode(File value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.getPath()) : null;
+		return value != null ? value.getPath() : null;
 	}
 
 	@Override
 	public String encode(Path value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.toString()) : null;
+		return value != null ? value.toString() : null;
 	}
 
 	@Override
 	public String encode(URI value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.toString()) : null;
+		return value != null ? value.toString() : null;
 	}
 
 	@Override
 	public String encode(URL value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.toString()) : null;
+		return value != null ? value.toString() : null;
 	}
 
 	@Override
 	public String encode(Pattern value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.pattern()) : null;
+		return value != null ? value.pattern() : null;
 	}
 
 	@Override
 	public String encode(InetAddress value) throws ConverterException {
-		return value != null ? StringEscapeUtils.escapeJava(value.getCanonicalHostName()) : null;
+		return value != null ? value.getCanonicalHostName() : null;
 	}
 
 	@Override
@@ -301,27 +291,17 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 		return value != null ? value.getCanonicalName() : null;
 	}
 	
-	@Override
-	public <T> Mono<T> decodeOne(Publisher<String> data, Class<T> type) {
-		return Flux.from(data).reduce(new StringBuilder(), (acc, val) -> acc.append(val)).map(s -> this.decode(s.toString(), type));
-	}
-	
-	@Override
-	public <T> Flux<T> decodeMany(Publisher<String> data, Class<T> type) {
-		return Flux.from(data).flatMapIterable(s -> this.decodeToList(s, type));
-	}
-	
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T decode(String data, Class<T> type) {
-		if (type.isInstance(data)) {
+		if(data == null) {
+			return null;
+		}
+		if (String.class.equals(type)) {
 			return (T) data;
 		}
 		if(type.isArray()) {
 			return (T)this.decodeToArray(data, type.getComponentType());
-		}
-		if(String.class.equals(type)) {
-			return (T) data;
 		}
 		if(Boolean.class.equals(type) || Boolean.TYPE.equals(type)) {
 			return (T) this.decodeBoolean(data);
@@ -361,7 +341,10 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 		} 
 		if(ZonedDateTime.class.equals(type)) {
 			return (T) this.decodeZonedDateTime(data);
-		} 
+		}
+		if (Currency.class.equals(type)) {
+			return (T) this.decodeCurrency(data);
+		}
 		if(File.class.equals(type)) {
 			return (T) this.decodeFile(data);
 		} 
@@ -389,38 +372,41 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 		if(InetAddress.class.isAssignableFrom(type)) {
 			return (T) this.decodeInetAddress(data);
 		}
-		// TODO we could inject another String to object decoder based on json, xml... to convert other types 
-		
-		throw new ConverterException(data + " can't be decoded to the requested type: " + type.getCanonicalName());
+		throw new ConverterException("Can't decode " + String.class.getCanonicalName() + " to " + data.getClass().getCanonicalName());
 	}
 
 	@Override
 	public <T> List<T> decodeToList(String data, Class<T> type) {
-		return Arrays.stream(data.split(this.arrayListSeparator))
-			.map(String::trim)
-			.map(item -> this.decode(item, type))
-			.collect(Collectors.toList());
+		if(data == null) {
+			return null;
+		}
+		return Arrays.stream(data.split(this.arrayListSeparator)).map(String::trim).map(item -> this.decode(item, type))
+				.collect(Collectors.toList());
 	}
 
 	@Override
 	public <T> Set<T> decodeToSet(String data, Class<T> type) {
-		return Arrays.stream(data.split(this.arrayListSeparator))
-			.map(String::trim)
-			.map(item -> this.decode(item, type))
-			.collect(Collectors.toSet());
+		if(data == null) {
+			return null;
+		}
+		return Arrays.stream(data.split(this.arrayListSeparator)).map(String::trim).map(item -> this.decode(item, type))
+				.collect(Collectors.toSet());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> T[] decodeToArray(String data, Class<T> type) {
+		if(data == null) {
+			return null;
+		}
 		List<T> objects = this.decodeToList(data, type);
-		return objects.toArray((T[])Array.newInstance(type, objects.size()));
+		return objects.toArray((T[]) Array.newInstance(type, objects.size()));
 	}
 	
 	@Override
 	public Byte decodeByte(String data) throws ConverterException {
 		try {
-			return Byte.valueOf(data);
+			return data != null ? Byte.valueOf(data) : null;
 		}
 		catch (NumberFormatException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -430,7 +416,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public Short decodeShort(String data) throws ConverterException {
 		try {
-			return Short.valueOf(data);
+			return data != null ? Short.valueOf(data) : null;
 		}
 		catch (NumberFormatException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -440,7 +426,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public Integer decodeInteger(String data) throws ConverterException {
 		try {
-			return Integer.valueOf(data);
+			return data != null ? Integer.valueOf(data) : null;
 		}
 		catch (NumberFormatException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -450,7 +436,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public Long decodeLong(String data) throws ConverterException {
 		try {
-			return Long.valueOf(data);
+			return data != null ? Long.valueOf(data) : null;
 		}
 		catch (NumberFormatException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -460,7 +446,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public Float decodeFloat(String data) throws ConverterException {
 		try {
-			return Float.valueOf(data);
+			return data != null ? Float.valueOf(data) : null;
 		}
 		catch (NumberFormatException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -470,7 +456,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public Double decodeDouble(String data) throws ConverterException {
 		try {
-			return Double.valueOf(data);
+			return data !=null ? Double.valueOf(data) : null;
 		} 
 		catch (NumberFormatException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -479,7 +465,6 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 
 	@Override
 	public Character decodeCharacter(String data) throws ConverterException {
-		data = StringEscapeUtils.unescapeJava(data);
 		if(data.length() == 1) {
 			return data.charAt(0);
 		}
@@ -488,18 +473,18 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 
 	@Override
 	public Boolean decodeBoolean(String data) throws ConverterException {
-		return Boolean.valueOf(data);
+		return data != null ? Boolean.valueOf(data) : null;
 	}
 
 	@Override
 	public String decodeString(String data) throws ConverterException {
-		return StringEscapeUtils.unescapeJava(data);
+		return data;
 	}
 
 	@Override
 	public BigInteger decodeBigInteger(String data) throws ConverterException {
 		try {
-			return new BigInteger(data);
+			return data != null ? new BigInteger(data) : null;
 		} 
 		catch (NumberFormatException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -509,7 +494,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public BigDecimal decodeBigDecimal(String data) throws ConverterException {
 		try {
-			return new BigDecimal(data);
+			return data != null ? new BigDecimal(data) : null;
 		}
 		catch (NumberFormatException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -519,7 +504,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public LocalDate decodeLocalDate(String data) throws ConverterException {
 		try {
-			return LocalDate.parse(StringEscapeUtils.unescapeJava(data));
+			return data != null ? LocalDate.parse(data) : null;
 		} 
 		catch (Exception e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -529,7 +514,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public LocalDateTime decodeLocalDateTime(String data) throws ConverterException {
 		try {
-			return LocalDateTime.parse(StringEscapeUtils.unescapeJava(data));
+			return data != null ? LocalDateTime.parse(data) : null;
 		} 
 		catch (DateTimeParseException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -539,7 +524,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public ZonedDateTime decodeZonedDateTime(String data) throws ConverterException {
 		try {
-			return ZonedDateTime.parse(StringEscapeUtils.unescapeJava(data));
+			return data != null ? ZonedDateTime.parse(data) : null;
 		} 
 		catch (DateTimeParseException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -549,7 +534,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public Currency decodeCurrency(String data) throws ConverterException {
 		try {
-			return Currency.getInstance(StringEscapeUtils.unescapeJava(data));
+			return data != null ? Currency.getInstance(data) : null;
 		} 
 		catch (IllegalArgumentException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -558,7 +543,10 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 
 	@Override
 	public Locale decodeLocale(String data) throws ConverterException {
-		String[] elements = StringEscapeUtils.unescapeJava(data).split("_");
+		if(data == null) {
+			return null;
+		}
+		String[] elements = data.split("_");
         if(elements.length >= 1 && (elements[0].length() == 2 || elements[0].length() == 0)) {
             return new Locale(elements[0], elements.length >= 2 ? elements[1] : "", elements.length >= 3 ? elements[2] : "");
         }
@@ -567,13 +555,13 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 
 	@Override
 	public File decodeFile(String data) throws ConverterException {
-		return new File(StringEscapeUtils.unescapeJava(data));
+		return data != null ? new File(data) : null;
 	}
 
 	@Override
 	public Path decodePath(String data) throws ConverterException {
 		try {
-			return Paths.get(StringEscapeUtils.unescapeJava(data));
+			return data != null ? Paths.get(data) : null;
 		} 
 		catch (InvalidPathException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -583,7 +571,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public URI decodeURI(String data) throws ConverterException {
 		try {
-			return new URI(StringEscapeUtils.unescapeJava(data));
+			return data != null ? new URI(data) : null;
 		} 
 		catch (URISyntaxException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -593,7 +581,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public URL decodeURL(String data) throws ConverterException {
 		try {
-			return new URL(StringEscapeUtils.unescapeJava(data));
+			return data != null ? new URL(data) : null;
 		} 
 		catch (MalformedURLException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -603,8 +591,9 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public Pattern decodePattern(String data) throws ConverterException {
 		try {
-			return Pattern.compile(StringEscapeUtils.unescapeJava(data));
-		} catch (PatternSyntaxException e) {
+			return data != null ? Pattern.compile(data) : null;
+		} 
+		catch (PatternSyntaxException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
 		}
 	}
@@ -612,7 +601,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public InetAddress decodeInetAddress(String data) throws ConverterException {
 		try {
-			return InetAddress.getByName(StringEscapeUtils.unescapeJava(data));
+			return data != null ? InetAddress.getByName(data) : null;
 		} 
 		catch (UnknownHostException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);
@@ -622,7 +611,7 @@ public class StringConverter implements Converter<String, Object>, PrimitiveDeco
 	@Override
 	public Class<?> decodeClass(String data) throws ConverterException {
 		try {
-			return Class.forName(data);
+			return data != null ? Class.forName(data) : null;
 		} 
 		catch (ClassNotFoundException e) {
 			throw new ConverterException(data + " can't be decoded to the requested type", e);

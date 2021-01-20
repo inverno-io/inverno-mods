@@ -30,6 +30,7 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.HeaderService;
 import io.winterframework.mod.web.internal.server.AbstractExchange;
@@ -53,6 +54,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	private ExchangeHandler<Exchange> rootHandler;
 	private ExchangeHandler<ErrorExchange<Throwable>> errorHandler; 
 	private HeaderService headerService;
+	private ObjectConverter<String> parameterConverter;
 	private MultipartDecoder<Parameter> urlEncodedBodyDecoder; 
 	private MultipartDecoder<Part> multipartBodyDecoder;
 	
@@ -63,11 +65,13 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 			ExchangeHandler<Exchange> rootHandler, 
 			ExchangeHandler<ErrorExchange<Throwable>> errorHandler, 
 			HeaderService headerService, 
+			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder) {
 		this.rootHandler = rootHandler;
 		this.errorHandler = errorHandler;
 		this.headerService = headerService;
+		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
 	}
@@ -125,7 +129,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 				this.onDecoderError(ctx, httpRequest);
 				return;
 			}
-			this.requestingExchange = new Http1xExchange(ctx, httpRequest, this, this.headerService, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.rootHandler, this.errorHandler);
+			this.requestingExchange = new Http1xExchange(ctx, httpRequest, this, this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.rootHandler, this.errorHandler);
 			if(this.exchangeQueue == null) {
 				this.exchangeQueue = this.requestingExchange;
 				this.requestingExchange.start(this);

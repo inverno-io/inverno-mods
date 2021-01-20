@@ -35,28 +35,14 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.reactivestreams.Publisher;
-
 import io.winterframework.mod.base.converter.ConverterException;
-import io.winterframework.mod.base.converter.PrimitiveDecoder;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import io.winterframework.mod.base.converter.SplittablePrimitiveDecoder;
 
 /**
  * @author jkuhn
  *
  */
-public class ObjectDecoder implements PrimitiveDecoder<Object> {
-
-	@Override
-	public <T> Mono<T> decodeOne(Publisher<Object> data, Class<T> type) {
-		return Flux.from(data).reduce(new StringBuilder(), (acc, val) -> acc.append(val)).map(s -> this.decode(s.toString(), type));
-	}
-
-	@Override
-	public <T> Flux<T> decodeMany(Publisher<Object> data, Class<T> type) {
-		return Flux.from(data).flatMapIterable(s -> this.decodeToList(s, type));
-	}
+public class ObjectDecoder implements SplittablePrimitiveDecoder<Object> {
 
 	@SuppressWarnings("unchecked")
 	@Override

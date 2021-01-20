@@ -148,7 +148,7 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange> {
 						throw new IllegalArgumentException("Duplicate path parameters: " + pathParamName);
 					}
 					pathParameterNames.add(pathParamName);
-					routePathPatternBuilder.append(".+");
+					routePathPatternBuilder.append("[^/]+");
 				}
 				else {
 					if(!uniquePathParameterNames.add(pathParamName)) {
