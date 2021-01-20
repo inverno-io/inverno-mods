@@ -21,5 +21,4 @@ package io.winterframework.mod.base.converter;
  */
 public interface Converter<A, B> extends Decoder<A, B>, Encoder<B, A> {
 
-	
 }

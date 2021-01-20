@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.base.converter;
+package io.winterframework.mod.configuration.internal;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -41,11 +41,11 @@ import org.junit.jupiter.api.Test;
  * @author jkuhn
  *
  */
-class StringConverterTest {
+public class StringConverterTest {
 
 	@Test
-	void testStringConverter() throws URISyntaxException, MalformedURLException, UnknownHostException {
-		StringConverter converter = new StringConverter();
+	public void testStringConverter() throws URISyntaxException, MalformedURLException, UnknownHostException {
+		JavaStringConverter converter = new JavaStringConverter();
 		
 		Byte byte_value = Byte.valueOf("5");
 		Assertions.assertEquals(byte_value, converter.decodeByte(converter.encode(byte_value)));

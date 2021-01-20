@@ -15,25 +15,11 @@
  */
 package io.winterframework.mod.base.converter;
 
-import java.util.List;
-import java.util.Set;
-
-import org.reactivestreams.Publisher;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
 /**
  * @author jkuhn
  *
  */
 public interface Decoder<From, To> {
 
-	<T extends To> Mono<T> decodeOne(Publisher<From> data, Class<T> type);
-	<T extends To> Flux<T> decodeMany(Publisher<From> data, Class<T> type);
-	
-	<T extends To> T decode(From data, Class<T> type);
-	<T extends To> List<T> decodeToList(From data, Class<T> type);
-	<T extends To> Set<T> decodeToSet(From data, Class<T> type);
-	<T extends To> T[] decodeToArray(From data, Class<T> type);
+	<T extends To> T decode(From data, Class<T> type) throws ConverterException;
 }

@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import io.winterframework.mod.base.converter.PrimitiveDecoder;
+import io.winterframework.mod.base.converter.SplittablePrimitiveDecoder;
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
 import io.winterframework.mod.configuration.internal.GenericConfigurationKey;
 import io.winterframework.mod.configuration.internal.GenericConfigurationQueryResult;
@@ -36,7 +36,7 @@ import reactor.core.publisher.Mono;
  */
 public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashConfigurationSource<A, B>> extends AbstractConfigurationSource<AbstractHashConfigurationSource.HashConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashExecutableConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashConfigurationQueryResult<A, B>, A> {
 	
-	public AbstractHashConfigurationSource(PrimitiveDecoder<A> decoder) {
+	public AbstractHashConfigurationSource(SplittablePrimitiveDecoder<A> decoder) {
 		super(decoder);
 	}
 	

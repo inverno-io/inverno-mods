@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import io.winterframework.mod.web.Method;
+import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.Header;
 
 /**
@@ -40,9 +41,11 @@ public interface RequestHeaders {
 	String getContentType();
 	
 	Long getContentLength();
+
+	boolean contains(CharSequence name, CharSequence value);
 	
 	Set<String> getNames();
-	
+
 	Optional<String> get(CharSequence name);
 	
 	List<String> getAll(CharSequence name);
@@ -55,5 +58,9 @@ public interface RequestHeaders {
 	
 	List<Header> getAllHeader();
 	
-	boolean contains(CharSequence name, CharSequence value);
+	Optional<Parameter> getParameter(CharSequence name);
+	
+	List<Parameter> getAllParameter(CharSequence name);
+	
+	List<Parameter> getAllParameter();
 }

@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.Header;
 
 /**
@@ -32,12 +33,13 @@ public interface ResponseTrailers {
 	
 	ResponseTrailers add(Header... trailers);
 	
-	
 	ResponseTrailers set(CharSequence name, CharSequence value);
 	
 	ResponseTrailers set(Header... trailers);
 	
 	ResponseTrailers remove(CharSequence... names);
+	
+	boolean contains(CharSequence name, CharSequence value);
 	
 	Set<String> getNames();
 	
@@ -53,5 +55,9 @@ public interface ResponseTrailers {
 	
 	List<Header> getAllHeader();
 	
-	boolean contains(CharSequence name, CharSequence value);
+	Optional<Parameter> getParameter(CharSequence name);
+	
+	List<Parameter> getAllParameter(CharSequence name);
+	
+	List<Parameter> getAllParameter();
 }

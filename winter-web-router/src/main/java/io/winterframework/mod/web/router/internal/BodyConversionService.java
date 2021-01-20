@@ -18,7 +18,6 @@ package io.winterframework.mod.web.router.internal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import io.netty.buffer.ByteBuf;
@@ -40,12 +39,12 @@ import reactor.core.publisher.Mono;
 @Bean( visibility = Visibility.PRIVATE)
 public class BodyConversionService {
 	
-	private Map<String, MediaTypeConverter<ByteBuf, Object>> converters;
+	private Map<String, MediaTypeConverter<ByteBuf>> converters;
 
-	public BodyConversionService(List<MediaTypeConverter<ByteBuf, Object>> converters) {
+	public BodyConversionService(List<MediaTypeConverter<ByteBuf>> converters) {
 		this.converters = new HashMap<>();
 		
-		for(MediaTypeConverter<ByteBuf, Object> converter : converters) {
+		for(MediaTypeConverter<ByteBuf> converter : converters) {
 			for(String supportedMediaType : converter.getSupportedMediaTypes()) {
 				supportedMediaType = supportedMediaType.toLowerCase();
 				// TODO at some point this is an issue in Spring as well, we should fix this in winter
@@ -54,7 +53,7 @@ public class BodyConversionService {
 				// - annotations defined on multiple bean socket to specify sorting for list, array or sets
 				// - we can also group by key to inject a map => new multi socket type
 				// - this is a bit tricky as for selector when it comes to the injection of list along with single values 
-				MediaTypeConverter<ByteBuf, Object> previousConverter = this.converters.put(supportedMediaType, converter);
+				MediaTypeConverter<ByteBuf> previousConverter = this.converters.put(supportedMediaType, converter);
 				if(previousConverter != null) {
 					throw new IllegalStateException("Multiple converters found for media type " + supportedMediaType + ": " + previousConverter.toString() + ", " + converter.toString());
 				}
@@ -62,27 +61,31 @@ public class BodyConversionService {
 		}
 	}
 
-	public Optional<MediaTypeConverter<ByteBuf, Object>> getConverter(String mediaType) {
-		return Optional.ofNullable(this.converters.get(mediaType));
+	public MediaTypeConverter<ByteBuf> getConverter(String mediaType) {
+		MediaTypeConverter<ByteBuf> result = this.converters.get(mediaType);
+		if(result == null) {
+			throw new InternalServerErrorException("No encoder found for media type: " + mediaType);
+		}
+		return result;
 	}
 	
 	public <T> WebResponseBody.Encoder createEncoder(ResponseBody.Raw raw, String mediaType) {
-		return this.getConverter(mediaType).map(converter -> new GenericRequestBodyEncoder(raw, converter)).orElseThrow(() -> new InternalServerErrorException("No encoder found for media type: " + mediaType));
+		return new GenericRequestBodyEncoder(raw, this.getConverter(mediaType));
 	}
 	
 	public <T> WebRequestBody.Decoder<T> createDecoder(RequestBody.Raw raw, String mediaType, Class<T> type) {
-		return this.getConverter(mediaType).map(converter -> new GenericRequestBodyDecoder<>(raw, converter, type)).orElseThrow(() -> new InternalServerErrorException("No decoder found for media type: " + mediaType));
+		return new GenericRequestBodyDecoder<>(raw, this.getConverter(mediaType), type);
 	}
 	
 	private static class GenericRequestBodyDecoder<A> implements WebRequestBody.Decoder<A> {
 
 		private RequestBody.Raw raw;
 		
-		private MediaTypeConverter<ByteBuf, Object> converter;
+		private MediaTypeConverter<ByteBuf> converter;
 		
 		private Class<A> type;
 		
-		public GenericRequestBodyDecoder(RequestBody.Raw raw, MediaTypeConverter<ByteBuf, Object> converter, Class<A> type) {
+		public GenericRequestBodyDecoder(RequestBody.Raw raw, MediaTypeConverter<ByteBuf> converter, Class<A> type) {
 			this.raw = raw;
 			this.converter = converter;
 			this.type = type;
@@ -103,9 +106,9 @@ public class BodyConversionService {
 
 		private ResponseBody.Raw raw;
 		
-		private MediaTypeConverter<ByteBuf, Object> converter;
+		private MediaTypeConverter<ByteBuf> converter;
 		
-		public GenericRequestBodyEncoder(ResponseBody.Raw raw, MediaTypeConverter<ByteBuf, Object> converter) {
+		public GenericRequestBodyEncoder(ResponseBody.Raw raw, MediaTypeConverter<ByteBuf> converter) {
 			this.raw = raw;
 			this.converter = converter;
 		}
@@ -127,5 +130,5 @@ public class BodyConversionService {
 	}
 	
 	@Bean( name = "MediaTypeConverters")
-	public static interface MediaTypeConvertersSocket extends Supplier<List<MediaTypeConverter<ByteBuf, Object>>> {}
+	public static interface MediaTypeConvertersSocket extends Supplier<List<MediaTypeConverter<ByteBuf>>> {}
 }

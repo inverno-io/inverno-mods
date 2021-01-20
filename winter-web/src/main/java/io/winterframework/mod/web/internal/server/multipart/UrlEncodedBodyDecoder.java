@@ -27,6 +27,7 @@ import io.netty.util.CharsetUtil;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.base.Charsets;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.base.resource.MediaTypes;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.HeaderService;
@@ -50,6 +51,12 @@ import reactor.core.publisher.Sinks;
 @Bean(visibility = Visibility.PRIVATE)
 public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 
+	private ObjectConverter<String> parameterConverter;
+	
+	public UrlEncodedBodyDecoder(ObjectConverter<String> parameterConverter) {
+		this.parameterConverter = parameterConverter;
+	}
+	
 	public static void main(String[] args) {
 		
 		
@@ -61,7 +68,7 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 		HeaderService headerService = new GenericHeaderService(List.of(new ContentTypeCodec(), new ContentDispositionCodec()));
 		Headers.ContentType contentType = headerService.<Headers.ContentType>decode("content-type: application/x-www-form-urlencoded");
 		
-		UrlEncodedBodyDecoder decoder = new UrlEncodedBodyDecoder();
+		UrlEncodedBodyDecoder decoder = new UrlEncodedBodyDecoder(null);
 		
 		ByteBuf buffer1 = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("name=Xavier+Xantico&verdict=Yes", CharsetUtil.UTF_8));
 		ByteBuf buffer2 = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("&colour=&happy=sad&Utf%7Cr=Send\n", CharsetUtil.UTF_8));
@@ -117,12 +124,12 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 					if (buffer.readByte() == HttpConstants.LF) {
 						endIndex = buffer.readerIndex() - 2;
 						if (parameterName != null) {
-							return new UrlEncodedParameter(this.decodeComponent(parameterName, charset), this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), false, true);
+							return new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(parameterName, charset), this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), false, true);
 						} 
 						else if (startIndex != null) {
-							return new UrlEncodedParameter(this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), "", false, true);
+							return new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), "", false, true);
 						}
-						return new UrlEncodedParameter("", "", true, true);
+						return new UrlEncodedParameter(this.parameterConverter, "", "", true, true);
 					} 
 					else {
 						buffer.readerIndex(readerIndex);
@@ -133,12 +140,12 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 			else if (nextByte == HttpConstants.LF) {
 				endIndex = buffer.readerIndex() - 1;
 				if (parameterName != null) {
-					return new UrlEncodedParameter(this.decodeComponent(parameterName, charset), this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), false, true);
+					return new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(parameterName, charset), this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), false, true);
 				} 
 				else if (startIndex != null) {
-					return new UrlEncodedParameter(this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), "", false, true);
+					return new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), "", false, true);
 				}
-				return new UrlEncodedParameter("", "", true, true);
+				return new UrlEncodedParameter(this.parameterConverter, "", "", true, true);
 			}
 			else {
 				if (parameterName == null) {
@@ -154,7 +161,7 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 					else if (nextByte == '&') {
 						if(startIndex < buffer.readerIndex() - 1) {
 							endIndex = buffer.readerIndex() - 1;
-							return new UrlEncodedParameter(this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), "", false, false);
+							return new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), "", false, false);
 						}
 						else {
 							startIndex = null;
@@ -167,7 +174,7 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 					}
 					if (nextByte == '&') {
 						endIndex = buffer.readerIndex() - 1;
-						return new UrlEncodedParameter(this.decodeComponent(parameterName, charset), this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), false, false);
+						return new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(parameterName, charset), this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), false, false);
 					}
 				}
 			}
@@ -175,13 +182,13 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 		
 		if(parameterName != null) {
 			if(startIndex == null) {
-				UrlEncodedParameter partialParameter = new UrlEncodedParameter(this.decodeComponent(parameterName, charset), "", true, false);
+				UrlEncodedParameter partialParameter = new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(parameterName, charset), "", true, false);
 				buffer.readerIndex(readerIndex);
 				return partialParameter;
 			}
 			else {
 				endIndex = buffer.readerIndex();
-				UrlEncodedParameter partialParameter = new UrlEncodedParameter(this.decodeComponent(parameterName, charset), this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), true, false);
+				UrlEncodedParameter partialParameter = new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(parameterName, charset), this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), true, false);
 				buffer.readerIndex(readerIndex);
 				return partialParameter;
 			}
@@ -189,7 +196,7 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 		else {
 			if(startIndex != null && startIndex < buffer.readerIndex()) {
 				endIndex = buffer.readerIndex();
-				UrlEncodedParameter partialParameter = new UrlEncodedParameter(this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), "", true, false);
+				UrlEncodedParameter partialParameter = new UrlEncodedParameter(this.parameterConverter, this.decodeComponent(buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString(), charset), "", true, false);
 				buffer.readerIndex(readerIndex);
 				return partialParameter;
 			}

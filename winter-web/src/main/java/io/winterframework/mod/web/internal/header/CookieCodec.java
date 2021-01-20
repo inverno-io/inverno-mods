@@ -25,8 +25,9 @@ import java.util.stream.Collectors;
 
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.header.Headers;
-import io.winterframework.mod.web.internal.server.GenericCookie;
+import io.winterframework.mod.web.internal.server.GenericCookieParameter;
 
 /**
  * @author jkuhn
@@ -35,8 +36,8 @@ import io.winterframework.mod.web.internal.server.GenericCookie;
 @Bean(visibility = Visibility.PRIVATE)
 public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, CookieCodec.Cookie.Builder> {
 
-	public CookieCodec() {
-		super(CookieCodec.Cookie.Builder::new, Set.of(Headers.NAME_COOKIE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, true, true, false, false, false, false);
+	public CookieCodec(ObjectConverter<String> parameterConverter) {
+		super(() -> new CookieCodec.Cookie.Builder(parameterConverter), Set.of(Headers.NAME_COOKIE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, true, true, false, false, false, false);
 	}
 	
 	@Override
@@ -60,8 +61,14 @@ public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, Co
 
 		public static final class Builder extends ParameterizedHeader.AbstractBuilder<Cookie, Builder> {
 
+			private ObjectConverter<String> parameterConverter;
+			
 			private Map<String, List<io.winterframework.mod.web.Cookie>> pairs;
 
+			public Builder(ObjectConverter<String> parameterConverter) {
+				this.parameterConverter = parameterConverter;
+			}
+			
 			@Override
 			public Builder parameter(String name, String value) {
 				if(this.pairs == null) {
@@ -70,7 +77,7 @@ public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, Co
 				if(!this.pairs.containsKey(name)) {
 					this.pairs.put(name, new LinkedList<>());
 				}
-				this.pairs.get(name).add(new GenericCookie(name, value));
+				this.pairs.get(name).add(new GenericCookieParameter(this.parameterConverter, name, value));
 				return this;
 			}
 			

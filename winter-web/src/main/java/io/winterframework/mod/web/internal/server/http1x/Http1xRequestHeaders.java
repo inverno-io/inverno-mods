@@ -24,11 +24,14 @@ import java.util.stream.Collectors;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.ssl.SslHandler;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.Method;
+import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.Header;
 import io.winterframework.mod.web.header.HeaderService;
 import io.winterframework.mod.web.header.Headers;
 import io.winterframework.mod.web.internal.netty.LinkedHttpHeaders;
+import io.winterframework.mod.web.internal.server.GenericParameter;
 import io.winterframework.mod.web.server.RequestHeaders;
 
 /**
@@ -38,18 +41,22 @@ import io.winterframework.mod.web.server.RequestHeaders;
 public class Http1xRequestHeaders implements RequestHeaders {
 
 	private final ChannelHandlerContext context;
-	private final HeaderService headerService;
 	private final HttpRequest httpRequest;
+	private final HeaderService headerService;
+	private final ObjectConverter<String> parameterConverter;
+	
 	private final LinkedHttpHeaders internalHeaders;
 	
 	private Method method;
 	private String scheme;
 	
-	public Http1xRequestHeaders(ChannelHandlerContext context, HttpRequest httpRequest, HeaderService headerService) {
+	public Http1xRequestHeaders(ChannelHandlerContext context, HttpRequest httpRequest, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.context = context;
 		this.httpRequest = httpRequest;
-		this.internalHeaders = (LinkedHttpHeaders)httpRequest.headers();
 		this.headerService = headerService;
+		this.parameterConverter = parameterConverter;
+		
+		this.internalHeaders = (LinkedHttpHeaders)httpRequest.headers();
 	}
 	
 	LinkedHttpHeaders getInternalHeaders() {
@@ -93,6 +100,11 @@ public class Http1xRequestHeaders implements RequestHeaders {
 	}
 
 	@Override
+	public boolean contains(CharSequence name, CharSequence value) {
+		return this.internalHeaders.contains(name, value, true);
+	}
+	
+	@Override
 	public Set<String> getNames() {
 		return this.internalHeaders.names();
 	}
@@ -128,7 +140,17 @@ public class Http1xRequestHeaders implements RequestHeaders {
 	}
 	
 	@Override
-	public boolean contains(CharSequence name, CharSequence value) {
-		return this.internalHeaders.contains(name, value, true);
+	public Optional<Parameter> getParameter(CharSequence name) {
+		return this.get(name).map(value -> new GenericParameter(this.parameterConverter, name.toString(), value));
+	}
+	
+	@Override
+	public List<Parameter> getAllParameter(CharSequence name) {
+		return this.internalHeaders.getAll(name).stream().map(value -> new GenericParameter(this.parameterConverter, name.toString(), value)).collect(Collectors.toList());
+	}
+	
+	@Override
+	public List<Parameter> getAllParameter() {
+		return this.internalHeaders.entries().stream().map(e -> new GenericParameter(this.parameterConverter, e.getKey(), e.getValue())).collect(Collectors.toList());
 	}
 }

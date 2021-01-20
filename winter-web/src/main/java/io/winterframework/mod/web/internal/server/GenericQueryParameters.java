@@ -25,21 +25,24 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.Parameter;
-import io.winterframework.mod.web.server.RequestParameters;
+import io.winterframework.mod.web.server.QueryParameters;
 
 /**
  * @author jkuhn
  *
  */
-public class GenericRequestParameters implements RequestParameters {
+public class GenericQueryParameters implements QueryParameters {
 
-	private String path;
+	private final String path;
+	private final ObjectConverter<String> parameterConverter;
 	
 	private QueryStringDecoder queryStringDecoder;
 	
-	public GenericRequestParameters(String path) {
+	public GenericQueryParameters(String path, ObjectConverter<String> parameterConverter) {
 		this.path = path;
+		this.parameterConverter = parameterConverter;
 	}
 
 	private QueryStringDecoder getQueryStringDecoder() {
@@ -56,19 +59,19 @@ public class GenericRequestParameters implements RequestParameters {
 	
 	@Override
 	public Optional<Parameter> get(String name) {
-		return Optional.ofNullable(this.getQueryStringDecoder().parameters().get(name)).filter(p -> !p.isEmpty()).map(p -> new GenericParameter(name, p.get(0)));
+		return Optional.ofNullable(this.getQueryStringDecoder().parameters().get(name)).filter(p -> !p.isEmpty()).map(p -> new GenericParameter(this.parameterConverter, name, p.get(0)));
 	}
 	
 	@Override
 	public List<Parameter> getAll(String name) {
-		return this.getQueryStringDecoder().parameters().get(name).stream().map(value -> new GenericParameter(name, value)).collect(Collectors.toList());
+		return this.getQueryStringDecoder().parameters().get(name).stream().map(value -> new GenericParameter(this.parameterConverter, name, value)).collect(Collectors.toList());
 	}
 
 	@Override
 	public Map<String, List<Parameter>> getAll() {
 		Map<String, List<Parameter>> result = new HashMap<>();
 		for(Entry<String, List<String>> e : this.getQueryStringDecoder().parameters().entrySet()) {
-			result.put(e.getKey(), e.getValue().stream().map(value -> new GenericParameter(e.getKey(), value)).collect(Collectors.toList()));
+			result.put(e.getKey(), e.getValue().stream().map(value -> new GenericParameter(this.parameterConverter, e.getKey(), value)).collect(Collectors.toList()));
 		}
 		return Collections.unmodifiableMap(result);
 	}

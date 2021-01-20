@@ -21,8 +21,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.Cookie;
 import io.winterframework.mod.web.header.Headers;
+import io.winterframework.mod.web.server.CookieParameter;
 import io.winterframework.mod.web.server.RequestCookies;
 import io.winterframework.mod.web.server.RequestHeaders;
 
@@ -32,12 +34,21 @@ import io.winterframework.mod.web.server.RequestHeaders;
  */
 public class GenericRequestCookies implements RequestCookies {
 
-	private Map<String, List<Cookie>> pairs; 
+	private Map<String, List<CookieParameter>> pairs; 
 	
-	public GenericRequestCookies(RequestHeaders requestHeaders) {
+	public GenericRequestCookies(RequestHeaders requestHeaders, ObjectConverter<String> parameterConverter) {
 		this.pairs = requestHeaders.<Headers.Cookie>getAllHeader(Headers.NAME_COOKIE)
 			.stream()
 			.flatMap(cookieHeader -> cookieHeader.getPairs().values().stream().flatMap(List::stream))
+			.map(cookie -> {
+				if(cookie instanceof CookieParameter) {
+					return (CookieParameter)cookie;
+				}
+				else {
+					return new GenericCookieParameter(parameterConverter, cookie.getName(), cookie.getValue());
+				}
+				
+			})
 			.collect(Collectors.groupingBy(Cookie::getName));
 	}
 
@@ -47,7 +58,7 @@ public class GenericRequestCookies implements RequestCookies {
 	}
 	
 	@Override
-	public Optional<Cookie> get(String name) {
+	public Optional<CookieParameter> get(String name) {
 		return Optional.ofNullable(this.getAll(name)).map(cookies ->  {
 			if(!cookies.isEmpty()) {
 				return cookies.get(0);
@@ -57,12 +68,12 @@ public class GenericRequestCookies implements RequestCookies {
 	}
 	
 	@Override
-	public List<Cookie> getAll(String name) {
+	public List<CookieParameter> getAll(String name) {
 		return this.pairs.get(name);
 	}
 
 	@Override
-	public Map<String, List<Cookie>> getAll() {
+	public Map<String, List<CookieParameter>> getAll() {
 		return this.pairs;
 	}
 }

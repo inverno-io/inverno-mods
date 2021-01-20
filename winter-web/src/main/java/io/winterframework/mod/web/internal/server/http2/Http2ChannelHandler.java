@@ -30,6 +30,7 @@ import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.HeaderService;
 import io.winterframework.mod.web.internal.server.AbstractExchange;
@@ -50,22 +51,28 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	private ExchangeHandler<Exchange> rootHandler;
 	private ExchangeHandler<ErrorExchange<Throwable>> errorHandler;
 	private HeaderService headerService;
+	private ObjectConverter<String> parameterConverter;
 	private MultipartDecoder<Parameter> urlEncodedBodyDecoder;
 	private MultipartDecoder<Part> multipartBodyDecoder;
 
 	private IntObjectMap<Http2Exchange> serverStreams;
 
-	public Http2ChannelHandler(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder,
+	public Http2ChannelHandler(
+			Http2ConnectionDecoder decoder, 
+			Http2ConnectionEncoder encoder,
 			Http2Settings initialSettings,
 			ExchangeHandler<Exchange> rootHandler,
 			ExchangeHandler<ErrorExchange<Throwable>> errorHandler,
-			HeaderService headerService, MultipartDecoder<Parameter> urlEncodedBodyDecoder,
+			HeaderService headerService, 
+			ObjectConverter<String> parameterConverter,
+			MultipartDecoder<Parameter> urlEncodedBodyDecoder,
 			MultipartDecoder<Part> multipartBodyDecoder) {
 		super(decoder, encoder, initialSettings);
 
 		this.rootHandler = rootHandler;
 		this.errorHandler = errorHandler;
 		this.headerService = headerService;
+		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
 
@@ -128,7 +135,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 //        System.out.println("onHeaderReads(2) " + streamId + " - " + endOfStream + " - " + this.hashCode());
 		Http2Exchange exchange = this.serverStreams.get(streamId);
 		if (exchange == null) {
-			Http2Exchange streamExchange = new Http2Exchange(ctx, this.connection().stream(streamId), headers, this.encoder(), this.headerService, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.rootHandler, this.errorHandler);
+			Http2Exchange streamExchange = new Http2Exchange(ctx, this.connection().stream(streamId), headers, this.encoder(), this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.rootHandler, this.errorHandler);
 			this.serverStreams.put(streamId, streamExchange);
 			if (endOfStream) {
 				streamExchange.request().data().ifPresent(sink -> sink.tryEmitComplete());

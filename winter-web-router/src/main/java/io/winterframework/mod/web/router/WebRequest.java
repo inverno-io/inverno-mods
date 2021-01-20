@@ -25,6 +25,8 @@ import io.winterframework.mod.web.server.Request;
  */
 public interface WebRequest extends Request {
 
+	PathParameters pathParameters();
+	
 	@Override
 	Optional<WebRequestBody> body();
 }

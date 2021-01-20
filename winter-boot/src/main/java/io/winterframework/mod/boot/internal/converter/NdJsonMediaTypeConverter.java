@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.boot.internal.converter;
 
-import java.util.List;
 import java.util.Set;
 
 import org.reactivestreams.Publisher;
@@ -24,8 +23,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Provide;
-import io.winterframework.mod.base.converter.Converter;
 import io.winterframework.mod.base.converter.MediaTypeConverter;
+import io.winterframework.mod.base.converter.ReactiveConverter;
 import io.winterframework.mod.base.resource.MediaTypes;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -35,11 +34,11 @@ import reactor.core.publisher.Mono;
  *
  */
 @Bean( name = "ndjsonMediaTypeConverter")
-public class NdJsonMediaTypeConverter extends AbstractJsonMediaTypeConverter implements @Provide MediaTypeConverter<ByteBuf, Object> {
+public class NdJsonMediaTypeConverter extends AbstractJsonMediaTypeConverter implements @Provide MediaTypeConverter<ByteBuf> {
 
 	private static final ByteBuf NEW_LINE = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(new byte[] {'\n'}));
 	
-	public NdJsonMediaTypeConverter(Converter<ByteBuf, Object> jsonByteBufConverter) {
+	public NdJsonMediaTypeConverter(ReactiveConverter<ByteBuf, Object> jsonByteBufConverter) {
 		super(jsonByteBufConverter);
 	}
 	
@@ -67,7 +66,7 @@ public class NdJsonMediaTypeConverter extends AbstractJsonMediaTypeConverter imp
 		return this.concatNewLine(super.encode(data));
 	}
 	
-	@Override
+	/*@Override
 	public <T> ByteBuf encodeArray(T[] data) {
 		return this.concatNewLine(super.encodeArray(data));
 	}
@@ -80,5 +79,5 @@ public class NdJsonMediaTypeConverter extends AbstractJsonMediaTypeConverter imp
 	@Override
 	public <T> ByteBuf encodeSet(Set<T> data) {
 		return this.concatNewLine(super.encodeSet(data));
-	}
+	}*/
 }

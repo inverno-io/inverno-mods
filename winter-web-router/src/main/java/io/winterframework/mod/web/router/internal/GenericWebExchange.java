@@ -21,8 +21,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.winterframework.mod.web.router.WebExchange;
-import io.winterframework.mod.web.router.WebRequest;
-import io.winterframework.mod.web.router.WebResponse;
 
 /**
  * @author jkuhn
@@ -30,36 +28,25 @@ import io.winterframework.mod.web.router.WebResponse;
  */
 public class GenericWebExchange implements WebExchange  {
 
-	private WebRequest request;
+	private GenericWebRequest request;
 	
-	private WebResponse response;
+	private GenericWebResponse response;
 	
 	private Map<String, Object> attributes;
 	
-	private Map<String, String> pathParameters;
-	
-	public GenericWebExchange(WebRequest request, WebResponse response) {
+	public GenericWebExchange(GenericWebRequest request, GenericWebResponse response) {
 		this.request = request;
 		this.response = response;
 	}
 
 	@Override
-	public WebRequest request() {
+	public GenericWebRequest request() {
 		return this.request;
 	}
 
 	@Override
-	public WebResponse response() {
+	public GenericWebResponse response() {
 		return this.response;
-	}
-
-	@Override
-	public Map<String, String> getPathParameters() {
-		return this.pathParameters != null ? this.pathParameters : Map.of();
-	}
-
-	public void setPathParameters(Map<String, String> pathParameters) {
-		this.pathParameters = pathParameters != null ? Collections.unmodifiableMap(pathParameters) : Map.of();
 	}
 	
 	@Override

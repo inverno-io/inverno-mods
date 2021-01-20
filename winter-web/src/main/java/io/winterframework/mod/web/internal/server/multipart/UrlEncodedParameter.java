@@ -15,6 +15,7 @@
  */
 package io.winterframework.mod.web.internal.server.multipart;
 
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.internal.server.GenericParameter;
 
 /**
@@ -31,8 +32,8 @@ class UrlEncodedParameter extends GenericParameter {
 	 * @param name
 	 * @param value
 	 */
-	public UrlEncodedParameter(String name, String value, boolean partial, boolean last) {
-		super(name, value);
+	public UrlEncodedParameter(ObjectConverter<String> parameterConverter, String name, String value, boolean partial, boolean last) {
+		super(parameterConverter, name, value);
 		this.partial = partial;
 		this.last = last;
 	}

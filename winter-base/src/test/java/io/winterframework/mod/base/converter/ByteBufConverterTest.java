@@ -39,179 +39,232 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.winterframework.mod.base.Charsets;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * @author jkuhn
  *
  */
-class ByteBufConverterTest {
+public class ByteBufConverterTest {
 
+	private static final ByteBufConverter CONVERTER = new ByteBufConverter(new StringConverter()); 
+	
 	@Test
-	void testEncode() throws ConverterException, URISyntaxException, MalformedURLException, UnknownHostException {
-		ByteBufConverter converter = new ByteBufConverter();
-		
-		ByteBuf buffer = converter.encode(List.of("a","b","c"));
+	public void testEncode() throws ConverterException, URISyntaxException, MalformedURLException, UnknownHostException {
+		ByteBuf buffer = CONVERTER.encode(List.of("a","b","c"));
 		Assertions.assertEquals("a,b,c", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encodeList(List.of("a","b","c"));
+		buffer = CONVERTER.encodeList(List.of("a","b","c"));
 		Assertions.assertEquals("a,b,c", buffer.toString(Charsets.DEFAULT));
 
-		buffer = converter.encode(new LinkedHashSet<>(List.of("a","b","c")));
+		buffer = CONVERTER.encode(new LinkedHashSet<>(List.of("a","b","c")));
 		Assertions.assertEquals("a,b,c", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encodeSet(new LinkedHashSet<>(List.of("a","b","c")));
+		buffer = CONVERTER.encodeSet(new LinkedHashSet<>(List.of("a","b","c")));
 		Assertions.assertEquals("a,b,c", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode(new String[]{"a","b","c"});
+		buffer = CONVERTER.encode(new String[]{"a","b","c"});
 		Assertions.assertEquals("a,b,c", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encodeArray(new String[]{"a","b","c"});
+		buffer = CONVERTER.encodeArray(new String[]{"a","b","c"});
 		Assertions.assertEquals("a,b,c", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode((byte)64);
+		buffer = CONVERTER.encode((byte)64);
 		Assertions.assertEquals("64", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode((short)256);
+		buffer = CONVERTER.encode((short)256);
 		Assertions.assertEquals("256", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode((int)1024);
+		buffer = CONVERTER.encode((int)1024);
 		Assertions.assertEquals("1024", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode((long)2048);
+		buffer = CONVERTER.encode((long)2048);
 		Assertions.assertEquals("2048", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode((float)12345.5);
+		buffer = CONVERTER.encode((float)12345.5);
 		Assertions.assertEquals("12345.5", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode((double)123456789.54321);
+		buffer = CONVERTER.encode((double)123456789.54321);
 		Assertions.assertEquals("1.2345678954321E8", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode('a');
+		buffer = CONVERTER.encode('a');
 		Assertions.assertEquals("a", buffer.toString(Charsets.DEFAULT));
 	
-		buffer = converter.encode(true);
+		buffer = CONVERTER.encode(true);
 		Assertions.assertEquals("true", buffer.toString(Charsets.DEFAULT));
 	
-		buffer = converter.encode("abcdef");
+		buffer = CONVERTER.encode("abcdef");
 		Assertions.assertEquals("abcdef", buffer.toString(Charsets.DEFAULT));
 	
-		buffer = converter.encode(new BigInteger("123457891011121314151617181920212223242526"));
+		buffer = CONVERTER.encode(new BigInteger("123457891011121314151617181920212223242526"));
 		Assertions.assertEquals("123457891011121314151617181920212223242526", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode(new BigDecimal("123457891011121314151617181920212223242526.987654321"));
+		buffer = CONVERTER.encode(new BigDecimal("123457891011121314151617181920212223242526.987654321"));
 		Assertions.assertEquals("123457891011121314151617181920212223242526.987654321", buffer.toString(Charsets.DEFAULT));
 	
-		buffer = converter.encode(LocalDate.of(2021, 1, 15));
+		buffer = CONVERTER.encode(LocalDate.of(2021, 1, 15));
 		Assertions.assertEquals("2021-01-15", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode(LocalDateTime.of(2021, 1, 15, 18, 0, 52));
+		buffer = CONVERTER.encode(LocalDateTime.of(2021, 1, 15, 18, 0, 52));
 		Assertions.assertEquals("2021-01-15T18:00:52", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode(ZonedDateTime.of(LocalDate.of(2021, 1, 15), LocalTime.of(18, 0, 52), ZoneId.of("UTC")));
+		buffer = CONVERTER.encode(ZonedDateTime.of(LocalDate.of(2021, 1, 15), LocalTime.of(18, 0, 52), ZoneId.of("UTC")));
 		Assertions.assertEquals("2021-01-15T18:00:52Z[UTC]", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode(Currency.getInstance("EUR"));
+		buffer = CONVERTER.encode(Currency.getInstance("EUR"));
 		Assertions.assertEquals("EUR", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode(Locale.FRANCE);
+		buffer = CONVERTER.encode(Locale.FRANCE);
 		Assertions.assertEquals("fr_FR", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode(new File("/abc.txt"));
+		buffer = CONVERTER.encode(new File("/abc.txt"));
 		Assertions.assertEquals("/abc.txt", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode(Paths.get("/abc.txt"));
+		buffer = CONVERTER.encode(Paths.get("/abc.txt"));
 		Assertions.assertEquals("/abc.txt", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode(new URI("http://127.0.0.1:8080/abc"));
+		buffer = CONVERTER.encode(new URI("http://127.0.0.1:8080/abc"));
 		Assertions.assertEquals("http://127.0.0.1:8080/abc", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode(new URL("http://127.0.0.1:8080/abc"));
+		buffer = CONVERTER.encode(new URL("http://127.0.0.1:8080/abc"));
 		Assertions.assertEquals("http://127.0.0.1:8080/abc", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode(Pattern.compile("[a-b]+.*"));
+		buffer = CONVERTER.encode(Pattern.compile("[a-b]+.*"));
 		Assertions.assertEquals("[a-b]+.*", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode(InetAddress.getByName("localhost"));
+		buffer = CONVERTER.encode(InetAddress.getByName("localhost"));
 		Assertions.assertEquals("localhost", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = converter.encode(String.class);
+		buffer = CONVERTER.encode(String.class);
 		Assertions.assertEquals("java.lang.String", buffer.toString(Charsets.DEFAULT));
 	}
 
 	@Test
 	public void testByteBufConverter() throws URISyntaxException, MalformedURLException, UnknownHostException {
-		ByteBufConverter converter = new ByteBufConverter();
-		
 		Byte byte_value = Byte.valueOf("5");
-		Assertions.assertEquals(byte_value, converter.decodeByte(converter.encode(byte_value)));
+		Assertions.assertEquals(byte_value, CONVERTER.decode(CONVERTER.encode(byte_value), Byte.class));
 		
 		Short short_value = Short.valueOf("6");
-		Assertions.assertEquals(short_value, converter.decodeShort(converter.encode(short_value)));
+		Assertions.assertEquals(short_value, CONVERTER.decode(CONVERTER.encode(short_value), Short.class));
 		
 		Integer integer_value = Integer.valueOf("55656");
-		Assertions.assertEquals(integer_value, converter.decodeInteger(converter.encode(integer_value)));
+		Assertions.assertEquals(integer_value, CONVERTER.decode(CONVERTER.encode(integer_value), Integer.class));
 		
 		Long long_value = Long.valueOf("456654894984");
-		Assertions.assertEquals(long_value, converter.decodeLong(converter.encode(long_value)));
+		Assertions.assertEquals(long_value, CONVERTER.decode(CONVERTER.encode(long_value), Long.class));
 		
 		Float float_value = Float.valueOf("52.36");
-		Assertions.assertEquals(float_value, converter.decodeFloat(converter.encode(float_value)));
+		Assertions.assertEquals(float_value, CONVERTER.decode(CONVERTER.encode(float_value), Float.class));
 		
 		Double double_value = Double.valueOf("5654842.36");
-		Assertions.assertEquals(double_value, converter.decodeDouble(converter.encode(double_value)));
+		Assertions.assertEquals(double_value, CONVERTER.decode(CONVERTER.encode(double_value), Double.class));
 		
 		Character character_value = Character.valueOf('\n');
-		Assertions.assertEquals(character_value, converter.decodeCharacter(converter.encode(character_value)));
+		Assertions.assertEquals(character_value, CONVERTER.decode(CONVERTER.encode(character_value), Character.class));
 		
 		Boolean boolean_value = Boolean.valueOf(true);
-		Assertions.assertEquals(boolean_value, converter.decodeBoolean(converter.encode(boolean_value)));
+		Assertions.assertEquals(boolean_value, CONVERTER.decode(CONVERTER.encode(boolean_value), Boolean.class));
 		
 		String string_value = "dslkfdgf\nsfkjdfhd\t\"fdlgf";
-		Assertions.assertEquals(string_value, converter.decodeString(converter.encode(string_value)));
+		Assertions.assertEquals(string_value, CONVERTER.decode(CONVERTER.encode(string_value), String.class));
 		
 		BigInteger bigInteger_value = new BigInteger("464984894894894894894651321564794135168798745318964651564894651684841654894651468974651518946168916198764165479797");
-		Assertions.assertEquals(bigInteger_value, converter.decodeBigInteger(converter.encode(bigInteger_value)));
+		Assertions.assertEquals(bigInteger_value, CONVERTER.decode(CONVERTER.encode(bigInteger_value), BigInteger.class));
 		
 		BigDecimal bigDecimal_value = new BigDecimal("464984894894894894894651321564794135168798745318964651564894651684841654894651468974651518946168916198764165479797.26554946400000000");
-		Assertions.assertEquals(bigDecimal_value, converter.decodeBigDecimal(converter.encode(bigDecimal_value)));
+		Assertions.assertEquals(bigDecimal_value, CONVERTER.decode(CONVERTER.encode(bigDecimal_value), BigDecimal.class));
 		
 		LocalDate localDate_value = LocalDate.now();
-		Assertions.assertEquals(localDate_value, converter.decodeLocalDate(converter.encode(localDate_value)));
+		Assertions.assertEquals(localDate_value, CONVERTER.decode(CONVERTER.encode(localDate_value), LocalDate.class));
 		
 		LocalDateTime localDateTime_value = LocalDateTime.now();
-		Assertions.assertEquals(localDateTime_value, converter.decodeLocalDateTime(converter.encode(localDateTime_value)));
+		Assertions.assertEquals(localDateTime_value, CONVERTER.decode(CONVERTER.encode(localDateTime_value), LocalDateTime.class));
 		
 		ZonedDateTime zonedDateTime_value = ZonedDateTime.now();
-		Assertions.assertEquals(zonedDateTime_value, converter.decodeZonedDateTime(converter.encode(zonedDateTime_value)));
+		Assertions.assertEquals(zonedDateTime_value, CONVERTER.decode(CONVERTER.encode(zonedDateTime_value), ZonedDateTime.class));
 		
 		Currency currency_value = Currency.getInstance("GBP");
-		Assertions.assertEquals(currency_value, converter.decodeCurrency(converter.encode(currency_value)));
+		Assertions.assertEquals(currency_value, CONVERTER.decode(CONVERTER.encode(currency_value), Currency.class));
 		
 		Locale locale_value = Locale.getDefault();
-		Assertions.assertEquals(locale_value, converter.decodeLocale(converter.encode(locale_value)));
+		Assertions.assertEquals(locale_value, CONVERTER.decode(CONVERTER.encode(locale_value), Locale.class));
 		
 		File file_value = new File(".");
-		Assertions.assertEquals(file_value, converter.decodeFile(converter.encode(file_value)));
+		Assertions.assertEquals(file_value, CONVERTER.decode(CONVERTER.encode(file_value), File.class));
 		
 		Path path_value = Paths.get(".");
-		Assertions.assertEquals(path_value, converter.decodePath(converter.encode(path_value)));
+		Assertions.assertEquals(path_value, CONVERTER.decode(CONVERTER.encode(path_value), Path.class));
 		
 		URI uri_value = new URI("file:/tmp");
-		Assertions.assertEquals(uri_value, converter.decodeURI(converter.encode(uri_value)));
+		Assertions.assertEquals(uri_value, CONVERTER.decode(CONVERTER.encode(uri_value), URI.class));
 		
 		URL url_value = new URL("file:/tmp");
-		Assertions.assertEquals(url_value, converter.decodeURL(converter.encode(url_value)));
+		Assertions.assertEquals(url_value, CONVERTER.decode(CONVERTER.encode(url_value), URL.class));
 		
 		Pattern pattern_value = Pattern.compile("\\d+\\{.*\\}");
-		Assertions.assertEquals(pattern_value.pattern(), converter.decodePattern(converter.encode(pattern_value)).pattern());
+		Assertions.assertEquals(pattern_value.pattern(), CONVERTER.decode(CONVERTER.encode(pattern_value), Pattern.class).pattern());
 		
 		InetAddress inetAddress_value = InetAddress.getLocalHost();
-		Assertions.assertEquals(inetAddress_value, converter.decodeInetAddress(converter.encode(inetAddress_value)));
+		Assertions.assertEquals(inetAddress_value, CONVERTER.decode(CONVERTER.encode(inetAddress_value), InetAddress.class));
 		
 		Class<?> class_value = List.class;
-		Assertions.assertEquals(class_value, converter.decodeClass(converter.encode(class_value)));
+		Assertions.assertEquals(class_value, CONVERTER.decode(CONVERTER.encode(class_value), Class.class));
+	}
+
+	@Test
+	public void testEncodeOne() {
+		Mono<Integer> in = Mono.just(52);
+		
+		Publisher<ByteBuf> out = CONVERTER.encodeOne(in);
+		
+		Assertions.assertEquals("52", Mono.from(out).block().toString(Charsets.DEFAULT));
+	}
+	
+	@Test
+	public void testEncodeMany() {
+		Flux<Integer> in = Flux.just(2,3,5,7,11,13,17);
+		
+		Publisher<ByteBuf> out = CONVERTER.encodeMany(in);
+		
+		List<ByteBuf> outList = Flux.from(out).collectList().block();
+		
+		Assertions.assertEquals(7, outList.size());
+		Assertions.assertEquals("2", outList.get(0).toString(Charsets.DEFAULT));
+		Assertions.assertEquals("3", outList.get(1).toString(Charsets.DEFAULT));
+		Assertions.assertEquals("5", outList.get(2).toString(Charsets.DEFAULT));
+		Assertions.assertEquals("7", outList.get(3).toString(Charsets.DEFAULT));
+		Assertions.assertEquals("11", outList.get(4).toString(Charsets.DEFAULT));
+		Assertions.assertEquals("13", outList.get(5).toString(Charsets.DEFAULT));
+		Assertions.assertEquals("17", outList.get(6).toString(Charsets.DEFAULT));
+	}
+	
+	@Test
+	public void testDecodeOne() {
+		Flux<ByteBuf> in = Flux.just(Unpooled.copiedBuffer("123", Charsets.DEFAULT), Unpooled.copiedBuffer("456", Charsets.DEFAULT), Unpooled.copiedBuffer("789", Charsets.DEFAULT));
+		
+		Publisher<Integer> out = CONVERTER.decodeOne(in, Integer.class);
+		
+		Assertions.assertEquals(123456789, Mono.from(out).block());
+	}
+	
+	@Test
+	public void testDecodeMany() {
+		Flux<ByteBuf> in = Flux.just(Unpooled.copiedBuffer("12,3", Charsets.DEFAULT), Unpooled.copiedBuffer("4,56,", Charsets.DEFAULT), Unpooled.copiedBuffer("78,9", Charsets.DEFAULT));
+		
+		Publisher<Integer> out = CONVERTER.decodeMany(in, Integer.class);
+		
+		List<Integer> outList = Flux.from(out).collectList().block();
+		
+		Assertions.assertEquals(12, outList.get(0));
+		Assertions.assertEquals(34, outList.get(1));
+		Assertions.assertEquals(56, outList.get(2));
+		Assertions.assertEquals(78, outList.get(3));
+		Assertions.assertEquals(9, outList.get(4));
 	}
 }

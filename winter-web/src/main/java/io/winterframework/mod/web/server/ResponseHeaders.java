@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.Status;
 import io.winterframework.mod.web.header.Header;
 import io.winterframework.mod.web.header.Headers;
@@ -54,6 +55,8 @@ public interface ResponseHeaders {
 	
 	Optional<Headers.ContentType> getContentTypeHeader();
 	
+	boolean contains(CharSequence name, CharSequence value);
+	
 	Set<String> getNames();
 	
 	Optional<String> get(CharSequence name);
@@ -68,6 +71,10 @@ public interface ResponseHeaders {
 	
 	List<Header> getAllHeader();
 	
-	boolean contains(CharSequence name, CharSequence value);
+	Optional<Parameter> getParameter(CharSequence name);
+	
+	List<Parameter> getAllParameter(CharSequence name);
+	
+	List<Parameter> getAllParameter();
 	
 }

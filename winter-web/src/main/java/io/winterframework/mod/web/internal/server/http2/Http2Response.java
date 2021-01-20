@@ -18,6 +18,7 @@ package io.winterframework.mod.web.internal.server.http2;
 import java.util.function.Consumer;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.header.HeaderService;
 import io.winterframework.mod.web.internal.server.AbstractResponse;
 import io.winterframework.mod.web.server.Response;
@@ -30,14 +31,16 @@ import io.winterframework.mod.web.server.ResponseTrailers;
 class Http2Response extends AbstractResponse {
 
 	private final HeaderService headerService;
+	private final ObjectConverter<String> parameterConverter;
 	
 	/**
 	 * @param headerService
 	 * @param responseHeaders
 	 */
-	public Http2Response(ChannelHandlerContext context, HeaderService headerService) {
-		super(context, headerService, new Http2ResponseHeaders(headerService));
+	public Http2Response(ChannelHandlerContext context, HeaderService headerService, ObjectConverter<String> parameterConverter) {
+		super(context, headerService, new Http2ResponseHeaders(headerService, parameterConverter));
 		this.headerService = headerService;
+		this.parameterConverter = parameterConverter;
 	}
 
 	@Override
@@ -48,7 +51,7 @@ class Http2Response extends AbstractResponse {
 	@Override
 	public Response trailers(Consumer<ResponseTrailers> trailersConfigurer) {
 		if(this.responseTrailers == null) {
-			this.responseTrailers = new Http2ResponseTrailers(this.headerService);
+			this.responseTrailers = new Http2ResponseTrailers(this.headerService, this.parameterConverter);
 		}
 		trailersConfigurer.accept(this.responseTrailers);
 		return this;

@@ -20,8 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import io.winterframework.mod.web.Cookie;
-
 /**
  * @author jkuhn
  *
@@ -30,9 +28,9 @@ public interface RequestCookies {
 	
 	Set<String> getNames();
 	
-	Optional<Cookie> get(String name);
+	Optional<CookieParameter> get(String name);
 	
-	List<Cookie> getAll(String name);
+	List<CookieParameter> getAll(String name);
 	
-	Map<String, List<Cookie>> getAll();
+	Map<String, List<CookieParameter>> getAll();
 }

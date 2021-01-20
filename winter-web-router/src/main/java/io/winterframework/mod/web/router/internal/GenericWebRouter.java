@@ -23,6 +23,7 @@ import java.util.function.Supplier;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Init;
 import io.winterframework.core.annotation.Provide;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.base.resource.Resource;
 import io.winterframework.mod.base.resource.ResourceService;
 import io.winterframework.mod.web.NotFoundException;
@@ -51,9 +52,12 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 	
 	private BodyConversionService bodyConversionService;
 	
-	public GenericWebRouter(ResourceService resourceService, BodyConversionService bodyConversionService) {
+	private ObjectConverter<String> parameterConverter;
+	
+	public GenericWebRouter(ResourceService resourceService, BodyConversionService bodyConversionService, ObjectConverter<String> parameterConverter) {
 		this.resourceService = resourceService;
 		this.bodyConversionService = bodyConversionService;
+		this.parameterConverter = parameterConverter;
 		AcceptCodec acceptCodec = new AcceptCodec(false);
 		ContentTypeCodec contentTypeCodec = new ContentTypeCodec();
 		AcceptLanguageCodec acceptLanguageCodec = new AcceptLanguageCodec(false);
@@ -122,7 +126,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 
 	@Override
 	public void handle(Exchange exchange) throws WebException {
-		this.firstLink.handle(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.bodyConversionService), new GenericWebResponse(exchange.response(), this.bodyConversionService)));
+		this.firstLink.handle(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.bodyConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.bodyConversionService)));
 	}
 	
 	@Bean( name = "WebRouterConfigurer")

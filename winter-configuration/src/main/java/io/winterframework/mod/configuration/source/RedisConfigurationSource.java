@@ -39,9 +39,8 @@ import io.lettuce.core.Range.Boundary;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.winterframework.mod.base.converter.ConverterException;
-import io.winterframework.mod.base.converter.PrimitiveDecoder;
-import io.winterframework.mod.base.converter.PrimitiveEncoder;
-import io.winterframework.mod.base.converter.StringConverter;
+import io.winterframework.mod.base.converter.JoinablePrimitiveEncoder;
+import io.winterframework.mod.base.converter.SplittablePrimitiveDecoder;
 import io.winterframework.mod.configuration.AbstractConfigurableConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
@@ -56,6 +55,7 @@ import io.winterframework.mod.configuration.internal.GenericConfigurationKey;
 import io.winterframework.mod.configuration.internal.GenericConfigurationProperty;
 import io.winterframework.mod.configuration.internal.GenericConfigurationQueryResult;
 import io.winterframework.mod.configuration.internal.GenericConfigurationUpdateResult;
+import io.winterframework.mod.configuration.internal.JavaStringConverter;
 import io.winterframework.mod.configuration.internal.parser.option.ConfigurationOptionParser;
 import io.winterframework.mod.configuration.internal.parser.option.ParseException;
 import io.winterframework.mod.configuration.internal.parser.option.StringProvider;
@@ -74,10 +74,10 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	private RedisReactiveCommands<String, String> commands;
 	
 	public RedisConfigurationSource(RedisClient redisClient) {
-		this(redisClient, new StringConverter(), new StringConverter());
+		this(redisClient, new JavaStringConverter(), new JavaStringConverter());
 	}
 	
-	public RedisConfigurationSource(RedisClient redisClient, PrimitiveEncoder<String> encoder, PrimitiveDecoder<String> decoder) {
+	public RedisConfigurationSource(RedisClient redisClient, JoinablePrimitiveEncoder<String> encoder, SplittablePrimitiveDecoder<String> decoder) {
 		super(encoder, decoder);
 		this.commands = redisClient.connect().reactive();
 	}

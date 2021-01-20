@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.Headers;
@@ -29,7 +30,7 @@ import io.winterframework.mod.web.server.Request;
 import io.winterframework.mod.web.server.RequestBody;
 import io.winterframework.mod.web.server.RequestCookies;
 import io.winterframework.mod.web.server.RequestHeaders;
-import io.winterframework.mod.web.server.RequestParameters;
+import io.winterframework.mod.web.server.QueryParameters;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
@@ -41,18 +42,20 @@ public abstract class AbstractRequest implements Request {
 
 	protected final ChannelHandlerContext context;
 	protected final RequestHeaders requestHeaders;
+	protected final ObjectConverter<String> parameterConverter;
 	protected final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
 	protected final MultipartDecoder<Part> multipartBodyDecoder;
 	
-	protected GenericRequestParameters requestParameters;
+	protected GenericQueryParameters queryParameters;
 	protected GenericRequestCookies requestCookies;
 	
 	private Optional<RequestBody> requestBody;
 	private Sinks.Many<ByteBuf> data;
 	
-	public AbstractRequest(ChannelHandlerContext context, RequestHeaders requestHeaders, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
+	public AbstractRequest(ChannelHandlerContext context, RequestHeaders requestHeaders, ObjectConverter<String> parameterConverter, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
 		this.context = context;
 		this.requestHeaders = requestHeaders;
+		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
 	}
@@ -63,17 +66,17 @@ public abstract class AbstractRequest implements Request {
 	}
 
 	@Override
-	public RequestParameters parameters() {
-		if(this.requestParameters == null) {
-			this.requestParameters = new GenericRequestParameters(this.requestHeaders.getPath());
+	public QueryParameters queryParameters() {
+		if(this.queryParameters == null) {
+			this.queryParameters = new GenericQueryParameters(this.requestHeaders.getPath(), this.parameterConverter);
 		}
-		return this.requestParameters;
+		return this.queryParameters;
 	}
 
 	@Override
 	public RequestCookies cookies() {
 		if(this.requestCookies == null) {
-			this.requestCookies = new GenericRequestCookies(this.requestHeaders);
+			this.requestCookies = new GenericRequestCookies(this.requestHeaders, this.parameterConverter);
 		}
 		return this.requestCookies;
 	}

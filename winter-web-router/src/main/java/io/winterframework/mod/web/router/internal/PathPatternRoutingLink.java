@@ -152,8 +152,7 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 			this.handler = handler;
 		}
 		
-		public Map<String, String> getPathParameters() {
-			Map<String, String> pathParameters = new HashMap<>();
+		public void injectPathParameters(GenericPathParameters pathParameters) {
 			int matcherIndex = 1;
 			for(String pathParameterName : this.pathPattern.getPathParameterNames()) {
 				if(pathParameterName != null && !pathParameterName.equals(":")) {
@@ -161,7 +160,6 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 				}
 				matcherIndex++;
 			}
-			return pathParameters;
 		}
 		
 		public RoutingLink<A, ?, B> getHandler() {
@@ -248,7 +246,7 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 				.findFirst()
 				.map(match -> {
 					if(exchange instanceof GenericWebExchange) {
-						((GenericWebExchange)exchange).setPathParameters(match.getPathParameters());
+						match.injectPathParameters(((GenericWebExchange)exchange).request().pathParameters());
 					}
 					return match.getHandler();
 				});

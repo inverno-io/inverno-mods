@@ -19,7 +19,7 @@ public class GenericWebRouterTest {
 
 	@Test
 	public void testGetRoutes() {
-		GenericWebRouter router = new GenericWebRouter(null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.route().consumes(MediaTypes.APPLICATION_JSON).consumes(MediaTypes.TEXT_HTML).handler(exhange -> {})
 			.route().method(Method.GET).method(Method.POST).language("fr-FR").language("en-US").handler(exhange -> {})
@@ -85,7 +85,7 @@ public class GenericWebRouterTest {
 		List<String> pathParams11 = new ArrayList<>();
 		pathParams11.add(null);
 		pathParams11.add(":param1");
-		route11.setPathPattern(new GenericWebRoute.GenericPathPattern("/hello/{param1}", Pattern.compile("^(\\Q/hello/\\E)(.+)$"), pathParams11));
+		route11.setPathPattern(new GenericWebRoute.GenericPathPattern("/hello/{param1}", Pattern.compile("^(\\Q/hello/\\E)([^/]+)$"), pathParams11));
 		
 		GenericWebRoute route12 = new GenericWebRoute(router);
 		route12.setPath("/hello/{param1}/{param2:[a-b]*}");
@@ -94,14 +94,14 @@ public class GenericWebRouterTest {
 		pathParams11.add(":param1");
 		pathParams11.add(null);
 		pathParams11.add(":param2");
-		route12.setPathPattern(new GenericWebRoute.GenericPathPattern("/hello/{param1}/{param2:[a-b]*}", Pattern.compile("^(\\Q/hello/\\E)(.+)(\\Q/\\E)([a-b]*)$"), pathParams12));
+		route12.setPathPattern(new GenericWebRoute.GenericPathPattern("/hello/{param1}/{param2:[a-b]*}", Pattern.compile("^(\\Q/hello/\\E)([^/]+)(\\Q/\\E)([a-b]*)$"), pathParams12));
 		
 		Assertions.assertEquals(Set.of(route1, route2, route3, route4, route5, route6, route7, route8, route9, route10, route11, route12), routes);
 	}
 	
 	@Test
 	public void testFindRoutes() {
-		GenericWebRouter router = new GenericWebRouter(null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.route().consumes(MediaTypes.APPLICATION_JSON).consumes(MediaTypes.TEXT_HTML).handler(exhange -> {})
 			.route().method(Method.GET).method(Method.POST).language("fr-FR").language("en-US").handler(exhange -> {})
@@ -140,7 +140,7 @@ public class GenericWebRouterTest {
 	
 	@Test
 	public void testRouteRemove() {
-		GenericWebRouter router = new GenericWebRouter(null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.route().consumes(MediaTypes.APPLICATION_JSON).consumes(MediaTypes.TEXT_HTML).handler(exhange -> {})
 			.route().method(Method.GET).method(Method.POST).language("fr-FR").language("en-US").handler(exhange -> {})
@@ -163,7 +163,7 @@ public class GenericWebRouterTest {
 	
 	@Test
 	public void testRouteEnableDisable() {
-		GenericWebRouter router = new GenericWebRouter(null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.route().consumes(MediaTypes.APPLICATION_JSON).consumes(MediaTypes.TEXT_HTML).handler(exhange -> {})
 			.route().method(Method.GET).method(Method.POST).language("fr-FR").language("en-US").handler(exhange -> {})

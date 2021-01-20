@@ -40,8 +40,10 @@ import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Provide;
-import io.winterframework.mod.base.converter.Converter;
 import io.winterframework.mod.base.converter.ConverterException;
+import io.winterframework.mod.base.converter.JoinableEncoder;
+import io.winterframework.mod.base.converter.ReactiveConverter;
+import io.winterframework.mod.base.converter.SplittableDecoder;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -51,7 +53,7 @@ import reactor.core.publisher.Mono;
  *
  */
 @Bean( name = "jsonByteBufConverter")
-public class JacksonByteBufConverter implements @Provide Converter<ByteBuf, Object> {
+public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteBuf, Object>, SplittableDecoder<ByteBuf, Object>, JoinableEncoder<Object, ByteBuf> {
 
 	private static final ByteBuf EMPTY_LAST_CHUNK = Unpooled.unreleasableBuffer(Unpooled.EMPTY_BUFFER);
 	
@@ -147,9 +149,6 @@ public class JacksonByteBufConverter implements @Provide Converter<ByteBuf, Obje
 					catch (IOException e) {
 						throw Exceptions.propagate(e);
 					}
-					finally {
-						chunk.release();
-					}
 				}
 			)
 			.skip(1)
@@ -198,9 +197,6 @@ public class JacksonByteBufConverter implements @Provide Converter<ByteBuf, Obje
 		catch (IOException e) {
 			throw new ConverterException("Error decoding data", e);
 		}
-		finally {
-			data.release();
-		}
 	}
 
 	@Override
@@ -219,9 +215,6 @@ public class JacksonByteBufConverter implements @Provide Converter<ByteBuf, Obje
 		} 
 		catch (IOException e) {
 			throw new ConverterException("Error decoding data", e);
-		}
-		finally {
-			data.release();
 		}
 	}
 
@@ -269,16 +262,21 @@ public class JacksonByteBufConverter implements @Provide Converter<ByteBuf, Obje
 		}
 
 		public void feedInput(ByteBuf chunk) throws IOException {
-			if(chunk.hasArray()) {
-				int length = chunk.readableBytes();
-				int offset = chunk.arrayOffset() + chunk.readerIndex();
-				this.feeder.feedInput(chunk.array(), offset, length);
+			try {
+				if(chunk.hasArray()) {
+					int length = chunk.readableBytes();
+					int offset = chunk.arrayOffset() + chunk.readerIndex();
+					this.feeder.feedInput(chunk.array(), offset, offset + length);
+				}
+				else {
+					int length = chunk.readableBytes();
+					byte[] chunkBytes = new byte[length];
+					chunk.getBytes(chunk.readerIndex(), chunkBytes);
+					this.feeder.feedInput(chunkBytes, 0, length);
+				}
 			}
-			else {
-				int length = chunk.readableBytes();
-				byte[] chunkBytes = new byte[length];
-				chunk.getBytes(chunk.readerIndex(), chunkBytes);
-				this.feeder.feedInput(chunkBytes, 0, length);
+			finally {
+				chunk.release();
 			}
 		}
 		

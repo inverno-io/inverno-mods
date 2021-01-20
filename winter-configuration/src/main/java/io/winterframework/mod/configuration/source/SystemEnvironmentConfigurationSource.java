@@ -15,9 +15,9 @@
  */
 package io.winterframework.mod.configuration.source;
 
-import io.winterframework.mod.base.converter.PrimitiveDecoder;
-import io.winterframework.mod.base.converter.StringConverter;
+import io.winterframework.mod.base.converter.SplittablePrimitiveDecoder;
 import io.winterframework.mod.configuration.AbstractPropertiesConfigurationSource;
+import io.winterframework.mod.configuration.internal.JavaStringConverter;
 
 /**
  * @author jkuhn
@@ -26,10 +26,10 @@ import io.winterframework.mod.configuration.AbstractPropertiesConfigurationSourc
 public class SystemEnvironmentConfigurationSource extends AbstractPropertiesConfigurationSource<String, SystemEnvironmentConfigurationSource> {
 	
 	public SystemEnvironmentConfigurationSource() {
-		this(new StringConverter());
+		this(new JavaStringConverter());
 	}
 	
-	public SystemEnvironmentConfigurationSource(PrimitiveDecoder<String> decoder) {
+	public SystemEnvironmentConfigurationSource(SplittablePrimitiveDecoder<String> decoder) {
 		super(System::getenv, decoder);
 	}
 }

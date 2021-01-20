@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import io.winterframework.mod.base.converter.PrimitiveDecoder;
+import io.winterframework.mod.base.converter.SplittablePrimitiveDecoder;
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
 import io.winterframework.mod.configuration.internal.GenericConfigurationKey;
 import io.winterframework.mod.configuration.internal.GenericConfigurationProperty;
@@ -39,7 +39,7 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 
 	protected Function<String, A> propertyAccessor;
 	
-	public AbstractPropertiesConfigurationSource(Function<String, A> propertyAccessor, PrimitiveDecoder<A> decoder) {
+	public AbstractPropertiesConfigurationSource(Function<String, A> propertyAccessor, SplittablePrimitiveDecoder<A> decoder) {
 		super(decoder);
 		this.propertyAccessor = propertyAccessor;
 	}
