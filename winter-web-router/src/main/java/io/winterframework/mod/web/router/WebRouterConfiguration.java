@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.web.router.internal;
+package io.winterframework.mod.web.router;
 
-import java.util.function.Supplier;
-
-import io.winterframework.core.annotation.Bean;
-import io.winterframework.mod.base.converter.ObjectConverter;
+import io.winterframework.core.annotation.NestedBean;
+import io.winterframework.mod.configuration.Configuration;
+import io.winterframework.mod.web.WebConfiguration;
 
 /**
  * @author jkuhn
  *
  */
-@Bean(name = "parameterConverter")
-public interface ParameterConverterSocket extends Supplier<ObjectConverter<String>> {
+@Configuration
+public interface WebRouterConfiguration {
 
+	@NestedBean
+	WebConfiguration web();
 }
