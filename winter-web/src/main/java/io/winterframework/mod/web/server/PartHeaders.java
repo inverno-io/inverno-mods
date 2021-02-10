@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.Header;
 
 /**
@@ -32,11 +33,37 @@ public interface PartHeaders {
 	
 	Long getContentLength();
 	
+//	Set<String> getNames();
+	
+//	<T extends Header> Optional<T> getHeader(String name);
+	
+//	<T extends Header> List<T> getAllHeader(String name);
+	
+//	Map<String, List<? extends Header>> getAllHeader();
+	
+	
+	
+	boolean contains(CharSequence name);
+	
+	boolean contains(CharSequence name, CharSequence value);
+	
 	Set<String> getNames();
+
+	Optional<String> get(CharSequence name);
 	
-	<T extends Header> Optional<T> getHeader(String name);
+	List<String> getAll(CharSequence name);
 	
-	<T extends Header> List<T> getAllHeader(String name);
+	List<Map.Entry<String, String>> getAll();
 	
-	Map<String, List<? extends Header>> getAllHeader();
+	<T extends Header> Optional<T> getHeader(CharSequence name);
+	
+	<T extends Header> List<T> getAllHeader(CharSequence name);
+	
+	List<Header> getAllHeader();
+	
+	Optional<Parameter> getParameter(CharSequence name);
+	
+	List<Parameter> getAllParameter(CharSequence name);
+	
+	List<Parameter> getAllParameter();
 }

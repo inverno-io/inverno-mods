@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.web.router.annotation;
 
-import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
@@ -23,13 +22,13 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-@Documented
-@Retention(SOURCE)
-@Target({ METHOD, PARAMETER })
 /**
  * @author jkuhn
  *
  */
+@Documented
+@Retention(SOURCE)
+@Target({ PARAMETER })
 public @interface QueryParam {
 
 }

@@ -91,6 +91,11 @@ public class Http2ResponseTrailers implements ResponseTrailers {
 	}
 
 	@Override
+	public boolean contains(CharSequence name) {
+		return this.internalTrailers.contains(name);
+	}
+	
+	@Override
 	public boolean contains(CharSequence name, CharSequence value) {
 		return this.internalTrailers.contains(name, value, true);
 	}

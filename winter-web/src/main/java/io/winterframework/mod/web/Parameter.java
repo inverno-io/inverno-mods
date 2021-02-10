@@ -16,6 +16,7 @@
 package io.winterframework.mod.web;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -43,11 +44,19 @@ public interface Parameter {
 	
 	<T> T as(Class<T> type);
 	
+	<T> T as(Type type);
+	
 	<T> T[] asArrayOf(Class<T> type);
+	
+	<T> T[] asArrayOf(Type type);
 	
 	<T> List<T> asListOf(Class<T> type);
 	
+	<T> List<T> asListOf(Type type);
+	
 	<T> Set<T> asSetOf(Class<T> type);
+	
+	<T> Set<T> asSetOf(Type type);
 	
 	Byte asByte();
 	

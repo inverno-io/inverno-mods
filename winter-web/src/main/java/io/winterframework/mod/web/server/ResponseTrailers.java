@@ -39,6 +39,8 @@ public interface ResponseTrailers {
 	
 	ResponseTrailers remove(CharSequence... names);
 	
+	boolean contains(CharSequence name);
+	
 	boolean contains(CharSequence name, CharSequence value);
 	
 	Set<String> getNames();

@@ -15,6 +15,7 @@
  */
 package io.winterframework.mod.base.converter;
 
+import java.lang.reflect.Type;
 import java.util.List;
 
 /**
@@ -49,12 +50,27 @@ public class CompositeConverter<A> implements Converter<A, Object> {
 	}
 	
 	@Override
-	public <T> T decode(A data, Class<T> type) {
-		return this.decoder.decode(data, type);
+	public <T> T decode(A value, Class<T> type) {
+		return this.decoder.decode(value, type);
+	}
+	
+	@Override
+	public <T> T decode(A value, Type type) throws ConverterException {
+		return this.decoder.decode(value, type);
 	}
 
 	@Override
-	public <T> A encode(T data) {
-		return this.encoder.encode(data);
+	public <T> A encode(T value) {
+		return this.encoder.encode(value);
+	}
+	
+	@Override
+	public <T> A encode(T value, Class<T> type) throws ConverterException {
+		return this.encoder.encode(value, type);
+	}
+	
+	@Override
+	public <T> A encode(T value, Type type) throws ConverterException {
+		return this.encoder.encode(value, type);
 	}
 }

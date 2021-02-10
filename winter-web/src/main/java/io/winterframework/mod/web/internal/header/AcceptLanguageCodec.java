@@ -137,7 +137,7 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 				for(byte b : secondarySubTag.getBytes()) {
 					size++;
 					if( !((b >= 0x41 && b <= 0x5A) || (b >= 0x61 && b <= 0x7A) || Character.isDigit(b)) || size > 8) {
-						throw new NotAcceptableException("Invalid language tag");
+						throw new NotAcceptableException("Invalid language tag: " + this.languageTag);
 					}
 				}
 				if(size == 0) {

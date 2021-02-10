@@ -30,7 +30,7 @@ public interface WebRouteManager<A extends WebExchange> extends AbstractRouteMan
 		return this.path(path, false);
 	}
 		
-	WebRouteManager<A> path(String path, boolean matchTrailingslash) throws IllegalArgumentException;
+	WebRouteManager<A> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException;
 	
 	WebRouteManager<A> method(Method method);
 	

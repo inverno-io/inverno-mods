@@ -15,13 +15,11 @@
  */
 package io.winterframework.mod.base.converter;
 
-import java.util.Set;
-
 /**
  * @author jkuhn
  *
  */
 public interface MediaTypeConverter<From> extends ReactiveConverter<From, Object> {
 
-	Set<String> getSupportedMediaTypes();
+	boolean canConvert(String mediaType);
 }

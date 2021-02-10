@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import io.netty.handler.codec.http2.Http2Headers;
 import io.winterframework.mod.base.converter.ObjectConverter;
+import io.winterframework.mod.base.net.URIs;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.Header;
@@ -44,6 +45,9 @@ public class Http2RequestHeaders implements RequestHeaders {
 	private final HeaderService headerService;
 	
 	private final ObjectConverter<String> parameterConverter;
+	
+	private String normalizedPath;
+	private Method method;
 	
 	public Http2RequestHeaders(Http2Headers headers, HeaderService HeaderService, ObjectConverter<String> parameterConverter) {
 		this.internalHeaders = headers;
@@ -67,12 +71,18 @@ public class Http2RequestHeaders implements RequestHeaders {
 
 	@Override
 	public String getPath() {
-		return this.getHeaderValue(Headers.NAME_PSEUDO_PATH);
+		if(this.normalizedPath == null) {
+			this.normalizedPath = URIs.uri(this.getHeaderValue(Headers.NAME_PSEUDO_PATH), URIs.Option.NORMALIZED).buildRawPath();
+		}
+		return this.normalizedPath;
 	}
 
 	@Override
 	public Method getMethod() {
-		return Method.valueOf(this.getHeaderValue(Headers.NAME_PSEUDO_METHOD));
+		if(this.method == null) {
+			this.method = Method.valueOf(this.getHeaderValue(Headers.NAME_PSEUDO_METHOD));
+		}
+		return this.method;
 	}
 
 	@Override
@@ -88,6 +98,11 @@ public class Http2RequestHeaders implements RequestHeaders {
 	@Override
 	public Long getContentLength() {
 		return this.internalHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
+	}
+	
+	@Override
+	public boolean contains(CharSequence name) {
+		return this.internalHeaders.contains(name);
 	}
 	
 	@Override

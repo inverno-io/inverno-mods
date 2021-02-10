@@ -15,9 +15,13 @@
  */
 package io.winterframework.mod.boot.internal.converter;
 
+import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.charset.Charset;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Assertions;
@@ -63,6 +67,32 @@ public class JacksonByteBufConverterTest {
 		Assertions.assertEquals("{\"firstname\":\"John\",\"name\":\"Smith\",\"age\":42}", outList.get(0).toString(Charset.defaultCharset()));
 		Assertions.assertEquals("{\"firstname\":\"Jane\",\"name\":\"Smith\",\"age\":40}", outList.get(1).toString(Charset.defaultCharset()));
 		Assertions.assertEquals("{\"firstname\":\"Junior\",\"name\":\"Smith\",\"age\":10}", outList.get(2).toString(Charset.defaultCharset()));
+	}
+	
+	private Map<String, Person> mapStringPerson;
+	
+	@Test
+	public void testEncodeManyType() throws IOException, NoSuchFieldException, SecurityException {
+		
+		LinkedHashMap<String, Person> smithMap = new LinkedHashMap<>();
+		smithMap.put("John Smith", new Person("John", "Smith", 42));
+		smithMap.put("Jane Smith", new Person("Jane", "Smith", 40));
+		
+		LinkedHashMap<String, Person> cooperMap = new LinkedHashMap<>();
+		cooperMap.put("Gary Cooper", new Person("Gary", "Cooper", 60));
+		
+		Flux<Map<String, Person>> in = Flux.just(smithMap, cooperMap);
+		
+		Type mapStringPersonType = JacksonByteBufConverterTest.class.getDeclaredField("mapStringPerson").getGenericType();
+		
+		Publisher<ByteBuf> out = CONVERTER.encodeMany(in, mapStringPersonType);
+		
+		List<ByteBuf> outList = Flux.from(out).collectList().block();
+		
+		Assertions.assertEquals(2, outList.size());
+		
+		Assertions.assertEquals("{\"John Smith\":{\"firstname\":\"John\",\"name\":\"Smith\",\"age\":42},\"Jane Smith\":{\"firstname\":\"Jane\",\"name\":\"Smith\",\"age\":40}}", outList.get(0).toString(Charset.defaultCharset()));
+		Assertions.assertEquals("{\"Gary Cooper\":{\"firstname\":\"Gary\",\"name\":\"Cooper\",\"age\":60}}", outList.get(1).toString(Charset.defaultCharset()));
 	}
 
 	@Test

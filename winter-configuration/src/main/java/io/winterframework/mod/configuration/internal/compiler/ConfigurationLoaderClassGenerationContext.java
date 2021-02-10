@@ -71,9 +71,6 @@ class ConfigurationLoaderClassGenerationContext extends AbstractSourceGeneration
 		super(parentGeneration);
 		this.configuration = parentGeneration.configuration;
 		this.resultIndex = parentGeneration.resultIndex;
-		this.collectionType = parentGeneration.collectionType;
-		this.listType = parentGeneration.listType;
-		this.setType = parentGeneration.setType;
 	}
 	
 	@Override
@@ -112,14 +109,14 @@ class ConfigurationLoaderClassGenerationContext extends AbstractSourceGeneration
 	}
 	
 	public TypeMirror getCollectionType() {
-		return this.collectionType;
+		return this.collectionType != null ? this.collectionType : this.parentGeneration.getCollectionType();
 	}
 	
 	public TypeMirror getListType() {
-		return listType;
+		return this.listType != null ? this.listType : this.parentGeneration.getListType();
 	}
 	
 	public TypeMirror getSetType() {
-		return setType;
+		return this.setType != null ? this.setType : this.parentGeneration.getSetType();
 	}
 }

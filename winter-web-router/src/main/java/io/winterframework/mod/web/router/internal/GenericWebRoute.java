@@ -15,10 +15,7 @@
  */
 package io.winterframework.mod.web.router.internal;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.regex.Pattern;
-
+import io.winterframework.mod.base.net.URIPattern;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.router.WebExchange;
 import io.winterframework.mod.web.router.WebRoute;
@@ -28,14 +25,14 @@ import io.winterframework.mod.web.server.ExchangeHandler;
  * @author jkuhn
  *
  */
-class GenericWebRoute implements WebRoute<WebExchange> {
 
-	private GenericWebRouter router;
+class GenericWebRoute implements WebRoute<WebExchange> {
+	private final GenericWebRouter router;
 	
 	private boolean disabled;
 	
 	private String path;
-	private WebRoute.PathPattern pathPattern;
+	private URIPattern pathPattern;
 	
 	private Method method;
 	
@@ -83,15 +80,17 @@ class GenericWebRoute implements WebRoute<WebExchange> {
 	}
 	
 	public void setPath(String path) {
+		this.pathPattern = null;
 		this.path = path;
 	}
 
 	@Override
-	public WebRoute.PathPattern getPathPattern() {
+	public URIPattern getPathPattern() {
 		return this.pathPattern;
 	}
 	
-	public void setPathPattern(WebRoute.PathPattern pathPattern) {
+	public void setPathPattern(URIPattern pathPattern) {
+		this.path = null;
 		this.pathPattern = pathPattern;
 	}
 
@@ -193,62 +192,5 @@ class GenericWebRoute implements WebRoute<WebExchange> {
 		} else if (!produce.equals(other.produce))
 			return false;
 		return true;
-	}
-
-	public static class GenericPathPattern implements WebRoute.PathPattern {
-
-		private String path;
-		
-		private Pattern pathPattern;
-		
-		private List<String> pathParameterNames;
-		
-		public GenericPathPattern(String path, Pattern pathPattern, List<String> pathParameterNames) {
-			Objects.requireNonNull(pathPattern);
-			Objects.requireNonNull(pathParameterNames);
-			this.path = path;
-			this.pathPattern = pathPattern;
-			this.pathParameterNames = pathParameterNames;
-		}
-		
-		@Override
-		public String getPath() {
-			return this.path;
-		}
-
-		@Override
-		public Pattern getPattern() {
-			return this.pathPattern;
-		}
-
-		@Override
-		public List<String> getPathParameterNames() {
-			return this.pathParameterNames;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((pathPattern == null) ? 0 : pathPattern.pattern().hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			GenericPathPattern other = (GenericPathPattern) obj;
-			if (pathPattern == null) {
-				if (other.pathPattern != null)
-					return false;
-			} else if (!pathPattern.pattern().equals(other.pathPattern.pattern()))
-				return false;
-			return true;
-		}
 	}
 }

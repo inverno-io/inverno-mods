@@ -15,16 +15,17 @@
  */
 package io.winterframework.mod.web.router.internal;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import io.winterframework.mod.base.net.URIBuilder;
+import io.winterframework.mod.base.net.URIPattern;
+import io.winterframework.mod.base.net.URIs;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.router.WebExchange;
 import io.winterframework.mod.web.router.WebExchangeHandler;
@@ -39,12 +40,10 @@ import io.winterframework.mod.web.server.ExchangeHandler;
  */
 class GenericWebRouteManager implements WebRouteManager<WebExchange> {
 
-	private GenericWebRouter router;
-	
-//	private GenericWebRoute route;
+	private final GenericWebRouter router;
 	
 	private Set<String> paths;
-	private WebRoute.PathPattern pathPattern;
+	private Set<URIPattern> pathPatterns;
 	
 	private Set<Method> methods;
 	
@@ -111,6 +110,43 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange> {
 	}
 
 	@Override
+	public WebRouteManager<WebExchange> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
+		Objects.requireNonNull(path);
+		if(!path.startsWith("/")) {
+			throw new IllegalArgumentException("Path must be absolute");
+		}
+		
+		URIBuilder pathBuilder = URIs.uri(path, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED);
+		
+		String rawPath = pathBuilder.buildRawPath();
+		List<String> pathParameterNames = pathBuilder.getParameterNames();
+		if(pathParameterNames.isEmpty()) {
+			// Static path
+			if(this.paths == null) {
+				this.paths = new HashSet<>();
+			}
+			this.paths.add(rawPath);
+			if(matchTrailingSlash) {
+				if(rawPath.endsWith("/")) {
+					this.paths.add(rawPath.substring(0, rawPath.length() - 1));
+				}
+				else {
+					this.paths.add(rawPath + "/");
+				}
+			}
+		}
+		else {
+			// PathPattern
+			if(this.pathPatterns == null) {
+				this.pathPatterns = new HashSet<>();
+			}
+			this.pathPatterns.add(pathBuilder.buildPathPattern(matchTrailingSlash));
+		}
+		return this;
+	}
+	
+	// {<name>[:<pattern>]}
+	/*@Override
 	public GenericWebRouteManager path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
 		Objects.requireNonNull(path);
 		if(!path.startsWith("/")) {
@@ -215,7 +251,7 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange> {
 			this.pathPattern = null;
 		}
 		return this;
-	}
+	}*/
 
 	@Override
 	public GenericWebRouteManager method(Method method) {
@@ -332,7 +368,12 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange> {
 			if(this.paths != null && !this.paths.isEmpty()) {
 				for(String path : this.paths) {
 					route.setPath(path);
-					route.setPathPattern(this.pathPattern);
+					methodsCommitter.accept(route);
+				}
+			}
+			else if(this.pathPatterns != null && !this.pathPatterns.isEmpty()) {
+				for(URIPattern pathPattern : this.pathPatterns) {
+					route.setPathPattern(pathPattern);
 					methodsCommitter.accept(route);
 				}
 			}

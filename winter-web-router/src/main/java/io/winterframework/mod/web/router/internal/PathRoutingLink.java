@@ -15,12 +15,9 @@
  */
 package io.winterframework.mod.web.router.internal;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.winterframework.mod.web.BadRequestException;
 import io.winterframework.mod.web.WebException;
 import io.winterframework.mod.web.router.PathAwareRoute;
 import io.winterframework.mod.web.server.Exchange;
@@ -41,7 +38,7 @@ class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends R
 	@Override
 	public PathRoutingLink<A, B> setRoute(B route) {
 		String path = route.getPath();
-		if(path != null && route.getPathPattern() == null) {
+		if(path != null) {
 			// Exact match
 			this.setRoute(path, route);
 		}
@@ -63,7 +60,7 @@ class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends R
 	@Override
 	public void enableRoute(B route) {
 		String path = route.getPath();
-		if(path != null && route.getPathPattern() == null) {
+		if(path != null) {
 			RoutingLink<A, ?, B> handler = this.handlers.get(path);
 			if(handler != null) {
 				handler.enableRoute(route);
@@ -78,7 +75,7 @@ class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends R
 	@Override
 	public void disableRoute(B route) {
 		String path = route.getPath();
-		if(path != null && route.getPathPattern() == null) {
+		if(path != null) {
 			RoutingLink<A, ?, B> handler = this.handlers.get(path);
 			if(handler != null) {
 				handler.disableRoute(route);
@@ -93,7 +90,7 @@ class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends R
 	@Override
 	public void removeRoute(B route) {
 		String path = route.getPath();
-		if(path != null && route.getPathPattern() == null) {
+		if(path != null) {
 			RoutingLink<A, ?, B> handler = this.handlers.get(path);
 			if(handler != null) {
 				handler.removeRoute(route);
@@ -137,15 +134,8 @@ class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends R
 			this.nextLink.handle(exchange);
 		}
 		else {
-			String normalizedPath;
-			try {
-				normalizedPath = new URI(exchange.request().headers().getPath()).normalize().getPath().toString();
-			} 
-			catch (URISyntaxException e) {
-				throw new BadRequestException("Bad URI", e);
-			}
-			
-			RoutingLink<A, ?, B> handler = this.handlers.get(normalizedPath);
+			// Path in the request headers is normalized as per API specification
+			RoutingLink<A, ?, B> handler = this.handlers.get(exchange.request().headers().getPath());
 			if(handler == null) {
 				handler = this.nextLink;
 			}

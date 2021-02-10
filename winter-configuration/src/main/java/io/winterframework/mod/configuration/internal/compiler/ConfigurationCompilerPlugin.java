@@ -19,10 +19,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
@@ -63,8 +65,8 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 	}
 
 	@Override
-	public String getSupportedAnnotationType() {
-		return Configuration.class.getCanonicalName();
+	public Set<String> getSupportedAnnotationTypes() {
+		return Set.of(Configuration.class.getCanonicalName());
 	}
 
 	@Override
@@ -76,31 +78,31 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 
 	@Override
 	public void execute(PluginExecution execution) throws PluginExecutionException {
-		for(TypeElement element : execution.getElements()) {
+		for(TypeElement element : execution.<TypeElement>getElementsAnnotatedWith(Configuration.class)) {
 			if(!TypeElement.class.isAssignableFrom(element.getClass())) {
 				throw new PluginExecutionException("The specified element must be a TypeElement");
 			}
 			
-			TypeElement typeElement = (TypeElement)element;
-			DeclaredType configurationType = (DeclaredType)typeElement.asType();
+			DeclaredType configurationType = (DeclaredType)element.asType();
 			
 			AnnotationMirror configurationAnnotation = null;
-			for(AnnotationMirror annotation : typeElement.getAnnotationMirrors()) {
+			for(AnnotationMirror annotation : element.getAnnotationMirrors()) {
 				if(this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.configurationAnnotationType)) {
 					configurationAnnotation = annotation;
+					break;
 				}
 			}
 			if(configurationAnnotation == null) {
 				throw new PluginExecutionException("The specified element is not annotated with " + Configuration.class.getSimpleName());
 			}
 			
-			if(!this.pluginContext.getElementUtils().getModuleOf(typeElement).getQualifiedName().toString().equals(execution.getModule().toString())) {
+			if(!this.pluginContext.getElementUtils().getModuleOf(element).getQualifiedName().toString().equals(execution.getModule().toString())) {
 				throw new PluginExecutionException("The specified element doesn't belong to module " + execution.getModule());
 			}
 			
-			ReporterInfo beanReporter = execution.getReporter(typeElement, configurationAnnotation);		
+			ReporterInfo beanReporter = execution.getReporter(element, configurationAnnotation);
 			
-			if(!typeElement.getKind().equals(ElementKind.INTERFACE)) {
+			if(!element.getKind().equals(ElementKind.INTERFACE)) {
 				// This should never happen, we shouldn't get there if it wasn't an interface
 				beanReporter.error("A configuration must be an interface");
 				continue;
@@ -122,7 +124,7 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 			
 			// Bean qualified name
 			if(name == null || name.equals("")) {
-				name = typeElement.getSimpleName().toString();
+				name = element.getSimpleName().toString();
 				name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
 			}
 			
@@ -135,7 +137,7 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 				continue;
 			}
 
-			List<? extends ConfigurationPropertyInfo> configurationProperties = this.pluginContext.getElementUtils().getAllMembers(typeElement).stream()
+			List<? extends ConfigurationPropertyInfo> configurationProperties = this.pluginContext.getElementUtils().getAllMembers(element).stream()
 				.filter(el -> el.getKind().equals(ElementKind.METHOD) && !this.pluginContext.getTypeUtils().isSameType(this.pluginContext.getElementUtils().getTypeElement(Object.class.getCanonicalName()).asType(), el.getEnclosingElement().asType()))
 				.map(el -> {
 					ExecutableElement propertyMethod = (ExecutableElement)el;
@@ -168,12 +170,12 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 			ConfigurationInfo configurationInfo = new GenericConfigurationInfo(configurationQName, beanReporter, configurationType, configurationProperties, generateBean, overridable);
 			
 			try {
-				execution.createSourceFile(configurationInfo.getType().toString() + "Loader", typeElement, () -> {
+				execution.createSourceFile(configurationInfo.getType().toString() + "Loader", new Element[] {element}, () -> {
 					return configurationInfo.accept(this.configurationLoaderClassGenerator, new ConfigurationLoaderClassGenerationContext(this.pluginContext.getTypeUtils(), this.pluginContext.getElementUtils(), GenerationMode.CONFIGURATION_LOADER_CLASS)).toString();
 				});
 			} 
 			catch (IOException e) {
-				throw new PluginExecutionException("Unable to generate configuration bean class " + configurationInfo.getType().toString() + "Bean", e);
+				throw new PluginExecutionException("Unable to generate configuration loader class " + configurationInfo.getType().toString() + "Loader", e);
 			}
 		}
 	}

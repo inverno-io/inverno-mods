@@ -17,12 +17,15 @@ package io.winterframework.mod.web.internal.server;
 
 import java.util.Optional;
 
+import org.reactivestreams.Publisher;
+
 import io.netty.buffer.ByteBuf;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.Headers;
 import io.winterframework.mod.web.internal.server.multipart.MultipartDecoder;
 import io.winterframework.mod.web.server.Part;
 import io.winterframework.mod.web.server.RequestBody;
+import io.winterframework.mod.web.server.RequestData;
 import reactor.core.publisher.Flux;
 
 /**
@@ -34,9 +37,9 @@ public class GenericRequestBody implements RequestBody {
 	private Flux<ByteBuf> data;
 	private Optional<Headers.ContentType> contentType;
 	
-	private RequestBody.Raw rawBody;
-	private RequestBody.UrlEncoded urlEncodedBody;
-	private RequestBody.Multipart multipartBody;
+	private RequestData<ByteBuf> rawData;
+	private RequestBody.UrlEncoded urlEncodedData;
+	private RequestBody.Multipart<Part> multipartData;
 	
 	private MultipartDecoder<Parameter> urlEncodedBodyDecoder;
 	private MultipartDecoder<Part> multipartBodyDecoder;
@@ -49,71 +52,64 @@ public class GenericRequestBody implements RequestBody {
 	}
 	
 	@Override
-	public RequestBody.Raw raw() {
-		// This is not required as the data flux is a unicast flux, an illegalstateexception will be thrown if multiple subscriptions are made
-//		if(this.urlEncodedBody != null || this.multipartBody != null) {
-//			throw new IllegalStateException("Request body decoder already exist");
-//		}
-		if(this.rawBody == null) {
-			this.rawBody = new GenericRawRequestBody();
+	public RequestData<ByteBuf> raw() {
+		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
+		if(this.rawData == null) {
+			this.rawData = new GenericRequestBodyRawData();
 		}
-		return this.rawBody;
+		return this.rawData;
 	}
 
 	@Override
-	public RequestBody.Multipart multipart() {
-//		if(this.rawBody != null || this.urlEncodedBody != null) {
-//			throw new IllegalStateException("Request body decoder already exist");
-//		}
-		if(this.multipartBody == null) {
-			this.multipartBody = new GenericMultipartRequestBody(this.multipartBodyDecoder.decode(this.data, this.contentType.orElse(null)));
+	public RequestBody.Multipart<Part> multipart() {
+		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
+		if(this.multipartData == null) {
+			this.multipartData = new GenericRequestBodyMultipartData(this.multipartBodyDecoder.decode(this.data, this.contentType.orElse(null)));
 		}
-		return this.multipartBody;
+		return this.multipartData;
 	}
 
 	@Override
 	public RequestBody.UrlEncoded urlEncoded() {
-//		if(this.rawBody != null || this.multipartBody != null) {
-//			throw new IllegalStateException("Request body decoder already exist");
-//		}
-		if(this.urlEncodedBody == null) {
-			this.urlEncodedBody = new GenericUrlEncodedRequestBody(this.urlEncodedBodyDecoder.decode(this.data, this.contentType.orElse(null)));
+		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
+		if(this.urlEncodedData == null) {
+			this.urlEncodedData = new GenericRequestBodyUrlEncodedData(this.urlEncodedBodyDecoder.decode(this.data, this.contentType.orElse(null)));
 		}
-		return this.urlEncodedBody;
+		return this.urlEncodedData;
 	}
 	
-	private class GenericRawRequestBody implements RequestBody.Raw {
+	private class GenericRequestBodyRawData implements RequestData<ByteBuf> {
 
 		@Override
-		public Flux<ByteBuf> data() {
+		public Publisher<ByteBuf> stream() {
 			return GenericRequestBody.this.data;
 		}
 	}
 
-	private class GenericUrlEncodedRequestBody implements RequestBody.UrlEncoded {
+	private class GenericRequestBodyUrlEncodedData implements RequestBody.UrlEncoded {
 
-		private Flux<Parameter> parameters;
+		private Publisher<Parameter> parameters;
 		
-		public GenericUrlEncodedRequestBody(Flux<Parameter> parameters) {
+		public GenericRequestBodyUrlEncodedData(Publisher<Parameter> parameters) {
 			this.parameters = parameters;
 		}
 
 		@Override
-		public Flux<Parameter> parameters() {
+		public Publisher<Parameter> stream() {
 			return this.parameters;
 		}
 	}
 	
-	private class GenericMultipartRequestBody implements RequestBody.Multipart {
+	private class GenericRequestBodyMultipartData implements RequestBody.Multipart<Part> {
 
-		private Flux<Part> parts;
+		private Publisher<Part> parts;
 		
-		public GenericMultipartRequestBody(Flux<Part> parts) {
+		public GenericRequestBodyMultipartData(Publisher<Part> parts) {
 			this.parts = parts;
 		}
 
 		@Override
-		public Flux<Part> parts() {
+		public Publisher<Part> stream() {
 			return this.parts;
 		}
 	}

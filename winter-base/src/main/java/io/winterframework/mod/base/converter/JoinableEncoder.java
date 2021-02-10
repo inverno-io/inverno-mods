@@ -15,6 +15,7 @@
  */
 package io.winterframework.mod.base.converter;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Set;
 
@@ -24,7 +25,15 @@ import java.util.Set;
  */
 public interface JoinableEncoder<From, To> extends Encoder<From, To> {
 
-	<T extends From> To encodeList(List<T> data);
-	<T extends From> To encodeSet(Set<T> data);
-	<T extends From> To encodeArray(T[] data);
+	<T extends From> To encodeList(List<T> value);
+	<T extends From> To encodeList(List<T> value, Class<T> type);
+	<T extends From> To encodeList(List<T> value, Type type);
+	
+	<T extends From> To encodeSet(Set<T> value);
+	<T extends From> To encodeSet(Set<T> value, Class<T> type);
+	<T extends From> To encodeSet(Set<T> value, Type type);
+	
+	<T extends From> To encodeArray(T[] value);
+	<T extends From> To encodeArray(T[] value, Class<T> type);
+	<T extends From> To encodeArray(T[] value, Type type);
 }

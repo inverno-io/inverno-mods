@@ -26,6 +26,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpConstants;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.base.resource.MediaTypes;
 import io.winterframework.mod.web.header.Header;
 import io.winterframework.mod.web.header.HeaderService;
@@ -45,10 +46,13 @@ import reactor.core.publisher.SignalType;
 @Bean(visibility = Visibility.PRIVATE)
 public class MultipartBodyDecoder implements MultipartDecoder<Part> {
 	
-	private HeaderService headerService;
+	private final HeaderService headerService;
 	
-	public MultipartBodyDecoder(HeaderService headerService) {
+	private final ObjectConverter<String> parameterConverter;
+	
+	public MultipartBodyDecoder(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
+		this.parameterConverter = parameterConverter;
 	}
 	
 	public Flux<Part> decode(Flux<ByteBuf> data, Headers.ContentType contentType) {
@@ -178,7 +182,7 @@ public class MultipartBodyDecoder implements MultipartDecoder<Part> {
 			Header partContentLengthHeader = context.<Header>getDecodedHeader(Headers.NAME_CONTENT_LENGTH);
 			Long partContentLength = partContentLengthHeader != null ? Long.parseLong(partContentLengthHeader.getHeaderValue()) : null;
 			
-			context.startPart(new GenericPart(partName, partFilename, context.getAllDecodedHeaders(), partContentType, partCharset, partContentLength));
+			context.startPart(new GenericPart(this.parameterConverter, partName, partFilename, context.getAllDecodedHeaders(), partContentType, partCharset, partContentLength));
 			
 			return this::data;
 		}

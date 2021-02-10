@@ -53,6 +53,11 @@ public class GenericQueryParameters implements QueryParameters {
 	}
 	
 	@Override
+	public boolean contains(String name) {
+		return this.getQueryStringDecoder().parameters().containsKey(name);
+	}
+	
+	@Override
 	public Set<String> getNames() {
 		return this.getQueryStringDecoder().parameters().keySet();
 	}
@@ -64,7 +69,11 @@ public class GenericQueryParameters implements QueryParameters {
 	
 	@Override
 	public List<Parameter> getAll(String name) {
-		return this.getQueryStringDecoder().parameters().get(name).stream().map(value -> new GenericParameter(this.parameterConverter, name, value)).collect(Collectors.toList());
+		List<String> parameters = this.getQueryStringDecoder().parameters().get(name);
+		if(parameters != null) {
+			return parameters.stream().map(value -> new GenericParameter(this.parameterConverter, name, value)).collect(Collectors.toList());
+		}
+		return Collections.emptyList();
 	}
 
 	@Override

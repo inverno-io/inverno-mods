@@ -16,6 +16,7 @@
 package io.winterframework.mod.web.router;
 
 import java.util.Set;
+import java.util.function.Consumer;
 
 import io.winterframework.mod.web.server.Exchange;
 import io.winterframework.mod.web.server.ExchangeHandler;
@@ -27,6 +28,12 @@ import io.winterframework.mod.web.server.ExchangeHandler;
 public interface AbstractRouter<A extends Exchange, B extends AbstractRouter<A, B, C, D, E>, C extends AbstractRouteManager<A, B, C, D, E>, D extends AbstractRoute<A>, E extends Exchange> extends ExchangeHandler<E> {
 	
 	C route();
+	
+	@SuppressWarnings("unchecked")
+	default B route(Consumer<C> routeConfigurer) {
+		routeConfigurer.accept(this.route());
+		return (B)this;
+	}
 	
 	Set<D> getRoutes();
 	

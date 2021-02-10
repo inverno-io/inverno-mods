@@ -25,7 +25,7 @@ import io.winterframework.mod.web.server.ExchangeHandler;
  */
 public class GenericErrorRoute implements ErrorRoute {
 
-	private GenericErrorRouter router;
+	private final GenericErrorRouter router;
 	
 	private boolean disabled;
 

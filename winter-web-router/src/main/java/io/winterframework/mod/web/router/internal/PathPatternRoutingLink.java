@@ -15,18 +15,16 @@
  */
 package io.winterframework.mod.web.router.internal;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.regex.Matcher;
+import java.util.Map.Entry;
 
-import io.winterframework.mod.web.BadRequestException;
+import io.winterframework.mod.base.net.URIMatcher;
+import io.winterframework.mod.base.net.URIPattern;
 import io.winterframework.mod.web.WebException;
 import io.winterframework.mod.web.router.PathAwareRoute;
+import io.winterframework.mod.web.router.PathParameters;
+import io.winterframework.mod.web.router.WebExchange;
 import io.winterframework.mod.web.server.Exchange;
 
 /**
@@ -35,7 +33,7 @@ import io.winterframework.mod.web.server.Exchange;
  */
 class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends RoutingLink<A, PathPatternRoutingLink<A, B>, B> {
 
-	private Map<PathAwareRoute.PathPattern, RoutingLink<A, ?, B>> handlers;
+	private Map<URIPattern, RoutingLink<A, ?, B>> handlers;
 	
 	public PathPatternRoutingLink() {
 		super(PathPatternRoutingLink::new);
@@ -44,7 +42,7 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 
 	@Override
 	public PathPatternRoutingLink<A, B> setRoute(B route) {
-		PathAwareRoute.PathPattern pathPattern = route.getPathPattern();
+		URIPattern pathPattern = route.getPathPattern();
 		if(pathPattern != null) {
 			if(this.handlers.containsKey(pathPattern)) {
 				this.handlers.get(pathPattern).setRoute(route);
@@ -61,7 +59,7 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 	
 	@Override
 	public void enableRoute(B route) {
-		PathAwareRoute.PathPattern pathPattern = route.getPathPattern();
+		URIPattern pathPattern = route.getPathPattern();
 		if(pathPattern != null) {
 			RoutingLink<A, ?, B> handler = this.handlers.get(pathPattern);
 			if(handler != null) {
@@ -76,7 +74,7 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 	
 	@Override
 	public void disableRoute(B route) {
-		PathAwareRoute.PathPattern pathPattern = route.getPathPattern();
+		URIPattern pathPattern = route.getPathPattern();
 		if(pathPattern != null) {
 			RoutingLink<A, ?, B> handler = this.handlers.get(pathPattern);
 			if(handler != null) {
@@ -91,7 +89,7 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 	
 	@Override
 	public void removeRoute(B route) {
-		PathAwareRoute.PathPattern pathPattern = route.getPathPattern();
+		URIPattern pathPattern = route.getPathPattern();
 		if(pathPattern != null) {
 			RoutingLink<A, ?, B> handler = this.handlers.get(pathPattern);
 			if(handler != null) {
@@ -130,7 +128,7 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 		super.extractRoute(extractor);
 	}
 
-	private PathPatternMatch<A, B> matches(String path, PathAwareRoute.PathPattern pathPattern, RoutingLink<A, ?, B> handler) {
+	/*private PathPatternMatch<A, B> matches(String path, PathAwareRoute.PathPattern pathPattern, RoutingLink<A, ?, B> handler) {
 		Matcher matcher = pathPattern.getPattern().matcher(path);
 		if(matcher.matches()) {
 			return new PathPatternMatch<>(matcher, pathPattern, handler);
@@ -168,6 +166,12 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 
 		@Override
 		public int compareTo(PathPatternMatch<A, B> other) {
+			// Rule: the most specific path wins from left to right
+			// 
+			
+			// /toto/{}_{}... > /toto/{}... 
+			// /toto/abc_{}... > /toto/{}... 
+			
 			// /toto/tata/titi/{}... > /toto/tata/{}...
 			// /toto/tata/titi/{}... > /toto/tata/{}
 			// /toto/{}/tutu > /toto/{}/{}
@@ -218,7 +222,7 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 			}
 			return 0;
 		}
-	}
+	}*/
 
 	@Override
 	public void handle(A exchange) throws WebException {
@@ -226,21 +230,64 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 			this.nextLink.handle(exchange);
 		}
 		else {
-			// TODO this is done twice after the pathroutinglink...
-			String normalizedPath;
-			try {
-				normalizedPath = new URI(exchange.request().headers().getPath()).normalize().getPath().toString();
-			} 
-			catch (URISyntaxException e) {
-				throw new BadRequestException("Bad URI", e);
+			// Path in the request headers is normalized as per API specification
+			String normalizedPath = exchange.request().headers().getPath();
+		
+			URIMatcher bestMatchMatcher = null;
+			RoutingLink<A, ?, B> bestMatchHandler = null;
+			for(Entry<URIPattern, RoutingLink<A, ?, B>> e : this.handlers.entrySet()) {
+				URIMatcher matcher = e.getKey().matcher(normalizedPath);
+				if(matcher.matches() && (bestMatchMatcher == null || matcher.compareTo(bestMatchMatcher) > 0)) {
+					bestMatchMatcher = matcher;
+					bestMatchHandler = e.getValue();
+				}
 			}
+			if(bestMatchHandler != null) {
+				Map<String, String> rawPathParameters = bestMatchMatcher.getParameters();
+				if(!rawPathParameters.isEmpty()) {
+					if(exchange instanceof WebExchange) {
+						PathParameters requestPathParameters = ((WebExchange)exchange).request().pathParameters();
+						if(requestPathParameters instanceof MutablePathParameters) {
+							((MutablePathParameters)requestPathParameters).putAll(bestMatchMatcher.getParameters());
+						}
+					}
+				}
+				
+				/*if(exchange instanceof GenericWebExchange) {
+					((GenericWebExchange)exchange).request().pathParameters().putAll(bestMatchMatcher.getParameters());
+				}*/
+				bestMatchHandler.handle(exchange);
+			}
+			else {
+				nextLink.handle(exchange);
+			}
+			
+			/*TreeMap<URIMatcher, RoutingLink<A, ?, B>> matchingHandlers = new TreeMap<>();
+			
+			for(Entry<URIPattern, RoutingLink<A, ?, B>> e : this.handlers.entrySet()) {
+				URIMatcher matcher = e.getKey().matcher(normalizedPath);
+				if(matcher.matches()) {
+					matchingHandlers.put(matcher, e.getValue());
+				}
+			}
+			if(!matchingHandlers.isEmpty()) {
+				Map.Entry<URIMatcher, RoutingLink<A, ?, B>> matchingEntry = matchingHandlers.firstEntry();
+				if(exchange instanceof GenericWebExchange) {
+					((GenericWebExchange)exchange).request().pathParameters().putAll(matchingEntry.getKey().getParameters());
+				}
+				matchingEntry.getValue().handle(exchange);
+			}
+			else {
+				this.nextLink.handle(exchange);
+			}*/
+			
 			
 			// TODO If we have more than one, we need to prioritize them or we need to fail depending on a routing strategy
 			// - we can choose to trust the Winter compiler to detect conflicts and have a defaulting behavior at runtime
 			// - we can choose to make this behavior configurable
 			// ==> for the time being let's just take the first one
-			Optional<RoutingLink<A, ?, B>> handler = this.handlers.entrySet().stream()
-				.map(e -> this.matches(normalizedPath, e.getKey(), e.getValue()))
+			/*Optional<RoutingLink<A, ?, B>> handler = this.handlers.entrySet().stream()
+				.map(e -> this.matches(exchange.request().headers().getPath(), e.getKey(), e.getValue())) 
 				.filter(Objects::nonNull)
 				.sorted(Comparator.reverseOrder())
 				.findFirst()
@@ -256,7 +303,7 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 			}
 			else {
 				this.nextLink.handle(exchange);
-			}
+			}*/
 		}
 	}
 }

@@ -36,9 +36,9 @@ import io.winterframework.mod.web.header.Headers.AcceptMatch;
  */
 class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> extends RoutingLink<A, ProducesRoutingLink<A, B>, B> {
 
-	private HeaderCodec<? extends Headers.Accept> acceptCodec;
+	private final HeaderCodec<? extends Headers.Accept> acceptCodec;
 	
-	private HeaderCodec<? extends Headers.ContentType> contentTypeCodec;
+	private final HeaderCodec<? extends Headers.ContentType> contentTypeCodec;
 	
 	private Map<Headers.ContentType, RoutingLink<A, ?, B>> handlers;
 	private Map<Headers.ContentType, RoutingLink<A, ?, B>> enabledHandlers;
@@ -166,9 +166,11 @@ class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 					.findAllMatch(this.enabledHandlers.entrySet(), Entry::getKey)
 					.iterator();
 				
+				boolean nextLinkInvoked = false;
 				while(acceptMatchesIterator.hasNext()) {
 					AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, ?, B>>> bestMatch = acceptMatchesIterator.next();
-					if(bestMatch.getSource().getMediaType().equals("*/*")) {
+					if(!nextLinkInvoked && bestMatch.getSource().getMediaType().equals("*/*") && bestMatch.getSource().getParameters().isEmpty()) {
+						nextLinkInvoked = true;
 						// First check if the next link can handle the request since this is the default
 						try {
 							this.nextLink.handle(exchange);

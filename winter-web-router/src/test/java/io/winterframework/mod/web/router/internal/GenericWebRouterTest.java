@@ -1,14 +1,12 @@
 package io.winterframework.mod.web.router.internal;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import io.winterframework.mod.base.net.URIs;
 import io.winterframework.mod.base.resource.MediaTypes;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.router.AbstractRoute;
@@ -82,19 +80,11 @@ public class GenericWebRouterTest {
 		
 		GenericWebRoute route11 = new GenericWebRoute(router);
 		route11.setPath("/hello/{param1}");
-		List<String> pathParams11 = new ArrayList<>();
-		pathParams11.add(null);
-		pathParams11.add(":param1");
-		route11.setPathPattern(new GenericWebRoute.GenericPathPattern("/hello/{param1}", Pattern.compile("^(\\Q/hello/\\E)([^/]+)$"), pathParams11));
+		route11.setPathPattern(URIs.uri("/hello/{param1}", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPathPattern(false));
 		
 		GenericWebRoute route12 = new GenericWebRoute(router);
 		route12.setPath("/hello/{param1}/{param2:[a-b]*}");
-		List<String> pathParams12 = new ArrayList<>();
-		pathParams11.add(null);
-		pathParams11.add(":param1");
-		pathParams11.add(null);
-		pathParams11.add(":param2");
-		route12.setPathPattern(new GenericWebRoute.GenericPathPattern("/hello/{param1}/{param2:[a-b]*}", Pattern.compile("^(\\Q/hello/\\E)([^/]+)(\\Q/\\E)([a-b]*)$"), pathParams12));
+		route12.setPathPattern(URIs.uri("/hello/{param1}/{param2:[a-b]*}", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPathPattern(false));
 		
 		Assertions.assertEquals(Set.of(route1, route2, route3, route4, route5, route6, route7, route8, route9, route10, route11, route12), routes);
 	}
@@ -193,5 +183,4 @@ public class GenericWebRouterTest {
 		Assertions.assertEquals(12, routes.size());
 		Assertions.assertTrue(routes.stream().noneMatch(AbstractRoute::isDisabled));
 	}
-
 }

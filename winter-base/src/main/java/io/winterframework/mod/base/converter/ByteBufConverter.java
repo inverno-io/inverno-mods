@@ -17,6 +17,9 @@ package io.winterframework.mod.base.converter;
 
 import java.io.File;
 import java.lang.reflect.Array;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -27,6 +30,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Currency;
 import java.util.HashSet;
@@ -92,8 +96,13 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 	}
 	
 	@Override
-	public <T> Mono<T> decodeOne(Publisher<ByteBuf> data, Class<T> type) {
-		return Flux.from(data).reduceWith(() -> Unpooled.unreleasableBuffer(Unpooled.buffer()), (acc, chunk) -> {
+	public <T> Mono<T> decodeOne(Publisher<ByteBuf> value, Class<T> type) {
+		return this.decodeOne(value, (Type)type);
+	}
+	
+	@Override
+	public <T> Mono<T> decodeOne(Publisher<ByteBuf> value, Type type) {
+		return Flux.from(value).reduceWith(() -> Unpooled.unreleasableBuffer(Unpooled.buffer()), (acc, chunk) -> {
 			try {
 				return acc.writeBytes(chunk);
 			}
@@ -104,9 +113,14 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 	}
 
 	@Override
-	public <T> Flux<T> decodeMany(Publisher<ByteBuf> data, Class<T> type) {
-		return Flux.concat(data, LAST_CHUNK_PUBLISHER).scanWith(
-				() -> new ObjectScanner<>(type),
+	public <T> Flux<T> decodeMany(Publisher<ByteBuf> value, Class<T> type) {
+		return this.decodeMany(value, (Type)type);
+	}
+
+	@Override
+	public <T> Flux<T> decodeMany(Publisher<ByteBuf> value, Type type) {
+		return Flux.concat(value, LAST_CHUNK_PUBLISHER).scanWith(
+				() -> new ObjectScanner<T>(type),
 				(scanner, chunk) -> {
 					if(chunk == EMPTY_LAST_CHUNK) {
 						scanner.endOfInput();
@@ -127,30 +141,66 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 				return Flux.fromIterable(objects);
 			});
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T decode(ByteBuf data, Class<T> type) {
-		if(data == null) {
+	public <T> T decode(ByteBuf value, Class<T> type) {
+		if(value == null) {
 			return null;
 		}
-		if (ByteBuf.class.equals(type)) {
-			return (T) data;
+		if(ByteBuf.class.equals(type)) {
+			return (T) value;
 		}
 		if(type.isArray()) {
-			return (T)this.decodeToArray(data, type.getComponentType());
+			return (T)this.decodeToArray(value, type.getComponentType());
 		}
 		try {
-			return this.stringConverter.decode(data.toString(this.charset), type);
+			return this.stringConverter.decode(value.toString(this.charset), type);
 		}
 		finally {
-			data.release();
+			value.release();
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> T decode(ByteBuf value, Type type) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		
+		if(type instanceof Class) {
+			return this.decode(value, (Class<T>)type);
+		}
+		else if(type instanceof GenericArrayType) {
+			return (T) this.decodeToArray(value, ((GenericArrayType)type).getGenericComponentType());
+		}
+		else if(type instanceof ParameterizedType) {
+			ParameterizedType parameterizedType = ((ParameterizedType)type);
+			if(parameterizedType.getActualTypeArguments().length == 1) {
+				if(parameterizedType.getRawType() instanceof Class) {
+					Class<?> rawType = (Class<?>)parameterizedType.getRawType();
+					Type typeArgument = parameterizedType.getActualTypeArguments()[0];
+					if(rawType.equals(Collection.class) || rawType.equals(List.class)) {
+						return (T) this.decodeToList(value, typeArgument);
+					}
+					else if(rawType.equals(Set.class)) {
+						return (T) this.decodeToSet(value, typeArgument);
+					}
+				}
+			}
+		}
+		try {
+			return this.stringConverter.decode(value.toString(this.charset), type);
+		}
+		finally {
+			value.release();
 		}
 	}
 
-	private <T> void decodeToCollection(ByteBuf data, Class<T> type, Collection<T> result) {
+	private <T> void decodeToCollection(ByteBuf value, Type type, Collection<T> result) {
 		ObjectScanner<T> scanner = new ObjectScanner<>(type);
-		scanner.feedInput(data);
+		scanner.feedInput(value);
 		scanner.endOfInput();
 		
 		T object = null;
@@ -160,266 +210,407 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 	}
 	
 	@Override
-	public <T> List<T> decodeToList(ByteBuf data, Class<T> type) {
-		List<T> result = new LinkedList<>();
-		this.decodeToCollection(data, type, result);
+	public <T> List<T> decodeToList(ByteBuf value, Class<T> type) {
+		return this.decodeToList(value, (Type)type);
+	}
+	
+	@Override
+	public <T> List<T> decodeToList(ByteBuf value, Type type) {
+		List<T> result = new ArrayList<>();
+		this.decodeToCollection(value, type, result);
 		return result;
 	}
 
 	@Override
-	public <T> Set<T> decodeToSet(ByteBuf data, Class<T> type) {
+	public <T> Set<T> decodeToSet(ByteBuf value, Class<T> type) {
+		return this.decodeToSet(value, (Type)type);
+	}
+	
+	@Override
+	public <T> Set<T> decodeToSet(ByteBuf value, Type type) {
 		Set<T> result = new HashSet<>();
-		this.decodeToCollection(data, type, result);
+		this.decodeToCollection(value, type, result);
 		return result;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T[] decodeToArray(ByteBuf data, Class<T> type) {
+	public <T> T[] decodeToArray(ByteBuf value, Class<T> type) {
 		List<T> result = new LinkedList<>();
-		this.decodeToCollection(data, type, result);
+		this.decodeToCollection(value, type, result);
 		return result.toArray((T[]) Array.newInstance(type, result.size()));
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public Byte decodeByte(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
+	public <T> T[] decodeToArray(ByteBuf value, Type type) {
+		List<T> result = new LinkedList<>();
+		this.decodeToCollection(value, type, result);
+		if(type instanceof Class) {
+			return result.toArray((T[]) Array.newInstance((Class<T>)type, result.size()));
 		}
-		return this.stringConverter.decodeByte(data.toString(this.charset));
-	}
-
-	@Override
-	public Short decodeShort(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
+		else if(type instanceof ParameterizedType) {
+			ParameterizedType parameterizedType = (ParameterizedType)type;
+			return result.toArray((T[]) Array.newInstance((Class<T>)parameterizedType.getRawType(), result.size()));
 		}
-		return this.stringConverter.decodeShort(data.toString(this.charset));
-	}
-
-	@Override
-	public Integer decodeInteger(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
+		else {
+			throw new ConverterException("Can't decode " + String.class.getCanonicalName() + " to array of " + type.getTypeName());
 		}
-		return this.stringConverter.decodeInteger(data.toString(this.charset));
-	}
-
-	@Override
-	public Long decodeLong(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeLong(data.toString(this.charset));
-	}
-
-	@Override
-	public Float decodeFloat(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeFloat(data.toString(this.charset));
-	}
-
-	@Override
-	public Double decodeDouble(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeDouble(data.toString(this.charset));
-	}
-
-	@Override
-	public Character decodeCharacter(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeCharacter(data.toString(this.charset));
-	}
-
-	@Override
-	public Boolean decodeBoolean(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeBoolean(data.toString(this.charset));
-	}
-
-	@Override
-	public String decodeString(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeString(data.toString(this.charset));
-	}
-
-	@Override
-	public BigInteger decodeBigInteger(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeBigInteger(data.toString(this.charset));
-	}
-
-	@Override
-	public BigDecimal decodeBigDecimal(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeBigDecimal(data.toString(this.charset));
-	}
-
-	@Override
-	public LocalDate decodeLocalDate(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeLocalDate(data.toString(this.charset));
-	}
-
-	@Override
-	public LocalDateTime decodeLocalDateTime(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeLocalDateTime(data.toString(this.charset));
-	}
-
-	@Override
-	public ZonedDateTime decodeZonedDateTime(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeZonedDateTime(data.toString(this.charset));
-	}
-
-	@Override
-	public Currency decodeCurrency(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeCurrency(data.toString(this.charset));
-	}
-
-	@Override
-	public Locale decodeLocale(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeLocale(data.toString(this.charset));
-	}
-
-	@Override
-	public File decodeFile(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeFile(data.toString(this.charset));
-	}
-
-	@Override
-	public Path decodePath(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodePath(data.toString(this.charset));
-	}
-
-	@Override
-	public URI decodeURI(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeURI(data.toString(this.charset));
-	}
-
-	@Override
-	public URL decodeURL(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeURL(data.toString(this.charset));
-	}
-
-	@Override
-	public Pattern decodePattern(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodePattern(data.toString(this.charset));
-	}
-
-	@Override
-	public InetAddress decodeInetAddress(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeInetAddress(data.toString(this.charset));
-	}
-
-	@Override
-	public Class<?> decodeClass(ByteBuf data) throws ConverterException {
-		if(data == null) {
-			return null;
-		}
-		return this.stringConverter.decodeClass(data.toString(this.charset));
-	}
-
-	@Override
-	public <T> Publisher<ByteBuf> encodeOne(Mono<T> data) {
-		return data.map(this::encode);
-	}
-
-	@Override
-	public <T> Publisher<ByteBuf> encodeMany(Flux<T> data) {
-		return data.map(this::encode);
-	}
-
-	@Override
-	public <T> ByteBuf encode(T data) {
-		if(data == null) {
-			return null;
-		}
-		if(ByteBuf.class.isAssignableFrom(data.getClass())) {
-			return (ByteBuf)data;
-		}
-		if(data.getClass().isArray()) {
-			return this.encodeArray((Object[])data);
-		}
-		if(Collection.class.isAssignableFrom(data.getClass())) {
-			return this.encodeCollection((Collection<?>)data);
-		}
-		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(data), this.charset));
 	}
 	
-	private <T> ByteBuf encodeCollection(Collection<T> data) {
-		ByteBuf[] buffers = new ByteBuf[data.size()];
+	@Override
+	public Byte decodeByte(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeByte(value.toString(this.charset));
+	}
+
+	@Override
+	public Short decodeShort(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeShort(value.toString(this.charset));
+	}
+
+	@Override
+	public Integer decodeInteger(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeInteger(value.toString(this.charset));
+	}
+
+	@Override
+	public Long decodeLong(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeLong(value.toString(this.charset));
+	}
+
+	@Override
+	public Float decodeFloat(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeFloat(value.toString(this.charset));
+	}
+
+	@Override
+	public Double decodeDouble(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeDouble(value.toString(this.charset));
+	}
+
+	@Override
+	public Character decodeCharacter(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeCharacter(value.toString(this.charset));
+	}
+
+	@Override
+	public Boolean decodeBoolean(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeBoolean(value.toString(this.charset));
+	}
+
+	@Override
+	public String decodeString(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeString(value.toString(this.charset));
+	}
+
+	@Override
+	public BigInteger decodeBigInteger(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeBigInteger(value.toString(this.charset));
+	}
+
+	@Override
+	public BigDecimal decodeBigDecimal(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeBigDecimal(value.toString(this.charset));
+	}
+
+	@Override
+	public LocalDate decodeLocalDate(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeLocalDate(value.toString(this.charset));
+	}
+
+	@Override
+	public LocalDateTime decodeLocalDateTime(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeLocalDateTime(value.toString(this.charset));
+	}
+
+	@Override
+	public ZonedDateTime decodeZonedDateTime(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeZonedDateTime(value.toString(this.charset));
+	}
+
+	@Override
+	public Currency decodeCurrency(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeCurrency(value.toString(this.charset));
+	}
+
+	@Override
+	public Locale decodeLocale(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeLocale(value.toString(this.charset));
+	}
+
+	@Override
+	public File decodeFile(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeFile(value.toString(this.charset));
+	}
+
+	@Override
+	public Path decodePath(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodePath(value.toString(this.charset));
+	}
+
+	@Override
+	public URI decodeURI(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeURI(value.toString(this.charset));
+	}
+
+	@Override
+	public URL decodeURL(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeURL(value.toString(this.charset));
+	}
+
+	@Override
+	public Pattern decodePattern(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodePattern(value.toString(this.charset));
+	}
+
+	@Override
+	public InetAddress decodeInetAddress(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeInetAddress(value.toString(this.charset));
+	}
+
+	@Override
+	public Class<?> decodeClass(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeClass(value.toString(this.charset));
+	}
+
+	@Override
+	public <T> Publisher<ByteBuf> encodeOne(Mono<T> value) {
+		return value.map(this::encode);
+	}
+	
+	@Override
+	public <T> Publisher<ByteBuf> encodeOne(Mono<T> value, Class<T> type) {
+		return this.encodeOne(value, (Type)type);
+	}
+	
+	@Override
+	public <T> Publisher<ByteBuf> encodeOne(Mono<T> value, Type type) {
+		return value.map(element -> this.encode(element, type));
+	}
+
+	@Override
+	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value) {
+		return value.map(this::encode);
+	}
+	
+	@Override
+	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value, Class<T> type) {
+		return this.encodeMany(value, (Type)type);
+	}
+	
+	@Override
+	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value, Type type) {
+		return value.map(element -> this.encode(element, type));
+	}
+
+	@Override
+	public <T> ByteBuf encode(T value) {
+		if(value == null) {
+			return null;
+		}
+		if(ByteBuf.class.isAssignableFrom(value.getClass())) {
+			return (ByteBuf)value;
+		}
+		if(value.getClass().isArray()) {
+			return this.encodeArray((Object[])value);
+		}
+		if(Collection.class.isAssignableFrom(value.getClass())) {
+			return this.encodeCollection((Collection<?>)value);
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
+	}
+	
+	@Override
+	public <T> ByteBuf encode(T value, Class<T> type) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		if(ByteBuf.class.equals(type)) {
+			return (ByteBuf) value;
+		}
+		if(type.isArray()) {
+			return this.encodeArray((Object[])value, type);
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value, type), this.charset));
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <T> ByteBuf encode(T value, Type type) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		if(type instanceof Class) {
+			return this.encode(value, (Class<T>)type);
+		}
+		else if(type instanceof GenericArrayType) {
+			return this.encodeArray((Object[])value, ((GenericArrayType)type).getGenericComponentType());
+		}
+		else if(type instanceof ParameterizedType) {
+			ParameterizedType parameterizedType = ((ParameterizedType)type);
+			if(parameterizedType.getActualTypeArguments().length == 1) {
+				if(parameterizedType.getRawType() instanceof Class) {
+					Class<?> rawType = (Class<?>)parameterizedType.getRawType();
+					Type typeArgument = parameterizedType.getActualTypeArguments()[0];
+					if(rawType.equals(Collection.class) || rawType.equals(List.class)) {
+						return this.encodeList((List<T>)value, typeArgument);
+					}
+					else if(rawType.equals(Set.class)) {
+						return this.encodeSet((Set<T>)value, typeArgument);
+					}
+				}
+			}
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
+		
+	}
+	
+	private <T> ByteBuf encodeCollection(Collection<T> value) {
+		ByteBuf[] buffers = new ByteBuf[value.size()];
 		int i = 0;
-		for(Iterator<T> dataIterator = data.iterator();dataIterator.hasNext();i++) {
-			buffers[i] = this.encode(dataIterator.next());
-			if(dataIterator.hasNext()) {
+		for(Iterator<T> valueIterator = value.iterator();valueIterator.hasNext();i++) {
+			buffers[i] = this.encode(valueIterator.next());
+			if(valueIterator.hasNext()) {
 				buffers[i].writeByte(this.arrayListSeparator);
 			}
 		}
 		return Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(buffers));
 	}
-
+	
+	private <T> ByteBuf encodeCollection(Collection<T> value, Type type) {
+		ByteBuf[] buffers = new ByteBuf[value.size()];
+		int i = 0;
+		for(Iterator<T> valueIterator = value.iterator();valueIterator.hasNext();i++) {
+			buffers[i] = this.encode(valueIterator.next(), type);
+			if(valueIterator.hasNext()) {
+				buffers[i].writeByte(this.arrayListSeparator);
+			}
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(buffers));
+	}
+	
 	@Override
-	public <T> ByteBuf encodeList(List<T> data) {
-		return this.encodeCollection(data);
+	public <T> ByteBuf encodeList(List<T> value) {
+		return this.encodeCollection(value);
+	}
+	
+	@Override
+	public <T> ByteBuf encodeList(List<T> value, Class<T> type) {
+		return this.encodeList(value, type);
+	}
+	
+	@Override
+	public <T> ByteBuf encodeList(List<T> value, Type type) {
+		return this.encodeCollection(value, type);
 	}
 
 	@Override
-	public <T> ByteBuf encodeSet(Set<T> data) {
-		return this.encodeCollection(data);
+	public <T> ByteBuf encodeSet(Set<T> value) {
+		return this.encodeCollection(value);
 	}
 
 	@Override
-	public <T> ByteBuf encodeArray(T[] data) {
-		ByteBuf[] buffers = new ByteBuf[data.length];
-		for(int i = 0;i<data.length;i++) {
-			buffers[i] = this.encode(data[i]);
-			if(i < data.length - 1) {
+	public <T> ByteBuf encodeSet(Set<T> value, Class<T> type) {
+		return this.encodeCollection(value, type);
+	}
+	
+	@Override
+	public <T> ByteBuf encodeSet(Set<T> value, Type type) {
+		return this.encodeCollection(value, type);
+	}
+	
+	@Override
+	public <T> ByteBuf encodeArray(T[] value) {
+		ByteBuf[] buffers = new ByteBuf[value.length];
+		for(int i = 0;i<value.length;i++) {
+			buffers[i] = this.encode(value[i]);
+			if(i < value.length - 1) {
+				buffers[i].writeByte(this.arrayListSeparator);
+			}
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(buffers));
+	}
+	
+	@Override
+	public <T> ByteBuf encodeArray(T[] value, Class<T> type) {
+		return this.encodeArray(value, (Type)type);
+	}
+	
+	@Override
+	public <T> ByteBuf encodeArray(T[] value, Type type) {
+		ByteBuf[] buffers = new ByteBuf[value.length];
+		for(int i = 0;i<value.length;i++) {
+			buffers[i] = this.encode(value[i], type);
+			if(i < value.length - 1) {
 				buffers[i].writeByte(this.arrayListSeparator);
 			}
 		}
@@ -612,7 +803,7 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 
 	private class ObjectScanner<T> {
 		
-		private Class<T> type;
+		private Type type;
 		
 		private boolean endOfInput;
 		
@@ -620,8 +811,13 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 		private ByteBuf inputBuffer;
 		private ByteBuf keepBuffer;
 		
-		public ObjectScanner(Class<T> type) {
+		public ObjectScanner(Type type) {
 			this.type = type;
+		}
+		
+		@SuppressWarnings("unused")
+		public ObjectScanner(Class<T> type) {
+			this((Type)type);
 		}
 		
 		public void feedInput(ByteBuf chunk) {

@@ -56,17 +56,17 @@ class Http1xResponseBody extends GenericResponseBody {
 			return super.resource();
 		}
 		else {
-			if(this.resourceBody == null) {
-				this.resourceBody = new Http1xResourceResponseBody();
+			if(this.resourceData == null) {
+				this.resourceData = new Http1xResponseBodyResourceData();
 			}
-			return this.resourceBody;
+			return this.resourceData;
 		}
 	}
 
-	private class Http1xResourceResponseBody extends GenericResponseBody.GenericResourceResponseBody {
+	private class Http1xResponseBodyResourceData extends GenericResponseBody.GenericResponseBodyResourceData {
 
 		@Override
-		public void data(io.winterframework.mod.base.resource.Resource resource) {
+		public void value(io.winterframework.mod.base.resource.Resource resource) {
 
 			if(resource.isFile()) {
 				// We need to create the file region and then send an empty response
@@ -97,7 +97,7 @@ class Http1xResponseBody extends GenericResponseBody {
 				Http1xResponseBody.this.setData(Flux.empty());
 			}
 			else {
-				super.data(resource);
+				super.value(resource);
 			}
 		}
 	}

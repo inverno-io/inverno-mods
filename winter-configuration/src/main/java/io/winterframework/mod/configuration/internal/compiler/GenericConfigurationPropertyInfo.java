@@ -19,6 +19,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.type.TypeMirror;
 
 import io.winterframework.core.compiler.spi.ReporterInfo;
+import io.winterframework.core.compiler.spi.support.AbstractInfo;
 import io.winterframework.mod.configuration.internal.compiler.spi.ConfigurationPropertyInfo;
 import io.winterframework.mod.configuration.internal.compiler.spi.PropertyQualifiedName;
 

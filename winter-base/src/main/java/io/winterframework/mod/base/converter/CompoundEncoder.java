@@ -15,11 +15,15 @@
  */
 package io.winterframework.mod.base.converter;
 
+import java.lang.reflect.Type;
+
 /**
  * @author jkuhn
  *
  */
 public interface CompoundEncoder<From, To> extends Encoder<From, To> {
 
-	Class<From> getEncodedType();
+	<T extends From> boolean canEncode(Class<T> type);
+	
+	boolean canEncode(Type type); 
 }

@@ -34,7 +34,7 @@ import io.winterframework.mod.web.server.ExchangeHandler;
  */
 class GenericErrorRouteManager implements ErrorRouteManager {
 
-	private GenericErrorRouter router;
+	private final GenericErrorRouter router;
 	
 	private Set<Class<? extends Throwable>> errors;
 	

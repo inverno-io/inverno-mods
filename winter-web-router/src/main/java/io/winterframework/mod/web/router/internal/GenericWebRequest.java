@@ -32,19 +32,19 @@ import io.winterframework.mod.web.server.RequestHeaders;
  */
 public class GenericWebRequest implements WebRequest {
 
-	private Request request;
+	private final Request request;
+	
+	private final DataConversionService dataConversionService;
+	
+	private final ObjectConverter<String> parameterConverter;
 	
 	private GenericPathParameters pathParameters;
 	
 	private Optional<WebRequestBody> webRequestBody;
 	
-	private BodyConversionService bodyConversionService;
-	
-	private ObjectConverter<String> parameterConverter;
-	
-	public GenericWebRequest(Request request, BodyConversionService bodyConversionService, ObjectConverter<String> parameterConverter) {
+	public GenericWebRequest(Request request, DataConversionService dataConversionService, ObjectConverter<String> parameterConverter) {
 		this.request = request;
-		this.bodyConversionService = bodyConversionService;
+		this.dataConversionService = dataConversionService;
 		this.parameterConverter = parameterConverter;
 	}
 
@@ -79,7 +79,7 @@ public class GenericWebRequest implements WebRequest {
 	@Override
 	public Optional<WebRequestBody> body() {
 		if(this.webRequestBody == null) {
-			this.webRequestBody = this.request.body().map(requestBody -> new GenericWebRequestBody(this, requestBody, this.bodyConversionService));
+			this.webRequestBody = this.request.body().map(requestBody -> new GenericWebRequestBody(this, requestBody, this.dataConversionService));
 		}
 		return this.webRequestBody;
 	}

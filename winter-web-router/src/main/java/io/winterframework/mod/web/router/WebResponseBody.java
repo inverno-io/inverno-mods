@@ -15,9 +15,9 @@
  */
 package io.winterframework.mod.web.router;
 
+import java.lang.reflect.Type;
+
 import io.winterframework.mod.web.server.ResponseBody;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 /**
  * @author jkuhn
@@ -25,16 +25,34 @@ import reactor.core.publisher.Mono;
  */
 public interface WebResponseBody extends ResponseBody {
 	
-	Encoder encoder();
+	<T> ResponseDataEncoder<T> encoder();
 	
-	// TODO encoded sse
+	<T> ResponseDataEncoder<T> encoder(Class<T> type);
 	
-	public static interface Encoder {
+	<T> ResponseDataEncoder<T> encoder(Type type);
+	
+	<T> WebResponseBody.SseEncoder<T> sseEncoder(String mediaType);
+	
+	<T> WebResponseBody.SseEncoder<T> sseEncoder(String mediaType, Class<T> type);
+	
+	<T> WebResponseBody.SseEncoder<T> sseEncoder(String mediaType, Type type);
+	
+	public interface SseEncoder<A> extends ResponseBody.Sse<A, WebResponseBody.SseEncoder.Event<A>, WebResponseBody.SseEncoder.EventFactory<A>> {
 		
-		<A> void data(Flux<A> data);
-		
-		<A> void data(Mono<A> data);
-		
-		<A> void data(A data);
+		public static interface Event<A> extends ResponseBody.Sse.Event<A>, ResponseDataEncoder<A> {
+
+			@Override
+			WebResponseBody.SseEncoder.Event<A> id(String id);
+			
+			@Override
+			WebResponseBody.SseEncoder.Event<A> comment(String comment);
+			
+			@Override
+			WebResponseBody.SseEncoder.Event<A> event(String event);
+		}
+
+		public static interface EventFactory<A> extends ResponseBody.Sse.EventFactory<A, WebResponseBody.SseEncoder.Event<A>> {
+			
+		}
 	}
 }

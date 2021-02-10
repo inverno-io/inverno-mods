@@ -26,6 +26,8 @@ import java.util.Set;
  */
 public interface RequestCookies {
 	
+	boolean contains(String name);
+	
 	Set<String> getNames();
 	
 	Optional<CookieParameter> get(String name);

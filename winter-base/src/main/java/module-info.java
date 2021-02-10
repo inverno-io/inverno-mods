@@ -21,6 +21,7 @@
  */
 module io.winterframework.mod.base {
 	requires org.apache.commons.text;
+	requires org.apache.commons.lang3;
 	
 	requires transitive reactor.core;
 	requires transitive org.reactivestreams;
@@ -31,6 +32,7 @@ module io.winterframework.mod.base {
 	
 	exports io.winterframework.mod.base;
 	exports io.winterframework.mod.base.net;
+	exports io.winterframework.mod.base.reflect;
 	exports io.winterframework.mod.base.resource;
 	exports io.winterframework.mod.base.converter;
 }

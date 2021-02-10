@@ -15,11 +15,16 @@
  */
 package io.winterframework.mod.base.converter;
 
+import java.lang.reflect.Type;
+
 /**
  * @author jkuhn
  *
  */
 public interface Decoder<From, To> {
 
-	<T extends To> T decode(From data, Class<T> type) throws ConverterException;
+	<T extends To> T decode(From value, Class<T> type) throws ConverterException;
+	
+	<T extends To> T decode(From value, Type type) throws ConverterException;
+	
 }

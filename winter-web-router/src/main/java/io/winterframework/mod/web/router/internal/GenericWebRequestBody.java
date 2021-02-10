@@ -15,11 +15,20 @@
  */
 package io.winterframework.mod.web.router.internal;
 
+import java.lang.reflect.Type;
+
+import org.reactivestreams.Publisher;
+
+import io.netty.buffer.ByteBuf;
 import io.winterframework.mod.web.InternalServerErrorException;
 import io.winterframework.mod.web.header.Headers;
+import io.winterframework.mod.web.router.RequestDataDecoder;
+import io.winterframework.mod.web.router.WebPart;
 import io.winterframework.mod.web.router.WebRequest;
 import io.winterframework.mod.web.router.WebRequestBody;
 import io.winterframework.mod.web.server.RequestBody;
+import io.winterframework.mod.web.server.RequestData;
+import reactor.core.publisher.Flux;
 
 /**
  * @author jkuhn
@@ -27,28 +36,26 @@ import io.winterframework.mod.web.server.RequestBody;
  */
 public class GenericWebRequestBody implements WebRequestBody {
 
-	private WebRequest request;
+	private final WebRequest request;
 	
-	private RequestBody requestBody;
+	private final RequestBody requestBody;
 	
-	private BodyConversionService bodyConversionService;
+	private final DataConversionService dataConversionService;
 	
-	private Decoder<?> decoder;
-	
-	public GenericWebRequestBody(WebRequest request, RequestBody requestBody, BodyConversionService bodyConversionService) {
+	public GenericWebRequestBody(WebRequest request, RequestBody requestBody, DataConversionService dataConversionService) {
 		this.request = request;
 		this.requestBody = requestBody;
-		this.bodyConversionService = bodyConversionService;
+		this.dataConversionService = dataConversionService;
 	}
 
 	@Override
-	public Raw raw() throws IllegalStateException {
+	public RequestData<ByteBuf> raw() throws IllegalStateException {
 		return this.requestBody.raw();
 	}
 
 	@Override
-	public Multipart multipart() throws IllegalStateException {
-		return this.requestBody.multipart();
+	public Multipart<WebPart> multipart() throws IllegalStateException {
+		return new WebMultipart();
 	}
 
 	@Override
@@ -56,14 +63,23 @@ public class GenericWebRequestBody implements WebRequestBody {
 		return this.requestBody.urlEncoded();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public <A> Decoder<A> decoder(Class<A> type) {
-		if(this.decoder == null) {
-			this.decoder = this.request.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE)
-				.map(contentType -> this.bodyConversionService.createDecoder(this.requestBody.raw(), contentType.getMediaType(), type))
-				.orElseThrow(() -> new InternalServerErrorException("Empty media type"));
+	public <A> RequestDataDecoder<A> decoder(Class<A> type) {
+		return this.decoder((Type)type);
+	}
+	
+	@Override
+	public <A> RequestDataDecoder<A> decoder(Type type) {
+		return this.request.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE)
+			.map(contentType -> this.dataConversionService.<A>createDecoder(this.requestBody.raw(), contentType.getMediaType(), type))
+			.orElseThrow(() -> new InternalServerErrorException("Empty media type"));
+	}
+	
+	private class WebMultipart implements Multipart<WebPart> {
+
+		@Override
+		public Publisher<WebPart> stream() {
+			return Flux.from(GenericWebRequestBody.this.requestBody.multipart().stream()).map(part -> new GenericWebPart(part, GenericWebRequestBody.this.dataConversionService));
 		}
-		return (Decoder<A>) this.decoder;
 	}
 }

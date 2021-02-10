@@ -16,6 +16,7 @@
 package io.winterframework.mod.web.internal.server;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -66,9 +67,19 @@ public class GenericParameter implements Parameter {
 	public <T> T as(Class<T> type) {
 		return this.parameterConverter.decode(this.value, type);
 	}
+	
+	@Override
+	public <T> T as(Type type) {
+		return this.parameterConverter.decode(this.value, type);
+	}
 
 	@Override
 	public <T> T[] asArrayOf(Class<T> type) {
+		return this.parameterConverter.decodeToArray(this.value, type);
+	}
+	
+	@Override
+	public <T> T[] asArrayOf(Type type) {
 		return this.parameterConverter.decodeToArray(this.value, type);
 	}
 
@@ -76,9 +87,19 @@ public class GenericParameter implements Parameter {
 	public <T> List<T> asListOf(Class<T> type) {
 		return this.parameterConverter.decodeToList(this.value, type);
 	}
+	
+	@Override
+	public <T> List<T> asListOf(Type type) {
+		return this.parameterConverter.decodeToList(this.value, type);
+	}
 
 	@Override
 	public <T> Set<T> asSetOf(Class<T> type) {
+		return this.parameterConverter.decodeToSet(this.value, type);
+	}
+	
+	@Override
+	public <T> Set<T> asSetOf(Type type) {
 		return this.parameterConverter.decodeToSet(this.value, type);
 	}
 

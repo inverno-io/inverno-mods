@@ -17,9 +17,11 @@ package io.winterframework.mod.web.server.handler;
 
 import java.util.function.Supplier;
 
+import io.netty.buffer.Unpooled;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Overridable;
 import io.winterframework.core.annotation.Wrapper;
+import io.winterframework.mod.base.Charsets;
 import io.winterframework.mod.web.NotFoundException;
 import io.winterframework.mod.web.server.Exchange;
 import io.winterframework.mod.web.server.ExchangeHandler;
@@ -37,7 +39,7 @@ public class RootHandler implements Supplier<ExchangeHandler<Exchange>> {
 	public ExchangeHandler<Exchange> get() {
 		return exchange -> {
 			if(exchange.request().headers().getPath().equalsIgnoreCase("/")) {
-				exchange.response().body().raw().data("Hello!");
+				exchange.response().body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello", Charsets.DEFAULT)));
 			}
 			else {
 				throw new NotFoundException();

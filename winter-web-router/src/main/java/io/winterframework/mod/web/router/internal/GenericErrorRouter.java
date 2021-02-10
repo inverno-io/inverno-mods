@@ -19,10 +19,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.time.format.DateTimeFormatter;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import io.netty.buffer.Unpooled;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Init;
 import io.winterframework.core.annotation.Provide;
@@ -40,6 +40,7 @@ import io.winterframework.mod.web.internal.header.ContentTypeCodec;
 import io.winterframework.mod.web.router.ErrorRoute;
 import io.winterframework.mod.web.router.ErrorRouteManager;
 import io.winterframework.mod.web.router.ErrorRouter;
+import io.winterframework.mod.web.router.ErrorRouterConfigurer;
 import io.winterframework.mod.web.server.ErrorExchange;
 import io.winterframework.mod.web.server.ErrorExchangeHandler;
 
@@ -50,9 +51,9 @@ import io.winterframework.mod.web.server.ErrorExchangeHandler;
 @Bean( name = "errorRouter" )
 public class GenericErrorRouter implements @Provide ErrorRouter {
 
-	private RoutingLink<ErrorExchange<Throwable>, ?, ErrorRoute> firstLink;
+	private final RoutingLink<ErrorExchange<Throwable>, ?, ErrorRoute> firstLink;
 	
-	private Consumer<ErrorRouter> configurer;
+	private ErrorRouterConfigurer configurer;
 	
 	public GenericErrorRouter() {
 		AcceptCodec acceptCodec = new AcceptCodec(false);
@@ -79,7 +80,7 @@ public class GenericErrorRouter implements @Provide ErrorRouter {
 		}
 	}
 
-	public void setConfigurer(Consumer<ErrorRouter> configurer) {
+	public void setConfigurer(ErrorRouterConfigurer configurer) {
 		this.configurer = configurer;
 	}
 	
@@ -114,6 +115,7 @@ public class GenericErrorRouter implements @Provide ErrorRouter {
 	@Override
 	public void handle(ErrorExchange<Throwable> exchange) throws WebException {
 		ErrorRouter.super.handle(exchange);
+		exchange.getError().printStackTrace();
 		this.firstLink.handle(exchange);
 	}
 	
@@ -173,7 +175,7 @@ public class GenericErrorRouter implements @Provide ErrorRouter {
 			}
 			error.append("}");
 			
-			exchange.response().headers(h -> h.status(exchange.getError().getStatusCode()).contentType(MediaTypes.APPLICATION_JSON)).body().raw().data(errorOut.toByteArray());
+			exchange.response().headers(h -> h.status(exchange.getError().getStatusCode()).contentType(MediaTypes.APPLICATION_JSON)).body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(errorOut.toByteArray())));
 		};
 	}
 	
@@ -232,7 +234,7 @@ public class GenericErrorRouter implements @Provide ErrorRouter {
 			error.append("</footer>");
 			error.append("</body>");
 			
-			exchange.response().headers(headers -> headers.status(exchange.getError().getStatusCode()).contentType(MediaTypes.TEXT_HTML)).body().raw().data(errorOut.toByteArray());
+			exchange.response().headers(headers -> headers.status(exchange.getError().getStatusCode()).contentType(MediaTypes.TEXT_HTML)).body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(errorOut.toByteArray())));
 		};
 	}
 	
@@ -243,5 +245,5 @@ public class GenericErrorRouter implements @Provide ErrorRouter {
 	}
 	
 	@Bean( name = "ErrorRouterConfigurer")
-	public static interface ConfigurerSocket extends Supplier<Consumer<ErrorRouter>> {}
+	public static interface ConfigurerSocket extends Supplier<ErrorRouterConfigurer> {}
 }

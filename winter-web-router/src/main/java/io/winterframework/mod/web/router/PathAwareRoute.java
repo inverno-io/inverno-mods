@@ -15,9 +15,7 @@
  */
 package io.winterframework.mod.web.router;
 
-import java.util.List;
-import java.util.regex.Pattern;
-
+import io.winterframework.mod.base.net.URIPattern;
 import io.winterframework.mod.web.server.Exchange;
 
 /**
@@ -26,16 +24,7 @@ import io.winterframework.mod.web.server.Exchange;
  */
 public interface PathAwareRoute<A extends Exchange> extends AbstractRoute<A> {
 
-	static interface PathPattern {
-		
-		String getPath();
-
-		Pattern getPattern();
-		
-		List<String> getPathParameterNames();
-	}
-	
 	String getPath();
 	
-	PathPattern getPathPattern();
+	URIPattern getPathPattern();
 }

@@ -15,9 +15,9 @@
  */
 package io.winterframework.mod.web.router.internal;
 
-import io.winterframework.mod.web.router.PathAwareRoute;
-import io.winterframework.mod.web.server.Exchange;
+import io.winterframework.mod.base.net.URIPattern;
 import io.winterframework.mod.web.router.AbstractRoute;
+import io.winterframework.mod.web.server.Exchange;
 
 /**
  * @author jkuhn
@@ -27,5 +27,5 @@ public interface PathAwareRouteExtractor<A extends Exchange, B extends AbstractR
 
 	C path(String path);
 	
-	C pathPattern(PathAwareRoute.PathPattern pathPattern);
+	C pathPattern(URIPattern pathPattern);
 }

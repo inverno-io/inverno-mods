@@ -15,9 +15,12 @@
  */
 package io.winterframework.mod.boot.internal.converter;
 
+import java.lang.reflect.Type;
+
 import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
+import io.winterframework.mod.base.converter.ConverterException;
 import io.winterframework.mod.base.converter.MediaTypeConverter;
 import io.winterframework.mod.base.converter.ReactiveConverter;
 import reactor.core.publisher.Flux;
@@ -36,61 +39,78 @@ abstract class AbstractJsonMediaTypeConverter implements MediaTypeConverter<Byte
 	}
 	
 	@Override
-	public <T> Mono<T> decodeOne(Publisher<ByteBuf> data, Class<T> type) {
-		return this.jsonByteBufConverter.decodeOne(data, type);
+	public <T> Mono<T> decodeOne(Publisher<ByteBuf> value, Class<T> type) {
+		return this.jsonByteBufConverter.decodeOne(value, type);
 	}
 
 	@Override
-	public <T> Flux<T> decodeMany(Publisher<ByteBuf> data, Class<T> type) {
-		return this.jsonByteBufConverter.decodeMany(data, type);
+	public <T> Mono<T> decodeOne(Publisher<ByteBuf> value, Type type) {
+		return this.jsonByteBufConverter.decodeOne(value, type);
+	}
+	
+	@Override
+	public <T> Flux<T> decodeMany(Publisher<ByteBuf> value, Class<T> type) {
+		return this.jsonByteBufConverter.decodeMany(value, type);
+	}
+	
+	@Override
+	public <T> Flux<T> decodeMany(Publisher<ByteBuf> value, Type type) {
+		return this.jsonByteBufConverter.decodeMany(value, type);
+	}
+	
+	@Override
+	public <T> T decode(ByteBuf value, Class<T> type) {
+		return this.jsonByteBufConverter.decode(value, type);
+	}
+	
+	@Override
+	public <T> T decode(ByteBuf value, Type type) throws ConverterException {
+		return this.jsonByteBufConverter.decode(value, type);
 	}
 
 	@Override
-	public <T> T decode(ByteBuf data, Class<T> type) {
-		return this.jsonByteBufConverter.decode(data, type);
+	public <T> Publisher<ByteBuf> encodeOne(Mono<T> value) {
+		return this.jsonByteBufConverter.encodeOne(value);
 	}
-
-	/*public <T> List<T> decodeToList(ByteBuf data, Class<T> type) {
-		return this.jsonByteBufConverter.decodeToList(data, type);
+	
+	@Override
+	public <T> Publisher<ByteBuf> encodeOne(Mono<T> value, Class<T> type) {
+		return this.jsonByteBufConverter.encodeOne(value, type);
+	}
+	
+	@Override
+	public <T> Publisher<ByteBuf> encodeOne(Mono<T> value, Type type) {
+		return this.jsonByteBufConverter.encodeOne(value, type);
 	}
 
 	@Override
-	public <T> Set<T> decodeToSet(ByteBuf data, Class<T> type) {
-		return this.jsonByteBufConverter.decodeToSet(data, type);
+	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value) {
+		return this.jsonByteBufConverter.encodeMany(value);
+	}
+	
+	@Override
+	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value, Class<T> type) {
+		return this.jsonByteBufConverter.encodeMany(value, type);
 	}
 
 	@Override
-	public <T> T[] decodeToArray(ByteBuf data, Class<T> type) {
-		return this.jsonByteBufConverter.decodeToArray(data, type);
-	}*/
-
+	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value, Type type) {
+		return this.jsonByteBufConverter.encodeMany(value, type);
+	}
+	
 	@Override
-	public <T> Publisher<ByteBuf> encodeOne(Mono<T> data) {
-		return this.jsonByteBufConverter.encodeOne(data);
+	public <T> ByteBuf encode(T value) {
+		return this.jsonByteBufConverter.encode(value);
+	}
+	
+	@Override
+	public <T> ByteBuf encode(T value, Class<T> type) throws ConverterException {
+		return this.jsonByteBufConverter.encode(value, type);
+	}
+	
+	@Override
+	public <T> ByteBuf encode(T value, Type type) throws ConverterException {
+		return this.jsonByteBufConverter.encode(value, type);
 	}
 
-	@Override
-	public <T> Publisher<ByteBuf> encodeMany(Flux<T> data) {
-		return this.jsonByteBufConverter.encodeMany(data);
-	}
-
-	@Override
-	public <T> ByteBuf encode(T data) {
-		return this.jsonByteBufConverter.encode(data);
-	}
-
-	/*@Override
-	public <T> ByteBuf encodeList(List<T> data) {
-		return this.jsonByteBufConverter.encodeList(data);
-	}
-
-	@Override
-	public <T> ByteBuf encodeSet(Set<T> data) {
-		return this.jsonByteBufConverter.encodeSet(data);
-	}
-
-	@Override
-	public <T> ByteBuf encodeArray(T[] data) {
-		return this.jsonByteBufConverter.encodeArray(data);
-	}*/
 }

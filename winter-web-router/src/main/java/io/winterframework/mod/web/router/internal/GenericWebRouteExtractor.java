@@ -19,8 +19,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import io.winterframework.mod.base.net.URIPattern;
 import io.winterframework.mod.web.Method;
-import io.winterframework.mod.web.router.PathAwareRoute.PathPattern;
 import io.winterframework.mod.web.server.ExchangeHandler;
 import io.winterframework.mod.web.router.WebExchange;
 import io.winterframework.mod.web.router.WebRoute;
@@ -39,7 +39,7 @@ public class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange, 
 	
 	private String path;
 	
-	private PathPattern pathPattern;
+	private URIPattern pathPattern;
 	
 	private Method method;
 	
@@ -76,7 +76,7 @@ public class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange, 
 		return null;
 	}
 	
-	private PathPattern getPathPattern() {
+	private URIPattern getPathPattern() {
 		if(this.pathPattern != null) {
 			return this.pathPattern;
 		}
@@ -156,7 +156,7 @@ public class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange, 
 	}
 
 	@Override
-	public GenericWebRouteExtractor pathPattern(PathPattern pathPattern) {
+	public GenericWebRouteExtractor pathPattern(URIPattern pathPattern) {
 		GenericWebRouteExtractor childExtractor = new GenericWebRouteExtractor(this);
 		childExtractor.pathPattern = pathPattern;
 		return childExtractor;
@@ -197,7 +197,7 @@ public class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange, 
 			route.setDisabled(disabled);
 			
 			String path = this.getPath();
-			PathPattern pathPattern = this.getPathPattern();
+			URIPattern pathPattern = this.getPathPattern();
 			Method method = this.getMethod();
 			String consume = this.getConsume();
 			String produce = this.getProduce();
@@ -207,7 +207,6 @@ public class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange, 
 				route.setPath(path);
 			}
 			if(pathPattern != null) {
-				route.setPath(pathPattern.getPath());
 				route.setPathPattern(pathPattern);
 			}
 			if(method != null) {

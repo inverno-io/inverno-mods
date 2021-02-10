@@ -15,11 +15,17 @@
  */
 package io.winterframework.mod.base.converter;
 
+import java.lang.reflect.Type;
+
 /**
  * @author jkuhn
  *
  */
 public interface Encoder<From, To> {
 
-	<T extends From> To encode(T data) throws ConverterException;
+	<T extends From> To encode(T value) throws ConverterException;
+	
+	<T extends From> To encode(T value, Class<T> type) throws ConverterException;
+	
+	<T extends From> To encode(T value, Type type) throws ConverterException;
 }

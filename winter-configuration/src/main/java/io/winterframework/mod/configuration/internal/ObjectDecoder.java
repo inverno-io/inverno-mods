@@ -17,6 +17,9 @@ package io.winterframework.mod.configuration.internal;
 
 import java.io.File;
 import java.lang.reflect.Array;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -26,8 +29,10 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Currency;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -46,194 +51,273 @@ public class ObjectDecoder implements SplittablePrimitiveDecoder<Object> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T decode(Object data, Class<T> type) {
-		if(type.isAssignableFrom(data.getClass())) {
-			return (T)data;
+	public <T> T decode(Object value, Class<T> type) {
+		if(type.isAssignableFrom(value.getClass())) {
+			return (T)value;
 		}
 		else {
-			throw new ConverterException(data + " can't be decoded to the requested type: " + type.getCanonicalName());
+			throw new ConverterException(value + " can't be decoded to the requested type: " + type.getCanonicalName());
 		}
 	}
 	
 	@SuppressWarnings("unchecked")
-	private <T> Collection<T> decodeToCollection(Object data, Class<T> type) {
-		if(Collection.class.isAssignableFrom(data.getClass())) {
-			Iterator<?> valueIterator = ((Collection<?>)data).iterator();
-			if(valueIterator.hasNext()) {
-				if(type.isAssignableFrom(valueIterator.next().getClass())) {
-					return (Collection<T>)data;
-				}
-				else {
-					throw new ConverterException(data + " is not a collection of " + type.getCanonicalName());
+	@Override
+	public <T> T decode(Object value, Type type) throws ConverterException {
+		if(type instanceof Class) {
+			return this.decode(value, (Class<T>)type);
+		}
+		else if(type instanceof GenericArrayType) {
+			return (T) this.decodeToArray(value, ((GenericArrayType)type).getGenericComponentType());
+		}
+		else if(type instanceof ParameterizedType) {
+			ParameterizedType parameterizedType = ((ParameterizedType)type);
+			if(parameterizedType.getActualTypeArguments().length == 1) {
+				if(parameterizedType.getRawType() instanceof Class) {
+					Class<?> rawType = (Class<?>)parameterizedType.getRawType();
+					Type typeArgument = parameterizedType.getActualTypeArguments()[0];
+					if(rawType.equals(Collection.class) || rawType.equals(List.class)) {
+						return (T) this.decodeToList(value, typeArgument);
+					}
+					else if(rawType.equals(Set.class)) {
+						return (T) this.decodeToSet(value, typeArgument);
+					}
 				}
 			}
-			return (Collection<T>)data;
+		}
+		throw new ConverterException("Can't decode " + String.class.getCanonicalName() + " to " + type.getTypeName());
+	}
+	
+	@SuppressWarnings("unchecked")
+	private <T> Collection<T> decodeToCollection(Object value, Class<T> type) {
+		if(Collection.class.isAssignableFrom(value.getClass())) {
+			Iterator<?> valueIterator = ((Collection<?>)value).iterator();
+			if(valueIterator.hasNext()) {
+				if(type.isAssignableFrom(valueIterator.next().getClass())) {
+					return (Collection<T>)value;
+				}
+				else {
+					throw new ConverterException(value + " is not a collection of " + type.getCanonicalName());
+				}
+			}
+			return (Collection<T>)value;
 		}
 		else {
-			throw new ConverterException(data + " is not a collection");
+			throw new ConverterException(value + " is not a collection");
 		}
 	}
+	
+	private <T> Collection<T> decodeToCollection(Object value, Type type, Collection<T> result) {
+		if(Collection.class.isAssignableFrom(value.getClass())) {
+			Iterator<?> valueIterator = ((Collection<?>)value).iterator();
+			if(valueIterator.hasNext()) {
+				result.add(this.decode(valueIterator.next(), type));
+			}
+			return result;
+		}
+		else {
+			throw new ConverterException(value + " is not a collection");
+		}
+	}
+	
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> List<T> decodeToList(Object data, Class<T> type) {
-		Collection<T> valueCollection = this.decodeToCollection(data, type);
+	public <T> List<T> decodeToList(Object value, Class<T> type) {
+		Collection<T> valueCollection = this.decodeToCollection(value, type);
 		if(List.class.isAssignableFrom(valueCollection.getClass())) {
-			return (List<T>)data;
+			return (List<T>)value;
 		}
 		else {
 			return valueCollection.stream().collect(Collectors.toList());
 		}
 	}
 
+	@Override
+	public <T> List<T> decodeToList(Object value, Type type) {
+		List<T> result = new ArrayList<>();
+		this.decodeToCollection(value, type, result);
+		return result;
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> Set<T> decodeToSet(Object data, Class<T> type) {
-		Collection<T> valueCollection = this.decodeToCollection(data, type);
+	public <T> Set<T> decodeToSet(Object value, Class<T> type) {
+		Collection<T> valueCollection = this.decodeToCollection(value, type);
 		if(List.class.isAssignableFrom(valueCollection.getClass())) {
-			return (Set<T>)data;
+			return (Set<T>)value;
 		}
 		else {
 			return valueCollection.stream().collect(Collectors.toSet());
 		}
 	}
+	
+	@Override
+	public <T> Set<T> decodeToSet(Object value, Type type) {
+		Set<T> result = new HashSet<>();
+		this.decodeToCollection(value, type, result);
+		return result;
+	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> T[] decodeToArray(Object data, Class<T> type) {
-		if(data.getClass().isArray()) {
-			if(data.getClass().getComponentType().equals(type)) {
-				return (T[])data;
+	public <T> T[] decodeToArray(Object value, Class<T> type) {
+		if(value.getClass().isArray()) {
+			if(value.getClass().getComponentType().equals(type)) {
+				return (T[])value;
 			}
-			else if(type.isAssignableFrom(data.getClass().getComponentType())) {
-				T[] array = (T[])Array.newInstance(type, Array.getLength(data));
+			else if(type.isAssignableFrom(value.getClass().getComponentType())) {
+				T[] array = (T[])Array.newInstance(type, Array.getLength(value));
 				for(int i=0;i<array.length;i++) {
-					array[i] = (T)Array.get(data, i);
+					array[i] = (T)Array.get(value, i);
 				}
 				return array;
 			}
 			else {
-				throw new ConverterException(data + " can't be decoded to an array of " + type.getCanonicalName());
+				throw new ConverterException(value + " can't be decoded to an array of " + type.getCanonicalName());
 			}
 		}
 		else {
-			throw new ConverterException(data + " is not an array");
+			throw new ConverterException(value + " is not an array");
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public Byte decodeByte(Object data) throws ConverterException {
-		return this.decode(data, Byte.class);
+	public <T> T[] decodeToArray(Object value, Type type) {
+		if(value.getClass().isArray()) {
+			T[] result;
+			if(type instanceof Class) {
+				result = (T[]) Array.newInstance((Class<T>)type, Array.getLength(value));
+			}
+			else if(type instanceof ParameterizedType) {
+				ParameterizedType parameterizedType = (ParameterizedType)type;
+				result = (T[]) Array.newInstance((Class<T>)parameterizedType.getRawType(), Array.getLength(value));
+			}
+			else {
+				throw new ConverterException("Can't decode " + String.class.getCanonicalName() + " to array of " + type.getTypeName());
+			}
+			for(int i = 0;i<result.length;i++) {
+				result[i] = this.decode(Array.get(value, i), type);
+			}
+			return result;
+		}
+		else {
+			throw new ConverterException(value + " is not an array");
+		}
+	}
+	
+	@Override
+	public Byte decodeByte(Object value) throws ConverterException {
+		return this.decode(value, Byte.class);
 	}
 
 	@Override
-	public Short decodeShort(Object data) throws ConverterException {
-		return this.decode(data, Short.class);
+	public Short decodeShort(Object value) throws ConverterException {
+		return this.decode(value, Short.class);
 	}
 
 	@Override
-	public Integer decodeInteger(Object data) throws ConverterException {
-		return this.decode(data, Integer.class);
+	public Integer decodeInteger(Object value) throws ConverterException {
+		return this.decode(value, Integer.class);
 	}
 
 	@Override
-	public Long decodeLong(Object data) throws ConverterException {
-		return this.decode(data, Long.class);
+	public Long decodeLong(Object value) throws ConverterException {
+		return this.decode(value, Long.class);
 	}
 
 	@Override
-	public Float decodeFloat(Object data) throws ConverterException {
-		return this.decode(data, Float.class);
+	public Float decodeFloat(Object value) throws ConverterException {
+		return this.decode(value, Float.class);
 	}
 
 	@Override
-	public Double decodeDouble(Object data) throws ConverterException {
-		return this.decode(data, Double.class);
+	public Double decodeDouble(Object value) throws ConverterException {
+		return this.decode(value, Double.class);
 	}
 
 	@Override
-	public Character decodeCharacter(Object data) throws ConverterException {
-		return this.decode(data, Character.class);
+	public Character decodeCharacter(Object value) throws ConverterException {
+		return this.decode(value, Character.class);
 	}
 
 	@Override
-	public Boolean decodeBoolean(Object data) throws ConverterException {
-		return this.decode(data, Boolean.class);
+	public Boolean decodeBoolean(Object value) throws ConverterException {
+		return this.decode(value, Boolean.class);
 	}
 
 	@Override
-	public String decodeString(Object data) throws ConverterException {
-		return this.decode(data, String.class);
+	public String decodeString(Object value) throws ConverterException {
+		return this.decode(value, String.class);
 	}
 
 	@Override
-	public BigInteger decodeBigInteger(Object data) throws ConverterException {
-		return this.decode(data, BigInteger.class);
+	public BigInteger decodeBigInteger(Object value) throws ConverterException {
+		return this.decode(value, BigInteger.class);
 	}
 
 	@Override
-	public BigDecimal decodeBigDecimal(Object data) throws ConverterException {
-		return this.decode(data, BigDecimal.class);
+	public BigDecimal decodeBigDecimal(Object value) throws ConverterException {
+		return this.decode(value, BigDecimal.class);
 	}
 
 	@Override
-	public LocalDate decodeLocalDate(Object data) throws ConverterException {
-		return this.decode(data, LocalDate.class);
+	public LocalDate decodeLocalDate(Object value) throws ConverterException {
+		return this.decode(value, LocalDate.class);
 	}
 
 	@Override
-	public LocalDateTime decodeLocalDateTime(Object data) throws ConverterException {
-		return this.decode(data, LocalDateTime.class);
+	public LocalDateTime decodeLocalDateTime(Object value) throws ConverterException {
+		return this.decode(value, LocalDateTime.class);
 	}
 
 	@Override
-	public ZonedDateTime decodeZonedDateTime(Object data) throws ConverterException {
-		return this.decode(data, ZonedDateTime.class);
+	public ZonedDateTime decodeZonedDateTime(Object value) throws ConverterException {
+		return this.decode(value, ZonedDateTime.class);
 	}
 
 	@Override
-	public Currency decodeCurrency(Object data) throws ConverterException {
-		return this.decode(data, Currency.class);
+	public Currency decodeCurrency(Object value) throws ConverterException {
+		return this.decode(value, Currency.class);
 	}
 
 	@Override
-	public Locale decodeLocale(Object data) throws ConverterException {
-		return this.decode(data, Locale.class);
+	public Locale decodeLocale(Object value) throws ConverterException {
+		return this.decode(value, Locale.class);
 	}
 
 	@Override
-	public File decodeFile(Object data) throws ConverterException {
-		return this.decode(data, File.class);
+	public File decodeFile(Object value) throws ConverterException {
+		return this.decode(value, File.class);
 	}
 
 	@Override
-	public Path decodePath(Object data) throws ConverterException {
-		return this.decode(data, Path.class);
+	public Path decodePath(Object value) throws ConverterException {
+		return this.decode(value, Path.class);
 	}
 
 	@Override
-	public URI decodeURI(Object data) throws ConverterException {
-		return this.decode(data, URI.class);
+	public URI decodeURI(Object value) throws ConverterException {
+		return this.decode(value, URI.class);
 	}
 
 	@Override
-	public URL decodeURL(Object data) throws ConverterException {
-		return this.decode(data, URL.class);
+	public URL decodeURL(Object value) throws ConverterException {
+		return this.decode(value, URL.class);
 	}
 
 	@Override
-	public Pattern decodePattern(Object data) throws ConverterException {
-		return this.decode(data, Pattern.class);
+	public Pattern decodePattern(Object value) throws ConverterException {
+		return this.decode(value, Pattern.class);
 	}
 
 	@Override
-	public InetAddress decodeInetAddress(Object data) throws ConverterException {
-		return this.decode(data, InetAddress.class);
+	public InetAddress decodeInetAddress(Object value) throws ConverterException {
+		return this.decode(value, InetAddress.class);
 	}
 
 	@Override
-	public Class<?> decodeClass(Object data) throws ConverterException {
-		return this.decode(data, Class.class);
+	public Class<?> decodeClass(Object value) throws ConverterException {
+		return this.decode(value, Class.class);
 	}
-
 }

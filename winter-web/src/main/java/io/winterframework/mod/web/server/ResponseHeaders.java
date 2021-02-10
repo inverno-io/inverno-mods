@@ -55,6 +55,8 @@ public interface ResponseHeaders {
 	
 	Optional<Headers.ContentType> getContentTypeHeader();
 	
+	boolean contains(CharSequence name);
+	
 	boolean contains(CharSequence name, CharSequence value);
 	
 	Set<String> getNames();

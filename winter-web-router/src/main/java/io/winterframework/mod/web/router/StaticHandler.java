@@ -60,7 +60,7 @@ public class StaticHandler implements WebExchangeHandler<WebExchange> {
 				throw new NotFoundException();
 			}
 			try(Resource requestedResource = this.baseResource.resolve(resourceUri)) {
-				exchange.response().body().resource().data(requestedResource);
+				exchange.response().body().resource().value(requestedResource);
 			}
 		} 
 		catch (URISyntaxException e) {

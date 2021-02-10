@@ -15,7 +15,7 @@
  */
 package io.winterframework.mod.base.converter;
 
-import java.util.Comparator;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,42 +26,19 @@ import java.util.Map;
  */
 public class CompositeEncoder<To> implements Encoder<Object, To> {
 
-	private Map<Class<?>, CompoundEncoder<?, To>> encoders;
+	private Map<Type, CompoundEncoder<?, To>> encodersCache;
+	
+	private List<CompoundEncoder<?, To>> encoders;
 	
 	private Encoder<Object, To> defaultEncoder;
 	
-	private static final Comparator<Class<?>> CLASS_COMPARATOR = (t1, t2) -> {
-		if(t1.isAssignableFrom(t2)) {
-			return -1;
-		}
-		else if(t2.isAssignableFrom(t1)) {
-			return 1;
-		}
-		else {
-			return 0;
-		}
-	};
-	
 	public CompositeEncoder() {
-		this.encoders = new HashMap<>();
+		this.setEncoders(List.of());
 	}
 	
 	public void setEncoders(List<CompoundEncoder<?, To>> encoders) {
-		this.encoders = new HashMap<>();
-		if(encoders != null) {
-			for(CompoundEncoder<?, To> encoder : encoders) {
-				// TODO at some point this is an issue in Spring as well, we should fix this in winter
-				// provide annotation for sorting at compile time and be able to inject maps as well 
-				// - annotations defined on the beans with some meta data
-				// - annotations defined on multiple bean socket to specify sorting for list, array or sets
-				// - we can also group by key to inject a map => new multi socket type
-				// - this is a bit tricky as for selector when it comes to the injection of list along with single values 
-				CompoundEncoder<?, To> previousEncoder = this.encoders.put(encoder.getEncodedType(), encoder); 
-				if(previousEncoder != null) {
-					throw new IllegalStateException("Multiple decoders found for type " + encoder.getEncodedType() + ": " + previousEncoder.toString() + ", " + encoder.toString());
-				}
-			}
-		}
+		this.encoders = encoders;
+		this.encodersCache = new HashMap<>();
 	}
 	
 	public void setDefaultEncoder(Encoder<Object, To> defaultEncoder) {
@@ -69,35 +46,48 @@ public class CompositeEncoder<To> implements Encoder<Object, To> {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected <T> CompoundEncoder<T, To> getEncoder(Class<T> type) throws EncoderNotFoundException {
-		CompoundEncoder<T, To> result = (CompoundEncoder<T, To>) this.encoders.get(type);
-		if(result == null && !this.encoders.containsKey(type)) {
-			CompoundEncoder<?, To> encoder = this.encoders.values().stream()
-				.filter(e -> e != null && e.getEncodedType().isAssignableFrom(type))
-				.sorted(Comparator.comparing(e -> e.getEncodedType(), CLASS_COMPARATOR))
-				.findFirst().orElse(null);
-			
-			this.encoders.put(type, encoder);
-			result = (CompoundEncoder<T, To>) encoder;
+	protected <T> CompoundEncoder<T, To> getEncoder(Type type) throws EncoderNotFoundException {
+		CompoundEncoder<T, To> result = (CompoundEncoder<T, To>) this.encodersCache.get(type);
+		if(result == null && !this.encodersCache.containsKey(type)) {
+			for(CompoundEncoder<?, To> encoder : this.encoders) {
+				if(encoder.canEncode(type)) {
+					this.encodersCache.put(type, encoder);
+					result = (CompoundEncoder<T, To>) encoder;
+					break;
+				}
+			}
+			if(result == null) {
+				this.encodersCache.put(type, null);
+			}
 		}
 		if(result == null) {
-			throw new EncoderNotFoundException("No encoder found for type: " + type.getCanonicalName());
+			throw new EncoderNotFoundException("No encoder found for type: " + type.getTypeName());
 		}
 		return result;
 	}
 
+	@Override
+	public <T> To encode(T value) throws EncoderNotFoundException {
+		return this.encode(value, (Type)value.getClass());
+	}
+	
+	@Override
+	public <T> To encode(T value, Class<T> type) throws ConverterException {
+		return this.encode(value, (Type)type);
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> To encode(T data) throws EncoderNotFoundException {
-		if(data == null) {
+	public <T> To encode(T value, Type type) throws ConverterException {
+		if(value == null) {
 			return null;
 		}
 		try {
-			return ((CompoundEncoder<T, To>)this.getEncoder(data.getClass())).encode(data);
+			return ((CompoundEncoder<T, To>)this.getEncoder(type)).encode(value);
 		}
 		catch(EncoderNotFoundException e) {
 			if(this.defaultEncoder != null) {
-				return this.defaultEncoder.encode(data);
+				return this.defaultEncoder.encode(value);
 			}
 			throw e;
 		}
