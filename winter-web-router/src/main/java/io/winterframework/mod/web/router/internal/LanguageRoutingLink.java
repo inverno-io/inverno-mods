@@ -22,13 +22,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import io.winterframework.mod.web.router.AcceptAwareRoute;
-import io.winterframework.mod.web.server.Exchange;
 import io.winterframework.mod.web.WebException;
 import io.winterframework.mod.web.header.HeaderCodec;
 import io.winterframework.mod.web.header.Headers;
-import io.winterframework.mod.web.header.Headers.AcceptMatch;
 import io.winterframework.mod.web.header.Headers.AcceptLanguage.LanguageRange;
+import io.winterframework.mod.web.header.Headers.AcceptMatch;
+import io.winterframework.mod.web.router.AcceptAwareRoute;
+import io.winterframework.mod.web.server.Exchange;
 
 /**
  * @author jkuhn
@@ -36,14 +36,20 @@ import io.winterframework.mod.web.header.Headers.AcceptLanguage.LanguageRange;
  */
 class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> extends RoutingLink<A, LanguageRoutingLink<A, B>, B> {
 
-	private HeaderCodec<? extends Headers.AcceptLanguage> acceptLanguageCodec;
+	private final HeaderCodec<? extends Headers.AcceptLanguage> acceptLanguageCodec;
 	
 	private Map<Headers.AcceptLanguage.LanguageRange, RoutingLink<A, ?, B>> handlers;
+	private Map<Headers.AcceptLanguage.LanguageRange, RoutingLink<A, ?, B>> enabledHandlers;
 	
 	public LanguageRoutingLink(HeaderCodec<? extends Headers.AcceptLanguage> acceptLanguageCodec) {
 		super(() -> new LanguageRoutingLink<>(acceptLanguageCodec));
 		this.acceptLanguageCodec = acceptLanguageCodec;
 		this.handlers = new LinkedHashMap<>();
+		this.enabledHandlers = Map.of();
+	}
+	
+	private void updateEnabledHandlers() {
+		this.enabledHandlers = this.handlers.entrySet().stream().filter(e -> !e.getValue().isDisabled()).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a,b) -> a, LinkedHashMap::new));
 	}
 
 	@Override
@@ -61,6 +67,7 @@ class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 				this.handlers.put(languageRange, this.nextLink.createNextLink().setRoute(route));
 			}
 			this.handlers = this.handlers.entrySet().stream().sorted(Comparator.comparing(Entry::getKey, Headers.AcceptLanguage.LanguageRange.COMPARATOR)).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a,b) -> a, LinkedHashMap::new));
+			this.updateEnabledHandlers();
 		}
 		else {
 			this.nextLink.setRoute(route);
@@ -76,6 +83,7 @@ class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 			RoutingLink<A, ?, B> handler = this.handlers.get(languageRange);
 			if(handler != null) {
 				handler.enableRoute(route);
+				this.updateEnabledHandlers();
 			}
 			// route doesn't exist so let's do nothing
 		}
@@ -92,6 +100,7 @@ class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 			RoutingLink<A, ?, B> handler = this.handlers.get(languageRange);
 			if(handler != null) {
 				handler.disableRoute(route);
+				this.updateEnabledHandlers();
 			}
 			// route doesn't exist so let's do nothing
 		}
@@ -111,6 +120,7 @@ class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 				if(!handler.hasRoute()) {
 					// The link has no more routes, we can remove it for good 
 					this.handlers.remove(languageRange);
+					this.updateEnabledHandlers();
 				}
 			}
 			// route doesn't exist so let's do nothing
@@ -144,17 +154,19 @@ class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 	
 	@Override
 	public void handle(A exchange) throws WebException {
-		if(this.handlers.isEmpty()) {
+		if(this.enabledHandlers.isEmpty()) {
 			this.nextLink.handle(exchange);
 		}
 		else {
-			Iterator<AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, ?, B>>>> acceptMatchesIterator = Headers.AcceptLanguage.merge(exchange.request().headers().<Headers.AcceptLanguage>getAllHeader(Headers.NAME_ACCEPT_LANGUAGE))
-				.orElse(this.acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, "*"))
+			Headers.AcceptLanguage acceptLanguage = Headers.AcceptLanguage.merge(exchange.request().headers().<Headers.AcceptLanguage>getAllHeader(Headers.NAME_ACCEPT_LANGUAGE))
+				.orElse(this.acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, "*"));
+			
+			Iterator<AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, ?, B>>>> acceptLanguageMatchesIterator = acceptLanguage
 				.findAllMatch(this.handlers.entrySet(), Entry::getKey)
 				.iterator();
 			
-			while(acceptMatchesIterator.hasNext()) {
-				AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, ?, B>>> bestMatch = acceptMatchesIterator.next();
+			while(acceptLanguageMatchesIterator.hasNext()) {
+				AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, ?, B>>> bestMatch = acceptLanguageMatchesIterator.next();
 				if(bestMatch.getSource().getLanguageTag().equals("*")) {
 					// First check if the next link can handle the request since this is the default
 					try {
@@ -184,6 +196,9 @@ class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 					}
 				}
 			}
+			// We havent't found a matching language so we default to the next link which
+			// can throw a RouteNorFoundException.
+			// User has to explicitly define a default handler
 			// Here we can possibly invoke the next link twice but in that case a
 			// RouteNotFoundException or DisabledRouteException is thrown so there shouldn't
 			// be complex processing involved.

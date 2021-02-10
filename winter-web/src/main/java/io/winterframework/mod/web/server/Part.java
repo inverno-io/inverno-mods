@@ -18,7 +18,6 @@ package io.winterframework.mod.web.server;
 import java.util.Optional;
 
 import io.netty.buffer.ByteBuf;
-import reactor.core.publisher.Flux;
 
 /**
  * @author jkuhn
@@ -32,5 +31,5 @@ public interface Part {
 	
 	PartHeaders headers();
 	
-	Flux<ByteBuf> data();
+	RequestData<ByteBuf> raw();
 }

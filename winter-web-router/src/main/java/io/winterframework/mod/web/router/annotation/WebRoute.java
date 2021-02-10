@@ -16,10 +16,10 @@
 package io.winterframework.mod.web.router.annotation;
 
 import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.SOURCE;
 
 import java.lang.annotation.Documented;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -31,14 +31,17 @@ import io.winterframework.mod.web.Method;
  */
 @Documented
 @Retention(SOURCE)
-@Target({ TYPE, METHOD })
+@Target({ METHOD })
+@Inherited
 public @interface WebRoute {
 
-	Method[] method() default Method.GET;
+	Method[] method() default {};
 	
 	String[] path() default {};
 	
 	String[] value() default {};
+	
+	boolean matchTrailingSlash() default false;
 	
 	String[] consumes() default {};
 	

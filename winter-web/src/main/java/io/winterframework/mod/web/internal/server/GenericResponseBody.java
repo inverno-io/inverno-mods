@@ -15,6 +15,7 @@
  */
 package io.winterframework.mod.web.internal.server;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.reactivestreams.Publisher;
@@ -28,8 +29,7 @@ import io.winterframework.mod.web.InternalServerErrorException;
 import io.winterframework.mod.web.NotFoundException;
 import io.winterframework.mod.web.header.Headers;
 import io.winterframework.mod.web.server.ResponseBody;
-import io.winterframework.mod.web.server.ServerSentEvent;
-import io.winterframework.mod.web.server.ServerSentEvent.Configurator;
+import io.winterframework.mod.web.server.ResponseData;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
@@ -44,9 +44,9 @@ public class GenericResponseBody implements ResponseBody {
 	
 	protected AbstractResponse response;
 	
-	protected ResponseBody.Raw dataBody;
-	protected ResponseBody.Sse<ByteBuf> sseBody;
-	protected ResponseBody.Resource resourceBody;
+	protected ResponseData<ByteBuf> rawData;
+	protected ResponseBody.Resource resourceData;
+	protected ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> sseData;
 	
 	private MonoSink<Publisher<ByteBuf>> dataEmitter;
 	private Publisher<ByteBuf> data;
@@ -89,56 +89,94 @@ public class GenericResponseBody implements ResponseBody {
 	}
 
 	@Override
-	public Raw raw() {
-		if(this.dataBody == null) {
-			this.dataBody = new GenericRawResponseBody();
+	public ResponseData<ByteBuf> raw() {
+		if(this.rawData == null) {
+			this.rawData = new GenericResponseBodyRawData();
 		}
-		return this.dataBody;
-	}
-
-	@Override
-	public Sse<ByteBuf> sse() {
-		if(this.sseBody == null) {
-			this.sseBody = new GenericSseResponseBody();
-		}
-		return this.sseBody;
+		return this.rawData;
 	}
 	
 	@Override
 	public Resource resource() {
-		if(this.resourceBody == null) {
-			this.resourceBody = new GenericResourceResponseBody();
+		if(this.resourceData == null) {
+			this.resourceData = new GenericResponseBodyResourceData();
 		}
-		return this.resourceBody;
+		return this.resourceData;
 	}
 	
-	protected class GenericRawResponseBody implements ResponseBody.Raw {
+	@Override
+	public ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> sse() {
+		if(this.sseData == null) {
+			this.sseData = new GenericResponseBodySseData();
+		}
+		return this.sseData;
+	}
+	
+	protected class GenericResponseBodyRawData implements ResponseData<ByteBuf> {
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public <T extends ByteBuf> void stream(Publisher<T> data) {
+			GenericResponseBody.this.setData((Publisher<ByteBuf>) data);
+		}
 
 		@Override
-		public void data(Publisher<ByteBuf> data) {
-			GenericResponseBody.this.setData(data);
+		public <T extends ByteBuf> void value(T data) {
+			this.stream(Mono.just(data));
+		}
+	}
+	
+	protected class GenericResponseBodyResourceData implements ResponseBody.Resource {
+
+		protected void populateHeaders(io.winterframework.mod.base.resource.Resource resource) {
+			GenericResponseBody.this.response.headers(h -> {
+				if(GenericResponseBody.this.response.headers().getContentLength() == null) {
+					Long size = resource.size();
+					if(size != null) {
+						h.contentLength(size);
+					}
+				}
+				
+				if(GenericResponseBody.this.response.headers().getCharSequence(Headers.NAME_CONTENT_TYPE) == null) {
+					String mediaType = resource.getMediaType();
+					if(mediaType != null) {
+						h.contentType(mediaType);
+					}
+				}
+			});
 		}
 		
 		@Override
-		public void data(String data) {
-			this.data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(data, Charsets.UTF_8))));
-		}
-		
-		@Override
-		public void data(byte[] data) {
-			this.data(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(data))));
+		public void value(io.winterframework.mod.base.resource.Resource resource) {
+			// Http2 doesn't support FileRegion so we have to read the resource and send it to the response data flux
+			Boolean exists = resource.exists();
+			if(exists == null || exists) {
+				// In case of file resources we should always be able to determine existence
+				// For other resources with a null exists we can still try, worst case scenario: 
+				// internal server error
+				this.populateHeaders(resource);
+				GenericResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable")));
+			}
+			else {
+				throw new NotFoundException();
+			}
 		}
 	}
 
-	protected class GenericSseResponseBody implements ResponseBody.Sse<ByteBuf> {
-
+	protected class GenericResponseBodySseData implements ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> {
+		
 		@Override
-		public void events(Publisher<ServerSentEvent<ByteBuf>> events) {
+		public void from(BiConsumer<ResponseBody.Sse.EventFactory<ByteBuf, Event<ByteBuf>>, ResponseData<ResponseBody.Sse.Event<ByteBuf>>> data) {
+			data.accept(this::create, this::stream);
+		}
+		
+		protected <T extends ResponseBody.Sse.Event<ByteBuf>> void stream(Publisher<T> value) {
 			GenericResponseBody.this.response.headers(headers -> headers
 				.contentType(GenericResponseBody.SSE_CONTENT_TYPE)
 			);
 			
-			GenericResponseBody.this.setData(Flux.from(events)
+			GenericResponseBody.this.setData(Flux.from(value)
+				.cast(GenericEvent.class)
 				.flatMapSequential(sse -> {
 					StringBuilder sseMetaData = new StringBuilder();
 					if(sse.getId() != null) {
@@ -150,12 +188,14 @@ public class GenericResponseBody implements ResponseBody {
 					if(sse.getComment() != null) {
 						sseMetaData.append(":").append(sse.getComment().replaceAll("\\r\\n|\\r|\\n", "\r\n:")).append("\n");
 					}
+					if(sse.getData() != null) {
+						sseMetaData.append("data:");
+					}
 					
 					Flux<ByteBuf> sseData = Flux.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(sseMetaData, Charsets.UTF_8)));
 					
 					if(sse.getData() != null) {
 						sseData = sseData
-							.concatWith(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("data:", Charsets.UTF_8))))
 							.concatWith(Flux.from(sse.getData())
 								.map(chunk -> {
 									ByteBuf escapedChunk = Unpooled.unreleasableBuffer(Unpooled.buffer(chunk.readableBytes(), Integer.MAX_VALUE));
@@ -183,48 +223,66 @@ public class GenericResponseBody implements ResponseBody {
 					return sseData;
 				}));
 		}
-
-		@Override
-		public ServerSentEvent<ByteBuf> create(Consumer<Configurator<ByteBuf>> configurer) {
-			GenericServerSentEvent sse = new GenericServerSentEvent();
+		
+		protected ResponseBody.Sse.Event<ByteBuf> create(Consumer<ResponseBody.Sse.Event<ByteBuf>> configurer) {
+			GenericEvent sse = new GenericEvent();
 			configurer.accept(sse);
 			return sse;
 		}
-	}
-	
-	protected class GenericResourceResponseBody implements ResponseBody.Resource {
-
-		protected void populateHeaders(io.winterframework.mod.base.resource.Resource resource) {
-			GenericResponseBody.this.response.headers(h -> {
-				if(GenericResponseBody.this.response.headers().getContentLength() == null) {
-					Long size = resource.size();
-					if(size != null) {
-						h.contentLength(size);
-					}
-				}
-				
-				if(GenericResponseBody.this.response.headers().getCharSequence(Headers.NAME_CONTENT_TYPE) == null) {
-					String mediaType = resource.getMediaType();
-					if(mediaType != null) {
-						h.contentType(mediaType);
-					}
-				}
-			});
-		}
 		
-		@Override
-		public void data(io.winterframework.mod.base.resource.Resource resource) {
-			// Http2 doesn't support FileRegion so we have to read the resource and send it to the response data flux
-			Boolean exists = resource.exists();
-			if(exists == null || exists) {
-				// In case of file resources we should always be able to determine existence
-				// For other resources with a null exists we can still try, worst case scenario: 
-				// internal server error
-				this.populateHeaders(resource);
-				GenericResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable")));
+		protected final class GenericEvent implements ResponseBody.Sse.Event<ByteBuf> {
+			
+			private String id;
+			
+			private String comment;
+			
+			private String event;
+			
+			private Publisher<ByteBuf> data;
+
+			@SuppressWarnings("unchecked")
+			@Override
+			public <T extends ByteBuf> void stream(Publisher<T> data) {
+				this.data = (Publisher<ByteBuf>) data;
 			}
-			else {
-				throw new NotFoundException();
+
+			@Override
+			public <T extends ByteBuf> void value(T data) {
+				this.data = Mono.just(data);
+			}
+
+			@Override
+			public GenericEvent id(String id) {
+				this.id = id;
+				return this;
+			}
+
+			@Override
+			public GenericEvent comment(String comment) {
+				this.comment = comment;
+				return this;
+			}
+
+			@Override
+			public GenericEvent event(String event) {
+				this.event = event;
+				return this;
+			}
+			
+			public String getId() {
+				return id;
+			}
+			
+			public String getComment() {
+				return comment;
+			}
+			
+			public String getEvent() {
+				return event;
+			}
+			
+			public Publisher<ByteBuf> getData() {
+				return data;
 			}
 		}
 	}

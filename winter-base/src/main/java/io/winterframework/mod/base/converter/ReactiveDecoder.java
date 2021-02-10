@@ -15,6 +15,8 @@
  */
 package io.winterframework.mod.base.converter;
 
+import java.lang.reflect.Type;
+
 import org.reactivestreams.Publisher;
 
 import reactor.core.publisher.Flux;
@@ -26,6 +28,9 @@ import reactor.core.publisher.Mono;
  */
 public interface ReactiveDecoder<From, To> extends Decoder<From, To> {
 
-	<T extends To> Mono<T> decodeOne(Publisher<From> data, Class<T> type);
-	<T extends To> Flux<T> decodeMany(Publisher<From> data, Class<T> type);
+	<T extends To> Mono<T> decodeOne(Publisher<From> value, Class<T> type);
+	<T extends To> Mono<T> decodeOne(Publisher<From> value, Type type);
+	
+	<T extends To> Flux<T> decodeMany(Publisher<From> value, Class<T> type);
+	<T extends To> Flux<T> decodeMany(Publisher<From> value, Type type);
 }

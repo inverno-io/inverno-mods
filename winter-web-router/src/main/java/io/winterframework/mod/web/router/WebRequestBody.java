@@ -15,9 +15,9 @@
  */
 package io.winterframework.mod.web.router;
 
+import java.lang.reflect.Type;
+
 import io.winterframework.mod.web.server.RequestBody;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 /**
  * @author jkuhn
@@ -25,12 +25,13 @@ import reactor.core.publisher.Mono;
  */
 public interface WebRequestBody extends RequestBody {
 
-	<A> Decoder<A> decoder(Class<A> type);
+	<A> RequestDataDecoder<A> decoder(Class<A> type);
 	
-	public static interface Decoder<A> {
-		
-		Mono<A> one();
-		
-		Flux<A> many();
+	<A> RequestDataDecoder<A> decoder(Type type);
+	
+	@Override
+	Multipart<? extends WebPart> multipart() throws IllegalStateException;
+	
+	public static interface WebMultipart extends Multipart<WebPart> {
 	}
 }

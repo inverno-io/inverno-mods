@@ -33,4 +33,6 @@ module io.winterframework.mod.web.router {
 	
 	exports io.winterframework.mod.web.router;
 	exports io.winterframework.mod.web.router.annotation;
+	
+	provides io.winterframework.core.compiler.spi.plugin.CompilerPlugin with io.winterframework.mod.web.router.internal.compiler.WebRouterConfigurerCompilerPlugin;
 }

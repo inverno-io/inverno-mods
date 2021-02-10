@@ -16,6 +16,7 @@
 package io.winterframework.mod.web.router.internal;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -37,25 +38,38 @@ import java.util.regex.Pattern;
 
 import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.web.Parameter;
-import io.winterframework.mod.web.router.PathParameters;
 
 /**
  * @author jkuhn
  *
  */
-public class GenericPathParameters implements PathParameters {
+public class GenericPathParameters implements MutablePathParameters {
 
-	private ObjectConverter<String> parameterConverter;
+	private final ObjectConverter<String> parameterConverter;
 	
-	private Map<String, Parameter> parameters;
+	private final Map<String, Parameter> parameters;
 	
 	public GenericPathParameters(ObjectConverter<String> parameterConverter) {
 		this.parameterConverter = parameterConverter;
 		this.parameters = new HashMap<>();
 	}
 	
+	@Override
 	public void put(String name, String value) {
 		this.parameters.put(name,  new GenericPathParameter(name, value));
+	}
+	
+	@Override
+	public void putAll(Map<String, String> parameters) {
+		for(Map.Entry<String, String> e : parameters.entrySet()) {
+			this.parameters.put(e.getKey(),  new GenericPathParameter(e.getKey(), e.getValue()));
+		}
+	}
+	
+	@Override
+	public String remove(String name) {
+		Parameter removedParameter = this.parameters.remove(name);
+		return removedParameter != null ? removedParameter.getValue() : null;
 	}
 
 	@Override
@@ -98,9 +112,19 @@ public class GenericPathParameters implements PathParameters {
 		public <T> T as(Class<T> type) {
 			return GenericPathParameters.this.parameterConverter.decode(this.value, type);
 		}
+		
+		@Override
+		public <T> T as(Type type) {
+			return GenericPathParameters.this.parameterConverter.decode(this.value, type);
+		}
 
 		@Override
 		public <T> T[] asArrayOf(Class<T> type) {
+			return GenericPathParameters.this.parameterConverter.decodeToArray(this.value, type);
+		}
+		
+		@Override
+		public <T> T[] asArrayOf(Type type) {
 			return GenericPathParameters.this.parameterConverter.decodeToArray(this.value, type);
 		}
 
@@ -110,7 +134,17 @@ public class GenericPathParameters implements PathParameters {
 		}
 
 		@Override
+		public <T> List<T> asListOf(Type type) {
+			return GenericPathParameters.this.parameterConverter.decodeToList(this.value, type);
+		}
+		
+		@Override
 		public <T> Set<T> asSetOf(Class<T> type) {
+			return GenericPathParameters.this.parameterConverter.decodeToSet(this.value, type);
+		}
+		
+		@Override
+		public <T> Set<T> asSetOf(Type type) {
 			return GenericPathParameters.this.parameterConverter.decodeToSet(this.value, type);
 		}
 

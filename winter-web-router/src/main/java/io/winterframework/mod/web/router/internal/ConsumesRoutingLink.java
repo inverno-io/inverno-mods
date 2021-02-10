@@ -36,7 +36,7 @@ import io.winterframework.mod.web.header.Headers.AcceptMatch;
  */
 class ConsumesRoutingLink<A extends Exchange, B extends ContentAwareRoute<A>> extends RoutingLink<A, ConsumesRoutingLink<A, B>, B> {
 
-	private HeaderCodec<? extends Headers.Accept> acceptCodec;
+	private final HeaderCodec<? extends Headers.Accept> acceptCodec;
 	
 	private Map<Headers.Accept.MediaRange, RoutingLink<A, ?, B>> handlers;
 	

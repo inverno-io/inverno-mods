@@ -17,7 +17,6 @@ package io.winterframework.mod.web.router.internal;
 
 import java.net.URI;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import io.winterframework.core.annotation.Bean;
@@ -35,6 +34,7 @@ import io.winterframework.mod.web.router.WebExchange;
 import io.winterframework.mod.web.router.WebRoute;
 import io.winterframework.mod.web.router.WebRouteManager;
 import io.winterframework.mod.web.router.WebRouter;
+import io.winterframework.mod.web.router.WebRouterConfigurer;
 import io.winterframework.mod.web.server.Exchange;
 
 /**
@@ -44,19 +44,19 @@ import io.winterframework.mod.web.server.Exchange;
 @Bean( name = "webRouter" )
 public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 
-	private RoutingLink<WebExchange, ?, WebRoute<WebExchange>> firstLink;
+	private final RoutingLink<WebExchange, ?, WebRoute<WebExchange>> firstLink;
 	
-	private Consumer<WebRouter<WebExchange>> configurer;
+	private final ResourceService resourceService;
 	
-	private ResourceService resourceService;
+	private final DataConversionService dataConversionService;
 	
-	private BodyConversionService bodyConversionService;
+	private final ObjectConverter<String> parameterConverter;
 	
-	private ObjectConverter<String> parameterConverter;
+	private WebRouterConfigurer<WebExchange> configurer;
 	
-	public GenericWebRouter(ResourceService resourceService, BodyConversionService bodyConversionService, ObjectConverter<String> parameterConverter) {
+	public GenericWebRouter(ResourceService resourceService, DataConversionService dataConversionService, ObjectConverter<String> parameterConverter) {
 		this.resourceService = resourceService;
-		this.bodyConversionService = bodyConversionService;
+		this.dataConversionService = dataConversionService;
 		this.parameterConverter = parameterConverter;
 		AcceptCodec acceptCodec = new AcceptCodec(false);
 		ContentTypeCodec contentTypeCodec = new ContentTypeCodec();
@@ -77,7 +77,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 		this.route().path("/favicon.ico").handler(exchange -> {
 			if(exchange.request().headers().getPath().equalsIgnoreCase("/favicon.ico")) {
 				try(Resource favicon = this.resourceService.get(URI.create("classpath:/winter_favicon.svg"))) {
-					exchange.response().body().resource().data(favicon);
+					exchange.response().body().resource().value(favicon);
 				} 
 				catch (Exception e) {
 					throw new NotFoundException();
@@ -92,7 +92,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 		}
 	}
 	
-	public void setConfigurer(Consumer<WebRouter<WebExchange>> configurer) {
+	public void setConfigurer(WebRouterConfigurer<WebExchange> configurer) {
 		this.configurer = configurer;
 	}
 	
@@ -126,9 +126,9 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 
 	@Override
 	public void handle(Exchange exchange) throws WebException {
-		this.firstLink.handle(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.bodyConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.bodyConversionService)));
+		this.firstLink.handle(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.dataConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService)));
 	}
 	
 	@Bean( name = "WebRouterConfigurer")
-	public static interface ConfigurerSocket extends Supplier<Consumer<WebRouter<WebExchange>>> {}
+	public static interface ConfigurerSocket extends Supplier<WebRouterConfigurer<WebExchange>> {}
 }

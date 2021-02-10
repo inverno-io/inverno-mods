@@ -17,7 +17,6 @@ package io.winterframework.mod.boot.internal.converter;
 
 import java.nio.charset.Charset;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -101,9 +100,7 @@ public class NdJsonMediaTypeConverterTest {
 
 	@Test
 	public void testGetSupportedMediaTypes() {
-		Set<String> supportedMediaTypes = CONVERTER.getSupportedMediaTypes();
-		Assertions.assertEquals(1, supportedMediaTypes.size());
-		Assertions.assertTrue(supportedMediaTypes.containsAll(Set.of(MediaTypes.APPLICATION_X_NDJSON)));
+		Assertions.assertTrue(CONVERTER.canConvert(MediaTypes.APPLICATION_X_NDJSON));
 	}
 
 }

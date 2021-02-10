@@ -16,7 +16,6 @@
 package io.winterframework.mod.boot.internal.converter;
 
 import java.util.Iterator;
-import java.util.Set;
 
 import org.reactivestreams.Publisher;
 
@@ -24,8 +23,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Provide;
-import io.winterframework.mod.base.converter.ReactiveConverter;
 import io.winterframework.mod.base.converter.MediaTypeConverter;
+import io.winterframework.mod.base.converter.ReactiveConverter;
 import io.winterframework.mod.base.resource.MediaTypes;
 import reactor.core.publisher.Flux;
 
@@ -45,12 +44,12 @@ public class JsonMediaTypeConverter extends AbstractJsonMediaTypeConverter imple
 	}
 	
 	@Override
-	public Set<String> getSupportedMediaTypes() {
-		return Set.of(MediaTypes.APPLICATION_JSON);
+	public boolean canConvert(String mediaType) {
+		return mediaType.equalsIgnoreCase(MediaTypes.APPLICATION_JSON);
 	}
 
 	@Override
-	public <T> Publisher<ByteBuf> encodeMany(Flux<T> data) {
+	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value) {
 		Iterable<ByteBuf> separators = new Iterable<ByteBuf>() {
 			
 			@Override
@@ -74,6 +73,6 @@ public class JsonMediaTypeConverter extends AbstractJsonMediaTypeConverter imple
 				};
 			}
 		};
-		return ((Flux<ByteBuf>)super.encodeMany(data)).zipWithIterable(separators, (value, separator) -> Unpooled.wrappedBuffer(separator, value)).concatWithValues(JSON_ARRAY_END.duplicate());
+		return ((Flux<ByteBuf>)super.encodeMany(value)).zipWithIterable(separators, (element, separator) -> Unpooled.wrappedBuffer(separator, element)).concatWithValues(JSON_ARRAY_END.duplicate());
 	}
 }

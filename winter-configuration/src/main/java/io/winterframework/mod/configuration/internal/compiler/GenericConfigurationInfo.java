@@ -20,6 +20,7 @@ import java.util.List;
 
 import javax.lang.model.type.DeclaredType;
 
+import io.winterframework.core.compiler.spi.support.AbstractInfo;
 import io.winterframework.core.compiler.spi.BeanQualifiedName;
 import io.winterframework.core.compiler.spi.ReporterInfo;
 import io.winterframework.mod.configuration.internal.compiler.spi.ConfigurationInfo;

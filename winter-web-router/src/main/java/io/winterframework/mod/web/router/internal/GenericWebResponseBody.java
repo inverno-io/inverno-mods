@@ -15,12 +15,16 @@
  */
 package io.winterframework.mod.web.router.internal;
 
+import java.lang.reflect.Type;
+
 import io.netty.buffer.ByteBuf;
 import io.winterframework.mod.web.InternalServerErrorException;
 import io.winterframework.mod.web.header.Headers;
+import io.winterframework.mod.web.router.ResponseDataEncoder;
 import io.winterframework.mod.web.router.WebResponse;
 import io.winterframework.mod.web.router.WebResponseBody;
 import io.winterframework.mod.web.server.ResponseBody;
+import io.winterframework.mod.web.server.ResponseData;
 
 /**
  * @author jkuhn
@@ -28,17 +32,15 @@ import io.winterframework.mod.web.server.ResponseBody;
  */
 public class GenericWebResponseBody implements WebResponseBody {
 
-	private WebResponse response;
+	private final WebResponse response;
 	
-	private ResponseBody responseBody;
+	private final ResponseBody responseBody;
 	
-	private BodyConversionService bodyConversionService;
+	private final DataConversionService dataConversionService;
 	
-	private Encoder encoder;
-	
-	public GenericWebResponseBody(WebResponse response, ResponseBody responseBody, BodyConversionService bodyConversionService) {
+	public GenericWebResponseBody(WebResponse response, ResponseBody responseBody, DataConversionService dataConversionService) {
 		this.response = response;
-		this.bodyConversionService = bodyConversionService;
+		this.dataConversionService = dataConversionService;
 		this.responseBody = responseBody;
 	}
 
@@ -48,31 +50,60 @@ public class GenericWebResponseBody implements WebResponseBody {
 	}
 
 	@Override
-	public Raw raw() {
+	public ResponseData<ByteBuf> raw() {
 		return this.responseBody.raw();
 	}
-
-	@Override
-	public Sse<ByteBuf> sse() {
-		return this.responseBody.sse();
-	}
-
+	
 	@Override
 	public Resource resource() {
 		return this.responseBody.resource();
 	}
+	
+	@Override
+	public Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> sse() {
+		return this.responseBody.sse();
+	}
+	
+	@Override
+	public <T> SseEncoder<T> sseEncoder(String mediaType) {
+		return this.dataConversionService.createSseEncoder(this.responseBody.sse(), mediaType);
+	}
+	
+	@Override
+	public <T> SseEncoder<T> sseEncoder(String mediaType, Class<T> type) {
+		return this.dataConversionService.createSseEncoder(this.responseBody.sse(), mediaType, type);
+	}
+	
+	@Override
+	public <T> SseEncoder<T> sseEncoder(String mediaType, Type type) {
+		return this.dataConversionService.createSseEncoder(this.responseBody.sse(), mediaType, type);
+	}
+	
+	@Override
+	public <T> ResponseDataEncoder<T> encoder() {
+		// if we don't have a content type specified in the response, it means that the route was created without any produces clause so we can fallback to a default representation assuming it is accepted in the request otherwise we should fail
+		// - define a default converter in the conversion service
+		// - check that the produced media type matches the Accept header
+		// => We don't have to do anything, if the media is empty, we don't know what to do anyway, so it is up to the user to explicitly set the content type on the response which is enough to make the conversion works otherwise we must fail
+		return this.response.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE)
+			.map(contentType -> this.dataConversionService.<T>createEncoder(this.response.body().raw(), contentType.getMediaType()))
+			.orElseThrow(() -> new InternalServerErrorException("Empty media type"));
+	}
 
 	@Override
-	public Encoder encoder() {
-		if(this.encoder == null) {
-			// if we don't have a content type specified in the response, it means that the route was created without any produces clause so we can fallback to a default representation assuming it is accepted in the request otherwise we should fail
-			// - define a default converter in the conversion service
-			// - check that the produced media type matches the Accept header
-			// => We don't have to do anything, if the media is empty, we don't know what to do anyway, so it is up to the user to explicitly set the content type on the response which is enough to make the conversion works otherwise we must fail
-			this.encoder = this.response.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE)
-				.map(contentType -> this.bodyConversionService.createEncoder(this.response.body().raw(), contentType.getMediaType()))
-				.orElseThrow(() -> new InternalServerErrorException("Empty media type"));
-		}
-		return this.encoder;
+	public <T> ResponseDataEncoder<T> encoder(Class<T> type) {
+		return this.encoder((Type)type);
 	}
+
+	@Override
+	public <T> ResponseDataEncoder<T> encoder(Type type) {
+		// if we don't have a content type specified in the response, it means that the route was created without any produces clause so we can fallback to a default representation assuming it is accepted in the request otherwise we should fail
+		// - define a default converter in the conversion service
+		// - check that the produced media type matches the Accept header
+		// => We don't have to do anything, if the media is empty, we don't know what to do anyway, so it is up to the user to explicitly set the content type on the response which is enough to make the conversion works otherwise we must fail
+		return this.response.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE)
+			.map(contentType -> this.dataConversionService.<T>createEncoder(this.response.body().raw(), contentType.getMediaType(), type))
+			.orElseThrow(() -> new InternalServerErrorException("Empty media type"));
+	}
+	
 }

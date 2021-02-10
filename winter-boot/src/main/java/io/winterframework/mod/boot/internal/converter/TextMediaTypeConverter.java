@@ -15,8 +15,6 @@
  */
 package io.winterframework.mod.boot.internal.converter;
 
-import java.util.Set;
-
 import io.netty.buffer.ByteBuf;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Provide;
@@ -37,7 +35,7 @@ public class TextMediaTypeConverter extends ByteBufConverter implements @Provide
 	}
 	
 	@Override
-	public Set<String> getSupportedMediaTypes() {
-		return Set.of(MediaTypes.TEXT_PLAIN);
+	public boolean canConvert(String mediaType) {
+		return mediaType.equalsIgnoreCase(MediaTypes.TEXT_PLAIN);
 	}
 }

@@ -27,9 +27,9 @@ import io.winterframework.mod.web.server.ExchangeHandler;
  */
 abstract class RoutingLink<A extends Exchange, B extends RoutingLink<A, B, C>, C extends AbstractRoute<A>> implements ExchangeHandler<A> {
 
-	protected RoutingLink<A, ?, C> nextLink;
+	private final Supplier<B> linkSupplier;
 	
-	private Supplier<B> linkSupplier;
+	protected RoutingLink<A, ?, C> nextLink;
 	
 	public RoutingLink(Supplier<B> linkSupplier) {
 		this.linkSupplier = linkSupplier;

@@ -32,6 +32,7 @@ public interface RequestHeaders {
 	
 	String getAuthority();
 	
+	// normalized path
 	String getPath();
 	
 	Method getMethod();
@@ -42,6 +43,8 @@ public interface RequestHeaders {
 	
 	Long getContentLength();
 
+	boolean contains(CharSequence name);
+	
 	boolean contains(CharSequence name, CharSequence value);
 	
 	Set<String> getNames();

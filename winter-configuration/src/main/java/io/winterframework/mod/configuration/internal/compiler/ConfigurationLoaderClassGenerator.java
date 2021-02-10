@@ -90,29 +90,29 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			StringBuilder configurationLoader_configuration_class = this.visit(configurationInfo, context.withIndentDepth(1).withMode(GenerationMode.CONFIGURATION_IMPL_CLASS));
 			StringBuilder configurationLoader_configurator_class = this.visit(configurationInfo, context.withIndentDepth(1).withMode(GenerationMode.CONFIGURATION_CONFIGURATOR_CLASS));
 			
-			StringBuilder configurationBean_class = new StringBuilder().append(context.indent(0)).append("public final class ").append(configurationLoaderClassName).append(" extends ").append(context.getTypeName(configurationLoaderSupportType)).append("<").append(context.getTypeName(configurationInfo.getType())).append(", ").append(configurationLoaderClassName).append(".").append(CONFIGURATOR_INNER_CLASS).append(", ").append(configurationLoaderClassName).append("> {\n\n");
+			StringBuilder configurationLoader_class = new StringBuilder().append(context.indent(0)).append("public final class ").append(configurationLoaderClassName).append(" extends ").append(context.getTypeName(configurationLoaderSupportType)).append("<").append(context.getTypeName(configurationInfo.getType())).append(", ").append(configurationLoaderClassName).append(".").append(CONFIGURATOR_INNER_CLASS).append(", ").append(configurationLoaderClassName).append("> {\n\n");
 			
-			configurationBean_class.append(configurationLoader_constructor).append("\n\n");
-			configurationBean_class.append(configurationLoader_load_method).append("\n\n");
-			configurationBean_class.append(configurationLoader_configuration_class).append("\n\n");
-			configurationBean_class.append(configurationLoader_configurator_class).append("\n");
+			configurationLoader_class.append(configurationLoader_constructor).append("\n\n");
+			configurationLoader_class.append(configurationLoader_load_method).append("\n\n");
+			configurationLoader_class.append(configurationLoader_configuration_class).append("\n\n");
+			configurationLoader_class.append(configurationLoader_configurator_class).append("\n");
 			
 			if(configurationInfo.isGenerateBean()) {
-				configurationBean_class.append("\n");
-				configurationBean_class.append(this.visit(configurationInfo, context.withIndentDepth(1).withMode(GenerationMode.CONFIGURATION_BEAN_CLASS))).append("\n");
+				configurationLoader_class.append("\n");
+				configurationLoader_class.append(this.visit(configurationInfo, context.withIndentDepth(1).withMode(GenerationMode.CONFIGURATION_BEAN_CLASS))).append("\n");
 			}
-			configurationBean_class.append(context.indent(0)).append("}");
+			configurationLoader_class.append(context.indent(0)).append("}");
 			
 			context.removeImport(CONFIGURATION_INNER_CLASS);
 			context.removeImport(CONFIGURATOR_INNER_CLASS);
 			context.removeImport(CONFIGURATION_BEAN_INNER_CLASS);
 			
-			configurationBean_class.insert(0, "\n\n").insert(0, context.getImports().stream().sorted().filter(i -> i.lastIndexOf(".") > 0 && !i.substring(0, i.lastIndexOf(".")).equals(packageName)).map(i -> new StringBuilder().append("import ").append(i).append(";")).collect(context.joining("\n")));
+			configurationLoader_class.insert(0, "\n\n").insert(0, context.getImports().stream().sorted().filter(i -> i.lastIndexOf(".") > 0 && !i.substring(0, i.lastIndexOf(".")).equals(packageName)).map(i -> new StringBuilder().append("import ").append(i).append(";")).collect(context.joining("\n")));
 			if(!packageName.equals("")) {
-				configurationBean_class.insert(0, ";\n\n").insert(0, packageName).insert(0, "package ");
+				configurationLoader_class.insert(0, ";\n\n").insert(0, packageName).insert(0, "package ");
 			}
 			
-			return configurationBean_class;
+			return configurationLoader_class;
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURATION_PROPERTIES) {
 			return Arrays.stream(configurationInfo.getProperties()).map(propertyInfo -> this.visit(propertyInfo , context.withConfiguration(configurationInfo).withMode(GenerationMode.CONFIGURATION_PROPERTY_NAME))).collect(context.joining(",\n"));
@@ -273,7 +273,7 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 				result.append("asArrayOf(").append(context.getTypeName(((ArrayType)configurationPropertyInfo.getType()).getComponentType())).append(".class).orElse(null)");
 			}
 			else if(context.getTypeUtils().isSameType(context.getCollectionType(), context.getTypeUtils().erasure(configurationPropertyInfo.getType()))) {
-				result.append("asCollectionOf(").append(context.getTypeName(((DeclaredType)configurationPropertyInfo.getType()).getTypeArguments().get(0))).append(".class).orElse(null)");
+				result.append("asListOf(").append(context.getTypeName(((DeclaredType)configurationPropertyInfo.getType()).getTypeArguments().get(0))).append(".class).orElse(null)");
 			}
 			else if(context.getTypeUtils().isSameType(context.getListType(), context.getTypeUtils().erasure(configurationPropertyInfo.getType()))) {
 				result.append("asListOf(").append(context.getTypeName(((DeclaredType)configurationPropertyInfo.getType()).getTypeArguments().get(0))).append(".class).orElse(null)");

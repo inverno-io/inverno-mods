@@ -28,6 +28,8 @@ import io.winterframework.mod.web.Parameter;
  */
 public interface QueryParameters {
 
+	boolean contains(String name);
+	
 	Set<String> getNames();
 	
 	Optional<Parameter> get(String name);

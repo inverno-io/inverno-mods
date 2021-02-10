@@ -30,13 +30,13 @@ import io.winterframework.mod.web.server.ResponseTrailers;
  */
 public class GenericWebResponse implements WebResponse {
 
-	private Response response;
+	private final Response response;
 	
-	private WebResponseBody responseBody;
+	private final WebResponseBody responseBody;
 	
-	public GenericWebResponse(Response response, BodyConversionService bodyConversionService) {
+	public GenericWebResponse(Response response, DataConversionService dataConversionService) {
 		this.response = response;
-		this.responseBody = new GenericWebResponseBody(this, response.body(), bodyConversionService);
+		this.responseBody = new GenericWebResponseBody(this, response.body(), dataConversionService);
 	}
 
 	@Override
@@ -50,8 +50,9 @@ public class GenericWebResponse implements WebResponse {
 	}
 	
 	@Override
-	public Response headers(Consumer<ResponseHeaders> headersConfigurer) throws IllegalStateException {
-		return this.response.headers(headersConfigurer);
+	public WebResponse headers(Consumer<ResponseHeaders> headersConfigurer) throws IllegalStateException {
+		this.response.headers(headersConfigurer);
+		return this;
 	}
 	
 	@Override
@@ -60,13 +61,15 @@ public class GenericWebResponse implements WebResponse {
 	}
 
 	@Override
-	public Response trailers(Consumer<ResponseTrailers> trailersConfigurer) {
-		return this.response.trailers(trailersConfigurer);
+	public WebResponse trailers(Consumer<ResponseTrailers> trailersConfigurer) {
+		this.response.trailers(trailersConfigurer);
+		return this;
 	}
 
 	@Override
-	public Response cookies(Consumer<ResponseCookies> cookiesConfigurer) throws IllegalStateException {
-		return this.response.cookies(cookiesConfigurer);
+	public WebResponse cookies(Consumer<ResponseCookies> cookiesConfigurer) throws IllegalStateException {
+		this.response.cookies(cookiesConfigurer);
+		return this;
 	}
 
 	@Override

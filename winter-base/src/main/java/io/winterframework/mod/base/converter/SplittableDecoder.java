@@ -15,6 +15,7 @@
  */
 package io.winterframework.mod.base.converter;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Set;
 
@@ -24,7 +25,12 @@ import java.util.Set;
  */
 public interface SplittableDecoder<From, To> {
 
-	<T extends To> List<T> decodeToList(From data, Class<T> type);
-	<T extends To> Set<T> decodeToSet(From data, Class<T> type);
-	<T extends To> T[] decodeToArray(From data, Class<T> type);
+	<T extends To> List<T> decodeToList(From value, Class<T> type);
+	<T extends To> List<T> decodeToList(From value, Type type);
+	
+	<T extends To> Set<T> decodeToSet(From value, Class<T> type);
+	<T extends To> Set<T> decodeToSet(From value, Type type);
+	
+	<T extends To> T[] decodeToArray(From value, Class<T> type);
+	<T extends To> T[] decodeToArray(From value, Type type);
 }

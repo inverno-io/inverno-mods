@@ -53,6 +53,11 @@ public class GenericRequestCookies implements RequestCookies {
 	}
 
 	@Override
+	public boolean contains(String name) {
+		return this.pairs.containsKey(name);
+	}
+	
+	@Override
 	public Set<String> getNames() {
 		return this.pairs.keySet();
 	}
@@ -69,7 +74,8 @@ public class GenericRequestCookies implements RequestCookies {
 	
 	@Override
 	public List<CookieParameter> getAll(String name) {
-		return this.pairs.get(name);
+		List<CookieParameter> cookiePairs = this.pairs.get(name);
+		return cookiePairs != null ? cookiePairs : List.of();
 	}
 
 	@Override

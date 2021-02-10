@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -42,6 +43,7 @@ public final class Headers {
 	public static final String NAME_CONTENT_LENGTH = "content-length";
 	public static final String NAME_COOKIE = "cookie";
 	public static final String NAME_HOST = "host";
+	public static final String NAME_LOCATION = "location";
 	public static final String NAME_RETRY_AFTER = "retry-after";
 	public static final String NAME_SET_COOKIE = "set-cookie";
 	public static final String NAME_TE = "te";
@@ -187,12 +189,13 @@ public final class Headers {
 			return Optional.empty();
 		}
 		
-		default List<AcceptMatch<MediaRange, Headers.ContentType>> findAllMatch(Collection<Headers.ContentType> contentTypes) {
+		default Collection<AcceptMatch<MediaRange, Headers.ContentType>> findAllMatch(Collection<Headers.ContentType> contentTypes) {
 			return this.findAllMatch(contentTypes, Function.identity());
 		}
 		
-		default <T> List<AcceptMatch<MediaRange, T>> findAllMatch(Collection<T> items, Function<T, Headers.ContentType> contentTypeExtractor) {
+		default <T> Collection<AcceptMatch<MediaRange, T>> findAllMatch(Collection<T> items, Function<T, Headers.ContentType> contentTypeExtractor) {
 			List<AcceptMatch<MediaRange, T>> result = new ArrayList<>();
+			// This works because items are content type ie. with no wild cards
 			for(MediaRange mediaRange : this.getMediaRanges()) {
 				for(T item : items) {
 					if(mediaRange.matches(contentTypeExtractor.apply(item))) {
@@ -249,6 +252,9 @@ public final class Headers {
 			
 			Map<String, String> getParameters();
 			
+			// When this range doesn't define any parameters, this method returns true as
+			// soon as the media types are compatible.
+			// The best match is then the most precise one.
 			default boolean matches(Headers.ContentType contentType) {
 				String requestType = contentType.getType();
 				String requestSubType = contentType.getSubType();
@@ -372,9 +378,9 @@ public final class Headers {
 	
 	public static class AcceptMatch<A, B> {
 		
-		private A source;
+		private final A source;
 		
-		private B target;
+		private final B target;
 		
 		private AcceptMatch(A source, B target) {
 			this.source = source;
@@ -387,6 +393,20 @@ public final class Headers {
 		
 		public B getTarget() {
 			return this.target;
+		}
+	}
+	
+	private static class AcceptLanguageMatch<A, B> extends AcceptMatch<A, B> {
+		
+		private final int score;
+		
+		private AcceptLanguageMatch(A source, B target, int score) {
+			super(source, target);
+			this.score = score;
+		}
+	
+		public int getScore() {
+			return score;
 		}
 	}
 	
@@ -406,30 +426,52 @@ public final class Headers {
 		}
 		
 		default <T> Optional<AcceptMatch<LanguageRange,T>> findBestMatch(Collection<T> items, Function<T, Headers.AcceptLanguage.LanguageRange> languageRangeExtractor) {
-			for(LanguageRange languageRange : this.getLanguageRanges()) {
+			/*for(LanguageRange languageRange : this.getLanguageRanges()) {
 				for(T item : items) {
 					if(languageRange.matches(languageRangeExtractor.apply(item))) {
 						return Optional.of(new AcceptMatch<>(languageRange, item));
 					}
 				}
-			}
-			return Optional.empty();
+			}*/
+
+			return this.findAllMatch(items, languageRangeExtractor).stream().findFirst();
 		}
 		
-		default List<AcceptMatch<LanguageRange, LanguageRange>> findAllMatch(Collection<Headers.AcceptLanguage.LanguageRange> languageRanges) {
+		default Collection<AcceptMatch<LanguageRange, LanguageRange>> findAllMatch(Collection<Headers.AcceptLanguage.LanguageRange> languageRanges) {
 			return this.findAllMatch(languageRanges, Function.identity());
 		}
 		
-		default <T> List<AcceptMatch<LanguageRange,T>> findAllMatch(Collection<T> items, Function<T, Headers.AcceptLanguage.LanguageRange> languageRangeExtractor) {
-			List<AcceptMatch<LanguageRange,T>> result = new ArrayList<>();
+		default <T> Collection<AcceptMatch<LanguageRange,T>> findAllMatch(Collection<T> items, Function<T, Headers.AcceptLanguage.LanguageRange> languageRangeExtractor) {
+			/*List<AcceptMatch<LanguageRange,T>> result = new ArrayList<>();
 			for(LanguageRange languageRange : this.getLanguageRanges()) {
 				for(T item : items) {
 					if(languageRange.matches(languageRangeExtractor.apply(item))) {
 						result.add(new AcceptMatch<>(languageRange, item));
 					}
 				}
-			}
-			return result;
+			}*/
+			
+			return this.getLanguageRanges().stream()
+				.flatMap(languageRange -> items.stream()
+					.map(item -> {
+						LanguageRange itemLanguageRange = languageRangeExtractor.apply(item);
+						if(languageRange.matches(itemLanguageRange)) {
+							int score;
+							if(languageRange.getLanguageTag().equals(itemLanguageRange.getLanguageTag())) {
+								// exact match
+								score = 100000 + itemLanguageRange.getScore();
+							}
+							else {
+								score = 10000 + itemLanguageRange.getScore();
+							}
+							return new AcceptLanguageMatch<>(languageRange, item, score);
+						}
+						return null;
+					})
+					.filter(Objects::nonNull)
+				)
+				.sorted((o1, o2) -> o2.getScore() - o1.getScore())
+				.collect(Collectors.toList());
 		}
 		
 		static Optional<AcceptLanguage> merge(List<AcceptLanguage> acceptLanguageHeaders) {
@@ -444,7 +486,7 @@ public final class Headers {
 
 					@Override
 					public String getHeaderName() {
-						return Headers.NAME_ACCEPT;
+						return Headers.NAME_ACCEPT_LANGUAGE;
 					}
 
 					@Override
@@ -495,7 +537,7 @@ public final class Headers {
 					else {
 						// xx-xx
 						return (primarySubType.equals("*") || primarySubType.equals(requestPrimarySubTag)) && 
-							(secondarySubType.equals("*") || secondarySubType.equals(requestSecondarySubTag)); // could be startsWith(requestSecondarySubTag + "-") with see https://tools.ietf.org/html/rfc4647#section-3.3.1
+							(secondarySubType == null || secondarySubType.equals(requestSecondarySubTag)); // could be startsWith(requestSecondarySubTag + "-") with see https://tools.ietf.org/html/rfc4647#section-3.3.1
 					}
 				}
 			}
@@ -520,7 +562,6 @@ public final class Headers {
 						score += 2 * 10;
 					}
 				}
-				
 				return score;
 			}
 			

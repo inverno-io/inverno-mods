@@ -25,6 +25,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.ssl.SslHandler;
 import io.winterframework.mod.base.converter.ObjectConverter;
+import io.winterframework.mod.base.net.URIs;
 import io.winterframework.mod.web.Method;
 import io.winterframework.mod.web.Parameter;
 import io.winterframework.mod.web.header.Header;
@@ -47,6 +48,7 @@ public class Http1xRequestHeaders implements RequestHeaders {
 	
 	private final LinkedHttpHeaders internalHeaders;
 	
+	private String normalizedPath;
 	private Method method;
 	private String scheme;
 	
@@ -70,7 +72,10 @@ public class Http1xRequestHeaders implements RequestHeaders {
 
 	@Override
 	public String getPath() {
-		return this.httpRequest.uri();
+		if(this.normalizedPath == null) {
+			this.normalizedPath = URIs.uri(this.httpRequest.uri(), URIs.Option.NORMALIZED).buildRawPath();
+		}
+		return this.normalizedPath;
 	}
 
 	@Override
@@ -99,6 +104,11 @@ public class Http1xRequestHeaders implements RequestHeaders {
 		return this.internalHeaders.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
 	}
 
+	@Override
+	public boolean contains(CharSequence name) {
+		return this.internalHeaders.contains(name);
+	}
+	
 	@Override
 	public boolean contains(CharSequence name, CharSequence value) {
 		return this.internalHeaders.contains(name, value, true);
@@ -136,7 +146,7 @@ public class Http1xRequestHeaders implements RequestHeaders {
 
 	@Override
 	public List<Header> getAllHeader() {
-		return this.internalHeaders.entries().stream().map(e -> (Header)this.headerService.decode(e.getKey(), e.getValue())).collect(Collectors.toList());
+		return this.internalHeaders.entries().stream().map(e -> this.headerService.<Header>decode(e.getKey(), e.getValue())).collect(Collectors.toList());
 	}
 	
 	@Override

@@ -15,8 +15,6 @@
  */
 package io.winterframework.mod.web.server;
 
-import org.reactivestreams.Publisher;
-
 import io.netty.buffer.ByteBuf;
 import io.winterframework.mod.web.Parameter;
 
@@ -26,21 +24,15 @@ import io.winterframework.mod.web.Parameter;
  */
 public interface RequestBody {
 	
-	RequestBody.Raw raw() throws IllegalStateException;
+	RequestData<ByteBuf> raw() throws IllegalStateException;
 	
-	RequestBody.Multipart multipart() throws IllegalStateException;
+	RequestBody.Multipart<? extends Part> multipart() throws IllegalStateException;
+	
+	public static interface Multipart<A extends Part> extends RequestData<A> {
+	}
 	
 	RequestBody.UrlEncoded urlEncoded() throws IllegalStateException;
 	
-	public static interface Raw {
-		Publisher<ByteBuf> data();
-	}
-	
-	public static interface Multipart {
-		Publisher<Part> parts();
-	}
-	
-	public static interface UrlEncoded {
-		Publisher<Parameter> parameters();
+	public static interface UrlEncoded extends RequestData<Parameter> {
 	}
 }

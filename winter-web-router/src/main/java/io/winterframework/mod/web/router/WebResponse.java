@@ -15,7 +15,12 @@
  */
 package io.winterframework.mod.web.router;
 
+import java.util.function.Consumer;
+
 import io.winterframework.mod.web.server.Response;
+import io.winterframework.mod.web.server.ResponseCookies;
+import io.winterframework.mod.web.server.ResponseHeaders;
+import io.winterframework.mod.web.server.ResponseTrailers;
 
 /**
  * @author jkuhn
@@ -25,4 +30,13 @@ public interface WebResponse extends Response {
 
 	@Override
 	WebResponseBody body();
+	
+	@Override
+	WebResponse headers(Consumer<ResponseHeaders> headersConfigurer) throws IllegalStateException;
+	
+	@Override
+	WebResponse trailers(Consumer<ResponseTrailers> trailersConfigurer);
+	
+	@Override
+	WebResponse cookies(Consumer<ResponseCookies> cookiesConfigurer) throws IllegalStateException;
 }

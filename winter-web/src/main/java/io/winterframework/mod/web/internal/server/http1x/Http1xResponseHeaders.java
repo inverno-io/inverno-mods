@@ -219,6 +219,11 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 	}
 
 	@Override
+	public boolean contains(CharSequence name) {
+		return this.internalHeaders.contains(name);
+	}
+	
+	@Override
 	public boolean contains(CharSequence name, CharSequence value) {
 		return this.internalHeaders.contains(name, value, true);
 	}

@@ -35,49 +35,49 @@ import java.util.regex.Pattern;
  */
 public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 
-	Byte decodeByte(From data) throws ConverterException;
+	Byte decodeByte(From value) throws ConverterException;
 	
-	Short decodeShort(From data) throws ConverterException;
+	Short decodeShort(From value) throws ConverterException;
 	
-	Integer decodeInteger(From data) throws ConverterException;
+	Integer decodeInteger(From value) throws ConverterException;
 	
-	Long decodeLong(From data) throws ConverterException;
+	Long decodeLong(From value) throws ConverterException;
 
-	Float decodeFloat(From data) throws ConverterException;
+	Float decodeFloat(From value) throws ConverterException;
 	
-	Double decodeDouble(From data) throws ConverterException;
+	Double decodeDouble(From value) throws ConverterException;
 	
-	Character decodeCharacter(From data) throws ConverterException;
+	Character decodeCharacter(From value) throws ConverterException;
 	
-	Boolean decodeBoolean(From data) throws ConverterException;
+	Boolean decodeBoolean(From value) throws ConverterException;
 	
-	String decodeString(From data) throws ConverterException;
+	String decodeString(From value) throws ConverterException;
 	
-	BigInteger decodeBigInteger(From data) throws ConverterException;
+	BigInteger decodeBigInteger(From value) throws ConverterException;
 	
-	BigDecimal decodeBigDecimal(From data) throws ConverterException;
+	BigDecimal decodeBigDecimal(From value) throws ConverterException;
 	
-	LocalDate decodeLocalDate(From data) throws ConverterException;
+	LocalDate decodeLocalDate(From value) throws ConverterException;
 	
-	LocalDateTime decodeLocalDateTime(From data) throws ConverterException;
+	LocalDateTime decodeLocalDateTime(From value) throws ConverterException;
 
-	ZonedDateTime decodeZonedDateTime(From data) throws ConverterException;
+	ZonedDateTime decodeZonedDateTime(From value) throws ConverterException;
 	
-	Currency decodeCurrency(From data) throws ConverterException;
+	Currency decodeCurrency(From value) throws ConverterException;
 
-	Locale decodeLocale(From data) throws ConverterException;
+	Locale decodeLocale(From value) throws ConverterException;
 	
-	File decodeFile(From data) throws ConverterException;
+	File decodeFile(From value) throws ConverterException;
 	
-	Path decodePath(From data) throws ConverterException;
+	Path decodePath(From value) throws ConverterException;
 	
-	URI decodeURI(From data) throws ConverterException;
+	URI decodeURI(From value) throws ConverterException;
 
-	URL decodeURL(From data) throws ConverterException;
+	URL decodeURL(From value) throws ConverterException;
 
-	Pattern decodePattern(From data) throws ConverterException;
+	Pattern decodePattern(From value) throws ConverterException;
 
-	InetAddress decodeInetAddress(From data) throws ConverterException;
+	InetAddress decodeInetAddress(From value) throws ConverterException;
 	
-	Class<?> decodeClass(From data) throws ConverterException;
+	Class<?> decodeClass(From value) throws ConverterException;
 }
