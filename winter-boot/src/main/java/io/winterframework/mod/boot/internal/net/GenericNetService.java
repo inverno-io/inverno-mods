@@ -44,7 +44,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.unix.DomainSocketAddress;
-import io.netty.util.concurrent.DefaultThreadFactory;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Destroy;
 import io.winterframework.core.annotation.Init;
@@ -132,7 +131,7 @@ public class GenericNetService implements @Provide NetService {
 	
 	@Init
 	public void init() {
-		this.rootEventLoopGroup = this.createEventLoopGroup(this.nThreads, new DefaultThreadFactory("winter-io-" + this.transportType.toString().toLowerCase(), false, 5));
+		this.rootEventLoopGroup = this.createEventLoopGroup(this.nThreads, new NonBlockingThreadFactory("winter-io-" + this.transportType.toString().toLowerCase(), false, 5));
 	}
 	
 	@Destroy
@@ -219,7 +218,7 @@ public class GenericNetService implements @Provide NetService {
 
 	@Override
 	public EventLoopGroup createAcceptorEventLoopGroup() {
-		return this.createEventLoopGroup(1, new DefaultThreadFactory("winter-acceptor-" + this.transportType.toString().toLowerCase(), false, 5));
+		return this.createEventLoopGroup(1, new NonBlockingThreadFactory("winter-acceptor-" + this.transportType.toString().toLowerCase(), false, 5));
 	}
 	
 	@Override
