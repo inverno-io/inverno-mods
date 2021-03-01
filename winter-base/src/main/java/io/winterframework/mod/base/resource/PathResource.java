@@ -61,8 +61,8 @@ public class PathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Boolean exists() {
-		return Files.exists(this.path);
+	public Optional<Boolean> exists() {
+		return Optional.of(Files.exists(this.path));
 	}
 	
 	@Override
@@ -71,13 +71,13 @@ public class PathResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public Long size() {
+	public Optional<Long> size() {
 		try {
-			return Files.size(this.path);
+			return Optional.of(Files.size(this.path));
 		} 
 		catch (IOException e) {
 			// TODO log debug
-			return null;
+			return Optional.empty();
 		}
 	}
 	
@@ -115,13 +115,13 @@ public class PathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public FileTime lastModified() {
+	public Optional<FileTime> lastModified() {
 		try {
-			return Files.getLastModifiedTime(this.path);
+			return Optional.of(Files.getLastModifiedTime(this.path));
 		}
 		catch (IOException e) {
 			// TODO log debug
-			return null;
+			return Optional.empty();
 		}
 	}
 	

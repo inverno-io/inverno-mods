@@ -120,7 +120,7 @@ public class ModuleResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public Boolean exists() throws ResourceException {
+	public Optional<Boolean> exists() throws ResourceException {
 		return this.resolve().map(module -> {
 			try {
 				return module.getResourceAsStream(this.resourceName) != null;
@@ -128,17 +128,17 @@ public class ModuleResource extends AbstractAsyncResource {
 			catch (IOException e) {
 				return false;
 			}
-		}).orElse(false);
+		}).or(() -> Optional.of(false));
 	}
 
 	@Override
-	public FileTime lastModified() throws ResourceException {
-		return null;
+	public Optional<FileTime> lastModified() throws ResourceException {
+		return Optional.empty();
 	}
 
 	@Override
-	public Long size() throws ResourceException {
-		return null;
+	public Optional<Long> size() throws ResourceException {
+		return Optional.empty();
 	}
 
 	@Override

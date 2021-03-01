@@ -102,8 +102,8 @@ public class UrlResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public Boolean exists() {
-		return null;
+	public Optional<Boolean> exists() {
+		return Optional.empty();
 	}
 	
 	@Override
@@ -112,27 +112,27 @@ public class UrlResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public FileTime lastModified() {
+	public Optional<FileTime> lastModified() {
 		Optional<URLConnection> c = this.resolve();
 		if(c.isPresent()) {
 			long lastModified = c.get().getLastModified();
 			if(lastModified > 0) {
-				return FileTime.fromMillis(lastModified);
+				return Optional.of(FileTime.fromMillis(lastModified));
 			}
 		}
-		return null;
+		return Optional.empty();
 	}
 	
 	@Override
-	public Long size() {
+	public Optional<Long> size() {
 		Optional<URLConnection> c = this.resolve();
 		if(c.isPresent()) {
 			long contentLength = c.get().getContentLengthLong();
 			if(contentLength >= 0) {
-				return contentLength;
+				return Optional.of(contentLength);
 			}
 		}
-		return null;
+		return Optional.empty();
 	}
 
 	@Override

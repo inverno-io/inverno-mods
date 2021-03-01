@@ -92,7 +92,7 @@ public class FileResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Boolean exists() {
+	public Optional<Boolean> exists() {
 		return this.pathResource.exists();
 	}
 	
@@ -102,12 +102,12 @@ public class FileResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public FileTime lastModified() {
+	public Optional<FileTime> lastModified() {
 		return this.pathResource.lastModified();
 	}
 	
 	@Override
-	public Long size() {
+	public Optional<Long> size() {
 		return this.pathResource.size();
 	}
 

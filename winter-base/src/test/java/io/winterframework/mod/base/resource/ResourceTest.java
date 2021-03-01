@@ -30,19 +30,12 @@ import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.winterframework.mod.base.resource.ClasspathResource;
-import io.winterframework.mod.base.resource.FileResource;
-import io.winterframework.mod.base.resource.JarResource;
-import io.winterframework.mod.base.resource.PathResource;
-import io.winterframework.mod.base.resource.Resource;
-import io.winterframework.mod.base.resource.UrlResource;
-import io.winterframework.mod.base.resource.ZipResource;
 import reactor.core.publisher.Flux;
 
 public class ResourceTest {
 
 	private void writeResource(Resource resource){
-		Assertions.assertFalse(resource.exists());
+		Assertions.assertFalse(resource.exists().get());
 		Assertions.assertNull(resource.lastModified());
 		resource.openWritableByteChannel().ifPresent(ch -> {
 			try(ch) {
@@ -60,9 +53,9 @@ public class ResourceTest {
 	}
 	
 	private void readResource(Resource resource) {
-		Assertions.assertTrue(resource.exists());
+		Assertions.assertTrue(resource.exists().get());
 		Assertions.assertNotNull(resource.lastModified());
-		Assertions.assertTrue(System.currentTimeMillis() - resource.lastModified().toMillis() < 1000);
+		Assertions.assertTrue(System.currentTimeMillis() - resource.lastModified().get().toMillis() < 1000);
 		resource.openReadableByteChannel().ifPresent(ch -> {
 			try (ByteArrayOutputStream out = new ByteArrayOutputStream();
 				ch;) {
@@ -84,9 +77,9 @@ public class ResourceTest {
 	}
 	
 	private void deleteResource(Resource resource) {
-		Assertions.assertTrue(resource.exists());
+		Assertions.assertTrue(resource.exists().get());
 		Assertions.assertTrue(resource.delete());
-		Assertions.assertFalse(resource.exists());
+		Assertions.assertFalse(resource.exists().get());
 	}
 	
 	@Test
@@ -162,7 +155,7 @@ public class ResourceTest {
 		ClassLoader cl = new URLClassLoader(new URL[] {testJar.toURI().toURL()});
 		URI uri = new URI("classpath:/ign/test.txt");
 		try (Resource resource = new ClasspathResource(uri, cl)) {
-			Assertions.assertTrue(resource.exists());
+			Assertions.assertTrue(resource.exists().get());
 			Assertions.assertNotNull(resource.lastModified());
 			resource.openReadableByteChannel().ifPresent(ch -> {
 				try (ByteArrayOutputStream out = new ByteArrayOutputStream();

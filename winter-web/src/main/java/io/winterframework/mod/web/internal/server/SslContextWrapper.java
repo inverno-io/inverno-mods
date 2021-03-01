@@ -15,8 +15,9 @@
  */
 package io.winterframework.mod.web.internal.server;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.channels.Channels;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -44,9 +45,11 @@ import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Strategy;
 import io.winterframework.core.annotation.Bean.Visibility;
-import io.winterframework.mod.web.WebConfiguration;
 import io.winterframework.core.annotation.Init;
 import io.winterframework.core.annotation.Wrapper;
+import io.winterframework.mod.base.resource.Resource;
+import io.winterframework.mod.base.resource.ResourceService;
+import io.winterframework.mod.web.WebConfiguration;
 
 /**
  * 
@@ -56,15 +59,17 @@ import io.winterframework.core.annotation.Wrapper;
 @Bean(visibility = Visibility.PRIVATE, strategy = Strategy.PROTOTYPE)
 @Wrapper
 public class SslContextWrapper implements Supplier<SslContext> {
-
-	private WebConfiguration configuration;
-
+	
+	private final WebConfiguration configuration;
+	private final ResourceService resourceService;
+	
 	private CipherSuiteFilter cipherSuiteFilter = SupportedCipherSuiteFilter.INSTANCE;
 	
 	private SslContext sslContext;
 
-	public SslContextWrapper(WebConfiguration configuration) {
+	public SslContextWrapper(WebConfiguration configuration, ResourceService resourceService) {
 		this.configuration = configuration;
+		this.resourceService = resourceService;
 	}
 	
 	public void setCipherSuiteFilter(CipherSuiteFilter cipherSuiteFilter) {
@@ -73,48 +78,57 @@ public class SslContextWrapper implements Supplier<SslContext> {
 	
 	@Init
 	public void init() {
-		try {
-			KeyStore ks = KeyStore.getInstance(this.configuration.key_store_type());
-			ks.load(new FileInputStream(this.configuration.key_store()),
-					this.configuration.key_store_password().toCharArray());
-			
-			final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-			kmf.init(ks, this.configuration.key_store_password().toCharArray());
-
-			SslContextBuilder sslContextBuilder = SslContextBuilder.forServer(kmf);
-			SslProvider sslProvider = SslProvider.isAlpnSupported(SslProvider.OPENSSL) ? SslProvider.OPENSSL : SslProvider.JDK;
-			sslContextBuilder.sslProvider(sslProvider);
-
-			if (sslProvider == SslProvider.OPENSSL) {
-				sslContextBuilder.ciphers(OpenSsl.availableOpenSslCipherSuites(), this.cipherSuiteFilter);
-			}
-			else {
-				sslContextBuilder.ciphers(OpenSsl.availableOpenSslCipherSuites(), this.cipherSuiteFilter);
-				try {
-					SSLContext context = SSLContext.getInstance("TLS");
-					context.init(null, null, null);
-					SSLEngine engine = context.createSSLEngine();
-					sslContextBuilder.ciphers(Arrays.asList(engine.getEnabledCipherSuites()));
-				} 
-				catch (KeyManagementException e) {
-					throw new RuntimeException("Error initializing SSL context", e);
+		try (Resource keystoreResource = this.resourceService.getResource(URI.create(this.configuration.key_store()))) {
+			keystoreResource.openReadableByteChannel().ifPresentOrElse(
+				fileChannel -> {
+					try {
+						KeyStore ks = KeyStore.getInstance(this.configuration.key_store_type());
+						ks.load(Channels.newInputStream(fileChannel),
+							this.configuration.key_store_password().toCharArray());
+						
+						final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+						kmf.init(ks, this.configuration.key_store_password().toCharArray());
+	
+						SslContextBuilder sslContextBuilder = SslContextBuilder.forServer(kmf);
+						SslProvider sslProvider = SslProvider.isAlpnSupported(SslProvider.OPENSSL) ? SslProvider.OPENSSL : SslProvider.JDK;
+						sslContextBuilder.sslProvider(sslProvider);
+	
+						if (sslProvider == SslProvider.OPENSSL) {
+							sslContextBuilder.ciphers(OpenSsl.availableOpenSslCipherSuites(), this.cipherSuiteFilter);
+						}
+						else {
+							sslContextBuilder.ciphers(OpenSsl.availableOpenSslCipherSuites(), this.cipherSuiteFilter);
+							try {
+								SSLContext context = SSLContext.getInstance("TLS");
+								context.init(null, null, null);
+								SSLEngine engine = context.createSSLEngine();
+								sslContextBuilder.ciphers(Arrays.asList(engine.getEnabledCipherSuites()));
+							} 
+							catch (KeyManagementException e) {
+								throw new RuntimeException("Error initializing SSL context", e);
+							}
+						}
+						
+						ApplicationProtocolConfig apn = new ApplicationProtocolConfig(
+							Protocol.ALPN,
+							SelectorFailureBehavior.NO_ADVERTISE,
+							SelectedListenerFailureBehavior.ACCEPT,
+							ApplicationProtocolNames.HTTP_2, 
+							ApplicationProtocolNames.HTTP_1_1
+						);
+						sslContextBuilder.applicationProtocolConfig(apn);
+						
+						this.sslContext = sslContextBuilder.build();
+					}
+					catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+						throw new RuntimeException("Error initializing SSL context", e);
+					}
+				},
+				() -> {
+					throw new RuntimeException("Keystore does not exist or is not readable: " + this.configuration.key_store());
 				}
-			}
-			
-			ApplicationProtocolConfig apn = new ApplicationProtocolConfig(
-				Protocol.ALPN,
-				SelectorFailureBehavior.NO_ADVERTISE,
-				SelectedListenerFailureBehavior.ACCEPT,
-				ApplicationProtocolNames.HTTP_2, 
-				ApplicationProtocolNames.HTTP_1_1
 			);
-			sslContextBuilder.applicationProtocolConfig(apn);
-			
-			this.sslContext = sslContextBuilder.build();
 		} 
-		catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
-			throw new RuntimeException("Error initializing SSL context", e);
-		}
 	}
 
 	@Override

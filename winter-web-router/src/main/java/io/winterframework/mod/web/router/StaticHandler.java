@@ -17,6 +17,7 @@ package io.winterframework.mod.web.router;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Optional;
 
 import io.winterframework.mod.base.resource.Resource;
 import io.winterframework.mod.web.BadRequestException;
@@ -67,11 +68,11 @@ public class StaticHandler implements WebExchangeHandler<WebExchange> {
 		}
 
 		try(Resource requestedResource = this.baseResource.resolve(resourceUri)) {
-			Boolean exists = requestedResource.exists();
-			if(exists == null || requestedResource.isFile()) {
+			Optional<Boolean> exists = requestedResource.exists();
+			if(!exists.isPresent() || requestedResource.isFile()) {
 				exchange.response().body().resource().value(requestedResource);
 			}
-			else if(exists) {
+			else if(exists.orElse(false)) {
 				// Try with index.html
 				// TODO this should be configurable
 				try(Resource requestedResourceIndex = requestedResource.resolve("index.html")) {
