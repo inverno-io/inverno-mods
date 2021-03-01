@@ -39,11 +39,11 @@ public interface Resource extends AutoCloseable {
 	
 	boolean isFile() throws ResourceException;
 	
-	Boolean exists() throws ResourceException;
+	Optional<Boolean> exists() throws ResourceException;
 
-	FileTime lastModified() throws ResourceException;
+	Optional<FileTime> lastModified() throws ResourceException;
 	
-	Long size() throws ResourceException;
+	Optional<Long> size() throws ResourceException;
 	
 	Optional<ReadableByteChannel> openReadableByteChannel() throws ResourceException;
 	

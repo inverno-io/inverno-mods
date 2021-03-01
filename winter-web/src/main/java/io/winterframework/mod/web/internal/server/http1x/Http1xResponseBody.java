@@ -76,7 +76,7 @@ class Http1xResponseBody extends GenericResponseBody {
 				
 				FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable"));
 				
-				long size = resource.size();
+				long size = resource.size().get();
 				int count = (int)Math.ceil((float)size / (float)MAX_FILE_REGION_SIZE);
 				
 				// We need to add an extra element in order to control when the flux terminates so we can properly close the file channel

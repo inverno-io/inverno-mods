@@ -51,8 +51,7 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 			this.openApiSpecs = new HashMap<>();
 			for(Module module : this.getClass().getModule().getLayer().modules()) {
 				Resource openApiSpec = resourceService.getResource(new URI("module://" + module.getName() + "/META-INF/winter/web/openapi.yml"));
-				Boolean exists = openApiSpec.exists();
-				if(exists != null && exists) {
+				if(openApiSpec.exists().orElse(false)) {
 					this.openApiSpecs.put(module.getName(), openApiSpec);
 				}
 			}

@@ -146,12 +146,12 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Boolean exists() {
+	public Optional<Boolean> exists() {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().exists();
 		}
-		return false;
+		return Optional.of(false);
 	}
 	
 	@Override
@@ -164,21 +164,21 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public FileTime lastModified() {
+	public Optional<FileTime> lastModified() {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().lastModified();
 		}
-		return null;
+		return Optional.empty();
 	}
 	
 	@Override
-	public Long size() {
+	public Optional<Long> size() {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().size();
 		}
-		return null;
+		return Optional.empty();
 	}
 
 	@Override

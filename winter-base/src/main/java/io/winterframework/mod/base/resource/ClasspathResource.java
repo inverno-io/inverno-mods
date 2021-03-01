@@ -175,12 +175,12 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Boolean exists() {
+	public Optional<Boolean> exists() {
 		Optional<Resource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().exists();
 		}
-		return false;
+		return Optional.of(false);
 	}
 	
 	@Override
@@ -193,21 +193,21 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Long size() {
+	public Optional<Long> size() {
 		Optional<Resource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().size();
 		}
-		return null;
+		return Optional.empty();
 	}
 	
 	@Override
-	public FileTime lastModified() {
+	public Optional<FileTime> lastModified() {
 		Optional<Resource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().lastModified();
 		}
-		return null;
+		return Optional.empty();
 	}
 	
 	@Override

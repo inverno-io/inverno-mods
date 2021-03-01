@@ -131,10 +131,7 @@ public class GenericResponseBody implements ResponseBody {
 		protected void populateHeaders(io.winterframework.mod.base.resource.Resource resource) {
 			GenericResponseBody.this.response.headers(h -> {
 				if(GenericResponseBody.this.response.headers().getContentLength() == null) {
-					Long size = resource.size();
-					if(size != null) {
-						h.contentLength(size);
-					}
+					resource.size().ifPresent(h::contentLength);
 				}
 				
 				if(GenericResponseBody.this.response.headers().getCharSequence(Headers.NAME_CONTENT_TYPE) == null) {
@@ -149,8 +146,7 @@ public class GenericResponseBody implements ResponseBody {
 		@Override
 		public void value(io.winterframework.mod.base.resource.Resource resource) {
 			// Http2 doesn't support FileRegion so we have to read the resource and send it to the response data flux
-			Boolean exists = resource.exists();
-			if(exists == null || exists) {
+			if(resource.exists().orElse(true)) {
 				// In case of file resources we should always be able to determine existence
 				// For other resources with a null exists we can still try, worst case scenario: 
 				// internal server error
