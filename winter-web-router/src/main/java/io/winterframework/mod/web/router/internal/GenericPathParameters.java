@@ -43,7 +43,7 @@ import io.winterframework.mod.web.Parameter;
  * @author jkuhn
  *
  */
-public class GenericPathParameters implements MutablePathParameters {
+class GenericPathParameters implements MutablePathParameters {
 
 	private final ObjectConverter<String> parameterConverter;
 	

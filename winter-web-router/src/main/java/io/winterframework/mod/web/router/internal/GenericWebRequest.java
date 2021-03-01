@@ -30,7 +30,7 @@ import io.winterframework.mod.web.server.RequestHeaders;
  * @author jkuhn
  *
  */
-public class GenericWebRequest implements WebRequest {
+class GenericWebRequest implements WebRequest {
 
 	private final Request request;
 	

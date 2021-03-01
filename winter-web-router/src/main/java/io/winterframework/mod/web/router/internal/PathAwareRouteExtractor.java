@@ -23,7 +23,7 @@ import io.winterframework.mod.web.server.Exchange;
  * @author jkuhn
  *
  */
-public interface PathAwareRouteExtractor<A extends Exchange, B extends AbstractRoute<A>, C extends PathAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
+interface PathAwareRouteExtractor<A extends Exchange, B extends AbstractRoute<A>, C extends PathAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
 
 	C path(String path);
 	

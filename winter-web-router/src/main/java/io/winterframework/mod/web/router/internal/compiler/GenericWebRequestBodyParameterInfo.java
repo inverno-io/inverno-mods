@@ -28,14 +28,14 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebRequestBodyPar
  * @author jkuhn
  *
  */
-public class GenericWebRequestBodyParameterInfo extends AbstractWebParameterInfo implements WebRequestBodyParameterInfo {
+class GenericWebRequestBodyParameterInfo extends AbstractWebParameterInfo implements WebRequestBodyParameterInfo {
 
 	private final RequestBodyKind requestBodyKind;
 	
 	private final RequestBodyReactiveKind requestBodyReactiveKind;
 	
-	public GenericWebRequestBodyParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, RequestBodyReactiveKind requestBodyReactiveKind, RequestBodyKind requestBodyKind, TypeMirror requestBodyType) {
-		super(name, reporter, parameterElement, requestBodyType, false);
+	public GenericWebRequestBodyParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement element, RequestBodyReactiveKind requestBodyReactiveKind, RequestBodyKind requestBodyKind, TypeMirror requestBodyType) {
+		super(name, reporter, element, requestBodyType, false);
 		this.requestBodyKind = Objects.requireNonNull(requestBodyKind);
 		this.requestBodyReactiveKind = Objects.requireNonNull(requestBodyReactiveKind);
 	}

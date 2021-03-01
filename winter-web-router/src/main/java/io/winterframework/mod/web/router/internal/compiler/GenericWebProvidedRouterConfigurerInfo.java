@@ -17,6 +17,7 @@ package io.winterframework.mod.web.router.internal.compiler;
 
 import java.util.List;
 
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 
 import io.winterframework.core.compiler.spi.BeanInfo;
@@ -29,18 +30,26 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebRouterConfigur
  * @author jkuhn
  *
  */
-public class GenericWebProvidedRouterConfigurerInfo extends AbstractInfo<WebRouterConfigurerQualifiedName> implements WebProvidedRouterConfigurerInfo {
+class GenericWebProvidedRouterConfigurerInfo extends AbstractInfo<WebRouterConfigurerQualifiedName> implements WebProvidedRouterConfigurerInfo {
 
+	private TypeElement element;
+	
 	private final DeclaredType type;
 	
 	private final List<? extends WebRouteInfo> routes;
 	
-	public GenericWebProvidedRouterConfigurerInfo(WebRouterConfigurerQualifiedName name, BeanInfo bean, List<? extends WebRouteInfo> routes) {
+	public GenericWebProvidedRouterConfigurerInfo(TypeElement element, WebRouterConfigurerQualifiedName name, BeanInfo bean, List<? extends WebRouteInfo> routes) {
 		super(name, bean);
+		this.element = element;
 		this.type = (DeclaredType)bean.getType();
 		this.routes = routes != null ? routes : List.of();
 	}
 
+	@Override
+	public TypeElement getElement() {
+		return this.element;
+	}
+	
 	@Override
 	public DeclaredType getType() {
 		return this.type;

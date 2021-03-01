@@ -28,7 +28,9 @@ import io.winterframework.mod.web.Method;
  */
 public interface WebRouteInfo extends Info {
 
-	Optional<ExecutableElement> getRouteElement();
+	Optional<WebControllerInfo> getController();
+	
+	Optional<ExecutableElement> getElement();
 	
 	@Override
 	WebRouteQualifiedName getQualifiedName();

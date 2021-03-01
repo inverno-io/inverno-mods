@@ -25,9 +25,16 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
+import org.reactivestreams.Publisher;
+
+import io.netty.buffer.ByteBuf;
 import io.winterframework.core.compiler.spi.ReporterInfo;
 import io.winterframework.core.compiler.spi.plugin.PluginContext;
 import io.winterframework.core.compiler.spi.plugin.PluginExecution;
+import io.winterframework.mod.web.Parameter;
+import io.winterframework.mod.web.router.WebExchange;
+import io.winterframework.mod.web.router.WebPart;
+import io.winterframework.mod.web.router.WebResponseBody;
 import io.winterframework.mod.web.router.annotation.Body;
 import io.winterframework.mod.web.router.annotation.CookieParam;
 import io.winterframework.mod.web.router.annotation.FormParam;
@@ -40,12 +47,15 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebRequestBodyPar
 import io.winterframework.mod.web.router.internal.compiler.spi.WebRequestBodyParameterInfo.RequestBodyReactiveKind;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebRouteQualifiedName;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebSseEventFactoryParameterInfo.SseEventFactoryKind;
+import io.winterframework.mod.web.server.ResponseBody;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * @author jkuhn
  *
  */
-public class WebParameterInfoFactory {
+class WebParameterInfoFactory {
 
 	private final PluginContext pluginContext;
 	private final PluginExecution pluginExecution;
@@ -88,17 +98,17 @@ public class WebParameterInfoFactory {
 		this.sseEventFactoryAnnotationType = this.pluginContext.getElementUtils().getTypeElement(SseEventFactory.class.getCanonicalName()).asType();
 		
 		this.optionalType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(Optional.class.getCanonicalName()).asType());
-		this.monoType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement("reactor.core.publisher.Mono").asType());
-		this.fluxType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement("reactor.core.publisher.Flux").asType());
-		this.publisherType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement("org.reactivestreams.Publisher").asType());
-		this.byteBufType = this.pluginContext.getElementUtils().getTypeElement("io.netty.buffer.ByteBuf").asType();
-		this.webPartType = this.pluginContext.getElementUtils().getTypeElement("io.winterframework.mod.web.router.WebPart").asType();
-		this.parameterType = this.pluginContext.getElementUtils().getTypeElement("io.winterframework.mod.web.Parameter").asType();
+		this.monoType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(Mono.class.getCanonicalName()).asType());
+		this.fluxType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(Flux.class.getCanonicalName()).asType());
+		this.publisherType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(Publisher.class.getCanonicalName()).asType());
+		this.byteBufType = this.pluginContext.getElementUtils().getTypeElement(ByteBuf.class.getCanonicalName()).asType();
+		this.webPartType = this.pluginContext.getElementUtils().getTypeElement(WebPart.class.getCanonicalName()).asType();
+		this.parameterType = this.pluginContext.getElementUtils().getTypeElement(Parameter.class.getCanonicalName()).asType();
 		
-		this.webExchangeType = this.pluginContext.getElementUtils().getTypeElement("io.winterframework.mod.web.router.WebExchange").asType();
-		TypeMirror rawSseEventType = this.pluginContext.getTypeUtils().getDeclaredType(this.pluginContext.getElementUtils().getTypeElement("io.winterframework.mod.web.server.ResponseBody.Sse.Event"), this.byteBufType);
-		this.rawSseEventFactoryType = this.pluginContext.getTypeUtils().getDeclaredType(this.pluginContext.getElementUtils().getTypeElement("io.winterframework.mod.web.server.ResponseBody.Sse.EventFactory"), this.byteBufType, rawSseEventType);
-		this.sseEncoderEventFactoryType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement("io.winterframework.mod.web.router.WebResponseBody.SseEncoder.EventFactory").asType());
+		this.webExchangeType = this.pluginContext.getElementUtils().getTypeElement(WebExchange.class.getCanonicalName()).asType();
+		TypeMirror rawSseEventType = this.pluginContext.getTypeUtils().getDeclaredType(this.pluginContext.getElementUtils().getTypeElement(ResponseBody.Sse.Event.class.getCanonicalName()), this.byteBufType);
+		this.rawSseEventFactoryType = this.pluginContext.getTypeUtils().getDeclaredType(this.pluginContext.getElementUtils().getTypeElement(ResponseBody.Sse.EventFactory.class.getCanonicalName()), this.byteBufType, rawSseEventType);
+		this.sseEncoderEventFactoryType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebResponseBody.SseEncoder.EventFactory.class.getCanonicalName()).asType());
 	}
 	
 	public AbstractWebParameterInfo createParameter(WebRouteQualifiedName routeQName, VariableElement parameterElement, VariableElement annotatedParameterElement, TypeMirror parameterType) {

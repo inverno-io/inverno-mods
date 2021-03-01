@@ -30,7 +30,7 @@ import io.winterframework.mod.web.server.ResponseData;
  * @author jkuhn
  *
  */
-public class GenericWebResponseBody implements WebResponseBody {
+class GenericWebResponseBody implements WebResponseBody {
 
 	private final WebResponse response;
 	

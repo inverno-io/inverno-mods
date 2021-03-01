@@ -23,7 +23,7 @@ import io.winterframework.mod.web.server.ExchangeHandler;
  * @author jkuhn
  *
  */
-public class GenericErrorRoute implements ErrorRoute {
+class GenericErrorRoute implements ErrorRoute {
 
 	private final GenericErrorRouter router;
 	

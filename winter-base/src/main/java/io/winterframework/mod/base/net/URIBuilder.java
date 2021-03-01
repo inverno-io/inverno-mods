@@ -35,7 +35,11 @@ public interface URIBuilder {
 	
 	URIBuilder port(String port);
 	
-	URIBuilder path(String path);
+	default URIBuilder path(String path) {
+		return this.path(path, true);
+	}
+	
+	URIBuilder path(String path, boolean ignoreTrailingSlash);
 	
 	URIBuilder segment(String segment);
 	

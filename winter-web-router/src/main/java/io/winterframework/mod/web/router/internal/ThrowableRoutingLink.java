@@ -29,7 +29,7 @@ import io.winterframework.mod.web.server.ErrorExchange;
  * @author jkuhn
  *
  */
-public class ThrowableRoutingLink extends RoutingLink<ErrorExchange<Throwable>, ThrowableRoutingLink, ErrorRoute> {
+class ThrowableRoutingLink extends RoutingLink<ErrorExchange<Throwable>, ThrowableRoutingLink, ErrorRoute> {
 
 	private Map<Class<? extends Throwable>, RoutingLink<ErrorExchange<Throwable>, ?, ErrorRoute>> handlers;
 	

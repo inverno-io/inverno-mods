@@ -27,6 +27,12 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.type.WildcardType;
 
+import io.winterframework.core.annotation.Bean;
+import io.winterframework.core.annotation.NestedBean;
+import io.winterframework.core.annotation.Overridable;
+import io.winterframework.core.annotation.Wrapper;
+import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
+import io.winterframework.mod.configuration.ConfigurationLoaderSupport;
 import io.winterframework.mod.configuration.ConfigurationSource;
 import io.winterframework.mod.configuration.internal.compiler.ConfigurationLoaderClassGenerationContext.GenerationMode;
 import io.winterframework.mod.configuration.internal.compiler.spi.ConfigurationInfo;
@@ -53,7 +59,7 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 		configurationClassName = configurationClassName.substring(packageName.length() + 1);
 		StringBuilder configurationLoaderClassName = new StringBuilder(configurationClassName).append("Loader");
 		if(context.getMode() == GenerationMode.CONFIGURATION_LOADER_CLASS) {
-			TypeMirror configurationLoaderSupportType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement("io.winterframework.mod.configuration.ConfigurationLoaderSupport").asType());
+			TypeMirror configurationLoaderSupportType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(ConfigurationLoaderSupport.class.getCanonicalName()).asType());
 			TypeMirror consumerType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(Consumer.class.getCanonicalName()).asType());
 			
 			context.addImport(CONFIGURATION_INNER_CLASS, configurationClassName + "Loader." + CONFIGURATION_INNER_CLASS);
@@ -179,19 +185,19 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			return configurationConfiguratorClass;
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURATION_BEAN_CLASS) {
-			TypeMirror beanAnnotationType = context.getElementUtils().getTypeElement(context.getElementUtils().getModuleElement("io.winterframework.core.annotation"), "io.winterframework.core.annotation.Bean").asType();
-			TypeMirror wrapperAnnotationType = context.getElementUtils().getTypeElement(context.getElementUtils().getModuleElement("io.winterframework.core.annotation"), "io.winterframework.core.annotation.Wrapper").asType();
-			TypeMirror configurationLoaderSupportType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement("io.winterframework.mod.configuration.ConfigurationLoaderSupport").asType());
+			TypeMirror beanAnnotationType = context.getElementUtils().getTypeElement(Bean.class.getCanonicalName()).asType();
+			TypeMirror wrapperAnnotationType = context.getElementUtils().getTypeElement(Wrapper.class.getCanonicalName()).asType();
+			TypeMirror configurationLoaderSupportType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(ConfigurationLoaderSupport.class.getCanonicalName()).asType());
 			TypeMirror configurationSupplierType = context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement(Supplier.class.getCanonicalName()), configurationInfo.getType());
 			TypeMirror consumerType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(Consumer.class.getCanonicalName()).asType());
 			WildcardType unknownWildcardType = context.getTypeUtils().getWildcardType(null, null);
 			TypeMirror configurationSourceType = context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement(ConfigurationSource.class.getCanonicalName()), unknownWildcardType, unknownWildcardType, unknownWildcardType);
-			TypeMirror parameterType = context.getElementUtils().getTypeElement("io.winterframework.mod.configuration.ConfigurationKey.Parameter").asType();
+			TypeMirror parameterType = context.getElementUtils().getTypeElement(Parameter.class.getCanonicalName()).asType();
 			
 			StringBuilder configurationBeanClass = new StringBuilder().append(context.indent(0)).append("@").append(context.getTypeName(beanAnnotationType)).append("(name = \"").append(configurationInfo.getQualifiedName().getBeanName()).append("\")\n");
 			configurationBeanClass.append(context.indent(0)).append("@").append(context.getTypeName(wrapperAnnotationType)).append("\n");
 			if(configurationInfo.isOverridable()) {
-				TypeMirror overridableAnnotationType = context.getElementUtils().getTypeElement(context.getElementUtils().getModuleElement("io.winterframework.core.annotation"), "io.winterframework.core.annotation.Overridable").asType();
+				TypeMirror overridableAnnotationType = context.getElementUtils().getTypeElement(Overridable.class.getCanonicalName()).asType();
 				configurationBeanClass.append(context.indent(0)).append("@").append(context.getTypeName(overridableAnnotationType)).append("\n");
 			}
 			configurationBeanClass.append(context.indent(0)).append("public static final class ").append(CONFIGURATION_BEAN_INNER_CLASS).append(" extends ").append(context.getTypeName(configurationLoaderSupportType)).append(".ConfigurationBeanSupport<").append(context.getTypeName(configurationInfo.getType())).append(", ").append(configurationLoaderClassName).append(".").append(CONFIGURATOR_INNER_CLASS).append(", ").append(configurationLoaderClassName).append("> implements ").append(context.getTypeName(configurationSupplierType)).append(" {\n\n");
@@ -238,7 +244,7 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 		else if(context.getMode() == GenerationMode.CONFIGURATION_IMPL_PROPERTY_ACCESSOR) {
 			StringBuilder result = new StringBuilder();
 			if(configurationPropertyInfo instanceof NestedConfigurationPropertyInfo) {
-				TypeMirror nestedAnnotationType = context.getElementUtils().getTypeElement(context.getElementUtils().getModuleElement("io.winterframework.core.annotation"), "io.winterframework.core.annotation.NestedBean").asType();
+				TypeMirror nestedAnnotationType = context.getElementUtils().getTypeElement(NestedBean.class.getCanonicalName()).asType();
 				result.append(context.indent(1)).append("@").append(context.getTypeName(nestedAnnotationType)).append("\n");
 			}
 			result.append(context.indent(1)).append("public ").append(context.getTypeName(configurationPropertyInfo.getType())).append(" ").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append("() {\n");

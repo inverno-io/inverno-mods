@@ -24,8 +24,8 @@ import java.util.concurrent.ExecutorService;
  */
 public interface AsyncResourceProvider<A extends AsyncResource> extends ResourceProvider<A> {
 
-	default A get(URI uri, ExecutorService executor) throws IllegalArgumentException, ResourceException {
-		A resource = this.get(uri);
+	default A getResource(URI uri, ExecutorService executor) throws IllegalArgumentException, ResourceException {
+		A resource = this.getResource(uri);
 		resource.setExecutor(executor);
 		return resource;
 	}

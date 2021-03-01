@@ -26,9 +26,13 @@ import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
+import io.winterframework.core.annotation.Bean;
 import io.winterframework.mod.base.net.URIs;
+import io.winterframework.mod.web.router.WebExchange;
+import io.winterframework.mod.web.router.WebRouter;
+import io.winterframework.mod.web.router.WebRouterConfigurer;
 import io.winterframework.mod.web.router.annotation.WebRoutes;
-import io.winterframework.mod.web.router.internal.compiler.WebRouterConfigurerGenerationContext.GenerationMode;
+import io.winterframework.mod.web.router.internal.compiler.WebRouterConfigurerClassGenerationContext.GenerationMode;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebBasicParameterInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebControllerInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebCookieParameterInfo;
@@ -54,19 +58,19 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebSseEventFactor
  * @author jkuhn
  *
  */
-public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisitor<StringBuilder, WebRouterConfigurerGenerationContext> {
+class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisitor<StringBuilder, WebRouterConfigurerClassGenerationContext> {
 
 	@Override
-	public StringBuilder visit(WebRouterConfigurerInfo routerConfigurerInfo, WebRouterConfigurerGenerationContext context) {
+	public StringBuilder visit(WebRouterConfigurerInfo routerConfigurerInfo, WebRouterConfigurerClassGenerationContext context) {
 		String configurerClassName = routerConfigurerInfo.getQualifiedName().getClassName();
 		String configurerPackageName = configurerClassName.lastIndexOf(".") != -1 ? configurerClassName.substring(0, configurerClassName.lastIndexOf(".")) : "";
 		configurerClassName = configurerClassName.substring(configurerPackageName.length() + 1);
 		if(context.getMode() == GenerationMode.CONFIGURER_CLASS) {
-			TypeMirror beanAnnotationType = context.getElementUtils().getTypeElement(context.getElementUtils().getModuleElement("io.winterframework.core.annotation"), "io.winterframework.core.annotation.Bean").asType();
+			TypeMirror beanAnnotationType = context.getElementUtils().getTypeElement(Bean.class.getCanonicalName()).asType();
 
-			TypeMirror webExchangeType = context.getElementUtils().getTypeElement("io.winterframework.mod.web.router.WebExchange").asType();
-			TypeMirror webRouterConfigurerType = context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement("io.winterframework.mod.web.router.WebRouterConfigurer"), webExchangeType);
-			TypeMirror routerType = context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement("io.winterframework.mod.web.router.WebRouter"), webExchangeType);
+			TypeMirror webExchangeType = context.getElementUtils().getTypeElement(WebExchange.class.getCanonicalName()).asType();
+			TypeMirror webRouterConfigurerType = context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement(WebRouterConfigurer.class.getCanonicalName()), webExchangeType);
+			TypeMirror routerType = context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement(WebRouter.class.getCanonicalName()), webExchangeType);
 			
 			context.addImport(configurerClassName, configurerPackageName + "." + configurerClassName);
 			
@@ -149,7 +153,7 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 	}
 	
 	@Override
-	public StringBuilder visit(WebProvidedRouterConfigurerInfo providedRouterConfigurerInfo, WebRouterConfigurerGenerationContext context) {
+	public StringBuilder visit(WebProvidedRouterConfigurerInfo providedRouterConfigurerInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.CONFIGURER_ANNOTATION) {
 			return Arrays.stream(providedRouterConfigurerInfo.getRoutes())
 				.map(routeInfo -> this.visit(routeInfo, context.withMode(GenerationMode.ROUTE_ANNOTATION)))
@@ -171,7 +175,7 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 	}
 
 	@Override
-	public StringBuilder visit(WebControllerInfo controllerInfo, WebRouterConfigurerGenerationContext context) {
+	public StringBuilder visit(WebControllerInfo controllerInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.CONTROLLER_FIELD) {
 			return new StringBuilder(context.indent(0)).append("private ").append(context.getTypeName(controllerInfo.getType())).append(" ").append(controllerInfo.getQualifiedName().getBeanName()).append(";");
 		}
@@ -188,18 +192,11 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 	}
 
 	@Override
-	public StringBuilder visit(WebRouteInfo routeInfo, WebRouterConfigurerGenerationContext context) {
+	public StringBuilder visit(WebRouteInfo routeInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_ANNOTATION) {
 			StringBuilder result = new StringBuilder();
 			result.append(context.indent(0)).append("@").append(context.getWebRouteAnnotationTypeName()).append("(");
-			result.append("path = { ").append(Arrays.stream(routeInfo.getPaths()).map(path -> {
-				if(context.getWebController() != null) {
-					return "\"" + URIs.uri(context.getWebController().getRootPath(), URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).path(path).buildRawPath() + "\"";
-				}
-				else {
-					return "\"" + path + "\"";
-				}
-			}).collect(Collectors.joining(", "))).append(" }");
+			result.append("path = { ").append(Arrays.stream(routeInfo.getPaths()).map(path -> "\"" + routeInfo.getController().map(WebControllerInfo::getRootPath).map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).path(path, false).buildRawPath()).orElse(path) + "\"").collect(Collectors.joining(", "))).append(" }");
 			if(routeInfo.isMatchTrailingSlash()) {
 				result.append(", matchTrailingSlash = true");
 			}
@@ -228,7 +225,7 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 			
 			StringBuilder routeManager = new StringBuilder();
 			
-			routeManager.append(Arrays.stream(routeInfo.getPaths()).map(path -> ".path(\"" + URIs.uri(context.getWebController().getRootPath(), URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).path(path).buildRawPath() + "\", " + routeInfo.isMatchTrailingSlash() + ")").collect(Collectors.joining()));
+			routeManager.append(Arrays.stream(routeInfo.getPaths()).map(path -> ".path(\"" + routeInfo.getController().map(WebControllerInfo::getRootPath).map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).path(path, false).buildRawPath()).orElse(path) + "\", " + routeInfo.isMatchTrailingSlash() + ")").collect(Collectors.joining()));
 			if(routeInfo.getMethods() != null && routeInfo.getMethods().length > 0) {
 				routeManager.append(Arrays.stream(routeInfo.getMethods()).map(method -> ".method(" + context.getMethodTypeName() + "." + method.toString() + ")").collect(Collectors.joining()));
 			}
@@ -279,7 +276,7 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 	}
 	
 	@Override
-	public StringBuilder visit(WebResponseBodyInfo responseBodyInfo, WebRouterConfigurerGenerationContext context) {
+	public StringBuilder visit(WebResponseBodyInfo responseBodyInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_HANDLER_BODY_CLASS || context.getMode() == GenerationMode.ROUTE_HANDLER_BODY_TYPE) {
 			boolean typesMode = context.getMode() == GenerationMode.ROUTE_HANDLER_BODY_TYPE;
 			
@@ -314,7 +311,7 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 				parameterIndex++;
 			}
 			
-			StringBuilder controllerInvoke = new StringBuilder("this.").append(context.getWebController().getQualifiedName().getBeanName()).append(".").append(routeInfo.getRouteElement().get().getSimpleName().toString()).append("(").append(requestParameters).append(")");
+			StringBuilder controllerInvoke = new StringBuilder("this.").append(context.getWebController().getQualifiedName().getBeanName()).append(".").append(routeInfo.getElement().get().getSimpleName().toString()).append("(").append(requestParameters).append(")");
 			
 			if(responseBodyInfo.getBodyKind() == ResponseBodyKind.EMPTY) {
 				if(hasFormParameters) {
@@ -439,7 +436,7 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 	}
 
 	@Override
-	public StringBuilder visit(WebParameterInfo parameterInfo, WebRouterConfigurerGenerationContext context) {
+	public StringBuilder visit(WebParameterInfo parameterInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(parameterInfo instanceof WebCookieParameterInfo) {
 			return this.visit((WebCookieParameterInfo)parameterInfo, context);
 		}
@@ -468,7 +465,7 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 	}
 	
 	@Override
-	public StringBuilder visit(WebBasicParameterInfo basicParameterInfo, WebRouterConfigurerGenerationContext context) {
+	public StringBuilder visit(WebBasicParameterInfo basicParameterInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS || context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE) {
 			boolean typesMode = context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE;
 			String parameterType = typesMode ? "routeTypes[" + context.getParameterIndex() + "]" : null;
@@ -578,7 +575,7 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 	}
 
 	@Override
-	public StringBuilder visit(WebCookieParameterInfo cookieParameterInfo, WebRouterConfigurerGenerationContext context) {
+	public StringBuilder visit(WebCookieParameterInfo cookieParameterInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_ONE) {
 			return new StringBuilder("exchange.request().cookies().get(\"").append(cookieParameterInfo.getQualifiedName().getParameterName()).append("\")");
 		}
@@ -592,15 +589,7 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 	}
 
 	@Override
-	public StringBuilder visit(WebExchangeParameterInfo exchangeParameterInfo, WebRouterConfigurerGenerationContext context) {
-		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS || context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE) {
-			return new StringBuilder("exchange");
-		}
-		return new StringBuilder();
-	}
-
-	@Override
-	public StringBuilder visit(WebFormParameterInfo formParameterInfo, WebRouterConfigurerGenerationContext context) {
+	public StringBuilder visit(WebFormParameterInfo formParameterInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_ONE) {
 			return new StringBuilder(context.getOptionalTypeName()).append(".ofNullable(formParameters.get(\"").append(formParameterInfo.getQualifiedName().getParameterName()).append("\")).flatMap(parameter -> parameter.stream().findFirst())");
 		}
@@ -614,7 +603,7 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 	}
 
 	@Override
-	public StringBuilder visit(WebHeaderParameterInfo headerParameterInfo, WebRouterConfigurerGenerationContext context) {
+	public StringBuilder visit(WebHeaderParameterInfo headerParameterInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_ONE) {
 			return new StringBuilder("exchange.request().headers().getParameter(\"").append(headerParameterInfo.getQualifiedName().getParameterName()).append("\")");
 		}
@@ -628,7 +617,7 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 	}
 
 	@Override
-	public StringBuilder visit(WebPathParameterInfo pathParameterInfo, WebRouterConfigurerGenerationContext context) {
+	public StringBuilder visit(WebPathParameterInfo pathParameterInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_ONE) {
 			return new StringBuilder("exchange.request().pathParameters().get(\"").append(pathParameterInfo.getQualifiedName().getParameterName()).append("\")");
 		}
@@ -642,7 +631,7 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 	}
 
 	@Override
-	public StringBuilder visit(WebQueryParameterInfo queryParameterInfo, WebRouterConfigurerGenerationContext context) {
+	public StringBuilder visit(WebQueryParameterInfo queryParameterInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_ONE) {
 			return new StringBuilder("exchange.request().queryParameters().get(\"").append(queryParameterInfo.getQualifiedName().getParameterName()).append("\")");
 		}
@@ -656,7 +645,7 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 	}
 
 	@Override
-	public StringBuilder visit(WebRequestBodyParameterInfo bodyParameterInfo, WebRouterConfigurerGenerationContext context) {
+	public StringBuilder visit(WebRequestBodyParameterInfo bodyParameterInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS || context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE) {
 			boolean typesMode = context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE;
 			String parameterType = typesMode ? "routeTypes[" + context.getParameterIndex() + "]" : null;
@@ -735,7 +724,15 @@ public class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInf
 	}
 	
 	@Override
-	public StringBuilder visit(WebSseEventFactoryParameterInfo sseEventFactoryParameterInfo, WebRouterConfigurerGenerationContext context) {
+	public StringBuilder visit(WebExchangeParameterInfo exchangeParameterInfo, WebRouterConfigurerClassGenerationContext context) {
+		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS || context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE) {
+			return new StringBuilder("exchange");
+		}
+		return new StringBuilder();
+	}
+	
+	@Override
+	public StringBuilder visit(WebSseEventFactoryParameterInfo sseEventFactoryParameterInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS || context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE) {
 			return new StringBuilder("events");
 		}

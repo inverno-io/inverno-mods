@@ -25,7 +25,7 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebResponseBodyIn
  * @author jkuhn
  *
  */
-public class GenericWebResponseBodyInfo implements WebResponseBodyInfo {
+class GenericWebResponseBodyInfo implements WebResponseBodyInfo {
 
 	private final TypeMirror type;
 	private final ResponseBodyKind responseBodyKind;

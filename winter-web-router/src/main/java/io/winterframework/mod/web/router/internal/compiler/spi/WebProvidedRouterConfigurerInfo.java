@@ -15,6 +15,7 @@
  */
 package io.winterframework.mod.web.router.internal.compiler.spi;
 
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 
 import io.winterframework.core.compiler.spi.Info;
@@ -24,6 +25,8 @@ import io.winterframework.core.compiler.spi.Info;
  *
  */
 public interface WebProvidedRouterConfigurerInfo extends Info {
+	
+	TypeElement getElement();
 	
 	@Override
 	WebRouterConfigurerQualifiedName getQualifiedName();

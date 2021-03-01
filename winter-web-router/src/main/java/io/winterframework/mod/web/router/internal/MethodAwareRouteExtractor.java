@@ -23,7 +23,7 @@ import io.winterframework.mod.web.server.Exchange;
  * @author jkuhn
  *
  */
-public interface MethodAwareRouteExtractor<A extends Exchange, B extends AbstractRoute<A>, C extends MethodAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
+interface MethodAwareRouteExtractor<A extends Exchange, B extends AbstractRoute<A>, C extends MethodAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
 
 	C method(Method method);
 }

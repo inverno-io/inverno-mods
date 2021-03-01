@@ -29,7 +29,5 @@ import java.lang.annotation.Target;
 @Target(TYPE)
 public @interface WebController {
 
-	String path() default "";
-	
-	String value() default "";
+	String path() default "/";
 }

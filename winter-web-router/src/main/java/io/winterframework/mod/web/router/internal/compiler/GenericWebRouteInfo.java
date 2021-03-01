@@ -24,6 +24,7 @@ import javax.lang.model.element.ExecutableElement;
 import io.winterframework.core.compiler.spi.ReporterInfo;
 import io.winterframework.core.compiler.spi.support.AbstractInfo;
 import io.winterframework.mod.web.Method;
+import io.winterframework.mod.web.router.internal.compiler.spi.WebControllerInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebParameterInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebResponseBodyInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebRouteInfo;
@@ -33,8 +34,10 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebRouteQualified
  * @author jkuhn
  *
  */
-public class GenericWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> implements WebRouteInfo {
+class GenericWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> implements WebRouteInfo {
 
+	private Optional<WebControllerInfo> controller = Optional.empty();
+	
 	private final String[] paths;
 	
 	private final boolean matchTrailingSlash;
@@ -51,9 +54,10 @@ public class GenericWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> imp
 	
 	private final WebResponseBodyInfo responseBody;
 	
-	private final ExecutableElement routeElement;
+	private final ExecutableElement element;
 	
 	public GenericWebRouteInfo(
+			ExecutableElement element,
 			WebRouteQualifiedName name, 
 			ReporterInfo reporter,
 			Set<String> paths,
@@ -62,11 +66,10 @@ public class GenericWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> imp
 			Set<String> consumes,
 			Set<String> produces,
 			Set<String> languages,
-			ExecutableElement routeElement,
 			List<? extends AbstractWebParameterInfo> parameters,
 			WebResponseBodyInfo responseBody) {
 		super(name, reporter instanceof NoOpReporterInfo ? ((NoOpReporterInfo)reporter).getReporter() : reporter);
-		
+		this.element = element;
 		this.paths = paths.stream().sorted().toArray(String[]::new);
 		this.matchTrailingSlash = matchTrailingSlash;
 		this.methods = methods.stream().sorted().toArray(Method[]::new);
@@ -75,7 +78,15 @@ public class GenericWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> imp
 		this.languages = languages.stream().sorted().toArray(String[]::new);
 		this.parameters = parameters;
 		this.responseBody = responseBody;
-		this.routeElement = routeElement;
+	}
+	
+	@Override
+	public Optional<WebControllerInfo> getController() {
+		return this.controller;
+	}
+	
+	public void setController(WebControllerInfo controller) {
+		this.controller = Optional.ofNullable(controller);
 	}
 	
 	@Override
@@ -119,8 +130,8 @@ public class GenericWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> imp
 	}
 
 	@Override
-	public Optional<ExecutableElement> getRouteElement() {
-		return Optional.ofNullable(this.routeElement);
+	public Optional<ExecutableElement> getElement() {
+		return Optional.ofNullable(this.element);
 	}
 	
 	@Override
@@ -131,5 +142,5 @@ public class GenericWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> imp
 	@Override
 	public WebResponseBodyInfo getResponseBody() {
 		return this.responseBody;
-	}
+	}	
 }

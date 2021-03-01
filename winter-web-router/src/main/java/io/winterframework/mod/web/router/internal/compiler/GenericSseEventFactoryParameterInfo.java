@@ -29,18 +29,18 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebSseEventFactor
  * @author jkuhn
  *
  */
-public class GenericSseEventFactoryParameterInfo extends AbstractWebParameterInfo implements WebSseEventFactoryParameterInfo {
+class GenericSseEventFactoryParameterInfo extends AbstractWebParameterInfo implements WebSseEventFactoryParameterInfo {
 
 	private final SseEventFactoryKind eventFactoryKind;
 	
 	private final Optional<String> dataMediaType;
 	
-	public GenericSseEventFactoryParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, TypeMirror eventType, SseEventFactoryKind eventFactoryKind) {
-		this(name, reporter, parameterElement, eventType, eventFactoryKind, null);
+	public GenericSseEventFactoryParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement element, TypeMirror eventType, SseEventFactoryKind eventFactoryKind) {
+		this(name, reporter, element, eventType, eventFactoryKind, null);
 	}
 	
-	public GenericSseEventFactoryParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, TypeMirror eventType, SseEventFactoryKind eventFactoryKind, String dataMediaType) {
-		super(name, reporter, parameterElement, eventType, true);
+	public GenericSseEventFactoryParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement element, TypeMirror eventType, SseEventFactoryKind eventFactoryKind, String dataMediaType) {
+		super(name, reporter, element, eventType, true);
 		this.eventFactoryKind = Objects.requireNonNull(eventFactoryKind);
 		this.dataMediaType = Optional.ofNullable(dataMediaType);
 	}

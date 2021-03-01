@@ -73,7 +73,7 @@ public class Http1xRequestHeaders implements RequestHeaders {
 	@Override
 	public String getPath() {
 		if(this.normalizedPath == null) {
-			this.normalizedPath = URIs.uri(this.httpRequest.uri(), URIs.Option.NORMALIZED).buildRawPath();
+			this.normalizedPath = URIs.uri(this.httpRequest.uri(), false, URIs.Option.NORMALIZED).buildRawPath();
 		}
 		return this.normalizedPath;
 	}

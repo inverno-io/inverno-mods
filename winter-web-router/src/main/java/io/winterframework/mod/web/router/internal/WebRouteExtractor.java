@@ -22,7 +22,7 @@ import io.winterframework.mod.web.router.WebRoute;
  * @author jkuhn
  *
  */
-public interface WebRouteExtractor<A extends WebExchange, B extends WebRoute<A>, C extends WebRouteExtractor<A, B, C>> extends 
+interface WebRouteExtractor<A extends WebExchange, B extends WebRoute<A>, C extends WebRouteExtractor<A, B, C>> extends 
 	PathAwareRouteExtractor<A, B, C>,
 	MethodAwareRouteExtractor<A, B, C>,
 	ContentAwareRouteExtractor<A, B, C>,

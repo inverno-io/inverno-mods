@@ -25,8 +25,8 @@ import io.winterframework.mod.web.server.ExchangeHandler;
  * @author jkuhn
  *
  */
-
 class GenericWebRoute implements WebRoute<WebExchange> {
+	
 	private final GenericWebRouter router;
 	
 	private boolean disabled;

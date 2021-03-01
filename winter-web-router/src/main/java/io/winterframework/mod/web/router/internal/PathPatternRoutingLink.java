@@ -127,103 +127,6 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 		});
 		super.extractRoute(extractor);
 	}
-
-	/*private PathPatternMatch<A, B> matches(String path, PathAwareRoute.PathPattern pathPattern, RoutingLink<A, ?, B> handler) {
-		Matcher matcher = pathPattern.getPattern().matcher(path);
-		if(matcher.matches()) {
-			return new PathPatternMatch<>(matcher, pathPattern, handler);
-		}
-		return null;
-	}
-	
-	private static class PathPatternMatch<A extends Exchange, B extends PathAwareRoute<A>> implements Comparable<PathPatternMatch<A, B>> {
-		
-		private Matcher matcher;
-		
-		private PathAwareRoute.PathPattern pathPattern;
-		
-		private RoutingLink<A, ?, B> handler;
-		
-		public PathPatternMatch(Matcher matcher, PathAwareRoute.PathPattern pathPattern, RoutingLink<A, ?, B> handler) {
-			this.matcher = matcher;
-			this.pathPattern = pathPattern;
-			this.handler = handler;
-		}
-		
-		public void injectPathParameters(GenericPathParameters pathParameters) {
-			int matcherIndex = 1;
-			for(String pathParameterName : this.pathPattern.getPathParameterNames()) {
-				if(pathParameterName != null && !pathParameterName.equals(":")) {
-					pathParameters.put(pathParameterName.substring(1), this.matcher.group(matcherIndex));
-				}
-				matcherIndex++;
-			}
-		}
-		
-		public RoutingLink<A, ?, B> getHandler() {
-			return this.handler;
-		}
-
-		@Override
-		public int compareTo(PathPatternMatch<A, B> other) {
-			// Rule: the most specific path wins from left to right
-			// 
-			
-			// /toto/{}_{}... > /toto/{}... 
-			// /toto/abc_{}... > /toto/{}... 
-			
-			// /toto/tata/titi/{}... > /toto/tata/{}...
-			// /toto/tata/titi/{}... > /toto/tata/{}
-			// /toto/{}/tutu > /toto/{}/{}
-			// /toto/tutu > /toto/{:.*}
-			// /toto/{}/tata > /toto/{:.*}
-			// /toto/{}/{} > /toto/{:.*} 
-			
-			int groupIndex = 1;
-			while (groupIndex < Math.min(this.matcher.groupCount(), other.matcher.groupCount())) {
-				String thisGroup = this.matcher.group(groupIndex);
-				boolean thisRegex = this.pathPattern.getPathParameterNames().get(groupIndex - 1) != null;
-				
-				String otherGroup = other.matcher.group(groupIndex);
-				boolean otherRegex = other.pathPattern.getPathParameterNames().get(groupIndex - 1) != null;
-
-				if(thisGroup.length() < otherGroup.length()) {
-					if(!otherRegex) {
-						return -1;
-					}
-					else {
-						return 1;
-					}
-				}
-				else if(thisGroup.length() > otherGroup.length()) {
-					if(!thisRegex) {
-						return 1;
-					}
-					else {
-						return -1;
-					}
-				}
-				else {
-					if(!thisRegex && otherRegex) {
-						return 1;
-					}
-					else if(thisRegex && !otherRegex) {
-						return -1;
-					}
-				}
-				groupIndex++;
-			}
-			
-			if(this.matcher.groupCount() < other.matcher.groupCount()) {
-				return 1;
-			}
-			else if(this.matcher.groupCount() > other.matcher.groupCount()) {
-				return -1;
-			}
-			return 0;
-		}
-	}*/
-
 	@Override
 	public void handle(A exchange) throws WebException {
 		if(this.handlers.isEmpty()) {
@@ -252,58 +155,11 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 						}
 					}
 				}
-				
-				/*if(exchange instanceof GenericWebExchange) {
-					((GenericWebExchange)exchange).request().pathParameters().putAll(bestMatchMatcher.getParameters());
-				}*/
 				bestMatchHandler.handle(exchange);
 			}
 			else {
 				nextLink.handle(exchange);
 			}
-			
-			/*TreeMap<URIMatcher, RoutingLink<A, ?, B>> matchingHandlers = new TreeMap<>();
-			
-			for(Entry<URIPattern, RoutingLink<A, ?, B>> e : this.handlers.entrySet()) {
-				URIMatcher matcher = e.getKey().matcher(normalizedPath);
-				if(matcher.matches()) {
-					matchingHandlers.put(matcher, e.getValue());
-				}
-			}
-			if(!matchingHandlers.isEmpty()) {
-				Map.Entry<URIMatcher, RoutingLink<A, ?, B>> matchingEntry = matchingHandlers.firstEntry();
-				if(exchange instanceof GenericWebExchange) {
-					((GenericWebExchange)exchange).request().pathParameters().putAll(matchingEntry.getKey().getParameters());
-				}
-				matchingEntry.getValue().handle(exchange);
-			}
-			else {
-				this.nextLink.handle(exchange);
-			}*/
-			
-			
-			// TODO If we have more than one, we need to prioritize them or we need to fail depending on a routing strategy
-			// - we can choose to trust the Winter compiler to detect conflicts and have a defaulting behavior at runtime
-			// - we can choose to make this behavior configurable
-			// ==> for the time being let's just take the first one
-			/*Optional<RoutingLink<A, ?, B>> handler = this.handlers.entrySet().stream()
-				.map(e -> this.matches(exchange.request().headers().getPath(), e.getKey(), e.getValue())) 
-				.filter(Objects::nonNull)
-				.sorted(Comparator.reverseOrder())
-				.findFirst()
-				.map(match -> {
-					if(exchange instanceof GenericWebExchange) {
-						match.injectPathParameters(((GenericWebExchange)exchange).request().pathParameters());
-					}
-					return match.getHandler();
-				});
-			
-			if(handler.isPresent()) {
-				handler.get().handle(exchange);
-			}
-			else {
-				this.nextLink.handle(exchange);
-			}*/
 		}
 	}
 }

@@ -22,7 +22,7 @@ import io.winterframework.mod.web.server.ErrorExchange;
  * @author jkuhn
  *
  */
-public interface ErrorRouteExtractor extends 
+interface ErrorRouteExtractor extends 
 	AcceptAwareRouteExtractor<ErrorExchange<Throwable>, ErrorRoute, ErrorRouteExtractor>,
 	ErrorAwareRouteExtractor<ErrorExchange<Throwable>, ErrorRoute, ErrorRouteExtractor>, 
 	RouteExtractor<ErrorExchange<Throwable>, ErrorRoute> {

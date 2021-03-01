@@ -29,24 +29,24 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebParameterQuali
  * @author jkuhn
  *
  */
-public abstract class AbstractWebParameterInfo extends AbstractInfo<WebParameterQualifiedName> implements WebParameterInfo {
+abstract class AbstractWebParameterInfo extends AbstractInfo<WebParameterQualifiedName> implements WebParameterInfo {
 
-	private final VariableElement parameterElement;
+	private final VariableElement element;
 
 	private final TypeMirror type;
 	
 	private final boolean required;
 	
-	public AbstractWebParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, TypeMirror type, boolean required) {
+	public AbstractWebParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement element, TypeMirror type, boolean required) {
 		super(name, reporter instanceof NoOpReporterInfo ? ((NoOpReporterInfo)reporter).getReporter() : reporter);
-		this.parameterElement = Objects.requireNonNull(parameterElement);
+		this.element = Objects.requireNonNull(element);
 		this.type = Objects.requireNonNull(type);
 		this.required = required;
 	}
 
 	@Override
-	public VariableElement getParameterElement() {
-		return this.parameterElement;
+	public VariableElement getElement() {
+		return this.element;
 	}
 
 	@Override

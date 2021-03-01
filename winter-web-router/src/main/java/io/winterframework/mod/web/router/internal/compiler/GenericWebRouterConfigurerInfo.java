@@ -17,6 +17,8 @@ package io.winterframework.mod.web.router.internal.compiler;
 
 import java.util.List;
 
+import javax.lang.model.element.ModuleElement;
+
 import io.winterframework.mod.web.router.internal.compiler.spi.WebControllerInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebProvidedRouterConfigurerInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebRouterConfigurerInfo;
@@ -27,17 +29,25 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebRouterConfigur
  * @author jkuhn
  *
  */
-public class GenericWebRouterConfigurerInfo implements WebRouterConfigurerInfo {
+class GenericWebRouterConfigurerInfo implements WebRouterConfigurerInfo {
 
+	private final ModuleElement element;
+	
 	private final WebRouterConfigurerQualifiedName name;
 	
 	private final List<? extends WebControllerInfo> webControllers; 
 	private final List<? extends WebProvidedRouterConfigurerInfo> webProvidedRouters;
 	
-	public GenericWebRouterConfigurerInfo(WebRouterConfigurerQualifiedName name, List<? extends WebControllerInfo> webControllers, List<? extends WebProvidedRouterConfigurerInfo> webProvidedRouters) {
+	public GenericWebRouterConfigurerInfo(ModuleElement element, WebRouterConfigurerQualifiedName name, List<? extends WebControllerInfo> webControllers, List<? extends WebProvidedRouterConfigurerInfo> webProvidedRouters) {
+		this.element = element;
 		this.name = name;
 		this.webControllers = webControllers != null ? webControllers : List.of();
 		this.webProvidedRouters = webProvidedRouters != null ? webProvidedRouters : List.of();
+	}
+	
+	@Override
+	public ModuleElement getElement() {
+		return this.element;
 	}
 	
 	@Override

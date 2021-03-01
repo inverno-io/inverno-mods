@@ -72,7 +72,7 @@ public class Http2RequestHeaders implements RequestHeaders {
 	@Override
 	public String getPath() {
 		if(this.normalizedPath == null) {
-			this.normalizedPath = URIs.uri(this.getHeaderValue(Headers.NAME_PSEUDO_PATH), URIs.Option.NORMALIZED).buildRawPath();
+			this.normalizedPath = URIs.uri(this.getHeaderValue(Headers.NAME_PSEUDO_PATH), false, URIs.Option.NORMALIZED).buildRawPath();
 		}
 		return this.normalizedPath;
 	}

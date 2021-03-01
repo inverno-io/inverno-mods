@@ -26,9 +26,9 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebParameterQuali
  * @author jkuhn
  *
  */
-public class GenericWebHeaderParameterInfo extends AbstractWebParameterInfo implements WebHeaderParameterInfo {
+class GenericWebHeaderParameterInfo extends AbstractWebParameterInfo implements WebHeaderParameterInfo {
 
-	public GenericWebHeaderParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement parameterElement, TypeMirror type, boolean required) {
-		super(name, reporter, parameterElement, type, required);
+	public GenericWebHeaderParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement element, TypeMirror type, boolean required) {
+		super(name, reporter, element, type, required);
 	}
 }

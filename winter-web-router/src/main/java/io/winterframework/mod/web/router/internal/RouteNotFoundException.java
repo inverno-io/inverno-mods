@@ -21,7 +21,7 @@ import io.winterframework.mod.web.NotFoundException;
  * @author jkuhn
  *
  */
-public class RouteNotFoundException extends NotFoundException {
+class RouteNotFoundException extends NotFoundException {
 
 	private static final long serialVersionUID = 5440809816503439777L;
 

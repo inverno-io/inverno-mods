@@ -15,6 +15,7 @@
  */
 package io.winterframework.mod.web.router.internal.compiler.spi;
 
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 
 import io.winterframework.core.compiler.spi.BeanQualifiedName;
@@ -26,6 +27,8 @@ import io.winterframework.core.compiler.spi.Info;
  */
 public interface WebControllerInfo extends Info {
 
+	TypeElement getElement();
+	
 	BeanQualifiedName getQualifiedName();
 	
 	DeclaredType getType();

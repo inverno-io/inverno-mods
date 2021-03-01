@@ -34,7 +34,7 @@ public final class URIs {
 	
 	public static enum Option {
 		NORMALIZED,
-		PARAMETERIZED
+		PARAMETERIZED // {<name>[:<pattern>]}
 	}
 
 	public static URIBuilder uri(URIs.Option... options) {
@@ -42,19 +42,27 @@ public final class URIs {
 	}
 	
 	public static URIBuilder uri(String path, URIs.Option... options) {
-		return new GenericURIBuilder(path, Charsets.DEFAULT, options);
+		return new GenericURIBuilder(path, true, Charsets.DEFAULT, options);
 	}
 	
-	public static URIBuilder uri(String path, Charset charset, URIs.Option... options) {
-		return new GenericURIBuilder(path, charset, options);
+	public static URIBuilder uri(String path, boolean ignoreTrailingSlash, URIs.Option... options) {
+		return new GenericURIBuilder(path, ignoreTrailingSlash, Charsets.DEFAULT, options);
+	}
+	
+	public static URIBuilder uri(String path, boolean ignoreTrailingSlash, Charset charset, URIs.Option... options) {
+		return new GenericURIBuilder(path, ignoreTrailingSlash, charset, options);
 	}
 	
 	public static URIBuilder uri(URI baseURI, URIs.Option... options) {
-		return new GenericURIBuilder(baseURI, Charsets.DEFAULT, options);
+		return new GenericURIBuilder(baseURI, true, Charsets.DEFAULT, options);
 	}
 	
-	public static URIBuilder uri(URI baseURI, Charset charset, URIs.Option... options) {
-		return new GenericURIBuilder(baseURI, charset, options);
+	public static URIBuilder uri(URI baseURI, boolean ignoreTrailingSlash, URIs.Option... options) {
+		return new GenericURIBuilder(baseURI, ignoreTrailingSlash, Charsets.DEFAULT, options);
+	}
+	
+	public static URIBuilder uri(URI baseURI, boolean ignoreTrailingSlash, Charset charset, URIs.Option... options) {
+		return new GenericURIBuilder(baseURI, ignoreTrailingSlash, charset, options);
 	}
 	
 	static String decodeURIComponent(String component, Charset charset) {

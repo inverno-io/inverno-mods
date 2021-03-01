@@ -67,9 +67,7 @@ public class PathResource extends AbstractAsyncResource {
 	
 	@Override
 	public boolean isFile() {
-		// We can always return a file channel with a path so yes this is a file
-		// However it doesn't mean the resource actually exist
-		return true;
+		return Files.isRegularFile(this.path);
 	}
 
 	@Override

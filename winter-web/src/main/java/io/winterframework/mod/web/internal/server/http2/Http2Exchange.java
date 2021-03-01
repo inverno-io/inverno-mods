@@ -111,7 +111,7 @@ public class Http2Exchange extends AbstractExchange {
 			headers.setWritten(true);
 		}
 		Http2ResponseTrailers trailers = (Http2ResponseTrailers)this.response.trailers();
-		this.encoder.writeData(this.context, this.stream.id(), value, 0, trailers != null, this.context.voidPromise());
+		this.encoder.writeData(this.context, this.stream.id(), value, 0, trailers == null, this.context.voidPromise());
 		if(trailers != null) {
 			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getInternalTrailers(), 0, true, this.context.voidPromise());	
 		}

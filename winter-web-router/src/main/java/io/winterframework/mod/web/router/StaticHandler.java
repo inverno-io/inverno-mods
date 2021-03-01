@@ -32,7 +32,7 @@ public class StaticHandler implements WebExchangeHandler<WebExchange> {
 
 	public static final String DEFAULT_PATH_PARAMETER_NAME = "path";
 	
-	private Resource baseResource;
+	private final Resource baseResource;
 	
 	private String pathParameterName;
 	
@@ -51,20 +51,39 @@ public class StaticHandler implements WebExchangeHandler<WebExchange> {
 	
 	@Override
 	public void handle(WebExchange exchange) throws WebException {
+		URI resourceUri;
 		try {
-			URI resourceUri = new URI(exchange.request().pathParameters().get(this.pathParameterName).orElseThrow(() -> new BadRequestException(this.pathParameterName + " is empty")).getValue()).normalize();
-			if(resourceUri.isAbsolute()) {
-				throw new BadRequestException("Resource can't be absolute");
-			}
-			if(resourceUri.getPath().startsWith(".")) {
-				throw new NotFoundException();
-			}
-			try(Resource requestedResource = this.baseResource.resolve(resourceUri)) {
-				exchange.response().body().resource().value(requestedResource);
-			}
-		} 
+			resourceUri = new URI(exchange.request().pathParameters().get(this.pathParameterName).orElseThrow(() -> new BadRequestException(this.pathParameterName + " is empty")).getValue()).normalize();
+		}
 		catch (URISyntaxException e) {
 			throw new InternalServerErrorException(e);
+		}
+		
+		if(resourceUri.isAbsolute()) {
+			throw new BadRequestException("Resource can't be absolute");
+		}
+		if(resourceUri.getPath().startsWith(".")) {
+			throw new NotFoundException();
+		}
+
+		try(Resource requestedResource = this.baseResource.resolve(resourceUri)) {
+			Boolean exists = requestedResource.exists();
+			if(exists == null || requestedResource.isFile()) {
+				exchange.response().body().resource().value(requestedResource);
+			}
+			else if(exists) {
+				// Try with index.html
+				// TODO this should be configurable
+				try(Resource requestedResourceIndex = requestedResource.resolve("index.html")) {
+					exchange.response().body().resource().value(requestedResourceIndex);
+				}
+			}
+			else {
+				throw new NotFoundException();
+			}
+		}
+		catch (NotFoundException e) {
+			throw new NotFoundException(resourceUri.toString());
 		}
 	}
 }

@@ -15,6 +15,10 @@
  */
 package io.winterframework.mod.base.resource;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+
 /**
  * @author jkuhn
  *
@@ -25,5 +29,9 @@ public abstract class AbstractResourceProvider<A extends Resource> implements Re
 	
 	public void setMediaTypeService(MediaTypeService mediaTypeService) {
 		this.mediaTypeService = mediaTypeService;
+	}
+	
+	protected FileSystem getFileSystem(URI uri) throws IOException {
+		return ReferenceCountedFileSystems.getFileSystem(uri);
 	}
 }

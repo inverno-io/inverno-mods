@@ -25,7 +25,7 @@ import io.winterframework.mod.web.server.ExchangeHandler;
  * @author jkuhn
  *
  */
-public interface RouteExtractor<C extends Exchange, D extends AbstractRoute<C>> {
+interface RouteExtractor<C extends Exchange, D extends AbstractRoute<C>> {
 
 	void handler(ExchangeHandler<C> handler, boolean disabled);
 	

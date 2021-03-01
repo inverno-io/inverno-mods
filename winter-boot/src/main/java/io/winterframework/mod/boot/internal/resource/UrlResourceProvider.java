@@ -17,6 +17,7 @@ package io.winterframework.mod.boot.internal.resource;
 
 import java.net.URI;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
@@ -38,8 +39,14 @@ public class UrlResourceProvider extends AbstractResourceProvider<UrlResource> {
 	}
 	
 	@Override
-	public UrlResource get(URI uri) throws IllegalArgumentException, ResourceException {
+	public UrlResource getResource(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
 		return new UrlResource(uri, this.mediaTypeService);
+	}
+	
+	@Override
+	public Stream<UrlResource> getResources(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
+		// we don't have the capability to do more
+		return Stream.of(this.getResource(uri));
 	}
 
 	@Override

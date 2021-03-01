@@ -16,6 +16,8 @@
 package io.winterframework.mod.base.resource;
 
 import java.net.URI;
+import java.nio.file.Paths;
+import java.util.Objects;
 
 /**
  * @author jkuhn
@@ -31,9 +33,16 @@ public class JarResource extends ZipResource {
 		super(uri, SCHEME_JAR, mediaTypeService);
 	}
 	
+	public static URI checkUri(URI uri) throws IllegalArgumentException {
+		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_JAR)) {
+			throw new IllegalArgumentException("Not a " + SCHEME_JAR + " uri");
+		}
+		return uri.normalize();
+	}
+	
 	@Override
 	public Resource resolve(URI uri) {
-		JarResource resolvedResource = new JarResource(this.getURI().resolve(uri.normalize()), this.getMediaTypeService());
+		JarResource resolvedResource = new JarResource(URI.create(this.zipFsUri.toString() + "!" + this.resourcePath.resolve(Paths.get(uri.getPath())).toString()), this.getMediaTypeService());
 		resolvedResource.setExecutor(this.getExecutor());
 		return resolvedResource;
 	}

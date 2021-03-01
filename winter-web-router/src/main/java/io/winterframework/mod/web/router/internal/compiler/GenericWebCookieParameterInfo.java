@@ -26,9 +26,9 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebParameterQuali
  * @author jkuhn
  *
  */
-public class GenericWebCookieParameterInfo extends AbstractWebParameterInfo implements WebCookieParameterInfo {
+class GenericWebCookieParameterInfo extends AbstractWebParameterInfo implements WebCookieParameterInfo {
 
-	public GenericWebCookieParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement parameterElement, TypeMirror type, boolean required) {
-		super(name, reporter, parameterElement, type, required);
+	public GenericWebCookieParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement element, TypeMirror type, boolean required) {
+		super(name, reporter, element, type, required);
 	}
 }

@@ -28,4 +28,12 @@ public interface WebRouterConfiguration {
 
 	@NestedBean
 	WebConfiguration web();
+	
+	default boolean enable_open_api() {
+		return false;
+	}
+	
+	default boolean enable_webjars() {
+		return false;
+	}
 }

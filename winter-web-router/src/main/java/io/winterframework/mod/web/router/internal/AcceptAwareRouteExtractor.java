@@ -22,7 +22,7 @@ import io.winterframework.mod.web.server.Exchange;
  * @author jkuhn
  *
  */
-public interface AcceptAwareRouteExtractor<A extends Exchange, B extends AbstractRoute<A>, C extends AcceptAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
+interface AcceptAwareRouteExtractor<A extends Exchange, B extends AbstractRoute<A>, C extends AcceptAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
 
 	C produces(String mediaType);
 	

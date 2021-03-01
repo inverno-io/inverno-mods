@@ -17,19 +17,15 @@ package io.winterframework.mod.web.router.internal.compiler;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
@@ -41,15 +37,15 @@ import io.winterframework.core.compiler.spi.plugin.CompilerPlugin;
 import io.winterframework.core.compiler.spi.plugin.PluginContext;
 import io.winterframework.core.compiler.spi.plugin.PluginExecution;
 import io.winterframework.core.compiler.spi.plugin.PluginExecutionException;
-import io.winterframework.mod.web.Method;
+import io.winterframework.mod.web.router.WebExchange;
+import io.winterframework.mod.web.router.WebRouterConfigurer;
 import io.winterframework.mod.web.router.annotation.WebController;
 import io.winterframework.mod.web.router.annotation.WebRoute;
 import io.winterframework.mod.web.router.annotation.WebRoutes;
-import io.winterframework.mod.web.router.internal.compiler.WebRouterConfigurerGenerationContext.GenerationMode;
+import io.winterframework.mod.web.router.internal.compiler.WebRouterConfigurerClassGenerationContext.GenerationMode;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebControllerInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebProvidedRouterConfigurerInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebRouteInfo;
-import io.winterframework.mod.web.router.internal.compiler.spi.WebRouteQualifiedName;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebRouterConfigurerQualifiedName;
 
 /**
@@ -58,6 +54,9 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebRouterConfigur
  */
 public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 
+	private static final String OPTION_GENERATE_OPENAPI_DEFINITION = "winter.web.generateOpenApiDefinition";
+	
+	private final WebRouterConfigurerOpenApiGenerator openApiGenrator;
 	private final WebRouterConfigurerClassGenerator webRouterConfigurerClassGenerator;
 	private final WebRouteDuplicateDetector webRouteDuplicateDectector;
 	
@@ -70,12 +69,18 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 	
 	public WebRouterConfigurerCompilerPlugin() {
 		this.webRouterConfigurerClassGenerator = new WebRouterConfigurerClassGenerator();
+		this.openApiGenrator = new WebRouterConfigurerOpenApiGenerator();
 		this.webRouteDuplicateDectector = new WebRouteDuplicateDetector();
 	}
 	
 	@Override
 	public Set<String> getSupportedAnnotationTypes() {
 		return Set.of(WebRoute.class.getCanonicalName(), WebController.class.getCanonicalName());
+	}
+	
+	@Override
+	public Set<String> getSupportedOptions() {
+		return Set.of(WebRouterConfigurerCompilerPlugin.OPTION_GENERATE_OPENAPI_DEFINITION);
 	}
 
 	@Override
@@ -86,21 +91,21 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 		this.webRoutesAnnotationType = this.pluginContext.getElementUtils().getTypeElement(WebRoutes.class.getCanonicalName()).asType();
 		
 		// WebRouterConfigurer<WebExchange> 
-		TypeMirror webExchangeType = this.pluginContext.getElementUtils().getTypeElement("io.winterframework.mod.web.router.WebExchange").asType();
-		TypeElement webRouterConfigurerTypeElement = this.pluginContext.getElementUtils().getTypeElement("io.winterframework.mod.web.router.WebRouterConfigurer");
+		TypeMirror webExchangeType = this.pluginContext.getElementUtils().getTypeElement(WebExchange.class.getCanonicalName()).asType();
+		TypeElement webRouterConfigurerTypeElement = this.pluginContext.getElementUtils().getTypeElement(WebRouterConfigurer.class.getCanonicalName());
 		this.webRouterConfigurerType = this.pluginContext.getTypeUtils().getDeclaredType(webRouterConfigurerTypeElement, webExchangeType);
 	}
 
 	@Override
 	public void execute(PluginExecution execution) throws PluginExecutionException {
 		WebRouteInfoFactory webRouteFactory = new WebRouteInfoFactory(this.pluginContext, execution);
-		WebRouterConfigurerQualifiedName webRouterConfigurerQName = new WebRouterConfigurerQualifiedName(execution.getModule());
+		WebRouterConfigurerQualifiedName webRouterConfigurerQName = new WebRouterConfigurerQualifiedName(execution.getModuleQualifiedName());
 		
 		this.processWebRoutes(execution, webRouteFactory);
 		List<? extends WebControllerInfo> webControllers = this.processWebControllers(execution, webRouteFactory);
-		List<? extends WebProvidedRouterConfigurerInfo> webRouters = this.processWebRouters(execution);
-		
-		GenericWebRouterConfigurerInfo webRouterConfigurerInfo = new GenericWebRouterConfigurerInfo(webRouterConfigurerQName, webControllers, webRouters);
+		List<? extends WebProvidedRouterConfigurerInfo> webRouters = this.processWebRouters(execution, webRouteFactory);
+
+		GenericWebRouterConfigurerInfo webRouterConfigurerInfo = new GenericWebRouterConfigurerInfo(execution.getModuleElement(), webRouterConfigurerQName, webControllers, webRouters);
 		
 		for(Map.Entry<WebRouteInfo, Set<WebRouteInfo>> e : this.webRouteDuplicateDectector.findDuplicates(Stream.concat(webControllers.stream().flatMap(controller -> Arrays.stream(controller.getRoutes())), webRouters.stream().flatMap(router -> Arrays.stream(router.getRoutes()))).collect(Collectors.toList())).entrySet()) {
 			e.getKey().error("Route " + e.getKey().getQualifiedName() + " is conflicting with route(s):\n" + e.getValue().stream().map(route -> "- " + route.getQualifiedName()).collect(Collectors.joining("\n")));
@@ -108,12 +113,28 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 			
 		if(!webRouterConfigurerInfo.hasError() && (webRouterConfigurerInfo.getControllers().length > 0 || webRouterConfigurerInfo.getRouters().length > 0)) {
 			try {
-				execution.createSourceFile(webRouterConfigurerInfo.getQualifiedName().getClassName(),  execution.getElements().stream().toArray(Element[]::new), () -> {
-					return webRouterConfigurerInfo.accept(this.webRouterConfigurerClassGenerator, new WebRouterConfigurerGenerationContext(this.pluginContext.getTypeUtils(), this.pluginContext.getElementUtils(), GenerationMode.CONFIGURER_CLASS)).toString();
+				execution.createSourceFile(webRouterConfigurerInfo.getQualifiedName().getClassName(), execution.getElements().stream().toArray(Element[]::new), () -> {
+					return webRouterConfigurerInfo.accept(this.webRouterConfigurerClassGenerator, new WebRouterConfigurerClassGenerationContext(this.pluginContext.getTypeUtils(), this.pluginContext.getElementUtils(), GenerationMode.CONFIGURER_CLASS)).toString();
 				});
 			} 
 			catch (IOException e) {
 				throw new PluginExecutionException("Unable to generate web router configurer class " + webRouterConfigurerInfo.getQualifiedName().getClassName(), e);
+			}
+			
+			if(this.pluginContext.getOptions().isOptionActivated(WebRouterConfigurerCompilerPlugin.OPTION_GENERATE_OPENAPI_DEFINITION, false)) {
+				try {
+					execution.createResourceFile("META-INF/winter/web/openapi.yml", execution.getElements().stream().toArray(Element[]::new), () -> {
+						return webRouterConfigurerInfo.accept(this.openApiGenrator, new WebRouterConfigurerOpenApiGenerationContext(this.pluginContext.getTypeUtils(), this.pluginContext.getElementUtils(), this.pluginContext.getDocUtils(), WebRouterConfigurerOpenApiGenerationContext.GenerationMode.ROUTER_SPEC)).toString();
+					});
+				} 
+				catch (Exception e) {
+					System.err.print("\n");
+					System.err.println("Error generating OpenApi specification for module : " + execution.getModuleQualifiedName());
+					if(this.pluginContext.getOptions().isDebug()) {
+						e.printStackTrace();
+					}
+					System.out.print("... ");
+				}
 			}
 		}
 	}
@@ -133,23 +154,21 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 					.findFirst()
 					.map(webControllerAnnotation -> {
 						String controllerRootPath = null;
-						annotationLoop:
 						for(Entry<? extends ExecutableElement, ? extends AnnotationValue> value : this.pluginContext.getElementUtils().getElementValuesWithDefaults(webControllerAnnotation).entrySet()) {
 							switch(value.getKey().getSimpleName().toString()) {
-								case "value" : controllerRootPath = (String)value.getValue().getValue();
-									break annotationLoop;
 								case "path" : controllerRootPath = (String)value.getValue().getValue();
 									break;
 							}
 						}
 						
-						List<? extends WebRouteInfo> webRoutes = webRouteFactory.compileControllerRoutes(bean);
+						List<GenericWebRouteInfo> webRoutes = webRouteFactory.compileControllerRoutes(bean);
 						
 						if(webRoutes.isEmpty()) {
 							bean.warning("Ignoring web controller which does not define any route");
 							return null;
 						}
-						return new GenericWebControllerInfo(bean.getQualifiedName(), bean, (DeclaredType)bean.getType(), controllerRootPath, webRoutes);
+						
+						return new GenericWebControllerInfo(beanElement, bean.getQualifiedName(), bean, (DeclaredType)bean.getType(), controllerRootPath, webRoutes);
 					});
 			})
 			.filter(Optional::isPresent)
@@ -157,8 +176,7 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 			.collect(Collectors.toList());
 	}
 	
-	@SuppressWarnings("unchecked")
-	private List<? extends WebProvidedRouterConfigurerInfo> processWebRouters(PluginExecution execution) {
+	private List<? extends WebProvidedRouterConfigurerInfo> processWebRouters(PluginExecution execution, WebRouteInfoFactory webRouteFactory) {
 		// Get component routers
 		return Arrays.stream(execution.getBeans())
 			.filter(bean -> this.pluginContext.getTypeUtils().isAssignable(bean.getType(), this.webRouterConfigurerType))
@@ -169,44 +187,11 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 					.filter(annotation -> this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.webRoutesAnnotationType))
 					.findFirst()
 					.map(webRouterConfigurerAnnotation -> {
-						final AtomicInteger routeIndex = new AtomicInteger();
-						List<WebRouteInfo> webRoutes = ((Collection<? extends AnnotationValue>)webRouterConfigurerAnnotation.getElementValues().values().iterator().next().getValue()).stream()
-							.map(value -> (AnnotationMirror)value.getValue())
-							.map(webRouteAnnotation -> {
-								Set<String> paths = new HashSet<>();
-								boolean matchTrailingSlash = false;
-								Set<Method> methods = new HashSet<>();
-								Set<String> consumes = new HashSet<>();
-								Set<String> produces = new HashSet<>();
-								Set<String> languages = new HashSet<>();
-								annotationLoop:
-								for(Entry<? extends ExecutableElement, ? extends AnnotationValue> value : this.pluginContext.getElementUtils().getElementValuesWithDefaults(webRouteAnnotation).entrySet()) {
-									switch(value.getKey().getSimpleName().toString()) {
-										case "value" : paths.addAll(((List<AnnotationValue>)value.getValue().getValue()).stream().map(v -> v.getValue().toString()).collect(Collectors.toSet()));
-											break annotationLoop;
-										case "path" : paths.addAll(((List<AnnotationValue>)value.getValue().getValue()).stream().map(v -> v.getValue().toString()).collect(Collectors.toSet()));
-											break;
-										case "matchTrailingSlash": matchTrailingSlash = (boolean)value.getValue().getValue();
-											break;
-										case "method" : methods.addAll(((List<AnnotationValue>)value.getValue().getValue()).stream().map(v -> Method.valueOf(v.getValue().toString())).collect(Collectors.toSet()));
-											break;
-										case "consumes" : consumes.addAll(((List<AnnotationValue>)value.getValue().getValue()).stream().map(v -> v.getValue().toString()).collect(Collectors.toSet()));
-											break;
-										case "produces" : produces.addAll(((List<AnnotationValue>)value.getValue().getValue()).stream().map(v -> v.getValue().toString()).collect(Collectors.toSet()));
-											break;
-										case "language" : languages.addAll(((List<AnnotationValue>)value.getValue().getValue()).stream().map(v -> v.getValue().toString()).collect(Collectors.toSet()));
-											break;
-									}
-								}
-								WebRouteQualifiedName routeQName = new WebRouteQualifiedName(bean.getQualifiedName(), "route_" + routeIndex.getAndIncrement());
-								return new ProvidedWebRouteInfo(routeQName, bean, paths, matchTrailingSlash, methods, consumes, produces, languages);
-							})
-							.collect(Collectors.toList());
-						
+						List<ProvidedWebRouteInfo> webRoutes = webRouteFactory.compileRouterRoutes(bean);
 						if(webRoutes.isEmpty()) {
 							return null;
 						}
-						return new GenericWebProvidedRouterConfigurerInfo(new WebRouterConfigurerQualifiedName(bean.getQualifiedName(), this.pluginContext.getTypeUtils().asElement(this.pluginContext.getTypeUtils().erasure(bean.getType())).getSimpleName().toString()), bean, webRoutes);
+						return new GenericWebProvidedRouterConfigurerInfo(beanElement, new WebRouterConfigurerQualifiedName(bean.getQualifiedName(), this.pluginContext.getTypeUtils().asElement(this.pluginContext.getTypeUtils().erasure(bean.getType())).getSimpleName().toString()), bean, webRoutes);
 					});
 				
 				if(!providedRouterConfigurerInfo.isPresent()) {

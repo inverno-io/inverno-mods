@@ -31,7 +31,7 @@ import io.winterframework.mod.web.server.RequestData;
  * @author jkuhn
  *
  */
-public class GenericWebPart implements WebPart {
+class GenericWebPart implements WebPart {
 
 	private final Part part;
 	

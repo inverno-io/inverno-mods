@@ -26,7 +26,7 @@ import io.winterframework.mod.web.router.WebExchange;
  * @author jkuhn
  *
  */
-public class GenericWebExchange implements WebExchange  {
+class GenericWebExchange implements WebExchange  {
 
 	private final GenericWebRequest request;
 	
