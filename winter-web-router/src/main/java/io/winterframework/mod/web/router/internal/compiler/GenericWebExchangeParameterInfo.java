@@ -25,9 +25,9 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebParameterQuali
  * @author jkuhn
  *
  */
-public class GenericWebExchangeParameterInfo extends AbstractWebParameterInfo implements WebExchangeParameterInfo {
+class GenericWebExchangeParameterInfo extends AbstractWebParameterInfo implements WebExchangeParameterInfo {
 
-	public GenericWebExchangeParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement) {
-		super(name, reporter, parameterElement, parameterElement.asType(), true);
+	public GenericWebExchangeParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement element) {
+		super(name, reporter, element, element.asType(), true);
 	}
 }

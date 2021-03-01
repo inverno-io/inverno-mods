@@ -16,15 +16,17 @@
 package io.winterframework.mod.web.router.internal.compiler;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import javax.lang.model.element.AnnotationMirror;
@@ -34,43 +36,52 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
-import javax.lang.model.type.NoType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
 
+import org.reactivestreams.Publisher;
+
+import io.netty.buffer.ByteBuf;
 import io.winterframework.core.compiler.spi.BeanInfo;
 import io.winterframework.core.compiler.spi.BeanQualifiedName;
 import io.winterframework.core.compiler.spi.ReporterInfo;
 import io.winterframework.core.compiler.spi.plugin.PluginContext;
 import io.winterframework.core.compiler.spi.plugin.PluginExecution;
+import io.winterframework.mod.base.resource.Resource;
 import io.winterframework.mod.web.Method;
+import io.winterframework.mod.web.router.WebResponseBody;
 import io.winterframework.mod.web.router.annotation.WebController;
 import io.winterframework.mod.web.router.annotation.WebRoute;
+import io.winterframework.mod.web.router.annotation.WebRoutes;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebFormParameterInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebParameterInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebRequestBodyParameterInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebResponseBodyInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebResponseBodyInfo.ResponseBodyKind;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebResponseBodyInfo.ResponseBodyReactiveKind;
-import io.winterframework.mod.web.router.internal.compiler.spi.WebRouteInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebRouteQualifiedName;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebSseEventFactoryParameterInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebSseEventFactoryParameterInfo.SseEventFactoryKind;
+import io.winterframework.mod.web.server.ResponseBody;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * @author jkuhn
  *
  */
-public class WebRouteInfoFactory {
+class WebRouteInfoFactory {
 
 	private final PluginContext pluginContext;
 	private final PluginExecution pluginExecution;
 	private final WebParameterInfoFactory parameterFactory;
 	private final Map<ExecutableElement, GenericWebRouteInfo> routes;
+	private final TypeHierarchyExtractor typeHierarchyExtractor;
 	
 	/* Web annotations */
 	private final TypeMirror webControllerAnnotationType;
+	private final TypeMirror webRoutesAnnotationType;
 	private final TypeMirror webRouteAnnotationType;
 	
 	/* Types */
@@ -87,20 +98,22 @@ public class WebRouteInfoFactory {
 		this.pluginExecution = Objects.requireNonNull(pluginExecution);
 		this.parameterFactory = new WebParameterInfoFactory(this.pluginContext , this.pluginExecution);
 		this.routes = new HashMap<>();
+		this.typeHierarchyExtractor = new TypeHierarchyExtractor(this.pluginContext.getTypeUtils());
 		
 		this.webControllerAnnotationType = this.pluginContext.getElementUtils().getTypeElement(WebController.class.getCanonicalName()).asType();
+		this.webRoutesAnnotationType = this.pluginContext.getElementUtils().getTypeElement(WebRoutes.class.getCanonicalName()).asType();
 		this.webRouteAnnotationType = this.pluginContext.getElementUtils().getTypeElement(WebRoute.class.getCanonicalName()).asType();
 		
-		this.publisherType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement("org.reactivestreams.Publisher").asType());
-		this.monoType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement("reactor.core.publisher.Mono").asType());
-		this.fluxType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement("reactor.core.publisher.Flux").asType());
-		this.byteBufType = this.pluginContext.getElementUtils().getTypeElement("io.netty.buffer.ByteBuf").asType();
-		this.sseRawEventType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement("io.winterframework.mod.web.server.ResponseBody.Sse.Event").asType());
-		this.SseEncoderEventType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement("io.winterframework.mod.web.router.WebResponseBody.SseEncoder.Event").asType());
-		this.resourceType = this.pluginContext.getElementUtils().getTypeElement("io.winterframework.mod.base.resource.Resource").asType();
+		this.publisherType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(Publisher.class.getCanonicalName()).asType());
+		this.monoType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(Mono.class.getCanonicalName()).asType());
+		this.fluxType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(Flux.class.getCanonicalName()).asType());
+		this.byteBufType = this.pluginContext.getElementUtils().getTypeElement(ByteBuf.class.getCanonicalName()).asType();
+		this.sseRawEventType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(ResponseBody.Sse.Event.class.getCanonicalName()).asType());
+		this.SseEncoderEventType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebResponseBody.SseEncoder.Event.class.getCanonicalName()).asType());
+		this.resourceType = this.pluginContext.getElementUtils().getTypeElement(Resource.class.getCanonicalName()).asType();
 	}
 
-	public Optional<WebRouteInfo> compileRoute(ExecutableElement routeElement) {
+	public Optional<GenericWebRouteInfo> compileRoute(ExecutableElement routeElement) {
 		AnnotationMirror webRouteAnnotation = null;
 		for(AnnotationMirror annotation : this.pluginContext.getElementUtils().getAllAnnotationMirrors(routeElement)) {
 			if(this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.webRouteAnnotationType)) {
@@ -118,12 +131,12 @@ public class WebRouteInfoFactory {
 			return Optional.of(routeInfo);
 		}
 		else {
-			return Optional.ofNullable(this.createRoute(webRouteAnnotation, null, routeElement, routeElement, (ExecutableType)routeElement.asType()));
+			return Optional.ofNullable(this.createRoute(webRouteAnnotation, null, routeElement, routeElement, (ExecutableType)routeElement.asType(), null));
 		}
 	}
 	
 	@SuppressWarnings("unchecked")
-	private GenericWebRouteInfo createRoute(AnnotationMirror webRouteAnnotation, BeanQualifiedName controllerQName, ExecutableElement routeElement, ExecutableElement routeAnnotatedElement, ExecutableType routeType) {
+	private GenericWebRouteInfo createRoute(AnnotationMirror webRouteAnnotation, BeanQualifiedName controllerQName, ExecutableElement routeElement, ExecutableElement routeAnnotatedElement, ExecutableType routeType, Integer discriminator) {
 		ReporterInfo routeReporter;
 		if(this.routes.containsKey(routeElement)) {
 			// We don't want to report error multiple times on the same element
@@ -163,12 +176,16 @@ public class WebRouteInfoFactory {
 			}
 		}
 		
+		String routeName = routeElement.getSimpleName().toString();
+		if(discriminator != null) {
+			routeName += "_" + discriminator; 
+		}
 		WebRouteQualifiedName routeQName;
 		if(controllerQName != null) {
-			routeQName = new WebRouteQualifiedName(controllerQName, routeElement.getSimpleName().toString());
+			routeQName = new WebRouteQualifiedName(controllerQName, routeName);
 		}
 		else {
-			routeQName = new WebRouteQualifiedName(routeElement.getSimpleName().toString());
+			routeQName = new WebRouteQualifiedName(routeName);
 		}
 		
 		// Get Response body info
@@ -203,15 +220,15 @@ public class WebRouteInfoFactory {
 				responseBodyKind = ResponseBodyKind.SSE_ENCODED;
 				responseBodyType = ((DeclaredType)responseBodyType).getTypeArguments().get(0);
 			}
-			else if(this.pluginContext.getTypeUtils().isSameType(responseBodyType, this.resourceType)) {
-				responseBodyKind = ResponseBodyKind.RESOURCE;
-			}
 		}
 		else if(responseBodyType.getKind() == TypeKind.VOID) {
 			responseBodyKind = ResponseBodyKind.EMPTY;
 		}
 		else if(this.pluginContext.getTypeUtils().isSameType(responseBodyType, this.byteBufType)) {
 			responseBodyKind = ResponseBodyKind.RAW;
+		}
+		else if(this.pluginContext.getTypeUtils().isSameType(responseBodyType, this.resourceType)) {
+			responseBodyKind = ResponseBodyKind.RESOURCE;
 		}
 		
 		WebResponseBodyInfo responseBodyInfo  = new GenericWebResponseBodyInfo(responseBodyType, responseBodyKind, responseBodyReactiveKind);
@@ -266,12 +283,57 @@ public class WebRouteInfoFactory {
 			routeReporter.error("Invalid SSE route declaration which must return a publisher of SSE events and define a corresponding SSE event factory parameter");
 		}
 
-		GenericWebRouteInfo routeInfo = new GenericWebRouteInfo(routeQName, routeReporter, paths, matchTrailingSlash, methods, consumes, produces, languages, routeElement, parameters, responseBodyInfo);
+		GenericWebRouteInfo routeInfo = new GenericWebRouteInfo(routeElement, routeQName, routeReporter, paths, matchTrailingSlash, methods, consumes, produces, languages, parameters, responseBodyInfo);
 		this.routes.putIfAbsent(routeElement, routeInfo);
 		return routeInfo;
 	}
 	
-	public List<? extends WebRouteInfo> compileControllerRoutes(BeanInfo bean) {
+	@SuppressWarnings("unchecked")
+	public List<ProvidedWebRouteInfo> compileRouterRoutes(BeanInfo bean) {
+		TypeElement beanElement = (TypeElement) this.pluginContext.getTypeUtils().asElement(bean.getType());
+		
+		AnnotationMirror webRoutesAnnotation = this.pluginContext.getElementUtils().getAllAnnotationMirrors(beanElement).stream()
+			.filter(annotation -> this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.webRoutesAnnotationType))
+			.findFirst()
+			.orElseThrow(() -> new IllegalArgumentException("bean " + bean + " is not annotated with " + WebRoutes.class));
+		
+		if(webRoutesAnnotation.getElementValues().isEmpty()) {
+			return List.of();
+		}
+		
+		final AtomicInteger routeIndex = new AtomicInteger();
+		return ((Collection<? extends AnnotationValue>)webRoutesAnnotation.getElementValues().values().iterator().next().getValue()).stream()
+			.map(value -> (AnnotationMirror)value.getValue())
+			.map(webRouteAnnotation -> {
+				Set<String> paths = new HashSet<>();
+				boolean matchTrailingSlash = false;
+				Set<Method> methods = new HashSet<>();
+				Set<String> consumes = new HashSet<>();
+				Set<String> produces = new HashSet<>();
+				Set<String> languages = new HashSet<>();
+				for(Entry<? extends ExecutableElement, ? extends AnnotationValue> value : this.pluginContext.getElementUtils().getElementValuesWithDefaults(webRouteAnnotation).entrySet()) {
+					switch(value.getKey().getSimpleName().toString()) {
+						case "path" : paths.addAll(((List<AnnotationValue>)value.getValue().getValue()).stream().map(v -> v.getValue().toString()).collect(Collectors.toSet()));
+							break;
+						case "matchTrailingSlash": matchTrailingSlash = (boolean)value.getValue().getValue();
+							break;
+						case "method" : methods.addAll(((List<AnnotationValue>)value.getValue().getValue()).stream().map(v -> Method.valueOf(v.getValue().toString())).collect(Collectors.toSet()));
+							break;
+						case "consumes" : consumes.addAll(((List<AnnotationValue>)value.getValue().getValue()).stream().map(v -> v.getValue().toString()).collect(Collectors.toSet()));
+							break;
+						case "produces" : produces.addAll(((List<AnnotationValue>)value.getValue().getValue()).stream().map(v -> v.getValue().toString()).collect(Collectors.toSet()));
+							break;
+						case "language" : languages.addAll(((List<AnnotationValue>)value.getValue().getValue()).stream().map(v -> v.getValue().toString()).collect(Collectors.toSet()));
+							break;
+					}
+				}
+				WebRouteQualifiedName routeQName = new WebRouteQualifiedName(bean.getQualifiedName(), "route_" + routeIndex.getAndIncrement());
+				return new ProvidedWebRouteInfo(routeQName, bean, paths, matchTrailingSlash, methods, consumes, produces, languages);
+			})
+			.collect(Collectors.toList());
+	}
+	
+	public List<GenericWebRouteInfo> compileControllerRoutes(BeanInfo bean) {
 		TypeElement beanElement = (TypeElement) this.pluginContext.getTypeUtils().asElement(bean.getType());
 		
 		this.pluginContext.getElementUtils().getAllAnnotationMirrors(beanElement).stream()
@@ -279,89 +341,54 @@ public class WebRouteInfoFactory {
 			.findFirst()
 			.orElseThrow(() -> new IllegalArgumentException("bean " + bean + " is not annotated with " + WebController.class));
 		
-		List<WebRouteInfo> result = new LinkedList<>();
+		Map<String, List<GenericWebRouteInfo>> routesByMethodName = new HashMap<>();
 		for(ExecutableElement routeElement : ElementFilter.methodsIn(this.pluginContext.getElementUtils().getAllMembers(beanElement))) {
-			ExecutableElement routeAnnotatedElement = this.getWebRouteAnnotatedElement(routeElement, beanElement);
-			if(routeAnnotatedElement == null) {
-				continue;
-			}
-			
-			AnnotationMirror webRouteAnnotation = null;
-			for(AnnotationMirror annotation : this.pluginContext.getElementUtils().getAllAnnotationMirrors(routeAnnotatedElement)) {
-				if(this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.webRouteAnnotationType)) {
-					webRouteAnnotation = annotation;
-					break;
-				}
-			}
-			
-			ExecutableType routeElementType = (ExecutableType)this.pluginContext.getTypeUtils().asMemberOf((DeclaredType)bean.getType(), routeElement);
-			
-			// We have to create the route no matter what since annotations and/or types
-			// might be different from what the compiler found when analyzing WebRoute
-			// annotated elements.
-			// eg. we can imagine an interface A external to the module exposing a WebRoute
-			// annotated method, and a class B in the module overriding that particular
-			// interface and implementing that particular method overriding the WebRoute
-			// annotation. If a class C extends B and implements A, then we'll found the
-			// route coming from B in the list of routes but we'll have to consider WebRoute
-			// annotation from A and therefore we have to recreate the route for that
-			// particular configuration but we must not report errors already reported on B.
-			// That being said, overriding WebRoute annotation is a bad idea, it would be
-			// interesting to see how JAX-RS and Spring handle this.
-			result.add(this.createRoute(webRouteAnnotation, bean.getQualifiedName(), routeElement, routeAnnotatedElement, routeElementType));
-		}
-		return result;
-	}
-	
-	private ExecutableElement getWebRouteAnnotatedElement(ExecutableElement executableElement, TypeElement typeElement) {
-		ExecutableElement result = null;
-		
-		for(ExecutableElement element : ElementFilter.methodsIn(typeElement.getEnclosedElements())) {
-			if(element.equals(executableElement) || this.pluginContext.getElementUtils().overrides(executableElement, element, typeElement)) {
-				if(element.getAnnotationMirrors().stream().anyMatch(annotation -> this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.webRouteAnnotationType))) {
-					result = element;
-				}
-				break;
-			}
-		}
-		
-		if(result == null) {
-			// Consider the interfaces declared by the specified type
-			result = this.getWebRouteAnnotatedElementImplemented(executableElement, typeElement);
-		}
-		
-		if(result == null) {
-			// Consider the direct superclass
-			TypeMirror extendedType = typeElement.getSuperclass();
-			if(!(extendedType instanceof NoType)) {
-				TypeElement extendedTypeElement = (TypeElement)this.pluginContext.getTypeUtils().asElement(extendedType);
-				result = this.getWebRouteAnnotatedElement(executableElement, extendedTypeElement);
-			}
-		}
-		
-		return result;
-	}
-	
-	private ExecutableElement getWebRouteAnnotatedElementImplemented(ExecutableElement executableElement, TypeElement typeElement) {
-		ExecutableElement result = null;
-		for(TypeMirror implementedType : typeElement.getInterfaces()) {
-			TypeElement implementedTypeElement = (TypeElement)this.pluginContext.getTypeUtils().asElement(implementedType);
-			for(ExecutableElement implementedExecutableElement : ElementFilter.methodsIn(this.pluginContext.getElementUtils().getAllMembers(implementedTypeElement))) {
-				if(executableElement.equals(implementedExecutableElement) || this.pluginContext.getElementUtils().overrides(executableElement, implementedExecutableElement, typeElement)) {
-					if(implementedExecutableElement.getAnnotationMirrors().stream().anyMatch(annotation -> this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.webRouteAnnotationType))) {
-						result = implementedExecutableElement;
-					}
-					if(result == null) {
-						TypeMirror extendedImplementedType = implementedTypeElement.getSuperclass();
-						if(!(extendedImplementedType instanceof NoType)) {
-							TypeElement extendedImplementedTypeElement = (TypeElement)this.pluginContext.getTypeUtils().asElement(extendedImplementedType);
-							result = this.getWebRouteAnnotatedElementImplemented(implementedExecutableElement, extendedImplementedTypeElement);
+			this.getWebRouteAnnotatedElement(routeElement, beanElement)
+				.ifPresent(routeAnnotatedElement -> {
+					AnnotationMirror webRouteAnnotation = null;
+					for(AnnotationMirror annotation : this.pluginContext.getElementUtils().getAllAnnotationMirrors(routeAnnotatedElement)) {
+						if(this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.webRouteAnnotationType)) {
+							webRouteAnnotation = annotation;
+							break;
 						}
 					}
-					break;
-				}
-			}
+					
+					ExecutableType routeElementType = (ExecutableType)this.pluginContext.getTypeUtils().asMemberOf((DeclaredType)bean.getType(), routeElement);
+					
+					// We have to create the route no matter what since annotations and/or types
+					// might be different from what the compiler found when analyzing WebRoute
+					// annotated elements.
+					// eg. we can imagine an interface A external to the module exposing a WebRoute
+					// annotated method, and a class B in the module overriding that particular
+					// interface and implementing that particular method overriding the WebRoute
+					// annotation. If a class C extends B and implements A, then we'll found the
+					// route coming from B in the list of routes but we'll have to consider WebRoute
+					// annotation from A and therefore we have to recreate the route for that
+					// particular configuration but we must not report errors already reported on B.
+					// That being said, overriding WebRoute annotation is a bad idea, it would be
+					// interesting to see how JAX-RS and Spring handle this.
+					
+					String routeMethodName = routeElement.getSimpleName().toString();
+					List<GenericWebRouteInfo> currentRoutes = routesByMethodName.get(routeMethodName);
+					if(currentRoutes == null) {
+						currentRoutes = new LinkedList<>();
+						routesByMethodName.put(routeMethodName, currentRoutes);
+					}
+					currentRoutes.add(this.createRoute(webRouteAnnotation, bean.getQualifiedName(), routeElement, routeAnnotatedElement, routeElementType, currentRoutes.isEmpty() ? null : currentRoutes.size()));
+				});
 		}
-		return result;
+		return routesByMethodName.values().stream().flatMap(List::stream).collect(Collectors.toList());
+	}
+	
+	private Optional<ExecutableElement> getWebRouteAnnotatedElement(ExecutableElement executableElement, TypeElement typeElement) {
+		return this.typeHierarchyExtractor.extractTypeHierarchy(typeElement).stream()
+			.map(element -> ElementFilter.methodsIn(element.getEnclosedElements()).stream()
+				.filter(methodElement -> methodElement.equals(executableElement) || this.pluginContext.getElementUtils().overrides(executableElement, methodElement, typeElement))
+				.findFirst()
+			)
+			.filter(Optional::isPresent)
+			.map(Optional::get)
+			.filter(overriddenElement -> overriddenElement.getAnnotationMirrors().stream().anyMatch(annotation -> this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.webRouteAnnotationType)))
+			.findFirst();
 	}
 }

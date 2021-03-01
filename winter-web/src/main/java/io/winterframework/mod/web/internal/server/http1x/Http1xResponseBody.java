@@ -23,6 +23,7 @@ import org.reactivestreams.Publisher;
 
 import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.FileRegion;
+import io.winterframework.mod.base.resource.ZipResource;
 import io.winterframework.mod.web.InternalServerErrorException;
 import io.winterframework.mod.web.internal.server.GenericResponseBody;
 import reactor.core.Exceptions;
@@ -67,13 +68,14 @@ class Http1xResponseBody extends GenericResponseBody {
 
 		@Override
 		public void value(io.winterframework.mod.base.resource.Resource resource) {
-
-			if(resource.isFile()) {
+			// it seems FileRegion does not support Zip files, I saw different behavior between JDK<15 and above
+			if(resource.isFile() && !(resource instanceof ZipResource)) {
 				// We need to create the file region and then send an empty response
 				// The Http1xServerExchange should then complete and check whether there is a file region or not
 				this.populateHeaders(resource);
 				
 				FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable"));
+				
 				long size = resource.size();
 				int count = (int)Math.ceil((float)size / (float)MAX_FILE_REGION_SIZE);
 				

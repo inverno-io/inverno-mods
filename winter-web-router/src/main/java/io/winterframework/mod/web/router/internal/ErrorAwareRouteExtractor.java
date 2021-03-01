@@ -22,7 +22,7 @@ import io.winterframework.mod.web.server.Exchange;
  * @author jkuhn
  *
  */
-public interface ErrorAwareRouteExtractor<A extends Exchange, B extends AbstractRoute<A>, C extends ErrorAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
+interface ErrorAwareRouteExtractor<A extends Exchange, B extends AbstractRoute<A>, C extends ErrorAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
 
 	C error(Class<? extends Throwable> error);
 }

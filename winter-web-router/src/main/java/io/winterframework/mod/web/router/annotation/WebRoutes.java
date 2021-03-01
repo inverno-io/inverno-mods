@@ -31,5 +31,5 @@ import java.lang.annotation.Target;
 @Target({ TYPE })
 public @interface WebRoutes {
 
-	WebRoute[] value(); 
+	WebRoute[] value() default {}; 
 }

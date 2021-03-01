@@ -26,9 +26,9 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebParameterQuali
  * @author jkuhn
  *
  */
-public class GenericWebFormParameterInfo extends AbstractWebParameterInfo implements WebFormParameterInfo {
+class GenericWebFormParameterInfo extends AbstractWebParameterInfo implements WebFormParameterInfo {
 
-	public GenericWebFormParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement parameterElement, TypeMirror type, boolean required) {
-		super(name, reporter, parameterElement, type, required);
+	public GenericWebFormParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement element, TypeMirror type, boolean required) {
+		super(name, reporter, element, type, required);
 	}
 }

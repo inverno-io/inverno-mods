@@ -112,19 +112,26 @@ class SegmentComponent implements ParameterizedURIComponent {
 		}
 	}
 	
-	public static List<SegmentComponent> fromPath(URIFlags flags, Charset charset, String path, boolean ignoreHeadingSlash) {
+	public static List<SegmentComponent> fromPath(URIFlags flags, Charset charset, String path, boolean ignoreHeadingSlash, boolean ignoreTrailingSlash) {
 		LinkedList<SegmentComponent> segments = new LinkedList<>();
 		if(StringUtils.isNotBlank(path)) {
-			String currentPath = path.charAt(0) == '/' ? path.substring(1) : path;
-			if(path.charAt(0) == '/') {
-				currentPath = path.substring(1);
+			String currentPath = path;
+			if(currentPath.charAt(0) == '/') {
+				currentPath = currentPath.substring(1);
 				if(!ignoreHeadingSlash) {
 					segments.add(new SegmentComponent(flags, charset, ""));
 				}
 			}
-			else {
-				currentPath = path;
+			
+			if(ignoreTrailingSlash) {
+				if(currentPath.isEmpty()) {
+					return segments;
+				}
+				else if(currentPath.charAt(currentPath.length() - 1) == '/') {
+					currentPath = currentPath.substring(0, currentPath.length() - 1);
+				}
 			}
+			
 			SegmentComponent nextSegment = null;
 			do {
 				if(nextSegment != null) {
@@ -161,7 +168,7 @@ class SegmentComponent implements ParameterizedURIComponent {
 				else {
 					segments.add(nextSegment);
 				}
-			} while(currentPath.length() > nextSegment.getRawValue().length() + 1);
+			} while(currentPath.length() >= nextSegment.getRawValue().length() + 1);
 		}
 		return segments;
 	}

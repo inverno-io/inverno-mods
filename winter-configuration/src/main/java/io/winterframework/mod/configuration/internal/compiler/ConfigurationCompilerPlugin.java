@@ -96,8 +96,8 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 				throw new PluginExecutionException("The specified element is not annotated with " + Configuration.class.getSimpleName());
 			}
 			
-			if(!this.pluginContext.getElementUtils().getModuleOf(element).getQualifiedName().toString().equals(execution.getModule().toString())) {
-				throw new PluginExecutionException("The specified element doesn't belong to module " + execution.getModule());
+			if(!this.pluginContext.getElementUtils().getModuleOf(element).getQualifiedName().toString().equals(execution.getModuleQualifiedName().toString())) {
+				throw new PluginExecutionException("The specified element doesn't belong to module " + execution.getModuleQualifiedName());
 			}
 			
 			ReporterInfo beanReporter = execution.getReporter(element, configurationAnnotation);
@@ -130,7 +130,7 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 			
 			BeanQualifiedName configurationQName;
 			try {
-				configurationQName = new BeanQualifiedName(execution.getModule(), name);
+				configurationQName = new BeanQualifiedName(execution.getModuleQualifiedName(), name);
 			} 
 			catch (QualifiedNameFormatException e) {
 				beanReporter.error("Invalid bean qualified name: " + e.getMessage());
@@ -157,7 +157,7 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 						return null;
 					}
 					
-					if(this.isNestedConfiguration(propertyMethod, execution.getModule())) {
+					if(this.isNestedConfiguration(propertyMethod, execution.getModuleQualifiedName())) {
 						return new GenericNestedConfigurationProperty(propertyQName, propertyReporter, propertyMethod, this.extractNestedConfigurationInfo(propertyReporter, propertyQName, (TypeElement)this.pluginContext.getTypeUtils().asElement(propertyMethod.getReturnType())));
 					}
 					else {

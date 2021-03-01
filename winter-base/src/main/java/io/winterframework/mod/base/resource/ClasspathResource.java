@@ -56,21 +56,18 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	public ClasspathResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
-		this(uri, Thread.currentThread().getContextClassLoader(), mediaTypeService);
+		this(uri, (ClassLoader)null, mediaTypeService);
 	}
 	
 	public ClasspathResource(URI uri, Class<?> clazz, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
-		this.uri = this.checkUri(uri);
+		this.uri = ClasspathResource.checkUri(uri);
 		this.clazz = Objects.requireNonNull(clazz);
 	}
 	
 	public ClasspathResource(URI uri, ClassLoader classLoader, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
-		this.uri = this.checkUri(uri);
-		if(!this.uri.getScheme().equals(SCHEME_CLASSPATH)) {
-			throw new IllegalArgumentException("Not a " + SCHEME_CLASSPATH + " uri");
-		}
+		this.uri = ClasspathResource.checkUri(uri);
 		
 		if(classLoader == null) {
 			try {
@@ -86,6 +83,13 @@ public class ClasspathResource extends AbstractAsyncResource {
 		else {
 			this.classLoader = classLoader;
 		}
+	}
+	
+	public static URI checkUri(URI uri) throws IllegalArgumentException {
+		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_CLASSPATH)) {
+			throw new IllegalArgumentException("Not a " + SCHEME_CLASSPATH + " uri");
+		}
+		return uri.normalize();
 	}
 	
 	@Override
@@ -145,13 +149,6 @@ public class ClasspathResource extends AbstractAsyncResource {
 			}
 		}
 		return this.resource;
-	}
-	
-	private URI checkUri(URI uri) {
-		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_CLASSPATH)) {
-			throw new IllegalArgumentException("Not a " + SCHEME_CLASSPATH + " uri");
-		}
-		return uri.normalize();
 	}
 	
 	@Override

@@ -34,6 +34,7 @@ import io.winterframework.mod.web.router.WebExchange;
 import io.winterframework.mod.web.router.WebRoute;
 import io.winterframework.mod.web.router.WebRouteManager;
 import io.winterframework.mod.web.router.WebRouter;
+import io.winterframework.mod.web.router.WebRouterConfiguration;
 import io.winterframework.mod.web.router.WebRouterConfigurer;
 import io.winterframework.mod.web.server.Exchange;
 
@@ -44,20 +45,24 @@ import io.winterframework.mod.web.server.Exchange;
 @Bean( name = "webRouter" )
 public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 
+	private final WebRouterConfiguration configuration;
 	private final RoutingLink<WebExchange, ?, WebRoute<WebExchange>> firstLink;
-	
 	private final ResourceService resourceService;
-	
 	private final DataConversionService dataConversionService;
-	
 	private final ObjectConverter<String> parameterConverter;
+	private final OpenApiWebRouterConfigurer openApiConfigurer;
+	private final WebjarsWebRouterConfigurer webjarsConfigurer;
 	
 	private WebRouterConfigurer<WebExchange> configurer;
 	
-	public GenericWebRouter(ResourceService resourceService, DataConversionService dataConversionService, ObjectConverter<String> parameterConverter) {
+	public GenericWebRouter(WebRouterConfiguration configuration, ResourceService resourceService, DataConversionService dataConversionService, ObjectConverter<String> parameterConverter) {
+		this.configuration = configuration;
 		this.resourceService = resourceService;
 		this.dataConversionService = dataConversionService;
 		this.parameterConverter = parameterConverter;
+		this.openApiConfigurer = this.configuration.enable_open_api() ? new OpenApiWebRouterConfigurer(configuration, resourceService) : null;
+		this.webjarsConfigurer = this.configuration.enable_webjars() ? new WebjarsWebRouterConfigurer(resourceService) : null;
+		
 		AcceptCodec acceptCodec = new AcceptCodec(false);
 		ContentTypeCodec contentTypeCodec = new ContentTypeCodec();
 		AcceptLanguageCodec acceptLanguageCodec = new AcceptLanguageCodec(false);
@@ -76,17 +81,32 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 	public void init() {
 		this.route().path("/favicon.ico").handler(exchange -> {
 			if(exchange.request().headers().getPath().equalsIgnoreCase("/favicon.ico")) {
-				try(Resource favicon = this.resourceService.get(URI.create("classpath:/winter_favicon.svg"))) {
+				try(Resource favicon = resourceService.getResource(new URI("module://" + this.getClass().getModule().getName() + "/winter_favicon.svg"))) {
 					exchange.response().body().resource().value(favicon);
 				} 
 				catch (Exception e) {
 					throw new NotFoundException();
 				}
+				
+				/*try(Resource favicon = this.resourceService.getResource(URI.create("classpath:/winter_favicon.svg"))) {
+					exchange.response().body().resource().value(favicon);
+				} 
+				catch (Exception e) {
+					throw new NotFoundException();
+				}*/
 			}
 			else {
 				throw new NotFoundException();
 			}
 		});
+		
+		if(this.webjarsConfigurer != null) {
+			this.webjarsConfigurer.accept(this);
+		}
+		if(this.openApiConfigurer != null) {
+			this.openApiConfigurer.accept(this);
+		}
+		
 		if(this.configurer != null) {
 			this.configurer.accept(this);
 		}

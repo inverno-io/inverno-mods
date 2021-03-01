@@ -17,6 +17,7 @@ package io.winterframework.mod.base.resource;
 
 import java.net.URI;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * @author jkuhn
@@ -24,7 +25,9 @@ import java.util.Set;
  */
 public interface ResourceProvider<A extends Resource> {
 	
-	A get(URI uri) throws IllegalArgumentException, ResourceException;
+	A getResource(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException;
+	
+	Stream<? extends Resource> getResources(URI uri) throws NullPointerException,IllegalArgumentException, ResourceException;
 	
 	Set<String> getSupportedSchemes();
 }

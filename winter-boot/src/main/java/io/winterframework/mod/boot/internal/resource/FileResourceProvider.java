@@ -16,7 +16,10 @@
 package io.winterframework.mod.boot.internal.resource;
 
 import java.net.URI;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
@@ -39,10 +42,16 @@ public class FileResourceProvider extends AbstractResourceProvider<FileResource>
 	}
 	
 	@Override
-	public FileResource get(URI uri) throws IllegalArgumentException, ResourceException {
+	public FileResource getResource(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
 		return new FileResource(uri, this.mediaTypeService);
 	}
-
+	
+	@Override
+	public Stream<FileResource> getResources(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
+		Path pathPattern =  Paths.get(FileResource.checkUri(uri));
+		return PathPatternResolver.resolve(pathPattern, path -> new FileResource(path.toUri(), this.mediaTypeService));
+	}
+	
 	@Override
 	public Set<String> getSupportedSchemes() {
 		return Set.of(FileResource.SCHEME_FILE);

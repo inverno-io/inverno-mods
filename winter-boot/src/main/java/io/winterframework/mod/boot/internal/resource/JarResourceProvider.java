@@ -15,8 +15,13 @@
  */
 package io.winterframework.mod.boot.internal.resource;
 
+import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.FileSystem;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
@@ -39,8 +44,37 @@ public class JarResourceProvider extends AbstractResourceProvider<JarResource> i
 	}
 	
 	@Override
-	public JarResource get(URI uri) throws IllegalArgumentException, ResourceException {
+	public JarResource getResource(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
 		return new JarResource(uri, this.mediaTypeService);
+	}
+	
+	@Override
+	public Stream<JarResource> getResources(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
+		final URI jarFsURI;
+		final String pathPattern;
+		
+		uri = JarResource.checkUri(uri);
+		String spec = uri.getSchemeSpecificPart();
+		int resourcePathIndex = spec.indexOf("!/");
+        if (resourcePathIndex == -1) {
+        	throw new IllegalArgumentException("Missing resource path info: ...!/path/to/resource");
+        }
+        String jarSpec = spec.substring(0, resourcePathIndex);
+        try {
+        	jarFsURI = new URI(JarResource.SCHEME_JAR, jarSpec, null);
+        	pathPattern = spec.substring(resourcePathIndex + 1);
+		} 
+        catch (URISyntaxException e) {
+			throw new IllegalArgumentException("Invalid jar resource URI", e);
+		}
+		
+        try(FileSystem fs = this.getFileSystem(jarFsURI)) {
+        	// We have to collect here because otherwise the file system is closed before the execution of the pattern resolver
+        	return PathPatternResolver.resolve(fs.getPath(pathPattern), fs.getPath("/"), p -> new JarResource(p.toUri(), this.mediaTypeService)).collect(Collectors.toList()).stream();
+        } 
+        catch (IOException e) {
+        	throw new ResourceException("Error resolving resources from pattern: " + spec, e);
+		}
 	}
 
 	@Override

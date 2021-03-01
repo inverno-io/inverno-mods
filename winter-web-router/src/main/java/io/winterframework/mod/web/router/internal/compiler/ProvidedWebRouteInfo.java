@@ -23,6 +23,7 @@ import javax.lang.model.element.ExecutableElement;
 import io.winterframework.core.compiler.spi.ReporterInfo;
 import io.winterframework.core.compiler.spi.support.AbstractInfo;
 import io.winterframework.mod.web.Method;
+import io.winterframework.mod.web.router.internal.compiler.spi.WebControllerInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebParameterInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebResponseBodyInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebRouteInfo;
@@ -32,7 +33,7 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebRouteQualified
  * @author jkuhn
  *
  */
-public class ProvidedWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> implements WebRouteInfo {
+class ProvidedWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> implements WebRouteInfo {
 
 	private final String[] paths;
 	
@@ -63,6 +64,11 @@ public class ProvidedWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> im
 		this.consumes = consumes.stream().sorted().toArray(String[]::new);
 		this.produces = produces.stream().sorted().toArray(String[]::new);
 		this.languages = languages.stream().sorted().toArray(String[]::new);
+	}
+	
+	@Override
+	public Optional<WebControllerInfo> getController() {
+		return Optional.empty();
 	}
 	
 	@Override
@@ -97,7 +103,7 @@ public class ProvidedWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> im
 
 
 	@Override
-	public Optional<ExecutableElement> getRouteElement() {
+	public Optional<ExecutableElement> getElement() {
 		return Optional.empty();
 	}
 	

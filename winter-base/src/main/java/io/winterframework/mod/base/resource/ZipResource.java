@@ -21,8 +21,8 @@ import java.net.URISyntaxException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Map;
@@ -44,9 +44,9 @@ public class ZipResource extends AbstractAsyncResource {
 	public static final String SCHEME_JAR = "jar";
 	
 	private URI uri;
-	private URI zipUri;
-	private URI zipFsUri;
-	private String resourcePath;
+	protected URI zipUri;
+	protected URI zipFsUri;
+	protected Path resourcePath;
 	
 	private FileSystem fileSystem;
 	private Optional<PathResource> pathResource;
@@ -80,11 +80,18 @@ public class ZipResource extends AbstractAsyncResource {
         try {
 			this.zipUri = new URI(zipSpec);
 			this.zipFsUri = new URI(SCHEME_JAR, zipSpec, null);
-			this.resourcePath = spec.substring(resourcePathIndex + 1);
+			this.resourcePath = Paths.get(spec.substring(resourcePathIndex + 1)).normalize();
 		} 
         catch (URISyntaxException e) {
 			throw new IllegalArgumentException("Invalid " + scheme + " resource URI", e);
 		}
+	}
+	
+	public static URI checkUri(URI uri) throws IllegalArgumentException {
+		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_ZIP)) {
+			throw new IllegalArgumentException("Not a " + SCHEME_ZIP + " uri");
+		}
+		return uri.normalize();
 	}
 	
 	@Override
@@ -101,8 +108,9 @@ public class ZipResource extends AbstractAsyncResource {
 		}
 		if(this.pathResource == null) {
 			try {
-				this.fileSystem = FileSystems.newFileSystem(this.zipFsUri, Map.of("create", "true"));
-				PathResource resolvedResource = new PathResource(this.fileSystem.getPath(this.resourcePath), this.getMediaTypeService());
+//				this.fileSystem = FileSystems.newFileSystem(this.zipFsUri, Map.of("create", "true"));
+				this.fileSystem = ReferenceCountedFileSystems.getFileSystem(this.zipFsUri, Map.of("create", "true"));
+				PathResource resolvedResource = new PathResource(this.fileSystem.getPath(this.resourcePath.toString()), this.getMediaTypeService());
 				resolvedResource.setExecutor(this.getExecutor());
 				this.pathResource = Optional.of(resolvedResource);
 			} 
@@ -230,14 +238,15 @@ public class ZipResource extends AbstractAsyncResource {
 	@Override
 	public void close() {
 		try {
-			Optional<PathResource> r = this.resolve();
-			if(r.isPresent()) {
-				r.get().close();
+			if(this.pathResource != null && this.pathResource.isPresent()) {
+				this.pathResource.get().close();
 			}
 		}
 		finally {
 			try {
-				this.fileSystem.close();
+				if(this.fileSystem != null) {
+					this.fileSystem.close();
+				}
 			} 
 			catch (IOException e) {
 				throw new ResourceException(e);
@@ -250,7 +259,7 @@ public class ZipResource extends AbstractAsyncResource {
 	
 	@Override
 	public Resource resolve(URI uri) {
-		ZipResource resolvedResource = new ZipResource(this.uri.resolve(uri.normalize()), this.getMediaTypeService());
+		ZipResource resolvedResource = new ZipResource(URI.create(this.zipFsUri.toString() + "!" + this.resourcePath.resolve(Paths.get(uri.getPath())).toString()), this.getMediaTypeService());
 		resolvedResource.setExecutor(this.getExecutor());
 		return resolvedResource;
 	}

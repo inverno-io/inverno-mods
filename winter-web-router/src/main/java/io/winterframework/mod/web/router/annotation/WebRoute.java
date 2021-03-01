@@ -39,8 +39,6 @@ public @interface WebRoute {
 	
 	String[] path() default {};
 	
-	String[] value() default {};
-	
 	boolean matchTrailingSlash() default false;
 	
 	String[] consumes() default {};

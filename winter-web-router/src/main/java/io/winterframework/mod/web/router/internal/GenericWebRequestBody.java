@@ -34,7 +34,7 @@ import reactor.core.publisher.Flux;
  * @author jkuhn
  *
  */
-public class GenericWebRequestBody implements WebRequestBody {
+class GenericWebRequestBody implements WebRequestBody {
 
 	private final WebRequest request;
 	

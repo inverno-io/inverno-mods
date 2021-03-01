@@ -20,10 +20,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Stream;
 
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Provide;
+import io.winterframework.mod.base.resource.AsyncResource;
 import io.winterframework.mod.base.resource.AsyncResourceProvider;
 import io.winterframework.mod.base.resource.Resource;
 import io.winterframework.mod.base.resource.ResourceException;
@@ -67,16 +70,36 @@ public class GenericResourceService implements @Provide ResourceService {
 	}
 
 	@Override
-	public Resource get(URI uri) throws IllegalArgumentException, ResourceException {
+	public Resource getResource(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
+		Objects.requireNonNull(uri, "uri");
 		String scheme = uri.getScheme();
 		ResourceProvider<?> provider = this.providers.get(scheme);
 		if(provider != null) {
 			if(provider instanceof AsyncResourceProvider) {
-				return ((AsyncResourceProvider<?>) provider).get(uri, this.executor);
+				return ((AsyncResourceProvider<?>) provider).getResource(uri, this.executor);
 			}
 			else {
-				return provider.get(uri);
+				return provider.getResource(uri);
 			}
+		}
+		else {
+			throw new IllegalArgumentException("Unsupported scheme: " + scheme);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public Stream<Resource> getResources(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
+		Objects.requireNonNull(uri, "uri");
+		String scheme = uri.getScheme();
+		ResourceProvider<?> provider = this.providers.get(scheme);
+		if(provider != null) {
+			return (Stream<Resource>) provider.getResources(uri).map(resource -> {
+				if(resource instanceof AsyncResource) {
+					((AsyncResource) resource).setExecutor(this.executor);
+				}
+				return resource;
+			});
 		}
 		else {
 			throw new IllegalArgumentException("Unsupported scheme: " + scheme);

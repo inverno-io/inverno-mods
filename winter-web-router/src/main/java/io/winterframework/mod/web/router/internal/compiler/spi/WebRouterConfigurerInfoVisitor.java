@@ -37,8 +37,6 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	
 	R visit(WebCookieParameterInfo cookieParameterInfo, P p);
 	
-	R visit(WebExchangeParameterInfo exchangeParameterInfo, P p);
-	
 	R visit(WebFormParameterInfo formParameterInfo, P p);
 	
 	R visit(WebHeaderParameterInfo headerParameterInfo, P p);
@@ -48,6 +46,8 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	R visit(WebQueryParameterInfo queryParameterInfo, P p);
 	
 	R visit(WebRequestBodyParameterInfo bodyParameterInfo, P p);
+	
+	R visit(WebExchangeParameterInfo exchangeParameterInfo, P p);
 	
 	R visit(WebSseEventFactoryParameterInfo sseEventFactoryParameterInfo, P p);
 }

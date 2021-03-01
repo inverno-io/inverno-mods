@@ -29,9 +29,9 @@ import io.winterframework.mod.web.router.WebRoute;
  * @author jkuhn
  *
  */
-public class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange, WebRoute<WebExchange>, GenericWebRouteExtractor> {
+class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange, WebRoute<WebExchange>, GenericWebRouteExtractor> {
 
-	private GenericWebRouter router;
+	private final GenericWebRouter router;
 	
 	private GenericWebRouteExtractor parent;
 	
@@ -55,15 +55,11 @@ public class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange, 
 	
 	private GenericWebRouteExtractor(GenericWebRouteExtractor parent) {
 		this.parent = parent;
+		this.router = parent.router;
 	}
 	
 	private GenericWebRouter getRouter() {
-		if(this.parent != null) {
-			return this.parent.getRouter();
-		}
-		else {
-			return this.router;
-		}
+		return this.router;
 	}
 	
 	private String getPath() {

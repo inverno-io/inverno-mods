@@ -27,9 +27,9 @@ import io.winterframework.mod.web.server.ExchangeHandler;
  * @author jkuhn
  *
  */
-public class GenericErrorRouteExtractor implements ErrorRouteExtractor {
+class GenericErrorRouteExtractor implements ErrorRouteExtractor {
 
-	private GenericErrorRouter router;
+	private final GenericErrorRouter router;
 	
 	private GenericErrorRouteExtractor parent;
 	
@@ -47,15 +47,11 @@ public class GenericErrorRouteExtractor implements ErrorRouteExtractor {
 
 	private GenericErrorRouteExtractor(GenericErrorRouteExtractor parent) {
 		this.parent = parent;
+		this.router = parent.router;
 	}
 	
 	private GenericErrorRouter getRouter() {
-		if(this.parent != null) {
-			return this.parent.getRouter();
-		}
-		else {
-			return this.router;
-		}
+		return this.router;
 	}
 	
 	private Class<? extends Throwable> getError() {

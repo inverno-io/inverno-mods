@@ -26,9 +26,9 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebPathParameterI
  * @author jkuhn
  *
  */
-public class GenericWebPathParameterInfo extends AbstractWebParameterInfo implements WebPathParameterInfo {
+class GenericWebPathParameterInfo extends AbstractWebParameterInfo implements WebPathParameterInfo {
 
-	public GenericWebPathParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement parameterElement, TypeMirror type, boolean required) {
-		super(name, reporter, parameterElement, type, required);
+	public GenericWebPathParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement element, TypeMirror type, boolean required) {
+		super(name, reporter, element, type, required);
 	}
 }

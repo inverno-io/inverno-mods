@@ -15,6 +15,8 @@
  */
 package io.winterframework.mod.web.router.internal.compiler.spi;
 
+import javax.lang.model.element.ModuleElement;
+
 import io.winterframework.core.compiler.spi.Info;
 
 /**
@@ -23,6 +25,8 @@ import io.winterframework.core.compiler.spi.Info;
  */
 public interface WebRouterConfigurerInfo extends Info {
 
+	ModuleElement getElement();
+	
 	@Override
 	WebRouterConfigurerQualifiedName getQualifiedName();
 	

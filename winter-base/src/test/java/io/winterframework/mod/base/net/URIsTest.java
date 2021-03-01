@@ -462,4 +462,19 @@ public class URIsTest {
 		Assertions.assertTrue("/a/b/f/e".matches(URIs.uri(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).path("/a/b/{param1}/d/").segment("..").segment("e").buildPattern().getPatternString()));
 		Assertions.assertTrue("/a/b/e".matches(URIs.uri(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).path("/a/b/{param1}/d/").segment("..").segment("..").segment("e").buildPattern().getPatternString()));
 	}
+	
+	@Test
+	public void test() {
+		Assertions.assertEquals("", URIs.uri().path("").buildPath());
+		Assertions.assertEquals("/", URIs.uri().path("/").buildPath());
+		
+		Assertions.assertEquals("/a/b", URIs.uri().path("/").path("/a/b").buildPath());
+		
+		Assertions.assertEquals("/a/b/c/d", URIs.uri().path("/a/b").path("/c/d").buildPath());
+		Assertions.assertEquals("/a/b/c/d", URIs.uri().path("/a/b").path("/c/d/").buildPath());
+		Assertions.assertEquals("/a/b/c/d", URIs.uri().path("/a/b").path("/c/d", false).buildPath());
+		Assertions.assertEquals("/a/b/c/d/", URIs.uri().path("/a/b").path("/c/d/", false).buildPath());
+		
+		Assertions.assertEquals("/a/b/", URIs.uri().path("/a/b").path("/", false).buildPath());
+	}
 }

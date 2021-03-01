@@ -29,7 +29,7 @@ public interface WebParameterInfo extends Info {
 	@Override
 	WebParameterQualifiedName getQualifiedName();
 	
-	VariableElement getParameterElement();
+	VariableElement getElement();
 	
 	boolean isRequired();
 	

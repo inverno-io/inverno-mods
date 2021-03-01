@@ -26,9 +26,9 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebQueryParameter
  * @author jkuhn
  *
  */
-public class GenericWebQueryParameterInfo extends AbstractWebParameterInfo implements WebQueryParameterInfo {
+class GenericWebQueryParameterInfo extends AbstractWebParameterInfo implements WebQueryParameterInfo {
 
-	public GenericWebQueryParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement parameterElement, TypeMirror type, boolean required) {
-		super(name, reporter, parameterElement, type, required);
+	public GenericWebQueryParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement element, TypeMirror type, boolean required) {
+		super(name, reporter, element, type, required);
 	}
 }

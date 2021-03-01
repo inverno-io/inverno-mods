@@ -28,7 +28,7 @@ import io.winterframework.mod.web.server.ResponseTrailers;
  * @author jkuhn
  *
  */
-public class GenericWebResponse implements WebResponse {
+class GenericWebResponse implements WebResponse {
 
 	private final Response response;
 	

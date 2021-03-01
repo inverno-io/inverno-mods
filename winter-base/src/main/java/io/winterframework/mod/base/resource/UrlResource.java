@@ -86,8 +86,8 @@ public class UrlResource extends AbstractAsyncResource {
 	
 	@Override
 	public String getFilename() {
-		String path = this.uri.getSchemeSpecificPart();
-		int lastSlashIndex = this.uri.getPath().lastIndexOf("/");
+		String path = this.uri.getPath();
+		int lastSlashIndex = path.lastIndexOf("/");
 		if(lastSlashIndex != -1) {
 			return path.substring(lastSlashIndex + 1);
 		}
@@ -177,7 +177,7 @@ public class UrlResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Resource resolve(URI uri) {
+	public UrlResource resolve(URI uri) {
 		return new UrlResource(this.uri.resolve(uri.normalize()), this.getMediaTypeService());
 	}
 }

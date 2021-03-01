@@ -24,7 +24,7 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebParameterQuali
  * @author jkuhn
  *
  */
-public class ErrorWebParameterInfo extends AbstractWebParameterInfo {
+class ErrorWebParameterInfo extends AbstractWebParameterInfo {
 
 	public ErrorWebParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, boolean required) {
 		super(name, reporter, parameterElement, parameterElement.asType(), required);

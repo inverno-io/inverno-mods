@@ -52,7 +52,7 @@ public class FileResource extends AbstractAsyncResource {
 	
 	public FileResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
-		this.pathResource = new PathResource(Paths.get(this.checkUri(uri)), mediaTypeService);
+		this.pathResource = new PathResource(Paths.get(FileResource.checkUri(uri)), mediaTypeService);
 	}
 	
 	public FileResource(String pathname, MediaTypeService mediaTypeService) {
@@ -64,17 +64,18 @@ public class FileResource extends AbstractAsyncResource {
 		this.pathResource = new PathResource(Objects.requireNonNull(file.getAbsoluteFile()).toPath(), mediaTypeService);
 	}
 	
-	@Override
-	public void setExecutor(ExecutorService executor) {
-		this.pathResource.setExecutor(executor);
-	}
-	
-	private URI checkUri(URI uri) throws IllegalArgumentException {
+	public static URI checkUri(URI uri) throws IllegalArgumentException {
 		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_FILE)) {
 			throw new IllegalArgumentException("Not a " + SCHEME_FILE + " uri");
 		}
 		return uri.normalize();
 	}
+	
+	@Override
+	public void setExecutor(ExecutorService executor) {
+		this.pathResource.setExecutor(executor);
+	}
+	
 	@Override
 	public String getFilename() {
 		return this.pathResource.getFilename();

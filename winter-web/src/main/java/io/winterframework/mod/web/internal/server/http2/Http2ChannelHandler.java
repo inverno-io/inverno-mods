@@ -222,12 +222,12 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 
 	@Override
 	public void onStreamAdded(Http2Stream stream) {
-//		System.out.println("Stream added");		
+//		System.out.println("Stream added: " + stream.id());
 	}
 
 	@Override
 	public void onStreamActive(Http2Stream stream) {
-//		System.out.println("Stream active");		
+//		System.out.println("Stream active: " + stream.id());		
 	}
 
 	@Override
@@ -237,7 +237,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 
 	@Override
 	public void onStreamClosed(Http2Stream stream) {
-//		System.out.println("Stream closed");
+//		System.out.println("Stream closed " + stream.id());
 		Http2Exchange serverStream = this.serverStreams.remove(stream.id());
 		if (serverStream != null) {
 			serverStream.dispose();

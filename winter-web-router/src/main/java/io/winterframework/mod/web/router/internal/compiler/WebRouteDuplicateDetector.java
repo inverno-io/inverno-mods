@@ -24,7 +24,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import io.winterframework.mod.base.net.URIs;
 import io.winterframework.mod.web.Method;
+import io.winterframework.mod.web.router.internal.compiler.spi.WebControllerInfo;
 import io.winterframework.mod.web.router.internal.compiler.spi.WebRouteInfo;
 
 /**
@@ -32,7 +34,7 @@ import io.winterframework.mod.web.router.internal.compiler.spi.WebRouteInfo;
  *
  */
 class WebRouteDuplicateDetector {
-
+	
 	public Map<WebRouteInfo, Set<WebRouteInfo>> findDuplicates(List<? extends WebRouteInfo> routes) {
 		Map<WebRouteInfo, Set<WebRouteInfo>> result = new HashMap<>();
 		int routeIndex = 0;
@@ -66,7 +68,7 @@ class WebRouteDuplicateDetector {
 		if(route.getPaths().length > 0) {
 			List<WebRouteInfo> duplicates = new ArrayList<>();
 			for(String path : route.getPaths()) {
-				duplicates.addAll(this.visitPath(route, path, route.isMatchTrailingSlash(), routes));
+				duplicates.addAll(this.visitPath(route, route.getController().map(WebControllerInfo::getRootPath).map(rootPath -> URIs.uri(rootPath).path(path, false).buildRawPath()).orElse(path), route.isMatchTrailingSlash(), routes));
 			}
 			return duplicates;
 		}
