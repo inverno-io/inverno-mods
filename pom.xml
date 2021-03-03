@@ -28,7 +28,7 @@
 	<packaging>pom</packaging>
 	
 	<name>winter-mods-root</name>
-	<description>Winter framework modules are a collection of components for building fully reactive applications</description>
+	<description>The Winter framework modules are a collection of components for building fully reactive applications</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

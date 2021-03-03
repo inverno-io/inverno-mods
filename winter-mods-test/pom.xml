@@ -29,7 +29,7 @@
 	<packaging>jar</packaging>
 	
 	<name>io.winterframework.mod.test</name>
-	<description>Winter mods testing module</description>
+	<description>Winter mods test module</description>
 
 	<dependencies>
 		<dependency>
