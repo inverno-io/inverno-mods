@@ -36,7 +36,7 @@ public class ResourceTest {
 
 	private void writeResource(Resource resource){
 		Assertions.assertFalse(resource.exists().get());
-		Assertions.assertNull(resource.lastModified());
+		Assertions.assertFalse(resource.lastModified().isPresent());
 		resource.openWritableByteChannel().ifPresent(ch -> {
 			try(ch) {
 				int bufferSize = 1024;
@@ -54,7 +54,7 @@ public class ResourceTest {
 	
 	private void readResource(Resource resource) {
 		Assertions.assertTrue(resource.exists().get());
-		Assertions.assertNotNull(resource.lastModified());
+		Assertions.assertTrue(resource.lastModified().isPresent());
 		Assertions.assertTrue(System.currentTimeMillis() - resource.lastModified().get().toMillis() < 1000);
 		resource.openReadableByteChannel().ifPresent(ch -> {
 			try (ByteArrayOutputStream out = new ByteArrayOutputStream();

@@ -22,8 +22,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.util.function.Consumer;
 
-import io.winterframework.core.annotation.Bean;
-
 /**
  * <p>
  * Used on an interface to indicate a configuration.
@@ -60,7 +58,7 @@ import io.winterframework.core.annotation.Bean;
  * @author jkuhn
  * @since 1.1
  * 
- * @see Bean
+ * @see io.winterframework.core.annotation.Bean
  */
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.TYPE)

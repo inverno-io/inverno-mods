@@ -18,9 +18,9 @@ package io.winterframework.mod.web.internal;
 import java.util.function.Supplier;
 
 import io.winterframework.core.annotation.Bean;
+import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.core.annotation.Overridable;
 import io.winterframework.core.annotation.Wrapper;
-import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.base.converter.StringConverter;
 

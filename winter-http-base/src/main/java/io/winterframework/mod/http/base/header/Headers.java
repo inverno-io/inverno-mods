@@ -1,0 +1,603 @@
+/*
+ * Copyright 2020 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.winterframework.mod.http.base.header;
+
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+/**
+ * @author jkuhn
+ *
+ */
+public final class Headers {
+
+	/* Header Names */
+	public static final String NAME_ACCEPT = "accept";
+	public static final String NAME_ACCEPT_LANGUAGE = "accept-language";
+	public static final String NAME_ALLOW = "allow";
+	public static final String NAME_CONNECTION = "connection";
+	public static final String NAME_CONTENT_DISPOSITION = "content-disposition";
+	public static final String NAME_CONTENT_TYPE = "content-type";
+	public static final String NAME_CONTENT_LENGTH = "content-length";
+	public static final String NAME_COOKIE = "cookie";
+	public static final String NAME_HOST = "host";
+	public static final String NAME_LOCATION = "location";
+	public static final String NAME_RETRY_AFTER = "retry-after";
+	public static final String NAME_SET_COOKIE = "set-cookie";
+	public static final String NAME_TE = "te";
+	public static final String NAME_TRAILER = "trailer";
+	public static final String NAME_TRANSFER_ENCODING = "transfer-encoding";
+	
+	// HTTP/2 pseudo headers
+	public static final String NAME_PSEUDO_AUTHORITY = ":authority";
+	public static final String NAME_PSEUDO_METHOD = ":method";
+	public static final String NAME_PSEUDO_PATH = ":path";
+	public static final String NAME_PSEUDO_SCHEME = ":scheme";
+	public static final String NAME_PSEUDO_STATUS = ":status";
+	
+	/* Header Values */
+	public static final String VALUE_CHUNKED = "chunked";
+	public static final String VALUE_CLOSE = "close";
+	public static final String VALUE_TRAILERS = "trailers";
+	
+	private Headers() {}
+	
+	/**
+	 * https://tools.ietf.org/html/rfc7231#section-3.1.1.5
+	 * 
+	 * @author jkuhn
+	 *
+	 */
+	public static interface ContentType extends Header {
+		
+		public static final String BOUNDARY = "boundary";
+		
+		public static final String CHARSET = "charset";
+		
+		String getMediaType();
+		
+		String getType();
+		
+		String getSubType();
+		
+		String getBoundary();
+
+		Charset getCharset();
+		
+		Map<String, String> getParameters();
+		
+		Accept.MediaRange toMediaRange();
+	}
+	
+	/**
+	 * https://tools.ietf.org/html/rfc6266#section-4.1
+	 * 
+	 * @author jkuhn
+	 *
+	 */
+	public static interface ContentDisposition extends Header {
+
+		public static final String PART_NAME = "name";
+		public static final String FILENAME = "filename";
+		public static final String CREATION_DATE = "creation-date";
+		public static final String MODIFICATION_DATE = "modification-date";
+		public static final String READ_DATE = "read-date";
+		public static final String SIZE = "size";
+		
+		String getDispositionType();
+		
+		String getPartName();
+		
+		String getFilename();
+		
+		String getCreationDateTime();
+		
+		String getModificationDatetime();
+		
+		String getReadDateTime();
+		
+		Integer getSize();
+	}
+	
+	/**
+	 * https://tools.ietf.org/html/rfc6265#section-4.1
+	 * 
+	 * @author jkuhn
+	 * 
+	 */
+	public static interface SetCookie extends Header {
+		
+		public static final String EXPIRES = "Expires";
+		public static final String MAX_AGE = "Max-Age";
+		public static final String DOMAIN = "Domain";
+		public static final String PATH = "Path";
+		public static final String SECURE = "Secure";
+		public static final String HTTPONLY = "HttpOnly";
+		
+		String getName();
+		
+		String getValue();
+		
+		String getExpires();
+		
+		Integer getMaxAge();
+		
+		String getDomain();
+		
+		String getPath();
+		
+		Boolean isSecure();
+		
+		Boolean isHttpOnly();
+	}
+	
+	/**
+	 * https://tools.ietf.org/html/rfc6265#section-4.2
+	 * 
+	 * @author jkuhn
+	 *
+	 */
+	public static interface Cookie extends Header {
+		
+		public Map<String, List<io.winterframework.mod.http.base.header.Cookie>> getPairs();
+	}
+	
+	/**
+	 * https://tools.ietf.org/html/rfc7231#section-5.3.2
+	 * 
+	 * @author jkuhn
+	 *
+	 */
+	public static interface Accept extends Header {
+		
+		List<MediaRange> getMediaRanges();
+		
+		default Optional<AcceptMatch<MediaRange, Headers.ContentType>> findBestMatch(Collection<Headers.ContentType> contentTypes) {
+			return this.findBestMatch(contentTypes, Function.identity());
+		}
+		
+		default <T> Optional<AcceptMatch<MediaRange, T>> findBestMatch(Collection<T> items, Function<T, Headers.ContentType> contentTypeExtractor) {
+			for(MediaRange mediaRange : this.getMediaRanges()) {
+				for(T item : items) {
+					if(mediaRange.matches(contentTypeExtractor.apply(item))) {
+						return Optional.of(new AcceptMatch<>(mediaRange, item));
+					}
+				}
+			}
+			return Optional.empty();
+		}
+		
+		default Collection<AcceptMatch<MediaRange, Headers.ContentType>> findAllMatch(Collection<Headers.ContentType> contentTypes) {
+			return this.findAllMatch(contentTypes, Function.identity());
+		}
+		
+		default <T> Collection<AcceptMatch<MediaRange, T>> findAllMatch(Collection<T> items, Function<T, Headers.ContentType> contentTypeExtractor) {
+			List<AcceptMatch<MediaRange, T>> result = new ArrayList<>();
+			// This works because items are content type ie. with no wild cards
+			for(MediaRange mediaRange : this.getMediaRanges()) {
+				for(T item : items) {
+					if(mediaRange.matches(contentTypeExtractor.apply(item))) {
+						result.add(new AcceptMatch<>(mediaRange, item));
+					}
+				}
+			}
+			return result;
+		}
+		
+		static Optional<Accept> merge(List<Accept> acceptHeaders) {
+			if(acceptHeaders.isEmpty()) {
+				return Optional.empty();
+			}
+			else if(acceptHeaders.size() == 1) {
+				return Optional.of(acceptHeaders.get(0));
+			}
+			else {
+				return Optional.of(new Accept() {
+
+					@Override
+					public String getHeaderName() {
+						return Headers.NAME_ACCEPT;
+					}
+
+					@Override
+					public String getHeaderValue() {
+						return acceptHeaders.stream().map(Accept::getHeaderValue).collect(Collectors.joining(", "));
+					}
+
+					@Override
+					public List<MediaRange> getMediaRanges() {
+						return acceptHeaders.stream()
+							.flatMap(accept -> accept.getMediaRanges().stream())
+							.distinct()
+							.sorted(MediaRange.COMPARATOR)
+							.collect(Collectors.toList());
+					}
+				});
+			}
+		}
+		
+		public static interface MediaRange {
+			
+			public static final Comparator<MediaRange> COMPARATOR = (r1, r2) -> r2.getScore() - r1.getScore();
+			
+			String getMediaType();
+			
+			String getType();
+			
+			String getSubType();
+			
+			float getWeight();
+			
+			Map<String, String> getParameters();
+			
+			// When this range doesn't define any parameters, this method returns true as
+			// soon as the media types are compatible.
+			// The best match is then the most precise one.
+			default boolean matches(Headers.ContentType contentType) {
+				String requestType = contentType.getType();
+				String requestSubType = contentType.getSubType();
+				Map<String, String> requestParameters = contentType.getParameters();
+
+				String consumeType = this.getType();
+				String consumeSubType = this.getSubType();
+				Map<String, String> consumeParameters = this.getParameters();
+
+				if(requestType.equals("*")) {
+					if(requestSubType.equals("*")) {
+						// we can stop here: any match as long as parameters match
+						return consumeParameters.isEmpty() || consumeParameters.equals(requestParameters);
+					}
+					else {
+						return (consumeSubType.equals("*") || consumeSubType.equals(requestSubType)) && 
+							(consumeParameters.isEmpty() || consumeParameters.equals(requestParameters));
+					}
+				}
+				else {
+					if(requestSubType.equals("*")) {
+						return (consumeType.equals("*") || consumeType.equals(requestType)) && 
+							(consumeParameters.isEmpty() || consumeParameters.equals(requestParameters));
+					}
+					else {
+						return (consumeType.equals("*") || consumeType.equals(requestType)) && 
+							(consumeSubType.equals("*") || consumeSubType.equals(requestSubType)) && 
+							(consumeParameters.isEmpty() || consumeParameters.equals(requestParameters));
+					}
+				}
+			}
+			
+			default int getScore() {
+				String type = this.getType();
+				String subType = this.getSubType();
+				Map<String, String> parameters = this.getParameters();
+				float weight = this.getWeight();
+				int score = 0;
+				
+				// 1. weight
+				score += 1000 * weight;
+				
+				// 2. wildcards
+				if(type.equals("*")) {
+					if(subType.equals("*")) {
+						// */*
+						score += 0 * 10;
+					}
+					else {
+						// */b
+						score += 1 * 10;
+					}
+				}
+				else {
+					if(subType.equals("*")) {
+						// a/*
+						score += 2 * 10;
+					}
+					else {
+						// a/b
+						score += 3 * 10;
+					}
+				}
+				
+				// 3. parameters
+				for(Entry<String, String> e : parameters.entrySet()) {
+					if(e.getValue() == null) {
+						score += 1 * 1;
+					}
+					else {
+						score += 2 * 1;
+					}
+				}
+				
+				return score;
+			}
+			
+			static Optional<AcceptMatch<MediaRange, Headers.ContentType>> findFirstMatch(Headers.ContentType contentType, List<MediaRange> mediaRanges) {
+				return findFirstMatch(contentType, mediaRanges, Function.identity());
+			}
+			
+			static <T> Optional<AcceptMatch<T, Headers.ContentType>> findFirstMatch(Headers.ContentType contentType, Collection<T> items, Function<T, MediaRange> mediaRangeExtractor) {
+				String requestType = contentType.getType();
+				String requestSubType = contentType.getSubType();
+				Map<String, String> requestParameters = contentType.getParameters();
+
+				return items.stream()
+					.filter(item -> {
+						MediaRange range = mediaRangeExtractor.apply(item);
+						String type = range.getType();
+						String subType = range.getSubType();
+						Map<String, String> consumeParameters = range.getParameters();
+
+						if(requestType.equals("*")) {
+							if(requestSubType.equals("*")) {
+								// we can stop here: any match as long as parameters match
+								return consumeParameters.isEmpty() || consumeParameters.equals(requestParameters);
+							}
+							else {
+								return (type.equals("*") || subType.equals(requestSubType)) && 
+									(consumeParameters.isEmpty() || consumeParameters.equals(requestParameters));
+							}
+						}
+						else {
+							if(requestSubType.equals("*")) {
+								return (type.equals("*") || type.equals(requestType)) && 
+									(consumeParameters.isEmpty() || consumeParameters.equals(requestParameters));
+							}
+							else {
+								return (type.equals("*") || type.equals(requestType)) && 
+									(subType.equals("*") || subType.equals(requestSubType)) && 
+									(consumeParameters.isEmpty() || consumeParameters.equals(requestParameters));
+							}
+						}
+					})
+					.findFirst()
+					.map(item -> new AcceptMatch<>(item, contentType));
+			}
+		}
+	}
+	
+	public static class AcceptMatch<A, B> {
+		
+		private final A source;
+		
+		private final B target;
+		
+		private AcceptMatch(A source, B target) {
+			this.source = source;
+			this.target = target;
+		}
+		
+		public A getSource() {
+			return this.source;
+		}
+		
+		public B getTarget() {
+			return this.target;
+		}
+	}
+	
+	private static class AcceptLanguageMatch<A, B> extends AcceptMatch<A, B> {
+		
+		private final int score;
+		
+		private AcceptLanguageMatch(A source, B target, int score) {
+			super(source, target);
+			this.score = score;
+		}
+	
+		public int getScore() {
+			return score;
+		}
+	}
+	
+	/**
+	 * https://tools.ietf.org/html/rfc7231#section-5.3.5
+	 * https://tools.ietf.org/html/rfc4647#section-3.3.1
+	 * 
+	 * @author jkuhn
+	 *
+	 */
+	public static interface AcceptLanguage extends Header {
+		
+		List<LanguageRange> getLanguageRanges();
+		
+		default Optional<AcceptMatch<LanguageRange, LanguageRange>> findBestMatch(Collection<Headers.AcceptLanguage.LanguageRange> languageRanges) {
+			return this.findBestMatch(languageRanges, Function.identity());
+		}
+		
+		default <T> Optional<AcceptMatch<LanguageRange,T>> findBestMatch(Collection<T> items, Function<T, Headers.AcceptLanguage.LanguageRange> languageRangeExtractor) {
+			/*for(LanguageRange languageRange : this.getLanguageRanges()) {
+				for(T item : items) {
+					if(languageRange.matches(languageRangeExtractor.apply(item))) {
+						return Optional.of(new AcceptMatch<>(languageRange, item));
+					}
+				}
+			}*/
+
+			return this.findAllMatch(items, languageRangeExtractor).stream().findFirst();
+		}
+		
+		default Collection<AcceptMatch<LanguageRange, LanguageRange>> findAllMatch(Collection<Headers.AcceptLanguage.LanguageRange> languageRanges) {
+			return this.findAllMatch(languageRanges, Function.identity());
+		}
+		
+		default <T> Collection<AcceptMatch<LanguageRange,T>> findAllMatch(Collection<T> items, Function<T, Headers.AcceptLanguage.LanguageRange> languageRangeExtractor) {
+			/*List<AcceptMatch<LanguageRange,T>> result = new ArrayList<>();
+			for(LanguageRange languageRange : this.getLanguageRanges()) {
+				for(T item : items) {
+					if(languageRange.matches(languageRangeExtractor.apply(item))) {
+						result.add(new AcceptMatch<>(languageRange, item));
+					}
+				}
+			}*/
+			
+			return this.getLanguageRanges().stream()
+				.flatMap(languageRange -> items.stream()
+					.map(item -> {
+						LanguageRange itemLanguageRange = languageRangeExtractor.apply(item);
+						if(languageRange.matches(itemLanguageRange)) {
+							int score;
+							if(languageRange.getLanguageTag().equals(itemLanguageRange.getLanguageTag())) {
+								// exact match
+								score = 100000 + itemLanguageRange.getScore();
+							}
+							else {
+								score = 10000 + itemLanguageRange.getScore();
+							}
+							return new AcceptLanguageMatch<>(languageRange, item, score);
+						}
+						return null;
+					})
+					.filter(Objects::nonNull)
+				)
+				.sorted((o1, o2) -> o2.getScore() - o1.getScore())
+				.collect(Collectors.toList());
+		}
+		
+		static Optional<AcceptLanguage> merge(List<AcceptLanguage> acceptLanguageHeaders) {
+			if(acceptLanguageHeaders.isEmpty()) {
+				return Optional.empty();
+			}
+			else if(acceptLanguageHeaders.size() == 1) {
+				return Optional.of(acceptLanguageHeaders.get(0));
+			}
+			else {
+				return Optional.of(new AcceptLanguage() {
+
+					@Override
+					public String getHeaderName() {
+						return Headers.NAME_ACCEPT_LANGUAGE;
+					}
+
+					@Override
+					public String getHeaderValue() {
+						return acceptLanguageHeaders.stream().map(AcceptLanguage::getHeaderValue).collect(Collectors.joining(", "));
+					}
+
+					@Override
+					public List<LanguageRange> getLanguageRanges() {
+						return acceptLanguageHeaders.stream()
+							.flatMap(accept -> accept.getLanguageRanges().stream())
+							.distinct()
+							.sorted(LanguageRange.COMPARATOR)
+							.collect(Collectors.toList());
+					}
+				});
+			}
+		}
+		
+		public static interface LanguageRange {
+			
+			public static final Comparator<LanguageRange> COMPARATOR = (r1, r2) -> r2.getScore() - r1.getScore();
+			
+			String getLanguageTag();
+			
+			String getPrimarySubTag();
+			
+			String getSecondarySubTag();
+			
+			float getWeight();
+			
+			default boolean matches(LanguageRange languageRange) {
+				String requestPrimarySubTag = languageRange.getPrimarySubTag();
+				String requestSecondarySubTag = languageRange.getSecondarySubTag();
+				
+				String primarySubType = this.getPrimarySubTag();
+				String secondarySubType = this.getSecondarySubTag();
+
+				if(requestPrimarySubTag.equals("*")) {
+					// *
+					return true;
+				}
+				else {
+					if(requestSecondarySubTag == null) {
+						// xx
+						return (primarySubType.equals("*") || primarySubType.equals(requestPrimarySubTag)); // could be startsWith(requestPrimarySubTag + "-") with see https://tools.ietf.org/html/rfc4647#section-3.3.1
+					}
+					else {
+						// xx-xx
+						return (primarySubType.equals("*") || primarySubType.equals(requestPrimarySubTag)) && 
+							(secondarySubType == null || secondarySubType.equals(requestSecondarySubTag)); // could be startsWith(requestSecondarySubTag + "-") with see https://tools.ietf.org/html/rfc4647#section-3.3.1
+					}
+				}
+			}
+			
+			default int getScore() {
+				String primarySubTag = this.getPrimarySubTag();
+				String secondarySubTag = this.getSecondarySubTag();
+				float weight = this.getWeight();
+				int score = 0;
+				
+				// 1. weight
+				score += 1000 * weight;
+				
+				// 2. wildcards
+				if(!primarySubTag.equals("*")) {
+					if(secondarySubTag == null) {
+						// xx
+						score += 1 * 10;
+					}
+					else {
+						// xx-xx
+						score += 2 * 10;
+					}
+				}
+				return score;
+			}
+			
+			static Optional<AcceptMatch<LanguageRange, LanguageRange>> findFirstMatch(LanguageRange languageRange, List<LanguageRange> languageRanges) {
+				return findFirstMatch(languageRange, languageRanges, Function.identity());
+			}
+			
+			static <T> Optional<AcceptMatch<T, LanguageRange>> findFirstMatch(LanguageRange languageRange, Collection<T> items, Function<T, LanguageRange> languageRangeExtractor) {
+				String requestPrimarySubTag = languageRange.getPrimarySubTag();
+				String requestSecondarySubTag = languageRange.getSecondarySubTag();
+
+				return items.stream()
+					.filter(item -> {
+						LanguageRange range = languageRangeExtractor.apply(item);
+						String primarySubType = range.getPrimarySubTag();
+						String secondarySubType = range.getSecondarySubTag();
+
+						if(requestPrimarySubTag.equals("*")) {
+							// *
+							return true;
+						}
+						else {
+							if(requestSecondarySubTag == null) {
+								// xx
+								return (primarySubType.equals("*") || primarySubType.equals(requestPrimarySubTag)); // could be startsWith(requestPrimarySubTag + "-") with see https://tools.ietf.org/html/rfc4647#section-3.3.1
+							}
+							else {
+								// xx-xx
+								return (primarySubType.equals("*") || primarySubType.equals(requestPrimarySubTag)) && 
+									(secondarySubType.equals("*") || secondarySubType.equals(requestSecondarySubTag)); // could be startsWith(requestSecondarySubTag + "-") with see https://tools.ietf.org/html/rfc4647#section-3.3.1
+							}
+						}
+					})
+					.findFirst()
+					.map(item -> new AcceptMatch<>(item, languageRange));
+			}
+		}
+	}
+}

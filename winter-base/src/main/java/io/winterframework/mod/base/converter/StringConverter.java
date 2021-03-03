@@ -81,7 +81,7 @@ public class StringConverter implements ObjectConverter<String> {
 			return null;
 		}
 		if(type.isArray()) {
-			return this.encodeArray((Object[])value, type);
+			return this.encodeArray((Object[])value, type.getComponentType());
 		}
 		if(Collection.class.isAssignableFrom(type)) {
 			return this.encodeCollection((Collection<?>)value);

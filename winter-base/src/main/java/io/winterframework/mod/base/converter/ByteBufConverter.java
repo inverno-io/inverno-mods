@@ -498,7 +498,7 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 			return (ByteBuf) value;
 		}
 		if(type.isArray()) {
-			return this.encodeArray((Object[])value, type);
+			return this.encodeArray((Object[])value, type.getComponentType());
 		}
 		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value, type), this.charset));
 	}
