@@ -17,6 +17,7 @@ package io.winterframework.mod.base.net;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
@@ -464,7 +465,7 @@ public class URIsTest {
 	}
 	
 	@Test
-	public void test() {
+	public void testSlash() {
 		Assertions.assertEquals("", URIs.uri().path("").buildPath());
 		Assertions.assertEquals("/", URIs.uri().path("/").buildPath());
 		
@@ -476,5 +477,19 @@ public class URIsTest {
 		Assertions.assertEquals("/a/b/c/d/", URIs.uri().path("/a/b").path("/c/d/", false).buildPath());
 		
 		Assertions.assertEquals("/a/b/", URIs.uri().path("/a/b").path("/", false).buildPath());
+	}
+	
+	@Test
+	public void testQuery() {
+		Assertions.assertEquals("p1=v1&p2=v2&p3=v3", URIs.uri().queryParameter("p1", "v1").queryParameter("p2", "v2").queryParameter("p3", "v3").buildQuery());
+		Assertions.assertEquals("p1=v1&p2=v2&p3=v3", URIs.uri("/a/b/c?p1=v1&p2=v2").queryParameter("p3", "v3").buildQuery());
+		Assertions.assertEquals("p1=v1&p2=v2&p3=v3", URIs.uri("/a/b/c?p1={param1}&p2=v2", URIs.Option.PARAMETERIZED).queryParameter("p3", "{param3}").buildQuery("v1", "v3"));
+		
+		Assertions.assertEquals("p1=v1&p2=v%7C2&p3=v3", URIs.uri().queryParameter("p1", "v1").queryParameter("p2", "v|2").queryParameter("p3", "v3").buildQuery());
+		Assertions.assertEquals("p1=v1&p2=v|2&p3=v3", URIs.uri().queryParameter("p1", "v1").queryParameter("p2", "v|2").queryParameter("p3", "v3").buildRawQuery());
+		
+		Assertions.assertEquals(Map.of("p1", List.of("v1"), "p2", List.of("v2"), "p3", List.of("v3")), URIs.uri().queryParameter("p1", "v1").queryParameter("p2", "v2").queryParameter("p3", "v3").getQueryParameters());
+		Assertions.assertEquals(Map.of("p1", List.of("v1", "v12"), "p2", List.of("v2"), "p3", List.of("v3")), URIs.uri("/a/b/c?p1=v1&p2=v2").queryParameter("p1", "v12").queryParameter("p3", "v3").getQueryParameters());
+		Assertions.assertEquals(Map.of("p1", List.of("v1"), "p2", List.of("v2"), "p3", List.of("v3")), URIs.uri("/a/b/c?p1={param1}&p2=v2", URIs.Option.PARAMETERIZED).queryParameter("p3", "{param3}").getQueryParameters("v1", "v3"));
 	}
 }

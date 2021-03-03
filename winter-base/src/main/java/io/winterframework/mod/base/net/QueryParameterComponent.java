@@ -61,11 +61,11 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 			for(int i=0;i<valueBytes.length;i++) {
 				byte nextByte = valueBytes[i];
 				if(nextByte == '{' && parameterIndex == null) {
-					// open path parameter
+					// open parameter
 					parameterIndex = i;
 				}
 				else if(nextByte == '}' && parameterIndex != null && valueBytes[i-1] != '\\') {
-					// close path parameter
+					// close parameter
 					if(parameterName == null) {
 						parameterName = new String(valueBytes, parameterIndex + 1, i - (parameterIndex + 1)); 
 						this.parameters.add(new URIParameter(parameterIndex, i - parameterIndex + 1, parameterName, this.charset));
@@ -85,6 +85,68 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 				throw new IllegalArgumentException("Invalid query parameter value with incomplete parameter: " + this.rawValue);
 			}
 		}
+	}
+	
+	public String getRawParameterName() {
+		return this.rawName;
+	}
+	
+	public String getRawParameterValue() {
+		return this.rawValue != null ? this.rawValue: "";
+	}
+	
+	public String getParameterName() {
+		return URIs.encodeURIComponent(this.rawName, QueryParameterComponent.ESCAPED_CHARACTERS, this.charset);
+	}
+	
+	public String getParameterValue(Object... values) {
+		StringBuilder result = new StringBuilder();
+		if(this.parameters.isEmpty()) {
+			return result.append(URIs.encodeURIComponent(this.rawValue, QueryParameterComponent.ESCAPED_CHARACTERS, this.charset)).toString();
+		}
+		if(values.length != this.parameters.size()) {
+			throw new IllegalArgumentException("Missing values to generate query parameter " + this.rawName + ": " + this.parameters.stream().map(URIParameter::getName).skip(values.length).collect(Collectors.joining(", ")));
+		}
+		
+		int valueIndex = 0;
+		for(int i = 0;i<this.parameters.size();i++) {
+			URIParameter parameter = this.parameters.get(i);
+			String parameterValue = parameter.checkValue(values[i].toString());
+			if(parameter.getOffset() > valueIndex) {
+				result.append(URIs.encodeURIComponent(this.rawValue.substring(valueIndex, parameter.getOffset()), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset));
+			}
+			result.append(URIs.encodeURIComponent(parameterValue, QueryParameterComponent.ESCAPED_CHARACTERS, this.charset));
+			valueIndex = parameter.getOffset() + parameter.getLength();
+		}
+		if(valueIndex < this.rawValue.length()) {
+			result.append(URIs.encodeURIComponent(this.rawValue.substring(valueIndex), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset));
+		}
+		return result.toString();
+	}
+	
+	public String getParameterValue(Map<String, ?> values) {
+		StringBuilder result = new StringBuilder();
+		if(this.parameters.isEmpty()) {
+			return result.append(URIs.encodeURIComponent(this.rawValue, QueryParameterComponent.ESCAPED_CHARACTERS, this.charset)).toString();
+		}
+		String missingValues = this.parameters.stream().map(URIParameter::getName).filter(name -> !values.containsKey(name)).collect(Collectors.joining(", "));
+		if(!StringUtils.isEmpty(missingValues)) {
+			throw new IllegalArgumentException("Missing values to generate query parameter " + this.rawName + ": " + missingValues);
+		}
+		
+		int valueIndex = 0;
+		for(URIParameter parameter : this.parameters) {
+			String parameterValue = parameter.checkValue(values.get(parameter.getName()).toString());
+			if(parameter.getOffset() > valueIndex) {
+				result.append(URIs.encodeURIComponent(this.rawValue.substring(valueIndex, parameter.getOffset()), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset));
+			}
+			result.append(URIs.encodeURIComponent(parameterValue, QueryParameterComponent.ESCAPED_CHARACTERS, this.charset));
+			valueIndex = parameter.getOffset() + parameter.getLength();
+		}
+		if(valueIndex < this.rawValue.length()) {
+			result.append(URIs.encodeURIComponent(this.rawValue.substring(valueIndex), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset));
+		}
+		return result.toString();
 	}
 	
 	@Override
@@ -153,7 +215,8 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 	
 	@Override
 	public String getValue(Object... values) {
-		StringBuilder result = new StringBuilder();
+		return new StringBuilder().append(this.getParameterName()).append("=").append(this.getParameterValue(values)).toString();
+		/*StringBuilder result = new StringBuilder();
 		result.append(URIs.encodeURIComponent(this.rawName, QueryParameterComponent.ESCAPED_CHARACTERS, this.charset)).append("=");
 		if(this.parameters.isEmpty()) {
 			return result.append(URIs.encodeURIComponent(this.rawValue, QueryParameterComponent.ESCAPED_CHARACTERS, this.charset)).toString();
@@ -175,12 +238,13 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 		if(valueIndex < this.rawValue.length()) {
 			result.append(URIs.encodeURIComponent(this.rawValue.substring(valueIndex), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset));
 		}
-		return result.toString();
+		return result.toString();*/
 	}
 	
 	@Override
 	public String getValue(Map<String, ?> values) {
-		StringBuilder result = new StringBuilder();
+		return new StringBuilder().append(this.getParameterName()).append("=").append(this.getParameterValue(values)).toString();
+		/*StringBuilder result = new StringBuilder();
 		result.append(URIs.encodeURIComponent(this.rawName, QueryParameterComponent.ESCAPED_CHARACTERS, this.charset)).append("=");
 		if(this.parameters.isEmpty()) {
 			return result.append(URIs.encodeURIComponent(this.rawValue, QueryParameterComponent.ESCAPED_CHARACTERS, this.charset)).toString();
@@ -202,6 +266,6 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 		if(valueIndex < this.rawValue.length()) {
 			result.append(URIs.encodeURIComponent(this.rawValue.substring(valueIndex), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset));
 		}
-		return result.toString();
+		return result.toString();*/
 	}
 }

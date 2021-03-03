@@ -3,14 +3,16 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>io.winterframework.mod</groupId>
-		<artifactId>winter-modules</artifactId>
+		<groupId>io.winterframework</groupId>
+		<artifactId>winter-mods-root</artifactId>
 		<version>1.0.0-SNAPSHOT</version>
 	</parent>
+	<groupId>io.winterframework.mod</groupId>
 	<artifactId>winter-web</artifactId>
 
 	<name>io.winterframework.mod.web</name>
 	<description>Winter web module</description>
+	<packaging>jar</packaging>
 
 	<dependencies>
 		<dependency>
@@ -19,18 +21,20 @@
 		</dependency>
 		<dependency>
 			<groupId>io.winterframework.mod</groupId>
+			<artifactId>winter-base</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.winterframework.mod</groupId>
 			<artifactId>winter-configuration</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.winterframework.mod</groupId>
-			<artifactId>winter-base</artifactId>
+			<artifactId>winter-http-server</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>io.netty</groupId>
-			<artifactId>netty-codec-http2</artifactId>
-		</dependency>
+		
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-core</artifactId>
@@ -70,16 +74,27 @@
 			<artifactId>junit-jupiter-engine</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	
 	<build>
 		<pluginManagement>
 			<plugins>
 				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.8.1</version>
 					<configuration>
-						<annotationProcessorPaths combine.children="append">
+						<annotationProcessorPaths>
+							<path>
+								<groupId>io.winterframework.mod</groupId>
+								<artifactId>winter-configuration-compiler</artifactId>
+								<version>${project.version}</version>
+							</path>
+							<!-- MCOMPILER-272 -->
 							<path>
 								<groupId>io.winterframework.mod</groupId>
 								<artifactId>winter-configuration</artifactId>

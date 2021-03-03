@@ -53,6 +53,14 @@ public interface URIBuilder {
 	
 	List<String> getParameterNames();
 	
+	List<String> getPathParameterNames();
+	
+	Map<String, List<String>> getQueryParameters(Object... values) throws URIBuilderException;
+	
+	Map<String, List<String>> getQueryParameters(Map<String, ?> values) throws URIBuilderException;
+	
+	Map<String, List<String>> getRawQueryParameters() throws URIBuilderException;
+	
 	URI build(Object... values) throws URIBuilderException;
 	
 	URI build(Object[] values, boolean escapeSlash) throws URIBuilderException;
@@ -69,10 +77,8 @@ public interface URIBuilder {
 	
 	String buildString(Map<String, ?> values, boolean escapeSlash) throws URIBuilderException;
 	
-	String buildRawString();
+	String buildRawString() throws URIBuilderException;
 
-	List<String> getPathParameterNames();
-	
 	String buildPath(Object... values);
 	
 	String buildPath(Object[] values, boolean escapeSlash);
@@ -81,7 +87,13 @@ public interface URIBuilder {
 
 	String buildPath(Map<String, ?> values, boolean escapeSlash);
 	
-	String buildRawPath();
+	String buildRawPath() throws URIBuilderException;
+	
+	String buildQuery(Object... values) throws URIBuilderException;
+	
+	String buildQuery(Map<String, ?> values) throws URIBuilderException;
+	
+	String buildRawQuery() throws URIBuilderException;
 	
 	// In order to have a consistent implementation we'll return a regexp that
 	// matches when a param {param1} is either a regular segment, '.' or '..'
