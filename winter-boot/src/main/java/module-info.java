@@ -81,7 +81,7 @@ import io.winterframework.mod.base.resource.ResourceService;
 @io.winterframework.core.annotation.Wire(beans="io.winterframework.mod.boot:jsonByteBufConverter", into="io.winterframework.mod.boot:jsonMediaTypeConverter:jsonByteBufConverter")
 @io.winterframework.core.annotation.Wire(beans="io.winterframework.mod.boot:jsonByteBufConverter", into="io.winterframework.mod.boot:ndjsonMediaTypeConverter:jsonByteBufConverter")
 module io.winterframework.mod.boot {
-	requires io.winterframework.core;
+	requires transitive io.winterframework.core;
 	requires static io.winterframework.core.annotation; // for javadoc...
 	
 	requires transitive io.winterframework.mod.base;
