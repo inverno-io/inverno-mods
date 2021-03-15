@@ -96,6 +96,11 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
+	 * This only applies when SSL is disabled, otherwise {@link #h2_enabled()} is
+	 * considered.
+	 * </p>
+	 * 
+	 * <p>
 	 * Defaults to false.
 	 * </p>
 	 * 
@@ -103,6 +108,26 @@ public interface HttpServerConfiguration {
 	 */
 	default boolean h2c_enabled() {
 		return false;
+	}
+	
+	/**
+	 * <p>
+	 * Enables/Disables HTTP/2.
+	 * </p>
+	 * 
+	 * <p>
+	 * This only applies when SSL is enabled, otherwise {@link #h2c_enabled()} is
+	 * considered.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to true.
+	 * </p>
+	 * 
+	 * @return true if the option is enabled, false otherwise
+	 */
+	default boolean h2_enabled() {
+		return true;
 	}
 
 	/**
@@ -163,21 +188,6 @@ public interface HttpServerConfiguration {
 	 */
 	default Long http2_header_table_size() {
 		return 4096l;
-	}
-
-	/**
-	 * <p>
-	 * Enables/Disables HTTP/2 server push.
-	 * </p>
-	 * 
-	 * <p>
-	 * Defaults to false.
-	 * </p>
-	 * 
-	 * @return true if the option is enabled, false otherwise
-	 */
-	default Boolean http2_push_enabled() {
-		return false;
 	}
 
 	/**

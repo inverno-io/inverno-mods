@@ -30,8 +30,8 @@ import io.winterframework.mod.http.base.header.HeaderService;
 import io.winterframework.mod.http.server.ErrorExchange;
 import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
-import io.winterframework.mod.http.server.Part;
 import io.winterframework.mod.http.server.HttpServerConfiguration;
+import io.winterframework.mod.http.server.Part;
 import io.winterframework.mod.http.server.internal.http1x.Http1xChannelHandler;
 import io.winterframework.mod.http.server.internal.multipart.MultipartDecoder;
 
@@ -98,7 +98,6 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 			Http2Settings initialSettings = this.initialSettings();
 			
 			Optional.ofNullable(Http2ChannelHandlerFactory.this.configuration.http2_header_table_size()).ifPresent(initialSettings::headerTableSize);
-			Optional.ofNullable(Http2ChannelHandlerFactory.this.configuration.http2_push_enabled()).ifPresent(initialSettings::pushEnabled);
 			Optional.ofNullable(Http2ChannelHandlerFactory.this.configuration.http2_max_concurrent_streams()).ifPresent(initialSettings::maxConcurrentStreams);
 			Optional.ofNullable(Http2ChannelHandlerFactory.this.configuration.http2_initial_window_size()).ifPresent(initialSettings::initialWindowSize);
 			Optional.ofNullable(Http2ChannelHandlerFactory.this.configuration.http2_max_frame_size()).ifPresent(initialSettings::maxFrameSize);
