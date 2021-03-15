@@ -25,8 +25,12 @@ import java.util.StringJoiner;
 
 
 /**
- * @author jkuhn
- *
+ * <p>{@link ParameterizedType} implementation.</p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ParameterizedType
  */
 class ParameterizedTypeImpl implements ParameterizedType {
 
@@ -53,12 +57,15 @@ class ParameterizedTypeImpl implements ParameterizedType {
 	}
 
 	/**
+	 * <p>
 	 * Returns an array of {@code Type} objects representing the actual type
 	 * arguments to this type.
+	 * </p>
 	 *
 	 * <p>
 	 * Note that in some cases, the returned array be empty. This can occur if this
 	 * type represents a non-parameterized type nested within a parameterized type.
+	 * </p>
 	 *
 	 * @return an array of {@code Type} objects representing the actual type
 	 *         arguments to this type
@@ -69,15 +76,16 @@ class ParameterizedTypeImpl implements ParameterizedType {
 	 *                                             parameters refer to a
 	 *                                             parameterized type that cannot be
 	 *                                             instantiated for any reason
-	 * @since 1.5
 	 */
 	public Type[] getActualTypeArguments() {
 		return actualTypeArguments.clone();
 	}
 
 	/**
+	 * <p>
 	 * Returns the {@code Type} object representing the class or interface that
 	 * declared this type.
+	 * </p>
 	 *
 	 * @return the {@code Type} object representing the class or interface that
 	 *         declared this type
@@ -87,12 +95,15 @@ class ParameterizedTypeImpl implements ParameterizedType {
 	}
 
 	/**
+	 * <p>
 	 * Returns a {@code Type} object representing the type that this type is a
 	 * member of. For example, if this type is {@code O<T>.I<S>}, return a
 	 * representation of {@code O<T>}.
-	 *
+	 * </p>
+	 * 
 	 * <p>
 	 * If this type is a top-level type, {@code null} is returned.
+	 * </p>
 	 *
 	 * @return a {@code Type} object representing the type that this type is a
 	 *         member of. If this type is a top-level type, {@code null} is returned
@@ -137,6 +148,7 @@ class ParameterizedTypeImpl implements ParameterizedType {
 		return Arrays.hashCode(actualTypeArguments) ^ Objects.hashCode(ownerType) ^ Objects.hashCode(rawType);
 	}
 
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 
@@ -165,5 +177,4 @@ class ParameterizedTypeImpl implements ParameterizedType {
 
 		return sb.toString();
 	}
-
 }

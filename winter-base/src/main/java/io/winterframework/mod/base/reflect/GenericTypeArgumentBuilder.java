@@ -20,15 +20,19 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import io.winterframework.mod.base.reflect.Types.ArrayTypeArgumentBuilder;
-import io.winterframework.mod.base.reflect.Types.TypeArgumentBuilder;
-import io.winterframework.mod.base.reflect.Types.WildcardTypeArgumentBuilder;
-
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link TypeArgumentBuilder} implementation
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see TypeArgumentBuilder
+ * 
+ * @param <A> the type of the parent builder
  */
-class TypeArgumentBuilderImpl<A> implements TypeArgumentBuilder<A> {
+class GenericTypeArgumentBuilder<A> implements TypeArgumentBuilder<A> {
 
 	private A parentBuilder;
 	
@@ -40,7 +44,18 @@ class TypeArgumentBuilderImpl<A> implements TypeArgumentBuilder<A> {
 	
 	private Type ownerType;
 	
-	public TypeArgumentBuilderImpl(A parentBuilder, Class<?> rawType, Consumer<Type> typeInjector) {
+	/**
+	 * <p>
+	 * Creates a generic type argument builder with the specified parent, raw type
+	 * and resulting type injector.
+	 * </p>
+	 * 
+	 * @param parentBuildert he parent builder
+	 * @param rawType        the erased type
+	 * @param typeInjector   the resulting type injector to invoke when the builder
+	 *                       is finalized.
+	 */
+	public GenericTypeArgumentBuilder(A parentBuilder, Class<?> rawType, Consumer<Type> typeInjector) {
 		this.parentBuilder = parentBuilder;
 		this.rawType = rawType;
 		this.typeInjector = typeInjector;
@@ -51,24 +66,35 @@ class TypeArgumentBuilderImpl<A> implements TypeArgumentBuilder<A> {
 		if(rawType.isPrimitive()) {
 			rawType = Types.boxType(rawType);
 		}
-		return new TypeArgumentBuilderImpl<>(this, rawType, this::addArgumentType);
+		return new GenericTypeArgumentBuilder<>(this, rawType, this::addArgumentType);
 	}
 
 	@Override
 	public WildcardTypeArgumentBuilder<TypeArgumentBuilder<A>> wildcardType() {
-		return new WildcardTypeArgumentBuilderImpl<>(this, this::addArgumentType);
+		return new GenericWildcardTypeArgumentBuilder<>(this, this::addArgumentType);
 	}
 
 	@Override
 	public ArrayTypeArgumentBuilder<TypeArgumentBuilder<A>> arrayType() {
-		return new ArrayTypeArgumentBuilderImpl<>(this, this::addArgumentType);
+		return new GenericArrayTypeArgumentBuilder<>(this, this::addArgumentType);
 	}
 	
 	@Override
 	public TypeArgumentBuilder<TypeArgumentBuilder<A>> ownerType(Class<?> rawType) {
-		return new TypeArgumentBuilderImpl<>(this, rawType, this::setOwnerType);
+		return new GenericTypeArgumentBuilder<>(this, rawType, this::setOwnerType);
 	}
 	
+	/**
+	 * <p>
+	 * Adds an argument type.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method is invoked by child builders when they are finalized.
+	 * </p>
+	 * 
+	 * @param type the argument type to set
+	 */
 	private void addArgumentType(Type type) {
 		if(this.typeArguments == null) {
 			this.typeArguments = new LinkedList<>();
@@ -76,6 +102,17 @@ class TypeArgumentBuilderImpl<A> implements TypeArgumentBuilder<A> {
 		this.typeArguments.add(type);
 	}
 	
+	/**
+	 * <p>
+	 * Sets an owner type.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method is invoked by child builders when they are finalized.
+	 * </p>
+	 * 
+	 * @param type the owner type to set
+	 */
 	private void setOwnerType(Type type) {
 		this.ownerType = type;
 	}
@@ -91,5 +128,4 @@ class TypeArgumentBuilderImpl<A> implements TypeArgumentBuilder<A> {
 		}
 		return this.parentBuilder;
 	}
-
 }

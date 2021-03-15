@@ -23,11 +23,29 @@ import io.winterframework.mod.web.compiler.spi.WebParameterQualifiedName;
 import io.winterframework.mod.web.compiler.spi.WebQueryParameterInfo;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebQueryParameterInfo} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractWebParameterInfo
  */
 class GenericWebQueryParameterInfo extends AbstractWebParameterInfo implements WebQueryParameterInfo {
 
+	/**
+	 * <p>
+	 * Creates a generic web query parameter info.
+	 * </p>
+	 * 
+	 * @param name             the parameter qualified name
+	 * @param reporter         the parameter reporter
+	 * @param parameterElement the parameter element
+	 * @param type             the parameter type
+	 * @param required         true to indicate a required parameter, false
+	 *                         otherwise
+	 */
 	public GenericWebQueryParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement element, TypeMirror type, boolean required) {
 		super(name, reporter, element, type, required);
 	}

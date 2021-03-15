@@ -36,18 +36,43 @@ import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.http.base.Parameter;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link Parameter} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Parameter
  */
 public class GenericParameter implements Parameter {
 
+	/**
+	 * The parameter value converter. 
+	 */
 	protected final ObjectConverter<String> parameterConverter;
 	
+	/**
+	 * The parameter name.
+	 */
 	protected final String name;
 	
+	/**
+	 * The parameter value.
+	 */
 	protected final String value;
 	
-	public GenericParameter(ObjectConverter<String> parameterConverter, String name, String value) {
+	/**
+	 * <p>
+	 * Creates a generic parameter with the specified parameter name, parameter
+	 * value and parameter value converter.
+	 * </p>
+	 * 
+	 * @param name               a parameter name
+	 * @param value              a parameter value
+	 * @param parameterConverter a string object converter
+	 */
+	public GenericParameter(String name, String value, ObjectConverter<String> parameterConverter) {
 		this.parameterConverter = parameterConverter;
 		this.name = name;
 		this.value = value;

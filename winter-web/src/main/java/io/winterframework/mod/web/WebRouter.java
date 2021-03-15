@@ -18,8 +18,30 @@ package io.winterframework.mod.web;
 import io.winterframework.mod.http.server.Exchange;
 
 /**
- * @author jkuhn
+ * <p>
+ * A web router is used to handle HTTP requests.
+ * </p>
+ * 
+ * <p>
+ * It determines the web exchange handler to invoke based on the parameters of
+ * the request including the absolute path, the method, the content type and the
+ * accepted content type and language.
+ * </p>
+ * 
+ * <p>
+ * An web router is itself an exchange handler that can be used as root handler
+ * of a HTTP server.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebExchange
+ * @see WebExchangeHandler
+ * @see WebRoute
+ * @see WebRouteManager
  *
+ * @param <A> the type of web exchange handled by the route
  */
 public interface WebRouter<A extends WebExchange> extends AbstractRouter<A, WebRouter<A>, WebRouteManager<A>, WebRoute<A>, Exchange> {
 

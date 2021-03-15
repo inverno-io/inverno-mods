@@ -31,20 +31,32 @@ import io.winterframework.mod.http.server.internal.http1x.Http1xResponseEncoder;
 import io.winterframework.mod.http.server.internal.http2.Http2ChannelHandler;
 
 /**
+ * <p>
+ * HTTP protocol negotiation handler.
+ * </p>
  * 
- * @author jkuhn
- *
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Bean(visibility = Visibility.PRIVATE)
 @Sharable
-public class WebProtocolNegociationHandler extends ApplicationProtocolNegotiationHandler {
+public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiationHandler {
 
 	private ByteBufAllocator directAllocator;
 	
 	private Supplier<Http1xChannelHandler> http1xChannelHandlerFactory;
 	private Supplier<Http2ChannelHandler> http2ChannelHandlerFactory;
 	
-	public WebProtocolNegociationHandler(
+	/**
+	 * <p>
+	 * Creates a HTTP protocol negotiation handler.
+	 * </p>
+	 * 
+	 * @param netService                  the Net service
+	 * @param http1xChannelHandlerFactory a HTTP1.x channel handler factory
+	 * @param http2ChannelHandlerFactory  a HTTP/2 channel handler factory
+	 */
+	public HttpProtocolNegotiationHandler(
 			NetService netService,
 			Supplier<Http1xChannelHandler> http1xChannelHandlerFactory,
 			Supplier<Http2ChannelHandler> http2ChannelHandlerFactory) {

@@ -44,19 +44,24 @@ import io.winterframework.mod.web.compiler.spi.WebPathParameterInfo;
 import io.winterframework.mod.web.compiler.spi.WebProvidedRouterConfigurerInfo;
 import io.winterframework.mod.web.compiler.spi.WebQueryParameterInfo;
 import io.winterframework.mod.web.compiler.spi.WebRequestBodyParameterInfo;
+import io.winterframework.mod.web.compiler.spi.WebRequestBodyParameterInfo.RequestBodyKind;
+import io.winterframework.mod.web.compiler.spi.WebRequestBodyParameterInfo.RequestBodyReactiveKind;
 import io.winterframework.mod.web.compiler.spi.WebResponseBodyInfo;
+import io.winterframework.mod.web.compiler.spi.WebResponseBodyInfo.ResponseBodyKind;
+import io.winterframework.mod.web.compiler.spi.WebResponseBodyInfo.ResponseBodyReactiveKind;
 import io.winterframework.mod.web.compiler.spi.WebRouteInfo;
 import io.winterframework.mod.web.compiler.spi.WebRouterConfigurerInfo;
 import io.winterframework.mod.web.compiler.spi.WebRouterConfigurerInfoVisitor;
 import io.winterframework.mod.web.compiler.spi.WebSseEventFactoryParameterInfo;
-import io.winterframework.mod.web.compiler.spi.WebRequestBodyParameterInfo.RequestBodyKind;
-import io.winterframework.mod.web.compiler.spi.WebRequestBodyParameterInfo.RequestBodyReactiveKind;
-import io.winterframework.mod.web.compiler.spi.WebResponseBodyInfo.ResponseBodyKind;
-import io.winterframework.mod.web.compiler.spi.WebResponseBodyInfo.ResponseBodyReactiveKind;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A {@link WebRouterConfigurerInfoVisitor} implementation used to generates a
+ * web router configurer class in a Winter module.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisitor<StringBuilder, WebRouterConfigurerClassGenerationContext> {
 

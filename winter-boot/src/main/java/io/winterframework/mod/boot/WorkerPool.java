@@ -24,8 +24,13 @@ import io.winterframework.core.annotation.Overridable;
 import io.winterframework.core.annotation.Wrapper;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * General worker pool used whenever there's a need for a
+ * {@link ExecutorService}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Bean
 @Wrapper

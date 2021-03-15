@@ -15,21 +15,49 @@
  */
 package io.winterframework.mod.configuration;
 
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
 
 /**
- * @author jkuhn
+ * <p>
+ * Base implementation for {@link ConfigurationLoader}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
+ * @param <A> the configuration type to load
+ * @param <B> the configuration loader type
  */
 public abstract class AbstractConfigurationLoader<A, B extends AbstractConfigurationLoader<A,B>> implements ConfigurationLoader<A, B> {
 
+	/**
+	 * The configuration source to use to load the configuration.
+	 */
 	protected ConfigurationSource<?, ?, ?> source;
 	
+	/**
+	 * The parameters to use to retrieve configuration values.
+	 */
 	protected Parameter[] parameters;
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public B withParameters(Parameter... parameters) throws IllegalArgumentException {
+		Set<String> parameterKeys = new HashSet<>();
+		List<String> duplicateParameters = new LinkedList<>();
+		for(Parameter parameter : parameters) {
+			if(!parameterKeys.add(parameter.getKey())) {
+				duplicateParameters.add(parameter.getKey());
+			}
+		}
+		if(duplicateParameters != null && duplicateParameters.size() > 0) {
+			throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
+		}
 		this.parameters = parameters;
 		return (B)this;
 	}

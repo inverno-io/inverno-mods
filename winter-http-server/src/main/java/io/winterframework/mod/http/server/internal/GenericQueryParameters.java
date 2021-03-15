@@ -30,7 +30,7 @@ import io.winterframework.mod.http.base.internal.GenericParameter;
 import io.winterframework.mod.http.server.QueryParameters;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class GenericQueryParameters implements QueryParameters {
@@ -55,14 +55,14 @@ public class GenericQueryParameters implements QueryParameters {
 	
 	@Override
 	public Optional<Parameter> get(String name) {
-		return Optional.ofNullable(this.queryParameters.get(name)).filter(p -> !p.isEmpty()).map(p -> new GenericParameter(this.parameterConverter, name, p.get(0)));
+		return Optional.ofNullable(this.queryParameters.get(name)).filter(p -> !p.isEmpty()).map(p -> new GenericParameter(name, p.get(0), this.parameterConverter));
 	}
 	
 	@Override
 	public List<Parameter> getAll(String name) {
 		List<String> parameters = queryParameters.get(name);
 		if(parameters != null) {
-			return parameters.stream().map(value -> new GenericParameter(this.parameterConverter, name, value)).collect(Collectors.toList());
+			return parameters.stream().map(value -> new GenericParameter(name, value, this.parameterConverter)).collect(Collectors.toList());
 		}
 		return Collections.emptyList();
 	}
@@ -71,7 +71,7 @@ public class GenericQueryParameters implements QueryParameters {
 	public Map<String, List<Parameter>> getAll() {
 		Map<String, List<Parameter>> result = new HashMap<>();
 		for(Entry<String, List<String>> e : queryParameters.entrySet()) {
-			result.put(e.getKey(), e.getValue().stream().map(value -> new GenericParameter(this.parameterConverter, e.getKey(), value)).collect(Collectors.toList()));
+			result.put(e.getKey(), e.getValue().stream().map(value -> new GenericParameter(e.getKey(), value, this.parameterConverter)).collect(Collectors.toList()));
 		}
 		return Collections.unmodifiableMap(result);
 	}

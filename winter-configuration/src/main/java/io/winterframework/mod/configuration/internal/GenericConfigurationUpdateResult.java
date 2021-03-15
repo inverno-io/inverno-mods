@@ -21,8 +21,16 @@ import io.winterframework.mod.configuration.ConfigurationSourceException;
 import io.winterframework.mod.configuration.ConfigurationUpdateResult;
 
 /**
- * @author jkuhn
+ * <p>
+ * Generic {@link ConfigurationUpdateResult} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationUpdateResult
  *
+ * @param <A> the key type
  */
 public class GenericConfigurationUpdateResult<A extends ConfigurationKey> implements ConfigurationUpdateResult<A> {
 
@@ -30,10 +38,28 @@ public class GenericConfigurationUpdateResult<A extends ConfigurationKey> implem
 	protected Throwable error;
 	protected ConfigurationSource<?,?,?> errorSource;
 	
+	/**
+	 * <p>
+	 * Creates a generic successful configuration update result with the specified
+	 * query key.
+	 * </p>
+	 * 
+	 * @param queryKey the query key
+	 */
 	public GenericConfigurationUpdateResult(A updateKey) {
 		this.updateKey = updateKey;
 	}
 	
+	/**
+	 * <p>
+	 * Creates a generic faulty configuration update result with the specified
+	 * query key, configuration source and error.
+	 * </p>
+	 * 
+	 * @param queryKey the query key
+	 * @param source   the configuration source
+	 * @param error    the error
+	 */
 	public GenericConfigurationUpdateResult(A updateKey, ConfigurationSource<?,?,?> source, Throwable error) {
 		this.updateKey = updateKey;
 		this.errorSource = source;

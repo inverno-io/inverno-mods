@@ -63,13 +63,20 @@ import io.winterframework.mod.web.compiler.spi.WebRouteQualifiedName;
 import io.winterframework.mod.web.compiler.spi.WebSseEventFactoryParameterInfo;
 import io.winterframework.mod.web.compiler.spi.WebResponseBodyInfo.ResponseBodyKind;
 import io.winterframework.mod.web.compiler.spi.WebResponseBodyInfo.ResponseBodyReactiveKind;
+import io.winterframework.mod.web.compiler.spi.WebRouteInfo;
 import io.winterframework.mod.web.compiler.spi.WebSseEventFactoryParameterInfo.SseEventFactoryKind;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A web route info factory is used to create web route info.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebRouteInfo
  */
 class WebRouteInfoFactory {
 
@@ -93,6 +100,14 @@ class WebRouteInfoFactory {
 	private final TypeMirror SseEncoderEventType;
 	private final TypeMirror resourceType;
 	
+	/**
+	 * <p>
+	 * Creates a web route info factory.
+	 * </p>
+	 * 
+	 * @param pluginContext   the web compiler plugin context
+	 * @param pluginExecution the web compiler plugin execution
+	 */
 	public WebRouteInfoFactory(PluginContext pluginContext, PluginExecution pluginExecution) {
 		this.pluginContext = Objects.requireNonNull(pluginContext);
 		this.pluginExecution = Objects.requireNonNull(pluginExecution);
@@ -113,6 +128,15 @@ class WebRouteInfoFactory {
 		this.resourceType = this.pluginContext.getElementUtils().getTypeElement(Resource.class.getCanonicalName()).asType();
 	}
 
+	/**
+	 * <p>
+	 * Compiles the specified executable element to create a web route info.
+	 * </p>
+	 * 
+	 * @param routeElement the executable element to compile
+	 * @return an optional returning a web route info or an empty optional if the
+	 *         specified element doesn't designate a web route
+	 */
 	public Optional<GenericWebRouteInfo> compileRoute(ExecutableElement routeElement) {
 		AnnotationMirror webRouteAnnotation = null;
 		for(AnnotationMirror annotation : this.pluginContext.getElementUtils().getAllAnnotationMirrors(routeElement)) {
@@ -271,7 +295,7 @@ class WebRouteInfoFactory {
 				}
 			}
 			else if(responseBodyInfo.getBodyKind() == ResponseBodyKind.SSE_ENCODED) {
-				if(sseFactoryParameter.getEventFactoryKind() != SseEventFactoryKind.ENCODER || !this.pluginContext.getTypeUtils().isSameType(responseBodyInfo.getType(), sseFactoryParameter.getType())) {
+				if(sseFactoryParameter.getEventFactoryKind() != SseEventFactoryKind.ENCODED || !this.pluginContext.getTypeUtils().isSameType(responseBodyInfo.getType(), sseFactoryParameter.getType())) {
 					routeReporter.error("SSE event factory " + sseFactoryParameter.getType() + " doesn't match sse response " + responseBodyInfo.getType());
 				}
 			}
@@ -288,8 +312,20 @@ class WebRouteInfoFactory {
 		return routeInfo;
 	}
 	
+	/**
+	 * <p>
+	 * Compiles the specified provided web router configurer bean and extracts the
+	 * web routes is defines.
+	 * </p>
+	 * 
+	 * @param bean a provided web router configurer bean
+	 * 
+	 * @return the list of web routes defined in the web router configurer
+	 * @throws IllegalArgumentException if the specified bean is not a provided web
+	 *                                  router configurer
+	 */
 	@SuppressWarnings("unchecked")
-	public List<ProvidedWebRouteInfo> compileRouterRoutes(BeanInfo bean) {
+	public List<ProvidedWebRouteInfo> compileRouterRoutes(BeanInfo bean) throws IllegalArgumentException {
 		TypeElement beanElement = (TypeElement) this.pluginContext.getTypeUtils().asElement(bean.getType());
 		
 		AnnotationMirror webRoutesAnnotation = this.pluginContext.getElementUtils().getAllAnnotationMirrors(beanElement).stream()
@@ -333,7 +369,18 @@ class WebRouteInfoFactory {
 			.collect(Collectors.toList());
 	}
 	
-	public List<GenericWebRouteInfo> compileControllerRoutes(BeanInfo bean) {
+	/**
+	 * <p>
+	 * Compiles the specified web controller bean and extracts the web routes it
+	 * defines.
+	 * </p>
+	 * 
+	 * @param bean a web controller bean
+	 * 
+	 * @return the list of web routes defined in the web controller
+	 * @throws IllegalArgumentException if the specified bean is not a web controller
+	 */
+	public List<GenericWebRouteInfo> compileControllerRoutes(BeanInfo bean) throws IllegalArgumentException {
 		TypeElement beanElement = (TypeElement) this.pluginContext.getTypeUtils().asElement(bean.getType());
 		
 		this.pluginContext.getElementUtils().getAllAnnotationMirrors(beanElement).stream()

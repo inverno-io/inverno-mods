@@ -16,25 +16,60 @@
 package io.winterframework.mod.http.base;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A web exception that indicates an {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)}
+ * accessing a server resource.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebException
  */
 public class InternalServerErrorException extends WebException {
 
 	private static final long serialVersionUID = 1297738299570958017L;
 
+	/**
+	 * <p>
+	 * Creates an internal server error exception.
+	 * </p>
+	 */
 	public InternalServerErrorException() {
 		super(Status.INTERNAL_SERVER_ERROR);
 	}
 
+	/**
+	 * <p>
+	 * Creates an internal server error exception with the specified message.
+	 * </p>
+	 * 
+	 * @param message a message
+	 */
 	public InternalServerErrorException(String message) {
 		super(Status.INTERNAL_SERVER_ERROR, message);
 	}
 
+	/**
+	 * <p>
+	 * Creates an internal server error exception with the specified cause.
+	 * </p>
+	 * 
+	 * @param cause a cause
+	 */
 	public InternalServerErrorException(Throwable cause) {
 		super(Status.INTERNAL_SERVER_ERROR, cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates an internal server error exception with the specified message and
+	 * cause.
+	 * </p>
+	 * 
+	 * @param message a message
+	 * @param cause   a cause
+	 */
 	public InternalServerErrorException(String message, Throwable cause) {
 		super(Status.INTERNAL_SERVER_ERROR, message, cause);
 	}

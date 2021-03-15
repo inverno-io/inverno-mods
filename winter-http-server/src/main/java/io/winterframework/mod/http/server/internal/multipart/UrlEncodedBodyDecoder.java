@@ -36,16 +36,27 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.SignalType;
 
 /**
- * https://url.spec.whatwg.org/#application/x-www-form-urlencoded
+ * <p>
+ * An application/x-www-form-urlencoded payload decoder implementation as
+ * defined by <a href=
+ * "https://url.spec.whatwg.org/#application/x-www-form-urlencoded">application/x-www-form-urlencoded</a>.
+ * </p>
  * 
- * @author jkuhn
- *
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 
 	private ObjectConverter<String> parameterConverter;
-	
+
+	/**
+	 * <p>
+	 * Creates an application/x-www-form-urlencoded body decoder.
+	 * </p>
+	 * 
+	 * @param parameterConverter a string object converter
+	 */
 	public UrlEncodedBodyDecoder(ObjectConverter<String> parameterConverter) {
 		this.parameterConverter = parameterConverter;
 	}
@@ -170,6 +181,14 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Request data publisher subscriber.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	private class BodyDataSubscriber extends BaseSubscriber<ByteBuf> {
 		
 		private final Charset charset;

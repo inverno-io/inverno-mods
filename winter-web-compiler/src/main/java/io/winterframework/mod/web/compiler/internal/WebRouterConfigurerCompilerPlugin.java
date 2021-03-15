@@ -50,8 +50,21 @@ import io.winterframework.mod.web.compiler.spi.WebRouteInfo;
 import io.winterframework.mod.web.compiler.spi.WebRouterConfigurerQualifiedName;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * The web Winter compiler plugin generates a {@link WebRouterConfigurer}
+ * implementation that aggregates the routes defined in the
+ * {@link WebController @WebController} beans defined in the module as well as
+ * the {@link WebRoutes web router configurer} beans provided in the module.
+ * </p>
+ * 
+ * <p>
+ * This plugin can also generates an <a href="https://www.openapis.org/">Open
+ * API</a> specification for all the web controllers defined in the module. This
+ * can be activated with option {@code winter.web.generateOpenApiDefinition}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 

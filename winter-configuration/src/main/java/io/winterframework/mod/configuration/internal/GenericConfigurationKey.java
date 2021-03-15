@@ -23,8 +23,14 @@ import java.util.stream.Collectors;
 import io.winterframework.mod.configuration.ConfigurationKey;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link ConfigurationKey} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationKey
  */
 public class GenericConfigurationKey implements ConfigurationKey {
 
@@ -32,11 +38,30 @@ public class GenericConfigurationKey implements ConfigurationKey {
 	
 	protected Collection<Parameter> parameters;
 	
-	public GenericConfigurationKey(String name) {
+	/**
+	 * <p>
+	 * Creates a key with the specified property name.
+	 * </p>
+	 * 
+	 * @param name a property name
+	 * 
+	 * @throws IllegalArgumentException if the specified name is empty
+	 */
+	public GenericConfigurationKey(String name) throws IllegalArgumentException {
 		this(name, null);
 	}
 	
-	public GenericConfigurationKey(String name, Collection<Parameter> parameters) {
+	/**
+	 * <p>
+	 * Creates a key with the specified property name and parameters.
+	 * </p>
+	 * 
+	 * @param name       a property name
+	 * @param parameters a collection of parameters
+	 * 
+	 * @throws IllegalArgumentException if the specified name is empty
+	 */
+	public GenericConfigurationKey(String name, Collection<Parameter> parameters) throws IllegalArgumentException {
 		if(name == null || name.equals("")) {
 			throw new IllegalArgumentException("Name can't be null or empty");
 		}

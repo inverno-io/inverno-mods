@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import io.winterframework.mod.configuration.AbstractHashConfigurationSource.HashConfigurationQueryResult;
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
 
-public class ConfigurationPropertyFileConfigurationSourceTest {
+public class CPropsFileConfigurationSourceTest {
 
 	static {
 		System.setProperty("org.apache.logging.log4j.simplelog.level", "INFO");
@@ -21,8 +21,8 @@ public class ConfigurationPropertyFileConfigurationSourceTest {
 	
 	@Test
 	public void testConfigurationPropertyFileConfigurationSource() throws URISyntaxException {
-		ConfigurationPropertyFileConfigurationSource src = new ConfigurationPropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
-		List<HashConfigurationQueryResult<String, ConfigurationPropertyFileConfigurationSource>> results = src
+		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
+		List<HashConfigurationQueryResult<String, CPropsFileConfigurationSource>> results = src
 			.get("tata.toto").withParameters("tutu", "plop","test", 5).and()
 			.get("tata.toto").withParameters("tutu", "plop").and()
 			.get("url", "table").and()
@@ -39,9 +39,9 @@ public class ConfigurationPropertyFileConfigurationSourceTest {
 		
 		Assertions.assertEquals(7, results.size());
 		
-		Iterator<HashConfigurationQueryResult<String, ConfigurationPropertyFileConfigurationSource>> resultIterator = results.iterator();
+		Iterator<HashConfigurationQueryResult<String, CPropsFileConfigurationSource>> resultIterator = results.iterator();
 		
-		HashConfigurationQueryResult<String, ConfigurationPropertyFileConfigurationSource> current = resultIterator.next();
+		HashConfigurationQueryResult<String, CPropsFileConfigurationSource> current = resultIterator.next();
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("test", 5), Parameter.of("tutu", "plop"))));
@@ -101,8 +101,8 @@ public class ConfigurationPropertyFileConfigurationSourceTest {
 	
 	@Test
 	public void testNull() throws URISyntaxException {
-		ConfigurationPropertyFileConfigurationSource src = new ConfigurationPropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
-		List<HashConfigurationQueryResult<String, ConfigurationPropertyFileConfigurationSource>> results = src
+		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
+		List<HashConfigurationQueryResult<String, CPropsFileConfigurationSource>> results = src
 			.get("testNull")
 			.execute()
 			.collectList()
@@ -115,8 +115,8 @@ public class ConfigurationPropertyFileConfigurationSourceTest {
 	
 	@Test
 	public void testUnset() throws URISyntaxException {
-		ConfigurationPropertyFileConfigurationSource src = new ConfigurationPropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
-		List<HashConfigurationQueryResult<String, ConfigurationPropertyFileConfigurationSource>> results = src
+		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
+		List<HashConfigurationQueryResult<String, CPropsFileConfigurationSource>> results = src
 			.get("testUnset")
 			.execute()
 			.collectList()

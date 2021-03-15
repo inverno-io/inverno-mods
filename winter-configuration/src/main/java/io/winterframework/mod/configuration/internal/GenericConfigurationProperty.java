@@ -16,6 +16,7 @@
 package io.winterframework.mod.configuration.internal;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -37,8 +38,18 @@ import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationProperty;
 
 /**
- * @author jkuhn
+ * <p>
+ * Generic {@link ConfigurationProperty} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationProperty
  *
+ * @param <A> the key type
+ * @param <B> the source type
+ * @param <C> the raw value type
  */
 public class GenericConfigurationProperty<A extends ConfigurationKey, B extends AbstractConfigurationSource<?,?,?, C>, C> implements ConfigurationProperty<A, B> {
 
@@ -50,12 +61,31 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	
 	protected boolean unset;
 	
+	/**
+	 * <p>
+	 * Creates a generic configuration property with the specified key, raw value
+	 * and source.
+	 * </p>
+	 * 
+	 * @param key    the property key
+	 * @param value  the property raw value
+	 * @param source the property source
+	 */
 	public GenericConfigurationProperty(A key, C value, B source) {
 		this.key = key;
 		this.value = value;
 		this.source = source;
 	}
 	
+	/**
+	 * <p>
+	 * Creates a generic unset configuration property with the specified key and
+	 * source.
+	 * </p>
+	 * 
+	 * @param key    the property key
+	 * @param source the property source
+	 */
 	public GenericConfigurationProperty(A key, B source) {
 		this.key = key;
 		this.source = source;
@@ -93,7 +123,27 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	}
 	
 	@Override
+	public <T> Optional<T> as(Type type) {
+		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decode(this.value, type) : null);
+	}
+	
+	@Override
+	public <T> Optional<T[]> asArrayOf(Class<T> type) {
+		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeToArray(this.value, type) : null);
+	}
+	
+	@Override
+	public <T> Optional<T[]> asArrayOf(Type type) {
+		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeToArray(this.value, type) : null);
+	}
+	
+	@Override
 	public <T> Optional<List<T>> asListOf(Class<T> type) {
+		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeToList(this.value, type) : null);
+	}
+	
+	@Override
+	public <T> Optional<List<T>> asListOf(Type type) {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeToList(this.value, type) : null);
 	}
 
@@ -103,10 +153,10 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	}
 	
 	@Override
-	public <T> Optional<T[]> asArrayOf(Class<T> type) {
-		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeToArray(this.value, type) : null);
+	public <T> Optional<Set<T>> asSetOf(Type type) {
+		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeToSet(this.value, type) : null);
 	}
-
+	
 	@Override
 	public Optional<Byte> asByte() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeByte(this.value) : null);

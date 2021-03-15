@@ -28,14 +28,19 @@ import io.winterframework.mod.http.base.Method;
 import io.winterframework.mod.http.base.Parameter;
 import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.server.Part;
+import io.winterframework.mod.http.server.Request;
 import io.winterframework.mod.http.server.RequestHeaders;
 import io.winterframework.mod.http.server.internal.AbstractRequest;
 import io.winterframework.mod.http.server.internal.multipart.MultipartDecoder;
 import reactor.core.publisher.Sinks.Many;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP1.x {@link Request} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class Http1xRequest extends AbstractRequest {
 
@@ -47,6 +52,19 @@ public class Http1xRequest extends AbstractRequest {
 	private String scheme;
 	private String authority;
 	
+	/**
+	 * <p>
+	 * Creates a HTTP1.x server request.
+	 * </p>
+	 * 
+	 * @param context               the channel handler context
+	 * @param httpRequest           the underlying HTTP request
+	 * @param requestHeaders        the HTTP1.x request headers
+	 * @param parameterConverter    a string object converter
+	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body
+	 *                              decoder
+	 * @param multipartBodyDecoder  the multipart/form-data body decoder
+	 */
 	public Http1xRequest(ChannelHandlerContext context, HttpRequest httpRequest, RequestHeaders requestHeaders, ObjectConverter<String> parameterConverter, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
 		super(context, requestHeaders, parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder);
 		this.httpRequest = httpRequest;

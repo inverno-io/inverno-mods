@@ -26,8 +26,12 @@ import io.winterframework.mod.web.compiler.spi.WebRouterConfigurerInfoVisitor;
 import io.winterframework.mod.web.compiler.spi.WebRouterConfigurerQualifiedName;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebRouterConfigurerInfo} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class GenericWebRouterConfigurerInfo implements WebRouterConfigurerInfo {
 
@@ -37,7 +41,19 @@ class GenericWebRouterConfigurerInfo implements WebRouterConfigurerInfo {
 	
 	private final List<? extends WebControllerInfo> webControllers; 
 	private final List<? extends WebProvidedRouterConfigurerInfo> webProvidedRouters;
-	
+
+	/**
+	 * <p>
+	 * Creates a generic web router configurer info.
+	 * </p>
+	 * 
+	 * @param element            the element of the module targeted by the router
+	 *                           configurer
+	 * @param name               the router configurer qualified name
+	 * @param webControllers     the controllers aggregated in the router controller
+	 * @param webProvidedRouters the provided router configurers aggresgated in the
+	 *                           router controller
+	 */
 	public GenericWebRouterConfigurerInfo(ModuleElement element, WebRouterConfigurerQualifiedName name, List<? extends WebControllerInfo> webControllers, List<? extends WebProvidedRouterConfigurerInfo> webProvidedRouters) {
 		this.element = element;
 		this.name = name;

@@ -27,8 +27,12 @@ import io.winterframework.mod.web.WebResponse;
 import io.winterframework.mod.web.WebResponseBody;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebResponseBody} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class GenericWebResponseBody implements WebResponseBody {
 
@@ -38,6 +42,16 @@ class GenericWebResponseBody implements WebResponseBody {
 	
 	private final DataConversionService dataConversionService;
 	
+	/**
+	 * <p>
+	 * Creates a generic web response body with the specified underlying response
+	 * and response body and data conversion service.
+	 * </p>
+	 * 
+	 * @param response              the underlying response
+	 * @param responseBody          the underlying response body
+	 * @param dataConversionService the data conversion service
+	 */
 	public GenericWebResponseBody(WebResponse response, ResponseBody responseBody, DataConversionService dataConversionService) {
 		this.response = response;
 		this.dataConversionService = dataConversionService;
@@ -105,5 +119,4 @@ class GenericWebResponseBody implements WebResponseBody {
 			.map(contentType -> this.dataConversionService.<T>createEncoder(this.response.body().raw(), contentType.getMediaType(), type))
 			.orElseThrow(() -> new InternalServerErrorException("Empty media type"));
 	}
-	
 }

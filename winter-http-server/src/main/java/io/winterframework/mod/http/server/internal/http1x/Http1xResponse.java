@@ -27,16 +27,28 @@ import io.winterframework.mod.http.server.ResponseTrailers;
 import io.winterframework.mod.http.server.internal.AbstractResponse;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP1.x {@link Response} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractResponse
  */
 class Http1xResponse extends AbstractResponse {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
-	
+
 	/**
-	 * @param headerService
+	 * <p>
+	 * Creates a HTTP1.x server response.
+	 * </p>
+	 * 
+	 * @param context            the channel handler context
+	 * @param headerService      the header service
+	 * @param parameterConverter a string object converter
 	 */
 	public Http1xResponse(ChannelHandlerContext context, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		super(context, headerService, new Http1xResponseHeaders(headerService, parameterConverter));
@@ -45,6 +57,13 @@ class Http1xResponse extends AbstractResponse {
 		this.responseBody = new Http1xResponseBody(this);
 	}
 	
+	/**
+	 * <p>
+	 * Determines whether file region is supported.
+	 * </p>
+	 * 
+	 * @return true if the file region is supported, false otherwise
+	 */
 	protected boolean supportsFileRegion() {
 		return this.context.pipeline().get(SslHandler.class) == null && this.context.pipeline().get(HttpContentCompressor.class) == null;
 	}

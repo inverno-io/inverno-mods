@@ -21,8 +21,18 @@ import io.winterframework.core.annotation.Bean;
 import io.winterframework.mod.base.net.NetService;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * the {@link NetService} socket.
+ * </p>
+ * 
+ * <p>
+ * The net service is used when creating the http server.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see HttpServer
  */
 @Bean(name = "netService")
 public interface NetServiceSocket extends Supplier<NetService> {

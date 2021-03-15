@@ -21,17 +21,44 @@ import javax.lang.model.type.TypeMirror;
 import io.winterframework.core.compiler.spi.Info;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Common web route parameter information.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebRouteInfo
  */
 public interface WebParameterInfo extends Info {
 	
 	@Override
 	WebParameterQualifiedName getQualifiedName();
 	
+	/**
+	 * <p>
+	 * Returns the web parameter element.
+	 * </p>
+	 * 
+	 * @return a variable element
+	 */
 	VariableElement getElement();
 	
+	/**
+	 * <p>
+	 * Determines whether the parameter is required.
+	 * </p>
+	 * 
+	 * @return true if the parameter is required, false otherwise
+	 */
 	boolean isRequired();
 	
+	/**
+	 * <p>
+	 * Returns the type of the parameter.
+	 * </p>
+	 * 
+	 * @return the parameter type
+	 */
 	TypeMirror getType();
 }

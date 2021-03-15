@@ -16,14 +16,51 @@
 package io.winterframework.mod.configuration.compiler.spi;
 
 /**
- * @author jkuhn
+ * <p>
+ * A configuration info visitor is used to process a configuration info.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @param <R> the visitor result type
+ * @param <P> the visitor parameter type
  */
 public interface ConfigurationInfoVisitor<R, P> {
 
+	/**
+	 * <p>
+	 * Visits configuration info.
+	 * </p>
+	 * 
+	 * @param configurationInfo the info to visit
+	 * @param p                 a visitor parameter
+	 * 
+	 * @return a visitor result
+	 */
 	R visit(ConfigurationInfo configurationInfo, P p);
-	
+
+	/**
+	 * <p>
+	 * Visits configuration property info.
+	 * </p>
+	 * 
+	 * @param configurationPropertyInfo the info to visit
+	 * @param p                         a visitor parameter
+	 * 
+	 * @return a visitor result
+	 */
 	R visit(ConfigurationPropertyInfo configurationPropertyInfo, P p);
-	
+
+	/**
+	 * <p>
+	 * Visits nested configuration property info.
+	 * </p>
+	 * 
+	 * @param nestedConfigurationPropertyInfo the info to visit
+	 * @param p                               a visitor parameter
+	 * 
+	 * @return a visitor result
+	 */
 	R visit(NestedConfigurationPropertyInfo nestedConfigurationPropertyInfo, P p);
 }

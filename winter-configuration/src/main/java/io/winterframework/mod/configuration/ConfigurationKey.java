@@ -20,11 +20,37 @@ import java.util.Collection;
 import org.apache.commons.text.StringEscapeUtils;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A configuration key uniquely identifies a configuration property in a
+ * configuration source. It is composed of a name and a collection of
+ * parameters.
+ * </p>
+ * 
+ * <p>
+ * The use of parameters in the key makes it possible to define different values
+ * for the same configuration property name and retrieve them within a
+ * particular context. For instance, it is possible to define a value in a test
+ * environment and different value for the same property in a production
+ * environment.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ExecutableConfigurationQuery
+ * @see ConfigurationQueryResult
  */
 public interface ConfigurationKey {
 
+	/**
+	 * <p>
+	 * A parameter is used to specify the context in which a property value is
+	 * defined.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	public static class Parameter {
 		
 		private String key;
@@ -45,14 +71,40 @@ public interface ConfigurationKey {
 			this.value = value;
 		}
 		
+		/**
+		 * <p>
+		 * Returns the parameter name.
+		 * </p>
+		 * 
+		 * @return the name of the parameter
+		 */
 		public String getKey() {
 			return key;
 		}
-		
+
+		/**
+		 * <p>
+		 * Returns the parameter value.
+		 * </p>
+		 * 
+		 * @return the value of the parameter
+		 */
 		public Object getValue() {
 			return value;
 		}
 		
+		/**
+		 * <p>
+		 * Creates a parameter with the specified key and value.
+		 * </p>
+		 * 
+		 * @param key   the parameter key
+		 * @param value the parameter value
+		 * 
+		 * @return a parameter
+		 * @throws IllegalArgumentException if the key is null or empty of if the value
+		 *                                  is null or not a string, nor a primitive
+		 */
 		public static Parameter of(String key, Object value) throws IllegalArgumentException {
 			return new Parameter(key, value);
 		}
@@ -102,8 +154,24 @@ public interface ConfigurationKey {
 			return this.key + "=" + (this.value instanceof Number ? this.value : "\"" + StringEscapeUtils.escapeJava(this.value.toString()) +"\""); 
 		}
 	}
-	
+
+	/**
+	 * <p>
+	 * Returns the name of the configuration property.
+	 * </p>
+	 * 
+	 * @return a name
+	 */
 	String getName();
 	
+	/**
+	 * <p>
+	 * Returns the list of parameters specifying the context in which a property
+	 * value is defined.
+	 * </p>
+	 * 
+	 * @return a collection of parameters or an empty collection if the key does not
+	 *         define any parameter
+	 */
 	Collection<Parameter> getParameters();
 }

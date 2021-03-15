@@ -26,15 +26,41 @@ import java.util.stream.Collectors;
 
 import io.winterframework.mod.base.net.URIs;
 import io.winterframework.mod.http.base.Method;
+import io.winterframework.mod.web.annotation.WebRoute;
 import io.winterframework.mod.web.compiler.spi.WebControllerInfo;
 import io.winterframework.mod.web.compiler.spi.WebRouteInfo;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A duplicate route detector is used to detect duplicate in the routes defined
+ * in a module.
+ * </p>
+ * 
+ * <p>
+ * Two routes are considered equals when they defined the exact same criteria,
+ * namely path, method, consume, produce and language.
+ * </p>
+ * 
+ * <p>
+ * Multiple criteria can be specified in {@link WebRoute @WebRoute} annotation,
+ * the detector analyzes all combinations to detect overlapping route
+ * definition.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class WebRouteDuplicateDetector {
 	
+	/**
+	 * <p>
+	 * Finds the duplicates in the specified list of web routes.
+	 * </p>
+	 * 
+	 * @param routes a list of web routes
+	 * 
+	 * @return a map indicating the duplicated routes of each route
+	 */
 	public Map<WebRouteInfo, Set<WebRouteInfo>> findDuplicates(List<? extends WebRouteInfo> routes) {
 		Map<WebRouteInfo, Set<WebRouteInfo>> result = new HashMap<>();
 		int routeIndex = 0;

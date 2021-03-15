@@ -15,6 +15,7 @@
  */
 package io.winterframework.mod.http.server.internal.http1x;
 
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpMessage;
 import io.netty.handler.codec.http.HttpMethod;
@@ -23,14 +24,32 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.winterframework.mod.http.server.internal.netty.LinkedHttpHeaders;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP1.x {@link HttpRequestDecoder} implementation.
+ * </p>
+ * 
+ * <p>
+ * This implementation basically substitutes a {@link LinkedHttpHeaders} for
+ * Netty's {@link DefaultHttpHeaders} in order to increase performances.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class Http1xRequestDecoder extends HttpRequestDecoder {
 	
-	// TODO make these values customizable or at least in static variables
+	private static final int MAX_INITIAL_LINE_LENGTH = 4096;
+	
+	private static final int MAX_HEADER_SIZE = 8192;
+	
+	private static final int MAX_CHUNK_SIZE = 8192;
+	
+	private static final boolean VALIDATE_HEADER = true;
+	
+	private static final int INITIAL_BUFFER_SIZE = 128;
+	
 	public Http1xRequestDecoder() {
-		super(4096, 8192, 8192, true, 128);
+		super(MAX_INITIAL_LINE_LENGTH, MAX_HEADER_SIZE, MAX_CHUNK_SIZE, VALIDATE_HEADER, INITIAL_BUFFER_SIZE);
 	}
 
 	@Override

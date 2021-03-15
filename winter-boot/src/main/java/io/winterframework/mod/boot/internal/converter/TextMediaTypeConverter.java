@@ -24,8 +24,14 @@ import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.base.resource.MediaTypes;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * ByteBuf text/plain media type converter.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see MediaTypeConverter
  */
 @Bean( name = "textPlainMediaTypeConverter" )
 public class TextMediaTypeConverter extends ByteBufConverter implements @Provide MediaTypeConverter<ByteBuf> {

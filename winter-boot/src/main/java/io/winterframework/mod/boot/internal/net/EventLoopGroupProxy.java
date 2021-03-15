@@ -20,19 +20,37 @@ import java.util.concurrent.Executor;
 import io.netty.channel.EventLoop;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.MultithreadEventLoopGroup;
+import io.winterframework.mod.base.net.NetService;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * An event loop group wrapper that provides the event loops of the root event
+ * loop group in order to optimize resource usage when multiple IO event loop
+ * groups are used within an application.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see NetService
  */
-public class EventLoopGroupProxy extends MultithreadEventLoopGroup {
-	
+class EventLoopGroupProxy extends MultithreadEventLoopGroup {
+
+	/**
+	 * <p>
+	 * Creates a event loop group with the specified amount of threads provided by
+	 * the specified root event loop group.
+	 * </p>
+	 * 
+	 * @param nThreads           the number of threads to allocate to the group
+	 * @param rootEventLoopGroup the root event loop group
+	 */
 	public EventLoopGroupProxy(int nThreads, EventLoopGroup rootEventLoopGroup) {
-		super(nThreads, (Executor)null, rootEventLoopGroup);
+		super(nThreads, (Executor) null, rootEventLoopGroup);
 	}
 
 	@Override
 	protected EventLoop newChild(Executor executor, Object... args) throws Exception {
-		return ((EventLoopGroup)args[0]).next();
+		return ((EventLoopGroup) args[0]).next();
 	}
 }

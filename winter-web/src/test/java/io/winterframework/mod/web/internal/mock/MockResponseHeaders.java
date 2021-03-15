@@ -32,14 +32,14 @@ import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.server.ResponseHeaders;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class MockResponseHeaders implements ResponseHeaders {
 
 	private final HeaderService headerService;
 	
-	private int status;
+	private int statusCode;
 	
 	private final Map<String, List<String>> headers;
 	
@@ -47,16 +47,16 @@ public class MockResponseHeaders implements ResponseHeaders {
 		this.headerService = headerService;
 		this.headers = new HashMap<>();
 	}
-
+	
 	@Override
 	public ResponseHeaders status(Status status) {
-		this.status = status.getCode();
+		this.statusCode = status.getCode();
 		return this;
 	}
 
 	@Override
 	public ResponseHeaders status(int status) {
-		this.status = status;
+		this.statusCode = status;
 		return this;
 	}
 
@@ -113,8 +113,13 @@ public class MockResponseHeaders implements ResponseHeaders {
 	}
 
 	@Override
-	public int getStatus() {
-		return this.status;
+	public Status getStatus() {
+		return Status.valueOf(this.statusCode);
+	}
+	
+	@Override
+	public int getStatusCode() {
+		return this.statusCode;
 	}
 
 	@Override

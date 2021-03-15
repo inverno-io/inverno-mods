@@ -20,27 +20,66 @@ import java.util.Set;
 
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
+import io.winterframework.mod.http.base.header.HeaderBuilder;
+import io.winterframework.mod.http.base.header.HeaderCodec;
 import io.winterframework.mod.http.base.header.HeaderService;
 import io.winterframework.mod.http.base.header.Headers;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Content-disposition HTTP {@link HeaderCodec} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ParameterizedHeaderCodec
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDispositionCodec.ContentDisposition, ContentDispositionCodec.ContentDisposition.Builder> {
 	
+	/**
+	 * <p>Creates a content-disposition header codec.</p>
+	 */
 	public ContentDispositionCodec() {
 		super(ContentDispositionCodec.ContentDisposition.Builder::new, Set.of(Headers.NAME_CONTENT_DISPOSITION), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, false);
 	}
 
+	/**
+	 * <p>
+	 * {@link Headers.ContentDisposition} header implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ParameterizedHeader
+	 */
 	public static final class ContentDisposition extends ParameterizedHeader implements Headers.ContentDisposition {
 
+		/**
+		 * The name parameter name.
+		 */
 		public static final String NAME = "name";
+		/**
+		 * The filename parameter name.
+		 */
 		public static final String FILENAME = "filename";
+		/**
+		 * The creation date parameter name. 
+		 */
 		public static final String CREATION_DATE = "creation-date";
+		/**
+		 * The modification date parameter name.
+		 */
 		public static final String MODIFICATION_DATE = "modification-date";
+		/**
+		 * The read date parameter name.
+		 */
 		public static final String READ_DATE = "read-date";
+		/**
+		 * The size parameter name.
+		 */
 		public static final String SIZE = "size";
 		
 		private String dispositionType;
@@ -75,35 +114,52 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 				throw new MalformedHeaderException("Invalid content disposition type");
 			}
 		}
-		
+
+		@Override
 		public String getDispositionType() {
 			return dispositionType;
 		}
 		
+		@Override
 		public String getPartName() {
 			return partName;
 		}
 		
+		@Override
 		public String getFilename() {
 			return filename;
 		}
 		
+		@Override
 		public String getCreationDateTime() {
 			return creationDateTime;
 		}
 		
+		@Override
 		public String getModificationDatetime() {
 			return modificationDatetime;
 		}
 		
+		@Override
 		public String getReadDateTime() {
 			return readDateTime;
 		}
 		
+		@Override
 		public Integer getSize() {
 			return size;
 		}
 		
+		/**
+		 * <p>
+		 * Content-disposition {@link HeaderBuilder} implementation.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+		 * @since 1.0
+		 * 
+		 * @see ParameterizedHeader.AbstractBuilder
+		 */
 		public static final class Builder extends ParameterizedHeader.AbstractBuilder<ContentDisposition, Builder> {
 
 			private String partName;

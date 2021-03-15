@@ -30,13 +30,26 @@ import io.winterframework.mod.http.server.RequestCookies;
 import io.winterframework.mod.http.server.RequestHeaders;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link RequestCookies} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class GenericRequestCookies implements RequestCookies {
 
 	private Map<String, List<CookieParameter>> pairs; 
 	
+	/**
+	 * <p>
+	 * Creates request cookies with the specified request headers and parameter
+	 * value converter.
+	 * </p>
+	 * 
+	 * @param requestHeaders     the request headers
+	 * @param parameterConverter an string object converter
+	 */
 	public GenericRequestCookies(RequestHeaders requestHeaders, ObjectConverter<String> parameterConverter) {
 		this.pairs = requestHeaders.<Headers.Cookie>getAllHeader(Headers.NAME_COOKIE)
 			.stream()

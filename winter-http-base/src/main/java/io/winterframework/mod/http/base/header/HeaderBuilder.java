@@ -16,14 +16,47 @@
 package io.winterframework.mod.http.base.header;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A header builder is used to build a specific {@link Header} instance.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Header
+ * 
+ * @param <A> the header type built by the builder
+ * @param <B> the header builder type
  */
+
 public interface HeaderBuilder<A extends Header, B extends HeaderBuilder<A, B>> {
 
+	/**
+	 * <p>
+	 * Sets the specified header name.
+	 * </p>
+	 * 
+	 * @param name a header name
+	 * @return the header builder
+	 */
 	B headerName(String name);
 	
+	/**
+	 * <p>
+	 * Sets the specified raw header value.
+	 * </p>
+	 * 
+	 * @param value a raw header value
+	 * @return the header builder
+	 */
 	B headerValue(String value);
 	
+	/**
+	 * <p>
+	 * Builds the header.
+	 * </p>
+	 * 
+	 * @return a header instance
+	 */
 	A build();
 }

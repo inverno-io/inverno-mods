@@ -27,8 +27,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * @author jkuhn
- *
+ * <p>Base class for {@link ParameterizedURIComponent} implementations.</p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ParameterizedURIComponent
  */
 abstract class AbstractParameterizedURIComponent implements ParameterizedURIComponent {
 	
@@ -45,14 +49,47 @@ abstract class AbstractParameterizedURIComponent implements ParameterizedURIComp
 	private String pattern;
 	private List<String> patternGroupNames;
 	
+	/**
+	 * <p>
+	 * Creates a parameterized URI component with the specified flags, charset and
+	 * raw value.
+	 * </p>
+	 * 
+	 * @param flags    URI flags
+	 * @param charset  a charset
+	 * @param rawValue a raw value
+	 */
 	public AbstractParameterizedURIComponent(URIFlags flags, Charset charset, String rawValue) {
 		this(flags, charset, rawValue, null, null);
 	}
-	
+
+	/**
+	 * <p>
+	 * Creates a parameterized URI component with the specified flags, charset, raw
+	 * value and escaped characters predicate.
+	 * </p>
+	 * 
+	 * @param flags             URI flags
+	 * @param charset           a charset
+	 * @param rawValue          a raw value
+	 * @param escapedCharacters an escaped character predicate
+	 */
 	public AbstractParameterizedURIComponent(URIFlags flags, Charset charset, String rawValue, Predicate<Integer> escapedCharacters) {
 		this(flags, charset, rawValue, escapedCharacters, null);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a parameterized URI component with the specified flags, charset, raw
+	 * value, escaped characters predicate and allowed characters predicate.
+	 * </p>
+	 * 
+	 * @param flags             URI flags
+	 * @param charset           a charset
+	 * @param rawValue          a raw value
+	 * @param escapedCharacters an escaped character predicate
+	 * @param allowedCharacters an allowed character predicate
+	 */
 	public AbstractParameterizedURIComponent(URIFlags flags, Charset charset, String rawValue, Predicate<Integer> escapedCharacters, Predicate<Integer> allowedCharacters) {
 		this.flags = flags;
 		this.charset = charset;
@@ -96,7 +133,7 @@ abstract class AbstractParameterizedURIComponent implements ParameterizedURIComp
 			}
 		}
 	}
-	
+
 	@Override
 	public String getRawValue() {
 		return this.rawValue;

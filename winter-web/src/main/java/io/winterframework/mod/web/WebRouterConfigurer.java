@@ -18,8 +18,14 @@ package io.winterframework.mod.web;
 import io.winterframework.mod.http.server.Exchange;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A configurer used to configure a web router.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebRouter
  */
 public interface WebRouterConfigurer<A extends WebExchange> extends AbstractRouterConfigurer<A, WebRouter<A>, WebRouteManager<A>, WebRoute<A>, Exchange> {
 

@@ -28,8 +28,22 @@ import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.SignalType;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base {@link Exchange} implementation.
+ * </p>
+ * 
+ * <p>
+ * This class also implements the subscriber used to subscribe to exchange
+ * response data publisher.
+ * </p>
+ * 
+ * <p>
+ * Implementors must basic provide the implementation of methods that actually
+ * send response data to the client.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implements Exchange {
 
@@ -53,6 +67,18 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	protected static final ExchangeHandler<ErrorExchange<Throwable>> LAST_RESORT_ERROR_HANDLER = new GenericErrorHandler();
 	
+	/**
+	 * <p>
+	 * Creates an exchange with the specified channel handler context, root exchange
+	 * handler, error exchange handler, request and response.
+	 * </p>
+	 * 
+	 * @param context      the channel handler context
+	 * @param rootHandler  the server root exchange handler
+	 * @param errorHandler the server error exchange handler
+	 * @param request      the exchange request
+	 * @param response     the exchange response
+	 */
 	public AbstractExchange(ChannelHandlerContext context, ExchangeHandler<Exchange> rootHandler, ExchangeHandler<ErrorExchange<Throwable>> errorHandler, AbstractRequest request, AbstractResponse response) {
 		this.context = context;
 		this.contextExecutor = this.context.executor();
@@ -100,6 +126,18 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		return this.errorSubscriber != null ? this.errorSubscriber.isDisposed() : super.isDisposed();
 	}
 	
+	/**
+	 * <p>
+	 * Starts the processing of the exchange with the specified callback handler.
+	 * </p>
+	 * 
+	 * <p>
+	 * This methods invokes the server root handler on the exchange and subscribe to
+	 * the response data publisher.
+	 * </p>
+	 * 
+	 * @param handler an exchange callback handler
+	 */
 	public void start(Handler handler) {
 		if(this.handler != null) {
 			throw new IllegalStateException("Exchange already started");
@@ -128,10 +166,46 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		this.response.data().subscribe(this);
 	}
 	
+	/**
+	 * <p>
+	 * Executes the specified task in the event loop.
+	 * </p>
+	 * 
+	 * <p>
+	 * The tasks is executed immediately when the current thread is in the event
+	 * loop, otherwise it is scheduled in the event loop.
+	 * </p>
+	 * 
+	 * <p>
+	 * After the execution of the task, one event is requested to the response data
+	 * subscriber.
+	 * </p>
+	 * 
+	 * @param runnable the task to execute
+	 */
 	protected void executeInEventLoop(Runnable runnable) {
 		this.executeInEventLoop(runnable, 1);
 	}
 	
+	/**
+	 * <p>
+	 * Executes the specified task in the event loop.
+	 * </p>
+	 * 
+	 * <p>
+	 * The tasks is executed immediately when the current thread is in the event
+	 * loop, otherwise it is scheduled in the event loop.
+	 * </p>
+	 * 
+	 * <p>
+	 * After the execution of the task, the specified number of events is requested
+	 * to the response data subscriber.
+	 * </p>
+	 * 
+	 * @param runnable the task to execute
+	 * @param request  the number of events to request to the response data
+	 *                 subscriber after the task completes
+	 */
 	protected void executeInEventLoop(Runnable runnable, int request) {
 		if(this.contextExecutor.inEventLoop()) {
 			runnable.run();
@@ -151,6 +225,15 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Creates an error exchange handler from the exchange with the specified error.
+	 * </p>
+	 * 
+	 * @param error the error
+	 * 
+	 * @return a new error exchange based on the exchange
+	 */
 	protected abstract ErrorExchange<Throwable> createErrorExchange(Throwable error);
 	
 	@Override
@@ -158,6 +241,18 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		this.onStart(subscription);
 	}
 	
+	/**
+	 * <p>
+	 * Invokes when the exchange is started.
+	 * </p>
+	 * 
+	 * <p>
+	 * The default implementation basically request an unbounded amount of events to
+	 * the subscription.
+	 * </p>
+	 * 
+	 * @param subscription the subscription to the response data publisher
+	 */
 	protected void onStart(Subscription subscription) {
 		subscription.request(Long.MAX_VALUE);
 	}
@@ -176,8 +271,21 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Invokes on an event when the response data publisher emits more than one
+	 * event.
+	 * </p>
+	 * 
+	 * @param value the event data
+	 */
 	protected abstract void onNextMany(ByteBuf value);
 	
+	/**
+	 * <p>
+	 * Invokes when the response data publisher completes with an error
+	 * </p>
+	 */
 	protected final void hookOnError(Throwable throwable) {
 		// if headers are already written => close the connection nothing we can do
 		// if headers are not already written => we should invoke the error handler
@@ -185,9 +293,6 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		// - create a new Response for the error
 		// - reset this exchange => transferedLength, chunkCount must be reset
 		// - invoke the error handler (potentially the fallback error handler) with a new ErrorExchange 
-		
-		throwable.printStackTrace();
-		
 		if(this.response.isHeadersWritten()) {
 			this.executeInEventLoop(() -> { 
 				this.onCompleteWithError(throwable);
@@ -215,6 +320,13 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Invokes when the response data stream completes with error.
+	 * </p>
+	 * 
+	 * @param throwable the error
+	 */
 	protected abstract void onCompleteWithError(Throwable throwable);
 	
 	@Override
@@ -227,17 +339,34 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 		else if(this.singleChunk != null) {
 			// single chunk response
-			this.executeInEventLoop(() -> this.onCompleteSingle(this.singleChunk));
+			this.executeInEventLoop(() -> {
+				this.onCompleteSingle(this.singleChunk);
+			});
 		}
 		else {
 			this.executeInEventLoop(this::onCompleteMany);
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Invokes when the response data publisher completes with no data.
+	 * </p>
+	 */
 	protected abstract void onCompleteEmpty();
 	
+	/**
+	 * <p>
+	 * Invokes when the response data publisher completes with a single data.
+	 * </p>
+	 */
 	protected abstract void onCompleteSingle(ByteBuf value);
 	
+	/**
+	 * <p>
+	 * Invokes when the response data publisher completes with many data.
+	 * </p>
+	 */
 	protected abstract void onCompleteMany();
 
 	@Override
@@ -245,6 +374,16 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		this.request.dispose();
 	}
 	
+	/**
+	 * <p>
+	 * Exchange callbacks handler
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see AbstractExchange#start(Handler)
+	 */
 	public static interface Handler {
 		
 		static Handler DEFAULT = new Handler() {};
@@ -266,6 +405,16 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 	}
 	
+	/**
+	 * <p>
+	 * An error subscriber which is created to subscribe to the response data
+	 * publisher of the error exchange created when the response data publisher
+	 * completes with an error.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	private final class ErrorSubscriber extends BaseSubscriber<ByteBuf> {
 		
 		private Throwable originalError;

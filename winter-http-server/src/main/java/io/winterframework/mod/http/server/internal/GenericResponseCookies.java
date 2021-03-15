@@ -25,8 +25,12 @@ import io.winterframework.mod.http.base.internal.header.SetCookieCodec;
 import io.winterframework.mod.http.server.ResponseCookies;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link ResponseCookies} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class GenericResponseCookies implements ResponseCookies {
 
@@ -34,11 +38,27 @@ public class GenericResponseCookies implements ResponseCookies {
 	
 	private final AbstractResponseHeaders responseHeaders;
 	
+	/**
+	 * <p>
+	 * Creates response cookies with the specified header service and response
+	 * headers.
+	 * </p>
+	 * 
+	 * @param headerService   the header service
+	 * @param responseHeaders the response headers
+	 */
 	public GenericResponseCookies(HeaderService headerService, AbstractResponseHeaders responseHeaders) {
 		this.headerService = headerService;
 		this.responseHeaders = responseHeaders;
 	}
 	
+	/**
+	 * <p>
+	 * Returns all response cookies.
+	 * </p>
+	 * 
+	 * @return a list of set-cookie headers
+	 */
 	public List<Headers.SetCookie> getAll() {
 		return this.responseHeaders.getAllHeader(Headers.NAME_SET_COOKIE);
 	}

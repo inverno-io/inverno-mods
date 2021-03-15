@@ -22,9 +22,12 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.LastHttpContent;
 
 /**
+ * <p>
+ * Optimized {@link LastHttpContent} implementation.
+ * </p>
  * 
- * @author jkuhn
- *
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class FlatLastHttpContent extends DefaultByteBufHolder implements LastHttpContent {
 

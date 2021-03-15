@@ -18,22 +18,93 @@ package io.winterframework.mod.http.server;
 import java.util.function.Consumer;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Represents a server response in a server exchange.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Exchange
  */
 public interface Response {
-	
+
+	/**
+	 * <p>
+	 * Determines whether the response headers have been sent to the client.
+	 * </p>
+	 * 
+	 * <p>
+	 * Any attempts to specify new headers in the response, once headers haven been
+	 * sent to the client, will result in an {@link IllegalStateException} being
+	 * thrown.
+	 * </p>
+	 * 
+	 * @return true if headers have been sent, false otherwise
+	 */
 	boolean isHeadersWritten();
 
+	/**
+	 * <p>
+	 * Returns the HTTP headers to send in the response.
+	 * </p>
+	 * 
+	 * @return the headers
+	 */
 	ResponseHeaders headers();
 	
+	/**
+	 * <p>
+	 * Configures the HTTP headers to send in the response.
+	 * </p>
+	 * 
+	 * @param headersConfigurer a response headers configurer
+	 * 
+	 * @return the response
+	 * @throws IllegalStateException if response headers have already been sent to
+	 *                               the client
+	 */
 	Response headers(Consumer<ResponseHeaders> headersConfigurer) throws IllegalStateException;
 	
+	/**
+	 * <p>
+	 * Returns the HTTP trailers to send in the response.
+	 * </p>
+	 * 
+	 * @return the trailers
+	 */
 	ResponseTrailers trailers();
 	
+	/**
+	 * <p>
+	 * Configures the HTTP trailers to send in the response.
+	 * </p>
+	 * 
+	 * @param trailersConfigurer a response trailers configurer
+	 * 
+	 * @return the response
+	 */
 	Response trailers(Consumer<ResponseTrailers> trailersConfigurer);
 	
+	/**
+	 * <p>
+	 * Configures the cookies to set in the response.
+	 * </p>
+	 * 
+	 * @param cookiesConfigurer a response cookies configurer
+	 * 
+	 * @return the response
+	 * @throws IllegalStateException if response headers have already been sent to
+	 *                               the client
+	 */
 	Response cookies(Consumer<ResponseCookies> cookiesConfigurer) throws IllegalStateException;
 	
+	/**
+	 * <p>
+	 * Returns the response body used to produce response payload.
+	 * </p>
+	 * 
+	 * @return a response body
+	 */
 	ResponseBody body();
 }

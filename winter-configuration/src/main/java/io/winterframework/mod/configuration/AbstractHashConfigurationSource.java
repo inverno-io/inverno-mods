@@ -31,15 +31,54 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
+ * <p>
+ * Base implementation for {@link ConfigurationSource} where configuration
+ * properties are resolved using a hash code of a {@link ConfigurationKey}
+ * corresponding to a {@link HashConfigurationQuery}.
+ * </p>
+ * 
+ * <p>
+ * This implementation is intended for configuration sources whose data can be
+ * loaded in-memory typically as a hash table (eg. command line parameters,
+ * property files...).
+ * </p>
+ * 
+ * <p>
+ * Implementors must implement the
+ * {@link AbstractHashConfigurationSource#load()} method which is called to load
+ * the configuration properties in memory.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationSource
  *
+ * @param <A> raw configuration value type
+ * @param <B> the hash configuration source type
  */
 public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashConfigurationSource<A, B>> extends AbstractConfigurationSource<AbstractHashConfigurationSource.HashConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashExecutableConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashConfigurationQueryResult<A, B>, A> {
 	
+	/**
+	 * <p>
+	 * Creates a hash configuration source with the specified decoder.
+	 * </p>
+	 * 
+	 * @param decoder a splittable primitive decoder
+	 * 
+	 * @throws NullPointerException if the specified decoder is null
+	 */
 	public AbstractHashConfigurationSource(SplittablePrimitiveDecoder<A> decoder) {
 		super(decoder);
 	}
 	
+	/**
+	 * <p>
+	 * Loads the configuration properties.
+	 * </p>
+	 * 
+	 * @return A mono emitting the list of configuration properties
+	 */
 	protected abstract Mono<List<ConfigurationProperty<ConfigurationKey, B>>> load();
 	
 	@Override
@@ -47,6 +86,19 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		return new HashExecutableConfigurationQuery<>(this).and().get(names);
 	}
 	
+	/**
+	 * <p>
+	 * The configuration query used by the a configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ConfigurationQuery
+	 *
+	 * @param <A> raw configuration value type
+	 * @param <B> the hash configuration source type
+	 */
 	public static class HashConfigurationQuery<A, B extends AbstractHashConfigurationSource<A, B>> implements ConfigurationQuery<HashConfigurationQuery<A, B>, HashExecutableConfigurationQuery<A, B>, HashConfigurationQueryResult<A, B>> {
 
 		private HashExecutableConfigurationQuery<A, B> executableQuery;
@@ -70,7 +122,20 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 			return this.executableQuery;
 		}
 	}
-	
+
+	/**
+	 * <p>
+	 * The executable configuration query used by a hash configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ExecutableConfigurationQuery
+	 *
+	 * @param <A> raw configuration value type
+	 * @param <B> the hash configuration source type
+	 */
 	public static class HashExecutableConfigurationQuery<A, B extends AbstractHashConfigurationSource<A, B>> implements ExecutableConfigurationQuery<HashConfigurationQuery<A, B>, HashExecutableConfigurationQuery<A, B>, HashConfigurationQueryResult<A, B>> {
 		
 		private B source;
@@ -123,13 +188,26 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The configuration query result returned by a hash configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ConfigurationQueryResult
+	 *
+	 * @param <A> raw configuration value type
+	 * @param <B> the hash configuration source type
+	 */
 	public static class HashConfigurationQueryResult<A, B extends AbstractHashConfigurationSource<A,B>> extends GenericConfigurationQueryResult<ConfigurationKey, ConfigurationProperty<ConfigurationKey, B>> {
 
 		private HashConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationProperty<ConfigurationKey, B> queryResult) {
 			super(queryKey, queryResult);
 		}
 		
-		public HashConfigurationQueryResult(ConfigurationKey queryKey, B source, Throwable error) {
+		private HashConfigurationQueryResult(ConfigurationKey queryKey, B source, Throwable error) {
 			super(queryKey, source, error);
 		}
 	}

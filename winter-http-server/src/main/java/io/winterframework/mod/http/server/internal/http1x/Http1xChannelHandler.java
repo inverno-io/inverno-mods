@@ -15,6 +15,9 @@
  */
 package io.winterframework.mod.http.server.internal.http1x;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelFuture;
@@ -41,11 +44,22 @@ import io.winterframework.mod.http.server.internal.AbstractExchange;
 import io.winterframework.mod.http.server.internal.multipart.MultipartDecoder;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP1.x channel handler implementation.
+ * </p>
+ * 
+ * <p>
+ * This is the entry point of a HTTP client connection to the HTTP server using
+ * version 1.x of the HTTP protocol.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1xConnectionEncoder, AbstractExchange.Handler {
 
+	private static final Logger LOGGER = LogManager.getLogger(Http1xChannelHandler.class);
+	
 	private Http1xExchange requestingExchange;
 	private Http1xExchange respondingExchange;
 	
@@ -61,6 +75,18 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	private boolean read;
 	private boolean flush;
 	
+	/**
+	 * <p>
+	 * Creates a HTTP1.x channel handler.
+	 * </p>
+	 * 
+	 * @param rootHandler           the root exchange handler
+	 * @param errorHandler          the error exchange handler
+	 * @param headerService         the header service
+	 * @param parameterConverter    a string object converter
+	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
+	 * @param multipartBodyDecoder  the multipart/form-data body decoder
+	 */
 	public Http1xChannelHandler(
 			ExchangeHandler<Exchange> rootHandler, 
 			ExchangeHandler<ErrorExchange<Throwable>> errorHandler, 
@@ -75,49 +101,6 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
 	}
-	
-/*	private static final byte[] STATIC_PLAINTEXT = "Hello, World!".getBytes(CharsetUtil.UTF_8);
-	
-	private static final ByteBuf STATIC_PLAINTEXT_BYTEBUF;
-	private static final int STATIC_PLAINTEXT_LEN = STATIC_PLAINTEXT.length;
-
-	static {
-		ByteBuf tmpBuf = Unpooled.directBuffer(STATIC_PLAINTEXT_LEN);
-		tmpBuf.writeBytes(STATIC_PLAINTEXT);
-		STATIC_PLAINTEXT_BYTEBUF = Unpooled.unreleasableBuffer(tmpBuf);
-	}
-	
-	private static final CharSequence PLAINTEXT_CLHEADER_VALUE = AsciiString.cached(String.valueOf(STATIC_PLAINTEXT_LEN));
-
-	private static final String LENGTH = String.valueOf(STATIC_PLAINTEXT_LEN);
-	
-	private static final String TEXT_PLAIN = "text/plain";
-	
-	@Override
-	public void channelRead(ChannelHandlerContext ctx, Object msg) {
-		if(msg instanceof HttpRequest) {
-			HttpRequest httpRequest = (HttpRequest)msg;
-			if(httpRequest.decoderResult() != DecoderResult.SUCCESS) {
-				this.onDecoderError(ctx, httpRequest);
-				return;
-			}
-			Http1xRequest request = new Http1xRequest(ctx, new Http1xRequestHeaders(ctx, httpRequest, this.headerService), this.urlEncodedBodyDecoder, this.multipartBodyDecoder);
-			Http1xResponse response = new Http1xResponse(ctx, this.headerService);
-			this.requestingExchange = new Http1xExchange(ctx, this.rootHandler, this.errorHandler, request, response);
-			
-			this.requestingExchange.start(ExchangeSubscriber.DEFAULT);
-			
-//			Http1xResponseHeaders headers = response.getHeaders();
-//			headers
-//				.add(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_PLAIN)
-//				.add(HttpHeaderNames.CONTENT_LENGTH, PLAINTEXT_CLHEADER_VALUE);
-//			
-//			final FlatFullHttpResponse httpResponse = new FlatFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, headers.getHttpHeaders(), STATIC_PLAINTEXT_BYTEBUF.duplicate(), EmptyHttpHeaders.INSTANCE);
-////			final FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, STATIC_PLAINTEXT_BYTEBUF.duplicate(), headers.getHttpHeaders(), EmptyHttpHeaders.INSTANCE);
-//			
-//			ctx.write(httpResponse, ctx.voidPromise());
-		}
-	}*/
 	
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -252,6 +235,8 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	
 	@Override
 	public void exchangeError(ChannelHandlerContext ctx, Throwable t) {
+		LOGGER.error(t);
+		
 		// If we get there it means we weren't able to properly handle the error before
 		if(this.flush) {
 			ctx.flush();

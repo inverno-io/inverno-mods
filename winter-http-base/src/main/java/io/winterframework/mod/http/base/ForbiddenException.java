@@ -16,25 +16,59 @@
 package io.winterframework.mod.http.base;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A web exception that indicates a {@link Status#FORBIDDEN Forbidden (403)}
+ * access to a server resource.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebException
  */
 public class ForbiddenException extends WebException {
 
 	private static final long serialVersionUID = -2158556254256844551L;
 
+	/**
+	 * <p>
+	 * Creates a forbidden exception.
+	 * </p>
+	 */
 	public ForbiddenException() {
 		super(Status.FORBIDDEN);
 	}
 
+	/**
+	 * <p>
+	 * Creates a forbidden exception with the specified message.
+	 * </p>
+	 * 
+	 * @param message a message
+	 */
 	public ForbiddenException(String message) {
 		super(Status.FORBIDDEN, message);
 	}
 
+	/**
+	 * <p>
+	 * Creates a forbidden exception with the specified cause.
+	 * </p>
+	 * 
+	 * @param cause a cause
+	 */
 	public ForbiddenException(Throwable cause) {
 		super(Status.FORBIDDEN, cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates a forbidden exception with the specified message and cause.
+	 * </p>
+	 * 
+	 * @param message a message
+	 * @param cause   a cause
+	 */
 	public ForbiddenException(String message, Throwable cause) {
 		super(Status.FORBIDDEN, message, cause);
 	}

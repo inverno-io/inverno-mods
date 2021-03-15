@@ -20,19 +20,68 @@ import java.nio.file.Paths;
 import java.util.Objects;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A {@link Resource} implementation that identifies resources by a URI of the
+ * form <code>jar:/path/to/resource</code> and looks up data in a jar file on
+ * the file system system.
+ * </p>
+ * 
+ * <p>
+ * A typical usage is:
+ * </p>
+ * 
+ * <blockquote><pre>
+ * JarResource resource = new JarResource(URI.create("jar:/path/to/jar!/path/to/resource"));
+ * ...
+ * </pre></blockquote>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ZipResource
  */
 public class JarResource extends ZipResource {
 
-	public JarResource(URI uri) {
+	/**
+	 * <p>
+	 * Creates a jar resource with the specified URI.
+	 * </p>
+	 * 
+	 * @param uri the resource URI
+	 * 
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  jar resource
+	 */
+	public JarResource(URI uri) throws IllegalArgumentException {
 		this(uri, null);
 	}
 	
-	public JarResource(URI uri, MediaTypeService mediaTypeService) {
+	/**
+	 * <p>
+	 * Creates a jar resource with the specified URI and media type service.
+	 * </p>
+	 * 
+	 * @param uri              the resource URI
+	 * @param mediaTypeService a media type service
+	 * 
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  jar resource
+	 */
+	public JarResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(uri, SCHEME_JAR, mediaTypeService);
 	}
 	
+	/**
+	 * <p>
+	 * Checks that the specified URI is a jar resource URI.
+	 * </p>
+	 * 
+	 * @param uri the uri to check
+	 * 
+	 * @return the uri if it is a jar resource URI
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  jar resource
+	 */
 	public static URI checkUri(URI uri) throws IllegalArgumentException {
 		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_JAR)) {
 			throw new IllegalArgumentException("Not a " + SCHEME_JAR + " uri");

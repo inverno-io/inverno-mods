@@ -23,7 +23,7 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class GeneratedDummyConfiguration implements DummyConfiguration {

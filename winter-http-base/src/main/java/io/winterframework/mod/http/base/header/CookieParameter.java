@@ -16,10 +16,18 @@
 package io.winterframework.mod.http.base.header;
 
 import io.winterframework.mod.http.base.Parameter;
+import io.winterframework.mod.http.base.internal.header.CookieCodec;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A cookie with parameter's conversion capabilities.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see io.winterframework.mod.http.base.header.Headers.Cookie
+ * @see CookieCodec
  */
 public interface CookieParameter extends Cookie, Parameter {
 

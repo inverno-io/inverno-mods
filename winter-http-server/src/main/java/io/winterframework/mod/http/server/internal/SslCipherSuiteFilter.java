@@ -26,16 +26,19 @@ import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.http.server.HttpServerConfiguration;
 
 /**
+ * <p>
+ * Ssl cipher suite filter.
+ * </p>
  * 
- * @author jkuhn
- *
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Bean(visibility = Visibility.PRIVATE)
-public class WebCipherSuiteFilter implements CipherSuiteFilter {
+public class SslCipherSuiteFilter implements CipherSuiteFilter {
 
 	private HttpServerConfiguration configuration;
 	
-	public WebCipherSuiteFilter(HttpServerConfiguration configuration) {
+	public SslCipherSuiteFilter(HttpServerConfiguration configuration) {
 		this.configuration = configuration;
 	}
 

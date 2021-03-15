@@ -18,12 +18,43 @@ package io.winterframework.mod.base.converter;
 import java.lang.reflect.Type;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A compound encoder is used in a {@link CompositeEncoder} to encode particular
+ * types of objects.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see CompositeEncoder
+ * @see CompositeConverter
+ * 
+ * @param <From> the decoded type
+ * @param <To>   the encoded type
  */
 public interface CompoundEncoder<From, To> extends Encoder<From, To> {
 
+	/**
+	 * <p>
+	 * Determines whether the encoder can encode the type represented by the
+	 * specified class.
+	 * </p>
+	 * 
+	 * @param <T>  the type of the object to encode
+	 * @param type the class of the object to encode
+	 * 
+	 * @return true if the encoder can encode the type, false otherwise
+	 */
 	<T extends From> boolean canEncode(Class<T> type);
 	
+	/**
+	 * <p>
+	 * Determines whether the encoder can encode the specified type.
+	 * </p>
+	 * 
+	 * @param type the type of the object to decode
+	 * 
+	 * @return true if the encoder can encode the type, false otherwise
+	 */
 	boolean canEncode(Type type); 
 }

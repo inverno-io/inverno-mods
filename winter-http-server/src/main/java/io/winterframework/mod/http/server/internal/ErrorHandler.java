@@ -24,8 +24,14 @@ import io.winterframework.mod.http.server.ErrorExchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * The Server error exchange handler using {@link GenericErrorHandler} by default.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see GenericErrorHandler
  */
 @Bean
 @Wrapper

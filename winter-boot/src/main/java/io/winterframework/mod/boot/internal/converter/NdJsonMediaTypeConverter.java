@@ -28,8 +28,14 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * ByteBuf application/x-ndjson media type converter as defined by <a href="http://ndjson.org/">Newline Delimited JSON</a>.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see MediaTypeConverter
  */
 @Bean( name = "ndjsonMediaTypeConverter")
 public class NdJsonMediaTypeConverter extends AbstractJsonMediaTypeConverter implements @Provide MediaTypeConverter<ByteBuf> {

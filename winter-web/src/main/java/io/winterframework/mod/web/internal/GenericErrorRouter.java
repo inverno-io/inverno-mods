@@ -22,6 +22,9 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import io.netty.buffer.Unpooled;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Init;
@@ -45,11 +48,13 @@ import io.winterframework.mod.web.ErrorRouter;
 import io.winterframework.mod.web.ErrorRouterConfigurer;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 @Bean( name = "errorRouter" )
 public class GenericErrorRouter implements @Provide ErrorRouter {
+	
+	private static final Logger LOGGER = LogManager.getLogger(GenericErrorRouter.class);
 
 	private final RoutingLink<ErrorExchange<Throwable>, ?, ErrorRoute> firstLink;
 	
@@ -115,7 +120,7 @@ public class GenericErrorRouter implements @Provide ErrorRouter {
 	@Override
 	public void handle(ErrorExchange<Throwable> exchange) throws WebException {
 		ErrorRouter.super.handle(exchange);
-		exchange.getError().printStackTrace();
+		LOGGER.error(exchange.getError());
 		this.firstLink.handle(exchange);
 	}
 	
@@ -244,6 +249,6 @@ public class GenericErrorRouter implements @Provide ErrorRouter {
 		};
 	}
 	
-	@Bean( name = "ErrorRouterConfigurer")
+	@Bean( name = "errorRouterConfigurer")
 	public static interface ConfigurerSocket extends Supplier<ErrorRouterConfigurer> {}
 }

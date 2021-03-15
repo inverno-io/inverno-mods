@@ -33,8 +33,19 @@ import io.winterframework.mod.http.server.internal.GenericErrorExchange;
 import io.winterframework.mod.http.server.internal.multipart.MultipartDecoder;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP/2 {@link Exchange} implementation.
+ * </p>
+ * 
+ * <p>
+ * This implementation provides the logic to send HTTP/2 response data to the
+ * client.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractExchange
  */
 public class Http2Exchange extends AbstractExchange {
 
@@ -43,6 +54,23 @@ public class Http2Exchange extends AbstractExchange {
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	
+	/**
+	 * <p>
+	 * Creates a HTTP/2 server exchange.
+	 * </p>
+	 * 
+	 * @param context               the channel handler context
+	 * @param stream                the underlying HTTP/2 stream
+	 * @param httpHeaders           the underlying HTTP/2 request headers
+	 * @param encoder               the HTTP/2 connection encoder
+	 * @param headerService         the header service
+	 * @param parameterConverter    a string object converter
+	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body
+	 *                              decoder
+	 * @param multipartBodyDecoder  the multipart/form-data body decoder
+	 * @param rootHandler           the server root exchange handler
+	 * @param errorHandler          the server error exchange handler
+	 */
 	public Http2Exchange(
 			ChannelHandlerContext context, 
 			Http2Stream stream, 
@@ -72,7 +100,7 @@ public class Http2Exchange extends AbstractExchange {
 		try {
 			Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.headers();
 			if(!headers.isWritten()) {
-				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getInternalHeaders(), 0, false, this.context.voidPromise());
+				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, false, this.context.voidPromise());
 				headers.setWritten(true);
 			}
 			// TODO implement back pressure with the flow controller
@@ -94,7 +122,6 @@ public class Http2Exchange extends AbstractExchange {
 	
 	@Override
 	protected void onCompleteWithError(Throwable throwable) {
-		throwable.printStackTrace();
 		this.handler.exchangeError(this.context, throwable);
 	}
 	
@@ -107,13 +134,13 @@ public class Http2Exchange extends AbstractExchange {
 	protected void onCompleteSingle(ByteBuf value) {
 		Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.headers();
 		if(!headers.isWritten()) {
-			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getInternalHeaders(), 0, false, this.context.voidPromise());
+			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, false, this.context.voidPromise());
 			headers.setWritten(true);
 		}
 		Http2ResponseTrailers trailers = (Http2ResponseTrailers)this.response.trailers();
 		this.encoder.writeData(this.context, this.stream.id(), value, 0, trailers == null, this.context.voidPromise());
 		if(trailers != null) {
-			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getInternalTrailers(), 0, true, this.context.voidPromise());	
+			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.context.voidPromise());	
 		}
 		this.context.channel().flush();
 		this.handler.exchangeNext(this.context, value);
@@ -124,7 +151,7 @@ public class Http2Exchange extends AbstractExchange {
 	protected void onCompleteMany() {
 		Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.headers();
 		if(!headers.isWritten()) {
-			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getInternalHeaders(), 0, false, this.context.voidPromise());
+			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, false, this.context.voidPromise());
 			headers.setWritten(true);
 		}
 		else {

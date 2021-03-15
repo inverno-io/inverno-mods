@@ -18,12 +18,42 @@ package io.winterframework.mod.base.reflect;
 import java.lang.reflect.Type;
 
 /**
- * @author jkuhn
+ * <p>
+ * Utility methods for Types manipulation.
+ * </p>
+ * 
+ * <p>
+ * {@link Type} allows to represent parameterized type at runtime which is not
+ * possible with a regular {@link Class} due to type erasure. This can be useful
+ * especially when one needs to perform reflective operation at runtime.
+ * </p>
+ * 
+ * <p>A {@link TypeBuilder} makes it easy to create types, for instance:</p>
+ * 
+ * <blockquote><pre>
+ * Type listOfStringType = Types.type(List.class).type(String.class).and().build();
+ * </pre></blockquote>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @see TypeBuilder
+ * @see ArrayTypeBuilder
  */
 public final class Types {
 
-	public static Class<?> boxType(Class<?> type) {
+	/**
+	 * <p>
+	 * Returns the boxed type corresponding to the specified primitive type.
+	 * </p>
+	 * 
+	 * @param type a primitive type
+	 *
+	 * @return a boxed type
+	 * @throws IllegalArgumentException if the specified type is not a primitive
+	 *                                  type
+	 */
+	public static Class<?> boxType(Class<?> type) throws IllegalArgumentException {
 		if(!type.isPrimitive()) {
 			throw new IllegalArgumentException(type + " is not a primitive type");
 		}
@@ -56,10 +86,19 @@ public final class Types {
 			return Void.class;
 		}
 		throw new IllegalArgumentException("Unknown primitive type: " + type);
-		
 	}
-	
-	public static Class<?> unboxType(Class<?> type) {
+
+	/**
+	 * <p>
+	 * Returns the primitive type corresponding to the specified boxed type.
+	 * </p>
+	 * 
+	 * @param type a boxed type
+	 * 
+	 * @return a primitive type
+	 * @throws IllegalArgumentException if the specified type is not a boxed type
+	 */
+	public static Class<?> unboxType(Class<?> type) throws IllegalArgumentException {
 		if(type.equals(Boolean.class)) {
 			return Boolean.TYPE;
 		}
@@ -90,70 +129,27 @@ public final class Types {
 		throw new IllegalArgumentException(type + " is not a boxed type");
 	}
 	
+	/**
+	 * <p>
+	 * Creates a type builder with the specified raw type.
+	 * </p>
+	 * 
+	 * @param rawType an erased type
+	 * 
+	 * @return a type builder
+	 */
 	public static TypeBuilder type(Class<?> rawType) {
-		return new TypeBuilderImpl(rawType);
+		return new GenericTypeBuilder(rawType);
 	}
 	
+	/**
+	 * <p>
+	 * Creates an array type builder.
+	 * </p>
+	 * 
+	 * @return an array type builder
+	 */
 	public static ArrayTypeBuilder arrayType() {
-		return new ArrayTypeBuilderImpl();
+		return new GenericArrayTypeBuilder();
 	}
-	
-	public static interface TypeBuilder {
-		
-		TypeArgumentBuilder<TypeBuilder> type(Class<?> rawType);
-		
-		WildcardTypeArgumentBuilder<TypeBuilder> wildcardType();
-		
-		ArrayTypeArgumentBuilder<TypeBuilder> arrayType();
-		
-		TypeArgumentBuilder<TypeBuilder> ownerType(Class<?> rawType);
-		
-		Type build();
-		
-	}
-	
-	public static interface TypeArgumentBuilder<A> {
-		
-		TypeArgumentBuilder<TypeArgumentBuilder<A>> type(Class<?> rawType);
-		
-		WildcardTypeArgumentBuilder<TypeArgumentBuilder<A>> wildcardType();
-		
-		ArrayTypeArgumentBuilder<TypeArgumentBuilder<A>> arrayType();
-		
-		TypeArgumentBuilder<TypeArgumentBuilder<A>> ownerType(Class<?> rawType);
-		
-		A and();
-	}
-	
-	public static interface WildcardTypeArgumentBuilder<A> {
-		
-		TypeArgumentBuilder<WildcardTypeArgumentBuilder<A>> upperBoundType(Class<?> rawType);
-		
-		ArrayTypeArgumentBuilder<WildcardTypeArgumentBuilder<A>> upperBoundArrayType();
-		
-		TypeArgumentBuilder<WildcardTypeArgumentBuilder<A>> lowerBoundType(Class<?> rawType);
-		
-		ArrayTypeArgumentBuilder<WildcardTypeArgumentBuilder<A>> lowerBoundArrayType();
-		
-		A and();
-	}
-	
-	public static interface ArrayTypeBuilder {
-		
-		TypeArgumentBuilder<ArrayTypeBuilder> componentType(Class<?> rawType);
-		
-		ArrayTypeArgumentBuilder<ArrayTypeBuilder> componentArrayType();
-		
-		Type build();
-	}
-	
-	public static interface ArrayTypeArgumentBuilder<A> {
-		
-		TypeArgumentBuilder<A> componentType(Class<?> rawType);
-		
-		ArrayTypeArgumentBuilder<A> componentArrayType();
-		
-		A and();
-	}
-	
 }

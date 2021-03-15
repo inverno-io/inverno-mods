@@ -28,8 +28,16 @@ import io.winterframework.mod.http.server.ErrorExchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link ErrorHandler} implementation.
+ * </p>
+ * 
+ * <p>
+ * This implementation is used by default to handle error exchange.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class GenericErrorHandler implements ExchangeHandler<ErrorExchange<Throwable>> {
 

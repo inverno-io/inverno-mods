@@ -28,8 +28,12 @@ import io.winterframework.mod.http.server.ResponseHeaders;
 import io.winterframework.mod.http.server.ResponseTrailers;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base {@link Response} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public abstract class AbstractResponse implements Response {
 
@@ -44,6 +48,15 @@ public abstract class AbstractResponse implements Response {
 	
 	protected GenericResponseBody responseBody;
 	
+	/**
+	 * <p>
+	 * Creates a response with the specified channel handler context, header service
+	 * and response headers.
+	 * 
+	 * @param context         the channel handler context
+	 * @param headerService   the header service
+	 * @param responseHeaders the response headers
+	 */
 	public AbstractResponse(ChannelHandlerContext context, HeaderService headerService, AbstractResponseHeaders responseHeaders) {
 		this.context = context;
 		this.headerService = headerService;
@@ -51,14 +64,35 @@ public abstract class AbstractResponse implements Response {
 		this.responseBody = new GenericResponseBody(this);
 	}
 
+	/**
+	 * <p>
+	 * Returns true if the response payload is composed of a single chunk of data.
+	 * <p>
+	 * 
+	 * @return true if the response payload is single, false otherwise
+	 */
 	public boolean isSingle() {
 		return this.responseBody.isSingle();
 	}
 	
+	/**
+	 * <p>
+	 * Returns the response data publisher.
+	 * </p>
+	 * 
+	 * @return the data publisher
+	 */
 	public Publisher<ByteBuf> data() {
 		return this.responseBody.getData();
 	}
 	
+	/**
+	 * <p>
+	 * Returns the response cookies.
+	 * </p>
+	 * 
+	 * @return the cookies
+	 */
 	public GenericResponseCookies getCookies() {
 		return this.responseCookies;
 	}

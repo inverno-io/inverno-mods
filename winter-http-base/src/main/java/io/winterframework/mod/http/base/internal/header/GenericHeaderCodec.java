@@ -20,14 +20,26 @@ import java.util.Set;
 
 import io.netty.buffer.ByteBuf;
 import io.winterframework.mod.http.base.header.AbstractHeaderCodec;
+import io.winterframework.mod.http.base.header.HeaderCodec;
 import io.winterframework.mod.http.base.header.HeaderService;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Genric HTTP {@link HeaderCodec} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractHeaderCodec
  */
 public class GenericHeaderCodec extends AbstractHeaderCodec<GenericHeader, GenericHeader.Builder> {
 
+	/**
+	 * <p>
+	 * Creates a generic HTTP header codec.
+	 * </p>
+	 */
 	protected GenericHeaderCodec() {
 		super(GenericHeader.Builder::new, Set.of("*"));
 	}

@@ -20,23 +20,58 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Utility methods and constants for charsets.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public final class Charsets {
 
+	/**
+	 * ISO-8859-1 charset constant
+	 */
 	public static final Charset ISO_8859_1 = StandardCharsets.ISO_8859_1;
 	
+	/**
+	 * UTF-8 charset constant
+	 */
 	public static final Charset UTF_8 = StandardCharsets.UTF_8;
 	
+	/**
+	 * Default charset
+	 */
 	public static final Charset DEFAULT = Charsets.UTF_8;
 	
 	private Charsets() {}
 	
+	/**
+	 * <p>
+	 * Returns the specified charset if not null or the default charset.
+	 * </p>
+	 * 
+	 * @param charset a charset
+	 * 
+	 * @return the specified charset or the default charset
+	 */
 	public static Charset orDefault(Charset charset) {
 		return Charsets.or(charset, DEFAULT);
 	}
 	
+	/**
+	 * <p>
+	 * Returns the specified charset if not null or the other charset which must not
+	 * be null.
+	 * </p>
+	 * 
+	 * @param charset a charset
+	 * @param other   another charset
+	 * 
+	 * @return the specified charset or the other charset
+	 * 
+	 * @throws NullPointerException if the other charset is null
+	 */
 	public static Charset or(Charset charset, Charset other) {
 		Objects.requireNonNull(other, () -> "other");
 		return charset != null ? charset : other;

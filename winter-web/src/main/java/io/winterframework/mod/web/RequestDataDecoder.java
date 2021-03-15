@@ -15,17 +15,47 @@
  */
 package io.winterframework.mod.web;
 
+import io.netty.buffer.ByteBuf;
+import io.winterframework.mod.base.converter.MediaTypeConverter;
 import io.winterframework.mod.http.server.RequestData;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A request payload consumer used to decode the payload to a single object or
+ * many objects.
+ * </p>
+ * 
+ * <p>
+ * Implementors should rely on a {@link MediaTypeConverter} to decode a raw
+ * payload as a publisher of {@link ByteBuf} to a publisher of decoded objects.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see MediaTypeConverter
+ * 
+ * @param <A> the type of the decoded object
  */
 public interface RequestDataDecoder<A> extends RequestData<A> {
 	
+	/**
+	 * <p>
+	 * Decodes the payload into one single object.
+	 * </p>
+	 * 
+	 * @return a mono emitting the decoded object
+	 */
 	Mono<A> one();
 	
+	/**
+	 * <p>
+	 * Decodes the payload into many objects.
+	 * </p>
+	 * 
+	 * @return a flux emitting the decoded objects
+	 */
 	Flux<A> many();
 }

@@ -16,11 +16,16 @@
 package io.winterframework.mod.http.server.internal.multipart;
 
 import io.winterframework.mod.base.converter.ObjectConverter;
+import io.winterframework.mod.http.base.Parameter;
 import io.winterframework.mod.http.base.internal.GenericParameter;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * URL encoded {@link Parameter} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class UrlEncodedParameter extends GenericParameter {
 
@@ -29,27 +34,64 @@ class UrlEncodedParameter extends GenericParameter {
 	private boolean last;
 	
 	/**
-	 * @param name
-	 * @param value
+	 * <p>
+	 * Creates a URL encoded parameter.
+	 * </p>
+	 * 
+	 * @param parameterConverter a string object converter
+	 * @param name               the parameter name
+	 * @param value              the parameter value
+	 * @param partial            true to indicate a partial parameter, false
+	 *                           otherwise
+	 * @param last               true if the parameter is the last parameter in the
+	 *                           payload
 	 */
 	public UrlEncodedParameter(ObjectConverter<String> parameterConverter, String name, String value, boolean partial, boolean last) {
-		super(parameterConverter, name, value);
+		super(name, value, parameterConverter);
 		this.partial = partial;
 		this.last = last;
 	}
 
+	/**
+	 * <p>
+	 * Determines whether the parameter is complete.
+	 * </p>
+	 * 
+	 * @return true if the parameter is not complete, false otherwise
+	 */
 	public boolean isPartial() {
 		return partial;
 	}
 
+	/**
+	 * <p>
+	 * Indicates whether the parameter is complete.
+	 * </p>
+	 * 
+	 * @param partial true if the parameter is partial, false otherwise
+	 */
 	public void setPartial(boolean partial) {
 		this.partial = partial;
 	}
 
+	/**
+	 * <p>
+	 * Determines whether the parameter is the last parameter in the payload.
+	 * </p>
+	 * 
+	 * @return true if the parameter is the last, false otherwise
+	 */
 	public boolean isLast() {
 		return last;
 	}
 
+	/**
+	 * <p>
+	 * Indicates whether the parameter is the last parameter in the payload.
+	 * </p>
+	 * 
+	 * @param last true if the parameter is the last, false otherwise
+	 */
 	public void setLast(boolean last) {
 		this.last = last;
 	}

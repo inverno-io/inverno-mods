@@ -26,8 +26,12 @@ import io.winterframework.mod.web.WebExchange;
 import io.winterframework.mod.web.WebRoute;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebRouteExtractor} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange, WebRoute<WebExchange>, GenericWebRouteExtractor> {
 
@@ -49,10 +53,24 @@ class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange, WebRout
 	
 	private String language;
 	
+	/**
+	 * <p>
+	 * Creates a generic web route extractor in the specified generic web router.
+	 * </p>
+	 * 
+	 * @param router a generic web router
+	 */
 	public GenericWebRouteExtractor(GenericWebRouter router) {
 		this.router = router;
 	}
 	
+	/**
+	 * <p>
+	 * Creates a generic web route extractor with the specified parent.
+	 * </p>
+	 * 
+	 * @param parent a generic web route extractor
+	 */
 	private GenericWebRouteExtractor(GenericWebRouteExtractor parent) {
 		this.parent = parent;
 		this.router = parent.router;
@@ -159,9 +177,9 @@ class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange, WebRout
 	}
 
 	@Override
-	public GenericWebRouteExtractor consumes(String mediaType) {
+	public GenericWebRouteExtractor consumes(String mediaRange) {
 		GenericWebRouteExtractor childExtractor = new GenericWebRouteExtractor(this);
-		childExtractor.consume = mediaType;
+		childExtractor.consume = mediaRange;
 		return childExtractor;
 	}
 

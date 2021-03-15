@@ -18,12 +18,34 @@ package io.winterframework.mod.base.resource;
 import java.util.concurrent.ExecutorService;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * An async resource uses an executor service to be read and written
+ * asynchronously.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Resource
  */
 public interface AsyncResource extends Resource {
 
+	/**
+	 * <p>
+	 * Sets the executor service to use when reading or writing the resource
+	 * asynchronously.
+	 * </p>
+	 * 
+	 * @param executor the executor service to set
+	 */
 	void setExecutor(ExecutorService executor);
 	
+	/**
+	 * <p>
+	 * Returns the executor service.
+	 * </p>
+	 * 
+	 * @return an executor service
+	 */
 	ExecutorService getExecutor();
 }

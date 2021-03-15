@@ -23,12 +23,30 @@ import io.winterframework.mod.web.compiler.spi.WebHeaderParameterInfo;
 import io.winterframework.mod.web.compiler.spi.WebParameterQualifiedName;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebHeaderParameterInfo} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractWebParameterInfo
  */
 class GenericWebHeaderParameterInfo extends AbstractWebParameterInfo implements WebHeaderParameterInfo {
 
-	public GenericWebHeaderParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement element, TypeMirror type, boolean required) {
-		super(name, reporter, element, type, required);
+	/**
+	 * <p>
+	 * Creates a generic web form parameter info.
+	 * </p>
+	 * 
+	 * @param name             the parameter qualified name
+	 * @param reporter         the parameter reporter
+	 * @param parameterElement the parameter element
+	 * @param type             the parameter type
+	 * @param required         true to indicate a required parameter, false
+	 *                         otherwise
+	 */
+	public GenericWebHeaderParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement parameterElement, TypeMirror type, boolean required) {
+		super(name, reporter, parameterElement, type, required);
 	}
 }

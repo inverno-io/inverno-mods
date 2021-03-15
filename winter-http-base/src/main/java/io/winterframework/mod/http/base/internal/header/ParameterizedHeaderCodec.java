@@ -24,20 +24,41 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.winterframework.mod.base.Charsets;
 import io.winterframework.mod.http.base.header.AbstractHeaderCodec;
+import io.winterframework.mod.http.base.header.HeaderCodec;
 import io.winterframework.mod.http.base.header.HeaderService;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A generic parameterized {@link HeaderCodec} implementation used to
+ * encode/decode various parameterized headers.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ParameterizedHeader
+ * @see HeaderCodec
  */
 public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends ParameterizedHeader.AbstractBuilder<A, B>> extends AbstractHeaderCodec<A, B> {
 
+	/**
+	 * Default parameter delimiter.
+	 */
 	public static final char DEFAULT_PARAMETER_DELIMITER = ';';
 	
+	/**
+	 * Default value delimiter.
+	 */
 	public static final char DEFAULT_VALUE_DELIMITER = ',';
 	
+	/**
+	 * The parameter delimiter.
+	 */
 	protected final char parameterDelimiter;
 	
+	/**
+	 * The value delimiter. 
+	 */
 	protected final char valueDelimiter;
 	
 	private final boolean allowEmptyValue; 
@@ -52,6 +73,26 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 	
 	private final boolean allowMultiple;
 	
+	/**
+	 * <p>
+	 * Creates a parameterized header codec with the specified header builder
+	 * supplier, list of supported header names, parameter delimiter, value
+	 * delimiter and options.
+	 * </p>
+	 * 
+	 * @param builderSupplier      a supplier to create header builder instances
+	 *                             when decoding a header
+	 * @param supportedHeaderNames the list of header names supported by the codec
+	 * @param parameterDelimiter   a parameter delimiter
+	 * @param valueDelimiter       a value delimiter
+	 * @param allowEmptyValue      allow empty parameterized value
+	 * @param expectNoValue        expect no parameterized value
+	 * @param allowFlagParameter   allow flag parameters (ie. parameter with no
+	 *                             value)
+	 * @param allowSpaceInValue    allow space in values
+	 * @param allowQuotedValue     allow quoted values
+	 * @param allowMultiple        allow multiple header values
+	 */
 	public ParameterizedHeaderCodec(Supplier<B> builderSupplier, Set<String> supportedHeaderNames, char parameterDelimiter, char valueDelimiter, boolean allowEmptyValue, boolean expectNoValue, boolean allowFlagParameter, boolean allowSpaceInValue, boolean allowQuotedValue, boolean allowMultiple) {
 		super(builderSupplier, supportedHeaderNames);
 		

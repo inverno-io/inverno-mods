@@ -29,7 +29,7 @@ import io.winterframework.mod.web.ErrorRouteManager;
 import io.winterframework.mod.web.ErrorRouter;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 class GenericErrorRouteManager implements ErrorRouteManager {
@@ -91,7 +91,7 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 	}
 
 	@Override
-	public ErrorRouteManager error(Class<? extends Throwable> error) throws IllegalArgumentException {
+	public ErrorRouteManager error(Class<? extends Throwable> error) {
 		if(this.errors == null) {
 			this.errors = new LinkedHashSet<>();
 		}

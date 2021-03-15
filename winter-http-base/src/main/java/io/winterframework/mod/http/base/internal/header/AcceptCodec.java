@@ -26,21 +26,43 @@ import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.BeanSocket;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.http.base.NotAcceptableException;
+import io.winterframework.mod.http.base.header.HeaderBuilder;
+import io.winterframework.mod.http.base.header.HeaderCodec;
 import io.winterframework.mod.http.base.header.HeaderService;
 import io.winterframework.mod.http.base.header.Headers;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Accept HTTP {@link HeaderCodec} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ParameterizedHeaderCodec
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, AcceptCodec.Accept.Builder> {
 
+	/**
+	 * <p>
+	 * Creates an accept header codec that allows multiple media ranges to be
+	 * specified in the header value.
+	 * </p>
+	 */
 	@BeanSocket
 	public AcceptCodec() {
 		this(true);
 	}
 	
+	/**
+	 * <p>
+	 * Creates an accept header codec that allows or not multiple media ranges to be
+	 * specified in the header value.
+	 * </p>
+	 * 
+	 * @param allowMultiple true to allow multiple media ranges, false otherwise
+	 */
 	public AcceptCodec(boolean allowMultiple) {
 		super(AcceptCodec.Accept.Builder::new, Set.of(Headers.NAME_ACCEPT), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, allowMultiple);
 	}
@@ -63,6 +85,16 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 		}).collect(Collectors.joining(Character.toString(this.valueDelimiter)));
 	}
 
+	/**
+	 * <p>
+	 * {@link Headers.Accept} header implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ParameterizedHeader
+	 */
 	public static final class Accept extends ParameterizedHeader implements Headers.Accept {
 
 		private List<Headers.Accept.MediaRange> ranges;
@@ -77,6 +109,14 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 			return this.ranges;
 		}
 		
+		/**
+		 * <p>
+		 * {@link Headers.Accept.MediaRange} implementation.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+		 * @since 1.0
+		 */
 		public static class MediaRange implements Headers.Accept.MediaRange {
 
 			private String mediaType;
@@ -91,6 +131,16 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 			
 			private int score;
 			
+			/**
+			 * <p>
+			 * Creates a media range with the specified media type, quality value and
+			 * parameters.
+			 * </p>
+			 * 
+			 * @param mediaType  a media type
+			 * @param weight     a quality value
+			 * @param parameters a map of parameters
+			 */
 			public MediaRange(String mediaType, float weight, Map<String, String> parameters) {
 				this.setMediaType(mediaType);
 				
@@ -99,6 +149,17 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 				this.score = Headers.Accept.MediaRange.super.getScore();
 			}
 			
+			/**
+			 * <p>
+			 * Creates a media range with the specified type, sub-type, quality value and
+			 * parameters.
+			 * </p>
+			 * 
+			 * @param type       a type
+			 * @param subType    a sub-type
+			 * @param weight     a quality value
+			 * @param parameters a map of parameters
+			 */
 			public MediaRange(String type, String subType, float weight, Map<String, String> parameters) {
 				this.setType(type.toLowerCase());
 				this.setSubType(subType.toLowerCase());
@@ -206,6 +267,16 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 			}
 		}
 		
+		/**
+		 * <p>
+		 * Accept {@link HeaderBuilder} implementation
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+		 * @since 1.0
+		 * 
+		 * @see ParameterizedHeader.AbstractBuilder
+		 */
 		public static final class Builder extends ParameterizedHeader.AbstractBuilder<Accept, Builder> {
 
 			private List<Headers.Accept.MediaRange> ranges;

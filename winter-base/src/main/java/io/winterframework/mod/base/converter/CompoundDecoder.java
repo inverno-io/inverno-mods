@@ -18,12 +18,43 @@ package io.winterframework.mod.base.converter;
 import java.lang.reflect.Type;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A compound decoder is used in a {@link CompositeDecoder} to decode particular
+ * types of objects.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see CompositeDecoder
+ * @see CompositeConverter
+ * 
+ * @param <From> the encoded type
+ * @param <To>   the decoded type
  */
 public interface CompoundDecoder<From, To> extends Decoder<From, To> {
 
+	/**
+	 * <p>
+	 * Determines whether the decoder can decode the type represented by the
+	 * specified class.
+	 * </p>
+	 * 
+	 * @param <T>  the type of the object to decode
+	 * @param type the class of the object to decode
+	 * 
+	 * @return true if the decoder can decode the type, false otherwise
+	 */
 	<T extends From> boolean canDecode(Class<T> type);
 	
+	/**
+	 * <p>
+	 * Determines whether the decoder can decode the specified type.
+	 * </p>
+	 * 
+	 * @param type the type of the object to decode
+	 * 
+	 * @return true if the decoder can decode the type, false otherwise
+	 */
 	boolean canDecode(Type type);
 }

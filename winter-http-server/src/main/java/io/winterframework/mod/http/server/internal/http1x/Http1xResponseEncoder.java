@@ -27,6 +27,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelProgressivePromise;
 import io.netty.channel.ChannelPromise;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseEncoder;
@@ -37,8 +38,17 @@ import io.winterframework.mod.http.server.internal.netty.FlatHttpResponse;
 import io.winterframework.mod.http.server.internal.netty.LinkedHttpHeaders;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP1.x {@link HttpResponseEncoder} implementation.
+ * </p>
+ * 
+ * <p>
+ * This implementation basically encodes {@link LinkedHttpHeaders} used instead
+ * of Netty's {@link DefaultHttpHeaders} in order to increase performances.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class Http1xResponseEncoder extends HttpResponseEncoder {
 
@@ -46,6 +56,13 @@ public class Http1xResponseEncoder extends HttpResponseEncoder {
 	
 	private ByteBufAllocator byteBufAllocator;
 	
+	/**
+	 * <p>
+	 * Creates a HTTP1.x response encoder with the specified BytBuf allocator.
+	 * </p>
+	 * 
+	 * @param byteBufAllocator a ByteBuf allocator
+	 */
 	public Http1xResponseEncoder(ByteBufAllocator byteBufAllocator) {
 		this.byteBufAllocator = byteBufAllocator;
 	}

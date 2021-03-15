@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.winterframework.mod.configuration.Configuration;
+import io.winterframework.mod.configuration.ConfigurationLoader;
 import io.winterframework.mod.configuration.ConfigurationLoaderException;
 import io.winterframework.mod.configuration.ConfigurationQuery;
 import io.winterframework.mod.configuration.ConfigurationQueryResult;
@@ -36,14 +38,44 @@ import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A {@link ConfigurationLoader} implementation that determines the
+ * configuration properties to load by analyzing a configuration interface as
+ * defined by {@link Configuration @Configuration} through reflection and
+ * eventually returns a Java proxy for the configuration interface providing the
+ * retrieved values.
+ * </p>
+ * 
+ * <p>
+ * Configuration properties must be declared as non-void no-argument methods in
+ * the interface. Default values can be specified in default methods.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Configuration
+ * @see ConfigurationLoader
+ * 
+ * @param <A> the configuration type
  */
 public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveConfigurationLoader<A, ConfigurationTypeConfigurationLoader<A>> {
 
 	private Class<A> configurationType;
 	
+	/**
+	 * <p>
+	 * Creates a configuration loader for the specified type.
+	 * </p>
+	 * 
+	 * @param configurationType the configuration type
+	 * 
+	 * @throws IllegalArgumentException if the specified type is not an interface
+	 */
 	public ConfigurationTypeConfigurationLoader(Class<A> configurationType) {
+		if(!configurationType.isInterface()) {
+			throw new IllegalArgumentException(configurationType.getCanonicalName() +" is not an interface");
+		}
 		this.configurationType = configurationType;
 	}
 	
@@ -83,7 +115,7 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 						});
 					}
 				}
-				return (A)Proxy.newProxyInstance(configurationType.getClassLoader(), new Class[] {configurationType}, new ConfigurationProxyInvocationHandler(properties, ""));
+				return (A)Proxy.newProxyInstance(configurationType.getClassLoader(), new Class[] { this.configurationType }, new ConfigurationProxyInvocationHandler(properties, ""));
 			});
 	}
 	

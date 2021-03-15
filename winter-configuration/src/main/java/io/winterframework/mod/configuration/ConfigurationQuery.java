@@ -16,10 +16,38 @@
 package io.winterframework.mod.configuration;
 
 /**
- * @author jkuhn
+ * <p>
+ * A configuration query is used to query configuration properties from a
+ * configuration source.
+ * </p>
+ * 
+ * <p>
+ * Note that a single query can result in multiple results being returned if
+ * multiple properties have been requested.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @see ConfigurationSource
+ * @see ExecutableConfigurationQuery
+ * @see ConfigurationQueryResult
+ * 
+ * @param <A> the query type
+ * @param <B> the executable query type
+ * @param <C> the query result type
  */
 public interface ConfigurationQuery<A extends ConfigurationQuery<A, B, C>, B extends ExecutableConfigurationQuery<A, B, C>, C extends ConfigurationQueryResult<?,?>> {
 
+	/**
+	 * <p>
+	 * Returns an executable query that retrieves the specified properties.
+	 * </p>
+	 * 
+	 * @param names a list of properties to retrieve
+	 * 
+	 * @return an executable query
+	 * @throws IllegalArgumentException if the array of names is null or empty
+	 */
 	B get(String... names) throws IllegalArgumentException;
 }

@@ -28,8 +28,14 @@ import io.winterframework.mod.web.WebRequest;
 import io.winterframework.mod.web.WebRequestBody;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebRequest} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebRequestBody
  */
 class GenericWebRequest implements WebRequest {
 
@@ -43,6 +49,16 @@ class GenericWebRequest implements WebRequest {
 	
 	private Optional<WebRequestBody> webRequestBody;
 	
+	/**
+	 * <p>
+	 * Creates a generic web request with the specified underlying request, data
+	 * conversion service and parameter value converter.
+	 * </p>
+	 * 
+	 * @param request               the underlying request
+	 * @param dataConversionService the data conversion service
+	 * @param parameterConverter    a string object converter
+	 */
 	public GenericWebRequest(Request request, DataConversionService dataConversionService, ObjectConverter<String> parameterConverter) {
 		this.request = request;
 		this.dataConversionService = dataConversionService;

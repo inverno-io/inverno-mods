@@ -23,14 +23,73 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
+ * <p>
+ * A reactive decoder.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Decoder
  *
+ * @param <From> the encoded type
+ * @param <To>   the decoded type
  */
 public interface ReactiveDecoder<From, To> extends Decoder<From, To> {
 
+	/**
+	 * <p>
+	 * Decodes the specified stream of values whose type is represented by the
+	 * specified class into a mono stream of values.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the stream of values to decode
+	 * @param type  the class of the decoded object
+	 * 
+	 * @return a mono emitting the decoded value
+	 */
 	<T extends To> Mono<T> decodeOne(Publisher<From> value, Class<T> type);
+	
+	/**
+	 * <p>
+	 * Decodes the specified stream of values whose type is the specified type into
+	 * a mono stream of value.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the stream of values to decode
+	 * @param type  the type of the decoded object
+	 * 
+	 * @return a mono emitting the decoded value
+	 */
 	<T extends To> Mono<T> decodeOne(Publisher<From> value, Type type);
 	
+	/**
+	 * <p>
+	 * Decodes the specified stream of values whose type is represented by the
+	 * specified class into a flux stream of values.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the stream of values to decode
+	 * @param type  the class of the decoded object
+	 * 
+	 * @return a flux emitting the decoded values
+	 */
 	<T extends To> Flux<T> decodeMany(Publisher<From> value, Class<T> type);
+	
+	/**
+	 * <p>
+	 * Decodes the specified stream of values whose type is the specified type into
+	 * a flux stream of values.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the stream of values to decode
+	 * @param type  the type of the decoded object
+	 * 
+	 * @return a flux emitting the decoded values
+	 */
 	<T extends To> Flux<T> decodeMany(Publisher<From> value, Type type);
 }

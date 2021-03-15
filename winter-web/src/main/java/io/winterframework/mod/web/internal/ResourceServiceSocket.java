@@ -21,8 +21,20 @@ import io.winterframework.core.annotation.Bean;
 import io.winterframework.mod.base.resource.ResourceService;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * The {@link ResourceService} socket.
+ * </p>
+ * 
+ * <p>
+ * A net service is required by the HTTP server module and to load Open API
+ * specifications among other things.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see OpenApiWebRouterConfigurer
+ * @see WebjarsWebRouterConfigurer
  */
 @Bean(name = "resourceService")
 public interface ResourceServiceSocket extends Supplier<ResourceService> {

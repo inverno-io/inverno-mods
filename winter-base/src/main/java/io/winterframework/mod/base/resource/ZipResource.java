@@ -34,18 +34,54 @@ import io.netty.buffer.ByteBuf;
 import reactor.core.publisher.Flux;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A {@link Resource} implementation that identifies resources by a URI of the
+ * form <code>zip:/path/to/resource</code> and looks up data in a zip file on
+ * the file system system.
+ * </p>
+ * 
+ * <p>
+ * A typical usage is:
+ * </p>
+ * 
+ * <blockquote><pre>
+ * ZipResource resource = new ZipResource(URI.create("zip:/path/to/zip!/path/to/resource"));
+ * ...
+ * </pre></blockquote>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AsyncResource
+ * @see JarResource
  */
 public class ZipResource extends AbstractAsyncResource {
 
+	/**
+	 * The zip resource scheme
+	 */
 	public static final String SCHEME_ZIP = "zip";
 	
+	/**
+	 * The jar resource scheme
+	 */
 	public static final String SCHEME_JAR = "jar";
 	
 	private URI uri;
+	
+	/**
+	 * The URI of the ZIP file.
+	 */
 	protected URI zipUri;
+	
+	/**
+	 * The URI of tje ZIP file system.
+	 */
 	protected URI zipFsUri;
+	
+	/**
+	 * The path to the resource in the ZIP file.
+	 */
 	protected Path resourcePath;
 	
 	private FileSystem fileSystem;
@@ -53,19 +89,64 @@ public class ZipResource extends AbstractAsyncResource {
 	
 	private boolean closed;
 	
-	public ZipResource(URI uri) {
+	/**
+	 * <p>
+	 * Creates a zip resource with the specified URI.
+	 * </p>
+	 * 
+	 * @param uri the resource URI
+	 * 
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  zip resource
+	 */
+	public ZipResource(URI uri) throws IllegalArgumentException {
 		this(uri, (MediaTypeService)null);
 	}
 
-	public ZipResource(URI uri, MediaTypeService mediaTypeService) {
+	/**
+	 * <p>
+	 * Creates a zip resource with the specified URI and media type service.
+	 * </p>
+	 * 
+	 * @param uri              the resource URI
+	 * @param mediaTypeService a media type service
+	 * 
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  zip resource
+	 */
+	public ZipResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		this(uri, SCHEME_ZIP, mediaTypeService);
 	}
 	
-	protected ZipResource(URI uri, String scheme) {
+	/**
+	 * <p>
+	 * Creates a zip-like resource with the specified URI and scheme.
+	 * </p>
+	 * 
+	 * @param uri    the resource URI
+	 * @param scheme the visible resource scheme (ie. zip, jar...)
+	 * 
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  resource of the specified scheme
+	 */
+	protected ZipResource(URI uri, String scheme) throws IllegalArgumentException {
 		this(uri, scheme, null);
 	}
 	
-	protected ZipResource(URI uri, String scheme, MediaTypeService mediaTypeService) {
+	/**
+	 * <p>
+	 * Creates a zip-like resource with the specified URI, scheme and media type
+	 * service.
+	 * </p>
+	 * 
+	 * @param uri              the resource URI
+	 * @param scheme           the visible resource scheme (ie. zip, jar...)
+	 * @param mediaTypeService a media type service
+	 * 
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  resource of the specified scheme
+	 */
+	protected ZipResource(URI uri, String scheme, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
 		if(!Objects.requireNonNull(uri).getScheme().equals(scheme)) {
 			throw new IllegalArgumentException("Not a " + scheme + " uri");
@@ -87,6 +168,17 @@ public class ZipResource extends AbstractAsyncResource {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Checks that the specified URI is a zip resource URI.
+	 * </p>
+	 * 
+	 * @param uri the uri to check
+	 * 
+	 * @return the uri if it is a zip resource URI
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  zip resource
+	 */
 	public static URI checkUri(URI uri) throws IllegalArgumentException {
 		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_ZIP)) {
 			throw new IllegalArgumentException("Not a " + SCHEME_ZIP + " uri");

@@ -52,31 +52,63 @@ import io.winterframework.mod.base.converter.ObjectConverter;
 
 /**
  * <p>
- * Decode/Encode primitive objects from/to Java String literals (ie. escaping
- * characters in a String using Java String rules).
+ * Java String {@link ObjectConverter} implementation that converts primitive
+ * and common types from/to Java String literals (ie. escaping characters in a
+ * String using Java String rules).
  * </p>
  * 
- * @author jkuhn
- *
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ObjectConverter
  */
 public class JavaStringConverter implements ObjectConverter<String> {
 
-	private static final String DEFAULT_ARRAY_LIST_SEPARATOR = ",";
+	/**
+	 * Default array list separator
+	 */
+	public static final String DEFAULT_ARRAY_LIST_SEPARATOR = ",";
 
 	private String arrayListSeparator;
 
+	/**
+	 * <p>
+	 * Creates a Java String converter with the default array/list separator.
+	 * </p>
+	 */
 	public JavaStringConverter() {
 		this(DEFAULT_ARRAY_LIST_SEPARATOR);
 	}
 
+	/**
+	 * <p>
+	 * Creates a Java String converter with the specified array/list separator.
+	 * </p>
+	 * 
+	 * @param arrayListSeparator an array/list separator
+	 */
 	public JavaStringConverter(String arrayListSeparator) {
 		this.arrayListSeparator = arrayListSeparator;
 	}
 
+	/**
+	 * <p>
+	 * Returns the array/list separator used to convert lists and arrays.
+	 * </p>
+	 * 
+	 * @return an array/list separator
+	 */
 	public String getArrayListSeparator() {
 		return arrayListSeparator;
 	}
 
+	/**
+	 * <p>
+	 * Sets the array/list separator used to convert lists and arrays.
+	 * </p>
+	 * 
+	 * @param arrayListSeparator an array/list separator
+	 */
 	public void setArrayListSeparator(String arrayListSeparator) {
 		this.arrayListSeparator = arrayListSeparator;
 	}

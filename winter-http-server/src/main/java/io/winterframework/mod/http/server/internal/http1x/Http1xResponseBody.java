@@ -25,13 +25,20 @@ import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.FileRegion;
 import io.winterframework.mod.base.resource.ZipResource;
 import io.winterframework.mod.http.base.InternalServerErrorException;
+import io.winterframework.mod.http.server.ResponseBody;
 import io.winterframework.mod.http.server.internal.GenericResponseBody;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP1.x {@link ResponseBody} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see GenericResponseBody
  */
 class Http1xResponseBody extends GenericResponseBody {
 
@@ -40,12 +47,25 @@ class Http1xResponseBody extends GenericResponseBody {
 	private Publisher<FileRegion> fileRegionData;
 	
 	/**
-	 * @param response
+	 * <p>
+	 * Creates a HTTP1.x server response body for the specified response.
+	 * </p>
+	 * 
+	 * @param response the HTTP1.x response
 	 */
 	public Http1xResponseBody(Http1xResponse response) {
 		super(response);
 	}
 	
+	/**
+	 * <p>
+	 * Returns the file region data publisher to send when present instead of the
+	 * regular payload data publisher.
+	 * </p>
+	 * 
+	 * @return an optional returning a file region publisher or an empty optional if
+	 *         no file region has been set in the response
+	 */
 	public Optional<Publisher<FileRegion>> getFileRegionData() {
 		return Optional.ofNullable(this.fileRegionData);
 	}
@@ -64,6 +84,17 @@ class Http1xResponseBody extends GenericResponseBody {
 		}
 	}
 
+	/**
+	 * <p>
+	 * {@link ResponseBody.Resource} implementation that uses file region when
+	 * available.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see FileRegion
+	 */
 	private class Http1xResponseBodyResourceData extends GenericResponseBody.GenericResponseBodyResourceData {
 
 		@Override

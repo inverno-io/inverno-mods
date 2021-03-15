@@ -30,7 +30,7 @@ import io.winterframework.mod.http.base.header.HeaderService;
 import io.winterframework.mod.http.server.ResponseTrailers;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class MockResponseTrailers implements ResponseTrailers {

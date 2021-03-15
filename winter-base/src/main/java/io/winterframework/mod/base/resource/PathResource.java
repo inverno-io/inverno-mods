@@ -29,18 +29,49 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A {@link Resource} implementation that identifies resources by a path and
+ * looks up data on the file system.
+ * </p>
+ * 
+ * <p>
+ * A typical usage is:
+ * </p>
+ * 
+ * <blockquote><pre>
+ * PathResource resource = new PathResource(Paths.get("/path/to/resource"));
+ * ...
+ * </pre></blockquote>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AsyncResource
  */
 public class PathResource extends AbstractAsyncResource {
 	
 	private Path path;
 	
+	/**
+	 * <p>
+	 * Creates a path resource with the specified path.
+	 * </p>
+	 * 
+	 * @param path the resource path
+	 */
 	public PathResource(Path path) {
 		this(path, null);
 	}
 	
-	protected PathResource(Path path, MediaTypeService mediaTypeService) {
+	/**
+	 * <p>
+	 * Creates a path resource with the specified path and media type service.
+	 * </p>
+	 * 
+	 * @param path             the resource path
+	 * @param mediaTypeService the media type service
+	 */
+	public PathResource(Path path, MediaTypeService mediaTypeService) {
 		super(mediaTypeService);
 		this.path = Objects.requireNonNull(path.normalize());
 	}

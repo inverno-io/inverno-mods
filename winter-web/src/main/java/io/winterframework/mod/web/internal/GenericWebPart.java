@@ -28,8 +28,12 @@ import io.winterframework.mod.web.RequestDataDecoder;
 import io.winterframework.mod.web.WebPart;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebPart} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class GenericWebPart implements WebPart {
 
@@ -37,6 +41,15 @@ class GenericWebPart implements WebPart {
 	
 	private final DataConversionService dataConversionService;
 	
+	/**
+	 * <p>
+	 * Creates a generic web part with the specified underlying part and data
+	 * conversion service.
+	 * </p>
+	 * 
+	 * @param part                  the underlying part
+	 * @param dataConversionService the data conversion service
+	 */
 	public GenericWebPart(Part part, DataConversionService dataConversionService) {
 		this.part = part;
 		this.dataConversionService = dataConversionService;

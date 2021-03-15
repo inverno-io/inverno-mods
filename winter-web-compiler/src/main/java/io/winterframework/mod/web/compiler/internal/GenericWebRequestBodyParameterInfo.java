@@ -25,8 +25,14 @@ import io.winterframework.mod.web.compiler.spi.WebParameterQualifiedName;
 import io.winterframework.mod.web.compiler.spi.WebRequestBodyParameterInfo;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebRequestBodyParameterInfo} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractWebParameterInfo
  */
 class GenericWebRequestBodyParameterInfo extends AbstractWebParameterInfo implements WebRequestBodyParameterInfo {
 
@@ -34,8 +40,20 @@ class GenericWebRequestBodyParameterInfo extends AbstractWebParameterInfo implem
 	
 	private final RequestBodyReactiveKind requestBodyReactiveKind;
 	
-	public GenericWebRequestBodyParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement element, RequestBodyReactiveKind requestBodyReactiveKind, RequestBodyKind requestBodyKind, TypeMirror requestBodyType) {
-		super(name, reporter, element, requestBodyType, false);
+	/**
+	 * <p>
+	 * Creates a generic web request body parameter info.
+	 * </p>
+	 * 
+	 * @param name                    the parameter qualified name
+	 * @param reporter                the parameter reporter
+	 * @param parameterElement        the parameter element
+	 * @param requestBodyType         the actual type of the request body
+	 * @param requestBodyKind         the request body kind
+	 * @param requestBodyReactiveKind the request body reactive kind
+	 */
+	public GenericWebRequestBodyParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, TypeMirror requestBodyType, RequestBodyKind requestBodyKind, RequestBodyReactiveKind requestBodyReactiveKind) {
+		super(name, reporter, parameterElement, requestBodyType, false);
 		this.requestBodyKind = Objects.requireNonNull(requestBodyKind);
 		this.requestBodyReactiveKind = Objects.requireNonNull(requestBodyReactiveKind);
 	}

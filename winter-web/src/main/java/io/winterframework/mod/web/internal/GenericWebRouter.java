@@ -39,7 +39,7 @@ import io.winterframework.mod.web.WebConfiguration;
 import io.winterframework.mod.web.WebRouterConfigurer;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 @Bean( name = "webRouter" )
@@ -142,6 +142,6 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 		this.firstLink.handle(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.dataConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService)));
 	}
 	
-	@Bean( name = "WebRouterConfigurer")
+	@Bean( name = "webRouterConfigurer")
 	public static interface ConfigurerSocket extends Supplier<WebRouterConfigurer<WebExchange>> {}
 }

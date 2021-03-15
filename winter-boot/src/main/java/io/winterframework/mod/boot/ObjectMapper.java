@@ -22,8 +22,12 @@ import io.winterframework.core.annotation.Overridable;
 import io.winterframework.core.annotation.Wrapper;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * General {@link com.fasterxml.jackson.databind.ObjectMapper} used to encode/decode JSON data.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Bean
 @Wrapper

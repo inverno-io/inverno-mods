@@ -19,12 +19,35 @@ import java.net.URI;
 import java.util.concurrent.ExecutorService;
 
 /**
- * @author jkuhn
+ * <p>
+ * A resource provider providing async resources.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @see ResourceProvider
+ * @see AsyncResource
+ * 
+ * @param <A> the type of the provided resource 
  */
 public interface AsyncResourceProvider<A extends AsyncResource> extends ResourceProvider<A> {
 
-	default A getResource(URI uri, ExecutorService executor) throws IllegalArgumentException, ResourceException {
+	/**
+	 * <p>
+	 * Creates an async resource with the specified URI and executor service.
+	 * </p>
+	 * 
+	 * @param uri      a URI
+	 * @param executor an executor service
+	 * 
+	 * @return an async resource
+	 * @throws NullPointerException     if the specified URI is null
+	 * @throws IllegalArgumentException if the specified URI does not point to a
+	 *                                  valid async resource
+	 * @throws ResourceException        if there was an error creating the resource
+	 */
+	default A getResource(URI uri, ExecutorService executor) throws NullPointerException, IllegalArgumentException, ResourceException {
 		A resource = this.getResource(uri);
 		resource.setExecutor(executor);
 		return resource;

@@ -25,8 +25,12 @@ import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.base.converter.StringConverter;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Module's parameter value converter socket.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Bean( name = "parameterConverter", visibility = Visibility.PRIVATE )
 @Wrapper

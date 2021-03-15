@@ -20,10 +20,22 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.spi.FileTypeDetector;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A generic {@link MediaTypeService} implementation.
+ * </p>
+ * 
+ * <p>
+ * This implementation relies on the installed {@link FileTypeDetector}
+ * implementation to determine the media type of a file.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Files#probeContentType(Path)
  */
 public class GenericMediaTypeService implements MediaTypeService {
 

@@ -28,8 +28,14 @@ import io.winterframework.core.compiler.spi.BeanQualifiedName;
 import io.winterframework.core.compiler.spi.ReporterInfo;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link ConfigurationInfo} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationInfo
  */
 class GenericConfigurationInfo extends AbstractInfo<BeanQualifiedName> implements ConfigurationInfo {
 

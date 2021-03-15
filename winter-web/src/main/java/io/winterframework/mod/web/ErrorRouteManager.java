@@ -19,16 +19,73 @@ import io.winterframework.mod.http.server.ErrorExchange;
 import io.winterframework.mod.http.server.ErrorExchangeHandler;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * An error route manager is used to manage the routes of an error router. It is
+ * created by an error router and allows to define, enable, disable, remove and
+ * find error routes in an error router.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ErrorExchange
+ * @see ErrorRoute
+ * @see ErrorRouter
  */
 public interface ErrorRouteManager extends AbstractRouteManager<ErrorExchange<Throwable>, ErrorRouter, ErrorRouteManager, ErrorRoute, ErrorExchange<Throwable>> {
 
+	/**
+	 * <p>
+	 * Specifies the route error exchange handler.
+	 * </p>
+	 *
+	 * <p>
+	 * This method basically appends the route specified in the error route manager
+	 * to the error router it comes from.
+	 * </p>
+	 * 
+	 * @param handler the route error exchange handler
+	 * 
+	 * @return the router
+	 */
 	ErrorRouter handler(ErrorExchangeHandler<? extends Throwable> handler);
 	
-	ErrorRouteManager error(Class<? extends Throwable> error) throws IllegalArgumentException;
+	/**
+	 * <p>
+	 * Specifies the type of errors accepted by the error route.
+	 * </p>
+	 * 
+	 * @param error a type of error
+	 * 
+	 * @return the error route manager
+	 * 
+	 * @see ErrorAwareRoute
+	 */
+	ErrorRouteManager error(Class<? extends Throwable> error);
 	
+	/**
+	 * <p>
+	 * Specifies the media type of the resource served by the error route.
+	 * </p>
+	 * 
+	 * @param mediaType a media type
+	 * 
+	 * @return the error route manager
+	 * 
+	 * @see AcceptAwareRoute
+	 */
 	ErrorRouteManager produces(String mediaType);
 	
+	/**
+	 * <p>
+	 * Specifies the language of the resource served by the error route.
+	 * </p>
+	 * 
+	 * @param language a language tag
+	 * 
+	 * @return the error route manager
+	 * 
+	 * @see AcceptAwareRoute
+	 */
 	ErrorRouteManager language(String language);
 }

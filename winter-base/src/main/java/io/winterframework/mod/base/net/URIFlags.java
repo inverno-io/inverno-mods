@@ -15,32 +15,64 @@
  */
 package io.winterframework.mod.base.net;
 
+import io.winterframework.mod.base.net.URIs.Option;
+
 /**
- * @author jkuhn
- *
+ * <p>
+ * URI flags providing bindings to the options specified when creating a URI
+ * builder.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see URIs.Option
+ * @see URIBuilder
  */
 class URIFlags {
 
 	private boolean normalized;
-	
+
 	private boolean parameterized;
-	
+
+	/**
+	 * <p>
+	 * Creates URI flags from the specified list of options.
+	 * </p>
+	 * 
+	 * @param options a list of options
+	 */
 	public URIFlags(URIs.Option... options) {
-		for(URIs.Option option : options) {
-			switch(option) {
-				case NORMALIZED: this.normalized = true;
-					break;
-				case PARAMETERIZED: this.parameterized = true;
-					break;
-				default: throw new IllegalArgumentException("Unsupported option: " + option);
+		for (URIs.Option option : options) {
+			switch (option) {
+			case NORMALIZED:
+				this.normalized = true;
+				break;
+			case PARAMETERIZED:
+				this.parameterized = true;
+				break;
+			default:
+				throw new IllegalArgumentException("Unsupported option: " + option);
 			}
 		}
 	}
 
+	/**
+	 * <p>
+	 * Returns when the {@link Option#NORMALIZED} was specified.
+	 * 
+	 * @return true if the normalized option is enabled, false otherwise
+	 */
 	public boolean isNormalized() {
 		return normalized;
 	}
-	
+
+	/**
+	 * <p>
+	 * Returns when the {@link Option#PARAMETERIZED} was specified.
+	 * 
+	 * @return true if the parameterized option is enabled, false otherwise
+	 */
 	public boolean isParameterized() {
 		return parameterized;
 	}

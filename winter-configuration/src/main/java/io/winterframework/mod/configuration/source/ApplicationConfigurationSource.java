@@ -24,17 +24,81 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A configuration source that considers multiple local sources to load the
+ * configuration of an application.
+ * </p>
+ * 
+ * <p>
+ * It resolves configuration properties from the following sources in that
+ * order:
+ * </p>
+ * 
+ * <ul>
+ *   <li>command line arguments</li>
+ *   <li>system properties</li>
+ *   <li>system environment variables</li>
+ *   <li>a {@code configuration.cprops} configuration properties file if present
+ * in the {@code ./config/} directory </li>
+ *   <li>a {@code configuration.cprops} configuration properties file if present
+ * in the application module</li>
+ * </ul>
+ * 
+ * <p>
+ * This source is typically created in a {@code main} method to load the
+ * application configuration at startup.
+ * </p>
+ * 
+ * <blockquote>
+ * 
+ * <pre>
+ * public class Application {
+ * 
+ *     public static void main(String[] args) {
+ *         ApplicationConfigurationSource source = new ApplicationConfigurationSource(App.class.getModule(), args);
+ *         
+ *         // Load configuration
+ *         ApplicationConfiguration configuration = ConfigurationLoader
+ *             .withConfiguration(ApplicationConfiguration.class)
+ *             .withSource(source)
+ *             .load()
+ *             .block();
+ * 
+ *         // Start the application with the configuration
+ *         ...
+ *     }
+ * }
+ * </pre>
+ * 
+ * </blockquote>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see CompositeConfigurationSource
+ * @see CommandLineConfigurationSource
+ * @see SystemPropertiesConfigurationSource
+ * @see SystemEnvironmentConfigurationSource
+ * @see CPropsFileConfigurationSource
  */
 public class ApplicationConfigurationSource extends CompositeConfigurationSource {
 
+	/**
+	 * <p>
+	 * Creates an application configuration source for the specified application
+	 * module and with the specified command line arguments.
+	 * </p>
+	 * 
+	 * @param module the application module
+	 * @param args   the command line arguments
+	 * @throws IOException if something goes wrong creating the configuration source
+	 */
 	public ApplicationConfigurationSource(Module module, String... args) throws IOException {
 		super(Stream.of(new CommandLineConfigurationSource(args),
 				new SystemPropertiesConfigurationSource(),
 				new SystemEnvironmentConfigurationSource(),
-				Optional.of(Paths.get("config", "configuration.cprops")).filter(Files::exists).map(ConfigurationPropertyFileConfigurationSource::new).orElse(null),
-				Optional.of(module.getResourceAsStream("configuration.cprops")).filter(Objects::nonNull).map(ConfigurationPropertyFileConfigurationSource::new).orElse(null)
+				Optional.of(Paths.get("config", "configuration.cprops")).filter(Files::exists).map(CPropsFileConfigurationSource::new).orElse(null),
+				Optional.of(module.getResourceAsStream("configuration.cprops")).filter(Objects::nonNull).map(CPropsFileConfigurationSource::new).orElse(null)
 		).filter(Objects::nonNull).collect(Collectors.toList()));
 	}
 }

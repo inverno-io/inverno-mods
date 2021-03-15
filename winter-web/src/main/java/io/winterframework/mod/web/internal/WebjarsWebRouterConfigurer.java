@@ -21,13 +21,27 @@ import java.net.URISyntaxException;
 import io.winterframework.mod.base.resource.ResourceService;
 import io.winterframework.mod.http.base.Method;
 import io.winterframework.mod.web.StaticHandler;
+import io.winterframework.mod.web.WebConfiguration;
 import io.winterframework.mod.web.WebExchange;
 import io.winterframework.mod.web.WebRouter;
 import io.winterframework.mod.web.WebRouterConfigurer;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Web router configurer used to configure routes to WebJars resources deployed
+ * in the classpath.
+ * </p>
+ * 
+ * <p>
+ * When activated in the {@link WebConfiguration#enable_webjars() web module
+ * configuration}, this configurer defines as many routes as there are webjars
+ * defined on the classpath. It assumes a webjar provides static content under <code>/META-INF/resources/webjars/{@literal <name>}/{@literal <version>}</code> as defined by <a href="https://www.webjars.org">WebJars</a>.
+ * </p>
+ * 
+ * <p>For instance assuming {@code example-webjar} is on the classpath in version {@code 1.2.3}, its resource can be accessed at {@code /webjars/example-webjar/*}.</p> 
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<WebExchange> {
 
@@ -35,6 +49,13 @@ public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 	
 	private final ResourceService resourceService;
 	
+	/**
+	 * <p>
+	 * Creates a WebJars web router configurer with the specified resource service.
+	 * </p>
+	 * 
+	 * @param resourceService the resource service
+	 */
 	public WebjarsWebRouterConfigurer(ResourceService resourceService) {
 		this.resourceService = resourceService;
 	}

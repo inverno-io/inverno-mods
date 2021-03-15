@@ -16,10 +16,29 @@
 package io.winterframework.mod.configuration.compiler.spi;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A nested configuration property info describes a configuration property
+ * nested in another configuration property (that can itself be nested).
+ * </p>
+ * 
+ * <p>
+ * Note that the type of a nested property info must be a configuration type and
+ * therefore correspond to a configuration info.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationPropertyInfo
  */
 public interface NestedConfigurationPropertyInfo extends ConfigurationPropertyInfo {
 
+	/**
+	 * <p>
+	 * Returns the configuration info defining the nested property.
+	 * </p>
+	 * 
+	 * @return a configuration info
+	 */
 	ConfigurationInfo getConfiguration();
 }

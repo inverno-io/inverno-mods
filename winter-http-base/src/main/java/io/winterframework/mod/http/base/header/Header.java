@@ -16,12 +16,36 @@
 package io.winterframework.mod.http.base.header;
 
 /**
- * @author jkuhn
- *
+ * <p>Base HTTP header interface defining common HTTP header.</p>  
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Headers
+ * @see HeaderBuilder
+ * @see HeaderCodec
  */
 public interface Header {
 
+	/**
+	 * <p>
+	 * Returns the header's name.
+	 * </p>
+	 * 
+	 * <p>
+	 * A header name is always in lower case.
+	 * </p>
+	 * 
+	 * @return a header name
+	 */
 	String getHeaderName();
-	
+
+	/**
+	 * <p>
+	 * Returns header's raw value.
+	 * </p>
+	 * 
+	 * @return a raw header value
+	 */
 	String getHeaderValue();
 }

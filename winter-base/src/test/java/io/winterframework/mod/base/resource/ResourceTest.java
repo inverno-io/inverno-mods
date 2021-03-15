@@ -179,7 +179,7 @@ public class ResourceTest {
 	
 	@Test
 	public void testUrl() throws URISyntaxException {
-		try (Resource resource = new UrlResource(new File("src/test/resources/test.txt").toURI())) {
+		try (Resource resource = new URLResource(new File("src/test/resources/test.txt").toURI())) {
 			resource.openReadableByteChannel().ifPresent(ch -> {
 				try (ByteArrayOutputStream out = new ByteArrayOutputStream();
 					ch;) {
@@ -267,7 +267,7 @@ public class ResourceTest {
 	
 	@Test
 	public void testUrlRead() throws IllegalArgumentException {
-		try (Resource resource = new UrlResource(new File("src/test/resources/test.txt").toURI())) {
+		try (Resource resource = new URLResource(new File("src/test/resources/test.txt").toURI())) {
 			String content = resource.read().get()
 				.map(chunk -> {
 					String s = chunk.toString(Charset.defaultCharset());
@@ -291,7 +291,7 @@ public class ResourceTest {
         fakeFtpServer.setFileSystem(fileSystem);
         fakeFtpServer.start();
         
-        try (Resource resource = new UrlResource(new URI(String.format("ftp://user:password@localhost:%d/test.txt", fakeFtpServer.getServerControlPort())))) {
+        try (Resource resource = new URLResource(new URI(String.format("ftp://user:password@localhost:%d/test.txt", fakeFtpServer.getServerControlPort())))) {
 			int bytesWritten = resource.write(Flux.just(Unpooled.copiedBuffer("This is a write test", Charset.defaultCharset()))).get().collect(Collectors.summingInt(Integer::intValue)).block();
 			Assertions.assertEquals(20, bytesWritten);
 			Assertions.assertTrue(fileSystem.exists("/data/test.txt"));

@@ -19,8 +19,16 @@ import java.nio.charset.Charset;
 import java.util.function.Predicate;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A URI component representing the host part of an URI as defined by
+ * <a href="https://tools.ietf.org/html/rfc3986#section-3.1">RFC 3986 Section
+ * 3.1</a>.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ParameterizedURIComponent
  */
 class SchemeComponent extends AbstractParameterizedURIComponent {
 	
@@ -28,6 +36,15 @@ class SchemeComponent extends AbstractParameterizedURIComponent {
 		return Character.isLetterOrDigit(b) || b == '+' || b == '-' || b == '.';
 	};
 	
+	/**
+	 * <p>
+	 * Creates a scheme component with the specified flags, charset and raw value.
+	 * </p>
+	 * 
+	 * @param flags    URI flags
+	 * @param charset  a charset
+	 * @param rawValue a raw value
+	 */
 	public SchemeComponent(URIFlags flags, Charset charset, String rawValue) {
 		super(flags, charset, rawValue, null, ALLOWED_CHARACTERS);
 	}

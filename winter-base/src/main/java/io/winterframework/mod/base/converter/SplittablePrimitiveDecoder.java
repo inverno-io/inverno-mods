@@ -16,8 +16,15 @@
 package io.winterframework.mod.base.converter;
 
 /**
- * @author jkuhn
- *
+ * <p>An object decoder which is splittable  with primitive decoding bindings.</p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see SplittableDecoder
+ * @see PrimitiveDecoder
+ * 
+ * @param <From> the encoded type
  */
 public interface SplittablePrimitiveDecoder<From> extends PrimitiveDecoder<From>, SplittableDecoder<From, Object> {
 

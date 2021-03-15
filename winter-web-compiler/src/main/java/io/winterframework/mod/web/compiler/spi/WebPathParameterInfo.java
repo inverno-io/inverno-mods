@@ -16,8 +16,12 @@
 package io.winterframework.mod.web.compiler.spi;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Describes a path parameter in a route.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public interface WebPathParameterInfo extends WebBasicParameterInfo {
 

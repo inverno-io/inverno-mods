@@ -40,28 +40,131 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A composite configuration source that uses multiple configuration sources to
+ * resolve configuration properties.
+ * </p>
+ * 
+ * <p>
+ * A composite configuration source uses a
+ * {@link CompositeConfigurationStrategy} to determine the best matching value
+ * among the different sources for a given query.
+ * </p>
+ * 
+ * <p>
+ * This allows to define priorities to the configuration sources so that if two
+ * sources define a value for a given property the value of the source with the
+ * highest priority is chosen. It also allows to implement more complex
+ * resolving strategies to determine the best matching value whose key does not
+ * necessarily exactly match the query. This is especially usefull when one
+ * needs to define a base configuration and customize it based on a context
+ * given by configuration parameters.
+ * </p>
+ * 
+ * <p>
+ * A composite configuration source queries its sources in sequence.
+ * </p>
+ * 
+ * <p>
+ * At each rounds, the actual queries executed on the source are populated by
+ * the strategy (@see
+ * {@link CompositeConfigurationStrategy#populateSourceQuery(ConfigurationKey, ConfigurationQuery, ConfigurationProperty)})
+ * so that multiple queries can actually be requested for a single original
+ * query to the composite source.
+ * </p>
+ * 
+ * <p>
+ * It then retains the first non-empty result that supersedes the one resolved
+ * in previous rounds for that original query (see @link
+ * {@link CompositeConfigurationStrategy#isSuperseded(ConfigurationKey, ConfigurationProperty, ConfigurationProperty)}}.
+ * </p>
+ * 
+ * <p>
+ * A property value is retained and the sequence stops when the query is
+ * considered as resolved according to the strategy (see
+ * {@link CompositeConfigurationStrategy#isResolved(ConfigurationKey, ConfigurationProperty)})
+ * or if there's no more source to query.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationSource
+ * @see CompositeConfigurationStrategy
  */
 public class CompositeConfigurationSource implements ConfigurationSource<CompositeConfigurationSource.CompositeConfigurationQuery, CompositeConfigurationSource.CompositeExecutableConfigurationQuery, CompositeConfigurationSource.CompositeConfigurationQueryResult> {
 
+	/**
+	 * The configuration sources.
+	 */
 	protected List<ConfigurationSource<?,?,?>> sources;
 	
 	private CompositeConfigurationStrategy strategy;
 	
-	public CompositeConfigurationSource(List<ConfigurationSource<?,?,?>> sources) {
-		this.sources = sources != null ? sources.stream().filter(Objects::nonNull).collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList)) : List.of();
-		this.strategy = new DefaultCompositeConfigurationStrategy();
+	/**
+	 * <p>
+	 * Creates a composite configuration query with the specified list of sources using the default strategy.
+	 * </p>
+	 * 
+	 * @param sources a list of configuration sources
+	 * 
+	 * @throws NullPointerException if the specified strategy is null
+	 * 
+	 * @see DefaultCompositeConfigurationStrategy
+	 */
+	public CompositeConfigurationSource(List<ConfigurationSource<?,?,?>> sources) throws NullPointerException {
+		this(sources, new DefaultCompositeConfigurationStrategy());
 	}
 	
+	/**
+	 * <p>
+	 * Creates a composite configuration query with the specified list of sources
+	 * using the specified strategy.
+	 * </p>
+	 * 
+	 * @param sources  a list of configuration sources
+	 * @param strategy a composite configuration strategy
+	 * 
+	 * @throws NullPointerException if the specified strategy is null
+	 * 
+	 * @see CompositeConfigurationStrategy
+	 */
+	public CompositeConfigurationSource(List<ConfigurationSource<?,?,?>> sources, CompositeConfigurationStrategy strategy) throws NullPointerException {
+		this.sources = sources != null ? sources.stream().filter(Objects::nonNull).collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList)) : List.of();
+		this.strategy = Objects.requireNonNull(strategy, "strategy");
+	}
+	
+	/**
+	 * <p>
+	 * Returns the list of configuration sources.
+	 * </p>
+	 * 
+	 * @return a list of configuration sources
+	 */
 	public List<ConfigurationSource<?, ?, ?>> getSources() {
 		return sources;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the composite configuration strategy.
+	 * </p>
+	 * 
+	 * @return the composite configuration strategy
+	 */
 	public CompositeConfigurationStrategy getStrategy() {
 		return strategy;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the composite configuration strategy.
+	 * </p>
+	 * 
+	 * @param strategy a strategy
+	 * 
+	 * @throws NullPointerException if the strategy is null
+	 */
 	public void setStrategy(CompositeConfigurationStrategy strategy) throws NullPointerException {
 		if(strategy == null) {
 			throw new NullPointerException("Strategy can't be null");
@@ -158,6 +261,16 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The configuration query used by the composite configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ConfigurationQuery
+	 */
 	public static class CompositeConfigurationQuery implements ConfigurationQuery<CompositeConfigurationQuery, CompositeExecutableConfigurationQuery, CompositeConfigurationQueryResult> {
 
 		private CompositeExecutableConfigurationQuery executableQuery;
@@ -182,6 +295,16 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The executable configuration query used by the composite configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ExecutableConfigurationQuery
+	 */
 	public static class CompositeExecutableConfigurationQuery implements ExecutableConfigurationQuery<CompositeConfigurationQuery, CompositeExecutableConfigurationQuery, CompositeConfigurationQueryResult> {
 
 		private CompositeConfigurationSource source;
@@ -250,6 +373,16 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The configuration query result returned by a composite configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ConfigurationQueryResult
+	 */
 	public static class CompositeConfigurationQueryResult extends GenericConfigurationQueryResult<ConfigurationKey, ConfigurationProperty<?, ?>> {
 
 		private CompositeConfigurationStrategy strategy;
@@ -294,11 +427,11 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 				} 
 				catch (ConfigurationSourceException e) {
 					// We have two choices:
-					// - set the a failed query result which can possibly be overridden by subsequent sources
+					// - set the failed query result which can possibly be overridden by subsequent sources
 					// - report the failure and resume the defaulting mechanism 
 					// The issue is that we don't know whether the error is related to an invalid value or an unreachable configuration source, in the latter case, we can't assume 
 					// We should delegate this to the strategy so it can decide what to do
-					// if the strategy does not ignore failure then if an error occur the result is set to fail otherwise the failed result is ingored and the process continue 
+					// if the strategy does not ignore failure then if an error occurs the result is set to fail otherwise the failed result is ignored and the process continue 
 					if(!this.strategy.ignoreFailure(e)) {
 						this.error = e.getCause();
 						this.errorSource = e.getSource();

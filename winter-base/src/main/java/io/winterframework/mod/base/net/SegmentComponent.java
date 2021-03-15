@@ -27,8 +27,16 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A URI component representing a segment part of a path in a URI as defined by
+ * <a href="https://tools.ietf.org/html/rfc3986#section-3.3">RFC 3986 Section
+ * 3.3</a>.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ParameterizedURIComponent
  */
 class SegmentComponent implements ParameterizedURIComponent {
 
@@ -50,6 +58,15 @@ class SegmentComponent implements ParameterizedURIComponent {
 	private String pattern;
 	private List<String> patternGroupNames;
 	
+	/**
+	 * <p>
+	 * Creates a segment component with the specified flags, charset and raw value.
+	 * </p>
+	 * 
+	 * @param flags    URI flags
+	 * @param charset  a charset
+	 * @param rawValue a raw value
+	 */
 	public SegmentComponent(URIFlags flags, Charset charset, String rawValue) {
 		this(flags, charset, rawValue, false);
 	}
@@ -112,6 +129,25 @@ class SegmentComponent implements ParameterizedURIComponent {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Returns a list of segment components contained in the specified path
+	 * considering heading and trailing slashes or not.
+	 * </p>
+	 * 
+	 * <p>
+	 * When heading and/or trailing are not ignored, empty segment components are
+	 * added to to the resulting list.
+	 * </p>
+	 * 
+	 * @param flags               URI flags
+	 * @param charset             a charset
+	 * @param path                a path
+	 * @param ignoreHeadingSlash  true to ignore heading slash
+	 * @param ignoreTrailingSlash true to ignore trailing slash
+	 * 
+	 * @return a list of segment components or an empty list
+	 */
 	public static List<SegmentComponent> fromPath(URIFlags flags, Charset charset, String path, boolean ignoreHeadingSlash, boolean ignoreTrailingSlash) {
 		LinkedList<SegmentComponent> segments = new LinkedList<>();
 		if(StringUtils.isNotBlank(path)) {
@@ -241,7 +277,27 @@ class SegmentComponent implements ParameterizedURIComponent {
 		return this.getValue(values, true);
 	}
 	
-	public String getValue(Object[] values, boolean escapeSlash) {
+	/**
+	 * <p>
+	 * Returns the segment component value after replacing the parameters with the
+	 * string representation of the specified values escaping or not slash it might
+	 * contain.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that the resulting value is percent encoded as defined by
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section
+	 * 2.1</a>.
+	 * </p>
+	 * 
+	 * @param values      an array of values to replace the component's parameters
+	 * @param escapeSlash true to escape the slash contained in the segment
+	 * 
+	 * @return the segment value
+	 * @throws IllegalArgumentException if there's not enough values to replace all
+	 *                                  parameters
+	 */
+	public String getValue(Object[] values, boolean escapeSlash) throws IllegalArgumentException {
 		if(this.parameters.isEmpty()) {
 			return URIs.encodeURIComponent(this.rawValue, SegmentComponent.ESCAPED_CHARACTERS_SLASH, this.charset);
 		}
@@ -268,7 +324,26 @@ class SegmentComponent implements ParameterizedURIComponent {
 		return result.toString();
 	}
 	
-	public String getValue(Map<String, ?> values, boolean escapeSlash) {
+	/**
+	 * <p>
+	 * Returns the segment component value after replacing the parameters with the
+	 * string representation of the specified values escaping or not slash it might
+	 * contain.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that the resulting value is percent encoded as defined by
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section
+	 * 2.1</a>.
+	 * </p>
+	 * 
+	 * @param values      a map of values to replace the component's parameters
+	 * @param escapeSlash true to escape the slash contained in the segment
+	 * 
+	 * @return the segment value
+	 * @throws IllegalArgumentException if there are missing values
+	 */
+	public String getValue(Map<String, ?> values, boolean escapeSlash) throws IllegalArgumentException {
 		if(this.parameters.isEmpty()) {
 			return URIs.encodeURIComponent(this.rawValue, SegmentComponent.ESCAPED_CHARACTERS_SLASH, this.charset);
 		}

@@ -1,3 +1,7 @@
+import io.winterframework.mod.web.WebRouterConfigurer;
+import io.winterframework.mod.web.annotation.WebController;
+import io.winterframework.mod.web.annotation.WebRoutes;
+
 /*
  * Copyright 2020 Jeremy KUHN
  *
@@ -15,15 +19,28 @@
  */
 
 /**
+ * <p>
+ * The Winter framework web compiler module provides a Winter compiler plugin to
+ * generate a {@link WebRouterConfigurer} implementation that aggregates all web
+ * controller beans and web router configurer beans defined in the module.
+ * </p>
  * 
- * @author jkuhn
- *
+ * <p>
+ * This generated web router configurer bean can then be used to configure the
+ * web router of a web module instance.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebController
+ * @see WebRoutes
  */
 module io.winterframework.mod.web.compiler {
-	requires io.winterframework.core.compiler;
+	requires transitive io.winterframework.core.compiler;
 	
 	requires io.winterframework.mod.base;
-	requires io.winterframework.mod.http.base;
+	requires transitive io.winterframework.mod.http.base;
 	requires io.winterframework.mod.http.server;
 	requires io.winterframework.mod.web;
 	

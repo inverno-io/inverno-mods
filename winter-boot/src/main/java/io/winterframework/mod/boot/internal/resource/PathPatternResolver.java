@@ -26,25 +26,101 @@ import java.util.stream.Stream;
 import io.winterframework.mod.base.resource.ResourceException;
 
 /**
- * @author jkuhn
+ * <p>
+ * A path pattern resolvers which can resolve paths matching a given path
+ * pattern from a base path.
+ * </p>
+ * 
+ * <p>Paths are resolved using the following rules:</p>
+ * <ul>
+ *   <li>? matches one character</p>
+ *   <li>* matches zero or more characters</p>
+ *   <li>* matches zero or more characters</p>
+ *   <li>** matches zero or more directories in a path</p>
+ * </ul>
+ * 
+ * <p>For instance:</p>
+ * 
+ * <pre><blockquote>
+ * // Returns: /base/test1/a, /base/test1/a/b, /base/test2/c...
+ * Stream<Path> paths = PathPatternResolver.resolve(Paths.get("/test?/{@literal **}/*"), Paths.get("/base"));
+ * </blockquote></pre>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 final class PathPatternResolver {
 	
 	private PathPatternResolver() {}
 	
+	/**
+	 * <p>
+	 * Resolves paths against the specified path pattern.
+	 * </p>
+	 * 
+	 * <p>
+	 * The base path is deduced from the path pattern: if it is absolute, the base
+	 * path is the root directory (ie. <code>'/'</code>), otherwise it is the
+	 * current directory (ie. <code>'./'</code>).
+	 * </p>
+	 * 
+	 * @param pathPattern a path pattern
+	 * 
+	 * @return a stream of paths
+	 */
 	public static Stream<Path> resolve(Path pathPattern) {
 		return resolve(pathPattern, null, Function.identity());
 	}
-	
+
+	/**
+	 * <p>
+	 * Resolves paths against the specified path pattern mapping resolved paths
+	 * using the specified mapper.
+	 * </p>
+	 * 
+	 * <p>
+	 * The base path is deduced from the path pattern: if it is absolute, the base
+	 * path is the root directory (ie. <code>'/'</code>), otherwise it is the
+	 * current directory (ie. <code>'./'</code>).
+	 * </p>
+	 * 
+	 * @param <T>         the type of object returned by the mapper
+	 * @param pathPattern a path pattern
+	 * @param mapper      a path mapper
+	 * 
+	 * @return a stream of T
+	 */
 	public static <T> Stream<T> resolve(Path pathPattern, Function<? super Path, ? extends T> mapper) {
 		return resolve(pathPattern, null, mapper);
 	}
-
+	
+	/**
+	 * <p>
+	 * Resolves paths against the specified path pattern from the specified base path.
+	 * </p>
+	 * 
+	 * @param pathPattern a path pattern
+	 * @param basePath a base path
+	 * 
+	 * @return a stream of paths
+	 */
 	public static Stream<Path> resolve(Path pathPattern, Path basePath) {
 		return resolve(pathPattern, basePath, Function.identity());
 	}
 	
+	/**
+	 * <p>
+	 * Resolves paths against the specified path pattern from the specified base
+	 * path mapping resolved paths using the specified mapper.
+	 * </p>
+	 * 
+	 * @param <T>         the type of object returned by the mapper
+	 * @param pathPattern a path pattern
+	 * @param basePath    a base path
+	 * @param mapper      a path mapper
+	 * 
+	 * @return a stream of T
+	 */
 	public static <T> Stream<T> resolve(Path pathPattern, Path basePath, Function<? super Path, ? extends T> mapper) {
 		Objects.requireNonNull(pathPattern, "path");
 		if(basePath == null) {
@@ -121,20 +197,7 @@ final class PathPatternResolver {
 								else {
 									return resolve(subPath, nextPath, mapper);
 								}
-								
-								/*try {
-									if(!Files.isDirectory(nextPath) || Files.list(nextPath).count() == 0) {
-										return Stream.of(mapper.apply(nextPath));
-									}
-									else {
-										return resolve(subPath, nextPath, mapper);
-									}
-								} 
-								catch (IOException e) {
-									throw new ResourceException("Error resolving paths from pattern: " + pathPattern, e);
-								}*/
 							}
-							
 						}
 						else if(Files.isDirectory(nextPath)) {
 							return resolve(subPath, nextPath, mapper);

@@ -18,31 +18,80 @@ package io.winterframework.mod.web;
 import io.winterframework.mod.http.base.BadRequestException;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Thrown to indicates that a required parameter is missing to process the
+ * request.
+ * </p>
+ * 
+ * <p>
+ * The missing parameter could be any kind of request parameters: a query
+ * parameter, a header, a cookie, path parameter...
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class MissingRequiredParameterException extends BadRequestException {
 
 	private static final long serialVersionUID = -1193466181199257037L;
 
+	/**
+	 * The name of the missing parameter
+	 */
 	private String parameterName;
 	
+	/**
+	 * <p>
+	 * Creates a missing required parameter exception.
+	 * </p>
+	 */
 	public MissingRequiredParameterException() {
 	}
-
+	
+	/**
+	 * <p>
+	 * Creates a missing required parameter exception for the specified parameter
+	 * name.
+	 * </p>
+	 * 
+	 * @param parameterName the name of the missing parameter
+	 */
 	public MissingRequiredParameterException(String parameterName) {
 		super("Missing required parameter: " + parameterName);
 		this.parameterName = parameterName;
 	}
 	
+	/**
+	 * <p>
+	 * Creates a missing required parameter exception with the specified cause.
+	 * </p>
+	 * 
+	 * @param cause the cause
+	 */
 	public MissingRequiredParameterException(Throwable cause) {
 		super(cause);
 	}
 
-	public MissingRequiredParameterException(String message, Throwable cause) {
-		super(message, cause);
+	/**
+	 * <p>
+	 * Creates a missing required parameter exception with the specified parameter
+	 * name and cause.
+	 * </p>
+	 * 
+	 * @param parameterName the name of the missing parameter
+	 * @param cause         the cause
+	 */
+	public MissingRequiredParameterException(String parameterName, Throwable cause) {
+		super("Missing required parameter: " + parameterName, cause);
 	}
 	
+	/**
+	 * <p>
+	 * Returns the name of the missing parameter.
+	 * </p>
+	 * 
+	 * @return the missing parameter name or null
+	 */
 	public String getParameterName() {
 		return parameterName;
 	}

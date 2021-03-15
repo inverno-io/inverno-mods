@@ -16,26 +16,41 @@
 package io.winterframework.mod.http.base.header;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base implementation for {@link HeaderBuilder}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see HeaderBuilder
+ * 
+ * @param <A> the header type
+ * @param <B> the header builder type
  */
 public abstract class AbstractHeaderBuilder<A extends Header, B extends AbstractHeaderBuilder<A, B>> implements HeaderBuilder<A, B> {
 
+	/**
+	 * The header name.
+	 */
 	protected String headerName;
 	
+	/**
+	 * The header value.
+	 */
 	protected String headerValue;
-	
+
 	@SuppressWarnings("unchecked")
+	@Override
 	public B headerName(String headerName) {
 		this.headerName = headerName;
 		return (B)this;
 	}
 	
 	@SuppressWarnings("unchecked")
+	@Override
 	public B headerValue(String headerValue) {
 		this.headerValue= headerValue;
 		return (B)this;
 	}
-	
-	public abstract A build();
 }

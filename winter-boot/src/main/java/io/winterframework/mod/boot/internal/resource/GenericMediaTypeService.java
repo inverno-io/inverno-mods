@@ -27,10 +27,16 @@ import io.winterframework.mod.base.resource.MediaTypeService;
 import io.winterframework.mod.base.resource.ResourceException;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link MediaTypeService} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see MediaTypeService
  */
-@Bean(name = "mediaService")
+@Bean(name = "mediaTypeService")
 public class GenericMediaTypeService implements @Provide MediaTypeService {
 
 	@Override

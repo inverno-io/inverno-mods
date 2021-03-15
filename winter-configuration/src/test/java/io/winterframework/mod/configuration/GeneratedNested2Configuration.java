@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class GeneratedNested2Configuration implements Nested2Configuration {

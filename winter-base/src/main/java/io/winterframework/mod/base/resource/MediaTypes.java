@@ -16,30 +16,67 @@
 package io.winterframework.mod.base.resource;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A collection of well known media types.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public final class MediaTypes {
-	
+
+	/**
+	 * {@code application/json}
+	 */
 	public static final String APPLICATION_JSON = "application/json";
 	
+	/**
+	 * {@code application/octet-stream}
+	 */
 	public static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
 
+	/**
+	 * {@code application/x-ndjson}
+	 */
 	public static final String APPLICATION_X_NDJSON = "application/x-ndjson";
 	
+	/**
+	 * {@code application/x-www-form-urlencoded}
+	 */
 	public static final String APPLICATION_X_WWW_FORM_URLENCODED = "application/x-www-form-urlencoded";
 	
+	/**
+	 * {@code application/xml}
+	 */
 	public static final String APPLICATION_XML = "application/xml";
 	
+	/**
+	 * {@code multipart/form-data}
+	 */
 	public static final String MULTIPART_FORM_DATA = "multipart/form-data";
 	
+	/**
+	 * {@code multipart/mixed}
+	 */
 	public static final String MULTIPART_MIXED = "multipart/mixed";
 	
+	/**
+	 * {@code text/event-stream}
+	 */
 	public static final String TEXT_EVENT_STREAM = "text/event-stream";
 	
+	/**
+	 * {@code text/html}
+	 */
 	public static final String TEXT_HTML = "text/html";
 	
+	/**
+	 * {@code text/plain}
+	 */
 	public static final String TEXT_PLAIN = "text/plain";
 	
+	/**
+	 * {@code text/xml}
+	 */
 	public static final String TEXT_XML = "text/xml";
 }

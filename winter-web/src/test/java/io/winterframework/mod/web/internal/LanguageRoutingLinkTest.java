@@ -33,7 +33,7 @@ import io.winterframework.mod.web.WebRoute;
 import io.winterframework.mod.web.internal.mock.MockWebExchange;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class LanguageRoutingLinkTest {

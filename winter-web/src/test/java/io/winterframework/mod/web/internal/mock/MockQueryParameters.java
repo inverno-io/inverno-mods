@@ -26,7 +26,7 @@ import io.winterframework.mod.http.base.Parameter;
 import io.winterframework.mod.http.server.QueryParameters;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class MockQueryParameters implements QueryParameters {

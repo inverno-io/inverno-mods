@@ -20,8 +20,12 @@ import io.winterframework.mod.http.server.Request;
 import io.winterframework.mod.http.server.Response;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base {@link ErrorExchange} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class GenericErrorExchange implements ErrorExchange<Throwable> {
 
@@ -29,6 +33,15 @@ public class GenericErrorExchange implements ErrorExchange<Throwable> {
 	private final AbstractResponse response;
 	private final Throwable error;
 	
+	/**
+	 * <p>
+	 * Creates an error exchange with the specified request, response and error.
+	 * </p>
+	 * 
+	 * @param request  the request
+	 * @param response the response
+	 * @param error    the error
+	 */
 	public GenericErrorExchange(AbstractRequest request, AbstractResponse response, Throwable error) {
 		this.request = request;
 		this.response = response;

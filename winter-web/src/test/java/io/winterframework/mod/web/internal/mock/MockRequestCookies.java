@@ -26,7 +26,7 @@ import io.winterframework.mod.http.base.header.CookieParameter;
 import io.winterframework.mod.http.server.RequestCookies;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class MockRequestCookies implements RequestCookies {

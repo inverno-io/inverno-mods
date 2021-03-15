@@ -49,8 +49,13 @@ import io.winterframework.mod.web.compiler.spi.WebSseEventFactoryParameterInfo;
 import io.winterframework.mod.web.compiler.spi.WebRequestBodyParameterInfo.RequestBodyKind;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A {@link WebRouterConfigurerInfoVisitor} implementation used to generates an
+ * Open API specification for the web controllers defined in a Winter module.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class WebRouterConfigurerOpenApiGenerator implements WebRouterConfigurerInfoVisitor<StringBuilder, WebRouterConfigurerOpenApiGenerationContext> {
 	

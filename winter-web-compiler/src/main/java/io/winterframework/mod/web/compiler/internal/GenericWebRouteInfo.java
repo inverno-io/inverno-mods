@@ -31,8 +31,14 @@ import io.winterframework.mod.web.compiler.spi.WebRouteInfo;
 import io.winterframework.mod.web.compiler.spi.WebRouteQualifiedName;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebRouteInfo} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractInfo
  */
 class GenericWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> implements WebRouteInfo {
 
@@ -56,6 +62,23 @@ class GenericWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> implements
 	
 	private final ExecutableElement element;
 	
+	/**
+	 * <p>
+	 * Creates a generic web route info.
+	 * </p>
+	 * 
+	 * @param element            the executable element of the route
+	 * @param name               the route qualified name
+	 * @param reporter           the route reporter
+	 * @param paths              the route paths
+	 * @param matchTrailingSlash true to match trailing slash, false otherwise
+	 * @param methods            the route methods
+	 * @param consumes           the route consumed media ranges
+	 * @param produces           the route produced media types
+	 * @param languages          the route produced languages
+	 * @param parameters         the route parameter info
+	 * @param responseBody       the route response body info
+	 */
 	public GenericWebRouteInfo(
 			ExecutableElement element,
 			WebRouteQualifiedName name, 
@@ -85,6 +108,17 @@ class GenericWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> implements
 		return this.controller;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the web controller in which the route is defined.
+	 * </p>
+	 * 
+	 * <p>
+	 * A web route defined in a provided web router configurer has no controller.
+	 * </p>
+	 * 
+	 * @param controller the route web controller
+	 */
 	public void setController(WebControllerInfo controller) {
 		this.controller = Optional.ofNullable(controller);
 	}

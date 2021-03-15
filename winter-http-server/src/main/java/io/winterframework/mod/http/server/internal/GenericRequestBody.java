@@ -29,8 +29,12 @@ import io.winterframework.mod.http.server.internal.multipart.MultipartDecoder;
 import reactor.core.publisher.Flux;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link RequestBody} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class GenericRequestBody implements RequestBody {
 	
@@ -44,6 +48,17 @@ public class GenericRequestBody implements RequestBody {
 	private MultipartDecoder<Parameter> urlEncodedBodyDecoder;
 	private MultipartDecoder<Part> multipartBodyDecoder;
 
+	/**
+	 * <p>
+	 * Creates a request body with the specified content type, url encoded body
+	 * decoder, multipart body decoder and payload data publisher.
+	 * </p>
+	 * 
+	 * @param contentType           the request content type
+	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
+	 * @param multipartBodyDecoder  the multipart/form-data body decoder
+	 * @param data                  the payload data publisher
+	 */
 	public GenericRequestBody(Optional<Headers.ContentType> contentType, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder, Flux<ByteBuf> data) {
 		this.contentType = contentType;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
@@ -86,10 +101,26 @@ public class GenericRequestBody implements RequestBody {
 		}
 	}
 
+	/**
+	 * <p>
+	 * Generic {@link RequestBody.UrlEncoded} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	private class GenericRequestBodyUrlEncodedData implements RequestBody.UrlEncoded {
 
 		private Publisher<Parameter> parameters;
 		
+		/**
+		 * <p>
+		 * Creates an application/x-www-form-urlencoded data consumer with the specified
+		 * source of parameters.
+		 * </p>
+		 * 
+		 * @param parameters the parameter publisher
+		 */
 		public GenericRequestBodyUrlEncodedData(Publisher<Parameter> parameters) {
 			this.parameters = parameters;
 		}
@@ -100,10 +131,25 @@ public class GenericRequestBody implements RequestBody {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Generic {@link RequestBody.Multipart} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	private class GenericRequestBodyMultipartData implements RequestBody.Multipart<Part> {
 
 		private Publisher<Part> parts;
 		
+		/**
+		 * <p>
+		 * Creates a multipart/form-data consumer with the specified source of parts.
+		 * </p>
+		 * 
+		 * @param parameters the parameter publisher
+		 */
 		public GenericRequestBodyMultipartData(Publisher<Part> parts) {
 			this.parts = parts;
 		}

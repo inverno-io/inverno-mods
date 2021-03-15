@@ -20,8 +20,14 @@ import java.lang.reflect.WildcardType;
 import java.util.Arrays;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * {@link WildcardType} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WildcardType
  */
 class WildcardTypeImpl implements WildcardType {
 
@@ -29,9 +35,11 @@ class WildcardTypeImpl implements WildcardType {
 	private final Type[] lowerBounds;
 
 	/**
+	 * <p>
 	 * Creates a wildcard type with the requested bounds. Note that the array
 	 * arguments are not cloned because instances of this class are never
 	 * constructed from outside the containing package.
+	 * </p>
 	 *
 	 * @param upperBounds the array of types representing the upper bound(s) of this
 	 *                    type variable
@@ -44,9 +52,11 @@ class WildcardTypeImpl implements WildcardType {
 	}
 
 	/**
+	 * <p>
 	 * Returns an array of {@link Type Type} objects representing the upper bound(s)
 	 * of this type variable. Note that if no upper bound is explicitly declared,
 	 * the upper bound is {@link Object Object}.
+	 * </p>
 	 *
 	 * @return an array of types representing the upper bound(s) of this type
 	 *         variable
@@ -56,10 +66,12 @@ class WildcardTypeImpl implements WildcardType {
 	}
 
 	/**
+	 * <p>
 	 * Returns an array of {@link Type Type} objects representing the lower bound(s)
 	 * of this type variable. Note that if no lower bound is explicitly declared,
 	 * the lower bound is the type of {@code null}. In this case, a zero length
 	 * array is returned.
+	 * </p>
 	 *
 	 * @return an array of types representing the lower bound(s) of this type
 	 *         variable
@@ -69,10 +81,12 @@ class WildcardTypeImpl implements WildcardType {
 	}
 
 	/**
+	 * <p>
 	 * Indicates whether some other object is "equal to" this one. It is implemented
 	 * compatibly with the JDK's
 	 * {@link sun.reflect.generics.reflectiveObjects.WildcardTypeImpl
 	 * WildcardTypeImpl}.
+	 * </p>
 	 *
 	 * @param object the reference object with which to compare
 	 * @return {@code true} if this object is the same as the object argument;
@@ -90,9 +104,11 @@ class WildcardTypeImpl implements WildcardType {
 	}
 
 	/**
+	 * <p>
 	 * Returns a hash code value for the object. It is implemented compatibly with
 	 * the JDK's {@link sun.reflect.generics.reflectiveObjects.WildcardTypeImpl
 	 * WildcardTypeImpl}.
+	 * </p>
 	 *
 	 * @return a hash code value for this object
 	 * @see sun.reflect.generics.reflectiveObjects.WildcardTypeImpl#hashCode
@@ -103,9 +119,11 @@ class WildcardTypeImpl implements WildcardType {
 	}
 
 	/**
+	 * <p>
 	 * Returns a string representation of the object. It is implemented compatibly
 	 * with the JDK's {@link sun.reflect.generics.reflectiveObjects.WildcardTypeImpl
 	 * WildcardTypeImpl}.
+	 * </p>
 	 *
 	 * @return a string representation of the object
 	 * @see sun.reflect.generics.reflectiveObjects.WildcardTypeImpl#toString

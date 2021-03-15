@@ -18,7 +18,7 @@ package io.winterframework.mod.configuration.internal.parser;
 import org.junit.jupiter.api.Test;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class ConfigurationPropertiesParserTest {

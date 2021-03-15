@@ -20,10 +20,27 @@ import io.winterframework.mod.http.base.header.Headers;
 import reactor.core.publisher.Flux;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base multipart payload decoder.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @param <A> the part type
  */
 public interface MultipartDecoder<A> {
 
+	/**
+	 * <p>
+	 * Decodes the specified payload data publisher formated according to the
+	 * specified content type.
+	 * </p>
+	 * 
+	 * @param data        the payload data publisher
+	 * @param contentType the payload content type
+	 * 
+	 * @return a part publisher
+	 */
 	Flux<A> decode(Flux<ByteBuf> data, Headers.ContentType contentType);
 }

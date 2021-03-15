@@ -17,11 +17,14 @@ package io.winterframework.mod.web.compiler.spi;
 
 import io.winterframework.core.compiler.spi.BeanQualifiedName;
 import io.winterframework.core.compiler.spi.ModuleQualifiedName;
-import io.winterframework.core.compiler.spi.QualifiedNameFormatException;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A qualified name identifying a web router configurer.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class WebRouterConfigurerQualifiedName extends BeanQualifiedName {
 
@@ -31,20 +34,53 @@ public class WebRouterConfigurerQualifiedName extends BeanQualifiedName {
 	
 	private final String className;
 	
-	public WebRouterConfigurerQualifiedName(ModuleQualifiedName moduleQName) throws QualifiedNameFormatException {
+	/**
+	 * <p>
+	 * Creates the web router configurer qualified name of the specified module
+	 * qualifed name.
+	 * </p>
+	 * 
+	 * @param moduleQName the module qualified name
+	 */
+	public WebRouterConfigurerQualifiedName(ModuleQualifiedName moduleQName) {
 		super(moduleQName, WEB_ROUTER_CONFIGURER_NAME);
 		this.className = this.getModuleQName().getSourcePackageName() + "." + WEB_ROUTER_CONFIGURER_CLASSNAME;
 	}
 	
-	public WebRouterConfigurerQualifiedName(BeanQualifiedName beanQName, String className) throws QualifiedNameFormatException {
+	/**
+	 * <p>
+	 * Creates a web router configurer qualified name with the specified bean
+	 * qualified name and class name.
+	 * </p>
+	 * 
+	 * @param beanQName the bean qualified name of the bean defining the web router
+	 *                  configurer
+	 * @param className the canonical class name of the class defining the web
+	 *                  router configurer
+	 */
+	public WebRouterConfigurerQualifiedName(BeanQualifiedName beanQName, String className) {
 		super(beanQName.getModuleQName(), beanQName.getBeanName());
 		this.className = className;
 	}
 	
-	public String getControllerName() {
+	/**
+	 * <p>
+	 * Returns the name of the router.
+	 * </p>
+	 * 
+	 * @return the router name
+	 */
+	public String getRouterName() {
 		return this.getBeanName();
 	}
 	
+	/**
+	 * <p>
+	 * Returns the router class name.
+	 * </p>
+	 * 
+	 * @return a canonical class name
+	 */
 	public String getClassName() {
 		return this.className;
 	}

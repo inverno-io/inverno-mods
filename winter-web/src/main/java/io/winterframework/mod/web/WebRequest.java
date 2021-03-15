@@ -20,11 +20,25 @@ import java.util.Optional;
 import io.winterframework.mod.http.server.Request;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A request with supports for path parameters and body decoding based on the
+ * request content type.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebExchange
  */
 public interface WebRequest extends Request {
 
+	/**
+	 * <p>
+	 * Returns the request path parameters.
+	 * </p>
+	 * 
+	 * @return the path parameters
+	 */
 	PathParameters pathParameters();
 	
 	@Override

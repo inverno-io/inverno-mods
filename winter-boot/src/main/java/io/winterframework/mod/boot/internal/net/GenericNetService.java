@@ -52,8 +52,12 @@ import io.winterframework.mod.boot.NetConfiguration;
 import io.winterframework.mod.base.net.NetService;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link NetService} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Bean(name = "netService")
 public class GenericNetService implements @Provide NetService {
@@ -72,6 +76,13 @@ public class GenericNetService implements @Provide NetService {
 	private final ByteBufAllocator allocator;
 	private final ByteBufAllocator directAllocator;
 	
+	/**
+	 * <p>
+	 * Creates a generic net service with the specified configuration.
+	 * </p>
+	 * 
+	 * @param netConfiguration the net configuration
+	 */
 	public GenericNetService(NetConfiguration netConfiguration) {
 		this.netConfiguration = netConfiguration;
 		
@@ -213,6 +224,11 @@ public class GenericNetService implements @Provide NetService {
 			.childOption(EpollChannelOption.TCP_QUICKACK, this.netConfiguration.tcp_quickack())
 			.childOption(EpollChannelOption.TCP_CORK, this.netConfiguration.tcp_cork())
 			.childOption(ChannelOption.ALLOCATOR, this.allocator);
+		
+		if(this.netConfiguration.accept_backlog() != null) {
+			bootstrap.option(ChannelOption.SO_BACKLOG, this.netConfiguration.accept_backlog());
+		}
+		
 		return bootstrap;
 	}
 

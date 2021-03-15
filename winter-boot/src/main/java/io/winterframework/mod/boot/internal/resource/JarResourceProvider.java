@@ -30,10 +30,38 @@ import io.winterframework.mod.base.resource.AsyncResourceProvider;
 import io.winterframework.mod.base.resource.JarResource;
 import io.winterframework.mod.base.resource.MediaTypeService;
 import io.winterframework.mod.base.resource.ResourceException;
+import io.winterframework.mod.base.resource.ResourceProvider;
+import io.winterframework.mod.base.resource.ResourceService;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * {@link ResourceProvider} implementation used to resolve resources in a
+ * jar file (ie. {@code jar:/path/to/jar!/path/to/resource}).
+ * </p>
+ * 
+ * <p>
+ * This implementation supports path patterns and can then resolve multiple
+ * resources matching a given URI pattern.
+ * </p>
+ * 
+ * <blockquote>
+ * 
+ * <pre>
+ * JarResourceProvider provider = new JarResourceProvider();
+ * 
+ * // Returns: /path/test1/a, /path/test1/a/b, /path/test2/c...
+ * Stream{@literal<JarResource>} resources = provider.getResources(URI.create("jar:/path/to/jar!/path/test?/{@literal **}/*");
+ * </pre>
+ * 
+ * </blockquote>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see JarResource
+ * @see AsyncResourceProvider
+ * @see ResourceService
+ * @see PathPatternResolver
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class JarResourceProvider extends AbstractResourceProvider<JarResource> implements AsyncResourceProvider<JarResource> {

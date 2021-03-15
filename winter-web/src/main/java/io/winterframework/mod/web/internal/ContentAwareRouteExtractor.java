@@ -17,12 +17,30 @@ package io.winterframework.mod.web.internal;
 
 import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.web.AbstractRoute;
+import io.winterframework.mod.web.ContentAwareRoute;
 
 /**
- * @author jkuhn
+ * <p>
+ * A route extractor to extract {@link ContentAwareRoute} routes.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @param <A> the type of exchange handled by the route
+ * @param <B> the route type
+ * @param <C> the route extractor type
  */
 interface ContentAwareRouteExtractor<A extends Exchange, B extends AbstractRoute<A>, C extends ContentAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
 
-	C consumes(String mediaType);
+	/**
+	 * <p>
+	 * Sets the extractor to extract routes which consume the specified media range.
+	 * </p>
+	 * 
+	 * @param mediaRange the media range matching the type of the routes to extract
+	 * 
+	 * @return the route extractor
+	 */
+	C consumes(String mediaRange);
 }

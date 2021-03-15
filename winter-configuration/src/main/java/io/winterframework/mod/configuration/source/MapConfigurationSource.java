@@ -22,16 +22,44 @@ import io.winterframework.mod.configuration.AbstractPropertiesConfigurationSourc
 import io.winterframework.mod.configuration.internal.ObjectDecoder;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A configuration source that looks up properties from a map.
+ * </p>
+ * 
+ * <p>
+ * Note that this source doesn't support parameterized queries, regardless of
+ * the parameters specified in a query, only the configuration key name is
+ * considered when resolving a value.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractPropertiesConfigurationSource
  */
 public class MapConfigurationSource extends AbstractPropertiesConfigurationSource<Object, MapConfigurationSource> {
 
+	/**
+	 * <p>
+	 * Creates a map configuration source with the specified map.
+	 * </p>
+	 * 
+	 * @param properties a map of properties
+	 */
 	public MapConfigurationSource(Map<String, Object> properties) {
 		this(properties, new ObjectDecoder());
 	}
 	
+	/**
+	 * <p>
+	 * Creates a map configuration source with the specified map and string value
+	 * decoder.
+	 * </p>
+	 * 
+	 * @param properties a map of properties
+	 * @param decoder    a string decoder
+	 */
 	public MapConfigurationSource(Map<String, Object> properties, SplittablePrimitiveDecoder<Object> decoder) {
-		super(properties::get, decoder);
+		super(decoder, properties::get);
 	}
 }

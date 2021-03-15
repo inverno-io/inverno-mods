@@ -21,25 +21,69 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import io.winterframework.mod.http.base.header.AbstractHeaderBuilder;
+import io.winterframework.mod.http.base.header.Header;
+import io.winterframework.mod.http.base.header.HeaderBuilder;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A parameterized {@link Header} implementation to represents HTTP headers with
+ * parameters.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Header
  */
 public class ParameterizedHeader extends GenericHeader {
 
+	/**
+	 * <p>
+	 * Base implementation for parameterized {@link HeaderBuilder}.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 *
+	 * @param <A> the parameterized header type
+	 * @param <B> the parmeterized header builder
+	 */
 	public static abstract class AbstractBuilder<A extends ParameterizedHeader, B extends AbstractBuilder<A, B>> extends AbstractHeaderBuilder<A, B> {
 		
+		/**
+		 * The parameterized value.
+		 */
 		protected String parameterizedValue;
 		
+		/**
+		 * The parameters.
+		 */
 		protected Map<String, String> parameters;
 		
+		/**
+		 * <p>
+		 * Specifies the parameterized value.
+		 * </p>
+		 * 
+		 * @param parameterizedValue the parameterized value
+		 * 
+		 * @return the header builder
+		 */
 		@SuppressWarnings("unchecked")
 		public B parameterizedValue(String parameterizedValue) {
 			this.parameterizedValue = parameterizedValue;
 			return (B)this;
 		}
 
+		/**
+		 * <p>
+		 * Adds a parameter.
+		 * </p>
+		 * 
+		 * @param name  the parameter name
+		 * @param value the parameter value
+		 * 
+		 * @return the header builder
+		 */
 		@SuppressWarnings("unchecked")
 		public B parameter(String name, String value) {
 			if(this.parameters == null) {
@@ -50,6 +94,16 @@ public class ParameterizedHeader extends GenericHeader {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Generic parmeterized {@link HeaderBuilder} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see MultiParameterizedHeader.AbstractBuilder
+	 */
 	public static class Builder extends ParameterizedHeader.AbstractBuilder<ParameterizedHeader, Builder> {
 
 		@Override
@@ -58,20 +112,50 @@ public class ParameterizedHeader extends GenericHeader {
 		}
 	}
 	
+	/**
+	 * The header parameters.
+	 */
 	protected Map<String, String> parameters;
 	
+	/**
+	 * The header parameterized value defined before the list of parameters in the header raw value. 
+	 */
 	protected String parameterizedValue;
 	
+	/**
+	 * <p>
+	 * Creates a parameterized header with the specified header name, header raw
+	 * value, header parameterized value and parameters.
+	 * </p>
+	 * 
+	 * @param headerName         the header name
+	 * @param headerValue        the header value
+	 * @param parameterizedValue the header parameterized value
+	 * @param parameters         the header parameters
+	 */
 	protected ParameterizedHeader(String headerName, String headerValue, String parameterizedValue, Map<String, String> parameters) {
 		super(headerName, headerValue);
 		this.parameters = parameters != null ? new HashMap<>(parameters) : new HashMap<>();
 		this.parameterizedValue = parameterizedValue;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the header parameterized value defined before the list of parameters
+	 * in the header raw value.
+	 * </p>
+	 * 
+	 * @return the header parameterized value
+	 */
 	public String getParameterizedValue() {
 		return this.parameterizedValue;
 	}
 	
+	/**
+	 * <p>Returns the header parameters.</p>
+	 * 
+	 * @return a map of parameters
+	 */
 	public Map<String, String> getParameters() {
 		if(this.parameters != null) {
 			return Collections.unmodifiableMap(this.parameters);

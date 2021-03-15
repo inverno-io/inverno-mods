@@ -18,12 +18,46 @@ package io.winterframework.mod.configuration;
 import java.util.Optional;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Represents a single query result providing the configuration property
+ * retrieved from a configuration source with a query key.
+ * </p>
+ * 
+ * <p>
+ * Note that the query key and the property key may differs if the configuration
+ * source uses a defaulting mechanism to return the value that best matches the
+ * context specified in the query key.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationQuery
+ * @see ConfigurationSource
+ * 
+ * @param <A> the type of the configuration key
+ * @param <B> the type of the resulting configuration property
  */
 public interface ConfigurationQueryResult<A extends ConfigurationKey, B extends ConfigurationProperty<?,?>> {
 
+	/**
+	 * <p>
+	 * Returns the configuration key corresponding to the query that was executed.
+	 * </p>
+	 * 
+	 * @return a configuration key
+	 */
 	A getQueryKey();
 	
+	/**
+	 * <p>
+	 * Returns the resulting configuration property.
+	 * </p>
+	 * 
+	 * @return an optional returning the configuration property or an empty optional
+	 *         if the configuration returned no value for the property
+	 * @throws ConfigurationSourceException if there was an error retrieving the
+	 *                                      configuration property
+	 */
 	Optional<B> getResult() throws ConfigurationSourceException;
 }

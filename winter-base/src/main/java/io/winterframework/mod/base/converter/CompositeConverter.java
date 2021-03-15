@@ -19,32 +19,82 @@ import java.lang.reflect.Type;
 import java.util.List;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A composite converter relies on multiple {@link CompoundEncoder} and
+ * {@link CompoundDecoder} to convert objects.
+ * </p>
+ * 
+ * <p>
+ * Such implementation makes it possible to create extensible converter able to
+ * convert various type of objects by composition of many specific compound
+ * encoders and decoders.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Converter
+ * 
+ * @param <A> the converted type
  */
 public class CompositeConverter<A> implements Converter<A, Object> {
 
-	private CompositeDecoder<A> decoder;
+	private final CompositeDecoder<A> decoder;
 	
-	private CompositeEncoder<A> encoder;
+	private final CompositeEncoder<A> encoder;
 	
+	/**
+	 * <p>
+	 * Creates a composite converter.
+	 * </p>
+	 */
 	public CompositeConverter() {
 		this.decoder = new CompositeDecoder<>();
 		this.encoder = new CompositeEncoder<>();
 	}
 
+	/**
+	 * <p>
+	 * Sets the compound decoders used to decode objects.
+	 * </p>
+	 * 
+	 * @param decoders a list of compound decoders
+	 */
 	public void setDecoders(List<CompoundDecoder<A, ?>> decoders) {
 		this.decoder.setDecoders(decoders);
 	}
-	
+
+	/**
+	 * <p>
+	 * Sets the compound encoders used to encode objects.
+	 * </p>
+	 * 
+	 * @param encoders a list of compound encoders
+	 */
 	public void setEncoders(List<CompoundEncoder<?, A>> encoders) {
 		this.encoder.setEncoders(encoders);
 	}
 	
+	/**
+	 * <p>
+	 * Sets a default decoder to use when no compound decoder is able to decode an
+	 * object.
+	 * </p>
+	 * 
+	 * @param defaultDecoder the default decoder
+	 */
 	public void setDefaultDecoder(Decoder<A, Object> defaultDecoder) {
 		this.decoder.setDefaultDecoder(defaultDecoder);
 	}
 
+	/**
+	 * <p>
+	 * Sets a default encoder to use when no compound encoder is able to encode an
+	 * object.
+	 * </p>
+	 * 
+	 * @param defaultEncoder the default decoder
+	 */
 	public void setDefaultEncoder(Encoder<Object, A> defaultEncoder) {
 		this.encoder.setDefaultEncoder(defaultEncoder);
 	}

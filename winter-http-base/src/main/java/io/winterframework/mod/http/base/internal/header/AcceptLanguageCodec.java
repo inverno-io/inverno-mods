@@ -24,20 +24,42 @@ import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.BeanSocket;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.http.base.NotAcceptableException;
+import io.winterframework.mod.http.base.header.HeaderBuilder;
+import io.winterframework.mod.http.base.header.HeaderCodec;
 import io.winterframework.mod.http.base.header.Headers;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Accept-language HTTP {@link HeaderCodec} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ParameterizedHeaderCodec
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguageCodec.AcceptLanguage, AcceptLanguageCodec.AcceptLanguage.Builder> {
 
+	/**
+	 * <p>
+	 * Creates an accept-language header codec that allows multiple language ranges
+	 * to be specified in the header value.
+	 * </p>
+	 */
 	@BeanSocket
 	public AcceptLanguageCodec() {
 		this(true);
 	}
 	
+	/**
+	 * <p>
+	 * Creates an accept-language header codec that allows or not multiple language
+	 * ranges to be specified in the header value.
+	 * </p>
+	 * 
+	 * @param allowMultiple true to allow multiple language ranges, false otherwise
+	 */
 	public AcceptLanguageCodec(boolean allowMultiple) {
 		super(AcceptLanguageCodec.AcceptLanguage.Builder::new, Set.of(Headers.NAME_ACCEPT_LANGUAGE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, allowMultiple);
 	}
@@ -53,6 +75,16 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 		}).collect(Collectors.joining(Character.toString(this.valueDelimiter)));
 	}
 
+	/**
+	 * <p>
+	 * {@link Headers.AcceptLanguage} header implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ParameterizedHeader
+	 */
 	public static final class AcceptLanguage extends ParameterizedHeader implements Headers.AcceptLanguage {
 
 		private List<Headers.AcceptLanguage.LanguageRange> ranges;
@@ -67,6 +99,14 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 			return this.ranges;
 		}
 		
+		/**
+		 * <p>
+		 * {@link Headers.AcceptLanguage.LanguageRange} implementation.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+		 * @since 1.0
+		 */
 		public static final class LanguageRange implements Headers.AcceptLanguage.LanguageRange {
 
 			private String languageTag;
@@ -79,6 +119,14 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 			
 			private int score;
 			
+			/**
+			 * <p>
+			 * Creates a language range with the specified language tag and quality value.
+			 * </p>
+			 * 
+			 * @param languageTag a language tag
+			 * @param weight      a quality value
+			 */
 			public LanguageRange(String languageTag, float weight) {
 				this.languageTag = languageTag;
 				this.weight = weight;
@@ -185,6 +233,16 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 			}
 		}
 		
+		/**
+		 * <p>
+		 * Accept-language {@link HeaderBuilder} implementation.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+		 * @since 1.0
+		 * 
+		 * @see ParameterizedHeader.AbstractBuilder
+		 */
 		public static final class Builder extends ParameterizedHeader.AbstractBuilder<AcceptLanguage, Builder> {
 
 			private List<Headers.AcceptLanguage.LanguageRange> ranges;

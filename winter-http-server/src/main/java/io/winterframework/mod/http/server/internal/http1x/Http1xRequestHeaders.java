@@ -32,66 +32,85 @@ import io.winterframework.mod.http.server.RequestHeaders;
 import io.winterframework.mod.http.server.internal.netty.LinkedHttpHeaders;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP1.x {@link RequestHeaders} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class Http1xRequestHeaders implements RequestHeaders {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	
-	private final LinkedHttpHeaders internalHeaders;
+	private final LinkedHttpHeaders underlyingHeaders;
 	
-	
+	/**
+	 * <p>
+	 * Creates HTTP1.x server request headers.
+	 * </p>
+	 * 
+	 * @param httpRequest        the underlying HTTP request
+	 * @param headerService      the header service
+	 * @param parameterConverter a string object converter
+	 */
 	public Http1xRequestHeaders(HttpRequest httpRequest, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		
-		this.internalHeaders = (LinkedHttpHeaders)httpRequest.headers();
+		this.underlyingHeaders = (LinkedHttpHeaders)httpRequest.headers();
 	}
-	
-	LinkedHttpHeaders getInternalHeaders() {
-		return this.internalHeaders;
+
+	/**
+	 * <p>
+	 * Returns the underlyinh headers.
+	 * </p>
+	 * 
+	 * @return the underlyinh headers
+	 */
+	LinkedHttpHeaders getUnderlyingHeaders() {
+		return this.underlyingHeaders;
 	}
 
 	@Override
 	public String getContentType() {
-		return this.internalHeaders.get((CharSequence)Headers.NAME_CONTENT_TYPE);
+		return this.underlyingHeaders.get((CharSequence)Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
 	public Long getContentLength() {
-		return this.internalHeaders.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
+		return this.underlyingHeaders.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
 	}
 
 	@Override
 	public boolean contains(CharSequence name) {
-		return this.internalHeaders.contains(name);
+		return this.underlyingHeaders.contains(name);
 	}
 	
 	@Override
 	public boolean contains(CharSequence name, CharSequence value) {
-		return this.internalHeaders.contains(name, value, true);
+		return this.underlyingHeaders.contains(name, value, true);
 	}
 	
 	@Override
 	public Set<String> getNames() {
-		return this.internalHeaders.names();
+		return this.underlyingHeaders.names();
 	}
 
 	@Override
 	public Optional<String> get(CharSequence name) {
-		return Optional.ofNullable(this.internalHeaders.get(name));
+		return Optional.ofNullable(this.underlyingHeaders.get(name));
 	}
 	
 	@Override
 	public List<String> getAll(CharSequence name) {
-		return this.internalHeaders.getAll(name);
+		return this.underlyingHeaders.getAll(name);
 	}
 	
 	@Override
 	public List<Entry<String, String>> getAll() {
-		return this.internalHeaders.entries();
+		return this.underlyingHeaders.entries();
 	}
 	
 	@Override
@@ -101,26 +120,26 @@ public class Http1xRequestHeaders implements RequestHeaders {
 
 	@Override
 	public <T extends Header> List<T> getAllHeader(CharSequence name) {
-		return this.internalHeaders.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value)).collect(Collectors.toList());
+		return this.underlyingHeaders.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value)).collect(Collectors.toList());
 	}
 
 	@Override
 	public List<Header> getAllHeader() {
-		return this.internalHeaders.entries().stream().map(e -> this.headerService.<Header>decode(e.getKey(), e.getValue())).collect(Collectors.toList());
+		return this.underlyingHeaders.entries().stream().map(e -> this.headerService.<Header>decode(e.getKey(), e.getValue())).collect(Collectors.toList());
 	}
 	
 	@Override
 	public Optional<Parameter> getParameter(CharSequence name) {
-		return this.get(name).map(value -> new GenericParameter(this.parameterConverter, name.toString(), value));
+		return this.get(name).map(value -> new GenericParameter(name.toString(), value, this.parameterConverter));
 	}
 	
 	@Override
 	public List<Parameter> getAllParameter(CharSequence name) {
-		return this.internalHeaders.getAll(name).stream().map(value -> new GenericParameter(this.parameterConverter, name.toString(), value)).collect(Collectors.toList());
+		return this.underlyingHeaders.getAll(name).stream().map(value -> new GenericParameter(name.toString(), value, this.parameterConverter)).collect(Collectors.toList());
 	}
 	
 	@Override
 	public List<Parameter> getAllParameter() {
-		return this.internalHeaders.entries().stream().map(e -> new GenericParameter(this.parameterConverter, e.getKey(), e.getValue())).collect(Collectors.toList());
+		return this.underlyingHeaders.entries().stream().map(e -> new GenericParameter(e.getKey(), e.getValue(), this.parameterConverter)).collect(Collectors.toList());
 	}
 }

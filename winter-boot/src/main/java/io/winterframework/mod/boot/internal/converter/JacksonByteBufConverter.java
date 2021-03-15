@@ -52,8 +52,16 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * JSON to Object converter backed by an {@link ObjectMapper}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Converter
+ * @see ReactiveConverter
+ * @see ObjectMapper
  */
 @Bean( name = "jsonByteBufConverter")
 public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteBuf, Object>, SplittableDecoder<ByteBuf, Object>, JoinableEncoder<Object, ByteBuf> {

@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class URIsTest {
@@ -329,10 +329,10 @@ public class URIsTest {
 		
 		Assertions.assertTrue(uriMatcher.matches());
 		Assertions.assertEquals(Map.of("param1", "1", "param2", "2/b", "param3", "3", "param4", "4"), uriMatcher.getParameters());
-		Assertions.assertEquals("1", uriMatcher.getParameterValue("param1"));
-		Assertions.assertEquals("2/b", uriMatcher.getParameterValue("param2"));
-		Assertions.assertEquals("3", uriMatcher.getParameterValue("param3"));
-		Assertions.assertEquals("4", uriMatcher.getParameterValue("param4"));
+		Assertions.assertEquals("1", uriMatcher.getParameterValue("param1").get());
+		Assertions.assertEquals("2/b", uriMatcher.getParameterValue("param2").get());
+		Assertions.assertEquals("3", uriMatcher.getParameterValue("param3").get());
+		Assertions.assertEquals("4", uriMatcher.getParameterValue("param4").get());
 		
 		Assertions.assertTrue(uriMatcher.getMatcher().matches());
 		Assertions.assertEquals(12, uriMatcher.getMatcher().groupCount());
@@ -353,10 +353,10 @@ public class URIsTest {
 		
 		Assertions.assertTrue(uriPathMatcher.matches());
 		Assertions.assertEquals(Map.of("param1", "1", "param2", "2/b", "param3", "3", "param4", "4"), uriPathMatcher.getParameters());
-		Assertions.assertEquals("1", uriPathMatcher.getParameterValue("param1"));
-		Assertions.assertEquals("2/b", uriPathMatcher.getParameterValue("param2"));
-		Assertions.assertEquals("3", uriPathMatcher.getParameterValue("param3"));
-		Assertions.assertEquals("4", uriPathMatcher.getParameterValue("param4"));
+		Assertions.assertEquals("1", uriPathMatcher.getParameterValue("param1").get());
+		Assertions.assertEquals("2/b", uriPathMatcher.getParameterValue("param2").get());
+		Assertions.assertEquals("3", uriPathMatcher.getParameterValue("param3").get());
+		Assertions.assertEquals("4", uriPathMatcher.getParameterValue("param4").get());
 		
 		Assertions.assertTrue(uriPathMatcher.getMatcher().matches());
 		Assertions.assertEquals(9, uriPathMatcher.getMatcher().groupCount());

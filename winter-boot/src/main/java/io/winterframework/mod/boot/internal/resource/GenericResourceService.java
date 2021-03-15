@@ -34,8 +34,20 @@ import io.winterframework.mod.base.resource.ResourceProvider;
 import io.winterframework.mod.base.resource.ResourceService;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link ResourceService} implementation.
+ * </p>
+ * 
+ * <p>
+ * This implementation relies on multiple {@link ResourceProvider} instances to
+ * resolve resources based on their kind specified in a URI scheme component.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ResourceService
+ * @see ResourceProvider
  */
 @Bean(name = "resourceService")
 public class GenericResourceService implements @Provide ResourceService {

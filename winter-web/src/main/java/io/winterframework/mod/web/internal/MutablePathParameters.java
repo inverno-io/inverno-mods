@@ -20,14 +20,42 @@ import java.util.Map;
 import io.winterframework.mod.web.PathParameters;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Mutable path parameters.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public interface MutablePathParameters extends PathParameters {
 
+	/**
+	 * <p>
+	 * Sets the specified parameter.
+	 * </p>
+	 * 
+	 * @param name  the parameter name
+	 * @param value the parameter value
+	 */
 	void put(String name, String value);
 	
+	/**
+	 * <p>
+	 * Sets all specified parameters.
+	 * </p>
+	 * 
+	 * @param parameters a map of parameters
+	 */
 	void putAll(Map<String, String> parameters);
 	
+	/**
+	 * <p>
+	 * Removes the parameter with the specified name.
+	 * </p>
+	 * 
+	 * @param name the parameter name
+	 * 
+	 * @return the removed value or null if no value was removed
+	 */
 	String remove(String name);
 }

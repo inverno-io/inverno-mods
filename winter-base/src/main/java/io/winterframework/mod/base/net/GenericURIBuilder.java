@@ -28,8 +28,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * @author jkuhn
- *
+ * <p>A generic URI builder implementation.</p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see URIBuilder
  */
 class GenericURIBuilder implements URIBuilder {
 
@@ -43,7 +47,15 @@ class GenericURIBuilder implements URIBuilder {
 	private final LinkedList<SegmentComponent> segments;
 	private final LinkedList<QueryParameterComponent> queryParameters;
 	private FragmentComponent fragment;
-	
+
+	/**
+	 * <p>
+	 * Creates a generic URI builder with the specified charset and options.
+	 * </p>
+	 * 
+	 * @param charset a charset
+	 * @param options an array of options
+	 */
 	public GenericURIBuilder(Charset charset, URIs.Option... options) {
 		this.charset = charset;
 		this.flags = new URIFlags(options);
@@ -51,6 +63,17 @@ class GenericURIBuilder implements URIBuilder {
 		this.queryParameters = new LinkedList<>();
 	}
 	
+	/**
+	 * <p>
+	 * Creates a generic URI builder with the specified charset and options from the
+	 * specified path ignoring or not the trailing slash.
+	 * </p>
+	 * 
+	 * @param path                a path
+	 * @param ignoreTrailingSlash ignore or the trailing slash in the path
+	 * @param charset             a charset
+	 * @param options             an array of options
+	 */
 	public GenericURIBuilder(String path, boolean ignoreTrailingSlash, Charset charset, URIs.Option... options) {
 		this.charset = charset;
 		this.flags = new URIFlags(options);
@@ -73,6 +96,17 @@ class GenericURIBuilder implements URIBuilder {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Creates a generic URI builder with the specified charset and options from the
+	 * specified URI ignoring or not the trailing slash.
+	 * </p>
+	 * 
+	 * @param uri                 a URI
+	 * @param ignoreTrailingSlash ignore or not trailing slash in the URI's path
+	 * @param charset             a charset
+	 * @param options             an array of options
+	 */
 	public GenericURIBuilder(URI uri, boolean ignoreTrailingSlash, Charset charset, URIs.Option... options) {
 		this.charset = charset;
 		this.flags = new URIFlags(options);
@@ -290,28 +324,13 @@ class GenericURIBuilder implements URIBuilder {
 	}
 	
 	@Override
-	public URI build(Object... values) throws URIBuilderException {
-		return this.build(values, true);
-	}
-	
-	@Override
 	public URI build(Object[] values, boolean escapeSlash) throws URIBuilderException {
 		return URI.create(this.buildString(values, escapeSlash));
 	}
 	
 	@Override
-	public URI build(Map<String, ?> values) throws URIBuilderException {
-		return this.build(values, true);
-	}
-	
-	@Override
 	public URI build(Map<String, ?> values, boolean escapeSlash) throws URIBuilderException {
 		return URI.create(this.buildString(values, escapeSlash));
-	}
-	
-	@Override
-	public String buildString(Object... values) throws URIBuilderException {
-		return this.buildString(values, true);
 	}
 	
 	@Override
@@ -397,11 +416,6 @@ class GenericURIBuilder implements URIBuilder {
 			uriBuilder.append("#").append(this.fragment.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.fragment.getParameters().size()), values.length))));
 		}
 		return uriBuilder.toString();
-	}
-	
-	@Override
-	public String buildString(Map<String, ?> values) throws URIBuilderException {
-		return this.buildString(values, true);
 	}
 	
 	@Override
@@ -531,11 +545,6 @@ class GenericURIBuilder implements URIBuilder {
 			uriBuilder.append("#").append(this.fragment.getRawValue());
 		}
 		return uriBuilder.toString();
-	}
-	
-	@Override
-	public String buildPath(Object... values) {
-		return this.buildPath(values, true);
 	}
 	
 	@Override

@@ -24,8 +24,12 @@ import io.winterframework.mod.http.server.ExchangeHandler;
 import io.winterframework.mod.web.ErrorRoute;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link ErrorRouteExtractor} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class GenericErrorRouteExtractor implements ErrorRouteExtractor {
 
@@ -41,10 +45,25 @@ class GenericErrorRouteExtractor implements ErrorRouteExtractor {
 	
 	private String language;
 	
+	/**
+	 * <p>
+	 * Creates a generic error route extractor in the specified generic error
+	 * router.
+	 * </p>
+	 * 
+	 * @param router a generic error router
+	 */
 	public GenericErrorRouteExtractor(GenericErrorRouter router) {
 		this.router = router;
 	}
 
+	/**
+	 * <p>
+	 * Creates a generic error route extractor with the specified parent.
+	 * </p>
+	 * 
+	 * @param parent a generic error route extractor
+	 */
 	private GenericErrorRouteExtractor(GenericErrorRouteExtractor parent) {
 		this.parent = parent;
 		this.router = parent.router;

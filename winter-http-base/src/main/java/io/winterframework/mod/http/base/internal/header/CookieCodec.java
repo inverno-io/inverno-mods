@@ -26,15 +26,31 @@ import java.util.stream.Collectors;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.base.converter.ObjectConverter;
+import io.winterframework.mod.http.base.header.CookieParameter;
+import io.winterframework.mod.http.base.header.HeaderBuilder;
+import io.winterframework.mod.http.base.header.HeaderCodec;
 import io.winterframework.mod.http.base.header.Headers;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Cookie HTTP {@link HeaderCodec} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ParameterizedHeaderCodec
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, CookieCodec.Cookie.Builder> {
 
+	/**
+	 * <p>
+	 * Creates a cookie header codec with the specified parameter value converter.
+	 * </p>
+	 * 
+	 * @param parameterConverter a string object converter
+	 */
 	public CookieCodec(ObjectConverter<String> parameterConverter) {
 		super(() -> new CookieCodec.Cookie.Builder(parameterConverter), Set.of(Headers.NAME_COOKIE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, true, true, false, false, false, false);
 	}
@@ -44,26 +60,53 @@ public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, Co
 		return headerField.getPairs().values().stream().flatMap(List::stream).map(cookie -> cookie.getName() + "=" + cookie.getValue()).collect(Collectors.joining("; "));
 	}
 	
+	/**
+	 * <p>
+	 * {@link Headers.Cookie} header implemetation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ParameterizedHeader
+	 */
 	public static final class Cookie extends ParameterizedHeader implements Headers.Cookie {
 		
-		private Map<String, List<io.winterframework.mod.http.base.header.Cookie>> pairs;
+		private Map<String, List<CookieParameter>> pairs;
 		
-		private Cookie(String headerName, String headerValue, Map<String, String> parameters, Map<String, List<io.winterframework.mod.http.base.header.Cookie>> pairs) {
+		private Cookie(String headerName, String headerValue, Map<String, String> parameters, Map<String, List<CookieParameter>> pairs) {
 			super(Headers.NAME_COOKIE, headerValue, null, parameters);
 			this.pairs = pairs != null ? Collections.unmodifiableMap(pairs) : Map.of();
 		}
 		
 		@Override
-		public Map<String, List<io.winterframework.mod.http.base.header.Cookie>> getPairs() {
+		public Map<String, List<CookieParameter>> getPairs() {
 			return this.pairs;
 		}
 
+		/**
+		 * <p>
+		 * Cookie {@link HeaderBuilder} implementation.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+		 * @since 1.0
+		 * 
+		 * @see ParameterizedHeader.AbstractBuilder
+		 */
 		public static final class Builder extends ParameterizedHeader.AbstractBuilder<Cookie, Builder> {
 
 			private ObjectConverter<String> parameterConverter;
 			
-			private Map<String, List<io.winterframework.mod.http.base.header.Cookie>> pairs;
+			private Map<String, List<CookieParameter>> pairs;
 
+			/**
+			 * <p>
+			 * Creates a cookie header builder.
+			 * </p>
+			 * 
+			 * @param parameterConverter a string object converter
+			 */
 			public Builder(ObjectConverter<String> parameterConverter) {
 				this.parameterConverter = parameterConverter;
 			}

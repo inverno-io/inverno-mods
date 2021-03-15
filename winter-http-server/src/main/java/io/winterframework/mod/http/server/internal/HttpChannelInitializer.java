@@ -35,13 +35,16 @@ import io.winterframework.mod.http.server.internal.http2.H2cUpgradeHandler;
 import io.winterframework.mod.http.server.internal.http2.Http2ChannelHandler;
 
 /**
+ * <p>
+ * HTTP Channel initializer.
+ * </p>
  * 
- * @author jkuhn
- *
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Bean(visibility = Visibility.PRIVATE)
 @Sharable
-public class WebChannelInitializer extends ChannelInitializer<SocketChannel> {
+public class HttpChannelInitializer extends ChannelInitializer<SocketChannel> {
 
 	private HttpServerConfiguration configuration;
 	
@@ -52,7 +55,20 @@ public class WebChannelInitializer extends ChannelInitializer<SocketChannel> {
 	private Supplier<Http1xChannelHandler> http1xChannelHandlerFactory;
 	private Supplier<Http2ChannelHandler> http2ChannelHandlerFactory;
 	
-	public WebChannelInitializer(
+	/**
+	 * <p>
+	 * Creates a HTTP channel initializer.
+	 * </p>
+	 * 
+	 * @param configuration                      the HTTP server configuration
+	 * @param netService                         the Net service
+	 * @param sslContextSupplier                 a SSL context supplier
+	 * @param protocolNegociationHandlerSupplier a HTTP protocol negotiation handler
+	 *                                           supplier
+	 * @param http1xChannelHandlerFactory        a HTTP1.x channel handler factory
+	 * @param http2ChannelHandlerFactory         a HTTP/2 channel handler factory
+	 */
+	public HttpChannelInitializer(
 		HttpServerConfiguration configuration,
 		NetService netService,
 		@Lazy Supplier<SslContext> sslContextSupplier, 

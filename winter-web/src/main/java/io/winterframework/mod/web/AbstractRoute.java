@@ -19,18 +19,68 @@ import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base route interface.
+ * </p>
+ * 
+ * <p>
+ * A route specifies an exchange handler and a set of criteria used by a router
+ * to determine the exchange handler to execute in response of a particular
+ * request matching these criteria.
+ * </p>
+ * 
+ * <p>
+ * A route defines then a <i>path</i> to a resource, it is used by a router to
+ * route a request to the handler matching the resource being requested.
+ * </p>
+ * 
+ * <p>
+ * A route is defined in a router using a route manager.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Exchange
+ * @see AbstractRouter
+ * 
+ * @param <A> the type of exchange handled by the route
  */
 public interface AbstractRoute<A extends Exchange> {
 
+	/**
+	 * <p>
+	 * Returns the route handler used to process a request matching the route's
+	 * criteria.
+	 * </p>
+	 * 
+	 * @return an exchange handler
+	 */
 	ExchangeHandler<A> getHandler();
 	
+	/**
+	 * <p>Enables the route.</p>
+	 */
 	void enable();
-	
+
+	/**
+	 * <p>Disables the route.</p>
+	 */
 	void disable();
 
+	/**
+	 * <p>
+	 * Determines whether the route is disabled.
+	 * </p>
+	 * 
+	 * @return true if the route is disabled, false otherwise
+	 */
 	boolean isDisabled();
 	
+	/**
+	 * <p>
+	 * Removes the route from the router that contains it.
+	 * </p>
+	 */
 	void remove();
 }

@@ -59,8 +59,14 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Represents a generation context used by the
+ * {@link WebRouterConfigurerClassGenerator} during the generation of a web
+ * router configurer in a Winter module.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class WebRouterConfigurerClassGenerationContext extends AbstractSourceGenerationContext<WebRouterConfigurerClassGenerationContext, WebRouterConfigurerClassGenerationContext.GenerationMode> {
 

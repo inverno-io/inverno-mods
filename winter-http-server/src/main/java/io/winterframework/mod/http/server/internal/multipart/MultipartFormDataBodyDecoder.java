@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.http.server.internal.multipart;
 
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -31,6 +30,7 @@ import io.winterframework.mod.base.resource.MediaTypes;
 import io.winterframework.mod.http.base.header.Header;
 import io.winterframework.mod.http.base.header.HeaderService;
 import io.winterframework.mod.http.base.header.Headers;
+import io.winterframework.mod.http.base.internal.header.ContentTypeCodec;
 import io.winterframework.mod.http.server.Part;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
@@ -38,23 +38,40 @@ import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.SignalType;
 
 /**
- * https://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
+ * <p>
+ * A multipart/form-data payload decoder implementation as defined by
+ * <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
+ * </p>
  * 
- * @author jkuhn
- *
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ */
+/*
+ * Usefull:
+ * - https://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
+ * 
  */
 @Bean(visibility = Visibility.PRIVATE)
-public class MultipartBodyDecoder implements MultipartDecoder<Part> {
+public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 	
 	private final HeaderService headerService;
 	
 	private final ObjectConverter<String> parameterConverter;
 	
-	public MultipartBodyDecoder(HeaderService headerService, ObjectConverter<String> parameterConverter) {
+	/**
+	 * <p>
+	 * Creates a multipart/form-data payload decoder.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter a string object converter
+	 */
+	public MultipartFormDataBodyDecoder(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 	}
 	
+	@Override
 	public Flux<Part> decode(Flux<ByteBuf> data, Headers.ContentType contentType) {
 		if(contentType == null || !contentType.getMediaType().equalsIgnoreCase(MediaTypes.MULTIPART_FORM_DATA)) {
 			throw new IllegalArgumentException("Content type is not " + MediaTypes.MULTIPART_FORM_DATA);
@@ -172,17 +189,12 @@ public class MultipartBodyDecoder implements MultipartDecoder<Part> {
 			if(context.isMultipartMixed() && partFilename == null) {
 				throw new MalformedBodyException("Field not supported in mixed multipart");
 			}
-			
-			String partContentType = partContentTypeHeader != null ? partContentTypeHeader.getMediaType() : null;
-			if(partFilename != null && partContentType == null) {
-				partContentType = MediaTypes.APPLICATION_OCTET_STREAM;
+
+			if(partContentTypeHeader == null && partFilename != null) {
+				context.addDecodedHeader(new ContentTypeCodec.ContentType(MediaTypes.APPLICATION_OCTET_STREAM, context.contentType.getCharset(), null, null));
 			}
-			Charset partCharset = partContentTypeHeader != null && partContentTypeHeader.getCharset() != null ? partContentTypeHeader.getCharset() : context.contentType.getCharset();
 			
-			Header partContentLengthHeader = context.<Header>getDecodedHeader(Headers.NAME_CONTENT_LENGTH);
-			Long partContentLength = partContentLengthHeader != null ? Long.parseLong(partContentLengthHeader.getHeaderValue()) : null;
-			
-			context.startPart(new GenericPart(this.parameterConverter, partName, partFilename, context.getAllDecodedHeaders(), partContentType, partCharset, partContentLength));
+			context.startPart(new GenericPart(this.parameterConverter, partName, partFilename, context.getAllDecodedHeaders()));
 			
 			return this::data;
 		}
@@ -218,8 +230,8 @@ public class MultipartBodyDecoder implements MultipartDecoder<Part> {
 					delimiterIndex++;
 					if(delimiterIndex == delimiterLength) {
 						// We found the delimiter
-						if(context.getPart().getDataEmitter().isPresent()) {
-							FluxSink<ByteBuf> partDataEmitter = context.getPart().getDataEmitter().get();
+						if(context.getPart().getData().isPresent()) {
+							FluxSink<ByteBuf> partDataEmitter = context.getPart().getData().get();
 							if(readerIndex < delimiterReaderIndex) {
 								partDataEmitter.next(buffer.retainedSlice(readerIndex, delimiterReaderIndex - readerIndex));
 							}
@@ -233,8 +245,8 @@ public class MultipartBodyDecoder implements MultipartDecoder<Part> {
 			}
 		}
 		
-		if(context.getPart().getDataEmitter().isPresent()) {
-			FluxSink<ByteBuf> partDataEmitter = context.getPart().getDataEmitter().get();
+		if(context.getPart().getData().isPresent()) {
+			FluxSink<ByteBuf> partDataEmitter = context.getPart().getData().get();
 			if(readerIndex < buffer.readerIndex()) {
 				partDataEmitter.next(buffer.retainedSlice(readerIndex, buffer.readerIndex() - readerIndex));
 			}
@@ -313,6 +325,14 @@ public class MultipartBodyDecoder implements MultipartDecoder<Part> {
 		DecoderTask run(ByteBuf buffer, BodyDataSubscriber context) throws MalformedBodyException;
 	}
 	
+	/**
+	 * <p>
+	 * Request data publisher subscriber.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	private class BodyDataSubscriber extends BaseSubscriber<ByteBuf> {
 		
 		private final Headers.ContentType contentType;
@@ -333,7 +353,7 @@ public class MultipartBodyDecoder implements MultipartDecoder<Part> {
 		public BodyDataSubscriber(Headers.ContentType contentType, FluxSink<Part> emitter) {
 			this.contentType = contentType;
 			this.delimiter = "--" + contentType.getBoundary();
-			this.task = MultipartBodyDecoder.this::boundary;
+			this.task = MultipartFormDataBodyDecoder.this::boundary;
 			this.emitter = emitter;
 			this.emitter.onCancel(() -> this.cancel());
 		}
@@ -379,7 +399,7 @@ public class MultipartBodyDecoder implements MultipartDecoder<Part> {
 		
 		public void endPart() {
 			if(this.part != null) {
-				this.part.getDataEmitter().ifPresent(emitter -> emitter.complete());
+				this.part.getData().ifPresent(emitter -> emitter.complete());
 				this.part = null;
 				if(this.decodedHeaders != null) {
 					this.decodedHeaders.clear();

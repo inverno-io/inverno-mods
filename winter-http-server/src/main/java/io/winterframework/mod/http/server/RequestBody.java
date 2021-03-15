@@ -19,20 +19,81 @@ import io.netty.buffer.ByteBuf;
 import io.winterframework.mod.http.base.Parameter;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Represents the payload body of a client request in a server exchange.
+ * </p>
+ * 
+ * <p>
+ * The request body basically provides multiple ways to consume the request
+ * payload depending on the request content type.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Request
  */
 public interface RequestBody {
 	
+	/**
+	 * <p>
+	 * Returns a raw payload consumer.
+	 * </p>
+	 * 
+	 * @return the raw data
+	 * 
+	 * @throws IllegalStateException if the payload has already been consumed using
+	 *                               another decoder
+	 */
 	RequestData<ByteBuf> raw() throws IllegalStateException;
 	
+	/**
+	 * <p>
+	 * Returns a multipart/form-data payload consumer.
+	 * </p>
+	 * 
+	 * @return body a multipart/form-data payload consumer
+	 * 
+	 * @throws IllegalStateException if the payload has already been consumed using
+	 *                               another decoder
+	 */
 	RequestBody.Multipart<? extends Part> multipart() throws IllegalStateException;
 	
+	/**
+	 * <p>
+	 * Returns an application/x-www-form-urlencoded payload consumer.
+	 * </p>
+	 * 
+	 * @return body an application/x-www-form-urlencoded payload consumer
+	 * 
+	 * @throws IllegalStateException if the payload has already been consumed using
+	 *                               another decoder
+	 */
+	RequestBody.UrlEncoded urlEncoded() throws IllegalStateException;
+
+	/**
+	 * <p>
+	 * A multipart/form-data consumer as defined by
+	 * <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @param <A> the part type
+	 */
 	public static interface Multipart<A extends Part> extends RequestData<A> {
 	}
 	
-	RequestBody.UrlEncoded urlEncoded() throws IllegalStateException;
-	
+	/**
+	 * <p>
+	 * An application/x-www-form-urlencoded data consumer as defined by <a href=
+	 * "https://url.spec.whatwg.org/#application/x-www-form-urlencoded">application/x-www-form-urlencoded</a>.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	public static interface UrlEncoded extends RequestData<Parameter> {
 	}
 }

@@ -18,14 +18,58 @@ package io.winterframework.mod.base.converter;
 import java.lang.reflect.Type;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * An encoder is used to encode an object into another object.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @param <From> the type of object to encode
+ * @param <To>   the type of the encoded object
  */
 public interface Encoder<From, To> {
 
+	/**
+	 * <p>
+	 * Encodes the specified value to the encoded type.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the object to encode
+	 * 
+	 * @return an encoded object
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	<T extends From> To encode(T value) throws ConverterException;
 	
+	/**
+	 * <p>
+	 * Encodes the specified value whose type is represented by the specified class
+	 * to the encoded type.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the object to encode
+	 * @param type  the class of the decoded object
+	 * 
+	 * @return an encoded object
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	<T extends From> To encode(T value, Class<T> type) throws ConverterException;
 	
+	/**
+	 * <p>
+	 * Encodes the specified value whose type is the specified type to the encoded
+	 * type.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the object to encode
+	 * @param type  the type of the decoded object
+	 * 
+	 * @return an encoded object
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	<T extends From> To encode(T value, Type type) throws ConverterException;
 }

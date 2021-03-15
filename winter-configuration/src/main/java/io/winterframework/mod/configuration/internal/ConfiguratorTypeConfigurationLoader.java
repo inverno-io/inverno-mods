@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import io.winterframework.mod.configuration.ConfigurationLoader;
 import io.winterframework.mod.configuration.ConfigurationLoaderException;
 import io.winterframework.mod.configuration.ConfigurationQuery;
 import io.winterframework.mod.configuration.ConfigurationQueryResult;
@@ -33,15 +34,48 @@ import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A {@link ConfigurationLoader} implementation that determines the
+ * configuration properties to load by analyzing a configurator class through
+ * reflection and eventually returns a configuration instance created by a
+ * creator function.
+ * </p>
+ * 
+ * <p>
+ * Configuration properties must be declared as void single-argument methods in
+ * the configurator type.
+ * </p>
+ * 
+ * <p>
+ * Unlike {@link ConfigurationTypeConfigurationLoader}, it is possible to load a
+ * configuration for any kind of object and not only interface since the
+ * creation of the configuration instance is delegated to a supplied
+ * configuration creator.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationLoader
+ * 
+ * @param <A> the configuration type
+ * @param <B> the configurator type
  */
-public class ConfiguratorTypeConfigurationLoader<A, B> extends  AbstractReflectiveConfigurationLoader<A, ConfiguratorTypeConfigurationLoader<A, B>> {
+public class ConfiguratorTypeConfigurationLoader<A, B> extends AbstractReflectiveConfigurationLoader<A, ConfiguratorTypeConfigurationLoader<A, B>> {
 
 	private Class<B> configuratorType;
 	
 	private Function<Consumer<B>, A> configurationCreator;
 	
+	/**
+	 * <p>
+	 * Creates a configuration loader with the specified configurator type and
+	 * configuration creator.
+	 * </p>
+	 * 
+	 * @param configuratorType     the configurator type
+	 * @param configurationCreator the configuration creator function
+	 */
 	public ConfiguratorTypeConfigurationLoader(Class<B> configuratorType, Function<Consumer<B>, A> configurationCreator) {
 		this.configuratorType = configuratorType;
 		this.configurationCreator = configurationCreator;

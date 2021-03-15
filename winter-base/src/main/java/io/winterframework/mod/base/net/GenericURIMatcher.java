@@ -18,11 +18,18 @@ package io.winterframework.mod.base.net;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 
 /**
- * @author jkuhn
- *
+ * <p>A generic URI matcher implementation.</p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see URIMatcher
+ * @see URIPattern
+ * @see URIBuilder
  */
 class GenericURIMatcher implements URIMatcher {
 
@@ -32,6 +39,15 @@ class GenericURIMatcher implements URIMatcher {
 	
 	private Map<String, String> parameters;
 	
+	/**
+	 * <p>
+	 * Creates a generic URI matcher with the specified matcher and list of group
+	 * names.
+	 * </p>
+	 * 
+	 * @param matcher    a matcher
+	 * @param groupNames a list of group names
+	 */
 	public GenericURIMatcher(Matcher matcher, List<String> groupNames) {
 		this.matcher = matcher;
 		this.groupNames = groupNames;
@@ -48,8 +64,8 @@ class GenericURIMatcher implements URIMatcher {
 	}
 
 	@Override
-	public String getParameterValue(String name) {
-		return this.getParameters().get(name);
+	public Optional<String> getParameterValue(String name) {
+		return Optional.ofNullable(this.getParameters().get(name));
 	}
 
 	@Override

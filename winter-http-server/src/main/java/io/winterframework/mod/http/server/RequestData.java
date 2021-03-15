@@ -18,11 +18,29 @@ package io.winterframework.mod.http.server;
 import org.reactivestreams.Publisher;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A generic request payload consumer.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see RequestBody#raw()
+ * @see RequestBody.Multipart
+ * @see RequestBody.UrlEncoded
+ * @see Part
+ * 
+ * @param <A> the type of data
  */
 @FunctionalInterface
 public interface RequestData<A> {
 
+	/**
+	 * <p>
+	 * Returns the payload data publisher.
+	 * </p>
+	 * 
+	 * @return a data publisher
+	 */
 	Publisher<A> stream();
 }

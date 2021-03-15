@@ -18,8 +18,12 @@ package io.winterframework.mod.http.server.internal.multipart;
 import io.winterframework.mod.http.base.BadRequestException;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Thrown to indicate a malformed multipart body.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class MalformedBodyException extends BadRequestException {
 

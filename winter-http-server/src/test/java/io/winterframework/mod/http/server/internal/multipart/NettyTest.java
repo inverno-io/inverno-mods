@@ -38,7 +38,7 @@ import io.netty.handler.codec.http.multipart.InterfaceHttpData;
 import io.winterframework.mod.base.resource.FileResource;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 @Disabled

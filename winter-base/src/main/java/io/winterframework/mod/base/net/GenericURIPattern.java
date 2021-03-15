@@ -20,8 +20,13 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * @author jkuhn
- *
+ * <p>A generic URI pattern implementation.</p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see URIPattern
+ * @see URIBuilder
  */
 class GenericURIPattern implements URIPattern {
 
@@ -31,6 +36,16 @@ class GenericURIPattern implements URIPattern {
 	
 	private Pattern pattern;
 	
+	/**
+	 * <p>
+	 * Creates a generic URI pattern with the specified raw value, regular
+	 * expression and list of group names.
+	 * </p>
+	 * 
+	 * @param rawValue   a raw value
+	 * @param regex      a regular expression
+	 * @param groupNames a list of group names
+	 */
 	public GenericURIPattern(String rawValue, String regex, List<String> groupNames) {
 		this.rawValue = rawValue;
 		this.regex = regex;

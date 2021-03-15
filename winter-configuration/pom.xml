@@ -82,8 +82,19 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
+	
 	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-javadoc-plugin</artifactId>
+					<configuration>
+						<excludePackageNames>io.winterframework.mod.configuration.internal.parser.*</excludePackageNames>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
 			<plugin>
 				<groupId>org.javacc.plugin</groupId>

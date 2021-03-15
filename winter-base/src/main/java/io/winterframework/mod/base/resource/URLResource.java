@@ -29,12 +29,26 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Highly non-performing
+ * <p>
+ * A {@link Resource} implementation that identifies resources by a URL that
+ * looks up data by opening a {@link URLConnection}.
+ * </p>
  * 
- * @author jkuhn
- *
+ * <p>
+ * A typical usage is:
+ * </p>
+ * 
+ * <blockquote><pre>
+ * URLResource resource = new URLResource(URI.create("http://host/path/to/resource"));
+ * ...
+ * </pre></blockquote>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AsyncResource
  */
-public class UrlResource extends AbstractAsyncResource {
+public class URLResource extends AbstractAsyncResource {
 
 	private URI uri;
 	
@@ -42,15 +56,43 @@ public class UrlResource extends AbstractAsyncResource {
 	
 	private Optional<URLConnection> connection;
 	
-	public UrlResource(URI uri) {
+	/**
+	 * <p>
+	 * Creates a URL resource with the specified URI.
+	 * </p>
+	 * 
+	 * @param uri the resource URI
+	 * 
+	 * throws {@link IllegalArgumentException} if the URI can't be converted to a URL
+	 */
+	public URLResource(URI uri) throws IllegalArgumentException {
 		this(uri, null);
 	}
 	
-	public UrlResource(URL url) throws IllegalArgumentException {
+	/**
+	 * <p>
+	 * Creates a URL resource with the specified URL.
+	 * </p>
+	 * 
+	 * @param url the resource URL
+	 * 
+	 * throws {@link IllegalArgumentException} if the URL can't be converted to a URI
+	 */
+	public URLResource(URL url) throws IllegalArgumentException {
 		this(url, null);
 	}
 	
-	public UrlResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
+	/**
+	 * <p>
+	 * Creates a URL resource with the specified URI and media type service.
+	 * </p>
+	 * 
+	 * @param uri the resource URI
+	 * @param mediaTypeService a media type service
+	 * 
+	 * throws {@link IllegalArgumentException} if the URI can't be converted to a URL
+	 */
+	public URLResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
 		this.uri = Objects.requireNonNull(uri.normalize());
 		try {
@@ -61,7 +103,17 @@ public class UrlResource extends AbstractAsyncResource {
 		}
 	}
 	
-	public UrlResource(URL url, MediaTypeService mediaTypeService) throws IllegalArgumentException {
+	/**
+	 * <p>
+	 * Creates a URL resource with the specified URL and media type service.
+	 * </p>
+	 * 
+	 * @param url the resource URL
+	 * @param mediaTypeService a media type service
+	 * 
+	 * throws {@link IllegalArgumentException} if the URL can't be converted to a URI
+	 */
+	public URLResource(URL url, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
 		this.url = Objects.requireNonNull(url);
 		try {
@@ -177,7 +229,7 @@ public class UrlResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public UrlResource resolve(URI uri) {
-		return new UrlResource(this.uri.resolve(uri.normalize()), this.getMediaTypeService());
+	public URLResource resolve(URI uri) {
+		return new URLResource(this.uri.resolve(uri.normalize()), this.getMediaTypeService());
 	}
 }

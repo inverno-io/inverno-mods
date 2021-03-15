@@ -29,7 +29,7 @@ import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.server.RequestHeaders;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class MockRequestHeaders implements RequestHeaders {

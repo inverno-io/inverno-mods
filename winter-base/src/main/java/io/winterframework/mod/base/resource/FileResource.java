@@ -29,41 +29,125 @@ import io.netty.buffer.ByteBuf;
 import reactor.core.publisher.Flux;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A {@link Resource} implementation that identifies resources by a URI of the
+ * form <code>file:/path/to/resource</code> and looks up data on the file
+ * system.
+ * </p>
+ * 
+ * <p>
+ * A typical usage is:
+ * </p>
+ * 
+ * <blockquote><pre>
+ * FileResource resource = new FileResource(URI.create("file:/path/to/resource"));
+ * ...
+ * </pre></blockquote>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AsyncResource
  */
 public class FileResource extends AbstractAsyncResource {
 
+	/**
+	 * The file resource scheme
+	 */
 	public static final String SCHEME_FILE = "file";
 	
 	private PathResource pathResource;
 	
+	/**
+	 * <p>
+	 * Creates a file resource with the specified URI.
+	 * </p>
+	 * 
+	 * @param uri the resource URI
+	 * 
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  file resource
+	 */
 	public FileResource(URI uri) throws IllegalArgumentException {
 		this(uri, null);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a file resource from the specified file.
+	 * </p>
+	 * 
+	 * @param file a file
+	 */
 	public FileResource(File file) {
 		this(file, null);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a file resource from the specified path.
+	 * </p>
+	 * 
+	 * @param pathname a path to a file
+	 */
 	public FileResource(String pathname) {
 		this(pathname, null);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a file resource with the specified URI and media type service.
+	 * </p>
+	 * 
+	 * @param uri              the resource URI
+	 * @param mediaTypeService a media type service
+	 * 
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  file resource
+	 */
 	public FileResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
 		this.pathResource = new PathResource(Paths.get(FileResource.checkUri(uri)), mediaTypeService);
 	}
 	
-	public FileResource(String pathname, MediaTypeService mediaTypeService) {
-		this(new File(pathname), mediaTypeService);
-	}
-	
+	/**
+	 * <p>
+	 * Creates a file resource from the specified file with the specified media type
+	 * service.
+	 * </p>
+	 * 
+	 * @param file a file
+	 * @param mediaTypeService a media type service
+	 */
 	public FileResource(File file, MediaTypeService mediaTypeService) {
 		super(mediaTypeService);
 		this.pathResource = new PathResource(Objects.requireNonNull(file.getAbsoluteFile()).toPath(), mediaTypeService);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a file resource from the specified path with the specified media type
+	 * service.
+	 * </p>
+	 * 
+	 * @param pathname         a path to a file
+	 * @param mediaTypeService a media type service
+	 */
+	public FileResource(String pathname, MediaTypeService mediaTypeService) {
+		this(new File(pathname), mediaTypeService);
+	}
+	
+	/**
+	 * <p>
+	 * Checks that the specified URI is a file resource URI.
+	 * </p>
+	 * 
+	 * @param uri the uri to check
+	 * 
+	 * @return the uri if it is a file resource URI
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  file resource
+	 */
 	public static URI checkUri(URI uri) throws IllegalArgumentException {
 		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_FILE)) {
 			throw new IllegalArgumentException("Not a " + SCHEME_FILE + " uri");

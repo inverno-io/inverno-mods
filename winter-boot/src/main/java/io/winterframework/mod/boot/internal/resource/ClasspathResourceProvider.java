@@ -31,11 +31,22 @@ import io.winterframework.mod.base.resource.JarResource;
 import io.winterframework.mod.base.resource.MediaTypeService;
 import io.winterframework.mod.base.resource.Resource;
 import io.winterframework.mod.base.resource.ResourceException;
+import io.winterframework.mod.base.resource.ResourceProvider;
+import io.winterframework.mod.base.resource.ResourceService;
 import io.winterframework.mod.base.resource.ZipResource;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * {@link ResourceProvider} implementation used to resolve resources
+ * on the classpath (ie. {@code classpath:/path/to/resource}).
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ClasspathResource
+ * @see AsyncResourceProvider
+ * @see ResourceService
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class ClasspathResourceProvider extends AbstractResourceProvider<ClasspathResource> implements AsyncResourceProvider<ClasspathResource> {

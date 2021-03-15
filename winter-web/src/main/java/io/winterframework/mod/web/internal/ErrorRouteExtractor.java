@@ -19,8 +19,12 @@ import io.winterframework.mod.http.server.ErrorExchange;
 import io.winterframework.mod.web.ErrorRoute;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A route extractor to extract {@link ErrorRoute} routes.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 interface ErrorRouteExtractor extends 
 	AcceptAwareRouteExtractor<ErrorExchange<Throwable>, ErrorRoute, ErrorRouteExtractor>,

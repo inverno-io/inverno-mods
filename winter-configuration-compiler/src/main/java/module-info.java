@@ -1,3 +1,5 @@
+import io.winterframework.mod.configuration.Configuration;
+
 /*
  * Copyright 2021 Jeremy KUHN
  *
@@ -15,12 +17,19 @@
  */
 
 /**
+ * <p>
+ * The Winter framework configuration compiler module provides a Winter compiler
+ * plugin to generate configuration loader for
+ * {@link Configuration @Configuration} annotated interfaces.
+ * </p>
  * 
- * @author jkuhn
- *
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Configuration
  */
 module io.winterframework.mod.configuration.compiler {
-	requires io.winterframework.core.compiler;
+	requires transitive io.winterframework.core.compiler;
 	
 	requires io.winterframework.mod.configuration;
 	

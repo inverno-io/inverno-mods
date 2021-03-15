@@ -23,7 +23,7 @@ import io.winterframework.mod.http.base.Method;
 import io.winterframework.mod.web.WebExchange;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class MockWebExchange implements WebExchange {

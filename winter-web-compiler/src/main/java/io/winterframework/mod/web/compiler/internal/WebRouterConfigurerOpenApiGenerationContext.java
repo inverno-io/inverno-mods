@@ -107,8 +107,14 @@ import io.winterframework.mod.http.base.WebException;
 import io.winterframework.mod.web.compiler.spi.WebRouteInfo;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Represents a generation context used by the
+ * {@link WebRouterConfigurerOpenApiGenerator} during the generation of an Open
+ * API specification.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerationContext<WebRouterConfigurerOpenApiGenerationContext, WebRouterConfigurerOpenApiGenerationContext.GenerationMode> {
 
