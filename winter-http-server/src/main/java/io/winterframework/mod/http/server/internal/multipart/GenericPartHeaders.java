@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.http.server.internal.multipart;
 
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -27,39 +26,46 @@ import java.util.stream.Collectors;
 import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.http.base.Parameter;
 import io.winterframework.mod.http.base.header.Header;
+import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.base.internal.GenericParameter;
 import io.winterframework.mod.http.server.PartHeaders;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link PartHeaders} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 // TODO Relying on Header by default is not performant so this needs to be refactored as well as the MultiparBodyDecoder
 class GenericPartHeaders implements PartHeaders {
 
 	private final ObjectConverter<String> parameterConverter;
 	
-	private String contentType;
-	
-	private Long contentLength;
-	
 	private Map<String, List<? extends Header>> headers;
 	
-	public GenericPartHeaders(Map<String, List<Header>> headers, String contentType, Charset charset, Long contentLength, ObjectConverter<String> parameterConverter) {
+	/**
+	 * <p>
+	 * Creates part headers.
+	 * </p>
+	 * 
+	 * @param headers            the map of headers
+	 * @param parameterConverter a string object converter
+	 */
+	public GenericPartHeaders(Map<String, List<Header>> headers, ObjectConverter<String> parameterConverter) {
 		this.parameterConverter = parameterConverter;
 		this.headers = headers != null ? Collections.unmodifiableMap(headers) : Map.of();
-		this.contentType = contentType;
-		this.contentLength = contentLength;
 	}
 	
 	@Override
 	public String getContentType() {
-		return this.contentType;
+		return Optional.ofNullable(this.headers.get(Headers.NAME_CONTENT_TYPE)).filter(l -> !l.isEmpty()).map(l -> l.get(0).getHeaderValue()).orElse(null);
 	}
 
 	@Override
 	public Long getContentLength() {
-		return this.contentLength;
+		return Optional.ofNullable(this.headers.get(Headers.NAME_CONTENT_LENGTH)).filter(l -> !l.isEmpty()).map(l -> l.get(0).getHeaderValue()).map(Long::parseLong).orElse(null);
 	}
 
 	@Override
@@ -140,7 +146,7 @@ class GenericPartHeaders implements PartHeaders {
 	public Optional<Parameter> getParameter(CharSequence name) {
 		return Optional.ofNullable(this.headers.get(name)).map(headers -> {
 			if(!headers.isEmpty()) {
-				return new GenericParameter(this.parameterConverter, headers.get(0).getHeaderName(), headers.get(0).getHeaderValue());
+				return new GenericParameter(headers.get(0).getHeaderName(), headers.get(0).getHeaderValue(), this.parameterConverter);
 			}
 			return null;
 		});
@@ -150,40 +156,13 @@ class GenericPartHeaders implements PartHeaders {
 	public List<Parameter> getAllParameter(CharSequence name) {
 		List<? extends Header> headers = this.headers.get(name);
 		if(headers != null) {
-			return headers.stream().map(h -> new GenericParameter(this.parameterConverter, h.getHeaderName(), h.getHeaderValue())).collect(Collectors.toList());
+			return headers.stream().map(h -> new GenericParameter(h.getHeaderName(), h.getHeaderValue(), this.parameterConverter)).collect(Collectors.toList());
 		}
 		return Collections.emptyList();
 	}
 
 	@Override
 	public List<Parameter> getAllParameter() {
-		return this.headers.values().stream().flatMap(l -> l.stream().map(h -> new GenericParameter(this.parameterConverter, h.getHeaderName(), h.getHeaderValue()))).collect(Collectors.toList());
+		return this.headers.values().stream().flatMap(l -> l.stream().map(h -> new GenericParameter(h.getHeaderName(), h.getHeaderValue(), this.parameterConverter))).collect(Collectors.toList());
 	}
-
-	
-	
-	/*@Override
-	@SuppressWarnings("unchecked")
-	public <T extends Header> Optional<T> getHeader(String name) {
-		return Optional.ofNullable(this.headers.get(name)).map(headers -> {
-			if(!headers.isEmpty()) {
-				return (T)headers.get(0);
-			}
-			return null;
-		});
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T extends Header> List<T> getAllHeader(String name) {
-		if(this.headers.containsKey(name)) {
-			return this.headers.get(name).stream().map(header -> (T)header).collect(Collectors.toList());
-		}
-		return null;
-	}
-
-	@Override
-	public Map<String, List<? extends Header>> getAllHeader() {
-		return this.headers;
-	}*/
 }

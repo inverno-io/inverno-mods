@@ -16,17 +16,50 @@
 package io.winterframework.mod.http.base;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Enumeration of HTTP methods as defined by
+ * <a href="https://tools.ietf.org/html/rfc7231#section-4.3">RFC 7231 Section
+ * 4.3</a>.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public enum Method {
+	/**
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.1">RFC 7231 Section 4.3.1</a>
+	 */
 	GET,
+	/**
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.2">RFC 7231 Section 4.3.2</a>
+	 */
 	HEAD,
+	/**
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.1">RFC 7231 Section 4.3.1</a>
+	 */
 	PATCH,
+	/**
+	 * <a href="https://tools.ietf.org/html/rfc5789">RFC 5789</a>
+	 */
 	POST,
+	/**
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.4">RFC 7231 Section 4.3.4</a>
+	 */
 	PUT,
+	/**
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.5">RFC 7231 Section 4.3.5</a>
+	 */
 	DELETE,
+	/**
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.6">RFC 7231 Section 4.3.6</a>
+	 */
 	CONNECT,
+	/**
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.7">RFC 7231 Section 4.3.7</a>
+	 */
 	OPTIONS,
+	/**
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.8">RFC 7231 Section 4.3.8</a>
+	 */
 	TRACE;
 }

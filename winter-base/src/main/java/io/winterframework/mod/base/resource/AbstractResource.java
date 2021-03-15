@@ -16,8 +16,14 @@
 package io.winterframework.mod.base.resource;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base implementation for {@link Resource}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Resource
  */
 public abstract class AbstractResource implements Resource {
 
@@ -25,10 +31,22 @@ public abstract class AbstractResource implements Resource {
 	
 	private MediaTypeService mediaTypeService;
 	
+	/**
+	 * <p>
+	 * Creates a resource.
+	 * </p>
+	 */
 	public AbstractResource() {
 		this(null);
 	}
 
+	/**
+	 * <p>
+	 * Creates a resource with the specified media type service.
+	 * </p>
+	 * 
+	 * @param mediaTypeService a media type service
+	 */
 	protected AbstractResource(MediaTypeService mediaTypeService) {
 		this.setMediaTypeService(mediaTypeService);
 	}
@@ -40,10 +58,24 @@ public abstract class AbstractResource implements Resource {
 		return defaultMediaTypeService;
 	}
 
+	/**
+	 * <p>
+	 * Sets the media type service.
+	 * </p>
+	 * 
+	 * @param mediaTypeService the media type service to set
+	 */
 	public void setMediaTypeService(MediaTypeService mediaTypeService) {
 		this.mediaTypeService = mediaTypeService;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the media type service.
+	 * </p>
+	 * 
+	 * @return a media type service or the default media type service if not set
+	 */
 	protected MediaTypeService getMediaTypeService() {
 		return this.mediaTypeService != null ? this.mediaTypeService : getDefaultMediaTypeService();
 	}

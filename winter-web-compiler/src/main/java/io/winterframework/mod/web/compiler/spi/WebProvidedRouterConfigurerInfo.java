@@ -21,17 +21,42 @@ import javax.lang.model.type.DeclaredType;
 import io.winterframework.core.compiler.spi.Info;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Describes a web router configurer.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public interface WebProvidedRouterConfigurerInfo extends Info {
-	
-	TypeElement getElement();
 	
 	@Override
 	WebRouterConfigurerQualifiedName getQualifiedName();
 	
+	/**
+	 * <p>
+	 * Returns the type element of the web router configurer.
+	 * </p>
+	 * 
+	 * @return a type element
+	 */
+	TypeElement getElement();
+	
+	/**
+	 * <p>
+	 * Returns the type of the web router configurer.
+	 * </p>
+	 * 
+	 * @return a type
+	 */
 	DeclaredType getType();
 	
+	/**
+	 * <p>
+	 * Returns the web routes defined in the web controller.
+	 * </p>
+	 * 
+	 * @return an array of web route info
+	 */
 	WebRouteInfo[] getRoutes();
 }

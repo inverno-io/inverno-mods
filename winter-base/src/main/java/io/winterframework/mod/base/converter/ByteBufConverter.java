@@ -50,47 +50,111 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * Decode/Encode primitive objects from/to their respective String representation serialized in ByteBuf.
+ * <p>
+ * A {@link Converter} that encodes objects to {@link ByteBuf} and decodes
+ * {@link ByteBuf} to objects.
+ * </p>
  * 
- * @author jkuhn
- *
+ * <p>
+ * This implementation relies on a String {@link ObjectConverter} to convert the
+ * string representation of an object from/to ByteBufs.
+ * </p>
+ * 
+ * <p>
+ * This converter is an object converter and as such it can convert collection
+ * of objects using a customizable separator.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ObjectConverter
+ * @see ReactiveConverter
  */
 public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, ObjectConverter<ByteBuf> {
 
+	/**
+	 * The default array/list separator
+	 */
+	public static final byte DEFAULT_ARRAY_LIST_SEPARATOR = ',';
+	
 	private static final ByteBuf EMPTY_LAST_CHUNK = Unpooled.unreleasableBuffer(Unpooled.EMPTY_BUFFER);
 	
 	private static final Mono<ByteBuf> LAST_CHUNK_PUBLISHER = Mono.just(EMPTY_LAST_CHUNK);
 	
-	private static final byte DEFAULT_ARRAY_LIST_SEPARATOR = ',';
-	
-	private ObjectConverter<String> stringConverter;
+	private final ObjectConverter<String> stringConverter;
 	
 	private byte arrayListSeparator;
 	
 	private Charset charset;
-	
+
+	/**
+	 * <p>
+	 * Creates a ByteBuf converter backed by the specified string converter, with default charset and array/list separator.
+	 * </p>
+	 * 
+	 * @param stringConverter a string converter
+	 */
 	public ByteBufConverter(ObjectConverter<String> stringConverter) {
 		this(stringConverter, Charsets.DEFAULT, DEFAULT_ARRAY_LIST_SEPARATOR);
 	}
-	
+
+	/**
+	 * <p>
+	 * Creates a ByteBuf converter backed by the specified string converter, with
+	 * specified charset and array/list separator.
+	 * </p>
+	 * 
+	 * @param stringConverter    A string converter
+	 * @param charset            the charset
+	 * @param arrayListSeparator the array/list separator
+	 */
 	public ByteBufConverter(ObjectConverter<String> stringConverter, Charset charset, byte arrayListSeparator) {
 		this.stringConverter = stringConverter;
 		this.charset = charset;
 		this.arrayListSeparator = arrayListSeparator;
 	}
 
+	/**
+	 * <p>
+	 * Returns the charset used to serialize/deserialize to/from ByteBuf.
+	 * </p>
+	 * 
+	 * @return a charset
+	 */
 	public Charset getCharset() {
 		return charset;
 	}
-	
+
+	/**
+	 * <p>
+	 * Sets the charset used to serialize/deserialize to/from ByteBuf.
+	 * </p>
+	 * 
+	 * @param charset a charset
+	 */
 	public void setCharset(Charset charset) {
 		this.charset = charset;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the array/list separator used to convert lists and arrays.
+	 * </p>
+	 * 
+	 * @return an array/list separator
+	 */
 	public byte getArrayListSeparator() {
 		return arrayListSeparator;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the array/list separator used to convert lists and arrays.
+	 * </p>
+	 * 
+	 * @param arrayListSeparator an array/list separator
+	 */
 	public void setArrayListSeparator(byte arrayListSeparator) {
 		this.arrayListSeparator = arrayListSeparator;
 	}

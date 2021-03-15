@@ -25,11 +25,30 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A {@link Resource} implementation that identifies resources by a URI of the
+ * form <code>{@literal module://<MODULE_NAME>/path/to/resource}</code> and looks up data from a module.
+ * </p>
+ * 
+ * <p>
+ * A typical usage is:
+ * </p>
+ * 
+ * <blockquote><pre>
+ * ModuleResource resource = new ModuleResource(URI.create("module://module/path/to/resource"));
+ * ...
+ * </pre></blockquote>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractAsyncResource
  */
 public class ModuleResource extends AbstractAsyncResource {
 
+	/**
+	 * The module resource scheme
+	 */
 	public static final String SCHEME_MODULE = "module";
 	
 	private final URI uri;
@@ -39,27 +58,102 @@ public class ModuleResource extends AbstractAsyncResource {
 	private String moduleName;
 	private String resourceName;
 	
-	public ModuleResource(URI uri) {
+	/**
+	 * <p>
+	 * Creates a module resource with the specified URI.
+	 * </p>
+	 * 
+	 * @param uri the resource URI
+	 * 
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  module resource
+	 */
+	public ModuleResource(URI uri) throws IllegalArgumentException {
 		this(uri, (ModuleLayer)null, null);
 	}
 	
-	public ModuleResource(URI uri, Class<?> clazz) {
+	/**
+	 * <p>
+	 * Creates a module resource with the specified URI that looks up data from the
+	 * module layer that contains the module of which the specified class is a
+	 * member.
+	 * </p>
+	 * 
+	 * @param uri   the resource URI
+	 * @param clazz a class
+	 * 
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  module resource
+	 * 
+	 * @see Class#getModule()
+	 */
+	public ModuleResource(URI uri, Class<?> clazz) throws IllegalArgumentException {
 		this(uri, clazz.getModule().getLayer(), null);
 	}
 	
-	public ModuleResource(URI uri, Class<?> clazz, MediaTypeService mediaTypeService) {
+	/**
+	 * <p>
+	 * Creates a module resource with the specified URI and media type service that
+	 * looks up data from the module layer that contains the module of which the
+	 * specified class is a member.
+	 * </p>
+	 * 
+	 * @param uri              the resource URI
+	 * @param clazz            a class
+	 * @param mediaTypeService a media type service
+	 * 
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  module resource
+	 */
+	public ModuleResource(URI uri, Class<?> clazz, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		this(uri, clazz.getModule().getLayer(), mediaTypeService);
 	}
 	
-	public ModuleResource(URI uri, ModuleLayer moduleLayer) {
+	/**
+	 * <p>
+	 * Creates a module resource with the specified URI that looks up data from the
+	 * specified module layer.
+	 * </p>
+	 * 
+	 * @param uri   the resource URI
+	 * @param moduleLayer a module layer
+	 * 
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  module resource
+	 */
+	public ModuleResource(URI uri, ModuleLayer moduleLayer) throws IllegalArgumentException {
 		this(uri, moduleLayer, null);
 	}
 	
-	public ModuleResource(URI uri, MediaTypeService mediaTypeService) {
+	/**
+	 * <p>
+	 * Creates a module resource with the specified URI and media type service.
+	 * </p>
+	 * 
+	 * @param uri              the resource URI
+	 * @param mediaTypeService the media type service
+	 * 
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  module resource
+	 */
+	public ModuleResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		this(uri, (ModuleLayer)null, mediaTypeService);
 	}
 	
-	public ModuleResource(URI uri, ModuleLayer moduleLayer, MediaTypeService mediaTypeService) {
+	/**
+	 * <p>
+	 * Creates a module resource with the specified URI and media type service that
+	 * looks up data from the specified module layer.
+	 * </p>
+	 * 
+	 * @param uri              the resource URI
+	 * @param moduleLayer      a module layer
+	 * @param mediaTypeService the media type service
+	 * 
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  module resource
+	 */
+	public ModuleResource(URI uri, ModuleLayer moduleLayer, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
 		this.uri = ModuleResource.checkUri(uri);
 		
@@ -84,6 +178,17 @@ public class ModuleResource extends AbstractAsyncResource {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Checks that the specified URI is a module resource URI.
+	 * </p>
+	 * 
+	 * @param uri the uri to check
+	 * 
+	 * @return the uri if it is a module resource URI
+	 * @throws IllegalArgumentException if the specified URI does not designate a
+	 *                                  module resource
+	 */
 	public static URI checkUri(URI uri) throws IllegalArgumentException {
 		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_MODULE)) {
 			throw new IllegalArgumentException("Not a " + SCHEME_MODULE + " uri");

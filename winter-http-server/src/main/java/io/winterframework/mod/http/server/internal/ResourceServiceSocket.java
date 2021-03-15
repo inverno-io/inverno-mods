@@ -21,8 +21,12 @@ import io.winterframework.core.annotation.Bean;
 import io.winterframework.mod.base.resource.ResourceService;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * The {@link ResourceService} socket.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Bean(name = "resourceService")
 public interface ResourceServiceSocket extends Supplier<ResourceService> {

@@ -16,25 +16,59 @@
 package io.winterframework.mod.http.base;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A web exception that indicates that the access to a server resource is
+ * {@link Status#UNAUTHORIZED Unauthorized (401)}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebException
  */
 public class UnauthorizedException extends WebException {
 
 	private static final long serialVersionUID = 2146912456392459200L;
 
+	/**
+	 * <p>
+	 * Creates an unauthorized exception.
+	 * </p>
+	 */
 	public UnauthorizedException() {
 		super(Status.UNAUTHORIZED);
 	}
 
+	/**
+	 * <p>
+	 * Creates an unauthorized exception with the specified message.
+	 * </p>
+	 * 
+	 * @param message a message
+	 */
 	public UnauthorizedException(String message) {
 		super(Status.UNAUTHORIZED, message);
 	}
 
+	/**
+	 * <p>
+	 * Creates an unauthorized exception with the specified cause.
+	 * </p>
+	 * 
+	 * @param cause a cause
+	 */
 	public UnauthorizedException(Throwable cause) {
 		super(Status.UNAUTHORIZED, cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates an unauthorized exception with the specified message and cause.
+	 * </p>
+	 * 
+	 * @param message a message
+	 * @param cause   a cause
+	 */
 	public UnauthorizedException(String message, Throwable cause) {
 		super(Status.UNAUTHORIZED, message, cause);
 	}

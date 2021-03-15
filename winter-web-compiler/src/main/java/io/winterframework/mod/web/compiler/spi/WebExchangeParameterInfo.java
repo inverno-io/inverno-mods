@@ -16,8 +16,12 @@
 package io.winterframework.mod.web.compiler.spi;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Describes the exchange route parameter.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public interface WebExchangeParameterInfo extends WebParameterInfo {
 

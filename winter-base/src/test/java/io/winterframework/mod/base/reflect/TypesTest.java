@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class TypesTest {
@@ -77,6 +77,15 @@ public class TypesTest {
 		.build();
 		
 		Assertions.assertEquals("java.util.List<java.lang.String>[]", type.toString());
+		
+		type = Types.arrayType()
+			.componentArrayType()
+				.componentType(int.class)
+				.and()
+			.and()
+		.build();
+		
+		Assertions.assertEquals("class [[I", type.toString());
 	}
-
+	
 }

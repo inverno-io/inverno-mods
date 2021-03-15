@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.winterframework.mod.configuration.source.CompositeConfigurationSource;
-import io.winterframework.mod.configuration.source.ConfigurationPropertyFileConfigurationSource;
+import io.winterframework.mod.configuration.source.CPropsFileConfigurationSource;
 
 public class ConfigurationLoaderTest {
 
@@ -22,7 +22,7 @@ public class ConfigurationLoaderTest {
 	
 	@Test
 	public void testLoad() throws URISyntaxException, MalformedURLException {
-		ConfigurationPropertyFileConfigurationSource src = new ConfigurationPropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-loader.cprops").toURI()));
+		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-loader.cprops").toURI()));
 		CompositeConfigurationSource comp_src = new CompositeConfigurationSource(List.of(src));
 		
 		DummyConfiguration conf = ConfigurationLoader.withConfiguration(DummyConfiguration.class).withSource(comp_src).load().block();
@@ -79,7 +79,7 @@ public class ConfigurationLoaderTest {
 	
 	@Test
 	public void testLoadConfigurator() throws URISyntaxException, MalformedURLException {
-		ConfigurationPropertyFileConfigurationSource src = new ConfigurationPropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-loader.cprops").toURI()));
+		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-loader.cprops").toURI()));
 		CompositeConfigurationSource comp_src = new CompositeConfigurationSource(List.of(src));
 		
 		DummyConfiguration conf = ConfigurationLoader.withConfigurator(DummyConfigurationBuilder.class, DummyConfigurationBuilder::build).withSource(comp_src).load().block();

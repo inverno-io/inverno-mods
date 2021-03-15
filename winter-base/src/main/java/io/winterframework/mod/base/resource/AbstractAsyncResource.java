@@ -29,26 +29,54 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base implementation for {@link AsyncResource}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AsyncResource
  */
 public abstract class AbstractAsyncResource extends AbstractResource implements AsyncResource {
 
+	/**
+	 * The default read buffer capacity.
+	 */
 	public static final int DEFAULT_READ_BUFFER_CAPACITY = 8192;
 	
-	protected int readBufferCapacity = DEFAULT_READ_BUFFER_CAPACITY;
+	private int readBufferCapacity = DEFAULT_READ_BUFFER_CAPACITY;
 	
 	private static ExecutorService defaultExecutor;
 	
 	private ExecutorService executor;
 	
+	/**
+	 * <p>
+	 * Creates an asnc resource.
+	 * </p>
+	 */
 	public AbstractAsyncResource() {
 	}
 
+	/**
+	 * <p>
+	 * Creates an async resource with the specified media type service.
+	 * </p>
+	 * 
+	 * @param mediaTypeService a media type service
+	 */
 	protected AbstractAsyncResource(MediaTypeService mediaTypeService) {
 		super(mediaTypeService);
 	}
 
+	/**
+	 * <p>
+	 * Sets the buffer read capacity.
+	 * </p>
+	 * 
+	 * @param readBufferCapacity the buffer read capacity to set
+	 */
 	public void setReadBufferCapacity(int readBufferCapacity) {
 		this.readBufferCapacity = readBufferCapacity;
 	}
@@ -75,10 +103,17 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 		return this.executor != null ? this.executor : getDefaultExecutor();
 	}
 	
+	/**
+	 * <p>
+	 * Thrown when the end of the file is reached when reading a resource.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	protected static class EndOfFileException extends RuntimeException {
 
 		private static final long serialVersionUID = -959922787939538588L;
-		
 	}
 	
 	@Override

@@ -16,12 +16,33 @@
 package io.winterframework.mod.http.base.header;
 
 /**
- * @author jkuhn
+ * <p>
+ * Represents a HTTP cookie.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @see CookieParameter
+ * @see SetCookie
  */
 public interface Cookie {
 
+	/**
+	 * <p>
+	 * Returns the name of the cookie.
+	 * </p>
+	 * 
+	 * @return a cookie name
+	 */
 	String getName();
 	
+	/**
+	 * <p>
+	 * Returns the value of the cookie
+	 * </p>
+	 * 
+	 * @return a cookie value
+	 */
 	String getValue();
 }

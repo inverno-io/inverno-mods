@@ -17,32 +17,121 @@ package io.winterframework.mod.web.compiler.spi;
 
 import javax.lang.model.type.TypeMirror;
 
+import org.reactivestreams.Publisher;
+
+import io.netty.buffer.ByteBuf;
+import io.winterframework.mod.base.resource.Resource;
+import io.winterframework.mod.web.WebResponseBody;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 /**
- * @author jkuhn
- *
+ * <p>
+ * Describes the request body parameter in a route.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public interface WebResponseBodyInfo {
 
+	/**
+	 * <p>
+	 * Indicates the kind of a response body.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	public static enum ResponseBodyKind {
+		/**
+		 * The actual response body type is {@link ByteBuf}.
+		 */
 		RAW,
+		/**
+		 * The actual response body type is {@link ByteBuf}.
+		 */
 		SSE_RAW,
+		/**
+		 * The actual response body type is {@link WebResponseBody.SseEncoder.Event
+		 * WebResponseBody.SseEncoder.Event&lt;U&gt;} where {@code U} is not a
+		 * {@link ByteBuf}.
+		 */
 		SSE_ENCODED,
+		/**
+		 * The actual response body type is {@link Resource}.
+		 */
 		RESOURCE,
+		/**
+		 * The actual response body type is {@link Void}.
+		 */
 		EMPTY,
+		/**
+		 * The actual response body type is none of the above.
+		 */
 		ENCODED;
 	}
 	
+	/**
+	 * <p>
+	 * Indicates the reactive kind of a response body.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	public static enum ResponseBodyReactiveKind {
+		/**
+		 * The body is not of a reactive type.
+		 */
 		NONE,
+		/**
+		 * The body is of type {@link Publisher Publisher&lt;T&gt;} where {@code T}
+		 * represents the actual response body type.
+		 */
 		PUBLISHER,
+		/**
+		 * The body is of type {@link Mono Mono&lt;T&gt;} where {@code T} represents the
+		 * actual response body type.
+		 */
 		ONE,
+		/**
+		 * The body is of type {@link Flux Flux&lt;T&gt;} where {@code T} represents the
+		 * actual response body type.
+		 */
 		MANY;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the actual type of the response body.
+	 * </p>
+	 * 
+	 * <p>
+	 * When the response body is reactive, this corresponds to the type argument of
+	 * the reactive type.
+	 * </p>
+	 * 
+	 * @return the actual body type
+	 */
 	TypeMirror getType();
 	
+	/**
+	 * <p>
+	 * Returns the response body kind.
+	 * </p>
+	 * 
+	 * @return the response body kind
+	 */
 	ResponseBodyKind getBodyKind();
 	
+	/**
+	 * <p>
+	 * Returns the response body reactive kind.
+	 * </p>
+	 * 
+	 * @return the response body reactive kind
+	 */
 	ResponseBodyReactiveKind getBodyReactiveKind();
 	
 }

@@ -22,12 +22,36 @@ import io.winterframework.mod.http.server.ExchangeHandler;
 import io.winterframework.mod.web.AbstractRoute;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A route extractor is used to extract the routes defined in a routing chain by
+ * visiting the chain invoking {@link RoutingLink#extractRoute(RouteExtractor)}
+ * method on the first routing link of the chain.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractRoute
+ * @see RoutingLink
  */
 interface RouteExtractor<C extends Exchange, D extends AbstractRoute<C>> {
 
+	/**
+	 * <p>
+	 * Extracts the route handler and finishes the current route.
+	 * </p>
+	 * 
+	 * @param handler
+	 * @param disabled
+	 */
 	void handler(ExchangeHandler<C> handler, boolean disabled);
 	
+	/**
+	 * <p>
+	 * Returns the extracted routes.
+	 * </p>
+	 * 
+	 * @return a set of routes
+	 */
 	Set<D> getRoutes();
 }

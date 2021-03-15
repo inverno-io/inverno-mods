@@ -32,17 +32,27 @@ import io.winterframework.core.annotation.NestedBean;
 import io.winterframework.core.annotation.Overridable;
 import io.winterframework.core.annotation.Wrapper;
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
+import io.winterframework.mod.configuration.ConfigurationLoader;
+import io.winterframework.mod.configuration.ConfigurationLoaderSupport;
+import io.winterframework.mod.configuration.ConfigurationSource;
 import io.winterframework.mod.configuration.compiler.internal.ConfigurationLoaderClassGenerationContext.GenerationMode;
 import io.winterframework.mod.configuration.compiler.spi.ConfigurationInfo;
 import io.winterframework.mod.configuration.compiler.spi.ConfigurationInfoVisitor;
 import io.winterframework.mod.configuration.compiler.spi.ConfigurationPropertyInfo;
 import io.winterframework.mod.configuration.compiler.spi.NestedConfigurationPropertyInfo;
-import io.winterframework.mod.configuration.ConfigurationLoaderSupport;
-import io.winterframework.mod.configuration.ConfigurationSource;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A {@link ConfigurationInfoVisitor} implementation used to generate a
+ * {@link ConfigurationLoader} class from a {@link ConfigurationInfo}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationInfo
+ * @see ConfigurationInfoVisitor
+ * @see ConfigurationLoader
  */
 class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<StringBuilder, ConfigurationLoaderClassGenerationContext> {
 	

@@ -38,8 +38,28 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * An extensible string converter.
+ * </p>
+ * 
+ * <p>
+ * This converter is backed by a {@link StringConverter} which can convert
+ * primitive and common objects, it can be extended to be able to convert other
+ * types of objects by injecting specific compound decoders and encoders.
+ * </p>
+ * 
+ * <p>
+ * This converter is an object converter and as such it can convert collection
+ * of objects using a customizable separator.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see CompositeConverter
+ * @see CompoundDecoder
+ * @see CompoundEncoder
+ * @see StringConverter
  */
 public class StringCompositeConverter extends CompositeConverter<String> implements ObjectConverter<String> {
 
@@ -47,10 +67,23 @@ public class StringCompositeConverter extends CompositeConverter<String> impleme
 	
 	private String arrayListSeparator;
 
+	/**
+	 * <p>
+	 * Creates a string composite converter with the default array/list separator
+	 * ({@link StringConverter#DEFAULT_ARRAY_LIST_SEPARATOR}.
+	 * </p>
+	 */
 	public StringCompositeConverter() {
 		this(StringConverter.DEFAULT_ARRAY_LIST_SEPARATOR);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a string composite converter with the specified array/list separator.
+	 * </p>
+	 * 
+	 * @param arrayListSeparator an array/list separator
+	 */
 	public StringCompositeConverter(String arrayListSeparator) {
 		this.arrayListSeparator = arrayListSeparator;
 		this.defaultConverter = new StringConverter(this.arrayListSeparator);
@@ -58,10 +91,24 @@ public class StringCompositeConverter extends CompositeConverter<String> impleme
 		this.setDefaultEncoder(this.defaultConverter);
 	}
 	
+	/**
+	 * <p>
+	 * Returns the array/list separator used to convert lists and arrays.
+	 * </p>
+	 * 
+	 * @return an array/list separator
+	 */
 	public String getArrayListSeparator() {
 		return this.arrayListSeparator;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the array/list separator used to convert lists and arrays.
+	 * </p>
+	 * 
+	 * @param arrayListSeparator an array/list separator
+	 */
 	public void setArrayListSeparator(String arrayListSeparator) {
 		this.arrayListSeparator = arrayListSeparator;
 		this.defaultConverter.setArrayListSeparator(this.arrayListSeparator);

@@ -28,8 +28,14 @@ import io.winterframework.mod.web.compiler.spi.WebControllerInfo;
 import io.winterframework.mod.web.compiler.spi.WebRouteInfo;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebControllerInfo} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractInfo
  */
 class GenericWebControllerInfo extends AbstractInfo<BeanQualifiedName> implements WebControllerInfo {
 
@@ -41,6 +47,18 @@ class GenericWebControllerInfo extends AbstractInfo<BeanQualifiedName> implement
 	
 	private final List<? extends WebRouteInfo> routes;
 	
+	/**
+	 * <p>
+	 * Creates a generic web controller info.
+	 * </p>
+	 * 
+	 * @param element  the type element of the controller
+	 * @param name     the controller qualified name
+	 * @param reporter the controller reporter
+	 * @param type     the controller type
+	 * @param rootPath the root path of the routes defined in the controller
+	 * @param routes   the routes defined in the controller
+	 */
 	public GenericWebControllerInfo(TypeElement element, BeanQualifiedName name, ReporterInfo reporter, DeclaredType type, String rootPath, List<GenericWebRouteInfo> routes) {
 		super(name, reporter instanceof NoOpReporterInfo ? ((NoOpReporterInfo)reporter).getReporter() : reporter);
 		this.element = element;

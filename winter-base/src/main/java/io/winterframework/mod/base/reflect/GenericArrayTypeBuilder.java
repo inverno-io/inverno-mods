@@ -17,58 +17,63 @@ package io.winterframework.mod.base.reflect;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Type;
-import java.util.function.Consumer;
-
-import io.winterframework.mod.base.reflect.Types.ArrayTypeArgumentBuilder;
-import io.winterframework.mod.base.reflect.Types.TypeArgumentBuilder;
-
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link ArrayTypeBuilder} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ArrayTypeBuilder
  */
-class ArrayTypeArgumentBuilderImpl<A> implements ArrayTypeArgumentBuilder<A> {
+class GenericArrayTypeBuilder implements ArrayTypeBuilder {
 
-	private A parentBuilder;
-
-	private Consumer<Type> typeInjector;
-	
 	private Type componentType;
 	
 	/**
-	 * 
+	 * <p>Creates a generic array type builder.</p>
 	 */
-	public ArrayTypeArgumentBuilderImpl(A parentBuilder, Consumer<Type> typeInjector) {
-		this.parentBuilder = parentBuilder;
-		this.typeInjector = typeInjector;
+	public GenericArrayTypeBuilder() {
 	}
 
 	@Override
-	public TypeArgumentBuilder<A> componentType(Class<?> rawType) {
-		return new TypeArgumentBuilderImpl<>(this.parentBuilder, rawType, this::setComponentType);
+	public TypeArgumentBuilder<ArrayTypeBuilder> componentType(Class<?> rawType) {
+		return new GenericTypeArgumentBuilder<>(this, rawType, this::setComponentType);
 	}
 
 	@Override
-	public ArrayTypeArgumentBuilder<A> componentArrayType() {
-		return new ArrayTypeArgumentBuilderImpl<>(this.parentBuilder, this::setComponentType);
+	public ArrayTypeArgumentBuilder<ArrayTypeBuilder> componentArrayType() {
+		return new GenericArrayTypeArgumentBuilder<>(this, this::setComponentType);
 	}
-	
+
+	/**
+	 * <p>
+	 * Sets the array component type.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method is invoked by child builders when they are finalized.
+	 * </p>
+	 * 
+	 * @param type the type to set
+	 */
 	private void setComponentType(Type type) {
 		this.componentType = type;
 	}
-
+	
 	@Override
-	public A and() {
+	public Type build() {
 		if(this.componentType == null) {
 			throw new IllegalStateException("Missing array component type");
 		}
 		if(this.componentType instanceof Class) {
-			this.typeInjector.accept(Array.newInstance((Class<?>)this.componentType, 0).getClass());
+			return Array.newInstance((Class<?>)this.componentType, 0).getClass();
 		}
 		else {
-			this.typeInjector.accept(new GenericArrayTypeImpl(this.componentType));
+			return new GenericArrayTypeImpl(this.componentType);
 		}
-		return this.parentBuilder;
 	}
 
 }

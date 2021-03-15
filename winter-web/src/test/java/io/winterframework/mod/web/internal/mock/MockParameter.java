@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 import io.winterframework.mod.http.base.Parameter;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class MockParameter implements Parameter {

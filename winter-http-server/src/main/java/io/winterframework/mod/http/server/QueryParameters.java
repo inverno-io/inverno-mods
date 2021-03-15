@@ -23,18 +23,72 @@ import java.util.Set;
 import io.winterframework.mod.http.base.Parameter;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Represents the query parameters sent of a client request in a server exchange.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Request
  */
 public interface QueryParameters {
 
+	/**
+	 * <p>
+	 * Determines whether a parameter with the specified name is present.
+	 * </p>
+	 * 
+	 * @param name a query parameter name
+	 * 
+	 * @return true if a parameter is present, false otherwise
+	 */
 	boolean contains(String name);
 	
+	/**
+	 * <p>
+	 * Returns the names of the query parameters sent in the request.
+	 * </p>
+	 * 
+	 * @return a list of header names
+	 */
 	Set<String> getNames();
 	
+	/**
+	 * <p>
+	 * Returns the query parameter with the specified name.
+	 * </p>
+	 * 
+	 * <p>
+	 * If there are multiple parameters with the same name, this method returns the
+	 * first one.
+	 * </p>
+	 * 
+	 * @param name a query parameter name
+	 * 
+	 * @return an optional returning the parameter or an empty optional if there's
+	 *         no parameter with the specified name
+	 */
 	Optional<Parameter> get(String name);
 	
+	/**
+	 * <p>
+	 * Returns all query parameters with the specified name.
+	 * </p>
+	 * 
+	 * @param name a query parameter name
+	 * 
+	 * @return a list of parameters or an empty list if there's no parameter with
+	 *         the specified name
+	 */
 	List<Parameter> getAll(String name);
 	
+	/**
+	 * <p>
+	 * Returns all query parameters sent in the request.
+	 * </p>
+	 * 
+	 * @return the parameters grouped by name
+	 */
 	Map<String, List<Parameter>> getAll();
 }

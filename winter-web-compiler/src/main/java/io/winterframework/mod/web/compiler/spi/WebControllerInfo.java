@@ -22,18 +22,51 @@ import io.winterframework.core.compiler.spi.BeanQualifiedName;
 import io.winterframework.core.compiler.spi.Info;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Describes a web controller.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public interface WebControllerInfo extends Info {
 
-	TypeElement getElement();
-	
+	@Override
 	BeanQualifiedName getQualifiedName();
 	
+	/**
+	 * <p>
+	 * Returns the type element defining the web controller.
+	 * </p>
+	 * 
+	 * @return a type element
+	 */
+	TypeElement getElement();
+	
+	/**
+	 * <p>
+	 * Returns the type of the web controller.
+	 * </p>
+	 * 
+	 * @return a type
+	 */
 	DeclaredType getType();
 	
+	/**
+	 * <p>
+	 * Returns the web controller root path.
+	 * </p>
+	 * 
+	 * @return an absolute normalized path
+	 */
 	String getRootPath();
 	
+	/**
+	 * <p>
+	 * Returns the web routes defined in the web controller.
+	 * </p>
+	 * 
+	 * @return an array of web route info
+	 */
 	WebRouteInfo[] getRoutes();
 }

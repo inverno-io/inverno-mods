@@ -30,18 +30,34 @@ import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.web.AcceptAwareRoute;
 
 /**
- * @author jkuhn
+ * <p>
+ * A routing link responsible to route an exchange based on the content types
+ * accepted by the client as defined by {@link AcceptAwareRoute}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @param <A> the type of exchange handled by the route
+ * @param <B> the route type
  */
 class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> extends RoutingLink<A, ProducesRoutingLink<A, B>, B> {
 
 	private final HeaderCodec<? extends Headers.Accept> acceptCodec;
-	
+
 	private final HeaderCodec<? extends Headers.ContentType> contentTypeCodec;
-	
+
 	private Map<Headers.ContentType, RoutingLink<A, ?, B>> handlers;
 	private Map<Headers.ContentType, RoutingLink<A, ?, B>> enabledHandlers;
-	
+
+	/**
+	 * <p>
+	 * Creates a produces routing link.
+	 * </p>
+	 * 
+	 * @param acceptCodec      an accept header codec
+	 * @param contentTypeCodec a content type header codec
+	 */
 	public ProducesRoutingLink(HeaderCodec<? extends Headers.Accept> acceptCodec, HeaderCodec<? extends Headers.ContentType> contentTypeCodec) {
 		super(() -> new ProducesRoutingLink<>(acceptCodec, contentTypeCodec));
 		this.acceptCodec = acceptCodec;
@@ -49,23 +65,27 @@ class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 		this.handlers = new LinkedHashMap<>();
 		this.enabledHandlers = Map.of();
 	}
-	
+
 	private void updateEnabledHandlers() {
-		this.enabledHandlers = this.handlers.entrySet().stream().filter(e -> !e.getValue().isDisabled()).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a,b) -> a, LinkedHashMap::new));
+		this.enabledHandlers = this.handlers.entrySet().stream()
+			.filter(e -> !e.getValue().isDisabled())
+			.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> a, LinkedHashMap::new));
 	}
 
 	@Override
 	public ProducesRoutingLink<A, B> setRoute(B route) {
 		String produce = route.getProduce();
-		if(produce != null) {
+		if (produce != null) {
 			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, produce);
-			if(this.handlers.containsKey(contentType)) {
+			if (this.handlers.containsKey(contentType)) {
 				this.handlers.get(contentType).setRoute(route);
-			}
+			} 
 			else {
 				this.handlers.put(contentType, this.nextLink.createNextLink().setRoute(route));
 			}
-			this.handlers = this.handlers.entrySet().stream().sorted(Comparator.comparing(e -> e.getKey().toMediaRange(), Headers.Accept.MediaRange.COMPARATOR)).collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a,b) -> a, LinkedHashMap::new));
+			this.handlers = this.handlers.entrySet().stream()
+				.sorted(Comparator.comparing(e -> e.getKey().toMediaRange(), Headers.Accept.MediaRange.COMPARATOR))
+				.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> a, LinkedHashMap::new));
 			this.updateEnabledHandlers();
 		}
 		else {
@@ -73,14 +93,14 @@ class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 		}
 		return this;
 	}
-	
+
 	@Override
 	public void enableRoute(B route) {
 		String produce = route.getProduce();
-		if(produce != null) {
+		if (produce != null) {
 			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, produce);
 			RoutingLink<A, ?, B> handler = this.handlers.get(contentType);
-			if(handler != null) {
+			if (handler != null) {
 				handler.enableRoute(route);
 				this.updateEnabledHandlers();
 			}
@@ -90,124 +110,127 @@ class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 			this.nextLink.enableRoute(route);
 		}
 	}
-	
+
 	@Override
 	public void disableRoute(B route) {
 		String produce = route.getProduce();
-		if(produce != null) {
+		if (produce != null) {
 			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, produce);
 			RoutingLink<A, ?, B> handler = this.handlers.get(contentType);
-			if(handler != null) {
+			if (handler != null) {
 				handler.disableRoute(route);
 				this.updateEnabledHandlers();
 			}
 			// route doesn't exist so let's do nothing
-		}
+		} 
 		else {
 			this.nextLink.disableRoute(route);
 		}
 	}
-	
+
 	@Override
 	public void removeRoute(B route) {
 		String produce = route.getProduce();
-		if(produce != null) {
+		if (produce != null) {
 			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, produce);
 			RoutingLink<A, ?, B> handler = this.handlers.get(contentType);
-			if(handler != null) {
+			if (handler != null) {
 				handler.removeRoute(route);
-				if(!handler.hasRoute()) {
-					// The link has no more routes, we can remove it for good 
+				if (!handler.hasRoute()) {
+					// The link has no more routes, we can remove it for good
 					this.handlers.remove(contentType);
 					this.updateEnabledHandlers();
 				}
 			}
 			// route doesn't exist so let's do nothing
-		}
+		} 
 		else {
 			this.nextLink.removeRoute(route);
 		}
 	}
-	
+
 	@Override
 	public boolean hasRoute() {
 		return !this.handlers.isEmpty() || this.nextLink.hasRoute();
 	}
-	
+
 	@Override
 	public boolean isDisabled() {
 		return this.handlers.values().stream().allMatch(RoutingLink::isDisabled) && this.nextLink.isDisabled();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public <F extends RouteExtractor<A, B>> void extractRoute(F extractor) {
 		super.extractRoute(extractor);
-		if(!(extractor instanceof AcceptAwareRouteExtractor)) {
+		if (!(extractor instanceof AcceptAwareRouteExtractor)) {
 			throw new IllegalArgumentException("Route extractor is not accept aware");
 		}
 		this.handlers.entrySet().stream().forEach(e -> {
-			e.getValue().extractRoute(((AcceptAwareRouteExtractor<A, B, ?>)extractor).produces(e.getKey().getMediaType()));
+			e.getValue().extractRoute(((AcceptAwareRouteExtractor<A, B, ?>) extractor).produces(e.getKey().getMediaType()));
 		});
 	}
-	
+
 	@Override
 	public void handle(A exchange) throws WebException {
-		if(this.handlers.isEmpty()) {
+		if (this.handlers.isEmpty()) {
 			this.nextLink.handle(exchange);
-		}
+		} 
 		else {
-			Headers.Accept accept = Headers.Accept.merge(exchange.request().headers().<Headers.Accept>getAllHeader(Headers.NAME_ACCEPT))
+			Headers.Accept accept = Headers.Accept
+				.merge(exchange.request().headers().<Headers.Accept>getAllHeader(Headers.NAME_ACCEPT))
 				.orElse(this.acceptCodec.decode(Headers.NAME_ACCEPT, "*/*"));
-			
-			if(!this.enabledHandlers.isEmpty()) {
+
+			if (!this.enabledHandlers.isEmpty()) {
 				Iterator<Headers.AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, ?, B>>>> acceptMatchesIterator = accept
-					.findAllMatch(this.enabledHandlers.entrySet(), Entry::getKey)
-					.iterator();
-				
+					.findAllMatch(this.enabledHandlers.entrySet(), Entry::getKey).iterator();
+
 				boolean nextLinkInvoked = false;
-				while(acceptMatchesIterator.hasNext()) {
+				while (acceptMatchesIterator.hasNext()) {
 					Headers.AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, ?, B>>> bestMatch = acceptMatchesIterator.next();
-					if(!nextLinkInvoked && bestMatch.getSource().getMediaType().equals("*/*") && bestMatch.getSource().getParameters().isEmpty()) {
+					if (!nextLinkInvoked && bestMatch.getSource().getMediaType().equals("*/*") && bestMatch.getSource().getParameters().isEmpty()) {
 						nextLinkInvoked = true;
 						// First check if the next link can handle the request since this is the default
 						try {
 							this.nextLink.handle(exchange);
 							return;
-						}
-						catch(RouteNotFoundException | DisabledRouteException e1) {
+						} 
+						catch (RouteNotFoundException | DisabledRouteException e1) {
 							// There's no default handler defined, we can take the best match
 							try {
 								exchange.response().headers().set(bestMatch.getTarget().getKey());
 								bestMatch.getTarget().getValue().handle(exchange);
 								return;
-							}
-							catch(RouteNotFoundException | DisabledRouteException e2) {
+							} 
+							catch (RouteNotFoundException | DisabledRouteException e2) {
 								// continue with the next best match
 								exchange.response().headers().remove(Headers.NAME_CONTENT_TYPE);
 								continue;
 							}
 						}
-					}
+					} 
 					else {
 						try {
 							exchange.response().headers().set(bestMatch.getTarget().getKey());
 							bestMatch.getTarget().getValue().handle(exchange);
 							return;
-						}
-						catch(RouteNotFoundException | DisabledRouteException e) {
+						} 
+						catch (RouteNotFoundException | DisabledRouteException e) {
 							exchange.response().headers().remove(Headers.NAME_CONTENT_TYPE);
 							continue;
 						}
 					}
 				}
 				// We haven't found any route that can handle the request
-				throw new NotAcceptableException(this.handlers.keySet().stream().map(Headers.ContentType::getMediaType).collect(Collectors.toSet()));
-			}
-			else if(accept.getMediaRanges().stream().anyMatch(mediaRange -> mediaRange.getMediaType().equals("*/*"))) {
+				throw new NotAcceptableException(this.handlers.keySet().stream()
+						.map(Headers.ContentType::getMediaType)
+						.collect(Collectors.toSet())
+					);
+			} 
+			else if (accept.getMediaRanges().stream().anyMatch(mediaRange -> mediaRange.getMediaType().equals("*/*"))) {
 				// We delegate to next link only if */* is accepted
 				this.nextLink.handle(exchange);
-			}
+			} 
 			else {
 				throw new NotAcceptableException();
 			}

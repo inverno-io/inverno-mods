@@ -18,17 +18,34 @@ package io.winterframework.mod.web.compiler.internal;
 import io.winterframework.core.compiler.spi.ReporterInfo;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A silent reporter info which ignores error and warning reports.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ReporterInfo
  */
 class NoOpReporterInfo implements ReporterInfo {
 
 	private final ReporterInfo reporter;
 	
+	/**
+	 * <p>
+	 * Creates a no-op reporter info.
+	 * </p>
+	 */
 	public NoOpReporterInfo() {
 		this(null);
 	}
-	
+	/**
+	 * <p>
+	 * Creates a no-op reporter info wrapping the specified reporter.
+	 * </p>
+	 * 
+	 * @param reporter the underlying reporter
+	 */
 	public NoOpReporterInfo(ReporterInfo reporter) {
 		this.reporter = reporter;
 	}

@@ -17,12 +17,31 @@ package io.winterframework.mod.web.internal;
 
 import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.web.AbstractRoute;
+import io.winterframework.mod.web.ErrorAwareRoute;
 
 /**
- * @author jkuhn
+ * <p>
+ * A route extractor to extract {@link ErrorAwareRoute} routes.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @param <A> the type of exchange handled by the route
+ * @param <B> the route type
+ * @param <C> the route extractor type
  */
 interface ErrorAwareRouteExtractor<A extends Exchange, B extends AbstractRoute<A>, C extends ErrorAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
 
+	/**
+	 * <p>
+	 * Sets the extractor to extract routes which support the specified type of
+	 * error.
+	 * </p>
+	 * 
+	 * @param error the error type supported by the routes to extract
+	 * 
+	 * @return the route extractor
+	 */
 	C error(Class<? extends Throwable> error);
 }

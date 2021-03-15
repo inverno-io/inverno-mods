@@ -23,18 +23,72 @@ import java.util.Set;
 import io.winterframework.mod.http.base.header.CookieParameter;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Represents the cookies of a client request in a server exchange.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Request
  */
 public interface RequestCookies {
 	
+	/**
+	 * <p>
+	 * Determines whether a cookie with the specified name is present.
+	 * </p>
+	 * 
+	 * @param name a cookie name
+	 * 
+	 * @return true if a cookie is present, false otherwise
+	 */
 	boolean contains(String name);
 	
+	/**
+	 * <p>
+	 * Returns the names of the cookies sent in the request.
+	 * </p>
+	 * 
+	 * @return a list of cookie names
+	 */
 	Set<String> getNames();
 	
+	/**
+	 * <p>
+	 * Returns the cookie with the specified name.
+	 * </p>
+	 * 
+	 * <p>
+	 * If there are multiple cookies with the same name, this method returns the
+	 * first one.
+	 * </p>
+	 * 
+	 * @param name a cookie name
+	 * 
+	 * @return an optional returning the cookie parameter or an empty optional if
+	 *         there's no cookie with the specified name
+	 */
 	Optional<CookieParameter> get(String name);
 	
+	/**
+	 * <p>
+	 * Returns all cookies with the specified name.
+	 * </p>
+	 * 
+	 * @param name a cookie name
+	 * 
+	 * @return a list of cookie parameters or an empty list if there's no cookie
+	 *         with the specified name
+	 */
 	List<CookieParameter> getAll(String name);
 	
+	/**
+	 * <p>
+	 * Returns all cookies sent in the request.
+	 * </p>
+	 * 
+	 * @return the cookies grouped by name
+	 */
 	Map<String, List<CookieParameter>> getAll();
 }

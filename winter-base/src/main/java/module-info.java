@@ -15,9 +15,12 @@
  */
 
 /**
+ * <p>
+ * Defines the foundational APIs of the Winter framework modules.
+ * </p>
  * 
- * @author jkuhn
- *
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 module io.winterframework.mod.base {
 	requires org.apache.commons.text;

@@ -20,7 +20,7 @@ import io.winterframework.core.compiler.spi.ModuleQualifiedName;
 import io.winterframework.core.compiler.spi.QualifiedNameFormatException;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class PropertyQualifiedName extends BeanQualifiedName {
@@ -34,6 +34,17 @@ public class PropertyQualifiedName extends BeanQualifiedName {
 	 */
 	private String name;
 
+	/**
+	 * <p>
+	 * Creates a property qualified name with the specified bean qualified name and
+	 * property name.
+	 * </p>
+	 * 
+	 * @param beanQName a bean qualified name
+	 * @param name      the property name
+	 * 
+	 * @throws QualifiedNameFormatException if the name is invalid
+	 */
 	public PropertyQualifiedName(BeanQualifiedName beanQName, String name) throws QualifiedNameFormatException {
 		super(beanQName.getModuleQName(), beanQName.getBeanName() + "." + name);
 
@@ -65,6 +76,19 @@ public class PropertyQualifiedName extends BeanQualifiedName {
 		return this.name;
 	}
 
+	/**
+	 * <p>
+	 * Creates a property qualified name from the specified raw value of the form
+	 * <code>BeanQualifiedName():&lt;propertyName&gt;</code> where
+	 * <code>&lt;propertyName&gt;</code> is a valid Java name.
+	 * </p>
+	 * 
+	 * @param qname a raw qualified name
+	 * 
+	 * @return a property qualified name
+	 * @throws QualifiedNameFormatException if the specified value is not a property
+	 *                                      qualified name
+	 */
 	public static PropertyQualifiedName valueOf(String qname) throws QualifiedNameFormatException {
 		int lastSeparatorIndex = qname.lastIndexOf(".");
 		if (lastSeparatorIndex == -1) {
@@ -73,6 +97,22 @@ public class PropertyQualifiedName extends BeanQualifiedName {
 		return new PropertyQualifiedName(BeanQualifiedName.valueOf(qname.substring(0, lastSeparatorIndex)), qname.substring(lastSeparatorIndex + 1));
 	}
 
+	/**
+	 * <p>
+	 * Creates a property qualified name from the specified module qualified name
+	 * and the specified raw value of the form
+	 * <code>&lt;beanName&gt;:&lt;propertyName&gt;</code> where
+	 * <code>&lt;beanName&gt;</code> and <code>&lt;propertyName&gt;</code> are valid
+	 * Java name.
+	 * </p>
+	 * 
+	 * @param moduleQName a module qualified name
+	 * @param qname       a raw qualified name
+	 * 
+	 * @return a property qualified name
+	 * @throws QualifiedNameFormatException if the specified value is not a property
+	 *                                      qualified name
+	 */
 	public static PropertyQualifiedName valueOf(ModuleQualifiedName moduleQName, String qname)
 			throws QualifiedNameFormatException {
 		String[] qnameParts = qname.split(".");

@@ -22,12 +22,27 @@ import io.winterframework.mod.web.compiler.spi.WebExchangeParameterInfo;
 import io.winterframework.mod.web.compiler.spi.WebParameterQualifiedName;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebExchangeParameterInfo} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractWebParameterInfo
  */
 class GenericWebExchangeParameterInfo extends AbstractWebParameterInfo implements WebExchangeParameterInfo {
 
-	public GenericWebExchangeParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement element) {
-		super(name, reporter, element, element.asType(), true);
+	/**
+	 * <p>
+	 * Creates a generic web exchange parameter info.
+	 * </p>
+	 * 
+	 * @param name             the parameter qualified name
+	 * @param reporter         the parameter reporter
+	 * @param parameterElement the parameter element
+	 */
+	public GenericWebExchangeParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement) {
+		super(name, reporter, parameterElement, parameterElement.asType(), true);
 	}
 }

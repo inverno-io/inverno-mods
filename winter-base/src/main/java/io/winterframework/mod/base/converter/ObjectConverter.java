@@ -16,8 +16,16 @@
 package io.winterframework.mod.base.converter;
 
 /**
- * @author jkuhn
+ * <p>An object converter which is splittable and joinable with primitive conversion bindings.</p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Converter
+ * @see SplittablePrimitiveDecoder
+ * @see JoinablePrimitiveEncoder
  *
+ * @param <From> the encoded type
  */
 public interface ObjectConverter<From> extends Converter<From, Object>, SplittablePrimitiveDecoder<From>, JoinablePrimitiveEncoder<From> {
 

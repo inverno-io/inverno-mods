@@ -19,10 +19,30 @@ import io.winterframework.mod.http.base.Method;
 import io.winterframework.mod.http.server.Exchange;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A route that specifies criteria used to determine whether the resource served
+ * by the route can process a request based on its HTTP method.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractRoute
+ * 
+ * @param <A> the type of web exchange handled by the route
  */
 public interface MethodAwareRoute<A extends Exchange> extends AbstractRoute<A> {
 
+	/**
+	 * <p>
+	 * Returns the HTTP method accepted by the resource served by the route.
+	 * </p>
+	 * 
+	 * <p>
+	 * This criteria should match the request HTTP method.
+	 * </p>
+	 * 
+	 * @return a HTTP method or null
+	 */
 	Method getMethod();
 }

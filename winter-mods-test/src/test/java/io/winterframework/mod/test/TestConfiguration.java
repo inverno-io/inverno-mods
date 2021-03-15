@@ -42,7 +42,7 @@ import io.winterframework.test.WinterModuleProxy;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class TestConfiguration extends AbstractConfigurationWinterTest {

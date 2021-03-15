@@ -16,36 +16,103 @@
 package io.winterframework.mod.configuration;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Thrown to indicate that an error occured in a configuration source.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationSource
+ * @see ConfigurationQueryResult
+ * @see ConfigurationUpdateResult
  */
 public class ConfigurationSourceException extends RuntimeException {
 
 	private static final long serialVersionUID = 2438241833256744554L;
 
+	/**
+	 * The configuration source at the origin of the error.
+	 */
 	private ConfigurationSource<?,?,?> source;
 
+	/**
+	 * <p>
+	 * Creates a configuration source exception for the specified source.
+	 * </p>
+	 * 
+	 * @param source the configuration source
+	 */
 	public ConfigurationSourceException(ConfigurationSource<?,?,?> source) {
 		super();
 		this.source = source;
 	}
 
-	public ConfigurationSourceException(ConfigurationSource<?,?,?> source, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
-
-	public ConfigurationSourceException(ConfigurationSource<?,?,?> source, String message, Throwable cause) {
-		super(message, cause);
-	}
-
+	/**
+	 * <p>
+	 * Creates a configuration source exception for the specified source and with
+	 * the specified message.
+	 * </p>
+	 * 
+	 * @param source  the configuration source
+	 * @param message the message
+	 */
 	public ConfigurationSourceException(ConfigurationSource<?,?,?> source, String message) {
 		super(message);
 	}
 
+	/**
+	 * <p>
+	 * Creates a configuration source exception for the specified source and with
+	 * the specified cause.
+	 * </p>
+	 * 
+	 * @param source the configuration source
+	 * @param cause  the cause
+	 */
 	public ConfigurationSourceException(ConfigurationSource<?,?,?> source, Throwable cause) {
 		super(cause);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a configuration source exception for the specified source and with
+	 * the specified message and cause.
+	 * </p>
+	 * 
+	 * @param source  the configuration source
+	 * @param message the message
+	 * @param cause   the cause
+	 */
+	public ConfigurationSourceException(ConfigurationSource<?,?,?> source, String message, Throwable cause) {
+		super(message, cause);
+	}
+	
+	/**
+	 * <p>
+	 * Creates a configuration source exception for the specified source and with
+	 * the specified message, cause, suppression enabled or disabled and writable
+	 * stack trace enabled or disabled.
+	 * </p>
+	 * 
+	 * @param source             the configuration source
+	 * @param message            the message
+	 * @param cause              the cause
+	 * @param enableSuppression  true to enable suppression, false otherwise
+	 * @param writableStackTrace true to make the stack trace writable, false
+	 *                           otherwise
+	 */
+	public ConfigurationSourceException(ConfigurationSource<?,?,?> source, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+		super(message, cause, enableSuppression, writableStackTrace);
+	}
+
+	/**
+	 * <p>
+	 * Returns the configuration source at the origin of the error.
+	 * </p>
+	 * 
+	 * @return the configuration source
+	 */
 	public ConfigurationSource<?, ?, ?> getSource() {
 		return source;
 	}

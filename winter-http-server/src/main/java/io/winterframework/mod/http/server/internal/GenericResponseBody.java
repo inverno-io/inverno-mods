@@ -35,8 +35,12 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link ResponseBody} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class GenericResponseBody implements ResponseBody {
 	
@@ -54,10 +58,26 @@ public class GenericResponseBody implements ResponseBody {
 	private boolean dataSet;
 	private boolean single;
 	
+	/**
+	 * <p>
+	 * Creates a response body for the specified response.
+	 * </p>
+	 * 
+	 * @param response the response
+	 */
 	public GenericResponseBody(AbstractResponse response) {
 		this.response = response;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the response payload data.
+	 * </p>
+	 * 
+	 * @param data the payload data publisher
+	 * 
+	 * @throws IllegalStateException if response data have already been set
+	 */
 	protected final void setData(Publisher<ByteBuf> data) {
 		if(this.dataSet) {
 			throw new IllegalStateException("Response data already posted");
@@ -71,6 +91,13 @@ public class GenericResponseBody implements ResponseBody {
 		this.data = data;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the response payload data publisher.
+	 * </p>
+	 * 
+	 * @return the payload data publisher
+	 */
 	public Publisher<ByteBuf> getData() {
 		if(this.data == null) {
 			this.setData(Flux.switchOnNext(Mono.<Publisher<ByteBuf>>create(emitter -> this.dataEmitter = emitter)));
@@ -79,13 +106,22 @@ public class GenericResponseBody implements ResponseBody {
 		return this.data;
 	}
 
+	/**
+	 * <p>
+	 * Returns true if the response payload is composed of a single chunk of data.
+	 * <p>
+	 * 
+	 * @return true if the response payload is single, false otherwise
+	 */
 	public boolean isSingle() {
 		return this.single;
 	}
 	
 	@Override
 	public void empty() {
-		this.setData(Mono.empty());
+		if(!this.dataSet) {
+			this.setData(Mono.empty());
+		}
 	}
 
 	@Override
@@ -112,6 +148,14 @@ public class GenericResponseBody implements ResponseBody {
 		return this.sseData;
 	}
 	
+	/**
+	 * <p>
+	 * Generic raw {@link ResponseData} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	protected class GenericResponseBodyRawData implements ResponseData<ByteBuf> {
 
 		@SuppressWarnings("unchecked")
@@ -125,9 +169,25 @@ public class GenericResponseBody implements ResponseBody {
 			this.stream(Mono.just(data));
 		}
 	}
-	
+
+	/**
+	 * <p>
+	 * Generic {@link ResponseBody.Resource} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	protected class GenericResponseBodyResourceData implements ResponseBody.Resource {
 
+		/**
+		 * <p>
+		 * Tries to determine resource content type in which case sets the content type
+		 * header.
+		 * </p>
+		 * 
+		 * @param resource the resource
+		 */
 		protected void populateHeaders(io.winterframework.mod.base.resource.Resource resource) {
 			GenericResponseBody.this.response.headers(h -> {
 				if(GenericResponseBody.this.response.headers().getContentLength() == null) {
@@ -159,6 +219,14 @@ public class GenericResponseBody implements ResponseBody {
 		}
 	}
 
+	/**
+	 * <p>
+	 * Generic raw {@link ResponseBody.Sse} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	protected class GenericResponseBodySseData implements ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> {
 		
 		@Override
@@ -166,6 +234,14 @@ public class GenericResponseBody implements ResponseBody {
 			data.accept(this::create, this::stream);
 		}
 		
+		/**
+		 * <p>
+		 * Raw server-sent events producer.
+		 * </p>
+		 * 
+		 * @param <T>   the server-sent event type
+		 * @param value the server-sent events publisher
+		 */
 		protected <T extends ResponseBody.Sse.Event<ByteBuf>> void stream(Publisher<T> value) {
 			GenericResponseBody.this.response.headers(headers -> headers
 				.contentType(GenericResponseBody.SSE_CONTENT_TYPE)
@@ -220,12 +296,29 @@ public class GenericResponseBody implements ResponseBody {
 				}));
 		}
 		
+		/**
+		 * <p>
+		 * Raw server-sent events factory.
+		 * </p>
+		 * 
+		 * @param configurer a raw server-sent event configurer
+		 * 
+		 * @return a new raw server-sent event
+		 */
 		protected ResponseBody.Sse.Event<ByteBuf> create(Consumer<ResponseBody.Sse.Event<ByteBuf>> configurer) {
 			GenericEvent sse = new GenericEvent();
 			configurer.accept(sse);
 			return sse;
 		}
 		
+		/**
+		 * <p>
+		 * Generic raw {@link ResponseBody.Sse.Event} implementation.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+		 * @since 1.0
+		 */
 		protected final class GenericEvent implements ResponseBody.Sse.Event<ByteBuf> {
 			
 			private String id;

@@ -15,84 +15,56 @@
  */
 package io.winterframework.mod.boot.internal.net;
 
+import java.util.concurrent.ThreadFactory;
+
 import io.netty.util.concurrent.DefaultThreadFactory;
+import reactor.core.scheduler.NonBlocking;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * {@link ThreadFactory} implementation that creates {@link NonBlocking} threads
+ * in order to prevent blocking calls from the Reactor APIs.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see NonBlocking
  */
 class NonBlockingThreadFactory extends DefaultThreadFactory {
 
-	/**
-	 * @param poolType
-	 */
 	public NonBlockingThreadFactory(Class<?> poolType) {
 		super(poolType);
 	}
 
-	/**
-	 * @param poolName
-	 */
 	public NonBlockingThreadFactory(String poolName) {
 		super(poolName);
 	}
 
-	/**
-	 * @param poolType
-	 * @param daemon
-	 */
 	public NonBlockingThreadFactory(Class<?> poolType, boolean daemon) {
 		super(poolType, daemon);
 	}
 
-	/**
-	 * @param poolName
-	 * @param daemon
-	 */
 	public NonBlockingThreadFactory(String poolName, boolean daemon) {
 		super(poolName, daemon);
 	}
 
-	/**
-	 * @param poolType
-	 * @param priority
-	 */
 	public NonBlockingThreadFactory(Class<?> poolType, int priority) {
 		super(poolType, priority);
 	}
 
-	/**
-	 * @param poolName
-	 * @param priority
-	 */
 	public NonBlockingThreadFactory(String poolName, int priority) {
 		super(poolName, priority);
 	}
 
-	/**
-	 * @param poolType
-	 * @param daemon
-	 * @param priority
-	 */
 	public NonBlockingThreadFactory(Class<?> poolType, boolean daemon, int priority) {
 		super(poolType, daemon, priority);
 	}
 
-	/**
-	 * @param poolName
-	 * @param daemon
-	 * @param priority
-	 */
 	public NonBlockingThreadFactory(String poolName, boolean daemon, int priority) {
 		super(poolName, daemon, priority);
 	}
 
-	/**
-	 * @param poolName
-	 * @param daemon
-	 * @param priority
-	 * @param threadGroup
-	 */
 	public NonBlockingThreadFactory(String poolName, boolean daemon, int priority, ThreadGroup threadGroup) {
 		super(poolName, daemon, priority, threadGroup);
 	}
@@ -101,5 +73,4 @@ class NonBlockingThreadFactory extends DefaultThreadFactory {
 	protected Thread newThread(Runnable r, String name) {
 		return new NonBlockingThread(r, name);
 	}
-	
 }

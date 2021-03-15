@@ -36,8 +36,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base {@link Request} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public abstract class AbstractRequest implements Request {
 
@@ -56,6 +60,19 @@ public abstract class AbstractRequest implements Request {
 	private String pathAbsolute;
 	private String queryString;
 	
+	/**
+	 * <p>
+	 * Creates a request with the specified channel handler context, request
+	 * headers, parameter value converter, URL encoded body decoder and multipart
+	 * body decoder.
+	 * </p>
+	 * 
+	 * @param context               the channel handler context
+	 * @param requestHeaders        the underlying request headers
+	 * @param parameterConverter    a string object converter
+	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
+	 * @param multipartBodyDecoder  the multipart/form-data body decoder
+	 */
 	public AbstractRequest(ChannelHandlerContext context, RequestHeaders requestHeaders, ObjectConverter<String> parameterConverter, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
 		this.context = context;
 		this.requestHeaders = requestHeaders;
@@ -64,6 +81,13 @@ public abstract class AbstractRequest implements Request {
 		this.multipartBodyDecoder = multipartBodyDecoder;
 	}
 
+	/**
+	 * <p>
+	 * Returns the path builder created from the request path.
+	 * </p>
+	 * 
+	 * @return the path builder
+	 */
 	protected abstract URIBuilder getPathBuilder();
 	
 	@Override
@@ -135,10 +159,23 @@ public abstract class AbstractRequest implements Request {
 		return this.requestBody;
 	}
 
+	/**
+	 * <p>
+	 * Returns the request payload data sink.
+	 * </p>
+	 * 
+	 * @return an optional returning the payload data sink or an empty optional if
+	 *         the request has no body
+	 */
 	public Optional<Sinks.Many<ByteBuf>> data() {
 		return Optional.ofNullable(this.data);
 	}
 	
+	/**
+	 * <p>
+	 * Drains and release the request data flux.
+	 * </p>
+	 */
 	public void dispose() {
 		if(this.data != null) {
 			// Try to drain and release buffered data 

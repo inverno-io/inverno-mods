@@ -27,8 +27,14 @@ import io.winterframework.mod.web.compiler.spi.WebRouteInfo;
 import io.winterframework.mod.web.compiler.spi.WebRouterConfigurerQualifiedName;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebProvidedRouterConfigurerInfo} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractInfo
  */
 class GenericWebProvidedRouterConfigurerInfo extends AbstractInfo<WebRouterConfigurerQualifiedName> implements WebProvidedRouterConfigurerInfo {
 
@@ -38,6 +44,16 @@ class GenericWebProvidedRouterConfigurerInfo extends AbstractInfo<WebRouterConfi
 	
 	private final List<? extends WebRouteInfo> routes;
 	
+	/**
+	 * <p>
+	 * Creates a generic web provided router configurer info.
+	 * </p>
+	 * 
+	 * @param element the type element of the router configurer
+	 * @param name    the router qualified name
+	 * @param bean    the router configurer bean info
+	 * @param routes  the routes defined in the router configuer
+	 */
 	public GenericWebProvidedRouterConfigurerInfo(TypeElement element, WebRouterConfigurerQualifiedName name, BeanInfo bean, List<? extends WebRouteInfo> routes) {
 		super(name, bean);
 		this.element = element;
@@ -59,5 +75,4 @@ class GenericWebProvidedRouterConfigurerInfo extends AbstractInfo<WebRouterConfi
 	public WebRouteInfo[] getRoutes() {
 		return this.routes.stream().toArray(WebRouteInfo[]::new);
 	}
-
 }

@@ -32,11 +32,17 @@ import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
 import io.winterframework.mod.http.server.Part;
 import io.winterframework.mod.http.server.HttpServerConfiguration;
+import io.winterframework.mod.http.server.internal.http1x.Http1xChannelHandler;
 import io.winterframework.mod.http.server.internal.multipart.MultipartDecoder;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A factory to create {@link Http1xChannelHandler} when a HTTP2 channel is
+ * initialized.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler> {
@@ -49,6 +55,19 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 	private MultipartDecoder<Parameter> urlEncodedBodyDecoder;
 	private MultipartDecoder<Part> multipartBodyDecoder;
 	
+	/**
+	 * <p>
+	 * Creates a HTTP/2 channel handler factory.
+	 * <p>
+	 * 
+	 * @param configuration         the HTTP server configuration
+	 * @param rootHandler           the root exchange handler
+	 * @param errorHandler          the error exchange handler
+	 * @param headerService         the header service
+	 * @param parameterConverter    a string object converter
+	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
+	 * @param multipartBodyDecoder  the multipart/form-data body decoder
+	 */
 	public Http2ChannelHandlerFactory(
 			HttpServerConfiguration configuration, 
 			ExchangeHandler<Exchange> rootHandler, 

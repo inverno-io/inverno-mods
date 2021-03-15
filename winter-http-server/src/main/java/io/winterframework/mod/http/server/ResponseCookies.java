@@ -20,11 +20,27 @@ import java.util.function.Consumer;
 import io.winterframework.mod.http.base.header.SetCookie;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Represents the cookies of a server response in a server exchange.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Response
  */
 public interface ResponseCookies {
 	
+	/**
+	 * <p>
+	 * Adds a cookie with the specified name and value.
+	 * </p>
+	 * 
+	 * @param name  a cookie name
+	 * @param value a cookie value
+	 * 
+	 * @return the response cookies
+	 */
 	default ResponseCookies addCookie(String name, String value) {
 		return this.addCookie(configurator -> {
 			configurator.name(name);
@@ -32,5 +48,14 @@ public interface ResponseCookies {
 		});
 	}
 
+	/**
+	 * <p>
+	 * Adds a cookie created with the specified configurer.
+	 * </p>
+	 * 
+	 * @param configurer a cookie configurer
+	 * 
+	 * @return the response cookies
+	 */
 	ResponseCookies addCookie(Consumer<SetCookie.Configurator> configurer);
 }

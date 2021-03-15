@@ -29,8 +29,14 @@ import io.winterframework.mod.base.resource.MediaTypes;
 import reactor.core.publisher.Flux;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * ByteBuf application/json media type converter.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see MediaTypeConverter
  */
 @Bean( name = "jsonMediaTypeConverter")
 public class JsonMediaTypeConverter extends AbstractJsonMediaTypeConverter implements @Provide MediaTypeConverter<ByteBuf> {

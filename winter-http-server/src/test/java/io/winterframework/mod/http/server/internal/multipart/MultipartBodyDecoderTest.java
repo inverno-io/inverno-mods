@@ -13,7 +13,6 @@ import io.netty.buffer.ByteBuf;
 import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.base.converter.StringConverter;
 import io.winterframework.mod.base.resource.FileResource;
-import io.winterframework.mod.http.base.header.HeaderService;
 import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.base.internal.header.ContentDispositionCodec;
 import io.winterframework.mod.http.base.internal.header.ContentTypeCodec;
@@ -23,17 +22,17 @@ public class MultipartBodyDecoderTest {
 
 	@Test
 	public void testDecodeFile() throws IOException {
-		HeaderService headerService = new GenericHeaderService(List.of(new ContentTypeCodec(), new ContentDispositionCodec()));
+		GenericHeaderService headerService = new GenericHeaderService(List.of(new ContentTypeCodec(), new ContentDispositionCodec()));
 		Headers.ContentType contentType = headerService.<Headers.ContentType>decode("content-type: multipart/form-data; boundary=------------------------f490929f7758651e");
 		
 		ObjectConverter<String> parameterConverter = new StringConverter();
 		
-		MultipartBodyDecoder decoder = new MultipartBodyDecoder(headerService, parameterConverter);
+		MultipartFormDataBodyDecoder decoder = new MultipartFormDataBodyDecoder(headerService, parameterConverter);
 		
 		try(FileResource resource = new FileResource("src/test/resources/file_multipart.txt")) {
 			List<ByteBuf> data = decoder.decode(resource.read().get(), contentType)
 				.flatMap(part -> {
-					Assertions.assertEquals("text/plain", part.headers().getContentType());
+					Assertions.assertEquals(" text/plain", part.headers().getContentType());
 					Assertions.assertTrue(part.getFilename().isPresent());
 					Assertions.assertEquals("file.txt", part.getFilename().get());
 					Assertions.assertEquals("file", part.getName());

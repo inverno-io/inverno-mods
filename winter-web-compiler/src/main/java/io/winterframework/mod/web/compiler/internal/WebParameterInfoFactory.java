@@ -43,6 +43,8 @@ import io.winterframework.mod.web.annotation.HeaderParam;
 import io.winterframework.mod.web.annotation.PathParam;
 import io.winterframework.mod.web.annotation.QueryParam;
 import io.winterframework.mod.web.annotation.SseEventFactory;
+import io.winterframework.mod.web.annotation.WebRoute;
+import io.winterframework.mod.web.compiler.spi.WebParameterInfo;
 import io.winterframework.mod.web.compiler.spi.WebParameterQualifiedName;
 import io.winterframework.mod.web.compiler.spi.WebRouteQualifiedName;
 import io.winterframework.mod.web.compiler.spi.WebRequestBodyParameterInfo.RequestBodyKind;
@@ -52,8 +54,14 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A web parameter info factory is used to create web parameter info.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebParameterInfo
  */
 class WebParameterInfoFactory {
 
@@ -83,7 +91,15 @@ class WebParameterInfoFactory {
 	private final TypeMirror byteBufType;
 	private final TypeMirror webPartType;
 	private final TypeMirror parameterType;
-	
+
+	/**
+	 * <p>
+	 * Creates a web parameter info factory.
+	 * </p>
+	 * 
+	 * @param pluginContext   the web compiler plugin context
+	 * @param pluginExecution the web compiler plugin execution
+	 */
 	public WebParameterInfoFactory(PluginContext pluginContext, PluginExecution pluginExecution) {
 		this.pluginContext = Objects.requireNonNull(pluginContext);
 		this.pluginExecution = Objects.requireNonNull(pluginExecution);
@@ -111,6 +127,21 @@ class WebParameterInfoFactory {
 		this.sseEncoderEventFactoryType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebResponseBody.SseEncoder.EventFactory.class.getCanonicalName()).asType());
 	}
 	
+	/**
+	 * <p>
+	 * Creates a web parameter from a parameter element.
+	 * </p>
+	 * 
+	 * @param routeQName                the qualified name of the route for which
+	 *                                  the parameter is defined
+	 * @param parameterElement          the variable element of the parameter
+	 * @param annotatedParameterElement the variable element of the parameter in the
+	 *                                  method actually annotated with
+	 *                                  {@link WebRoute @WebRoute} annotation
+	 * @param parameterType             the parameter type
+	 * 
+	 * @return an abstract web parameter info
+	 */
 	public AbstractWebParameterInfo createParameter(WebRouteQualifiedName routeQName, VariableElement parameterElement, VariableElement annotatedParameterElement, TypeMirror parameterType) {
 		AbstractWebParameterInfo result = null;
 		
@@ -184,49 +215,149 @@ class WebParameterInfoFactory {
 			if(!parameterReporter.hasError()) {
 				parameterReporter.error("Invalid parameter which is neither a web parameter, nor a valid contextual parameter");
 			}
-			result = new ErrorWebParameterInfo(parameterQName, parameterReporter, parameterElement, required);
+			result = new InvalidWebParameterInfo(parameterQName, parameterReporter, parameterElement, required);
 		}
 		this.processedParameterElements.putIfAbsent(parameterElement, result);
 		return result;
 	}
 	
+	/**
+	 * <p>
+	 * Creates a cookie parameter info.
+	 * </p>
+	 * 
+	 * @param reporter         the parameter reporter
+	 * @param parameterQName   the parameter qualified name
+	 * @param parameterElement the parameter element
+	 * @param parameterType    the parameter type
+	 * @param required         true to indicate a required parameter, false
+	 *                         otherwise
+	 * 
+	 * @return a web cookie parameter info
+	 */
 	private GenericWebCookieParameterInfo createCookieParameter(ReporterInfo reporter, WebParameterQualifiedName parameterQName, VariableElement parameterElement, TypeMirror parameterType, boolean required) {
 		return new GenericWebCookieParameterInfo(parameterQName, reporter, parameterElement, parameterType, required);
 	}
 	
+	/**
+	 * <p>Creates an exchange parameter info.</p>
+	 * 
+	 * @param reporter the parameter reporter
+	 * @param parameterQName the parameter qualified name
+	 * @param parameterElement the parameter element
+	 * 
+	 * @return a web exchange parameter info
+	 */
 	private GenericWebExchangeParameterInfo createExchangeParameter(ReporterInfo reporter, WebParameterQualifiedName parameterQName, VariableElement parameterElement) {
 		return new GenericWebExchangeParameterInfo(parameterQName, reporter, parameterElement);
 	}
 	
-	private GenericSseEventFactoryParameterInfo createSseEventFactoryParameter(ReporterInfo reporter, WebParameterQualifiedName parameterQName, VariableElement parameterElement) {
+	/**
+	 * <p>Creates a server-sent event factory parameter info.</p>
+	 * 
+	 * @param reporter the parameter reporter
+	 * @param parameterQName the parameter qualified name
+	 * @param parameterElement the parameter element
+	 * 
+	 * @return a web server-sent event factory parameter info
+	 */
+	private GenericWebSseEventFactoryParameterInfo createSseEventFactoryParameter(ReporterInfo reporter, WebParameterQualifiedName parameterQName, VariableElement parameterElement) {
 		if(this.pluginContext.getTypeUtils().isSameType(this.sseEncoderEventFactoryType, this.pluginContext.getTypeUtils().erasure(parameterElement.asType()))) {
-			return new GenericSseEventFactoryParameterInfo(parameterQName, reporter, parameterElement, ((DeclaredType)parameterElement.asType()).getTypeArguments().get(0), SseEventFactoryKind.ENCODER, parameterElement.getAnnotation(SseEventFactory.class).value());
+			return new GenericWebSseEventFactoryParameterInfo(parameterQName, reporter, parameterElement, ((DeclaredType)parameterElement.asType()).getTypeArguments().get(0), SseEventFactoryKind.ENCODED, parameterElement.getAnnotation(SseEventFactory.class).value());
 		}
 		else if(this.pluginContext.getTypeUtils().isSameType(this.rawSseEventFactoryType, parameterElement.asType())) {
-			return new GenericSseEventFactoryParameterInfo(parameterQName, reporter, parameterElement, this.byteBufType, SseEventFactoryKind.RAW, parameterElement.getAnnotation(SseEventFactory.class).value());
+			return new GenericWebSseEventFactoryParameterInfo(parameterQName, reporter, parameterElement, this.byteBufType, SseEventFactoryKind.RAW, parameterElement.getAnnotation(SseEventFactory.class).value());
 		}
 		else {
 			reporter.error("Invalid SSE event factory parameter which must be of type " + this.rawSseEventFactoryType + " or " + this.sseEncoderEventFactoryType);
-			return new GenericSseEventFactoryParameterInfo(parameterQName, reporter, parameterElement, this.byteBufType, SseEventFactoryKind.RAW);
+			return new GenericWebSseEventFactoryParameterInfo(parameterQName, reporter, parameterElement, this.byteBufType, SseEventFactoryKind.RAW);
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Creates a form parameter info.
+	 * </p>
+	 * 
+	 * @param reporter         the parameter reporter
+	 * @param parameterQName   the parameter qualified name
+	 * @param parameterElement the parameter element
+	 * @param parameterType    the parameter type
+	 * @param required         true to indicate a required parameter, false
+	 *                         otherwise
+	 * 
+	 * @return a web form parameter info
+	 */
 	private GenericWebFormParameterInfo createFormParameter(ReporterInfo reporter, WebParameterQualifiedName parameterQName, VariableElement parameterElement, TypeMirror parameterType, boolean required) {
 		return new GenericWebFormParameterInfo(parameterQName, reporter, parameterElement, parameterType, required);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a header parameter info.
+	 * </p>
+	 * 
+	 * @param reporter         the parameter reporter
+	 * @param parameterQName   the parameter qualified name
+	 * @param parameterElement the parameter element
+	 * @param parameterType    the parameter type
+	 * @param required         true to indicate a required parameter, false
+	 *                         otherwise
+	 * 
+	 * @return a web header parameter info
+	 */
 	private GenericWebHeaderParameterInfo createHeaderParameter(ReporterInfo reporter, WebParameterQualifiedName parameterQName, VariableElement parameterElement, TypeMirror parameterType, boolean required) {
 		return new GenericWebHeaderParameterInfo(parameterQName, reporter, parameterElement, parameterType, required);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a path parameter info.
+	 * </p>
+	 * 
+	 * @param reporter         the parameter reporter
+	 * @param parameterQName   the parameter qualified name
+	 * @param parameterElement the parameter element
+	 * @param parameterType    the parameter type
+	 * @param required         true to indicate a required parameter, false
+	 *                         otherwise
+	 * 
+	 * @return a web path parameter info
+	 */
 	private GenericWebPathParameterInfo createPathParameter(ReporterInfo reporter, WebParameterQualifiedName parameterQName, VariableElement parameterElement, TypeMirror parameterType, boolean required) {
 		return new GenericWebPathParameterInfo(parameterQName, reporter, parameterElement, parameterType, required);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a query parameter info.
+	 * </p>
+	 * 
+	 * @param reporter         the parameter reporter
+	 * @param parameterQName   the parameter qualified name
+	 * @param parameterElement the parameter element
+	 * @param parameterType    the parameter type
+	 * @param required         true to indicate a required parameter, false
+	 *                         otherwise
+	 * 
+	 * @return a web query parameter info
+	 */
 	private GenericWebQueryParameterInfo createQueryParameter(ReporterInfo reporter, WebParameterQualifiedName parameterQName, VariableElement parameterElement, TypeMirror parameterType, boolean required) {
 		return new GenericWebQueryParameterInfo(parameterQName, reporter, parameterElement, parameterType, required);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a web request body parameter info.
+	 * </p>
+	 * 
+	 * @param reporter            the parameter reporter
+	 * @param parameterQName      the parameter qualified name
+	 * @param parameterElementthe parameter element
+	 * @param parameterType       the parameter type
+	 * 
+	 * @return a request body parameter info
+	 */
 	private GenericWebRequestBodyParameterInfo createRequestBodyParameter(ReporterInfo reporter, WebParameterQualifiedName parameterQName, VariableElement parameterElement, TypeMirror parameterType) {
 		TypeMirror requestBodyType = parameterType;
 		TypeMirror erasedRequestBodyType = this.pluginContext.getTypeUtils().erasure(requestBodyType);
@@ -261,6 +392,6 @@ class WebParameterInfoFactory {
 		else if(this.pluginContext.getTypeUtils().isSameType(requestBodyType, this.byteBufType)) {
 			requestBodyKind = RequestBodyKind.RAW;
 		}
-		return new GenericWebRequestBodyParameterInfo(parameterQName, reporter, parameterElement, requestBodyReactiveKind, requestBodyKind, requestBodyType);
+		return new GenericWebRequestBodyParameterInfo(parameterQName, reporter, parameterElement, requestBodyType, requestBodyKind, requestBodyReactiveKind);
 	}
 }

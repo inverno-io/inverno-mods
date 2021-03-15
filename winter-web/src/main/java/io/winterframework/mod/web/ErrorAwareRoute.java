@@ -18,10 +18,25 @@ package io.winterframework.mod.web;
 import io.winterframework.mod.http.server.Exchange;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A route that specifies criteria used to determine whether the resource served
+ * by the route can process a request that failed with a particular type of
+ * error.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractRoute
  */
 public interface ErrorAwareRoute<A extends Exchange> extends AbstractRoute<A> {
 
+	/**
+	 * <p>
+	 * Returns the type of errors supported by the resource served by the route.
+	 * </p>
+	 * 
+	 * @return an error type or null
+	 */
 	Class<? extends Throwable> getError();
 }

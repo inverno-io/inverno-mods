@@ -21,22 +21,84 @@ import java.util.Map;
 import io.winterframework.mod.http.server.ResponseHeaders;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base internal response headers.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public interface AbstractResponseHeaders extends ResponseHeaders {
 	
+	/**
+	 * <p>
+	 * Determines whether the response headers have been sent to the client.
+	 * </p>
+	 * 
+	 * @return true if the headers have been sent, false otherwise
+	 */
 	boolean isWritten();
-	
+
+	/**
+	 * <p>
+	 * Defines whether headers have been sent to the client.
+	 * </p>
+	 * 
+	 * @param written true to indicates the headers have been written, false
+	 *                otherwise
+	 */
 	void setWritten(boolean written);
 
+	/**
+	 * <p>
+	 * Returns the content type header field value as a char sequence.
+	 * </p>
+	 * 
+	 * @return the content type header field value or null
+	 */
 	CharSequence getContentTypeCharSequence();
 	
+	/**
+	 * <p>
+	 * Returns the value of the header with the specified name as a char sequence.
+	 * </p>
+	 * 
+	 * <p>
+	 * </p>
+	 * 
+	 * @param name the header name
+	 * 
+	 * @return the header value or null if there's no header with the specified name
+	 */
 	CharSequence getCharSequence(CharSequence name);
 	
+	/**
+	 * <p>
+	 * Returns the values of all headers with the specified name as char sequences.
+	 * </p>
+	 * 
+	 * @param name a header name
+	 * 
+	 * @return a list of header values or an empty list if there's no header with
+	 *         the specified name
+	 */
 	List<CharSequence> getAllCharSequence(CharSequence name);
 
+	/**
+	 * <p>
+	 * Returns all headers in the response.
+	 * </p>
+	 * 
+	 * @return a list of header entries or an empty list if there's no header
+	 */
 	List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence();
 	
+	/**
+	 * <p>
+	 * Returns the response content length.
+	 * </p>
+	 * 
+	 * @return the content length or null
+	 */
 	Long getContentLength();
 }

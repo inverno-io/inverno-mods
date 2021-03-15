@@ -20,15 +20,47 @@ import javax.lang.model.type.TypeMirror;
 import io.winterframework.core.compiler.spi.Info;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A configuration property info describes a configuration property in a
+ * configuration.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationInfo
  */
 public interface ConfigurationPropertyInfo extends Info {
 
+	/**
+	 * <p>
+	 * Returns the qualified name of a configuration property defined a
+	 * configuration.
+	 * </p>
+	 */
 	@Override
 	PropertyQualifiedName getQualifiedName();
 	
+	/**
+	 * <p>
+	 * Determines whether the property defined a default values.
+	 * </p>
+	 * 
+	 * <p>
+	 * Default values are returned in default implementation in the configuration
+	 * interface.
+	 * </p>
+	 * 
+	 * @return true if the property has a default value, false otherwise
+	 */
 	boolean isDefault();
 	
+	/**
+	 * <p>
+	 * Returns the type of the configuration property.
+	 * </p>
+	 * 
+	 * @return a type
+	 */
 	TypeMirror getType();
 }

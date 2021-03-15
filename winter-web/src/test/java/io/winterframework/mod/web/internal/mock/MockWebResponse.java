@@ -25,7 +25,7 @@ import io.winterframework.mod.web.WebResponse;
 import io.winterframework.mod.web.WebResponseBody;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class MockWebResponse implements WebResponse {

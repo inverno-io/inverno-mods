@@ -1,3 +1,6 @@
+import io.winterframework.mod.http.base.Parameter;
+import io.winterframework.mod.http.base.header.HeaderService;
+
 /*
  * Copyright 2021 Jeremy KUHN
  *
@@ -15,13 +18,37 @@
  */
 
 /**
+ * <p>
+ * The Winter framework HTTP base module defines the base APIs and services for
+ * HTTP client and server implementations.
+ * </p>
  * 
- * @author jkuhn
- *
+ * <p>It defines the following sockets:</p>
+ * 
+ * <dl>
+ * <dt>headerCodecs</dt>
+ * <dd>extend the extends header service capabilities with a list of custom header codecs</dd>
+ * <dt>parameterConverter</dt>
+ * <dd>override the default parameter converter used in {@link Parameter} instances to convert their values</dd>
+ * </dl>
+ * 
+ * <p>
+ * It exposes the following beans:
+ * </p>
+ * 
+ * <dl>
+ * <dt>headerService</dt>
+ * <dd>A {@link HeaderService} used to decode and encode HTTP header fields.</dd>
+ * </dl>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @io.winterframework.core.annotation.Module
 module io.winterframework.mod.http.base {
 	requires io.winterframework.core;
+	requires static io.winterframework.core.annotation; // for javadoc...
+	
 	requires transitive io.winterframework.mod.base;
 	
 	requires transitive io.netty.buffer;

@@ -21,8 +21,20 @@ import io.winterframework.mod.http.server.ExchangeHandler;
 import io.winterframework.mod.web.AbstractRoute;
 
 /**
- * @author jkuhn
+ * <p>
+ * A routing link responsible for the route handler.
+ * </p>
+ * 
+ * <p>
+ * This link must appear at the end of a routing chain and holds the actual
+ * request processing logic.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @param <A> the type of exchange handled by the route
+ * @param <B> the route type
  */
 class HandlerRoutingLink<A extends Exchange, B extends AbstractRoute<A>> extends RoutingLink<A, HandlerRoutingLink<A, B>, B> {
 
@@ -30,10 +42,16 @@ class HandlerRoutingLink<A extends Exchange, B extends AbstractRoute<A>> extends
 	
 	private boolean disabled;
 	
+	/**
+	 * <p>
+	 * Creates a handler routing link.
+	 * </p>
+	 */
 	public HandlerRoutingLink() {
 		super(HandlerRoutingLink::new);
 	}
 	
+	@Override
 	public HandlerRoutingLink<A, B> setRoute(B route) {
 		this.handler = route.getHandler();
 		return this;

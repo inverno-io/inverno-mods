@@ -41,11 +41,19 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import io.winterframework.mod.base.converter.ConverterException;
+import io.winterframework.mod.base.converter.Decoder;
+import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.base.converter.SplittablePrimitiveDecoder;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Object to object {@link Decoder} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ObjectConverter
  */
 public class ObjectDecoder implements SplittablePrimitiveDecoder<Object> {
 

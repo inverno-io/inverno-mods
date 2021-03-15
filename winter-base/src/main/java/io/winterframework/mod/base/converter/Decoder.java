@@ -18,13 +18,44 @@ package io.winterframework.mod.base.converter;
 import java.lang.reflect.Type;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A decoder is used to decode an object into another object.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @param <From> the encoded type
+ * @param <To>   the decoded type
  */
 public interface Decoder<From, To> {
 
+	/**
+	 * <p>
+	 * Decodes the specified value to an object whose type is represented by the
+	 * specified class.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the object to decode
+	 * @param type  the class of the decoded object
+	 * 
+	 * @return a decoded object
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	<T extends To> T decode(From value, Class<T> type) throws ConverterException;
 	
+	/**
+	 * <p>
+	 * Decodes the specified value to an object of the specified type.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the object to decode
+	 * @param type  the type of the decoded object
+	 * 
+	 * @return a decoded object
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	<T extends To> T decode(From value, Type type) throws ConverterException;
-	
 }

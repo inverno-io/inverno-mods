@@ -18,8 +18,27 @@ package io.winterframework.mod.web;
 import io.winterframework.mod.http.server.ErrorExchange;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * An error route specifies criteria used to determine the error exchange
+ * handler to execute to handle a failing request.
+ * </p>
+ * 
+ * <p>
+ * It basically supports the following criteria:
+ * </p>
+ * 
+ * <ul>
+ * <li>the type of the error thrown during the regular processing of a
+ * request</li>
+ * <li>the content type of the resource</li>
+ * <li>the language tag of the resource</li>
+ * </ul>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ErrorExchange
+ * @see ErrorRouter
  */
 public interface ErrorRoute extends 
 	ErrorAwareRoute<ErrorExchange<Throwable>>, 

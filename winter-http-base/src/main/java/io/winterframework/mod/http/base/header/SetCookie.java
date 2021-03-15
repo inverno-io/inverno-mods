@@ -16,35 +16,146 @@
 package io.winterframework.mod.http.base.header;
 
 /**
- * @author jkuhn
+ * <p>
+ * Represents a HTTP set-cookie.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @see Cookie
  */
 public interface SetCookie extends Cookie {
 	
+	/**
+	 * <p>
+	 * Returns cookie's max age.
+	 * </p>
+	 * 
+	 * @return the max age or null
+	 */
 	Integer getMaxAge();
 	
+	/**
+	 * <p>
+	 * Returns cookie's dpmain.
+	 * </p>
+	 * 
+	 * @return the domain or null
+	 */
 	String getDomain();
 	
+	/**
+	 * <p>
+	 * Returns cookie's path.
+	 * </p>
+	 * 
+	 * @return the path or null
+	 */
 	String getPath();
 	
+	/**
+	 * <p>
+	 * Returns cookie's secure flag.
+	 * </p>
+	 * 
+	 * @return the secure flag or null
+	 */
 	Boolean isSecure();
 	
+	/**
+	 * <p>
+	 * Returns cookie's http only flag.
+	 * </p>
+	 * 
+	 * @return the http only flag or null
+	 */
 	Boolean isHttpOnly();
 
+	/**
+	 * <p>
+	 * A configurator used to configure a set-cookie.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	public static interface Configurator {
 
+		/**
+		 * <p>
+		 * Sets the cookie name.
+		 * </p>
+		 * 
+		 * @param name a cookie name
+		 * 
+		 * @return the configurator
+		 */
 		Configurator name(String name);
-		
+
+		/**
+		 * <p>
+		 * Sets the cookie value.
+		 * </p>
+		 * 
+		 * @param value a cookie value
+		 * 
+		 * @return the configurator
+		 */
 		Configurator value(String value);
-		
+
+		/**
+		 * <p>
+		 * sets the cookie max age.
+		 * </p>
+		 * 
+		 * @param maxAge the cookie max age
+		 * 
+		 * @return the configurator
+		 */
 		Configurator maxAge(int maxAge);
-		
+
+		/**
+		 * <p>
+		 * Sets the cookie domain.
+		 * </p>
+		 * 
+		 * @param domain the cookie domain
+		 * 
+		 * @return the configurator
+		 */
 		Configurator domain(String domain);
-		
+
+		/**
+		 * <p>
+		 * Sets the cookie path.
+		 * </p>
+		 * 
+		 * @param path the cookie path
+		 * 
+		 * @return the configurator
+		 */
 		Configurator path(String path);
-		
+
+		/**
+		 * <p>
+		 * Sets the cookie secure flag.
+		 * </p>
+		 * 
+		 * @param secure the cookie secure flag
+		 * 
+		 * @return the configurator
+		 */
 		Configurator secure(boolean secure);
-		
+
+		/**
+		 * <p>
+		 * Sets the cookie http only flag.
+		 * </p>
+		 * 
+		 * @param httpOnly the cookie http only flag
+		 * @return the configurator
+		 */
 		Configurator httpOnly(boolean httpOnly);
 	}
 }

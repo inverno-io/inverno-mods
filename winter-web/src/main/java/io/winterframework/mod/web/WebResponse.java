@@ -23,8 +23,14 @@ import io.winterframework.mod.http.server.ResponseHeaders;
 import io.winterframework.mod.http.server.ResponseTrailers;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A request with supports for body encoding based on the response content type.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebExchange
  */
 public interface WebResponse extends Response {
 

@@ -20,15 +20,44 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A generic response payload producer.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ResponseBody#raw()
+ * @see ResponseBody.Sse.Event
+ * 
+ * @param <A> the type of data
  */
 @FunctionalInterface
 public interface ResponseData<A> {
 
-	<T extends A> void stream(Publisher<T> value);
+	/**
+	 * <p>
+	 * Sets the payload data.
+	 * </p>
+	 * 
+	 * @param <T>   the type of data
+	 * @param value the data publisher
+	 * 
+	 * @throws IllegalStateException if the payload has already been set
+	 */
+	<T extends A> void stream(Publisher<T> value) throws IllegalStateException;
 	
-	default <T extends A> void value(T value) {
+	/**
+	 * <p>
+	 * Sets the specified data.
+	 * </p>
+	 * 
+	 * @param <T>   the type of data
+	 * @param value the value to set
+	 * 
+	 * @throws IllegalStateException if the payload has already been set
+	 */
+	default <T extends A> void value(T value) throws IllegalStateException {
 		this.stream(Mono.just(value));
 	}
 }

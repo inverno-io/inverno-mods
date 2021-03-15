@@ -24,8 +24,14 @@ import io.winterframework.mod.configuration.compiler.spi.ConfigurationPropertyIn
 import io.winterframework.mod.configuration.compiler.spi.PropertyQualifiedName;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link ConfigurationPropertyInfo} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationPropertyInfo
  */
 class GenericConfigurationPropertyInfo extends AbstractInfo<PropertyQualifiedName> implements ConfigurationPropertyInfo {
 

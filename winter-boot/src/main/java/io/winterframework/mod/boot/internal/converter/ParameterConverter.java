@@ -16,17 +16,33 @@
 package io.winterframework.mod.boot.internal.converter;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Provide;
+import io.winterframework.mod.base.converter.CompositeConverter;
 import io.winterframework.mod.base.converter.CompoundDecoder;
 import io.winterframework.mod.base.converter.CompoundEncoder;
 import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.base.converter.StringCompositeConverter;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * String to object converter used basically to convert string parameter values
+ * into primitive and common types.
+ * <p>
+ * 
+ * <p>
+ * This converter implements the {@link CompositeConverter} interface and as
+ * such it is possible to extend its capabilities by injecting specific
+ * {@link CompoundDecoder} and {@link CompoundEncoder} instances.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ObjectConverter
+ * @see CompositeConverter
  */
 @Bean( name = "parameterConverter" )
 public class ParameterConverter extends StringCompositeConverter implements @Provide ObjectConverter<String>  {
@@ -40,5 +56,31 @@ public class ParameterConverter extends StringCompositeConverter implements @Pro
 	public void setEncoders(List<CompoundEncoder<?, String>> encoders) {
 		super.setEncoders(encoders);
 	}
+	
+	/**
+	 * <p>
+	 * The compound decoders socket.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ParameterConverter
+	 */
+	@Bean( name = "compoundDecoders" )
+	public static interface CompoundDecodersSocket extends Supplier<List<CompoundDecoder<String, ?>>> {}
+	
+	/**
+	 * <p>
+	 * The compound encoders socket.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ParameterConverter
+	 */
+	@Bean( name = "compoundEncoders" )
+	public static interface CompoundEncodersSocket extends Supplier<List<CompoundEncoder<?, String>>> {}
 }
 

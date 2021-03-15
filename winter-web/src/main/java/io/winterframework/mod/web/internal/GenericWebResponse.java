@@ -25,8 +25,14 @@ import io.winterframework.mod.web.WebResponse;
 import io.winterframework.mod.web.WebResponseBody;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebResponse} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebResponseBody
  */
 class GenericWebResponse implements WebResponse {
 
@@ -34,6 +40,15 @@ class GenericWebResponse implements WebResponse {
 	
 	private final WebResponseBody responseBody;
 	
+	/**
+	 * <p>
+	 * Creates a generic web response with the specified underlying response and
+	 * data conversion service.
+	 * </p>
+	 * 
+	 * @param response              the underlying response
+	 * @param dataConversionService the data conversion service
+	 */
 	public GenericWebResponse(Response response, DataConversionService dataConversionService) {
 		this.response = response;
 		this.responseBody = new GenericWebResponseBody(this, response.body(), dataConversionService);

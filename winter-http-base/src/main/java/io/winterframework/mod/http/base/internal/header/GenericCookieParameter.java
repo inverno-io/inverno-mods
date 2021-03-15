@@ -20,12 +20,27 @@ import io.winterframework.mod.http.base.header.CookieParameter;
 import io.winterframework.mod.http.base.internal.GenericParameter;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link CookieParameter} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see GenericParameter
  */
 public class GenericCookieParameter extends GenericParameter implements CookieParameter {
 	
+	/**
+	 * <p>
+	 * Creates a generic cookie parameter.
+	 * </p>
+	 * 
+	 * @param parameterConverter a string object parameter
+	 * @param name               the parameter name
+	 * @param value              the parameter value
+	 */
 	public GenericCookieParameter(ObjectConverter<String> parameterConverter, String name, String value) {
-		super(parameterConverter, name, value);
+		super(name, value, parameterConverter);
 	}
 }

@@ -16,8 +16,16 @@
 package io.winterframework.mod.base.converter;
 
 /**
- * @author jkuhn
+ * <p>A converter decodes and encodes between two types of object.</p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Decoder
+ * @see Encoder
  *
+ * @param <A> the encoded type
+ * @param <B> the decoded type
  */
 public interface Converter<A, B> extends Decoder<A, B>, Encoder<B, A> {
 

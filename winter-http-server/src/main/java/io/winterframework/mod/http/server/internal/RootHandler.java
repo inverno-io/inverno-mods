@@ -27,8 +27,13 @@ import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * The server exchange handler which by default returns {@code Hello} when a
+ * request is made to the {@code /} resource.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Bean
 @Wrapper

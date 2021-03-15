@@ -37,8 +37,12 @@ import io.netty.util.AsciiString;
 import io.winterframework.mod.http.server.HttpServerConfiguration;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP/2 over cleartext upgrade handler.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class H2cUpgradeHandler extends ByteToMessageDecoder {
 
@@ -49,10 +53,26 @@ public class H2cUpgradeHandler extends ByteToMessageDecoder {
 
 	private Supplier<Http2ChannelHandler> http2ChannelHandlerSupplier;
 	
+	/**
+	 * <p>
+	 * H2C {@link HttpServerUpgradeHandler.UpgradeCodecFactory} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	private static class H2CUpgradeCodecFactory implements HttpServerUpgradeHandler.UpgradeCodecFactory {
 		
 		private HttpServerConfiguration configuration;
 		
+		/**
+		 * <p>
+		 * Creates a H2C upgrade codec factory with the specified HTTP server
+		 * configuration.
+		 * </p>
+		 * 
+		 * @param configuration the HTTP server configuration
+		 */
 		public H2CUpgradeCodecFactory(HttpServerConfiguration configuration) {
 			this.configuration = configuration;
 		}
@@ -78,6 +98,15 @@ public class H2cUpgradeHandler extends ByteToMessageDecoder {
 		}
 	}
 
+	/**
+	 * <p>
+	 * Creates a H2C upgrade handler with the specified HTTP server configuration
+	 * and HTTP/2 channel handler supplier.
+	 * </p>
+	 * 
+	 * @param configuration               the HTTP server configuration
+	 * @param http2ChannelHandlerSupplier the HTTP/2 channel handler supplier
+	 */
 	public H2cUpgradeHandler(HttpServerConfiguration configuration, Supplier<Http2ChannelHandler> http2ChannelHandlerSupplier) {
 		this.http2ChannelHandlerSupplier = Objects.requireNonNull(http2ChannelHandlerSupplier);
 

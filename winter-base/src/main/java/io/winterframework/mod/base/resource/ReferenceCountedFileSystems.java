@@ -32,8 +32,18 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Utility methods to optimally create {@link FileSystem} instances.
+ * </p>
+ * 
+ * <p>
+ * File systems returned by these methods are reference counted which means that
+ * for a given file system URI the same instance is returned with an incremented
+ * reference count until all consumers close the file system.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 final class ReferenceCountedFileSystems {
 
@@ -41,10 +51,31 @@ final class ReferenceCountedFileSystems {
 	
 	private ReferenceCountedFileSystems() {}
 	
+	/**
+	 * <p>
+	 * Creates or gets the file system identified by the specified URI.
+	 * </p>
+	 * 
+	 * @param uri the file system URI
+	 * 
+	 * @return a file system
+	 * @throws IOException if an I/O error occurs creating the file system
+	 */
 	public static FileSystem getFileSystem(URI uri) throws IOException {
 		return getFileSystem(uri, Map.of());
 	}
 	
+	/**
+	 * <p>
+	 * Creates or gets the file system identified by the specified URI.
+	 * </p>
+	 * 
+	 * @param uri the file system URI
+	 * @param env a map of provider specific properties to configure the file system; may be empty
+	 * 
+	 * @return a file system
+	 * @throws IOException if an I/O error occurs creating the file system
+	 */
 	public static FileSystem getFileSystem(URI uri, Map<String,?> env) throws IOException {
 		synchronized (fileSystems) {
 			String spec = uri.getRawSchemeSpecificPart();
@@ -63,6 +94,14 @@ final class ReferenceCountedFileSystems {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * A reference counted file system wrapper.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	private static class ReferenceCountedFileSystem extends FileSystem {
 
 		private final Path path;

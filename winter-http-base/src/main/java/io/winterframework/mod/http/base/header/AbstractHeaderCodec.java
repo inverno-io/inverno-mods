@@ -20,20 +20,46 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base implementation for {@link HeaderCodec}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see HeaderCodec
+ * 
+ * @param <A> the header type encoded/decoded by the codec
+ * @param <B> the header builder type
  */
 public abstract class AbstractHeaderCodec<A extends Header, B extends HeaderBuilder<A, B>> implements HeaderCodec<A> {
 	
+	/**
+	 * The header builder supplier.
+	 */
 	protected Supplier<B> builderSupplier;
 	
+	/**
+	 * The supported header names.
+	 */
 	protected Set<String> supportedHeaderNames;
 	
+	/**
+	 * <p>
+	 * Creates a header codec with the specified builder supplier and supported
+	 * header names.
+	 * </p>
+	 * 
+	 * @param builderSupplier      a supplier to create header builder instances
+	 *                             when decoding a header
+	 * @param supportedHeaderNames the list of header names supported by the codec
+	 */
 	protected AbstractHeaderCodec(Supplier<B> builderSupplier, Set<String> supportedHeaderNames) {
 		this.builderSupplier = builderSupplier;
 		this.supportedHeaderNames = supportedHeaderNames != null ? Collections.unmodifiableSet(supportedHeaderNames) : Set.of();
 	}
 	
+	@Override
 	public Set<String> getSupportedHeaderNames() {
 		return this.supportedHeaderNames;
 	}

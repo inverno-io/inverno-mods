@@ -26,11 +26,17 @@ import javax.lang.model.util.Types;
 
 import io.winterframework.core.compiler.spi.ModuleQualifiedName;
 import io.winterframework.core.compiler.spi.support.AbstractSourceGenerationContext;
+import io.winterframework.mod.configuration.ConfigurationLoader;
 import io.winterframework.mod.configuration.compiler.spi.ConfigurationInfo;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Represents a generation context used by the
+ * {@link ConfigurationLoaderClassGenerator} during the generation of a {@link ConfigurationLoader}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class ConfigurationLoaderClassGenerationContext extends AbstractSourceGenerationContext<ConfigurationLoaderClassGenerationContext, ConfigurationLoaderClassGenerationContext.GenerationMode> {
 

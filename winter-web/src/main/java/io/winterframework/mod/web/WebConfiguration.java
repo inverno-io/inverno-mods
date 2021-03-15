@@ -20,19 +20,44 @@ import io.winterframework.mod.configuration.Configuration;
 import io.winterframework.mod.http.server.HttpServerConfiguration;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Web module configuration.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Configuration
 public interface WebConfiguration {
 
+	/**
+	 * <p>
+	 * The HTTP server configuration.
+	 * </p>
+	 * 
+	 * @return the HTTP server configuration
+	 */
 	@NestedBean
-	HttpServerConfiguration web();
+	HttpServerConfiguration http_server();
 	
+	/**
+	 * <p>
+	 * Enables/disables routes to generated <a href="https://www.openapis.org/">Open API</a> specifications.
+	 * </p>
+	 * 
+	 * @return true to expose generated Open API specifications, false otherwise
+	 */
 	default boolean enable_open_api() {
 		return false;
 	}
 	
+	/**
+	 * <p>
+	 * Enables/disables routes to <a href="https://www.webjars.org/">WebJars</a> resources.
+	 * </p>
+	 * 
+	 * @return true to expose WebJars resources, false otherwise
+	 */
 	default boolean enable_webjars() {
 		return false;
 	}

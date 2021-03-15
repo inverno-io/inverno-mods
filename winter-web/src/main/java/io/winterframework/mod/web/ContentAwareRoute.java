@@ -18,10 +18,33 @@ package io.winterframework.mod.web;
 import io.winterframework.mod.http.server.Exchange;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A route that specifies criteria used to determine whether the resource served
+ * by the route can process a request based on its content type.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractRoute
+ * 
+ * @param <A> the type of web exchange handled by the route
  */
 public interface ContentAwareRoute<A extends Exchange> extends AbstractRoute<A> {
 
+	/**
+	 * <p>
+	 * Returns the media range defining the content types accepted by the resource
+	 * served by the route as defined by
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section
+	 * 5.3.2</a>.
+	 * </p>
+	 * 
+	 * <p>
+	 * This criteria should match the request {@code content-type} header field.
+	 * </p>
+	 * 
+	 * @return a media range or null
+	 */
 	String getConsume();
 }

@@ -30,54 +30,293 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * An object decoder providing primitive bindings to decode to primitive and
+ * common types.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Decoder
+ * 
+ * @param <From> the encoded type
  */
 public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 
+	/**
+	 * <p>
+	 * Decodes to byte.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	Byte decodeByte(From value) throws ConverterException;
 	
+	/**
+	 * <p>
+	 * Decodes to short.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	Short decodeShort(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to integer.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	Integer decodeInteger(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to long.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	Long decodeLong(From value) throws ConverterException;
 
+	/**
+	 * <p>
+	 * Decodes to float.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	Float decodeFloat(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to double.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	Double decodeDouble(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to character.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	Character decodeCharacter(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to boolean.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	Boolean decodeBoolean(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to string.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	String decodeString(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to big integer.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	BigInteger decodeBigInteger(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to big decimal.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	BigDecimal decodeBigDecimal(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to local date.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	LocalDate decodeLocalDate(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to local datetime.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	LocalDateTime decodeLocalDateTime(From value) throws ConverterException;
 
+	/**
+	 * <p>
+	 * Decodes to zoned datetime.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	ZonedDateTime decodeZonedDateTime(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to currency.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	Currency decodeCurrency(From value) throws ConverterException;
 
+	/**
+	 * <p>
+	 * Decodes to locale.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	Locale decodeLocale(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to file.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	File decodeFile(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to path.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	Path decodePath(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to URI.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	URI decodeURI(From value) throws ConverterException;
 
+	/**
+	 * <p>
+	 * Decodes to URL.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	URL decodeURL(From value) throws ConverterException;
 
+	/**
+	 * <p>
+	 * Decodes to pattern.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	Pattern decodePattern(From value) throws ConverterException;
 
+	/**
+	 * <p>
+	 * Decodes to inet address.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	InetAddress decodeInetAddress(From value) throws ConverterException;
-	
+
+	/**
+	 * <p>
+	 * Decodes to class.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
 	Class<?> decodeClass(From value) throws ConverterException;
 }

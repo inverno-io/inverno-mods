@@ -23,7 +23,7 @@ import io.winterframework.mod.http.base.header.SetCookie;
 import io.winterframework.mod.http.server.ResponseCookies;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class MockResponseCookies implements ResponseCookies {

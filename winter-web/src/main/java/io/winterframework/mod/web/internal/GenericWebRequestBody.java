@@ -31,8 +31,12 @@ import io.winterframework.mod.web.WebRequestBody;
 import reactor.core.publisher.Flux;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebRequestBody} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class GenericWebRequestBody implements WebRequestBody {
 
@@ -42,6 +46,16 @@ class GenericWebRequestBody implements WebRequestBody {
 	
 	private final DataConversionService dataConversionService;
 	
+	/**
+	 * <p>
+	 * creates a generic web request body with the specified underlying request and
+	 * request body and data conversion service.
+	 * </p>
+	 * 
+	 * @param request               the underlying request
+	 * @param requestBody           the unedrlying request body
+	 * @param dataConversionService the data conversion service
+	 */
 	public GenericWebRequestBody(WebRequest request, RequestBody requestBody, DataConversionService dataConversionService) {
 		this.request = request;
 		this.requestBody = requestBody;
@@ -75,6 +89,16 @@ class GenericWebRequestBody implements WebRequestBody {
 			.orElseThrow(() -> new InternalServerErrorException("Empty media type"));
 	}
 	
+	/**
+	 * <p>
+	 * a {@link Multipart} implementation that supports part body decoding.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see WebPart
+	 */
 	private class WebMultipart implements Multipart<WebPart> {
 
 		@Override

@@ -28,10 +28,38 @@ import io.winterframework.mod.base.resource.AsyncResourceProvider;
 import io.winterframework.mod.base.resource.FileResource;
 import io.winterframework.mod.base.resource.MediaTypeService;
 import io.winterframework.mod.base.resource.ResourceException;
+import io.winterframework.mod.base.resource.ResourceProvider;
+import io.winterframework.mod.base.resource.ResourceService;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * {@link ResourceProvider} implementation used to resolve resources on the
+ * file system (ie. {@code file:/path/to/resource}).
+ * </p>
+ * 
+ * <p>
+ * This implementation supports path patterns and can then resolve multiple
+ * resources matching a given URI pattern.
+ * </p>
+ * 
+ * <blockquote>
+ * 
+ * <pre>
+ * FileResourceProvider provider = new FileResourceProvider();
+ * 
+ * // Returns: /path/test1/a, /path/test1/a/b, /path/test2/c...
+ * Stream{@literal<FileResource>} resources = provider.getResources(URI.create("file:/path/test?/{@literal **}/*");
+ * </pre>
+ * 
+ * </blockquote>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see FileResource
+ * @see AsyncResourceProvider
+ * @see ResourceService
+ * @see PathPatternResolver
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class FileResourceProvider extends AbstractResourceProvider<FileResource> implements AsyncResourceProvider<FileResource> {
@@ -56,5 +84,4 @@ public class FileResourceProvider extends AbstractResourceProvider<FileResource>
 	public Set<String> getSupportedSchemes() {
 		return Set.of(FileResource.SCHEME_FILE);
 	}
-
 }

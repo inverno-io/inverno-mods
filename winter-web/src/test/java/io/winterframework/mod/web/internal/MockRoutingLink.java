@@ -23,7 +23,7 @@ import io.winterframework.mod.http.server.ExchangeHandler;
 import io.winterframework.mod.web.AbstractRoute;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class MockRoutingLink<A extends Exchange, B extends AbstractRoute<A>> extends RoutingLink<A, MockRoutingLink<A, B>, B> {

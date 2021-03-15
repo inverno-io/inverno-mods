@@ -15,79 +15,228 @@
  */
 package io.winterframework.mod.http.server;
 
+import java.net.URI;
+
 import io.winterframework.mod.configuration.Configuration;
 
 /**
+ * <p>
+ * HTTP server module configuration.
+ * </p>
  * 
- * @author jkuhn
- *
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Configuration
 public interface HttpServerConfiguration {
 
+	/**
+	 * <p>
+	 * The host name of the server socket address.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to "0.0.0.0".
+	 * </p>
+	 * 
+	 * @return the server host name
+	 */
 	default String server_host() {
 		return "0.0.0.0";
 	}
 
+	/**
+	 * <p>
+	 * The port of the server socket address.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 8080.
+	 * </p>
+	 * 
+	 * @return the server port
+	 */
 	default int server_port() {
 		return 8080;
 	}
-	
+
+	/**
+	 * <p>
+	 * The type of key store.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to "JKS".
+	 * </p>
+	 * 
+	 * @return the key store type
+	 */
 	default String key_store_type() {
 		return "JKS";
 	}
 
-	default int accept_backlog() {
-		return 1024;
-	}
-	
-	default boolean tcp_keep_alive() {
-		return false;
-	}
-	
-	default boolean tcp_no_delay() {
-		return true;
-	}
-	
+	/**
+	 * <p>
+	 * Enables/Disables HTTPS.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to false.
+	 * </p>
+	 * 
+	 * @return true if the option is enabled, false otherwise
+	 */
 	default boolean ssl_enabled() {
 		return false;
 	}
-	
+
+	/**
+	 * <p>
+	 * Enables/Disables H2C.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to false.
+	 * </p>
+	 * 
+	 * @return true if the option is enabled, false otherwise
+	 */
 	default boolean h2c_enabled() {
 		return false;
 	}
-	
-	String key_store();
 
+	/**
+	 * <p>
+	 * The path to the key store.
+	 * </p>
+	 * 
+	 * @return the key store URI
+	 */
+	URI key_store();
+
+	/**
+	 * <p>
+	 * The password of the key store.
+	 * </p>
+	 * 
+	 * @return a password
+	 */
 	String key_store_password();
 
+	/**
+	 * <p>
+	 * The alias of the key in the key store.
+	 * </p>
+	 * 
+	 * @return a key alias
+	 */
 	String key_alias();
-	
+
+	/**
+	 * <p>
+	 * The list of ciphers to include.
+	 * </p>
+	 * 
+	 * @return a list of ciphers
+	 */
 	String[] ssl_ciphers_includes();
-	
+
+	/**
+	 * <p>
+	 * The list of ciphers to exclude.
+	 * </p>
+	 * 
+	 * @return a list of ciphers
+	 */
 	String[] ssl_ciphers_excludes();
-	
+
+	/**
+	 * <p>
+	 * The HTTP/2 header table size.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 4096.
+	 * </p>
+	 * 
+	 * @return the header table size
+	 */
 	default Long http2_header_table_size() {
-		return null;
+		return 4096l;
 	}
-	
+
+	/**
+	 * <p>
+	 * Enables/Disables HTTP/2 server push.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to false.
+	 * </p>
+	 * 
+	 * @return true if the option is enabled, false otherwise
+	 */
 	default Boolean http2_push_enabled() {
-		return null;
+		return false;
 	}
-	
+
+	/**
+	 * <p>
+	 * HTTP/2 max concurrent streams.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 100.
+	 * </p>
+	 * 
+	 * @return max concurrent streams
+	 */
 	default Integer http2_max_concurrent_streams() {
 		return 100;
 	}
-	
+
+	/**
+	 * <p>
+	 * HTTP/2 initial window size.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 65535.
+	 * </p>
+	 * 
+	 * @return initial window size
+	 */
 	default Integer http2_initial_window_size() {
-		return null;
+		return 65535;
 	}
-	
+
+	/**
+	 * <p>
+	 * HTTP/2 max frame size.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 16384.
+	 * </p>
+	 * 
+	 * @return max frame size
+	 */
 	default Integer http2_max_frame_size() {
-		return null;
+		return 16384;
 	}
-	
+
+	/**
+	 * <p>
+	 * HTTP/2 max header list size.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@link Integer#MAX_VALUE}.
+	 * </p>
+	 * 
+	 * @return max header list size
+	 */
 	default Integer http2_max_header_list_size() {
-		return null;
+		return Integer.MAX_VALUE;
 	}
 }

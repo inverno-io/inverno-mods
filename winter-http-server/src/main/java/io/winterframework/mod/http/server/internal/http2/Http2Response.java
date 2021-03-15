@@ -25,17 +25,29 @@ import io.winterframework.mod.http.server.ResponseTrailers;
 import io.winterframework.mod.http.server.internal.AbstractResponse;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP/2 {@link Response} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractResponse
  */
 class Http2Response extends AbstractResponse {
 
 	private final HeaderService headerService;
+	
 	private final ObjectConverter<String> parameterConverter;
 	
 	/**
-	 * @param headerService
-	 * @param responseHeaders
+	 * <p>
+	 * Creates a HTTP/2 server response.
+	 * </p>
+	 * 
+	 * @param context            the channel handler context
+	 * @param headerService      the header service
+	 * @param parameterConverter a string object converter
 	 */
 	public Http2Response(ChannelHandlerContext context, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		super(context, headerService, new Http2ResponseHeaders(headerService, parameterConverter));

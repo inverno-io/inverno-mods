@@ -21,7 +21,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.http.base.Parameter;
 import io.winterframework.mod.http.base.Status;
@@ -34,29 +34,56 @@ import io.winterframework.mod.http.server.internal.AbstractResponseHeaders;
 import io.winterframework.mod.http.server.internal.netty.LinkedHttpHeaders;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP1.x {@link ResponseHeaders} implementation.
+ * </p>
+ * 
+ * <p>
+ * This implementation uses {@link LinkedHttpHeaders} instead of Netty's
+ * {@link DefaultHttpHeaders} as internal headers in order to increase
+ * performances.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractResponseHeaders
  */
 public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	
-	private final LinkedHttpHeaders internalHeaders;
+	private final LinkedHttpHeaders underlyingHeaders;
 	
-	private int status = 200;
+	private int statusCode = 200;
 	
 	private boolean written;
 	
+	/**
+	 * <p>
+	 * Creates HTTP1.x server response headers.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter a string object converter
+	 */
 	public Http1xResponseHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		
-		this.internalHeaders = new LinkedHttpHeaders();
+		this.underlyingHeaders = new LinkedHttpHeaders();
 	}
-	
-	HttpHeaders getInternalHeaders() {
-		return this.internalHeaders;
+
+	/**
+	 * <p>
+	 * Returns the underlying headers.
+	 * </p>
+	 * 
+	 * @return the underlying headers
+	 */
+	LinkedHttpHeaders getUnderlyingHeaders() {
+		return this.underlyingHeaders;
 	}
 
 	@Override
@@ -66,46 +93,46 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public Http1xResponseHeaders status(int status) {
-		this.status = status;
+		this.statusCode = status;
 		return this;
 	}
 
 	@Override
 	public Http1xResponseHeaders contentType(String contentType) {
-		this.internalHeaders.set((CharSequence)Headers.NAME_CONTENT_TYPE, contentType);
+		this.underlyingHeaders.set((CharSequence)Headers.NAME_CONTENT_TYPE, contentType);
 		return this;
 	}
 	
 	@Override
 	public Http1xResponseHeaders contentLength(long contentLength) {
-		this.internalHeaders.setLong((CharSequence)Headers.NAME_CONTENT_LENGTH, contentLength);
+		this.underlyingHeaders.setLong((CharSequence)Headers.NAME_CONTENT_LENGTH, contentLength);
 		return this;
 	}
 	
 	@Override
 	public Http1xResponseHeaders add(CharSequence name, CharSequence value) {
-		this.internalHeaders.addCharSequence(name, value);
+		this.underlyingHeaders.addCharSequence(name, value);
 		return this;
 	}
 
 	@Override
 	public Http1xResponseHeaders add(Header... headers) {
 		for(Header header : headers) {
-			this.internalHeaders.addCharSequence(header.getHeaderName(), header.getHeaderValue());
+			this.underlyingHeaders.addCharSequence(header.getHeaderName(), header.getHeaderValue());
 		}
 		return this;
 	}
 	
 	@Override
 	public ResponseHeaders set(CharSequence name, CharSequence value) {
-		this.internalHeaders.setCharSequence(name, value);
+		this.underlyingHeaders.setCharSequence(name, value);
 		return this;
 	}
 	
 	@Override
 	public ResponseHeaders set(Header... headers) {
 		for(Header header : headers) {
-			this.internalHeaders.setCharSequence(header.getHeaderName(), header.getHeaderValue());
+			this.underlyingHeaders.setCharSequence(header.getHeaderName(), header.getHeaderValue());
 		}
 		return this;
 	}
@@ -113,7 +140,7 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 	@Override
 	public ResponseHeaders remove(CharSequence... names) {
 		for(CharSequence name : names) {
-			this.internalHeaders.remove(name);
+			this.underlyingHeaders.remove(name);
 		}
 		return this;
 	}
@@ -130,7 +157,7 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 	
 	@Override
 	public Optional<String> getContentType() {
-		return Optional.ofNullable(this.internalHeaders.get((CharSequence)Headers.NAME_CONTENT_TYPE));
+		return Optional.ofNullable(this.underlyingHeaders.get((CharSequence)Headers.NAME_CONTENT_TYPE));
 	}
 	
 	@Override
@@ -140,7 +167,7 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public CharSequence getContentTypeCharSequence() {
-		return this.internalHeaders.getCharSequence((CharSequence)Headers.NAME_CONTENT_TYPE);
+		return this.underlyingHeaders.getCharSequence((CharSequence)Headers.NAME_CONTENT_TYPE);
 	}
 	
 	@Override
@@ -150,17 +177,17 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 	
 	@Override
 	public Optional<String> get(CharSequence name) {
-		return Optional.ofNullable(this.internalHeaders.get(name));
+		return Optional.ofNullable(this.underlyingHeaders.get(name));
 	}
 	
 	@Override
 	public CharSequence getCharSequence(CharSequence name) {
-		return this.internalHeaders.getCharSequence(name);
+		return this.underlyingHeaders.getCharSequence(name);
 	}
 
 	@Override
 	public List<String> getAll(CharSequence name) {
-		return this.internalHeaders.getAll(name);
+		return this.underlyingHeaders.getAll(name);
 	}
 	
 	@Override
@@ -170,12 +197,12 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public List<CharSequence> getAllCharSequence(CharSequence name) {
-		return this.internalHeaders.getAllCharSequence(name);
+		return this.underlyingHeaders.getAllCharSequence(name);
 	}
 	
 	@Override
 	public List<Map.Entry<String, String>> getAll() {
-		return this.internalHeaders.entries();
+		return this.underlyingHeaders.entries();
 	}
 	
 	@Override
@@ -185,46 +212,51 @@ public class Http1xResponseHeaders implements AbstractResponseHeaders {
 
 	@Override
 	public List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence() {
-		return this.internalHeaders.entriesCharSequence();
+		return this.underlyingHeaders.entriesCharSequence();
 	}
 	
 	@Override
 	public Optional<Parameter> getParameter(CharSequence name) {
-		return this.get(name).map(value -> new GenericParameter(this.parameterConverter, name.toString(), value));
+		return this.get(name).map(value -> new GenericParameter(name.toString(), value, this.parameterConverter));
 	}
 	
 	@Override
 	public List<Parameter> getAllParameter(CharSequence name) {
-		return this.internalHeaders.getAll(name).stream().map(value -> new GenericParameter(this.parameterConverter, name.toString(), value)).collect(Collectors.toList());
+		return this.underlyingHeaders.getAll(name).stream().map(value -> new GenericParameter(name.toString(), value, this.parameterConverter)).collect(Collectors.toList());
 	}
 	
 	@Override
 	public List<Parameter> getAllParameter() {
-		return this.internalHeaders.entries().stream().map(e -> new GenericParameter(this.parameterConverter, e.getKey(), e.getValue())).collect(Collectors.toList());
+		return this.underlyingHeaders.entries().stream().map(e -> new GenericParameter(e.getKey(), e.getValue(), this.parameterConverter)).collect(Collectors.toList());
 	}
 	
 	@Override
 	public Set<String> getNames() {
-		return this.internalHeaders.names();
+		return this.underlyingHeaders.names();
 	}
 
 	@Override
 	public Long getContentLength() {
-		return this.internalHeaders.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
+		return this.underlyingHeaders.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
 	}
 
 	@Override
-	public int getStatus() {
-		return this.status;
+	public Status getStatus() {
+		return Status.valueOf(this.statusCode);
+	}
+	
+	@Override
+	public int getStatusCode() {
+		return this.statusCode;
 	}
 
 	@Override
 	public boolean contains(CharSequence name) {
-		return this.internalHeaders.contains(name);
+		return this.underlyingHeaders.contains(name);
 	}
 	
 	@Override
 	public boolean contains(CharSequence name, CharSequence value) {
-		return this.internalHeaders.contains(name, value, true);
+		return this.underlyingHeaders.contains(name, value, true);
 	}
 }

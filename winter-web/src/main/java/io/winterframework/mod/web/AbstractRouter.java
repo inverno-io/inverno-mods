@@ -22,20 +22,78 @@ import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base router interface.
+ * </p>
+ * 
+ * <p>
+ * A router uses route definitions to determine the exchange handler to invoke
+ * in order to process a request.
+ * </p>
+ * 
+ * <p>
+ * Routes are defined in the router using a route manager that allows to specify
+ * route criteria and eventually the exchange handler to invoke to process a
+ * request that matches the criteria.
+ * </p>
+ * 
+ * <p>
+ * A router is itself an exchange handler that implements a routing logic to
+ * delegate the actual exchange processing to the exchange handler defined in
+ * the route matching the original request. A router is typically used as root
+ * or error handler in a HTTP server.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Exchange
+ * @see ExchangeHandler
+ * @see AbstractRoute
+ * @see AbstractRouteManager
+ * 
+ * @param <A> the type of exchange handled by the route
+ * @param <B> the router type
+ * @param <C> the route manager type
+ * @param <D> the route type
+ * @param <E> the type of exchange handled by the router
  */
-public interface AbstractRouter<A extends Exchange, B extends AbstractRouter<A, B, C, D, E>, C extends AbstractRouteManager<A, B, C, D, E>, D extends AbstractRoute<A>, E extends Exchange> extends ExchangeHandler<E> {
-	
+public interface AbstractRouter<A extends Exchange, B extends AbstractRouter<A, B, C, D, E>, C extends AbstractRouteManager<A, B, C, D, E>, D extends AbstractRoute<A>, E extends Exchange>
+		extends ExchangeHandler<E> {
+
+	/**
+	 * <p>
+	 * Returns a route manager to define, enable, disable, remove or find routes
+	 * in the router.
+	 * </p>
+	 * 
+	 * @return a route manager
+	 */
 	C route();
-	
+
+	/**
+	 * <p>
+	 * Invokes the specified route configurer on a route manager.
+	 * </p>
+	 * 
+	 * @param routeConfigurer a route configurer
+	 * 
+	 * @return the router
+	 */
 	@SuppressWarnings("unchecked")
 	default B route(Consumer<C> routeConfigurer) {
 		routeConfigurer.accept(this.route());
-		return (B)this;
+		return (B) this;
 	}
-	
+
+	/**
+	 * <p>
+	 * Returns the routes defined in the router.
+	 * </p>
+	 * 
+	 * @return a set of routes or an empty set if no route is defined in the router
+	 */
 	Set<D> getRoutes();
-	
+
 	// interceptors?
 }

@@ -23,18 +23,19 @@ import io.winterframework.mod.configuration.compiler.spi.NestedConfigurationProp
 import io.winterframework.mod.configuration.compiler.spi.PropertyQualifiedName;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link NestedConfigurationPropertyInfo} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see NestedConfigurationPropertyInfo
  */
 class GenericNestedConfigurationProperty extends GenericConfigurationPropertyInfo implements NestedConfigurationPropertyInfo {
 
 	private ConfigurationInfo configuration;
 	
-	/**
-	 * @param processingEnvironment
-	 * @param element
-	 * @param qname
-	 */
 	public GenericNestedConfigurationProperty(PropertyQualifiedName name, ReporterInfo reporter, 
 			ExecutableElement element,
 			ConfigurationInfo nestedConfiguration) {
@@ -47,5 +48,4 @@ class GenericNestedConfigurationProperty extends GenericConfigurationPropertyInf
 	public ConfigurationInfo getConfiguration() {
 		return this.configuration;
 	}
-
 }

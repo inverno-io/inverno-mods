@@ -16,13 +16,22 @@
 package io.winterframework.mod.base.resource;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Thrown when a read, write or delete operation is performed on closed resource
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class ClosedResourceException extends ResourceException {
 	
 	private static final long serialVersionUID = 4751489058127056365L;
 
+	/**
+	 * <p>
+	 * Creates a closed resource exception.
+	 * </p>
+	 */
 	public ClosedResourceException() {
 	}
 }

@@ -20,19 +20,61 @@ import javax.lang.model.element.ModuleElement;
 import io.winterframework.core.compiler.spi.Info;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Describes the module's web router configurer to generate.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public interface WebRouterConfigurerInfo extends Info {
 
-	ModuleElement getElement();
-	
 	@Override
 	WebRouterConfigurerQualifiedName getQualifiedName();
 	
+	/**
+	 * <p>
+	 * Returns the module element for which a web router configurer is generated.
+	 * </p>
+	 * 
+	 * @return a module element
+	 */
+	ModuleElement getElement();
+	
+	/**
+	 * <p>
+	 * Returns the web controllers defined in the module.
+	 * </p>
+	 * 
+	 * @return an array of web controllers
+	 */
 	WebControllerInfo[] getControllers();
 	
+	/**
+	 * <p>
+	 * Returns the web router configurer provided in the module.
+	 * </p>
+	 * 
+	 * <p>
+	 * These can be defined as beans defined in the module or as beans exposed in
+	 * component modules.
+	 * </p>
+	 * 
+	 * @return an array of provided router configurer
+	 */
 	WebProvidedRouterConfigurerInfo[] getRouters();
 	
+	/**
+	 * <p>
+	 * Accepts the specified web router configurer info visitor.
+	 * </p>
+	 * 
+	 * @param <R>     the type of the visitor result
+	 * @param <P>     the type of the visitor parameter
+	 * @param visitor the visitor to invoke
+	 * @param p       the parameter
+	 * 
+	 * @return the visitor result
+	 */
 	<R, P> R accept(WebRouterConfigurerInfoVisitor<R, P> visitor, P p);
 }

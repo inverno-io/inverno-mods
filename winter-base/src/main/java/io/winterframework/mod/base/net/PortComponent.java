@@ -19,8 +19,16 @@ import java.nio.charset.Charset;
 import java.util.function.Predicate;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A URI component representing the port part of an URI as defined by
+ * <a href="https://tools.ietf.org/html/rfc3986#section-3.2.3">RFC 3986 Section
+ * 3.2.3</a>.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ParameterizedURIComponent
  */
 class PortComponent extends AbstractParameterizedURIComponent {
 	
@@ -28,6 +36,15 @@ class PortComponent extends AbstractParameterizedURIComponent {
 		return Character.isDigit(b);
 	};
 	
+	/**
+	 * <p>
+	 * Creates a port component with the specified flags, charset and raw value.
+	 * </p>
+	 * 
+	 * @param flags    URI flags
+	 * @param charset  a charset
+	 * @param rawValue a raw value
+	 */
 	public PortComponent(URIFlags flags, Charset charset, String rawValue) {
 		super(flags, charset, rawValue, null, ALLOWED_CHARACTERS);
 	}

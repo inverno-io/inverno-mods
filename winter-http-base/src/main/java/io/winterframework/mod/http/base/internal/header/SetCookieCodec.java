@@ -20,15 +20,28 @@ import java.util.Set;
 
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
+import io.winterframework.mod.http.base.header.HeaderBuilder;
+import io.winterframework.mod.http.base.header.HeaderCodec;
 import io.winterframework.mod.http.base.header.Headers;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Set-cookie HTTP {@link HeaderCodec} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ParameterizedHeaderCodec
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetCookie, SetCookieCodec.SetCookie.Builder> {
 
+	/**
+	 * <p>
+	 * Creates a set-cookie header codec.
+	 * </p>
+	 */
 	public SetCookieCodec() {
 		super(SetCookieCodec.SetCookie.Builder::new, Set.of(Headers.NAME_SET_COOKIE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, true, true, true, true, false, false);
 	}
@@ -59,6 +72,16 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		return result.toString();
 	}
 
+	/**
+	 * <p>
+	 * {@link Headers.SetCookie} header implemetation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ParameterizedHeader
+	 */
 	public static final class SetCookie extends ParameterizedHeader implements Headers.SetCookie, io.winterframework.mod.http.base.header.SetCookie, io.winterframework.mod.http.base.header.SetCookie.Configurator {
 		
 		private String name;
@@ -70,6 +93,9 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		private Boolean secure;
 		private Boolean httpOnly;
 		
+		/**
+		 * <p>Creates an empty set-cookie header.</p>
+		 */
 		public SetCookie() {
 			super(Headers.NAME_SET_COOKIE, null, null, null);
 		}
@@ -127,7 +153,6 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 			return this.httpOnly;
 		}
 		
-		
 		@Override
 		public Configurator name(String name) {
 			this.name = name;
@@ -170,6 +195,16 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 			return this;
 		}
 
+		/**
+		 * <p>
+		 * Set-Cookie {@link HeaderBuilder} implementation.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+		 * @since 1.0
+		 * 
+		 * @see ParameterizedHeader.AbstractBuilder
+		 */
 		public static final class Builder extends ParameterizedHeader.AbstractBuilder<SetCookie, Builder> {
 
 			private String name;

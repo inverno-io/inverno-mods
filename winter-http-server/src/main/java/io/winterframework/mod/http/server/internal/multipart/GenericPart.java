@@ -15,7 +15,6 @@
  */
 package io.winterframework.mod.http.server.internal.multipart;
 
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,8 +31,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link Part} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class GenericPart implements Part {
 
@@ -48,21 +51,51 @@ class GenericPart implements Part {
 	
 	private RequestData<ByteBuf> rawData;
 	
-	public GenericPart(ObjectConverter<String> parameterConverter, String name, Map<String, List<Header>> headers, String contentType, Charset charset, Long contentLength) {
-		this(parameterConverter, name, null, headers, contentType, charset, contentLength);
+	/**
+	 * <p>
+	 * Creates a part.
+	 * </p>
+	 * 
+	 * @param parameterConverter a string object converter
+	 * @param name               the part's name
+	 * @param headers            the part's headers
+	 */
+	public GenericPart(ObjectConverter<String> parameterConverter, String name, Map<String, List<Header>> headers) {
+		this(parameterConverter, name, null, headers);
 	}
 	
-	public GenericPart(ObjectConverter<String> parameterConverter, String name, String filename, Map<String, List<Header>> headers, String contentType, Charset charset, Long contentLength) {
+	/**
+	 * <p>
+	 * creates a file part.
+	 * </p>
+	 * 
+	 * @param parameterConverter a string object converter
+	 * @param name               the part's name
+	 * @param filename           the part's file name
+	 * @param headers            the part's headers
+	 * @param contentType          the part's media type
+	 * @param charset            the part's charset
+	 * @param contentLength      the part's content length
+	 */
+	public GenericPart(ObjectConverter<String> parameterConverter, String name, String filename, Map<String, List<Header>> headers) {
 		this.name = name;
 		this.filename = filename;
-		this.partHeaders = new GenericPartHeaders(headers, contentType, charset, contentLength, parameterConverter);
+		this.partHeaders = new GenericPartHeaders(headers, parameterConverter);
 		
 		this.data = Flux.<ByteBuf>create(emitter -> {
 			this.dataEmitter = emitter;
 		}).doOnDiscard(ByteBuf.class, ByteBuf::release);
 	}
 	
-	public Optional<FluxSink<ByteBuf>> getDataEmitter() {
+	/**
+	 * <p>
+	 * Returns the part's data sink.
+	 * </p>
+	 * 
+	 * @return an optional returning the payload data sink or an empty optional if
+	 *         the part has no body
+	 */
+	public Optional<FluxSink<ByteBuf>> getData() {
 		return Optional.ofNullable(this.dataEmitter);
 	}
 	

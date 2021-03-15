@@ -37,14 +37,39 @@ import io.winterframework.mod.web.WebRouterConfigurer;
 import io.winterframework.mod.web.annotation.PathParam;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Web router configurer used to configure routes to generated
+ * <a href="https://www.openapis.org/">Open API</a> specifications.
+ * </p>
+ * 
+ * <p>When activated in the {@link WebConfiguration#enable_open_api() web module configuration}, this configurer defines the following routes:</p>
+ * 
+ * <dl>
+ * <dt>/open-api</dt>
+ * <dd>return the JSON list the Open API specifications</dd>
+ * <dd>if webjars are activated in the {@link WebConfiguration#enable_webjars() web module configuration} and requested with {@code accept: text/html}, it displays a Swagger UI presenting all the specifications</dd>
+ * <dt>/open-api/{moduleName}</dt>
+ * <dd>return the YAML Open API specification of the specified module</dd>
+ * <dd>if webjars are activated in the {@link WebConfiguration#enable_webjars() web module configuration} and requested with {@code accept: text/html}, it displays a Swagger UI presenting the module's specification</dd>
+ * </dl>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<WebExchange> {
 
 	private final WebConfiguration configuration;
 	private final Map<String, Resource> openApiSpecs;
 	
+	/**
+	 * <p>
+	 * Creates an Open API web router configurer with the specified web module
+	 * configuration and resource service.
+	 * </p>
+	 * 
+	 * @param configuration   the web module configuration
+	 * @param resourceService the resource service
+	 */
 	public OpenApiWebRouterConfigurer(WebConfiguration configuration, ResourceService resourceService) {
 		this.configuration = configuration;
 		try {
@@ -63,27 +88,43 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 	@Override
 	public void accept(WebRouter<WebExchange> router) {
 		router
-			.route().path("/open-api/{moduleName}", false).method(Method.GET).handler(exchange -> {
-				exchange.response().body().resource().value(this.getSpec(exchange.request().pathParameters().get("moduleName").map(parameter -> parameter.as(String.class)).orElseThrow(() -> new MissingRequiredParameterException("moduleName"))));
-			})
 			.route().path("/open-api", true).method(Method.GET).produces(MediaTypes.APPLICATION_JSON).handler(exchange -> {
 				exchange.response().body().raw().value(this.listSpec());
+			})
+			.route().path("/open-api/{moduleName}", false).method(Method.GET).handler(exchange -> {
+				exchange.response().body().resource().value(this.getSpec(exchange.request().pathParameters().get("moduleName").map(parameter -> parameter.as(String.class)).orElseThrow(() -> new MissingRequiredParameterException("moduleName"))));
 			});
 		
 		if(this.configuration.enable_webjars()) {
-			router.route().path("/open-api/{moduleName}", false).method(Method.GET).produces(MediaTypes.TEXT_HTML).handler(exchange -> {
-				exchange.response().body().raw().value(this.getSpecSwaggerUI(exchange.request().pathParameters().get("moduleName").map(parameter -> parameter.as(String.class)).orElseThrow(() -> new MissingRequiredParameterException("moduleName"))));
-			})
-			.route().path("/open-api", true).method(Method.GET).produces(MediaTypes.TEXT_HTML).handler(exchange -> {
-				exchange.response().body().raw().value(this.listSpecSwaggerUI());
-			});
+			router
+				.route().path("/open-api", true).method(Method.GET).produces(MediaTypes.TEXT_HTML).handler(exchange -> {
+					exchange.response().body().raw().value(this.listSpecSwaggerUI());
+				})
+				.route().path("/open-api/{moduleName}", false).method(Method.GET).produces(MediaTypes.TEXT_HTML).handler(exchange -> {
+					exchange.response().body().raw().value(this.getSpecSwaggerUI(exchange.request().pathParameters().get("moduleName").map(parameter -> parameter.as(String.class)).orElseThrow(() -> new MissingRequiredParameterException("moduleName"))));
+				});
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Returns a JSON list including all available Open API specifications.
+	 * </p>
+	 * 
+	 * @return a raw list of specifications
+	 */
 	public ByteBuf listSpec() {
 		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("[" + this.openApiSpecs.entrySet().stream().map(e -> "{\"name\":\"" + e.getKey() + "\",\"url\":\"" + "/open-api/" + e.getKey()+ "\"}").collect(Collectors.joining(", ")) + "]", Charsets.DEFAULT));
 	}
 	
+	/**
+	 * <p>
+	 * Returns the Swagger UI loading HTML for all available Open API
+	 * specifications.
+	 * </p>
+	 * 
+	 * @return a raw Swagger UI loader
+	 */
 	public ByteBuf listSpecSwaggerUI() {
 		StringBuilder configurationSnippet = new StringBuilder();
 		configurationSnippet.append("\"layout\": \"StandaloneLayout\", ");
@@ -93,7 +134,17 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.buildSwaggerUI(configurationSnippet.toString()).toString(), Charsets.DEFAULT));
 	}
 	
-	public Resource getSpec(@PathParam String moduleName) {
+	/**
+	 * <p>
+	 * Returns the Open API specification for the specified module usually in YAML
+	 * format.
+	 * </p>
+	 * 
+	 * @return a raw Open API specification
+	 * @throws NotFoundException if there's no specification for the specified
+	 *                           module
+	 */
+	public Resource getSpec(@PathParam String moduleName) throws NotFoundException {
 		Resource spec = this.openApiSpecs.get(moduleName);
 		if(spec == null) {
 			throw new NotFoundException();
@@ -101,7 +152,17 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 		return spec;
 	}
 	
-	public ByteBuf getSpecSwaggerUI(@PathParam String moduleName) {
+	/**
+	 * <p>
+	 * Returns the Swagger UI loading HTML for the Open API specification of the
+	 * specified module
+	 * </p>
+	 * 
+	 * @return a raw Swagger UI loader
+	 * @throws NotFoundException if there's no specification for the specified
+	 *                           module
+	 */
+	public ByteBuf getSpecSwaggerUI(@PathParam String moduleName) throws NotFoundException {
 		if(!this.openApiSpecs.containsKey(moduleName)) {
 			throw new NotFoundException();
 		}
@@ -163,5 +224,4 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 		
 		return result;
 	}
-
 }

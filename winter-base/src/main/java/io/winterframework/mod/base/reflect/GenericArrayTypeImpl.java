@@ -20,15 +20,24 @@ import java.lang.reflect.Type;
 import java.util.Objects;
 
 /**
- * @author jkuhn
- *
+ * <p>{@link GenericArrayType} implementation</p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ArrayTypeBuilder
+ * @see ArrayTypeArgumentBuilder
  */
 class GenericArrayTypeImpl implements GenericArrayType {
 
 	private final Type genericComponentType;
-	
+
 	/**
+	 * <p>
+	 * Creates a generic array type with the specified component type.
+	 * </p>
 	 * 
+	 * @param genericComponentType the type of the array component
 	 */
 	public GenericArrayTypeImpl(Type genericComponentType) {
 		this.genericComponentType = genericComponentType;
@@ -39,6 +48,7 @@ class GenericArrayTypeImpl implements GenericArrayType {
 		return this.genericComponentType;
 	}
 
+	@Override
 	public String toString() {
         return getGenericComponentType().getTypeName() + "[]";
     }

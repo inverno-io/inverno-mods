@@ -23,11 +23,20 @@ import java.util.stream.Collectors;
 
 import io.winterframework.mod.http.base.WebException;
 import io.winterframework.mod.http.server.ErrorExchange;
+import io.winterframework.mod.web.ErrorAwareRoute;
 import io.winterframework.mod.web.ErrorRoute;
 
 /**
- * @author jkuhn
+ * <p>
+ * A routing link responsible to route an error exchange based on the type of
+ * error as defined by {@link ErrorAwareRoute}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @param <A> the type of exchange handled by the route
+ * @param <B> the route type
  */
 class ThrowableRoutingLink extends RoutingLink<ErrorExchange<Throwable>, ThrowableRoutingLink, ErrorRoute> {
 
@@ -44,7 +53,12 @@ class ThrowableRoutingLink extends RoutingLink<ErrorExchange<Throwable>, Throwab
 			return 0;
 		}
 	};
-	
+
+	/**
+	 * <p>
+	 * Creates a throwable routing link.
+	 * </p>
+	 */
 	public ThrowableRoutingLink() {
 		super(ThrowableRoutingLink::new);
 		this.handlers = new LinkedHashMap<>();

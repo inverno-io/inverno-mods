@@ -19,8 +19,16 @@ import io.winterframework.mod.web.WebExchange;
 import io.winterframework.mod.web.WebRoute;
 
 /**
- * @author jkuhn
+ * <p>
+ * A route extractor to extract {@link WebRoute} routes.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @param <A> the type of exchange handled by the route
+ * @param <B> the route type
+ * @param <C> the route extractor type
  */
 interface WebRouteExtractor<A extends WebExchange, B extends WebRoute<A>, C extends WebRouteExtractor<A, B, C>> extends 
 	PathAwareRouteExtractor<A, B, C>,

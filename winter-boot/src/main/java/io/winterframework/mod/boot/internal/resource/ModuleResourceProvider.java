@@ -22,13 +22,25 @@ import java.util.stream.Stream;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.base.resource.AbstractResourceProvider;
+import io.winterframework.mod.base.resource.AsyncResourceProvider;
 import io.winterframework.mod.base.resource.MediaTypeService;
 import io.winterframework.mod.base.resource.ModuleResource;
 import io.winterframework.mod.base.resource.ResourceException;
+import io.winterframework.mod.base.resource.ResourceProvider;
+import io.winterframework.mod.base.resource.ResourceService;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * {@link ResourceProvider} implementation used to resolve module
+ * resources (ie. {@code module://module/path/to/resource}).
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ModuleResource
+ * @see AsyncResourceProvider
+ * @see ResourceService
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class ModuleResourceProvider extends AbstractResourceProvider<ModuleResource> {

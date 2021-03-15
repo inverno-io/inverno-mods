@@ -20,18 +20,37 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.winterframework.core.annotation.Bean;
+import io.winterframework.core.annotation.BeanSocket;
 import io.winterframework.mod.base.Charsets;
 import io.winterframework.mod.http.base.header.Header;
 import io.winterframework.mod.http.base.header.HeaderCodec;
 import io.winterframework.mod.http.base.header.HeaderService;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link HeaderService} implementation.
+ * </p>
+ * 
+ * <p>
+ * This implementation uses multiple HTTP header codecs to encode/decode various
+ * HTTP headers based on their name.
+ * </p>
+ * 
+ * <p>
+ * The {@link GenericHeaderCodec} is used when no other codec supports the
+ * header to encode/decode.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Header
+ * @see HeaderCodec
  */
 @Bean(name = "headerService")
 public class GenericHeaderService implements HeaderService {
@@ -40,28 +59,63 @@ public class GenericHeaderService implements HeaderService {
 	
 	private HeaderCodec<?> defaultCodec;
 	
-	public GenericHeaderService(List<HeaderCodec<?>> codecs) {
-		this.codecs = new HashMap<>();
-		
-		for(HeaderCodec<?> codec : codecs) {
-			for(String supportedHeaderName : codec.getSupportedHeaderNames()) {
-				supportedHeaderName = supportedHeaderName.toLowerCase();
-				// TODO at some point this is an issue in Spring as well, we should fix this in winter
-				// provide annotation for sorting at compile time and be able to inject maps as well 
-				// - annotations defined on the beans with some meta data
-				// - annotations defined on multiple bean socket to specify sorting for list, array or sets
-				// - we can also group by key to inject a map => new multi socket type
-				// - this is a bit tricky as for selector when it comes to the injection of list along with single values 
-				HeaderCodec<?> previousCodec = this.codecs.put(supportedHeaderName, codec);
-				if(previousCodec != null) {
-					throw new IllegalStateException("Multiple codecs found for header " + supportedHeaderName + ": " + previousCodec.toString() + ", " + codec.toString());
-				}
-			}
-		}
-		
+	/**
+	 * <p>
+	 * Creates a generic header service.
+	 * </p>
+	 */
+	@BeanSocket
+	public GenericHeaderService() throws IllegalStateException {
+		this(null);
+	}
+	
+	/**
+	 * <p>
+	 * Creates a generic header service with the specified list of HTTP header
+	 * codecs.
+	 * </p>
+	 * 
+	 * @param codecs a list of header codecs
+	 * 
+	 * @throws IllegalArgumentException if multiple codecs supporting the same
+	 *                                  header name have been specified.
+	 */
+	public GenericHeaderService(List<HeaderCodec<?>> codecs) throws IllegalArgumentException {
+		this.setHeaderCodecs(codecs);
 		this.defaultCodec = this.codecs.get("*");
 		if(this.defaultCodec == null) {
 			this.defaultCodec = new GenericHeaderCodec();
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Sets the header codecs used to encode and decode headers.
+	 * </p>
+	 * 
+	 * @param codecs a list of header codecs
+	 * 
+	 * @throws IllegalArgumentException if multiple codecs supporting the same
+	 *                                  header name have been specified.
+	 */
+	public void setHeaderCodecs(List<HeaderCodec<?>> codecs) {
+		this.codecs = new HashMap<>();
+		if(codecs != null) {
+			for(HeaderCodec<?> codec : codecs) {
+				for(String supportedHeaderName : codec.getSupportedHeaderNames()) {
+					supportedHeaderName = supportedHeaderName.toLowerCase();
+					// TODO at some point this is an issue in Spring as well, we should fix this in winter
+					// provide annotation for sorting at compile time and be able to inject maps as well 
+					// - annotations defined on the beans with some meta data
+					// - annotations defined on multiple bean socket to specify sorting for list, array or sets
+					// - we can also group by key to inject a map => new multi socket type
+					// - this is a bit tricky as for selector when it comes to the injection of list along with single values 
+					HeaderCodec<?> previousCodec = this.codecs.put(supportedHeaderName, codec);
+					if(previousCodec != null) {
+						throw new IllegalArgumentException("Multiple codecs found for header " + supportedHeaderName + ": " + previousCodec.toString() + ", " + codec.toString());
+					}
+				}
+			}
 		}
 	}
 	
@@ -97,15 +151,15 @@ public class GenericHeaderService implements HeaderService {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends Header> String encode(T headerField) {
-		return this.<T>getHeaderCodec(headerField.getHeaderName()).orElse((HeaderCodec<T>)this.defaultCodec).encode(headerField);
+	public <T extends Header> String encode(T header) {
+		return this.<T>getHeaderCodec(header.getHeaderName()).orElse((HeaderCodec<T>)this.defaultCodec).encode(header);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends Header> void encode(T headerField, ByteBuf buffer, Charset charset) {
+	public <T extends Header> void encode(T header, ByteBuf buffer, Charset charset) {
 		Charset charsetOrDefault = Charsets.orDefault(charset);
-		this.<T>getHeaderCodec(headerField.getHeaderName()).orElse((HeaderCodec<T>)this.defaultCodec).encode(headerField, buffer, charsetOrDefault);
+		this.<T>getHeaderCodec(header.getHeaderName()).orElse((HeaderCodec<T>)this.defaultCodec).encode(header, buffer, charsetOrDefault);
 	}
 
 	@Override
@@ -128,17 +182,28 @@ public class GenericHeaderService implements HeaderService {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends Header> String encodeValue(T headerField) {
-		return this.<T>getHeaderCodec(headerField.getHeaderName()).orElse((HeaderCodec<T>)this.defaultCodec).encodeValue(headerField);
+	public <T extends Header> String encodeValue(T header) {
+		return this.<T>getHeaderCodec(header.getHeaderName()).orElse((HeaderCodec<T>)this.defaultCodec).encodeValue(header);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T extends Header> void encodeValue(T headerField, ByteBuf buffer, Charset charset) {
+	public <T extends Header> void encodeValue(T header, ByteBuf buffer, Charset charset) {
 		Charset charsetOrDefault = Charsets.orDefault(charset);
-		this.<T>getHeaderCodec(headerField.getHeaderName()).orElse((HeaderCodec<T>)this.defaultCodec).encodeValue(headerField, buffer, charsetOrDefault);
+		this.<T>getHeaderCodec(header.getHeaderName()).orElse((HeaderCodec<T>)this.defaultCodec).encodeValue(header, buffer, charsetOrDefault);
 	}
 	
+	/**
+	 * <p>
+	 * Returns the header codec for the specified header name.
+	 * </p>
+	 * 
+	 * @param <T>  the header type
+	 * @param name the header name
+	 * 
+	 * @return an optional returning the header codec or an empty optional if
+	 *         there's no codec for the specified header name
+	 */
 	@SuppressWarnings("unchecked")
 	public <T extends Header> Optional<HeaderCodec<T>> getHeaderCodec(String name) {
 		return Optional.ofNullable((HeaderCodec<T>)this.codecs.get(name));
@@ -181,4 +246,17 @@ public class GenericHeaderService implements HeaderService {
 		buffer.readerIndex(readerIndex);
 		return null;
 	}
+	
+	/**
+	 * <p>
+	 * Header codecs socket.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see GenericHeaderService
+	 */
+	@Bean( name = "headerCodecs" )
+	public static interface HeaderCodecsSocket extends Supplier<List<HeaderCodec<?>>> {}
 }

@@ -17,28 +17,144 @@ package io.winterframework.mod.web;
 
 import java.lang.reflect.Type;
 
+import io.netty.buffer.ByteBuf;
+import io.winterframework.mod.base.converter.MediaTypeConverter;
 import io.winterframework.mod.http.server.ResponseBody;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A response body with payload encoding support.
+ * </p>
+ * 
+ * <p>
+ * Implementors should rely on {@link MediaTypeConverter} to encode a payload
+ * based on the content type of the response.
+ * </p>
+ * 
+ * <p>
+ * If no content-type header is specified in the response when encoding the
+ * payload, implementors may use the definition of the route serving the
+ * resource and especially the produced media type when specified to determine
+ * the converter to use.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebRequest
+ * @see MediaTypeConverter
  */
 public interface WebResponseBody extends ResponseBody {
-	
+
+	/**
+	 * <p>
+	 * Returns an encoder to encode a payload based on the content type of the
+	 * request.
+	 * </p>
+	 * 
+	 * @param <T> the type to encode
+	 * 
+	 * @return an encoder
+	 */
 	<T> ResponseDataEncoder<T> encoder();
 	
+	/**
+	 * <p>
+	 * Returns an encoder to encode a payload of the specified type based on the
+	 * content type of the request.
+	 * </p>
+	 * 
+	 * @param <T>  the type to encode
+	 * @param type a class of T
+	 * 
+	 * @return an encoder
+	 */
 	<T> ResponseDataEncoder<T> encoder(Class<T> type);
 	
+	/**
+	 * <p>
+	 * Returns an encoder to encode a payload of the specified type based on the
+	 * content type of the request.
+	 * </p>
+	 * 
+	 * @param <T>  the type to encode
+	 * @param type the type to encode
+	 * 
+	 * @return an encoder
+	 */
 	<T> ResponseDataEncoder<T> encoder(Type type);
-	
+
+	/**
+	 * <p>
+	 * Returns a server-sent events encoder to encode event's data in the
+	 * specified media type.
+	 * </p>
+	 * 
+	 * @param <T>       the type to encode
+	 * @param mediaType the target media type
+	 * 
+	 * @return a SSE encoder
+	 */
 	<T> WebResponseBody.SseEncoder<T> sseEncoder(String mediaType);
 	
+	/**
+	 * <p>
+	 * Returns a server-sent events encoder to encode event's data of the specified
+	 * type in the specified media type.
+	 * </p>
+	 * 
+	 * @param <T>       the type to encode
+	 * @param mediaType the target media type
+	 * @param type      a class of T
+	 * 
+	 * @return a SSE encoder
+	 */
 	<T> WebResponseBody.SseEncoder<T> sseEncoder(String mediaType, Class<T> type);
 	
+	/**
+	 * <p>
+	 * Returns a server-sent events encoder to encode event's data of the specified
+	 * type in the specified media type.
+	 * </p>
+	 * 
+	 * @param <T>       the type to encode
+	 * @param mediaType the target media type
+	 * @param type      the type to encode
+	 * 
+	 * @return a SSE encoder
+	 */
 	<T> WebResponseBody.SseEncoder<T> sseEncoder(String mediaType, Type type);
 	
+	/**
+	 * <p>
+	 * A server-sent events data producer used to encode data from a single object
+	 * or many objects.
+	 * </p>
+	 * 
+	 * <p>
+	 * Implementors should rely on a {@link MediaTypeConverter} to encode data as a
+	 * publisher of objects to raw data as a publisher of {@link ByteBuf}.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see MediaTypeConverter
+	 * 
+	 * @param <A> the type of data to encode
+	 */
 	public interface SseEncoder<A> extends ResponseBody.Sse<A, WebResponseBody.SseEncoder.Event<A>, WebResponseBody.SseEncoder.EventFactory<A>> {
 		
+		/**
+		 * <p>
+		 * A server-sent event with data encoding support.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+		 * @since 1.0
+		 *
+		 * @param <A> the type of data to encode
+		 */
 		public static interface Event<A> extends ResponseBody.Sse.Event<A>, ResponseDataEncoder<A> {
 
 			@Override
@@ -51,6 +167,15 @@ public interface WebResponseBody extends ResponseBody {
 			WebResponseBody.SseEncoder.Event<A> event(String event);
 		}
 
+		/**
+		 * <p>
+		 * A server-sent events factory with data encoding support.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+		 *
+		 * @param <A> the type of data to encode
+		 */
 		public static interface EventFactory<A> extends ResponseBody.Sse.EventFactory<A, WebResponseBody.SseEncoder.Event<A>> {
 			
 		}

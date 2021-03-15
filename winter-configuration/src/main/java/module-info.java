@@ -1,3 +1,14 @@
+import io.winterframework.mod.configuration.ConfigurationSource;
+import io.winterframework.mod.configuration.source.ApplicationConfigurationSource;
+import io.winterframework.mod.configuration.source.CPropsFileConfigurationSource;
+import io.winterframework.mod.configuration.source.CommandLineConfigurationSource;
+import io.winterframework.mod.configuration.source.CompositeConfigurationSource;
+import io.winterframework.mod.configuration.source.MapConfigurationSource;
+import io.winterframework.mod.configuration.source.PropertyFileConfigurationSource;
+import io.winterframework.mod.configuration.source.RedisConfigurationSource;
+import io.winterframework.mod.configuration.source.SystemEnvironmentConfigurationSource;
+import io.winterframework.mod.configuration.source.SystemPropertiesConfigurationSource;
+
 /*
  * Copyright 2020 Jeremy KUHN
  *
@@ -15,9 +26,53 @@
  */
 
 /**
+ * <p>
+ * The Winter framework configuration module provides advanced application
+ * configuration capabilities.
+ * </p>
  * 
- * @author jkuhn
- *
+ * <p>
+ * The API defines the {@link ConfigurationSource} to store or access
+ * configuration properties for a particular context specified as a list of
+ * parameters (key/value pairs) which opens up many possibilities to create
+ * highly customizable application.
+ * </p>
+ * 
+ * <p>
+ * The module provides several configuration sources:
+ * </p>
+ * 
+ * <ul>
+ * <li>{@link ApplicationConfigurationSource} used to load the bootstrap
+ * configuration of an application from various local sources: command line,
+ * system properties, system environment variable and configuration files</li>
+ * <li>{@link CommandLineConfigurationSource} used to load properties specified
+ * in the command line</li>
+ * <li>{@link CPropsFileConfigurationSource} used to load properties specified
+ * in a {@code .cprops} file</li>
+ * <li>{@link MapConfigurationSource} used to load properties specified in map
+ * in memory.</li>
+ * <li>{@link PropertyFileConfigurationSource} used to load properties specified
+ * in a regular {@code .properties} file</li>
+ * <li>{@link RedisConfigurationSource} used to store and load properties from a
+ * Redis data store</li>
+ * <li>{@link SystemEnvironmentConfigurationSource} used to load properties
+ * specified as system environment variables</li>
+ * <li>{@link SystemPropertiesConfigurationSource} used to load properties
+ * specified as system properties</li>
+ * <li>{@link CompositeConfigurationSource} used to load properties from a
+ * combination of multiple configuration sources relying on particular strategy
+ * to determine the best matching result for a given property</li>
+ * </ul>
+ * 
+ * <p>
+ * It also introduces the {@code .cprops} configuration file format that defines
+ * a syntax that simplifies the definition of parameterized configuration
+ * properties.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 module io.winterframework.mod.configuration {
 	requires io.winterframework.mod.base;

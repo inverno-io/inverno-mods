@@ -22,8 +22,12 @@ import io.winterframework.mod.web.WebExchange;
 import io.winterframework.mod.web.WebRoute;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebRoute} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class GenericWebRoute implements WebRoute<WebExchange> {
 	
@@ -44,6 +48,13 @@ class GenericWebRoute implements WebRoute<WebExchange> {
 	
 	private ExchangeHandler<WebExchange> handler;
 	
+	/**
+	 * <p>
+	 * Creates a generic web route in the specified generic web router.
+	 * </p>
+	 * 
+	 * @param router a generic web router
+	 */
 	public GenericWebRoute(GenericWebRouter router) {
 		this.router = router;
 	}
@@ -65,6 +76,13 @@ class GenericWebRoute implements WebRoute<WebExchange> {
 		return this.disabled;
 	}
 	
+	/**
+	 * <p>
+	 * Disables/Enables the web route.
+	 * </p>
+	 * 
+	 * @param disabled true to disable the route, false otherwise
+	 */
 	public void setDisabled(boolean disabled) {
 		this.disabled = disabled;
 	}
@@ -79,6 +97,13 @@ class GenericWebRoute implements WebRoute<WebExchange> {
 		return this.path;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the route static path as defined by {@link WebRoute#getPath()}.
+	 * </p>
+	 * 
+	 * @param path a static path
+	 */
 	public void setPath(String path) {
 		this.pathPattern = null;
 		this.path = path;
@@ -89,6 +114,14 @@ class GenericWebRoute implements WebRoute<WebExchange> {
 		return this.pathPattern;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the route parameterized path as defined by
+	 * {@link WebRoute#getPathPattern()}.
+	 * </p>
+	 * 
+	 * @param path a path pattern
+	 */
 	public void setPathPattern(URIPattern pathPattern) {
 		this.path = null;
 		this.pathPattern = pathPattern;
@@ -99,6 +132,13 @@ class GenericWebRoute implements WebRoute<WebExchange> {
 		return this.method;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the route HTTP method as defined by {@link WebRoute#getMethod()}.
+	 * </p>
+	 * 
+	 * @param method a HTTP method
+	 */
 	public void setMethod(Method method) {
 		this.method = method;
 	}
@@ -108,8 +148,16 @@ class GenericWebRoute implements WebRoute<WebExchange> {
 		return this.consume;
 	}
 	
-	public void setConsume(String consume) {
-		this.consume = consume;
+	/**
+	 * <p>
+	 * Sets the route consumed media range as defined by
+	 * {@link WebRoute#getConsume()}.
+	 * </p>
+	 * 
+	 * @param mediaRange a media range
+	 */
+	public void setConsume(String mediaRange) {
+		this.consume = mediaRange;
 	}
 
 	@Override
@@ -117,8 +165,16 @@ class GenericWebRoute implements WebRoute<WebExchange> {
 		return this.produce;
 	}
 	
-	public void setProduce(String produce) {
-		this.produce = produce;
+	/**
+	 * <p>
+	 * Sets the route produced media type as defined by
+	 * {@link WebRoute#getProduce()}.
+	 * </p>
+	 * 
+	 * @param mediaType a media type
+	 */
+	public void setProduce(String mediaType) {
+		this.produce = mediaType;
 	}
 	
 	@Override
@@ -126,6 +182,13 @@ class GenericWebRoute implements WebRoute<WebExchange> {
 		return this.language;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the route language as defined by {@link WebRoute#getLanguage()}
+	 * </p>
+	 * 
+	 * @param language a language tag
+	 */
 	public void setLanguage(String language) {
 		this.language = language;
 	}
@@ -135,6 +198,13 @@ class GenericWebRoute implements WebRoute<WebExchange> {
 		return this.handler;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the route exchange handler as defined by {@link WebRoute#getHandler()}.
+	 * </p>
+	 * 
+	 * @param handler an exchange handler
+	 */
 	public void setHandler(ExchangeHandler<WebExchange> handler) {
 		this.handler = handler;
 	}

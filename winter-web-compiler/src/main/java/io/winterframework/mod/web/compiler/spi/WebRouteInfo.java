@@ -23,31 +23,109 @@ import io.winterframework.core.compiler.spi.Info;
 import io.winterframework.mod.http.base.Method;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Describes a web route.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public interface WebRouteInfo extends Info {
 
-	Optional<WebControllerInfo> getController();
-	
-	Optional<ExecutableElement> getElement();
-	
 	@Override
 	WebRouteQualifiedName getQualifiedName();
 	
+	/**
+	 * <p>
+	 * Returns the web controller that defines the route.
+	 * </p>
+	 * 
+	 * @return an optional returning the web controller or an empty optional if the
+	 *         route has been defined outside of a web controller (eg. in a web
+	 *         router configurer)
+	 */
+	Optional<WebControllerInfo> getController();
+
+	/**
+	 * <p>
+	 * Returns the executable element defining the web route.
+	 * </p>
+	 * 
+	 * @return an optional returning the executable element or an empty optional if
+	 *         the route has not been defined with a method (eg. declared in a web
+	 *         router configurer)
+	 */
+	Optional<ExecutableElement> getElement();
+	
+	/**
+	 * <p>
+	 * Returns the paths specified in the route.
+	 * </p>
+	 * 
+	 * @return an array of paths
+	 */
 	String[] getPaths();
 	
+	/**
+	 * <p>
+	 * Determines whether the trailing slash should be matched.
+	 * </p>
+	 * 
+	 * @return true to match the trailing slash, false otherwiser
+	 */
 	boolean isMatchTrailingSlash();
 	
+	/**
+	 * <p>
+	 * Returns the methods specified in the route.
+	 * </p>
+	 * 
+	 * @return an array of methods
+	 */
 	Method[] getMethods();
 	
+	/**
+	 * <p>
+	 * Returns the consumed media ranges specified in the route.
+	 * </p>
+	 * 
+	 * @return an array of media ranges
+	 */
 	String[] getConsumes();
 	
+	/**
+	 * <p>
+	 * Returns the produced media types specified in the route.
+	 * </p>
+	 * 
+	 * @return an array of media types
+	 */
 	String[] getProduces();
 	
+	/**
+	 * <p>
+	 * Returns the produced languages specified in the route.
+	 * </p>
+	 * 
+	 * @return an array of language tags
+	 */
 	String[] getLanguages();
 	
+	/**
+	 * <p>
+	 * Returns the parameters specified in the route.
+	 * </p>
+	 * 
+	 * @return an array of web parameter info
+	 */
 	WebParameterInfo[] getParameters();
 	
+	/**
+	 * <p>
+	 * Returns the response body specified in the route.
+	 * </p>
+	 * 
+	 * @return a response body info
+	 */
 	WebResponseBodyInfo getResponseBody();
 }

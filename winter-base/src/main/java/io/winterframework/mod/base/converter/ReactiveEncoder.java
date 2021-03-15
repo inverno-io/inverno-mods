@@ -23,16 +23,97 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
+ * <p>
+ * A reactive encoder.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Encoder
  *
+ * @param <From> the decoded type
+ * @param <To>   the encoded type
  */
 public interface ReactiveEncoder<From, To> extends Encoder<From, To> {
 
+	/**
+	 * <p>
+	 * Encodes a mono stream of values to a stream of values.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the mono stream of values to encode
+	 * 
+	 * @return a stream of encoded values
+	 */
 	<T extends From> Publisher<To> encodeOne(Mono<T> value);
+	
+	/**
+	 * <p>
+	 * Encodes a mono stream of values whose type is represented by the specified
+	 * class to a stream of values.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the mono stream of values to encode
+	 * @param type  the class of the decoded object
+	 * 
+	 * @return a stream of encoded values
+	 */
 	<T extends From> Publisher<To> encodeOne(Mono<T> value, Class<T> type);
+	
+	/**
+	 * <p>
+	 * Encodes a mono stream of values whose type is the specified type to a stream
+	 * of values.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the mono stream of values to encode
+	 * @param type  the type of the decoded object
+	 * 
+	 * @return a stream of encoded values
+	 */
 	<T extends From> Publisher<To> encodeOne(Mono<T> value, Type type);
 	
+	/**
+	 * <p>
+	 * Encodes a flux stream of values to a stream of values.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the flux stream of values to encode
+	 * 
+	 * @return a stream of encoded values
+	 */
 	<T extends From> Publisher<To> encodeMany(Flux<T> value);
+	
+	/**
+	 * <p>
+	 * Encodes a flux stream of values whose type is represented by the specified
+	 * class to a stream of values.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the flux stream of values to encode
+	 * @param type  the class of the decoded object
+	 * 
+	 * @return a stream of encoded values
+	 */
 	<T extends From> Publisher<To> encodeMany(Flux<T> value, Class<T> type);
+
+	/**
+	 * <p>
+	 * Encodes a flux stream of values whose type is the specified type to a stream
+	 * of values.
+	 * </p>
+	 * 
+	 * @param <T>   the type of the decoded object
+	 * @param value the flux stream of values to encode
+	 * @param type  the type of the decoded object
+	 * 
+	 * @return a stream of encoded values
+	 */
 	<T extends From> Publisher<To> encodeMany(Flux<T> value, Type type);
 }

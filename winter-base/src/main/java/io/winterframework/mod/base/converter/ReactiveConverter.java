@@ -16,8 +16,17 @@
 package io.winterframework.mod.base.converter;
 
 /**
- * @author jkuhn
+ * <p>A reactive converter.</p> 
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Converter
+ * @see ReactiveDecoder
+ * @see ReactiveEncoder
  *
+ * @param <A> the encoded type
+ * @param <B> the decoded type
  */
 public interface ReactiveConverter<A, B> extends Converter<A, B>, ReactiveDecoder<A, B>, ReactiveEncoder<B, A> {
 

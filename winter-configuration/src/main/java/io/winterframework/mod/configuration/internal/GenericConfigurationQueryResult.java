@@ -24,8 +24,17 @@ import io.winterframework.mod.configuration.ConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationSourceException;
 
 /**
- * @author jkuhn
+ * <p>
+ * Generic {@link ConfigurationQueryResult} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationQueryResult
  *
+ * @param <A> the key type
+ * @param <B> the property type
  */
 public class GenericConfigurationQueryResult<A extends ConfigurationKey, B extends ConfigurationProperty<?,?>> implements ConfigurationQueryResult<A, B> {
 
@@ -34,11 +43,30 @@ public class GenericConfigurationQueryResult<A extends ConfigurationKey, B exten
 	protected Throwable error;
 	protected ConfigurationSource<?,?,?> errorSource;
 	
+	/**
+	 * <p>
+	 * Creates a generic successful configuration query result with the specified
+	 * query key and result property.
+	 * </p>
+	 * 
+	 * @param queryKey    the query key
+	 * @param queryResult the result property
+	 */
 	public GenericConfigurationQueryResult(A queryKey, B queryResult) {
 		this.queryKey = queryKey;
 		this.queryResult = Optional.ofNullable(queryResult);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a generic faulty configuration query result with the specified query
+	 * key, configuration source and error.
+	 * </p>
+	 * 
+	 * @param queryKey the query key
+	 * @param source   the configuration source
+	 * @param error    the error
+	 */
 	public GenericConfigurationQueryResult(A queryKey, ConfigurationSource<?,?,?> source, Throwable error) {
 		this.queryKey = queryKey;
 		this.errorSource = source;

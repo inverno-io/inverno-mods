@@ -25,11 +25,11 @@ import java.util.stream.Stream;
  * </p>
  *
  * <p>
- * Implementations should rely on multiple {@link ResourceProvider} to resolve
- * resources based on their kind specified in a URI schema.
+ * Implementations can rely on multiple {@link ResourceProvider} to resolve
+ * resources based on their kind specified in the scheme of the resource URI.
  * </p>
  * 
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * 
  * @see ResourceProvider
  */
@@ -37,46 +37,45 @@ public interface ResourceService {
 
 	/**
 	 * <p>
-	 * Returns a resource representation of the specified location.
+	 * Resolves the resource identified by the specified URI.
 	 * </p>
 	 * 
 	 * <p>
 	 * The resource returned by this method might not actually exist.
 	 * </p>
 	 * 
-	 * @param uri the resource location
+	 * @param uri a URI
 	 * 
 	 * @return A resource
-	 * 
 	 * @throws NullPointerException     if the specified URI is null
 	 * @throws IllegalArgumentException if the resource type specified in the URI is
 	 *                                  not supported by the implementation
-	 * @throws ResourceException        if something goes wrong creating the
-	 *                                  resource
+	 * @throws ResourceException        if there was an error resolving the resource
 	 */
-	Resource getResource(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException;
-	
+	Resource getResource(URI uri) throws IllegalArgumentException, ResourceException;
+
 	/**
 	 * <p>
-	 * Returns the resources that exist at the specified location.
+	 * Resolves the resources that exist the location identified by the specified
+	 * URI.
 	 * </p>
 	 * 
 	 * <p>
-	 * The returned result depends first on the type of resource considered and what
-	 * the corresponding {@link ResourceProvider} is capable of. For instance a file
-	 * resource provider might try to match some kind of pattern in the specified
-	 * URI to return multiple resources (eg. file:/a/**&#47;b.txt).
+	 * The returned result depends on the type of resource considered and the
+	 * corresponding {@link ResourceProvider}. For instance a file resource provider
+	 * could implement some kind of pattern in the specified URI to return multiple
+	 * resources (eg. <code>file:/a/**&#47;b.txt</code>), but not all kind of
+	 * resources can be listed in such a way, for instance it is not possible to
+	 * list resources on a classpath or at a given URL.
 	 * </p>
 	 * 
-	 * @param uri the location of the resource to resolve
+	 * @param uri a URI
 	 * 
-	 * @return an array of resources
-	 * 
+	 * @return an stream of resources
 	 * @throws NullPointerException     if the specified URI is null
 	 * @throws IllegalArgumentException if the resource type specified in the URI is
 	 *                                  not supported by the implementation
-	 * @throws ResourceException        if something goes wrong creating the
-	 *                                  resources
+	 * @throws ResourceException        if there was an error resolving the resource
 	 */
 	Stream<Resource> getResources(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException;
 }

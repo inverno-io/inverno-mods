@@ -43,14 +43,21 @@ import io.winterframework.core.compiler.spi.plugin.PluginContext;
 import io.winterframework.core.compiler.spi.plugin.PluginExecution;
 import io.winterframework.core.compiler.spi.plugin.PluginExecutionException;
 import io.winterframework.mod.configuration.Configuration;
+import io.winterframework.mod.configuration.ConfigurationLoader;
 import io.winterframework.mod.configuration.compiler.internal.ConfigurationLoaderClassGenerationContext.GenerationMode;
 import io.winterframework.mod.configuration.compiler.spi.ConfigurationInfo;
 import io.winterframework.mod.configuration.compiler.spi.ConfigurationPropertyInfo;
 import io.winterframework.mod.configuration.compiler.spi.PropertyQualifiedName;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * The configuration Winter compiler plugin generates a
+ * {@link ConfigurationLoader} implementation for each
+ * {@link Configuration @Configuration} annotated types in a module.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class ConfigurationCompilerPlugin implements CompilerPlugin {
 

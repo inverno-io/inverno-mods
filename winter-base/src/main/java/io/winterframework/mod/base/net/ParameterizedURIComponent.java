@@ -19,14 +19,70 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author jkuhn
+ * <p>
+ * A URI component that supports parameterization.
+ * </p>
+ * 
+ * <p>
+ * the raw value of parameterized component can contain parameters of the form
+ * <code>{{@literal <name>[:<pattern>]}}</code> which can be replaced by actual
+ * values when building a URI (eg.
+ * {scheme}://{userinfo}@{host}:{port}/a/{segment}?parameter={parameter}#{fragment}).
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @see URIComponent
  */
 interface ParameterizedURIComponent extends URIComponent {
 	
+	/**
+	 * <p>
+	 * Returns the list of parameters present in the component.
+	 * </p>
+	 * 
+	 * @return a list of parameters or an empty list if the component have no
+	 *         parameter
+	 */
 	List<URIParameter> getParameters();
 	
-	String getValue(Object... values);
+	/**
+	 * <p>
+	 * Returns the value of the component after replacing the parameters with the
+	 * string representation of the specified values.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that the resulting value is percent encoded as defined by
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section
+	 * 2.1</a>.
+	 * </p>
+	 * 
+	 * @param values an array of values to replace the component's parameters
+	 * 
+	 * @return the component value
+	 * @throws IllegalArgumentException if there's not enough values to replace all
+	 *                                  parameters
+	 */
+	String getValue(Object... values) throws IllegalArgumentException;
 	
+	/**
+	 * <p>
+	 * Returns the value of the component after replacing the parameters with the
+	 * string representation of the specified values.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that the resulting value is percent encoded as defined by
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section
+	 * 2.1</a>.
+	 * </p>
+	 * 
+	 * @param values a map of values to replace the component's parameters
+	 * 
+	 * @return the component value
+	 * @throws IllegalArgumentException if there are missing values
+	 */
 	String getValue(Map<String, ?> values);
 }

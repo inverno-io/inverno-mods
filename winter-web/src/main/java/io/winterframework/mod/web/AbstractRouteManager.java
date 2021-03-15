@@ -21,18 +21,84 @@ import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base route manager interface.
+ * </p>
+ * 
+ * <p>
+ * A route manager is used to manage the routes of a router. It is created by a
+ * router and allows to define, enable, disable, remove and find routes in a
+ * router.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Exchange
+ * @see AbstractRoute
+ * @see AbstractRouter
+ * 
+ * @param <A> the type of exchange handled by the route
+ * @param <B> the router type
+ * @param <C> the route manager type
+ * @param <D> the route type
+ * @param <E> the router exchange type
  */
 public interface AbstractRouteManager<A extends Exchange, B extends AbstractRouter<A, B, C, D, E>, C extends AbstractRouteManager<A, B, C, D, E>, D extends AbstractRoute<A>, E extends Exchange> {
 
+	/**
+	 * <p>
+	 * Specifies the route exchange handler.
+	 * </p>
+	 *
+	 * <p>
+	 * This method basically appends the route specified in the route manager to the
+	 * router it comes from.
+	 * </p>
+	 * 
+	 * @param handler the route exchange handler
+	 * 
+	 * @return the router
+	 */
 	B handler(ExchangeHandler<? super A> handler);
 
+	/**
+	 * <p>
+	 * Enables all the routes that matches the criteria specified in the route
+	 * manager and defined in the router it comes from.
+	 * </p>
+	 * 
+	 * @return the router
+	 */
 	B enable();
 	
+	/**
+	 * <p>
+	 * Disables all the routes that matches the criteria specified in the route
+	 * manager and defined in the router it comes from.
+	 * </p>
+	 * 
+	 * @return the router
+	 */
 	B disable();
 	
+	/**
+	 * <p>
+	 * Removes all the routes that matches the criteria specified in the route
+	 * manager and defined in the router it comes from.
+	 * </p>
+	 * 
+	 * @return the router
+	 */
 	B remove();
 	
+	/**
+	 * <p>
+	 * Finds all the routes that matches the criteria specified in the route manager
+	 * and defined in the router it comes from.
+	 * </p>
+	 * 
+	 * @return a set of routes or an empty set if no route matches the criteria
+	 */
 	Set<D> findRoutes();
 }

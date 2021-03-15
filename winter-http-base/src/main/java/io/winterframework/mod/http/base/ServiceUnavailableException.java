@@ -20,70 +20,183 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A web exception that indicates that the requested resource is
+ * {@link Status#SERVICE_UNAVAILABLE Service Unavailable (503)}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebException
  */
 public class ServiceUnavailableException extends WebException {
 
 	private static final long serialVersionUID = -7765924553702627055L;
 
+	/**
+	 * The datetime after which the failed request may be retried.
+	 */
 	private Optional<ZonedDateTime> retryAfter;
 	
+	/**
+	 * <p>
+	 * Creates a service unavailable exception.
+	 * </p>
+	 */
 	public ServiceUnavailableException() {
 		super(Status.SERVICE_UNAVAILABLE);
 		this.retryAfter = Optional.empty();
 	}
 
+	/**
+	 * <p>
+	 * Creates a service unavailable exception with the specified message.
+	 * </p>
+	 * 
+	 * @param message a message
+	 */
 	public ServiceUnavailableException(String message) {
 		super(Status.SERVICE_UNAVAILABLE, message);
 		this.retryAfter = Optional.empty();
 	}
 
+	/**
+	 * <p>
+	 * Creates a service unavailable exception with the specified cause.
+	 * </p>
+	 * 
+	 * @param cause a cause
+	 */
 	public ServiceUnavailableException(Throwable cause) {
 		super(Status.SERVICE_UNAVAILABLE, cause);
 		this.retryAfter = Optional.empty();
 	}
 
+	/**
+	 * <p>
+	 * Creates a service unavailable exception with the specified message and cause.
+	 * </p>
+	 * 
+	 * @param message a message
+	 * @param cause   a cause
+	 */
 	public ServiceUnavailableException(String message, Throwable cause) {
 		super(Status.SERVICE_UNAVAILABLE, message, cause);
 		this.retryAfter = Optional.empty();
 	}
-	
+
+	/**
+	 * <p>
+	 * Creates a service unavailable exception with the specified interval in
+	 * seconds after which the failed request may be retried.
+	 * </p>
+	 * 
+	 * @param retryAfter interval in seconds after which the failed request may be
+	 *                   retried
+	 */
 	public ServiceUnavailableException(long retryAfter) {
 		super(Status.SERVICE_UNAVAILABLE);
 		this.setRetryAfter(retryAfter);
 	}
 
+	/**
+	 * <p>
+	 * Creates a service unavailable exception with the specified interval in
+	 * seconds after which the failed request may be retried and message.
+	 * </p>
+	 * 
+	 * @param retryAfter interval in seconds after which the failed request may be
+	 *                   retried
+	 * @param message    a message
+	 */
 	public ServiceUnavailableException(long retryAfter, String message) {
 		super(Status.SERVICE_UNAVAILABLE, message);
 		this.setRetryAfter(retryAfter);
 	}
-
+	
+	/**
+	 * <p>
+	 * Creates a service unavailable exception with the specified interval in
+	 * seconds after which the failed request may be retried and cause.
+	 * </p>
+	 * 
+	 * @param retryAfter interval in seconds after which the failed request may be
+	 *                   retried
+	 * @param cause      a cause
+	 */
 	public ServiceUnavailableException(long retryAfter, Throwable cause) {
 		super(Status.SERVICE_UNAVAILABLE, cause);
 		this.setRetryAfter(retryAfter);
 	}
 
+	/**
+	 * <p>
+	 * Creates a service unavailable exception with the specified interval in
+	 * seconds after which the failed request may be retried, message and cause.
+	 * </p>
+	 * 
+	 * @param retryAfter interval in seconds after which the failed request may be
+	 *                   retried
+	 * @param message    a message
+	 * @param cause      a cause
+	 */
 	public ServiceUnavailableException(long retryAfter, String message, Throwable cause) {
 		super(Status.SERVICE_UNAVAILABLE, message, cause);
 		this.setRetryAfter(retryAfter);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a service unavailable exception with the specified date time after
+	 * which the failed request may be retried.
+	 * </p>
+	 * 
+	 * @param retryAfter a date time after which the failed request may be retried
+	 */
 	public ServiceUnavailableException(ZonedDateTime retryAfter) {
 		super(Status.SERVICE_UNAVAILABLE);
 		this.setRetryAfter(retryAfter);
 	}
 
+	/**
+	 * <p>
+	 * Creates a service unavailable exception with the specified date time after
+	 * which the failed request may be retried and message.
+	 * </p>
+	 * 
+	 * @param retryAfter a date time after which the failed request may be retried
+	 * @param message    a message
+	 */
 	public ServiceUnavailableException(ZonedDateTime retryAfter, String message) {
 		super(Status.SERVICE_UNAVAILABLE, message);
 		this.setRetryAfter(retryAfter);
 	}
 
+	/**
+	 * <p>
+	 * Creates a service unavailable exception with the specified date time after
+	 * which the failed request may be retried and cause.
+	 * </p>
+	 * 
+	 * @param retryAfter a date time after which the failed request may be retried
+	 * @param cause      a cause
+	 */
 	public ServiceUnavailableException(ZonedDateTime retryAfter, Throwable cause) {
 		super(Status.SERVICE_UNAVAILABLE, cause);
 		this.setRetryAfter(retryAfter);
 	}
 
+	/**
+	 * <p>
+	 * Creates a service unavailable exception with the specified date time after
+	 * which the failed request may be retried, message and cause.
+	 * </p>
+	 * 
+	 * @param retryAfter a date time after which the failed request may be retried
+	 * @param message    a message
+	 * @param cause      a cause
+	 */
 	public ServiceUnavailableException(ZonedDateTime retryAfter, String message, Throwable cause) {
 		super(Status.SERVICE_UNAVAILABLE, message, cause);
 		this.setRetryAfter(retryAfter);
@@ -100,6 +213,13 @@ public class ServiceUnavailableException extends WebException {
 		this.retryAfter = Optional.of(retryAfter);
 	}
 	
+	/**
+	 * <p>
+	 * Returns the datetime after which the failed request may be retried.
+	 * </p>
+	 * 
+	 * @return a zoned datetime
+	 */
 	public Optional<ZonedDateTime> getRetryAfter() {
 		return this.retryAfter;
 	}

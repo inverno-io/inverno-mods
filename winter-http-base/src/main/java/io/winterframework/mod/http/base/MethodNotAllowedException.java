@@ -18,35 +18,88 @@ package io.winterframework.mod.http.base;
 import java.util.Set;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A web exception that indicates a client requested
+ * {@link Status#METHOD_NOT_ALLOWED Method Not Allowed (405)}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebException
  */
 public class MethodNotAllowedException extends WebException {
 
 	private static final long serialVersionUID = 3533891588820461527L;
 
+	/**
+	 * The list of methods allowed by the requested resource.
+	 */
 	private Set<Method> allowedMethods;
 	
+	/**
+	 * <p>
+	 * Creates a method not allowed exception with the specified list of methods
+	 * allowed by the requested resource.
+	 * </p>
+	 * 
+	 * @param allowedMethods a list of allowed methods
+	 */
 	public MethodNotAllowedException(Set<Method> allowedMethods) {
 		super(Status.METHOD_NOT_ALLOWED);
 		this.allowedMethods = allowedMethods;
 	}
 
+	/**
+	 * <p>
+	 * Creates a method not allowed exception with the specified list of methods
+	 * allowed by the requested resource and message.
+	 * </p>
+	 * 
+	 * @param allowedMethods a list of allowed methods
+	 * @param message        a message
+	 */
 	public MethodNotAllowedException(Set<Method> allowedMethods, String message) {
 		super(Status.METHOD_NOT_ALLOWED, message);
 		this.allowedMethods = allowedMethods;
 	}
 
+	/**
+	 * <p>
+	 * Creates a method not allowed exception with the specified list of methods
+	 * allowed by the requested resource and cause.
+	 * </p>
+	 * 
+	 * @param allowedMethods a list of allowed methods
+	 * @param cause          a cause
+	 */
 	public MethodNotAllowedException(Set<Method> allowedMethods, Throwable cause) {
 		super(Status.METHOD_NOT_ALLOWED, cause);
 		this.allowedMethods = allowedMethods;
 	}
 
+	/**
+	 * <p>
+	 * Creates a method not allowed exception with the specified list of methods
+	 * allowed by the requested resource, message and cause.
+	 * </p>
+	 * 
+	 * @param allowedMethods a list of allowed methods
+	 * @param message        a message
+	 * @param cause          a cause
+	 */
 	public MethodNotAllowedException(Set<Method> allowedMethods, String message, Throwable cause) {
 		super(Status.METHOD_NOT_ALLOWED, message, cause);
 		this.allowedMethods = allowedMethods;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the list of methods allowed by the requested resource.
+	 * </p>
+	 * 
+	 * @return the list of allowed methods
+	 */
 	public Set<Method> getAllowedMethods() {
 		return allowedMethods;
 	}

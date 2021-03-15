@@ -15,22 +15,39 @@
  */
 package io.winterframework.mod.http.server;
 
-import java.util.Objects;
-import java.util.function.Function;
-
 import io.winterframework.mod.http.base.WebException;
 
 /**
- * @author jkuhn
+ * <p>
+ * An exchange handler is used to handle server exchanges.
+ * </p>
+ * 
+ * <p>
+ * The HTTP server relies on an exchange handler to actually process a client
+ * request and provide a response to the client. It will create an
+ * {@link ErrorExchange} and invoke the {@link ErrorExchangeHandler} in case an
+ * error is thrown during that process.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @see ErrorExchange
+ * @see ExchangeHandler
+ * 
+ * @param <A> the type of the exchange
  */
 @FunctionalInterface
 public interface ExchangeHandler<A extends Exchange> {
 
+	/**
+	 * <p>
+	 * Processes the specified server exchange.
+	 * </p>
+	 * 
+	 * @param exchange the exchange to process
+	 * 
+	 * @throws WebException if an error occurs during the processing of the exchange
+	 */
 	void handle(A exchange) throws WebException;
-	
-	default <B extends Exchange, C extends ExchangeHandler<B>> C map(Function<? super ExchangeHandler<A>, ? extends C> mapper) {
-		Objects.requireNonNull(mapper);
-		return mapper.apply(this);
-	}
 }

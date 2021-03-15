@@ -18,8 +18,14 @@ package io.winterframework.mod.web;
 import io.winterframework.mod.http.server.ExchangeHandler;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * An exchange handler used to handle {@link WebExchange}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @param <A> the type of web exchange
  */
 public interface WebExchangeHandler<A extends WebExchange> extends ExchangeHandler<A> {
 

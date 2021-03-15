@@ -15,21 +15,34 @@
  */
 package io.winterframework.mod.http.server;
 
-import java.util.Objects;
-import java.util.function.Function;
-
 /**
- * @author jkuhn
- *
+ * <p>
+ * Represents a server exchange between a client and a server.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Request
+ * @see Response
  */
 public interface Exchange {
 
+	/**
+	 * <p>
+	 * Returns the request part of the exchange.
+	 * <p>
+	 * 
+	 * @return the request part
+	 */
 	Request request();
 	
+	/**
+	 * <p>
+	 * Returns the response part of the exchange.
+	 * <p>
+	 * 
+	 * @return the response part
+	 */
 	Response response();
-	
-	default <T extends Exchange> T map(Function<? super Exchange, T> mapper) {
-		Objects.requireNonNull(mapper);
-		return mapper.apply(this);
-	}
 }

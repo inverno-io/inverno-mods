@@ -17,14 +17,41 @@ package io.winterframework.mod.web.internal;
 
 import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.web.AbstractRoute;
+import io.winterframework.mod.web.AcceptAwareRoute;
 
 /**
- * @author jkuhn
+ * <p>
+ * A route extractor to extract {@link AcceptAwareRoute} routes.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @param <A> the type of exchange handled by the route
+ * @param <B> the route type
+ * @param <C> the route extractor type
  */
 interface AcceptAwareRouteExtractor<A extends Exchange, B extends AbstractRoute<A>, C extends AcceptAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
 
+	/**
+	 * <p>
+	 * Sets the extractor to extract routes which produce the specified media type.
+	 * </p>
+	 * 
+	 * @param mediaType the media type produced by the routes to extract
+	 * 
+	 * @return the route extractor
+	 */
 	C produces(String mediaType);
 	
+	/**
+	 * <p>
+	 * Sets the extractor to extract routes which produce the specified language.
+	 * </p>
+	 * 
+	 * @param mediaType the language tag produced by the routes to extract
+	 * 
+	 * @return the route extractor
+	 */
 	C language(String language);
 }

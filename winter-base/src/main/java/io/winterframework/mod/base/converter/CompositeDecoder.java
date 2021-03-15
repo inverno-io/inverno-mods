@@ -21,8 +21,21 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A composite decoder relies on multiple {@link CompoundDecoder} to decode
+ * objects.
+ * </p>
+ * 
+ * <p>
+ * Such implementation makes it possible to create extensible decoder able to
+ * decode various type of objects by composition of many specific compound
+ * decoders.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @param <From> the decoded type
  */
 public class CompositeDecoder<From> implements Decoder<From, Object> {
 
@@ -32,19 +45,50 @@ public class CompositeDecoder<From> implements Decoder<From, Object> {
 	
 	private Decoder<From, Object> defaultDecoder;
 	
+	/**
+	 * <p>
+	 * Creates a composite decoder.
+	 * </p>
+	 */
 	public CompositeDecoder() {
 		this.setDecoders(List.of());
 	}
 	
+	/**
+	 * <p>
+	 * Sets the compound decoders used to decode objects.
+	 * </p>
+	 * 
+	 * @param decoders a list of compound decoders
+	 */
 	public void setDecoders(List<CompoundDecoder<From, ?>> decoders) {
 		this.decoders = decoders;
 		this.decodersCache = new HashMap<>();
 	}
 	
+	/**
+	 * <p>
+	 * Sets a default decoder to use when no compound decoder is able to decode an
+	 * object.
+	 * </p>
+	 * 
+	 * @param defaultDecoder the default decoder
+	 */
 	public void setDefaultDecoder(Decoder<From, Object> defaultDecoder) {
 		this.defaultDecoder = defaultDecoder;
 	}
 
+	/**
+	 * <p>
+	 * Returns the first compound decoder that can decode the specified type.
+	 * </p>
+	 * 
+	 * @param <T>  the type of object decoded by the returned decoder
+	 * @param type the type to decode
+	 * 
+	 * @return a compound decoder
+	 * @throws DecoderNotFoundException if no decoder can decode the specified type
+	 */
 	@SuppressWarnings("unchecked")
 	protected <T> CompoundDecoder<From, T> getDecoder(Type type) {
 		CompoundDecoder<From, T> result = (CompoundDecoder<From, T>) this.decodersCache.get(type);

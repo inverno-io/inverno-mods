@@ -16,8 +16,23 @@
 package io.winterframework.mod.http.server;
 
 /**
- * @author jkuhn
+ * <p>
+ * Exchange handler used to handle error server exchanges.
+ * </p>
+ * 
+ * <p>
+ * The HTTP server relies on an error exchange handler to handle errors thrown
+ * during the processing of a client request in order to provide a proper
+ * response to the client.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @see ErrorExchange
+ * @see ExchangeHandler
+ * 
+ * @param <A> the error type
  */
 public interface ErrorExchangeHandler<A extends Throwable> extends ExchangeHandler<ErrorExchange<A>> {
 

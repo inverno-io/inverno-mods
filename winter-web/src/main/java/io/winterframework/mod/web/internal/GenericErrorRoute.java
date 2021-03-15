@@ -20,8 +20,12 @@ import io.winterframework.mod.http.server.ExchangeHandler;
 import io.winterframework.mod.web.ErrorRoute;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link ErrorRoute} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class GenericErrorRoute implements ErrorRoute {
 
@@ -37,6 +41,13 @@ class GenericErrorRoute implements ErrorRoute {
 	
 	private ExchangeHandler<ErrorExchange<Throwable>> handler;
 	
+	/**
+	 * <p>
+	 * Creates a generic error route in the specified generic error router.
+	 * </p>
+	 * 
+	 * @param router a generic error router
+	 */
 	public GenericErrorRoute(GenericErrorRouter router) {
 		this.router = router;
 	}
@@ -58,6 +69,13 @@ class GenericErrorRoute implements ErrorRoute {
 		return this.disabled;
 	}
 	
+	/**
+	 * <p>
+	 * Disables/Enables the error route.
+	 * </p>
+	 * 
+	 * @param disabled true to disable the route, false otherwise
+	 */
 	public void setDisabled(boolean disabled) {
 		this.disabled = disabled;
 	}
@@ -67,6 +85,14 @@ class GenericErrorRoute implements ErrorRoute {
 		this.router.removeRoute(this);
 	}
 	
+	/**
+	 * <p>
+	 * Sets the route exchange handler as defined by
+	 * {@link ErrorRoute#getHandler()}.
+	 * </p>
+	 * 
+	 * @param handler an exchange handler
+	 */
 	public void setHandler(ExchangeHandler<ErrorExchange<Throwable>> handler) {
 		this.handler = handler;
 	}
@@ -76,6 +102,13 @@ class GenericErrorRoute implements ErrorRoute {
 		return this.error;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the route error type as defined by {@link ErrorRoute#getError()}
+	 * </p>
+	 * 
+	 * @param error an error type
+	 */
 	public void setError(Class<? extends Throwable> error) {
 		this.error = error;
 	}
@@ -85,6 +118,13 @@ class GenericErrorRoute implements ErrorRoute {
 		return this.language;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the route language as defined by {@link ErrorRoute#getLanguage()}
+	 * </p>
+	 * 
+	 * @param language a language tag
+	 */
 	public void setLanguage(String language) {
 		this.language = language;
 	}
@@ -94,8 +134,16 @@ class GenericErrorRoute implements ErrorRoute {
 		return this.produce;
 	}
 	
-	public void setProduce(String produce) {
-		this.produce = produce;
+	/**
+	 * <p>
+	 * Sets the route produced media type as defined by
+	 * {@link ErrorRoute#getProduce()}
+	 * </p>
+	 * 
+	 * @param mediaType a media type
+	 */
+	public void setProduce(String mediaType) {
+		this.produce = mediaType;
 	}
 	
 	@Override

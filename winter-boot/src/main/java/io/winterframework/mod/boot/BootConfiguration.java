@@ -19,14 +19,26 @@ import io.winterframework.core.annotation.NestedBean;
 import io.winterframework.mod.configuration.Configuration;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Boot module configuration.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Configuration
 public interface BootConfiguration {
-	
+
+	/**
+	 * <p>
+	 * Net specific configuration.
+	 * <p>
+	 * 
+	 * @return the net configuration
+	 */
 	@NestedBean
 	default NetConfiguration net() {
-		return new NetConfiguration() {};
+		return new NetConfiguration() {
+		};
 	}
 }

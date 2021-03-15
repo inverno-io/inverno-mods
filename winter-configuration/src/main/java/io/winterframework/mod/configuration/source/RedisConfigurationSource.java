@@ -42,13 +42,16 @@ import io.winterframework.mod.base.converter.ConverterException;
 import io.winterframework.mod.base.converter.JoinablePrimitiveEncoder;
 import io.winterframework.mod.base.converter.SplittablePrimitiveDecoder;
 import io.winterframework.mod.configuration.AbstractConfigurableConfigurationSource;
+import io.winterframework.mod.configuration.ConfigurableConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
 import io.winterframework.mod.configuration.ConfigurationProperty;
 import io.winterframework.mod.configuration.ConfigurationQuery;
+import io.winterframework.mod.configuration.ConfigurationQueryResult;
 import io.winterframework.mod.configuration.ConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationUpdate;
 import io.winterframework.mod.configuration.ConfigurationUpdate.SpecialValue;
+import io.winterframework.mod.configuration.ConfigurationUpdateResult;
 import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
 import io.winterframework.mod.configuration.ExecutableConfigurationUpdate;
 import io.winterframework.mod.configuration.internal.GenericConfigurationKey;
@@ -63,8 +66,53 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A configurable configuration source that stores and looks up properties in a
+ * Redis data store.
+ * </p>
+ * 
+ * <p>
+ * This implementation supports basic versioning which allows to set multiple
+ * properties and activate or revert them atomically.
+ * </p>
+ * 
+ * <p>
+ * Properties are organized in a tree of parameters sorted in natural order, a
+ * global revision is defined for the whole tree and a revision can also be
+ * assigned to any branch of that tree.
+ * </p>
+ * 
+ * <p>
+ * Properties are set for the working revision corresponding to their
+ * parameters. The working revision is activated using the
+ * {@link RedisConfigurationSource#activate(Parameter...)} method, the
+ * {@link RedisConfigurationSource#activate(int, Parameter...)} is used to
+ * activate a specific revision.
+ * </p>
+ * 
+ * <p>A typical workflow to set properties is:</p>
+ * 
+ * <blockquote><pre>
+ * RedisConfigurationSource source = null;
+ *     source
+ *         .set("db.url", "jdbc:oracle:thin:@dev.db.server:1521:sid").withParameters("env", "dev").and()
+ *         .set("db.url", "jdbc:oracle:thin:@prod_eu.db.server:1521:sid").withParameters("env", "prod", "zone", "eu").and()
+ *         .set("db.url", "jdbc:oracle:thin:@prod_us.db.server:1521:sid").withParameters("env", "prod", "zone", "us")
+ *         .execute()
+ *         .blockLast();
+ * 
+ *     // Activate working revision globally
+ *     source.activate().block();
+ *     
+ *     // Activate working revision for dev environment and prod environment independently
+ *     source.activate("env", "dev").block();
+ *     source.activate("env", "prod").block();
+ * </pre></blockquote>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurableConfigurationSource
  */
 public class RedisConfigurationSource extends AbstractConfigurableConfigurationSource<RedisConfigurationSource.RedisConfigurationQuery, RedisConfigurationSource.RedisExecutableConfigurationQuery, RedisConfigurationSource.RedisConfigurationQueryResult, RedisConfigurationSource.RedisConfigurationUpdate, RedisConfigurationSource.RedisExecutableConfigurationUpdate, RedisConfigurationSource.RedisConfigurationUpdateResult, String> {
 
@@ -73,10 +121,27 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	
 	private RedisReactiveCommands<String, String> commands;
 	
+	/**
+	 * <p>
+	 * Creates a redis configuration source with the specified redis client.
+	 * </p>
+	 * 
+	 * @param redisClient a redis client
+	 */
 	public RedisConfigurationSource(RedisClient redisClient) {
 		this(redisClient, new JavaStringConverter(), new JavaStringConverter());
 	}
 	
+	/**
+	 * <p>
+	 * Creates a redis configuration source with the specified redis client, string
+	 * value encoder and decoder.
+	 * </p>
+	 * 
+	 * @param redisClient a redis client
+	 * @param encoder     a string encoder
+	 * @param decoder     a string decoder
+	 */
 	public RedisConfigurationSource(RedisClient redisClient, JoinablePrimitiveEncoder<String> encoder, SplittablePrimitiveDecoder<String> decoder) {
 		super(encoder, decoder);
 		this.commands = redisClient.connect().reactive();
@@ -92,12 +157,29 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		return new RedisExecutableConfigurationUpdate(this).and().set(values);
 	}
 	
+	/**
+	 * <p>
+	 * Returns the list of metadata parameters.
+	 * </p>
+	 * 
+	 * @return a mono emitting the list of metadata parameters
+	 */
 	protected Mono<List<List<String>>> getMetaDataParameterSets() {
 		return this.commands.smembers(META_DATA_CONTROL_KEY)
 			.map(value -> Arrays.stream(value.split(",")).filter(s -> !s.isEmpty()).collect(Collectors.toList()))
 			.collectList();
 	}
 	
+	/**
+	 * <p>
+	 * Returns the configuration metadata for the specified list of parameters
+	 * extracted form a configuration query.
+	 * </p>
+	 * 
+	 * @param metaDataParameters a list of parameters
+	 * 
+	 * @return a mono emitting the metadata
+	 */
 	protected Mono<RedisConfigurationMetaData> getMetaData(List<Parameter> metaDataParameters) {
 		String metaDataKey = asMetaDataKey(metaDataParameters);
 		return this.commands.hgetall(metaDataKey)
@@ -128,6 +210,16 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 			.next();
 	}
 	
+	/**
+	 * <p>
+	 * Returns the configuration metadata for the specified list of parameters.
+	 * </p>
+	 * 
+	 * @param parameters an array of parameters
+	 * 
+	 * @return a mono emitting the metadata
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
 	public Mono<RedisConfigurationMetaData> getMetaData(Parameter... parameters) throws IllegalArgumentException {
 		Set<String> parameterKeys = new HashSet<>();
 		List<String> duplicateParameters = new LinkedList<>();
@@ -145,6 +237,16 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 			.flatMap(metaDataParameterSets -> this.getMetaData(parametersList, metaDataParameterSets));
 	}
 	
+	/**
+	 * <p>
+	 * Activates the working revision for the properties defined with the specified parameters.
+	 * </p>
+	 * 
+	 * @param parameters an array of parameters
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
 	public Mono<Void> activate(Parameter... parameters) throws IllegalArgumentException {
 		Set<String> parameterKeys = new HashSet<>();
 		List<String> duplicateParameters = new LinkedList<>();
@@ -181,6 +283,20 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 			.then();
 	}
 	
+	/**
+	 * <p>
+	 * Activates the specified revisions for the properties defined with the
+	 * specified parameters.
+	 * </p>
+	 * 
+	 * @param revision   the revision to activate
+	 * @param parameters an array of parameters
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 *                                  or if the specified revision is greater than
+	 *                                  the current working revision
+	 */
 	public Mono<Void> activate(int revision, Parameter... parameters) throws IllegalArgumentException {
 		if(revision < 1) {
 			throw new IllegalArgumentException("Revision must be a positive integer");
@@ -228,6 +344,16 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 			.then();
 	}
 	
+	/**
+	 * <p>
+	 * Provides information about a particular configuration branch.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see RedisConfigurationSource
+	 */
 	public static class RedisConfigurationMetaData {
 		
 		private List<Parameter> parameters;
@@ -247,19 +373,52 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 			this.workingRevision = Optional.ofNullable(workingRevision);
 		}
 		
+		/**
+		 * <p>
+		 * Returns the parameters representing a configuration branch.
+		 * </p>
+		 * 
+		 * @return a list of parameters
+		 */
 		public List<Parameter> getParameters() {
 			return this.parameters;
 		}
 		
+		/**
+		 * <p>
+		 * Returns the working revision of the configuration branch.
+		 * </p>
+		 * 
+		 * @return an optional returning the working revision, or an empty optional if
+		 *         no working revision has been defined
+		 */
 		public Optional<Integer> getWorkingRevision() {
 			return this.workingRevision;
 		}
 		
+		/**
+		 * <p>
+		 * Returns the active revision of the configuration branch.
+		 * </p>
+		 * 
+		 * @return an optional returning the active revision, or an empty optional if no
+		 *         revision has been activated so far
+		 */
 		public Optional<Integer> getActiveRevision() {
 			return this.activeRevision;
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The configuration key used by the Redis configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ConfigurationKey
+	 */
 	public static class RedisConfigurationKey extends GenericConfigurationKey {
 
 		private Optional<RedisConfigurationMetaData> metaData;
@@ -275,15 +434,40 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 			this.revision = Optional.ofNullable(actualRevision);
 		}
 		
+		/**
+		 * <p>
+		 * Returns the meta data associated with the key.
+		 * </p>
+		 * 
+		 * @return the meta data
+		 */
 		public Optional<RedisConfigurationMetaData> getMetaData() {
 			return metaData;
 		}
 		
+		/**
+		 * <p>
+		 * Returns revision of the property identified by the key.
+		 * </p>
+		 * 
+		 * @return an optional returning the revision or an empty optional if there's no
+		 *         revision
+		 */
 		public Optional<Integer> getRevision() {
 			return this.revision;
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The configuration query used by the Redis configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ConfigurationQuery
+	 */
 	public static class RedisConfigurationQuery implements ConfigurationQuery<RedisConfigurationQuery, RedisExecutableConfigurationQuery, RedisConfigurationQueryResult> {
 
 		private RedisExecutableConfigurationQuery executableQuery;
@@ -314,6 +498,16 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The executable configuration query used by the Redis configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ExecutableConfigurationQuery
+	 */
 	public static class RedisExecutableConfigurationQuery implements ExecutableConfigurationQuery<RedisConfigurationQuery, RedisExecutableConfigurationQuery, RedisConfigurationQueryResult> {
 
 		private RedisConfigurationSource source;
@@ -351,6 +545,16 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 			return this;
 		}
 		
+		/**
+		 * <p>
+		 * Specifies the revision (inclusive) up to which properties should be searched.
+		 * </p>
+		 * 
+		 * @param revision a revision
+		 * 
+		 * @return the executable configuration query
+		 * @throws IllegalArgumentException if the revision is invalid
+		 */
 		public RedisExecutableConfigurationQuery atRevision(int revision) throws IllegalArgumentException {
 			if(revision < 1) {
 				throw new IllegalArgumentException("Revision must be a positive integer");
@@ -444,6 +648,16 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The configuration query result returned by the Redis configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ConfigurationQueryResult
+	 */
 	public static class RedisConfigurationQueryResult extends GenericConfigurationQueryResult<RedisConfigurationKey, ConfigurationProperty<?, ?>> {
 		
 		private RedisConfigurationQueryResult(RedisConfigurationKey queryKey, ConfigurationProperty<?, ?> queryResult) {
@@ -455,6 +669,16 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The configuration update used by the Redis configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ConfigurationUpdate
+	 */
 	public static class RedisConfigurationUpdate implements ConfigurationUpdate<RedisConfigurationUpdate, RedisExecutableConfigurationUpdate, RedisConfigurationUpdateResult> {
 
 		private RedisExecutableConfigurationUpdate executableQuery;
@@ -485,6 +709,16 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The executable configuration update used by the Redis configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ExecutableConfigurationUpdate
+	 */
 	public static class RedisExecutableConfigurationUpdate implements ExecutableConfigurationUpdate<RedisConfigurationUpdate, RedisExecutableConfigurationUpdate, RedisConfigurationUpdateResult> {
 
 		private RedisConfigurationSource source;
@@ -609,6 +843,16 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The configuration update result returned by the Redis configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ConfigurationUpdateResult
+	 */
 	public static class RedisConfigurationUpdateResult extends GenericConfigurationUpdateResult<RedisConfigurationKey> {
 
 		private RedisConfigurationUpdateResult(RedisConfigurationKey updateKey) {
@@ -654,122 +898,759 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		return keyBuilder.toString();
 	}
 	
+	/**
+	 * <p>
+	 * Returns the configuration metadata for one parameters.
+	 * </p>
+	 * 
+	 * @param k1 the parameter name
+	 * @param v1 the parameter value
+	 * 
+	 * @return a mono emitting the metadata
+	 */
 	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1) {
 		return this.getMetaData(Parameter.of(k1, v1));
 	}
 
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2) {
+	/**
+	 * <p>
+	 * Returns the configuration metadata for two parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * 
+	 * @return a mono emitting the metadata
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2) throws IllegalArgumentException {
 		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2));
 	}
 	
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3) {
+	/**
+	 * <p>
+	 * Returns the configuration metadata for three parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * @param k3 the third parameter name
+	 * @param v3 the third parameter value
+	 * 
+	 * @return a mono emitting the metadata
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3) throws IllegalArgumentException {
 		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3));
 	}
 	
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) {
+	/**
+	 * <p>
+	 * Returns the configuration metadata for four parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * @param k3 the third parameter name
+	 * @param v3 the third parameter value
+	 * @param k4 the fourth parameter name
+	 * @param v4 the fourth parameter value
+	 * 
+	 * @return a mono emitting the metadata
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) throws IllegalArgumentException {
 		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4));
 	}
 	
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) {
+	/**
+	 * <p>
+	 * Returns the configuration metadata for five parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * @param k3 the third parameter name
+	 * @param v3 the third parameter value
+	 * @param k4 the fourth parameter name
+	 * @param v4 the fourth parameter value
+	 * @param k5 the fifth parameter name
+	 * @param v5 the fifth parameter value
+	 * 
+	 * @return a mono emitting the metadata
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) throws IllegalArgumentException {
 		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5));
 	}
 	
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) {
+	/**
+	 * <p>
+	 * Returns the configuration metadata for six parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * @param k3 the third parameter name
+	 * @param v3 the third parameter value
+	 * @param k4 the fourth parameter name
+	 * @param v4 the fourth parameter value
+	 * @param k5 the fifth parameter name
+	 * @param v5 the fifth parameter value
+	 * @param k6 the sixth parameter name
+	 * @param v6 the sixth parameter value
+	 * 
+	 * @return a mono emitting the metadata
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) throws IllegalArgumentException {
 		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6));
 	}
 	
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) {
+	/**
+	 * <p>
+	 * Returns the configuration metadata for seven parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * @param k3 the third parameter name
+	 * @param v3 the third parameter value
+	 * @param k4 the fourth parameter name
+	 * @param v4 the fourth parameter value
+	 * @param k5 the fifth parameter name
+	 * @param v5 the fifth parameter value
+	 * @param k6 the sixth parameter name
+	 * @param v6 the sixth parameter value
+	 * @param k7 the seventh parameter name
+	 * @param v7 the seventh parameter value
+	 * 
+	 * @return a mono emitting the metadata
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) throws IllegalArgumentException {
 		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7));
 	}
 	
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) {
+	/**
+	 * <p>
+	 * Returns the configuration metadata for eight parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * @param k3 the third parameter name
+	 * @param v3 the third parameter value
+	 * @param k4 the fourth parameter name
+	 * @param v4 the fourth parameter value
+	 * @param k5 the fifth parameter name
+	 * @param v5 the fifth parameter value
+	 * @param k6 the sixth parameter name
+	 * @param v6 the sixth parameter value
+	 * @param k7 the seventh parameter name
+	 * @param v7 the seventh parameter value
+	 * @param k8 the eighth parameter name
+	 * @param v8 the eighth parameter value
+	 * 
+	 * @return a mono emitting the metadata
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) throws IllegalArgumentException {
 		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8));
 	}
 	
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) {
+	/**
+	 * <p>
+	 * Returns the configuration metadata for nine parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * @param k3 the third parameter name
+	 * @param v3 the third parameter value
+	 * @param k4 the fourth parameter name
+	 * @param v4 the fourth parameter value
+	 * @param k5 the fifth parameter name
+	 * @param v5 the fifth parameter value
+	 * @param k6 the sixth parameter name
+	 * @param v6 the sixth parameter value
+	 * @param k7 the seventh parameter name
+	 * @param v7 the seventh parameter value
+	 * @param k8 the eighth parameter name
+	 * @param v8 the eighth parameter value
+	 * @param k9 the ninth parameter name
+	 * @param v9 the ninth parameter value
+	 * 
+	 * @return a mono emitting the metadata
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) throws IllegalArgumentException {
 		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9));
 	}
 	
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) {
+	/**
+	 * <p>
+	 * Returns the configuration metadata for ten parameters.
+	 * </p>
+	 * 
+	 * @param k1  the first parameter name
+	 * @param v1  the first parameter value
+	 * @param k2  the second parameter name
+	 * @param v2  the second parameter value
+	 * @param k3  the third parameter name
+	 * @param v3  the third parameter value
+	 * @param k4  the fourth parameter name
+	 * @param v4  the fourth parameter value
+	 * @param k5  the fifth parameter name
+	 * @param v5  the fifth parameter value
+	 * @param k6  the sixth parameter name
+	 * @param v6  the sixth parameter value
+	 * @param k7  the seventh parameter name
+	 * @param v7  the seventh parameter value
+	 * @param k8  the eighth parameter name
+	 * @param v8  the eighth parameter value
+	 * @param k9  the ninth parameter name
+	 * @param v9  the ninth parameter value
+	 * @param k10 the tenth parameter name
+	 * @param v10 the tenth parameter value
+	 * 
+	 * @return a mono emitting the metadata
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) throws IllegalArgumentException {
 		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9), Parameter.of(k10, v10));
 	}
 	
+	/**
+	 * <p>
+	 * Activates the working revision for the properties defined with the specified parameter.
+	 * </p>
+	 * 
+	 * @param k1 the parameter name
+	 * @param v1 the parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 */
 	public Mono<Void> activate(String k1, Object v1) {
 		return this.activate(Parameter.of(k1, v1));
 	}
 
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2) {
+	/**
+	 * <p>
+	 * Activates the working revision for the properties defined with the two specified parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<Void> activate(String k1, Object v1, String k2, Object v2) throws IllegalArgumentException {
 		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2));
 	}
 	
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3) {
+	/**
+	 * <p>
+	 * Activates the working revision for the properties defined with the three specified parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * @param k3 the third parameter name
+	 * @param v3 the third parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3) throws IllegalArgumentException {
 		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3));
 	}
 	
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) {
+	/**
+	 * <p>
+	 * Activates the working revision for the properties defined with the four specified parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * @param k3 the third parameter name
+	 * @param v3 the third parameter value
+	 * @param k4 the fourth parameter name
+	 * @param v4 the fourth parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) throws IllegalArgumentException {
 		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4));
 	}
 	
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) {
+	/**
+	 * <p>
+	 * Activates the working revision for the properties defined with the five specified parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * @param k3 the third parameter name
+	 * @param v3 the third parameter value
+	 * @param k4 the fourth parameter name
+	 * @param v4 the fourth parameter value
+	 * @param k5 the fifth parameter name
+	 * @param v5 the fifth parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) throws IllegalArgumentException {
 		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5));
 	}
 	
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) {
+	/**
+	 * <p>
+	 * Activates the working revision for the properties defined with the six specified parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * @param k3 the third parameter name
+	 * @param v3 the third parameter value
+	 * @param k4 the fourth parameter name
+	 * @param v4 the fourth parameter value
+	 * @param k5 the fifth parameter name
+	 * @param v5 the fifth parameter value
+	 * @param k6 the sixth parameter name
+	 * @param v6 the sixth parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) throws IllegalArgumentException {
 		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6));
 	}
 	
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) {
+	/**
+	 * <p>
+	 * Activates the working revision for the properties defined with the seven specified parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * @param k3 the third parameter name
+	 * @param v3 the third parameter value
+	 * @param k4 the fourth parameter name
+	 * @param v4 the fourth parameter value
+	 * @param k5 the fifth parameter name
+	 * @param v5 the fifth parameter value
+	 * @param k6 the sixth parameter name
+	 * @param v6 the sixth parameter value
+	 * @param k7 the seventh parameter name
+	 * @param v7 the seventh parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) throws IllegalArgumentException {
 		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7));
 	}
 	
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) {
+	/**
+	 * <p>
+	 * Activates the working revision for the properties defined with the eight specified parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * @param k3 the third parameter name
+	 * @param v3 the third parameter value
+	 * @param k4 the fourth parameter name
+	 * @param v4 the fourth parameter value
+	 * @param k5 the fifth parameter name
+	 * @param v5 the fifth parameter value
+	 * @param k6 the sixth parameter name
+	 * @param v6 the sixth parameter value
+	 * @param k7 the seventh parameter name
+	 * @param v7 the seventh parameter value
+	 * @param k8 the eighth parameter name
+	 * @param v8 the eighth parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) throws IllegalArgumentException {
 		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8));
 	}
 	
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) {
+	/**
+	 * <p>
+	 * Activates the working revision for the properties defined with the nine specified parameters.
+	 * </p>
+	 * 
+	 * @param k1 the first parameter name
+	 * @param v1 the first parameter value
+	 * @param k2 the second parameter name
+	 * @param v2 the second parameter value
+	 * @param k3 the third parameter name
+	 * @param v3 the third parameter value
+	 * @param k4 the fourth parameter name
+	 * @param v4 the fourth parameter value
+	 * @param k5 the fifth parameter name
+	 * @param v5 the fifth parameter value
+	 * @param k6 the sixth parameter name
+	 * @param v6 the sixth parameter value
+	 * @param k7 the seventh parameter name
+	 * @param v7 the seventh parameter value
+	 * @param k8 the eighth parameter name
+	 * @param v8 the eighth parameter value
+	 * @param k9 the ninth parameter name
+	 * @param v9 the ninth parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) throws IllegalArgumentException {
 		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9));
 	}
-	
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) {
+
+	/**
+	 * <p>
+	 * Activates the working revision for the properties defined with the ten specified parameters.
+	 * </p>
+	 * 
+	 * @param k1  the first parameter name
+	 * @param v1  the first parameter value
+	 * @param k2  the second parameter name
+	 * @param v2  the second parameter value
+	 * @param k3  the third parameter name
+	 * @param v3  the third parameter value
+	 * @param k4  the fourth parameter name
+	 * @param v4  the fourth parameter value
+	 * @param k5  the fifth parameter name
+	 * @param v5  the fifth parameter value
+	 * @param k6  the sixth parameter name
+	 * @param v6  the sixth parameter value
+	 * @param k7  the seventh parameter name
+	 * @param v7  the seventh parameter value
+	 * @param k8  the eighth parameter name
+	 * @param v8  the eighth parameter value
+	 * @param k9  the ninth parameter name
+	 * @param v9  the ninth parameter value
+	 * @param k10 the tenth parameter name
+	 * @param v10 the tenth parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) throws IllegalArgumentException {
 		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9), Parameter.of(k10, v10));
 	}
-	
+
+	/**
+	 * <p>
+	 * Activates the specified revisions for the properties defined with the
+	 * specified parameter.
+	 * </p>
+	 * 
+	 * @param revision the revision to activate
+	 * @param k1       the parameter name
+	 * @param v1       the parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if the specified revision is greater than
+	 *                                  the current working revision
+	 */
 	public Mono<Void> activate(int revision, String k1, Object v1) {
 		return this.activate(revision, Parameter.of(k1, v1));
 	}
 
+	/**
+	 * <p>
+	 * Activates the specified revisions for the properties defined with the two
+	 * specified parameters.
+	 * </p>
+	 * 
+	 * @param revision the revision to activate
+	 * @param k1       the first parameter name
+	 * @param v1       the first parameter value
+	 * @param k2       the second parameter name
+	 * @param v2       the second parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 *                                  or if the specified revision is greater than
+	 *                                  the current working revision
+	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2));
 	}
 	
+	/**
+	 * <p>
+	 * Activates the specified revisions for the properties defined with the three
+	 * specified parameters.
+	 * </p>
+	 * 
+	 * @param revision the revision to activate
+	 * @param k1       the first parameter name
+	 * @param v1       the first parameter value
+	 * @param k2       the second parameter name
+	 * @param v2       the second parameter value
+	 * @param k3       the third parameter name
+	 * @param v3       the third parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 *                                  or if the specified revision is greater than
+	 *                                  the current working revision
+	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3));
 	}
 	
+	/**
+	 * <p>
+	 * Activates the specified revisions for the properties defined with the four
+	 * specified parameters.
+	 * </p>
+	 * 
+	 * @param revision the revision to activate
+	 * @param k1       the first parameter name
+	 * @param v1       the first parameter value
+	 * @param k2       the second parameter name
+	 * @param v2       the second parameter value
+	 * @param k3       the third parameter name
+	 * @param v3       the third parameter value
+	 * @param k4       the fourth parameter name
+	 * @param v4       the fourth parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 *                                  or if the specified revision is greater than
+	 *                                  the current working revision
+	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4));
 	}
 	
+	/**
+	 * <p>
+	 * Activates the specified revisions for the properties defined with the five
+	 * specified parameters.
+	 * </p>
+	 * 
+	 * @param revision the revision to activate
+	 * @param k1       the first parameter name
+	 * @param v1       the first parameter value
+	 * @param k2       the second parameter name
+	 * @param v2       the second parameter value
+	 * @param k3       the third parameter name
+	 * @param v3       the third parameter value
+	 * @param k4       the fourth parameter name
+	 * @param v4       the fourth parameter value
+	 * @param k5       the fifth parameter name
+	 * @param v5       the fifth parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 *                                  or if the specified revision is greater than
+	 *                                  the current working revision
+	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5));
 	}
 	
+	/**
+	 * <p>
+	 * Activates the specified revisions for the properties defined with the six
+	 * specified parameters.
+	 * </p>
+	 * 
+	 * @param revision the revision to activate
+	 * @param k1       the first parameter name
+	 * @param v1       the first parameter value
+	 * @param k2       the second parameter name
+	 * @param v2       the second parameter value
+	 * @param k3       the third parameter name
+	 * @param v3       the third parameter value
+	 * @param k4       the fourth parameter name
+	 * @param v4       the fourth parameter value
+	 * @param k5       the fifth parameter name
+	 * @param v5       the fifth parameter value
+	 * @param k6       the sixth parameter name
+	 * @param v6       the sixth parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 *                                  or if the specified revision is greater than
+	 *                                  the current working revision
+	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6));
 	}
 	
+	/**
+	 * <p>
+	 * Activates the specified revisions for the properties defined with the seven
+	 * specified parameters.
+	 * </p>
+	 * 
+	 * @param revision the revision to activate
+	 * @param k1       the first parameter name
+	 * @param v1       the first parameter value
+	 * @param k2       the second parameter name
+	 * @param v2       the second parameter value
+	 * @param k3       the third parameter name
+	 * @param v3       the third parameter value
+	 * @param k4       the fourth parameter name
+	 * @param v4       the fourth parameter value
+	 * @param k5       the fifth parameter name
+	 * @param v5       the fifth parameter value
+	 * @param k6       the sixth parameter name
+	 * @param v6       the sixth parameter value
+	 * @param k7       the seventh parameter name
+	 * @param v7       the seventh parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 *                                  or if the specified revision is greater than
+	 *                                  the current working revision
+	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7));
 	}
 	
+	/**
+	 * <p>
+	 * Activates the specified revisions for the properties defined with the eight
+	 * specified parameters.
+	 * </p>
+	 * 
+	 * @param revision the revision to activate
+	 * @param k1       the first parameter name
+	 * @param v1       the first parameter value
+	 * @param k2       the second parameter name
+	 * @param v2       the second parameter value
+	 * @param k3       the third parameter name
+	 * @param v3       the third parameter value
+	 * @param k4       the fourth parameter name
+	 * @param v4       the fourth parameter value
+	 * @param k5       the fifth parameter name
+	 * @param v5       the fifth parameter value
+	 * @param k6       the sixth parameter name
+	 * @param v6       the sixth parameter value
+	 * @param k7       the seventh parameter name
+	 * @param v7       the seventh parameter value
+	 * @param k8       the eighth parameter name
+	 * @param v8       the eighth parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 *                                  or if the specified revision is greater than
+	 *                                  the current working revision
+	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8));
 	}
 	
+	/**
+	 * <p>
+	 * Activates the specified revisions for the properties defined with the nine
+	 * specified parameters.
+	 * </p>
+	 * 
+	 * @param revision the revision to activate
+	 * @param k1       the first parameter name
+	 * @param v1       the first parameter value
+	 * @param k2       the second parameter name
+	 * @param v2       the second parameter value
+	 * @param k3       the third parameter name
+	 * @param v3       the third parameter value
+	 * @param k4       the fourth parameter name
+	 * @param v4       the fourth parameter value
+	 * @param k5       the fifth parameter name
+	 * @param v5       the fifth parameter value
+	 * @param k6       the sixth parameter name
+	 * @param v6       the sixth parameter value
+	 * @param k7       the seventh parameter name
+	 * @param v7       the seventh parameter value
+	 * @param k8       the eighth parameter name
+	 * @param v8       the eighth parameter value
+	 * @param k9       the ninth parameter name
+	 * @param v9       the ninth parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 *                                  or if the specified revision is greater than
+	 *                                  the current working revision
+	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9));
 	}
 	
+	/**
+	 * <p>
+	 * Activates the specified revisions for the properties defined with the ten
+	 * specified parameters.
+	 * </p>
+	 * 
+	 * @param revision the revision to activate
+	 * @param k1       the first parameter name
+	 * @param v1       the first parameter value
+	 * @param k2       the second parameter name
+	 * @param v2       the second parameter value
+	 * @param k3       the third parameter name
+	 * @param v3       the third parameter value
+	 * @param k4       the fourth parameter name
+	 * @param v4       the fourth parameter value
+	 * @param k5       the fifth parameter name
+	 * @param v5       the fifth parameter value
+	 * @param k6       the sixth parameter name
+	 * @param v6       the sixth parameter value
+	 * @param k7       the seventh parameter name
+	 * @param v7       the seventh parameter value
+	 * @param k8       the eighth parameter name
+	 * @param v8       the eighth parameter value
+	 * @param k9       the ninth parameter name
+	 * @param v9       the ninth parameter value
+	 * @param k10      the tenth parameter name
+	 * @param v10      the tenth parameter value
+	 * 
+	 * @return a mono that completes when the operation succeeds or fails
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 *                                  or if the specified revision is greater than
+	 *                                  the current working revision
+	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9), Parameter.of(k10, v10));
 	}

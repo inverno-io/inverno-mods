@@ -16,25 +16,59 @@
 package io.winterframework.mod.http.base;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A web exception that indicates that a resource was {@link Status#NOT_FOUND
+ * Not Found (404)} on the server.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebException
  */
 public class NotFoundException extends WebException {
 
 	private static final long serialVersionUID = 1858611479382230346L;
 
+	/**
+	 * <p>
+	 * Creates a not found exception.
+	 * </p>
+	 */
 	public NotFoundException() {
 		super(Status.NOT_FOUND);
 	}
 
+	/**
+	 * <p>
+	 * Creates a not found exception with the specified message.
+	 * </p>
+	 * 
+	 * @param message a message
+	 */
 	public NotFoundException(String message) {
 		super(Status.NOT_FOUND, message);
 	}
 
+	/**
+	 * <p>
+	 * Creates a not found exception with the specified cause.
+	 * </p>
+	 * 
+	 * @param cause a cause
+	 */
 	public NotFoundException(Throwable cause) {
 		super(Status.NOT_FOUND, cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates a not found exception with the specified message and cause.
+	 * </p>
+	 * 
+	 * @param message a message
+	 * @param cause   a cause
+	 */
 	public NotFoundException(String message, Throwable cause) {
 		super(Status.NOT_FOUND, message, cause);
 	}

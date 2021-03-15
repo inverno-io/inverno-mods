@@ -38,10 +38,18 @@ import java.util.regex.Pattern;
 
 import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.http.base.Parameter;
+import io.winterframework.mod.web.PathParameters;
+import io.winterframework.mod.web.WebRequest;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link PathParameters} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebRequest
  */
 class GenericPathParameters implements MutablePathParameters {
 
@@ -49,6 +57,13 @@ class GenericPathParameters implements MutablePathParameters {
 	
 	private final Map<String, Parameter> parameters;
 	
+	/**
+	 * <p>
+	 * Creates generic path parameters with the specified parameter value converter.
+	 * </p>
+	 * 
+	 * @param parameterConverter a string object converter
+	 */
 	public GenericPathParameters(ObjectConverter<String> parameterConverter) {
 		this.parameterConverter = parameterConverter;
 		this.parameters = new HashMap<>();
@@ -87,12 +102,28 @@ class GenericPathParameters implements MutablePathParameters {
 		return Collections.unmodifiableMap(this.parameters);
 	}
 
+	/**
+	 * <p>
+	 * Generic path {@link Parameter} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	private class GenericPathParameter implements Parameter {
 
 		private String name;
 		
 		private String value;
 		
+		/**
+		 * <p>
+		 * Creates a generic path parameter with the specified name and value.
+		 * </p>
+		 * 
+		 * @param name  the parameter name
+		 * @param value the parameter value
+		 */
 		public GenericPathParameter(String name, String value) {
 			this.name = name;
 			this.value = value;

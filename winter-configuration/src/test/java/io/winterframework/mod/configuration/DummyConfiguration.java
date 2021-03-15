@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public interface DummyConfiguration {

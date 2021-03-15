@@ -21,21 +21,70 @@ import io.winterframework.core.compiler.spi.BeanQualifiedName;
 import io.winterframework.core.compiler.spi.Info;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A configuration info describes a configuration.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public interface ConfigurationInfo extends Info {
 
+	/**
+	 * <p>
+	 * Returns the qualified name of the bean deriving from the configuration.
+	 * </p>
+	 */
 	@Override
 	BeanQualifiedName getQualifiedName();
-	
+
+	/**
+	 * <p>
+	 * Returns the type of the configuration.
+	 * </p>
+	 * 
+	 * @return a type
+	 */
 	DeclaredType getType();
-	
+
+	/**
+	 * <p>
+	 * Returns the list of properties defined in the configuration.
+	 * </p>
+	 * 
+	 * @return an array of configuration properties
+	 */
 	ConfigurationPropertyInfo[] getProperties();
 
+	/**
+	 * <p>
+	 * Indicates whether a bean should be generated for the configuration.
+	 * </p>
+	 * 
+	 * @return true to generate a bean, false otherwise
+	 */
 	boolean isGenerateBean();
-	
+
+	/**
+	 * <p>
+	 * Indicates whether the generated configuration bean is overridable.
+	 * </p>
+	 * 
+	 * @return true of the bean must be overridable, false otherwise
+	 */
 	boolean isOverridable();
-	
+
+	/**
+	 * <p>
+	 * Accepts the specified configuration info visitor.
+	 * </p>
+	 * 
+	 * @param <R>     the type of the visitor result
+	 * @param <P>     the type of the visitor parameter
+	 * @param visitor the visitor to invoke
+	 * @param p       the parameter
+	 * 
+	 * @return the visitor result
+	 */
 	<R, P> R accept(ConfigurationInfoVisitor<R, P> visitor, P p);
 }

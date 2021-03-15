@@ -23,16 +23,29 @@ import java.util.Set;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.http.base.UnsupportedMediaTypeException;
+import io.winterframework.mod.http.base.header.HeaderBuilder;
+import io.winterframework.mod.http.base.header.HeaderCodec;
 import io.winterframework.mod.http.base.header.HeaderService;
 import io.winterframework.mod.http.base.header.Headers;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Content-type HTTP {@link HeaderCodec} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ParameterizedHeaderCodec
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.ContentType, ContentTypeCodec.ContentType.Builder> {
 	
+	/**
+	 * <p>
+	 * Creates a content-type header codec.
+	 * </p>
+	 */
 	public ContentTypeCodec() {
 		super(ContentTypeCodec.ContentType.Builder::new, Set.of(Headers.NAME_CONTENT_TYPE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, false);
 	}
@@ -58,6 +71,16 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 		return result.toString();
 	}
 
+	/**
+	 * <p>
+	 * {@link Headers.ContentType} header implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ParameterizedHeader
+	 */
 	public static final class ContentType extends ParameterizedHeader implements Headers.ContentType {
 		
 		private String mediaType;
@@ -66,6 +89,17 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 		private String boundary;
 		private Charset charset;
 		
+		/**
+		 * <p>
+		 * Creates a content-type header with the specified media type, charset,
+		 * boundary and parameters.
+		 * </p>
+		 * 
+		 * @param mediaType  a raw media type
+		 * @param charset    a charset
+		 * @param boundary   a boundary
+		 * @param parameters a map of parameters
+		 */
 		public ContentType(String mediaType, Charset charset, String boundary, Map<String, String> parameters) {
 			super(Headers.NAME_CONTENT_TYPE, null, mediaType, parameters);
 			this.setMediaType(mediaType.toLowerCase());
@@ -80,11 +114,12 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 			this.charset = charset;
 		}
 
+		@Override
 		public String getMediaType() {
 			return mediaType;
 		}
 		
-		public void setMediaType(String mediaType) {
+		private void setMediaType(String mediaType) {
 			this.mediaType = mediaType;
 			this.parameterizedValue = mediaType;
 			
@@ -130,7 +165,7 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 			return boundary;
 		}
 		
-		public void setBoundary(String boundary) {
+		private void setBoundary(String boundary) {
 			this.boundary = boundary;
 			if(boundary != null) {
 				this.parameters.put(BOUNDARY, charset.toString());
@@ -145,7 +180,7 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 			return charset;
 		}
 		
-		public void setCharset(Charset charset) {
+		private void setCharset(Charset charset) {
 			this.charset = charset;
 			if(charset != null) {
 				this.parameters.put(CHARSET, charset.toString());
@@ -160,6 +195,16 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 			return new AcceptCodec.Accept.MediaRange(this.type, this.subType, 1, this.parameters);
 		}
 		
+		/**
+		 * <p>
+		 * Content-type {@link HeaderBuilder} implementation.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+		 * @since 1.0
+		 * 
+		 * @see ParameterizedHeader.AbstractBuilder
+		 */
 		public static final class Builder extends ParameterizedHeader.AbstractBuilder<ContentType, Builder> {
 
 			private String boundary;

@@ -37,12 +37,15 @@ import io.winterframework.mod.base.net.NetService;
 import io.winterframework.mod.http.server.HttpServerConfiguration;
 
 /**
+ * <p>
+ * The HTTP1.x and HTTP/2 server.
+ * </p>
  * 
- * @author jkuhn
- *
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Bean(visibility = Visibility.PRIVATE)
-public class WebServer {
+public class HttpServer {
 
 	private Logger logger = LogManager.getLogger(this.getClass());
 	
@@ -54,12 +57,33 @@ public class WebServer {
 
 	private ChannelFuture serverChannelFuture;
 	
-	public WebServer(HttpServerConfiguration configuration, NetService netService, ChannelInitializer<SocketChannel> channelInitializer) {
+	/**
+	 * <p>
+	 * Creates a HTTP server.
+	 * </p>
+	 * 
+	 * @param configuration      the HTTP server configuration
+	 * @param netService         the Net service
+	 * @param channelInitializer the channel initializer
+	 */
+	public HttpServer(HttpServerConfiguration configuration, NetService netService, ChannelInitializer<SocketChannel> channelInitializer) {
 		this.configuration = configuration;
 		this.netService = netService;
 		this.channelInitializer = channelInitializer;
 	}
 	
+	/**
+	 * <p>
+	 * Starts the HTTP server.
+	 * </p>
+	 * 
+	 * @throws CertificateException
+	 * @throws InterruptedException
+	 * @throws IOException
+	 * @throws KeyStoreException
+	 * @throws NoSuchAlgorithmException
+	 * @throws UnrecoverableKeyException
+	 */
 	@Init
 	public void start() throws CertificateException, InterruptedException, IOException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException {
 		InetSocketAddress serverAddress = new InetSocketAddress(this.configuration.server_host(), this.configuration.server_port());

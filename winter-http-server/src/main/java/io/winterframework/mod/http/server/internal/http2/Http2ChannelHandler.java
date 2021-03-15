@@ -15,6 +15,9 @@
  */
 package io.winterframework.mod.http.server.internal.http2;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http2.Http2Connection;
@@ -38,16 +41,27 @@ import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
 import io.winterframework.mod.http.server.Part;
 import io.winterframework.mod.http.server.internal.AbstractExchange;
+import io.winterframework.mod.http.server.internal.http1x.Http1xChannelHandler;
 import io.winterframework.mod.http.server.internal.multipart.MultipartDecoder;
 import reactor.core.publisher.Sinks.EmitResult;
 
 /**
+ * <p>
+ * HTTP/2 channel handler implementation.
+ * </p>
  * 
- * @author jkuhn
- *
+ * <p>
+ * This is the entry point of a HTTP client connection to the HTTP server using
+ * version 2 of the HTTP protocol.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2FrameListener, Http2Connection.Listener {
 
+	private static final Logger LOGGER = LogManager.getLogger(Http1xChannelHandler.class);
+	
 	private ExchangeHandler<Exchange> rootHandler;
 	private ExchangeHandler<ErrorExchange<Throwable>> errorHandler;
 	private HeaderService headerService;
@@ -57,6 +71,21 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 
 	private IntObjectMap<Http2Exchange> serverStreams;
 
+	/**
+	 * <p>
+	 * Creates a HTTP/2 channel handler.
+	 * </p>
+	 * 
+	 * @param decoder               HTTP/2 connection decoder
+	 * @param encoder               HTTP/2 connection encoder
+	 * @param initialSettings       HTTP/2 initial settings
+	 * @param rootHandler           the root exchange handler
+	 * @param errorHandler          the error exchange handler
+	 * @param headerService         the header service
+	 * @param parameterConverter    a string object converter
+	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
+	 * @param multipartBodyDecoder  the multipart/form-data body decoder
+	 */
 	public Http2ChannelHandler(
 			Http2ConnectionDecoder decoder, 
 			Http2ConnectionEncoder encoder,
@@ -84,7 +113,6 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 //    	System.out.println("error");
 		super.exceptionCaught(ctx, cause);
-		cause.printStackTrace();
 		ctx.close();
 	}
 
@@ -143,13 +171,14 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 			streamExchange.start(new AbstractExchange.Handler() {
 				@Override
 				public void exchangeError(ChannelHandlerContext ctx, Throwable t) {
+					LOGGER.error(t);
 					Http2ChannelHandler.this.resetStream(ctx, streamId, Http2Error.INTERNAL_ERROR.code(), ctx.voidPromise());
 				}
 			});
 		} 
 		else {
 			// Continuation frame
-			((Http2RequestHeaders) exchange.request().headers()).getHttpHeaders().add(headers);
+			((Http2RequestHeaders) exchange.request().headers()).getUnderlyingHeaders().add(headers);
 		}
 	}
 
@@ -173,7 +202,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 		} 
 		else {
 			// TODO this should never happen?
-			System.err.println("Unable to reset unmanaged stream " + streamId);
+//			System.err.println("Unable to reset unmanaged stream " + streamId);
 //    		throw new IllegalStateException("Unable to reset unmanaged stream " + streamId);
 		}
 	}
@@ -244,7 +273,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 		} 
 		else {
 			// TODO this should never happen?
-			System.err.println("Unable to reset unmanaged stream " + stream.id());
+//			System.err.println("Unable to reset unmanaged stream " + stream.id());
 //    		throw new IllegalStateException("Unable to reset unmanaged stream " + stream.id());
 		}
 	}

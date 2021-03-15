@@ -17,11 +17,11 @@ package io.winterframework.mod.http.server.internal.http1x;
 
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.http.base.Parameter;
 import io.winterframework.mod.http.base.header.Header;
@@ -31,51 +31,77 @@ import io.winterframework.mod.http.server.ResponseTrailers;
 import io.winterframework.mod.http.server.internal.netty.LinkedHttpHeaders;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP1.x {@link ResponseTrailers} implementation.
+ * </p>
+ * 
+ * <p>
+ * This implementation uses {@link LinkedHttpHeaders} instead of Netty's
+ * {@link DefaultHttpHeaders} as internal headers in order to increase
+ * performances.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class Http1xResponseTrailers implements ResponseTrailers {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	
-	private final LinkedHttpHeaders internalTrailers;
+	private final LinkedHttpHeaders underlyingTrailers;
 	
+	/**
+	 * <p>
+	 * Creates HTTP1.x server response trailers.
+	 * </p>
+	 * 
+	 * @param httpRequest        the underlying HTTP request
+	 * @param headerService      the header service
+	 * @param parameterConverter a string object converter
+	 */
 	public Http1xResponseTrailers(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		
-		this.internalTrailers = new LinkedHttpHeaders();
+		this.underlyingTrailers = new LinkedHttpHeaders();
 	}
-
-	HttpHeaders getInternalTrailers() {
-		return this.internalTrailers;
+	
+	/**
+	 * <p>
+	 * Returns the underlying trailers.
+	 * </p>
+	 * 
+	 * @return the underlying trailers
+	 */
+	LinkedHttpHeaders getUnderlyingTrailers() {
+		return this.underlyingTrailers;
 	}
 	
 	@Override
 	public ResponseTrailers add(CharSequence name, CharSequence value) {
-		this.internalTrailers.addCharSequence(name, value);
+		this.underlyingTrailers.addCharSequence(name, value);
 		return this;
 	}
 
 	@Override
 	public ResponseTrailers add(Header... trailers) {
 		for(Header trailer : trailers) {
-			this.internalTrailers.addCharSequence(trailer.getHeaderName(), trailer.getHeaderValue());
+			this.underlyingTrailers.addCharSequence(trailer.getHeaderName(), trailer.getHeaderValue());
 		}
 		return this;
 	}
 
 	@Override
 	public ResponseTrailers set(CharSequence name, CharSequence value) {
-		this.internalTrailers.setCharSequence(name, value);
+		this.underlyingTrailers.setCharSequence(name, value);
 		return this;
 	}
 
 	@Override
 	public ResponseTrailers set(Header... trailers) {
 		for(Header trailer : trailers) {
-			this.internalTrailers.setCharSequence(trailer.getHeaderName(), trailer.getHeaderValue());
+			this.underlyingTrailers.setCharSequence(trailer.getHeaderName(), trailer.getHeaderValue());
 		}
 		return this;
 	}
@@ -83,39 +109,39 @@ public class Http1xResponseTrailers implements ResponseTrailers {
 	@Override
 	public ResponseTrailers remove(CharSequence... names) {
 		for(CharSequence name : names) {
-			this.internalTrailers.remove(name);
+			this.underlyingTrailers.remove(name);
 		}
 		return this;
 	}
 	
 	@Override
 	public boolean contains(CharSequence name) {
-		return this.internalTrailers.contains(name);
+		return this.underlyingTrailers.contains(name);
 	}
 	
 	@Override
 	public boolean contains(CharSequence name, CharSequence value) {
-		return this.internalTrailers.contains(name, value, true);
+		return this.underlyingTrailers.contains(name, value, true);
 	}
 
 	@Override
 	public Set<String> getNames() {
-		return this.internalTrailers.names();
+		return this.underlyingTrailers.names();
 	}
 
 	@Override
 	public Optional<String> get(CharSequence name) {
-		return Optional.ofNullable(this.internalTrailers.get((CharSequence)name));
+		return Optional.ofNullable(this.underlyingTrailers.get((CharSequence)name));
 	}
 
 	@Override
 	public List<String> getAll(CharSequence name) {
-		return this.internalTrailers.getAll(name);
+		return this.underlyingTrailers.getAll(name);
 	}
 
 	@Override
 	public List<Entry<String, String>> getAll() {
-		return this.internalTrailers.entries();
+		return this.underlyingTrailers.entries();
 	}
 
 	@Override
@@ -135,16 +161,16 @@ public class Http1xResponseTrailers implements ResponseTrailers {
 
 	@Override
 	public Optional<Parameter> getParameter(CharSequence name) {
-		return this.get(name).map(value -> new GenericParameter(this.parameterConverter, name.toString(), value));
+		return this.get(name).map(value -> new GenericParameter(name.toString(), value, this.parameterConverter));
 	}
 	
 	@Override
 	public List<Parameter> getAllParameter(CharSequence name) {
-		return this.getAll(name).stream().map(value -> new GenericParameter(this.parameterConverter, name.toString(), value)).collect(Collectors.toList());
+		return this.getAll(name).stream().map(value -> new GenericParameter(name.toString(), value, this.parameterConverter)).collect(Collectors.toList());
 	}
 	
 	@Override
 	public List<Parameter> getAllParameter() {
-		return this.getAll().stream().map(e -> new GenericParameter(this.parameterConverter, e.getKey(), e.getValue())).collect(Collectors.toList());
+		return this.getAll().stream().map(e -> new GenericParameter(e.getKey(), e.getValue(), this.parameterConverter)).collect(Collectors.toList());
 	}
 }

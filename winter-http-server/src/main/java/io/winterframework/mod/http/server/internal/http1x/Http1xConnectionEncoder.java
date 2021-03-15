@@ -20,10 +20,25 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A HTTP1.x connection encoder used to write data frame to the client.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 interface Http1xConnectionEncoder {
 
+	/**
+	 * <p>
+	 * Writes the specified message to the specified channel handler context.
+	 * </p>
+	 * 
+	 * @param ctx     the channel handler context
+	 * @param msg     the message to write
+	 * @param promise the write promise
+	 * 
+	 * @return a channel future
+	 */
 	ChannelFuture writeFrame(ChannelHandlerContext ctx, Object msg, ChannelPromise promise);
 }

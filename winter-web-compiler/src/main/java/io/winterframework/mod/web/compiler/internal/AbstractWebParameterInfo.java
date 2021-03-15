@@ -26,8 +26,14 @@ import io.winterframework.mod.web.compiler.spi.WebParameterInfo;
 import io.winterframework.mod.web.compiler.spi.WebParameterQualifiedName;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base {@link WebParameterInfo} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractInfo
  */
 abstract class AbstractWebParameterInfo extends AbstractInfo<WebParameterQualifiedName> implements WebParameterInfo {
 
@@ -37,9 +43,21 @@ abstract class AbstractWebParameterInfo extends AbstractInfo<WebParameterQualifi
 	
 	private final boolean required;
 	
-	public AbstractWebParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement element, TypeMirror type, boolean required) {
+	/**
+	 * <p>
+	 * Creates an web parameter info.
+	 * </p>
+	 * 
+	 * @param name             the parameter qualified name
+	 * @param reporter         the parameter reporter
+	 * @param parameterElement the parameter element
+	 * @param type             the parameter type
+	 * @param required         true to indicate a required parameter, false
+	 *                         otherwise
+	 */
+	public AbstractWebParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, TypeMirror type, boolean required) {
 		super(name, reporter instanceof NoOpReporterInfo ? ((NoOpReporterInfo)reporter).getReporter() : reporter);
-		this.element = Objects.requireNonNull(element);
+		this.element = Objects.requireNonNull(parameterElement);
 		this.type = Objects.requireNonNull(type);
 		this.required = required;
 	}
@@ -58,5 +76,4 @@ abstract class AbstractWebParameterInfo extends AbstractInfo<WebParameterQualifi
 	public boolean isRequired() {
 		return this.required;
 	}
-	
 }

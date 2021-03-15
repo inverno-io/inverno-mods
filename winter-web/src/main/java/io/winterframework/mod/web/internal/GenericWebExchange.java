@@ -21,10 +21,19 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.winterframework.mod.web.WebExchange;
+import io.winterframework.mod.web.WebRequest;
+import io.winterframework.mod.web.WebResponse;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebExchange} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see WebRequest
+ * @see WebResponse
  */
 class GenericWebExchange implements WebExchange  {
 
@@ -34,6 +43,14 @@ class GenericWebExchange implements WebExchange  {
 	
 	private Map<String, Object> attributes;
 	
+	/**
+	 * <p>
+	 * Creates a generic web exchange with the specified request and response.
+	 * </p>
+	 * 
+	 * @param request  a web request
+	 * @param response a web response
+	 */
 	public GenericWebExchange(GenericWebRequest request, GenericWebResponse response) {
 		this.request = request;
 		this.response = response;

@@ -19,72 +19,47 @@ import io.netty.util.concurrent.FastThreadLocalThread;
 import reactor.core.scheduler.NonBlocking;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A {@link NonBlocking} thread implementation which prevents blocking calls
+ * from the Reactor APIs.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see NonBlocking
+ * @see NonBlockingThreadFactory
  */
 class NonBlockingThread extends FastThreadLocalThread implements NonBlocking {
 
-	/**
-	 * 
-	 */
 	public NonBlockingThread() {
 	}
 
-	/**
-	 * @param target
-	 */
 	public NonBlockingThread(Runnable target) {
 		super(target);
 	}
 
-	/**
-	 * @param name
-	 */
 	public NonBlockingThread(String name) {
 		super(name);
 	}
 
-	/**
-	 * @param group
-	 * @param target
-	 */
 	public NonBlockingThread(ThreadGroup group, Runnable target) {
 		super(group, target);
 	}
 
-	/**
-	 * @param group
-	 * @param name
-	 */
 	public NonBlockingThread(ThreadGroup group, String name) {
 		super(group, name);
 	}
 
-	/**
-	 * @param target
-	 * @param name
-	 */
 	public NonBlockingThread(Runnable target, String name) {
 		super(target, name);
 	}
 
-	/**
-	 * @param group
-	 * @param target
-	 * @param name
-	 */
 	public NonBlockingThread(ThreadGroup group, Runnable target, String name) {
 		super(group, target, name);
 	}
 
-	/**
-	 * @param group
-	 * @param target
-	 * @param name
-	 * @param stackSize
-	 */
 	public NonBlockingThread(ThreadGroup group, Runnable target, String name, long stackSize) {
 		super(group, target, name, stackSize);
 	}
-
 }

@@ -18,8 +18,13 @@ package io.winterframework.mod.web.internal;
 import io.winterframework.mod.http.base.NotFoundException;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Thrown by a routing link to indicate that not route was found to process a
+ * request.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class RouteNotFoundException extends NotFoundException {
 

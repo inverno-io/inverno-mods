@@ -18,12 +18,43 @@ package io.winterframework.mod.web;
 import io.winterframework.mod.http.server.Exchange;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A route that specifies criteria used to determine whether the resource served
+ * by the route can produce a response which is acceptable to the client.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractRoute
+ * 
+ * @param <A> the type of web exchange handled by the route
  */
 public interface AcceptAwareRoute<A extends Exchange> extends AbstractRoute<A> {
 
+	/**
+	 * <p>
+	 * Returns the media type of the resource served by the route.
+	 * </p>
+	 * 
+	 * <p>
+	 * This criteria should match the request {@code accept} header field.
+	 * </p>
+	 * 
+	 * @return a media type or null
+	 */
 	String getProduce();
 	
+	/**
+	 * <p>
+	 * Returns the language of the resource served by the route.
+	 * </p>
+	 * 
+	 * <p>
+	 * This criteria should match the request {@code accept-language} header field.
+	 * </p>
+	 * 
+	 * @return a language tag or null
+	 */
 	String getLanguage();
 }

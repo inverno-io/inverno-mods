@@ -23,79 +23,97 @@ import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.web.PathAwareRoute;
 
 /**
- * @author jkuhn
+ * <p>
+ * A routing link responsible to route an exchange based on the absolute
+ * normalized path as defined by {@link PathAwareRoute}.
+ * </p>
+ * 
+ * <p>
+ * This link operates on routes defined with a static path, routes defined with
+ * parameterized path are handled by the {@link PathPatternRoutingLink}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
+ * @param <A> the type of exchange handled by the route
+ * @param <B> the route type
  */
 class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends RoutingLink<A, PathRoutingLink<A, B>, B> {
-	
+
 	private Map<String, RoutingLink<A, ?, B>> handlers;
-	
+
+	/**
+	 * <p>
+	 * Creates a path routing link.
+	 * </p>
+	 */
 	public PathRoutingLink() {
 		super(PathRoutingLink::new);
 		this.handlers = new HashMap<>();
 	}
-	
+
 	@Override
 	public PathRoutingLink<A, B> setRoute(B route) {
 		String path = route.getPath();
-		if(path != null) {
+		if (path != null) {
 			// Exact match
 			this.setRoute(path, route);
-		}
+		} 
 		else {
 			this.nextLink.setRoute(route);
 		}
 		return this;
 	}
-	
+
 	private void setRoute(String path, B route) {
-		if(this.handlers.containsKey(path)) {
+		if (this.handlers.containsKey(path)) {
 			this.handlers.get(path).setRoute(route);
-		}
+		} 
 		else {
 			this.handlers.put(path, this.nextLink.createNextLink().setRoute(route));
 		}
 	}
-	
+
 	@Override
 	public void enableRoute(B route) {
 		String path = route.getPath();
-		if(path != null) {
+		if (path != null) {
 			RoutingLink<A, ?, B> handler = this.handlers.get(path);
-			if(handler != null) {
+			if (handler != null) {
 				handler.enableRoute(route);
 			}
 			// route doesn't exist so let's do nothing
-		}
+		} 
 		else {
 			this.nextLink.enableRoute(route);
 		}
 	}
-	
+
 	@Override
 	public void disableRoute(B route) {
 		String path = route.getPath();
-		if(path != null) {
+		if (path != null) {
 			RoutingLink<A, ?, B> handler = this.handlers.get(path);
-			if(handler != null) {
+			if (handler != null) {
 				handler.disableRoute(route);
 			}
 			// route doesn't exist so let's do nothing
-		}
+		} 
 		else {
 			this.nextLink.disableRoute(route);
 		}
 	}
-	
+
 	@Override
 	public void removeRoute(B route) {
 		String path = route.getPath();
-		if(path != null) {
+		if (path != null) {
 			RoutingLink<A, ?, B> handler = this.handlers.get(path);
-			if(handler != null) {
+			if (handler != null) {
 				handler.removeRoute(route);
-				if(!handler.hasRoute()) {
-					// The link has no more routes, we can remove it for good 
+				if (!handler.hasRoute()) {
+					// The link has no more routes, we can remove it for good
 					this.handlers.remove(path);
 				}
 			}
@@ -105,38 +123,38 @@ class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends R
 			this.nextLink.removeRoute(route);
 		}
 	}
-	
+
 	@Override
 	public boolean hasRoute() {
 		return !this.handlers.isEmpty() || this.nextLink.hasRoute();
 	}
-	
+
 	@Override
 	public boolean isDisabled() {
 		return this.handlers.values().stream().allMatch(RoutingLink::isDisabled) && this.nextLink.isDisabled();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public <F extends RouteExtractor<A, B>> void extractRoute(F extractor) {
-		if(!(extractor instanceof PathAwareRouteExtractor)) {
+		if (!(extractor instanceof PathAwareRouteExtractor)) {
 			throw new IllegalArgumentException("Route extractor is not path aware");
 		}
 		this.handlers.entrySet().stream().forEach(e -> {
-			e.getValue().extractRoute(((PathAwareRouteExtractor<A, B, ?>)extractor).path(e.getKey()));
+			e.getValue().extractRoute(((PathAwareRouteExtractor<A, B, ?>) extractor).path(e.getKey()));
 		});
 		super.extractRoute(extractor);
 	}
 
 	@Override
 	public void handle(A exchange) throws WebException {
-		if(this.handlers.isEmpty()) {
+		if (this.handlers.isEmpty()) {
 			this.nextLink.handle(exchange);
-		}
+		} 
 		else {
 			// Path in the request headers is normalized as per API specification
 			RoutingLink<A, ?, B> handler = this.handlers.get(exchange.request().getPathAbsolute());
-			if(handler == null) {
+			if (handler == null) {
 				handler = this.nextLink;
 			}
 			handler.handle(exchange);

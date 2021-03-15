@@ -35,7 +35,7 @@ import io.winterframework.mod.web.WebRouteManager;
 import io.winterframework.mod.web.WebRouter;
 
 /**
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 class GenericWebRouteManager implements WebRouteManager<WebExchange> {
@@ -156,12 +156,12 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange> {
 	}
 	
 	@Override
-	public GenericWebRouteManager consumes(String mediaType) {
-		Objects.requireNonNull(mediaType);
+	public GenericWebRouteManager consumes(String mediaRange) {
+		Objects.requireNonNull(mediaRange);
 		if(this.consumes == null) {
 			this.consumes = new LinkedHashSet<>();
 		}
-		this.consumes.add(mediaType);
+		this.consumes.add(mediaRange);
 		return this;
 	}
 	

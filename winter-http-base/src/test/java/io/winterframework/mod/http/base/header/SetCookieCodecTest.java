@@ -22,7 +22,7 @@ import io.winterframework.mod.http.base.internal.header.SetCookieCodec;
 
 /**
  * 
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 public class SetCookieCodecTest {

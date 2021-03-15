@@ -26,26 +26,82 @@ import io.winterframework.mod.http.base.NotFoundException;
 import io.winterframework.mod.http.base.WebException;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A static handler used to serve static resources resolved from a base
+ * resource.
+ * </p>
+ * 
+ * <p>
+ * This handler is typically used as a handler in a web route to serve static
+ * content. It uses a configurable path parameter to determine the path of the
+ * resource to serve relative to the base path.
+ * </p>
+ * 
+ * <blockquote><pre>
+ * WebRouter router = ...
+ * 
+ * router
+ *     .route()
+ *     .path("/static/{path:.*}")
+ *     .handler(new StaticHandler(new FileResource("/path/to/resources/"));
+ * 
+ * </pre></blockquote>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Resource
  */
 public class StaticHandler implements WebExchangeHandler<WebExchange> {
 
+	/**
+	 * The default name of the path parameter defining the path to the resource.
+	 */
 	public static final String DEFAULT_PATH_PARAMETER_NAME = "path";
 	
 	private final Resource baseResource;
 	
 	private String pathParameterName;
 	
+	/**
+	 * <p>
+	 * Creates a static handler resolving resources from the specified base
+	 * resource using the default path parameter name.
+	 * </p>
+	 * 
+	 * @param baseResource the base resource
+	 * 
+	 * @see StaticHandler#DEFAULT_PATH_PARAMETER_NAME
+	 */
 	public StaticHandler(Resource baseResource) {
 		this(baseResource, DEFAULT_PATH_PARAMETER_NAME);
 	}
 	
+	
+	/**
+	 * <p>
+	 * Creates a static handler resolving resources from the specified base resource
+	 * using the specified path parameter name.
+	 * </p>
+	 * 
+	 * @param baseResource      the base resource
+	 * @param pathParameterName the path parameter name
+	 * 
+	 * @see StaticHandler#DEFAULT_PATH_PARAMETER_NAME
+	 */
 	public StaticHandler(Resource baseResource, String pathParameterName) {
 		this.baseResource = baseResource;
 		this.pathParameterName = pathParameterName;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the name of the path parameter that specifies the path of a resource
+	 * relative to the base path.
+	 * </p>
+	 * 
+	 * @param pathParameterName a path parameter name
+	 */
 	public void setPathParameterName(String pathParameterName) {
 		this.pathParameterName = pathParameterName;
 	}

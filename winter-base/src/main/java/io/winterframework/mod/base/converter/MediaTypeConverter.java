@@ -16,10 +16,32 @@
 package io.winterframework.mod.base.converter;
 
 /**
- * @author jkuhn
+ * <p>
+ * An object converter that can convert particular media types.
+ * </p>
+ * 
+ * <p>
+ * A typical implementation would convert objects from/to serialized data
+ * formatted according to a given media type.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ReactiveConverter
  *
+ * @param <From> the encoded type
  */
 public interface MediaTypeConverter<From> extends ReactiveConverter<From, Object> {
 
+	/**
+	 * <p>
+	 * Determines whether the converter can convert the specified media type.
+	 * </p>
+	 * 
+	 * @param mediaType a media type
+	 * 
+	 * @return true if the converter can convert the media type, false otherwise
+	 */
 	boolean canConvert(String mediaType);
 }

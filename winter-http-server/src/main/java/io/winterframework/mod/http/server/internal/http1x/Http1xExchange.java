@@ -54,8 +54,19 @@ import io.winterframework.mod.http.server.internal.netty.FlatLastHttpContent;
 import reactor.core.publisher.BaseSubscriber;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP1.x {@link Exchange} implementation.
+ * </p>
+ * 
+ * <p>
+ * This implementation provides the logic to send HTTP1.x response data to the
+ * client.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractExchange
  */
 public class Http1xExchange extends AbstractExchange {
 
@@ -70,6 +81,22 @@ public class Http1xExchange extends AbstractExchange {
 	boolean keepAlive;
 	boolean trailers;
 	
+	/**
+	 * <p>
+	 * Creates a HTTP1.x server exchange.
+	 * </p>
+	 * 
+	 * @param context               the channel handler context
+	 * @param httpRequest           the underlying HTTP request
+	 * @param encoder               the HTTP1.x connection encoder
+	 * @param headerService         the header service
+	 * @param parameterConverter    a string object converter
+	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body
+	 *                              decoder
+	 * @param multipartBodyDecoder  the multipart/form-data body decoder
+	 * @param rootHandler           the root exchange handler
+	 * @param errorHandler          the error exchange handler
+	 */
 	public Http1xExchange(
 			ChannelHandlerContext context, 
 			HttpRequest httpRequest,
@@ -128,16 +155,16 @@ public class Http1xExchange extends AbstractExchange {
 	}
 	
 	private HttpResponse createHttpResponse(Http1xResponseHeaders headers, Http1xResponseTrailers trailers) {
-		HttpResponseStatus status = HttpResponseStatus.valueOf(headers.getStatus());
-		HttpHeaders httpHeaders = headers.getInternalHeaders();
-		HttpHeaders httpTrailers = trailers != null ? trailers.getInternalTrailers() : null;
+		HttpResponseStatus status = HttpResponseStatus.valueOf(headers.getStatusCode());
+		HttpHeaders httpHeaders = headers.getUnderlyingHeaders();
+		HttpHeaders httpTrailers = trailers != null ? trailers.getUnderlyingTrailers() : null;
 		this.preProcessResponseInternals(status, httpHeaders, httpTrailers);
 		return new FlatHttpResponse(HttpVersion.HTTP_1_1, status, httpHeaders, false);
 	}
 	
 	private HttpResponse createFullHttpResponse(Http1xResponseHeaders headers, ByteBuf content) {
-		HttpResponseStatus status = HttpResponseStatus.valueOf(headers.getStatus());
-		HttpHeaders httpHeaders = headers.getInternalHeaders();
+		HttpResponseStatus status = HttpResponseStatus.valueOf(headers.getStatusCode());
+		HttpHeaders httpHeaders = headers.getUnderlyingHeaders();
 		this.preProcessResponseInternals(status, httpHeaders, null); // trailers are only authorized in chunked transfer encoding
 		return new FlatFullHttpResponse(HttpVersion.HTTP_1_1, status, httpHeaders, content, EmptyHttpHeaders.INSTANCE);
 	}
@@ -172,7 +199,6 @@ public class Http1xExchange extends AbstractExchange {
 	
 	@Override
 	protected void onCompleteWithError(Throwable throwable) {
-		throwable.printStackTrace();
 		this.handler.exchangeError(this.context, throwable);
 	}
 	
@@ -213,7 +239,7 @@ public class Http1xExchange extends AbstractExchange {
 	protected void onCompleteMany() {
 		Http1xResponseTrailers trailers = (Http1xResponseTrailers)this.response.trailers();
 		if(trailers != null) {
-			this.encoder.writeFrame(this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, trailers.getInternalTrailers()), this.context.voidPromise());
+			this.encoder.writeFrame(this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, trailers.getUnderlyingTrailers()), this.context.voidPromise());
 		}
 		else {
 			this.encoder.writeFrame(this.context, LastHttpContent.EMPTY_LAST_CONTENT, this.context.voidPromise());

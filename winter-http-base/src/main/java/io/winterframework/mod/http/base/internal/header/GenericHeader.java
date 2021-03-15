@@ -17,13 +17,30 @@ package io.winterframework.mod.http.base.internal.header;
 
 import io.winterframework.mod.http.base.header.AbstractHeaderBuilder;
 import io.winterframework.mod.http.base.header.Header;
+import io.winterframework.mod.http.base.header.HeaderBuilder;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic HTTP {@link Header} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Header
  */
 public class GenericHeader implements Header {
 
+	/**
+	 * <p>
+	 * Generic HTTP {@link HeaderBuilder} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see AbstractHeaderBuilder
+	 */
 	public static class Builder extends AbstractHeaderBuilder<GenericHeader, Builder> {
 
 		@Override
@@ -32,12 +49,26 @@ public class GenericHeader implements Header {
 		}
 	}
 	
+	/**
+	 * The header name.
+	 */
 	protected String headerName;
 	
+	/**
+	 * The header raw value.
+	 */
 	protected String headerValue;
 	
+	/**
+	 * <p>
+	 * Creates a generic header with the specified name and raw value.
+	 * </p>
+	 * 
+	 * @param headerName  the header name
+	 * @param headerValue the header raw value
+	 */
 	public GenericHeader(String headerName, String headerValue) {
-		this.headerName = headerName;
+		this.headerName = headerName.toLowerCase();
 		this.headerValue = headerValue;
 	}
 
@@ -46,6 +77,13 @@ public class GenericHeader implements Header {
 		return this.headerName;
 	}
 
+	/**
+	 * <p>
+	 * Sets the header raw value.
+	 * </p>
+	 * 
+	 * @param headerValue the header raw value
+	 */
 	public void setHeaderValue(String headerValue) {
 		this.headerValue = headerValue;
 	}

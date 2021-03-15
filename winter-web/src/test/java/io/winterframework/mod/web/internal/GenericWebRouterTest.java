@@ -19,7 +19,7 @@ public class GenericWebRouterTest {
 
 	private static final WebConfiguration CONFIGURATION = new WebConfiguration() {
 		@Override
-		public HttpServerConfiguration web() {
+		public HttpServerConfiguration http_server() {
 			// TODO Auto-generated method stub
 			return null;
 		}

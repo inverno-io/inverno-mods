@@ -16,12 +16,35 @@
 package io.winterframework.mod.configuration;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Represents a single update result.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationUpdate
+ * @see ConfigurableConfigurationSource
+ * 
+ * @param <A> the type of the configuration key
  */
 public interface ConfigurationUpdateResult<A extends ConfigurationKey> {
 
+	/**
+	 * <p>
+	 * Returns the configuration key corresponding to the update that was executed.
+	 * </p>
+	 * 
+	 * @return a configuration key
+	 */
 	A getUpdateKey();
 	
+	/**
+	 * <p>
+	 * Checks that the update was successful.
+	 * </p>
+	 * 
+	 * @throws ConfigurationSourceException if the update was not successful
+	 */
 	void check() throws ConfigurationSourceException;
 }

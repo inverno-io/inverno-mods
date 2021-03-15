@@ -22,15 +22,30 @@ import javax.lang.model.type.TypeMirror;
 import io.winterframework.mod.web.compiler.spi.WebResponseBodyInfo;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Generic {@link WebResponseBodyInfo} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 class GenericWebResponseBodyInfo implements WebResponseBodyInfo {
 
 	private final TypeMirror type;
+	
 	private final ResponseBodyKind responseBodyKind;
+	
 	private final ResponseBodyReactiveKind responseBodyReactiveKind;
 	
+	/**
+	 * <p>
+	 * Creates a generic web response body info.
+	 * </p>
+	 * 
+	 * @param type                     the actual type of the response body
+	 * @param responseBodyKind         the response body kind
+	 * @param responseBodyReactiveKind the response body reactivekind
+	 */
 	public GenericWebResponseBodyInfo(TypeMirror type, ResponseBodyKind responseBodyKind, ResponseBodyReactiveKind responseBodyReactiveKind) {
 		this.type = Objects.requireNonNull(type);
 		this.responseBodyKind = Objects.requireNonNull(responseBodyKind);

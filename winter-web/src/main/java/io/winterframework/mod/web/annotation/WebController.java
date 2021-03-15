@@ -21,13 +21,74 @@ import static java.lang.annotation.RetentionPolicy.SOURCE;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import io.winterframework.core.annotation.Bean;
+import io.winterframework.mod.web.WebRouterConfigurer;
+
 /**
- * @author jkuhn
- *
+ * <p>
+ * The WebController annotation is used in conjunction with the
+ * {@link Bean @Bean} annotation to indicate a web controller bean.
+ * </p>
+ * 
+ * <p>
+ * Web controller beans are used to specify web routes exposed in a module.
+ * These routes are aggregated in a generated {@link WebRouterConfigurer} bean
+ * that can be used to configure a web router.
+ * </p>
+ * 
+ * <p>
+ * Web routes are declared as methods annotated with {@link WebRoute @Webroute}
+ * and implementing the exchange handler.
+ * </p>
+ * 
+ * <p>
+ * A web controller defines a base path, set to '/' by default, for all the
+ * routes defined in the controller.
+ * </p>
+ * 
+ * <p>
+ * For instance, in the following example a request to {@code /book} is handled
+ * by the {@code getList()} method and a request to {@code /book/1} by the
+ * {@code get()} method.
+ * </p>
+ * 
+ * <blockquote>
+ * 
+ * <pre>
+ * &#64;WebController( path = "/book" )
+ * &#64;Bean
+ * public class BookResource {
+ * 
+ *     &#64;WebRoute
+ *     public List{@literal <Book>} getList() {
+ *         ...
+ *     }
+ *     
+ *     &#64;WebRoute( path = "{id}" )
+ *     public Book get() {
+ *         ...
+ *     }
+ * }
+ * </pre>
+ * 
+ * </blockquote>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Bean
+ * @see WebRoute
  */
 @Retention(SOURCE)
 @Target(TYPE)
 public @interface WebController {
 
+	/**
+	 * <p>
+	 * The base path of all the routes defined in the web controller.
+	 * </p>
+	 * 
+	 * @return the base path
+	 */
 	String path() default "/";
 }

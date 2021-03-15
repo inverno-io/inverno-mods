@@ -22,16 +22,28 @@ import java.util.stream.Stream;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.base.resource.AbstractResourceProvider;
+import io.winterframework.mod.base.resource.AsyncResourceProvider;
 import io.winterframework.mod.base.resource.MediaTypeService;
 import io.winterframework.mod.base.resource.ResourceException;
-import io.winterframework.mod.base.resource.UrlResource;
+import io.winterframework.mod.base.resource.ResourceProvider;
+import io.winterframework.mod.base.resource.ResourceService;
+import io.winterframework.mod.base.resource.URLResource;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * {@link ResourceProvider} implementation used to resolve resources at given
+ * URL (eg. {@code http://...}, {@code https://...}, {@code ftp://...}).
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see URLResource
+ * @see AsyncResourceProvider
+ * @see ResourceService
  */
 @Bean(visibility = Visibility.PRIVATE)
-public class UrlResourceProvider extends AbstractResourceProvider<UrlResource> {
+public class URLResourceProvider extends AbstractResourceProvider<URLResource> {
 
 	@Override
 	public void setMediaTypeService(MediaTypeService mediaTypeService) {
@@ -39,12 +51,12 @@ public class UrlResourceProvider extends AbstractResourceProvider<UrlResource> {
 	}
 	
 	@Override
-	public UrlResource getResource(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
-		return new UrlResource(uri, this.mediaTypeService);
+	public URLResource getResource(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
+		return new URLResource(uri, this.mediaTypeService);
 	}
 	
 	@Override
-	public Stream<UrlResource> getResources(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
+	public Stream<URLResource> getResources(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
 		// we don't have the capability to do more
 		return Stream.of(this.getResource(uri));
 	}

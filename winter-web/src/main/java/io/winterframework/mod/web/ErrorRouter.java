@@ -17,10 +17,31 @@ package io.winterframework.mod.web;
 
 import io.winterframework.mod.http.base.WebException;
 import io.winterframework.mod.http.server.ErrorExchange;
+import io.winterframework.mod.http.server.ErrorExchangeHandler;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * An error router is used to handle failing requests for which an error was
+ * thrown during the initial processing.
+ * </p>
+ * 
+ * <p>
+ * It determines the error exchange handler to invoke based on the type of the
+ * error as well as the media type and language accepted by the client.
+ * </p>
+ * 
+ * <p>
+ * An error router is itself an error exchange handler that can be used as error
+ * handler of a HTTP server.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ErrorExchange
+ * @see ErrorExchangeHandler
+ * @see ErrorRoute
+ * @see ErrorRouteManager
  */
 public interface ErrorRouter extends AbstractRouter<ErrorExchange<Throwable>, ErrorRouter, ErrorRouteManager, ErrorRoute, ErrorExchange<Throwable>> {
 	

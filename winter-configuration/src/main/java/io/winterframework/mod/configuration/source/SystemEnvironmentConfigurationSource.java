@@ -20,16 +20,42 @@ import io.winterframework.mod.configuration.AbstractPropertiesConfigurationSourc
 import io.winterframework.mod.configuration.internal.JavaStringConverter;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A configuration source that looks up properties from the system environment
+ * variables.
+ * </p>
+ * 
+ * <p>
+ * Note that this source doesn't support parameterized queries, regardless of
+ * the parameters specified in a query, only the configuration key name is
+ * considered when resolving a value.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractPropertiesConfigurationSource
  */
 public class SystemEnvironmentConfigurationSource extends AbstractPropertiesConfigurationSource<String, SystemEnvironmentConfigurationSource> {
 	
+	/**
+	 * <p>
+	 * Creates a system environment configuration source.
+	 * </p>
+	 */
 	public SystemEnvironmentConfigurationSource() {
 		this(new JavaStringConverter());
 	}
 	
+	/**
+	 * <p>
+	 * Creates a system environment configuration source with the specified string
+	 * value decoder.
+	 * </p>
+	 * 
+	 * @param decoder a string decoder
+	 */
 	public SystemEnvironmentConfigurationSource(SplittablePrimitiveDecoder<String> decoder) {
-		super(System::getenv, decoder);
+		super(decoder, System::getenv);
 	}
 }

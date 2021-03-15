@@ -23,13 +23,18 @@ import io.winterframework.mod.http.base.Method;
 import io.winterframework.mod.http.base.Parameter;
 import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.server.Part;
+import io.winterframework.mod.http.server.Request;
 import io.winterframework.mod.http.server.RequestHeaders;
 import io.winterframework.mod.http.server.internal.AbstractRequest;
 import io.winterframework.mod.http.server.internal.multipart.MultipartDecoder;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP/2 {@link Request} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class Http2Request extends AbstractRequest {
 
@@ -40,6 +45,17 @@ public class Http2Request extends AbstractRequest {
 	private String authority;
 	private String path;
 	
+	/**
+	 * <p>
+	 * Creates a HTTP/2 server request.
+	 * </p>
+	 * 
+	 * @param context
+	 * @param requestHeaders
+	 * @param parameterConverter
+	 * @param urlEncodedBodyDecoder
+	 * @param multipartBodyDecoder
+	 */
 	public Http2Request(ChannelHandlerContext context, RequestHeaders requestHeaders, ObjectConverter<String> parameterConverter, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
 		super(context, requestHeaders, parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder);
 	}

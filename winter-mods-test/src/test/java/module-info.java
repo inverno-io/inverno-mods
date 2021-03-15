@@ -16,10 +16,10 @@
 
 /**
  * <p>
- * Winter framework unit tests module.
+ * The Winter framework modules unit tests module.
  * </p>
  * 
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
 module io.winterframework.mod.test {

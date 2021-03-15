@@ -1,0 +1,20 @@
+web {
+    server_port=8080
+    [ profile = "ssl" ] {
+        server_port=8443
+    }
+}
+
+[ env="dev" ] {
+    db.url="jdbc:oracle:thin:@dev.db.server:1521:sid"
+}
+
+[ env="prod" ] {
+    db.url="jdbc:oracle:thin:@dev.db.server:1521:sid"
+    [ zone="eu" ] {
+        db.url="jdbc:oracle:thin:@prod_eu.db.server:1521:sid"
+    }
+    [ zone="us" ] {
+        db.url="jdbc:oracle:thin:@prod_us.db.server:1521:sid"
+    }
+}

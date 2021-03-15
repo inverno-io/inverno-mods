@@ -32,14 +32,51 @@ import io.winterframework.mod.configuration.internal.GenericConfigurationQueryRe
 import reactor.core.publisher.Flux;
 
 /**
- * @author jkuhn
+ * <p>
+ * Base implementation for {@link ConfigurationSource} where configuration
+ * properties are resolved using a property accessor function to retrieve
+ * property values.
+ * </p>
+ * 
+ * <p>
+ * This implementation is intended for configuration sources whose properties
+ * are uniquely identified by a single key such as system properties, system
+ * environment variables or maps in general.
+ * </p>
+ * 
+ * <p>
+ * As a result, parameterized query are not supported with this kind of
+ * configuration source, regardless of the parameters specified when building a
+ * query, only the configuration key name is considered when resolving a value.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationSource
  *
+ * @param <A> raw configuration value type
+ * @param <B> the properties configuration source type
  */
 public abstract class AbstractPropertiesConfigurationSource<A, B extends AbstractPropertiesConfigurationSource<A,B>> extends AbstractConfigurationSource<AbstractPropertiesConfigurationSource.PropertyConfigurationQuery<A, B>, AbstractPropertiesConfigurationSource.PropertyExecutableConfigurationQuery<A, B>, AbstractPropertiesConfigurationSource.PropertyConfigurationQueryResult<A, B>, A> {
 
+	/**
+	 * The property accessor.
+	 */
 	protected Function<String, A> propertyAccessor;
 	
-	public AbstractPropertiesConfigurationSource(Function<String, A> propertyAccessor, SplittablePrimitiveDecoder<A> decoder) {
+	/**
+	 * <p>
+	 * Creates a properties configuration source with the specified decoder and
+	 * property accessor.
+	 * </p>
+	 * 
+	 * @param decoder          a value decoder
+	 * @param propertyAccessor a property accessor
+	 * 
+	 * @throws NullPointerException if the specified decoder is null
+	 */
+	public AbstractPropertiesConfigurationSource(SplittablePrimitiveDecoder<A> decoder, Function<String, A> propertyAccessor) {
 		super(decoder);
 		this.propertyAccessor = propertyAccessor;
 	}
@@ -49,6 +86,19 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 		return new PropertyExecutableConfigurationQuery<>(this).and().get(names);
 	}
 	
+	/**
+	 * <p>
+	 * The configuration query used by a properties configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ConfigurationQuery
+	 *
+	 * @param <A> raw configuration value type
+	 * @param <B> the properties configuration source type
+	 */
 	public static class PropertyConfigurationQuery<A, B extends AbstractPropertiesConfigurationSource<A,B>> implements ConfigurationQuery<PropertyConfigurationQuery<A, B>, PropertyExecutableConfigurationQuery<A, B>, PropertyConfigurationQueryResult<A, B>> {
 		
 		private List<String> names;
@@ -73,6 +123,19 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The executable configuration query used by a properties configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ExecutableConfigurationQuery
+	 *
+	 * @param <A> raw configuration value type
+	 * @param <B> the properties configuration source type
+	 */
 	public static class PropertyExecutableConfigurationQuery<A, B extends AbstractPropertiesConfigurationSource<A,B>> implements ExecutableConfigurationQuery<PropertyConfigurationQuery<A, B>, PropertyExecutableConfigurationQuery<A, B>, PropertyConfigurationQueryResult<A, B>> {
 
 		private B source;
@@ -124,6 +187,19 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The configuration query result returned by a properties configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ConfigurationQueryResult
+	 *
+	 * @param <A> raw configuration value type
+	 * @param <B> the properties configuration source type
+	 */
 	public static class PropertyConfigurationQueryResult<A, B extends AbstractPropertiesConfigurationSource<A,B>> extends GenericConfigurationQueryResult<ConfigurationKey, ConfigurationProperty<ConfigurationKey, B>> {
 
 		private PropertyConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationProperty<ConfigurationKey, B> queryResult) {

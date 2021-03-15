@@ -16,7 +16,6 @@
 package io.winterframework.mod.http.server.internal;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.channels.Channels;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
@@ -52,9 +51,12 @@ import io.winterframework.mod.base.resource.ResourceService;
 import io.winterframework.mod.http.server.HttpServerConfiguration;
 
 /**
+ * <p>
+ * The server SSL context.
+ * </p>
  * 
- * @author jkuhn
- *
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Bean(visibility = Visibility.PRIVATE, strategy = Strategy.PROTOTYPE)
 @Wrapper
@@ -78,7 +80,7 @@ public class SslContextWrapper implements Supplier<SslContext> {
 	
 	@Init
 	public void init() {
-		try (Resource keystoreResource = this.resourceService.getResource(URI.create(this.configuration.key_store()))) {
+		try (Resource keystoreResource = this.resourceService.getResource(this.configuration.key_store())) {
 			keystoreResource.openReadableByteChannel().ifPresentOrElse(
 				fileChannel -> {
 					try {

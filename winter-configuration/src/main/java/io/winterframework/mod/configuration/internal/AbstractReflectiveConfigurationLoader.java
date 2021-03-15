@@ -16,13 +16,35 @@
 package io.winterframework.mod.configuration.internal;
 
 import io.winterframework.mod.configuration.AbstractConfigurationLoader;
+import io.winterframework.mod.configuration.ConfigurationLoader;
+
 
 /**
- * @author jkuhn
+ * <p>
+ * Base implementation for {@link ConfigurationLoader} that uses reflection to
+ * determine configuration properties to load.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ConfigurationLoader
  *
+ * @param <A> the configuration type
+ * @param <B> the configuration loader type
  */
 abstract class AbstractReflectiveConfigurationLoader<A, B extends AbstractReflectiveConfigurationLoader<A, B>> extends AbstractConfigurationLoader<A, B> {
 
+	/**
+	 * <p>
+	 * Returns the default value associated to the specified type.
+	 * </p>
+	 * 
+	 * @param <B> a type
+	 * @param type a class of type B
+	 * 
+	 * @return a default value which can be null
+	 */
 	@SuppressWarnings("unchecked")
 	protected static <B> B getDefaultValue(Class<B> type) {
 		Object result = null;

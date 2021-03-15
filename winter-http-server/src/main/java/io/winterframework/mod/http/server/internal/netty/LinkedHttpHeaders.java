@@ -40,8 +40,17 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.AsciiString;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Optimized {@link HttpHeaders} implementation.
+ * </p>
+ * 
+ * <p>
+ * This implementation is based on a linked list keeping a pointer to the head
+ * and the tail of the list for fast access.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class LinkedHttpHeaders extends HttpHeaders {
 

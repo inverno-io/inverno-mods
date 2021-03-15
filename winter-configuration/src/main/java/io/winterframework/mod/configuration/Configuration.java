@@ -32,7 +32,19 @@ import java.util.function.Consumer;
  * configuration data in a module. Configuration properties are declared as
  * non-void no-argument methods in an interface. Default values can be specified
  * in default methods.
- * <p>
+ * </p>
+ * 
+ * <blockquote><pre>
+ * {@literal @Configuration}
+ * public interface SomeConfig {
+ *     
+ *     String property1();
+ *     
+ *     default int property2() {
+ *         return 0;
+ *     }
+ * }
+ * </pre></blockquote>
  * 
  * <p>
  * For a given configuration, a module bean named after the configuration
@@ -50,15 +62,13 @@ import java.util.function.Consumer;
  * configurator is called a configurer:
  * </p>
  * 
- * <pre>
+ * <blockquote><pre>
  * Config config = SomeConfigBean.ConfigConfigurator
- * 		.create(configConfigurator -> configConfigurator.property1("someValue").property2(42));
- * </pre>
+ *     .create(configConfigurator -> configConfigurator.property1("someValue").property2(42));
+ * </pre></blockquote>
  * 
- * @author jkuhn
- * @since 1.1
- * 
- * @see io.winterframework.core.annotation.Bean
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.TYPE)

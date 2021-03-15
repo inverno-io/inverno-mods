@@ -20,8 +20,24 @@ import java.util.function.Consumer;
 import io.winterframework.mod.http.server.Exchange;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Base router configurer interface.
+ * </p>
+ * 
+ * <p>
+ * A router configurer is used to configure a router.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractRouter
+ * 
+ * @param <A> the route exchange type
+ * @param <B> the router type
+ * @param <C> the route manager type
+ * @param <D> the route type
+ * @param <E> the router exchange type
  */
 public interface AbstractRouterConfigurer<A extends Exchange, B extends AbstractRouter<A, B, C, D, E>, C extends AbstractRouteManager<A, B, C, D, E>, D extends AbstractRoute<A>, E extends Exchange> extends Consumer<B> {
 

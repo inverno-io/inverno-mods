@@ -19,9 +19,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Headers;
@@ -33,51 +33,70 @@ import io.winterframework.mod.http.base.internal.GenericParameter;
 import io.winterframework.mod.http.server.ResponseTrailers;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * HTTP/2 {@link ResponseTrailers} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
  */
 public class Http2ResponseTrailers implements ResponseTrailers {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	
-	private final Http2Headers internalTrailers;
+	private final Http2Headers underlyingTrailers;
 	
+	/**
+	 * <p>
+	 * Creates HTTP/2 response trailers.
+	 * </p>
+	 * 
+	 * @param headerService the header service
+	 * @param parameterConverter a string object converter 
+	 */
 	public Http2ResponseTrailers(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		
-		this.internalTrailers = new DefaultHttp2Headers();
+		this.underlyingTrailers = new DefaultHttp2Headers();
 	}
 
-	Http2Headers getInternalTrailers() {
-		return this.internalTrailers;
+	/**
+	 * <p>
+	 * Returns the underlying headers.
+	 * </p>
+	 * 
+	 * @return the underlying headers
+	 */
+	Http2Headers getUnderlyingTrailers() {
+		return this.underlyingTrailers;
 	}
 
 	@Override
 	public ResponseTrailers add(CharSequence name, CharSequence value) {
-		this.internalTrailers.add(name, value);
+		this.underlyingTrailers.add(name, value);
 		return this;
 	}
 
 	@Override
 	public ResponseTrailers add(Header... trailers) {
 		for(Header trailer : trailers) {
-			this.internalTrailers.add(trailer.getHeaderName(), trailer.getHeaderValue());
+			this.underlyingTrailers.add(trailer.getHeaderName(), trailer.getHeaderValue());
 		}
 		return this;
 	}
 
 	@Override
 	public ResponseTrailers set(CharSequence name, CharSequence value) {
-		this.internalTrailers.set(name, value);
+		this.underlyingTrailers.set(name, value);
 		return this;
 	}
 
 	@Override
 	public ResponseTrailers set(Header... trailers) {
 		for(Header trailer : trailers) {
-			this.internalTrailers.set(trailer.getHeaderName(), trailer.getHeaderValue());
+			this.underlyingTrailers.set(trailer.getHeaderName(), trailer.getHeaderValue());
 		}
 		return this;
 	}
@@ -85,40 +104,40 @@ public class Http2ResponseTrailers implements ResponseTrailers {
 	@Override
 	public ResponseTrailers remove(CharSequence... names) {
 		for(CharSequence name : names) {
-			this.internalTrailers.remove(name);
+			this.underlyingTrailers.remove(name);
 		}
 		return this;
 	}
 
 	@Override
 	public boolean contains(CharSequence name) {
-		return this.internalTrailers.contains(name);
+		return this.underlyingTrailers.contains(name);
 	}
 	
 	@Override
 	public boolean contains(CharSequence name, CharSequence value) {
-		return this.internalTrailers.contains(name, value, true);
+		return this.underlyingTrailers.contains(name, value, true);
 	}
 	
 	@Override
 	public Set<String> getNames() {
-		return this.internalTrailers.names().stream().map(CharSequence::toString).collect(Collectors.toSet());
+		return this.underlyingTrailers.names().stream().map(CharSequence::toString).collect(Collectors.toSet());
 	}
 
 	@Override
 	public Optional<String> get(CharSequence name) {
-		return Optional.of(this.internalTrailers.get(name)).map(Object::toString);
+		return Optional.of(this.underlyingTrailers.get(name)).map(Object::toString);
 	}
 
 	@Override
 	public List<String> getAll(CharSequence name) {
-		return this.internalTrailers.getAll(name).stream().map(CharSequence::toString).collect(Collectors.toList());
+		return this.underlyingTrailers.getAll(name).stream().map(CharSequence::toString).collect(Collectors.toList());
 	}
 
 	@Override
 	public List<Entry<String, String>> getAll() {
 		List<Entry<String, String>> result = new LinkedList<>();
-		this.internalTrailers.forEach(e -> {
+		this.underlyingTrailers.forEach(e -> {
 			result.add(Map.entry(e.getKey().toString(), e.getValue().toString()));
 		});
 		return result;
@@ -131,13 +150,13 @@ public class Http2ResponseTrailers implements ResponseTrailers {
 
 	@Override
 	public <T extends Header> List<T> getAllHeader(CharSequence name) {
-		return this.internalTrailers.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value.toString())).collect(Collectors.toList());
+		return this.underlyingTrailers.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value.toString())).collect(Collectors.toList());
 	}
 
 	@Override
 	public List<Header> getAllHeader() {
 		List<Header> result = new LinkedList<>();
-		this.internalTrailers.forEach(e -> {
+		this.underlyingTrailers.forEach(e -> {
 			result.add(this.headerService.<Header>decode(e.getKey().toString(), e.getValue().toString()));
 		});
 		return result;
@@ -145,19 +164,19 @@ public class Http2ResponseTrailers implements ResponseTrailers {
 	
 	@Override
 	public Optional<Parameter> getParameter(CharSequence name) {
-		return this.get(name).map(value -> new GenericParameter(this.parameterConverter, name.toString(), value));
+		return this.get(name).map(value -> new GenericParameter(name.toString(), value, this.parameterConverter));
 	}
 	
 	@Override
 	public List<Parameter> getAllParameter(CharSequence name) {
-		return this.internalTrailers.getAll(name).stream().map(value -> new GenericParameter(this.parameterConverter, name.toString(), value.toString())).collect(Collectors.toList());
+		return this.underlyingTrailers.getAll(name).stream().map(value -> new GenericParameter(name.toString(), value.toString(), this.parameterConverter)).collect(Collectors.toList());
 	}
 	
 	@Override
 	public List<Parameter> getAllParameter() {
 		List<Parameter> result = new LinkedList<>();
-		this.internalTrailers.forEach(e -> {
-			result.add(new GenericParameter(this.parameterConverter, e.getKey().toString(), e.getValue().toString()));
+		this.underlyingTrailers.forEach(e -> {
+			result.add(new GenericParameter(e.getKey().toString(), e.getValue().toString(), this.parameterConverter));
 		});
 		return result;
 	}

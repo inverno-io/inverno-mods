@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.winterframework.mod.web.compiler.internal;
-
-import javax.lang.model.element.VariableElement;
-
-import io.winterframework.core.compiler.spi.ReporterInfo;
-import io.winterframework.mod.web.compiler.spi.WebParameterQualifiedName;
-
 /**
- * @author jkuhn
- *
+ * <p>
+ * Winter HTTP server multipart/form-data and application/x-www-form-urlencoded
+ * body decoders.
+ * </p>
  */
-class ErrorWebParameterInfo extends AbstractWebParameterInfo {
-
-	public ErrorWebParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, boolean required) {
-		super(name, reporter, parameterElement, parameterElement.asType(), required);
-	}
-}
+package io.winterframework.mod.http.server.internal.multipart;

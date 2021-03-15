@@ -46,26 +46,67 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A converter that converts strings to objects.
+ * </p>
+ * 
+ * <p>
+ * This converter is an object converter and as such it can convert collection
+ * of objects using a customizable separator.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ObjectConverter
  */
 public class StringConverter implements ObjectConverter<String> {
 
+	/**
+	 * Default array list separator
+	 */
 	public static final String DEFAULT_ARRAY_LIST_SEPARATOR = ",";
+	
 	private String arrayListSeparator;
 	
+	/**
+	 * <p>
+	 * Creates a string converter with the default array/list separator.
+	 * </p>
+	 */
 	public StringConverter() {
 		this(DEFAULT_ARRAY_LIST_SEPARATOR);
 	}
-	
+		
+	/**
+	 * <p>
+	 * Creates a string converter with the specified array/list separator.
+	 * </p>
+	 * 
+	 * @param arrayListSeparator an array/list separator
+	 */
 	public StringConverter(String arrayListSeparator) {
 		this.arrayListSeparator = arrayListSeparator;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the array/list separator used to convert lists and arrays.
+	 * </p>
+	 * 
+	 * @return an array/list separator
+	 */
 	public String getArrayListSeparator() {
 		return arrayListSeparator;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the array/list separator used to convert lists and arrays.
+	 * </p>
+	 * 
+	 * @param arrayListSeparator an array/list separator
+	 */
 	public void setArrayListSeparator(String arrayListSeparator) {
 		this.arrayListSeparator = arrayListSeparator;
 	}

@@ -16,8 +16,17 @@
 package io.winterframework.mod.base.converter;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * An object encoder which is joinable with primitive encoding bindings.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see JoinableEncoder
+ * @see PrimitiveEncoder
+ * 
+ * @param <To> the encoded type
  */
 public interface JoinablePrimitiveEncoder<To> extends PrimitiveEncoder<To>, JoinableEncoder<Object, To> {
 

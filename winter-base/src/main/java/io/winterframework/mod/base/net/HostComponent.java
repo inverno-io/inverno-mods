@@ -18,12 +18,29 @@ package io.winterframework.mod.base.net;
 import java.nio.charset.Charset;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A URI component representing the host part of an URI as defined by
+ * <a href="https://tools.ietf.org/html/rfc3986#section-3.2.2">RFC 3986 Section
+ * 3.2.2</a>.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see ParameterizedURIComponent
  */
 // TODO validate host value
 class HostComponent extends AbstractParameterizedURIComponent {
 	
+	/**
+	 * <p>
+	 * Creates a host component with the specified flags, charset and raw value.
+	 * </p>
+	 * 
+	 * @param flags    URI flags
+	 * @param charset  a charset
+	 * @param rawValue a raw value
+	 */
 	public HostComponent(URIFlags flags, Charset charset, String rawValue) {
 		super(flags, charset, rawValue);
 	}

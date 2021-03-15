@@ -39,8 +39,27 @@ import io.winterframework.mod.configuration.internal.parser.option.StringProvide
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A configuration source that looks up properties in a regular property file.
+ * </p>
+ * 
+ * <p>
+ * This source supports parameterized configuration properties defined in a
+ * configuration file as follows:
+ * </p>
+ * 
+ * <blockquote><pre>
+ * web.server_port=8080
+ * web.server_port[profile="ssl"]=8443
+ * db.url[env="dev"]=jdbc:oracle:thin:@dev.db.server:1521:sid
+ * db.url[env="prod",zone="eu"]=jdbc:oracle:thin:@prod_eu.db.server:1521:sid
+ * db.url[env="prod",zone="us"]=jdbc:oracle:thin:@prod_us.db.server:1521:sid
+ * </pre></blockquote>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractHashConfigurationSource
  */
 public class PropertyFileConfigurationSource extends AbstractHashConfigurationSource<String, PropertyFileConfigurationSource> {
 
@@ -50,19 +69,53 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	
 	private InputStream propertyInput;
 	
+	/**
+	 * <p>
+	 * Creates a property file configuration source with the {@code .properties}
+	 * file at the specified path.
+	 * </p>
+	 * 
+	 * @param propertyFile the path to the {@code .properties} file
+	 */
 	public PropertyFileConfigurationSource(Path propertyFile) {
 		this(propertyFile, new JavaStringConverter());
 	}
 	
+	/**
+	 * <p>
+	 * Creates a property file configuration source with the {@code .properties}
+	 * file at the specified path and the specified string value decoder.
+	 * </p>
+	 * 
+	 * @param propertyFile the path to the {@code .properties} file
+	 * @param decoder      a string decoder
+	 */
 	public PropertyFileConfigurationSource(Path propertyFile, SplittablePrimitiveDecoder<String> decoder) {
 		super(decoder);
 		this.propertyFile = propertyFile;
 	}
 	
+	/**
+	 * <p>
+	 * Creates a property file configuration source with the specified input
+	 * stream.
+	 * </p>
+	 * 
+	 * @param propertyInput the {@code .properties} input
+	 */
 	public PropertyFileConfigurationSource(InputStream propertyInput) {
 		this(propertyInput, new JavaStringConverter());
 	}
 	
+	/**
+	 * <p>
+	 * Creates a property file configuration source with the specified input stream
+	 * and string value decoder.
+	 * </p>
+	 * 
+	 * @param propertyInput the {@code .properties} input
+	 * @param decoder       a string decoder
+	 */
 	public PropertyFileConfigurationSource(InputStream propertyInput, SplittablePrimitiveDecoder<String> decoder) {
 		super(decoder);
 		this.propertyInput = propertyInput;

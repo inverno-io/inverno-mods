@@ -25,13 +25,21 @@ import io.winterframework.core.compiler.spi.support.AbstractInfo;
 import io.winterframework.mod.http.base.Method;
 import io.winterframework.mod.web.compiler.spi.WebControllerInfo;
 import io.winterframework.mod.web.compiler.spi.WebParameterInfo;
+import io.winterframework.mod.web.compiler.spi.WebProvidedRouterConfigurerInfo;
 import io.winterframework.mod.web.compiler.spi.WebResponseBodyInfo;
 import io.winterframework.mod.web.compiler.spi.WebRouteInfo;
 import io.winterframework.mod.web.compiler.spi.WebRouteQualifiedName;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * Provided {@link WebRouteInfo} implementation used to describes routes in a
+ * {@link WebProvidedRouterConfigurerInfo}.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see AbstractInfo
  */
 class ProvidedWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> implements WebRouteInfo {
 
@@ -47,6 +55,18 @@ class ProvidedWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> implement
 	
 	private final String[] languages;
 	
+	/**
+	 * <p>Creates a provided web route info.</p>
+	 * 
+	 * @param name the route qualified name
+	 * @param reporter the route reporter
+	 * @param paths the route paths
+	 * @param matchTrailingSlash true to match trailing slash, false otherwise
+	 * @param methods            the route methods
+	 * @param consumes           the route consumed media ranges
+	 * @param produces           the route produced media types
+	 * @param languages          the route produced languages
+	 */
 	public ProvidedWebRouteInfo(
 			WebRouteQualifiedName name, 
 			ReporterInfo reporter,
@@ -100,7 +120,6 @@ class ProvidedWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> implement
 	public String[] getLanguages() {
 		return this.languages;
 	}
-
 
 	@Override
 	public Optional<ExecutableElement> getElement() {

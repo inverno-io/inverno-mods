@@ -30,54 +30,247 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * An object encoder providing primitive bindings to encode primitive and common
+ * types.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see Encoder
+ * 
+ * @param <To> the encoded type
  */
 public interface PrimitiveEncoder<To> extends Encoder<Object, To> {
 
+	/**
+	 * <p>Encodes byte.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(Byte value) throws ConverterException;
 
+	/**
+	 * <p>Encodes short.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(Short value) throws ConverterException;
 
+	/**
+	 * <p>Encodes integer.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(Integer value) throws ConverterException;
 
+	/**
+	 * <p>Encodes long.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(Long value) throws ConverterException;
 
+	/**
+	 * <p>Encodes float.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(Float value) throws ConverterException;
 
+	/**
+	 * <p>Encodes double.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(Double value) throws ConverterException;
 
+	/**
+	 * <p>Encodes character.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(Character value) throws ConverterException;
 
+	/**
+	 * <p>Encodes boolean.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(Boolean value) throws ConverterException;
-	
+
+	/**
+	 * <p>Encodes string.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(String value) throws ConverterException;
 
+	/**
+	 * <p>Encodes big integer.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(BigInteger value) throws ConverterException;
 
+	/**
+	 * <p>Encodes big decimal.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(BigDecimal value) throws ConverterException;
 
+	/**
+	 * <p>Encodes local date.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(LocalDate value) throws ConverterException;
 
+	/**
+	 * <p>Encodes local datetime.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(LocalDateTime value) throws ConverterException;
 
+	/**
+	 * <p>Encodes zoned datetime.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(ZonedDateTime value) throws ConverterException;
 
+	/**
+	 * <p>Encodes currency.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(Currency value) throws ConverterException;
 
+	/**
+	 * <p>Encodes locale.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(Locale value) throws ConverterException;
 
+	/**
+	 * <p>Encodes file.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(File value) throws ConverterException;
 
+	/**
+	 * <p>Encodes path.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(Path value) throws ConverterException;
 
+	/**
+	 * <p>Encodes URI.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(URI value) throws ConverterException;
 
+	/**
+	 * <p>Encodes URL.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(URL value) throws ConverterException;
 
+	/**
+	 * <p>Encodes pattern.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(Pattern value) throws ConverterException;
 
+	/**
+	 * <p>Encodes inet address.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(InetAddress value) throws ConverterException;
 
+	/**
+	 * <p>Encodes class.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
 	To encode(Class<?> value) throws ConverterException;
 }
