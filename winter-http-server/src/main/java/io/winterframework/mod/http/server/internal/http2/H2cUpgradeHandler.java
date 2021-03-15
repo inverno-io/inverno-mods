@@ -84,7 +84,6 @@ public class H2cUpgradeHandler extends ByteToMessageDecoder {
 				
 				Http2Settings initialSettings = builder.initialSettings();
 				Optional.ofNullable(this.configuration.http2_header_table_size()).ifPresent(initialSettings::headerTableSize);
-				Optional.ofNullable(this.configuration.http2_push_enabled()).ifPresent(initialSettings::pushEnabled);
 				Optional.ofNullable(this.configuration.http2_max_concurrent_streams()).ifPresent(initialSettings::maxConcurrentStreams);
 				Optional.ofNullable(this.configuration.http2_initial_window_size()).ifPresent(initialSettings::initialWindowSize);
 				Optional.ofNullable(this.configuration.http2_max_frame_size()).ifPresent(initialSettings::maxFrameSize);

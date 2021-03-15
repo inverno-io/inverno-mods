@@ -89,8 +89,16 @@ public class HttpChannelInitializer extends ChannelInitializer<SocketChannel> {
 	@Override
 	protected void initChannel(SocketChannel ch) throws Exception {
 		if(this.configuration.ssl_enabled()) {
-			ch.pipeline().addLast(this.sslContext.newHandler(ch.alloc()));
-	        ch.pipeline().addLast(this.protocolNegociationHandlerSupplier.get());
+			if(this.configuration.h2_enabled()) {
+				ch.pipeline().addLast(this.sslContext.newHandler(ch.alloc()));
+	        	ch.pipeline().addLast(this.protocolNegociationHandlerSupplier.get());
+			}
+			else {
+				ch.pipeline().addLast(this.sslContext.newHandler(ch.alloc()));
+				ch.pipeline().addLast(new Http1xRequestDecoder());
+				ch.pipeline().addLast(new Http1xResponseEncoder(this.directAllocator));
+				ch.pipeline().addLast(this.http1xChannelHandlerFactory.get());
+			}
 		}
 		else {
 			if(this.configuration.h2c_enabled()) {

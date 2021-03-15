@@ -111,14 +111,16 @@ public class SslContextWrapper implements Supplier<SslContext> {
 							}
 						}
 						
-						ApplicationProtocolConfig apn = new ApplicationProtocolConfig(
-							Protocol.ALPN,
-							SelectorFailureBehavior.NO_ADVERTISE,
-							SelectedListenerFailureBehavior.ACCEPT,
-							ApplicationProtocolNames.HTTP_2, 
-							ApplicationProtocolNames.HTTP_1_1
-						);
-						sslContextBuilder.applicationProtocolConfig(apn);
+						if(this.configuration.h2_enabled()) {
+							ApplicationProtocolConfig apn = new ApplicationProtocolConfig(
+								Protocol.ALPN,
+								SelectorFailureBehavior.NO_ADVERTISE,
+								SelectedListenerFailureBehavior.ACCEPT,
+								ApplicationProtocolNames.HTTP_2, 
+								ApplicationProtocolNames.HTTP_1_1
+							);
+							sslContextBuilder.applicationProtocolConfig(apn);
+						}
 						
 						this.sslContext = sslContextBuilder.build();
 					}
