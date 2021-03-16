@@ -74,6 +74,51 @@ public interface HttpServerConfiguration {
 	default String key_store_type() {
 		return "JKS";
 	}
+	
+	/**
+	 * <p>
+	 * Enables/Disables HTTP compression.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to false.
+	 * </p>
+	 * 
+	 * @return true if compression is enabled, false otherwise
+	 */
+	default boolean compression_enabled() {
+		return false;
+	}
+	
+	/**
+	 * <p>
+	 * Enables/Disables HTTP decompression.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to false.
+	 * </p>
+	 * 
+	 * @return true if decompression is enabled, false otherwise
+	 */
+	default boolean decompression_enabled() {
+		return false;
+	}
+	
+	/**
+	 * <p>
+	 * The HTTP compression level.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 6.
+	 * </p>
+	 * 
+	 * @return the HTTP compression level
+	 */
+	default int compression_level() {
+		return 6;
+	}
 
 	/**
 	 * <p>

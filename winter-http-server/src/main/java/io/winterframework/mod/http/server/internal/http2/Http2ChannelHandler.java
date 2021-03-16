@@ -20,6 +20,10 @@ import org.apache.logging.log4j.Logger;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.compression.ZlibWrapper;
+import io.netty.handler.codec.http.HttpContentCompressor;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http2.DelegatingDecompressorFrameListener;
 import io.netty.handler.codec.http2.Http2Connection;
 import io.netty.handler.codec.http2.Http2ConnectionDecoder;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
@@ -39,6 +43,7 @@ import io.winterframework.mod.http.base.header.HeaderService;
 import io.winterframework.mod.http.server.ErrorExchange;
 import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
+import io.winterframework.mod.http.server.HttpServerConfiguration;
 import io.winterframework.mod.http.server.Part;
 import io.winterframework.mod.http.server.internal.AbstractExchange;
 import io.winterframework.mod.http.server.internal.http1x.Http1xChannelHandler;
@@ -62,20 +67,24 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 
 	private static final Logger LOGGER = LogManager.getLogger(Http1xChannelHandler.class);
 	
-	private ExchangeHandler<Exchange> rootHandler;
-	private ExchangeHandler<ErrorExchange<Throwable>> errorHandler;
-	private HeaderService headerService;
-	private ObjectConverter<String> parameterConverter;
-	private MultipartDecoder<Parameter> urlEncodedBodyDecoder;
-	private MultipartDecoder<Part> multipartBodyDecoder;
+	private static final ContentEncodingResolver CONTENT_ENCODING_RESOLVER = new ContentEncodingResolver();
+	
+	private final HttpServerConfiguration configuration; 
+	private final ExchangeHandler<Exchange> rootHandler;
+	private final ExchangeHandler<ErrorExchange<Throwable>> errorHandler;
+	private final HeaderService headerService;
+	private final ObjectConverter<String> parameterConverter;
+	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
+	private final MultipartDecoder<Part> multipartBodyDecoder;
 
-	private IntObjectMap<Http2Exchange> serverStreams;
+	private final IntObjectMap<Http2Exchange> serverStreams;
 
 	/**
 	 * <p>
 	 * Creates a HTTP/2 channel handler.
 	 * </p>
 	 * 
+	 * @param configuration         the HTTP server configuration
 	 * @param decoder               HTTP/2 connection decoder
 	 * @param encoder               HTTP/2 connection encoder
 	 * @param initialSettings       HTTP/2 initial settings
@@ -83,10 +92,12 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	 * @param errorHandler          the error exchange handler
 	 * @param headerService         the header service
 	 * @param parameterConverter    a string object converter
-	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
+	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body
+	 *                              decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 */
 	public Http2ChannelHandler(
+			HttpServerConfiguration configuration,
 			Http2ConnectionDecoder decoder, 
 			Http2ConnectionEncoder encoder,
 			Http2Settings initialSettings,
@@ -98,6 +109,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 			MultipartDecoder<Part> multipartBodyDecoder) {
 		super(decoder, encoder, initialSettings);
 
+		this.configuration = configuration;
 		this.rootHandler = rootHandler;
 		this.errorHandler = errorHandler;
 		this.headerService = headerService;
@@ -164,6 +176,12 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 		Http2Exchange exchange = this.serverStreams.get(streamId);
 		if (exchange == null) {
 			Http2Exchange streamExchange = new Http2Exchange(ctx, this.connection().stream(streamId), headers, this.encoder(), this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.rootHandler, this.errorHandler);
+			if(this.configuration.compression_enabled()) {
+				String acceptEncoding = headers.get(HttpHeaderNames.ACCEPT_ENCODING) != null ? headers.get(HttpHeaderNames.ACCEPT_ENCODING).toString() : null;
+				if(acceptEncoding != null) {
+					streamExchange.setContentEncoding(CONTENT_ENCODING_RESOLVER.resolve(acceptEncoding));
+				}
+			}
 			this.serverStreams.put(streamId, streamExchange);
 			if (endOfStream) {
 				streamExchange.request().data().ifPresent(sink -> sink.tryEmitComplete());
@@ -181,7 +199,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 			((Http2RequestHeaders) exchange.request().headers()).getUnderlyingHeaders().add(headers);
 		}
 	}
-
+	
 	@Override
 	public void onHeadersRead(ChannelHandlerContext ctx, int streamId, Http2Headers headers, int streamDependency, short weight, boolean exclusive, int padding, boolean endOfStream) throws Http2Exception {
 //        System.out.println("onHeaderReads(1)");
@@ -215,6 +233,12 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	@Override
 	public void onSettingsRead(ChannelHandlerContext ctx, Http2Settings settings) throws Http2Exception {
 //        System.out.println("onSettingsRead()");
+		if (this.configuration.decompression_enabled()) {
+			this.decoder().frameListener(new DelegatingDecompressorFrameListener(decoder().connection(), this));
+		} 
+		else {
+			this.decoder().frameListener(this);
+		}
 	}
 
 	@Override
@@ -293,4 +317,40 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 //		System.out.println("Stream go away received");		
 	}
 
+	/**
+	 * <p>
+	 * Used to determine the target content encoding of a response based on the
+	 * {@code accept-encoding} header of a request.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
+	private static class ContentEncodingResolver extends HttpContentCompressor {
+
+		/**
+		 * <p>
+		 * Resolves the response content encoding.
+		 * </p>
+		 * 
+		 * @param acceptEncoding the accept encoding header of a request
+		 * 
+		 * @return a content encoding or null
+		 * @throws NullPointerException if acceptEncoding is null
+		 */
+		public String resolve(String acceptEncoding) throws NullPointerException {
+			ZlibWrapper wrapper = super.determineWrapper(acceptEncoding);
+			if (wrapper != null) {
+				switch(wrapper) {
+					case GZIP:
+						return "gzip";
+					case ZLIB:
+						return "deflate";
+					default:
+						return null;
+				}
+			}
+			return null;
+		}
+	}
 }

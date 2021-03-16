@@ -88,7 +88,7 @@ public class HttpServer {
 	public void start() throws CertificateException, InterruptedException, IOException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException {
 		InetSocketAddress serverAddress = new InetSocketAddress(this.configuration.server_host(), this.configuration.server_port());
 		
-		ServerBootstrap serverBootstrap = this.netService.createServer(serverAddress, 8)
+		ServerBootstrap serverBootstrap = this.netService.createServer(serverAddress)
 			.childHandler(this.channelInitializer);
 
 		this.serverChannelFuture = serverBootstrap.bind(serverAddress).sync();

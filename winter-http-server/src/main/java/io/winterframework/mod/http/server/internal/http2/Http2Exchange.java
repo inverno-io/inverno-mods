@@ -24,6 +24,7 @@ import io.netty.handler.codec.http2.Http2Stream;
 import io.winterframework.mod.base.converter.ObjectConverter;
 import io.winterframework.mod.http.base.Parameter;
 import io.winterframework.mod.http.base.header.HeaderService;
+import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.server.ErrorExchange;
 import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
@@ -88,6 +89,20 @@ public class Http2Exchange extends AbstractExchange {
 		this.encoder = encoder;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
+	}
+	
+	/**
+	 * <p>
+	 * Sets the content encoding of the response negotiated from the request.
+	 * </p>
+	 * 
+	 * @param contentEncoding the target content encoding of the response resolved
+	 *                        from the {@code accept-encoding} header of the request
+	 */
+	public void setContentEncoding(String contentEncoding) {
+		if(contentEncoding != null) {
+			this.response.headers().set(Headers.NAME_CONTENT_ENCODING, contentEncoding);
+		}
 	}
 	
 	@Override
