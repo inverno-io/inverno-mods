@@ -15,20 +15,11 @@
  */
 package io.winterframework.mod.http.server.internal;
 
-import java.util.function.Supplier;
-
 import io.netty.channel.ChannelHandler.Sharable;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
-import io.winterframework.core.annotation.Bean;
-import io.winterframework.core.annotation.Bean.Visibility;
-import io.winterframework.mod.base.net.NetService;
-import io.winterframework.mod.http.server.internal.http1x.Http1xChannelHandler;
-import io.winterframework.mod.http.server.internal.http1x.Http1xRequestDecoder;
-import io.winterframework.mod.http.server.internal.http1x.Http1xResponseEncoder;
-import io.winterframework.mod.http.server.internal.http2.Http2ChannelHandler;
 
 /**
  * <p>
@@ -38,43 +29,31 @@ import io.winterframework.mod.http.server.internal.http2.Http2ChannelHandler;
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-@Bean(visibility = Visibility.PRIVATE)
 @Sharable
 public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiationHandler {
 
-	private ByteBufAllocator directAllocator;
-	
-	private Supplier<Http1xChannelHandler> http1xChannelHandlerFactory;
-	private Supplier<Http2ChannelHandler> http2ChannelHandlerFactory;
+	private final HttpChannelConfigurer channelConfigurer;
 	
 	/**
 	 * <p>
 	 * Creates a HTTP protocol negotiation handler.
 	 * </p>
 	 * 
-	 * @param netService                  the Net service
-	 * @param http1xChannelHandlerFactory a HTTP1.x channel handler factory
-	 * @param http2ChannelHandlerFactory  a HTTP/2 channel handler factory
+	 * @param channelConfigurer the channel configurer
 	 */
-	public HttpProtocolNegotiationHandler(
-			NetService netService,
-			Supplier<Http1xChannelHandler> http1xChannelHandlerFactory,
-			Supplier<Http2ChannelHandler> http2ChannelHandlerFactory) {
+	public HttpProtocolNegotiationHandler(HttpChannelConfigurer channelConfigurer) {
 		super(ApplicationProtocolNames.HTTP_1_1);
-		this.directAllocator = netService.getDirectByteBufAllocator();
-		this.http1xChannelHandlerFactory = http1xChannelHandlerFactory;
-		this.http2ChannelHandlerFactory = http2ChannelHandlerFactory;
+		this.channelConfigurer = channelConfigurer;
 	}
 
 	@Override
 	protected void configurePipeline(ChannelHandlerContext ctx, String protocol) throws Exception {
+		ChannelPipeline pipeline = ctx.pipeline();
 		if (ApplicationProtocolNames.HTTP_2.equals(protocol)) {
-            ctx.pipeline().addLast(this.http2ChannelHandlerFactory.get());
+			this.channelConfigurer.configureHttp2(pipeline);
         }
 		else if (ApplicationProtocolNames.HTTP_1_1.equals(protocol)) {
-			ctx.pipeline().addLast(new Http1xRequestDecoder());
-			ctx.pipeline().addLast(new Http1xResponseEncoder(this.directAllocator));
-			ctx.pipeline().addLast(this.http1xChannelHandlerFactory.get());
+			this.channelConfigurer.configureHttp1x(pipeline);
         }
 		else {
 			throw new IllegalStateException("Unsupported protocol: " + protocol);

@@ -135,7 +135,7 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURATION_CONFIGURER) {
 			StringBuilder configurer = new StringBuilder().append(configurationInfo.getQualifiedName().normalize()).append("_configurator -> {\n"); 
-			configurer.append(Arrays.stream(configurationInfo.getProperties()).map(propertyInfo -> this.visit(propertyInfo, context.withIndentDepth(context.getIndentDepth() + 1).withConfiguration(configurationInfo).withMode(GenerationMode.CONFIGURATION_PROPERTY_CONFIGURER))).collect(context.joining("\n"))).append("\n");
+			configurer.append(Arrays.stream(configurationInfo.getProperties()).map(propertyInfo -> this.visit(propertyInfo, context.withIndentDepthAdd(1).withConfiguration(configurationInfo).withMode(GenerationMode.CONFIGURATION_PROPERTY_CONFIGURER))).collect(context.joining("\n"))).append("\n");
 			configurer.append(context.indent(0)).append("}");
 			return configurer;
 		}
@@ -337,7 +337,7 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 		else if(context.getMode() == GenerationMode.CONFIGURATION_PROPERTY_CONFIGURER) {
 			StringBuilder result = new StringBuilder().append(context.indent(0)).append(context.getConfiguration().getQualifiedName().normalize()).append("_configurator.").append(nestedConfigurationPropertyInfo.getQualifiedName().getPropertyName()).append("(");
 			result.append(this.visit(nestedConfigurationPropertyInfo.getConfiguration(), context.withMode(GenerationMode.CONFIGURATION_CONFIGURER)));
-			result.append(context.indent(0)).append(");");
+			result.append(");");
 			return result;
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURATION_CONFIGURATOR_PROPERTY_INJECTOR) {

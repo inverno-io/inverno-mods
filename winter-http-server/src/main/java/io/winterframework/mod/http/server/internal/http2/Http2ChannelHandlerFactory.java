@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import io.netty.handler.codec.http2.AbstractHttp2ConnectionHandlerBuilder;
+import io.netty.handler.codec.http2.CompressorHttp2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2ConnectionDecoder;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Settings;
@@ -111,11 +112,22 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 
 		@Override
 		protected Http2ChannelHandler build(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings) throws Exception {
+			if (Http2ChannelHandlerFactory.this.configuration.compression_enabled()) {
+				encoder = new CompressorHttp2ConnectionEncoder(
+					encoder, 
+					Http2ChannelHandlerFactory.this.configuration.compression_level(),
+					CompressorHttp2ConnectionEncoder.DEFAULT_WINDOW_BITS,
+					CompressorHttp2ConnectionEncoder.DEFAULT_MEM_LEVEL
+				);
+			}
+			
 			Http2ChannelHandler handler = new Http2ChannelHandler(
+				Http2ChannelHandlerFactory.this.configuration,
 				decoder, 
 				encoder, 
 				initialSettings,
-				Http2ChannelHandlerFactory.this.rootHandler, Http2ChannelHandlerFactory.this.errorHandler,
+				Http2ChannelHandlerFactory.this.rootHandler, 
+				Http2ChannelHandlerFactory.this.errorHandler,
 				Http2ChannelHandlerFactory.this.headerService,
 				Http2ChannelHandlerFactory.this.parameterConverter,
 				Http2ChannelHandlerFactory.this.urlEncodedBodyDecoder,

@@ -46,6 +46,10 @@ public final class Headers {
 	 */
 	public static final String NAME_ACCEPT = "accept";
 	/**
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.4">RFC 7231 Section 5.3.4</a>
+	 */
+	public static final String NAME_ACCEPT_ENCODING = "accept-encoding";
+	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.5">RFC 7231 Section 5.3.5</a>
 	 */
 	public static final String NAME_ACCEPT_LANGUAGE = "accept-language";
@@ -62,6 +66,10 @@ public final class Headers {
 	 */
 	public static final String NAME_CONTENT_DISPOSITION = "content-disposition";
 	/**
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-3.1.2.2">RFC 7231 Section 3.1.2.2</a>
+	 */
+	public static final String NAME_CONTENT_ENCODING = "content-encoding";
+	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-3.1.1.5">RFC 7231 Section 3.1.1.5</a>
 	 */
 	public static final String NAME_CONTENT_TYPE = "content-type";
@@ -77,6 +85,10 @@ public final class Headers {
 	 * <a href="https://tools.ietf.org/html/rfc7230#section-5.4">RFC 7230 Section 5.4</a>
 	 */
 	public static final String NAME_HOST = "host";
+	/**
+	 * <a href="https://tools.ietf.org/html/rfc7540#section-3.2.1">RFC 7540 Section 3.2.1</a>
+	 */
+	public static final String NAME_HTTP2_SETTINGS = "http2-settings";
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-7.1.2">RFC 7231 Section 7.1.2</a>
 	 */
@@ -109,6 +121,10 @@ public final class Headers {
 	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.3.1">RFC 7230 Section 3.3.1</a>
 	 */
 	public static final String NAME_TRANSFER_ENCODING = "transfer-encoding";
+	/**
+	 * <a href="https://tools.ietf.org/html/rfc7230#section-6.7">RFC 7230 Section 6.7</a>
+	 */
+	public static final String NAME_UPGRADE = "upgrade";
 	
 	/* HTTP/2 pseudo headers */
 	/**
@@ -142,9 +158,25 @@ public final class Headers {
 	 */
 	public static final String VALUE_CLOSE = "close";
 	/**
+	 * deflate content encoding as defined by <a href="https://www.ietf.org/rfc/rfc1951.txt">RFC 1951</a>
+	 */
+	public static final String VALUE_DEFLATE = "deflate";
+	/**
+	 * gzip content encoding as defined by <a href="https://tools.ietf.org/html/rfc1952">RFC 1952</a>
+	 */
+	public static final String VALUE_GZIP = "gzip";
+	/**
 	 * <a href="https://tools.ietf.org/html/rfc7230#section-4.3">RFC 7230 Section 4.3</a>
 	 */
 	public static final String VALUE_TRAILERS = "trailers";
+	/**
+	 * x-deflate content encoding as defined by <a href="https://www.ietf.org/rfc/rfc1951.txt">RFC 1951</a>
+	 */
+	public static final String VALUE_X_DEFLATE = "x-deflate";
+	/**
+	 * x-gzip content encoding as defined by <a href="https://tools.ietf.org/html/rfc1952">RFC 1952</a>
+	 */
+	public static final String VALUE_X_GZIP = "x-gzip";
 	
 	private Headers() {}
 	
