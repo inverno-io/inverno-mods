@@ -16,7 +16,6 @@
 package io.winterframework.mod.base.converter;
 
 import java.io.File;
-import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -39,6 +38,8 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import io.winterframework.mod.base.reflect.Types;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
@@ -120,15 +121,11 @@ public class StringConverterTest {
 		Assertions.assertEquals(class_value, converter.decodeClass(converter.encode(class_value)));
 	}
 	
-	private Collection<Integer> collectionInteger;
-	
 	@Test
 	public void testDecodeType() throws NoSuchFieldException, SecurityException {
 		StringConverter converter = new StringConverter();
 		
-		Type collectionIntegerType = StringConverterTest.class.getDeclaredField("collectionInteger").getGenericType();
-		
-		Collection<Integer> data = converter.decode("4,5,6,7", collectionIntegerType);
+		Collection<Integer> data = converter.decode("4,5,6,7", Types.type(Collection.class).type(Integer.class).and().build());
 		
 		Assertions.assertEquals(4, data.size());
 		

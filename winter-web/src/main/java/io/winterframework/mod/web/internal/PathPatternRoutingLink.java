@@ -21,7 +21,7 @@ import java.util.Map.Entry;
 
 import io.winterframework.mod.base.net.URIMatcher;
 import io.winterframework.mod.base.net.URIPattern;
-import io.winterframework.mod.http.base.WebException;
+import io.winterframework.mod.http.base.HttpException;
 import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.web.PathAwareRoute;
 import io.winterframework.mod.web.PathParameters;
@@ -148,7 +148,7 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 	}
 
 	@Override
-	public void handle(A exchange) throws WebException {
+	public void handle(A exchange) throws HttpException {
 		if (this.handlers.isEmpty()) {
 			this.nextLink.handle(exchange);
 		} 

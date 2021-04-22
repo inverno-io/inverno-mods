@@ -49,8 +49,8 @@ import io.winterframework.mod.http.server.ExchangeHandler;
  * 
  * @see Exchange
  * @see ExchangeHandler
- * @see AbstractRoute
- * @see AbstractRouteManager
+ * @see Route
+ * @see RouteManager
  * 
  * @param <A> the type of exchange handled by the route
  * @param <B> the router type
@@ -58,7 +58,7 @@ import io.winterframework.mod.http.server.ExchangeHandler;
  * @param <D> the route type
  * @param <E> the type of exchange handled by the router
  */
-public interface AbstractRouter<A extends Exchange, B extends AbstractRouter<A, B, C, D, E>, C extends AbstractRouteManager<A, B, C, D, E>, D extends AbstractRoute<A>, E extends Exchange>
+public interface Router<A extends Exchange, B extends Router<A, B, C, D, E>, C extends RouteManager<A, B, C, D, E>, D extends Route<A>, E extends Exchange>
 		extends ExchangeHandler<E> {
 
 	/**
@@ -94,6 +94,4 @@ public interface AbstractRouter<A extends Exchange, B extends AbstractRouter<A, 
 	 * @return a set of routes or an empty set if no route is defined in the router
 	 */
 	Set<D> getRoutes();
-
-	// interceptors?
 }

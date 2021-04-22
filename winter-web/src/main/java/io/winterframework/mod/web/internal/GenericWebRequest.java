@@ -19,6 +19,7 @@ import java.net.SocketAddress;
 import java.util.Optional;
 
 import io.winterframework.mod.base.converter.ObjectConverter;
+import io.winterframework.mod.base.net.URIBuilder;
 import io.winterframework.mod.http.base.Method;
 import io.winterframework.mod.http.server.QueryParameters;
 import io.winterframework.mod.http.server.Request;
@@ -111,6 +112,11 @@ class GenericWebRequest implements WebRequest {
 	@Override
 	public String getPathAbsolute() {
 		return this.request.getPathAbsolute();
+	}
+	
+	@Override
+	public URIBuilder getPathBuilder() {
+		return this.request.getPathBuilder();
 	}
 
 	@Override

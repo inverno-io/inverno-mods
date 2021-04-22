@@ -71,7 +71,7 @@ public class Http1xRequest extends AbstractRequest {
 	}
 	
 	@Override
-	protected URIBuilder getPathBuilder() {
+	protected URIBuilder getPrimaryPathBuilder() {
 		if(this.pathBuilder == null) {
 			this.pathBuilder = URIs.uri(this.httpRequest.uri(), false, URIs.Option.NORMALIZED);
 		}

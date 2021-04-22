@@ -23,7 +23,7 @@ package io.winterframework.mod.configuration;
  * <p>Configuration properties can be queries as follows:</p>
  * 
  * <blockquote><pre>
- * ConfigurationSource{@literal <?, ?, ?>} source = null;
+ * ConfigurationSource{@literal <?, ?, ?>} source = ...
  * 
  * Map{@literal <String, String>} propertiesAsString = source
  *     .get("prop1", "prop2")

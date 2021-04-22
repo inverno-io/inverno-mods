@@ -1221,7 +1221,7 @@ public final class Headers {
 			 * <li>the range quality value is multiplied by 1000</li>
 			 * <li>* is worth 0</li>
 			 * <li>xx is worth 10</li>
-			 * <li>xx is worth 20</li>
+			 * <li>xx-xx is worth 20</li>
 			 * </ul>
 			 * 
 			 * @return the score of the language range

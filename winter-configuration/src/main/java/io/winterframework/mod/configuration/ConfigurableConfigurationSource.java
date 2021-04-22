@@ -28,9 +28,9 @@ import java.util.Map;
  * </p>
  * 
  * <blockquote><pre>
- * ConfigurableConfigurationSource{@literal <?,?,?,?,?,?>} src = ...;
+ * ConfigurableConfigurationSource{@literal <?,?,?,?,?,?>} source = ...;
  * 
- * src.set("prop1", "value1")
+ * source.set("prop1", "value1")
  *     .and().set("prop2", "value2")
  *     .execute()
  *     .subscribe();

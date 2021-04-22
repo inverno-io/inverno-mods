@@ -75,6 +75,7 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 	private final WebRouteDuplicateDetector webRouteDuplicateDectector;
 	
 	private PluginContext pluginContext;
+	private TypeHierarchyExtractor typeHierarchyExtractor;
 	
 	private TypeMirror webControllerAnnotationType;
 	private TypeMirror webRoutesAnnotationType;
@@ -117,6 +118,8 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 		TypeMirror webExchangeType = this.pluginContext.getElementUtils().getTypeElement(WebExchange.class.getCanonicalName()).asType();
 		TypeElement webRouterConfigurerTypeElement = this.pluginContext.getElementUtils().getTypeElement(WebRouterConfigurer.class.getCanonicalName());
 		this.webRouterConfigurerType = this.pluginContext.getTypeUtils().getDeclaredType(webRouterConfigurerTypeElement, webExchangeType);
+		
+		this.typeHierarchyExtractor = new TypeHierarchyExtractor(this.pluginContext.getTypeUtils());
 	}
 
 	@Override
@@ -138,7 +141,7 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 		for(Map.Entry<WebRouteInfo, Set<WebRouteInfo>> e : this.webRouteDuplicateDectector.findDuplicates(Stream.concat(webControllers.stream().flatMap(controller -> Arrays.stream(controller.getRoutes())), webRouters.stream().flatMap(router -> Arrays.stream(router.getRoutes()))).collect(Collectors.toList())).entrySet()) {
 			e.getKey().error("Route " + e.getKey().getQualifiedName() + " is conflicting with route(s):\n" + e.getValue().stream().map(route -> "- " + route.getQualifiedName()).collect(Collectors.joining("\n")));
 		}
-			
+		
 		if(!webRouterConfigurerInfo.hasError() && (webRouterConfigurerInfo.getControllers().length > 0 || webRouterConfigurerInfo.getRouters().length > 0)) {
 			try {
 				execution.createSourceFile(webRouterConfigurerInfo.getQualifiedName().getClassName(), execution.getElements().stream().toArray(Element[]::new), () -> {
@@ -149,7 +152,7 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 				throw new PluginExecutionException("Unable to generate web router configurer class " + webRouterConfigurerInfo.getQualifiedName().getClassName(), e);
 			}
 			
-			if(this.pluginContext.getOptions().isOptionActivated(WebRouterConfigurerCompilerPlugin.OPTION_GENERATE_OPENAPI_DEFINITION, false)) {
+			if(webRouterConfigurerInfo.getControllers().length > 0 && this.pluginContext.getOptions().isOptionActivated(WebRouterConfigurerCompilerPlugin.OPTION_GENERATE_OPENAPI_DEFINITION, false)) {
 				try {
 					execution.createResourceFile("META-INF/winter/web/openapi.yml", execution.getElements().stream().toArray(Element[]::new), () -> {
 						return webRouterConfigurerInfo.accept(this.openApiGenrator, new WebRouterConfigurerOpenApiGenerationContext(this.pluginContext.getTypeUtils(), this.pluginContext.getElementUtils(), this.pluginContext.getDocUtils(), WebRouterConfigurerOpenApiGenerationContext.GenerationMode.ROUTER_SPEC)).toString();
@@ -177,8 +180,13 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 		return Arrays.stream(execution.getBeans())
 			.map(bean -> {
 				TypeElement beanElement = (TypeElement) this.pluginContext.getTypeUtils().asElement(bean.getType());
-				return this.pluginContext.getElementUtils().getAllAnnotationMirrors(beanElement).stream()
-					.filter(annotation -> this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.webControllerAnnotationType))
+				return this.typeHierarchyExtractor.extractTypeHierarchy(beanElement).stream()
+					.map(element -> this.pluginContext.getElementUtils().getAllAnnotationMirrors(element).stream()
+						.filter(annotation -> this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.webControllerAnnotationType))
+						.findFirst()
+					)
+					.filter(Optional::isPresent)
+					.map(Optional::get)
 					.findFirst()
 					.map(webControllerAnnotation -> {
 						String controllerRootPath = null;

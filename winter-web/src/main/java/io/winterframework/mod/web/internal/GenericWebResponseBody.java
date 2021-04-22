@@ -80,17 +80,32 @@ class GenericWebResponseBody implements WebResponseBody {
 	
 	@Override
 	public <T> SseEncoder<T> sseEncoder(String mediaType) {
-		return this.dataConversionService.createSseEncoder(this.responseBody.sse(), mediaType);
+		try {
+			return this.dataConversionService.createSseEncoder(this.responseBody.sse(), mediaType);
+		} 
+		catch (NoConverterException e) {
+			throw new InternalServerErrorException("No converter found for media type: " + e.getMediaType(), e);
+		}
 	}
 	
 	@Override
 	public <T> SseEncoder<T> sseEncoder(String mediaType, Class<T> type) {
-		return this.dataConversionService.createSseEncoder(this.responseBody.sse(), mediaType, type);
+		try {
+			return this.dataConversionService.createSseEncoder(this.responseBody.sse(), mediaType, type);
+		} 
+		catch (NoConverterException e) {
+			throw new InternalServerErrorException("No converter found for media type: " + e.getMediaType(), e);
+		}
 	}
 	
 	@Override
 	public <T> SseEncoder<T> sseEncoder(String mediaType, Type type) {
-		return this.dataConversionService.createSseEncoder(this.responseBody.sse(), mediaType, type);
+		try {
+			return this.dataConversionService.createSseEncoder(this.responseBody.sse(), mediaType, type);
+		} 
+		catch (NoConverterException e) {
+			throw new InternalServerErrorException("No converter found for media type: " + e.getMediaType(), e);
+		}
 	}
 	
 	@Override
@@ -100,7 +115,14 @@ class GenericWebResponseBody implements WebResponseBody {
 		// - check that the produced media type matches the Accept header
 		// => We don't have to do anything, if the media is empty, we don't know what to do anyway, so it is up to the user to explicitly set the content type on the response which is enough to make the conversion works otherwise we must fail
 		return this.response.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE)
-			.map(contentType -> this.dataConversionService.<T>createEncoder(this.response.body().raw(), contentType.getMediaType()))
+			.map(contentType -> {
+				try {
+					return this.dataConversionService.<T>createEncoder(this.response.body().raw(), contentType.getMediaType());
+				} 
+				catch (NoConverterException e) {
+					throw new InternalServerErrorException("No converter found for media type: " + e.getMediaType(), e);
+				}
+			})
 			.orElseThrow(() -> new InternalServerErrorException("Empty media type"));
 	}
 
@@ -116,7 +138,14 @@ class GenericWebResponseBody implements WebResponseBody {
 		// - check that the produced media type matches the Accept header
 		// => We don't have to do anything, if the media is empty, we don't know what to do anyway, so it is up to the user to explicitly set the content type on the response which is enough to make the conversion works otherwise we must fail
 		return this.response.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE)
-			.map(contentType -> this.dataConversionService.<T>createEncoder(this.response.body().raw(), contentType.getMediaType(), type))
+			.map(contentType -> {
+				try {
+					return this.dataConversionService.<T>createEncoder(this.response.body().raw(), contentType.getMediaType(), type);
+				}
+				catch (NoConverterException e) {
+					throw new InternalServerErrorException("No converter found for media type: " + e.getMediaType(), e);
+				}
+			})
 			.orElseThrow(() -> new InternalServerErrorException("Empty media type"));
 	}
 }

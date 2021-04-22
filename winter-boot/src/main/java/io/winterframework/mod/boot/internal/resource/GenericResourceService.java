@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import io.winterframework.core.annotation.Bean;
@@ -116,5 +117,20 @@ public class GenericResourceService implements @Provide ResourceService {
 		else {
 			throw new IllegalArgumentException("Unsupported scheme: " + scheme);
 		}
+	}
+	
+	/**
+	 * <p>
+	 * Resource providers socket.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see GenericresourceService
+	 */
+	@Bean( name = "resourceProviders" )
+	public static interface ResourceProvidersSocket extends Supplier<ResourceProvider<?>> {
+		
 	}
 }

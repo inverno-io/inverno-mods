@@ -17,6 +17,10 @@ package io.winterframework.mod.boot.internal.net;
 
 import java.net.SocketAddress;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
@@ -44,6 +48,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.unix.DomainSocketAddress;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Destroy;
 import io.winterframework.core.annotation.Init;
@@ -62,8 +68,11 @@ import io.winterframework.mod.base.net.NetService;
 @Bean(name = "netService")
 public class GenericNetService implements @Provide NetService {
 	
+	private Logger logger = LogManager.getLogger(this.getClass());
+	
 	private NetConfiguration netConfiguration;
 	
+	private EventLoopGroup acceptorEventLoopGroup;
 	private EventLoopGroup rootEventLoopGroup;
 	
 	private final int nThreads;
@@ -142,12 +151,33 @@ public class GenericNetService implements @Provide NetService {
 	
 	@Init
 	public void init() {
+		this.logger.debug("Creating acceptor event loop group ({})...", () -> this.transportType.toString().toLowerCase());
+		this.acceptorEventLoopGroup = this.createEventLoopGroup(1, new NonBlockingThreadFactory("winter-acceptor-" + this.transportType.toString().toLowerCase(), false, 5));
+		this.logger.debug("Creating root IO event loop group ({}) with {} threads...", () -> this.transportType.toString().toLowerCase(), () -> this.nThreads);
 		this.rootEventLoopGroup = this.createEventLoopGroup(this.nThreads, new NonBlockingThreadFactory("winter-io-" + this.transportType.toString().toLowerCase(), false, 5));
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Destroy
 	public void destroy() throws InterruptedException {
-		this.rootEventLoopGroup.shutdownGracefully().sync();
+		this.logger.debug("Destroying acceptor event loop group...");
+		this.acceptorEventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS).addListener(new GenericFutureListener() {
+			@Override
+			public void operationComplete(Future future) throws Exception {
+				if(!future.isSuccess()) {
+					GenericNetService.this.logger.warn("Error while destroying acceptor event loop group", future.cause());
+				}
+				GenericNetService.this.logger.debug("Destroying root event loop group...");
+				GenericNetService.this.rootEventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS).addListener(new GenericFutureListener() {
+					@Override
+					public void operationComplete(Future future) throws Exception {
+						if(!future.isSuccess()) {
+							GenericNetService.this.logger.warn("Error while destroying root IO event loop group", future.cause());
+						}
+					}
+				});
+			}
+		});
 	}
 	
 	@Override
@@ -196,7 +226,7 @@ public class GenericNetService implements @Provide NetService {
 	@Override
 	public ServerBootstrap createServer(SocketAddress socketAddress, int nThreads) {
 		ServerBootstrap bootstrap = new ServerBootstrap();
-		bootstrap.group(this.createAcceptorEventLoopGroup(), this.createIoEventLoopGroup(nThreads));
+		bootstrap.group(this.getAcceptorEventLoopGroup(), this.createIoEventLoopGroup(nThreads));
 		if(this.transportType == TransportType.KQUEUE) {
 			if(socketAddress instanceof DomainSocketAddress) {
 				bootstrap.channelFactory(KQueueServerDomainSocketChannel::new);
@@ -212,29 +242,28 @@ public class GenericNetService implements @Provide NetService {
 			else {
 				bootstrap.channelFactory(EpollServerSocketChannel::new);
 			}
+			bootstrap.option(EpollChannelOption.SO_REUSEPORT, this.netConfiguration.reuse_port())
+				.childOption(EpollChannelOption.TCP_QUICKACK, this.netConfiguration.tcp_quickack())
+				.childOption(EpollChannelOption.TCP_CORK, this.netConfiguration.tcp_cork());
 		}
 		else {
 			bootstrap.channelFactory(NioServerSocketChannel::new);
 		}
 		
 		bootstrap.option(ChannelOption.SO_REUSEADDR, this.netConfiguration.reuse_address())
-			.option(EpollChannelOption.SO_REUSEPORT, this.netConfiguration.reuse_port())
 			.childOption(ChannelOption.SO_KEEPALIVE, this.netConfiguration.keep_alive())
 			.childOption(ChannelOption.TCP_NODELAY, this.netConfiguration.tcp_no_delay())
-			.childOption(EpollChannelOption.TCP_QUICKACK, this.netConfiguration.tcp_quickack())
-			.childOption(EpollChannelOption.TCP_CORK, this.netConfiguration.tcp_cork())
 			.childOption(ChannelOption.ALLOCATOR, this.allocator);
 		
 		if(this.netConfiguration.accept_backlog() != null) {
 			bootstrap.option(ChannelOption.SO_BACKLOG, this.netConfiguration.accept_backlog());
 		}
-		
 		return bootstrap;
 	}
 
 	@Override
-	public EventLoopGroup createAcceptorEventLoopGroup() {
-		return this.createEventLoopGroup(1, new NonBlockingThreadFactory("winter-acceptor-" + this.transportType.toString().toLowerCase(), false, 5));
+	public EventLoopGroup getAcceptorEventLoopGroup() {
+		return this.acceptorEventLoopGroup;
 	}
 	
 	@Override

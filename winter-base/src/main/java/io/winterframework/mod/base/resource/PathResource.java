@@ -22,7 +22,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
 import java.util.Objects;
@@ -97,8 +96,8 @@ public class PathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public boolean isFile() {
-		return Files.isRegularFile(this.path);
+	public Optional<Boolean> isFile() {
+		return Optional.of(Files.isRegularFile(this.path));
 	}
 
 	@Override
@@ -243,8 +242,8 @@ public class PathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Resource resolve(URI uri) {
-		PathResource resolvedResource = new PathResource(Paths.get(this.getURI().resolve(uri.normalize())), this.getMediaTypeService());
+	public Resource resolve(Path path) {
+		PathResource resolvedResource = new PathResource(this.path.resolve(path), this.getMediaTypeService());
 		resolvedResource.setExecutor(this.getExecutor());
 		return resolvedResource;
 	}

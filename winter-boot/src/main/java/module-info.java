@@ -31,8 +31,8 @@ import io.winterframework.mod.base.resource.ResourceService;
  * <p>It defines the following sockets:</p>
  * 
  * <dl>
- * <dt>bootConfiguration</dt>
- * <dd>the boot module configuration</dd>
+ * <dt>netConfiguration</dt>
+ * <dd>the net service configuration</dd>
  * <dt>compoundDecoders</dt>
  * <dd>extend the parameter converter decoding capabilities with a list of {@link CompoundDecoder}</dd>
  * <dt>compoundEncoders</dt>
@@ -48,8 +48,8 @@ import io.winterframework.mod.base.resource.ResourceService;
  * </p>
  * 
  * <dl>
- * <dt>bootConfiguration</dt>
- * <dd>the boot module configuration</dd>
+ * <dt>netConfiguration</dt>
+ * <dd>the net service configuration</dd>
  * <dt>netService</dt>
  * <dd>a {@link NetService} used to create optimized event loop group as well as
  * network clients and servers</dd>
@@ -87,14 +87,15 @@ module io.winterframework.mod.boot {
 	requires transitive io.winterframework.mod.base;
 	requires transitive io.winterframework.mod.configuration;
 	
+	requires org.apache.logging.log4j;
 	requires transitive reactor.core;
 	requires transitive org.reactivestreams;
 	
 	requires transitive io.netty.buffer;
 	requires io.netty.common;
 	requires transitive io.netty.transport;
-	requires static io.netty.transport.epoll;
 	requires static io.netty.transport.unix.common;
+	requires static io.netty.transport.epoll;
 	requires static io.netty.transport.kqueue;
 	
 	requires transitive com.fasterxml.jackson.databind;

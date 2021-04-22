@@ -21,10 +21,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import io.winterframework.mod.http.base.WebException;
-import io.winterframework.mod.http.server.ErrorExchange;
+import io.winterframework.mod.http.base.HttpException;
 import io.winterframework.mod.web.ErrorAwareRoute;
-import io.winterframework.mod.web.ErrorRoute;
+import io.winterframework.mod.web.ErrorWebExchange;
+import io.winterframework.mod.web.ErrorWebRoute;
 
 /**
  * <p>
@@ -38,9 +38,9 @@ import io.winterframework.mod.web.ErrorRoute;
  * @param <A> the type of exchange handled by the route
  * @param <B> the route type
  */
-class ThrowableRoutingLink extends RoutingLink<ErrorExchange<Throwable>, ThrowableRoutingLink, ErrorRoute> {
+class ThrowableRoutingLink extends RoutingLink<ErrorWebExchange<Throwable>, ThrowableRoutingLink, ErrorWebRoute> {
 
-	private Map<Class<? extends Throwable>, RoutingLink<ErrorExchange<Throwable>, ?, ErrorRoute>> handlers;
+	private Map<Class<? extends Throwable>, RoutingLink<ErrorWebExchange<Throwable>, ?, ErrorWebRoute>> handlers;
 	
 	private static final Comparator<Class<? extends Throwable>> CLASS_COMPARATOR = (t1, t2) -> {
 		if(t1.isAssignableFrom(t2)) {
@@ -65,7 +65,7 @@ class ThrowableRoutingLink extends RoutingLink<ErrorExchange<Throwable>, Throwab
 	}
 
 	@Override
-	public ThrowableRoutingLink setRoute(ErrorRoute route) {
+	public ThrowableRoutingLink setRoute(ErrorWebRoute route) {
 		Class<? extends Throwable> error = route.getError();
 		if(error != null) {
 			if(this.handlers.containsKey(error)) {
@@ -83,10 +83,10 @@ class ThrowableRoutingLink extends RoutingLink<ErrorExchange<Throwable>, Throwab
 	}
 	
 	@Override
-	public void enableRoute(ErrorRoute route) {
+	public void enableRoute(ErrorWebRoute route) {
 		Class<? extends Throwable> error = route.getError();
 		if(error != null) {
-			RoutingLink<ErrorExchange<Throwable>, ?, ErrorRoute> handler = this.handlers.get(error);
+			RoutingLink<ErrorWebExchange<Throwable>, ?, ErrorWebRoute> handler = this.handlers.get(error);
 			if(handler != null) {
 				handler.enableRoute(route);
 			}
@@ -98,10 +98,10 @@ class ThrowableRoutingLink extends RoutingLink<ErrorExchange<Throwable>, Throwab
 	}
 	
 	@Override
-	public void disableRoute(ErrorRoute route) {
+	public void disableRoute(ErrorWebRoute route) {
 		Class<? extends Throwable> error = route.getError();
 		if(error != null) {
-			RoutingLink<ErrorExchange<Throwable>, ?, ErrorRoute> handler = this.handlers.get(error);
+			RoutingLink<ErrorWebExchange<Throwable>, ?, ErrorWebRoute> handler = this.handlers.get(error);
 			if(handler != null) {
 				handler.disableRoute(route);
 			}
@@ -113,10 +113,10 @@ class ThrowableRoutingLink extends RoutingLink<ErrorExchange<Throwable>, Throwab
 	}
 	
 	@Override
-	public void removeRoute(ErrorRoute route) {
+	public void removeRoute(ErrorWebRoute route) {
 		Class<? extends Throwable> error = route.getError();
 		if(error != null) {
-			RoutingLink<ErrorExchange<Throwable>, ?, ErrorRoute> handler = this.handlers.get(error);
+			RoutingLink<ErrorWebExchange<Throwable>, ?, ErrorWebRoute> handler = this.handlers.get(error);
 			if(handler != null) {
 				handler.removeRoute(route);
 				if(!handler.hasRoute()) {
@@ -143,18 +143,18 @@ class ThrowableRoutingLink extends RoutingLink<ErrorExchange<Throwable>, Throwab
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <F extends RouteExtractor<ErrorExchange<Throwable>, ErrorRoute>> void extractRoute(F extractor) {
+	public <F extends RouteExtractor<ErrorWebExchange<Throwable>, ErrorWebRoute>> void extractRoute(F extractor) {
 		super.extractRoute(extractor);
 		if(!(extractor instanceof ErrorAwareRouteExtractor)) {
 			throw new IllegalArgumentException("Route extractor is not error aware");
 		}
 		this.handlers.entrySet().stream().forEach(e -> {
-			e.getValue().extractRoute(((ErrorAwareRouteExtractor<ErrorExchange<Throwable>, ErrorRoute, ?>)extractor).error(e.getKey()));
+			e.getValue().extractRoute(((ErrorAwareRouteExtractor<ErrorWebExchange<Throwable>, ErrorWebRoute, ?>)extractor).error(e.getKey()));
 		});
 	}
 	
 	@Override
-	public void handle(ErrorExchange<Throwable> exchange) throws WebException {
+	public void handle(ErrorWebExchange<Throwable> exchange) throws HttpException {
 		// We take the first match, or we delegate to the next link
 		this.handlers.entrySet().stream()
 			.filter(e -> e.getKey().isAssignableFrom(exchange.getError().getClass()))

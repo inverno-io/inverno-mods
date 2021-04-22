@@ -77,10 +77,41 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * Properties are organized in a tree of parameters sorted in natural order, a
- * global revision is defined for the whole tree and a revision can also be
- * assigned to any branch of that tree.
+ * Properties can be viewed in a tree of properties whose nodes correspond to
+ * parameters in natural order, a global revision is defined at the root of the
+ * tree and finer revisions can also be created in child nodes to version
+ * particular branches.
  * </p>
+ * 
+ * <p>
+ * Particular care must be taken when deciding to version a specific branch, a
+ * property can only be versioned once which is the case when versioned property
+ * sets are disjointed. More specifically, a given property can't be versioned
+ * twice which might happen when the configuration is activated with different
+ * overlapping sets of parameters. An exception is normally thrown when such
+ * situation is detected. On the other hand, it is quite possible to version
+ * nested branches.
+ * </p>
+ * 
+ * <p>
+ * For instance, the following setup is most likely to fail if properties can be
+ * defined with both {@code environment="production"} and {@code zone="eu"}
+ * parameters:
+ * </p>
+ * 
+ * <ul>
+ * <li>{@code []}: global tree</li>
+ * <li>{@code [environment="production"]}: production environment tree</li>
+ * <li>{@code [zone="eu"]}: eu zone tree</li>
+ * </ul>
+ * 
+ * <p>While the following setup will work just fine:</p>
+ * 
+ * <ul>
+ * <li>{@code []}: global tree</li>
+ * <li>{@code [environment="production"]}: production environment tree</li>
+ * <li>{@code [environment="production", zone="eu"]}: eu zone tree</li>
+ * </ul>
  * 
  * <p>
  * Properties are set for the working revision corresponding to their
@@ -90,24 +121,30 @@ import reactor.core.publisher.Mono;
  * activate a specific revision.
  * </p>
  * 
- * <p>A typical workflow to set properties is:</p>
+ * <p>
+ * A typical workflow to set properties is:
+ * </p>
  * 
- * <blockquote><pre>
- * RedisConfigurationSource source = null;
- *     source
- *         .set("db.url", "jdbc:oracle:thin:@dev.db.server:1521:sid").withParameters("env", "dev").and()
- *         .set("db.url", "jdbc:oracle:thin:@prod_eu.db.server:1521:sid").withParameters("env", "prod", "zone", "eu").and()
- *         .set("db.url", "jdbc:oracle:thin:@prod_us.db.server:1521:sid").withParameters("env", "prod", "zone", "us")
- *         .execute()
- *         .blockLast();
+ * <blockquote>
  * 
- *     // Activate working revision globally
- *     source.activate().block();
- *     
- *     // Activate working revision for dev environment and prod environment independently
- *     source.activate("env", "dev").block();
- *     source.activate("env", "prod").block();
- * </pre></blockquote>
+ * <pre>
+ * RedisConfigurationSource source = ...;
+ * source
+ *     .set("db.url", "jdbc:oracle:thin:@dev.db.server:1521:sid").withParameters("env", "dev").and()
+ *     .set("db.url", "jdbc:oracle:thin:@prod_eu.db.server:1521:sid").withParameters("env", "prod", "zone", "eu").and()
+ *     .set("db.url", "jdbc:oracle:thin:@prod_us.db.server:1521:sid").withParameters("env", "prod", "zone", "us")
+ *     .execute()
+ *     .blockLast();
+ * 
+ * // Activate working revision globally
+ * source.activate().block();
+ * 
+ * // Activate working revision for dev environment and prod environment independently
+ * source.activate("env", "dev").block();
+ * source.activate("env", "prod").block();
+ * </pre>
+ * 
+ * </blockquote>
  * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0

@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import io.winterframework.core.annotation.Bean;
+import io.winterframework.core.annotation.Overridable;
 import io.winterframework.core.annotation.Provide;
 import io.winterframework.mod.base.resource.MediaTypeService;
 import io.winterframework.mod.base.resource.ResourceException;
@@ -37,6 +38,7 @@ import io.winterframework.mod.base.resource.ResourceException;
  * @see MediaTypeService
  */
 @Bean(name = "mediaTypeService")
+@Overridable
 public class GenericMediaTypeService implements @Provide MediaTypeService {
 
 	@Override

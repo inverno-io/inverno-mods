@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import io.winterframework.mod.base.resource.ClasspathResource;
 import io.winterframework.mod.configuration.AbstractHashConfigurationSource.HashConfigurationQueryResult;
 import io.winterframework.mod.configuration.ConfigurationKey.Parameter;
 
@@ -21,7 +22,8 @@ public class PropertyFileConfigurationSourceTest {
 	
 	@Test
 	public void testPropertyFileConfigurationSource() throws URISyntaxException {
-		PropertyFileConfigurationSource src = new PropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.properties").toURI()));
+//		PropertyFileConfigurationSource src = new PropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.properties").toURI()));
+		PropertyFileConfigurationSource src = new PropertyFileConfigurationSource(new ClasspathResource(URI.create("classpath:/test-configuration.properties")));
 		List<HashConfigurationQueryResult<String, PropertyFileConfigurationSource>> results = src
 			.get("tata.toto").withParameters("tutu", "plop", "test", 5).and()
 			.get("tata.toto").withParameters("tutu", "plop").and()

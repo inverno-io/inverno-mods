@@ -28,7 +28,7 @@ import io.winterframework.mod.http.server.Exchange;
  * </p>
  * 
  * <p>
- * It provides request body decoding based on the request content type as well
+ * It supports request body decoding based on the request content type as well
  * as response body encoding based on the response content type.
  * </p>
  * 

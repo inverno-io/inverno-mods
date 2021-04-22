@@ -31,7 +31,7 @@ import io.winterframework.mod.http.server.Exchange;
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see AbstractRouter
+ * @see Router
  * 
  * @param <A> the route exchange type
  * @param <B> the router type
@@ -39,6 +39,6 @@ import io.winterframework.mod.http.server.Exchange;
  * @param <D> the route type
  * @param <E> the router exchange type
  */
-public interface AbstractRouterConfigurer<A extends Exchange, B extends AbstractRouter<A, B, C, D, E>, C extends AbstractRouteManager<A, B, C, D, E>, D extends AbstractRoute<A>, E extends Exchange> extends Consumer<B> {
+public interface RouterConfigurer<A extends Exchange, B extends Router<A, B, C, D, E>, C extends RouteManager<A, B, C, D, E>, D extends Route<A>, E extends Exchange> extends Consumer<B> {
 
 }

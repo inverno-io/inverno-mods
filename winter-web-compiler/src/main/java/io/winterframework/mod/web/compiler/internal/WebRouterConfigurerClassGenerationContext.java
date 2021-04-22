@@ -43,6 +43,7 @@ import javax.lang.model.util.Types;
 
 import org.reactivestreams.Publisher;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.winterframework.core.compiler.spi.ModuleQualifiedName;
 import io.winterframework.core.compiler.spi.support.AbstractSourceGenerationContext;
@@ -112,6 +113,7 @@ class WebRouterConfigurerClassGenerationContext extends AbstractSourceGeneration
 	private TypeMirror typeType;
 	private TypeMirror typesType;
 	private TypeMirror voidType;
+	private TypeMirror byteBufType;
 	
 	public WebRouterConfigurerClassGenerationContext(Types typeUtils, Elements elementUtils, GenerationMode mode) {
 		super(typeUtils, elementUtils, mode);
@@ -135,6 +137,7 @@ class WebRouterConfigurerClassGenerationContext extends AbstractSourceGeneration
 		this.typeType = elementUtils.getTypeElement(Type.class.getCanonicalName()).asType();
 		this.typesType = elementUtils.getTypeElement(io.winterframework.mod.base.reflect.Types.class.getCanonicalName()).asType();
 		this.voidType = elementUtils.getTypeElement(Void.class.getCanonicalName()).asType();
+		this.byteBufType = elementUtils.getTypeElement(ByteBuf.class.getCanonicalName()).asType();
 	}
 	
 	private WebRouterConfigurerClassGenerationContext(WebRouterConfigurerClassGenerationContext parentGeneration) {
@@ -392,6 +395,14 @@ class WebRouterConfigurerClassGenerationContext extends AbstractSourceGeneration
 	
 	public String getVoidTypeName() {
 		return this.getTypeName(this.getVoidType());
+	}
+	
+	public TypeMirror getByteBufType() {
+		return byteBufType != null ? byteBufType : this.parentGeneration.getByteBufType();
+	}
+	
+	public String getByteBufTypeName() {
+		return this.getTypeName(this.getByteBufType());
 	}
 	
 	public StringBuilder getTypeGenerator(TypeMirror type) {

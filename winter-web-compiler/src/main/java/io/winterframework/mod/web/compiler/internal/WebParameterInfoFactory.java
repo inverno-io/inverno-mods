@@ -145,7 +145,7 @@ class WebParameterInfoFactory {
 	public AbstractWebParameterInfo createParameter(WebRouteQualifiedName routeQName, VariableElement parameterElement, VariableElement annotatedParameterElement, TypeMirror parameterType) {
 		AbstractWebParameterInfo result = null;
 		
-		WebParameterQualifiedName parameterQName = new WebParameterQualifiedName(routeQName, parameterElement.getSimpleName().toString());
+		WebParameterQualifiedName parameterQName = new WebParameterQualifiedName(routeQName, annotatedParameterElement.getSimpleName().toString());
 		boolean required = !this.pluginContext.getTypeUtils().isSameType(this.pluginContext.getTypeUtils().erasure(parameterType), this.optionalType);
 		if(!required) {
 			// For optional parameter consider the Optional<> argument

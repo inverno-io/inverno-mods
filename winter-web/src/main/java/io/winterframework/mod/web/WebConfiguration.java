@@ -42,7 +42,8 @@ public interface WebConfiguration {
 	
 	/**
 	 * <p>
-	 * Enables/disables routes to generated <a href="https://www.openapis.org/">Open API</a> specifications.
+	 * Enables/disables routes to generated <a href="https://www.openapis.org/">Open
+	 * API</a> specifications.
 	 * </p>
 	 * 
 	 * @return true to expose generated Open API specifications, false otherwise
@@ -53,7 +54,8 @@ public interface WebConfiguration {
 	
 	/**
 	 * <p>
-	 * Enables/disables routes to <a href="https://www.webjars.org/">WebJars</a> resources.
+	 * Enables/disables routes to <a href="https://www.webjars.org/">WebJars</a>
+	 * resources.
 	 * </p>
 	 * 
 	 * @return true to expose WebJars resources, false otherwise

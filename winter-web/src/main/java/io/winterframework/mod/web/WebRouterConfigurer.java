@@ -27,6 +27,6 @@ import io.winterframework.mod.http.server.Exchange;
  * 
  * @see WebRouter
  */
-public interface WebRouterConfigurer<A extends WebExchange> extends AbstractRouterConfigurer<A, WebRouter<A>, WebRouteManager<A>, WebRoute<A>, Exchange> {
+public interface WebRouterConfigurer<A extends WebExchange> extends RouterConfigurer<A, WebRouter<A>, WebRouteManager<A>, WebRoute<A>, Exchange> {
 
 }

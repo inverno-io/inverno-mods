@@ -88,13 +88,21 @@ public class HttpServer {
 	public void start() throws CertificateException, InterruptedException, IOException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException {
 		InetSocketAddress serverAddress = new InetSocketAddress(this.configuration.server_host(), this.configuration.server_port());
 		
-		ServerBootstrap serverBootstrap = this.netService.createServer(serverAddress)
-			.childHandler(this.channelInitializer);
+		ServerBootstrap serverBootstrap;
+		if(this.configuration.server_event_loop_group_size() != null) {
+			serverBootstrap = this.netService.createServer(serverAddress, this.configuration.server_event_loop_group_size());
+		}
+		else {
+			serverBootstrap = this.netService.createServer(serverAddress);
+		}
 
-		this.serverChannelFuture = serverBootstrap.bind(serverAddress).sync();
-		String scheme = this.configuration.ssl_enabled() ? "https://" : "http://";
+		this.serverChannelFuture = serverBootstrap
+			.childHandler(this.channelInitializer)
+			.bind(serverAddress).sync();
+		
+		String scheme = this.configuration.tls_enabled() ? "https://" : "http://";
 		if (this.serverChannelFuture.isSuccess()) {
-			this.logger.info(() -> "Web Server listening on " + scheme + serverAddress.getHostString() + ":" + serverAddress.getPort());
+			this.logger.info(() -> "HTTP Server (" + this.netService.getTransportType().toString().toLowerCase() + ") listening on " + scheme + serverAddress.getHostString() + ":" + serverAddress.getPort());
 		}
 		else {
 			throw new RuntimeException("Can't start Web server on " + scheme + serverAddress.getHostString() + ":" + serverAddress.getPort(), this.serverChannelFuture.cause());

@@ -82,7 +82,7 @@ public class HttpChannelConfigurer {
 		this.http2ChannelHandlerFactory = http2ChannelHandlerFactory;
 		this.protocolNegotiationHandler = new HttpProtocolNegotiationHandler(this);
 		
-		if(this.configuration.ssl_enabled()) {
+		if(this.configuration.tls_enabled()) {
 			this.sslContext = sslContextSupplier.get();			
 		}
 	}
@@ -95,7 +95,7 @@ public class HttpChannelConfigurer {
 	 * @param pipeline the pipeline to configure
 	 */
 	public void configure(ChannelPipeline pipeline) {
-		if(this.configuration.ssl_enabled()) {
+		if(this.configuration.tls_enabled()) {
 			pipeline.addLast("sslHandler", this.sslContext.newHandler(this.allocator));
 			if(this.configuration.h2_enabled()) {
 				pipeline.addLast("protocolNegotiationHandler", this.protocolNegotiationHandler);

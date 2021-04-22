@@ -15,38 +15,38 @@
  */
 package io.winterframework.mod.web;
 
-import io.winterframework.mod.http.base.WebException;
+import io.winterframework.mod.http.base.HttpException;
 import io.winterframework.mod.http.server.ErrorExchange;
-import io.winterframework.mod.http.server.ErrorExchangeHandler;
 
 /**
  * <p>
- * An error router is used to handle failing requests for which an error was
+ * An error web router is used to handle failing requests for which an error was
  * thrown during the initial processing.
  * </p>
  * 
  * <p>
- * It determines the error exchange handler to invoke based on the type of the
- * error as well as the media type and language accepted by the client.
+ * It determines the error web exchange handler to invoke based on the type of
+ * the error as well as the media type and language accepted by the client.
  * </p>
  * 
  * <p>
- * An error router is itself an error exchange handler that can be used as error
- * handler of a HTTP server.
+ * An error web router is itself an error exchange handler that can be used as
+ * error handler of a HTTP server.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
  * @see ErrorExchange
- * @see ErrorExchangeHandler
- * @see ErrorRoute
- * @see ErrorRouteManager
+ * @see ErrorWebExchange
+ * @see ErrorWebExchangeHandler
+ * @see ErrorWebRoute
+ * @see ErrorWebRouteManager
  */
-public interface ErrorRouter extends AbstractRouter<ErrorExchange<Throwable>, ErrorRouter, ErrorRouteManager, ErrorRoute, ErrorExchange<Throwable>> {
+public interface ErrorWebRouter extends Router<ErrorWebExchange<Throwable>, ErrorWebRouter, ErrorWebRouteManager, ErrorWebRoute, ErrorExchange<Throwable>> {
 	
 	@Override
-	default void handle(ErrorExchange<Throwable> exchange) throws WebException {
+	default void handle(ErrorExchange<Throwable> exchange) throws HttpException {
 		if(exchange.response().isHeadersWritten()) {
 			throw new IllegalStateException("Headers already written", exchange.getError());
 		}

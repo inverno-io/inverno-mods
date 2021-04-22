@@ -43,7 +43,7 @@ import io.winterframework.mod.base.resource.ResourceException;
  * 
  * <pre><blockquote>
  * // Returns: /base/test1/a, /base/test1/a/b, /base/test2/c...
- * Stream<Path> paths = PathPatternResolver.resolve(Paths.get("/test?/{@literal **}/*"), Paths.get("/base"));
+ * Stream{@literal <Path>} paths = PathPatternResolver.resolve(Paths.get("/test?/{@literal **}/*"), Paths.get("/base"));
  * </blockquote></pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>

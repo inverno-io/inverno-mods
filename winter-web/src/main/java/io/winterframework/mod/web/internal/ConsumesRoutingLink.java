@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.winterframework.mod.http.base.UnsupportedMediaTypeException;
-import io.winterframework.mod.http.base.WebException;
+import io.winterframework.mod.http.base.HttpException;
 import io.winterframework.mod.http.base.header.HeaderCodec;
 import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.server.Exchange;
@@ -159,7 +159,7 @@ class ConsumesRoutingLink<A extends Exchange, B extends ContentAwareRoute<A>> ex
 	}
 
 	@Override
-	public void handle(A exchange) throws WebException {
+	public void handle(A exchange) throws HttpException {
 		if (this.handlers.isEmpty()) {
 			this.nextLink.handle(exchange);
 		} 

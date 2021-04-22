@@ -35,8 +35,8 @@ import io.winterframework.mod.http.server.ExchangeHandler;
  * @since 1.0
  * 
  * @see Exchange
- * @see AbstractRoute
- * @see AbstractRouter
+ * @see Route
+ * @see Router
  * 
  * @param <A> the type of exchange handled by the route
  * @param <B> the router type
@@ -44,7 +44,7 @@ import io.winterframework.mod.http.server.ExchangeHandler;
  * @param <D> the route type
  * @param <E> the router exchange type
  */
-public interface AbstractRouteManager<A extends Exchange, B extends AbstractRouter<A, B, C, D, E>, C extends AbstractRouteManager<A, B, C, D, E>, D extends AbstractRoute<A>, E extends Exchange> {
+public interface RouteManager<A extends Exchange, B extends Router<A, B, C, D, E>, C extends RouteManager<A, B, C, D, E>, D extends Route<A>, E extends Exchange> {
 
 	/**
 	 * <p>

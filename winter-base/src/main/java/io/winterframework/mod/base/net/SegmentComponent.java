@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -58,6 +60,8 @@ class SegmentComponent implements ParameterizedURIComponent {
 	private String pattern;
 	private List<String> patternGroupNames;
 	
+	private String segmentRawValue;
+	
 	/**
 	 * <p>
 	 * Creates a segment component with the specified flags, charset and raw value.
@@ -75,58 +79,24 @@ class SegmentComponent implements ParameterizedURIComponent {
 		this.flags = flags;
 		this.charset = charset;
 		this.parameters = new LinkedList<>();
-
-		boolean parameterized = this.flags.isParameterized();
-		if(!parameterized && !consumePath) {
-			this.rawValue = path;
+		
+		Consumer<URIParameter> parameterHandler = null;
+		if(this.flags.isParameterized()) {
+			parameterHandler = this.parameters::add;
 		}
-		else {
-			String segmentRawValue = null;
-			if(StringUtils.isNotEmpty(path)) {
-				byte[] pathBytes = path.getBytes(charset);
-				String parameterName = null;
-				Integer parameterIndex = null;
-				int segmentValueIndex = 0;
-				for(int i=0;i<pathBytes.length;i++) {
-					byte nextByte = pathBytes[i];
-					if(parameterized && nextByte == '{' && parameterIndex == null) {
-						// open path parameter
-						parameterIndex = i;
-					}
-					else if(parameterized && nextByte == '}' && parameterIndex != null && pathBytes[i-1] != '\\') {
-						// close path parameter
-						if(parameterName == null) {
-							parameterName = new String(pathBytes, parameterIndex + 1, i - (parameterIndex + 1)); 
-							this.parameters.add(new URIParameter(parameterIndex, i - parameterIndex + 1, parameterName, this.charset));
-						}
-						else {
-							int patternIndex = parameterIndex + 1 + parameterName.length() + 1;
-							this.parameters.add(new URIParameter(parameterIndex, i - parameterIndex + 1, parameterName, new String(pathBytes, patternIndex, i - patternIndex), this.charset));
-						}
-						parameterName = null;
-						parameterIndex = null;
-					}
-					else if(parameterized && nextByte == ':' && parameterIndex != null && parameterName == null) {
-						parameterName = new String(pathBytes, parameterIndex + 1, i - (parameterIndex + 1));
-					}
-					else if(consumePath && nextByte == '/' && parameterIndex == null) {
-						if(i == 0) {
-							segmentValueIndex = 1;
-							// Ignore heading slash and continue
-						}
-						else {
-							// We found a meaningful '/' so we break
-							segmentRawValue = path.substring(segmentValueIndex, i);
-							break;
-						}
-					}
+		
+		BiPredicate<Integer, Byte> breakPredicate = null;
+		if(consumePath) {
+			breakPredicate = (i, nextByte) -> {
+				if(nextByte == '/') {
+					this.segmentRawValue = path.charAt(0) == '/' ? path.substring(1, i) : path.substring(0, i);
+					return true;
 				}
-				if(parameterIndex != null) {
-					throw new IllegalArgumentException("Invalid segment with incomplete parameter: " + path);
-				}
-			}
-			this.rawValue = segmentRawValue != null ? segmentRawValue : path; 
+				return false;
+			};
 		}
+		URIs.scanURIComponent(path, null, charset, parameterHandler, breakPredicate); 
+		this.rawValue = this.segmentRawValue != null ? this.segmentRawValue : path;
 	}
 	
 	/**

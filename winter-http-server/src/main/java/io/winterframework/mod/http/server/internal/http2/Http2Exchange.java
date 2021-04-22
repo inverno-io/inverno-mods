@@ -142,20 +142,26 @@ public class Http2Exchange extends AbstractExchange {
 	
 	@Override
 	protected void onCompleteEmpty() {
-		this.onCompleteMany();
+		Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.headers();
+		Http2ResponseTrailers trailers = (Http2ResponseTrailers)this.response.trailers();
+		this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, trailers == null, this.context.voidPromise());
+		headers.setWritten(true);
+		if(trailers != null) {
+			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.context.voidPromise());
+		}
+		this.context.channel().flush();
+		this.handler.exchangeComplete(this.context);
 	}
 	
 	@Override
 	protected void onCompleteSingle(ByteBuf value) {
 		Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.headers();
-		if(!headers.isWritten()) {
-			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, false, this.context.voidPromise());
-			headers.setWritten(true);
-		}
+		this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, false, this.context.voidPromise());
+		headers.setWritten(true);
 		Http2ResponseTrailers trailers = (Http2ResponseTrailers)this.response.trailers();
 		this.encoder.writeData(this.context, this.stream.id(), value, 0, trailers == null, this.context.voidPromise());
 		if(trailers != null) {
-			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.context.voidPromise());	
+			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.context.voidPromise());
 		}
 		this.context.channel().flush();
 		this.handler.exchangeNext(this.context, value);
@@ -165,12 +171,21 @@ public class Http2Exchange extends AbstractExchange {
 	@Override
 	protected void onCompleteMany() {
 		Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.headers();
+		Http2ResponseTrailers trailers = (Http2ResponseTrailers)this.response.trailers();
 		if(!headers.isWritten()) {
-			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, false, this.context.voidPromise());
+			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, trailers == null, this.context.voidPromise());
 			headers.setWritten(true);
+			if(trailers != null) {
+				this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.context.voidPromise());
+			}
 		}
 		else {
-			this.encoder.writeData(this.context, this.stream.id(), Unpooled.EMPTY_BUFFER, 0, true, this.context.voidPromise());
+			if(trailers != null) {
+				this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.context.voidPromise());
+			}
+			else {
+				this.encoder.writeData(this.context, this.stream.id(), Unpooled.EMPTY_BUFFER, 0, true, this.context.voidPromise());
+			}
 		}
 		this.context.channel().flush();
 		this.handler.exchangeComplete(this.context);

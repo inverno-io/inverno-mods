@@ -36,6 +36,7 @@ import io.netty.handler.codec.http.multipart.HttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
 import io.winterframework.mod.base.resource.FileResource;
+import reactor.core.publisher.Flux;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
@@ -90,7 +91,7 @@ public class NettyTest {
 //        decoder.offer(new DefaultHttpContent(data));
         
         try(FileResource resource = new FileResource("src/test/resources/file_multipart.txt")) {
-        	for(ByteBuf data : resource.read().get().collectList().block()) {
+        	for(ByteBuf data : resource.read().map(Flux::from).get().collectList().block()) {
         		decoder.offer(new DefaultHttpContent(data));
         	}
         }

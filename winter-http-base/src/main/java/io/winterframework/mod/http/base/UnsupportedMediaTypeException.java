@@ -25,9 +25,9 @@ package io.winterframework.mod.http.base;
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see WebException
+ * @see HttpException
  */
-public class UnsupportedMediaTypeException extends WebException {
+public class UnsupportedMediaTypeException extends HttpException {
 
 	private static final long serialVersionUID = 5153779471415173515L;
 

@@ -31,6 +31,8 @@ import io.winterframework.mod.base.net.URIs.Option;
  */
 class URIFlags {
 
+	private final URIs.Option[] options;
+	
 	private boolean normalized;
 
 	private boolean parameterized;
@@ -43,6 +45,7 @@ class URIFlags {
 	 * @param options a list of options
 	 */
 	public URIFlags(URIs.Option... options) {
+		this.options = options;
 		for (URIs.Option option : options) {
 			switch (option) {
 			case NORMALIZED:
@@ -70,10 +73,22 @@ class URIFlags {
 	/**
 	 * <p>
 	 * Returns when the {@link Option#PARAMETERIZED} was specified.
+	 * </p>
 	 * 
 	 * @return true if the parameterized option is enabled, false otherwise
 	 */
 	public boolean isParameterized() {
 		return parameterized;
+	}
+	
+	/**
+	 * <p>
+	 * Returns the underlying list of options.
+	 * </p>
+	 * 
+	 * @return a list of options
+	 */
+	public URIs.Option[] getOptions() {
+		return this.options;
 	}
 }

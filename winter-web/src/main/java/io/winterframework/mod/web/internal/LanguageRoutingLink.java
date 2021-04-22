@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import io.winterframework.mod.http.base.WebException;
+import io.winterframework.mod.http.base.HttpException;
 import io.winterframework.mod.http.base.header.HeaderCodec;
 import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.base.header.Headers.AcceptLanguage.LanguageRange;
@@ -172,7 +172,7 @@ class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 	}
 
 	@Override
-	public void handle(A exchange) throws WebException {
+	public void handle(A exchange) throws HttpException {
 		if (this.enabledHandlers.isEmpty()) {
 			this.nextLink.handle(exchange);
 		} 

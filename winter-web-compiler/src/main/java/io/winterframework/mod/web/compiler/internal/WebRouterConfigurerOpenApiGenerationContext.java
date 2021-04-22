@@ -103,7 +103,7 @@ import io.winterframework.mod.http.base.NotFoundException;
 import io.winterframework.mod.http.base.ServiceUnavailableException;
 import io.winterframework.mod.http.base.UnauthorizedException;
 import io.winterframework.mod.http.base.UnsupportedMediaTypeException;
-import io.winterframework.mod.http.base.WebException;
+import io.winterframework.mod.http.base.HttpException;
 import io.winterframework.mod.web.compiler.spi.WebRouteInfo;
 
 /**
@@ -195,7 +195,7 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		this.componentSchemaTypes = new HashMap<>();
 		this.typeHierarchyExtractor = new TypeHierarchyExtractor(this.typeUtils);
 		
-		this.webExceptionType = this.elementUtils.getTypeElement(WebException.class.getCanonicalName()).asType();
+		this.webExceptionType = this.elementUtils.getTypeElement(HttpException.class.getCanonicalName()).asType();
 		this.badRequestExceptionType = this.elementUtils.getTypeElement(BadRequestException.class.getCanonicalName()).asType();
 		this.forbiddenExceptionType = this.elementUtils.getTypeElement(ForbiddenException.class.getCanonicalName()).asType();
 		this.internalServerErrorExceptionType = this.elementUtils.getTypeElement(InternalServerErrorException.class.getCanonicalName()).asType();
@@ -320,7 +320,8 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 				.collect(Collectors.toList());
 		}
 		else {
-			context.docCommentTrees = List.of(this.docUtils.getDocCommentTree(element));
+			DocCommentTree docCommentTree = this.docUtils.getDocCommentTree(element);
+			context.docCommentTrees = docCommentTree != null ? List.of(docCommentTree) : List.of();
 		}
 		return context;
 	}

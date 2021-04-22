@@ -83,12 +83,14 @@ public abstract class AbstractRequest implements Request {
 
 	/**
 	 * <p>
-	 * Returns the path builder created from the request path.
+	 * Returns or creates the primary path builder created from the request path.
 	 * </p>
+	 * 
+	 * <p>The primary path builder is used to extract absolute path, query parameters and query string and to create the path builder returned by  
 	 * 
 	 * @return the path builder
 	 */
-	protected abstract URIBuilder getPathBuilder();
+	protected abstract URIBuilder getPrimaryPathBuilder();
 	
 	@Override
 	public RequestHeaders headers() {
@@ -98,7 +100,7 @@ public abstract class AbstractRequest implements Request {
 	@Override
 	public QueryParameters queryParameters() {
 		if(this.queryParameters == null) {
-			this.queryParameters = new GenericQueryParameters(this.getPathBuilder().getQueryParameters(), this.parameterConverter);
+			this.queryParameters = new GenericQueryParameters(this.getPrimaryPathBuilder().getQueryParameters(), this.parameterConverter);
 		}
 		return this.queryParameters;
 	}
@@ -114,15 +116,20 @@ public abstract class AbstractRequest implements Request {
 	@Override
 	public String getPathAbsolute() {
 		if(this.pathAbsolute == null) {
-			this.pathAbsolute = this.getPathBuilder().buildRawPath();
+			this.pathAbsolute = this.getPrimaryPathBuilder().buildRawPath();
 		}
 		return this.pathAbsolute;
 	}
 	
 	@Override
+	public URIBuilder getPathBuilder() {
+		return this.getPrimaryPathBuilder().clone();
+	}
+	
+	@Override
 	public String getQuery() {
 		if(this.queryString == null) {
-			this.queryString = this.getPathBuilder().buildRawQuery();
+			this.queryString = this.getPrimaryPathBuilder().buildRawQuery();
 		}
 		return this.queryString;
 	}

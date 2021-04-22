@@ -106,7 +106,7 @@ public interface SetCookie extends Cookie {
 
 		/**
 		 * <p>
-		 * sets the cookie max age.
+		 * sets the cookie max age in seconds.
 		 * </p>
 		 * 
 		 * @param maxAge the cookie max age

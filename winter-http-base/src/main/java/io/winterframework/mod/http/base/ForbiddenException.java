@@ -24,9 +24,9 @@ package io.winterframework.mod.http.base;
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see WebException
+ * @see HttpException
  */
-public class ForbiddenException extends WebException {
+public class ForbiddenException extends HttpException {
 
 	private static final long serialVersionUID = -2158556254256844551L;
 

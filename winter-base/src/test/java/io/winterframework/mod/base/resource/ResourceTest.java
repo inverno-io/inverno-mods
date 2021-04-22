@@ -99,6 +99,12 @@ public class ResourceTest {
 			try (Resource resource = new FileResource(uri)) {
 				this.deleteResource(resource);
 			}
+			
+			try (Resource resource = new FileResource(uri)) {
+				try (Resource resolvedResource = resource.resolve("../foo.txt");) {
+					Assertions.assertEquals(new File("target/tmp/ign/foo.txt").toURI(), resolvedResource.getURI());
+				}
+			}			
 		}
 		finally {
 			file.delete();
@@ -121,6 +127,12 @@ public class ResourceTest {
 			try (Resource resource = new ZipResource(uri)) {
 				this.deleteResource(resource);
 			}
+			
+			try (Resource resource = new ZipResource(uri)) {
+				try (Resource resolvedResource = resource.resolve("../foo.txt");) {
+					Assertions.assertEquals(URI.create("zip:" + zipFile.toURI() +"!/ign/foo.txt"), resolvedResource.getURI());
+				}
+			}
 		}
 		finally {
 			zipFile.delete();
@@ -142,6 +154,12 @@ public class ResourceTest {
 			
 			try (Resource resource = new JarResource(uri)) {
 				this.deleteResource(resource);
+			}
+			
+			try (Resource resource = new JarResource(uri)) {
+				try (Resource resolvedResource = resource.resolve("../foo.txt");) {
+					Assertions.assertEquals(URI.create("jar:" + jarFile.toURI() +"!/ign/foo.txt"), resolvedResource.getURI());
+				}
 			}
 		}
 		finally {
@@ -174,6 +192,10 @@ public class ResourceTest {
 					throw new RuntimeException(e);
 				}
 			});
+			
+			try (Resource resolvedResource = resource.resolve("../foo.txt");) {
+				Assertions.assertEquals(URI.create("classpath:/ign/foo.txt"), resolvedResource.getURI());
+			}
 		}
 	}
 	
@@ -197,6 +219,10 @@ public class ResourceTest {
 					throw new RuntimeException(e);
 				}
 			});
+			
+			try (Resource resolvedResource = resource.resolve("../foo.txt");) {
+				Assertions.assertEquals(new File("src/test/resources/foo.txt").toURI(), resolvedResource.getURI());
+			}
 		}
 	}
 	
@@ -207,7 +233,7 @@ public class ResourceTest {
 		FileChannel out = FileChannel.open(tgtFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 		try(PathResource resource = new PathResource(srcFile)) {
 			resource.setExecutor(Executors.newFixedThreadPool(5));
-			resource.read().ifPresent(data -> {
+			resource.read().map(Flux::from).ifPresent(data -> {
 				data.doOnNext(chunk -> {
 					try {
 						out.write(chunk.nioBuffer());
@@ -249,8 +275,8 @@ public class ResourceTest {
 		try(PathResource srcResource = new PathResource(srcFile);
 			PathResource tgtResource = new PathResource(tgtFile)) {
 			
-			Flux<ByteBuf> srcData = srcResource.read().get();
-			tgtResource.write(srcData).get().blockLast();
+			Flux<ByteBuf> srcData = srcResource.read().map(Flux::from).get();
+			tgtResource.write(srcData).map(Flux::from).get().blockLast();
 		}
 		Assertions.assertEquals(Files.size(srcFile), Files.size(tgtFile));
 		FileChannel srcChannel = FileChannel.open(srcFile, StandardOpenOption.READ);
@@ -268,7 +294,7 @@ public class ResourceTest {
 	@Test
 	public void testUrlRead() throws IllegalArgumentException {
 		try (Resource resource = new URLResource(new File("src/test/resources/test.txt").toURI())) {
-			String content = resource.read().get()
+			String content = resource.read().map(Flux::from).get()
 				.map(chunk -> {
 					String s = chunk.toString(Charset.defaultCharset());
 					chunk.release();
@@ -292,7 +318,7 @@ public class ResourceTest {
         fakeFtpServer.start();
         
         try (Resource resource = new URLResource(new URI(String.format("ftp://user:password@localhost:%d/test.txt", fakeFtpServer.getServerControlPort())))) {
-			int bytesWritten = resource.write(Flux.just(Unpooled.copiedBuffer("This is a write test", Charset.defaultCharset()))).get().collect(Collectors.summingInt(Integer::intValue)).block();
+			int bytesWritten = resource.write(Flux.just(Unpooled.copiedBuffer("This is a write test", Charset.defaultCharset()))).map(Flux::from).get().collect(Collectors.summingInt(Integer::intValue)).block();
 			Assertions.assertEquals(20, bytesWritten);
 			Assertions.assertTrue(fileSystem.exists("/data/test.txt"));
 			Assertions.assertEquals(20, fileSystem.getEntry("/data/test.txt").getSize());

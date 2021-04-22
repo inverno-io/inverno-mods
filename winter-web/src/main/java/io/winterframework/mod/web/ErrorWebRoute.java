@@ -15,12 +15,10 @@
  */
 package io.winterframework.mod.web;
 
-import io.winterframework.mod.http.server.ErrorExchange;
-
 /**
  * <p>
- * An error route specifies criteria used to determine the error exchange
- * handler to execute to handle a failing request.
+ * An error web route specifies criteria used to determine the error web
+ * exchange handler to execute to handle a failing request.
  * </p>
  * 
  * <p>
@@ -37,12 +35,12 @@ import io.winterframework.mod.http.server.ErrorExchange;
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see ErrorExchange
- * @see ErrorRouter
+ * @see ErrorWebExchange
+ * @see ErrorWebRouter
  */
-public interface ErrorRoute extends 
-	ErrorAwareRoute<ErrorExchange<Throwable>>, 
-	AcceptAwareRoute<ErrorExchange<Throwable>>, 
-	AbstractRoute<ErrorExchange<Throwable>> {
+public interface ErrorWebRoute extends 
+	ErrorAwareRoute<ErrorWebExchange<Throwable>>, 
+	AcceptAwareRoute<ErrorWebExchange<Throwable>>, 
+	Route<ErrorWebExchange<Throwable>> {
 
 }

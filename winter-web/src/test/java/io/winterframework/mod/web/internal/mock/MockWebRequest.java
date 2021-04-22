@@ -95,6 +95,11 @@ public class MockWebRequest implements WebRequest {
 	public String getPathAbsolute() {
 		return this.pathBuilder.buildPath();
 	}
+	
+	@Override
+	public URIBuilder getPathBuilder() {
+		return this.pathBuilder.clone();
+	}
 
 	@Override
 	public String getQuery() {

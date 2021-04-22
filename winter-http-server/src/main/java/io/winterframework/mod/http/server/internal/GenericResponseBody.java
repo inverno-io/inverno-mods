@@ -205,11 +205,10 @@ public class GenericResponseBody implements ResponseBody {
 		
 		@Override
 		public void value(io.winterframework.mod.base.resource.Resource resource) {
-			// Http2 doesn't support FileRegion so we have to read the resource and send it to the response data flux
+			// In case of file resources we should always be able to determine existence
+			// For other resources with a null exists we can still try, worst case scenario: 
+			// internal server error
 			if(resource.exists().orElse(true)) {
-				// In case of file resources we should always be able to determine existence
-				// For other resources with a null exists we can still try, worst case scenario: 
-				// internal server error
 				this.populateHeaders(resource);
 				GenericResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable")));
 			}

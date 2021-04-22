@@ -15,18 +15,18 @@
  */
 package io.winterframework.mod.web;
 
-import io.winterframework.mod.http.server.ErrorExchange;
+import io.winterframework.mod.http.server.ErrorExchangeHandler;
 
 /**
  * <p>
- * A configurer used to configure an error router.
+ * An error exchange handler used to handle {@link ErrorWebExchange}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see ErrorRouter
+ * @param <A> the type of error web exchange
  */
-public interface ErrorRouterConfigurer extends AbstractRouterConfigurer<ErrorExchange<Throwable>, ErrorRouter, ErrorRouteManager, ErrorRoute, ErrorExchange<Throwable>> {
+public interface ErrorWebExchangeHandler<A extends Throwable> extends ErrorExchangeHandler<A, ErrorWebExchange<A>> {
 
 }

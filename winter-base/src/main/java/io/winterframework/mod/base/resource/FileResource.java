@@ -17,16 +17,19 @@ package io.winterframework.mod.base.resource;
 
 import java.io.File;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
+import org.reactivestreams.Publisher;
+
 import io.netty.buffer.ByteBuf;
-import reactor.core.publisher.Flux;
 
 /**
  * <p>
@@ -181,7 +184,7 @@ public class FileResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public boolean isFile() {
+	public Optional<Boolean> isFile() {
 		return this.pathResource.isFile();
 	}
 
@@ -206,12 +209,12 @@ public class FileResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public Optional<Flux<ByteBuf>> read() {
+	public Optional<Publisher<ByteBuf>> read() {
 		return this.pathResource.read();
 	}
 	
 	@Override
-	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) {
+	public Optional<Publisher<Integer>> write(Publisher<ByteBuf> data, boolean append, boolean createParents) {
 		return this.pathResource.write(data, append, createParents);
 	}
 	
@@ -226,9 +229,16 @@ public class FileResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Resource resolve(URI uri) {
-		FileResource resolvedResource = new FileResource(this.getURI().resolve(uri.normalize()), this.getMediaTypeService());
-		resolvedResource.setExecutor(this.getExecutor());
-		return resolvedResource;
+	public Resource resolve(Path path) throws IllegalArgumentException {
+		try {
+			URI uri = this.getURI();
+			URI resolvedUri = new URI(FileResource.SCHEME_FILE, uri.getAuthority(), Paths.get(uri.getPath()).resolve(path).toString(), null, null);
+			FileResource resolvedResource = new FileResource(resolvedUri, this.getMediaTypeService());
+			resolvedResource.setExecutor(this.getExecutor());
+			return resolvedResource;
+		} 
+		catch (URISyntaxException e) {
+			throw new IllegalArgumentException("Invalid path", e);
+		}
 	}
 }

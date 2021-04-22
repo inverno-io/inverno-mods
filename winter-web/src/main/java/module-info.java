@@ -122,7 +122,6 @@ module io.winterframework.mod.web {
 	
 	requires transitive io.winterframework.mod.base;
 	requires io.winterframework.mod.configuration;
-	requires transitive io.winterframework.mod.http.base;
 	requires transitive io.winterframework.mod.http.server;
 	
 	requires org.apache.logging.log4j;

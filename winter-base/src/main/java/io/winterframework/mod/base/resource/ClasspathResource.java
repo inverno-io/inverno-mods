@@ -20,13 +20,16 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
+import org.reactivestreams.Publisher;
+
 import io.netty.buffer.ByteBuf;
-import reactor.core.publisher.Flux;
 
 /**
  * <p>
@@ -192,7 +195,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	 *                                  classpath resource
 	 */
 	public static URI checkUri(URI uri) throws IllegalArgumentException {
-		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_CLASSPATH)) {
+		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_CLASSPATH) || uri.getAuthority() != null) {
 			throw new IllegalArgumentException("Not a " + SCHEME_CLASSPATH + " uri");
 		}
 		return uri.normalize();
@@ -290,12 +293,12 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public boolean isFile() {
+	public Optional<Boolean> isFile() {
 		Optional<Resource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().isFile();
 		}
-		return false;
+		return Optional.of(false);
 	}
 	
 	@Override
@@ -331,7 +334,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Optional<Flux<ByteBuf>> read() {
+	public Optional<Publisher<ByteBuf>> read() {
 		Optional<Resource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().read();
@@ -340,7 +343,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) {
+	public Optional<Publisher<Integer>> write(Publisher<ByteBuf> data, boolean append, boolean createParents) {
 		return Optional.empty();
 	}
 	
@@ -363,16 +366,21 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Resource resolve(URI uri) throws IllegalArgumentException {
-		URI resolvedUri = this.uri.resolve(uri.normalize());
-		ClasspathResource resolvedResource;
-		if(this.clazz != null) {
-			resolvedResource = new ClasspathResource(resolvedUri, this.clazz, this.getMediaTypeService());
+	public Resource resolve(Path path) throws IllegalArgumentException {
+		try {
+			URI resolvedUri = new URI(ClasspathResource.SCHEME_CLASSPATH, Paths.get(this.uri.getPath()).resolve(path).toString(), null);
+			ClasspathResource resolvedResource;
+			if(this.clazz != null) {
+				resolvedResource = new ClasspathResource(resolvedUri, this.clazz, this.getMediaTypeService());
+			}
+			else {
+				resolvedResource = new ClasspathResource(resolvedUri, this.classLoader, this.getMediaTypeService());
+			}
+			resolvedResource.setExecutor(this.getExecutor());
+			return resolvedResource;
+		} 
+		catch (URISyntaxException e) {
+			throw new IllegalArgumentException("Invalid path", e);
 		}
-		else {
-			resolvedResource = new ClasspathResource(resolvedUri, this.classLoader, this.getMediaTypeService());
-		}
-		resolvedResource.setExecutor(this.getExecutor());
-		return resolvedResource;
 	}
 }

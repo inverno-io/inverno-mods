@@ -29,6 +29,49 @@
 	
 	<name>winter-mods-root</name>
 	<description>The Winter framework modules are a collection of components for building fully reactive applications</description>
+	<inceptionYear>2020</inceptionYear>
+	<organization>
+		<name>Winter Framework IO</name>
+		<url>https://winterframework.io</url>
+	</organization>
+	<url>https://github.com/winterframework-io/winter</url>
+
+	<licenses>
+		<license>
+			<name>Apache License 2.0</name>
+			<url>https://spdx.org/licenses/Apache-2.0</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>jkuhn</id>
+			<name>Jeremy Kuhn</name>
+			<email>jeremy.kuhn@winterframework.io</email>
+		</developer>
+	</developers>
+
+	<scm>
+		<url>https://github.com/winterframework-io/winter-mods.git</url>
+		<connection>scm:git:git://github.com/winterframework-io/winter-mods.git</connection>
+		<developerConnection>scm:git:git@github.com:winterframework-io/winter-mods.git</developerConnection>
+	</scm>
+
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/winterframework-io/winter-mods/issues</url>
+	</issueManagement>
+
+	<distributionManagement>
+		<snapshotRepository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+		</repository>
+	</distributionManagement>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

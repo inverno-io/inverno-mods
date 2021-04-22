@@ -61,7 +61,7 @@ public class Http2Request extends AbstractRequest {
 	}
 	
 	@Override
-	protected URIBuilder getPathBuilder() {
+	protected URIBuilder getPrimaryPathBuilder() {
 		if(this.pathBuilder == null) {
 			this.pathBuilder = this.requestHeaders.get(Headers.NAME_PSEUDO_PATH)
 				.map(path -> URIs.uri(path, false, URIs.Option.NORMALIZED))

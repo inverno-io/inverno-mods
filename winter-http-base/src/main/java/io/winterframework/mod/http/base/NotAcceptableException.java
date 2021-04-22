@@ -27,9 +27,9 @@ import java.util.Set;
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see WebException
+ * @see HttpException
  */
-public class NotAcceptableException extends WebException {
+public class NotAcceptableException extends HttpException {
 
 	private static final long serialVersionUID = 7410917159887462383L;
 

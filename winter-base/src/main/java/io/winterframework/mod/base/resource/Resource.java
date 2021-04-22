@@ -16,14 +16,17 @@
 package io.winterframework.mod.base.resource;
 
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Optional;
 
+import org.reactivestreams.Publisher;
+
 import io.netty.buffer.ByteBuf;
-import reactor.core.publisher.Flux;
 
 /**
  * <p>
@@ -157,14 +160,20 @@ public interface Resource extends AutoCloseable {
 	
 	/**
 	 * <p>
-	 * Determines whether this resource is a file.
+	 * Determines whether this resource represents a file.
 	 * </p>
 	 * 
-	 * @return true if the resource is a file, false otherwise
+	 * <p>
+	 * A file resource is a resource that can be accessed through a
+	 * {@link FileChannel}.
+	 * </p>
+	 * 
+	 * @return an optional returning true if the resource is a file, false otherwise
+	 *         or an empty optional if it couldn't be determined
 	 * @throws ResourceException if there was an error determining whether the
 	 *                           resource is a file
 	 */
-	boolean isFile() throws ResourceException;
+	Optional<Boolean> isFile() throws ResourceException;
 	
 	/**
 	 * <p>
@@ -270,7 +279,7 @@ public interface Resource extends AutoCloseable {
 	 *         resource is not readable
 	 * @throws ResourceException if there was an error reading the resource
 	 */
-	Optional<Flux<ByteBuf>> read() throws ResourceException;
+	Optional<Publisher<ByteBuf>> read() throws ResourceException;
 	
 	/**
 	 * <p>
@@ -283,7 +292,7 @@ public interface Resource extends AutoCloseable {
 	 *         written or an empty optional if the resource is not writable
 	 * @throws ResourceException if there was an error writing to the resource
 	 */
-	default Optional<Flux<Integer>> write(Flux<ByteBuf> data) throws ResourceException {
+	default Optional<Publisher<Integer>> write(Publisher<ByteBuf> data) throws ResourceException {
 		return this.write(data, false);
 	}
 	
@@ -293,14 +302,14 @@ public interface Resource extends AutoCloseable {
 	 * an existing resource.
 	 * </p>
 	 * 
-	 * @param data the stream of data to write
-	 * @param append        true to append content to an existing resource
+	 * @param data   the stream of data to write
+	 * @param append true to append content to an existing resource
 	 * 
 	 * @return an optional returning a stream of integer emitting number of bytes
 	 *         written or an empty optional if the resource is not writable
 	 * @throws ResourceException if there was an error writing to the resource
 	 */
-	default Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append) throws ResourceException {
+	default Optional<Publisher<Integer>> write(Publisher<ByteBuf> data, boolean append) throws ResourceException {
 		return this.write(data, append, true);
 	}
 	
@@ -310,7 +319,7 @@ public interface Resource extends AutoCloseable {
 	 * an existing resource and create or not missing parent directories.
 	 * </p>
 	 * 
-	 * @param data the stream of data to write
+	 * @param data          the stream of data to write
 	 * @param append        true to append content to an existing resource
 	 * @param createParents true to create missing parent directories
 	 * 
@@ -318,7 +327,7 @@ public interface Resource extends AutoCloseable {
 	 *         written or an empty optional if the resource is not writable
 	 * @throws ResourceException if there was an error writing to the resource
 	 */
-	Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) throws ResourceException;
+	Optional<Publisher<Integer>> write(Publisher<ByteBuf> data, boolean append, boolean createParents) throws ResourceException;
 	
 	/**
 	 * <p>
@@ -332,35 +341,32 @@ public interface Resource extends AutoCloseable {
 	
 	/**
 	 * <p>
-	 * Resolves the specified URI against the resource.
-	 * </p>
-	 * 
-	 * @param uri the URI to resolve
-	 * 
-	 * @return a new resource resulting from the resolution of the specified URI
-	 *         against the resource
-	 * @throws ResourceException if there was an error resolving the URI
-	 */
-	Resource resolve(URI uri) throws ResourceException;
-	
-	/**
-	 * <p>
-	 * Resolves the specified path against the resource.
+	 * Resolves the specified URI against the resource URI as defined by
+	 * {@link Path#resolve(Path)}.
 	 * </p>
 	 * 
 	 * @param path the path to resolve
 	 * 
 	 * @return a new resource resulting from the resolution of the specified path
 	 *         against the resource
-	 * @throws ResourceException if there was an error resolving the URI
+	 * @throws ResourceException if there was an error resolving the resource
+	 */
+	Resource resolve(Path path) throws ResourceException;
+	
+	/**
+	 * <p>
+	 * Resolves the specified path against the resource URI as defined by
+	 * {@link Path#resolve(String)}.
+	 * </p>
+	 * 
+	 * @param path the path to resolve
+	 * 
+	 * @return a new resource resulting from the resolution of the specified path
+	 *         against the resource
+	 * @throws ResourceException if there was an error resolving the resource
 	 */
 	default Resource resolve(String path) throws ResourceException {
-		try {
-			return this.resolve(new URI(path));
-		} 
-		catch (URISyntaxException e) {
-			throw new IllegalArgumentException(e);
-		}
+		return this.resolve(Paths.get(path));
 	}
 	
 	@Override

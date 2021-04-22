@@ -72,37 +72,8 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 		this.rawName = rawName;
 		this.rawValue = value != null ? value.toString() : null;
 		this.parameters = new LinkedList<>();
-		
-		if(this.flags.isParameterized() && StringUtils.isNotBlank(this.rawValue)) {
-			byte[] valueBytes = this.rawValue.getBytes(charset);
-			String parameterName = null;
-			Integer parameterIndex = null;
-			for(int i=0;i<valueBytes.length;i++) {
-				byte nextByte = valueBytes[i];
-				if(nextByte == '{' && parameterIndex == null) {
-					// open parameter
-					parameterIndex = i;
-				}
-				else if(nextByte == '}' && parameterIndex != null && valueBytes[i-1] != '\\') {
-					// close parameter
-					if(parameterName == null) {
-						parameterName = new String(valueBytes, parameterIndex + 1, i - (parameterIndex + 1)); 
-						this.parameters.add(new URIParameter(parameterIndex, i - parameterIndex + 1, parameterName, this.charset));
-					}
-					else {
-						int patternIndex = parameterIndex + 1 + parameterName.length() + 1;
-						this.parameters.add(new URIParameter(parameterIndex, i - parameterIndex + 1, parameterName, new String(valueBytes, patternIndex, i - patternIndex), this.charset));
-					}
-					parameterName = null;
-					parameterIndex = null;
-				}
-				else if(nextByte == ':' && parameterIndex != null && parameterName == null) {
-					parameterName = new String(valueBytes, parameterIndex + 1, i - (parameterIndex + 1));
-				}
-			}
-			if(parameterIndex != null) {
-				throw new IllegalArgumentException("Invalid query parameter value with incomplete parameter: " + this.rawValue);
-			}
+		if(this.flags.isParameterized()) {
+			URIs.scanURIComponent(this.rawValue, null, this.charset, this.parameters::add, null);
 		}
 	}
 	

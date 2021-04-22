@@ -319,6 +319,10 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * Executes the chain of configuration updates.
 	 * </p>
 	 * 
+	 * <p>
+	 * Results are emitted in the same order as the queries.
+	 * </p>
+	 * 
 	 * @return a stream of configuration update results
 	 */
 	Flux<C> execute();

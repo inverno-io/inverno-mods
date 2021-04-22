@@ -76,7 +76,7 @@ public class FileResourceProvider extends AbstractResourceProvider<FileResource>
 	
 	@Override
 	public Stream<FileResource> getResources(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
-		Path pathPattern =  Paths.get(FileResource.checkUri(uri));
+		Path pathPattern = Paths.get(FileResource.checkUri(uri));
 		return PathPatternResolver.resolve(pathPattern, path -> new FileResource(path.toUri(), this.mediaTypeService));
 	}
 	

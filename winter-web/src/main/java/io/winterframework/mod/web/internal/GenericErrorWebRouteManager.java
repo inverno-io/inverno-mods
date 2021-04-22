@@ -21,20 +21,24 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import io.winterframework.mod.http.server.ErrorExchange;
-import io.winterframework.mod.http.server.ErrorExchangeHandler;
 import io.winterframework.mod.http.server.ExchangeHandler;
-import io.winterframework.mod.web.ErrorRoute;
-import io.winterframework.mod.web.ErrorRouteManager;
-import io.winterframework.mod.web.ErrorRouter;
+import io.winterframework.mod.web.ErrorWebExchange;
+import io.winterframework.mod.web.ErrorWebExchangeHandler;
+import io.winterframework.mod.web.ErrorWebRoute;
+import io.winterframework.mod.web.ErrorWebRouteManager;
+import io.winterframework.mod.web.ErrorWebRouter;
 
 /**
+ * <p>
+ * Generic {@link ErrorWebRouteManager} implementation.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
- *
+ * @since 1.0
  */
-class GenericErrorRouteManager implements ErrorRouteManager {
+class GenericErrorWebRouteManager implements ErrorWebRouteManager {
 
-	private final GenericErrorRouter router;
+	private final GenericErrorWebRouter router;
 	
 	private Set<Class<? extends Throwable>> errors;
 	
@@ -42,32 +46,39 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 	
 	private Set<String> languages;
 	
-	private ExchangeHandler<ErrorExchange<Throwable>> handler;
+	private ExchangeHandler<ErrorWebExchange<Throwable>> handler;
 	
-	public GenericErrorRouteManager(GenericErrorRouter router) {
+	/**
+	 * <p>
+	 * Creates a generic error web route manager.
+	 * </p>
+	 * 
+	 * @param router the generic error web router
+	 */
+	public GenericErrorWebRouteManager(GenericErrorWebRouter router) {
 		this.router = router;
 	}
 
 	@Override
-	public ErrorRouter enable() {
+	public ErrorWebRouter enable() {
 		this.findRoutes().stream().forEach(route -> route.enable());
 		return this.router;
 	}
 
 	@Override
-	public ErrorRouter disable() {
+	public ErrorWebRouter disable() {
 		this.findRoutes().stream().forEach(route -> route.disable());
 		return this.router;
 	}
 
 	@Override
-	public ErrorRouter remove() {
+	public ErrorWebRouter remove() {
 		this.findRoutes().stream().forEach(route -> route.remove());
 		return this.router;
 	}
 
 	@Override
-	public Set<ErrorRoute> findRoutes() {
+	public Set<ErrorWebRoute> findRoutes() {
 		// TODO Implement filtering in the route extractor
 		return this.router.getRoutes().stream().filter(route -> {
 			// We want all routes that share the same criteria as the one defined in this route manager
@@ -91,7 +102,7 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 	}
 
 	@Override
-	public ErrorRouteManager error(Class<? extends Throwable> error) {
+	public ErrorWebRouteManager error(Class<? extends Throwable> error) {
 		if(this.errors == null) {
 			this.errors = new LinkedHashSet<>();
 		}
@@ -100,7 +111,7 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 	}
 
 	@Override
-	public ErrorRouteManager produces(String mediaType) {
+	public ErrorWebRouteManager produces(String mediaType) {
 		if(this.produces == null) {
 			this.produces = new LinkedHashSet<>();
 		}
@@ -109,7 +120,7 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 	}
 
 	@Override
-	public ErrorRouteManager language(String language) {
+	public ErrorWebRouteManager language(String language) {
 		if(this.languages == null) {
 			this.languages = new LinkedHashSet<>();
 		}
@@ -119,25 +130,25 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public ErrorRouter handler(ExchangeHandler<? super ErrorExchange<Throwable>> handler) {
+	public ErrorWebRouter handler(ExchangeHandler<? super ErrorWebExchange<Throwable>> handler) {
 		Objects.requireNonNull(handler);
-		this.handler = (ExchangeHandler<ErrorExchange<Throwable>>) handler;
+		this.handler = (ExchangeHandler<ErrorWebExchange<Throwable>>) handler;
 		this.commit();
 		return this.router;
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public ErrorRouter handler(ErrorExchangeHandler<? extends Throwable> handler) {
+	public ErrorWebRouter handler(ErrorWebExchangeHandler<? extends Throwable> handler) {
 		Objects.requireNonNull(handler);
 		// This might throw a class cast exception if the handler is not associated with corresponding class types
-		this.handler = (ErrorExchangeHandler<Throwable>) handler;
+		this.handler = (ErrorWebExchangeHandler<Throwable>) handler;
 		this.commit();
 		return this.router;
 	}
 	
 	private void commit() {
-		Consumer<GenericErrorRoute> languagesCommitter = route -> {
+		Consumer<GenericErrorWebRoute> languagesCommitter = route -> {
 			if(this.languages != null && !this.languages.isEmpty()) {
 				for(String language : this.languages) {
 					route.setLanguage(language);
@@ -151,7 +162,7 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 			}
 		};
 		
-		Consumer<GenericErrorRoute> producesCommitter = route -> {
+		Consumer<GenericErrorWebRoute> producesCommitter = route -> {
 			if(this.produces != null && !this.produces.isEmpty()) {
 				for(String produce : this.produces) {
 					route.setProduce(produce);
@@ -163,7 +174,7 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 			}
 		};
 		
-		Consumer<GenericErrorRoute> errorsCommitter = route -> {
+		Consumer<GenericErrorWebRoute> errorsCommitter = route -> {
 			if(this.errors != null && !this.errors.isEmpty()) {
 				for(Class<? extends Throwable> error : this.errors) {
 					route.setError(error);
@@ -174,6 +185,6 @@ class GenericErrorRouteManager implements ErrorRouteManager {
 				producesCommitter.accept(route);
 			}
 		};
-		errorsCommitter.accept(new GenericErrorRoute(this.router));
+		errorsCommitter.accept(new GenericErrorWebRoute(this.router));
 	}
 }

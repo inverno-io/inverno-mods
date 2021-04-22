@@ -15,10 +15,10 @@
  */
 package io.winterframework.mod.web.internal;
 
-import io.winterframework.mod.http.base.WebException;
+import io.winterframework.mod.http.base.HttpException;
 import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
-import io.winterframework.mod.web.AbstractRoute;
+import io.winterframework.mod.web.Route;
 
 /**
  * <p>
@@ -36,7 +36,7 @@ import io.winterframework.mod.web.AbstractRoute;
  * @param <A> the type of exchange handled by the route
  * @param <B> the route type
  */
-class HandlerRoutingLink<A extends Exchange, B extends AbstractRoute<A>> extends RoutingLink<A, HandlerRoutingLink<A, B>, B> {
+class HandlerRoutingLink<A extends Exchange, B extends Route<A>> extends RoutingLink<A, HandlerRoutingLink<A, B>, B> {
 
 	private ExchangeHandler<A> handler;
 	
@@ -93,7 +93,7 @@ class HandlerRoutingLink<A extends Exchange, B extends AbstractRoute<A>> extends
 	}
 	
 	@Override
-	public void handle(A exchange) throws WebException {
+	public void handle(A exchange) throws HttpException {
 		if(this.handler == null) {
 			throw new RouteNotFoundException();
 		}

@@ -43,6 +43,6 @@ import io.winterframework.mod.http.server.Exchange;
  *
  * @param <A> the type of web exchange handled by the route
  */
-public interface WebRouter<A extends WebExchange> extends AbstractRouter<A, WebRouter<A>, WebRouteManager<A>, WebRoute<A>, Exchange> {
+public interface WebRouter<A extends WebExchange> extends Router<A, WebRouter<A>, WebRouteManager<A>, WebRoute<A>, Exchange> {
 
 }

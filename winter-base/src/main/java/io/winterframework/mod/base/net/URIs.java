@@ -20,6 +20,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.Objects;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.apache.commons.lang3.StringUtils;
@@ -41,6 +43,20 @@ import io.winterframework.mod.base.Charsets;
  *     .scheme("http")
  *     .host("localhost")
  *     .path("/foo/bar/123")
+ *     .build();
+ * </pre></blockquote>
+ * 
+ * <p>
+ * A URI can be automatically normalized by enabling the
+ * {@link Option#NORMALIZED} option:
+ * </p>
+ * 
+ * <blockquote><pre>
+ * // http://localhost/123 
+ * URI uri = URIs.uri(URIs.Option.NORMALIZED)
+ *     .scheme("http")
+ *     .host("localhost")
+ *     .path("/foo/../123")
  *     .build();
  * </pre></blockquote>
  * 
@@ -340,4 +356,118 @@ public final class URIs {
 		}
 		return component;
 	}
+	
+	/**
+	 * URI parameter extract "default" status.
+	 */
+	private static final byte STATUS_DEFAULT = 0;
+	/**
+	 * URI parameter extract "in name" status.
+	 */
+	private static final byte STATUS_IN_NAME = 1;
+	/**
+	 * URI parameter extract "in pattern" status.
+	 */
+	private static final byte STATUS_IN_PATTERN = 2;
+	
+	/**
+	 * <p>
+	 * Scans the specified URI component in order to extracts parameters while a
+	 * break predicate is not matched.
+	 * </p>
+	 * 
+	 * <p>
+	 * URI parameters are extracted from the specified value when a parameter
+	 * handler is specified.
+	 * </p>
+	 * 
+	 * <p>
+	 * The break predicate is used to stop scanning when a particular index is
+	 * reached or a particular character is matched outside parameter definitions
+	 * when parameters are extracted.
+	 * </p>
+	 * 
+	 * @param component the component value to scan
+	 * @param allowedCharacters  the allowed characters predicate
+	 * @param charset the charset
+	 * @param parameterHandler the parameter handler, null to disable parameter extraction
+	 * @param breakPredicate the break predicate, null to never break the scan
+	 * 
+	 * @throws URIBuilderException if an invalid parameter is found
+	 */
+	static void scanURIComponent(String component, Predicate<Integer> allowedCharacters, Charset charset, Consumer<URIParameter> parameterHandler, BiPredicate<Integer, Byte> breakPredicate) throws URIBuilderException {
+		if(StringUtils.isNotBlank(component)) {
+			boolean escape = false;
+			byte patternBraceDepth = 0;
+			
+			byte[] valueBytes = component.getBytes(charset);
+			byte status = STATUS_DEFAULT;
+			Integer parameterIndex = null;
+			Integer parameterPatternIndex = null;
+			loop:
+			for(int i=0;i<valueBytes.length;i++) {
+				byte nextByte = valueBytes[i];
+				
+				if(nextByte == '\\') {
+					escape = !escape;
+					continue;
+				}
+				
+				switch(status) {
+					case STATUS_IN_NAME: {
+						if(nextByte == '}') {
+							String parameterName = new String(valueBytes, parameterIndex + 1, i - (parameterIndex + 1));
+							parameterHandler.accept(new URIParameter(parameterIndex, i - parameterIndex + 1, parameterName, allowedCharacters, charset));
+							parameterIndex = parameterPatternIndex = null;
+							status = STATUS_DEFAULT;
+						}
+						else if(nextByte == ':') {
+							parameterPatternIndex = i;
+							status = STATUS_IN_PATTERN;
+						}
+						else if( (i == parameterIndex + 1 && !Character.isJavaIdentifierStart(nextByte)) || (i > parameterIndex + 1 && !Character.isJavaIdentifierPart(nextByte))) {
+							throw new URIBuilderException("Invalid parameter name at position " + parameterIndex + ": " + component);
+						}
+						break;
+					}
+					case STATUS_IN_PATTERN: {
+						if(!escape) {
+							if(nextByte == '{') {
+								patternBraceDepth++;
+							}
+							else if(nextByte == '}') {
+								if(patternBraceDepth == 0) {
+									// close parameter
+									String parameterName = new String(valueBytes, parameterIndex + 1, parameterPatternIndex - (parameterIndex + 1));
+									String parameterPattern = new String(valueBytes, parameterPatternIndex + 1, i - (parameterPatternIndex + 1));
+									parameterHandler.accept(new URIParameter(parameterIndex, i - parameterIndex + 1, parameterName, parameterPattern, allowedCharacters, charset));
+									parameterIndex = parameterPatternIndex = null;
+									status = STATUS_DEFAULT;
+								}
+								else {
+									patternBraceDepth--;
+								}
+							}
+						}
+						break;
+					}
+					default: {
+						if(nextByte == '{' && parameterHandler != null) {
+							parameterIndex = i;
+							status = STATUS_IN_NAME;
+						}
+						else if(allowedCharacters != null && !allowedCharacters.test((int)nextByte)) {
+							throw new URIBuilderException("Invalid character " + (char)nextByte + " found in URI component");
+						}
+						else if(breakPredicate != null && breakPredicate.test(i, nextByte)) {
+							break loop;
+						}
+						break;
+					}
+				}
+				escape = false;
+			}
+		}
+	}
+	
 }

@@ -17,6 +17,7 @@ import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.base.internal.header.ContentDispositionCodec;
 import io.winterframework.mod.http.base.internal.header.ContentTypeCodec;
 import io.winterframework.mod.http.base.internal.header.GenericHeaderService;
+import reactor.core.publisher.Flux;
 
 public class MultipartBodyDecoderTest {
 
@@ -30,7 +31,7 @@ public class MultipartBodyDecoderTest {
 		MultipartFormDataBodyDecoder decoder = new MultipartFormDataBodyDecoder(headerService, parameterConverter);
 		
 		try(FileResource resource = new FileResource("src/test/resources/file_multipart.txt")) {
-			List<ByteBuf> data = decoder.decode(resource.read().get(), contentType)
+			List<ByteBuf> data = decoder.decode(resource.read().map(Flux::from).get(), contentType)
 				.flatMap(part -> {
 					Assertions.assertEquals(" text/plain", part.headers().getContentType());
 					Assertions.assertTrue(part.getFilename().isPresent());

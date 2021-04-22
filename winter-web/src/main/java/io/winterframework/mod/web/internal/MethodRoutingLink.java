@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 import io.winterframework.mod.http.base.Method;
 import io.winterframework.mod.http.base.MethodNotAllowedException;
-import io.winterframework.mod.http.base.WebException;
+import io.winterframework.mod.http.base.HttpException;
 import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.web.MethodAwareRoute;
 
@@ -153,7 +153,7 @@ class MethodRoutingLink<A extends Exchange, B extends MethodAwareRoute<A>> exten
 	}
 
 	@Override
-	public void handle(A exchange) throws WebException {
+	public void handle(A exchange) throws HttpException {
 		if (this.handlers.isEmpty()) {
 			this.nextLink.handle(exchange);
 		} 

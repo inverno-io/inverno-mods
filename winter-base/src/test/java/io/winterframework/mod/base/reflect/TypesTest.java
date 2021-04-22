@@ -53,14 +53,16 @@ public class TypesTest {
 		
 		type = Types.type(List.class)
 			.wildcardType()
-				.upperBoundType(String.class).and()
+				.upperBoundType(Comparable.class)
+					.type(String.class).and()
+				.and()
 				.upperBoundType(Runnable.class).and()
 			.and()
 		.build();
 		
-		Assertions.assertEquals("java.util.List<? extends java.lang.String & java.lang.Runnable>", type.toString());
+		Assertions.assertEquals("java.util.List<? extends java.lang.Comparable<java.lang.String> & java.lang.Runnable>", type.toString());
 	}
-
+	
 	@Test
 	public void testArray() {
 		Type type = Types.arrayType()

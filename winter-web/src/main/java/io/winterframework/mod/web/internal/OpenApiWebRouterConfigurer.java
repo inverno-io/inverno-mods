@@ -181,7 +181,7 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 		result.append("<head>");
 		result.append("<meta charset= \"UTF-8\"/>");
 		result.append("<title>Winter OpenAPI</title>");
-		result.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"/webjars/swagger-ui/swagger-ui.css\" />");
+		result.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"/webjars/swagger.ui/swagger-ui.css\" />");
 		result.append("<link rel=\"icon\" type=\"image/svg+xml\" href=\"/favicon.ico\" />");
 		result.append("<style>");
 		result.append("html {");
@@ -201,8 +201,8 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 		
 		result.append("<body>");
 		result.append("<div id=\"swagger-ui\"></div>");
-		result.append("<script src=\"/webjars/swagger-ui/swagger-ui-bundle.js\" charset=\"UTF-8\"> </script>");
-		result.append("<script src=\"/webjars/swagger-ui/swagger-ui-standalone-preset.js\" charset=\"UTF-8\"> </script>");
+		result.append("<script src=\"/webjars/swagger.ui/swagger-ui-bundle.js\" charset=\"UTF-8\"> </script>");
+		result.append("<script src=\"/webjars/swagger.ui/swagger-ui-standalone-preset.js\" charset=\"UTF-8\"> </script>");
 		result.append("<script>");
 		
 		result.append("window.onload = function() {");

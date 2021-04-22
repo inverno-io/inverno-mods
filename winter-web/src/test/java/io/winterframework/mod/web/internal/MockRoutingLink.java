@@ -17,16 +17,16 @@ package io.winterframework.mod.web.internal;
 
 import java.util.List;
 
-import io.winterframework.mod.http.base.WebException;
+import io.winterframework.mod.http.base.HttpException;
 import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
-import io.winterframework.mod.web.AbstractRoute;
+import io.winterframework.mod.web.Route;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  *
  */
-public class MockRoutingLink<A extends Exchange, B extends AbstractRoute<A>> extends RoutingLink<A, MockRoutingLink<A, B>, B> {
+public class MockRoutingLink<A extends Exchange, B extends Route<A>> extends RoutingLink<A, MockRoutingLink<A, B>, B> {
 
 	private ExchangeHandler<A> handler;
 	
@@ -85,7 +85,7 @@ public class MockRoutingLink<A extends Exchange, B extends AbstractRoute<A>> ext
 	}
 	
 	@Override
-	public void handle(A exchange) throws WebException {
+	public void handle(A exchange) throws HttpException {
 		if(this.handler == null) {
 			throw new RouteNotFoundException();
 		}

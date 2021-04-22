@@ -97,8 +97,11 @@ abstract class AbstractParameterizedURIComponent implements ParameterizedURIComp
 		this.escapedCharacters = escapedCharacters;
 		this.allowedCharacters = allowedCharacters;
 		this.parameters = new LinkedList<>();
+		if(this.flags.isParameterized()) {
+			URIs.scanURIComponent(this.rawValue, this.allowedCharacters, this.charset, this.parameters::add, null);
+		}
 		
-		if(this.flags.isParameterized() && StringUtils.isNotBlank(this.rawValue)) {
+		/*if(this.flags.isParameterized() && StringUtils.isNotBlank(this.rawValue)) {
 			byte[] valueBytes = this.rawValue.getBytes(charset);
 			String parameterName = null;
 			Integer parameterIndex = null;
@@ -131,7 +134,7 @@ abstract class AbstractParameterizedURIComponent implements ParameterizedURIComp
 			if(parameterIndex != null) {
 				throw new IllegalArgumentException("Invalid component value with incomplete parameter: " + this.rawValue);
 			}
-		}
+		}*/
 	}
 
 	@Override

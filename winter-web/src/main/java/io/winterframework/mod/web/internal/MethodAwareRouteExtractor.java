@@ -17,7 +17,7 @@ package io.winterframework.mod.web.internal;
 
 import io.winterframework.mod.http.base.Method;
 import io.winterframework.mod.http.server.Exchange;
-import io.winterframework.mod.web.AbstractRoute;
+import io.winterframework.mod.web.Route;
 import io.winterframework.mod.web.MethodAwareRoute;
 
 /**
@@ -32,7 +32,7 @@ import io.winterframework.mod.web.MethodAwareRoute;
  * @param <B> the route type
  * @param <C> the route extractor type
  */
-interface MethodAwareRouteExtractor<A extends Exchange, B extends AbstractRoute<A>, C extends MethodAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
+interface MethodAwareRouteExtractor<A extends Exchange, B extends Route<A>, C extends MethodAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
 
 	/**
 	 * <p>

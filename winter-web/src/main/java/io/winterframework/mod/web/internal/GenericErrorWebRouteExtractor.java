@@ -19,25 +19,25 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import io.winterframework.mod.http.server.ErrorExchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
-import io.winterframework.mod.web.ErrorRoute;
+import io.winterframework.mod.web.ErrorWebExchange;
+import io.winterframework.mod.web.ErrorWebRoute;
 
 /**
  * <p>
- * Generic {@link ErrorRouteExtractor} implementation.
+ * Generic {@link ErrorWebRouteExtractor} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericErrorRouteExtractor implements ErrorRouteExtractor {
+class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 
-	private final GenericErrorRouter router;
+	private final GenericErrorWebRouter router;
 	
-	private GenericErrorRouteExtractor parent;
+	private GenericErrorWebRouteExtractor parent;
 	
-	private Set<ErrorRoute> routes;
+	private Set<ErrorWebRoute> routes;
 	
 	private Class<? extends Throwable> error;
 	
@@ -47,29 +47,29 @@ class GenericErrorRouteExtractor implements ErrorRouteExtractor {
 	
 	/**
 	 * <p>
-	 * Creates a generic error route extractor in the specified generic error
-	 * router.
+	 * Creates a generic error web route extractor in the specified generic error
+	 * web router.
 	 * </p>
 	 * 
-	 * @param router a generic error router
+	 * @param router a generic error web router
 	 */
-	public GenericErrorRouteExtractor(GenericErrorRouter router) {
+	public GenericErrorWebRouteExtractor(GenericErrorWebRouter router) {
 		this.router = router;
 	}
 
 	/**
 	 * <p>
-	 * Creates a generic error route extractor with the specified parent.
+	 * Creates a generic error web route extractor with the specified parent.
 	 * </p>
 	 * 
-	 * @param parent a generic error route extractor
+	 * @param parent a generic error web route extractor
 	 */
-	private GenericErrorRouteExtractor(GenericErrorRouteExtractor parent) {
+	private GenericErrorWebRouteExtractor(GenericErrorWebRouteExtractor parent) {
 		this.parent = parent;
 		this.router = parent.router;
 	}
 	
-	private GenericErrorRouter getRouter() {
+	private GenericErrorWebRouter getRouter() {
 		return this.router;
 	}
 	
@@ -103,7 +103,7 @@ class GenericErrorRouteExtractor implements ErrorRouteExtractor {
 		return null;
 	}
 	
-	private void addRoute(ErrorRoute route) {
+	private void addRoute(ErrorWebRoute route) {
 		if(this.parent != null) {
 			this.parent.addRoute(route);
 		}
@@ -116,7 +116,7 @@ class GenericErrorRouteExtractor implements ErrorRouteExtractor {
 	}
 	
 	@Override
-	public Set<ErrorRoute> getRoutes() {
+	public Set<ErrorWebRoute> getRoutes() {
 		if(this.parent != null) {
 			return this.parent.getRoutes();			
 		}
@@ -126,30 +126,30 @@ class GenericErrorRouteExtractor implements ErrorRouteExtractor {
 	}
 	
 	@Override
-	public ErrorRouteExtractor error(Class<? extends Throwable> error) {
-		GenericErrorRouteExtractor childExtractor = new GenericErrorRouteExtractor(this);
+	public ErrorWebRouteExtractor error(Class<? extends Throwable> error) {
+		GenericErrorWebRouteExtractor childExtractor = new GenericErrorWebRouteExtractor(this);
 		childExtractor.error = error;
 		return childExtractor;
 	}
 	
 	@Override
-	public ErrorRouteExtractor produces(String mediaType) {
-		GenericErrorRouteExtractor childExtractor = new GenericErrorRouteExtractor(this);
+	public ErrorWebRouteExtractor produces(String mediaType) {
+		GenericErrorWebRouteExtractor childExtractor = new GenericErrorWebRouteExtractor(this);
 		childExtractor.produce = mediaType;
 		return childExtractor;
 	}
 
 	@Override
-	public ErrorRouteExtractor language(String language) {
-		GenericErrorRouteExtractor childExtractor = new GenericErrorRouteExtractor(this);
+	public ErrorWebRouteExtractor language(String language) {
+		GenericErrorWebRouteExtractor childExtractor = new GenericErrorWebRouteExtractor(this);
 		childExtractor.language = language;
 		return childExtractor;
 	}
 
 	@Override
-	public void handler(ExchangeHandler<ErrorExchange<Throwable>> handler, boolean disabled) {
+	public void handler(ExchangeHandler<ErrorWebExchange<Throwable>> handler, boolean disabled) {
 		if(handler != null) {
-			GenericErrorRoute route = new GenericErrorRoute(this.getRouter());
+			GenericErrorWebRoute route = new GenericErrorWebRoute(this.getRouter());
 			route.setDisabled(disabled);
 	
 			Class<? extends Throwable> error = this.getError();

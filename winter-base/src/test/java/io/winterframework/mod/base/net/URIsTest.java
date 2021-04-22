@@ -17,11 +17,15 @@ package io.winterframework.mod.base.net;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import io.winterframework.mod.base.Charsets;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
@@ -371,6 +375,18 @@ public class URIsTest {
 		
 		Assertions.assertFalse("/A/1/b/_2/b_3_/4".matches(uriPathPattern.getPatternString()));
 		
+		uriBuilder = URIs.uri("/a/{p:[1-9][0-9]{0,2}}", URIs.Option.PARAMETERIZED);
+		uriPathPattern = uriBuilder.buildPathPattern();
+		uriPathMatcher = uriPathPattern.matcher("/a/123");
+		
+		Assertions.assertTrue(uriPathMatcher.matches());
+		Assertions.assertEquals(Map.of("p", "123"), uriPathMatcher.getParameters());
+		Assertions.assertEquals("123", uriPathMatcher.getParameterValue("p").get());
+		
+		uriPathMatcher = uriPathPattern.matcher("/a/1000");
+		
+		Assertions.assertFalse(uriPathMatcher.matches());
+		
 		// Comparison
 		
 		URIBuilder p1 = URIs.uri("/a/{p1}_{p2}", URIs.Option.PARAMETERIZED);
@@ -491,5 +507,51 @@ public class URIsTest {
 		Assertions.assertEquals(Map.of("p1", List.of("v1"), "p2", List.of("v2"), "p3", List.of("v3")), URIs.uri().queryParameter("p1", "v1").queryParameter("p2", "v2").queryParameter("p3", "v3").getQueryParameters());
 		Assertions.assertEquals(Map.of("p1", List.of("v1", "v12"), "p2", List.of("v2"), "p3", List.of("v3")), URIs.uri("/a/b/c?p1=v1&p2=v2").queryParameter("p1", "v12").queryParameter("p3", "v3").getQueryParameters());
 		Assertions.assertEquals(Map.of("p1", List.of("v1"), "p2", List.of("v2"), "p3", List.of("v3")), URIs.uri("/a/b/c?p1={param1}&p2=v2", URIs.Option.PARAMETERIZED).queryParameter("p3", "{param3}").getQueryParameters("v1", "v3"));
+	}
+	
+	@Test
+	public void testScanParameters() {
+		List<URIParameter> parameters = null;
+		Iterator<URIParameter> parametersIterator = null;
+		URIParameter parameter = null;
+		
+		parameters = new LinkedList<>();
+		URIs.scanURIComponent("/book/{id:[1-9][0-9]{0,2}}/tata/{name:[A-Z][a-z]{0,50}}/{action}/{:.*}", null, Charsets.DEFAULT, parameters::add, null);
+		
+		Assertions.assertEquals(4, parameters.size());
+		parametersIterator = parameters.iterator();
+		parameter = parametersIterator.next();
+		Assertions.assertEquals("id", parameter.getName());
+		Assertions.assertEquals("(?<id>[1-9][0-9]{0,2})", parameter.getPattern());
+		parameter = parametersIterator.next();
+		Assertions.assertEquals("name", parameter.getName());
+		Assertions.assertEquals("(?<name>[A-Z][a-z]{0,50})", parameter.getPattern());
+		parameter = parametersIterator.next();
+		Assertions.assertEquals("action", parameter.getName());
+		Assertions.assertEquals("(?<action>[^/]*)", parameter.getPattern());
+		parameter = parametersIterator.next();
+		Assertions.assertNull(parameter.getName());
+		Assertions.assertEquals("(.*)", parameter.getPattern());
+		
+		parameters = new LinkedList<>();
+		URIs.scanURIComponent("/{patternWithBrace:a\\{b\\}c}", null, Charsets.DEFAULT, parameters::add, null);
+		Assertions.assertEquals(1, parameters.size());
+		parametersIterator = parameters.iterator();
+		parameter = parametersIterator.next();
+		Assertions.assertEquals("patternWithBrace", parameter.getName());
+		Assertions.assertEquals("(?<patternWithBrace>a\\{b\\}c)", parameter.getPattern());
+		
+		parameters = new LinkedList<>();
+		try {
+			URIs.scanURIComponent("/book/{#invalid}", null, Charsets.DEFAULT, parameters::add, null);
+			Assertions.fail("Should throw a URIBuilderException");
+		} 
+		catch (URIBuilderException e) {}
+		
+		try {
+			URIs.scanURIComponent("/book/{invalid-id}", null, Charsets.DEFAULT, parameters::add, null);
+			Assertions.fail("Should throw a URIBuilderException");
+		} 
+		catch (URIBuilderException e) {}
 	}
 }
