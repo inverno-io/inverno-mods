@@ -15,21 +15,21 @@
  */
 package io.winterframework.mod.web.internal;
 
-import io.winterframework.mod.http.server.ErrorExchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
-import io.winterframework.mod.web.ErrorRoute;
+import io.winterframework.mod.web.ErrorWebExchange;
+import io.winterframework.mod.web.ErrorWebRoute;
 
 /**
  * <p>
- * Generic {@link ErrorRoute} implementation.
+ * Generic {@link ErrorWebRoute} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericErrorRoute implements ErrorRoute {
+class GenericErrorWebRoute implements ErrorWebRoute {
 
-	private final GenericErrorRouter router;
+	private final GenericErrorWebRouter router;
 	
 	private boolean disabled;
 
@@ -39,16 +39,16 @@ class GenericErrorRoute implements ErrorRoute {
 	
 	private String language;
 	
-	private ExchangeHandler<ErrorExchange<Throwable>> handler;
+	private ExchangeHandler<ErrorWebExchange<Throwable>> handler;
 	
 	/**
 	 * <p>
-	 * Creates a generic error route in the specified generic error router.
+	 * Creates a generic error web route in the specified generic error web router.
 	 * </p>
 	 * 
-	 * @param router a generic error router
+	 * @param router a generic error web router
 	 */
-	public GenericErrorRoute(GenericErrorRouter router) {
+	public GenericErrorWebRoute(GenericErrorWebRouter router) {
 		this.router = router;
 	}
 
@@ -71,7 +71,7 @@ class GenericErrorRoute implements ErrorRoute {
 	
 	/**
 	 * <p>
-	 * Disables/Enables the error route.
+	 * Disables/Enables the error web route.
 	 * </p>
 	 * 
 	 * @param disabled true to disable the route, false otherwise
@@ -88,12 +88,12 @@ class GenericErrorRoute implements ErrorRoute {
 	/**
 	 * <p>
 	 * Sets the route exchange handler as defined by
-	 * {@link ErrorRoute#getHandler()}.
+	 * {@link ErrorWebRoute#getHandler()}.
 	 * </p>
 	 * 
 	 * @param handler an exchange handler
 	 */
-	public void setHandler(ExchangeHandler<ErrorExchange<Throwable>> handler) {
+	public void setHandler(ExchangeHandler<ErrorWebExchange<Throwable>> handler) {
 		this.handler = handler;
 	}
 	
@@ -104,7 +104,7 @@ class GenericErrorRoute implements ErrorRoute {
 	
 	/**
 	 * <p>
-	 * Sets the route error type as defined by {@link ErrorRoute#getError()}
+	 * Sets the route error type as defined by {@link ErrorWebRoute#getError()}
 	 * </p>
 	 * 
 	 * @param error an error type
@@ -120,7 +120,7 @@ class GenericErrorRoute implements ErrorRoute {
 	
 	/**
 	 * <p>
-	 * Sets the route language as defined by {@link ErrorRoute#getLanguage()}
+	 * Sets the route language as defined by {@link ErrorWebRoute#getLanguage()}
 	 * </p>
 	 * 
 	 * @param language a language tag
@@ -137,7 +137,7 @@ class GenericErrorRoute implements ErrorRoute {
 	/**
 	 * <p>
 	 * Sets the route produced media type as defined by
-	 * {@link ErrorRoute#getProduce()}
+	 * {@link ErrorWebRoute#getProduce()}
 	 * </p>
 	 * 
 	 * @param mediaType a media type
@@ -147,7 +147,7 @@ class GenericErrorRoute implements ErrorRoute {
 	}
 	
 	@Override
-	public ExchangeHandler<ErrorExchange<Throwable>> getHandler() {
+	public ExchangeHandler<ErrorWebExchange<Throwable>> getHandler() {
 		return this.handler;
 	}
 }

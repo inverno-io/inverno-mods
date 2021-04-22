@@ -27,11 +27,11 @@ import io.winterframework.mod.http.server.Exchange;
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see AbstractRoute
+ * @see Route
  * 
  * @param <A> the type of web exchange handled by the route
  */
-public interface MethodAwareRoute<A extends Exchange> extends AbstractRoute<A> {
+public interface MethodAwareRoute<A extends Exchange> extends Route<A> {
 
 	/**
 	 * <p>

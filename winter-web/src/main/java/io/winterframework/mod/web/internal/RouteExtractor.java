@@ -19,7 +19,7 @@ import java.util.Set;
 
 import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
-import io.winterframework.mod.web.AbstractRoute;
+import io.winterframework.mod.web.Route;
 
 /**
  * <p>
@@ -31,10 +31,10 @@ import io.winterframework.mod.web.AbstractRoute;
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see AbstractRoute
+ * @see Route
  * @see RoutingLink
  */
-interface RouteExtractor<C extends Exchange, D extends AbstractRoute<C>> {
+interface RouteExtractor<C extends Exchange, D extends Route<C>> {
 
 	/**
 	 * <p>

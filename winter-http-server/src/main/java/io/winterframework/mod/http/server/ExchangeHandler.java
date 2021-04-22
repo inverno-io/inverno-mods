@@ -15,7 +15,7 @@
  */
 package io.winterframework.mod.http.server;
 
-import io.winterframework.mod.http.base.WebException;
+import io.winterframework.mod.http.base.HttpException;
 
 /**
  * <p>
@@ -47,7 +47,7 @@ public interface ExchangeHandler<A extends Exchange> {
 	 * 
 	 * @param exchange the exchange to process
 	 * 
-	 * @throws WebException if an error occurs during the processing of the exchange
+	 * @throws HttpException if an error occurs during the processing of the exchange
 	 */
-	void handle(A exchange) throws WebException;
+	void handle(A exchange) throws HttpException;
 }

@@ -72,7 +72,7 @@ import reactor.core.publisher.Mono;
  * 
  * <p>
  * The following are valid configuration properties passed as command line
- * argument:
+ * arguments:
  * </p>
  * 
  * <ul>

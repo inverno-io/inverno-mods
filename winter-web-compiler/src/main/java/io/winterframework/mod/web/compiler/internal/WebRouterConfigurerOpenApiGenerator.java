@@ -96,18 +96,20 @@ class WebRouterConfigurerOpenApiGenerator implements WebRouterConfigurerInfoVisi
 			Map<String, List<WebRouteInfo>> routesByPath = Arrays.stream(routerConfigurerInfo.getControllers())
 				.flatMap(controller -> Arrays.stream(controller.getRoutes())
 					.flatMap(route -> {
-						Stream<String> pathStream = Arrays.stream(route.getPaths());
-						if(route.isMatchTrailingSlash()) {
-							pathStream = pathStream.flatMap(path -> {
-								if(path.endsWith("/")) {
-									return Stream.of(path, path.substring(0, path.length() - 1));
-								}
-								else {
-									return Stream.of(path, path + "/");
-								}
-							});
+						Stream<String> routePathStream;
+						if(route.getPaths().length > 0) {
+							routePathStream = Arrays.stream(route.getPaths())
+								.map(path -> route.getController()
+									.map(WebControllerInfo::getRootPath)
+									.map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).path(path, false).buildRawPath())
+									.orElse(path)
+								);
 						}
-						return pathStream.map(path -> new Object[] {route.getController().map(WebControllerInfo::getRootPath).map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).path(path, false).buildRawPath()).orElse(path), route});
+						else {
+							routePathStream = Stream.of(route.getController().map(WebControllerInfo::getRootPath).orElse("/"));
+						}
+						
+						return routePathStream.map(path -> new Object[] {path, route});
 					})
 				)
 				.collect(Collectors.groupingBy(pathAndRoute -> (String)pathAndRoute[0], Collectors.mapping(pathAndRoute -> (WebRouteInfo)pathAndRoute[1], Collectors.toList())));

@@ -40,41 +40,48 @@ public class JsonMediaTypeConverterTest {
 	
 	@Test
 	public void testEncodeMany() throws IOException {
-		Flux<Person> in = Flux.just(new Person("John", "Smith", 42));
-		
+		Flux<Person> in = Flux.empty();
 		Publisher<ByteBuf> out = CONVERTER.encodeMany(in);
-		
 		List<ByteBuf> outList = Flux.from(out).collectList().block();
 		
 		Assertions.assertEquals(2, outList.size());
 		
-		Assertions.assertEquals("[{\"firstname\":\"John\",\"name\":\"Smith\",\"age\":42}", outList.get(0).toString(Charset.defaultCharset()));
+		Assertions.assertEquals("[", outList.get(0).toString(Charset.defaultCharset()));
 		Assertions.assertEquals("]", outList.get(1).toString(Charset.defaultCharset()));
 		
-		in = Flux.just(new Person("John", "Smith", 42), new Person("Jane", "Smith", 40));
 		
+		in = Flux.just(new Person("John", "Smith", 42));
 		out = CONVERTER.encodeMany(in);
-		
 		outList = Flux.from(out).collectList().block();
 		
 		Assertions.assertEquals(3, outList.size());
 		
-		Assertions.assertEquals("[{\"firstname\":\"John\",\"name\":\"Smith\",\"age\":42}", outList.get(0).toString(Charset.defaultCharset()));
-		Assertions.assertEquals(",{\"firstname\":\"Jane\",\"name\":\"Smith\",\"age\":40}", outList.get(1).toString(Charset.defaultCharset()));
+		Assertions.assertEquals("[", outList.get(0).toString(Charset.defaultCharset()));
+		Assertions.assertEquals("{\"firstname\":\"John\",\"name\":\"Smith\",\"age\":42}", outList.get(1).toString(Charset.defaultCharset()));
 		Assertions.assertEquals("]", outList.get(2).toString(Charset.defaultCharset()));
 		
-		in = Flux.just(new Person("John", "Smith", 42), new Person("Jane", "Smith", 40), new Person("Junior", "Smith", 10));
-		
+		in = Flux.just(new Person("John", "Smith", 42), new Person("Jane", "Smith", 40));
 		out = CONVERTER.encodeMany(in);
-		
 		outList = Flux.from(out).collectList().block();
 		
 		Assertions.assertEquals(4, outList.size());
 		
-		Assertions.assertEquals("[{\"firstname\":\"John\",\"name\":\"Smith\",\"age\":42}", outList.get(0).toString(Charset.defaultCharset()));
-		Assertions.assertEquals(",{\"firstname\":\"Jane\",\"name\":\"Smith\",\"age\":40}", outList.get(1).toString(Charset.defaultCharset()));
-		Assertions.assertEquals(",{\"firstname\":\"Junior\",\"name\":\"Smith\",\"age\":10}", outList.get(2).toString(Charset.defaultCharset()));
+		Assertions.assertEquals("[", outList.get(0).toString(Charset.defaultCharset()));
+		Assertions.assertEquals("{\"firstname\":\"John\",\"name\":\"Smith\",\"age\":42}", outList.get(1).toString(Charset.defaultCharset()));
+		Assertions.assertEquals(",{\"firstname\":\"Jane\",\"name\":\"Smith\",\"age\":40}", outList.get(2).toString(Charset.defaultCharset()));
 		Assertions.assertEquals("]", outList.get(3).toString(Charset.defaultCharset()));
+		
+		in = Flux.just(new Person("John", "Smith", 42), new Person("Jane", "Smith", 40), new Person("Junior", "Smith", 10));
+		out = CONVERTER.encodeMany(in);
+		outList = Flux.from(out).collectList().block();
+		
+		Assertions.assertEquals(5, outList.size());
+		
+		Assertions.assertEquals("[", outList.get(0).toString(Charset.defaultCharset()));
+		Assertions.assertEquals("{\"firstname\":\"John\",\"name\":\"Smith\",\"age\":42}", outList.get(1).toString(Charset.defaultCharset()));
+		Assertions.assertEquals(",{\"firstname\":\"Jane\",\"name\":\"Smith\",\"age\":40}", outList.get(2).toString(Charset.defaultCharset()));
+		Assertions.assertEquals(",{\"firstname\":\"Junior\",\"name\":\"Smith\",\"age\":10}", outList.get(3).toString(Charset.defaultCharset()));
+		Assertions.assertEquals("]", outList.get(4).toString(Charset.defaultCharset()));
 	}
 	
 	@Test

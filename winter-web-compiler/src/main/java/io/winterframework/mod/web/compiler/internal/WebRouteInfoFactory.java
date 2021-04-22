@@ -95,6 +95,7 @@ class WebRouteInfoFactory {
 	private final TypeMirror publisherType;
 	private final TypeMirror monoType;
 	private final TypeMirror fluxType;
+	private final TypeMirror voidType;
 	private final TypeMirror byteBufType;
 	private final TypeMirror sseRawEventType;
 	private final TypeMirror SseEncoderEventType;
@@ -122,6 +123,7 @@ class WebRouteInfoFactory {
 		this.publisherType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(Publisher.class.getCanonicalName()).asType());
 		this.monoType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(Mono.class.getCanonicalName()).asType());
 		this.fluxType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(Flux.class.getCanonicalName()).asType());
+		this.voidType = this.pluginContext.getElementUtils().getTypeElement(Void.class.getCanonicalName()).asType();
 		this.byteBufType = this.pluginContext.getElementUtils().getTypeElement(ByteBuf.class.getCanonicalName()).asType();
 		this.sseRawEventType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(ResponseBody.Sse.Event.class.getCanonicalName()).asType());
 		this.SseEncoderEventType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebResponseBody.SseEncoder.Event.class.getCanonicalName()).asType());
@@ -233,7 +235,10 @@ class WebRouteInfoFactory {
 		ResponseBodyKind responseBodyKind = ResponseBodyKind.ENCODED;
 		if(responseBodyReactiveKind != ResponseBodyReactiveKind.NONE) {
 			responseBodyType = ((DeclaredType)responseBodyType).getTypeArguments().get(0);
-			if(this.pluginContext.getTypeUtils().isSameType(responseBodyType, this.byteBufType)) {
+			if(this.pluginContext.getTypeUtils().isSameType(responseBodyType, this.voidType)) {
+				responseBodyKind = ResponseBodyKind.EMPTY;
+			}
+			else if(this.pluginContext.getTypeUtils().isSameType(responseBodyType, this.byteBufType)) {
 				responseBodyKind = ResponseBodyKind.RAW;
 			}
 			else if(this.pluginContext.getTypeUtils().isSameType(this.pluginContext.getTypeUtils().erasure(responseBodyType), this.sseRawEventType)) {
@@ -383,8 +388,13 @@ class WebRouteInfoFactory {
 	public List<GenericWebRouteInfo> compileControllerRoutes(BeanInfo bean) throws IllegalArgumentException {
 		TypeElement beanElement = (TypeElement) this.pluginContext.getTypeUtils().asElement(bean.getType());
 		
-		this.pluginContext.getElementUtils().getAllAnnotationMirrors(beanElement).stream()
-			.filter(annotation -> this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.webControllerAnnotationType))
+		this.typeHierarchyExtractor.extractTypeHierarchy(beanElement).stream()
+			.map(element -> this.pluginContext.getElementUtils().getAllAnnotationMirrors(element).stream()
+				.filter(annotation -> this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.webControllerAnnotationType))
+				.findFirst()
+			)
+			.filter(Optional::isPresent)
+			.map(Optional::get)
 			.findFirst()
 			.orElseThrow(() -> new IllegalArgumentException("bean " + bean + " is not annotated with " + WebController.class));
 		

@@ -15,6 +15,7 @@
  */
 package io.winterframework.mod.boot.internal.converter;
 
+import java.lang.reflect.Type;
 import java.util.Iterator;
 
 import org.reactivestreams.Publisher;
@@ -27,6 +28,7 @@ import io.winterframework.mod.base.converter.MediaTypeConverter;
 import io.winterframework.mod.base.converter.ReactiveConverter;
 import io.winterframework.mod.base.resource.MediaTypes;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -44,6 +46,8 @@ public class JsonMediaTypeConverter extends AbstractJsonMediaTypeConverter imple
 	private static final ByteBuf JSON_ARRAY_START = Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(new byte[] {'['}));
 	private static final ByteBuf JSON_ARRAY_SEPARATOR = Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(new byte[] {','}));
 	private static final ByteBuf JSON_ARRAY_END = Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(new byte[] {']'}));
+
+	private static final Mono<ByteBuf> JSON_ARRAY_START_MONO = Mono.just(JSON_ARRAY_START);
 	
 	public JsonMediaTypeConverter(ReactiveConverter<ByteBuf, Object> jsonByteBufConverter) {
 		super(jsonByteBufConverter);
@@ -56,29 +60,44 @@ public class JsonMediaTypeConverter extends AbstractJsonMediaTypeConverter imple
 
 	@Override
 	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value) {
-		Iterable<ByteBuf> separators = new Iterable<ByteBuf>() {
+		return JSON_ARRAY_START_MONO.concatWith(((Flux<ByteBuf>)super.encodeMany(value)).zipWithIterable(new Separators(), (element, separator) -> Unpooled.wrappedBuffer(separator, element))).concatWithValues(JSON_ARRAY_END.duplicate());
+//		return ((Flux<ByteBuf>)super.encodeMany(value)).zipWithIterable(new Separators(), (element, separator) -> Unpooled.wrappedBuffer(separator, element)).concatWithValues(JSON_ARRAY_END.duplicate());
+	}
+	
+	
+	@Override
+	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value, Class<T> type) {
+		return JSON_ARRAY_START_MONO.concatWith(((Flux<ByteBuf>)super.encodeMany(value, type)).zipWithIterable(new Separators(), (element, separator) -> Unpooled.wrappedBuffer(separator, element))).concatWithValues(JSON_ARRAY_END.duplicate());
+//		return ((Flux<ByteBuf>)super.encodeMany(value, type)).zipWithIterable(new Separators(), (element, separator) -> Unpooled.wrappedBuffer(separator, element)).concatWithValues(JSON_ARRAY_END.duplicate());
+	}
+	
+	@Override
+	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value, Type type) {
+		return JSON_ARRAY_START_MONO.concatWith(((Flux<ByteBuf>)super.encodeMany(value, type)).zipWithIterable(new Separators(), (element, separator) -> Unpooled.wrappedBuffer(separator, element))).concatWithValues(JSON_ARRAY_END.duplicate());
+//		return ((Flux<ByteBuf>)super.encodeMany(value, type)).zipWithIterable(new Separators(), (element, separator) -> Unpooled.wrappedBuffer(separator, element)).concatWithValues(JSON_ARRAY_END.duplicate());
+	}
+	
+	private static class Separators implements Iterable<ByteBuf> {
+		
+		@Override
+		public Iterator<ByteBuf> iterator() {
 			
-			@Override
-			public Iterator<ByteBuf> iterator() {
+			return new Iterator<ByteBuf>() {
 				
-				return new Iterator<ByteBuf>() {
-					
-					private ByteBuf current = JSON_ARRAY_START;
+				private ByteBuf current = Unpooled.EMPTY_BUFFER;// JSON_ARRAY_START;
 
-					@Override
-					public boolean hasNext() {
-						return true;
-					}
+				@Override
+				public boolean hasNext() {
+					return true;
+				}
 
-					@Override
-					public ByteBuf next() {
-						ByteBuf next = this.current;
-						this.current = JSON_ARRAY_SEPARATOR;
-						return next;
-					}
-				};
-			}
-		};
-		return ((Flux<ByteBuf>)super.encodeMany(value)).zipWithIterable(separators, (element, separator) -> Unpooled.wrappedBuffer(separator, element)).concatWithValues(JSON_ARRAY_END.duplicate());
+				@Override
+				public ByteBuf next() {
+					ByteBuf next = this.current;
+					this.current = JSON_ARRAY_SEPARATOR;
+					return next;
+				}
+			};
+		}
 	}
 }

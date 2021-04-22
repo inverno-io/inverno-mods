@@ -106,13 +106,17 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			configurer_constructor.append("\n").append(context.indent(1)).append("}");
 					
 			StringBuilder configurer_accept = new StringBuilder(context.indent(1)).append("@Override\n");
-			configurer_accept.append(context.indent(1)).append("public void accept(").append(context.getTypeName(routerType)).append(" router) {\n");
+			configurer_accept.append(context.indent(1)).append("public void accept(").append(context.getTypeName(routerType)).append(" router) {");
 			if(routerConfigurerInfo.getRouters().length > 0) {
-				configurer_accept.append(Arrays.stream(routerConfigurerInfo.getRouters()).map(routerInfo -> this.visit(routerInfo, context.withIndentDepth(2).withMode(GenerationMode.CONFIGURER_INVOKE))).collect(context.joining("\n"))).append("\n\n");
+				configurer_accept.append("\n").append(Arrays.stream(routerConfigurerInfo.getRouters()).map(routerInfo -> this.visit(routerInfo, context.withIndentDepth(2).withMode(GenerationMode.CONFIGURER_INVOKE))).collect(context.joining("\n"))).append("\n");
 			}
-			configurer_accept.append(context.indent(2)).append("router\n");
-			configurer_accept.append(Arrays.stream(routerConfigurerInfo.getControllers()).map(controllerInfo -> this.visit(controllerInfo, context.withIndentDepth(3).withMode(GenerationMode.ROUTE_DECLARATION))).collect(context.joining("\n")));
-			configurer_accept.append(";\n").append(context.indent(1)).append("}");
+			if(routerConfigurerInfo.getControllers().length > 0) {
+				configurer_accept.append("\n").append(context.indent(2)).append("router\n");
+				configurer_accept.append(Arrays.stream(routerConfigurerInfo.getControllers()).map(controllerInfo -> this.visit(controllerInfo, context.withIndentDepth(3).withMode(GenerationMode.ROUTE_DECLARATION))).collect(context.joining("\n")));
+				configurer_accept.append(";\n");
+			}
+			
+			configurer_accept.append(context.indent(1)).append("}");
 			
 			StringBuilder configurer_class = new StringBuilder();
 			
@@ -165,16 +169,16 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 				.collect(context.joining(",\n"));
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURER_FIELD) {
-			return new StringBuilder(context.indent(0)).append("private ").append(context.getTypeName(providedRouterConfigurerInfo.getType())).append(" ").append(providedRouterConfigurerInfo.getQualifiedName().getBeanName()).append(";");
+			return new StringBuilder(context.indent(0)).append("private ").append(context.getTypeName(providedRouterConfigurerInfo.getType())).append(" ").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName())).append(";");
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURER_PARAMETER) {
-			return new StringBuilder(context.indent(0)).append(context.getTypeName(providedRouterConfigurerInfo.getType())).append(" ").append(providedRouterConfigurerInfo.getQualifiedName().getBeanName());
+			return new StringBuilder(context.indent(0)).append(context.getTypeName(providedRouterConfigurerInfo.getType())).append(" ").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName()));
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURER_ASSIGNMENT) {
-			return new StringBuilder(context.indent(0)).append("this.").append(providedRouterConfigurerInfo.getQualifiedName().getBeanName()).append(" = ").append(providedRouterConfigurerInfo.getQualifiedName().getBeanName()).append(";");
+			return new StringBuilder(context.indent(0)).append("this.").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName())).append(" = ").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName())).append(";");
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURER_INVOKE) {
-			return new StringBuilder(context.indent(0)).append("this.").append(providedRouterConfigurerInfo.getQualifiedName().getBeanName()).append(".accept(router);");
+			return new StringBuilder(context.indent(0)).append("this.").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName())).append(".accept(router);");
 		}
 		return new StringBuilder();
 	}
@@ -182,13 +186,13 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 	@Override
 	public StringBuilder visit(WebControllerInfo controllerInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.CONTROLLER_FIELD) {
-			return new StringBuilder(context.indent(0)).append("private ").append(context.getTypeName(controllerInfo.getType())).append(" ").append(controllerInfo.getQualifiedName().getBeanName()).append(";");
+			return new StringBuilder(context.indent(0)).append("private ").append(context.getTypeName(controllerInfo.getType())).append(" ").append(context.getFieldName(controllerInfo.getQualifiedName())).append(";");
 		}
 		else if(context.getMode() == GenerationMode.CONTROLLER_PARAMETER) {
-			return new StringBuilder(context.indent(0)).append(context.getTypeName(controllerInfo.getType())).append(" ").append(controllerInfo.getQualifiedName().getBeanName());
+			return new StringBuilder(context.indent(0)).append(context.getTypeName(controllerInfo.getType())).append(" ").append(context.getFieldName(controllerInfo.getQualifiedName()));
 		}
 		else if(context.getMode() == GenerationMode.CONTROLLER_ASSIGNMENT) {
-			return new StringBuilder(context.indent(0)).append("this.").append(controllerInfo.getQualifiedName().getBeanName()).append(" = ").append(controllerInfo.getQualifiedName().getBeanName()).append(";");
+			return new StringBuilder(context.indent(0)).append("this.").append(context.getFieldName(controllerInfo.getQualifiedName())).append(" = ").append(context.getFieldName(controllerInfo.getQualifiedName())).append(";");
 		}
 		else if(context.getMode() == GenerationMode.ROUTE_DECLARATION) {
 			return Arrays.stream(controllerInfo.getRoutes()).map(routeInfo -> this.visit(routeInfo, context.withWebController(controllerInfo))).collect(context.joining("\n"));
@@ -201,7 +205,26 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 		if(context.getMode() == GenerationMode.ROUTE_ANNOTATION) {
 			StringBuilder result = new StringBuilder();
 			result.append(context.indent(0)).append("@").append(context.getWebRouteAnnotationTypeName()).append("(");
-			result.append("path = { ").append(Arrays.stream(routeInfo.getPaths()).map(path -> "\"" + routeInfo.getController().map(WebControllerInfo::getRootPath).map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).path(path, false).buildRawPath()).orElse(path) + "\"").collect(Collectors.joining(", "))).append(" }");
+			
+			result.append("path = { ");
+			if(routeInfo.getPaths().length > 0) {
+				result.append(Arrays.stream(routeInfo.getPaths())
+					.map(path -> "\"" + routeInfo.getController()
+						.map(WebControllerInfo::getRootPath)
+						.map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).path(path, false).buildRawPath())
+						.orElse(path) + "\""
+					)
+					.collect(Collectors.joining(", "))
+				);	
+			}
+			else {
+				routeInfo.getController()
+					.map(WebControllerInfo::getRootPath)
+					.map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).buildRawPath())
+					.ifPresent(rootPath -> result.append("\"").append(rootPath).append("\""));
+			}
+			result.append(" }");
+			
 			if(routeInfo.isMatchTrailingSlash()) {
 				result.append(", matchTrailingSlash = true");
 			}
@@ -230,7 +253,22 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			
 			StringBuilder routeManager = new StringBuilder();
 			
-			routeManager.append(Arrays.stream(routeInfo.getPaths()).map(path -> ".path(\"" + routeInfo.getController().map(WebControllerInfo::getRootPath).map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).path(path, false).buildRawPath()).orElse(path) + "\", " + routeInfo.isMatchTrailingSlash() + ")").collect(Collectors.joining()));
+			if(routeInfo.getPaths().length > 0) {
+				routeManager.append(Arrays.stream(routeInfo.getPaths())
+					.map(path -> ".path(\"" + routeInfo.getController()
+						.map(WebControllerInfo::getRootPath)
+						.map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).path(path, false).buildRawPath())
+						.orElse(path) + "\", " + routeInfo.isMatchTrailingSlash() + ")"
+					)
+					.collect(Collectors.joining())
+				);
+			}
+			else {
+				routeInfo.getController()
+					.map(WebControllerInfo::getRootPath)
+					.map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).buildRawPath())
+					.ifPresent(rootPath -> routeManager.append(".path(\"").append(rootPath).append("\", ").append(routeInfo.isMatchTrailingSlash()).append(")"));
+			}
 			if(routeInfo.getMethods() != null && routeInfo.getMethods().length > 0) {
 				routeManager.append(Arrays.stream(routeInfo.getMethods()).map(method -> ".method(" + context.getMethodTypeName() + "." + method.toString() + ")").collect(Collectors.joining()));
 			}
@@ -316,9 +354,9 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 				parameterIndex++;
 			}
 			
-			StringBuilder controllerInvoke = new StringBuilder("this.").append(context.getWebController().getQualifiedName().getBeanName()).append(".").append(routeInfo.getElement().get().getSimpleName().toString()).append("(").append(requestParameters).append(")");
+			StringBuilder controllerInvoke = new StringBuilder("this.").append(context.getFieldName(context.getWebController().getQualifiedName())).append(".").append(routeInfo.getElement().get().getSimpleName().toString()).append("(").append(requestParameters).append(")");
 			
-			if(responseBodyInfo.getBodyKind() == ResponseBodyKind.EMPTY) {
+			if(responseBodyInfo.getBodyKind() == ResponseBodyKind.EMPTY && responseBodyInfo.getBodyReactiveKind() == ResponseBodyReactiveKind.NONE) {
 				if(hasFormParameters) {
 					result.append(context.indent(0)).append("exchange.response().body().raw().stream(");
 					result.append(context.getFluxTypeName()).append(".from(exchange.request().body().get().urlEncoded().stream()).collectMultimap(").append(context.getParameterTypeName()).append("::getName)").append(".flatMap(formParameters -> ");
@@ -355,7 +393,16 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 					controllerInvoke.insert(0, new StringBuilder(context.getFluxTypeName()).append(".from(exchange.request().body().get().urlEncoded().stream()).collectMultimap(").append(context.getParameterTypeName()).append("::getName)").append(".map(formParameters -> ")).append(")");
 				}
 				
-				if(responseBodyInfo.getBodyKind() == ResponseBodyKind.RAW) {
+				if(responseBodyInfo.getBodyKind() == ResponseBodyKind.EMPTY) {
+					// We know we are reactive here
+					if(responseBodyInfo.getBodyReactiveKind() == ResponseBodyReactiveKind.PUBLISHER) {
+						controllerInvoke.insert(0, new StringBuilder(context.getFluxTypeName()).append(".from(")).append(")");
+					}
+					result.append(context.indent(0)).append("exchange.response().body().raw().stream(");
+					result.append(controllerInvoke).append(".then().cast(").append(context.getByteBufTypeName()).append(".class)");
+					result.append(");\n");
+				}
+				else if(responseBodyInfo.getBodyKind() == ResponseBodyKind.RAW) {
 					String responseBodyDataMethod;
 					if(responseBodyInfo.getBodyReactiveKind() == ResponseBodyReactiveKind.NONE) {
 						if(hasFormParameters || requestBodyInfo != null) {

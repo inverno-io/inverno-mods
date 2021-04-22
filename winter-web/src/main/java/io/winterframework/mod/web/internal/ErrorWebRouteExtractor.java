@@ -15,20 +15,20 @@
  */
 package io.winterframework.mod.web.internal;
 
-import io.winterframework.mod.http.server.ErrorExchange;
-import io.winterframework.mod.web.ErrorRoute;
+import io.winterframework.mod.web.ErrorWebExchange;
+import io.winterframework.mod.web.ErrorWebRoute;
 
 /**
  * <p>
- * A route extractor to extract {@link ErrorRoute} routes.
+ * A route extractor to extract {@link ErrorWebRoute} routes.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-interface ErrorRouteExtractor extends 
-	AcceptAwareRouteExtractor<ErrorExchange<Throwable>, ErrorRoute, ErrorRouteExtractor>,
-	ErrorAwareRouteExtractor<ErrorExchange<Throwable>, ErrorRoute, ErrorRouteExtractor>, 
-	RouteExtractor<ErrorExchange<Throwable>, ErrorRoute> {
+interface ErrorWebRouteExtractor extends 
+	AcceptAwareRouteExtractor<ErrorWebExchange<Throwable>, ErrorWebRoute, ErrorWebRouteExtractor>,
+	ErrorAwareRouteExtractor<ErrorWebExchange<Throwable>, ErrorWebRoute, ErrorWebRouteExtractor>, 
+	RouteExtractor<ErrorWebExchange<Throwable>, ErrorWebRoute> {
 
 }

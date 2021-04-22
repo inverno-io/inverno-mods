@@ -16,24 +16,29 @@
 package io.winterframework.mod.base.resource;
 
 import java.net.URI;
-import java.nio.file.Paths;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.Objects;
 
 /**
  * <p>
  * A {@link Resource} implementation that identifies resources by a URI of the
- * form <code>jar:/path/to/resource</code> and looks up data in a jar file on
- * the file system system.
+ * form <code>jar:file:/path/to/jar!/path/to/resource</code> and looks up data in a
+ * jar file on the file system system.
  * </p>
  * 
  * <p>
  * A typical usage is:
  * </p>
  * 
- * <blockquote><pre>
- * JarResource resource = new JarResource(URI.create("jar:/path/to/jar!/path/to/resource"));
+ * <blockquote>
+ * 
+ * <pre>
+ * JarResource resource = new JarResource(URI.create("jar:file:/path/to/jar!/path/to/resource"));
  * ...
- * </pre></blockquote>
+ * </pre>
+ * 
+ * </blockquote>
  * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
@@ -90,9 +95,15 @@ public class JarResource extends ZipResource {
 	}
 	
 	@Override
-	public Resource resolve(URI uri) {
-		JarResource resolvedResource = new JarResource(URI.create(this.zipFsUri.toString() + "!" + this.resourcePath.resolve(Paths.get(uri.getPath())).toString()), this.getMediaTypeService());
-		resolvedResource.setExecutor(this.getExecutor());
-		return resolvedResource;
+	public Resource resolve(Path path) {
+		try {
+			URI resolvedURI = new URI(JarResource.SCHEME_JAR, this.zipFsUri.getSchemeSpecificPart()+ "!" + this.resourcePath.resolve(path).normalize().toString(), null);
+			JarResource resolvedResource = new JarResource(resolvedURI, this.getMediaTypeService());
+			resolvedResource.setExecutor(this.getExecutor());
+			return resolvedResource;
+		} 
+		catch (URISyntaxException e) {
+			throw new IllegalArgumentException("Invalid path", e);
+		}
 	}
 }

@@ -20,7 +20,6 @@ public class CommandLineConfigurationSourceTest {
 	
 	@Test
 	public void testCommandLineConfigurationSource() throws URISyntaxException {
-		
 		// --tata.toto[test=5,tutu=\"plop\"]=563 --tata.toto[tutu=\"plop\"]=65432  --url="\"https://localhost:8443\""
 		
 		String[] args = {
@@ -40,9 +39,9 @@ public class CommandLineConfigurationSourceTest {
 			.collectList()
 			.block();
 
-		results.stream().forEach(queryResult -> {
+		/*results.stream().forEach(queryResult -> {
 			System.out.println(queryResult.getQueryKey() + " -> " + queryResult.getResult().orElse(null));
-		});
+		});*/
 		
 		// cast test
 		/*ConfigurationSource<?,?,?> src2 = src;

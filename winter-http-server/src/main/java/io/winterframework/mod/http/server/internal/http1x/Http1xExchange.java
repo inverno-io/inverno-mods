@@ -24,6 +24,7 @@ import org.reactivestreams.Subscription;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.FileRegion;
 import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
@@ -275,9 +276,18 @@ public class Http1xExchange extends AbstractExchange {
 		@Override
 		protected void hookOnComplete() {
 			Http1xExchange.this.executeInEventLoop(() -> {
-				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.newPromise().addListener(future -> {
+				Http1xResponseTrailers trailers = (Http1xResponseTrailers)Http1xExchange.this.response.trailers();
+				
+				ChannelPromise promise = Http1xExchange.this.context.newPromise().addListener(future -> {
 					Http1xExchange.this.handler.exchangeComplete(Http1xExchange.this.context);
-				}));
+				});
+				
+				if(trailers != null) {
+					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, trailers.getUnderlyingTrailers()), promise);
+				}
+				else {
+					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, promise);
+				}
 			});
 		}
 	}

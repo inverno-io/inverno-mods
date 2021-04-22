@@ -34,6 +34,6 @@ package io.winterframework.mod.http.server;
  * 
  * @param <A> the error type
  */
-public interface ErrorExchangeHandler<A extends Throwable> extends ExchangeHandler<ErrorExchange<A>> {
+public interface ErrorExchangeHandler<A extends Throwable, B extends ErrorExchange<A>> extends ExchangeHandler<B> {
 
 }

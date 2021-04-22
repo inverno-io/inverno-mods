@@ -820,6 +820,21 @@ class GenericURIBuilder implements URIBuilder {
 	}
 	
 	@Override
+	public URIBuilder clone() {
+		GenericURIBuilder copy = new GenericURIBuilder(this.charset, this.flags.getOptions());
+		
+		copy.fragment = this.fragment;
+		copy.host = this.host;
+		copy.port = this.port;
+		copy.queryParameters.addAll(this.queryParameters);
+		copy.scheme = this.scheme;
+		copy.segments.addAll(this.segments);
+		copy.userInfo = this.userInfo;
+		
+		return copy;
+	}
+	
+	@Override
 	public String toString() {
 		return this.buildRawString();
 	}

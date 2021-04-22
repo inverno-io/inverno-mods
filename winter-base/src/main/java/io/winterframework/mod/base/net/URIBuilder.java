@@ -44,7 +44,7 @@ import java.util.Map;
  * @see URIs
  * @see URIPattern
  */
-public interface URIBuilder {
+public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
@@ -616,4 +616,13 @@ public interface URIBuilder {
 	 * @return a URI pattern
 	 */
 	URIPattern buildPathPattern(boolean matchTrailingSlash);
+	
+	/**
+	 * <p>
+	 * Clones the URI builder.
+	 * </p>
+	 * 
+	 * @return A copy of the URI builder
+	 */
+	URIBuilder clone();
 }

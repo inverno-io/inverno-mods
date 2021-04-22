@@ -24,6 +24,8 @@ import java.net.URLConnection;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Objects;
 import java.util.Optional;
@@ -159,8 +161,8 @@ public class URLResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public boolean isFile() {
-		return false;
+	public Optional<Boolean> isFile() {
+		return Optional.empty();
 	}
 
 	@Override
@@ -229,7 +231,15 @@ public class URLResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public URLResource resolve(URI uri) {
-		return new URLResource(this.uri.resolve(uri.normalize()), this.getMediaTypeService());
+	public URLResource resolve(Path path) {
+		try {
+			URI resolvedUri = new URI(this.uri.getScheme(), this.uri.getAuthority(), Paths.get(this.uri.getPath()).resolve(path).toString(), this.uri.getQuery(), this.uri.getFragment());
+			URLResource resolvedResource = new URLResource(resolvedUri, this.getMediaTypeService());
+			resolvedResource.setExecutor(this.getExecutor());
+			return resolvedResource;
+		} 
+		catch (URISyntaxException e) {
+			throw new IllegalArgumentException("Invalid path", e);
+		}
 	}
 }

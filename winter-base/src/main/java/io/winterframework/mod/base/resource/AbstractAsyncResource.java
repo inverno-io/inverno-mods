@@ -21,6 +21,8 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.reactivestreams.Publisher;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import reactor.core.Exceptions;
@@ -117,7 +119,7 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 	}
 	
 	@Override
-	public Optional<Flux<ByteBuf>> read() {
+	public Optional<Publisher<ByteBuf>> read() {
 		return this.openReadableByteChannel().map(channel -> {
 			return Flux.generate(
 				() -> Long.valueOf(0),	
@@ -152,9 +154,9 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 	}
 	
 	@Override
-	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) {
+	public Optional<Publisher<Integer>> write(Publisher<ByteBuf> data, boolean append, boolean createParents) {
 		return this.openWritableByteChannel(append, createParents)
-			.map(channel -> data
+			.map(channel -> Flux.from(data)
 				.concatMap(chunk -> Mono.<Integer>create(sink -> {
 						try {
 							sink.success(channel.write(chunk.nioBuffer()));

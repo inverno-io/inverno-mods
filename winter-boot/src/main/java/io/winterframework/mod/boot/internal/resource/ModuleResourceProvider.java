@@ -35,6 +35,19 @@ import io.winterframework.mod.base.resource.ResourceService;
  * resources (ie. {@code module://module/path/to/resource}).
  * </p>
  * 
+ * <p>This implementation allows to resolve resources with the same name but in different module by specifying '*' instead of a module name in the module resource URI.</p>
+ * 
+ * <blockquote>
+ * 
+ * <pre>
+ * ModuleResourceProvider provider = new ModuleResourceProvider();
+ * 
+ * // Returns all resources with name /path/to/module defined in the application modules
+ * Stream{@literal<ModuleResource>} resources = provider.getResources(URI.create("module://{@literal *}/path/to/resource");
+ * </pre>
+ * 
+ * </blockquote>
+ * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
@@ -57,6 +70,13 @@ public class ModuleResourceProvider extends AbstractResourceProvider<ModuleResou
 	
 	@Override
 	public Stream<ModuleResource> getResources(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
+		String moduleName = uri.getAuthority();
+		if(moduleName != null && moduleName.equals("*")) {
+			ModuleLayer moduleLayer = this.getClass().getModule().getLayer();
+			if(moduleLayer != null) {
+				return moduleLayer.modules().stream().map(module -> new ModuleResource(URI.create(ModuleResource.SCHEME_MODULE + "://" + module.getName() + uri.getPath()))).filter(moduleResource -> moduleResource.exists().orElse(false));
+			}
+		}
 		return Stream.of(this.getResource(uri));
 	}
 

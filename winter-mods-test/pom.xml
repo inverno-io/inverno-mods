@@ -105,7 +105,8 @@
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-<!-- 					<argLine>add-opens java.base/java.lang.invoke=io.winterframework.test</argLine> -->
+					<!-- This seems to be required for Java 16 -->
+					<argLine>--add-opens java.base/java.lang.invoke=ALL-UNNAMED,io.winterframework.test</argLine>
 					<includes>
 <!-- 						<include>**/*.java</include> -->
 					</includes>

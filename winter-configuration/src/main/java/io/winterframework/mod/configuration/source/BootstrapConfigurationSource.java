@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 /**
  * <p>
  * A configuration source that considers multiple local sources to load the
- * configuration of an application.
+ * bootstrap configuration of an application.
  * </p>
  * 
  * <p>
@@ -35,13 +35,15 @@ import java.util.stream.Stream;
  * </p>
  * 
  * <ul>
- *   <li>command line arguments</li>
- *   <li>system properties</li>
- *   <li>system environment variables</li>
- *   <li>a {@code configuration.cprops} configuration properties file if present
- * in the {@code ./config/} directory </li>
- *   <li>a {@code configuration.cprops} configuration properties file if present
- * in the application module</li>
+ * <li>command line arguments</li>
+ * <li>system properties</li>
+ * <li>system environment variables</li>
+ * <li>the {@code configuration.cprops} file in {@code ./conf/} or
+ * <code>${winter.config.path}/</code> directories if one exists (if the first one exists the second
+ * one is ignored)</li>
+ * <li>the {@code configuration.cprops} file in <code>${java.home}/conf/</code> directory if it exists</li>
+ * <li>the {@code configuration.cprops} file in the application module if it
+ * exists</li>
  * </ul>
  * 
  * <p>
@@ -81,11 +83,15 @@ import java.util.stream.Stream;
  * @see SystemEnvironmentConfigurationSource
  * @see CPropsFileConfigurationSource
  */
-public class ApplicationConfigurationSource extends CompositeConfigurationSource {
+public class BootstrapConfigurationSource extends CompositeConfigurationSource {
 
+	private static final String WINTER_CONFIG_PATH = "winter.config.path";
+	
+	private static final String JAVA_HOME = "java.home";
+	
 	/**
 	 * <p>
-	 * Creates an application configuration source for the specified application
+	 * Creates a bootstrap configuration source for the specified application
 	 * module and with the specified command line arguments.
 	 * </p>
 	 * 
@@ -93,11 +99,15 @@ public class ApplicationConfigurationSource extends CompositeConfigurationSource
 	 * @param args   the command line arguments
 	 * @throws IOException if something goes wrong creating the configuration source
 	 */
-	public ApplicationConfigurationSource(Module module, String... args) throws IOException {
+	// TODO 
+	// - add Paths.get(System.getProperty("app.home"), "conf", "configuration.cprops");
+	// - add Paths.get(System.getProperty("java.home"), "conf", "configuration.cprops");
+	public BootstrapConfigurationSource(Module module, String... args) throws IOException {
 		super(Stream.of(new CommandLineConfigurationSource(args),
 				new SystemPropertiesConfigurationSource(),
 				new SystemEnvironmentConfigurationSource(),
-				Optional.of(Paths.get("config", "configuration.cprops")).filter(Files::exists).map(CPropsFileConfigurationSource::new).orElse(null),
+				Optional.of(Paths.get("conf", "configuration.cprops")).filter(Files::exists).or(() -> Optional.ofNullable(System.getProperty(WINTER_CONFIG_PATH)).map(config_path -> Paths.get(config_path, "configuration.cprops")).filter(Files::exists)).map(CPropsFileConfigurationSource::new).orElse(null),
+				Optional.of(System.getProperty(JAVA_HOME)).map(app_home -> Paths.get(app_home, "conf", "configuration.cprops")).filter(Files::exists).map(CPropsFileConfigurationSource::new).orElse(null),
 				Optional.of(module.getResourceAsStream("configuration.cprops")).filter(Objects::nonNull).map(CPropsFileConfigurationSource::new).orElse(null)
 		).filter(Objects::nonNull).collect(Collectors.toList()));
 	}

@@ -15,12 +15,15 @@
  */
 package io.winterframework.mod.boot.internal.converter;
 
+import java.lang.reflect.Type;
+
 import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Provide;
+import io.winterframework.mod.base.converter.ConverterException;
 import io.winterframework.mod.base.converter.MediaTypeConverter;
 import io.winterframework.mod.base.converter.ReactiveConverter;
 import io.winterframework.mod.base.resource.MediaTypes;
@@ -56,17 +59,47 @@ public class NdJsonMediaTypeConverter extends AbstractJsonMediaTypeConverter imp
 	}
 	
 	@Override
-	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value) {
-		return ((Flux<ByteBuf>)super.encodeMany(value)).map(this::concatNewLine);
-	}
-	
-	@Override
 	public <T> Publisher<ByteBuf> encodeOne(Mono<T> value) {
 		return ((Mono<ByteBuf>)super.encodeOne(value)).map(this::concatNewLine);
 	}
 	
 	@Override
+	public <T> Publisher<ByteBuf> encodeOne(Mono<T> value, Class<T> type) {
+		return ((Mono<ByteBuf>)super.encodeOne(value, type)).map(this::concatNewLine);
+	}
+	
+	@Override
+	public <T> Publisher<ByteBuf> encodeOne(Mono<T> value, Type type) {
+		return ((Mono<ByteBuf>)super.encodeOne(value, type)).map(this::concatNewLine);
+	}
+
+	@Override
+	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value) {
+		return ((Flux<ByteBuf>)super.encodeMany(value)).map(this::concatNewLine);
+	}
+	
+	@Override
+	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value, Class<T> type) {
+		return ((Flux<ByteBuf>)super.encodeMany(value, type)).map(this::concatNewLine);
+	}
+
+	@Override
+	public <T> Publisher<ByteBuf> encodeMany(Flux<T> value, Type type) {
+		return ((Flux<ByteBuf>)super.encodeMany(value, type)).map(this::concatNewLine);
+	}
+	
+	@Override
 	public <T> ByteBuf encode(T value) {
 		return this.concatNewLine(super.encode(value));
+	}
+	
+	@Override
+	public <T> ByteBuf encode(T value, Class<T> type) throws ConverterException {
+		return this.concatNewLine(super.encode(value, type));
+	}
+	
+	@Override
+	public <T> ByteBuf encode(T value, Type type) throws ConverterException {
+		return this.concatNewLine(super.encode(value, type));
 	}
 }

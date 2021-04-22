@@ -23,7 +23,7 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import io.winterframework.mod.http.base.NotAcceptableException;
-import io.winterframework.mod.http.base.WebException;
+import io.winterframework.mod.http.base.HttpException;
 import io.winterframework.mod.http.base.header.HeaderCodec;
 import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.server.Exchange;
@@ -172,7 +172,7 @@ class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 	}
 
 	@Override
-	public void handle(A exchange) throws WebException {
+	public void handle(A exchange) throws HttpException {
 		if (this.handlers.isEmpty()) {
 			this.nextLink.handle(exchange);
 		} 

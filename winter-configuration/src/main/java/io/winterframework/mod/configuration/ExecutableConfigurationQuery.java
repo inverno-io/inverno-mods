@@ -319,6 +319,10 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	 * Executes the chain of configuration queries.
 	 * </p>
 	 * 
+	 * <p>
+	 * Results are emitted in the same order as the queries.
+	 * </p>
+	 * 
 	 * @return a stream of configuration query results
 	 */
 	Flux<C> execute();

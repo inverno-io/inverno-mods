@@ -59,6 +59,20 @@ public interface HttpServerConfiguration {
 	default int server_port() {
 		return 8080;
 	}
+	
+	/**
+	 * <p>
+	 * The number of event loops to allocate to the server.
+	 * </p>
+	 * 
+	 * <p>
+	 * If not specified, the number of thread allocated to the root event loop group
+	 * shall be used.
+	 * </p>
+	 * 
+	 * @return the number of threads to allocate
+	 */
+	Integer server_event_loop_group_size();
 
 	/**
 	 * <p>
@@ -131,7 +145,7 @@ public interface HttpServerConfiguration {
 	 * 
 	 * @return true if the option is enabled, false otherwise
 	 */
-	default boolean ssl_enabled() {
+	default boolean tls_enabled() {
 		return false;
 	}
 
@@ -209,7 +223,7 @@ public interface HttpServerConfiguration {
 	 * 
 	 * @return a list of ciphers
 	 */
-	String[] ssl_ciphers_includes();
+	String[] tls_ciphers_includes();
 
 	/**
 	 * <p>
@@ -218,7 +232,7 @@ public interface HttpServerConfiguration {
 	 * 
 	 * @return a list of ciphers
 	 */
-	String[] ssl_ciphers_excludes();
+	String[] tls_ciphers_excludes();
 
 	/**
 	 * <p>

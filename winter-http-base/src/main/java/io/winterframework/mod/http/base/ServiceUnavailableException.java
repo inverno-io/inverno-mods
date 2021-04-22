@@ -28,9 +28,9 @@ import java.util.Optional;
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see WebException
+ * @see HttpException
  */
-public class ServiceUnavailableException extends WebException {
+public class ServiceUnavailableException extends HttpException {
 
 	private static final long serialVersionUID = -7765924553702627055L;
 

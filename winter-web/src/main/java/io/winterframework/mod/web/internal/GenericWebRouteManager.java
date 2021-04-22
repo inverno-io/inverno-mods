@@ -35,8 +35,12 @@ import io.winterframework.mod.web.WebRouteManager;
 import io.winterframework.mod.web.WebRouter;
 
 /**
+ * <p>
+ * Generic {@link WebRouteManager} implementation.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
- *
+ * @since 1.0
  */
 class GenericWebRouteManager implements WebRouteManager<WebExchange> {
 
@@ -55,6 +59,13 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange> {
 
 	private ExchangeHandler<WebExchange> handler;
 	
+	/**
+	 * <p>
+	 * Creates a generic web route manager.
+	 * </p>
+	 * 
+	 * @param router the generic web router
+	 */
 	public GenericWebRouteManager(GenericWebRouter router) {
 		this.router = router;
 	}

@@ -45,7 +45,7 @@ public interface CompoundDecoder<From, To> extends Decoder<From, To> {
 	 * 
 	 * @return true if the decoder can decode the type, false otherwise
 	 */
-	<T extends From> boolean canDecode(Class<T> type);
+	<T extends To> boolean canDecode(Class<T> type);
 	
 	/**
 	 * <p>

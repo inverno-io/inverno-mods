@@ -17,6 +17,7 @@ package io.winterframework.mod.configuration.source;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -25,6 +26,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import io.winterframework.mod.base.converter.SplittablePrimitiveDecoder;
+import io.winterframework.mod.base.resource.Resource;
+import io.winterframework.mod.base.resource.ResourceException;
 import io.winterframework.mod.configuration.AbstractHashConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationProperty;
@@ -88,6 +91,8 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 	
 	private Path propertyFile;
 	
+	private Resource propertyResource;
+	
 	private InputStream propertyInput;
 	
 	/**
@@ -141,23 +146,65 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 		super(decoder);
 		this.propertyInput = propertyInput;
 	}
+
+	/**
+	 * <p>
+	 * Creates a {@code .cprops} file configuration source with the specified resource
+	 * </p>
+	 * 
+	 * @param propertyResource the {@code .properties} resource
+	 */
+	public CPropsFileConfigurationSource(Resource propertyResource) {
+		this(propertyResource, new JavaStringConverter());
+	}
+	
+	/**
+	 * <p>
+	 * Creates a {@code .cprops} file configuration source with the specified resource and
+	 * string value decoder.
+	 * </p>
+	 * 
+	 * @param propertyResource the {@code .properties} resource
+	 * @param decoder          a string decoder
+	 */
+	public CPropsFileConfigurationSource(Resource propertyResource, SplittablePrimitiveDecoder<String> decoder) {
+		super(decoder);
+		this.propertyResource = propertyResource;
+	}
+
+	/**
+	 * <p>
+	 * Opens an input stream to read the {@code .cprops} file.
+	 * </p>
+	 * 
+	 * @return An input stream
+	 * @throws IOException       if there was an I/O error opening the file
+	 * @throws ResourceException if there was an error opening the resource
+	 */
+	private InputStream open() throws IOException, ResourceException {
+		if(this.propertyFile != null) {
+			return Files.newInputStream(this.propertyFile);
+		}
+		else if(this.propertyResource != null) {
+			return this.propertyResource.openReadableByteChannel().map(Channels::newInputStream).orElseThrow(() -> new ResourceException("Property file " + this.propertyResource.getURI() + " is not readable"));
+		}
+		else {
+			return this.propertyInput;
+		}
+	}
 	
 	@Override
 	protected Mono<List<ConfigurationProperty<ConfigurationKey, CPropsFileConfigurationSource>>> load() {
 		return Mono.defer(() -> {
-			try(InputStream input = this.propertyFile != null ? Files.newInputStream(this.propertyFile) : this.propertyInput) {
+			try(InputStream input = this.open()) {
 				ConfigurationPropertiesParser<CPropsFileConfigurationSource> parser = new ConfigurationPropertiesParser<>(new StreamProvider(input));
 				parser.setConfigurationSource(this);
 				return Mono.just(parser.StartConfigurationProperties());
 			} 
-			catch (IOException e) {
-				LOGGER.warn(() -> "Invalid configuration property file " + this.propertyFile.getFileName() + " after I/O error: " + e.getMessage());
+			catch (IOException | ParseException | ResourceException e) {
+				LOGGER.warn(() -> "Invalid property file: " + e.getMessage());
 				return Mono.error(e);
 			} 
-			catch (ParseException e) {
-				LOGGER.warn(() -> "Invalid configuration property file " + this.propertyFile.getFileName() + " after parsing error: " + e.getMessage());
-				return Mono.error(e);
-			}
 		});
 	}
 }

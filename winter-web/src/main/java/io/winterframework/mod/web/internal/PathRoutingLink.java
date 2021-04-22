@@ -18,7 +18,7 @@ package io.winterframework.mod.web.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.winterframework.mod.http.base.WebException;
+import io.winterframework.mod.http.base.HttpException;
 import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.web.PathAwareRoute;
 
@@ -147,7 +147,7 @@ class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends R
 	}
 
 	@Override
-	public void handle(A exchange) throws WebException {
+	public void handle(A exchange) throws HttpException {
 		if (this.handlers.isEmpty()) {
 			this.nextLink.handle(exchange);
 		} 

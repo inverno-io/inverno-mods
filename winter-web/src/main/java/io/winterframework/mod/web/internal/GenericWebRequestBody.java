@@ -20,7 +20,8 @@ import java.lang.reflect.Type;
 import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
-import io.winterframework.mod.http.base.InternalServerErrorException;
+import io.winterframework.mod.http.base.BadRequestException;
+import io.winterframework.mod.http.base.UnsupportedMediaTypeException;
 import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.server.RequestBody;
 import io.winterframework.mod.http.server.RequestData;
@@ -85,8 +86,15 @@ class GenericWebRequestBody implements WebRequestBody {
 	@Override
 	public <A> RequestDataDecoder<A> decoder(Type type) {
 		return this.request.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE)
-			.map(contentType -> this.dataConversionService.<A>createDecoder(this.requestBody.raw(), contentType.getMediaType(), type))
-			.orElseThrow(() -> new InternalServerErrorException("Empty media type"));
+			.map(contentType -> {
+				try {
+					return this.dataConversionService.<A>createDecoder(this.requestBody.raw(), contentType.getMediaType(), type);
+				} 
+				catch (NoConverterException e) {
+					throw new UnsupportedMediaTypeException("No converter found for media type: " + e.getMediaType(), e);
+				}
+			})
+			.orElseThrow(() -> new BadRequestException("Empty media type"));
 	}
 	
 	/**

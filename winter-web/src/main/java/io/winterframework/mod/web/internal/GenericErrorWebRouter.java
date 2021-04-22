@@ -30,37 +30,53 @@ import io.winterframework.core.annotation.Bean;
 import io.winterframework.core.annotation.Init;
 import io.winterframework.core.annotation.Provide;
 import io.winterframework.mod.base.resource.MediaTypes;
+import io.winterframework.mod.http.base.HttpException;
 import io.winterframework.mod.http.base.InternalServerErrorException;
 import io.winterframework.mod.http.base.Method;
 import io.winterframework.mod.http.base.MethodNotAllowedException;
 import io.winterframework.mod.http.base.NotAcceptableException;
 import io.winterframework.mod.http.base.ServiceUnavailableException;
-import io.winterframework.mod.http.base.WebException;
 import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.base.internal.header.AcceptCodec;
 import io.winterframework.mod.http.base.internal.header.AcceptLanguageCodec;
 import io.winterframework.mod.http.base.internal.header.ContentTypeCodec;
 import io.winterframework.mod.http.server.ErrorExchange;
-import io.winterframework.mod.http.server.ErrorExchangeHandler;
-import io.winterframework.mod.web.ErrorRoute;
-import io.winterframework.mod.web.ErrorRouteManager;
-import io.winterframework.mod.web.ErrorRouter;
-import io.winterframework.mod.web.ErrorRouterConfigurer;
+import io.winterframework.mod.web.ErrorWebExchange;
+import io.winterframework.mod.web.ErrorWebExchangeHandler;
+import io.winterframework.mod.web.ErrorWebRoute;
+import io.winterframework.mod.web.ErrorWebRouteManager;
+import io.winterframework.mod.web.ErrorWebRouter;
+import io.winterframework.mod.web.ErrorWebRouterConfigurer;
 
 /**
+ * <p>
+ * Generic {@link ErrorWebRouter} implementation.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
- *
+ * @since 1.0
  */
 @Bean( name = "errorRouter" )
-public class GenericErrorRouter implements @Provide ErrorRouter {
+public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	
-	private static final Logger LOGGER = LogManager.getLogger(GenericErrorRouter.class);
+	private static final Logger LOGGER = LogManager.getLogger(GenericErrorWebRouter.class);
 
-	private final RoutingLink<ErrorExchange<Throwable>, ?, ErrorRoute> firstLink;
+	private final DataConversionService dataConversionService;
 	
-	private ErrorRouterConfigurer configurer;
+	private final RoutingLink<ErrorWebExchange<Throwable>, ?, ErrorWebRoute> firstLink;
 	
-	public GenericErrorRouter() {
+	private ErrorWebRouterConfigurer configurer;
+	
+	/**
+	 * <p>
+	 * Creates a generic error web router.
+	 * </p>
+	 * 
+	 * @param dataConversionService the data conversion service
+	 */
+	public GenericErrorWebRouter(DataConversionService dataConversionService) {
+		this.dataConversionService = dataConversionService;
+		
 		AcceptCodec acceptCodec = new AcceptCodec(false);
 		ContentTypeCodec contentTypeCodec = new ContentTypeCodec();
 		AcceptLanguageCodec acceptLanguageCodec = new AcceptLanguageCodec(false);
@@ -73,11 +89,11 @@ public class GenericErrorRouter implements @Provide ErrorRouter {
 	
 	@Init
 	public void init() {
-		this.route().produces(MediaTypes.APPLICATION_JSON).error(WebException.class).handler(webExceptionHandler_json())
+		this.route().produces(MediaTypes.APPLICATION_JSON).error(HttpException.class).handler(httpExceptionHandler_json())
 			.route().produces(MediaTypes.APPLICATION_JSON).handler(this.throwableHandler_json())
-			.route().produces(MediaTypes.TEXT_HTML).error(WebException.class).handler(this.webExceptionHandler_html())
+			.route().produces(MediaTypes.TEXT_HTML).error(HttpException.class).handler(this.httpExceptionHandler_html())
 			.route().produces(MediaTypes.TEXT_HTML).handler(this.throwableHandler_html())
-			.route().error(WebException.class).handler(this.webExceptionHandler())
+			.route().error(HttpException.class).handler(this.httpExceptionHandler())
 			.route().handler(this.throwableHandler());
 		
 		if(this.configurer != null) {
@@ -85,46 +101,88 @@ public class GenericErrorRouter implements @Provide ErrorRouter {
 		}
 	}
 
-	public void setConfigurer(ErrorRouterConfigurer configurer) {
+	/**
+	 * <p>
+	 * Sets the error web router configurer used to initialize the router.
+	 * </p>
+	 * 
+	 * @param configurer an error web router configurer
+	 */
+	public void setConfigurer(ErrorWebRouterConfigurer configurer) {
 		this.configurer = configurer;
 	}
 	
-	@Override
-	public ErrorRouteManager route() {
-		return new GenericErrorRouteManager(this);
-	}
-	
-	void setRoute(ErrorRoute route) {
+	/**
+	 * <p>
+	 * Sets the specified error web route in the router.
+	 * </p>
+	 * 
+	 * @param route an error web route
+	 */
+	void setRoute(ErrorWebRoute route) {
 		this.firstLink.setRoute(route);
 	}
 	
-	void enableRoute(ErrorRoute route) {
+	/**
+	 * <p>
+	 * Enables the specified error web route if it exists.
+	 * </p>
+	 * 
+	 * @param route the error web route to enable
+	 */
+	void enableRoute(ErrorWebRoute route) {
 		this.firstLink.enableRoute(route);
 	}
 	
-	void disableRoute(ErrorRoute route) {
+	/**
+	 * <p>
+	 * Disables the specified error web route if it exists.
+	 * </p>
+	 * 
+	 * @param route the error web route to disable
+	 */
+	void disableRoute(ErrorWebRoute route) {
 		this.firstLink.disableRoute(route);
 	}
 
-	void removeRoute(ErrorRoute route) {
+	/**
+	 * <p>
+	 * Removes the specified error web route if it exists.
+	 * </p>
+	 * 
+	 * @param route the error web route to remove
+	 */
+	void removeRoute(ErrorWebRoute route) {
 		this.firstLink.removeRoute(route);
 	}
 	
 	@Override
-	public Set<ErrorRoute> getRoutes() {
-		GenericErrorRouteExtractor routeExtractor = new GenericErrorRouteExtractor(this);
+	public ErrorWebRouteManager route() {
+		return new GenericErrorWebRouteManager(this);
+	}
+	
+	@Override
+	public Set<ErrorWebRoute> getRoutes() {
+		GenericErrorWebRouteExtractor routeExtractor = new GenericErrorWebRouteExtractor(this);
 		this.firstLink.extractRoute(routeExtractor);
 		return routeExtractor.getRoutes();
 	}
 	
 	@Override
-	public void handle(ErrorExchange<Throwable> exchange) throws WebException {
-		ErrorRouter.super.handle(exchange);
+	public void handle(ErrorExchange<Throwable> exchange) throws HttpException {
+		ErrorWebRouter.super.handle(exchange);
 		LOGGER.error(exchange.getError());
-		this.firstLink.handle(exchange);
+		this.firstLink.handle(new GenericErrorWebExchange(exchange, new GenericWebResponse(exchange.response(), this.dataConversionService)));
 	}
 	
-	private ErrorExchangeHandler<WebException> webExceptionHandler() {
+	/**
+	 * <p>
+	 * Returns the default HttpException error handler.
+	 * </p>
+	 * 
+	 * @return an error web exchange handler
+	 */
+	private ErrorWebExchangeHandler<HttpException> httpExceptionHandler() {
 		return exchange -> {
 			if(exchange.getError() instanceof MethodNotAllowedException) {
 				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
@@ -138,13 +196,27 @@ public class GenericErrorRouter implements @Provide ErrorRouter {
 		};
 	}
 	
-	private ErrorExchangeHandler<Throwable> throwableHandler() {
+	/**
+	 * <p>
+	 * Returns the default Throwable error handler.
+	 * </p>
+	 * 
+	 * @return an error web exchange handler
+	 */
+	private ErrorWebExchangeHandler<Throwable> throwableHandler() {
 		return exchange -> {
-			this.webExceptionHandler().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
+			this.httpExceptionHandler().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
 		};
 	}
 	
-	private ErrorExchangeHandler<WebException> webExceptionHandler_json() {
+	/**
+	 * <p>
+	 * Returns the {@code application/json} HttpException error handler.
+	 * </p>
+	 * 
+	 * @return an error web exchange handler
+	 */
+	private ErrorWebExchangeHandler<HttpException> httpExceptionHandler_json() {
 		// {"timestamp":"2020-11-20T16:10:33.829+00:00","path":"/tertjer","status":404,"error":"Not Found","message":null,"requestId":"115fe3c6-3"}
 		return exchange -> {
 			ByteArrayOutputStream errorOut = new ByteArrayOutputStream();
@@ -184,13 +256,27 @@ public class GenericErrorRouter implements @Provide ErrorRouter {
 		};
 	}
 	
-	private ErrorExchangeHandler<Throwable> throwableHandler_json() {
+	/**
+	 * <p>
+	 * Returns the {@code application/json} Throwable error handler.
+	 * </p>
+	 * 
+	 * @return an error web exchange handler
+	 */
+	private ErrorWebExchangeHandler<Throwable> throwableHandler_json() {
 		return exchange -> {
-			this.webExceptionHandler_json().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
+			this.httpExceptionHandler_json().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
 		};
 	}
 	
-	private ErrorExchangeHandler<WebException> webExceptionHandler_html() {
+	/**
+	 * <p>
+	 * Returns the whitelabel {@code text/html} HttpException error handler.
+	 * </p>
+	 * 
+	 * @return an error web exchange handler
+	 */
+	private ErrorWebExchangeHandler<HttpException> httpExceptionHandler_html() {
 		return exchange -> {
 			String status = Integer.toString(exchange.getError().getStatusCode());
 			
@@ -243,12 +329,19 @@ public class GenericErrorRouter implements @Provide ErrorRouter {
 		};
 	}
 	
-	private ErrorExchangeHandler<Throwable> throwableHandler_html() {
+	/**
+	 * <p>
+	 * Returns the whitelabel {@code text/html} Throwable error handler.
+	 * </p>
+	 * 
+	 * @return an error web exchange handler
+	 */
+	private ErrorWebExchangeHandler<Throwable> throwableHandler_html() {
 		return exchange -> {
-			this.webExceptionHandler_html().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
+			this.httpExceptionHandler_html().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
 		};
 	}
 	
 	@Bean( name = "errorRouterConfigurer")
-	public static interface ConfigurerSocket extends Supplier<ErrorRouterConfigurer> {}
+	public static interface ConfigurerSocket extends Supplier<ErrorWebRouterConfigurer> {}
 }

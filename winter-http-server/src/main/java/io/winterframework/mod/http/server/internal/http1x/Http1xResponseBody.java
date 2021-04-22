@@ -25,6 +25,7 @@ import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.FileRegion;
 import io.winterframework.mod.base.resource.ZipResource;
 import io.winterframework.mod.http.base.InternalServerErrorException;
+import io.winterframework.mod.http.base.NotFoundException;
 import io.winterframework.mod.http.server.ResponseBody;
 import io.winterframework.mod.http.server.internal.GenericResponseBody;
 import reactor.core.Exceptions;
@@ -99,38 +100,49 @@ class Http1xResponseBody extends GenericResponseBody {
 
 		@Override
 		public void value(io.winterframework.mod.base.resource.Resource resource) {
-			// it seems FileRegion does not support Zip files, I saw different behavior between JDK<15 and above
-			if(resource.isFile() && !(resource instanceof ZipResource)) {
-				// We need to create the file region and then send an empty response
-				// The Http1xServerExchange should then complete and check whether there is a file region or not
+			// In case of file resources we should always be able to determine existence
+			// For other resources with a null exists we can still try, worst case scenario: 
+			// internal server error
+			if(resource.exists().orElse(true)) {
 				this.populateHeaders(resource);
-				
-				FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable"));
-				
-				long size = resource.size().get();
-				int count = (int)Math.ceil((float)size / (float)MAX_FILE_REGION_SIZE);
-				
-				// We need to add an extra element in order to control when the flux terminates so we can properly close the file channel
-				Http1xResponseBody.this.fileRegionData = Flux.range(0, count + 1) 
-					.filter(index -> index < count)
-					.map(index -> {
-						long position = index * MAX_FILE_REGION_SIZE;
-						FileRegion region = new DefaultFileRegion(fileChannel, position, Math.min(size - position, MAX_FILE_REGION_SIZE));
-						region.retain();
-						return region;
-					})
-					.doFinally(sgn -> {
-						try {
-							fileChannel.close();
-						} 
-						catch (IOException e) {
-							Exceptions.propagate(e);
-						}
-					});
-				Http1xResponseBody.this.setData(Flux.empty());
+
+				// Only regular file resources supports zero-copy
+				// It seems FileRegion does not support Zip files, I saw different behavior between JDK<15 and above
+				if(resource.isFile().orElse(false) && !(resource instanceof ZipResource)) {
+					// We need to create the file region and then send an empty response
+					// The Http1xServerExchange should then complete and check whether there is a file region or not
+					this.populateHeaders(resource);
+					
+					FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable"));
+					
+					long size = resource.size().get();
+					int count = (int)Math.ceil((float)size / (float)MAX_FILE_REGION_SIZE);
+					
+					// We need to add an extra element in order to control when the flux terminates so we can properly close the file channel
+					Http1xResponseBody.this.fileRegionData = Flux.range(0, count + 1) 
+						.filter(index -> index < count)
+						.map(index -> {
+							long position = index * MAX_FILE_REGION_SIZE;
+							FileRegion region = new DefaultFileRegion(fileChannel, position, Math.min(size - position, MAX_FILE_REGION_SIZE));
+							region.retain();
+							return region;
+						})
+						.doFinally(sgn -> {
+							try {
+								fileChannel.close();
+							} 
+							catch (IOException e) {
+								Exceptions.propagate(e);
+							}
+						});
+					Http1xResponseBody.this.setData(Flux.empty());
+				}
+				else {
+					Http1xResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable")));
+				}
 			}
 			else {
-				super.value(resource);
+				throw new NotFoundException();
 			}
 		}
 	}

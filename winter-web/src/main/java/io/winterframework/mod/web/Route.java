@@ -42,11 +42,11 @@ import io.winterframework.mod.http.server.ExchangeHandler;
  * @since 1.0
  * 
  * @see Exchange
- * @see AbstractRouter
+ * @see Router
  * 
  * @param <A> the type of exchange handled by the route
  */
-public interface AbstractRoute<A extends Exchange> {
+public interface Route<A extends Exchange> {
 
 	/**
 	 * <p>

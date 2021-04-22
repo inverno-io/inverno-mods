@@ -17,6 +17,7 @@ package io.winterframework.mod.configuration.source;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -28,6 +29,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import io.winterframework.mod.base.converter.SplittablePrimitiveDecoder;
+import io.winterframework.mod.base.resource.Resource;
+import io.winterframework.mod.base.resource.ResourceException;
 import io.winterframework.mod.configuration.AbstractHashConfigurationSource;
 import io.winterframework.mod.configuration.ConfigurationKey;
 import io.winterframework.mod.configuration.ConfigurationProperty;
@@ -66,6 +69,8 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	private static final Logger LOGGER = LogManager.getLogger(PropertyFileConfigurationSource.class);
 	
 	private Path propertyFile;
+	
+	private Resource propertyResource;
 	
 	private InputStream propertyInput;
 	
@@ -120,11 +125,57 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 		super(decoder);
 		this.propertyInput = propertyInput;
 	}
+	
+	/**
+	 * <p>
+	 * Creates a property file configuration source with the specified resource
+	 * </p>
+	 * 
+	 * @param propertyResource the {@code .properties} resource
+	 */
+	public PropertyFileConfigurationSource(Resource propertyResource) {
+		this(propertyResource, new JavaStringConverter());
+	}
+	
+	/**
+	 * <p>
+	 * Creates a property file configuration source with the specified resource and
+	 * string value decoder.
+	 * </p>
+	 * 
+	 * @param propertyResource the {@code .properties} resource
+	 * @param decoder          a string decoder
+	 */
+	public PropertyFileConfigurationSource(Resource propertyResource, SplittablePrimitiveDecoder<String> decoder) {
+		super(decoder);
+		this.propertyResource = propertyResource;
+	}
 
+	/**
+	 * <p>
+	 * Opens an input stream to read the {@code .properties} file.
+	 * </p>
+	 * 
+	 * @return An input stream
+	 * @throws IOException       if there was an I/O error opening the file
+	 * @throws ResourceException if there was an error opening the resource
+	 */
+	private InputStream open() throws IOException, ResourceException {
+		if(this.propertyFile != null) {
+			return Files.newInputStream(this.propertyFile);
+		}
+		else if(this.propertyResource != null) {
+			return this.propertyResource.openReadableByteChannel().map(Channels::newInputStream).orElseThrow(() -> new ResourceException("Property file " + this.propertyResource.getURI() + " is not readable"));
+		}
+		else {
+			return this.propertyInput;
+		}
+	}
+	
 	@Override
 	protected Mono<List<ConfigurationProperty<ConfigurationKey, PropertyFileConfigurationSource>>> load() {
 		return Mono.defer(() -> {
-			try(InputStream input = this.propertyFile != null ? Files.newInputStream(this.propertyFile) : this.propertyInput) {
+			try(InputStream input = this.open()) {
 				Properties properties = new Properties();
 				properties.load(input);
 				
@@ -142,8 +193,8 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 					.collect(Collectors.toList())
 				);
 			}
-			catch(IOException e) {
-				LOGGER.warn(() -> "Invalid property file " + this.propertyFile.getFileName().toString() + " after I/O error: " + e.getMessage());
+			catch(IOException | ResourceException e) {
+				LOGGER.warn(() -> "Invalid property file configuration: " + e.getMessage());
 				return Mono.error(e);
 			}
 		});

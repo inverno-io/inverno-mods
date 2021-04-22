@@ -19,8 +19,8 @@ import java.util.function.Supplier;
 
 import io.winterframework.mod.http.server.Exchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
-import io.winterframework.mod.web.AbstractRoute;
-import io.winterframework.mod.web.AbstractRouter;
+import io.winterframework.mod.web.Route;
+import io.winterframework.mod.web.Router;
 
 /**
  * <p>
@@ -28,7 +28,7 @@ import io.winterframework.mod.web.AbstractRouter;
  * </p>
  * 
  * <p>
- * A {@link AbstractRouter router} can be implemented around a routing chain
+ * A {@link Router router} can be implemented around a routing chain
  * through which an exchange is routed to the right handler based on a set of
  * criteria. The chain is composed of multiple routing links, each responsible
  * to route the exchange based on a particular set of criteria. The routes in a
@@ -49,10 +49,10 @@ import io.winterframework.mod.web.AbstractRouter;
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see GenericErrorRouter
+ * @see GenericErrorWebRouter
  * @see GenericWebRouter
  */
-abstract class RoutingLink<A extends Exchange, B extends RoutingLink<A, B, C>, C extends AbstractRoute<A>>
+abstract class RoutingLink<A extends Exchange, B extends RoutingLink<A, B, C>, C extends Route<A>>
 		implements ExchangeHandler<A> {
 
 	private final Supplier<B> linkSupplier;

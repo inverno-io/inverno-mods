@@ -10,7 +10,7 @@ import io.winterframework.mod.base.net.URIs;
 import io.winterframework.mod.base.resource.MediaTypes;
 import io.winterframework.mod.http.base.Method;
 import io.winterframework.mod.http.server.HttpServerConfiguration;
-import io.winterframework.mod.web.AbstractRoute;
+import io.winterframework.mod.web.Route;
 import io.winterframework.mod.web.WebExchange;
 import io.winterframework.mod.web.WebRoute;
 import io.winterframework.mod.web.WebConfiguration;
@@ -183,7 +183,7 @@ public class GenericWebRouterTest {
 		routes = router.getRoutes();
 		Assertions.assertEquals(12, routes.size());
 		
-		Optional<WebRoute<WebExchange>> disabledRouteOptional = routes.stream().filter(AbstractRoute::isDisabled).findFirst();
+		Optional<WebRoute<WebExchange>> disabledRouteOptional = routes.stream().filter(Route::isDisabled).findFirst();
 		Assertions.assertTrue(disabledRouteOptional.isPresent());
 		Assertions.assertEquals(disabledRoute, disabledRouteOptional.get());
 		
@@ -191,6 +191,6 @@ public class GenericWebRouterTest {
 		
 		routes = router.getRoutes();
 		Assertions.assertEquals(12, routes.size());
-		Assertions.assertTrue(routes.stream().noneMatch(AbstractRoute::isDisabled));
+		Assertions.assertTrue(routes.stream().noneMatch(Route::isDisabled));
 	}
 }

@@ -80,12 +80,17 @@ public interface NetService {
 	
 	/**
 	 * <p>
-	 * Creates an acceptor event loop group typically with one thread.
+	 * Returns the acceptor event loop group typically with one thread.
+	 * </p>
+	 * 
+	 * <p>
+	 * This event loop group should be shared across network servers to accept
+	 * connections.
 	 * </p>
 	 * 
 	 * @return an acceptor event loop group
 	 */
-	EventLoopGroup createAcceptorEventLoopGroup();
+	EventLoopGroup getAcceptorEventLoopGroup();
 	
 	/**
 	 * <p>

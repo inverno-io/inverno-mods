@@ -30,24 +30,29 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
+import org.reactivestreams.Publisher;
+
 import io.netty.buffer.ByteBuf;
-import reactor.core.publisher.Flux;
 
 /**
  * <p>
  * A {@link Resource} implementation that identifies resources by a URI of the
- * form <code>zip:/path/to/resource</code> and looks up data in a zip file on
- * the file system system.
+ * form <code>zip:file:/path/to/zip!/path/to/resource</code> and looks up data in a
+ * zip file on the file system system.
  * </p>
  * 
  * <p>
  * A typical usage is:
  * </p>
  * 
- * <blockquote><pre>
- * ZipResource resource = new ZipResource(URI.create("zip:/path/to/zip!/path/to/resource"));
+ * <blockquote>
+ * 
+ * <pre>
+ * ZipResource resource = new ZipResource(URI.create("zip:file:/path/to/zip!/path/to/resource"));
  * ...
- * </pre></blockquote>
+ * </pre>
+ * 
+ * </blockquote>
  * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
@@ -75,7 +80,7 @@ public class ZipResource extends AbstractAsyncResource {
 	protected URI zipUri;
 	
 	/**
-	 * The URI of tje ZIP file system.
+	 * The URI of the ZIP file system.
 	 */
 	protected URI zipFsUri;
 	
@@ -247,12 +252,12 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public boolean isFile() {
+	public Optional<Boolean> isFile() {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().isFile();
 		}
-		return false;
+		return Optional.of(false);
 	}
 
 	@Override
@@ -301,7 +306,7 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Optional<Flux<ByteBuf>> read() {
+	public Optional<Publisher<ByteBuf>> read() {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().read();
@@ -310,7 +315,7 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Optional<Flux<Integer>> write(Flux<ByteBuf> data, boolean append, boolean createParents) {
+	public Optional<Publisher<Integer>> write(Publisher<ByteBuf> data, boolean append, boolean createParents) {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().write(data);
@@ -350,9 +355,15 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Resource resolve(URI uri) {
-		ZipResource resolvedResource = new ZipResource(URI.create(this.zipFsUri.toString() + "!" + this.resourcePath.resolve(Paths.get(uri.getPath())).toString()), this.getMediaTypeService());
-		resolvedResource.setExecutor(this.getExecutor());
-		return resolvedResource;
+	public Resource resolve(Path path) {
+		try {
+			URI resolvedURI = new URI(ZipResource.SCHEME_ZIP, this.zipFsUri.getSchemeSpecificPart()+ "!" + this.resourcePath.resolve(path).normalize().toString(), null);
+			ZipResource resolvedResource = new ZipResource(resolvedURI, this.getMediaTypeService());
+			resolvedResource.setExecutor(this.getExecutor());
+			return resolvedResource;
+		} 
+		catch (URISyntaxException e) {
+			throw new IllegalArgumentException("Invalid path", e);
+		}
 	}
 }

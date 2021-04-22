@@ -15,15 +15,15 @@
  */
 package io.winterframework.mod.web;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Optional;
 
+import io.winterframework.mod.base.net.URIBuilder;
+import io.winterframework.mod.base.net.URIs;
 import io.winterframework.mod.base.resource.Resource;
 import io.winterframework.mod.http.base.BadRequestException;
-import io.winterframework.mod.http.base.InternalServerErrorException;
+import io.winterframework.mod.http.base.HttpException;
 import io.winterframework.mod.http.base.NotFoundException;
-import io.winterframework.mod.http.base.WebException;
+import io.winterframework.mod.http.base.Parameter;
 
 /**
  * <p>
@@ -107,40 +107,68 @@ public class StaticHandler implements WebExchangeHandler<WebExchange> {
 	}
 	
 	@Override
-	public void handle(WebExchange exchange) throws WebException {
-		URI resourceUri;
-		try {
-			resourceUri = new URI(exchange.request().pathParameters().get(this.pathParameterName).orElseThrow(() -> new BadRequestException(this.pathParameterName + " is empty")).getValue()).normalize();
-		}
-		catch (URISyntaxException e) {
-			throw new InternalServerErrorException(e);
+	public void handle(WebExchange exchange) throws HttpException {
+		String resourcePath = exchange.request().pathParameters().get(this.pathParameterName).map(Parameter::getValue).orElse("");
+		boolean isDirectory = resourcePath.endsWith("/");
+		
+		URIBuilder resourceUriBuilder = URIs.uri(resourcePath, URIs.Option.NORMALIZED);
+		if(isDirectory) {
+			resourceUriBuilder.segment("index.html");
 		}
 		
-		if(resourceUri.isAbsolute()) {
-			throw new BadRequestException("Resource can't be absolute");
+		resourcePath = resourceUriBuilder.buildPath();
+		
+		if(resourcePath.startsWith("/")) {
+			throw new BadRequestException("Static resource path can't be absolute");
 		}
-		if(resourceUri.getPath().startsWith(".")) {
+		if(resourcePath.startsWith(".")) {
 			throw new NotFoundException();
 		}
 
-		try(Resource requestedResource = this.baseResource.resolve(resourceUri)) {
+		try(Resource requestedResource = this.baseResource.resolve(resourcePath)) {
 			Optional<Boolean> exists = requestedResource.exists();
-			if(!exists.isPresent() || requestedResource.isFile()) {
+			Optional<Boolean> isFile = requestedResource.isFile();
+			
+			if(!exists.isPresent()) {
+				// We can't determine the existence, this indicates an "opaque" resource like a URL, we can only try
 				exchange.response().body().resource().value(requestedResource);
 			}
-			else if(exists.orElse(false)) {
-				// Try with index.html
-				// TODO this should be configurable
-				try(Resource requestedResourceIndex = requestedResource.resolve("index.html")) {
-					exchange.response().body().resource().value(requestedResourceIndex);
+			else if(exists.get()) {
+				// Resource exists
+				if(isFile.isPresent()) {
+					// We know what the resource is
+					if(isFile.get()) {
+						// regular file
+						exchange.response().body().resource().value(requestedResource);
+					}
+					else {
+						// directory
+						try(Resource requestedResourceIndex = requestedResource.resolve("index.html")) {
+							exchange.response().body().resource().value(requestedResourceIndex);
+						}
+					}
+				}
+				else {
+					// This might indicate stream based resources like module or URL in which case we'll have content but no file
+					exchange.response().body().resource().value(requestedResource);
 				}
 			}
 			else {
-				throw new NotFoundException();
+				// Resource doesn't exist
+				if(!isFile.isPresent()) {
+					// This might indicate stream based resources like module or URL in which case we might have a directory
+					try(Resource requestedResourceIndex = requestedResource.resolve("index.html")) {
+						exchange.response().body().resource().value(requestedResourceIndex);
+					}
+				}
+				else {
+					// Resource doesn't exist for sure
+					throw new NotFoundException();
+				}
 			}
 		}
 		catch (NotFoundException e) {
-			throw new NotFoundException(resourceUri.toString());
+			throw new NotFoundException(resourcePath);
 		}
 	}
 }

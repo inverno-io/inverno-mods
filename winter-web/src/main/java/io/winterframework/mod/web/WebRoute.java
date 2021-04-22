@@ -51,6 +51,6 @@ public interface WebRoute<A extends WebExchange> extends
 	MethodAwareRoute<A>, 
 	ContentAwareRoute<A>, 
 	AcceptAwareRoute<A>, 
-	AbstractRoute<A> {
+	Route<A> {
 
 }

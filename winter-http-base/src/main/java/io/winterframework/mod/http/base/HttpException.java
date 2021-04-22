@@ -19,13 +19,13 @@ import io.winterframework.mod.http.base.Status.Category;
 
 /**
  * <p>
- * Base exception class used to report web application errors.
+ * Base exception class used to report HTTP errors.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class WebException extends RuntimeException {
+public class HttpException extends RuntimeException {
 
 	private static final long serialVersionUID = 2847460450871488615L;
 
@@ -46,43 +46,43 @@ public class WebException extends RuntimeException {
 	
 	/**
 	 * <p>
-	 * Creates a web exception with default status
+	 * Creates a HTTP exception with default status
 	 * {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)}.
 	 * </p>
 	 */
-	public WebException() {
+	public HttpException() {
 		this(500);
 	}
 
 	/**
 	 * <p>
-	 * Creates a web exception with default status
+	 * Creates a HTTP exception with default status
 	 * {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)} and
 	 * specified message.
 	 * </p>
 	 * 
 	 * @param message a message
 	 */
-	public WebException(String message) {
+	public HttpException(String message) {
 		this(500, message);
 	}
 
 	/**
 	 * <p>
-	 * Creates a web exception with default status
+	 * Creates a HTTP exception with default status
 	 * {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)} and
 	 * specified cause.
 	 * </p>
 	 * 
 	 * @param cause a cause
 	 */
-	public WebException(Throwable cause) {
+	public HttpException(Throwable cause) {
 		this(500, cause);
 	}
 
 	/**
 	 * <p>
-	 * Creates a web exception with default status
+	 * Creates a HTTP exception with default status
 	 * {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)}, specified
 	 * message and cause
 	 * </p>
@@ -90,13 +90,13 @@ public class WebException extends RuntimeException {
 	 * @param message a message
 	 * @param cause   a cause
 	 */
-	public WebException(String message, Throwable cause) {
+	public HttpException(String message, Throwable cause) {
 		this(500, message, cause);
 	}
 	
 	/**
 	 * <p>
-	 * Creates a web exception with specified HTTP status code.
+	 * Creates a HTTP exception with specified HTTP status code.
 	 * </p>
 	 * 
 	 * @param statusCode a HTTP status code
@@ -104,13 +104,13 @@ public class WebException extends RuntimeException {
 	 * @throws IllegalArgumentException if the specified status doesn't correspond
 	 *                                  to a known HTTP status
 	 */
-	public WebException(int statusCode) throws IllegalArgumentException {
+	public HttpException(int statusCode) throws IllegalArgumentException {
 		this.setStatusCode(statusCode);
 	}
 
 	/**
 	 * <p>
-	 * Creates a web exception with specified HTTP status code and message.
+	 * Creates a HTTP exception with specified HTTP status code and message.
 	 * </p>
 	 * 
 	 * @param statusCode a HTTP status code
@@ -119,14 +119,14 @@ public class WebException extends RuntimeException {
 	 * @throws IllegalArgumentException if the specified status doesn't correspond
 	 *                                  to a known HTTP status
 	 */
-	public WebException(int statusCode, String message) throws IllegalArgumentException {
+	public HttpException(int statusCode, String message) throws IllegalArgumentException {
 		super(message);
 		this.setStatusCode(statusCode);
 	}
 
 	/**
 	 * <p>
-	 * Creates a web exception with specified HTTP status code and cause.
+	 * Creates a HTTP exception with specified HTTP status code and cause.
 	 * </p>
 	 * 
 	 * @param statusCode a HTTP status code
@@ -135,14 +135,14 @@ public class WebException extends RuntimeException {
 	 * @throws IllegalArgumentException if the specified status doesn't correspond
 	 *                                  to a known HTTP status
 	 */
-	public WebException(int statusCode, Throwable cause) throws IllegalArgumentException {
+	public HttpException(int statusCode, Throwable cause) throws IllegalArgumentException {
 		super(cause);
 		this.setStatusCode(statusCode);
 	}
 
 	/**
 	 * <p>
-	 * Creates a web exception with specified HTTP status code, message and cause.
+	 * Creates a HTTP exception with specified HTTP status code, message and cause.
 	 * </p>
 	 * 
 	 * @param statusCode a HTTP status code
@@ -152,58 +152,58 @@ public class WebException extends RuntimeException {
 	 * @throws IllegalArgumentException if the specified status doesn't correspond
 	 *                                  to a known HTTP status
 	 */
-	public WebException(int statusCode, String message, Throwable cause) throws IllegalArgumentException {
+	public HttpException(int statusCode, String message, Throwable cause) throws IllegalArgumentException {
 		super(message, cause);
 		this.setStatusCode(statusCode);
 	}
 	
 	/**
 	 * <p>
-	 * Creates a web exception with specified HTTP status.
+	 * Creates a HTTP exception with specified HTTP status.
 	 * </p>
 	 * 
 	 * @param status a HTTP status
 	 */
-	public WebException(Status status) {
+	public HttpException(Status status) {
 		this.setStatus(status);
 	}
 
 	/**
 	 * <p>
-	 * Creates a web exception with specified HTTP status and message.
+	 * Creates a HTTP exception with specified HTTP status and message.
 	 * </p>
 	 * 
 	 * @param status  a HTTP status
 	 * @param message a message
 	 */
-	public WebException(Status status, String message) {
+	public HttpException(Status status, String message) {
 		super(message);
 		this.setStatus(status);
 	}
 
 	/**
 	 * <p>
-	 * Creates a web exception with specified HTTP status and cause.
+	 * Creates a HTTP exception with specified HTTP status and cause.
 	 * </p>
 	 * 
 	 * @param status a HTTP status
 	 * @param cause  a cause
 	 */
-	public WebException(Status status, Throwable cause) {
+	public HttpException(Status status, Throwable cause) {
 		super(cause);
 		this.setStatus(status);
 	}
 
 	/**
 	 * <p>
-	 * Creates a web exception with specified HTTP status, message and cause.
+	 * Creates a HTTP exception with specified HTTP status, message and cause.
 	 * </p>
 	 * 
 	 * @param status  a HTTP status
 	 * @param message a message
 	 * @param cause   a cause
 	 */
-	public WebException(Status status, String message, Throwable cause) {
+	public HttpException(Status status, String message, Throwable cause) {
 		super(message, cause);
 		this.setStatus(status);
 	}

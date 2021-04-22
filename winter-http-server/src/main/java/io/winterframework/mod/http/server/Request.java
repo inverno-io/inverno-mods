@@ -18,6 +18,8 @@ package io.winterframework.mod.http.server;
 import java.net.SocketAddress;
 import java.util.Optional;
 
+import io.winterframework.mod.base.net.URIBuilder;
+import io.winterframework.mod.base.net.URIs;
 import io.winterframework.mod.http.base.Method;
 
 /**
@@ -79,7 +81,7 @@ public interface Request {
 	
 	/**
 	 * <p>
-	 * Returns the requested authority.
+	 * Returns the request authority.
 	 * </p>
 	 * 
 	 * @return the authority
@@ -121,6 +123,21 @@ public interface Request {
 	 * @return the normalized absolute path to the targeted resource
 	 */
 	String getPathAbsolute();
+	
+	/**
+	 * <p>
+	 * Returns a path builder initialized with the path of the request.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method always returns a new {@link URIBuilder} instance with
+	 * {@link URIs.Option#NORMALIZED} option. It is then safe to use it to build
+	 * relative paths.
+	 * </p>
+	 * 
+	 * @return a new URI builder
+	 */
+	URIBuilder getPathBuilder();
 	
 	/**
 	 * <p>

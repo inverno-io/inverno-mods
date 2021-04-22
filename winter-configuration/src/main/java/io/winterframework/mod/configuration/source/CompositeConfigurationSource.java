@@ -37,7 +37,6 @@ import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
 import io.winterframework.mod.configuration.internal.GenericConfigurationKey;
 import io.winterframework.mod.configuration.internal.GenericConfigurationQueryResult;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -66,7 +65,7 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * At each rounds, the actual queries executed on the source are populated by
+ * At each round, the actual queries executed on the source are populated by
  * the strategy (@see
  * {@link CompositeConfigurationStrategy#populateSourceQuery(ConfigurationKey, ConfigurationQuery, ConfigurationProperty)})
  * so that multiple queries can actually be requested for a single original
@@ -106,7 +105,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	 * Creates a composite configuration query with the specified list of sources using the default strategy.
 	 * </p>
 	 * 
-	 * @param sources a list of configuration sources
+	 * @param sources a list of configuration sources from the highest priority to the lowest
 	 * 
 	 * @throws NullPointerException if the specified strategy is null
 	 * 
@@ -122,7 +121,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	 * using the specified strategy.
 	 * </p>
 	 * 
-	 * @param sources  a list of configuration sources
+	 * @param sources  a list of configuration sources from the highest priority to the lowest
 	 * @param strategy a composite configuration strategy
 	 * 
 	 * @throws NullPointerException if the specified strategy is null
@@ -136,7 +135,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	
 	/**
 	 * <p>
-	 * Returns the list of configuration sources.
+	 * Returns the list of configuration sources from the highest priority to the lowest.
 	 * </p>
 	 * 
 	 * @return a list of configuration sources
@@ -344,13 +343,13 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 
 		@Override
 		public Flux<CompositeConfigurationQueryResult> execute() {
-			return Mono.just(this.queries.stream()
-				.flatMap(query -> query.names.stream().map(name -> new CompositeConfigurationQueryResult(this.source.strategy, new GenericConfigurationKey(name, query.parameters))))
-				.collect(Collectors.toList())
-			)
-			.flatMapMany(results -> {
-				return Flux.fromIterable(this.source.sources)
-					.flatMap(source -> {
+			return Flux.create(sink -> {
+				LinkedList<CompositeConfigurationQueryResult> results = this.queries.stream()
+					.flatMap(query -> query.names.stream().map(name -> new CompositeConfigurationQueryResult(this.source.strategy, new GenericConfigurationKey(name, query.parameters))))
+					.collect(Collectors.toCollection(LinkedList::new));
+				
+				 Flux.fromIterable(this.source.sources)
+					.flatMapSequential(source -> {
 						SourceConfigurationQueryWrapper wrappedQuery = new SourceConfigurationQueryWrapper(source);
 						List<CompositeConfigurationQueryResult> unresolvedResults = results.stream().filter(result -> !result.isResolved()).collect(Collectors.toList());
 						unresolvedResults.forEach(result -> {
@@ -366,9 +365,21 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 									unresolvedResultsIterator.previous();
 								}
 								return currentResult;
+							})
+							.doOnComplete(() -> {
+								while(!results.isEmpty() && results.peek().isResolved()) {
+									sink.next(results.poll());
+								}
 							});
 					})
-					.distinct();
+				 	.subscribe(
+				 		ign -> {},
+				 		e -> sink.error(e),
+				 		() -> {
+				 			results.forEach(sink::next);
+				 			sink.complete();
+				 		}
+				 	);
 			});
 		}
 	}
@@ -418,12 +429,14 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 			}
 			if(this.consumeCounter > 0) {
 				try {
-					result.getResult().ifPresent(property -> {
-						if(!this.resolved && this.strategy.isSuperseded(this.queryKey, this.queryResult.orElse(null), property)) {
-							this.queryResult = property.isUnset() ? Optional.empty() : Optional.of(property);
-							this.resolved = this.strategy.isResolved(this.queryKey, property);
-						}
-					});
+					if(!this.resolved) {
+						result.getResult().ifPresent(property -> {
+							if(this.strategy.isSuperseded(this.queryKey, this.queryResult.orElse(null), property)) {
+								this.queryResult = property.isUnset() ? Optional.empty() : Optional.of(property);
+								this.resolved = this.strategy.isResolved(this.queryKey, property);
+							}
+						});
+					}
 				} 
 				catch (ConfigurationSourceException e) {
 					// We have two choices:

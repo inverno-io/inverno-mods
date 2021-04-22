@@ -15,6 +15,8 @@
  */
 package io.winterframework.mod.boot;
 
+import io.winterframework.mod.configuration.Configuration;
+
 /**
  * <p>
  * Net specific configuration.
@@ -23,6 +25,7 @@ package io.winterframework.mod.boot;
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
  */
+@Configuration
 public interface NetConfiguration {
 
 	/**

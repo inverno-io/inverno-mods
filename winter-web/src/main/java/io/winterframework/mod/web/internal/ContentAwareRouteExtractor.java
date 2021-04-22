@@ -16,7 +16,7 @@
 package io.winterframework.mod.web.internal;
 
 import io.winterframework.mod.http.server.Exchange;
-import io.winterframework.mod.web.AbstractRoute;
+import io.winterframework.mod.web.Route;
 import io.winterframework.mod.web.ContentAwareRoute;
 
 /**
@@ -31,7 +31,7 @@ import io.winterframework.mod.web.ContentAwareRoute;
  * @param <B> the route type
  * @param <C> the route extractor type
  */
-interface ContentAwareRouteExtractor<A extends Exchange, B extends AbstractRoute<A>, C extends ContentAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
+interface ContentAwareRouteExtractor<A extends Exchange, B extends Route<A>, C extends ContentAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
 
 	/**
 	 * <p>

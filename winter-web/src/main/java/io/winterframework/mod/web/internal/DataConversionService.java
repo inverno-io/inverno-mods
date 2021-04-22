@@ -30,7 +30,6 @@ import io.winterframework.core.annotation.Bean.Visibility;
 import io.winterframework.mod.base.converter.ConverterException;
 import io.winterframework.mod.base.converter.MediaTypeConverter;
 import io.winterframework.mod.http.base.BadRequestException;
-import io.winterframework.mod.http.base.InternalServerErrorException;
 import io.winterframework.mod.http.server.RequestData;
 import io.winterframework.mod.http.server.ResponseBody;
 import io.winterframework.mod.http.server.ResponseData;
@@ -87,10 +86,10 @@ public class DataConversionService {
 	 * @param mediaType a media type
 	 * @return a media type converter
 	 * 
-	 * @throws InternalServerErrorException if there's no converter that can convert
-	 *                                      the specified media type
+	 * @throws NoConverterException if there's no converter that can convert the
+	 *                              specified media type
 	 */
-	public MediaTypeConverter<ByteBuf> getConverter(String mediaType) throws InternalServerErrorException {
+	public MediaTypeConverter<ByteBuf> getConverter(String mediaType) throws NoConverterException {
 		MediaTypeConverter<ByteBuf> result = this.convertersCache.get(mediaType);
 		if (result == null && !this.convertersCache.containsKey(mediaType)) {
 			for (MediaTypeConverter<ByteBuf> converter : this.converters) {
@@ -105,7 +104,7 @@ public class DataConversionService {
 			}
 		}
 		if (result == null) {
-			throw new InternalServerErrorException("No encoder found for media type: " + mediaType);
+			throw new NoConverterException(mediaType);
 		}
 		return result;
 	}
@@ -121,8 +120,11 @@ public class DataConversionService {
 	 * @param type      a class of T
 	 * 
 	 * @return a request data decoder
+	 * 
+	 * @throws NoConverterException if there's no converter that can convert the
+	 *                              specified media type
 	 */
-	public <T> RequestDataDecoder<T> createDecoder(RequestData<ByteBuf> rawData, String mediaType, Class<T> type) {
+	public <T> RequestDataDecoder<T> createDecoder(RequestData<ByteBuf> rawData, String mediaType, Class<T> type) throws NoConverterException {
 		return new GenericRequestBodyDecoder<>(rawData, this.getConverter(mediaType), type);
 	}
 
@@ -137,8 +139,11 @@ public class DataConversionService {
 	 * @param type      the type of the decoded object
 	 * 
 	 * @return a request data decoder
+	 * 
+	 * @throws NoConverterException if there's no converter that can convert the
+	 *                              specified media type
 	 */
-	public <T> RequestDataDecoder<T> createDecoder(RequestData<ByteBuf> rawData, String mediaType, Type type) {
+	public <T> RequestDataDecoder<T> createDecoder(RequestData<ByteBuf> rawData, String mediaType, Type type) throws NoConverterException {
 		return new GenericRequestBodyDecoder<T>(rawData, this.getConverter(mediaType), type);
 	}
 
@@ -152,8 +157,11 @@ public class DataConversionService {
 	 * @param mediaType the target media type
 	 * 
 	 * @return a response data encoder
+	 * 
+	 * @throws NoConverterException if there's no converter that can convert the
+	 *                              specified media type
 	 */
-	public <T> ResponseDataEncoder<T> createEncoder(ResponseData<ByteBuf> rawData, String mediaType) {
+	public <T> ResponseDataEncoder<T> createEncoder(ResponseData<ByteBuf> rawData, String mediaType) throws NoConverterException {
 		return new GenericRequestBodyEncoder<T>(rawData, this.getConverter(mediaType));
 	}
 
@@ -168,8 +176,11 @@ public class DataConversionService {
 	 * @param type      a class of T
 	 * 
 	 * @return a response data encoder
+	 * 
+	 * @throws NoConverterException if there's no converter that can convert the
+	 *                              specified media type
 	 */
-	public <T> ResponseDataEncoder<T> createEncoder(ResponseData<ByteBuf> rawData, String mediaType, Class<T> type) {
+	public <T> ResponseDataEncoder<T> createEncoder(ResponseData<ByteBuf> rawData, String mediaType, Class<T> type) throws NoConverterException {
 		return new GenericRequestBodyEncoder<T>(rawData, this.getConverter(mediaType), type);
 	}
 
@@ -184,8 +195,11 @@ public class DataConversionService {
 	 * @param type      the type of object to encode
 	 * 
 	 * @return a response data encoder
+	 * 
+	 * @throws NoConverterException if there's no converter that can convert the
+	 *                              specified media type
 	 */
-	public <T> ResponseDataEncoder<T> createEncoder(ResponseData<ByteBuf> rawData, String mediaType, Type type) {
+	public <T> ResponseDataEncoder<T> createEncoder(ResponseData<ByteBuf> rawData, String mediaType, Type type) throws NoConverterException {
 		return new GenericRequestBodyEncoder<T>(rawData, this.getConverter(mediaType), type);
 	}
 
@@ -199,8 +213,11 @@ public class DataConversionService {
 	 * @param mediaType the target media type
 	 * 
 	 * @return a server-sent events encoder
+	 * 
+	 * @throws NoConverterException if there's no converter that can convert the
+	 *                              specified media type
 	 */
-	public <T> WebResponseBody.SseEncoder<T> createSseEncoder(ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> rawSse, String mediaType) {
+	public <T> WebResponseBody.SseEncoder<T> createSseEncoder(ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> rawSse, String mediaType) throws NoConverterException {
 		return new GenericSseEncoder<>(rawSse, this.getConverter(mediaType));
 	}
 
@@ -215,8 +232,11 @@ public class DataConversionService {
 	 * @param type      a class of T
 	 * 
 	 * @return a server-sent events encoder
+	 * 
+	 * @throws NoConverterException if there's no converter that can convert the
+	 *                              specified media type
 	 */
-	public <T> WebResponseBody.SseEncoder<T> createSseEncoder(ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> rawSse, String mediaType, Class<T> type) {
+	public <T> WebResponseBody.SseEncoder<T> createSseEncoder(ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> rawSse, String mediaType, Class<T> type) throws NoConverterException {
 		return new GenericSseEncoder<T>(rawSse, this.getConverter(mediaType), type);
 	}
 
@@ -231,8 +251,11 @@ public class DataConversionService {
 	 * @param type      the type of object to encode
 	 * 
 	 * @return a server-sent events encoder
+	 * 
+	 * @throws NoConverterException if there's no converter that can convert the
+	 *                              specified media type
 	 */
-	public <T> WebResponseBody.SseEncoder<T> createSseEncoder(ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> rawSse, String mediaType, Type type) {
+	public <T> WebResponseBody.SseEncoder<T> createSseEncoder(ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> rawSse, String mediaType, Type type) throws NoConverterException {
 		return new GenericSseEncoder<T>(rawSse, this.getConverter(mediaType), type);
 	}
 
@@ -295,7 +318,7 @@ public class DataConversionService {
 		public Mono<A> one() {
 			return (Mono<A>) this.converter
 				.decodeOne(this.rawData.stream(), this.type)
-				.onErrorMap(ConverterException.class, ex -> new BadRequestException("dsfdgdfgf", ex));
+				.onErrorMap(ConverterException.class, ex -> new BadRequestException(ex));
 		}
 
 		@SuppressWarnings("unchecked")

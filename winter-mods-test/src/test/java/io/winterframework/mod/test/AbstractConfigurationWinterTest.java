@@ -37,23 +37,23 @@ public class AbstractConfigurationWinterTest extends AbstractWinterTest {
 					return Optional.of(new File("../winter-configuration/target/classes")).filter(File::exists).orElse(file);
 				}
 				else if(file.getName().startsWith("winter-core-annotation")) {
-					return Optional.of(new File("../../winter-root/winter-core-annotation/target/classes")).filter(File::exists).orElse(file);
+					return Optional.of(new File("../../winter/winter-core-annotation/target/classes")).filter(File::exists).orElse(file);
 				}
 				else if(file.getName().startsWith("winter-core-compiler")) {
-					return Optional.of(new File("../../winter-root/winter-core-compiler/target/classes")).filter(File::exists).orElse(file);
+					return Optional.of(new File("../../winter/winter-core-compiler/target/classes")).filter(File::exists).orElse(file);
 				}
 				else if(file.getName().startsWith("winter-core")) {
-					return Optional.of(new File("../../winter-root/winter-core/target/classes")).filter(File::exists).orElse(file);
+					return Optional.of(new File("../../winter/winter-core/target/classes")).filter(File::exists).orElse(file);
 				}
 			}
 			return file;
 		},
 		file -> {
 			if(file.getName().startsWith("winter-core-compiler")) {
-				return Optional.of(new File("../../winter-root/winter-core-compiler/target/classes")).filter(File::exists).orElse(file);
+				return Optional.of(new File("../../winter/winter-core-compiler/target/classes")).filter(File::exists).orElse(file);
 			}
 			else if(file.getName().startsWith("winter-core-annotation")) {
-				return Optional.of(new File("../../winter-root/winter-core-annotation/target/classes")).filter(File::exists).orElse(file);
+				return Optional.of(new File("../../winter/winter-core-annotation/target/classes")).filter(File::exists).orElse(file);
 			}
 			else if(file.getName().startsWith("winter-configuration-compiler")) {
 				return Optional.of(new File("../winter-configuration-compiler/target/classes")).filter(File::exists).orElse(file);

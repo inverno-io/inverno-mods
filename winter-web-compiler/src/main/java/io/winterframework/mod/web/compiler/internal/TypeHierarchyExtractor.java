@@ -33,8 +33,8 @@ import javax.lang.model.util.Types;
  * 
  * <p>
  * The distance from a type {@code T} to type {@code U} is given by the number
- * of indirection between them, that to say the number of {@code extends} or
- * {@code implements} keywords, one should go through to get to {@code U} from
+ * of indirection between them, that is to say the number of {@code extends} or
+ * {@code implements} keywords one should go through to get to {@code U} from
  * {@code T}. If there is a tie, the type accessed with the biggest number of
  * {@code extends} wins.
  * </p>

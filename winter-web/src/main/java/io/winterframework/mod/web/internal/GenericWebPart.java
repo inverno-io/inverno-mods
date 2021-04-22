@@ -20,6 +20,7 @@ import java.util.Optional;
 
 import io.netty.buffer.ByteBuf;
 import io.winterframework.mod.base.resource.MediaTypes;
+import io.winterframework.mod.http.base.InternalServerErrorException;
 import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.server.Part;
 import io.winterframework.mod.http.server.PartHeaders;
@@ -86,6 +87,11 @@ class GenericWebPart implements WebPart {
 		String mediaType = this.part.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE)
 			.map(contentType -> contentType.getMediaType())
 			.orElse(MediaTypes.TEXT_PLAIN);
-		return this.dataConversionService.<A>createDecoder(this.part.raw(), mediaType, type);
+		try {
+			return this.dataConversionService.<A>createDecoder(this.part.raw(), mediaType, type);
+		}
+		catch (NoConverterException e) {
+			throw new InternalServerErrorException("No converter found for media type: " + e.getMediaType(), e);
+		}
 	}
 }

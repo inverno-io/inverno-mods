@@ -49,11 +49,11 @@ public class SslCipherSuiteFilter implements CipherSuiteFilter {
 			filteredCiphers.add(cipher);
 		}
 		
-		if(configuration.ssl_ciphers_includes() != null) {
-			filteredCiphers.retainAll(Arrays.asList(configuration.ssl_ciphers_includes()));
+		if(configuration.tls_ciphers_includes() != null) {
+			filteredCiphers.retainAll(Arrays.asList(configuration.tls_ciphers_includes()));
 		}
-		if(configuration.ssl_ciphers_excludes() != null) {
-			filteredCiphers.removeAll(Arrays.asList(configuration.ssl_ciphers_excludes()));
+		if(configuration.tls_ciphers_excludes() != null) {
+			filteredCiphers.removeAll(Arrays.asList(configuration.tls_ciphers_excludes()));
 		}
 		
 		return filteredCiphers.stream().toArray(String[]::new);

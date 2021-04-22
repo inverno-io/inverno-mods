@@ -16,10 +16,14 @@
 package io.winterframework.mod.base.resource;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Objects;
 import java.util.Optional;
@@ -27,17 +31,32 @@ import java.util.Optional;
 /**
  * <p>
  * A {@link Resource} implementation that identifies resources by a URI of the
- * form <code>{@literal module://<MODULE_NAME>/path/to/resource}</code> and looks up data from a module.
+ * form {@code module://[MODULE_NAME]/path/to/resource} or
+ * {@code module:/path/to/resource} and looks up data from a module.
+ * </p>
+ * 
+ * <p>
+ * When no module name is specified in the URI, the {@code jdk.module.main}
+ * module is considered.
+ * </p>
+ * 
+ * <p>
+ * When the application runs without modules, the unamed module is used whatever
+ * the module specified in the URI.
  * </p>
  * 
  * <p>
  * A typical usage is:
  * </p>
  * 
- * <blockquote><pre>
+ * <blockquote>
+ * 
+ * <pre>
  * ModuleResource resource = new ModuleResource(URI.create("module://module/path/to/resource"));
  * ...
- * </pre></blockquote>
+ * </pre>
+ * 
+ * </blockquote>
  * 
  * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
  * @since 1.0
@@ -57,6 +76,8 @@ public class ModuleResource extends AbstractAsyncResource {
 	private Optional<Module> module;
 	private String moduleName;
 	private String resourceName;
+	
+	private Optional<Boolean> exists;
 	
 	/**
 	 * <p>
@@ -159,12 +180,12 @@ public class ModuleResource extends AbstractAsyncResource {
 		
 		this.moduleName = this.uri.getAuthority();
 		if(this.moduleName == null || this.moduleName.isEmpty()) {
-			throw new IllegalArgumentException("No module specified in uri: " + SCHEME_MODULE + "://<MODULE_NAME>/<RESOURCE_NAME>");
+			this.moduleName = System.getProperty("jdk.module.main");
 		}
 		
 		this.resourceName = this.uri.getPath();
 		if(this.resourceName == null || this.resourceName.isEmpty()) {
-			throw new IllegalArgumentException("No resource name specified in uri: " + SCHEME_MODULE + "://<MODULE_NAME>/<RESOURCE_NAME>");
+			throw new IllegalArgumentException("No resource name specified in uri: " + SCHEME_MODULE + "://[MODULE_NAME]/[RESOURCE_NAME]");
 		}
 		if(this.resourceName.startsWith("/")) {
 			this.resourceName = this.resourceName.substring(1);
@@ -198,7 +219,23 @@ public class ModuleResource extends AbstractAsyncResource {
 	
 	private Optional<Module> resolve() {
 		if(this.module == null) {
-			this.module = this.moduleLayer.modules().stream().filter(module -> module.getName().equals(this.moduleName)).findFirst();
+			if(this.moduleLayer != null && this.moduleName != null) {
+				this.module = this.moduleLayer.modules().stream().filter(module -> module.getName().equals(this.moduleName)).findFirst();
+			}
+			else {
+				// unnamed module
+				ClassLoader classLoader = null;
+				try {
+					classLoader = Thread.currentThread().getContextClassLoader();
+				}
+				catch (Throwable ex) {
+					classLoader = ClasspathResource.class.getClassLoader();
+					if (classLoader == null) {
+						classLoader = ClassLoader.getSystemClassLoader();
+					}
+				}
+				this.module = Optional.of(classLoader.getUnnamedModule());
+			}
 		}
 		return this.module;
 	}
@@ -220,20 +257,23 @@ public class ModuleResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public boolean isFile() throws ResourceException {
-		return false;
+	public Optional<Boolean> isFile() throws ResourceException {
+		return Optional.empty();
 	}
 
 	@Override
 	public Optional<Boolean> exists() throws ResourceException {
-		return this.resolve().map(module -> {
-			try {
-				return module.getResourceAsStream(this.resourceName) != null;
-			}
-			catch (IOException e) {
-				return false;
-			}
-		}).or(() -> Optional.of(false));
+		if(this.exists == null) {
+			this.exists = this.resolve().map(module -> {
+				try(InputStream resourceStream = module.getResourceAsStream(this.resourceName)) {
+					return resourceStream != null;
+				}
+				catch (IOException e) {
+					return false;
+				}
+			}).or(() -> Optional.of(false));
+		}
+		return this.exists;
 	}
 
 	@Override
@@ -271,8 +311,16 @@ public class ModuleResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public ModuleResource resolve(URI uri) throws ResourceException {
-		return new ModuleResource(this.uri.resolve(uri.normalize()), this.getMediaTypeService());
+	public ModuleResource resolve(Path path) throws ResourceException {
+		try {
+			URI resolvedUri = new URI(ModuleResource.SCHEME_MODULE, this.uri.getAuthority(), Paths.get(this.uri.getPath()).resolve(path).toString(), null, null);
+			ModuleResource resolvedResource = new ModuleResource(resolvedUri, this.getMediaTypeService());
+			resolvedResource.setExecutor(this.getExecutor());
+			return resolvedResource;
+		} 
+		catch (URISyntaxException e) {
+			throw new IllegalArgumentException("Invalid path", e);
+		}
 	}
 
 	@Override

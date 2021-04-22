@@ -96,7 +96,7 @@ module io.winterframework.mod.http.server {
 	requires org.apache.logging.log4j;
 	requires com.fasterxml.jackson.databind;
 	
-	requires jdk.unsupported;
+	requires jdk.unsupported; // required by netty for low level API for accessing direct buffers
 	requires transitive reactor.core;
 	requires transitive org.reactivestreams;
 	requires transitive io.netty.buffer;

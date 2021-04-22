@@ -1,5 +1,5 @@
 import io.winterframework.mod.configuration.ConfigurationSource;
-import io.winterframework.mod.configuration.source.ApplicationConfigurationSource;
+import io.winterframework.mod.configuration.source.BootstrapConfigurationSource;
 import io.winterframework.mod.configuration.source.CPropsFileConfigurationSource;
 import io.winterframework.mod.configuration.source.CommandLineConfigurationSource;
 import io.winterframework.mod.configuration.source.CompositeConfigurationSource;
@@ -43,7 +43,7 @@ import io.winterframework.mod.configuration.source.SystemPropertiesConfiguration
  * </p>
  * 
  * <ul>
- * <li>{@link ApplicationConfigurationSource} used to load the bootstrap
+ * <li>{@link BootstrapConfigurationSource} used to load the bootstrap
  * configuration of an application from various local sources: command line,
  * system properties, system environment variable and configuration files</li>
  * <li>{@link CommandLineConfigurationSource} used to load properties specified
@@ -75,9 +75,9 @@ import io.winterframework.mod.configuration.source.SystemPropertiesConfiguration
  * @since 1.0
  */
 module io.winterframework.mod.configuration {
-	requires io.winterframework.mod.base;
+	requires transitive io.winterframework.mod.base;
 	
-//	requires jdk.unsupported;
+	requires jdk.unsupported; // required by netty for low level API for accessing direct buffers
 	requires transitive reactor.core;
 	requires transitive org.reactivestreams;
 	requires static lettuce.core;

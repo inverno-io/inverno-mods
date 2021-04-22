@@ -22,7 +22,7 @@ import io.winterframework.mod.http.base.Method;
 import io.winterframework.mod.http.base.MethodNotAllowedException;
 import io.winterframework.mod.http.base.ServiceUnavailableException;
 import io.winterframework.mod.http.base.Status;
-import io.winterframework.mod.http.base.WebException;
+import io.winterframework.mod.http.base.HttpException;
 import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.server.ErrorExchange;
 import io.winterframework.mod.http.server.ExchangeHandler;
@@ -42,12 +42,12 @@ import io.winterframework.mod.http.server.ExchangeHandler;
 public class GenericErrorHandler implements ExchangeHandler<ErrorExchange<Throwable>> {
 
 	@Override
-	public void handle(ErrorExchange<Throwable> exchange) throws WebException {
+	public void handle(ErrorExchange<Throwable> exchange) throws HttpException {
 		if(exchange.response().isHeadersWritten()) {
 			throw new IllegalStateException("Headers already written", exchange.getError());
 		}
-		if(exchange.getError() instanceof WebException) {
-			WebException webError = (WebException)exchange.getError();
+		if(exchange.getError() instanceof HttpException) {
+			HttpException webError = (HttpException)exchange.getError();
 			if(webError instanceof MethodNotAllowedException) {
 				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)webError).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
 			}
