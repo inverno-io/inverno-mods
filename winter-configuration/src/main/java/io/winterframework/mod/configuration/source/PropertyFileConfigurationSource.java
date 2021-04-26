@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -73,6 +74,10 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	private Resource propertyResource;
 	
 	private InputStream propertyInput;
+	
+	private Duration propertiesTTL;
+	
+	private Mono<List<ConfigurationProperty<ConfigurationKey, PropertyFileConfigurationSource>>> properties;
 	
 	/**
 	 * <p>
@@ -153,6 +158,41 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 
 	/**
 	 * <p>
+	 * Sets the time-to-live duration of the properties loaded with {@link #load()}.
+	 * </p>
+	 * 
+	 * <p>
+	 * If set to null, which is the default, properties are cached indefinitely.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that this ttl doesn't apply to a source created with an
+	 * {@link InputStream} which is cached indefinitely since the steam can't be
+	 * read twice.
+	 * </p>
+	 * 
+	 * @param ttl the properties time-to-live or null to cache properties
+	 *            indefinitely
+	 */
+	public void setPropertiesTTL(Duration ttl) {
+		this.propertiesTTL = ttl;
+	}
+	
+	/**
+	 * <p>
+	 * Returns the time-to-live duration of the properties loaded with
+	 * {@link #load()}.
+	 * </p>
+	 * 
+	 * @return the properties time-to-live or null if properties are cached
+	 *         indefinitely
+	 */
+	public Duration getPropertiesTTL() {
+		return this.propertiesTTL;
+	}
+	
+	/**
+	 * <p>
 	 * Opens an input stream to read the {@code .properties} file.
 	 * </p>
 	 * 
@@ -174,29 +214,39 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	
 	@Override
 	protected Mono<List<ConfigurationProperty<ConfigurationKey, PropertyFileConfigurationSource>>> load() {
-		return Mono.defer(() -> {
-			try(InputStream input = this.open()) {
-				Properties properties = new Properties();
-				properties.load(input);
-				
-				return Mono.just(properties.entrySet().stream().map(entry -> {
-						try {
-							ConfigurationOptionParser<PropertyFileConfigurationSource> parser = new ConfigurationOptionParser<>(new StringProvider(entry.getKey().toString()));
-							return new GenericConfigurationProperty<ConfigurationKey, PropertyFileConfigurationSource, String>( parser.StartKey(), entry.getValue().toString(), this);
-						} 
-						catch (ParseException e) {
-							LOGGER.warn(() -> "Ignoring property " + entry.getKey() + " after parsing error: " + e.getMessage());
-						}
-						return null;
-					})
-					.filter(Objects::nonNull)
-					.collect(Collectors.toList())
-				);
+		if(this.properties == null) {
+			this.properties = Mono.defer(() -> {
+				try(InputStream input = this.open()) {
+					Properties properties = new Properties();
+					properties.load(input);
+					
+					return Mono.just(properties.entrySet().stream().map(entry -> {
+							try {
+								ConfigurationOptionParser<PropertyFileConfigurationSource> parser = new ConfigurationOptionParser<>(new StringProvider(entry.getKey().toString()));
+								return new GenericConfigurationProperty<ConfigurationKey, PropertyFileConfigurationSource, String>( parser.StartKey(), entry.getValue().toString(), this);
+							} 
+							catch (ParseException e) {
+								LOGGER.warn(() -> "Ignoring property " + entry.getKey() + " after parsing error: " + e.getMessage());
+							}
+							return null;
+						})
+						.filter(Objects::nonNull)
+						.collect(Collectors.toList())
+					);
+				}
+				catch(IOException | ResourceException e) {
+					LOGGER.warn(() -> "Invalid property file configuration: " + e.getMessage());
+					return Mono.error(e);
+				}
+			});
+			
+			if(this.propertyInput != null) {
+				this.properties = this.properties.cache();
 			}
-			catch(IOException | ResourceException e) {
-				LOGGER.warn(() -> "Invalid property file configuration: " + e.getMessage());
-				return Mono.error(e);
+			else if(this.propertiesTTL != null) {
+				this.properties = this.properties.cache(this.propertiesTTL);
 			}
-		});
+		}
+		return this.properties;
 	}
 }

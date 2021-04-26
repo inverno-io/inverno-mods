@@ -16,12 +16,16 @@
 package io.winterframework.mod.configuration.source;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.winterframework.mod.base.resource.ModuleResource;
+import io.winterframework.mod.base.resource.Resource;
 
 /**
  * <p>
@@ -99,16 +103,13 @@ public class BootstrapConfigurationSource extends CompositeConfigurationSource {
 	 * @param args   the command line arguments
 	 * @throws IOException if something goes wrong creating the configuration source
 	 */
-	// TODO 
-	// - add Paths.get(System.getProperty("app.home"), "conf", "configuration.cprops");
-	// - add Paths.get(System.getProperty("java.home"), "conf", "configuration.cprops");
 	public BootstrapConfigurationSource(Module module, String... args) throws IOException {
 		super(Stream.of(new CommandLineConfigurationSource(args),
 				new SystemPropertiesConfigurationSource(),
 				new SystemEnvironmentConfigurationSource(),
 				Optional.of(Paths.get("conf", "configuration.cprops")).filter(Files::exists).or(() -> Optional.ofNullable(System.getProperty(WINTER_CONFIG_PATH)).map(config_path -> Paths.get(config_path, "configuration.cprops")).filter(Files::exists)).map(CPropsFileConfigurationSource::new).orElse(null),
 				Optional.of(System.getProperty(JAVA_HOME)).map(app_home -> Paths.get(app_home, "conf", "configuration.cprops")).filter(Files::exists).map(CPropsFileConfigurationSource::new).orElse(null),
-				Optional.of(module.getResourceAsStream("configuration.cprops")).filter(Objects::nonNull).map(CPropsFileConfigurationSource::new).orElse(null)
+				Optional.of(new ModuleResource(URI.create("module://" + module.getName() + "/configuration.cprops"))).filter(resource -> resource.exists().orElse(false)).map(CPropsFileConfigurationSource::new).orElse(null)
 		).filter(Objects::nonNull).collect(Collectors.toList()));
 	}
 }
