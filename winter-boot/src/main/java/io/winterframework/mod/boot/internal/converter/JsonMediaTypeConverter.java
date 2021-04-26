@@ -47,7 +47,7 @@ public class JsonMediaTypeConverter extends AbstractJsonMediaTypeConverter imple
 	private static final ByteBuf JSON_ARRAY_SEPARATOR = Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(new byte[] {','}));
 	private static final ByteBuf JSON_ARRAY_END = Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer(new byte[] {']'}));
 
-	private static final Mono<ByteBuf> JSON_ARRAY_START_MONO = Mono.just(JSON_ARRAY_START);
+	private static final Mono<ByteBuf> JSON_ARRAY_START_MONO = Mono.fromSupplier(() -> JSON_ARRAY_START.duplicate());
 	
 	public JsonMediaTypeConverter(ReactiveConverter<ByteBuf, Object> jsonByteBufConverter) {
 		super(jsonByteBufConverter);
