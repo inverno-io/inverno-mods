@@ -40,7 +40,11 @@ public class MainController {
 }
 ```
 
-Please refer to [Winter distribution](https://github.com/winterframework-io/winter-dist) for detailed installation instructions. Comprehensive reference documentations are available for [Winter core](https://github.com/winterframework-io/winter/tree/master/doc/reference-guide.md) and [Winter modules](https://github.com/winterframework-io/winter-mods/tree/master/doc/reference-guide.md)
+Please refer to [Winter distribution](https://github.com/winterframework-io/winter-dist) for detailed installation instructions. 
+
+Comprehensive reference documentations are available for [Winter core](https://github.com/winterframework-io/winter/tree/master/doc/reference-guide.md) and [Winter modules](https://github.com/winterframework-io/winter-mods/tree/master/doc/reference-guide.md).
+
+Several example projects showing various features are also available in the [Winter example project](https://github.com/winterframework-io/winter-examples). They can also be used as templates to start new Winter application or component projects.
 
 Feel free to report bugs and feature requests in GitHub's issue tracking system if you ran in any issue or wish to see some new functionalities implemented in the framework.
 
