@@ -1068,9 +1068,9 @@ RedisClient redisClient = ...
 RedisConfigurationSource source = new RedisConfigurationSource(redisClient);
 
 source
-    .set("db.url", "jdbc:oracle:thin:@dev.db.server:1521:sid").withParameters("env", "dev").and()
-    .set("db.url", "jdbc:oracle:thin:@prod_eu.db.server:1521:sid").withParameters("env", "prod", "zone", "eu").and()
-    .set("db.url", "jdbc:oracle:thin:@prod_us.db.server:1521:sid").withParameters("env", "prod", "zone", "us")
+    .set("db.url", "jdbc:oracle:thin:@dev.db.server:1521:sid").withParameters("environment", "dev").and()
+    .set("db.url", "jdbc:oracle:thin:@prod_eu.db.server:1521:sid").withParameters("environment", "prod", "zone", "eu").and()
+    .set("db.url", "jdbc:oracle:thin:@prod_us.db.server:1521:sid").withParameters("environment", "prod", "zone", "us")
     .execute()
     .blockLast();
     
@@ -1078,8 +1078,8 @@ source
 source.activate().block();
 
 // Activate working revision for dev environment and prod environment independently
-source.activate("env", "dev").block();
-source.activate("env", "prod").block();
+source.activate("environment", "dev").block();
+source.activate("environment", "prod").block();
 ```
 
 It is also possible to fallback to a particular revision by specifying it in the `activate()` method:
@@ -1101,14 +1101,16 @@ The property returned for a configuration query key then depends on two factors:
 
 The `CompositeConfigurationSource` resolves a configuration property by querying its sources in sequence from the highest priority to the lowest. It relies on a `CompositeConfigurationStrategy` to determine at each round which queries to execute and retain the best matching property from the results. The best matching property is the property whose key is the closest to the original configuration query key according to a metric implemented in the strategy. The algorithm stops when an exact match is found or when there's no more configuration source to query.
 
-The `DefaultCompositeConfigurationStrategy` defines the default strategy implementation. It determines the best matching property for a given original query by prioritizing query parameters from left to right. If we consider query key `property[p1=v1,...pn=vn]`, it supersedes key `property[p1=v1,...pn-1=vn-1]` which supersedes key `property[p1=v1,...pn-2=vn-2]`... which supersedes key `property[]`. As a result, an original query with `n` parameters results in `n+1` queries being actually executed if no property was retained in previous rounds and `n-p` queries if a property with p parameters (p<n) was retained in previous rounds. The order into which parameters are specified in the original query is then significant: `property[p1=v1,p2=v2] != property[p2=v2,p1=v1]`.
+The `DefaultCompositeConfigurationStrategy` defines the default strategy implementation. It determines the best matching property for a given original query by prioritizing query parameters from left to right: the best matching property is the one matching the most continuous parameters from right to left. In practice, if we consider query key `property[p1=v1,...pn=vn]`, it supersedes key `property[p2=v2,...pn=vn]` which supersedes key `property[p3=v3,...pn=vn]`... which supersedes key `property[]`. As a result, an original query with `n` parameters results in `n+1` queries being actually executed if no property was retained in previous rounds and `n-p` queries if a property with p parameters (p<n) was retained in previous rounds. The order into which parameters are specified in the original query is then significant: `property[p1=v1,p2=v2] != property[p2=v2,p1=v1]`.
+
+When defining configuration parameters, we should then order them from the most specific to the most general when querying a composite source. For example, the `node` parameter which is more specific than the `zone` parameter should come first then the `zone` parameter which is more specific than the `environment` parameter should come next and finally the `environment` parameter which is the most general should come last.
 
 For instance, we can consider two parameterized configuration sources: `source1` and `source2`.
 
 `source1` holds the following properties:
 
 - `server.url[]=null`
-- `server.url[environment="production", zone="US"]="https://prod.us"`
+- `server.url[zone="US", environment="production"]="https://prod.us"`
 - `server.url[zone="EU"]="https://default.eu"`
 
 `source2` holds the following properties:
@@ -1127,7 +1129,7 @@ CompositeConfigurationSource source = new CompositeConfigurationSource(List.of(s
 
 source                                                         // 1
     .get("server.url")
-    .withParameters("environment", "production", "zone", "US")
+    .withParameters("zone", "US", "environment", "production")
     .execute()
     ...
 
@@ -1145,12 +1147,12 @@ source                                                         // 3
 
 source                                                         // 4
     .get("server.url")
-    .withParameters("environment", "production", "zone", "EU")
+    .withParameters("zone", "EU", "environment", "production")
     .execute()...
 
 source                                                         // 5
     .get("server.url")
-    .withParameters("zone", "EU", "environment", "production")
+    .withParameters("environment", "production", "zone", "EU")
     .execute()
     ...
     
@@ -1161,8 +1163,8 @@ In the example above:
 1. `server.url[environment="production",zone="US"]` is exactly defined in `source1` => `https://prod.us` defined in `source1` is returned
 2. `server.url[environment="test"]` is not defined in `source1` but exactly defined in `source2` => `https://test`  defined in `source2` is returned
 3. Although `server.url[]` is defined in both `source1` and `source2`, `source1` has the highest priority and therefore => `null` is returned
-4. There is no exact match for `server.url[environment="production",zone="EU"]` in both `source1` and `source2`, the priority is given to the parameters from left to right, the property matching `server.url[environment="production"]` shall be returned => `https://prod` defined in `source2` is returned
-5. Here we simply change the order of the parameters in the previous query, again the priority is given to parameters from left to right, since there is no match for `server.url[zone="EU",environment="production"]`, `server.url[zone="EU"]` is considered => `https://default.eu` defined in `source1` is returned
+4. There is no exact match for `server.url[zone="EU", environment="production"]` in both `source1` and `source2`, the priority is given to the parameters from left to right, the property matching `server.url[environment="production"]` shall be returned => `https://prod` defined in `source2` is returned
+5. Here we've simply changed the order of the parameters in the previous query, again the priority is given to parameters from left to right, since there is no match for `server.url[environment="production", zone="EU"]`, `server.url[zone="EU"]` is considered => `https://default.eu` defined in `source1` is returned
 
 As you can see, the order into which parameters are specified in a query is significant and different results might be returned.
 
@@ -2995,15 +2997,9 @@ The content negotiation is similar to the one described in the [produce routing 
 
 The Web router then selects the route whose produced language tag matches the language range with the highest priority.
 
-Now unlike produce routing rule, the server returns a response even if content negotiation did not give any match by selecting the first route defined or a default route if there is one as suggested by RFC 7231.
+As for the produce routing rule, if there is no route defined with a language tag that matches any of the acceptable language ranges, then a (406) not acceptable error is returned. However, unlike the produce routing rule, a default route can be defined to handle such unmatched exchanges.
 
-For instance, a request with the following `accept-language` header field is matched by the route that was defined first and a document in English shall be returned:
-
-```
-accept-language: it-IT
-```
-
-Now if we add a default route, it will be matched if the router was unable to find a language match:
+For instance, we can add the following default route to the router:
 
 ```java
 router
@@ -3012,6 +3008,12 @@ router
         .handler(exchange -> {
             ...
         });
+```
+
+A request with the following `accept-language` header field is then matched by the default route:
+
+```
+accept-language: it-IT
 ```
 
 #### Error routing
@@ -4219,32 +4221,31 @@ The module descriptors for each of these modules should look like:
 
 ```java
 @io.winterframework.core.annotation.Module( excludes = { "io.winterframework.mod.web" } )
-module io.winterframework.example.book.admin {
+module io.winterframework.example.web_modular.admin {
     requires io.winterframework.core;
     requires io.winterframework.mod.web;
 
-    exports io.winterframework.example.book.admin to io.winterframework.example.book.app;
-    exports io.winterframework.example.book.admin.dto to com.fasterxml.jackson.databind;
+    exports io.winterframework.example.web_modular.admin to io.winterframework.example.web_modular.app;
 }
 ```
 ```java
 @io.winterframework.core.annotation.Module( excludes = { "io.winterframework.mod.web" } )
-module io.winterframework.example.book.book {
+module io.winterframework.example.web_modular.book {
     requires io.winterframework.core;
     requires io.winterframework.mod.web;
     
-    exports io.winterframework.example.book.book to io.winterframework.example.book.app;
-    exports io.winterframework.example.book.book.dto to com.fasterxml.jackson.databind;
+    exports io.winterframework.example.web_modular.book to io.winterframework.example.web_modular.app;
+    exports io.winterframework.example.web_modular.book.dto to com.fasterxml.jackson.databind;
 }
 ```
 ```java
 @io.winterframework.core.annotation.Module
-module io.winterframework.example.book.app {
+module io.winterframework.example.web_modular.app {
     requires io.winterframework.mod.boot;
     requires io.winterframework.mod.web;
     
-    requires io.winterframework.example.book.admin;
-    requires io.winterframework.example.book.book;
+    requires io.winterframework.example.web_modular.admin;
+    requires io.winterframework.example.web_modular.book;
 }
 ```
 
@@ -4254,8 +4255,8 @@ The *admin* and *book* modules should compile just fine resulting in two Web rou
 
 ```java
 @io.winterframework.core.annotation.Module
-@io.winterframework.core.annotation.Wire(beans="io.winterframework.example.book.app:webRouterConfigurer", into="io.winterframework.mod.web:webRouterConfigurer")
-module io.winterframework.example.book.app {
+@io.winterframework.core.annotation.Wire(beans="io.winterframework.example.web_modular.app:webRouterConfigurer", into="io.winterframework.mod.web:webRouterConfigurer")
+module io.winterframework.example.web_modular.app {
     ...
 }
 ```
@@ -4400,12 +4401,12 @@ For instance, we can describe the API exposed by the *book* module in the module
  * @version 1.2.3
  */
 @io.winterframework.core.annotation.Module( excludes = { "io.winterframework.mod.web" } )
-module io.winterframework.example.book.book {
+module io.winterframework.example.web_modular.book {
     requires io.winterframework.core;
     requires io.winterframework.mod.web;
     
-    exports io.winterframework.example.book.book to io.winterframework.example.book.app;
-    exports io.winterframework.example.book.book.dto to com.fasterxml.jackson.databind;
+    exports io.winterframework.example.web_modular.book to io.winterframework.example.web_modular.app;
+    exports io.winterframework.example.web_modular.book.dto to com.fasterxml.jackson.databind;
 }
 ```
 
@@ -4415,18 +4416,18 @@ If we build and run the [modular book application](#composite-web-module) and ac
 
 <img src="img/swaggerUI_root.png" style="display: block; margin: 2em auto;"/>
 
-It is also possible to target a single specification by specifying the module name in the URI, for instance `http://locahost:8080/open-api/io.winterframework.example.book.admin`:
+It is also possible to target a single specification by specifying the module name in the URI, for instance `http://locahost:8080/open-api/io.winterframework.example.web_modular.book`:
 
 <img src="img/swaggerUI_module.png" style="display: block; margin: 2em auto;"/>
 
 Finally, Open API specifications formatted in [YAML](https://en.wikipedia.org/wiki/YAML) can be retrieved as follows:
 
 ```
-$ curl http://locahost:8080/open-api/io.winterframework.example.book.admin
+$ curl http://locahost:8080/open-api/io.winterframework.example.web_modular.admin
 	
 openapi: 3.0.3
 info:
-    title: 'io.winterframework.example.book.admin'
+    title: 'io.winterframework.example.web_modular.admin'
     version: ''
 ...
 ```
