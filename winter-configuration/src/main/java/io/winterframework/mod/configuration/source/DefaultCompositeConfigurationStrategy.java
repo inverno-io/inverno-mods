@@ -37,11 +37,11 @@ import io.winterframework.mod.configuration.ExecutableConfigurationQuery;
  * 
  * <p>
  * It determines the best matching result for a given original query by
- * prioritizing query parameters from left to right. If we consider query key
- * {@code property[p1=v1,...pn=vn]}, it supersedes key
- * {@code property[p1=v1,...pn-1=vn-1]} which supersedes key
- * {@code property[p1=v1,...pn-2=vn-2]}... which supersedes key
- * {@code property[]}.
+ * prioritizing query parameters from left to right: the best matching property
+ * is the one matching the most continuous parameters from right to left. If we
+ * consider query key {@code property[p1=v1,...pn=vn]}, it supersedes key
+ * {@code property[p2=v2,...pn=vn]} which supersedes key
+ * {@code property[p3=v3,...pn=vn]}... which supersedes key {@code property[]}.
  * </p>
  * 
  * <p>

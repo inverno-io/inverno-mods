@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -94,6 +95,10 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 	private Resource propertyResource;
 	
 	private InputStream propertyInput;
+	
+	private Duration propertiesTTL;
+	
+	private Mono<List<ConfigurationProperty<ConfigurationKey, CPropsFileConfigurationSource>>> properties;
 	
 	/**
 	 * <p>
@@ -171,6 +176,42 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 		super(decoder);
 		this.propertyResource = propertyResource;
 	}
+	
+	/**
+	 * <p>
+	 * Sets the time-to-live duration of the properties loaded with {@link #load()}.
+	 * </p>
+	 * 
+	 * <p>
+	 * If set to null, which is the default, properties are cached indefinitely.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that this ttl doesn't apply to a source created with an
+	 * {@link InputStream} which is cached indefinitely since the steam can't be
+	 * read twice.
+	 * </p>
+	 * 
+	 * @param ttl the properties time-to-live or null to cache properties
+	 *            indefinitely
+	 */
+	public void setPropertiesTTL(Duration ttl) {
+		this.propertiesTTL = ttl;
+		this.properties = null;
+	}
+	
+	/**
+	 * <p>
+	 * Returns the time-to-live duration of the properties loaded with
+	 * {@link #load()}.
+	 * </p>
+	 * 
+	 * @return the properties time-to-live or null if properties are cached
+	 *         indefinitely
+	 */
+	public Duration getPropertiesTTL() {
+		return this.propertiesTTL;
+	}
 
 	/**
 	 * <p>
@@ -195,16 +236,26 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 	
 	@Override
 	protected Mono<List<ConfigurationProperty<ConfigurationKey, CPropsFileConfigurationSource>>> load() {
-		return Mono.defer(() -> {
-			try(InputStream input = this.open()) {
-				ConfigurationPropertiesParser<CPropsFileConfigurationSource> parser = new ConfigurationPropertiesParser<>(new StreamProvider(input));
-				parser.setConfigurationSource(this);
-				return Mono.just(parser.StartConfigurationProperties());
-			} 
-			catch (IOException | ParseException | ResourceException e) {
-				LOGGER.warn(() -> "Invalid property file: " + e.getMessage());
-				return Mono.error(e);
-			} 
-		});
+		if(this.properties == null) {
+			this.properties = Mono.defer(() -> {
+				try(InputStream input = this.open()) {
+					ConfigurationPropertiesParser<CPropsFileConfigurationSource> parser = new ConfigurationPropertiesParser<>(new StreamProvider(input));
+					parser.setConfigurationSource(this);
+					return Mono.just(parser.StartConfigurationProperties());
+				} 
+				catch (IOException | ParseException | ResourceException e) {
+					LOGGER.warn(() -> "Invalid property file: " + e.getMessage());
+					return Mono.error(e);
+				}
+			});
+			
+			if(this.propertyInput != null) {
+				this.properties = this.properties.cache();
+			}
+			else if(this.propertiesTTL != null) {
+				this.properties = this.properties.cache(this.propertiesTTL);
+			}
+		}
+		return this.properties;
 	}
 }

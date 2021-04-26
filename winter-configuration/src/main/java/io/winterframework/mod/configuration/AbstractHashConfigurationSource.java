@@ -71,7 +71,7 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 	public AbstractHashConfigurationSource(SplittablePrimitiveDecoder<A> decoder) {
 		super(decoder);
 	}
-	
+
 	/**
 	 * <p>
 	 * Loads the configuration properties.
