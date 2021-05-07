@@ -2,7 +2,6 @@ package io.winterframework.mod.configuration.source;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 
