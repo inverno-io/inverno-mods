@@ -1,8 +1,50 @@
-# Winter Framework Modules
+[winter-root]: https://github.com/winterframework-io/winter
+[winter-root-doc]: https://github.com/winterframework-io/winter/tree/master/doc/reference-guide.md
+[winter-dist-root]: https://github.com/winterframework-io/winter-dist
+[winter-tools-root]: https://github.com/winterframework-io/winter-tools
+
+[javadoc]: http://tbd
+[cprops-grammar]: https://github.com/winterframework-io/winter-mods/tree/master/winter-configuration/src/main/javacc/configuration_properties.jj
+
+[project-reactor-io]: https://projectreactor.io/
+[project-reactor-io-doc]: https://projectreactor.io/docs/core/release/reference/
+[media-type]: https://en.wikipedia.org/wiki/Media_type
+[jdk-files-probeContentType]: https://docs.oracle.com/javase/9/docs/api/java/nio/file/Files.html#probeContentType-java.nio.file.Path-
+[jdk-executors-newCachedThreadPool]: https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/Executors.html#newCachedThreadPool--
+[jdk-providers]: https://docs.oracle.com/en/java/javase/11/security/oracle-providers.html
+[ndjson]: http://ndjson.org/
+[javacc]: https://javacc.github.io/javacc/
+[redis]: https://redis.io/
+[netty]: https://netty.io/
+[form-urlencoded]: https://url.spec.whatwg.org/#application/x-www-form-urlencoded
+[epoll]: https://en.wikipedia.org/wiki/Epoll
+[kqueue]: https://en.wikipedia.org/wiki/Kqueue
+[webjars]: https://www.webjars.org/
+[open-api]: https://www.openapis.org/
+[swagger-ui]: https://swagger.io/tools/swagger-ui/
+[yaml]: https://en.wikipedia.org/wiki/YAML
+[zero-copy]: https://en.wikipedia.org/wiki/Zero-copy
+[server-sent-events]: https://www.w3.org/TR/eventsource/
+[chunked-transfer-encoding]: https://en.wikipedia.org/wiki/Chunked_transfer_encoding
+
+[rfc-3986]: https://tools.ietf.org/html/rfc3986
+[rfc-7231-5.1.1.5]: https://tools.ietf.org/html/rfc7231#section-5.1.1.5
+[rfc-7231-5.3]: https://tools.ietf.org/html/rfc7231#section-5.3
+[rfc-7231-5.3.1]: https://tools.ietf.org/html/rfc7231#section-5.3.1
+[rfc-7231-5.3.2]: https://tools.ietf.org/html/rfc7231#section-5.3.2
+[rfc-7231-5.3.5]: https://tools.ietf.org/html/rfc7231#section-5.3.5
+[rfc-7231-7.1.2]: https://tools.ietf.org/html/rfc7231#section-7.1.2
+[rfc-6265-4.1]: https://tools.ietf.org/html/rfc6265#section-4.1
+[rfc-6265-4.2]: https://tools.ietf.org/html/rfc6265#section-4.2
+[rfc-6266]: https://tools.ietf.org/html/rfc6266
+[rfc-7540-8.1.2.4]: https://tools.ietf.org/html/rfc7540#section-8.1.2.4
+[rfc-7578]: https://tools.ietf.org/html/rfc7578
+
+# Winter Modules
 
 ## Motivation
 
-Built on top of the [Winter core IoC/DI framework](https://github.com/winterframework-io/winter), Winter modules suite aimed to provide a complete set of features to develop high end production-grade applications.
+Built on top of the [Winter core IoC/DI framework][winter-root], Winter modules suite aimed to provide a complete set of features to develop high end production-grade applications.
 
 The advent of cloud computing and highly distributed architecture based on microservices has changed the way applications should be conceived, maintained, executed and operated. While it was perfectly fine to have application started in couple of seconds or even minutes some years ago with long release cycles, today's application must be highly efficient, agile in terms of development and deployment and start in a heart beat.
 
@@ -22,11 +64,11 @@ The primary goals can be summarized as follows:
 
 ## Prerequisites
 
-Before we can dig into the various modules provided in the framework, it is important to understand how to setup a modular Winter project, so please have a look at the [Winter distribution documentation](https://github.com/winterframework-io/winter-dist) which describes in details how to create, build, run, package and distribute a modular Winter component or application.
+Before we can dig into the various modules provided in the framework, it is important to understand how to setup a modular Winter project, so please have a look at the [Winter distribution documentation][winter-dist-root] which describes in details how to create, build, run, package and distribute a modular Winter component or application.
 
-Winter modules are built on top of the Winter core IoC/DI framework, please refer to the [Winter core documentation](https://github.com/winterframework-io/winter/tree/master/doc/reference-guide.md) to understand how IoC/DI is working in the framework.
+Winter modules are built on top of the Winter core IoC/DI framework, please refer to the [Winter core documentation][winter-root-doc] to understand how IoC/DI is working in the framework.
 
-The framework is fully reactive thanks to [Project Reactor Core library](https://projectreactor.io/), it is strongly recommended to also look at [the reference documentation](https://projectreactor.io/docs/core/release/reference/).
+The framework is fully reactive thanks to [Project Reactor Core library][project-reactor-io], it is strongly recommended to also look at [the reference documentation][project-reactor-io-doc].
 
 ## Overview 
 
@@ -282,7 +324,7 @@ Publisher<ByteBuf> integerStream = converter.encodeMany(Flux.just(1,2,3,4));
 
 #### Media type converter
 
-A `MediaTypeConverter` is a particular kind of object converter which supports a specific format specified as a [media type](https://en.wikipedia.org/wiki/Media_type) and converts object from/to raw data in the supported format. A typical example would be a JSON media type converter used to decode/encode raw JSON data.
+A `MediaTypeConverter` is a particular kind of object converter which supports a specific format specified as a [media type][media-type] and converts object from/to raw data in the supported format. A typical example would be a JSON media type converter used to decode/encode raw JSON data.
 
 > The *web* module relies on such converters to respectively decode end encode HTTP request and HTTP response payloads based on the content type specified in the message headers.
 
@@ -383,7 +425,7 @@ The Net API provides interfaces and classes to manipulate basic network elements
 
 #### URIs
 
-A URI follows the standard defined by [RFC 3986](https://tools.ietf.org/html/rfc3986), it is mostly used to identify resources such as file or more specifically a route in a Web server. The JDK provides a standard implementation which is not close to what is required by the *web* module to name just one.
+A URI follows the standard defined by [RFC 3986][rfc-3986], it is mostly used to identify resources such as file or more specifically a route in a Web server. The JDK provides a standard implementation which is not close to what is required by the *web* module to name just one.
 
 The `URIs` utility class is the main entry point for working on URIs in any ways imaginable. It defines methods to create a blank URI or a URI based on a given path or URI. These methods return a `URIBuilder` instance which is then used to build a URI, a path, a query string or a URI pattern.
 
@@ -639,7 +681,7 @@ The *boot* module defines specific configuration for the services it exposes, th
 
 For instance the `NetConfiguration` is used to configure the net service.
 
-Please refer to the [JavaDoc]() to have an exhaustive description of the different configuration properties.
+Please refer to the [API documentation][javadoc] to have an exhaustive description of the different configuration properties.
 
 ### Net service
 
@@ -647,7 +689,7 @@ The module provides a base `NetService` implementation exposed as a bean for bui
 
 ### Media type service
 
-The module provides a base `MediaTypeService` implementation based on the JDK (see [Files.probeContentType(Path)](https://docs.oracle.com/javase/9/docs/api/java/nio/file/Files.html#probeContentType-java.nio.file.Path-)) and exposed as an overridable bean allowing custom implementations to be provided.
+The module provides a base `MediaTypeService` implementation based on the JDK (see [Files.probeContentType(Path)][jdk-files-probeContentType]) and exposed as an overridable bean allowing custom implementations to be provided.
 
 ### Resource service
 
@@ -703,14 +745,14 @@ This includes the following also exposed as beans:
 - a parameter converter for converting strings from/to objects, this converter can be extended by injecting specific compound decoders and encoders in the module as described in the [composite converter documentation](#composite-converter).
 - a JSON `ByteBuf` converter for converting raw JSON data in `ByteBuf` from/to objects in the application.
 - an `application/json` media type converter for converting message payloads from/to JSON.
-- an `application/x-ndjson` media type converter for converting message payloads from/to [Newline Delimited JSON](http://ndjson.org/)
+- an `application/x-ndjson` media type converter for converting message payloads from/to [Newline Delimited JSON][ndjson]
 - a `text/plain` media type converter for converting message payloads from/to plain text.
 
 ### Worker pool
 
 A Winter application must be fully reactive, most of the processing is performed in non-blocking I/O threads but sometimes blocking operations might be needed, in such cases, the worker thread pool should be used to execute these blocking operations without impacting the I/O event loop.
 
-The default worker pool bean is a simple [cached Thread pool](https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/Executors.html#newCachedThreadPool--) which can be overridden by providing a different instance to the *boot* module.
+The default worker pool bean is a simple [cached Thread pool][jdk-executors-newCachedThreadPool] which can be overridden by providing a different instance to the *boot* module.
 
 ### Object mapper
 
@@ -895,7 +937,7 @@ This implementation can be used for testing purpose in order to provide a mock c
 
 The system environment configuration source exposes system environment variables as configuration properties. As for the map configuration source, this implementation doesn't support parameterized properties.
 
-```shell
+```plaintext
 $ export SERVER_URL=http://localhost
 ```
 
@@ -910,7 +952,7 @@ This implementation can be used to bootstrap an application using system environ
 
 The system properties configuration source exposes system properties as configuration properties. As for the two previous implementations, it doesn't support parameterized properties.
 
-```shell
+```plaintext
 $ java -Dserver.url=http://localhost ...
 ```
 
@@ -925,11 +967,11 @@ This implementation can be used to bootstrap an application using system propert
 
 The command line configuration source exposes configuration properties specified as command line arguments of the application. This implementation supports parameterized properties.
 
-Configuration properties must be specified as application arguments using the following syntax: `--property[parameter_1=value_1...parameter_n=value_n]=value` where property and parameter names are valid Java identifiers and property and parameter values are Java primitives such as integer, boolean, string... A complete description of the syntax can be found in the [JavaDoc]().
+Configuration properties must be specified as application arguments using the following syntax: `--property[parameter_1=value_1...parameter_n=value_n]=value` where property and parameter names are valid Java identifiers and property and parameter values are Java primitives such as integer, boolean, string... A complete description of the syntax can be found in the [API documentation][javadoc].
 
 For instance the following are valid configuration properties specified as command line arguments:
 
-```shell
+```plaintext
 $ java ... Main \
 --web.server_port=8080 \
 --web.server_port[profile="ssl"]=8443 \
@@ -973,7 +1015,7 @@ The `.cprops` file format has been introduced to facilitate the definition and r
 
 For instance:
 
-```
+```properties
 server.port=8080
 db.url=jdbc:oracle:thin:@localhost:1521:sid
 db.user=user
@@ -1014,7 +1056,7 @@ application.greeting.message="""
 }
 ```
 
-A complete [JavaCC](https://javacc.github.io/javacc/) [grammar](https://github.com/winterframework-io/winter-mods/tree/master/winter-configuration/src/main/javacc/configuration_properties.jj) is available in the source of the configuration module.
+A complete [JavaCC][javacc] [grammar][cprops-grammar] is available in the source of the configuration module.
 
 ```java
 CPropsFileConfigurationSource source = new CPropsFileConfigurationSource(new ClasspathResource(URI.create("classpath:/path/to/file")));
@@ -1057,7 +1099,7 @@ public class Application {
 
 #### Redis configuration source
 
-The [Redis](https://redis.io/) configuration source exposes configuration properties stored in a Redis data store. This implementation supports parameterized properties and it is also configurable which means it can be used to set configuration properties in the data store at runtime.
+The [Redis][redis] configuration source exposes configuration properties stored in a Redis data store. This implementation supports parameterized properties and it is also configurable which means it can be used to set configuration properties in the data store at runtime.
 
 It also provides a simple but effective versioning system which allows to set multiple properties and activate or revert them atomically. A global revision keeps track of the whole data store but it is also possible to version a particular branch in the tree of properties.
 
@@ -1502,16 +1544,16 @@ Most of the time the *http-base* module is composed in a composite module and as
 
 By default, the *http-base* module provides codecs for the following headers:
 
-- `accept` as defined by [RFC 7231 Section 5.3.2](https://tools.ietf.org/html/rfc7231#section-5.3.2)
-- `accept-language` as defined by [RFC 7231 Section 5.3.5](https://tools.ietf.org/html/rfc7231#section-5.3.5)
-- `content-disposition` as defined by [RFC 6266](https://tools.ietf.org/html/rfc6266)
-- `content-type` as defined by [RFC 7231 Section 3.1.1.5](https://tools.ietf.org/html/rfc7231#section-3.1.1.5)
-- `cookie` as defined by [RFC 6265 Section 4.2](https://tools.ietf.org/html/rfc6265#section-4.2)
-- `set-cookie` as defined by [RFC 6265 Section 4.1](https://tools.ietf.org/html/rfc6265#section-4.1)
+- `accept` as defined by [RFC 7231 Section 5.3.2][rfc-7231-5.3.2]
+- `accept-language` as defined by [RFC 7231 Section 5.3.5][rfc-7231-5.3.5]
+- `content-disposition` as defined by [RFC 6266][rfc-6266]
+- `content-type` as defined by [RFC 7231 Section 3.1.1.5][rfc-7231-5.1.1.5]
+- `cookie` as defined by [RFC 6265 Section 4.2][rfc-6265-4.2]
+- `set-cookie` as defined by [RFC 6265 Section 4.1][rfc-6265-4.1]
 
 ## HTTP Server
 
-The Winter *http-server* module provides fully reactive HTTP/1.x and HTTP/2 server based on [Netty](https://netty.io/).
+The Winter *http-server* module provides fully reactive HTTP/1.x and HTTP/2 server based on [Netty][netty].
 
 It especially supports:
 
@@ -1622,7 +1664,7 @@ In the above example, if a client sends a payload in the request, the server res
 
 #### URL Encoded form
 
-HTML form data are sent in the body of a POST request in the form of key/value pairs encoded in [application/x-www-form-urlencoded format](https://url.spec.whatwg.org/#application/x-www-form-urlencoded). The resulting list of `Parameter` can be obtained as follows:
+HTML form data are sent in the body of a POST request in the form of key/value pairs encoded in [application/x-www-form-urlencoded format][form-urlencoded]. The resulting list of `Parameter` can be obtained as follows:
 
 ```java
 ExchangeHandler<Exchange> handler = exchange -> {
@@ -1651,7 +1693,7 @@ ExchangeHandler<Exchange> handler = exchange -> {
 
 #### Multipart form
 
-A [multipart/form-data](https://tools.ietf.org/html/rfc7578) request can be handled in a similar way. Form parts can be obtained as follows:
+A [multipart/form-data][rfc-7578] request can be handled in a similar way. Form parts can be obtained as follows:
 
 ```java
 ExchangeHandler<Exchange> handler = exchange -> {
@@ -1703,7 +1745,7 @@ The `Flux.using()` construct is the reactive counterpart of a try-with-resource 
 
 #### Resource
 
-A [resource](#resource-api) can be sent as a response to a request. When this is possible the server uses low-level ([zero-copy](https://en.wikipedia.org/wiki/Zero-copy)) API for fast resource transfer.
+A [resource](#resource-api) can be sent as a response to a request. When this is possible the server uses low-level ([zero-copy][zero-copy]) API for fast resource transfer.
 
 ```java
 ExchangeHandler<Exchange> handler = exchange -> {
@@ -1718,7 +1760,7 @@ The media type of the resource is resolved using a [media type service](#media-t
 
 #### Server-sent events
 
-[Server-sent events](https://www.w3.org/TR/eventsource/) provide a way to send server push notifications to a client. It is based on [chunked transfer encoding](https://en.wikipedia.org/wiki/Chunked_transfer_encoding) over HTTP/1.x and regular streams over HTTP/2. The API provides an easy way to create SSE endpoints.
+[Server-sent events][server-sent-events] provide a way to send server push notifications to a client. It is based on [chunked transfer encoding][chunked-transfer-encoding] over HTTP/1.x and regular streams over HTTP/2. The API provides an easy way to create SSE endpoints.
 
 ```java
 ExchangeHandler<Exchange> handler = exchange -> {
@@ -1896,7 +1938,7 @@ ExchangeHandler<Exchange> handler = exchange -> {
 
 ##### Response status
 
-The response status can be set in the response headers following HTTP/2 specification as defined by [RFC 7540 Section 8.1.2.4](https://tools.ietf.org/html/rfc7540#section-8.1.2.4).
+The response status can be set in the response headers following HTTP/2 specification as defined by [RFC 7540 Section 8.1.2.4][rfc-7540-8.1.2.4].
 
 ```java
 ExchangeHandler<Exchange> handler = exchange -> {
@@ -2005,7 +2047,7 @@ The above example starts a HTTP/1.x server using default configuration and defau
 
 You should be able to send a request to the server:
 
-```shell
+```plaintext
 $ curl -i http://localhost:8080/
 HTTP/1.1 200
 content-length: 5
@@ -2071,11 +2113,11 @@ public class Main {
 
 In the above code, we have set the server port to 8081, enabled HTTP/2 over cleartext and set the number of thread allocated to the root event loop group to 4.
 
-Please refer to the [JavaDoc]() to have an exhaustive description of the different configuration properties. We can for instance configure low level network settings like TCP keep alive or TCP no delay as well as HTTP related settings like compression or TLS.
+Please refer to the [API documentation](javadoc) to have an exhaustive description of the different configuration properties. We can for instance configure low level network settings like TCP keep alive or TCP no delay as well as HTTP related settings like compression or TLS.
 
 > You can also refer to the [configuration module documentation](#configuration-1) to get more details on how configuration works and more especially how you can from here define the HTTP server configuration in command line arguments, property files...
 
-By default, the HTTP server uses the Java NIO transport, but it is possible to use native [epoll](https://en.wikipedia.org/wiki/Epoll) transport on Linux or [kqueue](https://en.wikipedia.org/wiki/Kqueue) transport on BSD-like systems for optimized performances. This can be done by adding the corresponding Netty dependency with the right classifier in the project descriptor:
+By default, the HTTP server uses the Java NIO transport, but it is possible to use native [epoll][epoll] transport on Linux or [kqueue][kqueue] transport on BSD-like systems for optimized performances. This can be done by adding the corresponding Netty dependency with the right classifier in the project descriptor:
 
 ```xml
 <project>
@@ -2118,7 +2160,7 @@ or
 >
 > This approach is fine as long as we are sure the application will run on Linux, but in order to create a properly portable application, we should prefer adding the modules explicitly when running the application:
 >
-> ```shell
+> ```plaintext
 > $ java --add-modules io.netty.transport.unix.common,io.netty.transport.epoll ...
 > ```
 > 
@@ -2299,7 +2341,7 @@ public class Main {
 
 Now if we send a request which accepts compression to the server, we should now receive a compressed response:
 
-```shell
+```plaintext
 $ curl -i --compressed -H 'accept-encoding: gzip, deflate' http://localhost:8080
 HTTP/1.1 200 OK
 content-type: text/plain
@@ -2316,7 +2358,7 @@ In order to activate TLS, we need first to obtain a private key and a certificat
 
 A self-signed certificate can be generated using `keytool`, the resulting keystore should be placed in `src/main/resources` to make it available as a module resource:
 
-```shell
+```plaintext
 $ keytool -genkey -keyalg RSA -alias selfsigned -keystore keystore.jks -storepass password -validity 360 -keysize 2048
 ```
 
@@ -2343,7 +2385,7 @@ public class Main {
 }
 ```
 
-> When an application using the *http-server* module is packaged as an application image, you'll need to make sure TLS related modules from the JDK are included in the runtime image otherwise TLS might not work. You can refer to the [JDK providers documentation](https://docs.oracle.com/en/java/javase/11/security/oracle-providers.html) in the security developer's guide to find out which modules should be added depending on your needs. Most of the time you'll simply add `jdk.crypto.ec` module in the Winter Maven plugin configuration:
+> When an application using the *http-server* module is packaged as an application image, you'll need to make sure TLS related modules from the JDK are included in the runtime image otherwise TLS might not work. You can refer to the [JDK providers documentation][jdk-providers] in the security developer's guide to find out which modules should be added depending on your needs. Most of the time you'll simply add `jdk.crypto.ec` module in the Winter Maven plugin configuration:
 > 
 > ```xml
 > <project>
@@ -2435,7 +2477,7 @@ public class Main {
 }
 ```
 
-```shell
+```plaintext
 $ curl -i --insecure https://localhost:8443/
 HTTP/2 200 
 content-length: 16
@@ -2454,9 +2496,9 @@ It especially provides:
 - automatic message payload conversion
 - path parameters
 - static handler for serving static resources
-- version agnostic [WebJars](https://www.webjars.org/) support
+- version agnostic [WebJars][webjars] support
 - easy Web/REST controller development
-- [OpenAPI](https://www.openapis.org/) specifications generation using Web controllers JavaDoc comments
+- [OpenAPI][open-api] specifications generation using Web controllers JavaDoc comments
 - SwaggerUI integration
 - a Winter compiler plugin providing static validation of the routes and generation of Web router configurers
 
@@ -2546,7 +2588,7 @@ WebExchangeHandler<WebExchange> securityInterceptor = exchange -> {
 
 ###### Path parameters
 
-Path parameters are exposed in the `WebRequest`, they are extracted from the requested path by the [Web router](web-router) when the handler is attached to a route matching a parameterized path as defined in a [URI builder](#uris).
+Path parameters are exposed in the `WebRequest`, they are extracted from the requested path by the [Web router](#web-router) when the handler is attached to a route matching a parameterized path as defined in a [URI builder](#uris).
 
 For instance, if the handler is attached to a route matching `/book/{id}`, the `id` path parameter can be retrieved as follows:
 
@@ -2834,7 +2876,7 @@ router
 
 ###### Consume routing rule
 
-The consume routing rule matches exchanges whose request body content type matches a particular media range as defined by [RFC 7231 Section 5.3.2](https://tools.ietf.org/html/rfc7231#section-5.3.2).
+The consume routing rule matches exchanges whose request body content type matches a particular media range as defined by [RFC 7231 Section 5.3.2][rfc-7231-5.3.2].
 
 For instance, in order to match all exchanges with a `application/json` request payload, we can do:
 
@@ -2860,11 +2902,11 @@ router
         });
 ```
 
-The two previous routes are different and as a result they can be both defined in the router, a content negotiation algorithm is used to determine which route should process a particular exchange as defined in [RFC 7231 Section 5.3](https://tools.ietf.org/html/rfc7231#section-5.3).
+The two previous routes are different and as a result they can be both defined in the router, a content negotiation algorithm is used to determine which route should process a particular exchange as defined in [RFC 7231 Section 5.3][rfc-7231-5.3].
 
 Routes are sorted by consumed media ranges as follows:
 
-- quality value is compared first as defined by [RFC7231 Section 5.3.1](https://tools.ietf.org/html/rfc7231#section-5.3.1), the default quality value is 1.
+- quality value is compared first as defined by [RFC7231 Section 5.3.1][rfc-7231-5.3.1], the default quality value is 1.
 - type and subtype wildcards are considered after: `a/b` > `a/*` > `*/b` > `*/*`
 - parameters are considered last, the most precise media range which is the one with the most parameters with values gets the highest priority (eg. `application/json;p1=a;p2=2` > `application/json;p1=b` > `application/json;p1`)
 
@@ -2911,7 +2953,7 @@ If there is no route matching the content type of a request of an exchange match
 
 ###### Produce routing rule
 
-The produce routing rule matches exchanges based on the acceptable media ranges supplied by the client in the `accept` header field of the request as defined by [RFC 7231 Section 5.3.2](https://tools.ietf.org/html/rfc7231#section-5.3.2).
+The produce routing rule matches exchanges based on the acceptable media ranges supplied by the client in the `accept` header field of the request as defined by [RFC 7231 Section 5.3.2][rfc-7231-5.3.2].
 
 A HTTP client (eg. Web browser) typically sends a `accept` header to indicate the server which response media types are acceptable in the response. The Web router determines the best matching route based on the media types produced by the routes matching previous routing rules.
 
@@ -2938,7 +2980,7 @@ router
 
 Now let's consider the following `accept` request header field:
 
-```
+```http
 accept: application/json, application/xml;q=0.9, */xml;q=0.8
 ```
 
@@ -2950,13 +2992,13 @@ Considering previous routes, a request with previous `accept` header field is th
 
 A request with the following `accept` header field is matched by the second route:
 
-```
+```http
 accept: application/xml;q=0.9, */xml;q=0.8
 ```
 
 The exchange is also matched by the second route with the following `accept` header field:
 
-```
+```http
 accept: application/json;q=0.5, text/xml;q=1.0
 ```
 
@@ -2966,7 +3008,7 @@ If there is no route producing a media type that matches any of the acceptable m
 
 ###### Language routing rule
 
-Finally, the language routing rule matches exchanges based on the acceptable languages supplied by client in the `accept-language` header field of the request as defined by [RFC 7231 Section 5.3.5](https://tools.ietf.org/html/rfc7231#section-5.3.5).
+Finally, the language routing rule matches exchanges based on the acceptable languages supplied by client in the `accept-language` header field of the request as defined by [RFC 7231 Section 5.3.5][rfc-7231-5.3.5].
 
 A HTTP client (eg. Web browser) typically sends a `accept-language` header to indicate the server which languages are acceptable for the response. The Web router determines the best matching route based on the language tags produced by the routes matching previous routing rules.
 
@@ -2992,7 +3034,7 @@ router
 
 The content negotiation is similar to the one described in the [produce routing rule](#produce-routing-rule) but using language ranges and language types instead of media ranges and media types. Acceptable language ranges are sorted as follows:
 
-- quality value is compared first as defined by [RFC 7231 Section 5.3.1](https://tools.ietf.org/html/rfc7231#section-5.3.1), the default quality value is 1.
+- quality value is compared first as defined by [RFC 7231 Section 5.3.1][rfc-7231-5.3.1], the default quality value is 1.
 - primary and secondary language tags and wildcards are considered after: `fr-FR` > `fr` > `*`
 
 The Web router then selects the route whose produced language tag matches the language range with the highest priority.
@@ -3012,7 +3054,7 @@ router
 
 A request with the following `accept-language` header field is then matched by the default route:
 
-```
+```http
 accept-language: it-IT
 ```
 
@@ -3186,7 +3228,7 @@ The static handler relies on the resource abstraction to resolve resources, as a
 
 The static handler also looks for a welcome page when a directory resource is requested. For instance considering the following `web-root` directory:
 
-```
+```plaintext
 web-root/
 ├── index.html
 └── snowflake.svg
@@ -3223,7 +3265,7 @@ public class Main {
 
 The above example starts a Web server using default configuration which is a HTTP/1.x server with a Web router as root handler and an error router as error handler.
 
-```
+```plaintext
 2021-04-14 11:00:18,308 INFO  [main] i.w.c.v.Application - Winter is starting...
 
 
@@ -3268,7 +3310,7 @@ The above example starts a Web server using default configuration which is a HTT
 
 The Web router doesn't define any routes by default so if we hit the server, a (404) not found error is returned showing the error router in action:
 
-```shell
+```plaintext
 $ curl -i -H 'accept: application/json' http://locahost:8080
 HTTP/1.1 404 Not Found
 content-type: application/json
@@ -3387,12 +3429,12 @@ public class App_webWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 
 Now we can test the application:
 
-```
+```plaintext
 $ curl -i http://locahost:8080/
 HTTP/1.1 404 Not Found
 content-length: 0
 ```
-```
+```plaintext
 $ curl -i http://locahost:8080/hello
 HTTP/1.1 200 OK
 content-type: text/plain
@@ -3400,7 +3442,7 @@ content-length: 6
 
 Hello!
 ```
-```
+```plaintext
 $ curl -i -H 'accept-language: fr' http://locahost:8080/hello
 HTTP/1.1 200 OK
 content-type: text/plain
@@ -3408,7 +3450,7 @@ content-length: 8
 
 Bonjour!
 ```
-```
+```plaintext
 $ curl -i -H 'accept: application/json' http://locahost:8080/hello
 HTTP/1.1 406 Not Acceptable
 content-type: application/json
@@ -3481,7 +3523,7 @@ public class App_webErrorWebRouterConfigurer implements ErrorWebRouterConfigurer
 
 Now if we hit `http://locahost:8080/custom_exception` we should receive a custom error:
 
-```
+```plaintext
 $ curl -i http://locahost:8080/custom_exception
 HTTP/1.1 400 Bad Request
 content-type: text/plain
@@ -3492,7 +3534,7 @@ A custom exception was raised
 
 #### WebJars
 
-The Web server can also be configured to automatically serve static resources from [WebJars dependencies](https://www.webjars.org/) using a version agnostic path: `/webjars/{webjar_module}/{path:.*}` where `{webjar_module}` corresponds to the *modularized* name of the WebJar minus `org.webjars`. For example the location of the Swagger UI WebJar would be `/webjars/swagger.ui/`.
+The Web server can also be configured to automatically serve static resources from [WebJars dependencies][webjars] using a version agnostic path: `/webjars/{webjar_module}/{path:.*}` where `{webjar_module}` corresponds to the *modularized* name of the WebJar minus `org.webjars`. For example the location of the Swagger UI WebJar would be `/webjars/swagger.ui/`.
 
 This feature can be activated with the following configuration:
 
@@ -3532,23 +3574,23 @@ Then we can declare WebJars dependencies such as the Swagger UI in the build des
 
 The Swagger UI should now be accessible at `http://locahost:8080/webjars/swagger.ui/`.
 
-Sadly WebJars are not modular JARs, they are not even named modules which causes several issues when dependencies are specified on the module path. That's why when an application is run or packaged using [Winter tools](https://github.com/winterframework-io/winter-tools/tree/master/doc/README.md), such dependencies and WebJars in particular are *modularized*. A WebJar such as `swagger-ui` is modularized into `org.webjars.swagger.ui` module which explains why it is referred by its module name: `swagger.ui` in the WebJars resource path (the `org.webjars` part is omitted since the context is known).
+Sadly WebJars are not modular JARs, they are not even named modules which causes several issues when dependencies are specified on the module path. That's why when an application is run or packaged using [Winter tools][winter-tools-root], such dependencies and WebJars in particular are *modularized*. A WebJar such as `swagger-ui` is modularized into `org.webjars.swagger.ui` module which explains why it is referred by its module name: `swagger.ui` in the WebJars resource path (the `org.webjars` part is omitted since the context is known).
 
 When running a fully modular Winter application, *modularized* WebJars modules must be added explicitly to the JVM using the `--add-modules` option, otherwise they are not resolved when the JVM starts. For instance:
 
-```
+```plaintext
 $ java --add-modules org.webjars.swagger.ui ...
 ```
 
 Hopefully, the Winter Maven plugin adds unnamed modules by default when running or packaging an application, so you shouldn't have to worry about it. The following command automatically adds the unnamed modules when running the JVM:
 
-```
+```plaintext
 $ mvn winter:run
 ```
 
 This can be disabled in order to manually control which modules should be added:
 
-```
+```plaintext
 $ mvn winter:run -Dwinter.exec.addUnnamedModules=false -Dwinter.exec.vmOptions="--add-modules org.webjars.swagger.ui"
 ```
 
@@ -3558,7 +3600,7 @@ Note that when the application is run with non-modular WebJars specified on the 
 
 #### OpenAPI specification
 
-The Web server can also be configured to expose [OpenAPI specifications](https://www.openapis.org/) defined in `/META-INF/winter/web/openapi.yml` resource in application modules.
+The Web server can also be configured to expose [OpenAPI specifications][open-api] defined in `/META-INF/winter/web/openapi.yml` resource in application modules.
 
 This feature can be activated with the following configuration:
 
@@ -3588,7 +3630,7 @@ When the server starts, it will scan for OpenAPI specifications files `/META-INF
 - `/open-api` returning the list of available OpenAPI specifications in `application/json`
 - `/open-api/{moduleName}` returning the OpenAPI specifications defined for the specified module name or (404) not found error if there is no OpenAPI specification defined in the module or no module with that name.
 
-If the server is also configured to serve [WebJars](#webjars), previous routes can also be used to display OpenAPI specifications in a [Swagger UI](https://swagger.io/tools/swagger-ui/) assuming the Swagger UI WebJar dependency is present:
+If the server is also configured to serve [WebJars](#webjars), previous routes can also be used to display OpenAPI specifications in a [Swagger UI][swagger-ui] assuming the Swagger UI WebJar dependency is present:
 
 ```xml
 <project>
@@ -3699,7 +3741,7 @@ Using a dedicated package for DTOs allows then to limit and control the access t
 
 We can now run the application and test the book resource:
 
-```
+```plaintext
 $ curl -i http://locahost:8080/book
 HTTP/1.1 200 OK
 content-type: application/json
@@ -3707,13 +3749,13 @@ content-length: 2
 
 []
 ```
-```
+```plaintext
 $ curl -i -X POST -H 'content-type: application/json' -d '{"isbn":"978-0132143011","title":"Distributed Systems: Concepts and Design","author":"George Coulouris, Jean Dollimore, Tim Kindberg, Gordon Blair","pages":1080}' http://locahost:8080/book
 HTTP/1.1 200 OK
 content-length: 0
 
 ```
-```
+```plaintext
 $ curl -i http://locahost:8080/book
 HTTP/1.1 200 OK
 content-type: application/json
@@ -3721,7 +3763,7 @@ content-length: 163
 
 [{"isbn":"978-0132143011","title":"Distributed Systems: Concepts and Design","author":"George Coulouris, Jean Dollimore, Tim Kindberg, Gordon Blair","pages":1080}]
 ```
-```
+```plaintext
 $ curl -i http://locahost:8080/book/978-0132143011
 HTTP/1.1 200 OK
 content-type: application/json
@@ -3732,7 +3774,7 @@ content-length: 161
 
 > If you have carefully followed the *web* module documentation, you should have noticed that we have previously created a Web router configurer bean in the *app_web* module which is indeed conflicting with the generated Web router configurer resulting in the following self-explanatory compilation error:
 > 
-> ```
+> ```plaintext
 > [ERROR] /home/jkuhn/Devel/git/frmk/io.winterframework.example.app_web/src/main/java/module-info.java:[4,1] Multiple beans matching socket io.winterframework.mod.web:webRouterConfigurer were found
 >  - io.winterframework.example.app_web:app_webWebRouterConfigurer of type io.winterframework.example.app_web.App_webWebRouterConfigurer
 >  - io.winterframework.example.app_web:webRouterConfigurer of type io.winterframework.example.app_web.WebRouterConfigurer
@@ -3879,7 +3921,7 @@ public interface CRUD<T> {
 }
 ```
 
-There is one remaining thing to do to make the book resource a proper REST resource. When creating a book we must return a 201 Created HTTP code with a `location` header as defined by [RFC7231 Section 7.1.2](https://tools.ietf.org/html/rfc7231#section-7.1.2). This can be done by injecting the `WebExchange` in the `create()` method:
+There is one remaining thing to do to make the book resource a proper REST resource. When creating a book we must return a 201 Created HTTP code with a `location` header as defined by [RFC7231 Section 7.1.2][rfc-7231-7.1.2]. This can be done by injecting the `WebExchange` in the `create()` method:
 
 ```java
 public interface CRUD<T> {
@@ -3920,7 +3962,7 @@ public class BookResourceImpl implements BookResource {
 
 Now if we run the application and create a book resource we should get the following:
 
-```
+```plaintext
 $ curl -i -X POST -H 'content-type: application/json' -d '{"isbn":"978-0132143011","title":"Distributed Systems: Concepts and Design","author":"George Coulouris, Jean Dollimore, Tim Kindberg, Gordon Blair","pages":1080}' http://locahost:8080/book
 HTTP/1.1 201 Created
 content-type: application/json
@@ -4017,7 +4059,7 @@ Mono<Void> create(@CookieParam String book_store, @Body Mono<T> book, WebExchang
 
 In previous example, the route must be queried with a `book_store` cookie:
 
-```
+```plaintext
 $ curl -i -X POST -H 'cookie: book_store=store1' -H 'content-type: application/json' -d '...' http://locahost:8080/book
 ...
 ```
@@ -4033,7 +4075,7 @@ Flux<T> list(@HeaderParam Optional<Format> format);
 
 In previous example, the `Format` type is an enumeration indicating how book references must be returned (eg. `SHORT`, `FULL`...), a `format` header may or may not be added to the request since it is declared as optional:
 
-```
+```plaintext
 $ curl -i -H 'format: SHORT' http://locahost:8080/book
 ...
 ```
@@ -4053,15 +4095,15 @@ Mono<Void> createAuthor(
     @FormParam String nationality);
 ```
 
-Form parameters are sent in a request body using `application/x-www-form-urlencoded` format as defined by [living standard](https://url.spec.whatwg.org/#application/x-www-form-urlencoded). They can be sent using a HTML form submitted to the server resulting in the following request body:
+Form parameters are sent in a request body using `application/x-www-form-urlencoded` format as defined by [living standard][form-urlencoded]. They can be sent using a HTML form submitted to the server resulting in the following request body:
 
-```
+```http
 forename=Leslie,middlename=B.,surname=Lamport,birthdate=19410207,nationality=US
 ```
 
 Previous route can then be queried as follows:
 
-```
+```plaintext
 $ curl -i -X POST -H 'content-type:application/x-www-form-urlencoded' -d 'forename=Leslie,middlename=B.,surname=Lamport,birthdate=19410207,nationality=US' http://locahost:8080/author
 ```
 
@@ -4151,7 +4193,7 @@ Depending on the media type converter, partial responses can be sent to the clie
 Stream<Book> list();
 ```
 
-In the preceding example, as soon as a book is retrieved from a data store it can be sent to the client which can then process responses as soon as possible reducing the latency and resource consumption on both client and server. The response content type is `application/x-ndjson`, so each book is encoded in JSON before a newline delimiter to let the client detects partial responses as defined by [the ndjon format](http://ndjson.org/).
+In the preceding example, as soon as a book is retrieved from a data store it can be sent to the client which can then process responses as soon as possible reducing the latency and resource consumption on both client and server. The response content type is `application/x-ndjson`, so each book is encoded in JSON before a newline delimiter to let the client detects partial responses as defined by [the ndjon format][ndjson].
 
 ###### Server-sent events
 
@@ -4159,7 +4201,7 @@ Server-sent events can be streamed in the response body when declared together w
 
 In the following example, we declare a basic server-sent events Web route producing events with a `String` message:
 
-```
+```java
 @WebRoute(path = "/event", method = Method.GET)
 Publisher<WebResponseBody.SseEncoder.Event<String>> getBookEvents(@SseEventFactory WebResponseBody.SseEncoder.EventFactory<String> events);
 ```
@@ -4201,11 +4243,11 @@ A generated Web router configurer is always annotated with a `@WebRoutes` annota
 
 ```java
 @WebRoutes({
-	@WebRoute(path = { "/book/{id}" }, method = { Method.GET }, produces = { "application/json" }),
-	@WebRoute(path = { "/book" }, method = { Method.POST }, consumes = { "application/json" }),
-	@WebRoute(path = { "/book/{id}" }, method = { Method.PUT }, consumes = { "application/json" }),
-	@WebRoute(path = { "/book" }, method = { Method.GET }, produces = { "application/json" }),
-	@WebRoute(path = { "/book/{id}" }, method = { Method.DELETE })
+    @WebRoute(path = { "/book/{id}" }, method = { Method.GET }, produces = { "application/json" }),
+    @WebRoute(path = { "/book" }, method = { Method.POST }, consumes = { "application/json" }),
+    @WebRoute(path = { "/book/{id}" }, method = { Method.PUT }, consumes = { "application/json" }),
+    @WebRoute(path = { "/book" }, method = { Method.GET }, produces = { "application/json" }),
+    @WebRoute(path = { "/book/{id}" }, method = { Method.DELETE })
 })
 @Bean
 public final class WebRouterConfigurer implements io.winterframework.mod.web.WebRouterConfigurer<WebExchange> {
@@ -4267,7 +4309,7 @@ The same principles applies if multiple modules like *admin* or *book* are casca
 
 #### Automatic OpenAPI specifications
 
-Besides facilitating the development of REST and Web resources in general, Web controllers also simplify documentation. The Web Winter compiler plugin can be setup to generate [Open API](https://www.openapis.org/) specifications from the Web controller classes defined in a module and their JavaDoc comments. 
+Besides facilitating the development of REST and Web resources in general, Web controllers also simplify documentation. The Web Winter compiler plugin can be setup to generate [Open API][open-api] specifications from the Web controller classes defined in a module and their JavaDoc comments. 
 
 > Writing JavaDoc comments is something natural when developing in the Java language, with this approach, a REST API can be documented just as you document a Java class or method, documentation is written once and can be used in both Java and other languages and technologies using the generated Open API specification.
 
@@ -4275,20 +4317,20 @@ In order to activate this feature the `winter.web.generateOpenApiDefinition` ann
 
 ```java
 <project>
-	<build>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<configuration>
-						<compilerArgs combine.children="append">
-							<arg>-Awinter.web.generateOpenApiDefinition=true</arg>
-						</compilerArgs>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement>
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <compilerArgs combine.children="append">
+                            <arg>-Awinter.web.generateOpenApiDefinition=true</arg>
+                        </compilerArgs>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 </project>
 ```
@@ -4420,14 +4462,15 @@ It is also possible to target a single specification by specifying the module na
 
 <img src="img/swaggerUI_module.png" style="display: block; margin: 2em auto;"/>
 
-Finally, Open API specifications formatted in [YAML](https://en.wikipedia.org/wiki/YAML) can be retrieved as follows:
+Finally, Open API specifications formatted in [YAML][yaml] can be retrieved as follows:
 
-```
+```plaintext
 $ curl http://locahost:8080/open-api/io.winterframework.example.web_modular.admin
-	
+
 openapi: 3.0.3
 info:
     title: 'io.winterframework.example.web_modular.admin'
     version: ''
 ...
 ```
+
