@@ -22,6 +22,8 @@ import io.winterframework.mod.http.base.InternalServerErrorException;
 import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.server.ResponseBody;
 import io.winterframework.mod.http.server.ResponseData;
+import io.winterframework.mod.http.server.ResponseBody.Sse.Event;
+import io.winterframework.mod.http.server.ResponseBody.Sse.EventFactory;
 import io.winterframework.mod.web.ResponseDataEncoder;
 import io.winterframework.mod.web.WebResponse;
 import io.winterframework.mod.web.WebResponseBody;
@@ -69,6 +71,11 @@ class GenericWebResponseBody implements WebResponseBody {
 	}
 	
 	@Override
+	public <T extends CharSequence> ResponseData<T> string() {
+		return this.responseBody.string();
+	}
+	
+	@Override
 	public Resource resource() {
 		return this.responseBody.resource();
 	}
@@ -76,6 +83,11 @@ class GenericWebResponseBody implements WebResponseBody {
 	@Override
 	public Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> sse() {
 		return this.responseBody.sse();
+	}
+	
+	@Override
+	public <T extends CharSequence> Sse<T, Event<T>, EventFactory<T, Event<T>>> sseString() {
+		return this.responseBody.sseString();
 	}
 	
 	@Override

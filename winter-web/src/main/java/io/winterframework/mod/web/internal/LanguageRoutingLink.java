@@ -179,7 +179,7 @@ class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 		else {
 			Headers.AcceptLanguage acceptLanguage = Headers.AcceptLanguage
 				.merge(exchange.request().headers().<Headers.AcceptLanguage>getAllHeader(Headers.NAME_ACCEPT_LANGUAGE))
-				.orElse(this.acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, "*"));
+				.orElse(Headers.AcceptLanguage.ALL);
 
 			Iterator<AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, ?, B>>>> acceptLanguageMatchesIterator = acceptLanguage
 				.findAllMatch(this.handlers.entrySet(), Entry::getKey).iterator();

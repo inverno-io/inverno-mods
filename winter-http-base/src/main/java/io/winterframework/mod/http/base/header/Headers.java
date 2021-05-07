@@ -28,6 +28,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.winterframework.mod.http.base.header.Headers.Accept.MediaRange;
+import io.winterframework.mod.http.base.internal.header.AcceptCodec;
+import io.winterframework.mod.http.base.internal.header.AcceptLanguageCodec;
 
 /**
  * <p>
@@ -512,6 +514,11 @@ public final class Headers {
 	public static interface Accept extends Header {
 		
 		/**
+		 * Accept all header: *{@literal /*}
+		 */
+		public static final Headers.Accept ALL = new AcceptCodec.Accept(null);
+		
+		/**
 		 * <p>
 		 * Returns the list of media ranges defined in the accept header.
 		 * </p>
@@ -983,6 +990,11 @@ public final class Headers {
 	 * @since 1.0
 	 */
 	public static interface AcceptLanguage extends Header {
+		
+		/**
+		 * Accept all header: *
+		 */
+		public static final Headers.AcceptLanguage ALL = new AcceptLanguageCodec.AcceptLanguage(null);
 		
 		/**
 		 * <p>

@@ -30,6 +30,8 @@ import io.winterframework.mod.http.base.NotFoundException;
 import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.server.ResponseBody;
 import io.winterframework.mod.http.server.ResponseData;
+import io.winterframework.mod.http.server.ResponseBody.Sse.Event;
+import io.winterframework.mod.http.server.ResponseBody.Sse.EventFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
@@ -49,8 +51,10 @@ public class GenericResponseBody implements ResponseBody {
 	protected AbstractResponse response;
 	
 	protected ResponseData<ByteBuf> rawData;
+	protected ResponseData<CharSequence> stringData;
 	protected ResponseBody.Resource resourceData;
 	protected ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> sseData;
+	protected ResponseBody.Sse<CharSequence, ResponseBody.Sse.Event<CharSequence>, ResponseBody.Sse.EventFactory<CharSequence, ResponseBody.Sse.Event<CharSequence>>> sseStringData;
 	
 	private MonoSink<Publisher<ByteBuf>> dataEmitter;
 	private Publisher<ByteBuf> data;
@@ -133,6 +137,14 @@ public class GenericResponseBody implements ResponseBody {
 	}
 	
 	@Override
+	public ResponseData<CharSequence> string() {
+		if(this.stringData == null) {
+			this.stringData = new GenericResponseBodyStringData();
+		}
+		return this.stringData;
+	}
+	
+	@Override
 	public Resource resource() {
 		if(this.resourceData == null) {
 			this.resourceData = new GenericResponseBodyResourceData();
@@ -146,6 +158,14 @@ public class GenericResponseBody implements ResponseBody {
 			this.sseData = new GenericResponseBodySseData();
 		}
 		return this.sseData;
+	}
+	
+	@Override
+	public Sse<CharSequence, Event<CharSequence>, EventFactory<CharSequence, Event<CharSequence>>> sseString() {
+		if(this.sseStringData == null) {
+			this.sseStringData = new GenericResponseBodySseStringData();
+		}
+		return this.sseStringData;
 	}
 	
 	/**
@@ -163,10 +183,33 @@ public class GenericResponseBody implements ResponseBody {
 		public <T extends ByteBuf> void stream(Publisher<T> data) {
 			GenericResponseBody.this.setData((Publisher<ByteBuf>) data);
 		}
+	}
+	
+	/**
+	 * <p>
+	 * Generic string {@link ResponseData} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
+	protected class GenericResponseBodyStringData implements ResponseData<CharSequence> {
 
 		@Override
-		public <T extends ByteBuf> void value(T data) {
-			this.stream(Mono.just(data));
+		public <T extends CharSequence> void stream(Publisher<T> value) throws IllegalStateException {
+			Publisher<ByteBuf> data;
+			if(value instanceof Mono) {
+				data = ((Mono<T>)value).map(chunk -> Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(chunk, Charsets.DEFAULT)));
+			}
+			else {
+				data = Flux.from(value).map(chunk -> Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(chunk, Charsets.DEFAULT)));
+			}
+			GenericResponseBody.this.setData(data);
+		}
+		
+		@Override
+		public <T extends CharSequence> void value(T value) throws IllegalStateException {
+			GenericResponseBody.this.setData(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value, Charsets.DEFAULT))));
 		}
 	}
 
@@ -370,6 +413,162 @@ public class GenericResponseBody implements ResponseBody {
 			}
 			
 			public Publisher<ByteBuf> getData() {
+				return data;
+			}
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Generic string {@link ResponseBody.Sse} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
+	protected class GenericResponseBodySseStringData implements ResponseBody.Sse<CharSequence, ResponseBody.Sse.Event<CharSequence>, ResponseBody.Sse.EventFactory<CharSequence, ResponseBody.Sse.Event<CharSequence>>> {
+
+		@Override
+		public void from(BiConsumer<ResponseBody.Sse.EventFactory<CharSequence, Event<CharSequence>>, ResponseData<ResponseBody.Sse.Event<CharSequence>>> data) {
+			data.accept(this::create, this::stream);
+		}
+		
+		/**
+		 * <p>
+		 * String server-sent events producer.
+		 * </p>
+		 * 
+		 * @param <T>   the server-sent event type
+		 * @param value the server-sent events publisher
+		 */
+		protected <T extends ResponseBody.Sse.Event<CharSequence>> void stream(Publisher<T> value) {
+			GenericResponseBody.this.response.headers(headers -> headers
+				.contentType(GenericResponseBody.SSE_CONTENT_TYPE)
+			);
+			
+			GenericResponseBody.this.setData(Flux.from(value)
+				.cast(GenericEvent.class)
+				.flatMapSequential(sse -> {
+					StringBuilder sseMetaData = new StringBuilder();
+					if(sse.getId() != null) {
+						sseMetaData.append("id:").append(sse.getId()).append("\n");
+					}
+					if(sse.getEvent() != null) {
+						sseMetaData.append("event:").append(sse.getEvent()).append("\n");
+					}
+					if(sse.getComment() != null) {
+						sseMetaData.append(":").append(sse.getComment().replaceAll("\\r\\n|\\r|\\n", "\r\n:")).append("\n");
+					}
+					if(sse.getData() != null) {
+						sseMetaData.append("data:");
+					}
+					
+					Flux<ByteBuf> sseData = Flux.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(sseMetaData, Charsets.UTF_8)));
+					
+					if(sse.getData() != null) {
+						sseData = sseData
+							.concatWith(Flux.from(sse.getData())
+								.map(chunk -> {
+									ByteBuf escapedChunk = Unpooled.unreleasableBuffer(Unpooled.buffer(chunk.length(), Integer.MAX_VALUE));
+									for(int i=0;i<chunk.length();i++) {
+										char nextChar = chunk.charAt(i);
+										if(nextChar == HttpConstants.CR) {
+											if(i < chunk.length() - 1 && chunk.charAt(i+1) == HttpConstants.LF) {
+												i++;
+											}
+											escapedChunk.writeCharSequence("\r\ndata:", Charsets.UTF_8);
+										}
+										else if(nextChar == HttpConstants.LF) {
+											escapedChunk.writeCharSequence("\r\ndata:", Charsets.UTF_8);
+										}
+										else {
+											escapedChunk.writeByte(nextChar);
+										}
+									}
+									return escapedChunk;
+								})
+							);
+					}
+					sseData = sseData.concatWith(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("\r\n\r\n", Charsets.UTF_8))));
+					return sseData;
+				}));
+		}
+		
+		/**
+		 * <p>
+		 * String server-sent events factory.
+		 * </p>
+		 * 
+		 * @param configurer a string server-sent event configurer
+		 * 
+		 * @return a new string server-sent event
+		 */
+		protected ResponseBody.Sse.Event<CharSequence> create(Consumer<ResponseBody.Sse.Event<CharSequence>> configurer) {
+			GenericEvent sse = new GenericEvent();
+			configurer.accept(sse);
+			return sse;
+		}
+		
+		/**
+		 * <p>
+		 * Generic string {@link ResponseBody.Sse.Event} implementation.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+		 * @since 1.0
+		 */
+		protected final class GenericEvent implements ResponseBody.Sse.Event<CharSequence> {
+			
+			private String id;
+			
+			private String comment;
+			
+			private String event;
+			
+			private Publisher<CharSequence> data;
+
+			@SuppressWarnings("unchecked")
+			@Override
+			public <T extends CharSequence> void stream(Publisher<T> data) {
+				this.data = (Publisher<CharSequence>) data;
+			}
+
+			@Override
+			public <T extends CharSequence> void value(T data) {
+				this.data = Mono.just(data);
+			}
+
+			@Override
+			public GenericEvent id(String id) {
+				this.id = id;
+				return this;
+			}
+
+			@Override
+			public GenericEvent comment(String comment) {
+				this.comment = comment;
+				return this;
+			}
+
+			@Override
+			public GenericEvent event(String event) {
+				this.event = event;
+				return this;
+			}
+			
+			public String getId() {
+				return id;
+			}
+			
+			public String getComment() {
+				return comment;
+			}
+			
+			public String getEvent() {
+				return event;
+			}
+			
+			public Publisher<CharSequence> getData() {
 				return data;
 			}
 		}

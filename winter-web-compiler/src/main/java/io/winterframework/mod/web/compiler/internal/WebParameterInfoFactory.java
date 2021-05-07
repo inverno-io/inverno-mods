@@ -80,7 +80,7 @@ class WebParameterInfoFactory {
 	
 	/* Contextual */
 	private final TypeMirror webExchangeType;
-	private final TypeMirror rawSseEventFactoryType;
+	private final TypeMirror sseEventFactoryType;
 	private final TypeMirror sseEncoderEventFactoryType;
 	
 	/* Types */
@@ -89,6 +89,7 @@ class WebParameterInfoFactory {
 	private final TypeMirror fluxType;
 	private final TypeMirror publisherType;
 	private final TypeMirror byteBufType;
+	private final TypeMirror charSequenceType;
 	private final TypeMirror webPartType;
 	private final TypeMirror parameterType;
 
@@ -118,12 +119,12 @@ class WebParameterInfoFactory {
 		this.fluxType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(Flux.class.getCanonicalName()).asType());
 		this.publisherType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(Publisher.class.getCanonicalName()).asType());
 		this.byteBufType = this.pluginContext.getElementUtils().getTypeElement(ByteBuf.class.getCanonicalName()).asType();
+		this.charSequenceType = this.pluginContext.getElementUtils().getTypeElement(CharSequence.class.getCanonicalName()).asType();
 		this.webPartType = this.pluginContext.getElementUtils().getTypeElement(WebPart.class.getCanonicalName()).asType();
 		this.parameterType = this.pluginContext.getElementUtils().getTypeElement(Parameter.class.getCanonicalName()).asType();
 		
 		this.webExchangeType = this.pluginContext.getElementUtils().getTypeElement(WebExchange.class.getCanonicalName()).asType();
-		TypeMirror rawSseEventType = this.pluginContext.getTypeUtils().getDeclaredType(this.pluginContext.getElementUtils().getTypeElement(ResponseBody.Sse.Event.class.getCanonicalName()), this.byteBufType);
-		this.rawSseEventFactoryType = this.pluginContext.getTypeUtils().getDeclaredType(this.pluginContext.getElementUtils().getTypeElement(ResponseBody.Sse.EventFactory.class.getCanonicalName()), this.byteBufType, rawSseEventType);
+		this.sseEventFactoryType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(ResponseBody.Sse.EventFactory.class.getCanonicalName()).asType());
 		this.sseEncoderEventFactoryType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebResponseBody.SseEncoder.EventFactory.class.getCanonicalName()).asType());
 	}
 	
@@ -265,11 +266,23 @@ class WebParameterInfoFactory {
 		if(this.pluginContext.getTypeUtils().isSameType(this.sseEncoderEventFactoryType, this.pluginContext.getTypeUtils().erasure(parameterElement.asType()))) {
 			return new GenericWebSseEventFactoryParameterInfo(parameterQName, reporter, parameterElement, ((DeclaredType)parameterElement.asType()).getTypeArguments().get(0), SseEventFactoryKind.ENCODED, parameterElement.getAnnotation(SseEventFactory.class).value());
 		}
-		else if(this.pluginContext.getTypeUtils().isSameType(this.rawSseEventFactoryType, parameterElement.asType())) {
-			return new GenericWebSseEventFactoryParameterInfo(parameterQName, reporter, parameterElement, this.byteBufType, SseEventFactoryKind.RAW, parameterElement.getAnnotation(SseEventFactory.class).value());
+		else if(this.pluginContext.getTypeUtils().isSameType(this.sseEventFactoryType, this.pluginContext.getTypeUtils().erasure(parameterElement.asType()))) {
+			TypeMirror sseEventType = ((DeclaredType)parameterElement.asType()).getTypeArguments().get(0);
+			
+			SseEventFactoryKind sseFactoryType = SseEventFactoryKind.RAW;
+			if(this.pluginContext.getTypeUtils().isSameType(sseEventType, this.byteBufType)) {
+				sseFactoryType = SseEventFactoryKind.RAW;
+			}
+			else if(this.pluginContext.getTypeUtils().isAssignable(sseEventType, this.charSequenceType)) {
+				sseFactoryType = SseEventFactoryKind.CHARSEQUENCE;
+			}
+			else {
+				reporter.error("Unsupported server-sent event type: " + sseEventType);
+			}
+			return new GenericWebSseEventFactoryParameterInfo(parameterQName, reporter, parameterElement, sseEventType, sseFactoryType, parameterElement.getAnnotation(SseEventFactory.class).value());
 		}
 		else {
-			reporter.error("Invalid SSE event factory parameter which must be of type " + this.rawSseEventFactoryType + " or " + this.sseEncoderEventFactoryType);
+			reporter.error("Invalid SSE event factory parameter which must be of type " + this.sseEventFactoryType + " or " + this.sseEncoderEventFactoryType);
 			return new GenericWebSseEventFactoryParameterInfo(parameterQName, reporter, parameterElement, this.byteBufType, SseEventFactoryKind.RAW);
 		}
 	}

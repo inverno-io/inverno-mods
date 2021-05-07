@@ -37,7 +37,6 @@ import io.winterframework.mod.http.base.MethodNotAllowedException;
 import io.winterframework.mod.http.base.NotAcceptableException;
 import io.winterframework.mod.http.base.ServiceUnavailableException;
 import io.winterframework.mod.http.base.header.Headers;
-import io.winterframework.mod.http.base.internal.header.AcceptCodec;
 import io.winterframework.mod.http.base.internal.header.AcceptLanguageCodec;
 import io.winterframework.mod.http.base.internal.header.ContentTypeCodec;
 import io.winterframework.mod.http.server.ErrorExchange;
@@ -77,12 +76,11 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	public GenericErrorWebRouter(DataConversionService dataConversionService) {
 		this.dataConversionService = dataConversionService;
 		
-		AcceptCodec acceptCodec = new AcceptCodec(false);
 		ContentTypeCodec contentTypeCodec = new ContentTypeCodec();
 		AcceptLanguageCodec acceptLanguageCodec = new AcceptLanguageCodec(false);
 		
 		this.firstLink = new ThrowableRoutingLink();
-		this.firstLink.connect(new ProducesRoutingLink<>(acceptCodec, contentTypeCodec))
+		this.firstLink.connect(new ProducesRoutingLink<>(contentTypeCodec))
 			.connect(new LanguageRoutingLink<>(acceptLanguageCodec))
 			.connect(new HandlerRoutingLink<>());
 	}

@@ -97,8 +97,9 @@ class WebRouteInfoFactory {
 	private final TypeMirror fluxType;
 	private final TypeMirror voidType;
 	private final TypeMirror byteBufType;
+	private final TypeMirror charSequenceType;
 	private final TypeMirror sseRawEventType;
-	private final TypeMirror SseEncoderEventType;
+	private final TypeMirror sseEncoderEventType;
 	private final TypeMirror resourceType;
 	
 	/**
@@ -125,8 +126,9 @@ class WebRouteInfoFactory {
 		this.fluxType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(Flux.class.getCanonicalName()).asType());
 		this.voidType = this.pluginContext.getElementUtils().getTypeElement(Void.class.getCanonicalName()).asType();
 		this.byteBufType = this.pluginContext.getElementUtils().getTypeElement(ByteBuf.class.getCanonicalName()).asType();
+		this.charSequenceType = this.pluginContext.getElementUtils().getTypeElement(CharSequence.class.getCanonicalName()).asType();
 		this.sseRawEventType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(ResponseBody.Sse.Event.class.getCanonicalName()).asType());
-		this.SseEncoderEventType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebResponseBody.SseEncoder.Event.class.getCanonicalName()).asType());
+		this.sseEncoderEventType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebResponseBody.SseEncoder.Event.class.getCanonicalName()).asType());
 		this.resourceType = this.pluginContext.getElementUtils().getTypeElement(Resource.class.getCanonicalName()).asType();
 	}
 
@@ -241,11 +243,24 @@ class WebRouteInfoFactory {
 			else if(this.pluginContext.getTypeUtils().isSameType(responseBodyType, this.byteBufType)) {
 				responseBodyKind = ResponseBodyKind.RAW;
 			}
-			else if(this.pluginContext.getTypeUtils().isSameType(this.pluginContext.getTypeUtils().erasure(responseBodyType), this.sseRawEventType)) {
-				responseBodyKind = ResponseBodyKind.SSE_RAW;
-				responseBodyType = ((DeclaredType)responseBodyType).getTypeArguments().get(0);
+			else if(this.pluginContext.getTypeUtils().isAssignable(responseBodyType, this.charSequenceType)) {
+				if(produces.isEmpty()) {
+					responseBodyKind = ResponseBodyKind.CHARSEQUENCE;
+				}
 			}
-			else if(this.pluginContext.getTypeUtils().isSameType(this.pluginContext.getTypeUtils().erasure(responseBodyType), this.SseEncoderEventType)) {
+			else if(this.pluginContext.getTypeUtils().isSameType(this.pluginContext.getTypeUtils().erasure(responseBodyType), this.sseRawEventType)) {
+				responseBodyType = ((DeclaredType)responseBodyType).getTypeArguments().get(0);
+				if(this.pluginContext.getTypeUtils().isSameType(responseBodyType, this.byteBufType)) {
+					responseBodyKind = ResponseBodyKind.SSE_RAW;
+				}
+				else if(this.pluginContext.getTypeUtils().isAssignable(responseBodyType, this.charSequenceType)) {
+					responseBodyKind = ResponseBodyKind.SSE_CHARSEQUENCE;
+				}
+				else {
+					routeReporter.error("Unsupported server-sent event type: " + responseBodyType);
+				}
+			}
+			else if(this.pluginContext.getTypeUtils().isSameType(this.pluginContext.getTypeUtils().erasure(responseBodyType), this.sseEncoderEventType)) {
 				responseBodyKind = ResponseBodyKind.SSE_ENCODED;
 				responseBodyType = ((DeclaredType)responseBodyType).getTypeArguments().get(0);
 			}
@@ -255,6 +270,11 @@ class WebRouteInfoFactory {
 		}
 		else if(this.pluginContext.getTypeUtils().isSameType(responseBodyType, this.byteBufType)) {
 			responseBodyKind = ResponseBodyKind.RAW;
+		}
+		else if(this.pluginContext.getTypeUtils().isAssignable(responseBodyType, this.charSequenceType)) {
+			if(produces.isEmpty()) {
+				responseBodyKind = ResponseBodyKind.CHARSEQUENCE;
+			}
 		}
 		else if(this.pluginContext.getTypeUtils().isSameType(responseBodyType, this.resourceType)) {
 			responseBodyKind = ResponseBodyKind.RESOURCE;
@@ -296,6 +316,11 @@ class WebRouteInfoFactory {
 		if(sseFactoryParameter != null) {
 			if(responseBodyInfo.getBodyKind() == ResponseBodyKind.SSE_RAW) {
 				if(sseFactoryParameter.getEventFactoryKind() != SseEventFactoryKind.RAW) {
+					routeReporter.error("SSE event factory " + sseFactoryParameter.getType() + " doesn't match sse response " + responseBodyInfo.getType());
+				}
+			}
+			else if(responseBodyInfo.getBodyKind() == ResponseBodyKind.SSE_CHARSEQUENCE) {
+				if(sseFactoryParameter.getEventFactoryKind() != SseEventFactoryKind.CHARSEQUENCE) {
 					routeReporter.error("SSE event factory " + sseFactoryParameter.getType() + " doesn't match sse response " + responseBodyInfo.getType());
 				}
 			}

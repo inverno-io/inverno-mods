@@ -26,7 +26,6 @@ import org.mockito.Mockito;
 import io.winterframework.mod.http.base.NotAcceptableException;
 import io.winterframework.mod.http.base.NotFoundException;
 import io.winterframework.mod.http.base.header.Headers;
-import io.winterframework.mod.http.base.internal.header.AcceptCodec;
 import io.winterframework.mod.http.base.internal.header.ContentTypeCodec;
 import io.winterframework.mod.http.server.ExchangeHandler;
 import io.winterframework.mod.web.WebExchange;
@@ -44,7 +43,7 @@ public class ProducesRoutingLinkTest {
 	public void testHandle_with_default() {
 		List<MockRoutingLink<WebExchange, WebRoute<WebExchange>>> linkRegistry = new ArrayList<>();
 		MockRoutingLink<WebExchange, WebRoute<WebExchange>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
-		ProducesRoutingLink<WebExchange, WebRoute<WebExchange>> routingLink = new ProducesRoutingLink<>(new AcceptCodec(false), new ContentTypeCodec());
+		ProducesRoutingLink<WebExchange, WebRoute<WebExchange>> routingLink = new ProducesRoutingLink<>(new ContentTypeCodec());
 		routingLink.connect(mockRoutingLink);
 		
 		GenericWebRoute route_default = new GenericWebRoute(null);
@@ -198,7 +197,7 @@ public class ProducesRoutingLinkTest {
 	public void testHandle_no_default_parameters() {
 		List<MockRoutingLink<WebExchange, WebRoute<WebExchange>>> linkRegistry = new ArrayList<>();
 		MockRoutingLink<WebExchange, WebRoute<WebExchange>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
-		ProducesRoutingLink<WebExchange, WebRoute<WebExchange>> routingLink = new ProducesRoutingLink<>(new AcceptCodec(false), new ContentTypeCodec());
+		ProducesRoutingLink<WebExchange, WebRoute<WebExchange>> routingLink = new ProducesRoutingLink<>(new ContentTypeCodec());
 		routingLink.connect(mockRoutingLink);
 		
 		MockWebExchange exchange1 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT, List.of("application/json"))).build();
@@ -349,7 +348,7 @@ public class ProducesRoutingLinkTest {
 	public void testHandle_quality_no_default() {
 		List<MockRoutingLink<WebExchange, WebRoute<WebExchange>>> linkRegistry = new ArrayList<>();
 		MockRoutingLink<WebExchange, WebRoute<WebExchange>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
-		ProducesRoutingLink<WebExchange, WebRoute<WebExchange>> routingLink = new ProducesRoutingLink<>(new AcceptCodec(false), new ContentTypeCodec());
+		ProducesRoutingLink<WebExchange, WebRoute<WebExchange>> routingLink = new ProducesRoutingLink<>(new ContentTypeCodec());
 		routingLink.connect(mockRoutingLink);
 		
 		GenericWebRoute route1 = new GenericWebRoute(null);

@@ -49,9 +49,17 @@ public interface WebResponseBodyInfo {
 		 */
 		RAW,
 		/**
+		 * {@link CharSequence} is assignable from the actual response body type. 
+		 */
+		CHARSEQUENCE,
+		/**
 		 * The actual response body type is {@link ByteBuf}.
 		 */
 		SSE_RAW,
+		/**
+		 * {@link CharSequence} is assignable from the actual response body type. 
+		 */
+		SSE_CHARSEQUENCE,
 		/**
 		 * The actual response body type is {@link WebResponseBody.SseEncoder.Event
 		 * WebResponseBody.SseEncoder.Event&lt;U&gt;} where {@code U} is not a

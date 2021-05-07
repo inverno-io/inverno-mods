@@ -78,6 +78,28 @@ public interface ResponseBody {
 	
 	/**
 	 * <p>
+	 * Returns a string payload producer.
+	 * </p>
+	 * 
+	 * <p>
+	 * A typical usage is:
+	 * </p>
+	 * 
+	 * <blockquote><pre>
+	 * exchange.response().body().string().stream(
+	 *     Flux.just(
+	 *         Unpooled.unreleasableBuffer("Hello "), 
+	 *         Unpooled.unreleasableBuffer("World!")
+	 *     )
+	 * );
+	 * </pre></blockquote>
+	 * 
+	 * @return a string payload producer
+	 */
+	<T extends CharSequence> ResponseData<T> string();
+	
+	/**
+	 * <p>
 	 * Returns a resource payload producer.
 	 * </p>
 	 * 
@@ -118,6 +140,31 @@ public interface ResponseBody {
 	 * @return a server-sent events payload producer
 	 */
 	ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> sse();
+	
+	/**
+	 * <p>
+	 * Returns a server-sent events payload producer as defined by <a href="https://www.w3.org/TR/eventsource/">Server-Sent Events</a>.
+	 * </p>
+	 * 
+	 * <p>
+	 * A typical usage is:
+	 * </p>
+	 * 
+	 * <blockquote><pre>
+	 * exchange.response().body().sseString().from(
+	 *     (events, data) -> Flux.interval(Duration.ofSeconds(1))
+	 *         .map(seq -> events.create(event -> event
+	 *                 .id(Long.toString(seq))
+	 *                 .event("seq")
+	 *                 .value("Event #" + seq, Charsets.DEFAULT))
+	 *             )
+	 *         )
+	 * );
+	 * </pre></blockquote>
+	 * 
+	 * @return a server-sent events payload producer
+	 */
+	<T extends CharSequence> ResponseBody.Sse<T, ResponseBody.Sse.Event<T>, ResponseBody.Sse.EventFactory<T, ResponseBody.Sse.Event<T>>> sseString();
 	
 	/**
 	 * <p>

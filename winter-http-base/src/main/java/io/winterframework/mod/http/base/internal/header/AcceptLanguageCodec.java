@@ -89,9 +89,21 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 
 		private List<Headers.AcceptLanguage.LanguageRange> ranges;
 		
+		/**
+		 * <p>
+		 * Creates an accept-language header with the specified list of language range.
+		 * </p>
+		 * 
+		 * @param ranges A list of language range.
+		 */
+		public AcceptLanguage(List<Headers.AcceptLanguage.LanguageRange> ranges) {
+			super(Headers.NAME_ACCEPT_LANGUAGE, null, null, null);
+			this.ranges = ranges != null && !ranges.isEmpty() ? ranges.stream().sorted(Headers.AcceptLanguage.LanguageRange.COMPARATOR).collect(Collectors.toList()) : List.of(new AcceptLanguageCodec.AcceptLanguage.LanguageRange("*", 1));
+		}
+		
 		private AcceptLanguage(String headerName, String headerValue, List<Headers.AcceptLanguage.LanguageRange> ranges) {
 			super(headerName, headerValue, null, null);
-			this.ranges = ranges != null ? ranges.stream().sorted(Headers.AcceptLanguage.LanguageRange.COMPARATOR).collect(Collectors.toList()) : List.of(new AcceptLanguageCodec.AcceptLanguage.LanguageRange("*", 1));
+			this.ranges = ranges != null && !ranges.isEmpty() ? ranges.stream().sorted(Headers.AcceptLanguage.LanguageRange.COMPARATOR).collect(Collectors.toList()) : List.of(new AcceptLanguageCodec.AcceptLanguage.LanguageRange("*", 1));
 		}
 
 		@Override

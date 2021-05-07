@@ -87,7 +87,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 			.connect(new PathPatternRoutingLink<>())
 			.connect(new MethodRoutingLink<>())
 			.connect(new ConsumesRoutingLink<>(acceptCodec))
-			.connect(new ProducesRoutingLink<>(acceptCodec, contentTypeCodec))
+			.connect(new ProducesRoutingLink<>(contentTypeCodec))
 			.connect(new LanguageRoutingLink<>(acceptLanguageCodec))
 			.connect(new HandlerRoutingLink<>());
 	}
