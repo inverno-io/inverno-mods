@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.winterframework.mod.base.resource.ModuleResource;
-import io.winterframework.mod.base.resource.Resource;
 
 /**
  * <p>
