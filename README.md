@@ -1,10 +1,21 @@
-The [Winter framework](https://www.winterframework.io) modules project provides a collection of components for building highly modular and powerful applications on top of the [Winter IoC/DI framework](https://github.com/winterframework-io/winter).
+[winterframework-io]: https://www.winterframework.io
+[winter-dist-root]: https://github.com/winterframework-io/winter-dist
+[winter-root]: https://github.com/winterframework-io/winter
+[winter-root-doc]: https://github.com/winterframework-io/winter/tree/master/doc/reference-guide.md
+[winter-mods-root-doc]: https://github.com/winterframework-io/winter-mods/tree/master/doc/reference-guide.md
+[winter-examples-root]: https://github.com/winterframework-io/winter-examples
+
+[apache-license]: https://www.apache.org/licenses/LICENSE-2.0
+
+# Winter Modules
+
+The [Winter framework][winterframework-io] modules project provides a collection of components for building highly modular and powerful applications on top of the [Winter IoC/DI framework][winter-root].
 
 While being fully integrated, any of these modules can also be used individually in any application thanks to the high modularity and low footprint offered by the Winter framework.
 
 The objective is to provide a complete consistent set of high end tools and components for the development of fast and maintainable applications.
 
-## Getting started
+## Using a module
 
 Modules can be used in a Winter module by defining dependencies in the module descriptor. For instance you can create a Web application module using the *boot* and *web* modules:
 
@@ -29,26 +40,26 @@ import io.winterframework.mod.web.annotation.WebRoute;
 @WebController
 public class MainController {
 
-	@WebRoute( path = "/message", produces = MediaTypes.TEXT_PLAIN)
-	public String getMessage() {
-		return "Hello, world!";
-	}
+    @WebRoute( path = "/message", produces = MediaTypes.TEXT_PLAIN)
+    public String getMessage() {
+        return "Hello, world!";
+    }
 
-	public static void main(String[] args) {
-		Application.with(new WebApp.Builder()).run();
-	}
+    public static void main(String[] args) {
+        Application.with(new WebApp.Builder()).run();
+    }
 }
 ```
 
-Please refer to [Winter distribution](https://github.com/winterframework-io/winter-dist) for detailed installation instructions. 
+Please refer to [Winter distribution][winter-dist-root] for detailed setup and installation instructions. 
 
-Comprehensive reference documentations are available for [Winter core](https://github.com/winterframework-io/winter/tree/master/doc/reference-guide.md) and [Winter modules](https://github.com/winterframework-io/winter-mods/tree/master/doc/reference-guide.md).
+Comprehensive reference documentations are available for [Winter core][winter-root-doc] and [Winter modules][winter-mods-root-doc].
 
-Several example projects showing various features are also available in the [Winter example project](https://github.com/winterframework-io/winter-examples). They can also be used as templates to start new Winter application or component projects.
+Several example projects showing various features are also available in the [Winter example project][winter-examples-root]. They can also be used as templates to start new Winter application or component projects.
 
 Feel free to report bugs and feature requests in GitHub's issue tracking system if you ran in any issue or wish to see some new functionalities implemented in the framework.
 
-## Modules
+## Available modules
 
 The framework currently provides the following modules.
 
@@ -124,12 +135,13 @@ REST controllers can be easily defined using annotations which are processed by 
 
 ## Building Winter framework modules
 
-The Winter framework  modules can be built using Maven and Java 9+ with the following command:
+The Winter framework modules can be built using Maven and Java 9+ with the following command:
 
-```shell
+```plaintext
 $ mvn install
 ```
 
 ## License
 
-The Winter Framework is released under version 2.0 of the [Apache License](https://www.apache.org/licenses/LICENSE-2.0).
+The Winter Framework is released under version 2.0 of the [Apache License][apache-license].
+
