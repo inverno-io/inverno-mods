@@ -419,6 +419,23 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 					result.append(controllerInvoke);
 					result.append(");\n");
 				}
+				else if(responseBodyInfo.getBodyKind() == ResponseBodyKind.CHARSEQUENCE) {
+					String responseBodyDataMethod;
+					if(responseBodyInfo.getBodyReactiveKind() == ResponseBodyReactiveKind.NONE) {
+						if(hasFormParameters || requestBodyInfo != null) {
+							responseBodyDataMethod = "stream";
+						}
+						else {
+							responseBodyDataMethod = "value";
+						}
+					}
+					else {
+						responseBodyDataMethod = "stream";
+					}
+					result.append(context.indent(0)).append("exchange.response().body().string().").append(responseBodyDataMethod).append("(");
+					result.append(controllerInvoke);
+					result.append(");\n");
+				}
 				else if(responseBodyInfo.getBodyKind() == ResponseBodyKind.ENCODED) {
 					String responseBodyDataMethod;
 					if(responseBodyInfo.getBodyReactiveKind() == ResponseBodyReactiveKind.NONE) {
@@ -464,6 +481,11 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 				}
 				else if(responseBodyInfo.getBodyKind() == ResponseBodyKind.SSE_RAW) {
 					result.append(context.indent(0)).append("exchange.response().body().sse().from((events, data) -> data.stream(");
+					result.append(controllerInvoke);
+					result.append("));\n");
+				}
+				else if(responseBodyInfo.getBodyKind() == ResponseBodyKind.SSE_CHARSEQUENCE) {
+					result.append(context.indent(0)).append("exchange.response().body().<").append(context.getTypeName(responseBodyInfo.getType())).append(">sseString().from((events, data) -> data.stream(");
 					result.append(controllerInvoke);
 					result.append("));\n");
 				}

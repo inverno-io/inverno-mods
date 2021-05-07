@@ -99,9 +99,21 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 
 		private List<Headers.Accept.MediaRange> ranges;
 		
+		/**
+		 * <p>
+		 * Creates an accept header with the specified list of media range.
+		 * </p>
+		 * 
+		 * @param ranges A list of media range.
+		 */
+		public Accept(List<Headers.Accept.MediaRange> ranges) {
+			super(Headers.NAME_ACCEPT, null, null, null);
+			this.ranges = ranges != null && !ranges.isEmpty() ? ranges.stream().sorted(Headers.Accept.MediaRange.COMPARATOR).collect(Collectors.toList()) : List.of(new MediaRange("*/*", 1, null));
+		}
+		
 		private Accept(String headerName, String headerValue, List<Headers.Accept.MediaRange> ranges) {
 			super(headerName, headerValue, null, null);
-			this.ranges = ranges != null ? ranges.stream().sorted(Headers.Accept.MediaRange.COMPARATOR).collect(Collectors.toList()) : List.of(new MediaRange("*/*", 1, null));
+			this.ranges = ranges != null && !ranges.isEmpty() ? ranges.stream().sorted(Headers.Accept.MediaRange.COMPARATOR).collect(Collectors.toList()) : List.of(new MediaRange("*/*", 1, null));
 		}
 
 		@Override

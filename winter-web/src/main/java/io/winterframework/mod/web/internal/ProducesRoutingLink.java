@@ -43,24 +43,20 @@ import io.winterframework.mod.web.AcceptAwareRoute;
  */
 class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> extends RoutingLink<A, ProducesRoutingLink<A, B>, B> {
 
-	private final HeaderCodec<? extends Headers.Accept> acceptCodec;
-
 	private final HeaderCodec<? extends Headers.ContentType> contentTypeCodec;
 
 	private Map<Headers.ContentType, RoutingLink<A, ?, B>> handlers;
 	private Map<Headers.ContentType, RoutingLink<A, ?, B>> enabledHandlers;
-
+	
 	/**
 	 * <p>
 	 * Creates a produces routing link.
 	 * </p>
 	 * 
-	 * @param acceptCodec      an accept header codec
 	 * @param contentTypeCodec a content type header codec
 	 */
-	public ProducesRoutingLink(HeaderCodec<? extends Headers.Accept> acceptCodec, HeaderCodec<? extends Headers.ContentType> contentTypeCodec) {
-		super(() -> new ProducesRoutingLink<>(acceptCodec, contentTypeCodec));
-		this.acceptCodec = acceptCodec;
+	public ProducesRoutingLink(HeaderCodec<? extends Headers.ContentType> contentTypeCodec) {
+		super(() -> new ProducesRoutingLink<>(contentTypeCodec));
 		this.contentTypeCodec = contentTypeCodec;
 		this.handlers = new LinkedHashMap<>();
 		this.enabledHandlers = Map.of();
@@ -179,7 +175,7 @@ class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 		else {
 			Headers.Accept accept = Headers.Accept
 				.merge(exchange.request().headers().<Headers.Accept>getAllHeader(Headers.NAME_ACCEPT))
-				.orElse(this.acceptCodec.decode(Headers.NAME_ACCEPT, "*/*"));
+				.orElse(Headers.Accept.ALL);
 
 			if (!this.enabledHandlers.isEmpty()) {
 				Iterator<Headers.AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, ?, B>>>> acceptMatchesIterator = accept

@@ -43,6 +43,10 @@ public interface WebSseEventFactoryParameterInfo extends WebParameterInfo {
 		 */
 		RAW,
 		/**
+		 * The event data type is {@link CharSequence}.
+		 */
+		CHARSEQUENCE,
+		/**
 		 * The event data type is any type other than {@link ByteBuf}
 		 */
 		ENCODED
