@@ -3,7 +3,7 @@
 [winter-dist-root]: https://github.com/winterframework-io/winter-dist
 [winter-tools-root]: https://github.com/winterframework-io/winter-tools
 
-[javadoc]: http://tbd
+[winter-javadoc]: https://winterframework.io/docs/release/api/index.html
 [cprops-grammar]: https://github.com/winterframework-io/winter-mods/tree/master/winter-configuration/src/main/javacc/configuration_properties.jj
 
 [project-reactor-io]: https://projectreactor.io/
@@ -681,7 +681,7 @@ The *boot* module defines specific configuration for the services it exposes, th
 
 For instance the `NetConfiguration` is used to configure the net service.
 
-Please refer to the [API documentation][javadoc] to have an exhaustive description of the different configuration properties.
+Please refer to the [API documentation][winter-javadoc] to have an exhaustive description of the different configuration properties.
 
 ### Net service
 
@@ -967,7 +967,7 @@ This implementation can be used to bootstrap an application using system propert
 
 The command line configuration source exposes configuration properties specified as command line arguments of the application. This implementation supports parameterized properties.
 
-Configuration properties must be specified as application arguments using the following syntax: `--property[parameter_1=value_1...parameter_n=value_n]=value` where property and parameter names are valid Java identifiers and property and parameter values are Java primitives such as integer, boolean, string... A complete description of the syntax can be found in the [API documentation][javadoc].
+Configuration properties must be specified as application arguments using the following syntax: `--property[parameter_1=value_1...parameter_n=value_n]=value` where property and parameter names are valid Java identifiers and property and parameter values are Java primitives such as integer, boolean, string... A complete description of the syntax can be found in the [API documentation][winter-javadoc].
 
 For instance the following are valid configuration properties specified as command line arguments:
 
@@ -2017,7 +2017,7 @@ The above example starts a HTTP/1.x server using default configuration and defau
      ║                 ,   __\_/\_\__   ,     \  / \  /| || | | || |_ |  __/| |                   ║
      ║                  , /_/ /\/\ \_\ ,       \/   \/ |_||_| |_| \__| \___||_|                   ║
      ║                   ,     /\     ,                                                           ║
-     ║                     ,   \/   ,                        -- 1.0.2-SNAPSHOT --                 ║
+     ║                     ,   \/   ,                        -- 1.0.2 --                          ║
      ║                       ' -- '                                                               ║
      ╠════════════════════════════════════════════════════════════════════════════════════════════╣
      ║ Java runtime        : OpenJDK Runtime Environment                                          ║
@@ -3278,7 +3278,7 @@ The above example starts a Web server using default configuration which is a HTT
      ║                 ,   __\_/\_\__   ,     \  / \  /| || | | || |_ |  __/| |                   ║
      ║                  , /_/ /\/\ \_\ ,       \/   \/ |_||_| |_| \__| \___||_|                   ║
      ║                   ,     /\     ,                                                           ║
-     ║                     ,   \/   ,                        -- 1.0.2-SNAPSHOT --                 ║
+     ║                     ,   \/   ,                        -- 1.0.2 --                          ║
      ║                       ' -- '                                                               ║
      ╠════════════════════════════════════════════════════════════════════════════════════════════╣
      ║ Java runtime        : OpenJDK Runtime Environment                                          ║
@@ -3321,7 +3321,7 @@ content-length: 47
 
 If you open `http://locahost:8080` in a Web browser, you should see the following (404) whitelabel error page:
 
-<img src="img/404_whitelabel.png" style="display: block; margin: 2em auto;"/>
+<img class="shadow mb-4" src="img/404_whitelabel.png"/>
 
 #### Configuration
 
@@ -4456,11 +4456,11 @@ These specifications can also be exposed in the Web server as described in the [
 
 If we build and run the [modular book application](#composite-web-module) and access `http://locahost:8080/open-api` in a Web browser we should see a Swagger UI loaded with the Open API specifications of the *admin* and *book* modules:
 
-<img src="img/swaggerUI_root.png" style="display: block; margin: 2em auto;"/>
+<img class="shadow mb-4" src="img/swaggerUI_root.png"/>
 
 It is also possible to target a single specification by specifying the module name in the URI, for instance `http://locahost:8080/open-api/io.winterframework.example.web_modular.book`:
 
-<img src="img/swaggerUI_module.png" style="display: block; margin: 2em auto;"/>
+<img class="shadow mb-4" src="img/swaggerUI_module.png"/>
 
 Finally, Open API specifications formatted in [YAML][yaml] can be retrieved as follows:
 

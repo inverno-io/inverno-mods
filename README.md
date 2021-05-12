@@ -135,7 +135,7 @@ REST controllers can be easily defined using annotations which are processed by 
 
 ## Building Winter framework modules
 
-The Winter framework modules can be built using Maven and Java 9+ with the following command:
+The Winter framework modules can be built using Maven and Java<=9 with the following command:
 
 ```plaintext
 $ mvn install
