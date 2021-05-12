@@ -214,7 +214,7 @@ public interface HttpServerConfiguration {
 	 * 
 	 * @return a key alias
 	 */
-	String key_alias();
+//	String key_alias();
 
 	/**
 	 * <p>
