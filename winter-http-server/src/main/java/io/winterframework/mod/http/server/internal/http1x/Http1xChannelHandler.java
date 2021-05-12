@@ -108,7 +108,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 		this.read = true;
 		if(msg instanceof HttpRequest) {
 			HttpRequest httpRequest = (HttpRequest)msg;
-			if(httpRequest.decoderResult() != DecoderResult.SUCCESS) {
+			if(httpRequest.decoderResult().isFailure()) {
 				this.onDecoderError(ctx, httpRequest);
 				return;
 			}
@@ -128,7 +128,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 			}
 			else {
 				HttpContent httpContent = (HttpContent)msg;
-				if(httpContent.decoderResult() != DecoderResult.SUCCESS) {
+				if(httpContent.decoderResult().isFailure()) {
 					this.onDecoderError(ctx, httpContent);
 					return;
 				}
@@ -159,8 +159,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	}
 
 	private void onDecoderError(ChannelHandlerContext ctx, HttpObject httpObject) {
-		DecoderResult result = httpObject.decoderResult();
-		Throwable cause = result.cause();
+		Throwable cause = httpObject.decoderResult().cause();
 		if (cause instanceof TooLongFrameException) {
 			String causeMsg = cause.getMessage();
 			HttpResponseStatus status;
