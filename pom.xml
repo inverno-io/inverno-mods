@@ -21,10 +21,10 @@
 	<parent>
 		<groupId>io.winterframework</groupId>
 		<artifactId>winter-oss-parent</artifactId>
-		<version>1-SNAPSHOT</version>
+		<version>1</version>
 	</parent>
 	<artifactId>winter-mods-root</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<packaging>pom</packaging>
 	
 	<name>winter-mods-root</name>
@@ -78,7 +78,7 @@
 		<maven.compiler.source>9</maven.compiler.source>
 		<maven.compiler.target>9</maven.compiler.target>
 
-		<version.winter>1.0.2-SNAPSHOT</version.winter>
+		<version.winter>1.1.0</version.winter>
 	</properties>
 
 	<dependencyManagement>
