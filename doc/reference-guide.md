@@ -3321,7 +3321,7 @@ content-length: 47
 
 If you open `http://locahost:8080` in a Web browser, you should see the following (404) whitelabel error page:
 
-<img class="shadow mb-4" src="img/404_whitelabel.png"/>
+<img class="shadow mb-4" src="img/404_whitelabel.png" alt="HTTP 404 whitelabel error page"/>
 
 #### Configuration
 
@@ -4456,11 +4456,11 @@ These specifications can also be exposed in the Web server as described in the [
 
 If we build and run the [modular book application](#composite-web-module) and access `http://locahost:8080/open-api` in a Web browser we should see a Swagger UI loaded with the Open API specifications of the *admin* and *book* modules:
 
-<img class="shadow mb-4" src="img/swaggerUI_root.png"/>
+<img class="shadow mb-4" src="img/swaggerUI_root.png" alt="General Swagger UI"/>
 
 It is also possible to target a single specification by specifying the module name in the URI, for instance `http://locahost:8080/open-api/io.winterframework.example.web_modular.book`:
 
-<img class="shadow mb-4" src="img/swaggerUI_module.png"/>
+<img class="shadow mb-4" src="img/swaggerUI_module.png" alt="Module Swagger UI"/>
 
 Finally, Open API specifications formatted in [YAML][yaml] can be retrieved as follows:
 
