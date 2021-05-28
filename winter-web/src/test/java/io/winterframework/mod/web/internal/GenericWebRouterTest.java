@@ -193,4 +193,20 @@ public class GenericWebRouterTest {
 		Assertions.assertEquals(12, routes.size());
 		Assertions.assertTrue(routes.stream().noneMatch(Route::isDisabled));
 	}
+	
+	@Test
+	public void testMixPathroute() {
+		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		router
+			.route()
+				.path("/hello", true)
+				.path("/hello/{param1}")
+				.path("/hello/{param1}/{param2:[a-b]*}")
+				.handler(exchange -> {});
+
+		// Should result in 4 routes
+		Set<WebRoute<WebExchange>> routes = router.getRoutes();
+		Assertions.assertEquals(4, routes.size());
+	}
+	
 }

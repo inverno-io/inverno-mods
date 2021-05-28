@@ -268,16 +268,18 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange> {
 		};
 		
 		Consumer<GenericWebRoute> pathCommitter = route -> {
-			if(this.paths != null && !this.paths.isEmpty()) {
-				for(String path : this.paths) {
-					route.setPath(path);
-					methodsCommitter.accept(route);
+			if(this.paths != null && !this.paths.isEmpty() || this.pathPatterns != null && !this.pathPatterns.isEmpty()) {
+				if(this.paths != null) {
+					for(String path : this.paths) {
+						route.setPath(path);
+						methodsCommitter.accept(route);
+					}
 				}
-			}
-			else if(this.pathPatterns != null && !this.pathPatterns.isEmpty()) {
-				for(URIPattern pathPattern : this.pathPatterns) {
-					route.setPathPattern(pathPattern);
-					methodsCommitter.accept(route);
+				if(this.pathPatterns != null) {
+					for(URIPattern pathPattern : this.pathPatterns) {
+						route.setPathPattern(pathPattern);
+						methodsCommitter.accept(route);
+					}
 				}
 			}
 			else {
