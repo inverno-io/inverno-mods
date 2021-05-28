@@ -29,9 +29,9 @@ import io.winterframework.mod.http.base.InternalServerErrorException;
 import io.winterframework.mod.http.base.NotFoundException;
 import io.winterframework.mod.http.base.header.Headers;
 import io.winterframework.mod.http.server.ResponseBody;
-import io.winterframework.mod.http.server.ResponseData;
 import io.winterframework.mod.http.server.ResponseBody.Sse.Event;
 import io.winterframework.mod.http.server.ResponseBody.Sse.EventFactory;
+import io.winterframework.mod.http.server.ResponseData;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
@@ -238,6 +238,17 @@ public class GenericResponseBody implements ResponseBody {
 				}
 				
 				if(GenericResponseBody.this.response.headers().getCharSequence(Headers.NAME_CONTENT_TYPE) == null) {
+					String mediaType = resource.getMediaType();
+					if(mediaType != null) {
+						h.contentType(mediaType);
+					}
+				}
+				
+				if(GenericResponseBody.this.response.headers().getCharSequence(Headers.NAME_LAST_MODIFIED) == null) {
+					resource.lastModified().ifPresent(lastModified -> {
+						h.set(Headers.NAME_LAST_MODIFIED, Headers.FORMATTER_RFC_1123_DATE_TIME.format(lastModified.toInstant()));
+					});
+					
 					String mediaType = resource.getMediaType();
 					if(mediaType != null) {
 						h.contentType(mediaType);

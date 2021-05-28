@@ -111,8 +111,6 @@ class Http1xResponseBody extends GenericResponseBody {
 				if(resource.isFile().orElse(false) && !(resource instanceof ZipResource)) {
 					// We need to create the file region and then send an empty response
 					// The Http1xServerExchange should then complete and check whether there is a file region or not
-					this.populateHeaders(resource);
-					
 					FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable"));
 					
 					long size = resource.size().get();

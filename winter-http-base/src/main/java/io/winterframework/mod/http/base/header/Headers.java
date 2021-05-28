@@ -16,10 +16,13 @@
 package io.winterframework.mod.http.base.header;
 
 import java.nio.charset.Charset;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -42,6 +45,11 @@ import io.winterframework.mod.http.base.internal.header.AcceptLanguageCodec;
  */
 public final class Headers {
 
+	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc5322#section-3.3">RFC 5322 Section 3.3</a>
+	 */
+	public static final DateTimeFormatter FORMATTER_RFC_1123_DATE_TIME = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
+	
 	/* Header Names */
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>
@@ -59,6 +67,10 @@ public final class Headers {
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-7.4.1">RFC 7231 Section 7.4.1</a>
 	 */
 	public static final String NAME_ALLOW = "allow";
+	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7234#section-5.2">RFC 7234 Section 5.2</a>
+	 */
+	public static final String NAME_CACHE_CONTROL = "cache-control";
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7230#section-6.1">RFC 7230 Section 6.1</a>
 	 */
@@ -84,6 +96,10 @@ public final class Headers {
 	 */
 	public static final String NAME_COOKIE = "cookie";
 	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-7.1.1.2">RFC 7231 Section 7.1.1.2</a>
+	 */
+	public static final String NAME_DATE = "date";
+	/**
 	 * <a href="https://tools.ietf.org/html/rfc7230#section-5.4">RFC 7230 Section 5.4</a>
 	 */
 	public static final String NAME_HOST = "host";
@@ -91,6 +107,10 @@ public final class Headers {
 	 * <a href="https://tools.ietf.org/html/rfc7540#section-3.2.1">RFC 7540 Section 3.2.1</a>
 	 */
 	public static final String NAME_HTTP2_SETTINGS = "http2-settings";
+	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7232#section-2.2">RFC 7232 Section 2.2</a>
+	 */
+	public static final String NAME_LAST_MODIFIED = "last-modified";
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-7.1.2">RFC 7231 Section 7.1.2</a>
 	 */
