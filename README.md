@@ -1,40 +1,40 @@
-[winterframework-io]: https://www.winterframework.io
-[winter-dist-root]: https://github.com/winterframework-io/winter-dist
-[winter-root]: https://github.com/winterframework-io/winter
-[winter-root-doc]: https://github.com/winterframework-io/winter/tree/master/doc/reference-guide.md
-[winter-mods-root-doc]: https://github.com/winterframework-io/winter-mods/tree/master/doc/reference-guide.md
-[winter-examples-root]: https://github.com/winterframework-io/winter-examples
+[inverno-io]: https://www.inverno.io
+[inverno-dist-root]: https://github.com/inverno-io/inverno-dist
+[inverno-core-root]: https://github.com/inverno-io/inverno-core
+[inverno-core-root-doc]: https://github.com/inverno-io/inverno-core/tree/master/doc/reference-guide.md
+[inverno-mods-root-doc]: https://github.com/inverno-io/inverno-mods/tree/master/doc/reference-guide.md
+[inverno-examples-root]: https://github.com/inverno-io/inverno-examples
 
 [apache-license]: https://www.apache.org/licenses/LICENSE-2.0
 
-# Winter Modules
+# Inverno Modules
 
-The [Winter framework][winterframework-io] modules project provides a collection of components for building highly modular and powerful applications on top of the [Winter IoC/DI framework][winter-root].
+The [Inverno modules framework][inverno-io] project provides a collection of components for building highly modular and powerful applications on top of the [Inverno IoC/DI framework][inverno-core-root].
 
-While being fully integrated, any of these modules can also be used individually in any application thanks to the high modularity and low footprint offered by the Winter framework.
+While being fully integrated, any of these modules can also be used individually in any application thanks to the high modularity and low footprint offered by the Inverno framework.
 
 The objective is to provide a complete consistent set of high end tools and components for the development of fast and maintainable applications.
 
 ## Using a module
 
-Modules can be used in a Winter module by defining dependencies in the module descriptor. For instance you can create a Web application module using the *boot* and *web* modules:
+Modules can be used in a Inverno module by defining dependencies in the module descriptor. For instance you can create a Web application module using the *boot* and *web* modules:
 
 ```java
-@io.winterframework.core.annotation.Module
-module io.winterframework.example.webApp {
-    requires io.winterframework.mod.boot;
-    requires io.winterframework.mod.web;
+@io.inverno.core.annotation.Module
+module io.inverno.example.webApp {
+    requires io.inverno.mod.boot;
+    requires io.inverno.mod.web;
 }
 ```
 
 A simple microservice application can then be created in a few lines of code as follows:
 
 ```java
-import io.winterframework.core.annotation.Bean;
-import io.winterframework.core.v1.Application;
-import io.winterframework.mod.base.resource.MediaTypes;
-import io.winterframework.mod.web.annotation.WebController;
-import io.winterframework.mod.web.annotation.WebRoute;
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.v1.Application;
+import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.web.annotation.WebController;
+import io.inverno.mod.web.annotation.WebRoute;
 
 @Bean
 @WebController
@@ -51,11 +51,11 @@ public class MainController {
 }
 ```
 
-Please refer to [Winter distribution][winter-dist-root] for detailed setup and installation instructions. 
+Please refer to [Inverno distribution][inverno-dist-root] for detailed setup and installation instructions. 
 
-Comprehensive reference documentations are available for [Winter core][winter-root-doc] and [Winter modules][winter-mods-root-doc].
+Comprehensive reference documentations are available for [Inverno core][inverno-core-root-doc] and [Inverno modules][inverno-mods-root-doc].
 
-Several example projects showing various features are also available in the [Winter example project][winter-examples-root]. They can also be used as templates to start new Winter application or component projects.
+Several example projects showing various features are also available in the [Inverno example project][inverno-examples-root]. They can also be used as templates to start new Inverno application or component projects.
 
 Feel free to report bugs and feature requests in GitHub's issue tracking system if you ran in any issue or wish to see some new functionalities implemented in the framework.
 
@@ -63,18 +63,18 @@ Feel free to report bugs and feature requests in GitHub's issue tracking system 
 
 The framework currently provides the following modules.
 
-### winter-base
+### inverno-base
 
-The foundational APIs of the Winter framework modules:
+The foundational APIs of the Inverno framework modules:
 
 - Conversion API used to convert objects from/to other objects
 - Net API providing URI manipulation as well as low level network client and server utilities
 - Reflect API for manipulating parameterized type at runtime
 - Resource API to read/write any kind of resources (eg. file, zip, jar, classpath, module...)
 
-### winter-boot
+### inverno-boot
 
-The boot Winter module provides base services to an application:
+The boot Inverno module provides base services to an application:
 
 - a net service used for the implementation of optimized network clients and servers
 - a media type service used to determine the media type of a resource
@@ -83,7 +83,7 @@ The boot Winter module provides base services to an application:
 - a worker thread pool used to execute tasks asynchronously
 - a JSON reader/writer
 
-### winter-configuration
+### inverno-configuration
 
 Application configuration API providing great customization and configuration features to multiple parts of an application (eg. system configuration, multitenant configuration, user preferences...).
 
@@ -101,15 +101,15 @@ In addition, it also provides implementations for multiple configuration sources
 - a composite configuration source used to combine multiple sources with support for smart defaulting
 - an application configuration source used to load the system configuration of an application from a set of common configuration sources in a specific order, for instance: command line, system properties, system environment, local `configuration.cprops` file and `configuration.cprops` file resource in the application module
 
-Configurations are defined as simple interfaces in a module which are processed by the Winter compiler to generate configuration loaders and beans to make them available in an application with no further effort.
+Configurations are defined as simple interfaces in a module which are processed by the Inverno compiler to generate configuration loaders and beans to make them available in an application with no further effort.
 
-### winter-http-base
+### inverno-http-base
 
-The Winter HTTP base module provides the foundational API as well as common services for HTTP client and server development, in particular an extensible HTTP header service used to decode and encode HTTP headers.
+The Inverno HTTP base module provides the foundational API as well as common services for HTTP client and server development, in particular an extensible HTTP header service used to decode and encode HTTP headers.
 
-### winter-http-server
+### inverno-http-server
 
-The Winter HTTP server module provides a fully reactive HTTP/1.x and HTTP/2 server implementation based on Netty. 
+The Inverno HTTP server module provides a fully reactive HTTP/1.x and HTTP/2 server implementation based on Netty. 
 
 It supports the following features:
 
@@ -120,9 +120,9 @@ It supports the following features:
 - URL encoded form data
 - Multipart form data
 
-### winter-web
+### inverno-web
 
-The Winter Web module provides advanced features on top of the HTTP server module, including:
+The Inverno Web module provides advanced features on top of the HTTP server module, including:
 
 - request routing based on path, path pattern, HTTP method, request and response content negotiation including request and response content type and language of the response.
 - path parameters
@@ -131,11 +131,11 @@ The Winter Web module provides advanced features on top of the HTTP server modul
 - static resource handler to serve static resources from various location based on the resource API
 - a complete set of annotations for easy REST controller development
 
-REST controllers can be easily defined using annotations which are processed by the Winter compiler to generate the Web server configuration. The compiler also checks that everything is in order as for example that there are no conflicting routes.
+REST controllers can be easily defined using annotations which are processed by the Inverno compiler to generate the Web server configuration. The compiler also checks that everything is in order as for example that there are no conflicting routes.
 
-## Building Winter framework modules
+## Building Inverno framework modules
 
-The Winter framework modules can be built using Maven and Java<=9 with the following command:
+The Inverno framework modules can be built using Maven and Java<=9 with the following command:
 
 ```plaintext
 $ mvn install
@@ -143,5 +143,5 @@ $ mvn install
 
 ## License
 
-The Winter Framework is released under version 2.0 of the [Apache License][apache-license].
+The Inverno Framework is released under version 2.0 of the [Apache License][apache-license].
 

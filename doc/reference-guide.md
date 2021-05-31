@@ -1,10 +1,10 @@
-[winter-root]: https://github.com/winterframework-io/winter
-[winter-root-doc]: https://github.com/winterframework-io/winter/tree/master/doc/reference-guide.md
-[winter-dist-root]: https://github.com/winterframework-io/winter-dist
-[winter-tools-root]: https://github.com/winterframework-io/winter-tools
+[inverno-core-root]: https://github.com/inverno-io/inverno-core
+[inverno-core-root-doc]: https://github.com/inverno-io/inverno-core/tree/master/doc/reference-guide.md
+[inverno-dist-root]: https://github.com/inverno-io/inverno-dist
+[inverno-tools-root]: https://github.com/inverno-io/inverno-tools
 
-[winter-javadoc]: https://winterframework.io/docs/release/api/index.html
-[cprops-grammar]: https://github.com/winterframework-io/winter-mods/tree/master/winter-configuration/src/main/javacc/configuration_properties.jj
+[inverno-javadoc]: https://inverno.io/docs/release/api/index.html
+[cprops-grammar]: https://github.com/inverno-io/inverno-mods/tree/master/inverno-configuration/src/main/javacc/configuration_properties.jj
 
 [project-reactor-io]: https://projectreactor.io/
 [project-reactor-io-doc]: https://projectreactor.io/docs/core/release/reference/
@@ -40,19 +40,19 @@
 [rfc-7540-8.1.2.4]: https://tools.ietf.org/html/rfc7540#section-8.1.2.4
 [rfc-7578]: https://tools.ietf.org/html/rfc7578
 
-# Winter Modules
+# Inverno Modules
 
 ## Motivation
 
-Built on top of the [Winter core IoC/DI framework][winter-root], Winter modules suite aimed to provide a complete set of features to develop high end production-grade applications.
+Built on top of the [Inverno core IoC/DI framework][inverno-core-root], Inverno modules suite aimed to provide a complete set of features to develop high end production-grade applications.
 
 The advent of cloud computing and highly distributed architecture based on microservices has changed the way applications should be conceived, maintained, executed and operated. While it was perfectly fine to have application started in couple of seconds or even minutes some years ago with long release cycles, today's application must be highly efficient, agile in terms of development and deployment and start in a heart beat.
 
-The Winter framework was created to reduce framework overhead at runtime to the minimum, allowing to create applications that start in milliseconds. Winter modules extend this approach to provide functionalities with low footprint, relying on the compiler when it makes sense to generate human-readable code for easy maintenance and improved performance.
+The Inverno framework was created to reduce framework overhead at runtime to the minimum, allowing to create applications that start in milliseconds. Inverno modules extend this approach to provide functionalities with low footprint, relying on the compiler when it makes sense to generate human-readable code for easy maintenance and improved performance.
 
-An agile application is naturally modular which is the essence of the Winter framework, but it must also be highly configurable and customizable in many ways using configuration data distributed in various data stores and that greatly depend on the context such as an execution environment: test, production..., a location: US, Europe, Asia..., a particular customer, a particular user... Advanced configuration capabilities are then essential to build modern applications.
+An agile application is naturally modular which is the essence of the Inverno framework, but it must also be highly configurable and customizable in many ways using configuration data distributed in various data stores and that greatly depend on the context such as an execution environment: test, production..., a location: US, Europe, Asia..., a particular customer, a particular user... Advanced configuration capabilities are then essential to build modern applications.
 
-Traditional application servers and frameworks used to be based on inefficient threading models that didn't make fair use of hardware resources which make them bad cloud citizens. Winter applications are one hundred percent reactive making maximum use of the allocated resources.
+Traditional application servers and frameworks used to be based on inefficient threading models that didn't make fair use of hardware resources which make them bad cloud citizens. Inverno applications are one hundred percent reactive making maximum use of the allocated resources.
 
 The primary goals can be summarized as follows:
 
@@ -64,20 +64,20 @@ The primary goals can be summarized as follows:
 
 ## Prerequisites
 
-Before we can dig into the various modules provided in the framework, it is important to understand how to setup a modular Winter project, so please have a look at the [Winter distribution documentation][winter-dist-root] which describes in details how to create, build, run, package and distribute a modular Winter component or application.
+Before we can dig into the various modules provided in the framework, it is important to understand how to setup a modular Inverno project, so please have a look at the [Inverno distribution documentation][inverno-dist-root] which describes in details how to create, build, run, package and distribute a modular Inverno component or application.
 
-Winter modules are built on top of the Winter core IoC/DI framework, please refer to the [Winter core documentation][winter-root-doc] to understand how IoC/DI is working in the framework.
+Inverno modules are built on top of the Inverno core IoC/DI framework, please refer to the [Inverno core documentation][inverno-core-root-doc] to understand how IoC/DI is working in the framework.
 
 The framework is fully reactive thanks to [Project Reactor Core library][project-reactor-io], it is strongly recommended to also look at [the reference documentation][project-reactor-io-doc].
 
 ## Overview 
 
-The basic Winter application is a Winter module composing the *boot* module which provides common services. Other Winter modules can then be added by defining the corresponding dependencies in the module descriptor.
+The basic Inverno application is an Inverno module composing the *boot* module which provides common services. Other Inverno modules can then be added by defining the corresponding dependencies in the module descriptor.
 
 ```java
-@io.winterframework.core.annotation.Module
-module io.winterframework.example.app {
-    requires io.winterframework.mod.boot;
+@io.inverno.core.annotation.Module
+module io.inverno.example.app {
+    requires io.inverno.mod.boot;
     // Other modules...
 }
 ```
@@ -87,7 +87,7 @@ Declaring a dependency to the *boot* module automatically includes core IoC/DI m
 A basic application can then be created as follows:
 
 ```java
-import io.winterframework.core.v1.Application;
+import io.inverno.core.v1.Application;
 
 public class Main {
 
@@ -97,7 +97,7 @@ public class Main {
 }
 ```
 
-Winter modules are fully integrated which means they have been designed to work together in a Winter component or application but this doesn't mean it's not possible to embed them independently in any kind of application following the agile principle. For instance, the *configuration* module, can be easily used in any application with limited dependency overhead. More generally, a Winter module can be created and started very easily in pure Java thanks to the Winter core IoC/DI framework. 
+Inverno modules are fully integrated which means they have been designed to work together in an Inverno component or application but this doesn't mean it's not possible to embed them independently in any kind of application following the agile principle. For instance, the *configuration* module, can be easily used in any application with limited dependency overhead. More generally, an Inverno module can be created and started very easily in pure Java thanks to the Inverno core IoC/DI framework. 
 
 For instance, an application can embed a HTTP server as follows:
 
@@ -122,17 +122,17 @@ httpServer.stop();
 boot.stop();
 ```
 
-> Note that as for any Winter module, dependencies are clearly specified and must be provided when creating a module, in the previous example the HTTP server requires a `NetService` and a `ResourceService` which are normally provided by the boot module but custom implementations can be provided. It is also possible to create a Winter module composing the *boot* and *http-server* modules to let the framework deal with dependency injection.
+> Note that as for any Inverno module, dependencies are clearly specified and must be provided when creating a module, in the previous example the HTTP server requires a `NetService` and a `ResourceService` which are normally provided by the boot module but custom implementations can be provided. It is also possible to create an Inverno module composing the *boot* and *http-server* modules to let the framework deal with dependency injection.
 
 ## Base
 
-The Winter *base* module defines the foundational APIs used across all modules, it can be seen as an extension to the *java.base* module. 
+The Inverno *base* module defines the foundational APIs used across all modules, it can be seen as an extension to the *java.base* module. 
 
-In order to use the Winter *base* module, we need to declare a dependency in the module descriptor:
+In order to use the Inverno *base* module, we need to declare a dependency in the module descriptor:
 
 ```java
-module io.winterframework.example.app {
-    requires io.winterframework.mod.base;
+module io.inverno.example.app {
+    requires io.inverno.mod.base;
     ...
 }
 ```
@@ -147,8 +147,8 @@ Using Maven:
 <project>
     <dependencies>
         <dependency>
-            <groupId>io.winterframework.mod</groupId>
-            <artifactId>winter-base</artifactId>
+            <groupId>io.inverno.mod</groupId>
+            <artifactId>inverno-base</artifactId>
         </dependency>
     </dependencies>
 </project>
@@ -158,7 +158,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.winterframework.mod:winter-base:1.0.0'
+compile 'io.inverno.mod:inverno-base:1.0.0'
 ...
 ```
 
@@ -638,14 +638,14 @@ String mediaType = mediaTypeService.getForExtension("png");
 
 ## Boot
 
-The Winter *boot* module provides basic services to applications including several base implementation for interfaces defined in the *base* module.
+The Inverno *boot* module provides basic services to applications including several base implementation for interfaces defined in the *base* module.
 
-The Winter *boot* module is the basic building block for any application and as such it must be the first module to declare in an application module descriptor.
+The Inverno *boot* module is the basic building block for any application and as such it must be the first module to declare in an application module descriptor.
 
 ```java
-@io.winterframework.core.annotation.Module
-module io.winterframework.example.app {
-    requires io.winterframework.mod.boot;
+@io.inverno.core.annotation.Module
+module io.inverno.example.app {
+    requires io.inverno.mod.boot;
     // Other modules...
 }
 ```
@@ -660,8 +660,8 @@ Using Maven:
 <project>
     <dependencies>
         <dependency>
-            <groupId>io.winterframework.mod</groupId>
-            <artifactId>winter-boot</artifactId>
+            <groupId>io.inverno.mod</groupId>
+            <artifactId>inverno-boot</artifactId>
         </dependency>
     </dependencies>
 </project>
@@ -671,7 +671,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.winterframework.mod:winter-boot:1.0.0'
+compile 'io.inverno.mod:inverno-boot:1.0.0'
 ...
 ```
 
@@ -681,7 +681,7 @@ The *boot* module defines specific configuration for the services it exposes, th
 
 For instance the `NetConfiguration` is used to configure the net service.
 
-Please refer to the [API documentation][winter-javadoc] to have an exhaustive description of the different configuration properties.
+Please refer to the [API documentation][inverno-javadoc] to have an exhaustive description of the different configuration properties.
 
 ### Net service
 
@@ -750,7 +750,7 @@ This includes the following also exposed as beans:
 
 ### Worker pool
 
-A Winter application must be fully reactive, most of the processing is performed in non-blocking I/O threads but sometimes blocking operations might be needed, in such cases, the worker thread pool should be used to execute these blocking operations without impacting the I/O event loop.
+An Inverno application must be fully reactive, most of the processing is performed in non-blocking I/O threads but sometimes blocking operations might be needed, in such cases, the worker thread pool should be used to execute these blocking operations without impacting the I/O event loop.
 
 The default worker pool bean is a simple [cached Thread pool][jdk-executors-newCachedThreadPool] which can be overridden by providing a different instance to the *boot* module.
 
@@ -760,7 +760,7 @@ A standard JSON reader/writer based on Jackson `ObjectMapper` is also provided. 
 
 ## Configuration
 
-The Winter *configuration* module defines a unified configuration API for building agile highly configurable applications.
+The Inverno *configuration* module defines a unified configuration API for building agile highly configurable applications.
 
 Configuration is one of the most important aspect of an application and sadly one of the most neglected. There are very few decent configuration frameworks and most of the time they relate to one part of the issue. It is important to approach configuration by considering it as a whole and not as something that can be solved by a property file here and a database there. Besides, it must be the first issue to tackle during the design phase as it will impact all aspects of the application. For instance, we can imagine an application where configuration is defined in simple property files, a complete configuration would probably be needed for each environment where the application is deployed, maintenance would be probably problematic even more when we know that configuration properties can be added, modified or removed over time.
 
@@ -779,12 +779,12 @@ We can summarize this as follows:
 
 The configuration API has been created to address previous points, giving a maximum flexibility to precisely design how an application should be configured.
 
-In order to use the Winter *configuration* module, we need to declare a dependency in the module descriptor:
+In order to use the Inverno *configuration* module, we need to declare a dependency in the module descriptor:
 
 ```java
-module io.winterframework.example.app {
+module io.inverno.example.app {
     ...
-    requires io.winterframework.mod.configuration;
+    requires io.inverno.mod.configuration;
     ...
 }
 ```
@@ -797,8 +797,8 @@ Using Maven:
 <project>
     <dependencies>
         <dependency>
-            <groupId>io.winterframework.mod</groupId>
-            <artifactId>winter-configuration</artifactId>
+            <groupId>io.inverno.mod</groupId>
+            <artifactId>inverno-configuration</artifactId>
         </dependency>
     </dependencies>
 </project>
@@ -808,7 +808,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.winterframework.mod:winter-configuration:1.0.0'
+compile 'io.inverno.mod:inverno-configuration:1.0.0'
 ...
 ```
 
@@ -967,7 +967,7 @@ This implementation can be used to bootstrap an application using system propert
 
 The command line configuration source exposes configuration properties specified as command line arguments of the application. This implementation supports parameterized properties.
 
-Configuration properties must be specified as application arguments using the following syntax: `--property[parameter_1=value_1...parameter_n=value_n]=value` where property and parameter names are valid Java identifiers and property and parameter values are Java primitives such as integer, boolean, string... A complete description of the syntax can be found in the [API documentation][winter-javadoc].
+Configuration properties must be specified as application arguments using the following syntax: `--property[parameter_1=value_1...parameter_n=value_n]=value` where property and parameter names are valid Java identifiers and property and parameter values are Java primitives such as integer, boolean, string... A complete description of the syntax can be found in the [API documentation][inverno-javadoc].
 
 For instance the following are valid configuration properties specified as command line arguments:
 
@@ -1072,7 +1072,7 @@ This implementation resolves configuration properties from the following sources
 - command line
 - system properties
 - system environment variables
-- the `configuration.cprops` file in `./conf/` or `${winter.conf.path}/` directories if one exists (if the first one exists the second one is ignored)
+- the `configuration.cprops` file in `./conf/` or `${inverno.conf.path}/` directories if one exists (if the first one exists the second one is ignored)
 - the `configuration.cprops` file in `${java.home}/conf/` directory if it exists
 - the `configuration.cprops` file in the application module if it exists
 
@@ -1260,7 +1260,7 @@ RedisConfigurationSource source = new RedisConfigurationSource(redisClient, cust
 
 The API offers a great flexibility but as we've seen it might require some efforts to load a configuration in a usable explicit Java bean. Hopefully, this has been anticipated and the configuration module provides a configuration loader to smoothly load configuration objects in the application.
 
-The `ConfigurationLoader` interface is the main entry point for loading configuration objects from a configuration source. It can be used in two different ways, either dynamically using Java reflection or statically using the Winter compiler.
+The `ConfigurationLoader` interface is the main entry point for loading configuration objects from a configuration source. It can be used in two different ways, either dynamically using Java reflection or statically using the Inverno compiler.
 
 #### Dynamic loader
 
@@ -1374,9 +1374,9 @@ ConfigurationLoader
 
 #### Static loader
 
-Dynamic loading is fine but it relies on Java reflection which induces extra processing at runtime and might cause unexpected runtime errors due to the lack of static checking. This is all the more true as most of the time configuration definitions are known at compile time. For these reasons, it is better to create adhoc configuration loader implementations. Fortunately, the configuration Winter compiler plugin can generate these for us.
+Dynamic loading is fine but it relies on Java reflection which induces extra processing at runtime and might cause unexpected runtime errors due to the lack of static checking. This is all the more true as most of the time configuration definitions are known at compile time. For these reasons, it is better to create adhoc configuration loader implementations. Fortunately, the configuration Inverno compiler plugin can generate these for us.
 
-In order to create a configuration bean in a Winter module, we simply need to create an interface for our configuration as specified above and annotates it with `@Configuration`, this will tell the configuration Winter compiler plugin to generate a corresponding configuration loader implementation as well as a module bean making our configuration directly available inside our module.
+In order to create a configuration bean in an Inverno module, we simply need to create an interface for our configuration as specified above and annotates it with `@Configuration`, this will tell the configuration Inverno compiler plugin to generate a corresponding configuration loader implementation as well as a module bean making our configuration directly available inside our module.
 
 ```java
 @Configuration
@@ -1450,17 +1450,17 @@ public interface CompositeModuleConfiguration {
 }
 ```
 
-In the preceding example, we basically indicate to the Winter framework that the `ComponentModuleConfiguration` defined in the `CompositeModuleConfiguration` must be injected into the component module instance.
+In the preceding example, we basically indicate to the Inverno framework that the `ComponentModuleConfiguration` defined in the `CompositeModuleConfiguration` must be injected into the component module instance.
 
 ## HTTP Base
 
-The Winter *http-base* module defines the foundational API for creating HTTP clients and servers. It also provides common HTTP services such as the header service.
+The Inverno *http-base* module defines the foundational API for creating HTTP clients and servers. It also provides common HTTP services such as the header service.
 
-In order to use the Winter *http-base* module, we need to declare a dependency in the module descriptor:
+In order to use the Inverno *http-base* module, we need to declare a dependency in the module descriptor:
 
 ```java
-module io.winterframework.example.app {
-    requires io.winterframework.mod.http.base;
+module io.inverno.example.app {
+    requires io.inverno.mod.http.base;
     ...
 }
 ```
@@ -1473,8 +1473,8 @@ Using Maven:
 <project>
     <dependencies>
         <dependency>
-            <groupId>io.winterframework.mod</groupId>
-            <artifactId>winter-http-base</artifactId>
+            <groupId>io.inverno.mod</groupId>
+            <artifactId>inverno-http-base</artifactId>
         </dependency>
     </dependencies>
 </project>
@@ -1484,7 +1484,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.winterframework.mod:winter-http-base:1.0.0'
+compile 'io.inverno.mod:inverno-http-base:1.0.0'
 ...
 ```
 
@@ -1553,7 +1553,7 @@ By default, the *http-base* module provides codecs for the following headers:
 
 ## HTTP Server
 
-The Winter *http-server* module provides fully reactive HTTP/1.x and HTTP/2 server based on [Netty][netty].
+The Inverno *http-server* module provides fully reactive HTTP/1.x and HTTP/2 server based on [Netty][netty].
 
 It especially supports:
 
@@ -1572,13 +1572,13 @@ The server is fully reactive, based on the reactor pattern and non-blocking sock
 
 > This module lays the foundational service and API for building HTTP servers with more complex and advanced features, that is why you might sometimes find it a little bit low level but that is the price of performance. If you require higher level functionalities like request routing, content negotiation and automatic payload conversion please consider the [web module](#web).
 
-This module requires basic services like a [net service](#net-service) and a [resource service](#resource-service) which are usually provided by the *boot* module, so in order to use the Winter *http-server* module, we should declare the following dependencies in the module descriptor:
+This module requires basic services like a [net service](#net-service) and a [resource service](#resource-service) which are usually provided by the *boot* module, so in order to use the Inverno *http-server* module, we should declare the following dependencies in the module descriptor:
 
 ```java
-@io.winterframework.core.annotation.Module
-module io.winterframework.example.app_http {
-    requires io.winterframework.mod.boot;
-    requires io.winterframework.mod.http.server;
+@io.inverno.core.annotation.Module
+module io.inverno.example.app_http {
+    requires io.inverno.mod.boot;
+    requires io.inverno.mod.http.server;
 }
 ```
 
@@ -1592,12 +1592,12 @@ Using Maven:
 <project>
     <dependencies>
         <dependency>
-            <groupId>io.winterframework.mod</groupId>
-            <artifactId>winter-boot</artifactId>
+            <groupId>io.inverno.mod</groupId>
+            <artifactId>inverno-boot</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.winterframework.mod</groupId>
-            <artifactId>winter-http-server</artifactId>
+            <groupId>io.inverno.mod</groupId>
+            <artifactId>inverno-http-server</artifactId>
         </dependency>
     </dependencies>
 </project>
@@ -1607,8 +1607,8 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.winterframework.mod:winter-boot:1.0.0'
-compile 'io.winterframework.mod:winter-http-server:1.0.0'
+compile 'io.inverno.mod:inverno-boot:1.0.0'
+compile 'io.inverno.mod:inverno-http-server:1.0.0'
 ...
 ```
 
@@ -1917,7 +1917,7 @@ ExchangeHandler<Exchange> handler = exchange -> {
     exchange.response()
         .headers(headers -> headers
             .contentType(MediaTypes.TEXT_PLAIN)
-            .set(Headers.NAME_SERVER, "winter")
+            .set(Headers.NAME_SERVER, "inverno")
             .add("custom-header", "abc")
         )
         .body().raw()...;
@@ -1977,22 +1977,22 @@ Note that cookies can also be set or added as response headers.
 
 ### HTTP Server
 
-The HTTP server is started with the *http-server* module which requires a `NetService` and a `ResourceService` usually provided by the *boot* module, so one way to create an application with a HTTP server is to create a Winter module composing the *boot* and *http-server* modules.
+The HTTP server is started with the *http-server* module which requires a `NetService` and a `ResourceService` usually provided by the *boot* module, so one way to create an application with a HTTP server is to create an Inverno module composing the *boot* and *http-server* modules.
 
 ```java
-@io.winterframework.core.annotation.Module
-module io.winterframework.example.app_http {
-    requires io.winterframework.mod.boot;
-    requires io.winterframework.mod.http.server;
+@io.inverno.core.annotation.Module
+module io.inverno.example.app_http {
+    requires io.inverno.mod.boot;
+    requires io.inverno.mod.http.server;
 }
 ```
 
 The resulting *app_http* module, thus created, can then be started as an application as follows:
 
 ```java
-package io.winterframework.example.app_http;
+package io.inverno.example.app_http;
 
-import io.winterframework.core.v1.Application;
+import io.inverno.core.v1.Application;
 
 public class Main {
 
@@ -2005,43 +2005,43 @@ public class Main {
 The above example starts a HTTP/1.x server using default configuration and default root and error handlers.
 
 ```
-2021-04-14 09:51:46,329 INFO  [main] i.w.c.v.Application - Winter is starting...
+2021-04-14 09:51:46,329 INFO  [main] i.w.c.v.Application - Inverno is starting...
 
 
      ╔════════════════════════════════════════════════════════════════════════════════════════════╗
-     ║                       , ~~ ,                                                               ║
-     ║                   , '   /\   ' ,                 _                                         ║
-     ║                  , __   \/   __ ,       _     _ (_)        _                               ║
-     ║                 ,  \_\_\/\/_/_/  ,     | | _ | | _   ___  | |_   ___   __                  ║
-     ║                 ,    _\_\/_/_    ,     | |/_\| || | / _ \ | __| / _ \ / _|                 ║
-     ║                 ,   __\_/\_\__   ,     \  / \  /| || | | || |_ |  __/| |                   ║
-     ║                  , /_/ /\/\ \_\ ,       \/   \/ |_||_| |_| \__| \___||_|                   ║
-     ║                   ,     /\     ,                                                           ║
-     ║                     ,   \/   ,                        -- 1.0.2 --                          ║
-     ║                       ' -- '                                                               ║
+     ║                      , ~~ ,                                                                ║
+     ║                  , '   /\   ' ,                                                            ║
+     ║                 , __   \/   __ ,      _                                                    ║
+     ║                ,  \_\_\/\/_/_/  ,    | |  ___  _    _  ___   __  ___   ___                 ║
+     ║                ,    _\_\/_/_    ,    | | / _ \\ \  / // _ \ / _|/ _ \ / _ \                ║
+     ║                ,   __\_/\_\__   ,    | || | | |\ \/ /|  __/| | | | | | |_| |               ║
+     ║                 , /_/ /\/\ \_\ ,     |_||_| |_| \__/  \___||_| |_| |_|\___/                ║
+     ║                  ,     /\     ,                                                            ║
+     ║                    ,   \/   ,                                  -- 1.2.0 --                 ║
+     ║                      ' -- '                                                                ║
      ╠════════════════════════════════════════════════════════════════════════════════════════════╣
      ║ Java runtime        : OpenJDK Runtime Environment                                          ║
      ║ Java version        : 16+36-2231                                                           ║
      ║ Java home           : /home/jkuhn/Devel/jdk/jdk-16                                         ║
      ║                                                                                            ║
-     ║ Application module  : io.winterframework.example.app_http                                  ║
+     ║ Application module  : io.inverno.example.app_http                                          ║
      ║ Application version : 1.0.0-SNAPSHOT                                                       ║
-     ║ Application class   : io.winterframework.example.app_http.Main                             ║
+     ║ Application class   : io.inverno.example.app_http.Main                                     ║
      ║                                                                                            ║
      ║ Modules             :                                                                      ║
      ║  ....                                                                                      ║
      ╚════════════════════════════════════════════════════════════════════════════════════════════╝
 
 
-2021-04-14 09:53:21,829 INFO  [main] i.w.e.a.App_http - Starting Module io.winterframework.example.app_http...
-2021-04-14 09:53:21,829 INFO  [main] i.w.m.b.Boot - Starting Module io.winterframework.mod.boot...
-2021-04-14 09:53:22,025 INFO  [main] i.w.m.b.Boot - Module io.winterframework.mod.boot started in 195ms
-2021-04-14 09:53:22,025 INFO  [main] i.w.m.h.s.Server - Starting Module io.winterframework.mod.http.server...
-2021-04-14 09:53:22,025 INFO  [main] i.w.m.h.b.Base - Starting Module io.winterframework.mod.http.base...
-2021-04-14 09:53:22,029 INFO  [main] i.w.m.h.b.Base - Module io.winterframework.mod.http.base started in 3ms
+2021-04-14 09:53:21,829 INFO  [main] i.w.e.a.App_http - Starting Module io.inverno.example.app_http...
+2021-04-14 09:53:21,829 INFO  [main] i.w.m.b.Boot - Starting Module io.inverno.mod.boot...
+2021-04-14 09:53:22,025 INFO  [main] i.w.m.b.Boot - Module io.inverno.mod.boot started in 195ms
+2021-04-14 09:53:22,025 INFO  [main] i.w.m.h.s.Server - Starting Module io.inverno.mod.http.server...
+2021-04-14 09:53:22,025 INFO  [main] i.w.m.h.b.Base - Starting Module io.inverno.mod.http.base...
+2021-04-14 09:53:22,029 INFO  [main] i.w.m.h.b.Base - Module io.inverno.mod.http.base started in 3ms
 2021-04-14 09:53:22,080 INFO  [main] i.w.m.h.s.i.HttpServer - HTTP Server (nio) listening on http://0.0.0.0:8080
-2021-04-14 09:53:22,080 INFO  [main] i.w.m.h.s.Server - Module io.winterframework.mod.http.server started in 55ms
-2021-04-14 09:53:22,080 INFO  [main] i.w.e.a.App_http - Module io.winterframework.example.app_http started in 252ms
+2021-04-14 09:53:22,080 INFO  [main] i.w.m.h.s.Server - Module io.inverno.mod.http.server started in 55ms
+2021-04-14 09:53:22,080 INFO  [main] i.w.e.a.App_http - Module io.inverno.example.app_http started in 252ms
 
 ```
 
@@ -2057,7 +2057,7 @@ Hello
 
 The HTTP server defines two handlers: the **root handler** which handles HTTP requests and the **error handler** which handles errors. The module provides default implementations as overridable beans, custom handlers can then be used instead when creating the *http-server* module.
 
-> this module can also be used to embed a HTTP server in any application, unlike other application frameworks, Winter core IoC/DI framework is not pervasive and any Winter modules can be safely used in various contexts and applications.
+> this module can also be used to embed a HTTP server in any application, unlike other application frameworks, Inverno core IoC/DI framework is not pervasive and any Inverno modules can be safely used in various contexts and applications.
 
 #### Configuration
 
@@ -2066,12 +2066,12 @@ The first thing we might want to do is to create a configuration in the *app_htt
 The following configuration can then be created in the *app_http* module:
 
 ```java
-package io.winterframework.example.app_http;
+package io.inverno.example.app_http;
 
-import io.winterframework.core.annotation.NestedBean;
-import io.winterframework.mod.boot.NetConfiguration;
-import io.winterframework.mod.configuration.Configuration;
-import io.winterframework.mod.http.server.HttpServerConfiguration;
+import io.inverno.core.annotation.NestedBean;
+import io.inverno.mod.boot.NetConfiguration;
+import io.inverno.mod.configuration.Configuration;
+import io.inverno.mod.http.server.HttpServerConfiguration;
 
 @Configuration
 public interface App_httpConfiguration {
@@ -2087,9 +2087,9 @@ public interface App_httpConfiguration {
 This should be enough for exposing a configuration in the *app_http* module, that let us setup the server: 
 
 ```java
-package io.winterframework.example.app_http;
+package io.inverno.example.app_http;
 
-import io.winterframework.core.v1.Application;
+import io.inverno.core.v1.Application;
 
 public class Main {
 
@@ -2145,13 +2145,13 @@ or
 </project>
 ```
 
-> When these dependencies are declared on the JVM module path, the corresponding Java modules must be added explicitly when running the application. This is typically the case when the application is run or packaged as an application image using the Winter Maven plugin.
+> When these dependencies are declared on the JVM module path, the corresponding Java modules must be added explicitly when running the application. This is typically the case when the application is run or packaged as an application image using the Inverno Maven plugin.
 >
 > This can be done by defining the corresponding dependencies in the module descriptor: 
 > 
 > ```java
-> @io.winterframework.core.annotation.Module
-> module io.winterframework.example.app {
+> @io.inverno.core.annotation.Module
+> module io.inverno.example.app {
 >     ...
 >     requires io.netty.transport.unix.common;
 >     requires io.netty.transport.epoll;
@@ -2164,15 +2164,15 @@ or
 > $ java --add-modules io.netty.transport.unix.common,io.netty.transport.epoll ...
 > ```
 > 
-> When building an application image, this can be specified in the Winter Maven plugin configuration:
+> When building an application image, this can be specified in the Inverno Maven plugin configuration:
 >
 > ```xml
 > <project>
 >     <build>
 >         <plugins>
 >             <plugin>
->                 <groupId>io.winterframework.tool</groupId>
->                 <artifactId>winter-maven-plugin</artifactId>
+>                 <groupId>io.inverno.tool</groupId>
+>                 <artifactId>inverno-maven-plugin</artifactId>
 >                 <executions>
 >                     <execution>
 >                         <configuration>
@@ -2193,14 +2193,14 @@ The HTTP server defines a root exchange handler to handle all HTTP requests. By 
 In order to use our own handler, we must define an exchange handler bean in the *app_http* module:
 
 ```java
-package io.winterframework.example.app_http;
+package io.inverno.example.app_http;
 
 import io.netty.buffer.Unpooled;
-import io.winterframework.core.annotation.Bean;
-import io.winterframework.mod.base.Charsets;
-import io.winterframework.mod.http.base.HttpException;
-import io.winterframework.mod.http.server.Exchange;
-import io.winterframework.mod.http.server.ExchangeHandler;
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.base.Charsets;
+import io.inverno.mod.http.base.HttpException;
+import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeHandler;
 
 @Bean
 public class CustomHandler implements ExchangeHandler<Exchange> {
@@ -2217,16 +2217,16 @@ public class CustomHandler implements ExchangeHandler<Exchange> {
 This bean will be automatically wired to the root handler socket defined by the *http-server* module overriding the default root handler. If we don't want to provide a handler implementation inside the *app_http* module, we can also define a socket bean for the root handler and provide an instance when creating the *app_http* module. 
 
 ```java
-package io.winterframework.example.app_http;
+package io.inverno.example.app_http;
 
 import java.util.function.Supplier;
 
 import io.netty.buffer.Unpooled;
-import io.winterframework.core.annotation.Bean;
-import io.winterframework.core.v1.Application;
-import io.winterframework.mod.base.Charsets;
-import io.winterframework.mod.http.server.Exchange;
-import io.winterframework.mod.http.server.ExchangeHandler;
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.v1.Application;
+import io.inverno.mod.base.Charsets;
+import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeHandler;
 
 public class Main {
 
@@ -2255,12 +2255,12 @@ The HTTP server defines an error exchange handler to handle exceptions thrown wh
 This default implementation should be enough for a basic HTTP server but a custom handler can be provided to produce custom error pages for specific types of error. This can be done in the exact same way as the [root handler](#root-handler) by defining an error exchange handler bean:
 
 ```java
-package io.winterframework.example.app_http;
+package io.inverno.example.app_http;
 
-import io.winterframework.core.annotation.Bean;
-import io.winterframework.mod.http.base.HttpException;
-import io.winterframework.mod.http.server.ErrorExchange;
-import io.winterframework.mod.http.server.ExchangeHandler;
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.http.base.HttpException;
+import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.ExchangeHandler;
 
 @Bean
 public class CustomErrorHandler implements ExchangeHandler<ErrorExchange<Throwable>> {
@@ -2284,17 +2284,17 @@ public class CustomErrorHandler implements ExchangeHandler<ErrorExchange<Throwab
 Or by defining a socket bean:
 
 ```java
-package io.winterframework.example.app_http;
+package io.inverno.example.app_http;
 
 import java.util.function.Supplier;
 
 import io.netty.buffer.Unpooled;
-import io.winterframework.core.annotation.Bean;
-import io.winterframework.core.v1.Application;
-import io.winterframework.mod.base.Charsets;
-import io.winterframework.mod.http.server.ErrorExchange;
-import io.winterframework.mod.http.server.Exchange;
-import io.winterframework.mod.http.server.ExchangeHandler;
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.v1.Application;
+import io.inverno.mod.base.Charsets;
+import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeHandler;
 
 public class Main {
 
@@ -2345,7 +2345,7 @@ Now if we send a request which accepts compression to the server, we should now 
 $ curl -i --compressed -H 'accept-encoding: gzip, deflate' http://localhost:8080
 HTTP/1.1 200 OK
 content-type: text/plain
-server: winter
+server: inverno
 content-encoding: gzip
 content-length: 39
 
@@ -2374,7 +2374,7 @@ public class Main {
                     .http_server(server -> server
                         .server_port(8443)
                         .tls_enabled(true)
-                        .key_store(URI.create("module://io.winterframework.example.app_http/keystore.jks"))
+                        .key_store(URI.create("module://io.inverno.example.app_http/keystore.jks"))
                         .key_alias("selfsigned")
                         .key_store_password("password")
                     )
@@ -2385,15 +2385,15 @@ public class Main {
 }
 ```
 
-> When an application using the *http-server* module is packaged as an application image, you'll need to make sure TLS related modules from the JDK are included in the runtime image otherwise TLS might not work. You can refer to the [JDK providers documentation][jdk-providers] in the security developer's guide to find out which modules should be added depending on your needs. Most of the time you'll simply add `jdk.crypto.ec` module in the Winter Maven plugin configuration:
+> When an application using the *http-server* module is packaged as an application image, you'll need to make sure TLS related modules from the JDK are included in the runtime image otherwise TLS might not work. You can refer to the [JDK providers documentation][jdk-providers] in the security developer's guide to find out which modules should be added depending on your needs. Most of the time you'll simply add `jdk.crypto.ec` module in the Inverno Maven plugin configuration:
 > 
 > ```xml
 > <project>
 >     <build>
 >         <plugins>
 >             <plugin>
->                 <groupId>io.winterframework.tool</groupId>
->                 <artifactId>winter-maven-plugin</artifactId>
+>                 <groupId>io.inverno.tool</groupId>
+>                 <artifactId>inverno-maven-plugin</artifactId>
 >                 <executions>
 >                     <execution>
 >                         <configuration>
@@ -2423,18 +2423,18 @@ To sum up, all we have to do to extend these services is to provide `HeaderCodec
 If we put all we've just seen together, here is a complete example showing how to create a HTTP/2 server with HTTP compression using custom root and error handlers:
 
 ```java
-package io.winterframework.example.app_http;
+package io.inverno.example.app_http;
 
 import java.net.URI;
 import java.util.function.Supplier;
 
 import io.netty.buffer.Unpooled;
-import io.winterframework.core.annotation.Bean;
-import io.winterframework.core.v1.Application;
-import io.winterframework.mod.base.Charsets;
-import io.winterframework.mod.http.server.ErrorExchange;
-import io.winterframework.mod.http.server.Exchange;
-import io.winterframework.mod.http.server.ExchangeHandler;
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.v1.Application;
+import io.inverno.mod.base.Charsets;
+import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeHandler;
 
 public class Main {
 
@@ -2455,7 +2455,7 @@ public class Main {
                         // TLS
                         .server_port(8443)
                         .tls_enabled(true)
-                        .key_store(URI.create("module://io.winterframework.example.app_http/keystore.jks"))
+                        .key_store(URI.create("module://io.inverno.example.app_http/keystore.jks"))
                         .key_alias("selfsigned")
                         .key_store_password("password")
                         // Enable HTTP/2
@@ -2487,7 +2487,7 @@ Hello from main!
 
 ## Web
 
-The Winter *web* module provides extended functionalities on top of the *http-server* module for developing Web and RESTfull applications.
+The Inverno *web* module provides extended functionalities on top of the *http-server* module for developing Web and RESTfull applications.
 
 It especially provides:
 
@@ -2500,17 +2500,17 @@ It especially provides:
 - easy Web/REST controller development
 - [OpenAPI][open-api] specifications generation using Web controllers JavaDoc comments
 - SwaggerUI integration
-- a Winter compiler plugin providing static validation of the routes and generation of Web router configurers
+- an Inverno compiler plugin providing static validation of the routes and generation of Web router configurers
 
 The *web* module composes the *http-server* module and therefore starts a HTTP server. Just like the *http-server* module, it requires a net service and a resource service as well as a list of [media type converters](#media-type-converter) for message payload conversion. Basic implementations of these services are provided by the *boot* module which provides `application/json`, `application/x-ndjson` and `text/plain` media type converters. Additional media type converters can surely be provided by implementing the `MediaTypeConverter` interface.
 
-In order to use the Winter *web* module, we should declare the following dependencies in the module descriptor:
+In order to use the Inverno *web* module, we should declare the following dependencies in the module descriptor:
 
 ```java
-@io.winterframework.core.annotation.Module
-module io.winterframework.example.app_web {
-    requires io.winterframework.mod.boot;
-    requires io.winterframework.mod.web;
+@io.inverno.core.annotation.Module
+module io.inverno.example.app_web {
+    requires io.inverno.mod.boot;
+    requires io.inverno.mod.web;
 }
 ```
 
@@ -2522,12 +2522,12 @@ Using Maven:
 <project>
     <dependencies>
         <dependency>
-            <groupId>io.winterframework.mod</groupId>
-            <artifactId>winter-boot</artifactId>
+            <groupId>io.inverno.mod</groupId>
+            <artifactId>inverno-boot</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.winterframework.mod</groupId>
-            <artifactId>winter-web</artifactId>
+            <groupId>io.inverno.mod</groupId>
+            <artifactId>inverno-web</artifactId>
         </dependency>
     </dependencies>
 </project>
@@ -2537,8 +2537,8 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.winterframework.mod:winter-boot:1.0.0'
-compile 'io.winterframework.mod:winter-web:1.0.0'
+compile 'io.inverno.mod:inverno-boot:1.0.0'
+compile 'io.inverno.mod:inverno-web:1.0.0'
 ...
 ```
 
@@ -3238,22 +3238,22 @@ A request to `http://127.0.0.1/static/` would return the `index.html` file.
 
 ### Web Server
 
-The *web* module composes the *http-server* module and as a result it requires a `NetService` and a `ResourceService`. A set of [media type converters](#media-type-converter) is also required for message payload conversion. All these services are provided by the *boot* module, so one way to create an application with a Web server is to create a Winter module composing *boot* and *web* modules.
+The *web* module composes the *http-server* module and as a result it requires a `NetService` and a `ResourceService`. A set of [media type converters](#media-type-converter) is also required for message payload conversion. All these services are provided by the *boot* module, so one way to create an application with a Web server is to create an Inverno module composing *boot* and *web* modules.
 
 ```java
-@io.winterframework.core.annotation.Module
-module io.winterframework.example.app_web {
-    requires io.winterframework.mod.boot;
-    requires io.winterframework.mod.web;
+@io.inverno.core.annotation.Module
+module io.inverno.example.app_web {
+    requires io.inverno.mod.boot;
+    requires io.inverno.mod.web;
 }
 ```
 
 The resulting *app_web* module, thus created, can then be started as an application as follows:
 
 ```java
-package io.winterframework.example.app_web;
+package io.inverno.example.app_web;
 
-import io.winterframework.core.v1.Application;
+import io.inverno.core.v1.Application;
 
 public class Main {
 
@@ -3266,45 +3266,45 @@ public class Main {
 The above example starts a Web server using default configuration which is a HTTP/1.x server with a Web router as root handler and an error router as error handler.
 
 ```plaintext
-2021-04-14 11:00:18,308 INFO  [main] i.w.c.v.Application - Winter is starting...
+2021-04-14 11:00:18,308 INFO  [main] i.w.c.v.Application - Inverno is starting...
 
 
      ╔════════════════════════════════════════════════════════════════════════════════════════════╗
-     ║                       , ~~ ,                                                               ║
-     ║                   , '   /\   ' ,                 _                                         ║
-     ║                  , __   \/   __ ,       _     _ (_)        _                               ║
-     ║                 ,  \_\_\/\/_/_/  ,     | | _ | | _   ___  | |_   ___   __                  ║
-     ║                 ,    _\_\/_/_    ,     | |/_\| || | / _ \ | __| / _ \ / _|                 ║
-     ║                 ,   __\_/\_\__   ,     \  / \  /| || | | || |_ |  __/| |                   ║
-     ║                  , /_/ /\/\ \_\ ,       \/   \/ |_||_| |_| \__| \___||_|                   ║
-     ║                   ,     /\     ,                                                           ║
-     ║                     ,   \/   ,                        -- 1.0.2 --                          ║
-     ║                       ' -- '                                                               ║
+     ║                      , ~~ ,                                                                ║
+     ║                  , '   /\   ' ,                                                            ║
+     ║                 , __   \/   __ ,      _                                                    ║
+     ║                ,  \_\_\/\/_/_/  ,    | |  ___  _    _  ___   __  ___   ___                 ║
+     ║                ,    _\_\/_/_    ,    | | / _ \\ \  / // _ \ / _|/ _ \ / _ \                ║
+     ║                ,   __\_/\_\__   ,    | || | | |\ \/ /|  __/| | | | | | |_| |               ║
+     ║                 , /_/ /\/\ \_\ ,     |_||_| |_| \__/  \___||_| |_| |_|\___/                ║
+     ║                  ,     /\     ,                                                            ║
+     ║                    ,   \/   ,                                  -- 1.2.0 --                 ║
+     ║                      ' -- '                                                                ║
      ╠════════════════════════════════════════════════════════════════════════════════════════════╣
      ║ Java runtime        : OpenJDK Runtime Environment                                          ║
      ║ Java version        : 16+36-2231                                                           ║
      ║ Java home           : /home/jkuhn/Devel/jdk/jdk-16                                         ║
      ║                                                                                            ║
-     ║ Application module  : io.winterframework.example.app_web                                   ║
+     ║ Application module  : io.inverno.example.app_web                                           ║
      ║ Application version : 1.0.0-SNAPSHOT                                                       ║
-     ║ Application class   : io.winterframework.example.app_web.Main                              ║
+     ║ Application class   : io.inverno.example.app_web.Main                                      ║
      ║                                                                                            ║
      ║ Modules             :                                                                      ║
      ║  ...                                                                                       ║
      ╚════════════════════════════════════════════════════════════════════════════════════════════╝
 
 
-2021-04-14 11:00:18,313 INFO  [main] i.w.e.a.App_web - Starting Module io.winterframework.example.app_web...
-2021-04-14 11:00:18,313 INFO  [main] i.w.m.b.Boot - Starting Module io.winterframework.mod.boot...
-2021-04-14 11:00:18,494 INFO  [main] i.w.m.b.Boot - Module io.winterframework.mod.boot started in 181ms
-2021-04-14 11:00:18,494 INFO  [main] i.w.m.w.Web - Starting Module io.winterframework.mod.web...
-2021-04-14 11:00:18,495 INFO  [main] i.w.m.h.s.Server - Starting Module io.winterframework.mod.http.server...
-2021-04-14 11:00:18,495 INFO  [main] i.w.m.h.b.Base - Starting Module io.winterframework.mod.http.base...
-2021-04-14 11:00:18,499 INFO  [main] i.w.m.h.b.Base - Module io.winterframework.mod.http.base started in 4ms
+2021-04-14 11:00:18,313 INFO  [main] i.w.e.a.App_web - Starting Module io.inverno.example.app_web...
+2021-04-14 11:00:18,313 INFO  [main] i.w.m.b.Boot - Starting Module io.inverno.mod.boot...
+2021-04-14 11:00:18,494 INFO  [main] i.w.m.b.Boot - Module io.inverno.mod.boot started in 181ms
+2021-04-14 11:00:18,494 INFO  [main] i.w.m.w.Web - Starting Module io.inverno.mod.web...
+2021-04-14 11:00:18,495 INFO  [main] i.w.m.h.s.Server - Starting Module io.inverno.mod.http.server...
+2021-04-14 11:00:18,495 INFO  [main] i.w.m.h.b.Base - Starting Module io.inverno.mod.http.base...
+2021-04-14 11:00:18,499 INFO  [main] i.w.m.h.b.Base - Module io.inverno.mod.http.base started in 4ms
 2021-04-14 11:00:18,570 INFO  [main] i.w.m.h.s.i.HttpServer - HTTP Server (nio) listening on http://0.0.0.0:8080
-2021-04-14 11:00:18,570 INFO  [main] i.w.m.h.s.Server - Module io.winterframework.mod.http.server started in 75ms
-2021-04-14 11:00:18,571 INFO  [main] i.w.m.w.Web - Module io.winterframework.mod.web started in 76ms
-2021-04-14 11:00:18,571 INFO  [main] i.w.e.a.App_web - Module io.winterframework.example.app_web started in 259ms
+2021-04-14 11:00:18,570 INFO  [main] i.w.m.h.s.Server - Module io.inverno.mod.http.server started in 75ms
+2021-04-14 11:00:18,571 INFO  [main] i.w.m.w.Web - Module io.inverno.mod.web started in 76ms
+2021-04-14 11:00:18,571 INFO  [main] i.w.e.a.App_web - Module io.inverno.example.app_web started in 259ms
 
 ```
 
@@ -3332,12 +3332,12 @@ The following configuration can then be created in the *app_http* module:
 Let's create the following configuration in the *app_web* module:
 
 ```java
-package io.winterframework.example.app_web;
+package io.inverno.example.app_web;
 
-import io.winterframework.core.annotation.NestedBean;
-import io.winterframework.mod.boot.NetConfiguration;
-import io.winterframework.mod.configuration.Configuration;
-import io.winterframework.mod.web.WebConfiguration;
+import io.inverno.core.annotation.NestedBean;
+import io.inverno.mod.boot.NetConfiguration;
+import io.inverno.mod.configuration.Configuration;
+import io.inverno.mod.web.WebConfiguration;
 
 @Configuration
 public interface App_webConfiguration {
@@ -3355,9 +3355,9 @@ The Web server can then be configured. For instance, we can enable HTTP/2 over c
 For instance:
 
 ```java
-package io.winterframework.example.app_web;
+package io.inverno.example.app_web;
 
-import io.winterframework.core.v1.Application;
+import io.inverno.core.v1.Application;
 
 public class Main {
 
@@ -3388,13 +3388,13 @@ This can be done by defining a `WebRouterConfigurer` bean in the *app_web* modul
 Using what we've learned from the [Web routing documentation](#web-routing), routes can then be defined as follows:
 
 ```java
-package io.winterframework.example.app_web;
+package io.inverno.example.app_web;
 
-import io.winterframework.core.annotation.Bean;
-import io.winterframework.mod.base.resource.MediaTypes;
-import io.winterframework.mod.web.WebExchange;
-import io.winterframework.mod.web.WebRouter;
-import io.winterframework.mod.web.WebRouterConfigurer;
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.web.WebExchange;
+import io.inverno.mod.web.WebRouter;
+import io.inverno.mod.web.WebRouterConfigurer;
 
 @Bean
 public class App_webWebRouterConfigurer implements WebRouterConfigurer<WebExchange> {
@@ -3491,13 +3491,13 @@ public class App_webWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 Now using what we've learned from the [error routing documentation](#error-routing), we can define an error route to handle that particular exception as follows:
 
 ```java
-package io.winterframework.example.app_web;
+package io.inverno.example.app_web;
 
-import io.winterframework.core.annotation.Bean;
-import io.winterframework.mod.base.resource.MediaTypes;
-import io.winterframework.mod.http.base.Status;
-import io.winterframework.mod.web.ErrorWebRouter;
-import io.winterframework.mod.web.ErrorWebRouterConfigurer;
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.Status;
+import io.inverno.mod.web.ErrorWebRouter;
+import io.inverno.mod.web.ErrorWebRouterConfigurer;
 
 @Bean
 public class App_webErrorWebRouterConfigurer implements ErrorWebRouterConfigurer {
@@ -3539,9 +3539,9 @@ The Web server can also be configured to automatically serve static resources fr
 This feature can be activated with the following configuration:
 
 ```java
-package io.winterframework.example.app_web;
+package io.inverno.example.app_web;
 
-import io.winterframework.core.v1.Application;
+import io.inverno.core.v1.Application;
 
 public class Main {
 
@@ -3574,24 +3574,24 @@ Then we can declare WebJars dependencies such as the Swagger UI in the build des
 
 The Swagger UI should now be accessible at `http://locahost:8080/webjars/swagger.ui/`.
 
-Sadly WebJars are not modular JARs, they are not even named modules which causes several issues when dependencies are specified on the module path. That's why when an application is run or packaged using [Winter tools][winter-tools-root], such dependencies and WebJars in particular are *modularized*. A WebJar such as `swagger-ui` is modularized into `org.webjars.swagger.ui` module which explains why it is referred by its module name: `swagger.ui` in the WebJars resource path (the `org.webjars` part is omitted since the context is known).
+Sadly WebJars are not modular JARs, they are not even named modules which causes several issues when dependencies are specified on the module path. That's why when an application is run or packaged using [Inverno tools][inverno-tools-root], such dependencies and WebJars in particular are *modularized*. A WebJar such as `swagger-ui` is modularized into `org.webjars.swagger.ui` module which explains why it is referred by its module name: `swagger.ui` in the WebJars resource path (the `org.webjars` part is omitted since the context is known).
 
-When running a fully modular Winter application, *modularized* WebJars modules must be added explicitly to the JVM using the `--add-modules` option, otherwise they are not resolved when the JVM starts. For instance:
+When running a fully modular Inverno application, *modularized* WebJars modules must be added explicitly to the JVM using the `--add-modules` option, otherwise they are not resolved when the JVM starts. For instance:
 
 ```plaintext
 $ java --add-modules org.webjars.swagger.ui ...
 ```
 
-Hopefully, the Winter Maven plugin adds unnamed modules by default when running or packaging an application, so you shouldn't have to worry about it. The following command automatically adds the unnamed modules when running the JVM:
+Hopefully, the Inverno Maven plugin adds unnamed modules by default when running or packaging an application, so you shouldn't have to worry about it. The following command automatically adds the unnamed modules when running the JVM:
 
 ```plaintext
-$ mvn winter:run
+$ mvn inverno:run
 ```
 
 This can be disabled in order to manually control which modules should be added:
 
 ```plaintext
-$ mvn winter:run -Dwinter.exec.addUnnamedModules=false -Dwinter.exec.vmOptions="--add-modules org.webjars.swagger.ui"
+$ mvn inverno:run -Dinverno.exec.addUnnamedModules=false -Dinverno.exec.vmOptions="--add-modules org.webjars.swagger.ui"
 ```
 
 > It might also be possible to define the dependency in the module descriptor, unfortunately since WebJars modules are unnamed, they are named against the name of the JAR file which is greatly unstable and can't be trusted, so previous approach is by far the safest. If you need to create a WebJar you should make it a named module with the `Automatic-Module-Name` attribute sets to `org.webjars.{webjar_module}` in the manifest file and with resources located under `META-INF/resources/webjars/{webjar_module}/{webjar_version}/`.
@@ -3600,14 +3600,14 @@ Note that when the application is run with non-modular WebJars specified on the 
 
 #### OpenAPI specification
 
-The Web server can also be configured to expose [OpenAPI specifications][open-api] defined in `/META-INF/winter/web/openapi.yml` resource in application modules.
+The Web server can also be configured to expose [OpenAPI specifications][open-api] defined in `/META-INF/inverno/web/openapi.yml` resource in application modules.
 
 This feature can be activated with the following configuration:
 
 ```java
-package io.winterframework.example.app_web;
+package io.inverno.example.app_web;
 
-import io.winterframework.core.v1.Application;
+import io.inverno.core.v1.Application;
 
 public class Main {
 
@@ -3625,7 +3625,7 @@ public class Main {
 }
 ```
 
-When the server starts, it will scan for OpenAPI specifications files `/META-INF/winter/web/openapi.yml` in the application modules and configure the following routes:
+When the server starts, it will scan for OpenAPI specifications files `/META-INF/inverno/web/openapi.yml` in the application modules and configure the following routes:
 
 - `/open-api` returning the list of available OpenAPI specifications in `application/json`
 - `/open-api/{moduleName}` returning the OpenAPI specifications defined for the specified module name or (404) not found error if there is no OpenAPI specification defined in the module or no module with that name.
@@ -3644,18 +3644,18 @@ If the server is also configured to serve [WebJars](#webjars), previous routes c
 </project>
 ```
 
-> OpenAPI specifications are usually automatically generated by the Web Winter compiler plugin for routes defined in a [Web controller](#web-controller) but you can provide manual or generated specifications using the tool of your choice, as long as it is not conflicting with the Web compiler plugin.
+> OpenAPI specifications are usually automatically generated by the Web Inverno compiler plugin for routes defined in a [Web controller](#web-controller) but you can provide manual or generated specifications using the tool of your choice, as long as it is not conflicting with the Web compiler plugin.
 
 ### Web Controller
 
 The [Web router](#web-router) and [Web server](#web-server) documentations describe a *programmatic* way of defining the Web routes of a Web server but the *web* module API also provides a set of annotations for defining Web routes in a more declarative way. 
 
-A **Web controller** is a regular module bean annotated with `@WebController` which defines methods annotated with `@WebRoute` describing Web routes. These beans are scanned at compile time by the Web Winter compiler plugin in order to generate a single `WebRouterConfigurer` bean configuring the routes in the Web router.
+A **Web controller** is a regular module bean annotated with `@WebController` which defines methods annotated with `@WebRoute` describing Web routes. These beans are scanned at compile time by the Web Inverno compiler plugin in order to generate a single `WebRouterConfigurer` bean configuring the routes in the Web router.
 
 For instance, we can create a book resource with basic CRUD operations, to do so we must define a `Book` model in a dedicated `*.dto` package, we'll see later why this matters:
 
 ```java
-package io.winterframework.example.app_web.dto;
+package io.inverno.example.app_web.dto;
 
 public class Book {
 
@@ -3671,18 +3671,18 @@ public class Book {
 Now we can define a `BookResource` Web controller as follows:
 
 ```java
-package io.winterframework.example.app_web;
+package io.inverno.example.app_web;
 
 import java.util.Set;
 
-import io.winterframework.core.annotation.Bean;
-import io.winterframework.example.app_web.dto.Book;
-import io.winterframework.mod.base.resource.MediaTypes;
-import io.winterframework.mod.http.base.Method;
-import io.winterframework.mod.web.annotation.Body;
-import io.winterframework.mod.web.annotation.PathParam;
-import io.winterframework.mod.web.annotation.WebController;
-import io.winterframework.mod.web.annotation.WebRoute;
+import io.inverno.core.annotation.Bean;
+import io.inverno.example.app_web.dto.Book;
+import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.Method;
+import io.inverno.mod.web.annotation.Body;
+import io.inverno.mod.web.annotation.PathParam;
+import io.inverno.mod.web.annotation.WebController;
+import io.inverno.mod.web.annotation.WebRoute;
 
 @Bean                                                                                          // 1
 @WebController( path = "/book" )                                                               // 2
@@ -3724,14 +3724,14 @@ Implementations details have been omitted for clarity, here is what's important:
 
 Some other contextual objects like the underlying `WebExchange` can also be injected in the Web controller method.
 
-Assuming we have provided proper implementations to create, update, list, get and delete a book in a data store, we can compile the module. A new module bean `io.winterframework.example.app_web.WebRouterConfigurer` implementing `WebRouterConfigurer` should have been generated in `target/generated-sources/annotations`. It basically configures the routes corresponding to the Web controller's annotated methods in the Web router. This class uses the APIs described before and it is perfectly readable and debuggable and above all it eliminates the overhead of resolving Web controllers or Web routes at runtime.
+Assuming we have provided proper implementations to create, update, list, get and delete a book in a data store, we can compile the module. A new module bean `io.inverno.example.app_web.WebRouterConfigurer` implementing `WebRouterConfigurer` should have been generated in `target/generated-sources/annotations`. It basically configures the routes corresponding to the Web controller's annotated methods in the Web router. This class uses the APIs described before and it is perfectly readable and debuggable and above all it eliminates the overhead of resolving Web controllers or Web routes at runtime.
 
 Now let's go back to the `Book` DTO, we said earlier that it must be created in a dedicated package, the reason is actually quite simple. Since above routes consume and produce `application/json` payloads, the `application/json` media type converter will be invoked to convert `Book` objects from/to JSON data. This converter uses an `ObjectMapper` object from module `com.fasterxml.jackson.databind` which uses reflection to instantiate the objects and populate them from a parsed JSON tree. Unfortunately or hopefully the Java modular system prevents unauthorized reflective access and as a result the `ObjectMapper` can't access the `Book` class unless we explicitly export the package containing DTOs to module `com.fasterxml.jackson.databind` in the module descriptor as follows:
 
 ```java
-module io.winterframework.example.app_web {
+module io.inverno.example.app_web {
     ...    
-    exports io.winterframework.example.app_web.dto to com.fasterxml.jackson.databind;
+    exports io.inverno.example.app_web.dto to com.fasterxml.jackson.databind;
 }
 ```
 
@@ -3775,18 +3775,18 @@ content-length: 161
 > If you have carefully followed the *web* module documentation, you should have noticed that we have previously created a Web router configurer bean in the *app_web* module which is indeed conflicting with the generated Web router configurer resulting in the following self-explanatory compilation error:
 > 
 > ```plaintext
-> [ERROR] /home/jkuhn/Devel/git/frmk/io.winterframework.example.app_web/src/main/java/module-info.java:[4,1] Multiple beans matching socket io.winterframework.mod.web:webRouterConfigurer were found
->  - io.winterframework.example.app_web:app_webWebRouterConfigurer of type io.winterframework.example.app_web.App_webWebRouterConfigurer
->  - io.winterframework.example.app_web:webRouterConfigurer of type io.winterframework.example.app_web.WebRouterConfigurer
+> [ERROR] /home/jkuhn/Devel/git/frmk/io.inverno.example.app_web/src/main/java/module-info.java:[4,1] Multiple beans matching socket io.inverno.mod.web:webRouterConfigurer were found
+>  - io.inverno.example.app_web:app_webWebRouterConfigurer of type io.inverno.example.app_web.App_webWebRouterConfigurer
+>  - io.inverno.example.app_web:webRouterConfigurer of type io.inverno.example.app_web.WebRouterConfigurer
 >  
->  Consider specifying an explicit wiring in module io.winterframework.example.app_web (eg. @io.winterframework.core.annotation.Wire(beans="io.winterframework.example.app_web:app_webWebRouterConfigurer", into="io.winterframework.mod.web:webRouterConfigurer") )
+>  Consider specifying an explicit wiring in module io.inverno.example.app_web (eg. @io.inverno.core.annotation.Wire(beans="io.inverno.example.app_web:app_webWebRouterConfigurer", into="io.inverno.mod.web:webRouterConfigurer") )
 > ```
 > In order to resolve that conflict, you can remove the first router configurer or define an explicit wire in the module definition:
 > 
 > ```java
-> @io.winterframework.core.annotation.Module
-> @io.winterframework.core.annotation.Wire(beans="io.winterframework.example.app_web:webRouterConfigurer", into="io.winterframework.mod.web:webRouterConfigurer")
-> module io.winterframework.example.app_web {
+> @io.inverno.core.annotation.Module
+> @io.inverno.core.annotation.Wire(beans="io.inverno.example.app_web:webRouterConfigurer", into="io.inverno.mod.web:webRouterConfigurer")
+> module io.inverno.example.app_web {
 >   ...
 > }
 > ```
@@ -3796,17 +3796,17 @@ content-length: 161
 It is possible to separate the API from the implementation by defining the Web controller and the Web routes in an interface implemented in a module bean. For instance,
 
 ```java
-package io.winterframework.example.app_web;
+package io.inverno.example.app_web;
 
 import java.util.Set;
 
-import io.winterframework.example.app_web.dto.Book;
-import io.winterframework.mod.base.resource.MediaTypes;
-import io.winterframework.mod.http.base.Method;
-import io.winterframework.mod.web.annotation.Body;
-import io.winterframework.mod.web.annotation.PathParam;
-import io.winterframework.mod.web.annotation.WebController;
-import io.winterframework.mod.web.annotation.WebRoute;
+import io.inverno.example.app_web.dto.Book;
+import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.Method;
+import io.inverno.mod.web.annotation.Body;
+import io.inverno.mod.web.annotation.PathParam;
+import io.inverno.mod.web.annotation.WebController;
+import io.inverno.mod.web.annotation.WebRoute;
 
 @WebController(path = "/book")
 public interface BookResource {
@@ -3833,15 +3833,15 @@ This provides better modularity allowing to define the API in a dedicated module
 Generics are also supported, we can for instance create a generic `CRUD<T>` interface as follows:
 
 ```java
-package io.winterframework.example.app_web;
+package io.inverno.example.app_web;
 
 import java.util.Set;
 
-import io.winterframework.mod.base.resource.MediaTypes;
-import io.winterframework.mod.http.base.Method;
-import io.winterframework.mod.web.annotation.Body;
-import io.winterframework.mod.web.annotation.PathParam;
-import io.winterframework.mod.web.annotation.WebRoute;
+import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.Method;
+import io.inverno.mod.web.annotation.Body;
+import io.inverno.mod.web.annotation.PathParam;
+import io.inverno.mod.web.annotation.WebRoute;
 
 public interface CRUD<T> {
 
@@ -3865,12 +3865,12 @@ public interface CRUD<T> {
 And then create specific resources sharing the same interface:
 
 ```java
-package io.winterframework.example.app_web;
+package io.inverno.example.app_web;
 
 import java.util.Set;
 
-import io.winterframework.example.app_web.dto.Book;
-import io.winterframework.mod.web.annotation.WebController;
+import io.inverno.example.app_web.dto.Book;
+import io.inverno.mod.web.annotation.WebController;
 
 @WebController(path = "/book")
 public interface BookResource extends CRUD<Book> {
@@ -3892,13 +3892,13 @@ The book resource as we defined it doesn't seem very reactive, this statement is
 Luckily, we can transform previous interfaces to make them fully reactive:
 
 ```java
-package io.winterframework.example.app_web;
+package io.inverno.example.app_web;
 
-import io.winterframework.mod.base.resource.MediaTypes;
-import io.winterframework.mod.http.base.Method;
-import io.winterframework.mod.web.annotation.Body;
-import io.winterframework.mod.web.annotation.PathParam;
-import io.winterframework.mod.web.annotation.WebRoute;
+import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.Method;
+import io.inverno.mod.web.annotation.Body;
+import io.inverno.mod.web.annotation.PathParam;
+import io.inverno.mod.web.annotation.WebRoute;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -3935,13 +3935,13 @@ public interface CRUD<T> {
 We can then do the following in the book resource implementation class:
 
 ```java
-package io.winterframework.example.app_web;
+package io.inverno.example.app_web;
 
-import io.winterframework.core.annotation.Bean;
-import io.winterframework.example.app_web.dto.Book;
-import io.winterframework.mod.http.base.Status;
-import io.winterframework.mod.http.base.header.Headers;
-import io.winterframework.mod.web.WebExchange;
+import io.inverno.core.annotation.Bean;
+import io.inverno.example.app_web.dto.Book;
+import io.inverno.mod.http.base.Status;
+import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.web.WebExchange;
 import reactor.core.publisher.Mono;
 
 @Bean
@@ -4035,7 +4035,7 @@ Flux<T> getBooksByIsbn(@QueryParam String[] isbns);
 
 Note that the name of the method parameter actually specifies the name of the query parameter.
 
-> This contrasts with other RESTful API, such as JAX-RS, which requires to specify the parameter name, again, in the annotation. Since the Web Winter compiler plugin works at compile time, it has access to actual method parameter names defined in the source.
+> This contrasts with other RESTful API, such as JAX-RS, which requires to specify the parameter name, again, in the annotation. Since the Web Inverno compiler plugin works at compile time, it has access to actual method parameter names defined in the source.
 
 ###### Path parameter
 
@@ -4228,7 +4228,7 @@ public Publisher<WebResponseBody.SseEncoder.Event<BookEvent>> getBookEvents(@Sse
 
 #### Composite Web module
 
-The Web Winter compiler plugin generates a single Web router configurer bean aggregating all route definitions specified in Web controllers beans in the module. When the module composes the *web* module, this bean is then plugged in the *web* module to configure the Web server router. 
+The Web Inverno compiler plugin generates a single Web router configurer bean aggregating all route definitions specified in Web controllers beans in the module. When the module composes the *web* module, this bean is then plugged in the *web* module to configure the Web server router. 
 
 Now if the module doesn't compose the *web* module, the Web router configurer bean is simply exposed by the module waiting for the module to be composed within other modules until a top module eventually composes the *web* module. 
 
@@ -4237,7 +4237,7 @@ This raises two issues:
 - First if multiple modules exposing web router configurers are composed together with the *web* module, we'll end up with dependency injection conflicts since multiple web router configurer beans can be wired to the *web* module. Selecting one of them with a `@Wire` annotation doesn't really solve the problem since we expect all routes to be configured in the Web server router.
 - Then if such module is composed in another module defining other Web controllers, we still need to expose one Web router configurer providing all route definitions to a top module composing the *web* module.
 
-In order to solve these issues, the Web Winter compiler plugin aggregates all Web router configurer beans annotated with `@WebRoutes` into the generated Web router configurer of the module so that it can be used to configure all defined routes. This includes Web router configurer exposed in component modules as well as user defined Web router configurer beans within the module.
+In order to solve these issues, the Web Inverno compiler plugin aggregates all Web router configurer beans annotated with `@WebRoutes` into the generated Web router configurer of the module so that it can be used to configure all defined routes. This includes Web router configurer exposed in component modules as well as user defined Web router configurer beans within the module.
 
 A generated Web router configurer is always annotated with a `@WebRoutes` annotation specifying the Web routes it configures. For instance, the Web router configurer generated for the module defining the book Web controller looks like:
 
@@ -4250,7 +4250,7 @@ A generated Web router configurer is always annotated with a `@WebRoutes` annota
     @WebRoute(path = { "/book/{id}" }, method = { Method.DELETE })
 })
 @Bean
-public final class WebRouterConfigurer implements io.winterframework.mod.web.WebRouterConfigurer<WebExchange> {
+public final class WebRouterConfigurer implements io.inverno.mod.web.WebRouterConfigurer<WebExchange> {
     ...
 }
 ```
@@ -4262,43 +4262,43 @@ Now let's imagine we have created a modular Web application with a *book* module
 The module descriptors for each of these modules should look like:
 
 ```java
-@io.winterframework.core.annotation.Module( excludes = { "io.winterframework.mod.web" } )
-module io.winterframework.example.web_modular.admin {
-    requires io.winterframework.core;
-    requires io.winterframework.mod.web;
+@io.inverno.core.annotation.Module( excludes = { "io.inverno.mod.web" } )
+module io.inverno.example.web_modular.admin {
+    requires io.inverno.core;
+    requires io.inverno.mod.web;
 
-    exports io.winterframework.example.web_modular.admin to io.winterframework.example.web_modular.app;
+    exports io.inverno.example.web_modular.admin to io.inverno.example.web_modular.app;
 }
 ```
 ```java
-@io.winterframework.core.annotation.Module( excludes = { "io.winterframework.mod.web" } )
-module io.winterframework.example.web_modular.book {
-    requires io.winterframework.core;
-    requires io.winterframework.mod.web;
+@io.inverno.core.annotation.Module( excludes = { "io.inverno.mod.web" } )
+module io.inverno.example.web_modular.book {
+    requires io.inverno.core;
+    requires io.inverno.mod.web;
     
-    exports io.winterframework.example.web_modular.book to io.winterframework.example.web_modular.app;
-    exports io.winterframework.example.web_modular.book.dto to com.fasterxml.jackson.databind;
+    exports io.inverno.example.web_modular.book to io.inverno.example.web_modular.app;
+    exports io.inverno.example.web_modular.book.dto to com.fasterxml.jackson.databind;
 }
 ```
 ```java
-@io.winterframework.core.annotation.Module
-module io.winterframework.example.web_modular.app {
-    requires io.winterframework.mod.boot;
-    requires io.winterframework.mod.web;
+@io.inverno.core.annotation.Module
+module io.inverno.example.web_modular.app {
+    requires io.inverno.mod.boot;
+    requires io.inverno.mod.web;
     
-    requires io.winterframework.example.web_modular.admin;
-    requires io.winterframework.example.web_modular.book;
+    requires io.inverno.example.web_modular.admin;
+    requires io.inverno.example.web_modular.book;
 }
 ```
 
-The first thing to notice is that the *web* module is excluded from *admin* and *book* modules since we don't want to start a Web server in these modules, we only need the Web API to define Web controllers and generate Web router configurer beans. As a consequence, the *boot* module which provides converters and net service required to create and start the *web* module is also not required but the `io.winterframework.core` module is still required. Finally we must export packages containing the generated module classes to the *app* module so it can compose them.
+The first thing to notice is that the *web* module is excluded from *admin* and *book* modules since we don't want to start a Web server in these modules, we only need the Web API to define Web controllers and generate Web router configurer beans. As a consequence, the *boot* module which provides converters and net service required to create and start the *web* module is also not required but the `io.inverno.core` module is still required. Finally we must export packages containing the generated module classes to the *app* module so it can compose them.
 
 The *admin* and *book* modules should compile just fine resulting in two Web router configurer beans being generated and exposed in each module. But the compilation of *app* module should raise some dependency injection errors since multiple Web router configurer beans exist whereas only one can be wired to the *web* module. There are actually three Web configurer beans, how so? There are those exposed by the *admin* and *book* modules and one Web router configurer bean generated in the *app* module and aggregating the previous two. In order to solve the conflict, we should then define the following explicit wire in the *app* module:
 
 ```java
-@io.winterframework.core.annotation.Module
-@io.winterframework.core.annotation.Wire(beans="io.winterframework.example.web_modular.app:webRouterConfigurer", into="io.winterframework.mod.web:webRouterConfigurer")
-module io.winterframework.example.web_modular.app {
+@io.inverno.core.annotation.Module
+@io.inverno.core.annotation.Wire(beans="io.inverno.example.web_modular.app:webRouterConfigurer", into="io.inverno.mod.web:webRouterConfigurer")
+module io.inverno.example.web_modular.app {
     ...
 }
 ```
@@ -4309,11 +4309,11 @@ The same principles applies if multiple modules like *admin* or *book* are casca
 
 #### Automatic OpenAPI specifications
 
-Besides facilitating the development of REST and Web resources in general, Web controllers also simplify documentation. The Web Winter compiler plugin can be setup to generate [Open API][open-api] specifications from the Web controller classes defined in a module and their JavaDoc comments. 
+Besides facilitating the development of REST and Web resources in general, Web controllers also simplify documentation. The Web Inverno compiler plugin can be setup to generate [Open API][open-api] specifications from the Web controller classes defined in a module and their JavaDoc comments. 
 
 > Writing JavaDoc comments is something natural when developing in the Java language, with this approach, a REST API can be documented just as you document a Java class or method, documentation is written once and can be used in both Java and other languages and technologies using the generated Open API specification.
 
-In order to activate this feature the `winter.web.generateOpenApiDefinition` annotation processor option must be enabled when compiling a Web module. This can be done on the command line: `java -Awinter.web.generateOpenApiDefinition=true ...` or in the Maven compiler plugin configuration in the build descriptor:
+In order to activate this feature the `inverno.web.generateOpenApiDefinition` annotation processor option must be enabled when compiling a Web module. This can be done on the command line: `java -Ainverno.web.generateOpenApiDefinition=true ...` or in the Maven compiler plugin configuration in the build descriptor:
 
 ```java
 <project>
@@ -4325,7 +4325,7 @@ In order to activate this feature the `winter.web.generateOpenApiDefinition` ann
                     <artifactId>maven-compiler-plugin</artifactId>
                     <configuration>
                         <compilerArgs combine.children="append">
-                            <arg>-Awinter.web.generateOpenApiDefinition=true</arg>
+                            <arg>-Ainverno.web.generateOpenApiDefinition=true</arg>
                         </compilerArgs>
                     </configuration>
                 </plugin>
@@ -4335,7 +4335,7 @@ In order to activate this feature the `winter.web.generateOpenApiDefinition` ann
 </project>
 ```
 
-The compiler then generates an Open API specification in `META-INF/winter/web/openapi.yml` for any module defining one or more Web controllers.
+The compiler then generates an Open API specification in `META-INF/inverno/web/openapi.yml` for any module defining one or more Web controllers.
 
 The previous [book resource](#web-controller) could then be documented as follows:
 
@@ -4405,7 +4405,7 @@ public class BookResource {
 
 Note that just like the `javadoc` tool, the Web compiler plugin takes inheritance into account when resolving JavaDoc comments and as a result, it is possible to define JavaDoc comments in an interface and enrich or override them in the implementation classes.
 
-By default, the normal HTTP status code responded by a route is assumed to be `200` but it is possible to specify a custom status code using the `@winter.web.status` tag. For instance the book creation route which actually responds with a `201` status should be documented as follows:
+By default, the normal HTTP status code responded by a route is assumed to be `200` but it is possible to specify a custom status code using the `@inverno.web.status` tag. For instance the book creation route which actually responds with a `201` status should be documented as follows:
 
 ```java
 public class BookResource {
@@ -4416,7 +4416,7 @@ public class BookResource {
      * @param book a book
      * @param exchange the web exchange
      * 
-     * @return {@winter.web.status 201} the book resource has been successfully created
+     * @return {@inverno.web.status 201} the book resource has been successfully created
      * @throws BadRequestException A book with the same ISBN reference already exist
      */
     @WebRoute(method = Method.POST, consumes = MediaTypes.APPLICATION_JSON)
@@ -4436,19 +4436,19 @@ For instance, we can describe the API exposed by the *book* module in the module
 
 ```java
 /**
- * This is a sample Book API which demonstrates Winter Web module capabilities.
+ * This is a sample Book API which demonstrates Inverno Web module capabilities.
  * 
- * @author <a href="mailto:jeremy.kuhn@winterframework.io">Jeremy Kuhn</a>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * 
  * @version 1.2.3
  */
-@io.winterframework.core.annotation.Module( excludes = { "io.winterframework.mod.web" } )
-module io.winterframework.example.web_modular.book {
-    requires io.winterframework.core;
-    requires io.winterframework.mod.web;
+@io.inverno.core.annotation.Module( excludes = { "io.inverno.mod.web" } )
+module io.inverno.example.web_modular.book {
+    requires io.inverno.core;
+    requires io.inverno.mod.web;
     
-    exports io.winterframework.example.web_modular.book to io.winterframework.example.web_modular.app;
-    exports io.winterframework.example.web_modular.book.dto to com.fasterxml.jackson.databind;
+    exports io.inverno.example.web_modular.book to io.inverno.example.web_modular.app;
+    exports io.inverno.example.web_modular.book.dto to com.fasterxml.jackson.databind;
 }
 ```
 
@@ -4458,18 +4458,18 @@ If we build and run the [modular book application](#composite-web-module) and ac
 
 <img class="shadow mb-4" src="img/swaggerUI_root.png" alt="General Swagger UI"/>
 
-It is also possible to target a single specification by specifying the module name in the URI, for instance `http://locahost:8080/open-api/io.winterframework.example.web_modular.book`:
+It is also possible to target a single specification by specifying the module name in the URI, for instance `http://locahost:8080/open-api/io.inverno.example.web_modular.book`:
 
 <img class="shadow mb-4" src="img/swaggerUI_module.png" alt="Module Swagger UI"/>
 
 Finally, Open API specifications formatted in [YAML][yaml] can be retrieved as follows:
 
 ```plaintext
-$ curl http://locahost:8080/open-api/io.winterframework.example.web_modular.admin
+$ curl http://locahost:8080/open-api/io.inverno.example.web_modular.admin
 
 openapi: 3.0.3
 info:
-    title: 'io.winterframework.example.web_modular.admin'
+    title: 'io.inverno.example.web_modular.admin'
     version: ''
 ...
 ```

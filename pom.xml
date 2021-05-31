@@ -19,22 +19,22 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>io.winterframework</groupId>
-		<artifactId>winter-oss-parent</artifactId>
+		<groupId>io.inverno</groupId>
+		<artifactId>inverno-oss-parent</artifactId>
 		<version>2-SNAPSHOT</version>
 	</parent>
-	<artifactId>winter-mods-root</artifactId>
+	<artifactId>inverno-mods-root</artifactId>
 	<version>1.1.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	
-	<name>winter-mods-root</name>
-	<description>The Winter framework modules are a collection of components for building fully reactive applications</description>
+	<name>inverno-mods-root</name>
+	<description>The Inverno framework modules are a collection of components for building fully reactive applications</description>
 	<inceptionYear>2020</inceptionYear>
 	<organization>
-		<name>Winter Framework IO</name>
-		<url>https://winterframework.io</url>
+		<name>Inverno Framework</name>
+		<url>https://inverno.io</url>
 	</organization>
-	<url>https://github.com/winterframework-io/winter</url>
+	<url>https://github.com/inverno-io/inverno-mods</url>
 
 	<licenses>
 		<license>
@@ -47,19 +47,19 @@
 		<developer>
 			<id>jkuhn</id>
 			<name>Jeremy Kuhn</name>
-			<email>jeremy.kuhn@winterframework.io</email>
+			<email>jeremy.kuhn@inverno.io</email>
 		</developer>
 	</developers>
 
 	<scm>
-		<url>https://github.com/winterframework-io/winter-mods.git</url>
-		<connection>scm:git:git://github.com/winterframework-io/winter-mods.git</connection>
-		<developerConnection>scm:git:git@github.com:winterframework-io/winter-mods.git</developerConnection>
+		<url>https://github.com/inverno-io/inverno-mods.git</url>
+		<connection>scm:git:git://github.com/inverno-io/inverno-mods.git</connection>
+		<developerConnection>scm:git:git@github.com:inverno-io/inverno-mods.git</developerConnection>
 	</scm>
 
 	<issueManagement>
 		<system>GitHub</system>
-		<url>https://github.com/winterframework-io/winter-mods/issues</url>
+		<url>https://github.com/inverno-io/inverno-mods/issues</url>
 	</issueManagement>
 
 	<distributionManagement>
@@ -78,42 +78,42 @@
 		<maven.compiler.source>9</maven.compiler.source>
 		<maven.compiler.target>9</maven.compiler.target>
 
-		<version.winter>1.2.0-SNAPSHOT</version.winter>
+		<version.inverno>1.2.0-SNAPSHOT</version.inverno>
 	</properties>
 
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
-				<groupId>io.winterframework</groupId>
-				<artifactId>winter-core</artifactId>
-				<version>${version.winter}</version>
+				<groupId>io.inverno</groupId>
+				<artifactId>inverno-core</artifactId>
+				<version>${version.inverno}</version>
 			</dependency>
 			<dependency>
-				<groupId>io.winterframework</groupId>
-				<artifactId>winter-core-annotation</artifactId>
-				<version>${version.winter}</version>
+				<groupId>io.inverno</groupId>
+				<artifactId>inverno-core-annotation</artifactId>
+				<version>${version.inverno}</version>
 			</dependency>
 			<dependency>
-				<groupId>io.winterframework</groupId>
-				<artifactId>winter-core-compiler</artifactId>
-				<version>${version.winter}</version>
+				<groupId>io.inverno</groupId>
+				<artifactId>inverno-core-compiler</artifactId>
+				<version>${version.inverno}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
 
 	<modules>
 		<!-- Compilers must be built first -->
-		<module>winter-configuration-compiler</module>
-		<module>winter-web-compiler</module>
+		<module>inverno-configuration-compiler</module>
+		<module>inverno-web-compiler</module>
 		
-		<module>winter-base</module>
-		<module>winter-boot</module>
-		<module>winter-configuration</module>
-		<module>winter-http-base</module>
-		<module>winter-http-server</module>
-		<module>winter-web</module>
+		<module>inverno-base</module>
+		<module>inverno-boot</module>
+		<module>inverno-configuration</module>
+		<module>inverno-http-base</module>
+		<module>inverno-http-server</module>
+		<module>inverno-web</module>
 		
-		<module>winter-mods-test</module>
+		<module>inverno-mods-test</module>
 	</modules>
 	
 	<build>
@@ -125,15 +125,15 @@
 					<configuration>
 						<annotationProcessorPaths combine.children="append">
 							<path>
-								<groupId>io.winterframework</groupId>
-								<artifactId>winter-core-compiler</artifactId>
-								<version>${version.winter}</version>
+								<groupId>io.inverno</groupId>
+								<artifactId>inverno-core-compiler</artifactId>
+								<version>${version.inverno}</version>
 							</path>
 						</annotationProcessorPaths>
 						<compilerArgs>
 							<arg>--module-version=${project.version}</arg>
-							<arg>-Awinter.verbose=true</arg>
-							<arg>-Awinter.debug=true</arg>
+							<arg>-Ainverno.verbose=true</arg>
+							<arg>-Ainverno.debug=true</arg>
 						</compilerArgs>
 					</configuration>
 				</plugin>
@@ -143,7 +143,7 @@
 	
 	<profiles>
 		<profile>
-			<id>io.winterframework.prerelease</id>
+			<id>io.inverno.prerelease</id>
 			<build>
 				<plugins>
 					<plugin>
@@ -196,7 +196,7 @@
 			</build>
 		</profile>
 		<profile>
-			<id>io.winterframework.release</id>
+			<id>io.inverno.release</id>
 			<build>
 				<plugins>
 					<plugin>

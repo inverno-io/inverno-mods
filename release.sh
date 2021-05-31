@@ -22,12 +22,12 @@ if (( $# > 0 ))
 	then
 		echo "===== Releasing: $1 ====="
 		mvn -o versions:update-parent -DgenerateBackupPoms=false
-		mvn -o versions:update-property -DgenerateBackupPoms=false -Dproperty=version.winter
+		mvn -o versions:update-property -DgenerateBackupPoms=false -Dproperty=version.inverno
 		mvn versions:set -DgenerateBackupPoms=false -DnewVersion=$1
 		git commit -a -m "Release $1"
 		git tag -a $1 -m "Release $1"
 		mvn clean install
-		mvn -pl '!winter-mods-test' clean deploy -Dmaven.test.skip=true -Pio.winterframework.release
+		mvn -pl '!inverno-mods-test' clean deploy -Dmaven.test.skip=true -Pio.inverno.release
 fi
 
 if (( $# == 2 ))
@@ -38,7 +38,7 @@ if (( $# == 2 ))
 		fi
 		echo "===== New Snapshot: $2 ====="
 		mvn -o versions:update-parent -DgenerateBackupPoms=false -DallowSnapshots=true
-		mvn -o versions:update-property -DgenerateBackupPoms=false -Dproperty=version.winter -DallowSnapshots=true
+		mvn -o versions:update-property -DgenerateBackupPoms=false -Dproperty=version.inverno -DallowSnapshots=true
 		mvn versions:set -DgenerateBackupPoms=false -DnewVersion=$2
 		git commit -a -m "$2"
 fi
