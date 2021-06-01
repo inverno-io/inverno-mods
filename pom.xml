@@ -21,10 +21,10 @@
 	<parent>
 		<groupId>io.inverno</groupId>
 		<artifactId>inverno-oss-parent</artifactId>
-		<version>2-SNAPSHOT</version>
+		<version>2</version>
 	</parent>
 	<artifactId>inverno-mods-root</artifactId>
-	<version>1.1.0-SNAPSHOT</version>
+	<version>1.1.0</version>
 	<packaging>pom</packaging>
 	
 	<name>inverno-mods-root</name>
@@ -78,7 +78,7 @@
 		<maven.compiler.source>9</maven.compiler.source>
 		<maven.compiler.target>9</maven.compiler.target>
 
-		<version.inverno>1.2.0-SNAPSHOT</version.inverno>
+		<version.inverno>1.2.0</version.inverno>
 	</properties>
 
 	<dependencyManagement>
