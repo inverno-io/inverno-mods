@@ -61,5 +61,9 @@ public enum Method {
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.8">RFC 7231 Section 4.3.8</a>
 	 */
-	TRACE;
+	TRACE,
+	/**
+	 * Describes an unknown or unsupported HTTP method
+	 */
+	UNKNOWN;
 }

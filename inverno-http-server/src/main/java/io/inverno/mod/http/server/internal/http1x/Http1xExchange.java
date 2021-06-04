@@ -39,6 +39,7 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
@@ -205,25 +206,35 @@ public class Http1xExchange extends AbstractExchange {
 	
 	@Override
 	protected void onCompleteEmpty() {
-		// empty response or file region
 		Http1xResponse http1xResponse = (Http1xResponse)this.response;
 		Http1xResponseHeaders headers = http1xResponse.headers();
 		
-		http1xResponse.body().getFileRegionData().ifPresentOrElse(
-			fileRegionData -> {
-				// Headers are not written here since we have an empty response
-				this.encoder.writeFrame(this.context, this.createHttpResponse(headers, http1xResponse.trailers()), this.context.voidPromise());
-				headers.setWritten(true);
-				fileRegionData.subscribe(new FileRegionDataSubscriber());
-			},
-			() -> {
-				// just write headers in a fullHttpResponse
-				// Headers are not written here since we have an empty response
-				this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), this.context.voidPromise());
-				headers.setWritten(true);
-				this.handler.exchangeComplete(this.context);
+		if(this.request.getMethod().equals(Method.HEAD)) {
+			if(headers.getContentLength() == null && !headers.contains(Headers.NAME_TRANSFER_ENCODING)) {
+				headers.set(Headers.NAME_TRANSFER_ENCODING, Headers.VALUE_CHUNKED);
 			}
-		);
+			this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), this.context.voidPromise());
+			headers.setWritten(true);
+			this.handler.exchangeComplete(this.context);
+		}
+		else {
+			// empty response or file region
+			http1xResponse.body().getFileRegionData().ifPresentOrElse(
+				fileRegionData -> {
+					// Headers are not written here since we have an empty response
+					this.encoder.writeFrame(this.context, this.createHttpResponse(headers, http1xResponse.trailers()), this.context.voidPromise());
+					headers.setWritten(true);
+					fileRegionData.subscribe(new FileRegionDataSubscriber());
+				},
+				() -> {
+					// just write headers in a fullHttpResponse
+					// Headers are not written here since we have an empty response
+					this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), this.context.voidPromise());
+					headers.setWritten(true);
+					this.handler.exchangeComplete(this.context);
+				}
+			);
+		}
 	}
 	
 	@Override

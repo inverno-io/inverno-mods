@@ -20,6 +20,7 @@ import org.reactivestreams.Subscription;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.EventExecutor;
+import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
@@ -267,7 +268,14 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			this.singleChunk = value;
 		}
 		else {
-			this.executeInEventLoop(() -> this.onNextMany(value));
+			if(this.request.getMethod().equals(Method.HEAD)) {
+				value.release();
+				this.executeInEventLoop(this::onCompleteEmpty);
+				this.dispose();
+			}
+			else {
+				this.executeInEventLoop(() -> this.onNextMany(value));
+			}
 		}
 	}
 	
@@ -339,9 +347,14 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 		else if(this.singleChunk != null) {
 			// single chunk response
-			this.executeInEventLoop(() -> {
-				this.onCompleteSingle(this.singleChunk);
-			});
+			if(this.request.getMethod().equals(Method.HEAD)) {
+				this.executeInEventLoop(this::onCompleteEmpty);
+			}
+			else {
+				this.executeInEventLoop(() -> {
+					this.onCompleteSingle(this.singleChunk);
+				});
+			}
 		}
 		else {
 			this.executeInEventLoop(this::onCompleteMany);

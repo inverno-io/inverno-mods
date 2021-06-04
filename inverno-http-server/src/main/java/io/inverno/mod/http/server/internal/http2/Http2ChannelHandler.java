@@ -189,7 +189,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 			streamExchange.start(new AbstractExchange.Handler() {
 				@Override
 				public void exchangeError(ChannelHandlerContext ctx, Throwable t) {
-					LOGGER.error(t);
+					LOGGER.error("", t);
 					Http2ChannelHandler.this.resetStream(ctx, streamId, Http2Error.INTERNAL_ERROR.code(), ctx.voidPromise());
 				}
 			});

@@ -92,7 +92,12 @@ public class Http1xRequest extends AbstractRequest {
 	@Override
 	public Method getMethod() {
 		if(this.method == null) {
-			this.method = Method.valueOf(this.httpRequest.method().name());
+			try {
+				this.method = Method.valueOf(this.httpRequest.method().name());
+			}
+			catch (IllegalArgumentException e) {
+				this.method = Method.UNKNOWN;
+			}
 		}
 		return method;
 	}

@@ -73,7 +73,16 @@ public class Http2Request extends AbstractRequest {
 	@Override
 	public Method getMethod() {
 		if(this.method == null) {
-			this.method = this.requestHeaders.get(Headers.NAME_PSEUDO_METHOD).map(Method::valueOf).orElse(null);
+			this.method = this.requestHeaders.get(Headers.NAME_PSEUDO_METHOD)
+				.map(methodString -> {
+					try {
+						return Method.valueOf(methodString);
+					}
+					catch(IllegalArgumentException e) {
+						return Method.UNKNOWN;
+					}
+				})
+				.orElse(null);
 		}
 		return method;
 	}

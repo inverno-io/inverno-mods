@@ -234,7 +234,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	
 	@Override
 	public void exchangeError(ChannelHandlerContext ctx, Throwable t) {
-		LOGGER.error(t);
+		LOGGER.error("", t);
 		
 		// If we get there it means we weren't able to properly handle the error before
 		if(this.flush) {

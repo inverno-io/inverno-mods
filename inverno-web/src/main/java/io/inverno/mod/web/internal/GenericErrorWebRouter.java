@@ -169,7 +169,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	@Override
 	public void handle(ErrorExchange<Throwable> exchange) throws HttpException {
 		ErrorWebRouter.super.handle(exchange);
-		LOGGER.error(exchange.getError());
+		LOGGER.error("", exchange.getError());
 		this.firstLink.handle(new GenericErrorWebExchange(exchange, new GenericWebResponse(exchange.response(), this.dataConversionService)));
 	}
 	
