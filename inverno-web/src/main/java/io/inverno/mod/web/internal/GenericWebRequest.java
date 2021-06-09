@@ -136,4 +136,14 @@ class GenericWebRequest implements WebRequest {
 		}
 		return this.webRequestBody;
 	}
+
+	@Override
+	public String getProtocol() {
+		return this.request.getProtocol();
+	}
+
+	@Override
+	public SocketAddress getLocalAddress() {
+		return this.request.getLocalAddress();
+	}
 }

@@ -63,6 +63,15 @@ public interface Request {
 	
 	/**
 	 * <p>
+	 * Returns the protocol of the request (eg. HTTP/1.1).
+	 * </p>
+	 * 
+	 * @return the protocol
+	 */
+	String getProtocol();
+	
+	/**
+	 * <p>
 	 * Returns the HTTP method of the request.
 	 * </p>
 	 * 
@@ -147,6 +156,15 @@ public interface Request {
 	 * @return a URI query component
 	 */
 	String getQuery();
+	
+	/**
+	 * <p>
+	 * Returns the socket address of the interface on which the request was received.
+	 * </p>
+	 * 
+	 * @return a socket address
+	 */
+	SocketAddress getLocalAddress();
 	
 	/**
 	 * <p>

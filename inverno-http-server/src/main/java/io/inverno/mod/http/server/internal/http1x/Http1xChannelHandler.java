@@ -15,24 +15,6 @@
  */
 package io.inverno.mod.http.server.internal.http1x;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.DecoderResult;
-import io.netty.handler.codec.TooLongFrameException;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.HttpContent;
-import io.netty.handler.codec.http.HttpObject;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpVersion;
-import io.netty.handler.codec.http.LastHttpContent;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
@@ -42,6 +24,20 @@ import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
+import io.netty.handler.codec.TooLongFrameException;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.LastHttpContent;
 
 /**
  * <p>
@@ -58,8 +54,6 @@ import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
  */
 public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1xConnectionEncoder, AbstractExchange.Handler {
 
-	private static final Logger LOGGER = LogManager.getLogger(Http1xChannelHandler.class);
-	
 	private Http1xExchange requestingExchange;
 	private Http1xExchange respondingExchange;
 	
@@ -234,8 +228,6 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	
 	@Override
 	public void exchangeError(ChannelHandlerContext ctx, Throwable t) {
-		LOGGER.error("", t);
-		
 		// If we get there it means we weren't able to properly handle the error before
 		if(this.flush) {
 			ctx.flush();

@@ -15,16 +15,27 @@
  */
 package io.inverno.mod.http.server.internal;
 
+import java.net.InetSocketAddress;
+import java.util.function.Supplier;
+
+import org.apache.commons.text.StringEscapeUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
+import org.apache.logging.log4j.message.MultiformatMessage;
+import org.apache.logging.log4j.util.Strings;
 import org.reactivestreams.Subscription;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.concurrent.EventExecutor;
+import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeHandler;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.concurrent.EventExecutor;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.SignalType;
 
@@ -48,6 +59,10 @@ import reactor.core.publisher.SignalType;
  */
 public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implements Exchange {
 
+	private static final Logger LOGGER = LogManager.getLogger(AbstractExchange.class);
+	private static final Marker MARKER_ERROR = MarkerManager.getMarker("HTTP_ERROR");
+	private static final Marker MARKER_ACCESS = MarkerManager.getMarker("HTTP_ACCESS");
+	
 	protected final ChannelHandlerContext context;
 	protected final EventExecutor contextExecutor;
 	
@@ -59,8 +74,8 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 
 	protected Handler handler;
 	
-	private int transferedLength;
-	
+	protected int transferedLength;
+
 	protected boolean single;
 	private ByteBuf singleChunk;
 	
@@ -149,14 +164,16 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			this.rootHandler.handle(this);
 		}
 		catch(Throwable throwable) {
+			this.logError(() -> "Exchange handler error", throwable);
 			// We need to create a new error exchange each time we try to handle the error in order to have a fresh response 
 			ErrorExchange<Throwable> errorExchange = this.createErrorExchange(throwable);
 			try {
 				this.errorHandler.handle(errorExchange);
 			} 
 			catch (Throwable t) {
-				// TODO we should probably log the error handler error
+				this.logError(() -> "ErrorExchange handler error", t);
 				errorExchange = this.createErrorExchange(throwable);
+				// TODO This may fail as well what do we do in such situations?
 				LAST_RESORT_ERROR_HANDLER.handle(errorExchange);
 			}
 			finally {
@@ -304,6 +321,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		if(this.response.isHeadersWritten()) {
 			this.executeInEventLoop(() -> { 
 				this.onCompleteWithError(throwable);
+				this.logError(() -> "Exchange processing error", throwable);
 			});
 		}
 		else {
@@ -313,8 +331,9 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				this.errorHandler.handle(errorExchange);
 			} 
 			catch (Throwable t) {
-				// TODO we should probably log the error handler error
+				this.logError(() -> "ErrorExchange handler error", t);
 				errorExchange = this.createErrorExchange(throwable);
+				// TODO This may fail as well what do we do in such situations?
 				LAST_RESORT_ERROR_HANDLER.handle(errorExchange);
 			}
 			finally {
@@ -343,21 +362,191 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			if(this.response.headers().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
 				this.response.headers().contentLength(0);
 			}
-			this.executeInEventLoop(this::onCompleteEmpty);
+			this.executeInEventLoop(() -> {
+				this.onCompleteEmpty();
+				this.logAccess();
+			});
 		}
 		else if(this.singleChunk != null) {
 			// single chunk response
 			if(this.request.getMethod().equals(Method.HEAD)) {
-				this.executeInEventLoop(this::onCompleteEmpty);
+				this.executeInEventLoop(() -> {
+					this.onCompleteEmpty();
+					this.logAccess();
+				});
 			}
 			else {
 				this.executeInEventLoop(() -> {
 					this.onCompleteSingle(this.singleChunk);
+					this.logAccess();
 				});
 			}
 		}
 		else {
-			this.executeInEventLoop(this::onCompleteMany);
+			this.executeInEventLoop(() -> {
+				this.onCompleteMany();
+				this.logAccess();
+			});
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Logs an access log message.
+	 * </p>
+	 */
+	private void logAccess() {
+		// HTTP access
+		/*LOGGER.info(MARKER_ACCESS, () -> {
+			InetSocketAddress inetRemoteAddress = (InetSocketAddress)this.request.getRemoteAddress();
+//			InetSocketAddress inetLocalAddress = (InetSocketAddress)this.request.getLocalAddress();
+			String method = this.request.getMethod().name();
+			StringMapMessage accessLogMessage = new StringMapMessage()
+//				.with("remoteAddress", inetRemoteAddress.getAddress().getHostAddress()) // %a - Remote IP address
+				.with("remoteHost", inetRemoteAddress.getAddress().getHostName()) // %h - Remote host name
+//				.with("localAddress", inetLocalAddress.getAddress().getHostAddress()) // %A - Local IP address
+//				.with("localPort", Integer.toString(inetLocalAddress.getPort())) // %p - Local port
+				.with("bytes", Integer.toString(this.transferedLength)) // %B - Bytes sent, excluding HTTP headers
+//				.with("protocol", this.request.getProtocol()) // %H - Request protocol
+//				.with("remoteLogicalUsername", "-") // %l - Remote logical username from identd (always returns '-')
+//				.with("method", method) // %m - Request method
+//				.with("query", this.request.getQuery()) // %q - Query string (prepended with a '?' if it exists, otherwise an empty string
+				.with("request", method + " " + this.request.getPath()) // %r - First line of the request
+				.with("status", Integer.toString(this.response.headers().getStatusCode())) // %s - HTTP status code of the response
+//				.with("path", this.request.getPathAbsolute()) // %U - Requested URL path
+//				.with("authority", this.request.getAuthority()) // %v - Local server name
+				.with("referer", this.request.headers().get(Headers.NAME_REFERER).orElse("")) // %{Referer}i - referer
+				.with("userAgent", this.request.headers().get(Headers.NAME_USER_AGENT).orElse("")); // %{User-agent}i - user agent
+			
+			return accessLogMessage;
+		});*/
+		
+		LOGGER.info(MARKER_ACCESS, () -> new AccessLogMessage());
+	}
+	
+	/**
+	 * <p>
+	 * Access log message
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.1.1
+	 */
+	private class AccessLogMessage implements MultiformatMessage {
+
+		private static final long serialVersionUID = -8367544116216876788L;
+		
+		private static final String JSON_FORMAT = "JSON";
+		
+		@Override
+		public String getFormat() {
+			return Strings.EMPTY;
+		}
+
+		@Override
+		public Object[] getParameters() {
+			return new Object[] {
+				this.getRemoteAddress(),
+				this.getRequest(),
+				this.getStatus(),
+				this.getTransferedBytes(),
+				this.getReferer(),
+				this.getUserAgent()
+			};
+		}
+
+		@Override
+		public Throwable getThrowable() {
+			return null;
+		}
+		
+		@Override
+		public String getFormattedMessage() {
+			return this.asString();
+		}
+
+		@Override
+		public String getFormattedMessage(String[] formats) {
+			for(String format : formats) {
+				if(format.equalsIgnoreCase(JSON_FORMAT)) {
+					return this.asJson();
+				}
+			}
+			return this.asString();
+		}
+
+		@Override
+		public String[] getFormats() {
+			return new String[] { "JSON" };
+		}
+		
+		private String getRemoteAddress() {
+			return ((InetSocketAddress)AbstractExchange.this.request.getRemoteAddress()).getAddress().getHostAddress();
+		}
+		
+		private String getRequest() {
+			return new StringBuilder().append(AbstractExchange.this.request.getMethod().name()).append(" ").append(AbstractExchange.this.request.getPath()).toString();
+		}
+		
+		private int getStatus() {
+			return AbstractExchange.this.response.headers().getStatusCode();
+		}
+		
+		private int getTransferedBytes() {
+			return AbstractExchange.this.transferedLength;
+		}
+		
+		private String getReferer() {
+			return AbstractExchange.this.request.headers().get(Headers.NAME_REFERER).orElse("");
+		}
+		
+		private String getUserAgent() {
+			return AbstractExchange.this.request.headers().get(Headers.NAME_USER_AGENT).orElse("");
+		}
+		
+		private String asString() {
+			StringBuilder message = new StringBuilder();
+			message.append(((InetSocketAddress)AbstractExchange.this.request.getRemoteAddress()).getAddress().getHostName()).append(" ");
+			message.append("\"").append(AbstractExchange.this.request.getMethod().name()).append(" ").append(AbstractExchange.this.request.getPath()).append("\" ");
+			message.append(AbstractExchange.this.response.headers().getStatusCode()).append(" ");
+			message.append(AbstractExchange.this.transferedLength).append(" ");
+			message.append("\"").append(AbstractExchange.this.request.headers().get(Headers.NAME_REFERER).orElse("")).append("\" ");
+			message.append("\"").append(AbstractExchange.this.request.headers().get(Headers.NAME_USER_AGENT).orElse("")).append("\" ");
+			
+			return message.toString();
+		}
+		
+		private String asJson() {
+			StringBuilder message = new StringBuilder();
+			message.append("{");
+			message.append("\"remoteAddress\":\"").append(this.getRemoteAddress()).append("\",");
+			message.append("\"request\":\"").append(StringEscapeUtils.escapeJson(this.getRequest())).append("\",");
+			message.append("\"status\":").append(this.getStatus()).append(",");
+			message.append("\"bytes\":").append(this.getTransferedBytes()).append(",");
+			message.append("\"referer\":\"").append(StringEscapeUtils.escapeJson(this.getReferer())).append("\",");
+			message.append("\"userAgent\":\"").append(StringEscapeUtils.escapeJson(this.getUserAgent())).append("\"");
+			message.append("}");
+			
+			return message.toString();
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Logs an error.
+	 * </p>
+	 * 
+	 * @param messageSupplier the message supplier
+	 * @param throwable the error
+	 */
+	private void logError(Supplier<?> messageSupplier, Throwable throwable) {
+		if(throwable instanceof HttpException) {
+			// HTTP error: typically recoverable HTTP exceptions returning a proper error to the client
+			LOGGER.error(MARKER_ERROR, messageSupplier, throwable);
+		}
+		else {
+			// non HTTP error: typically unrecoverable unchecked exceptions 
+			LOGGER.error(() -> "Exchange handler error", throwable);
 		}
 	}
 	
@@ -446,11 +635,15 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			// If we get there it means we can no longer process anything
 			// TODO we should probably log the error handler error
 			AbstractExchange.this.onCompleteWithError(this.originalError);
+			AbstractExchange.this.logError(() -> "Exchange processing error", this.originalError);
+			AbstractExchange.this.logError(() -> "ErrorExchange processing error", throwable);
 		}
 		
 		@Override
 		protected void hookOnComplete() {
 			AbstractExchange.this.hookOnComplete();
+			AbstractExchange.this.logError(() -> "Exchange processing error", this.originalError);
+			AbstractExchange.this.logAccess();
 		}
 	}
 }

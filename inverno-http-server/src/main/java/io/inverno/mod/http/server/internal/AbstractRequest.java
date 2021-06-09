@@ -135,6 +135,11 @@ public abstract class AbstractRequest implements Request {
 	}
 
 	@Override
+	public SocketAddress getLocalAddress() {
+		return this.context.channel().localAddress();
+	}
+	
+	@Override
 	public SocketAddress getRemoteAddress() {
 		return this.context.channel().remoteAddress();
 	}

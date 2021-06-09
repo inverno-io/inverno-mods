@@ -93,6 +93,7 @@ module io.inverno.mod.http.server {
 	requires io.inverno.mod.configuration;
 	requires transitive io.inverno.mod.http.base;
 	
+	requires org.apache.commons.text;
 	requires org.apache.logging.log4j;
 	requires com.fasterxml.jackson.databind;
 	

@@ -15,9 +15,16 @@
  */
 package io.inverno.mod.http.server.internal.http2;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.HttpServerConfiguration;
+import io.inverno.mod.http.server.Part;
+import io.inverno.mod.http.server.internal.AbstractExchange;
+import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.compression.ZlibWrapper;
@@ -37,17 +44,6 @@ import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
-import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.http.base.header.HeaderService;
-import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeHandler;
-import io.inverno.mod.http.server.HttpServerConfiguration;
-import io.inverno.mod.http.server.Part;
-import io.inverno.mod.http.server.internal.AbstractExchange;
-import io.inverno.mod.http.server.internal.http1x.Http1xChannelHandler;
-import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import reactor.core.publisher.Sinks.EmitResult;
 
 /**
@@ -65,8 +61,6 @@ import reactor.core.publisher.Sinks.EmitResult;
  */
 public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2FrameListener, Http2Connection.Listener {
 
-	private static final Logger LOGGER = LogManager.getLogger(Http1xChannelHandler.class);
-	
 	private static final ContentEncodingResolver CONTENT_ENCODING_RESOLVER = new ContentEncodingResolver();
 	
 	private final HttpServerConfiguration configuration; 
@@ -189,7 +183,6 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 			streamExchange.start(new AbstractExchange.Handler() {
 				@Override
 				public void exchangeError(ChannelHandlerContext ctx, Throwable t) {
-					LOGGER.error("", t);
 					Http2ChannelHandler.this.resetStream(ctx, streamId, Http2Error.INTERNAL_ERROR.code(), ctx.voidPromise());
 				}
 			});

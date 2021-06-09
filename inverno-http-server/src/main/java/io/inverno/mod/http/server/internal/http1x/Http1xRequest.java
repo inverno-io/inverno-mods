@@ -44,6 +44,8 @@ import reactor.core.publisher.Sinks.Many;
  */
 public class Http1xRequest extends AbstractRequest {
 
+	private static final String PROTOCOL = "HTTP/1.1";
+	
 	private final HttpRequest httpRequest;
 	
 	private URIBuilder pathBuilder;
@@ -87,6 +89,11 @@ public class Http1xRequest extends AbstractRequest {
 		// invoke the exchange handler which is supposed to create the body
 		this.body();
 		return super.data();
+	}
+	
+	@Override
+	public String getProtocol() {
+		return PROTOCOL;
 	}
 	
 	@Override

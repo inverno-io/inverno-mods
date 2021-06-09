@@ -38,6 +38,8 @@ import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
  */
 public class Http2Request extends AbstractRequest {
 
+	private static final String PROTOCOL = "HTTP/2";
+	
 	private URIBuilder pathBuilder;
 	
 	private Method method;
@@ -68,6 +70,11 @@ public class Http2Request extends AbstractRequest {
 				.orElseThrow(() -> new IllegalStateException("Request has no :path"));
 		}
 		return this.pathBuilder;
+	}
+	
+	@Override
+	public String getProtocol() {
+		return PROTOCOL;
 	}
 	
 	@Override

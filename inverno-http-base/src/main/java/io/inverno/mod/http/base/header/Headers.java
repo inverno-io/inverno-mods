@@ -147,6 +147,10 @@ public final class Headers {
 	 * <a href="https://tools.ietf.org/html/rfc7230#section-6.7">RFC 7230 Section 6.7</a>
 	 */
 	public static final String NAME_UPGRADE = "upgrade";
+	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.5.3">RFC 7231 Section 5.5.3</a>
+	 */
+	public static final String NAME_USER_AGENT = "user-agent";
 	
 	/* HTTP/2 pseudo headers */
 	/**

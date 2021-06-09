@@ -269,6 +269,7 @@ public class Http1xExchange extends AbstractExchange {
 		@Override
 		protected void hookOnNext(FileRegion fileRegion) {
 			Http1xExchange.this.executeInEventLoop(() -> {
+				Http1xExchange.this.transferedLength += fileRegion.count();
 				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, fileRegion, Http1xExchange.this.context.newPromise().addListener(future -> {
 					if(future.isSuccess()) {
 						// TODO here we put null as next value because we don't have access to the actual buffer, can we do better?

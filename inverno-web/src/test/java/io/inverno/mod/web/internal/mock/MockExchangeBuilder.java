@@ -40,11 +40,13 @@ public class MockExchangeBuilder {
 	private String authority = "localhost";
 	private String scheme = "http";
 	private String path = "/";
+	private String protocol = "HTTP/1.1";
 	private Method method = Method.GET;
 	private Map<String, List<String>> headers = Map.of();
 
 	private Map<String, List<String>> requestQueryParameters = Map.of();
 	private Map<String, List<String>> requestCookies = Map.of();
+	private SocketAddress localAddress = new InetSocketAddress("localhost", 8080);
 	private SocketAddress remoteAddress = new InetSocketAddress("localhost", 8080);
 	
 	private WebRequestBody mockRequestBody;
@@ -63,6 +65,11 @@ public class MockExchangeBuilder {
 	
 	public MockExchangeBuilder path(String path) {
 		this.path = path;
+		return this;
+	}
+	
+	public MockExchangeBuilder protocol(String protocol) {
+		this.protocol = protocol;
 		return this;
 	}
 	
@@ -86,6 +93,11 @@ public class MockExchangeBuilder {
 		return this;
 	}
 	
+	public MockExchangeBuilder localAddress(SocketAddress localAddress) {
+		this.localAddress = localAddress;
+		return this;
+	}
+	
 	public MockExchangeBuilder remoteAddress(SocketAddress remoteAddress) {
 		this.remoteAddress = remoteAddress;
 		return this;
@@ -102,7 +114,7 @@ public class MockExchangeBuilder {
 	}
 	
 	public MockWebExchange build() {
-		MockWebRequest mockRequest = new MockWebRequest(this.authority, this.scheme, this.path, this.method, new MockRequestHeaders(HEADER_SERVICE, this.headers), new MockQueryParameters(this.requestQueryParameters), new MockRequestCookies(this.requestCookies), this.remoteAddress, this.mockRequestBody);
+		MockWebRequest mockRequest = new MockWebRequest(this.authority, this.scheme, this.path, this.protocol, this.method, new MockRequestHeaders(HEADER_SERVICE, this.headers), new MockQueryParameters(this.requestQueryParameters), new MockRequestCookies(this.requestCookies), this.localAddress, this.remoteAddress, this.mockRequestBody);
 		MockWebResponse mockResponse = new MockWebResponse(HEADER_SERVICE, this.mockResponseBody);
 		
 		return new MockWebExchange(mockRequest, mockResponse);

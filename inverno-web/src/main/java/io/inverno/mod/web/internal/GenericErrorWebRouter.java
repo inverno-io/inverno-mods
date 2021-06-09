@@ -22,9 +22,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import io.netty.buffer.Unpooled;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Init;
@@ -58,8 +55,6 @@ import io.inverno.mod.web.ErrorWebRouterConfigurer;
 @Bean( name = "errorRouter" )
 public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	
-	private static final Logger LOGGER = LogManager.getLogger(GenericErrorWebRouter.class);
-
 	private final DataConversionService dataConversionService;
 	
 	private final RoutingLink<ErrorWebExchange<Throwable>, ?, ErrorWebRoute> firstLink;
@@ -169,7 +164,6 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	@Override
 	public void handle(ErrorExchange<Throwable> exchange) throws HttpException {
 		ErrorWebRouter.super.handle(exchange);
-		LOGGER.error("", exchange.getError());
 		this.firstLink.handle(new GenericErrorWebExchange(exchange, new GenericWebResponse(exchange.response(), this.dataConversionService)));
 	}
 	
