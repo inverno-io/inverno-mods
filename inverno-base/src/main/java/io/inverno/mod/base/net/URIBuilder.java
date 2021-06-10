@@ -164,6 +164,27 @@ public interface URIBuilder extends Cloneable {
 
 	/**
 	 * <p>
+	 * Sets the query component as defined by
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-3.4">RFC 3986 Section
+	 * 3.4</a>.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method basically replaces previous query component value with the
+	 * specified value removing query parameters if any. Implementation does not
+	 * extract query parameters from the specified value which remains opaque. If
+	 * you wish to provide query parameters you should use
+	 * {@link #queryParameter(String, String)} instead.
+	 * </p>
+	 * 
+	 * @param value the query value
+	 * 
+	 * @return the URI builder
+	 */
+	URIBuilder query(String value);
+	
+	/**
+	 * <p>
 	 * Appends a query parameter component with specified name and value as defined
 	 * by <a href="https://tools.ietf.org/html/rfc3986#section-3.4">RFC 3986 Section
 	 * 3.4</a>.

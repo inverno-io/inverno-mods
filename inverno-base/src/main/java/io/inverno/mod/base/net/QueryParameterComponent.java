@@ -41,7 +41,7 @@ import org.apache.commons.lang3.StringUtils;
 class QueryParameterComponent implements ParameterizedURIComponent {
 	
 	private static final Predicate<Integer> ESCAPED_CHARACTERS =  b -> {
-		return !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == ':' || b == '@' || b == '/' || b == '?');
+		return !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':' || b == '@' || b == '/' || b == '?');
 	};
 	
 	private final URIFlags flags;

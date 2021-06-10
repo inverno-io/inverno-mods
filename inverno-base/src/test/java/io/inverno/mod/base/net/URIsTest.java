@@ -501,12 +501,20 @@ public class URIsTest {
 		Assertions.assertEquals("p1=v1&p2=v2&p3=v3", URIs.uri("/a/b/c?p1=v1&p2=v2").queryParameter("p3", "v3").buildQuery());
 		Assertions.assertEquals("p1=v1&p2=v2&p3=v3", URIs.uri("/a/b/c?p1={param1}&p2=v2", URIs.Option.PARAMETERIZED).queryParameter("p3", "{param3}").buildQuery("v1", "v3"));
 		
-		Assertions.assertEquals("p1=v1&p2=v%7C2&p3=v3", URIs.uri().queryParameter("p1", "v1").queryParameter("p2", "v|2").queryParameter("p3", "v3").buildQuery());
+		Assertions.assertEquals("p%201=v1&p2=v%7C2&p3=v3", URIs.uri().queryParameter("p 1", "v1").queryParameter("p2", "v|2").queryParameter("p3", "v3").buildQuery());
 		Assertions.assertEquals("p1=v1&p2=v|2&p3=v3", URIs.uri().queryParameter("p1", "v1").queryParameter("p2", "v|2").queryParameter("p3", "v3").buildRawQuery());
 		
 		Assertions.assertEquals(Map.of("p1", List.of("v1"), "p2", List.of("v2"), "p3", List.of("v3")), URIs.uri().queryParameter("p1", "v1").queryParameter("p2", "v2").queryParameter("p3", "v3").getQueryParameters());
 		Assertions.assertEquals(Map.of("p1", List.of("v1", "v12"), "p2", List.of("v2"), "p3", List.of("v3")), URIs.uri("/a/b/c?p1=v1&p2=v2").queryParameter("p1", "v12").queryParameter("p3", "v3").getQueryParameters());
 		Assertions.assertEquals(Map.of("p1", List.of("v1"), "p2", List.of("v2"), "p3", List.of("v3")), URIs.uri("/a/b/c?p1={param1}&p2=v2", URIs.Option.PARAMETERIZED).queryParameter("p3", "{param3}").getQueryParameters("v1", "v3"));
+		
+		Assertions.assertNull(URIs.uri("/a/b/c?this_is_a_test").getRawQueryParameters());
+		Assertions.assertEquals("this_is_a_test", URIs.uri("/a/b/c?this_is_a_test").buildQuery());
+		
+		Assertions.assertEquals("this_{param1}_a_{param2}", URIs.uri("/a/b/c?this_{param1}_a_{param2}", URIs.Option.PARAMETERIZED).buildRawQuery());
+		Assertions.assertEquals("this_is_a_test", URIs.uri("/a/b/c?this_{param1}_a_{param2}", URIs.Option.PARAMETERIZED).buildQuery("is", "test"));
+		Assertions.assertEquals("te%7Cst", URIs.uri("/a/b/c?a=b").query("te|st").buildQuery());
+		Assertions.assertEquals("te|st", URIs.uri("/a/b/c?a=b").query("te|st").buildRawQuery());
 	}
 	
 	@Test
@@ -554,4 +562,5 @@ public class URIsTest {
 		} 
 		catch (URIBuilderException e) {}
 	}
+	
 }

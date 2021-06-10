@@ -45,7 +45,8 @@ class GenericURIBuilder implements URIBuilder {
 	private HostComponent host;
 	private PortComponent port;
 	private final LinkedList<SegmentComponent> segments;
-	private final LinkedList<QueryParameterComponent> queryParameters;
+	private QueryComponent query;
+	private List<QueryParameterComponent> queryParameters;
 	private FragmentComponent fragment;
 
 	/**
@@ -60,7 +61,6 @@ class GenericURIBuilder implements URIBuilder {
 		this.charset = charset;
 		this.flags = new URIFlags(options);
 		this.segments = new LinkedList<>();
-		this.queryParameters = new LinkedList<>();
 	}
 	
 	/**
@@ -78,20 +78,14 @@ class GenericURIBuilder implements URIBuilder {
 		this.charset = charset;
 		this.flags = new URIFlags(options);
 		this.segments = new LinkedList<>();
-		this.queryParameters = new LinkedList<>();
 		if(path != null) {
 			int queryIndex = path.indexOf('?');
 			if(queryIndex < 0) {
 				this.path(path, ignoreTrailingSlash);
 			}
 			else {
-				String pathPart = path.substring(0, queryIndex);
-				String queryPart = path.substring(queryIndex + 1);
-				this.path(pathPart, ignoreTrailingSlash);
-				for(String queryParameter : queryPart.split("&")) {
-					String[] queryParameterNameValue = queryParameter.split("=");
-					this.queryParameters.add(new QueryParameterComponent(this.flags, this.charset, URIs.decodeURIComponent(queryParameterNameValue[0], this.charset), URIs.decodeURIComponent(queryParameterNameValue[1], this.charset)));
-				}
+				this.path(path.substring(0, queryIndex), ignoreTrailingSlash);
+				this.parseRawQuery(path.substring(queryIndex + 1));
 			}
 		}
 	}
@@ -128,13 +122,36 @@ class GenericURIBuilder implements URIBuilder {
 				}
 			}
 			
-			if(uri.getRawQuery() != null) {
-				for(String queryParameter : uri.getRawQuery().split("&")) {
-					String[] queryParameterNameValue = queryParameter.split("=");
-					this.queryParameters.add(new QueryParameterComponent(this.flags, this.charset, URIs.decodeURIComponent(queryParameterNameValue[0], this.charset), URIs.decodeURIComponent(queryParameterNameValue[1], this.charset)));
-				}
+			String rawQuery = uri.getRawQuery();
+			if(rawQuery != null) {
+				this.parseRawQuery(rawQuery);
 			}
 			this.fragment(URIs.decodeURIComponent(uri.getFragment(), this.charset));
+		}
+	}
+	
+	private void parseRawQuery(String rawQuery) {
+		String[] queryParameterParts = rawQuery.split("&");
+		List<QueryParameterComponent> parsedQueryParameters = new LinkedList<>();
+		for(String queryParameter : queryParameterParts) {
+			String[] queryParameterNameValue = queryParameter.split("=");
+			if(queryParameterNameValue.length == 1) {
+				if(queryParameterNameValue[0].length() == 0) {
+					continue;
+				}
+				else if(queryParameterParts.length == 1) {
+					this.query = new QueryComponent(this.flags, this.charset, URIs.decodeURIComponent(rawQuery, this.charset));
+				}
+				else {
+					parsedQueryParameters.add(new QueryParameterComponent(this.flags, this.charset, URIs.decodeURIComponent(queryParameterNameValue[0], this.charset), ""));
+				}
+			}
+			else {
+				parsedQueryParameters.add(new QueryParameterComponent(this.flags, this.charset, URIs.decodeURIComponent(queryParameterNameValue[0], this.charset), URIs.decodeURIComponent(queryParameterNameValue[1], this.charset)));
+			}
+		}
+		if(this.query == null) {
+			this.queryParameters = parsedQueryParameters;
 		}
 	}
 	
@@ -247,8 +264,25 @@ class GenericURIBuilder implements URIBuilder {
 	}
 	
 	@Override
+	public URIBuilder query(String value) {
+		this.queryParameters = null;
+		if(value != null) {
+			this.query = new QueryComponent(this.flags, this.charset, value);
+		}
+		else {
+			this.query = null;
+		}
+		return this;
+	}
+	
+	@Override
 	public URIBuilder queryParameter(String name, String value) {
+		this.query = null;
 		if(StringUtils.isNotBlank(name) && value != null) {
+			if(this.queryParameters == null) {
+				this.queryParameters = new LinkedList<>();
+				this.query = null;
+			}
 			this.queryParameters.add(new QueryParameterComponent(this.flags, this.charset, name, value));
 		}
 		return this;
@@ -256,7 +290,8 @@ class GenericURIBuilder implements URIBuilder {
 	
 	@Override
 	public URIBuilder clearQuery() {
-		this.queryParameters.clear();
+		this.query = null;
+		this.queryParameters = null;
 		return this;
 	}
 	
@@ -289,9 +324,15 @@ class GenericURIBuilder implements URIBuilder {
 		for(SegmentComponent segment : this.segments) {
 			parameters.addAll(segment.getParameters());
 		}
-		for(QueryParameterComponent queryParameter : this.queryParameters) {
-			parameters.addAll(queryParameter.getParameters());
+		if(this.query != null) {
+			parameters.addAll(this.query.getParameters());
 		}
+		else if(this.queryParameters != null) {
+			for(QueryParameterComponent queryParameter : this.queryParameters) {
+				parameters.addAll(queryParameter.getParameters());
+			}
+		}
+		
 		if(this.fragment != null) {
 			parameters.addAll(this.fragment.getParameters());
 		}
@@ -309,18 +350,27 @@ class GenericURIBuilder implements URIBuilder {
 	
 	@Override
 	public Map<String, List<String>> getQueryParameters(Object... values) throws URIBuilderException {
-		AtomicInteger valuesIndex = new AtomicInteger();
-		return this.queryParameters.stream().collect(Collectors.groupingBy(QueryParameterComponent::getParameterName, Collectors.mapping(queryParameter -> queryParameter.getParameterValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(queryParameter.getParameters().size()), values.length))), Collectors.toList())));
+		if(this.queryParameters != null) {
+			AtomicInteger valuesIndex = new AtomicInteger();
+			return this.queryParameters.stream().collect(Collectors.groupingBy(QueryParameterComponent::getParameterName, Collectors.mapping(queryParameter -> queryParameter.getParameterValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(queryParameter.getParameters().size()), values.length))), Collectors.toList())));
+		}
+		return null;
 	}
 	
 	@Override
 	public Map<String, List<String>> getQueryParameters(Map<String, ?> values) throws URIBuilderException {
-		return this.queryParameters.stream().collect(Collectors.groupingBy(QueryParameterComponent::getParameterName, Collectors.mapping(queryParameter -> queryParameter.getParameterValue(values), Collectors.toList())));
+		if(this.queryParameters != null) {
+			return this.queryParameters.stream().collect(Collectors.groupingBy(QueryParameterComponent::getParameterName, Collectors.mapping(queryParameter -> queryParameter.getParameterValue(values), Collectors.toList())));
+		}
+		return null;
 	}
 	
 	@Override
 	public Map<String, List<String>> getRawQueryParameters() throws URIBuilderException {
-		return this.queryParameters.stream().collect(Collectors.groupingBy(QueryParameterComponent::getRawParameterName, Collectors.mapping(QueryParameterComponent::getRawParameterValue, Collectors.toList())));
+		if(this.queryParameters != null) {
+			return this.queryParameters.stream().collect(Collectors.groupingBy(QueryParameterComponent::getRawParameterName, Collectors.mapping(QueryParameterComponent::getRawParameterValue, Collectors.toList())));
+		}
+		return null;
 	}
 	
 	@Override
@@ -404,7 +454,10 @@ class GenericURIBuilder implements URIBuilder {
 			}
 		}
 		
-		if(!this.queryParameters.isEmpty()) {
+		if(this.query != null) {
+			uriBuilder.append("?").append(this.query.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.query.getParameters().size()), values.length))));
+		}
+		else if(this.queryParameters != null && !this.queryParameters.isEmpty()) {
 			uriBuilder.append("?");
 			uriBuilder.append(this.queryParameters.stream()
 				.map(queryParameter -> queryParameter.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(queryParameter.getParameters().size()), values.length))))
@@ -486,7 +539,10 @@ class GenericURIBuilder implements URIBuilder {
 			}
 		}
 
-		if(!this.queryParameters.isEmpty()) {
+		if(this.query != null) {
+			uriBuilder.append("?").append(this.query.getValue(values));
+		}
+		else if(this.queryParameters != null && !this.queryParameters.isEmpty()) {
 			uriBuilder.append("?");
 			uriBuilder.append(this.queryParameters.stream()
 				.map(queryParameter -> queryParameter.getValue(values))
@@ -536,7 +592,10 @@ class GenericURIBuilder implements URIBuilder {
 			}
 		}
 		
-		if(!this.queryParameters.isEmpty()) {
+		if(this.query != null) {
+			uriBuilder.append("?").append(this.query.getRawValue());
+		}
+		else if(this.queryParameters != null && !this.queryParameters.isEmpty()) {
 			uriBuilder.append("?");
 			uriBuilder.append(this.queryParameters.stream().map(queryParameter -> queryParameter.getRawValue()).collect(Collectors.joining("&")));
 		}
@@ -673,7 +732,10 @@ class GenericURIBuilder implements URIBuilder {
 	public String buildQuery(Object... values) {
 		StringBuilder queryBuilder = new StringBuilder();
 		AtomicInteger valuesIndex = new AtomicInteger();
-		if(!this.queryParameters.isEmpty()) {
+		if(this.query != null) {
+			queryBuilder.append(this.query.getValue(values));
+		}
+		else if(this.queryParameters != null && !this.queryParameters.isEmpty()) {
 			queryBuilder.append(this.queryParameters.stream()
 				.map(queryParameter -> queryParameter.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(queryParameter.getParameters().size()), values.length))))
 				.collect(Collectors.joining("&"))
@@ -685,7 +747,10 @@ class GenericURIBuilder implements URIBuilder {
 	@Override
 	public String buildQuery(Map<String, ?> values) {
 		StringBuilder queryBuilder = new StringBuilder();
-		if(!this.queryParameters.isEmpty()) {
+		if(this.query != null) {
+			queryBuilder.append(this.query.getValue(values));
+		}
+		else if(this.queryParameters != null && !this.queryParameters.isEmpty()) {
 			queryBuilder.append("?");
 			queryBuilder.append(this.queryParameters.stream()
 				.map(queryParameter -> queryParameter.getValue(values))
@@ -698,7 +763,10 @@ class GenericURIBuilder implements URIBuilder {
 	@Override
 	public String buildRawQuery() {
 		StringBuilder queryBuilder = new StringBuilder();
-		if(!this.queryParameters.isEmpty()) {
+		if(this.query != null) {
+			queryBuilder.append(this.query.getRawValue());
+		}
+		else if(this.queryParameters != null && !this.queryParameters.isEmpty()) {
 			queryBuilder.append(this.queryParameters.stream().map(queryParameter -> queryParameter.getRawValue()).collect(Collectors.joining("&")));
 		}
 		return queryBuilder.toString();
@@ -749,7 +817,11 @@ class GenericURIBuilder implements URIBuilder {
 				}
 			}
 		}
-		if(!this.queryParameters.isEmpty()) {
+		if(this.query != null) {
+			patternBuilder.append("\\?").append(this.query.getPattern());
+			rawValueBuilder.append("?").append(this.query.getRawValue());
+		}
+		else if(this.queryParameters != null && !this.queryParameters.isEmpty()) {
 			patternBuilder.append("\\?");
 			rawValueBuilder.append("?");
 			patternBuilder.append(this.queryParameters.stream().map(queryParameter -> queryParameter.getPattern()).collect(Collectors.joining("&")));
@@ -777,8 +849,13 @@ class GenericURIBuilder implements URIBuilder {
 		for(SegmentComponent segment : this.segments) {
 			groupNames.addAll(segment.getPatternGroupNames());
 		}
-		for(QueryParameterComponent queryParameter : this.queryParameters) {
-			groupNames.addAll(queryParameter.getPatternGroupNames());
+		if(this.query != null) {
+			groupNames.addAll(this.query.getPatternGroupNames());
+		}
+		else if(this.queryParameters != null && !this.queryParameters.isEmpty()) {
+			for(QueryParameterComponent queryParameter : this.queryParameters) {
+				groupNames.addAll(queryParameter.getPatternGroupNames());
+			}
 		}
 		if(this.fragment != null) {
 			groupNames.addAll(this.fragment.getPatternGroupNames());
@@ -826,7 +903,10 @@ class GenericURIBuilder implements URIBuilder {
 		copy.fragment = this.fragment;
 		copy.host = this.host;
 		copy.port = this.port;
-		copy.queryParameters.addAll(this.queryParameters);
+		copy.query = this.query;
+		if(this.queryParameters != null) {
+			copy.queryParameters = new LinkedList<>(this.queryParameters);
+		}
 		copy.scheme = this.scheme;
 		copy.segments.addAll(this.segments);
 		copy.userInfo = this.userInfo;

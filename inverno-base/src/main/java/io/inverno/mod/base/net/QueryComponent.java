@@ -20,9 +20,9 @@ import java.util.function.Predicate;
 
 /**
  * <p>
- * A URI component representing the fragment part of an URI as defined by
- * <a href="https://tools.ietf.org/html/rfc3986#section-3.5">RFC 3986 Section
- * 3.5</a>.
+ * A URI component representing the query part of an URI as defined by
+ * <a href="https://tools.ietf.org/html/rfc3986#section-3.4">RFC 3986 Section
+ * 3.4</a>.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -30,7 +30,7 @@ import java.util.function.Predicate;
  * 
  * @see ParameterizedURIComponent
  */
-class FragmentComponent extends AbstractParameterizedURIComponent {
+class QueryComponent extends AbstractParameterizedURIComponent {
 	
 	private static final Predicate<Integer> ESCAPED_CHARACTERS =  b -> {
 		return !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':' || b == '@' || b == '/' || b == '?');
@@ -38,13 +38,13 @@ class FragmentComponent extends AbstractParameterizedURIComponent {
 	
 	/**
 	 * <p>
-	 * Creates a fragment component with the specified flags, charset and raw value.
+	 * Creates a query component with the specified flags, charset and raw value.
 	 * 
 	 * @param flags    URI flags
 	 * @param charset  a charset
 	 * @param rawValue a raw value
 	 */
-	public FragmentComponent(URIFlags flags, Charset charset, String rawValue) {
+	public QueryComponent(URIFlags flags, Charset charset, String rawValue) {
 		super(flags, charset, rawValue, ESCAPED_CHARACTERS, null);
 	}
 }
