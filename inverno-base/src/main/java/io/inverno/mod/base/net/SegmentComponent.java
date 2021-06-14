@@ -89,7 +89,7 @@ class SegmentComponent implements ParameterizedURIComponent {
 		if(consumePath) {
 			breakPredicate = (i, nextByte) -> {
 				if(nextByte == '/') {
-					this.segmentRawValue = path.charAt(0) == '/' ? path.substring(1, i) : path.substring(0, i);
+					this.segmentRawValue = i == 0 ? "" : path.substring(0, i);
 					return true;
 				}
 				return false;

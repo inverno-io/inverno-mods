@@ -563,4 +563,21 @@ public class URIsTest {
 		catch (URIBuilderException e) {}
 	}
 	
+	@Test
+	public void testEmptySegment() {
+		// We need to add four emtpy segment to represent "////..." because the first empty segment indicates an absolute path and the next three ones indicate the three empty segments we want to create
+		Assertions.assertEquals("////a2billing/customer/templates/default/footer.tpl", URIs.uri(URIs.Option.NORMALIZED).segment("").segment("").segment("").segment("").segment("a2billing").segment("customer").segment("templates").segment("default").segment("footer.tpl").buildString());
+		
+		// We can wonder whether we should keep it that way if the URI has a host component, in which case we'll necessarily have an absolute path...
+		Assertions.assertEquals("http://localhost////a2billing/customer/templates/default/footer.tpl", URIs.uri(URIs.Option.NORMALIZED).scheme("http").host("localhost").segment("").segment("").segment("").segment("").segment("a2billing").segment("customer").segment("templates").segment("default").segment("footer.tpl").buildString());
+
+		Assertions.assertEquals("/a2billing/customer/templates/default/footer.tpl", URIs.uri(URIs.Option.NORMALIZED).scheme("http").host("localhost").segment("a2billing").segment("customer").segment("templates").segment("default").segment("footer.tpl").buildPath());
+		Assertions.assertEquals("a2billing/customer/templates/default/footer.tpl", URIs.uri(URIs.Option.NORMALIZED).segment("a2billing").segment("customer").segment("templates").segment("default").segment("footer.tpl").buildPath());
+		
+		Assertions.assertEquals("////a2billing/customer/templates/default/footer.tpl", URIs.uri(URIs.Option.NORMALIZED).scheme("http").host("localhost").segment("").segment("").segment("").segment("").segment("a2billing").segment("customer").segment("templates").segment("default").segment("footer.tpl").buildPath());
+		
+		Assertions.assertEquals("////a2billing/customer/templates/default/footer.tpl", URIs.uri(URIs.Option.NORMALIZED).path("////a2billing/customer/templates/default/footer.tpl").buildString());
+		
+		Assertions.assertEquals("////a2billing/customer/templates/default/footer.tpl", URIs.uri("////a2billing/customer/templates/default/footer.tpl", URIs.Option.NORMALIZED).buildString());
+	}
 }
