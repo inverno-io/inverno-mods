@@ -226,32 +226,6 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 						templateSetModeClass.append(context.indent(0)).append("}");
 					}
 					return templateSetModeClass;
-					
-					/*StringBuilder templateSetModeClass = new StringBuilder();
-					
-					templateSetModeClass.append(context.indent(0)).append("private static class ").append(CaseUtils.toCamelCase(mode.toString().toLowerCase(), true, '_')).append("TemplateSetImpl");
-					if(mode == TemplateMode.STREAM) {
-						templateSetModeClass.append("<T extends ").append(OutputStream.class.getCanonicalName()).append(">");
-					}
-					templateSetModeClass.append(" extends ").append(mode.getTemplateSetType().getCanonicalName());
-					if(mode == TemplateMode.STREAM) {
-						templateSetModeClass.append("<T>");
-					}
-					templateSetModeClass.append(" implements ").append(context.getTemplateName()).append(".").append(StringUtils.capitalize(mode.getStaticContentType().toString().toLowerCase())).append("TemplateSet {").append(System.lineSeparator()).append(System.lineSeparator());
-					templateSetModeClass.append(context.indent(1)).append("private ").append(CaseUtils.toCamelCase(mode.toString().toLowerCase(), true, '_')).append("TemplateSetImpl").append("(");
-					if(mode == TemplateMode.STREAM) {
-						templateSetModeClass.append("T output");
-					}
-					templateSetModeClass.append(") {").append(System.lineSeparator());
-					templateSetModeClass.append(context.indent(2)).append("super(").append(context.getTemplateName()).append(".CHARSET");
-					if(mode == TemplateMode.STREAM) {
-						templateSetModeClass.append(", output");
-					}
-					templateSetModeClass.append(");").append(System.lineSeparator());
-					templateSetModeClass.append(context.indent(1)).append("}").append(System.lineSeparator());
-					templateSetModeClass.append(context.indent(0)).append("}");
-					
-					return templateSetModeClass;*/
 				})
 				.collect(context.joining(System.lineSeparator() + System.lineSeparator()));
 			
@@ -266,55 +240,6 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 			
 			return templateSetInterface;
 		}
-		/*else if(context.getMode() == IrtClassGenerationContext.GenerationMode.IRT_RENDERER_CLASSES) {
-			// TODO this works but it doesn't allow to inject Renderer within the module since when analyzing a socket we expect the types to be known which is not the case here (the renderer class is generated after compiling the beans)
-			StringBuilder rendererMethods = Arrays.stream(context.getOptions().getModes()).map(mode -> {
-				final IrtClassGenerationContext contextWithTemplateMode = context.withTemplateMode(mode);
-				
-				StringBuilder rendererClass = new StringBuilder();
-				
-				if(mode != TemplateMode.STREAM) {
-					rendererClass.append(context.indent(1)).append("@").append(Bean.class.getCanonicalName()).append("( name = \"").append(StringUtils.uncapitalize(context.getTemplateName())).append("_").append(CaseUtils.toCamelCase(mode.toString().toLowerCase(), true, '_')).append("Renderer\" )").append(System.lineSeparator());
-				}
-				rendererClass.append(context.indent(1)).append("public static final class ").append(CaseUtils.toCamelCase(mode.toString().toLowerCase(), true, '_')).append("Renderer");
-				if(mode == TemplateMode.STREAM) {
-					rendererClass.append("<T extends ").append(OutputStream.class.getCanonicalName()).append("> ");
-				}
-				rendererClass.append(" implements Renderer<").append(contextWithTemplateMode.getTemplateModeType()).append("> {").append(System.lineSeparator()).append(System.lineSeparator());
-				if(mode == TemplateMode.STREAM) {
-					rendererClass.append(context.indent(2)).append("private final ").append(Supplier.class.getCanonicalName()).append("<T> outputs;").append(System.lineSeparator()).append(System.lineSeparator());
-					rendererClass.append(context.indent(2)).append("public ").append(CaseUtils.toCamelCase(mode.toString().toLowerCase(), true, '_')).append("Renderer").append("(").append(Supplier.class.getCanonicalName()).append("<T> outputFactory) {").append(System.lineSeparator());
-					rendererClass.append(context.indent(3)).append("this.outputs = outputFactory;").append(System.lineSeparator());
-					rendererClass.append(context.indent(2)).append("}").append(System.lineSeparator()).append(System.lineSeparator());
-				}
-				
-				rendererClass.append(Arrays.stream(info.getTemplates()).map(templateInfo -> this.visit(templateInfo, contextWithTemplateMode.withIndentDepthAdd(2).withMode(IrtClassGenerationContext.GenerationMode.RENDER_METHOD))).collect(context.joining(System.lineSeparator() + System.lineSeparator()))).append(System.lineSeparator());
-				rendererClass.append(context.indent(1)).append("}");
-				
-				if(mode == TemplateMode.STREAM) {
-					// TODO when inverno core eventually supports lazy factory injection (ie. Function<Arg, Bean>), this should be removed 
-					rendererClass.append(System.lineSeparator()).append(System.lineSeparator());
-					
-					rendererClass.append(context.indent(1)).append("@").append(Bean.class.getCanonicalName()).append("( name = \"").append(StringUtils.uncapitalize(context.getTemplateName())).append("_").append(CaseUtils.toCamelCase(mode.toString().toLowerCase(), true, '_')).append("RendererFactory\" )").append(System.lineSeparator());
-					
-					rendererClass.append(context.indent(1)).append("public static final class ").append(CaseUtils.toCamelCase(mode.toString().toLowerCase(), true, '_')).append("RendererFactory implements ")
-						.append(Function.class.getCanonicalName()).append("<")
-							.append(Supplier.class.getCanonicalName()).append("<").append(OutputStream.class.getCanonicalName()).append(">, ")
-							.append("Renderer<").append(CompletableFuture.class.getCanonicalName()).append("<").append(OutputStream.class.getCanonicalName()).append(">").append(">")
-						.append("> {").append(System.lineSeparator()).append(System.lineSeparator());
-					
-					rendererClass.append(context.indent(2)).append("@Override").append(System.lineSeparator());
-					rendererClass.append(context.indent(2)).append("public Renderer<").append(CompletableFuture.class.getCanonicalName()).append("<").append(OutputStream.class.getCanonicalName()).append(">> apply(").append(Supplier.class.getCanonicalName()).append("<").append(OutputStream.class.getCanonicalName()).append("> outputFactory) {").append(System.lineSeparator());
-					rendererClass.append(context.indent(3)).append("return new ").append(CaseUtils.toCamelCase(mode.toString().toLowerCase(), true, '_')).append("Renderer<>(outputFactory);").append(System.lineSeparator());
-					rendererClass.append(context.indent(2)).append("}").append(System.lineSeparator());
-					rendererClass.append(context.indent(1)).append("}");
-				}
-
-				return rendererClass;
-			}).collect(context.joining(System.lineSeparator() + System.lineSeparator()));
-			
-			return rendererMethods;
-		}*/
 		else if(context.getMode() == IrtClassGenerationContext.GenerationMode.IRT_RENDERER_METHODS) {
 			StringBuilder rendererMethods = Arrays.stream(context.getOptions().getModes()).map(mode -> {
 				final IrtClassGenerationContext contextWithTemplateMode = context.withTemplateMode(mode);
@@ -353,27 +278,6 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 				}
 				
 				return rendererMethod;
-				
-				/*StringBuilder rendererMethod = new StringBuilder();
-				
-				rendererMethod.append(context.indent(1)).append("public static ");
-				if(mode == TemplateMode.STREAM) {
-					rendererMethod.append("<T extends ").append(OutputStream.class.getCanonicalName()).append("> ");
-				}
-				rendererMethod.append("Renderer<").append(contextWithTemplateMode.getTemplateModeType()).append("> ").append(StringUtils.uncapitalize(CaseUtils.toCamelCase(mode.toString().toLowerCase(), true, '_'))).append("(");
-				if(mode == TemplateMode.STREAM) {
-					rendererMethod.append(Supplier.class.getCanonicalName()).append("<T> outputFactory");
-				}
-				rendererMethod.append(") {").append(System.lineSeparator());
-				rendererMethod.append(context.indent(2)).append("return new Renderer<").append(contextWithTemplateMode.getTemplateModeType()).append(">() {").append(System.lineSeparator()).append(System.lineSeparator());
-				if(mode == TemplateMode.STREAM) {
-					rendererMethod.append(context.indent(3)).append("private ").append(Supplier.class.getCanonicalName()).append("<T> outputs = outputFactory;").append(System.lineSeparator()).append(System.lineSeparator());
-				}
-				rendererMethod.append(Arrays.stream(info.getTemplates()).map(templateInfo -> this.visit(templateInfo, contextWithTemplateMode.withIndentDepthAdd(3).withMode(IrtClassGenerationContext.GenerationMode.RENDER_METHOD))).collect(context.joining(System.lineSeparator() + System.lineSeparator()))).append(System.lineSeparator());
-				rendererMethod.append(context.indent(2)).append("};").append(System.lineSeparator());
-				rendererMethod.append(context.indent(1)).append("}");
-				
-				return rendererMethod;*/
 			}).collect(context.joining(System.lineSeparator() + System.lineSeparator()));
 			
 			return rendererMethods;
@@ -517,41 +421,6 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 			}
 			
 			return renderMethod;
-			
-			/*StringBuilder renderMethod = new StringBuilder();
-			renderMethod.append(context.indent(0)).append("@Override").append(System.lineSeparator());
-			renderMethod.append(context.indent(0)).append("public ").append(context.getTemplateModeType()).append(" render");
-			info.getName().ifPresent(templateName -> renderMethod.append("_").append(templateName));
-			renderMethod.append("(").append(info.getParameters().values().stream().map(formalParameterInfo -> this.visit(formalParameterInfo, contextWithTemplate)).collect(context.joining(", ")));
-			renderMethod.append(") {").append(this.visit((LocatableInfo)info, context)).append(System.lineSeparator());
-			
-			renderMethod.append(context.indent(1)).append(CaseUtils.toCamelCase(context.getTemplateMode().toString().toLowerCase(), true, '_')).append("TemplateSetImpl");
-			if(context.getTemplateMode() == TemplateMode.STREAM) {
-				renderMethod.append("<T>");
-			}
-			renderMethod.append(" tpl = new ").append(CaseUtils.toCamelCase(context.getTemplateMode().toString().toLowerCase(), true, '_')).append("TemplateSetImpl");
-			if(context.getTemplateMode() == TemplateMode.STREAM) {
-				renderMethod.append("<>");
-			}
-			renderMethod.append("(");
-			if(context.getTemplateMode() == TemplateMode.STREAM) {
-				renderMethod.append("this.outputs.get()");
-			}
-			renderMethod.append(");").append(System.lineSeparator());
-			
-			if(context.getTemplateMode() == TemplateMode.STRING || context.getTemplateMode() == TemplateMode.BYTEBUF || context.getTemplateMode() == TemplateMode.STREAM) {
-				renderMethod.append(context.indent(1)).append("return tpl.template");
-				info.getName().ifPresent(templateName -> renderMethod.append("_").append(templateName));
-				renderMethod.append("(").append(info.getParameters().keySet().stream().collect(Collectors.joining(", "))).append(").thenApply(_").append(info.hashCode()).append(" -> tpl.getOutput());").append(System.lineSeparator());
-			}
-			else {
-				renderMethod.append(context.indent(1)).append("return tpl.getSink().asFlux().doOnSubscribe(_").append(info.hashCode()).append(" -> tpl.template");
-				info.getName().ifPresent(templateName -> renderMethod.append("_").append(templateName));
-				renderMethod.append("(").append(info.getParameters().keySet().stream().collect(Collectors.joining(", "))).append(").thenRun(tpl.getSink()::tryEmitComplete));").append(System.lineSeparator());
-			}
-			renderMethod.append(context.indent(0)).append("}");
-			
-			return renderMethod;*/
 		}
 		return new StringBuilder();
 	}
@@ -608,14 +477,6 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 		if(context.getMode() == IrtClassGenerationContext.GenerationMode.TEMPLATE_SET_INTERFACES) {
 			StringBuilder result = new StringBuilder();
 			result.append("this.render(");
-			
-			/*if(info.getExpression().isPresent()) {
-				result.append(info.getExpression().get());
-			}
-			else {
-				result.append(this.visit(info.getName().get(), context.withMode(IrtClassGenerationContext.GenerationMode.NAME_EXPRESSION)));
-			}*/
-			
 			result.append(this.visit(info, context.withMode(IrtClassGenerationContext.GenerationMode.VALUE)));
 			result.append(")");
 			

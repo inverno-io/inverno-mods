@@ -707,7 +707,7 @@ public class IrtClassGenerationContext {
 		/**
 		 * ByteBuf mode
 		 */
-		BYTEBUF(TemplateMode.BYTEBUF, AbstractByteBufTemplateSet.class, StaticContentType.BYTEBUF, io.inverno.mod.base.reflect.Types.type(CompletableFuture.class).type(ByteBuf.class).and().build().getTypeName()),
+		BYTEBUF(TemplateMode.BYTEBUF, AbstractByteBufTemplateSet.class, StaticContentType.BYTES, io.inverno.mod.base.reflect.Types.type(CompletableFuture.class).type(ByteBuf.class).and().build().getTypeName()),
 		/**
 		 * Publisher String mode
 		 */
