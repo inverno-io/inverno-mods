@@ -23,6 +23,7 @@ import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.Response;
 import io.inverno.mod.http.server.ResponseTrailers;
 import io.inverno.mod.http.server.internal.AbstractResponse;
+import io.inverno.mod.http.server.internal.GenericResponseBody;
 
 /**
  * <p>
@@ -36,8 +37,6 @@ import io.inverno.mod.http.server.internal.AbstractResponse;
  */
 class Http2Response extends AbstractResponse {
 
-	private final HeaderService headerService;
-	
 	private final ObjectConverter<String> parameterConverter;
 	
 	/**
@@ -51,8 +50,8 @@ class Http2Response extends AbstractResponse {
 	 */
 	public Http2Response(ChannelHandlerContext context, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		super(context, headerService, new Http2ResponseHeaders(headerService, parameterConverter));
-		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
+		this.responseBody = new GenericResponseBody(this);
 	}
 
 	@Override

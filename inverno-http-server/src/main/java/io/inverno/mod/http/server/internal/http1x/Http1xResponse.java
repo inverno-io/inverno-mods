@@ -38,7 +38,6 @@ import io.inverno.mod.http.server.internal.AbstractResponse;
  */
 class Http1xResponse extends AbstractResponse {
 
-	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 
 	/**
@@ -52,7 +51,6 @@ class Http1xResponse extends AbstractResponse {
 	 */
 	public Http1xResponse(ChannelHandlerContext context, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		super(context, headerService, new Http1xResponseHeaders(headerService, parameterConverter));
-		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		this.responseBody = new Http1xResponseBody(this);
 	}

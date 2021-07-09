@@ -19,13 +19,13 @@ import java.util.function.Consumer;
 
 import org.reactivestreams.Publisher;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.Response;
 import io.inverno.mod.http.server.ResponseCookies;
 import io.inverno.mod.http.server.ResponseHeaders;
 import io.inverno.mod.http.server.ResponseTrailers;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * <p>
@@ -37,21 +37,22 @@ import io.inverno.mod.http.server.ResponseTrailers;
  */
 public abstract class AbstractResponse implements Response {
 
-	protected ChannelHandlerContext context;
+	protected final ChannelHandlerContext context;
 	
-	protected HeaderService headerService;
+	protected final HeaderService headerService;
 	
-	protected AbstractResponseHeaders responseHeaders; 
+	protected final AbstractResponseHeaders responseHeaders; 
+	protected GenericResponseBody responseBody;	
+	
 	protected ResponseTrailers responseTrailers;
 
 	protected GenericResponseCookies responseCookies;
-	
-	protected GenericResponseBody responseBody;
 	
 	/**
 	 * <p>
 	 * Creates a response with the specified channel handler context, header service
 	 * and response headers.
+	 * </p>
 	 * 
 	 * @param context         the channel handler context
 	 * @param headerService   the header service
@@ -61,9 +62,8 @@ public abstract class AbstractResponse implements Response {
 		this.context = context;
 		this.headerService = headerService;
 		this.responseHeaders = responseHeaders;
-		this.responseBody = new GenericResponseBody(this);
 	}
-
+	
 	/**
 	 * <p>
 	 * Returns true if the response payload is composed of a single chunk of data.

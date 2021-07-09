@@ -48,7 +48,7 @@ public class GenericResponseBody implements ResponseBody {
 	
 	private static final String SSE_CONTENT_TYPE = MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8";
 	
-	protected AbstractResponse response;
+	protected final AbstractResponse response;
 	
 	protected ResponseData<ByteBuf> rawData;
 	protected ResponseData<CharSequence> stringData;

@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.http.server;
 
+import reactor.core.publisher.Mono;
+
 /**
  * <p>
  * Represents a server exchange between a client and a server.
@@ -45,4 +47,19 @@ public interface Exchange {
 	 * @return the response part
 	 */
 	Response response();
+	
+	/**
+	 * <p>
+	 * Returns the exchange finalizer which completes once the exchange is fully
+	 * processed.
+	 * </p>
+	 * 
+	 * <p>
+	 * A exchange is considered fully processed when the response has been fully
+	 * sent to the client or following an error.
+	 * </p>
+	 * 
+	 * @return a finalizer mono
+	 */
+	Mono<Void> finalizer();
 }

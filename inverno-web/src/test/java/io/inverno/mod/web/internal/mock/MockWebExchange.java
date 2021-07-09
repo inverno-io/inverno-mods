@@ -21,6 +21,7 @@ import java.util.Optional;
 
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.web.WebExchange;
+import reactor.core.publisher.Mono;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -55,6 +56,11 @@ public class MockWebExchange implements WebExchange {
 	@Override
 	public MockWebResponse response() {
 		return this.mockResponse;
+	}
+	
+	@Override
+	public Mono<Void> finalizer() {
+		return Mono.empty();
 	}
 
 	@Override

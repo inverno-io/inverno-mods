@@ -35,9 +35,14 @@ import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import reactor.core.publisher.BaseSubscriber;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.SignalType;
+import reactor.core.publisher.Sinks;
 
 /**
  * <p>
@@ -71,6 +76,8 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	protected final AbstractRequest request;
 	protected AbstractResponse response;
+	
+	protected Sinks.Empty<Void> finalizer;
 
 	protected Handler handler;
 	
@@ -113,15 +120,99 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	public AbstractResponse response() {
 		return this.response;
 	}
+	
+	@Override
+	public Mono<Void> finalizer() {
+		if(this.finalizer == null) {
+			this.finalizer = Sinks.empty();
+		}
+		return this.finalizer.asMono();
+	}
 
+	/**
+	 * <p>
+	 * Creates a new promise that shall be used to finalize the exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * If a finalizer has been requested on the exchange (see
+	 * {@link Exchange#finalizer()}), a listener terminating the finalizer sink is
+	 * added before the specified listener in the returned promise.
+	 * </p>
+	 * 
+	 * @param listener
+	 * @return
+	 */
+	protected ChannelPromise newFinalizerPromise(GenericFutureListener<? extends Future<? super Void>> listener) {
+		if(this.finalizer == null) {
+			return this.context.newPromise().addListener(listener);
+		}
+		
+		return this.context.newPromise()
+			.addListener(future -> {
+				if(future.isSuccess()) {
+					this.finalizer.tryEmitEmpty();
+				}
+				else {
+					this.finalizer.tryEmitError(future.cause());
+				}
+			})
+			.addListener(listener);
+	}
+	
+	/**
+	 * <p>
+	 * Completes the exchange finalizer if it was requested (see
+	 * {@link Exchange#finalizer()})
+	 * </p>
+	 */
+	protected void finalizerComplete() {
+		if(this.finalizer != null) {
+			this.finalizer.tryEmitEmpty();
+		}
+	}
+
+	/**
+	 * <p>
+	 * Fails the exchange finalizer if it was requested (see
+	 * {@link Exchange#finalizer()})
+	 * </p>
+	 */
+	protected void finalizerFails(Throwable error) {
+		if(this.finalizer != null) {
+			this.finalizer.tryEmitError(error);
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Returns the root handler.
+	 * </p>
+	 * 
+	 * @return the root handler
+	 */
 	public ExchangeHandler<Exchange> getRootHandler() {
 		return this.rootHandler;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the error handler.
+	 * </p>
+	 * 
+	 * @return the error handler
+	 */
 	public ExchangeHandler<ErrorExchange<Throwable>> getErrorHandler() {
 		return this.errorHandler;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the current transfered content length.
+	 * </p>
+	 * 
+	 * @return the current transfered content length
+	 */
 	public long getTransferedLength() {
 		return this.transferedLength;
 	}
@@ -633,7 +724,6 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		@Override
 		protected void hookOnError(Throwable throwable) {
 			// If we get there it means we can no longer process anything
-			// TODO we should probably log the error handler error
 			AbstractExchange.this.onCompleteWithError(this.originalError);
 			AbstractExchange.this.logError(() -> "Exchange processing error", this.originalError);
 			AbstractExchange.this.logError(() -> "ErrorExchange processing error", throwable);

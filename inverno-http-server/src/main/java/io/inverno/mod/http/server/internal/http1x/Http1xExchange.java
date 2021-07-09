@@ -130,7 +130,7 @@ public class Http1xExchange extends AbstractExchange {
 	
 	@Override
 	protected ErrorExchange<Throwable> createErrorExchange(Throwable error) {
-		return new GenericErrorExchange(this.request, new Http1xResponse(this.context, this.headerService, this.parameterConverter), error);
+		return new GenericErrorExchange(this.request, new Http1xResponse(this.context, this.headerService, this.parameterConverter), this::finalizer, error);
 	}
 	
 	private Charset getCharset() {
@@ -201,6 +201,7 @@ public class Http1xExchange extends AbstractExchange {
 	
 	@Override
 	protected void onCompleteWithError(Throwable throwable) {
+		this.finalizerFails(throwable);
 		this.handler.exchangeError(this.context, throwable);
 	}
 	
@@ -213,9 +214,8 @@ public class Http1xExchange extends AbstractExchange {
 			if(headers.getContentLength() == null && !headers.contains(Headers.NAME_TRANSFER_ENCODING)) {
 				headers.set(Headers.NAME_TRANSFER_ENCODING, Headers.VALUE_CHUNKED);
 			}
-			this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), this.context.voidPromise());
+			this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), this.newFinalizerPromise(future -> this.handler.exchangeComplete(this.context)));
 			headers.setWritten(true);
-			this.handler.exchangeComplete(this.context);
 		}
 		else {
 			// empty response or file region
@@ -229,9 +229,8 @@ public class Http1xExchange extends AbstractExchange {
 				() -> {
 					// just write headers in a fullHttpResponse
 					// Headers are not written here since we have an empty response
-					this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), this.context.voidPromise());
+					this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), this.newFinalizerPromise(future -> this.handler.exchangeComplete(this.context)));
 					headers.setWritten(true);
-					this.handler.exchangeComplete(this.context);
 				}
 			);
 		}
@@ -241,10 +240,11 @@ public class Http1xExchange extends AbstractExchange {
 	protected void onCompleteSingle(ByteBuf value) {
 		// Response has one chunk => send a FullHttpResponse
 		Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.headers();
-		this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, value), this.context.voidPromise());
+		this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, value), this.newFinalizerPromise(future -> {
+			this.handler.exchangeNext(this.context, value);
+			this.handler.exchangeComplete(this.context);
+		}));
 		headers.setWritten(true);
-		this.handler.exchangeNext(this.context, value);
-		this.handler.exchangeComplete(this.context);
 	}
 	
 	@Override
@@ -291,6 +291,7 @@ public class Http1xExchange extends AbstractExchange {
 				Http1xResponseTrailers trailers = (Http1xResponseTrailers)Http1xExchange.this.response.trailers();
 				
 				ChannelPromise promise = Http1xExchange.this.context.newPromise().addListener(future -> {
+					Http1xExchange.this.finalizerComplete();
 					Http1xExchange.this.handler.exchangeComplete(Http1xExchange.this.context);
 				});
 				

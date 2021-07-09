@@ -184,7 +184,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 	
 	@Override
 	public void handle(Exchange exchange) throws HttpException {
-		this.firstLink.handle(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.dataConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService)));
+		this.firstLink.handle(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.dataConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange::finalizer));
 	}
 	
 	/**

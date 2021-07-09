@@ -19,10 +19,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRequest;
 import io.inverno.mod.web.WebResponse;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -41,6 +43,8 @@ class GenericWebExchange implements WebExchange  {
 	
 	private final GenericWebResponse response;
 	
+	private final Supplier<Mono<Void>> finalizerSupplier;
+	
 	private Map<String, Object> attributes;
 	
 	/**
@@ -48,12 +52,14 @@ class GenericWebExchange implements WebExchange  {
 	 * Creates a generic web exchange with the specified request and response.
 	 * </p>
 	 * 
-	 * @param request  a web request
-	 * @param response a web response
+	 * @param request           a web request
+	 * @param response          a web response
+	 * @param finalizerSupplier the deferred exchange finalizer
 	 */
-	public GenericWebExchange(GenericWebRequest request, GenericWebResponse response) {
+	public GenericWebExchange(GenericWebRequest request, GenericWebResponse response, Supplier<Mono<Void>> finalizerSupplier) {
 		this.request = request;
 		this.response = response;
+		this.finalizerSupplier = finalizerSupplier;
 	}
 
 	@Override
@@ -64,6 +70,11 @@ class GenericWebExchange implements WebExchange  {
 	@Override
 	public GenericWebResponse response() {
 		return this.response;
+	}
+	
+	@Override
+	public Mono<Void> finalizer() {
+		return this.finalizerSupplier.get();
 	}
 	
 	@Override

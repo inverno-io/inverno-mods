@@ -17,6 +17,8 @@ package io.inverno.mod.http.server;
 
 import java.util.function.Function;
 
+import reactor.core.publisher.Mono;
+
 /**
  * <p>
  * Represents a failing server exchange.
@@ -73,9 +75,15 @@ public interface ErrorExchange<A extends Throwable> extends Exchange {
 			}
 
 			@Override
+			public Mono<Void> finalizer() {
+				return thisExchange.finalizer();
+			}
+			
+			@Override
 			public T getError() {
 				return errorMapper.apply(thisExchange.getError());
 			}
+			
 		};
 	}
 }

@@ -15,9 +15,12 @@
  */
 package io.inverno.mod.http.server.internal;
 
+import java.util.function.Supplier;
+
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.Response;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -31,6 +34,7 @@ public class GenericErrorExchange implements ErrorExchange<Throwable> {
 
 	private final Request request;
 	private final AbstractResponse response;
+	private final Supplier<Mono<Void>> finalizerSupplier;
 	private final Throwable error;
 	
 	/**
@@ -42,9 +46,10 @@ public class GenericErrorExchange implements ErrorExchange<Throwable> {
 	 * @param response the response
 	 * @param error    the error
 	 */
-	public GenericErrorExchange(AbstractRequest request, AbstractResponse response, Throwable error) {
+	public GenericErrorExchange(AbstractRequest request, AbstractResponse response, Supplier<Mono<Void>> finalizerSupplier, Throwable error) {
 		this.request = request;
 		this.response = response;
+		this.finalizerSupplier = finalizerSupplier;
 		this.error = error;
 	}
 
@@ -56,6 +61,11 @@ public class GenericErrorExchange implements ErrorExchange<Throwable> {
 	@Override
 	public Response response() {
 		return this.response;
+	}
+	
+	@Override
+	public Mono<Void> finalizer() {
+		return this.finalizerSupplier.get();
 	}
 
 	@Override
