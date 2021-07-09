@@ -104,6 +104,7 @@
 	<modules>
 		<!-- Compilers must be built first -->
 		<module>inverno-configuration-compiler</module>
+		<module>inverno-irt-compiler</module>
 		<module>inverno-web-compiler</module>
 		
 		<module>inverno-base</module>
@@ -111,6 +112,7 @@
 		<module>inverno-configuration</module>
 		<module>inverno-http-base</module>
 		<module>inverno-http-server</module>
+		<module>inverno-irt</module>
 		<module>inverno-web</module>
 		
 		<module>inverno-mods-test</module>

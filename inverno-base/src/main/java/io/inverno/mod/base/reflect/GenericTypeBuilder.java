@@ -15,7 +15,9 @@
  */
 package io.inverno.mod.base.reflect;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -28,11 +30,13 @@ import java.util.Objects;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
- * @see TypeBuilder
+ * @see Type
+ * @see ParameterizedType
  */
 class GenericTypeBuilder implements TypeBuilder {
 
-	private Class<?> rawType;
+	private final Class<?> rawType;
+	private final TypeVariable<?>[] rawTypeParameters;
 	
 	private List<Type> typeArguments;
 	
@@ -48,13 +52,31 @@ class GenericTypeBuilder implements TypeBuilder {
 	public GenericTypeBuilder(Class<?> rawType) {
 		Objects.requireNonNull(rawType, "rawType");
 		this.rawType = rawType;
+		this.rawTypeParameters = this.rawType.getTypeParameters();
 	}
 	
 	@Override
 	public TypeArgumentBuilder<TypeBuilder> type(Class<?> rawType) {
 		return new GenericTypeArgumentBuilder<>(this, rawType, this::addArgumentType);
 	}
+	
+	@Override
+	public TypeBuilder type(Type type) {
+		this.addArgumentType(type);
+		return this;
+	}
 
+	@Override
+	public TypeVariableBuilder<TypeBuilder> variableType(String name) {
+		int argIndex = this.typeArguments != null ? this.typeArguments.size() : 0;
+		if(argIndex < this.rawTypeParameters.length) {
+			return new GenericTypeVariableBuilder<>(this, this.rawTypeParameters[argIndex], name, this::addArgumentType);
+		}
+		else {
+			throw new IllegalStateException("Too many arguments");
+		}
+	}
+	
 	@Override
 	public WildcardTypeArgumentBuilder<TypeBuilder> wildcardType() {
 		return new GenericWildcardTypeArgumentBuilder<>(this, this::addArgumentType);
@@ -68,6 +90,12 @@ class GenericTypeBuilder implements TypeBuilder {
 	@Override
 	public TypeArgumentBuilder<TypeBuilder> ownerType(Class<?> rawType) {
 		return new GenericTypeArgumentBuilder<>(this, rawType, this::setOwnerType);
+	}
+	
+	@Override
+	public TypeBuilder ownerType(Type type) {
+		this.setOwnerType(type);
+		return this;
 	}
 
 	/**

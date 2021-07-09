@@ -47,6 +47,26 @@ public interface TypeBuilder {
 	
 	/**
 	 * <p>
+	 * Specifies a type as the next argument of the parameterized type.
+	 * </p>
+	 * 
+	 * @param type a type
+	 * @return this builder
+	 */
+	TypeBuilder type(Type type);
+	
+	/**
+	 * <p>
+	 * Specifies a variable type as the next argument of the parameterized type.
+	 * </p>
+	 * 
+	 * @param name The name of the variable
+	 * @return a type variable builder with this builder as parent
+	 */
+	TypeVariableBuilder<TypeBuilder> variableType(String name);
+	
+	/**
+	 * <p>
 	 * Specifies a wildcard type as the next argument of the parameterized type.
 	 * </p>
 	 * 
@@ -68,10 +88,20 @@ public interface TypeBuilder {
 	 * Specifies the owner type of the parameterized type.
 	 * </p>
 	 * 
-	 * @param rawType the owner type to set
+	 * @param rawType the erased type of the owner
 	 * @return a type argument builder with this builder as parent
 	 */
 	TypeArgumentBuilder<TypeBuilder> ownerType(Class<?> rawType);
+	
+	/**
+	 * <p>
+	 * Specifies the owner type of the parameterized type.
+	 * </p>
+	 * 
+	 * @param type the type of the owner
+	 * @return this builder
+	 */
+	TypeBuilder ownerType(Type type);
 	
 	/**
 	 * <p>Builds the type.</p>

@@ -16,6 +16,8 @@
 package io.inverno.mod.base.reflect;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.function.Consumer;
 
@@ -28,7 +30,8 @@ import java.util.function.Consumer;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see ArrayTypeArgumentBuilder
+ * @see GenericArrayType
+ * @see ParameterizedType
  * 
  * @param <A> the type of the parent builder
  */
@@ -58,6 +61,12 @@ class GenericArrayTypeArgumentBuilder<A> implements ArrayTypeArgumentBuilder<A> 
 	@Override
 	public TypeArgumentBuilder<ArrayTypeArgumentBuilder<A>> componentType(Class<?> rawType) {
 		return new GenericTypeArgumentBuilder<>(this, rawType, this::setComponentType);
+	}
+	
+	@Override
+	public ArrayTypeArgumentBuilder<A> componentType(Type type) {
+		this.setComponentType(type);
+		return this;
 	}
 
 	@Override

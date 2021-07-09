@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.base.reflect;
 
+import java.lang.reflect.Type;
+
 /**
  * <p>
  * A wildcard type argument builder is used to specify the bounds of a
@@ -40,6 +42,17 @@ public interface WildcardTypeArgumentBuilder<A> {
 	
 	/**
 	 * <p>
+	 * Specifies the upper bound type of the parameterized type argument.
+	 * </p>
+	 * 
+	 * @param type a type
+	 * 
+	 * @return this builder
+	 */
+	WildcardTypeArgumentBuilder<A> upperBoundType(Type type);
+	
+	/**
+	 * <p>
 	 * Specifies an array type as upper bound type of the parameterized type
 	 * argument.
 	 * </p>
@@ -58,6 +71,17 @@ public interface WildcardTypeArgumentBuilder<A> {
 	 * @return a type argument builder with this builder as parent
 	 */
 	TypeArgumentBuilder<WildcardTypeArgumentBuilder<A>> lowerBoundType(Class<?> rawType);
+	
+	/**
+	 * <p>
+	 * Specifies the lower bound type of the parameterized type argument.
+	 * </p>
+	 * 
+	 * @param type a type
+	 * 
+	 * @return this builder
+	 */
+	WildcardTypeArgumentBuilder<A> lowerBoundType(Type type);
 	
 	/**
 	 * <p>

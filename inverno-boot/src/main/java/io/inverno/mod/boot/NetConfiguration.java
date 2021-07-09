@@ -154,12 +154,12 @@ public interface NetConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to the number of processors available to the JVM.
+	 * Defaults to twice the number of processors available to the JVM.
 	 * </p>
 	 * 
 	 * @return the number of threads to allocate
 	 */
 	default int root_event_loop_group_size() {
-		return Runtime.getRuntime().availableProcessors();
+		return Runtime.getRuntime().availableProcessors() * 2;
 	}
 }

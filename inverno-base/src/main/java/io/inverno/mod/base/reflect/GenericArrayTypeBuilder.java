@@ -16,6 +16,7 @@
 package io.inverno.mod.base.reflect;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Type;
 
 /**
@@ -26,7 +27,7 @@ import java.lang.reflect.Type;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see ArrayTypeBuilder
+ * @see GenericArrayType
  */
 class GenericArrayTypeBuilder implements ArrayTypeBuilder {
 
@@ -41,6 +42,12 @@ class GenericArrayTypeBuilder implements ArrayTypeBuilder {
 	@Override
 	public TypeArgumentBuilder<ArrayTypeBuilder> componentType(Class<?> rawType) {
 		return new GenericTypeArgumentBuilder<>(this, rawType, this::setComponentType);
+	}
+	
+	@Override
+	public ArrayTypeBuilder componentType(Type type) {
+		this.setComponentType(type);
+		return this;
 	}
 
 	@Override
@@ -75,5 +82,4 @@ class GenericArrayTypeBuilder implements ArrayTypeBuilder {
 			return new GenericArrayTypeImpl(this.componentType);
 		}
 	}
-
 }

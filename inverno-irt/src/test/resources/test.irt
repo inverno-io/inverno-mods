@@ -1,0 +1,52 @@
+package com.example.tpl;
+
+import com.example.test.rtemplate.Item;
+import static com.example.test.rtemplate.Pipes.*;
+
+include com.example.test.Other1;
+include com.example.test.Other2;
+
+(Item item, long index) -> {
+	<div class="{@(index%2 == 0 ? "even" : "odd")}">
+		<h1>{@(item.getTitle())}</h1>
+		{@if 
+			(item.getType() == "error") -> {
+				<p>ERROR</p>
+			};
+			(item.getType() == "warn") -> {
+				<p>WARNING</p>
+			};
+			() -> {
+				<p>INFO</p>
+			}
+		}
+{item.content -> item_content}
+	</div>
+}
+
+toto_template() -> {
+abc def ghi
+}
+
+(@Toto   String   toto) -> {
+sqdsfd
+{@(toto)}
+qdsf
+}
+
+(Publisher<Item> items) -> {
+	{()}
+	{(x != 0 || y == 1 ? items : List.of())|sort(abc)}
+	{items|sort(Comparator.comparing(Item::getTitle)) -> test(r, "52") when (x == 5); tata(r, "123") when (x.equals("toto")); (r, "465")}
+}
+
+(Stream<Item> items) -> {
+	{items|(StreamPipes::sort)}
+}
+
+template_name(String toto) -> {
+abc \{\} def \{\} fdsfdjgdf ds fkdsj fdlkjfj dsj fdk\} dsj fdjf d
+}
+
+conflict(String tata) -> Other1::toto
+

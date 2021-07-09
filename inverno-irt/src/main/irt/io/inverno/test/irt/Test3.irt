@@ -1,0 +1,17 @@
+package io.inverno.test.irt;
+
+import io.inverno.test.irt.Item;
+import java.time.ZonedDateTime;
+
+include io.inverno.test.irt.Test4;
+include io.inverno.test.irt.Test5;
+
+(Item item) -> {
+{item.dateTime}
+}
+
+(ZonedDateTime dateTime) -> this::toto
+
+toto(ZonedDateTime dateTime) -> {
+Test3 : {@dateTime}
+}

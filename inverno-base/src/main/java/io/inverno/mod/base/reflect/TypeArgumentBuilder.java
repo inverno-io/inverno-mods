@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.base.reflect;
 
+import java.lang.reflect.Type;
+
 /**
  * <p>
  * A type argument builder is used to specify the arguments of a parameterized
@@ -36,6 +38,26 @@ public interface TypeArgumentBuilder<A> {
 	 * @return a type argument builder with this builder as parent
 	 */
 	TypeArgumentBuilder<TypeArgumentBuilder<A>> type(Class<?> rawType);
+
+	/**
+	 * <p>
+	 * Specifies a type as the next argument of the parameterized type.
+	 * </p>
+	 * 
+	 * @param type a type
+	 * @return this builder
+	 */
+	TypeArgumentBuilder<A> type(Type type);
+	
+	/**
+	 * <p>
+	 * Specifies a variable type as the next argument of the parameterized type.
+	 * </p>
+	 * 
+	 * @param name The name of the variable
+	 * @return a type variable builder with this builder as parent
+	 */
+	TypeVariableBuilder<TypeArgumentBuilder<A>> variableType(String name);
 	
 	/**
 	 * <p>

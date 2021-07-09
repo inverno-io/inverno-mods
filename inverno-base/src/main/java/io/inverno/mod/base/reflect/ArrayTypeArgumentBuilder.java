@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.base.reflect;
 
+import java.lang.reflect.Type;
+
 /**
  * <p>
  * An array type argument builder is used to specify the component type of an
@@ -40,6 +42,16 @@ public interface ArrayTypeArgumentBuilder<A> {
 	 * @return a type argument builder with this builder as parent
 	 */
 	TypeArgumentBuilder<ArrayTypeArgumentBuilder<A>> componentType(Class<?> rawType);
+	
+	/**
+	 * <p>
+	 * Specifies the component type of the array type.
+	 * </p>
+	 * 
+	 * @param type a type
+	 * @return this builder
+	 */
+	ArrayTypeArgumentBuilder<A> componentType(Type type);
 	
 	/**
 	 * <p>

@@ -31,6 +31,8 @@ import java.util.Arrays;
  */
 class WildcardTypeImpl implements WildcardType {
 
+	public static final WildcardType WILDCARD_ALL = new WildcardTypeImpl(new Type[0], new Type[0]);
+	
 	private final Type[] upperBounds;
 	private final Type[] lowerBounds;
 
@@ -97,8 +99,12 @@ class WildcardTypeImpl implements WildcardType {
 	public boolean equals(Object object) {
 		if (object instanceof WildcardType) {
 			WildcardType type = (WildcardType) object;
-			return Arrays.equals(this.upperBounds, type.getUpperBounds())
-					&& Arrays.equals(this.lowerBounds, type.getLowerBounds());
+			return (
+					Arrays.equals(this.upperBounds, type.getUpperBounds()) 
+					|| (this.upperBounds.length == 0 && type.getUpperBounds().length == 1 && type.getUpperBounds()[0].equals(Object.class)) 
+					|| (this.upperBounds.length == 1 && type.getUpperBounds().length == 0 && this.upperBounds[0].equals(Object.class))
+				)
+				&& Arrays.equals(this.lowerBounds, type.getLowerBounds());
 		}
 		return false;
 	}

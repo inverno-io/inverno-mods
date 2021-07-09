@@ -19,10 +19,15 @@ import java.lang.reflect.MalformedParameterizedTypeException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.StringJoiner;
 
+import org.apache.commons.lang3.reflect.TypeUtils;
 
 /**
  * <p>{@link ParameterizedType} implementation.</p>
@@ -41,18 +46,86 @@ class ParameterizedTypeImpl implements ParameterizedType {
 	public ParameterizedTypeImpl(Class<?> rawType, Type[] actualTypeArguments, Type ownerType) {
 		this.actualTypeArguments = actualTypeArguments;
 		this.rawType = rawType;
-		this.ownerType = (ownerType != null) ? ownerType : rawType.getDeclaringClass();
-		validateConstructorArguments();
-	}
-
-	private void validateConstructorArguments() {
+//		this.ownerType = (ownerType != null) ? ownerType : rawType.getEnclosingClass();
+		if(rawType.getEnclosingClass() == null) {
+			if(ownerType != null) {
+				throw new MalformedParameterizedTypeException(/*"You can't specify an owner type on " + this.rawType*/);
+			}
+			this.ownerType = null;
+		}
+		else if(ownerType == null) {
+			this.ownerType = rawType.getEnclosingClass();
+		}
+		else if(Types.isAssignable(ownerType, rawType.getEnclosingClass())) {
+			this.ownerType = ownerType;
+		}
+		else {
+			throw new MalformedParameterizedTypeException(/*"Owner type " + this.ownerType + " is not assignable to " + rawType.getEnclosingClass()*/);
+		}
+		
 		TypeVariable<?>[] formals = rawType.getTypeParameters();
 		// check correct arity of actual type args
-		if (formals.length != actualTypeArguments.length) {
-			throw new MalformedParameterizedTypeException();
+		if (formals.length != this.actualTypeArguments.length) {
+			throw new MalformedParameterizedTypeException(/*"Actual arguments does not match type parameters arity"*/);
 		}
-		for (int i = 0; i < actualTypeArguments.length; i++) {
+		
+		Set<String> variables = null;
+		for (int i = 0; i < this.actualTypeArguments.length; i++) {
+			if(this.actualTypeArguments[i] instanceof TypeVariable<?>) {
+				if(variables == null) {
+					variables = new HashSet<>();
+				}
+				if(!variables.add(((TypeVariable<?>)this.actualTypeArguments[i]).getName())) {
+					throw new MalformedParameterizedTypeException(/*"Duplicate type parameter " + ((TypeVariable<?>)this.actualTypeArguments[i]).getName()*/); 
+				}
+			}
+			
 			// check actuals against formals' bounds
+			Map<TypeVariable<?>, Type> typeArguments = Map.of();
+			if(this.ownerType instanceof ParameterizedType) {
+				typeArguments = TypeUtils.getTypeArguments((ParameterizedType)this.ownerType);
+			}
+			
+			if(formals[i].getBounds().length > 0) {
+				// ? extends ...
+				for(Type formalBound : formals[i].getBounds()) {
+					Type actualBound = formalBound instanceof TypeVariable<?> ? typeArguments.get((TypeVariable<?>)formalBound) : formalBound;
+					if(this.actualTypeArguments[i] instanceof WildcardType) {
+						// Wildcard types don't allow for multiple bounds which is why we only consider the first bound
+						// see WildcardType comments...
+						if(this.actualTypeArguments[i].equals(WildcardTypeImpl.WILDCARD_ALL)) {
+							// ?
+							// this is ok
+						}
+						else if(((WildcardType)this.actualTypeArguments[i]).getLowerBounds().length > 0) {
+							// ? super ...
+							// we must check that the super bound is assignable to the formal bound
+							if(!Types.isAssignable(((WildcardType)this.actualTypeArguments[i]).getLowerBounds()[0], actualBound)) {
+								throw new MalformedParameterizedTypeException(/*"Type " + ((WildcardType)this.actualTypeArguments[i]).getLowerBounds()[0] + " can't be assigned to type " + actualBound*/);
+							}
+						}
+						else {
+							// ? extends ...
+							// we must check that the extends bound is assignable to the formal bound
+							if(!Types.isAssignable(((WildcardType)this.actualTypeArguments[i]).getUpperBounds()[0], actualBound)) {
+								throw new MalformedParameterizedTypeException(/*"Type " + ((WildcardType)this.actualTypeArguments[i]).getUpperBounds()[0] + " can't be assigned to type " + actualBound*/);
+							}
+						}
+					}
+					else if(this.actualTypeArguments[i] instanceof TypeVariable<?>) {
+						if(((TypeVariable<?>)this.actualTypeArguments[i]).getBounds().length > 0) {
+							// T extends ...
+							// we must check that the bound is assignable to the formal bound
+							if(!Types.isAssignable(((TypeVariable<?>)this.actualTypeArguments[i]).getBounds()[0], actualBound)) {
+								throw new MalformedParameterizedTypeException(/*"Type " + ((TypeVariable<?>)this.actualTypeArguments[i]).getBounds()[0] + " can't be assigned to type " + actualBound*/);
+							}
+						}
+					}
+					else if(!TypeUtils.isAssignable(this.actualTypeArguments[i], actualBound)) {
+						throw new MalformedParameterizedTypeException(/*"Type " + this.actualTypeArguments[i] + " can't be assigned to type " + actualBound*/);
+					}
+				}
+			}
 		}
 	}
 
@@ -77,6 +150,7 @@ class ParameterizedTypeImpl implements ParameterizedType {
 	 *                                             parameterized type that cannot be
 	 *                                             instantiated for any reason
 	 */
+	@Override
 	public Type[] getActualTypeArguments() {
 		return actualTypeArguments.clone();
 	}
@@ -90,6 +164,7 @@ class ParameterizedTypeImpl implements ParameterizedType {
 	 * @return the {@code Type} object representing the class or interface that
 	 *         declared this type
 	 */
+	@Override
 	public Class<?> getRawType() {
 		return rawType;
 	}
@@ -114,6 +189,7 @@ class ParameterizedTypeImpl implements ParameterizedType {
 	 *                                             instantiated for any reason
 	 *
 	 */
+	@Override
 	public Type getOwnerType() {
 		return ownerType;
 	}

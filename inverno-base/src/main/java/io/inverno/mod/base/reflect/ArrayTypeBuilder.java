@@ -47,6 +47,16 @@ public interface ArrayTypeBuilder {
 	
 	/**
 	 * <p>
+	 * Specifies the component type of the array type.
+	 * </p>
+	 * 
+	 * @param type a type
+	 * @return this builder
+	 */
+	ArrayTypeBuilder componentType(Type type);
+	
+	/**
+	 * <p>
 	 * Specifies an array type as component type of the array type.
 	 * </p>
 	 * 

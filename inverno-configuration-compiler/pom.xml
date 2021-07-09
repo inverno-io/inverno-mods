@@ -87,18 +87,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>org.javacc.plugin</groupId>
-				<artifactId>javacc-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>javacc</id>
-						<goals>
-							<goal>javacc</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 	</build>
 </project>

@@ -15,7 +15,9 @@
  */
 package io.inverno.mod.base.reflect;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -26,7 +28,8 @@ import java.util.function.Consumer;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see WildcardTypeArgumentBuilder
+ * @see WildcardType
+ * @see ParameterizedType
  * 
  * @param <A> the type of the parent builder
  */
@@ -60,12 +63,18 @@ class GenericWildcardTypeArgumentBuilder<A> implements WildcardTypeArgumentBuild
 		if(rawType.isPrimitive()) {
 			rawType = Types.boxType(rawType);
 		}
-		return new GenericTypeArgumentBuilder<>(this, rawType, this::setUpperBoundType);
+		return new GenericTypeArgumentBuilder<>(this, rawType, this::addUpperBoundType);
+	}
+
+	@Override
+	public WildcardTypeArgumentBuilder<A> upperBoundType(Type type) {
+		this.addUpperBoundType(type);
+		return this;
 	}
 
 	@Override
 	public ArrayTypeArgumentBuilder<WildcardTypeArgumentBuilder<A>> upperBoundArrayType() {
-		return new GenericArrayTypeArgumentBuilder<>(this, this::setUpperBoundType);
+		return new GenericArrayTypeArgumentBuilder<>(this, this::addUpperBoundType);
 	}
 
 	@Override
@@ -73,26 +82,32 @@ class GenericWildcardTypeArgumentBuilder<A> implements WildcardTypeArgumentBuild
 		if(rawType.isPrimitive()) {
 			rawType = Types.boxType(rawType);
 		}
-		return new GenericTypeArgumentBuilder<>(this, rawType, this::setLowerBoundType);
+		return new GenericTypeArgumentBuilder<>(this, rawType, this::addLowerBoundType);
+	}
+	
+	@Override
+	public WildcardTypeArgumentBuilder<A> lowerBoundType(Type type) {
+		this.addLowerBoundType(type);
+		return this;
 	}
 
 	@Override
 	public ArrayTypeArgumentBuilder<WildcardTypeArgumentBuilder<A>> lowerBoundArrayType() {
-		return new GenericArrayTypeArgumentBuilder<>(this, this::setLowerBoundType);
+		return new GenericArrayTypeArgumentBuilder<>(this, this::addLowerBoundType);
 	}
 
 	/**
 	 * <p>
-	 * Sets the upper bound type.
+	 * Adds a upper bound type.
 	 * </p>
 	 * 
 	 * <p>
 	 * This method is invoked by child builders when they are finalized.
 	 * </p>
 	 * 
-	 * @param type the upper bound type to set
+	 * @param type the upper bound type to add
 	 */
-	private void setUpperBoundType(Type type) {
+	private void addUpperBoundType(Type type) {
 		if(this.upperBoundTypes == null) {
 			this.upperBoundTypes = new LinkedList<>();
 		}
@@ -101,20 +116,20 @@ class GenericWildcardTypeArgumentBuilder<A> implements WildcardTypeArgumentBuild
 	
 	/**
 	 * <p>
-	 * Sets the lower bound type.
+	 * Adds a lower bound type.
 	 * </p>
 	 * 
 	 * <p>
 	 * This method is invoked by child builders when they are finalized.
 	 * </p>
 	 * 
-	 * @param type the lower bound type to set
+	 * @param type the lower bound type to add
 	 */
-	private void setLowerBoundType(Type type) {
-		if(this.upperBoundTypes == null) {
-			this.upperBoundTypes = new LinkedList<>();
+	private void addLowerBoundType(Type type) {
+		if(this.lowerBoundTypes == null) {
+			this.lowerBoundTypes = new LinkedList<>();
 		}
-		this.upperBoundTypes.add(type);
+		this.lowerBoundTypes.add(type);
 	}
 	
 	@Override
