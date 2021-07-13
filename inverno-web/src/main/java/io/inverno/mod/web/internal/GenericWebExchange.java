@@ -19,8 +19,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
+import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRequest;
 import io.inverno.mod.web.WebResponse;
@@ -43,7 +44,7 @@ class GenericWebExchange implements WebExchange  {
 	
 	private final GenericWebResponse response;
 	
-	private final Supplier<Mono<Void>> finalizerSupplier;
+	private final Function<Mono<Void>, Exchange> finalizerConsumer;
 	
 	private Map<String, Object> attributes;
 	
@@ -56,10 +57,10 @@ class GenericWebExchange implements WebExchange  {
 	 * @param response          a web response
 	 * @param finalizerSupplier the deferred exchange finalizer
 	 */
-	public GenericWebExchange(GenericWebRequest request, GenericWebResponse response, Supplier<Mono<Void>> finalizerSupplier) {
+	public GenericWebExchange(GenericWebRequest request, GenericWebResponse response, Function<Mono<Void>, Exchange> finalizerConsumer) {
 		this.request = request;
 		this.response = response;
-		this.finalizerSupplier = finalizerSupplier;
+		this.finalizerConsumer = finalizerConsumer;
 	}
 
 	@Override
@@ -73,8 +74,9 @@ class GenericWebExchange implements WebExchange  {
 	}
 	
 	@Override
-	public Mono<Void> finalizer() {
-		return this.finalizerSupplier.get();
+	public Exchange finalizer(Mono<Void> finalizer) {
+		this.finalizerConsumer.apply(finalizer);
+		return this;
 	}
 	
 	@Override

@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.web.WebExchange;
 import reactor.core.publisher.Mono;
 
@@ -59,8 +60,8 @@ public class MockWebExchange implements WebExchange {
 	}
 	
 	@Override
-	public Mono<Void> finalizer() {
-		return Mono.empty();
+	public Exchange finalizer(Mono<Void> finalizer) {
+		return this;
 	}
 
 	@Override

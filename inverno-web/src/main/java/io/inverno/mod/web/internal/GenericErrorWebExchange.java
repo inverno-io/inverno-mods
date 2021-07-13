@@ -16,6 +16,7 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.WebResponse;
@@ -53,9 +54,11 @@ class GenericErrorWebExchange implements ErrorWebExchange<Throwable> {
 	}
 	
 	@Override
-	public Mono<Void> finalizer() {
-		return this.wrappedErrorExchange.finalizer();
+	public Exchange finalizer(Mono<Void> finalizer) {
+		this.wrappedErrorExchange.finalizer(finalizer);
+		return this;
 	}
+	
 
 	@Override
 	public WebResponse response() {

@@ -73,12 +73,13 @@ public interface ErrorExchange<A extends Throwable> extends Exchange {
 			public Response response() {
 				return thisExchange.response();
 			}
-
-			@Override
-			public Mono<Void> finalizer() {
-				return thisExchange.finalizer();
-			}
 			
+			@Override
+			public Exchange finalizer(Mono<Void> finalizer) {
+				thisExchange.finalizer(finalizer);
+				return this;
+			}
+
 			@Override
 			public T getError() {
 				return errorMapper.apply(thisExchange.getError());

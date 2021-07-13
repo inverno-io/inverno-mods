@@ -37,12 +37,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.EventExecutor;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SignalType;
-import reactor.core.publisher.Sinks;
 
 /**
  * <p>
@@ -77,8 +74,8 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	protected final AbstractRequest request;
 	protected AbstractResponse response;
 	
-	protected Sinks.Empty<Void> finalizer;
-
+	protected Mono<Void> finalizer;
+	
 	protected Handler handler;
 	
 	protected int transferedLength;
@@ -122,13 +119,91 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	}
 	
 	@Override
-	public Mono<Void> finalizer() {
-		if(this.finalizer == null) {
-			this.finalizer = Sinks.empty();
+	public AbstractExchange finalizer(Mono<Void> finalizer) {
+		if(this.finalizer != null) {
+			this.finalizer = this.finalizer.then(finalizer);
 		}
-		return this.finalizer.asMono();
+		else {
+			this.finalizer = finalizer;
+		}
+		return this;
 	}
-
+	
+	/**
+	 * <p>
+	 * Creates a new finalize promise which finalizes the exchange as defined by
+	 * {{@link #finalize(Runnable, Runnable)}.
+	 * </p>
+	 * 
+	 * @param preFinalize  a non-null pre finalizer
+	 * @param postFinalize a non-null post finalizer
+	 * 
+	 * @return a new exchange finalizer promise
+	 */
+	protected ChannelPromise newFinalizePromise(Runnable preFinalize, Runnable postFinalize) {
+		return this.context.newPromise().addListener(future -> this.finalize(preFinalize, postFinalize));
+	}
+	
+	/**
+	 * <p>
+	 * Creates a new finalize promise which finalizes the exchange as defined by
+	 * {{@link #finalize(Runnable)}.
+	 * </p>
+	 * 
+	 * @param postFinalize a non-null post finalizer
+	 * 
+	 * @return a new exchange finalizer promise
+	 */
+	protected ChannelPromise newFinalizePromise(Runnable postFinalize) {
+		return this.context.newPromise().addListener(future -> this.finalize(postFinalize));
+	}
+	
+	/**
+	 * <p>
+	 * Finalizes the exchange by invoking the preFinalize runnable before the
+	 * subscribing to the exchange finalizer when defined and finally invoking the
+	 * postFinalize runnable
+	 * </p>
+	 * 
+	 * @param preFinalize  a non-null pre finalizer
+	 * @param postFinalize a non-null post finalizer
+	 */
+	protected void finalize(Runnable preFinalize, Runnable postFinalize) {
+		if(this.finalizer == null) {
+			preFinalize.run();
+			postFinalize.run();
+		}
+		else {
+			preFinalize.run();
+			// TODO here we do nothing if the finalizer fails, maybe we should consider a debug or trace log
+			// Note that when creating the finalizer the user can actually catch the error: doOnError(...)
+			Mono<Void> actualFinalizer = this.finalizer;
+			if(postFinalize != null) {
+				actualFinalizer = actualFinalizer.doFinally(ign -> postFinalize.run());
+			}
+			actualFinalizer.subscribe();
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Finalizes the exchange by subscribing to the exchange finalizer when defined
+	 * and finally invoking the postFinalize runnable
+	 * </p>
+	 * 
+	 * @param postFinalize a non-null post finalizer
+	 */
+	protected void finalize(Runnable postFinalize) {
+		if(this.finalizer == null) {
+			postFinalize.run();
+		}
+		else {
+			// TODO here we do nothing if the finalizer fails, maybe we should consider a debug or trace log
+			// Note that when creating the finalizer the user can actually catch the error: doOnError(...)
+			this.finalizer.doOnTerminate(postFinalize).subscribe();
+		}
+	}
+	
 	/**
 	 * <p>
 	 * Creates a new promise that shall be used to finalize the exchange.
@@ -143,7 +218,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * @param listener
 	 * @return
 	 */
-	protected ChannelPromise newFinalizerPromise(GenericFutureListener<? extends Future<? super Void>> listener) {
+	/*protected ChannelPromise newFinalizerPromise(GenericFutureListener<? extends Future<? super Void>> listener) {
 		if(this.finalizer == null) {
 			return this.context.newPromise().addListener(listener);
 		}
@@ -158,7 +233,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				}
 			})
 			.addListener(listener);
-	}
+	}*/
 	
 	/**
 	 * <p>
@@ -166,11 +241,11 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * {@link Exchange#finalizer()})
 	 * </p>
 	 */
-	protected void finalizerComplete() {
+	/*protected void finalizerComplete() {
 		if(this.finalizer != null) {
 			this.finalizer.tryEmitEmpty();
 		}
-	}
+	}*/
 
 	/**
 	 * <p>
@@ -178,11 +253,11 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * {@link Exchange#finalizer()})
 	 * </p>
 	 */
-	protected void finalizerFails(Throwable error) {
+	/*protected void finalizerFails(Throwable error) {
 		if(this.finalizer != null) {
 			this.finalizer.tryEmitError(error);
 		}
-	}
+	}*/
 	
 	/**
 	 * <p>

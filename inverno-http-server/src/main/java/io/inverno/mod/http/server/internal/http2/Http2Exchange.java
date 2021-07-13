@@ -107,7 +107,7 @@ public class Http2Exchange extends AbstractExchange {
 	
 	@Override
 	protected ErrorExchange<Throwable> createErrorExchange(Throwable error) {
-		return new GenericErrorExchange(this.request, new Http2Response(this.context, this.headerService, this.parameterConverter), this::finalizer, error);
+		return new GenericErrorExchange(this.request, new Http2Response(this.context, this.headerService, this.parameterConverter), this.finalizer, error);
 	}
 	
 	@Override
@@ -137,8 +137,8 @@ public class Http2Exchange extends AbstractExchange {
 	
 	@Override
 	protected void onCompleteWithError(Throwable throwable) {
-		this.finalizerFails(throwable);
-		this.handler.exchangeError(this.context, throwable);
+		this.finalize(() -> this.handler.exchangeError(this.context, throwable));
+		
 	}
 	
 	@Override
@@ -146,13 +146,13 @@ public class Http2Exchange extends AbstractExchange {
 		Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.headers();
 		Http2ResponseTrailers trailers = (Http2ResponseTrailers)this.response.trailers();
 		if(trailers == null) {
-			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, true, this.newFinalizerPromise(future -> this.handler.exchangeComplete(this.context)));
+			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, true, this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
 			headers.setWritten(true);
 		}
 		else {
 			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, false, this.context.voidPromise());
 			headers.setWritten(true);
-			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.newFinalizerPromise(future -> this.handler.exchangeComplete(this.context)));
+			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
 		}
 		this.context.channel().flush();
 	}
@@ -164,17 +164,11 @@ public class Http2Exchange extends AbstractExchange {
 		headers.setWritten(true);
 		Http2ResponseTrailers trailers = (Http2ResponseTrailers)this.response.trailers();
 		if(trailers == null) {
-			this.encoder.writeData(this.context, this.stream.id(), value, 0, true, this.newFinalizerPromise(future -> {
-				this.handler.exchangeNext(this.context, value);
-				this.handler.exchangeComplete(this.context);
-			}));
+			this.encoder.writeData(this.context, this.stream.id(), value, 0, true, this.newFinalizePromise(() -> this.handler.exchangeNext(this.context, value), () -> this.handler.exchangeComplete(this.context)));
 		}
 		else {
 			this.encoder.writeData(this.context, this.stream.id(), value, 0, false, this.context.voidPromise());
-			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.newFinalizerPromise(future -> {
-				this.handler.exchangeNext(this.context, value);
-				this.handler.exchangeComplete(this.context);
-			}));
+			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.newFinalizePromise(() -> this.handler.exchangeNext(this.context, value), () -> this.handler.exchangeComplete(this.context)));
 		}
 		this.context.channel().flush();
 	}
@@ -186,20 +180,20 @@ public class Http2Exchange extends AbstractExchange {
 		
 		if(!headers.isWritten()) {
 			if(trailers == null) {
-				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, true, this.newFinalizerPromise(future -> this.handler.exchangeComplete(this.context)));
+				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, true, this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
 				headers.setWritten(true);
 			}
 			else {
 				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, false, this.context.voidPromise());
 				headers.setWritten(true);
-				this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.newFinalizerPromise(future -> this.handler.exchangeComplete(this.context)));
+				this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
 			}
 		}
 		else if(trailers != null) {
-			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.newFinalizerPromise(future -> this.handler.exchangeComplete(this.context)));
+			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
 		}
 		else {
-			this.encoder.writeData(this.context, this.stream.id(), Unpooled.EMPTY_BUFFER, 0, true, this.newFinalizerPromise(future -> this.handler.exchangeComplete(this.context)));
+			this.encoder.writeData(this.context, this.stream.id(), Unpooled.EMPTY_BUFFER, 0, true, this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
 		}
 		this.context.channel().flush();
 	}

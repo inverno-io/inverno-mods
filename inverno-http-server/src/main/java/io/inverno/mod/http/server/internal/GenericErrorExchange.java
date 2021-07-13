@@ -34,7 +34,7 @@ public class GenericErrorExchange implements ErrorExchange<Throwable> {
 
 	private final Request request;
 	private final AbstractResponse response;
-	private final Supplier<Mono<Void>> finalizerSupplier;
+	private Mono<Void> finalizer;
 	private final Throwable error;
 	
 	/**
@@ -46,10 +46,10 @@ public class GenericErrorExchange implements ErrorExchange<Throwable> {
 	 * @param response the response
 	 * @param error    the error
 	 */
-	public GenericErrorExchange(AbstractRequest request, AbstractResponse response, Supplier<Mono<Void>> finalizerSupplier, Throwable error) {
+	public GenericErrorExchange(AbstractRequest request, AbstractResponse response, Mono<Void> finalizer, Throwable error) {
 		this.request = request;
 		this.response = response;
-		this.finalizerSupplier = finalizerSupplier;
+		this.finalizer = finalizer;
 		this.error = error;
 	}
 
@@ -64,8 +64,14 @@ public class GenericErrorExchange implements ErrorExchange<Throwable> {
 	}
 	
 	@Override
-	public Mono<Void> finalizer() {
-		return this.finalizerSupplier.get();
+	public GenericErrorExchange finalizer(Mono<Void> finalizer) {
+		if(this.finalizer != null) {
+			this.finalizer = this.finalizer.then(finalizer);
+		}
+		else {
+			this.finalizer = finalizer;
+		}
+		return this;
 	}
 
 	@Override

@@ -18,6 +18,7 @@ package io.inverno.mod.web;
 import java.util.function.Function;
 
 import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.Request;
 import reactor.core.publisher.Mono;
 
@@ -62,8 +63,9 @@ public interface ErrorWebExchange<A extends Throwable> extends ErrorExchange<A> 
 			}
 			
 			@Override
-			public Mono<Void> finalizer() {
-				return thisExchange.finalizer();
+			public Exchange finalizer(Mono<Void> finalizer) {
+				thisExchange.finalizer(finalizer);
+				return this;
 			}
 
 			@Override

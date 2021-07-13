@@ -21,21 +21,6 @@ import java.util.stream.Collectors;
 
 import org.reactivestreams.Subscription;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.FileRegion;
-import io.netty.handler.codec.http.DefaultHttpContent;
-import io.netty.handler.codec.http.EmptyHttpHeaders;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaderValues;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpVersion;
-import io.netty.handler.codec.http.LastHttpContent;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.resource.MediaTypes;
@@ -53,6 +38,20 @@ import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.inverno.mod.http.server.internal.netty.FlatFullHttpResponse;
 import io.inverno.mod.http.server.internal.netty.FlatHttpResponse;
 import io.inverno.mod.http.server.internal.netty.FlatLastHttpContent;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.FileRegion;
+import io.netty.handler.codec.http.DefaultHttpContent;
+import io.netty.handler.codec.http.EmptyHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.LastHttpContent;
 import reactor.core.publisher.BaseSubscriber;
 
 /**
@@ -130,7 +129,7 @@ public class Http1xExchange extends AbstractExchange {
 	
 	@Override
 	protected ErrorExchange<Throwable> createErrorExchange(Throwable error) {
-		return new GenericErrorExchange(this.request, new Http1xResponse(this.context, this.headerService, this.parameterConverter), this::finalizer, error);
+		return new GenericErrorExchange(this.request, new Http1xResponse(this.context, this.headerService, this.parameterConverter), this.finalizer, error);
 	}
 	
 	private Charset getCharset() {
@@ -201,8 +200,7 @@ public class Http1xExchange extends AbstractExchange {
 	
 	@Override
 	protected void onCompleteWithError(Throwable throwable) {
-		this.finalizerFails(throwable);
-		this.handler.exchangeError(this.context, throwable);
+		this.finalize(() -> this.handler.exchangeError(this.context, throwable));
 	}
 	
 	@Override
@@ -214,7 +212,8 @@ public class Http1xExchange extends AbstractExchange {
 			if(headers.getContentLength() == null && !headers.contains(Headers.NAME_TRANSFER_ENCODING)) {
 				headers.set(Headers.NAME_TRANSFER_ENCODING, Headers.VALUE_CHUNKED);
 			}
-			this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), this.newFinalizerPromise(future -> this.handler.exchangeComplete(this.context)));
+			
+			this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
 			headers.setWritten(true);
 		}
 		else {
@@ -229,7 +228,7 @@ public class Http1xExchange extends AbstractExchange {
 				() -> {
 					// just write headers in a fullHttpResponse
 					// Headers are not written here since we have an empty response
-					this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), this.newFinalizerPromise(future -> this.handler.exchangeComplete(this.context)));
+					this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
 					headers.setWritten(true);
 				}
 			);
@@ -240,10 +239,7 @@ public class Http1xExchange extends AbstractExchange {
 	protected void onCompleteSingle(ByteBuf value) {
 		// Response has one chunk => send a FullHttpResponse
 		Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.headers();
-		this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, value), this.newFinalizerPromise(future -> {
-			this.handler.exchangeNext(this.context, value);
-			this.handler.exchangeComplete(this.context);
-		}));
+		this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, value), this.newFinalizePromise(() -> this.handler.exchangeNext(this.context, value), () -> this.handler.exchangeComplete(this.context)));
 		headers.setWritten(true);
 	}
 	
@@ -251,12 +247,11 @@ public class Http1xExchange extends AbstractExchange {
 	protected void onCompleteMany() {
 		Http1xResponseTrailers trailers = (Http1xResponseTrailers)this.response.trailers();
 		if(trailers != null) {
-			this.encoder.writeFrame(this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, trailers.getUnderlyingTrailers()), this.context.voidPromise());
+			this.encoder.writeFrame(this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, trailers.getUnderlyingTrailers()), this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
 		}
 		else {
-			this.encoder.writeFrame(this.context, LastHttpContent.EMPTY_LAST_CONTENT, this.context.voidPromise());
+			this.encoder.writeFrame(this.context, LastHttpContent.EMPTY_LAST_CONTENT, this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
 		}
-		this.handler.exchangeComplete(this.context);
 	}
 	
 	private class FileRegionDataSubscriber extends BaseSubscriber<FileRegion> {
@@ -290,16 +285,11 @@ public class Http1xExchange extends AbstractExchange {
 			Http1xExchange.this.executeInEventLoop(() -> {
 				Http1xResponseTrailers trailers = (Http1xResponseTrailers)Http1xExchange.this.response.trailers();
 				
-				ChannelPromise promise = Http1xExchange.this.context.newPromise().addListener(future -> {
-					Http1xExchange.this.finalizerComplete();
-					Http1xExchange.this.handler.exchangeComplete(Http1xExchange.this.context);
-				});
-				
 				if(trailers != null) {
-					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, trailers.getUnderlyingTrailers()), promise);
+					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, trailers.getUnderlyingTrailers()), Http1xExchange.this.newFinalizePromise(() -> Http1xExchange.this.handler.exchangeComplete(Http1xExchange.this.context)));
 				}
 				else {
-					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, promise);
+					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.newFinalizePromise(() -> Http1xExchange.this.handler.exchangeComplete(Http1xExchange.this.context)));
 				}
 			});
 		}

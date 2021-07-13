@@ -50,16 +50,16 @@ public interface Exchange {
 	
 	/**
 	 * <p>
-	 * Returns the exchange finalizer which completes once the exchange is fully
+	 * Adds a finalizer to the exchange which completes once the exchange is fully
 	 * processed.
 	 * </p>
 	 * 
 	 * <p>
-	 * A exchange is considered fully processed when the response has been fully
-	 * sent to the client or following an error.
+	 * A exchange is considered fully processed when the last chunk of the response
+	 * has been fully sent to the client or following an error.
 	 * </p>
 	 * 
-	 * @return a finalizer mono
+	 * @param finalizer a finalizer
 	 */
-	Mono<Void> finalizer();
+	Exchange finalizer(Mono<Void> finalizer);
 }
