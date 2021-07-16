@@ -15,8 +15,6 @@
  */
 package io.inverno.mod.http.server.internal;
 
-import java.util.function.Supplier;
-
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.Response;

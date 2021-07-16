@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.boot.internal.net;
+package io.inverno.mod.boot.internal.concurrent;
 
 import java.util.concurrent.Executor;
 

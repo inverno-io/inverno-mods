@@ -28,15 +28,19 @@ import io.inverno.mod.base.resource.ResourceService;
  * The Inverno framework boot module provides basic services.
  * </p>
  * 
- * <p>It defines the following sockets:</p>
+ * <p>
+ * It defines the following sockets:
+ * </p>
  * 
  * <dl>
- * <dt>netConfiguration</dt>
- * <dd>the net service configuration</dd>
+ * <dt>bootConfiguration</dt>
+ * <dd>the boot module configuration</dd>
  * <dt>compoundDecoders</dt>
- * <dd>extend the parameter converter decoding capabilities with a list of {@link CompoundDecoder}</dd>
+ * <dd>extend the parameter converter decoding capabilities with a list of
+ * {@link CompoundDecoder}</dd>
  * <dt>compoundEncoders</dt>
- * <dd>extend the parameter converter encoding capabilities with a list of {@link CompoundEncoder}</dd>
+ * <dd>extend the parameter converter encoding capabilities with a list of
+ * {@link CompoundEncoder}</dd>
  * <dt>objectMapper</dt>
  * <dd>override the JSON reader/writer</dd>
  * <dt>workerPool</dt>
@@ -48,17 +52,23 @@ import io.inverno.mod.base.resource.ResourceService;
  * </p>
  * 
  * <dl>
- * <dt>netConfiguration</dt>
- * <dd>the net service configuration</dd>
+ * <dt>bootConfiguration</dt>
+ * <dd>the boot module configuration</dd>
+ * <dt>reactor</dt>
+ * <dd>the {@link Reactor} used to create optimized threading model based on
+ * event loop group</dd>
  * <dt>netService</dt>
- * <dd>a {@link NetService} used to create optimized event loop group as well as
- * network clients and servers</dd>
+ * <dd>a {@link NetService} used to create optimized network clients and
+ * servers</dd>
  * <dt>mediaTypeService</dt>
- * <dd>a {@link MediaTypeService} used to determine the media type of a resource based on its URI</dd>
+ * <dd>a {@link MediaTypeService} used to determine the media type of a resource
+ * based on its URI</dd>
  * <dt>resourceService</dt>
  * <dd>a {@link ResourceService} used to access {@link Resource}</dd>
  * <dt>parameterConverter</dt>
- * <dd>a parameter converter used to convert parameter values to primitive and common types as well as custom types when custom compound decoders and/or encoders are injected</dd>
+ * <dd>a parameter converter used to convert parameter values to primitive and
+ * common types as well as custom types when custom compound decoders and/or
+ * encoders are injected</dd>
  * <dt>jsonByteBufConverter</dt>
  * <dd>A JSON to ByteBuf converter</dd>
  * <dt>jsonMediaTypeConverter</dt>
@@ -68,7 +78,8 @@ import io.inverno.mod.base.resource.ResourceService;
  * <dt>textPlainMediaTypeConverter</dt>
  * <dd>An text/plain media type converter</dd>
  * <dt>workerPool</dt>
- * <dd>a worker thread pool used whenever there's a need for an {@link ExecutorService} to execute tasks asynchronously.
+ * <dd>a worker thread pool used whenever there's a need for an
+ * {@link ExecutorService} to execute tasks asynchronously.
  * <dt>objectMapper</dt>
  * <dd>A JSON reader/writer</dd>
  * </dl>
@@ -97,6 +108,8 @@ module io.inverno.mod.boot {
 	requires static io.netty.transport.unix.common;
 	requires static io.netty.transport.epoll;
 	requires static io.netty.transport.kqueue;
+	
+	requires static io.vertx.core;
 	
 	requires transitive com.fasterxml.jackson.databind;
 	

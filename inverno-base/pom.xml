@@ -48,6 +48,21 @@
 			<groupId>io.netty</groupId>
 			<artifactId>netty-transport</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>io.vertx</groupId>
+			<artifactId>vertx-core</artifactId>
+			<optional>true</optional>
+			<exclusions>
+				<exclusion>
+        			<groupId>io.netty</groupId>
+        			<artifactId>*</artifactId>
+		        </exclusion>
+		        <exclusion>
+        			<groupId>com.fasterxml.jackson.core</groupId>
+        			<artifactId>*</artifactId>
+		        </exclusion>
+			</exclusions>
+	    </dependency>
 
 		<dependency>
 			<groupId>org.junit.platform</groupId>

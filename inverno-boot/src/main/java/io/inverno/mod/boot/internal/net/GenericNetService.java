@@ -16,12 +16,12 @@
 package io.inverno.mod.boot.internal.net;
 
 import java.net.SocketAddress;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.annotation.Provide;
+import io.inverno.mod.base.concurrent.Reactor;
+import io.inverno.mod.base.net.NetService;
+import io.inverno.mod.boot.BootConfiguration;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
@@ -30,32 +30,18 @@ import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.epoll.EpollDomainSocketChannel;
-import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerDomainSocketChannel;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.epoll.EpollSocketChannel;
-import io.netty.channel.kqueue.KQueue;
 import io.netty.channel.kqueue.KQueueDomainSocketChannel;
-import io.netty.channel.kqueue.KQueueEventLoopGroup;
 import io.netty.channel.kqueue.KQueueServerDomainSocketChannel;
 import io.netty.channel.kqueue.KQueueServerSocketChannel;
 import io.netty.channel.kqueue.KQueueSocketChannel;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.unix.DomainSocketAddress;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
-import io.inverno.core.annotation.Bean;
-import io.inverno.core.annotation.Destroy;
-import io.inverno.core.annotation.Init;
-import io.inverno.core.annotation.Provide;
-import io.inverno.mod.boot.NetConfiguration;
-import io.inverno.mod.base.net.NetService;
 
 /**
  * <p>
@@ -68,14 +54,8 @@ import io.inverno.mod.base.net.NetService;
 @Bean(name = "netService")
 public class GenericNetService implements @Provide NetService {
 	
-	private Logger logger = LogManager.getLogger(this.getClass());
-	
-	private NetConfiguration netConfiguration;
-	
-	private EventLoopGroup acceptorEventLoopGroup;
-	private EventLoopGroup rootEventLoopGroup;
-	
-	private final int nThreads;
+	private final BootConfiguration configuration;
+	private final Reactor reactor;
 	
 	private final TransportType transportType;
 	
@@ -92,94 +72,18 @@ public class GenericNetService implements @Provide NetService {
 	 * 
 	 * @param netConfiguration the net configuration
 	 */
-	public GenericNetService(NetConfiguration netConfiguration) {
-		this.netConfiguration = netConfiguration;
-		
-		if(this.netConfiguration.prefer_native_transport()) {
-			if(isKQueueAvailable()) {
-				this.transportType = TransportType.KQUEUE;
-			}
-			else if(isEpollAvailable()) {
-				this.transportType = TransportType.EPOLL;
-			}
-			else {
-				this.transportType = TransportType.NIO;
-			}
-		}
-		else {
-			this.transportType = TransportType.NIO;
-		}
-		
-		this.nThreads = this.netConfiguration.root_event_loop_group_size();
-		
+	public GenericNetService(BootConfiguration netConfiguration, Reactor reactor, TransportType transportType) {
+		this.configuration = netConfiguration;
+		this.reactor = reactor;
+		this.transportType = transportType;
+				
 		this.pooledAllocator = new PooledByteBufAllocator(true);
 		this.unpooledAllocator = new UnpooledByteBufAllocator(false); 
 		
 		this.allocator = new NetByteBufAllocator();
 		this.directAllocator = new DirectNetByteBufAllocator();
 	}
-	
-	private static boolean isKQueueAvailable() {
-		try {
-			return KQueue.isAvailable();
-		}
-		catch(NoClassDefFoundError e) {
-			return false;
-		}
-	}
-	
-	private static boolean isEpollAvailable() {
-		try {
-			return Epoll.isAvailable();
-		}
-		catch(NoClassDefFoundError e) {
-			return false;
-		}
-	}
-	
-	private EventLoopGroup createEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
-		if(this.transportType == TransportType.KQUEUE) {
-			return new KQueueEventLoopGroup(nThreads, threadFactory);
-		}
-		else if(this.transportType == TransportType.EPOLL) {
-			return new EpollEventLoopGroup(nThreads, threadFactory);
-		}
-		else {
-			return new NioEventLoopGroup(nThreads, threadFactory);
-		}
-	}
-	
-	@Init
-	public void init() {
-		this.logger.debug("Creating acceptor event loop group ({})...", () -> this.transportType.toString().toLowerCase());
-		this.acceptorEventLoopGroup = this.createEventLoopGroup(1, new NonBlockingThreadFactory("inverno-acceptor-" + this.transportType.toString().toLowerCase(), false, 5));
-		this.logger.debug("Creating root IO event loop group ({}) with {} threads...", () -> this.transportType.toString().toLowerCase(), () -> this.nThreads);
-		this.rootEventLoopGroup = this.createEventLoopGroup(this.nThreads, new NonBlockingThreadFactory("inverno-io-" + this.transportType.toString().toLowerCase(), false, 5));
-	}
-	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	@Destroy
-	public void destroy() throws InterruptedException {
-		this.logger.debug("Destroying acceptor event loop group...");
-		this.acceptorEventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS).addListener(new GenericFutureListener() {
-			@Override
-			public void operationComplete(Future future) throws Exception {
-				if(!future.isSuccess()) {
-					GenericNetService.this.logger.warn("Error while destroying acceptor event loop group", future.cause());
-				}
-				GenericNetService.this.logger.debug("Destroying root event loop group...");
-				GenericNetService.this.rootEventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS).addListener(new GenericFutureListener() {
-					@Override
-					public void operationComplete(Future future) throws Exception {
-						if(!future.isSuccess()) {
-							GenericNetService.this.logger.warn("Error while destroying root IO event loop group", future.cause());
-						}
-					}
-				});
-			}
-		});
-	}
-	
+
 	@Override
 	public TransportType getTransportType() {
 		return this.transportType;
@@ -187,13 +91,13 @@ public class GenericNetService implements @Provide NetService {
 
 	@Override
 	public Bootstrap createClient(SocketAddress socketAddress) {
-		return this.createClient(socketAddress, this.nThreads);
+		return this.createClient(socketAddress, this.reactor.getCoreIoEventLoopGroupSize());
 	}
 
 	@Override
 	public Bootstrap createClient(SocketAddress socketAddress, int nThreads) {
 		Bootstrap bootstrap = new Bootstrap();
-		bootstrap.group(this.createIoEventLoopGroup(nThreads));
+		bootstrap.group(this.reactor.createIoEventLoopGroup(nThreads));
 		if(this.transportType == TransportType.KQUEUE) {
 			if(socketAddress instanceof DomainSocketAddress) {
 				bootstrap.channelFactory(KQueueDomainSocketChannel::new);
@@ -220,13 +124,13 @@ public class GenericNetService implements @Provide NetService {
 
 	@Override
 	public ServerBootstrap createServer(SocketAddress socketAddress) {
-		return this.createServer(socketAddress, this.nThreads);
+		return this.createServer(socketAddress, this.reactor.getCoreIoEventLoopGroupSize());
 	}
 
 	@Override
 	public ServerBootstrap createServer(SocketAddress socketAddress, int nThreads) {
 		ServerBootstrap bootstrap = new ServerBootstrap();
-		bootstrap.group(this.getAcceptorEventLoopGroup(), this.createIoEventLoopGroup(nThreads));
+		bootstrap.group(this.reactor.getAcceptorEventLoopGroup(), this.reactor.createIoEventLoopGroup(nThreads));
 		if(this.transportType == TransportType.KQUEUE) {
 			if(socketAddress instanceof DomainSocketAddress) {
 				bootstrap.channelFactory(KQueueServerDomainSocketChannel::new);
@@ -242,43 +146,25 @@ public class GenericNetService implements @Provide NetService {
 			else {
 				bootstrap.channelFactory(EpollServerSocketChannel::new);
 			}
-			bootstrap.option(EpollChannelOption.SO_REUSEPORT, this.netConfiguration.reuse_port())
-				.childOption(EpollChannelOption.TCP_QUICKACK, this.netConfiguration.tcp_quickack())
-				.childOption(EpollChannelOption.TCP_CORK, this.netConfiguration.tcp_cork());
+			bootstrap.option(EpollChannelOption.SO_REUSEPORT, this.configuration.reuse_port())
+				.childOption(EpollChannelOption.TCP_QUICKACK, this.configuration.tcp_quickack())
+				.childOption(EpollChannelOption.TCP_CORK, this.configuration.tcp_cork());
 		}
 		else {
 			bootstrap.channelFactory(NioServerSocketChannel::new);
 		}
 		
-		bootstrap.option(ChannelOption.SO_REUSEADDR, this.netConfiguration.reuse_address())
-			.childOption(ChannelOption.SO_KEEPALIVE, this.netConfiguration.keep_alive())
-			.childOption(ChannelOption.TCP_NODELAY, this.netConfiguration.tcp_no_delay())
+		bootstrap.option(ChannelOption.SO_REUSEADDR, this.configuration.reuse_address())
+			.childOption(ChannelOption.SO_KEEPALIVE, this.configuration.keep_alive())
+			.childOption(ChannelOption.TCP_NODELAY, this.configuration.tcp_no_delay())
 			.childOption(ChannelOption.ALLOCATOR, this.allocator);
 		
-		if(this.netConfiguration.accept_backlog() != null) {
-			bootstrap.option(ChannelOption.SO_BACKLOG, this.netConfiguration.accept_backlog());
+		if(this.configuration.accept_backlog() != null) {
+			bootstrap.option(ChannelOption.SO_BACKLOG, this.configuration.accept_backlog());
 		}
 		return bootstrap;
 	}
 
-	@Override
-	public EventLoopGroup getAcceptorEventLoopGroup() {
-		return this.acceptorEventLoopGroup;
-	}
-	
-	@Override
-	public EventLoopGroup createIoEventLoopGroup() {
-		return this.createIoEventLoopGroup(this.nThreads);
-	}
-
-	@Override
-	public EventLoopGroup createIoEventLoopGroup(int nThreads) {
-		if(nThreads > this.nThreads) {
-			throw new IllegalArgumentException("Number of threads: " + nThreads + " exceeds root event loop group size: " + this.nThreads);
-		}
-		return new EventLoopGroupProxy(nThreads, this.rootEventLoopGroup);
-	}
-	
 	@Override
 	public ByteBufAllocator getByteBufAllocator() {
 		return this.allocator;

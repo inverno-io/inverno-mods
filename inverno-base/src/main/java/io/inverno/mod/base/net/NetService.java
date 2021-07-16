@@ -20,7 +20,6 @@ import java.net.SocketAddress;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.EventLoopGroup;
 
 /**
  * <p>
@@ -56,6 +55,10 @@ public interface NetService {
 	 */
 	public static enum TransportType {
 		/**
+		 * <a href="https://en.wikipedia.org/wiki/Non-blocking_I/O_(Java)">Nio</a> transport type.
+		 */
+		NIO,
+		/**
 		 * <a href="https://en.wikipedia.org/wiki/Epoll">Epoll</a> transport type.
 		 */
 		EPOLL,
@@ -64,9 +67,9 @@ public interface NetService {
 		 */
 		KQUEUE,
 		/**
-		 * <a href="https://en.wikipedia.org/wiki/Non-blocking_I/O_(Java)">Nio</a> transport type.
+		 * <a href="https://github.com/netty/netty-incubator-transport-io_uring">io_uring</a> transport type. 
 		 */
-		NIO;
+//		IO_URING;
 	}
 
 	/**
@@ -77,42 +80,6 @@ public interface NetService {
 	 * @return a trasport type
 	 */
 	TransportType getTransportType();
-	
-	/**
-	 * <p>
-	 * Returns the acceptor event loop group typically with one thread.
-	 * </p>
-	 * 
-	 * <p>
-	 * This event loop group should be shared across network servers to accept
-	 * connections.
-	 * </p>
-	 * 
-	 * @return an acceptor event loop group
-	 */
-	EventLoopGroup getAcceptorEventLoopGroup();
-	
-	/**
-	 * <p>
-	 * Creates an IO event loop group with all available threads.
-	 * </p>
-	 * 
-	 * @return an IO event loop group
-	 */
-	EventLoopGroup createIoEventLoopGroup();
-	
-	/**
-	 * <p>
-	 * Creates an IO event loop group with the specified amount of threads.
-	 * </p>
-	 * 
-	 * @param nThreads the number of threads to allocate
-	 * 
-	 * @return an IO event loop group
-	 * @throws IllegalArgumentException if the specified number of thread exceeds
-	 *                                  the number of threads available
-	 */
-	EventLoopGroup createIoEventLoopGroup(int nThreads) throws IllegalArgumentException;
 	
 	/**
 	 * <p>

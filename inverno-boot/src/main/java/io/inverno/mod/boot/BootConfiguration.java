@@ -15,7 +15,10 @@
  */
 package io.inverno.mod.boot;
 
+import io.inverno.mod.base.concurrent.Reactor;
+import io.inverno.mod.base.net.NetService;
 import io.inverno.mod.configuration.Configuration;
+import io.vertx.core.Vertx;
 
 /**
  * <p>
@@ -26,7 +29,7 @@ import io.inverno.mod.configuration.Configuration;
  * @since 1.0
  */
 @Configuration
-public interface NetConfiguration {
+public interface BootConfiguration {
 
 	/**
 	 * <p>
@@ -135,7 +138,12 @@ public interface NetConfiguration {
 
 	/**
 	 * <p>
-	 * Enables/Disables native transport preference.
+	 * Enables/Disables native transport when available.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that this settings impact both {@link Reactor} and {@link NetService}
+	 * implementations.
 	 * </p>
 	 * 
 	 * <p>
@@ -147,10 +155,30 @@ public interface NetConfiguration {
 	default boolean prefer_native_transport() {
 		return true;
 	}
+	
+	/**
+	 * <p>
+	 * Enables/Disables Vert.x reactor when available.
+	 * </p>
+	 * 
+	 * <p>
+	 * If sets to true and Vert.x core is on the module path, the reactor is backed
+	 * by a {@link Vertx} instance.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to false.
+	 * </p>
+	 * 
+	 * @return true if the option is enabled, false otherwise
+	 */
+	default boolean reactor_prefer_vertx() {
+		return false;
+	}
 
 	/**
 	 * <p>
-	 * The number of threads to allocate to the root event loop group.
+	 * The number of threads to allocate to the reactor event loop group.
 	 * </p>
 	 * 
 	 * <p>
@@ -159,7 +187,7 @@ public interface NetConfiguration {
 	 * 
 	 * @return the number of threads to allocate
 	 */
-	default int root_event_loop_group_size() {
+	default int reactor_event_loop_group_size() {
 		return Runtime.getRuntime().availableProcessors() * 2;
 	}
 }

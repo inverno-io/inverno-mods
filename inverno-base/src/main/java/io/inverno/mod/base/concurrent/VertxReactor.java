@@ -13,32 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.inverno.mod.base.concurrent;
+
+import io.vertx.core.Vertx;
 
 /**
  * <p>
- * Defines the foundational APIs of the Inverno framework modules.
+ * A specific Reactor backed by Vert.x core.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.2
  */
-module io.inverno.mod.base {
-	requires org.apache.commons.text;
-	requires org.apache.commons.lang3;
-	
-	requires transitive reactor.core;
-	requires transitive org.reactivestreams;
-	
-	requires io.netty.common;
-	requires transitive io.netty.buffer;
-	requires transitive io.netty.transport;
-	
-	requires static io.vertx.core;
-	
-	exports io.inverno.mod.base;
-	exports io.inverno.mod.base.concurrent;
-	exports io.inverno.mod.base.net;
-	exports io.inverno.mod.base.reflect;
-	exports io.inverno.mod.base.resource;
-	exports io.inverno.mod.base.converter;
+public interface VertxReactor extends Reactor {
+
+	/**
+	 * <p>
+	 * Returns the underlying Vert.x instance.
+	 * </p>
+	 * 
+	 * @return the vertx instance
+	 */
+	Vertx getVertx();
 }
