@@ -111,11 +111,10 @@ public class IrtTypeResolver {
 			if (importParts.size() == 1) {
 				throw new IllegalArgumentException("Invalid import identifier: *");
 			}
-			this.wildcardImports.add(
-					importParts.subList(0, importParts.size() - 1).stream().collect(Collectors.joining(".")) + ".");
-		} else {
-			TypeElement typeElement = this.elementUtils
-					.getTypeElement(importParts.stream().collect(Collectors.joining(".")));
+			this.wildcardImports.add(importParts.subList(0, importParts.size() - 1).stream().collect(Collectors.joining(".")) + ".");
+		} 
+		else {
+			TypeElement typeElement = this.elementUtils.getTypeElement(importParts.stream().collect(Collectors.joining(".")));
 			if (typeElement != null) {
 				this.importedTypes.put(importParts.get(importParts.size() - 1), typeElement);
 			}
@@ -144,15 +143,13 @@ public class IrtTypeResolver {
 		TypeElement resolvedType = this.importedTypes.get(nameParts.get(0));
 		if (resolvedType != null) {
 			if (nameParts.size() > 1) {
-				resolvedType = this.elementUtils.getTypeElement(resolvedType.getQualifiedName().toString() + "."
-						+ nameParts.subList(1, nameParts.size()).stream().collect(Collectors.joining(".")));
+				resolvedType = this.elementUtils.getTypeElement(resolvedType.getQualifiedName().toString() + "." + nameParts.subList(1, nameParts.size()).stream().collect(Collectors.joining(".")));
 				if (resolvedType == null) {
-					throw new IrtCompilationException(
-							nameParts.stream().collect(Collectors.joining(".")) + " cannot be resolved to a type",
-							range);
+					throw new IrtCompilationException(nameParts.stream().collect(Collectors.joining(".")) + " cannot be resolved to a type", range);
 				}
 			}
-		} else {
+		}
+		else {
 			// 2. Try wildcard imports package
 			for (String wildcardImport : this.wildcardImports) {
 				resolvedType = this.elementUtils
@@ -165,8 +162,7 @@ public class IrtTypeResolver {
 
 		// 3. Try within template package
 		if (resolvedType == null && this.packageParts != null && !this.packageParts.isEmpty()) {
-			resolvedType = this.elementUtils.getTypeElement(
-					Stream.concat(this.packageParts.stream(), nameParts.stream()).collect(Collectors.joining(".")));
+			resolvedType = this.elementUtils.getTypeElement(Stream.concat(this.packageParts.stream(), nameParts.stream()).collect(Collectors.joining(".")));
 		}
 
 		// 4. Try fully qualified name
@@ -175,8 +171,7 @@ public class IrtTypeResolver {
 		}
 
 		if (resolvedType == null) {
-			throw new IrtCompilationException(
-					nameParts.stream().collect(Collectors.joining(".")) + " cannot be resolved to a type", range);
+			throw new IrtCompilationException(nameParts.stream().collect(Collectors.joining(".")) + " cannot be resolved to a type", range);
 		}
 
 		return resolvedType;
