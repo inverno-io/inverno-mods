@@ -15,14 +15,10 @@
  */
 package io.inverno.mod.http.server.internal;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.ChannelPipeline;
-import io.netty.handler.codec.http.HttpContentCompressor;
-import io.netty.handler.codec.http.HttpContentDecompressor;
-import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
-import io.netty.handler.ssl.SslContext;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.core.annotation.Lazy;
@@ -33,6 +29,14 @@ import io.inverno.mod.http.server.internal.http1x.Http1xRequestDecoder;
 import io.inverno.mod.http.server.internal.http1x.Http1xResponseEncoder;
 import io.inverno.mod.http.server.internal.http2.H2cUpgradeHandler;
 import io.inverno.mod.http.server.internal.http2.Http2ChannelHandler;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.compression.CompressionOptions;
+import io.netty.handler.codec.compression.StandardCompressionOptions;
+import io.netty.handler.codec.http.HttpContentCompressor;
+import io.netty.handler.codec.http.HttpContentDecompressor;
+import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
+import io.netty.handler.ssl.SslContext;
 
 /**
  * <p>
@@ -54,6 +58,8 @@ public class HttpChannelConfigurer {
 
 	private final Supplier<Http1xChannelHandler> http1xChannelHandlerFactory;
 	private final Supplier<Http2ChannelHandler> http2ChannelHandlerFactory;
+	
+	private final CompressionOptions[] compressionOptions;
 	
 	/**
 	 * <p>
@@ -85,6 +91,19 @@ public class HttpChannelConfigurer {
 		if(this.configuration.tls_enabled()) {
 			this.sslContext = sslContextSupplier.get();			
 		}
+		
+		List<CompressionOptions> compressionOptionsList = new ArrayList<>();
+
+		compressionOptionsList.add(StandardCompressionOptions.deflate(this.configuration.compression_deflate_compressionLevel(), this.configuration.compression_deflate_windowBits(), this.configuration.compression_deflate_memLevel()));
+		compressionOptionsList.add(StandardCompressionOptions.gzip(this.configuration.compression_gzip_compressionLevel(), this.configuration.compression_gzip_windowBits(), this.configuration.compression_gzip_memLevel()));
+		compressionOptionsList.add(StandardCompressionOptions.zstd(this.configuration.compression_zstd_compressionLevel(), this.configuration.compression_zstd_blockSize(), this.configuration.compression_zstd_maxEncodeSize()));
+		
+		// Brotli lib is currently an unnamed module so we can't configure it...
+		/*if(Brotli.isAvailable()) {
+			compressionOptionsList.add(StandardCompressionOptions.brotli(new Encoder.Parameters().setQuality(this.configuration.compression_brotli_quality()).setMode(this.configuration.compression_brotli_mode()).setWindow(this.configuration.compression_brotli_window())));
+		}*/
+		
+		this.compressionOptions = compressionOptionsList.stream().toArray(CompressionOptions[]::new);
 	}
 	
 	/**
@@ -129,7 +148,7 @@ public class HttpChannelConfigurer {
 			pipeline.addLast("http1xDecompressor", new HttpContentDecompressor(false));
 		}
 		if (this.configuration.compression_enabled()) {
-			pipeline.addLast("http1xCompressor", new HttpContentCompressor(this.configuration.compression_level()));
+			pipeline.addLast("http1xCompressor", new HttpContentCompressor(this.configuration.compression_contentSizeThreshold(), this.compressionOptions));
 		}
 	}
 	

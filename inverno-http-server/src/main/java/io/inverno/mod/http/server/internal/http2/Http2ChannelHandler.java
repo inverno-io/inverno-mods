@@ -27,7 +27,6 @@ import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.compression.ZlibWrapper;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http2.DelegatingDecompressorFrameListener;
@@ -284,7 +283,10 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	@Override
 	public void onStreamClosed(Http2Stream stream) {
 //		System.out.println("Stream closed " + stream.id());
-		Http2Exchange serverStream = this.serverStreams.remove(stream.id());
+		
+		// TODO same issue as for Http1xChannelHandler#channelInactive
+		// Canceling subscriptions here might raise other issues so we prefer to let things crash when one will try to read or write to a closed stream
+		/*Http2Exchange serverStream = this.serverStreams.remove(stream.id());
 		if (serverStream != null) {
 			serverStream.dispose();
 		} 
@@ -292,7 +294,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 			// TODO this should never happen?
 //			System.err.println("Unable to reset unmanaged stream " + stream.id());
 //    		throw new IllegalStateException("Unable to reset unmanaged stream " + stream.id());
-		}
+		}*/
 	}
 
 	@Override
@@ -332,18 +334,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 		 * @throws NullPointerException if acceptEncoding is null
 		 */
 		public String resolve(String acceptEncoding) throws NullPointerException {
-			ZlibWrapper wrapper = super.determineWrapper(acceptEncoding);
-			if (wrapper != null) {
-				switch(wrapper) {
-					case GZIP:
-						return "gzip";
-					case ZLIB:
-						return "deflate";
-					default:
-						return null;
-				}
-			}
-			return null;
+			return this.determineEncoding(acceptEncoding);
 		}
 	}
 }

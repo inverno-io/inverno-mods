@@ -15,9 +15,13 @@
  */
 package io.inverno.mod.http.server.internal.http2;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import io.netty.handler.codec.compression.CompressionOptions;
+import io.netty.handler.codec.compression.StandardCompressionOptions;
 import io.netty.handler.codec.http2.AbstractHttp2ConnectionHandlerBuilder;
 import io.netty.handler.codec.http2.CompressorHttp2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2ConnectionDecoder;
@@ -48,13 +52,15 @@ import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 @Bean(visibility = Visibility.PRIVATE)
 public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler> {
 
-	private HttpServerConfiguration configuration;
-	private ExchangeHandler<Exchange> rootHandler; 
-	private ExchangeHandler<ErrorExchange<Throwable>> errorHandler;
-	private HeaderService headerService;
-	private ObjectConverter<String> parameterConverter;
-	private MultipartDecoder<Parameter> urlEncodedBodyDecoder;
-	private MultipartDecoder<Part> multipartBodyDecoder;
+	private final HttpServerConfiguration configuration;
+	private final ExchangeHandler<Exchange> rootHandler; 
+	private final ExchangeHandler<ErrorExchange<Throwable>> errorHandler;
+	private final HeaderService headerService;
+	private final ObjectConverter<String> parameterConverter;
+	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
+	private final MultipartDecoder<Part> multipartBodyDecoder;
+	
+	private final CompressionOptions[] compressionOptions;
 	
 	/**
 	 * <p>
@@ -84,6 +90,19 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
+		
+		List<CompressionOptions> compressionOptionsList = new ArrayList<>();
+
+		compressionOptionsList.add(StandardCompressionOptions.deflate(this.configuration.compression_deflate_compressionLevel(), this.configuration.compression_deflate_windowBits(), this.configuration.compression_deflate_memLevel()));
+		compressionOptionsList.add(StandardCompressionOptions.gzip(this.configuration.compression_gzip_compressionLevel(), this.configuration.compression_gzip_windowBits(), this.configuration.compression_gzip_memLevel()));
+		compressionOptionsList.add(StandardCompressionOptions.zstd(this.configuration.compression_zstd_compressionLevel(), this.configuration.compression_zstd_blockSize(), this.configuration.compression_zstd_maxEncodeSize()));
+		
+		// Brotli lib is currently an unnamed module so we can't configure it...
+		/*if(Brotli.isAvailable()) {
+			compressionOptionsList.add(StandardCompressionOptions.brotli(new Encoder.Parameters().setQuality(this.configuration.compression_brotli_quality()).setMode(this.configuration.compression_brotli_mode()).setWindow(this.configuration.compression_brotli_window())));
+		}*/
+		
+		this.compressionOptions = compressionOptionsList.stream().toArray(CompressionOptions[]::new);
 	}
 
 	@Override
@@ -114,10 +133,8 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 		protected Http2ChannelHandler build(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings) throws Exception {
 			if (Http2ChannelHandlerFactory.this.configuration.compression_enabled()) {
 				encoder = new CompressorHttp2ConnectionEncoder(
-					encoder, 
-					Http2ChannelHandlerFactory.this.configuration.compression_level(),
-					CompressorHttp2ConnectionEncoder.DEFAULT_WINDOW_BITS,
-					CompressorHttp2ConnectionEncoder.DEFAULT_MEM_LEVEL
+					encoder,
+					Http2ChannelHandlerFactory.this.compressionOptions
 				);
 			}
 			

@@ -199,9 +199,14 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 //		System.out.println("channel inactive");
-		if(this.respondingExchange != null) {
+		
+		// TODO this created DB connections not returned to pool
+		// If the purpose to clean resources, I think we should see why this happens before the responding exchange response publisher did not finish
+		// one explanation could be that response events are not published on the channel event loop: the connection might be closed/end while the onComplete events hasn't been processed
+		// In any case this is disturbing and not easy to troubleshoot, we'll see in the future if this is a real issue or not
+		/*if(this.respondingExchange != null) {
 			this.respondingExchange.dispose();
-		}
+		}*/
 	}
 
 	@Override

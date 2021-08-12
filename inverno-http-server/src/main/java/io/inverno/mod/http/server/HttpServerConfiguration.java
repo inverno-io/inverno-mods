@@ -29,7 +29,7 @@ import io.inverno.mod.configuration.Configuration;
  */
 @Configuration
 public interface HttpServerConfiguration {
-
+	
 	/**
 	 * <p>
 	 * The host name of the server socket address.
@@ -121,17 +121,198 @@ public interface HttpServerConfiguration {
 	
 	/**
 	 * <p>
-	 * The HTTP compression level.
+	 * The threshold beyond which the response body should be compressed.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 0 which means all responses are compressed.
+	 * </p>
+	 *
+	 * @return the compression content size threshold
+	 */
+	default int compression_contentSizeThreshold() {
+		return 0;
+	}
+	
+	// Brotli lib is currently an unnamed module so we can't configure it...
+	/**
+	 * <p>
+	 * Brotly compression quality.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 4.
+	 * </p>
+	 * 
+	 * @return the brotli compression quality
+	 */
+	/*default int compression_brotli_quality() {
+		return 4;
+	}*/
+	
+	/**
+	 * <p>
+	 * Brotly compression window.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to -1.
+	 * </p>
+	 * 
+	 * @return the brotli compression window
+	 */
+	/*default int compression_brotli_window() {
+		return -1;
+	}*/
+
+	/**
+	 * <p>
+	 * Brotly compression mode (0=GENERIC, 1=TEXT, 2=FONT).
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 1 (TEXT).
+	 * </p>
+	 * 
+	 * @return the brotli compression mode
+	 */
+	/*default int compression_brotli_mode() {
+		return 1;
+	}*/
+	
+	/**
+	 * <p>
+	 * Deflate compression level.
 	 * </p>
 	 * 
 	 * <p>
 	 * Defaults to 6.
 	 * </p>
 	 * 
-	 * @return the HTTP compression level
+	 * @return the deflate compression level
 	 */
-	default int compression_level() {
+	default int compression_deflate_compressionLevel() {
 		return 6;
+	}
+	
+	/**
+	 * <p>
+	 * Deflate compression window bits.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 15.
+	 * </p>
+	 * 
+	 * @return the deflate compression window bits
+	 */
+	default int compression_deflate_windowBits() {
+		return 15;
+	}
+	
+	/**
+	 * <p>
+	 * Deflate compression memory level.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 8.
+	 * </p>
+	 * 
+	 * @return the deflate compression memory level bits
+	 */
+	default int compression_deflate_memLevel() {
+		return 8;
+	}
+	
+	/**
+	 * <p>
+	 * Gzip compression level.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 6.
+	 * </p>
+	 * 
+	 * @return the gzip compression level
+	 */
+	default int compression_gzip_compressionLevel() {
+		return 6;
+	}
+	
+	/**
+	 * <p>
+	 * Gzip compression window bits.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 15.
+	 * </p>
+	 * 
+	 * @return the gzip compression window bits
+	 */
+	default int compression_gzip_windowBits() {
+		return 15;
+	}
+	
+	/**
+	 * <p>
+	 * Gzip compression memory level.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 8.
+	 * </p>
+	 * 
+	 * @return the gzip compression memory level
+	 */
+	default int compression_gzip_memLevel() {
+		return 8;
+	}
+	
+	/**
+	 * <p>
+	 * Zstandard compression bock size.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 64 KB.
+	 * </p>
+	 * 
+	 * @return the zstd compression block size
+	 */
+	default int compression_zstd_blockSize() {
+		return 1 << 16;
+	}
+	
+	/**
+	 * <p>
+	 * Zstandard compression level.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 3.
+	 * </p>
+	 * 
+	 * @return the zstd compression level
+	 */
+	default int compression_zstd_compressionLevel() {
+		return 3;
+	}
+	
+	/**
+	 * <p>
+	 * Zstandard compression max encode size.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to 32 MB.
+	 * </p>
+	 * 
+	 * @return the zstd compression max encode size
+	 */
+	default int compression_zstd_maxEncodeSize() {
+		return 1 << 10 + 0x0F;
 	}
 
 	/**
