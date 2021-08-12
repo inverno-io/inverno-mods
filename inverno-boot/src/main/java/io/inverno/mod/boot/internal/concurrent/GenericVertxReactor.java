@@ -82,7 +82,7 @@ public class GenericVertxReactor implements VertxReactor, ReactorLifecycle {
 			.setPreferNativeTransport(this.configuration.prefer_native_transport())
 			.setEventLoopPoolSize(this.configuration.reactor_event_loop_group_size());
 
-		this.vertx = new VertxBuilder(options).threadFactory(new NonBlockingVertxThreadFactory()).init().vertx();
+		this.vertx = new VertxBuilder(options).threadFactory(new ReactorVertxThreadFactory()).init().vertx();
 
 		// This is kind of dangerous if Vert.x decide to make VertxImpl private we might be in trouble... 
 		this.acceptorEventLoopGroup = ((VertxImpl)this.vertx).getAcceptorEventLoopGroup();

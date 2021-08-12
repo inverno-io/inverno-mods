@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.boot.internal.concurrent;
 
+import io.inverno.mod.base.concurrent.Reactor;
 import io.netty.util.concurrent.FastThreadLocalThread;
 import reactor.core.scheduler.NonBlocking;
 
@@ -28,38 +29,38 @@ import reactor.core.scheduler.NonBlocking;
  * @since 1.0
  * 
  * @see NonBlocking
- * @see NonBlockingThreadFactory
+ * @see ReactorThreadFactory
  */
-class NonBlockingThread extends FastThreadLocalThread implements NonBlocking {
+class ReactorThread extends FastThreadLocalThread implements Reactor.Thread {
 
-	public NonBlockingThread() {
+	public ReactorThread() {
 	}
 
-	public NonBlockingThread(Runnable target) {
+	public ReactorThread(Runnable target) {
 		super(target);
 	}
 
-	public NonBlockingThread(String name) {
+	public ReactorThread(String name) {
 		super(name);
 	}
 
-	public NonBlockingThread(ThreadGroup group, Runnable target) {
+	public ReactorThread(ThreadGroup group, Runnable target) {
 		super(group, target);
 	}
 
-	public NonBlockingThread(ThreadGroup group, String name) {
+	public ReactorThread(ThreadGroup group, String name) {
 		super(group, name);
 	}
 
-	public NonBlockingThread(Runnable target, String name) {
+	public ReactorThread(Runnable target, String name) {
 		super(target, name);
 	}
 
-	public NonBlockingThread(ThreadGroup group, Runnable target, String name) {
+	public ReactorThread(ThreadGroup group, Runnable target, String name) {
 		super(group, target, name);
 	}
 
-	public NonBlockingThread(ThreadGroup group, Runnable target, String name, long stackSize) {
+	public ReactorThread(ThreadGroup group, Runnable target, String name, long stackSize) {
 		super(group, target, name, stackSize);
 	}
 }

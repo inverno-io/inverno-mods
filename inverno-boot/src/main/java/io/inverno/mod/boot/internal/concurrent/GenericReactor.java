@@ -97,9 +97,9 @@ public class GenericReactor implements Reactor, ReactorLifecycle {
 	@Override
 	public void init() {
 		this.logger.debug("Creating acceptor event loop group ({})...", () -> this.transportType.toString().toLowerCase());
-		this.acceptorEventLoopGroup = this.createEventLoopGroup(1, new NonBlockingThreadFactory("inverno-acceptor-" + this.transportType.toString().toLowerCase(), false, 5));
+		this.acceptorEventLoopGroup = this.createEventLoopGroup(1, new ReactorThreadFactory("inverno-acceptor-" + this.transportType.toString().toLowerCase(), false, 5));
 		this.logger.debug("Creating core event loop group ({}) with {} threads...", () -> this.transportType.toString().toLowerCase(), () -> this.coreEventLoopGroupSize);
-		this.coreEventLoopGroup = this.createEventLoopGroup(this.coreEventLoopGroupSize, new NonBlockingThreadFactory("inverno-io-" + this.transportType.toString().toLowerCase(), false, 5));
+		this.coreEventLoopGroup = this.createEventLoopGroup(this.coreEventLoopGroupSize, new ReactorThreadFactory("inverno-io-" + this.transportType.toString().toLowerCase(), false, 5));
 	}
 	
 	@Override

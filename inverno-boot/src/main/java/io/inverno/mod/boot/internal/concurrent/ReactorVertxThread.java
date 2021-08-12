@@ -17,16 +17,25 @@ package io.inverno.mod.boot.internal.concurrent;
 
 import java.util.concurrent.TimeUnit;
 
+import io.inverno.mod.base.concurrent.Reactor;
 import io.vertx.core.impl.VertxThread;
 import reactor.core.scheduler.NonBlocking;
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * A {@link NonBlocking} Vertx thread implementation which prevents blocking
+ * calls from the Reactor APIs.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.0
+ * 
+ * @see NonBlocking
+ * @see ReactorVertxThreadFactory
  */
-class NonBlockingVertxThread extends VertxThread implements NonBlocking {
+class ReactorVertxThread extends VertxThread implements Reactor.Thread {
 
-	public NonBlockingVertxThread(Runnable target, String name, boolean worker, long maxExecTime, TimeUnit maxExecTimeUnit) {
+	public ReactorVertxThread(Runnable target, String name, boolean worker, long maxExecTime, TimeUnit maxExecTimeUnit) {
 		super(target, name, worker, maxExecTime, maxExecTimeUnit);
 	}
 }

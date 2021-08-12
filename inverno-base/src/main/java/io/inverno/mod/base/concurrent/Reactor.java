@@ -16,6 +16,7 @@
 package io.inverno.mod.base.concurrent;
 
 import io.netty.channel.EventLoopGroup;
+import reactor.core.scheduler.NonBlocking;
 
 /**
  * <p>
@@ -84,4 +85,15 @@ public interface Reactor {
 	 * @return The number of threads allocated to the core IO event loop group
 	 */
 	int getCoreIoEventLoopGroupSize();
+	
+	/**
+	 * <p>
+	 * A marker interface that is detected on {@link Thread Threads} to indicate
+	 * that a thread is part of a reactor.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.2
+	 */
+	interface Thread extends NonBlocking {} 
 }

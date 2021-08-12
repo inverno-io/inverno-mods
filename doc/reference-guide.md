@@ -28,6 +28,8 @@
 [chunked-transfer-encoding]: https://en.wikipedia.org/wiki/Chunked_transfer_encoding
 [xslt]: https://en.wikipedia.org/wiki/XSLT
 [erlang]: https://en.wikipedia.org/wiki/Erlang_(programming_language)
+[vertx-sql-client]: https://github.com/eclipse-vertx/vertx-sql-client
+[vertx-database-doc]: https://vertx.io/docs/#databases
 
 [rfc-3986]: https://tools.ietf.org/html/rfc3986
 [rfc-7231-5.1.1.5]: https://tools.ietf.org/html/rfc7231#section-5.1.1.5
@@ -169,6 +171,56 @@ The *base* module is usually provided as a transitive dependency by other module
 ### Converter API
 
 The converter API provides interfaces and classes for building converters, decoders or encoders which are basically used to decode/encode objects of a given type from/to objects of another type.
+
+#### Scope
+
+The `Scope` interface specifies a way to expose different bean instances depending on particular scope.
+
+For instance, let's say we want to use different instances of a `Warehouse` bean based on a particular region, we can define a prototype bean for the `Warehouse` and create the following bean which extends `KeyScope`:
+
+```java
+@Bean
+public class WarehouseKeyScope extends KeyScope<Warehouse> {
+
+    private final Supplier<Warehouse> storePrototype;
+    
+    public WarehouseKeyScope(@Lazy Supplier<Warehouse> storePrototype) {
+        this.storePrototype = storePrototype;
+    }
+    
+    @Override
+    protected Warehouse create() {
+        return this.storePrototype.get();
+    }
+}
+```
+
+We can then inject that bean where we need a `Warehouse` instance for a particular region:
+
+```java
+@Bean
+public class WarehouseService {
+
+    private final KeyScope<Warehouse> warehouse;
+
+    public WarehouseService(KeyScope<Warehouse> warehouse) {
+        this.warehouse = warehouse;
+    }
+    
+    public void store(Product product, String region) {
+        Warehouse warehouse = this.warehouse.get(region);
+        ...
+    }
+}
+```
+
+The base module expose three base `Scope` implementations:
+
+- the `KeyScope` which binds an instance to an arbitrary key
+- the `ThreadScope` which binds an instance to the current thread
+- the `ReactorScope` which binds an instance to the current reactor's thread. This is very similar to the `ThreadScope` but this throws an `IllegalStateException` when used outside the scope of the reactor (ie. the current thread is not a reactor thread).
+
+> Particular care must be taken when using this technique in order to avoid resource leaks. For instance, when a scoped instance is no longer in use, it should be cleaned explicitly as references can be strongly reachable. The `KeyScope` exposes the `remove()` for this purpose. Also when using prototype bean instance, the destroy method, if any, may not be invoked if the instance is reclaimed before it can be destroyed, as a result you should avoid using such bean instances within scope beans.
 
 #### Basic converter
 
@@ -5008,3 +5060,369 @@ String result = Flux.from(Simple.publisherString().render(new Message("some impo
 
 If you consider small data set and require very high performance, you should prefer non-reactive modes. If your concern is more about resources, considering a large amount of data that you do not want to load into memory at once, you should prefer reactive modes with a slight decrease in performance.
 
+### SQL Client
+
+The Inverno SQL client module specifies a reactive API for executing SQL statement on a RDBMS.
+
+This module only exposes the API and a proper implementation module must be considered to obtain `SqlClient` instances.
+
+In order to use the Inverno *SQL client* module, we need to declare a dependency to the API and at least one implementation in the module descriptor:
+
+```java
+module io.inverno.example.app {
+    ...
+    requires io.inverno.mod.sql; // this is actually optional since implementations should already define a transitive dependency
+    requires io.inverno.mod.sql.vertx; // Vert.x implementation
+    ...
+}
+```
+
+And also declare these dependencies in the build descriptor:
+
+Using Maven:
+
+```xml
+<project>
+    <dependencies>
+        <dependency>
+            <groupId>io.inverno.mod</groupId>
+            <artifactId>inverno-sql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.inverno.mod</groupId>
+            <artifactId>inverno-sql-vertx</artifactId>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+Using Gradle:
+
+```groovy
+...
+compile 'io.inverno.mod:inverno-sql:1.2.0'
+compile 'io.inverno.mod:inverno-sql-vertx:1.2.0'
+...
+```
+
+#### SQL client API
+
+The Sql client API defines the `SqlClient` interface which provides reactive methods to execute SQL statements on a RDBMS.
+
+##### Query and update
+
+The `SqlClient` extends the `SqlOperations` interface which defines methods for common RDBMS operations such as query or update in addition to the more general statements and prepared statements.
+
+We can query a database as follows:
+
+```java
+SqlClient client = ...
+
+Flux<Person> persons = Flux.from(
+    client.query("SELECT * FROM person")
+)
+.map(row -> new Person(row.getString("firstname"), row.getString("name"), row.getLocalDate("birthdate"))); // Map the resulting rows
+
+persons.subscribe(...); // The query is executed on subscribe following reactive principles
+```
+
+Prepared queries are also supported:
+
+```java
+Publisher<Row> results = client.query("SELECT * FROM person WHERE name = $1", "John");
+```
+
+A row mapping function can be specified directly in the query as well
+
+```java
+Publisher<Person> results = client.query(
+    "SELECT * FROM person WHERE name = $1", 
+    row -> new Person(row.getString("firstname"), row.getString("name"), row.getLocalDate("birthdate")), 
+    "Smith"
+);
+```
+
+A single result can also be queried as follows:
+
+```java
+Mono<Person> person = client.queryForObject( // only consider the first row in the results
+    "SELECT * FROM person WHERE name = $1", 
+    row -> new Person(row.getString("firstname"), row.getString("name"), row.getLocalDate("birthdate")),
+    "Smith"
+);
+```
+
+> The two previous examples are actually optimizations of the first one which enable implementations to optimize the query, resulting in faster execution.
+
+The database can be updated as follows:
+
+```java
+client.update(
+    "UPDATE person SET birthdate = $1 WHERE id = $2", 
+    LocalDate.of(1970, 1, 1), 123
+);
+```
+
+It can also be updated in a batch as follows:
+
+```java
+client.batchUpdate(
+    "UPDATE person SET birthdate = $1 WHERE id = $2", 
+    List.of(
+        new Object[]{ LocalDate.of(1970, 1, 1), 123 },
+        new Object[]{ LocalDate.of(1980, 1, 1), 456 },
+        new Object[]{ LocalDate.of(1990, 1, 1), 789 }
+    )
+);
+```
+
+> Note that all these operations use prepared statements which protect against SQL injection attacks.
+
+##### Statements
+
+The `SqlClient` also defines methods to create more general statements and prepared statements.
+
+A static statement can be created and executed as follows:
+
+```java
+SqlClient client = ...
+
+Publisher<SqlResult> results = client.statement("SELECT * FROM person").execute();
+
+results.subscribe(...); // The statement is executed on subscribe following reactive principles
+```
+
+The execution of a statement returns `SqlResult` for each SQL operations in the statement in a publisher.
+
+The `SqlResult` exposes row metadata and depending on the operation type either the number of rows affected by the operation (`UPDATE` or `DELETE`) or the resulting rows (`SELECT`).
+
+Following preceding example:
+
+```java
+Flux<Person> persons = Flux.from(client.statement("SELECT * FROM person").execute())
+    .single() // Make sure we have only one result
+    .flatMapMany(SqlResult::rows)
+    .map(row -> new Person(row.getString("firstname"), row.getString("name"), row.getLocalDate("birthdate")))
+
+persons.subscribe(...);
+```
+
+Queries can also be fluently appended to a statement as follows:
+
+```java
+Publisher<SqlResult> results = client
+    .statement("SELECT * FROM person")
+    .and("SELECT * FROM city")
+    .and("SELECT * FROM country")
+    .execute();
+```
+
+Unlike prepared statements, static statements are not pre-compiled and do not protect against SQL injection attacks which is why prepared statements should be preferred when there is a need for performance, dynamic or user provided queries.
+
+A prepared statement can be created and executed as follows:
+
+```java
+SqlClient client = ...
+
+Publisher<SqlResult> results = client.preparedStatement("SELECT * FROM person WHERE name = $1")
+    .bind("Smith") // bind the query argument
+    .execute();
+
+results.subscribe(...); // The statement is executed on subscribe following reactive principles
+```
+
+As for a static statement, a prepared statement returns `SqlResult` for each SQL operations in the statement, however it is not possible to specify multiple operation in a prepared statement. But it is possible to transform it into a batch which will result in multiple operations and therefore multiple `SqlResult`.
+
+In order to create a batch statement, we must bind multiple query arguments as follows:
+
+```java
+Publisher<SqlResult> results = client.preparedStatement("SELECT * FROM person WHERE name = $1")
+    .bind("Smith")         // first query
+    .and().bind("Cooper")  // second query
+    .and().bind("Johnson") // third query
+    .execute();
+
+long resultCount = Flux.from(results).count().block(); // returns 3 since we have created a batch statement with three queries
+```
+
+##### Transactions
+
+The API provides two ways to execute statement in a transaction which can be managed explicitly or implicitly.
+
+We can choose to manage transaction explicitly by obtaining a `TransactionalSqlOperations` which expose `commit()` and `rollback()` methods that we must invoke explicitly to close the transaction:
+
+In the following example we perform a common `SELECT/UPDATE` operation within a transaction:
+
+```java
+SqlClient client = ...
+
+final float debit = 42.00f;
+final int accountId = 1;
+
+Mono<Integer> affectedRows = Mono.usingWhen(
+    client.transaction(), 
+    tops -> tops
+        .queryForObject("SELECT balance FROM account WHERE id = $1", row -> row.getFloat(0), accountId)
+        .flatMap(balance -> ops
+            .update("UPDATE account SET balance = $1 WHERE id = $2", balance - debit, accountId)
+            .doOnNext(rowCount -> {
+                if(balance - debit < 0) {
+                    throw new IllegalStateException();
+                }
+            })
+        )
+    ,
+    tops -> {                                // Complete
+        // extra processing before commit
+        // ...
+        
+        return tops.commit();
+    },
+    (tops, ex) -> {                          // Error
+        // extra processing before roll back
+        // ...
+        
+        return tops.rollback();
+    }, 
+    tops -> {                                // Cancel
+        // extra processing before commit
+        // ...
+        
+        return tops.rollback();
+    }
+);
+
+affectedRows.subscribe(...); // on subscribe, a transaction is created, the closure method is invoked and the transaction is explicitly committed or rolled back when the publisher terminates.
+```
+
+The following example does the same but with implicit transaction management:
+
+```java
+SqlClient client = ...
+
+final float debit = 42.00f;
+final int accountId = 1;
+
+Publisher<Integer> affectedRows = client.transaction(ops -> ops
+    .queryForObject("SELECT balance FROM account WHERE id = $1", row -> row.getFloat(0), accountId)
+    .flatMap(balance -> ops
+        .update("UPDATE account SET balance = $1 WHERE id = $2", balance - debit, accountId)
+        .doOnNext(rowCount -> {
+            if(balance - debit < 0) {
+                throw new IllegalStateException();
+            }
+        })
+    )
+);
+
+affectedRows.subscribe(...); // same as before but the transaction is implicitly committed or rolled back
+```
+
+> Note that transactions might not be supported by all implementations, for instance the Vert.x pooled client implementation does not support transactions and an `UnsupportedOperationException` will be thrown if you try to create a transaction.
+
+##### Connections
+
+Some `SqlClient` implementations backed by a connection pool for instance can be used to execute multiple SQL statements on a single connection released once the resulting publisher terminates (either closed or returned to the pool).
+
+For instance we can execute multiple statements on a single connection as follows:
+
+```java
+SqlClient client = ...
+
+final int postId = 1;
+
+client.connection(ops -> ops
+    .queryForObject("SELECT likes FROM posts WHERE id = $1", row -> row.getInteger(0), postId)
+    .flatMap(likes -> ops.update("UPDATE posts SET likes = $1 WHERE id = $2", likes + 1, postId))
+);
+```
+
+#### Vert.x SQL Client implementation
+
+The Inverno Vert.x SQL client module is an implementation of the SQL client API on top of the [Vert.x Reactive SQL client][vertx-sql-client].
+
+It provides multiple `SqlClient` implementations that wraps Vert.x SQL pooled client, pool or connection and exposes a `SqlCLient` bean created from the module's configuration and backed by a Vert.x pool. It can be used to execute SQL statements in an application.
+
+In order to use the Inverno *Vert.x SQL client* module, we need to declare a dependency in the module descriptor:
+
+```java
+module io.inverno.example.app {
+    ...
+    requires io.inverno.mod.sql.vertx;
+    ...
+}
+```
+
+And also declare this dependency as well as a dependency to the Vert.x implementation corresponding to the RDBMS we are targeting in the build descriptor:
+
+Using Maven:
+
+```xml
+<project>
+    <dependencies>
+        <dependency>
+            <groupId>io.inverno.mod</groupId>
+            <artifactId>inverno-sql-vertx</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-pg-client</artifactId>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+Using Gradle:
+
+```groovy
+...
+compile 'io.inverno.mod:inverno-sql-vertx:1.2.0'
+compile 'io.vertx:vertx-pg-client:4.1.2'
+...
+```
+
+##### Configuration
+
+The `VertxSqlClientConfiguration` is used to create and configure the SQL client bean exposed by the module.
+
+Please refer to the [API documentation][inverno-javadoc] to have an exhaustive description of the different configuration properties.
+
+##### Sql Client bean
+
+The module exposes a `SqlClient` bean which is backed by a Vert.x pool. It is created using the configuration and especially the `db_uri` property whose scheme indicates the RDBMS system and therefore the Vert.x pool implementation to use.
+
+For instance, the following configuration can be used to connect to a PostgreSQL database:
+
+```plaintext
+db_uri="postgres://user:password@localhost:5432/sample_db"
+```
+
+> If you want to connect to a particular RDBMS, don't forget to add a dependency to the corresponding Vert.x SQL client implementation. Vert.x currently supports DB2, MSSQL, MySQL and PostgreSQL.
+
+The pool can be configured as well: 
+
+```plaintext
+pool_maxSize=20
+```
+
+Please refer to the [Vert.x database documentation][vertx-database-doc] to get the options supported for each RDBMS implementations.
+
+The Vert.x SQL client requires a `Vertx` instance which is provided in the Inverno application reactor when using a `VertxReactor`, otherwise a dedicated `Vertx` instance is created. In any case, this instance can be overridden by providing a custom instance to the module.
+
+##### Vert.x wrappers
+
+Depending on our needs, we can also choose to create a custom `SqlClient` using one the Vert.x SQL client wrappers provided by the module.
+
+The `ConnectionSqlClient` wraps a Vert.x SQL connection, you can use to transform a single connection obtained via a Vert.x connection factory into a reactive `SqlClient`.
+
+The `PooledClientSqlClient` wraps a Vert.x pooled SQL client that supports pipelining of queries on a single configuration for optimized performances. This implementation doesn't support transactions.
+
+```java
+SqlClient client = new PooledClientSqlClient(PgPool.client(...));
+```
+
+Finally, the `PoolSqlClient` wraps a Vert.x SQL pool. This is a common implementation supporting transactions and result streaming, it is used to create the module's SQL client bean.
+
+```java
+SqlClient client = new PoolSqlClient(PgPool.pool(...));
+```

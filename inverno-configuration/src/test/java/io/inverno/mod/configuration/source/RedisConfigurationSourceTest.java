@@ -6,17 +6,18 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 
-import io.lettuce.core.RedisClient;
 import io.inverno.mod.configuration.ConfigurationKey.Parameter;
 import io.inverno.mod.configuration.ConfigurationUpdate.SpecialValue;
 import io.inverno.mod.configuration.source.RedisConfigurationSource.RedisConfigurationKey;
 import io.inverno.mod.configuration.source.RedisConfigurationSource.RedisConfigurationQueryResult;
 import io.inverno.mod.configuration.source.RedisConfigurationSource.RedisExecutableConfigurationQuery;
+import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisConnectionException;
 
-@Disabled
+@EnabledIf( value = "isEnabled", disabledReason = "Failed to connect to test Redis database" )
 public class RedisConfigurationSourceTest {
 
 	static {
@@ -24,9 +25,28 @@ public class RedisConfigurationSourceTest {
 		System.setProperty("org.apache.logging.log4j.simplelog.logFile", "system.out");
 	}
 	
+	private static RedisClient createClient() {
+		return RedisClient.create("redis://localhost:6379");
+	}
+	
+	public static boolean isEnabled() {
+		RedisClient client = createClient();
+		
+		try {
+			client.connect();
+			return true;
+		}
+		catch (RedisConnectionException e) {
+			return false;
+		}
+		finally {
+			client.shutdown();
+		}
+	}
+	
 	@Test
 	public void testRedisConfigurationSourceRedisClient() throws IllegalArgumentException, URISyntaxException {
-		RedisClient client = RedisClient.create("redis://localhost:6379");
+		RedisClient client = createClient();
 
 		try {
 			RedisConfigurationSource source = new RedisConfigurationSource(client);
@@ -472,7 +492,6 @@ public class RedisConfigurationSourceTest {
 	@Test
 	public void testUnset() {
 		RedisClient client = RedisClient.create("redis://localhost:6379");
-
 		try {
 			RedisConfigurationSource source = new RedisConfigurationSource(client);
 			
@@ -494,7 +513,7 @@ public class RedisConfigurationSourceTest {
 	
 	@Test
 	public void testNull() {
-		RedisClient client = RedisClient.create("redis://localhost:6379");
+		RedisClient client = createClient();
 
 		try {
 			RedisConfigurationSource source = new RedisConfigurationSource(client);
@@ -517,7 +536,7 @@ public class RedisConfigurationSourceTest {
 	
 	@Test
 	public void testSinglePerf() {
-		RedisClient client = RedisClient.create("redis://localhost:6379");
+		RedisClient client = createClient();
 
 		try {
 			RedisConfigurationSource source = new RedisConfigurationSource(client);
@@ -543,7 +562,7 @@ public class RedisConfigurationSourceTest {
 	
 	@Test
 	public void testHeavyPerf() throws IllegalArgumentException, URISyntaxException {
-		RedisClient client = RedisClient.create("redis://localhost:6379");
+		RedisClient client = createClient();
 
 		try {
 			RedisConfigurationSource source = new RedisConfigurationSource(client);

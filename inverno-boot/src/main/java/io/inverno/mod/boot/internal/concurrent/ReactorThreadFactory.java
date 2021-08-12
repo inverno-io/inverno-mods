@@ -31,46 +31,46 @@ import reactor.core.scheduler.NonBlocking;
  * 
  * @see NonBlocking
  */
-class NonBlockingThreadFactory extends DefaultThreadFactory {
+class ReactorThreadFactory extends DefaultThreadFactory {
 
-	public NonBlockingThreadFactory(Class<?> poolType) {
+	public ReactorThreadFactory(Class<?> poolType) {
 		super(poolType);
 	}
 
-	public NonBlockingThreadFactory(String poolName) {
+	public ReactorThreadFactory(String poolName) {
 		super(poolName);
 	}
 
-	public NonBlockingThreadFactory(Class<?> poolType, boolean daemon) {
+	public ReactorThreadFactory(Class<?> poolType, boolean daemon) {
 		super(poolType, daemon);
 	}
 
-	public NonBlockingThreadFactory(String poolName, boolean daemon) {
+	public ReactorThreadFactory(String poolName, boolean daemon) {
 		super(poolName, daemon);
 	}
 
-	public NonBlockingThreadFactory(Class<?> poolType, int priority) {
+	public ReactorThreadFactory(Class<?> poolType, int priority) {
 		super(poolType, priority);
 	}
 
-	public NonBlockingThreadFactory(String poolName, int priority) {
+	public ReactorThreadFactory(String poolName, int priority) {
 		super(poolName, priority);
 	}
 
-	public NonBlockingThreadFactory(Class<?> poolType, boolean daemon, int priority) {
+	public ReactorThreadFactory(Class<?> poolType, boolean daemon, int priority) {
 		super(poolType, daemon, priority);
 	}
 
-	public NonBlockingThreadFactory(String poolName, boolean daemon, int priority) {
+	public ReactorThreadFactory(String poolName, boolean daemon, int priority) {
 		super(poolName, daemon, priority);
 	}
 
-	public NonBlockingThreadFactory(String poolName, boolean daemon, int priority, ThreadGroup threadGroup) {
+	public ReactorThreadFactory(String poolName, boolean daemon, int priority, ThreadGroup threadGroup) {
 		super(poolName, daemon, priority, threadGroup);
 	}
 
 	@Override
 	protected Thread newThread(Runnable r, String name) {
-		return new NonBlockingThread(r, name);
+		return new ReactorThread(r, name);
 	}
 }

@@ -13,28 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.server.internal;
-
-import java.util.function.Supplier;
-
-import io.inverno.core.annotation.Bean;
-import io.inverno.mod.base.net.NetService;
-
 /**
  * <p>
- * The {@link NetService} socket.
+ * Concurrent API.
  * </p>
- * 
- * <p>
- * The net service is used when creating the http server.
- * </p>
- * 
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
- * 
- * @see HttpServer
  */
-@Bean(name = "netService")
-public interface NetServiceSocket extends Supplier<NetService> {
-
-}
+package io.inverno.mod.base.concurrent;
