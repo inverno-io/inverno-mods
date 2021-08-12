@@ -113,6 +113,8 @@
 		<module>inverno-http-base</module>
 		<module>inverno-http-server</module>
 		<module>inverno-irt</module>
+		<module>inverno-sql</module>
+		<module>inverno-sql-vertx</module>
 		<module>inverno-web</module>
 		
 		<module>inverno-mods-test</module>
