@@ -1666,8 +1666,8 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-boot:1.0.0'
-compile 'io.inverno.mod:inverno-http-server:1.0.0'
+compile 'io.inverno.mod:inverno-boot:1.2.0'
+compile 'io.inverno.mod:inverno-http-server:1.2.0'
 ...
 ```
 
