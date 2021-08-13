@@ -354,7 +354,7 @@ class GenericURIBuilder implements URIBuilder {
 			AtomicInteger valuesIndex = new AtomicInteger();
 			return this.queryParameters.stream().collect(Collectors.groupingBy(QueryParameterComponent::getParameterName, Collectors.mapping(queryParameter -> queryParameter.getParameterValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(queryParameter.getParameters().size()), values.length))), Collectors.toList())));
 		}
-		return null;
+		return Map.of();
 	}
 	
 	@Override
@@ -362,7 +362,7 @@ class GenericURIBuilder implements URIBuilder {
 		if(this.queryParameters != null) {
 			return this.queryParameters.stream().collect(Collectors.groupingBy(QueryParameterComponent::getParameterName, Collectors.mapping(queryParameter -> queryParameter.getParameterValue(values), Collectors.toList())));
 		}
-		return null;
+		return Map.of();
 	}
 	
 	@Override
@@ -370,7 +370,7 @@ class GenericURIBuilder implements URIBuilder {
 		if(this.queryParameters != null) {
 			return this.queryParameters.stream().collect(Collectors.groupingBy(QueryParameterComponent::getRawParameterName, Collectors.mapping(QueryParameterComponent::getRawParameterValue, Collectors.toList())));
 		}
-		return null;
+		return Map.of();
 	}
 	
 	@Override
