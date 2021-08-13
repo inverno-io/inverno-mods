@@ -1,5 +1,6 @@
 import java.util.concurrent.ExecutorService;
 
+import io.inverno.mod.base.concurrent.Reactor;
 import io.inverno.mod.base.converter.CompoundDecoder;
 import io.inverno.mod.base.converter.CompoundEncoder;
 import io.inverno.mod.base.net.NetService;

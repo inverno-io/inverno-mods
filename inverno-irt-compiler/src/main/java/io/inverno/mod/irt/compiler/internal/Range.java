@@ -85,6 +85,7 @@ public class Range {
 	 * </p>
 	 * 
 	 * @param begin the new begin position
+	 * 
 	 * @return a new range
 	 */
 	public Range withBegin(Position begin) {
@@ -98,6 +99,7 @@ public class Range {
 	 * 
 	 * @param beginLine   the new begin line number
 	 * @param beginColumn the new begin column number
+	 * 
 	 * @return a new range
 	 */
 	public Range withBegin(int beginLine, int beginColumn) {
@@ -110,6 +112,7 @@ public class Range {
 	 * </p>
 	 * 
 	 * @param beginToken the new begin token
+	 * 
 	 * @return a new range
 	 */
 	public Range withBegin(Token beginToken) {
@@ -121,7 +124,8 @@ public class Range {
 	 * Returns a new range with the specified end position.
 	 * </p>
 	 * 
-	 * @param begin the new end position
+	 * @param end the new end position
+	 * 
 	 * @return a new range
 	 */
 	public Range withEnd(Position end) {
@@ -133,8 +137,9 @@ public class Range {
 	 * Returns a new range with the specified end position.
 	 * </p>
 	 * 
-	 * @param beginLine   the new end line number
-	 * @param beginColumn the new end column number
+	 * @param endLine   the new end line number
+	 * @param endColumn the new end column number
+	 * 
 	 * @return a new range
 	 */
 	public Range withEnd(int endLine, int endColumn) {
@@ -146,7 +151,8 @@ public class Range {
 	 * Returns a new range with the specified end token.
 	 * </p>
 	 * 
-	 * @param beginToken the new end token
+	 * @param endToken the new end token
+	 * 
 	 * @return a new range
 	 */
 	public Range withEnd(Token endToken) {

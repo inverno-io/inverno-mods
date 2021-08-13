@@ -163,7 +163,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-base:1.0.0'
+compile 'io.inverno.mod:inverno-base:1.2.0'
 ...
 ```
 
@@ -726,7 +726,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-boot:1.0.0'
+compile 'io.inverno.mod:inverno-boot:1.2.0'
 ...
 ```
 
@@ -867,7 +867,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-configuration:1.0.0'
+compile 'io.inverno.mod:inverno-configuration:1.2.0'
 ...
 ```
 
@@ -1543,7 +1543,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-http-base:1.0.0'
+compile 'io.inverno.mod:inverno-http-base:1.2.0'
 ...
 ```
 
@@ -2076,7 +2076,7 @@ The above example starts a HTTP/1.x server using default configuration and defau
      ║                ,   __\_/\_\__   ,    | || | | |\ \/ /|  __/| | | | | | |_| |               ║
      ║                 , /_/ /\/\ \_\ ,     |_||_| |_| \__/  \___||_| |_| |_|\___/                ║
      ║                  ,     /\     ,                                                            ║
-     ║                    ,   \/   ,                                  -- 1.2.0 --                 ║
+     ║                    ,   \/   ,                                  -- 1.3.0 --                 ║
      ║                      ' -- '                                                                ║
      ╠════════════════════════════════════════════════════════════════════════════════════════════╣
      ║ Java runtime        : OpenJDK Runtime Environment                                          ║
@@ -2688,8 +2688,8 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-boot:1.0.0'
-compile 'io.inverno.mod:inverno-web:1.0.0'
+compile 'io.inverno.mod:inverno-boot:1.2.0'
+compile 'io.inverno.mod:inverno-web:1.2.0'
 ...
 ```
 
@@ -3368,7 +3368,7 @@ For instance, we can create a route to serve files stored in a `web-root` direct
 ```java
 router
     .route()
-        .path("/static/{path:.*}")                            // 1
+        .path("/static/{path:.*}")                                 // 1
         .handler(new StaticHandler(new FileResource("web-root/"))) // 2
 ```
 
@@ -3429,7 +3429,7 @@ The above example starts a Web server using default configuration which is a HTT
      ║                ,   __\_/\_\__   ,    | || | | |\ \/ /|  __/| | | | | | |_| |               ║
      ║                 , /_/ /\/\ \_\ ,     |_||_| |_| \__/  \___||_| |_| |_|\___/                ║
      ║                  ,     /\     ,                                                            ║
-     ║                    ,   \/   ,                                  -- 1.2.0 --                 ║
+     ║                    ,   \/   ,                                  -- 1.3.0 --                 ║
      ║                      ' -- '                                                                ║
      ╠════════════════════════════════════════════════════════════════════════════════════════════╣
      ║ Java runtime        : OpenJDK Runtime Environment                                          ║
@@ -3789,7 +3789,6 @@ If the server is also configured to serve [WebJars](#webjars), previous routes c
         <dependency>
             <groupId>org.webjars</groupId>
             <artifactId>swagger-ui</artifactId>
-            <version>3.46.0</version>
         </dependency>
     </dependencies>
 </project>
@@ -4625,7 +4624,7 @@ info:
 ...
 ```
 
-### Reactive Template
+## Reactive Template
 
 The Inverno *reactive template* module provides a template engine for efficient reactive data rendering.
 
@@ -4668,7 +4667,7 @@ compile 'io.inverno.mod:inverno-irt:1.2.0'
 ...
 ```
 
-#### Creates an `.irt` template
+### Creates an `.irt` template
 
 A template can be created along with other Java source files in the source directory of an Inverno module. At compile time, the Inverno reactive template compiler plugin will scan the module source folder for `.irt` files and compiles them to generate template set classes that can be used in your module to render data.
 
@@ -4720,9 +4719,9 @@ CompletableFuture<String> rendered = Simple.string().render(new Message("Hello, 
 System.out.println(rendered.get()); // The message is: Hello, world!
 ```
 
-#### `.irt` syntax
+### `.irt` syntax
 
-##### Package and imports
+#### Package and imports
 
 An `.irt` template always starts with the declaration of the Java package containing the template, followed by the list of imported Java types or static methods used within the template. This is exactly the same as any Java source file.
 
@@ -4733,7 +4732,7 @@ import io.inverno.example.app_irt.model.Message;
 ...
 ```
 
-##### Includes
+#### Includes
 
 Then you can specify external template sets to include in the template set using the `include` keyword. This allows to include templates from an external template set in a template set using the same precedence. For instance, in the following example, template set `io.inverno.example.app_irt.templates.Misc` is included in the template set which means that its templates can be applied in the including template.
 
@@ -4743,7 +4742,7 @@ include io.inverno.example.app_irt.templates.Misc;
 
 > Note that this can lead to conflicts when two included templates defines a template using the same signature (same name and same input parameters), such conflict can be resolved by explicitly overriding the conflicting template in the including template set.
 
-##### Options
+#### Options
 
 Rendering options are specified after that using the `option` keyword. You can for instance declare the charset to use for rendering which defaults to `utf-8` if not specified: 
 
@@ -4765,7 +4764,7 @@ The last two modes are particularly suitable for reactive rendering.
 option modes = {"STRING", "STREAM", "PUBLISHER_STRING"};
 ```
 
-##### Templates
+#### Templates
 
 Templates are specified last. A template is a function that defines how a particular input must be rendered, a template can have a name in which case it is referred as a named template. In a template set, there can't be two template with the same signature (ie. defining the same input parameters) unless they have different names.
 
@@ -4810,7 +4809,7 @@ include io.inverno.example.app_irt.templates.Include2;
 conflicting(String input) -> Include1
 ```
 
-##### Static content
+#### Static content
 
 Static contents are specified directly in the template body and are rendered as is:
 
@@ -4820,7 +4819,7 @@ This is a static content, braces: \{ and \} must be escaped.
 }
 ```
 
-##### Comment
+#### Comment
 
 The syntax supports two kinds of comments which can be either outside or inside the body of a template.
 
@@ -4841,7 +4840,7 @@ Hello {% this is a comment} World.
 }
 ```
 
-##### Value of
+#### Value of
 
 A value can be rendered directly in a synchronous way within a statement starting with `{@` and ending with `}` as follows:
 
@@ -4869,7 +4868,7 @@ The message is: {@(5+8)}
 
 > Note that this can be dangerous when you can't trust the source of a template set.
 
-##### If
+#### If
 
 An if statement can be used to render different contents based on one or more conditions. An if statement starts with `{@if` and ends with `}`, it contains one or more branches separated by `;` defining a condition and a corresponding body, a default branch with an empty condition can be specified last. Each condition is specified as a raw Java if expression between `(` and `)`:
 
@@ -4889,7 +4888,7 @@ An if statement can be used to render different contents based on one or more co
 }
 ```
 
-##### Apply template
+#### Apply template
 
 Templates can be applied on data using an apply template statement starting with `{` and ending with `}`. The template to apply is selected among the ones available in the template set based on the type of data to render following Java's rules for function overloading. 
 
@@ -5058,7 +5057,7 @@ The message is: {@message.message}
 ==== FOOTER ====
 ```
 
-#### Pipes
+### Pipes
 
 A pipe can be used to transform data before they are rendered or before a template is applied, as a result they can be specified in value of and apply template statements. In practice, a pipe is a simple function that accepts a data and transform it into another data. Pipes can be chained to sequentially apply multiple transformations.
 
@@ -5115,7 +5114,7 @@ import java.time.format.DateTimeFormatter;
 }
 ```
 
-#### Modes
+### Modes
 
 Template set classes are generated by the Inverno reactive template compiler plugin. Depending on the modes specified in the template set options, the resulting class will expose different `render()` methods with different outputs.
 
@@ -5153,7 +5152,7 @@ String result = Flux.from(Simple.publisherString().render(new Message("some impo
 
 If you consider small data set and require very high performance, you should prefer non-reactive modes. If your concern is more about resources, considering a large amount of data that you do not want to load into memory at once, you should prefer reactive modes with a slight decrease in performance.
 
-### SQL Client
+## SQL Client
 
 The Inverno SQL client module specifies a reactive API for executing SQL statement on a RDBMS.
 
@@ -5198,11 +5197,11 @@ compile 'io.inverno.mod:inverno-sql-vertx:1.2.0'
 ...
 ```
 
-#### SQL client API
+### SQL client API
 
 The Sql client API defines the `SqlClient` interface which provides reactive methods to execute SQL statements on a RDBMS.
 
-##### Query and update
+#### Query and update
 
 The `SqlClient` extends the `SqlOperations` interface which defines methods for common RDBMS operations such as query or update in addition to the more general statements and prepared statements.
 
@@ -5271,7 +5270,7 @@ client.batchUpdate(
 
 > Note that all these operations use prepared statements which protect against SQL injection attacks.
 
-##### Statements
+#### Statements
 
 The `SqlClient` also defines methods to create more general statements and prepared statements.
 
@@ -5338,7 +5337,7 @@ Publisher<SqlResult> results = client.preparedStatement("SELECT * FROM person WH
 long resultCount = Flux.from(results).count().block(); // returns 3 since we have created a batch statement with three queries
 ```
 
-##### Transactions
+#### Transactions
 
 The API provides two ways to execute statement in a transaction which can be managed explicitly or implicitly.
 
@@ -5413,7 +5412,7 @@ affectedRows.subscribe(...); // same as before but the transaction is implicitly
 
 > Note that transactions might not be supported by all implementations, for instance the Vert.x pooled client implementation does not support transactions and an `UnsupportedOperationException` will be thrown if you try to create a transaction.
 
-##### Connections
+#### Connections
 
 Some `SqlClient` implementations backed by a connection pool for instance can be used to execute multiple SQL statements on a single connection released once the resulting publisher terminates (either closed or returned to the pool).
 
@@ -5430,7 +5429,7 @@ client.connection(ops -> ops
 );
 ```
 
-#### Vert.x SQL Client implementation
+### Vert.x SQL Client implementation
 
 The Inverno Vert.x SQL client module is an implementation of the SQL client API on top of the [Vert.x Reactive SQL client][vertx-sql-client].
 
@@ -5474,13 +5473,13 @@ compile 'io.vertx:vertx-pg-client:4.1.2'
 ...
 ```
 
-##### Configuration
+#### Configuration
 
 The `VertxSqlClientConfiguration` is used to create and configure the SQL client bean exposed by the module.
 
 Please refer to the [API documentation][inverno-javadoc] to have an exhaustive description of the different configuration properties.
 
-##### Sql Client bean
+#### Sql Client bean
 
 The module exposes a `SqlClient` bean which is backed by a Vert.x pool. It is created using the configuration and especially the `db_uri` property whose scheme indicates the RDBMS system and therefore the Vert.x pool implementation to use.
 
@@ -5500,9 +5499,9 @@ pool_maxSize=20
 
 Please refer to the [Vert.x database documentation][vertx-database-doc] to get the options supported for each RDBMS implementations.
 
-The Vert.x SQL client requires a `Vertx` instance which is provided in the Inverno application reactor when using a `VertxReactor`, otherwise a dedicated `Vertx` instance is created. In any case, this instance can be overridden by providing a custom instance to the module.
+The Vert.x SQL client requires a `Vertx` instance which is provided in the Inverno application reactor when using a `VertxReactor`, otherwise a dedicated `Vertx` instance is created. In any case, this instance can be overridden by providing a custom one to the module.
 
-##### Vert.x wrappers
+#### Vert.x wrappers
 
 Depending on our needs, we can also choose to create a custom `SqlClient` using one the Vert.x SQL client wrappers provided by the module.
 

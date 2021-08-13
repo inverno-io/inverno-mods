@@ -270,6 +270,8 @@ public final class Pipes {
 	 * locale.
 	 * </p>
 	 * 
+ 	 * @param locale a locale 
+	 * 
 	 * @return a pipe
 	 */
 	public static Pipe<Number, String> number(Locale locale) {
@@ -365,6 +367,8 @@ public final class Pipes {
 	 * Returns a pipe which formats a number as an amount in the specified locale
 	 * currency.
 	 * </p>
+	 * 
+	 * @param locale a locale
 	 * 
 	 * @return a pipe
 	 */

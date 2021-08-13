@@ -28,6 +28,8 @@ import reactor.core.publisher.Sinks;
  * 
  * @see AbstractByteBufPublisherTemplateSet
  * @see AbstractStringPublisherTemplateSet
+ *
+ * @param <T> the type of rendered data
  */
 public interface PublisherTemplateSet<T> extends TemplateSet {
 

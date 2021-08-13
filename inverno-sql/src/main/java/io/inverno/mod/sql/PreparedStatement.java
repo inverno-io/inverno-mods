@@ -70,7 +70,7 @@ public interface PreparedStatement {
 	 * </p>
 	 * 
 	 * @param index the index of the argument
-	 * @param value the type of argument
+	 * @param type  the type of argument
 	 * 
 	 * @return this statement
 	 */

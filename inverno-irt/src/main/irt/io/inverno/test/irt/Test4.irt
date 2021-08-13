@@ -1,7 +1,0 @@
-package io.inverno.test.irt;
-
-import java.time.ZonedDateTime;
-
-(ZonedDateTime dateTime) -> {
-Test4 : {@dateTime}
-}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2020 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.boot;
+package io.inverno.mod.boot.internal;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 import io.inverno.core.annotation.Bean;
@@ -23,7 +25,8 @@ import io.inverno.core.annotation.Wrapper;
 
 /**
  * <p>
- * General {@link com.fasterxml.jackson.databind.ObjectMapper} used to encode/decode JSON data.
+ * General worker pool used whenever there's a need for a
+ * {@link ExecutorService}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -32,10 +35,10 @@ import io.inverno.core.annotation.Wrapper;
 @Bean
 @Wrapper
 @Overridable
-public class ObjectMapper implements Supplier<com.fasterxml.jackson.databind.ObjectMapper> {
+public class WorkerPool implements Supplier<ExecutorService> {
 
 	@Override
-	public com.fasterxml.jackson.databind.ObjectMapper get() {
-		return new com.fasterxml.jackson.databind.ObjectMapper();
+	public ExecutorService get() {
+		return Executors.newCachedThreadPool();
 	}
 }

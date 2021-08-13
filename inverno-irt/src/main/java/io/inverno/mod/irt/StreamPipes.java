@@ -103,8 +103,8 @@ public final class StreamPipes {
 	 * 
 	 * @return a stream pipe
 	 */
-	public static <T, U> StreamPipe<T, T> filter(Function<? super T, ? extends U> extractor, Predicate<? super U> predicate) {
-		return source -> source.filter(v -> predicate.test(extractor.apply(v)));
+	public static <T, U> StreamPipe<T, T> filter(Function<? super T, ? extends U> keySelector, Predicate<? super U> predicate) {
+		return source -> source.filter(v -> predicate.test(keySelector.apply(v)));
 	}
 	
 	/**
