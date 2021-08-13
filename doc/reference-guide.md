@@ -30,6 +30,7 @@
 [erlang]: https://en.wikipedia.org/wiki/Erlang_(programming_language)
 [vertx-sql-client]: https://github.com/eclipse-vertx/vertx-sql-client
 [vertx-database-doc]: https://vertx.io/docs/#databases
+[log4j-2]: https://logging.apache.org/log4j/2.x/index.html
 
 [rfc-3986]: https://tools.ietf.org/html/rfc3986
 [rfc-7231-5.1.1.5]: https://tools.ietf.org/html/rfc7231#section-5.1.1.5
@@ -2174,6 +2175,98 @@ In the above code, we have set the server port to 8081, enabled HTTP/2 over clea
 Please refer to the [API documentation](javadoc) to have an exhaustive description of the different configuration properties. We can for instance configure low level network settings like TCP keep alive or TCP no delay as well as HTTP related settings like compression or TLS.
 
 > You can also refer to the [configuration module documentation](#configuration-1) to get more details on how configuration works and more especially how you can from here define the HTTP server configuration in command line arguments, property files...
+
+##### Logging
+
+The HTTP server can log access and error events at `INFO` and `ERROR` level respectively. They can be disabled by configuring `io.inverno.mod.http.server.internal.AbstractExchange` logger as follows:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration xmlns="http://logging.apache.org/log4j/2.0/config"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://logging.apache.org/log4j/2.0/config https://raw.githubusercontent.com/apache/logging-log4j2/rel/2.14.0/log4j-core/src/main/resources/Log4j-config.xsd" 
+	status="WARN" shutdownHook="disable">
+
+    <Appenders>
+        <Console name="LogToConsole" target="SYSTEM_OUT">
+             <PatternLayout pattern="%d{DEFAULT} %highlight{%-5level} [%t] %c{1.} - %msg%n%ex"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+    	<!-- Disable HTTP server access and error logs -->
+    	<Logger name="io.inverno.mod.http.server.internal.AbstractExchange" additivity="false" level="off"  />
+    	
+        <Root level="info">
+            <AppenderRef ref="LogToConsole"/>
+        </Root>
+    </Loggers>
+</Configuration>
+```
+
+We can also create a more *production-like* logging configuration for a standard HTTP server that asynchronously logs access and error events in separate files in a JSON format for easy integration with log processing tools with a rolling strategy.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" name="Website" shutdownHook="disable">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+             <PatternLayout pattern="%d{DEFAULT} %highlight{%-5level} [%t] %c{1.} - %msg%n%ex"/>
+        </Console>
+        <!-- Error log -->
+		<RollingRandomAccessFile name="ErrorRollingFile" fileName="logs/error.log" filePattern="logs/error-%d{yyyy-MM-dd}-%i.log.gz">
+			<JsonTemplateLayout/>
+			<NoMarkerFilter onMatch="ACCEPT" onMismatch="DENY"/>
+			<Policies>
+				<TimeBasedTriggeringPolicy />
+				<SizeBasedTriggeringPolicy size="10 MB"/>
+			</Policies>
+			<DefaultRolloverStrategy>
+				<Delete basePath="logs" maxDepth="2">
+					<IfFileName glob="error-*.log.gz" />
+					<IfLastModified age="10d" />
+				</Delete>
+			</DefaultRolloverStrategy>
+		</RollingRandomAccessFile>
+		<Async name="AsyncErrorRollingFile">
+			<AppenderRef ref="ErrorRollingFile"/>
+		</Async>
+		<!-- Access log -->
+		<RollingRandomAccessFile name="AccessRollingFile" fileName="logs/access.log" filePattern="logs/access-%d{yyyy-MM-dd}-%i.log.gz">
+			<JsonTemplateLayout/>
+			<MarkerFilter marker="HTTP_ACCESS" onMatch="ACCEPT" onMismatch="DENY"/>
+			<Policies>
+				<TimeBasedTriggeringPolicy />
+				<SizeBasedTriggeringPolicy size="10 MB"/>
+			</Policies>
+			<DefaultRolloverStrategy>
+				<Delete basePath="logs" maxDepth="2">
+					<IfFileName glob="access-*.log.gz" />
+					<IfLastModified age="10d" />
+				</Delete>
+			</DefaultRolloverStrategy>
+		</RollingRandomAccessFile>
+		<Async name="AsyncAccessRollingFile">
+			<AppenderRef ref="AccessRollingFile"/>
+		</Async>
+	</Appenders>
+    
+    <Loggers>
+		<Logger name="io.inverno.mod.http.server.internal.AbstractExchange" additivity="false" level="info">
+			<AppenderRef ref="AsyncAccessRollingFile" level="info"/>
+			<AppenderRef ref="AsyncErrorRollingFile" level="error"/>
+		</Logger>
+
+        <Root level="info" additivity="false">
+			<AppenderRef ref="Console" level="info" />
+			<AppenderRef ref="AsyncErrorRollingFile" level="error"/>
+        </Root>
+    </Loggers>
+</Configuration>
+```
+
+> Note that access and error events are logged by the same logger, they are differentiated by markers, `HTTP_ACCESS` and `HTTP_ERROR` respectively.
+
+##### Transport
 
 By default, the HTTP server uses the Java NIO transport, but it is possible to use native [epoll][epoll] transport on Linux or [kqueue][kqueue] transport on BSD-like systems for optimized performances. This can be done by adding the corresponding Netty dependency with the right classifier in the project descriptor:
 
