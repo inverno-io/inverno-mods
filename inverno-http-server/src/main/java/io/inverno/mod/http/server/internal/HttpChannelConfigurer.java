@@ -35,7 +35,6 @@ import io.netty.handler.codec.compression.CompressionOptions;
 import io.netty.handler.codec.compression.StandardCompressionOptions;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpContentDecompressor;
-import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
 import io.netty.handler.ssl.SslContext;
 
 /**
@@ -51,7 +50,6 @@ public class HttpChannelConfigurer {
 
 	private final HttpServerConfiguration configuration;
 	
-	private final ApplicationProtocolNegotiationHandler protocolNegotiationHandler;
 	private SslContext sslContext;
 	private final ByteBufAllocator allocator;
 	private final ByteBufAllocator directAllocator;
@@ -86,7 +84,6 @@ public class HttpChannelConfigurer {
 		
 		this.http1xChannelHandlerFactory = http1xChannelHandlerFactory;
 		this.http2ChannelHandlerFactory = http2ChannelHandlerFactory;
-		this.protocolNegotiationHandler = new HttpProtocolNegotiationHandler(this);
 		
 		if(this.configuration.tls_enabled()) {
 			this.sslContext = sslContextSupplier.get();			
@@ -117,7 +114,7 @@ public class HttpChannelConfigurer {
 		if(this.configuration.tls_enabled()) {
 			pipeline.addLast("sslHandler", this.sslContext.newHandler(this.allocator));
 			if(this.configuration.h2_enabled()) {
-				pipeline.addLast("protocolNegotiationHandler", this.protocolNegotiationHandler);
+				pipeline.addLast("protocolNegotiationHandler", new HttpProtocolNegotiationHandler(this));
 			}
 			else {
 				this.configureHttp1x(pipeline);

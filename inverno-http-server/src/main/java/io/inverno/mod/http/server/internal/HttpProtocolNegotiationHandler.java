@@ -15,7 +15,6 @@
  */
 package io.inverno.mod.http.server.internal;
 
-import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.ssl.ApplicationProtocolNames;
@@ -29,7 +28,6 @@ import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-@Sharable
 public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiationHandler {
 
 	private final HttpChannelConfigurer channelConfigurer;
