@@ -131,11 +131,13 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 
 		@Override
 		protected Http2ChannelHandler build(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings) throws Exception {
+			Http2ContentEncodingResolver contentEncodingResolver = null;
 			if (Http2ChannelHandlerFactory.this.configuration.compression_enabled()) {
 				encoder = new CompressorHttp2ConnectionEncoder(
 					encoder,
 					Http2ChannelHandlerFactory.this.compressionOptions
 				);
+				contentEncodingResolver = new Http2ContentEncodingResolver(Http2ChannelHandlerFactory.this.compressionOptions);
 			}
 			
 			Http2ChannelHandler handler = new Http2ChannelHandler(
@@ -148,7 +150,8 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 				Http2ChannelHandlerFactory.this.headerService,
 				Http2ChannelHandlerFactory.this.parameterConverter,
 				Http2ChannelHandlerFactory.this.urlEncodedBodyDecoder,
-				Http2ChannelHandlerFactory.this.multipartBodyDecoder
+				Http2ChannelHandlerFactory.this.multipartBodyDecoder,
+				contentEncodingResolver
 			);
 			this.frameListener(handler);
 			return handler;

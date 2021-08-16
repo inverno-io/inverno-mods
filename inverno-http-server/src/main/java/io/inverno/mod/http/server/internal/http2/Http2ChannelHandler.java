@@ -27,7 +27,6 @@ import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http2.DelegatingDecompressorFrameListener;
 import io.netty.handler.codec.http2.Http2Connection;
@@ -60,8 +59,6 @@ import reactor.core.publisher.Sinks.EmitResult;
  */
 public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2FrameListener, Http2Connection.Listener {
 
-	private static final ContentEncodingResolver CONTENT_ENCODING_RESOLVER = new ContentEncodingResolver();
-	
 	private final HttpServerConfiguration configuration; 
 	private final ExchangeHandler<Exchange> rootHandler;
 	private final ExchangeHandler<ErrorExchange<Throwable>> errorHandler;
@@ -69,6 +66,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	private final ObjectConverter<String> parameterConverter;
 	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
 	private final MultipartDecoder<Part> multipartBodyDecoder;
+	private final Http2ContentEncodingResolver contentEncodingResolver;
 
 	private final IntObjectMap<Http2Exchange> serverStreams;
 
@@ -99,7 +97,8 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder,
-			MultipartDecoder<Part> multipartBodyDecoder) {
+			MultipartDecoder<Part> multipartBodyDecoder,
+			Http2ContentEncodingResolver contentEncodingResolver) {
 		super(decoder, encoder, initialSettings);
 
 		this.configuration = configuration;
@@ -109,7 +108,8 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
-
+		this.contentEncodingResolver = contentEncodingResolver;
+		
 		this.serverStreams = new IntObjectHashMap<>();
 		this.connection().addListener(this);
 	}
@@ -172,7 +172,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 			if(this.configuration.compression_enabled()) {
 				String acceptEncoding = headers.get(HttpHeaderNames.ACCEPT_ENCODING) != null ? headers.get(HttpHeaderNames.ACCEPT_ENCODING).toString() : null;
 				if(acceptEncoding != null) {
-					streamExchange.setContentEncoding(CONTENT_ENCODING_RESOLVER.resolve(acceptEncoding));
+					streamExchange.setContentEncoding(this.contentEncodingResolver.resolve(acceptEncoding));
 				}
 			}
 			this.serverStreams.put(streamId, streamExchange);
@@ -310,31 +310,5 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	@Override
 	public void onGoAwayReceived(int lastStreamId, long errorCode, ByteBuf debugData) {
 //		System.out.println("Stream go away received");		
-	}
-
-	/**
-	 * <p>
-	 * Used to determine the target content encoding of a response based on the
-	 * {@code accept-encoding} header of a request.
-	 * </p>
-	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 */
-	private static class ContentEncodingResolver extends HttpContentCompressor {
-
-		/**
-		 * <p>
-		 * Resolves the response content encoding.
-		 * </p>
-		 * 
-		 * @param acceptEncoding the accept encoding header of a request
-		 * 
-		 * @return a content encoding or null
-		 * @throws NullPointerException if acceptEncoding is null
-		 */
-		public String resolve(String acceptEncoding) throws NullPointerException {
-			return this.determineEncoding(acceptEncoding);
-		}
 	}
 }
