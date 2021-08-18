@@ -18,6 +18,7 @@ package io.inverno.mod.http.server.internal.http2;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
@@ -137,8 +138,9 @@ public class Http2Exchange extends AbstractExchange {
 	
 	@Override
 	protected void onCompleteWithError(Throwable throwable) {
-		this.finalize(() -> this.handler.exchangeError(this.context, throwable));
-		
+		ChannelPromise finalizePromise = this.context.newPromise();
+		this.finalizeExchange(finalizePromise, () -> this.handler.exchangeError(this.context, throwable));
+		finalizePromise.tryFailure(throwable);
 	}
 	
 	@Override
@@ -146,13 +148,18 @@ public class Http2Exchange extends AbstractExchange {
 		Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.headers();
 		Http2ResponseTrailers trailers = (Http2ResponseTrailers)this.response.trailers();
 		if(trailers == null) {
-			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, true, this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
+			ChannelPromise finalizePromise = this.context.newPromise();
+			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, true, finalizePromise);
 			headers.setWritten(true);
+			this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 		}
 		else {
 			this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, false, this.context.voidPromise());
 			headers.setWritten(true);
-			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
+			
+			ChannelPromise finalizePromise = this.context.newPromise();
+			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, finalizePromise);
+			this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 		}
 		this.context.channel().flush();
 	}
@@ -164,11 +171,18 @@ public class Http2Exchange extends AbstractExchange {
 		headers.setWritten(true);
 		Http2ResponseTrailers trailers = (Http2ResponseTrailers)this.response.trailers();
 		if(trailers == null) {
-			this.encoder.writeData(this.context, this.stream.id(), value, 0, true, this.newFinalizePromise(() -> this.handler.exchangeNext(this.context, value), () -> this.handler.exchangeComplete(this.context)));
+			ChannelPromise finalizePromise = this.context.newPromise();
+			this.encoder.writeData(this.context, this.stream.id(), value, 0, true, finalizePromise);
+			this.handler.exchangeNext(this.context, value);
+			this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 		}
 		else {
 			this.encoder.writeData(this.context, this.stream.id(), value, 0, false, this.context.voidPromise());
-			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.newFinalizePromise(() -> this.handler.exchangeNext(this.context, value), () -> this.handler.exchangeComplete(this.context)));
+			this.handler.exchangeNext(this.context, value);
+			
+			ChannelPromise finalizePromise = this.context.newPromise();
+			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, finalizePromise);
+			this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 		}
 		this.context.channel().flush();
 	}
@@ -180,20 +194,29 @@ public class Http2Exchange extends AbstractExchange {
 		
 		if(!headers.isWritten()) {
 			if(trailers == null) {
-				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, true, this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
+				ChannelPromise finalizePromise = this.context.newPromise();
+				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, true, finalizePromise);
 				headers.setWritten(true);
+				this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 			}
 			else {
 				this.encoder.writeHeaders(this.context, this.stream.id(), headers.getUnderlyingHeaders(), 0, false, this.context.voidPromise());
 				headers.setWritten(true);
-				this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
+				
+				ChannelPromise finalizePromise = this.context.newPromise();
+				this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, finalizePromise);
+				this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 			}
 		}
 		else if(trailers != null) {
-			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
+			ChannelPromise finalizePromise = this.context.newPromise();
+			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, finalizePromise);
+			this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 		}
 		else {
-			this.encoder.writeData(this.context, this.stream.id(), Unpooled.EMPTY_BUFFER, 0, true, this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
+			ChannelPromise finalizePromise = this.context.newPromise();
+			this.encoder.writeData(this.context, this.stream.id(), Unpooled.EMPTY_BUFFER, 0, true, finalizePromise);
+			this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 		}
 		this.context.channel().flush();
 	}

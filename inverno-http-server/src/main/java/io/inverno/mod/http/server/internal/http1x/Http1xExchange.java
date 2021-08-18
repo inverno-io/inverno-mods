@@ -41,6 +41,7 @@ import io.inverno.mod.http.server.internal.netty.FlatLastHttpContent;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.FileRegion;
 import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
@@ -200,7 +201,9 @@ public class Http1xExchange extends AbstractExchange {
 	
 	@Override
 	protected void onCompleteWithError(Throwable throwable) {
-		this.finalize(() -> this.handler.exchangeError(this.context, throwable));
+		ChannelPromise finalizePromise = this.context.newPromise();
+		this.finalizeExchange(finalizePromise, () -> this.handler.exchangeError(this.context, throwable));
+		finalizePromise.tryFailure(throwable);
 	}
 	
 	@Override
@@ -212,9 +215,10 @@ public class Http1xExchange extends AbstractExchange {
 			if(headers.getContentLength() == null && !headers.contains(Headers.NAME_TRANSFER_ENCODING)) {
 				headers.set(Headers.NAME_TRANSFER_ENCODING, Headers.VALUE_CHUNKED);
 			}
-			
-			this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
+			ChannelPromise finalizePromise = this.context.newPromise();
+			this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), finalizePromise);
 			headers.setWritten(true);
+			this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 		}
 		else {
 			// empty response or file region
@@ -228,8 +232,10 @@ public class Http1xExchange extends AbstractExchange {
 				() -> {
 					// just write headers in a fullHttpResponse
 					// Headers are not written here since we have an empty response
-					this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
+					ChannelPromise finalizePromise = this.context.newPromise();
+					this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), finalizePromise);
 					headers.setWritten(true);
+					this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 				}
 			);
 		}
@@ -239,19 +245,22 @@ public class Http1xExchange extends AbstractExchange {
 	protected void onCompleteSingle(ByteBuf value) {
 		// Response has one chunk => send a FullHttpResponse
 		Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.headers();
-		this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, value), this.newFinalizePromise(() -> this.handler.exchangeNext(this.context, value), () -> this.handler.exchangeComplete(this.context)));
+		
+		ChannelPromise finalizePromise = this.context.newPromise();
+		this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, value), finalizePromise);
 		headers.setWritten(true);
+		this.handler.exchangeNext(this.context, value);
+		this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 	}
 	
 	@Override
 	protected void onCompleteMany() {
 		Http1xResponseTrailers trailers = (Http1xResponseTrailers)this.response.trailers();
-		if(trailers != null) {
-			this.encoder.writeFrame(this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, trailers.getUnderlyingTrailers()), this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
-		}
-		else {
-			this.encoder.writeFrame(this.context, LastHttpContent.EMPTY_LAST_CONTENT, this.newFinalizePromise(() -> this.handler.exchangeComplete(this.context)));
-		}
+		Object msg = trailers != null ? new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, trailers.getUnderlyingTrailers()) : LastHttpContent.EMPTY_LAST_CONTENT;
+		
+		ChannelPromise finalizePromise = this.context.newPromise();
+		this.encoder.writeFrame(this.context, msg, finalizePromise);
+		this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 	}
 	
 	private class FileRegionDataSubscriber extends BaseSubscriber<FileRegion> {
@@ -284,13 +293,11 @@ public class Http1xExchange extends AbstractExchange {
 		protected void hookOnComplete() {
 			Http1xExchange.this.executeInEventLoop(() -> {
 				Http1xResponseTrailers trailers = (Http1xResponseTrailers)Http1xExchange.this.response.trailers();
+				Object msg = trailers != null ? new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, trailers.getUnderlyingTrailers()) : LastHttpContent.EMPTY_LAST_CONTENT;
 				
-				if(trailers != null) {
-					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, trailers.getUnderlyingTrailers()), Http1xExchange.this.newFinalizePromise(() -> Http1xExchange.this.handler.exchangeComplete(Http1xExchange.this.context)));
-				}
-				else {
-					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.newFinalizePromise(() -> Http1xExchange.this.handler.exchangeComplete(Http1xExchange.this.context)));
-				}
+				ChannelPromise finalizePromise = Http1xExchange.this.context.newPromise();
+				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, msg, finalizePromise);
+				Http1xExchange.this.finalizeExchange(finalizePromise, () -> Http1xExchange.this.handler.exchangeComplete(Http1xExchange.this.context));
 			});
 		}
 	}

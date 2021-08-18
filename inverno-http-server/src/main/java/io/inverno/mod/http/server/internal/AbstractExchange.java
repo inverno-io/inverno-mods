@@ -34,6 +34,7 @@ import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.EventExecutor;
@@ -131,78 +132,42 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	/**
 	 * <p>
-	 * Creates a new finalize promise which finalizes the exchange as defined by
-	 * {{@link #finalize(Runnable, Runnable)}.
+	 * Finalizes the exchange by invoking the finalizer and the postFinalize when
+	 * the final promise completes when a finalizer has been provided, otherwise the
+	 * postFinalize runnable is invoked immediately.
 	 * </p>
 	 * 
-	 * @param preFinalize  a non-null pre finalizer
-	 * @param postFinalize a non-null post finalizer
-	 * 
-	 * @return a new exchange finalizer promise
-	 */
-	protected ChannelPromise newFinalizePromise(Runnable preFinalize, Runnable postFinalize) {
-		return this.context.newPromise().addListener(future -> this.finalize(preFinalize, postFinalize));
-	}
-	
-	/**
 	 * <p>
-	 * Creates a new finalize promise which finalizes the exchange as defined by
-	 * {{@link #finalize(Runnable)}.
+	 * When using a finalizer, we have to wait for the final write operation to
+	 * complete before invoking the finalizer, this basically breaks HTTP pipelining
+	 * but this is mandatory to get a chance to reset shared resources used to
+	 * process multiple exchanges (eg. Bytebuf).
 	 * </p>
 	 * 
-	 * @param postFinalize a non-null post finalizer
+	 * @param finalPromise a promise that completes with the final exchange operation 
+	 * @param postFinalize a post finalize operation or null
 	 * 
-	 * @return a new exchange finalizer promise
+	 * @return the promise
 	 */
-	protected ChannelPromise newFinalizePromise(Runnable postFinalize) {
-		return this.context.newPromise().addListener(future -> this.finalize(postFinalize));
-	}
-	
-	/**
-	 * <p>
-	 * Finalizes the exchange by invoking the preFinalize runnable before the
-	 * subscribing to the exchange finalizer when defined and finally invoking the
-	 * postFinalize runnable
-	 * </p>
-	 * 
-	 * @param preFinalize  a non-null pre finalizer
-	 * @param postFinalize a non-null post finalizer
-	 */
-	protected void finalize(Runnable preFinalize, Runnable postFinalize) {
-		if(this.finalizer == null) {
-			preFinalize.run();
+	protected ChannelFuture finalizeExchange(ChannelPromise finalPromise, Runnable postFinalize) {
+		if(this.finalizer != null) {
+			finalPromise.addListener(future -> {
+				Mono<Void> actualFinalizer = this.finalizer;
+				if(postFinalize != null) {
+					actualFinalizer.doOnTerminate(postFinalize);
+				}
+				if(!future.isSuccess()) {
+					Mono.error(future.cause()).then(actualFinalizer);
+				}
+				actualFinalizer.subscribe();
+			});
+		}
+		else if(postFinalize != null){
 			postFinalize.run();
 		}
-		else {
-			preFinalize.run();
-			// TODO here we do nothing if the finalizer fails, maybe we should consider a debug or trace log
-			// Note that when creating the finalizer the user can actually catch the error: doOnError(...)
-			Mono<Void> actualFinalizer = this.finalizer;
-			if(postFinalize != null) {
-				actualFinalizer = actualFinalizer.doFinally(ign -> postFinalize.run());
-			}
-			actualFinalizer.subscribe();
-		}
+		return finalPromise;
 	}
 	
-	/**
-	 * <p>
-	 * Finalizes the exchange by subscribing to the exchange finalizer when defined
-	 * and finally invoking the postFinalize runnable
-	 * </p>
-	 * 
-	 * @param postFinalize a non-null post finalizer
-	 */
-	protected void finalize(Runnable postFinalize) {
-		if(this.finalizer == null) {
-			postFinalize.run();
-		}
-		else {
-			// TODO here we do nothing if the finalizer fails, maybe we should consider a debug or trace log
-			// Note that when creating the finalizer the user can actually catch the error: doOnError(...)
-			this.finalizer.doOnTerminate(postFinalize).subscribe();
-		}
-	}
 	
 	/**
 	 * <p>

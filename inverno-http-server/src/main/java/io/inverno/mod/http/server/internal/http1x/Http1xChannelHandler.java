@@ -207,6 +207,10 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 		/*if(this.respondingExchange != null) {
 			this.respondingExchange.dispose();
 		}*/
+		
+		if(this.exchangeQueue != null) {
+			this.exchangeQueue.next = null;
+		}
 	}
 
 	@Override

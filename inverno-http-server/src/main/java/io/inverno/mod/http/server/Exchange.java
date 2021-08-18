@@ -59,6 +59,12 @@ public interface Exchange {
 	 * has been fully sent to the client or following an error.
 	 * </p>
 	 * 
+	 * <p>
+	 * Note that using a finalizer actually impacts HTTP pipelining since the server
+	 * must wait for the response to be fully sent to the client in order to process
+	 * following requests.
+	 * </p>
+	 * 
 	 * @param finalizer a finalizer
 	 */
 	Exchange finalizer(Mono<Void> finalizer);
