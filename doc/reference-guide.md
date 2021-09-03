@@ -163,7 +163,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-base:1.2.0'
+compile 'io.inverno.mod:inverno-base:1.2.1'
 ...
 ```
 
@@ -726,7 +726,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-boot:1.2.0'
+compile 'io.inverno.mod:inverno-boot:1.2.1'
 ...
 ```
 
@@ -867,7 +867,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-configuration:1.2.0'
+compile 'io.inverno.mod:inverno-configuration:1.2.1'
 ...
 ```
 
@@ -1543,7 +1543,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-http-base:1.2.0'
+compile 'io.inverno.mod:inverno-http-base:1.2.1'
 ...
 ```
 
@@ -1666,8 +1666,8 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-boot:1.2.0'
-compile 'io.inverno.mod:inverno-http-server:1.2.0'
+compile 'io.inverno.mod:inverno-boot:1.2.1'
+compile 'io.inverno.mod:inverno-http-server:1.2.1'
 ...
 ```
 
@@ -2688,8 +2688,8 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-boot:1.2.0'
-compile 'io.inverno.mod:inverno-web:1.2.0'
+compile 'io.inverno.mod:inverno-boot:1.2.1'
+compile 'io.inverno.mod:inverno-web:1.2.1'
 ...
 ```
 
@@ -4669,7 +4669,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-irt:1.2.0'
+compile 'io.inverno.mod:inverno-irt:1.2.1'
 ...
 ```
 
@@ -5198,8 +5198,8 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-sql:1.2.0'
-compile 'io.inverno.mod:inverno-sql-vertx:1.2.0'
+compile 'io.inverno.mod:inverno-sql:1.2.1'
+compile 'io.inverno.mod:inverno-sql-vertx:1.2.1'
 ...
 ```
 
@@ -5474,7 +5474,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-sql-vertx:1.2.0'
+compile 'io.inverno.mod:inverno-sql-vertx:1.2.1'
 compile 'io.vertx:vertx-pg-client:4.1.2'
 ...
 ```
