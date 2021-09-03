@@ -4636,7 +4636,7 @@ The syntax of `.irt` template set is inspired from functional language such as [
 
 In terms of raw performance, Inverno templates processing is faster than most Java template engines by an order of magnitude and with lower memory usage. The following [benchmark project][template-benchmark] compares performances of various template engines rendering a list of stock items into an HTML document as a String. 
 
-<img class="shadow mb-4" src="img/template_benchmarks.png" alt="Template Benchmarks"/>
+<img class="shadow mb-4 mx-auto d-block" src="img/template_benchmarks.png" alt="Template Benchmarks"/>
 
 > Please keep in mind that outcomes might be different considering different scenarios, especially reactive rendering which might appear slower but addresses different concerns such as stream processing and optimized usage of resources.
 
