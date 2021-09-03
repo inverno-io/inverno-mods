@@ -4673,7 +4673,7 @@ compile 'io.inverno.mod:inverno-irt:1.2.0'
 ...
 ```
 
-### Creates an `.irt` template
+### Creates an .irt template
 
 A template can be created along with other Java source files in the source directory of an Inverno module. At compile time, the Inverno reactive template compiler plugin will scan the module source folder for `.irt` files and compiles them to generate template set classes that can be used in your module to render data.
 
@@ -4725,7 +4725,7 @@ CompletableFuture<String> rendered = Simple.string().render(new Message("Hello, 
 System.out.println(rendered.get()); // The message is: Hello, world!
 ```
 
-### `.irt` syntax
+### .irt syntax
 
 #### Package and imports
 
