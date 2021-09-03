@@ -5,6 +5,7 @@
 
 [inverno-javadoc]: https://inverno.io/docs/release/api/index.html
 [cprops-grammar]: https://github.com/inverno-io/inverno-mods/tree/master/inverno-configuration/src/main/javacc/configuration_properties.jj
+[template-benchmark]: https://github.com/jkuhn1/template-benchmark
 
 [project-reactor-io]: https://projectreactor.io/
 [project-reactor-io-doc]: https://projectreactor.io/docs/core/release/reference/
@@ -30,7 +31,6 @@
 [erlang]: https://en.wikipedia.org/wiki/Erlang_(programming_language)
 [vertx-sql-client]: https://github.com/eclipse-vertx/vertx-sql-client
 [vertx-database-doc]: https://vertx.io/docs/#databases
-[log4j-2]: https://logging.apache.org/log4j/2.x/index.html
 
 [rfc-3986]: https://tools.ietf.org/html/rfc3986
 [rfc-7231-5.1.1.5]: https://tools.ietf.org/html/rfc7231#section-5.1.1.5
@@ -4632,7 +4632,13 @@ Data are basically rendered by templates which are regrouped in template sets an
 
 The template sets classes thus obtained support reactive rendering, data are rendered as a flow of events for efficient usage of resources. For instance, the complete set of data doesn't have to be available or loaded into memory, the rendering being reactive the output can be generated incrementally by processing each piece of data individually one after the other when they become available. Since the rendering process never blocks it is also possible to lazily load data when/if they need to be rendered.
 
-The syntax of `.irt` template set is inspired from functional language such as [XSLT][xslt] and [Erlang][erlang] which are particularly suited for reactive rendering. Since a template is a generated Java class, the Java language is also widely used in a template source file, especially for in dynamic parts of a template.
+The syntax of `.irt` template set is inspired from functional language such as [XSLT][xslt] and [Erlang][erlang] which are particularly suited for reactive rendering. Since a template is a generated Java class, the Java language is also widely used in a template source file, especially for the dynamic parts of a template.
+
+In terms of raw performance, Inverno templates processing is faster than most Java template engines by an order of magnitude and with lower memory usage. The following [benchmark project][template-benchmark] compares performances of various template engines rendering a list of stock items into an HTML document as a String. 
+
+<img class="shadow mb-4" src="img/template_benchmarks.png" alt="Template Benchmarks"/>
+
+> Please keep in mind that outcomes might be different considering different scenarios, especially reactive rendering which might appear slower but addresses different concerns such as stream processing and optimized usage of resources.
 
 In order to use the Inverno *reactive template* module, we need to declare a dependency in the module descriptor:
 
