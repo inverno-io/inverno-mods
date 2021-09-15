@@ -22,6 +22,7 @@ import java.util.function.Supplier;
 
 import io.netty.handler.codec.compression.CompressionOptions;
 import io.netty.handler.codec.compression.StandardCompressionOptions;
+import io.netty.handler.codec.compression.Zstd;
 import io.netty.handler.codec.http2.AbstractHttp2ConnectionHandlerBuilder;
 import io.netty.handler.codec.http2.CompressorHttp2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2ConnectionDecoder;
@@ -95,7 +96,9 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 
 		compressionOptionsList.add(StandardCompressionOptions.deflate(this.configuration.compression_deflate_compressionLevel(), this.configuration.compression_deflate_windowBits(), this.configuration.compression_deflate_memLevel()));
 		compressionOptionsList.add(StandardCompressionOptions.gzip(this.configuration.compression_gzip_compressionLevel(), this.configuration.compression_gzip_windowBits(), this.configuration.compression_gzip_memLevel()));
-		compressionOptionsList.add(StandardCompressionOptions.zstd(this.configuration.compression_zstd_compressionLevel(), this.configuration.compression_zstd_blockSize(), this.configuration.compression_zstd_maxEncodeSize()));
+		if(Zstd.isAvailable()) {
+			compressionOptionsList.add(StandardCompressionOptions.zstd(this.configuration.compression_zstd_compressionLevel(), this.configuration.compression_zstd_blockSize(), this.configuration.compression_zstd_maxEncodeSize()));
+		}
 		
 		// Brotli lib is currently an unnamed module so we can't configure it...
 		/*if(Brotli.isAvailable()) {
