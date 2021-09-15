@@ -163,7 +163,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-base:1.2.1'
+compile 'io.inverno.mod:inverno-base:${VERSION_INVERNO_MODS}'
 ...
 ```
 
@@ -726,7 +726,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-boot:1.2.1'
+compile 'io.inverno.mod:inverno-boot:${VERSION_INVERNO_MODS}'
 ...
 ```
 
@@ -867,7 +867,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-configuration:1.2.1'
+compile 'io.inverno.mod:inverno-configuration:${VERSION_INVERNO_MODS}'
 ...
 ```
 
@@ -1543,7 +1543,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-http-base:1.2.1'
+compile 'io.inverno.mod:inverno-http-base:${VERSION_INVERNO_MODS}'
 ...
 ```
 
@@ -1666,8 +1666,8 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-boot:1.2.1'
-compile 'io.inverno.mod:inverno-http-server:1.2.1'
+compile 'io.inverno.mod:inverno-boot:${VERSION_INVERNO_MODS}'
+compile 'io.inverno.mod:inverno-http-server:${VERSION_INVERNO_MODS}'
 ...
 ```
 
@@ -2076,7 +2076,7 @@ The above example starts a HTTP/1.x server using default configuration and defau
      ║                ,   __\_/\_\__   ,    | || | | |\ \/ /|  __/| | | | | | |_| |               ║
      ║                 , /_/ /\/\ \_\ ,     |_||_| |_| \__/  \___||_| |_| |_|\___/                ║
      ║                  ,     /\     ,                                                            ║
-     ║                    ,   \/   ,                                  -- 1.3.0 --                 ║
+     ║                    ,   \/   ,                                  -- ${VERSION_INVERNO_CORE} --                 ║
      ║                      ' -- '                                                                ║
      ╠════════════════════════════════════════════════════════════════════════════════════════════╣
      ║ Java runtime        : OpenJDK Runtime Environment                                          ║
@@ -2688,8 +2688,8 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-boot:1.2.1'
-compile 'io.inverno.mod:inverno-web:1.2.1'
+compile 'io.inverno.mod:inverno-boot:${VERSION_INVERNO_MODS}'
+compile 'io.inverno.mod:inverno-web:${VERSION_INVERNO_MODS}'
 ...
 ```
 
@@ -3429,7 +3429,7 @@ The above example starts a Web server using default configuration which is a HTT
      ║                ,   __\_/\_\__   ,    | || | | |\ \/ /|  __/| | | | | | |_| |               ║
      ║                 , /_/ /\/\ \_\ ,     |_||_| |_| \__/  \___||_| |_| |_|\___/                ║
      ║                  ,     /\     ,                                                            ║
-     ║                    ,   \/   ,                                  -- 1.3.0 --                 ║
+     ║                    ,   \/   ,                                  -- ${VERSION_INVERNO_CORE} --                 ║
      ║                      ' -- '                                                                ║
      ╠════════════════════════════════════════════════════════════════════════════════════════════╣
      ║ Java runtime        : OpenJDK Runtime Environment                                          ║
@@ -4669,7 +4669,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-irt:1.2.1'
+compile 'io.inverno.mod:inverno-irt:${VERSION_INVERNO_MODS}'
 ...
 ```
 
@@ -5198,8 +5198,8 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-sql:1.2.1'
-compile 'io.inverno.mod:inverno-sql-vertx:1.2.1'
+compile 'io.inverno.mod:inverno-sql:${VERSION_INVERNO_MODS}'
+compile 'io.inverno.mod:inverno-sql-vertx:${VERSION_INVERNO_MODS}'
 ...
 ```
 
@@ -5474,7 +5474,7 @@ Using Gradle:
 
 ```groovy
 ...
-compile 'io.inverno.mod:inverno-sql-vertx:1.2.1'
+compile 'io.inverno.mod:inverno-sql-vertx:${VERSION_INVERNO_MODS}'
 compile 'io.vertx:vertx-pg-client:4.1.2'
 ...
 ```
