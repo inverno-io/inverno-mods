@@ -9,6 +9,8 @@
 
 # Inverno Modules
 
+[![CI/CD](https://github.com/inverno-io/inverno-mods/actions/workflows/maven.yml/badge.svg)](https://github.com/inverno-io/inverno-mods/actions/workflows/maven.yml)
+
 The [Inverno modules framework][inverno-io] project provides a collection of components for building highly modular and powerful applications on top of the [Inverno IoC/DI framework][inverno-core-root].
 
 While being fully integrated, any of these modules can also be used individually in any application thanks to the high modularity and low footprint offered by the Inverno framework.
