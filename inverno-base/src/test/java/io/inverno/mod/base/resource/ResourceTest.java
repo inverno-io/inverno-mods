@@ -170,7 +170,7 @@ public class ResourceTest {
 	@Test
 	public void testClasspath() throws URISyntaxException, MalformedURLException {
 		File testJar = new File("src/test/resources/test.jar");
-		Assertions.assertTrue(testJar.exists());
+		System.out.println(testJar.getAbsolutePath());
 		ClassLoader cl = new URLClassLoader(new URL[] {testJar.toURI().toURL()});
 		URI uri = new URI("classpath:/ign/test.txt");
 		try (Resource resource = new ClasspathResource(uri, cl)) {
