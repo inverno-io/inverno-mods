@@ -224,10 +224,10 @@ public class TestConfiguration extends AbstractConfigurationInvernoTest {
 			Assertions.assertEquals(1, messages.size());
 			
 			String configurationBeanConflict = "Multiple beans matching socket io.inverno.mod.test.config.moduleB:beanB:configB were found\n" + 
+					"  - io.inverno.mod.test.config.moduleB:configB of type io.inverno.mod.test.config.moduleB.ConfigB\n" +
 					"  - io.inverno.mod.test.config.moduleB:configB_Bean of type io.inverno.mod.test.config.moduleB.ConfigB_Bean\n" + 
-					"  - io.inverno.mod.test.config.moduleB:configB of type io.inverno.mod.test.config.moduleB.ConfigB\n" + 
 					"  \n" + 
-					"  Consider specifying an explicit wiring in module io.inverno.mod.test.config.moduleB (eg. @io.inverno.core.annotation.Wire(beans=\"io.inverno.mod.test.config.moduleB:configB_Bean\", into=\"io.inverno.mod.test.config.moduleB:beanB:configB\") )\n" + 
+					"  Consider specifying an explicit wiring in module io.inverno.mod.test.config.moduleB (eg. @io.inverno.core.annotation.Wire(beans=\"io.inverno.mod.test.config.moduleB:configB\", into=\"io.inverno.mod.test.config.moduleB:beanB:configB\") )\n" + 
 					"   ";
 					
 			Assertions.assertEquals(configurationBeanConflict, messages.get(0));
