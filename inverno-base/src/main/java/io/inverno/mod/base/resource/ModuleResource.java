@@ -183,7 +183,7 @@ public class ModuleResource extends AbstractAsyncResource {
 			this.moduleName = System.getProperty("jdk.module.main");
 		}
 		
-		this.resourceName = this.uri.getPath();
+		this.resourceName = this.uri.getRawPath();
 		if(this.resourceName == null || this.resourceName.isEmpty()) {
 			throw new IllegalArgumentException("No resource name specified in uri: " + SCHEME_MODULE + "://[MODULE_NAME]/[RESOURCE_NAME]");
 		}

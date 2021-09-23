@@ -62,6 +62,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	private Optional<Resource> resource;
 	
 	private URI uri;
+	private String resourceName;
 	
 	private Class<?> clazz;
 	private ClassLoader classLoader;
@@ -148,6 +149,14 @@ public class ClasspathResource extends AbstractAsyncResource {
 		super(mediaTypeService);
 		this.uri = ClasspathResource.checkUri(uri);
 		this.clazz = Objects.requireNonNull(clazz);
+		
+		this.resourceName = this.uri.getRawPath();
+		if(this.resourceName == null || this.resourceName.isEmpty()) {
+			throw new IllegalArgumentException("No resource name specified in uri: " + SCHEME_CLASSPATH + ":/[RESOURCE_NAME]");
+		}
+		if(!this.resourceName.startsWith("/")) {
+			this.resourceName = "/" + this.resourceName;
+		}
 	}
 	
 	/**
@@ -166,6 +175,14 @@ public class ClasspathResource extends AbstractAsyncResource {
 	public ClasspathResource(URI uri, ClassLoader classLoader, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
 		this.uri = ClasspathResource.checkUri(uri);
+		
+		this.resourceName = this.uri.getRawPath();
+		if(this.resourceName == null || this.resourceName.isEmpty()) {
+			throw new IllegalArgumentException("No resource name specified in uri: " + SCHEME_CLASSPATH + ":/[RESOURCE_NAME]");
+		}
+		if(this.resourceName.startsWith("/")) {
+			this.resourceName = this.resourceName.substring(1);
+		}
 		
 		if(classLoader == null) {
 			try {
@@ -198,6 +215,9 @@ public class ClasspathResource extends AbstractAsyncResource {
 		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_CLASSPATH) || uri.getAuthority() != null) {
 			throw new IllegalArgumentException("Not a " + SCHEME_CLASSPATH + " uri");
 		}
+		if(uri.isOpaque()) {
+			throw new IllegalArgumentException(SCHEME_CLASSPATH + "uri can't be opaque");
+		}
 		return uri.normalize();
 	}
 	
@@ -217,14 +237,10 @@ public class ClasspathResource extends AbstractAsyncResource {
 		if(this.resource == null) {
 			URL url;
 			if(this.clazz != null) {
-				url = this.clazz.getResource(this.uri.getPath());
+				url = this.clazz.getResource(this.resourceName);
 			}
 			else {
-				String path = this.uri.getPath();
-				if(path.startsWith("/")) {
-					path = path.substring(1);
-				}
-				url = this.classLoader.getResource(path);
+				url = this.classLoader.getResource(this.resourceName);
 			}
 			if(url != null) {
 				URI uri;
@@ -236,17 +252,21 @@ public class ClasspathResource extends AbstractAsyncResource {
 				}
 				String scheme = uri.getScheme();
 				Resource resolvedResource;
-				if(scheme.equals(FileResource.SCHEME_FILE)) {
-					resolvedResource = new FileResource(uri, this.getMediaTypeService());
-				}
-				else if(scheme.equals(JarResource.SCHEME_JAR)) {
-					resolvedResource = new JarResource(uri, this.getMediaTypeService());
-				}
-				else if(scheme.equals(ZipResource.SCHEME_ZIP)) {
-					resolvedResource = new ZipResource(uri, this.getMediaTypeService());
-				}
-				else {
-					throw new ResourceException("Unsupported resource scheme: " + scheme);
+				switch(scheme) {
+					case FileResource.SCHEME_FILE:
+						resolvedResource = new FileResource(uri, this.getMediaTypeService());
+						break;
+					case JarResource.SCHEME_JAR:
+						resolvedResource = new JarResource(uri, this.getMediaTypeService());
+						break;
+					case ZipResource.SCHEME_ZIP:
+						resolvedResource = new ZipResource(uri, this.getMediaTypeService());
+						break;
+					case NativeResource.SCHEME_RESOURCE:
+						resolvedResource = new NativeResource(uri, this.getMediaTypeService());
+						break;
+					default:
+						throw new ResourceException("Unsupported resource scheme: " + scheme);
 				}
 				if(resolvedResource instanceof AsyncResource) {
 					((AsyncResource) resolvedResource).setExecutor(this.getExecutor());
@@ -368,7 +388,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	@Override
 	public Resource resolve(Path path) throws IllegalArgumentException {
 		try {
-			URI resolvedUri = new URI(ClasspathResource.SCHEME_CLASSPATH, Paths.get(this.uri.getPath()).resolve(path).toString(), null);
+			URI resolvedUri = new URI(ClasspathResource.SCHEME_CLASSPATH, Paths.get(this.uri.getRawPath()).resolve(path).toString(), null);
 			ClasspathResource resolvedResource;
 			if(this.clazz != null) {
 				resolvedResource = new ClasspathResource(resolvedUri, this.clazz, this.getMediaTypeService());
