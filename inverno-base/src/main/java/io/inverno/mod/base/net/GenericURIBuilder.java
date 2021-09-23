@@ -69,7 +69,7 @@ class GenericURIBuilder implements URIBuilder {
 	 * specified path ignoring or not the trailing slash.
 	 * </p>
 	 * 
-	 * @param path                a path
+	 * @param path                a path with optional query and fragment components
 	 * @param ignoreTrailingSlash ignore or the trailing slash in the path
 	 * @param charset             a charset
 	 * @param options             an array of options
@@ -80,12 +80,22 @@ class GenericURIBuilder implements URIBuilder {
 		this.segments = new LinkedList<>();
 		if(path != null) {
 			int queryIndex = path.indexOf('?');
-			if(queryIndex < 0) {
-				this.path(path, ignoreTrailingSlash);
+			int fragmentIndex = path.indexOf('#');
+			if(queryIndex > 0 && fragmentIndex > 0) {
+				this.path(path.substring(0, queryIndex), ignoreTrailingSlash);
+				this.parseRawQuery(path.substring(queryIndex + 1, fragmentIndex));
+				this.fragment(path.substring(fragmentIndex + 1));
 			}
-			else {
+			else if(queryIndex > 0 && fragmentIndex < 0) {
 				this.path(path.substring(0, queryIndex), ignoreTrailingSlash);
 				this.parseRawQuery(path.substring(queryIndex + 1));
+			}
+			else if(fragmentIndex > 0) {
+				this.path(path.substring(0, fragmentIndex), ignoreTrailingSlash);
+				this.fragment(path.substring(fragmentIndex + 1));
+			}
+			else {
+				this.path(path, ignoreTrailingSlash);
 			}
 		}
 	}
@@ -108,25 +118,46 @@ class GenericURIBuilder implements URIBuilder {
 		this.queryParameters = new LinkedList<>();
 		if(uri != null) {
 			this.scheme(uri.getScheme());
-			this.userInfo(uri.getUserInfo());
-			this.host(uri.getHost());
-			this.port(uri.getPort());
 			
-			if(uri.getRawPath() != null) {
-				String[] segments = uri.getRawPath().split("/");
-				for(int i=0;i<segments.length;i++) {
-					if(ignoreTrailingSlash && i ==  segments.length - 1 && segments[i].equals("/")) {
-						break;
-					}
-					this.segment(URIs.decodeURIComponent(segments[i], this.charset));
+			if(uri.isOpaque()) {
+				// I have a scheme-specific part which correspond to path-rootless + fragment according to RFC3986
+				String path = uri.getRawSchemeSpecificPart();
+				int queryIndex = path.indexOf('?');
+				if(queryIndex > 0) {
+					this.path(path.substring(0, queryIndex), ignoreTrailingSlash);
+					this.parseRawQuery(path.substring(queryIndex + 1));
+				}
+				else {
+					this.path(path, ignoreTrailingSlash);
+				}
+				if(uri.getRawFragment() != null) {
+					this.fragment(URIs.decodeURIComponent(uri.getRawFragment(), this.charset));
 				}
 			}
-			
-			String rawQuery = uri.getRawQuery();
-			if(rawQuery != null) {
-				this.parseRawQuery(rawQuery);
+			else {
+				this.userInfo(uri.getUserInfo());
+				this.host(uri.getHost());
+				this.port(uri.getPort());
+				
+				if(uri.getRawPath() != null) {
+					String[] segments = uri.getRawPath().split("/");
+					for(int i=0;i<segments.length;i++) {
+						if(ignoreTrailingSlash && i ==  segments.length - 1 && segments[i].equals("/")) {
+							break;
+						}
+						this.segment(URIs.decodeURIComponent(segments[i], this.charset));
+					}
+				}
+				
+				String rawQuery = uri.getRawQuery();
+				if(rawQuery != null) {
+					this.parseRawQuery(rawQuery);
+				}
+				String rawFragment = uri.getRawFragment();
+				if(rawFragment != null) {
+					this.fragment(URIs.decodeURIComponent(rawFragment, this.charset));
+				}
 			}
-			this.fragment(URIs.decodeURIComponent(uri.getFragment(), this.charset));
 		}
 	}
 	
@@ -388,13 +419,12 @@ class GenericURIBuilder implements URIBuilder {
 		AtomicInteger valuesIndex = new AtomicInteger();
 		StringBuilder uriBuilder = new StringBuilder();
 		
-		boolean absolute = false;
+		boolean abempty = false;
 		if(this.scheme != null && this.scheme.isPresent()) {
-			absolute = true;
 			uriBuilder.append(this.scheme.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.scheme.getParameters().size()), values.length)))).append(":");
 		}
 		if(this.host != null && this.host.isPresent()) {
-			absolute = true;
+			abempty = true;
 			uriBuilder.append("//");
 			if(this.userInfo != null && this.userInfo.isPresent()) {
 				uriBuilder.append(this.userInfo.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.userInfo.getParameters().size()), values.length)))).append("@");
@@ -412,7 +442,7 @@ class GenericURIBuilder implements URIBuilder {
 				uriBuilder.append("/");
 			}
 			else {
-				if(absolute && !firstSegmentEmpty) {
+				if(abempty && !firstSegmentEmpty) {
 					uriBuilder.append("/");
 				}
 				
@@ -475,14 +505,13 @@ class GenericURIBuilder implements URIBuilder {
 	public String buildString(Map<String, ?> values, boolean escapeSlash) throws URIBuilderException {
 		StringBuilder uriBuilder = new StringBuilder();
 		
-		boolean absolute = false;
+		boolean abempty = false;
 		if(this.scheme != null && this.scheme.isPresent()) {
-			absolute = true;
 			uriBuilder.append(this.scheme.getValue(values)).append(":");
 		}
 
 		if(this.host != null && this.host.isPresent()) {
-			absolute = true;
+			abempty = true;
 			uriBuilder.append("//");
 			if(this.userInfo != null && this.userInfo.isPresent()) {
 				uriBuilder.append(this.userInfo.getValue(values)).append("@");
@@ -500,7 +529,7 @@ class GenericURIBuilder implements URIBuilder {
 				uriBuilder.append("/");
 			}
 			else {
-				if(absolute && !firstSegmentEmpty) {
+				if(abempty && !firstSegmentEmpty) {
 					uriBuilder.append("/");
 				}
 				
@@ -560,14 +589,13 @@ class GenericURIBuilder implements URIBuilder {
 	public String buildRawString() {
 		StringBuilder uriBuilder = new StringBuilder();
 		
-		boolean absolute = false;
+		boolean abempty = false;
 		if(this.scheme != null && this.scheme.isPresent()) {
-			absolute = true;
 			uriBuilder.append(this.scheme.getRawValue()).append(":");
 		}
 
 		if(this.host != null && this.host.isPresent()) {
-			absolute = true;
+			abempty = true;
 			uriBuilder.append("//");
 			if(this.userInfo != null && this.userInfo.isPresent()) {
 				uriBuilder.append(this.userInfo.getRawValue()).append("@");
@@ -585,7 +613,7 @@ class GenericURIBuilder implements URIBuilder {
 				uriBuilder.append("/");
 			}
 			else {
-				if(absolute && !firstSegmentEmpty) {
+				if(abempty && !firstSegmentEmpty) {
 					uriBuilder.append("/");
 				}
 				uriBuilder.append(this.segments.stream().map(segment -> segment.getRawValue()).collect(Collectors.joining("/")));
@@ -609,7 +637,7 @@ class GenericURIBuilder implements URIBuilder {
 	@Override
 	public String buildPath(Object[] values, boolean escapeSlash) {
 		StringBuilder pathBuilder = new StringBuilder();
-		boolean absolute = (this.scheme != null && this.scheme.isPresent()) || (this.host != null && this.host.isPresent());
+		boolean abempty = (this.host != null && this.host.isPresent());
 		
 		int segmentSize = this.segments.size();
 		if(segmentSize > 0) {
@@ -618,7 +646,7 @@ class GenericURIBuilder implements URIBuilder {
 				pathBuilder.append("/");
 			}
 			else {
-				if(absolute && !firstSegmentEmpty) {
+				if(abempty && !firstSegmentEmpty) {
 					pathBuilder.append("/");
 				}
 				
@@ -671,7 +699,7 @@ class GenericURIBuilder implements URIBuilder {
 	@Override
 	public String buildPath(Map<String, ?> values, boolean escapeSlash) {
 		StringBuilder pathBuilder = new StringBuilder();
-		boolean absolute = (this.scheme != null && this.scheme.isPresent()) || (this.host != null && this.host.isPresent());
+		boolean abempty = (this.host != null && this.host.isPresent());
 		
 		int segmentSize = this.segments.size();
 		if(segmentSize > 0) {
@@ -680,7 +708,7 @@ class GenericURIBuilder implements URIBuilder {
 				pathBuilder.append("/");
 			}
 			else {
-				if(absolute && !firstSegmentEmpty) {
+				if(abempty && !firstSegmentEmpty) {
 					pathBuilder.append("/");
 				}
 				if(this.flags.isNormalized() && this.flags.isParameterized()) {
@@ -777,14 +805,13 @@ class GenericURIBuilder implements URIBuilder {
 		StringBuilder patternBuilder = new StringBuilder("^");
 		StringBuilder rawValueBuilder = new StringBuilder();
 		
-		boolean absolute = false;
+		boolean abempty = false;
 		if(this.scheme != null && this.scheme.isPresent()) {
-			absolute = true;
 			patternBuilder.append(this.scheme.getPattern()).append(":");
 			rawValueBuilder.append(this.scheme.getRawValue()).append(":");
 		}
 		if(this.host != null && this.host.isPresent()) {
-			absolute = true;
+			abempty = true;
 			patternBuilder.append("//");
 			rawValueBuilder.append("//");
 			if(this.userInfo != null && this.userInfo.isPresent()) {
@@ -806,7 +833,7 @@ class GenericURIBuilder implements URIBuilder {
 				rawValueBuilder.append("/");
 			}
 			else {
-				if(absolute && !firstSegmentEmpty) {
+				if(abempty && !firstSegmentEmpty) {
 					patternBuilder.append("/");
 					rawValueBuilder.append("/");
 				}
@@ -868,7 +895,7 @@ class GenericURIBuilder implements URIBuilder {
 	public URIPattern buildPathPattern(boolean matchTrailingSlash) {
 		StringBuilder pathPatternBuilder = new StringBuilder("^");
 		String rawValue = "";
-		boolean absolute = (this.scheme != null && this.scheme.isPresent()) || (this.host != null && this.host.isPresent());
+		boolean abempty = (this.host != null && this.host.isPresent());
 		int segmentSize = this.segments.size();
 		if(segmentSize > 0) {
 			boolean firstSegmentEmpty = this.segments.getFirst().getRawValue().isEmpty();
@@ -876,7 +903,7 @@ class GenericURIBuilder implements URIBuilder {
 				pathPatternBuilder.append("/");
 			}
 			else {
-				if(absolute && !firstSegmentEmpty) {
+				if(abempty && !firstSegmentEmpty) {
 					pathPatternBuilder.append("/");
 				}
 				pathPatternBuilder.append(this.segments.stream().map(segment -> segment.getPattern()).collect(Collectors.joining("/")));

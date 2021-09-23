@@ -124,7 +124,7 @@ public final class URIs {
 	 * the specified options and default charset.
 	 * </p>
 	 * 
-	 * @param path    a path
+	 * @param path    a path with optional query and fragment components
 	 * @param options a list of options
 	 * 
 	 * @return a URI builder
@@ -139,7 +139,7 @@ public final class URIs {
 	 * with the specified options and default charset.
 	 * </p>
 	 * 
-	 * @param path                a path
+	 * @param path                a path with optional query and fragment components
 	 * @param ignoreTrailingSlash true to ignore trailing slash in the path
 	 * @param options             a list of options
 	 * 
@@ -155,7 +155,7 @@ public final class URIs {
 	 * with the specified options and default charset.
 	 * </p>
 	 * 
-	 * @param path                a path
+	 * @param path                a path with optional query and fragment components
 	 * @param ignoreTrailingSlash true to ignore trailing slash in the path
 	 * @param charset             a charset
 	 * @param options             a list of options

@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.inverno.mod.base.Charsets;
+import io.inverno.mod.base.resource.ClasspathResource;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -64,6 +65,8 @@ public class URIsTest {
 		newURI = URIs.uri(baseURI, URIs.Option.PARAMETERIZED).path("foo/bar/123").queryParameter("tutu€tata", "1322").build();
 		
 		Assertions.assertEquals(new URI("https://toto@127.0.0.1:1324/tata/titi/tutu/foo/bar/123?a%7Cb=b&c=d&e=5631,569&tutu%E2%82%ACtata=1322#!/ta%7Cta/yoyo"), newURI);
+		
+		Assertions.assertEquals(URI.create("classpath:META-INF/inverno/web/openapi.yml"), URIs.uri(URI.create("resource:META-INF/inverno/web/openapi.yml")).scheme("classpath").build());
 	}
 
 	@Test
@@ -149,14 +152,14 @@ public class URIsTest {
 		
 		URIBuilder schemeUriBuilder = URIs.uri("a/b/c", URIs.Option.PARAMETERIZED).scheme("{scheme}");
 
-		Assertions.assertEquals("{scheme}:/a/b/c", schemeUriBuilder.toString());
+		Assertions.assertEquals("{scheme}:a/b/c", schemeUriBuilder.toString());
 		
-		Assertions.assertEquals("http:/a/b/c", schemeUriBuilder.buildString("http"));
-		Assertions.assertEquals("http:/a/b/c", schemeUriBuilder.buildString(Map.of("scheme", "http")));
-		Assertions.assertEquals("/a/b/c", schemeUriBuilder.buildPath("http"));
-		Assertions.assertEquals("/a/b/c", schemeUriBuilder.buildPath(Map.of("scheme", "http")));
-		Assertions.assertEquals(new URI("http:/a/b/c"), schemeUriBuilder.build("http"));
-		Assertions.assertEquals(new URI("http:/a/b/c"), schemeUriBuilder.build(Map.of("scheme", "http")));
+		Assertions.assertEquals("http:a/b/c", schemeUriBuilder.buildString("http"));
+		Assertions.assertEquals("http:a/b/c", schemeUriBuilder.buildString(Map.of("scheme", "http")));
+		Assertions.assertEquals("a/b/c", schemeUriBuilder.buildPath("http"));
+		Assertions.assertEquals("a/b/c", schemeUriBuilder.buildPath(Map.of("scheme", "http")));
+		Assertions.assertEquals(new URI("http:a/b/c"), schemeUriBuilder.build("http"));
+		Assertions.assertEquals(new URI("http:a/b/c"), schemeUriBuilder.build(Map.of("scheme", "http")));
 		
 		try {
 			schemeUriBuilder.build("#@55");
