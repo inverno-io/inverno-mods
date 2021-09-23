@@ -70,7 +70,7 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 
 	private static final String OPTION_GENERATE_OPENAPI_DEFINITION = "inverno.web.generateOpenApiDefinition";
 	
-	private final WebRouterConfigurerOpenApiGenerator openApiGenrator;
+	private final WebRouterConfigurerOpenApiGenerator openApiGenerator;
 	private final WebRouterConfigurerClassGenerator webRouterConfigurerClassGenerator;
 	private final WebRouteDuplicateDetector webRouteDuplicateDectector;
 	
@@ -85,7 +85,7 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 	
 	public WebRouterConfigurerCompilerPlugin() {
 		this.webRouterConfigurerClassGenerator = new WebRouterConfigurerClassGenerator();
-		this.openApiGenrator = new WebRouterConfigurerOpenApiGenerator();
+		this.openApiGenerator = new WebRouterConfigurerOpenApiGenerator();
 		this.webRouteDuplicateDectector = new WebRouteDuplicateDetector();
 	}
 	
@@ -154,8 +154,8 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 			
 			if(webRouterConfigurerInfo.getControllers().length > 0 && this.pluginContext.getOptions().isOptionActivated(WebRouterConfigurerCompilerPlugin.OPTION_GENERATE_OPENAPI_DEFINITION, false)) {
 				try {
-					execution.createResourceFile("META-INF/inverno/web/openapi.yml", execution.getElements().stream().toArray(Element[]::new), () -> {
-						return webRouterConfigurerInfo.accept(this.openApiGenrator, new WebRouterConfigurerOpenApiGenerationContext(this.pluginContext.getTypeUtils(), this.pluginContext.getElementUtils(), this.pluginContext.getDocUtils(), WebRouterConfigurerOpenApiGenerationContext.GenerationMode.ROUTER_SPEC)).toString();
+					execution.createResourceFile("META-INF/inverno/web/" + webRouterConfigurerQName.getModuleQName().toString() + "/openapi.yml", execution.getElements().stream().toArray(Element[]::new), () -> {
+						return webRouterConfigurerInfo.accept(this.openApiGenerator, new WebRouterConfigurerOpenApiGenerationContext(this.pluginContext.getTypeUtils(), this.pluginContext.getElementUtils(), this.pluginContext.getDocUtils(), WebRouterConfigurerOpenApiGenerationContext.GenerationMode.ROUTER_SPEC)).toString();
 					});
 				} 
 				catch (Exception e) {

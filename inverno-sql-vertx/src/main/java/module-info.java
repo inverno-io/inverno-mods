@@ -1,4 +1,4 @@
-import io.inverno.mod.sql.vertx.Vertx;
+import io.vertx.core.Vertx;
 
 /*
  * Copyright 2021 Jeremy KUHN

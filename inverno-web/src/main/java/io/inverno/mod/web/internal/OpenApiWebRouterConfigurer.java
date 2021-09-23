@@ -21,8 +21,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.base.resource.Resource;
@@ -30,11 +31,13 @@ import io.inverno.mod.base.resource.ResourceService;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.web.MissingRequiredParameterException;
+import io.inverno.mod.web.WebConfiguration;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRouter;
-import io.inverno.mod.web.WebConfiguration;
 import io.inverno.mod.web.WebRouterConfigurer;
 import io.inverno.mod.web.annotation.PathParam;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 /**
  * <p>
@@ -58,6 +61,8 @@ import io.inverno.mod.web.annotation.PathParam;
  */
 public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<WebExchange> {
 
+	private static final Logger LOGGER = LogManager.getLogger(OpenApiWebRouterConfigurer.class);
+	
 	private final WebConfiguration configuration;
 	private final Map<String, Resource> openApiSpecs;
 	
@@ -74,13 +79,31 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 		this.configuration = configuration;
 		try {
 			this.openApiSpecs = new HashMap<>();
-			for(Module module : this.getClass().getModule().getLayer().modules()) {
-				Resource openApiSpec = resourceService.getResource(new URI("module://" + module.getName() + "/META-INF/inverno/web/openapi.yml"));
-				if(openApiSpec.exists().orElse(false)) {
-					this.openApiSpecs.put(module.getName(), openApiSpec);
+			
+			ModuleLayer moduleLayer = this.getClass().getModule().getLayer();
+			if(moduleLayer != null) {
+				for(Module module : moduleLayer.modules()) {
+					Resource openApiSpec = resourceService.getResource(new URI("module://" + module.getName() + "/META-INF/inverno/web/" + module.getName() + "openapi.yml"));
+					if(openApiSpec.exists().orElse(false)) {
+						LOGGER.debug(() -> "Registered OpenAPI specification " + openApiSpec.getURI() + " for module " + module.getName());
+						this.openApiSpecs.put(module.getName(), openApiSpec);
+					}
 				}
 			}
-		} catch (URISyntaxException e) {
+			else {
+				resourceService.getResources(new URI("classpath:/META-INF/inverno/web"))
+					.flatMap(resource -> {
+						return resourceService.getResources(URI.create(resource.getURI().toString() + "/*/openapi.yml"));
+					}).forEach(openApiSpec -> {
+						String[] splitSpec = openApiSpec.getURI().getSchemeSpecificPart().split("/");
+						final String moduleName = splitSpec[splitSpec.length - 2];
+						
+						LOGGER.debug(() -> "Registered OpenAPI specification " + openApiSpec.getURI() + " for module " + moduleName);
+						this.openApiSpecs.put(moduleName, openApiSpec);
+				});
+			}
+		} 
+		catch (URISyntaxException e) {
 			throw new RuntimeException("Error fetching open api specifications", e);
 		}
 	}

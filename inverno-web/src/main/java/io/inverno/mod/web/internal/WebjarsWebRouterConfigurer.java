@@ -19,6 +19,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.regex.Pattern;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import io.inverno.mod.base.resource.ModuleResource;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceService;
@@ -48,6 +51,8 @@ import io.inverno.mod.web.WebRouterConfigurer;
  */
 public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<WebExchange> {
 
+	private static final Logger LOGGER = LogManager.getLogger(WebjarsWebRouterConfigurer.class);
+	
 	private static final String WEBJARS_MODULE_PREFIX = "org.webjars";
 	
 	private static final String BASE_WEBJARS_PATH = "/webjars";
@@ -83,25 +88,30 @@ public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 				String webjarVersion = module.getDescriptor().rawVersion().get();
 				Resource baseResource = this.resourceService.getResource(URI.create(ModuleResource.SCHEME_MODULE + "://" + module.getName() + "/META-INF/resources/webjars/" + webjarName + "/" + webjarVersion + "/"));
 				String webjarRootPath = WebjarsWebRouterConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
+				LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
 				router.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
 			});
 		}
-		
-		try {
-			this.resourceService.getResources(new URI("classpath:/META-INF/resources/webjars"))
-				.flatMap(resource -> this.resourceService.getResources(URI.create(resource.getURI().toString() + "/*/*")))
-				.forEach(baseResource -> {
-					String spec = baseResource.getURI().getSchemeSpecificPart();
-					int versionIndex = spec.lastIndexOf("/");
-					int webjarIndex = spec.substring(0, versionIndex).lastIndexOf("/");
-					
-					String webjarName = toModuleName(spec.substring(webjarIndex + 1, versionIndex));
-					String webjarRootPath = WebjarsWebRouterConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
-					router.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
-				});
-		} 
-		catch (URISyntaxException e) {
-			throw new IllegalStateException("Error resolving webjars", e);
+		else {
+			try {
+				this.resourceService.getResources(new URI("classpath:/META-INF/resources/webjars"))
+					.flatMap(resource -> {
+						return this.resourceService.getResources(URI.create(resource.getURI().toString() + "/*/*"));
+					})
+					.forEach(baseResource -> {
+						String spec = baseResource.getURI().getSchemeSpecificPart();
+						int versionIndex = spec.lastIndexOf("/");
+						int webjarIndex = spec.substring(0, versionIndex).lastIndexOf("/");
+						
+						String webjarName = toModuleName(spec.substring(webjarIndex + 1, versionIndex));
+						String webjarRootPath = WebjarsWebRouterConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
+						LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
+						router.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
+					});
+			} 
+			catch (URISyntaxException e) {
+				throw new IllegalStateException("Error resolving webjars", e);
+			}
 		}
 	}
 	
