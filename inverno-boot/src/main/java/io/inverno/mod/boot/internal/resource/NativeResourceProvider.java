@@ -25,7 +25,6 @@ import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.mod.base.resource.AbstractResourceProvider;
 import io.inverno.mod.base.resource.AsyncResourceProvider;
-import io.inverno.mod.base.resource.ClasspathResource;
 import io.inverno.mod.base.resource.FileResource;
 import io.inverno.mod.base.resource.JarResource;
 import io.inverno.mod.base.resource.MediaTypeService;
@@ -39,18 +38,18 @@ import io.inverno.mod.base.resource.ZipResource;
 /**
  * <p>
  * {@link ResourceProvider} implementation used to resolve resources
- * on the classpath (ie. {@code classpath:/path/to/resource}).
+ * in a native image (ie. {@code resource:path/to/resource}).
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see ClasspathResource
+ * @see NativeResource
  * @see AsyncResourceProvider
  * @see ResourceService
  */
 @Bean(visibility = Visibility.PRIVATE)
-public class ClasspathResourceProvider extends AbstractResourceProvider<ClasspathResource> implements AsyncResourceProvider<ClasspathResource> {
+public class NativeResourceProvider extends AbstractResourceProvider<NativeResource> implements AsyncResourceProvider<NativeResource> {
 
 	@Override
 	public void setMediaTypeService(MediaTypeService mediaTypeService) {
@@ -58,14 +57,15 @@ public class ClasspathResourceProvider extends AbstractResourceProvider<Classpat
 	}
 	
 	@Override
-	public ClasspathResource getResource(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
-		return new ClasspathResource(uri, this.mediaTypeService);
+	public NativeResource getResource(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
+		return new NativeResource(uri, this.mediaTypeService);
 	}
 	
 	@Override
 	public Stream<Resource> getResources(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
 		// we can't support path pattern here, if someone wants to list resources in such a way he should rely on JarResouce
-		String path = ClasspathResource.checkUri(uri).getPath();
+		uri = NativeResource.checkUri(uri);
+		String path = uri.isOpaque() ? uri.getRawSchemeSpecificPart() : uri.getRawPath();
 		if(path == null) {
 			return Stream.of();
 		}
@@ -78,7 +78,7 @@ public class ClasspathResourceProvider extends AbstractResourceProvider<Classpat
 			classLoader = Thread.currentThread().getContextClassLoader();
 		}
 		catch (Throwable ex) {
-			classLoader = ClasspathResource.class.getClassLoader();
+			classLoader = NativeResource.class.getClassLoader();
 			if (classLoader == null) {
 				classLoader = ClassLoader.getSystemClassLoader();
 			}
@@ -111,6 +111,6 @@ public class ClasspathResourceProvider extends AbstractResourceProvider<Classpat
 	
 	@Override
 	public Set<String> getSupportedSchemes() {
-		return Set.of(ClasspathResource.SCHEME_CLASSPATH);
+		return Set.of(NativeResource.SCHEME_RESOURCE);
 	}
 }
