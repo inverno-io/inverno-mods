@@ -40,6 +40,14 @@ import io.inverno.mod.configuration.compiler.spi.ConfigurationInfo;
  */
 class ConfigurationLoaderClassGenerationContext extends AbstractSourceGenerationContext<ConfigurationLoaderClassGenerationContext, ConfigurationLoaderClassGenerationContext.GenerationMode> {
 
+	public static final String CONFIGURATION_LOADER_CLASS_SUFFIX = "Loader";
+	
+	public static final String CONFIGURATION_INNER_CLASS = "Configuration";
+	
+	public static final String CONFIGURATOR_INNER_CLASS = "Configurator";
+	
+	public static final String CONFIGURATION_BEAN_INNER_CLASS = "Bean";
+	
 	public static enum GenerationMode {
 		CONFIGURATION_LOADER_CLASS,
 		CONFIGURATION_PROPERTIES,
@@ -124,5 +132,9 @@ class ConfigurationLoaderClassGenerationContext extends AbstractSourceGeneration
 	
 	public TypeMirror getSetType() {
 		return this.setType != null ? this.setType : this.parentGeneration.getSetType();
+	}
+	
+	public String getConfigurationLoaderTypeName(ConfigurationInfo configurationInfo) {
+		return this.getTypeName(configurationInfo.getType().toString() + CONFIGURATION_LOADER_CLASS_SUFFIX);
 	}
 }

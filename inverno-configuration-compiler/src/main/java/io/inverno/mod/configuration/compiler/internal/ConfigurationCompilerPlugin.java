@@ -33,7 +33,6 @@ import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 
-import io.inverno.core.annotation.NestedBean;
 import io.inverno.core.compiler.spi.BeanQualifiedName;
 import io.inverno.core.compiler.spi.ModuleQualifiedName;
 import io.inverno.core.compiler.spi.QualifiedNameFormatException;
@@ -66,7 +65,6 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 	private PluginContext pluginContext;
 	
 	private TypeMirror configurationAnnotationType;
-	private TypeMirror nestedBeanAnnotationType;
 	
 	private boolean enabled = true;
 	
@@ -91,7 +89,6 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 			}
 			return;
 		}
-		this.nestedBeanAnnotationType = this.pluginContext.getElementUtils().getTypeElement(NestedBean.class.getCanonicalName()).asType();
 		this.configurationAnnotationType = configurationAnnotationElement.asType();
 	}
 	
@@ -239,18 +236,14 @@ public class ConfigurationCompilerPlugin implements CompilerPlugin {
 	}
 	
 	private boolean isNestedConfiguration(ExecutableElement propertyMethod, ModuleQualifiedName module) {
-		if(propertyMethod.getAnnotationMirrors().stream().anyMatch(annotation -> this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.nestedBeanAnnotationType))) {
-			TypeMirror type = propertyMethod.getReturnType();
-			if(type.getKind().equals(TypeKind.DECLARED)) {
-				TypeElement typeElement = (TypeElement)this.pluginContext.getTypeUtils().asElement(type);
-				return !this.pluginContext.getElementUtils().getModuleOf(typeElement).toString().equals(module.toString())
-						&& typeElement.getAnnotationMirrors().stream().anyMatch(annotation -> this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.configurationAnnotationType));
-			}
-			else {
-				// primitive, array...
-				return false;
-			}
+		TypeMirror type = propertyMethod.getReturnType();
+		if(type.getKind().equals(TypeKind.DECLARED)) {
+			TypeElement typeElement = (TypeElement)this.pluginContext.getTypeUtils().asElement(type);
+			return typeElement.getAnnotationMirrors().stream().anyMatch(annotation -> this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.configurationAnnotationType));
 		}
-		return false;
+		else {
+			// primitive, array...
+			return false;
+		}
 	}
 }
