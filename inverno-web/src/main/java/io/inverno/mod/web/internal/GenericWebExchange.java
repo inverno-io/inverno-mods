@@ -71,7 +71,7 @@ class GenericWebExchange implements WebExchange<WebExchange.Context> {
 	}
 	
 	@Override
-	public Context context() {
+	public WebExchange.Context context() {
 		return this.context;
 	}
 	

@@ -27,6 +27,8 @@ import io.inverno.mod.web.ErrorWebExchangeHandler;
 import io.inverno.mod.web.ErrorWebRoute;
 import io.inverno.mod.web.ErrorWebRouteManager;
 import io.inverno.mod.web.ErrorWebRouter;
+import io.inverno.mod.web.WebExchange;
+import io.inverno.mod.web.WebExchange.Context;
 
 /**
  * <p>
@@ -36,7 +38,7 @@ import io.inverno.mod.web.ErrorWebRouter;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericErrorWebRouteManager implements ErrorWebRouteManager {
+class GenericErrorWebRouteManager implements ErrorWebRouteManager<WebExchange.Context> {
 
 	private final GenericErrorWebRouter router;
 	
@@ -46,7 +48,7 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager {
 	
 	private Set<String> languages;
 	
-	private ExchangeHandler<ErrorWebExchange<Throwable>> handler;
+	private ExchangeHandler<ErrorWebExchange<Throwable, WebExchange.Context>> handler;
 	
 	/**
 	 * <p>
@@ -60,25 +62,25 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager {
 	}
 
 	@Override
-	public ErrorWebRouter enable() {
+	public ErrorWebRouter<WebExchange.Context> enable() {
 		this.findRoutes().stream().forEach(route -> route.enable());
 		return this.router;
 	}
 
 	@Override
-	public ErrorWebRouter disable() {
+	public ErrorWebRouter<WebExchange.Context> disable() {
 		this.findRoutes().stream().forEach(route -> route.disable());
 		return this.router;
 	}
 
 	@Override
-	public ErrorWebRouter remove() {
+	public ErrorWebRouter<WebExchange.Context> remove() {
 		this.findRoutes().stream().forEach(route -> route.remove());
 		return this.router;
 	}
 
 	@Override
-	public Set<ErrorWebRoute> findRoutes() {
+	public Set<ErrorWebRoute<WebExchange.Context>> findRoutes() {
 		// TODO Implement filtering in the route extractor
 		return this.router.getRoutes().stream().filter(route -> {
 			// We want all routes that share the same criteria as the one defined in this route manager
@@ -102,7 +104,7 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager {
 	}
 
 	@Override
-	public ErrorWebRouteManager error(Class<? extends Throwable> error) {
+	public ErrorWebRouteManager<WebExchange.Context> error(Class<? extends Throwable> error) {
 		if(this.errors == null) {
 			this.errors = new LinkedHashSet<>();
 		}
@@ -111,7 +113,7 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager {
 	}
 
 	@Override
-	public ErrorWebRouteManager produces(String mediaType) {
+	public ErrorWebRouteManager<WebExchange.Context> produces(String mediaType) {
 		if(this.produces == null) {
 			this.produces = new LinkedHashSet<>();
 		}
@@ -120,29 +122,29 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager {
 	}
 
 	@Override
-	public ErrorWebRouteManager language(String language) {
+	public ErrorWebRouteManager<WebExchange.Context> language(String language) {
 		if(this.languages == null) {
 			this.languages = new LinkedHashSet<>();
 		}
 		this.languages.add(language);
 		return this;
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	@Override
-	public ErrorWebRouter handler(ExchangeHandler<? super ErrorWebExchange<Throwable>> handler) {
+	public ErrorWebRouter<Context> handler(ExchangeHandler<? super ErrorWebExchange<Throwable, Context>> handler) {
 		Objects.requireNonNull(handler);
-		this.handler = (ExchangeHandler<ErrorWebExchange<Throwable>>) handler;
+		this.handler = (ExchangeHandler<ErrorWebExchange<Throwable, WebExchange.Context>>) handler;
 		this.commit();
 		return this.router;
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public ErrorWebRouter handler(ErrorWebExchangeHandler<? extends Throwable> handler) {
+	public ErrorWebRouter<Context> handler(ErrorWebExchangeHandler<? extends Throwable, ? super Context> handler) {
 		Objects.requireNonNull(handler);
 		// This might throw a class cast exception if the handler is not associated with corresponding class types
-		this.handler = (ErrorWebExchangeHandler<Throwable>) handler;
+		this.handler = (ErrorWebExchangeHandler<Throwable, WebExchange.Context>) handler;
 		this.commit();
 		return this.router;
 	}

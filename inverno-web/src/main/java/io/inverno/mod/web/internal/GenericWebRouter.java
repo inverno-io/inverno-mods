@@ -25,18 +25,19 @@ import io.inverno.core.annotation.Provide;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceService;
-import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.base.HttpException;
+import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.base.internal.header.AcceptCodec;
 import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.web.WebConfiguration;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.WebRouteManager;
 import io.inverno.mod.web.WebRouter;
-import io.inverno.mod.web.WebConfiguration;
 import io.inverno.mod.web.WebRouterConfigurer;
+import io.inverno.mod.web.WebRouterException;
 
 /**
  * <p>
@@ -186,7 +187,13 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange.Context>
 	
 	@Override
 	public void handle(Exchange exchange) throws HttpException {
-		this.firstLink.handle(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.dataConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange::finalizer, this.configurer.createContext()));
+		WebExchange.Context context = this.configurer != null ? this.configurer.createContext() : null;
+		try {
+			this.firstLink.handle(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.dataConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange::finalizer, context));
+		}
+		catch(Throwable t) {
+			throw new WebRouterException(t, context);
+		}
 	}
 	
 	/**

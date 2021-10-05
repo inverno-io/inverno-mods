@@ -25,8 +25,9 @@ import io.inverno.mod.http.server.ErrorExchangeHandler;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @param <A> the type of error web exchange
+ * @param <A> the error type
+ * @param <B> the type of web exchange context
  */
-public interface ErrorWebExchangeHandler<A extends Throwable> extends ErrorExchangeHandler<A, ErrorWebExchange<A>> {
+public interface ErrorWebExchangeHandler<A extends Throwable, B extends WebExchange.Context> extends ErrorExchangeHandler<A, ErrorWebExchange<A, B>> {
 
 }

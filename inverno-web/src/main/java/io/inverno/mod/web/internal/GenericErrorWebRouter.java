@@ -43,6 +43,7 @@ import io.inverno.mod.web.ErrorWebRoute;
 import io.inverno.mod.web.ErrorWebRouteManager;
 import io.inverno.mod.web.ErrorWebRouter;
 import io.inverno.mod.web.ErrorWebRouterConfigurer;
+import io.inverno.mod.web.WebExchange;
 
 /**
  * <p>
@@ -53,13 +54,13 @@ import io.inverno.mod.web.ErrorWebRouterConfigurer;
  * @since 1.0
  */
 @Bean( name = "errorRouter" )
-public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
+public class GenericErrorWebRouter implements @Provide ErrorWebRouter<WebExchange.Context> {
 	
 	private final DataConversionService dataConversionService;
 	
-	private final RoutingLink<ErrorWebExchange<Throwable>, ?, ErrorWebRoute> firstLink;
+	private final RoutingLink<ErrorWebExchange<Throwable, WebExchange.Context>, ?, ErrorWebRoute<WebExchange.Context>> firstLink;
 	
-	private ErrorWebRouterConfigurer configurer;
+	private ErrorWebRouterConfigurer<WebExchange.Context> configurer;
 	
 	/**
 	 * <p>
@@ -101,7 +102,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	 * 
 	 * @param configurer an error web router configurer
 	 */
-	public void setConfigurer(ErrorWebRouterConfigurer configurer) {
+	public void setConfigurer(ErrorWebRouterConfigurer<WebExchange.Context> configurer) {
 		this.configurer = configurer;
 	}
 	
@@ -112,7 +113,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	 * 
 	 * @param route an error web route
 	 */
-	void setRoute(ErrorWebRoute route) {
+	void setRoute(ErrorWebRoute<WebExchange.Context> route) {
 		this.firstLink.setRoute(route);
 	}
 	
@@ -123,7 +124,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	 * 
 	 * @param route the error web route to enable
 	 */
-	void enableRoute(ErrorWebRoute route) {
+	void enableRoute(ErrorWebRoute<WebExchange.Context> route) {
 		this.firstLink.enableRoute(route);
 	}
 	
@@ -134,7 +135,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	 * 
 	 * @param route the error web route to disable
 	 */
-	void disableRoute(ErrorWebRoute route) {
+	void disableRoute(ErrorWebRoute<WebExchange.Context> route) {
 		this.firstLink.disableRoute(route);
 	}
 
@@ -145,17 +146,17 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	 * 
 	 * @param route the error web route to remove
 	 */
-	void removeRoute(ErrorWebRoute route) {
+	void removeRoute(ErrorWebRoute<WebExchange.Context> route) {
 		this.firstLink.removeRoute(route);
 	}
 	
 	@Override
-	public ErrorWebRouteManager route() {
+	public ErrorWebRouteManager<WebExchange.Context> route() {
 		return new GenericErrorWebRouteManager(this);
 	}
 	
 	@Override
-	public Set<ErrorWebRoute> getRoutes() {
+	public Set<ErrorWebRoute<WebExchange.Context>> getRoutes() {
 		GenericErrorWebRouteExtractor routeExtractor = new GenericErrorWebRouteExtractor(this);
 		this.firstLink.extractRoute(routeExtractor);
 		return routeExtractor.getRoutes();
@@ -174,7 +175,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<HttpException> httpExceptionHandler() {
+	private ErrorWebExchangeHandler<HttpException, WebExchange.Context> httpExceptionHandler() {
 		return exchange -> {
 			if(exchange.getError() instanceof MethodNotAllowedException) {
 				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
@@ -195,7 +196,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<Throwable> throwableHandler() {
+	private ErrorWebExchangeHandler<Throwable, WebExchange.Context> throwableHandler() {
 		return exchange -> {
 			this.httpExceptionHandler().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
 		};
@@ -208,8 +209,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<HttpException> httpExceptionHandler_json() {
-		// {"timestamp":"2020-11-20T16:10:33.829+00:00","path":"/tertjer","status":404,"error":"Not Found","message":null,"requestId":"115fe3c6-3"}
+	private ErrorWebExchangeHandler<HttpException, WebExchange.Context> httpExceptionHandler_json() {
 		return exchange -> {
 			ByteArrayOutputStream errorOut = new ByteArrayOutputStream();
 			PrintStream error = new PrintStream(errorOut);
@@ -255,7 +255,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<Throwable> throwableHandler_json() {
+	private ErrorWebExchangeHandler<Throwable, WebExchange.Context> throwableHandler_json() {
 		return exchange -> {
 			this.httpExceptionHandler_json().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
 		};
@@ -268,7 +268,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<HttpException> httpExceptionHandler_html() {
+	private ErrorWebExchangeHandler<HttpException, WebExchange.Context> httpExceptionHandler_html() {
 		return exchange -> {
 			String status = Integer.toString(exchange.getError().getStatusCode());
 			
@@ -328,12 +328,12 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<Throwable> throwableHandler_html() {
+	private ErrorWebExchangeHandler<Throwable, WebExchange.Context> throwableHandler_html() {
 		return exchange -> {
 			this.httpExceptionHandler_html().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
 		};
 	}
 	
 	@Bean( name = "errorRouterConfigurer")
-	public static interface ConfigurerSocket extends Supplier<ErrorWebRouterConfigurer> {}
+	public static interface ConfigurerSocket extends Supplier<ErrorWebRouterConfigurer<WebExchange.Context>> {}
 }

@@ -17,6 +17,7 @@ package io.inverno.mod.web.internal;
 
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebRoute;
+import io.inverno.mod.web.WebExchange;
 
 /**
  * <p>
@@ -26,9 +27,9 @@ import io.inverno.mod.web.ErrorWebRoute;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-interface ErrorWebRouteExtractor extends 
-	AcceptAwareRouteExtractor<ErrorWebExchange<Throwable>, ErrorWebRoute, ErrorWebRouteExtractor>,
-	ErrorAwareRouteExtractor<ErrorWebExchange<Throwable>, ErrorWebRoute, ErrorWebRouteExtractor>, 
-	RouteExtractor<ErrorWebExchange<Throwable>, ErrorWebRoute> {
+interface ErrorWebRouteExtractor<A extends WebExchange.Context> extends 
+	AcceptAwareRouteExtractor<ErrorWebExchange<Throwable, A>, ErrorWebRoute<A>, ErrorWebRouteExtractor<A>>,
+	ErrorAwareRouteExtractor<ErrorWebExchange<Throwable, A>, ErrorWebRoute<A>, ErrorWebRouteExtractor<A>>, 
+	RouteExtractor<ErrorWebExchange<Throwable, A>, ErrorWebRoute<A>> {
 
 }

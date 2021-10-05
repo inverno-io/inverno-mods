@@ -37,10 +37,12 @@ package io.inverno.mod.web;
  * 
  * @see ErrorWebExchange
  * @see ErrorWebRouter
+ * 
+ * @param <A> the type of web exchange context
  */
-public interface ErrorWebRoute extends 
-	ErrorAwareRoute<ErrorWebExchange<Throwable>>, 
-	AcceptAwareRoute<ErrorWebExchange<Throwable>>, 
-	Route<ErrorWebExchange<Throwable>> {
+public interface ErrorWebRoute<A extends WebExchange.Context> extends 
+	ErrorAwareRoute<ErrorWebExchange<Throwable, A>>, 
+	AcceptAwareRoute<ErrorWebExchange<Throwable, A>>, 
+	Route<ErrorWebExchange<Throwable, A>> {
 
 }

@@ -41,16 +41,26 @@ import reactor.core.publisher.Mono;
  * @see ErrorWebRouter
  * 
  * @param <A> the error type
+ * @param <B> the type of web exchange context
  */
-public interface ErrorWebExchange<A extends Throwable> extends ErrorExchange<A> {
+public interface ErrorWebExchange<A extends Throwable, B extends WebExchange.Context> extends ErrorExchange<A> {
 
 	@Override
 	WebResponse response();
 	
+	/**
+	 * <p>
+	 * Returns the context associated to the Web exchange that caused the error.
+	 * </p>
+	 * 
+	 * @return a context object
+	 */
+	B context();
+	
 	@Override
-	default <T extends Throwable> ErrorWebExchange<T> mapError(Function<? super A, ? extends T> errorMapper) {
-		ErrorWebExchange<A> thisExchange = this;
-		return new ErrorWebExchange<T>() {
+	default <T extends Throwable> ErrorWebExchange<T, B> mapError(Function<? super A, ? extends T> errorMapper) {
+		ErrorWebExchange<A, B> thisExchange = this;
+		return new ErrorWebExchange<T, B>() {
 
 			@Override
 			public Request request() {
@@ -60,6 +70,11 @@ public interface ErrorWebExchange<A extends Throwable> extends ErrorExchange<A> 
 			@Override
 			public WebResponse response() {
 				return thisExchange.response();
+			}
+			
+			@Override
+			public B context() {
+				return thisExchange.context();
 			}
 			
 			@Override

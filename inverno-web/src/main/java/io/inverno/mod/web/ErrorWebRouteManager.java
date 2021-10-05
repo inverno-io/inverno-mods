@@ -30,8 +30,10 @@ import io.inverno.mod.http.server.ErrorExchange;
  * @see ErrorWebExchange
  * @see ErrorWebRoute
  * @see ErrorWebRouter
+ * 
+ * @param <A> the type of web exchange context
  */
-public interface ErrorWebRouteManager extends RouteManager<ErrorWebExchange<Throwable>, ErrorWebRouter, ErrorWebRouteManager, ErrorWebRoute, ErrorExchange<Throwable>> {
+public interface ErrorWebRouteManager<A extends WebExchange.Context> extends RouteManager<ErrorWebExchange<Throwable, A>, ErrorWebRouter<A>, ErrorWebRouteManager<A>, ErrorWebRoute<A>, ErrorExchange<Throwable>> {
 
 	/**
 	 * <p>
@@ -47,7 +49,7 @@ public interface ErrorWebRouteManager extends RouteManager<ErrorWebExchange<Thro
 	 * 
 	 * @return the router
 	 */
-	ErrorWebRouter handler(ErrorWebExchangeHandler<? extends Throwable> handler);
+	ErrorWebRouter<A> handler(ErrorWebExchangeHandler<? extends Throwable, ? super A> handler);
 	
 	/**
 	 * <p>
@@ -60,7 +62,7 @@ public interface ErrorWebRouteManager extends RouteManager<ErrorWebExchange<Thro
 	 * 
 	 * @see ErrorAwareRoute
 	 */
-	ErrorWebRouteManager error(Class<? extends Throwable> error);
+	ErrorWebRouteManager<A> error(Class<? extends Throwable> error);
 	
 	/**
 	 * <p>
@@ -73,7 +75,7 @@ public interface ErrorWebRouteManager extends RouteManager<ErrorWebExchange<Thro
 	 * 
 	 * @see AcceptAwareRoute
 	 */
-	ErrorWebRouteManager produces(String mediaType);
+	ErrorWebRouteManager<A> produces(String mediaType);
 	
 	/**
 	 * <p>
@@ -86,5 +88,5 @@ public interface ErrorWebRouteManager extends RouteManager<ErrorWebExchange<Thro
 	 * 
 	 * @see AcceptAwareRoute
 	 */
-	ErrorWebRouteManager language(String language);
+	ErrorWebRouteManager<A> language(String language);
 }

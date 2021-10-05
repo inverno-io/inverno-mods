@@ -206,7 +206,7 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange.Context> {
 		return this.router;
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@SuppressWarnings({ "unchecked" })
 	@Override
 	public WebRouter<WebExchange.Context> handler(WebExchangeHandler<? super WebExchange.Context> handler) {
 		Objects.requireNonNull(handler);
@@ -219,7 +219,7 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange.Context> {
 		 * context type to the WebRouter which is the one providing the
 		 * GenericWebRouteManager instance
 		 */ 
-		this.handler = (ExchangeHandler)handler;
+		this.handler = (WebExchangeHandler<WebExchange.Context>)handler;
 		this.commit();
 		return this.router;
 	}

@@ -18,6 +18,7 @@ package io.inverno.mod.web.internal;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebRoute;
+import io.inverno.mod.web.WebExchange;
 
 /**
  * <p>
@@ -27,7 +28,7 @@ import io.inverno.mod.web.ErrorWebRoute;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericErrorWebRoute implements ErrorWebRoute {
+class GenericErrorWebRoute implements ErrorWebRoute<WebExchange.Context> {
 
 	private final GenericErrorWebRouter router;
 	
@@ -39,7 +40,7 @@ class GenericErrorWebRoute implements ErrorWebRoute {
 	
 	private String language;
 	
-	private ExchangeHandler<ErrorWebExchange<Throwable>> handler;
+	private ExchangeHandler<ErrorWebExchange<Throwable, WebExchange.Context>> handler;
 	
 	/**
 	 * <p>
@@ -85,6 +86,11 @@ class GenericErrorWebRoute implements ErrorWebRoute {
 		this.router.removeRoute(this);
 	}
 	
+	@Override
+	public ExchangeHandler<ErrorWebExchange<Throwable, WebExchange.Context>> getHandler() {
+		return this.handler;
+	}
+	
 	/**
 	 * <p>
 	 * Sets the route exchange handler as defined by
@@ -93,7 +99,7 @@ class GenericErrorWebRoute implements ErrorWebRoute {
 	 * 
 	 * @param handler an exchange handler
 	 */
-	public void setHandler(ExchangeHandler<ErrorWebExchange<Throwable>> handler) {
+	public void setHandler(ExchangeHandler<ErrorWebExchange<Throwable, WebExchange.Context>> handler) {
 		this.handler = handler;
 	}
 	
@@ -144,10 +150,5 @@ class GenericErrorWebRoute implements ErrorWebRoute {
 	 */
 	public void setProduce(String mediaType) {
 		this.produce = mediaType;
-	}
-	
-	@Override
-	public ExchangeHandler<ErrorWebExchange<Throwable>> getHandler() {
-		return this.handler;
 	}
 }

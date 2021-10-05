@@ -26,7 +26,9 @@ import io.inverno.mod.http.server.ErrorExchange;
  * @since 1.0
  * 
  * @see ErrorWebRouter
+ * 
+ * @param <A> the type of web exchange context
  */
-public interface ErrorWebRouterConfigurer extends RouterConfigurer<ErrorWebExchange<Throwable>, ErrorWebRouter, ErrorWebRouteManager, ErrorWebRoute, ErrorExchange<Throwable>> {
+public interface ErrorWebRouterConfigurer<A extends WebExchange.Context> extends RouterConfigurer<ErrorWebExchange<Throwable, A>, ErrorWebRouter<A>, ErrorWebRouteManager<A>, ErrorWebRoute<A>, ErrorExchange<Throwable>> {
 
 }

@@ -22,6 +22,7 @@ import java.util.Set;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebRoute;
+import io.inverno.mod.web.WebExchange;
 
 /**
  * <p>
@@ -31,13 +32,13 @@ import io.inverno.mod.web.ErrorWebRoute;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
+class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor<WebExchange.Context> {
 
 	private final GenericErrorWebRouter router;
 	
 	private GenericErrorWebRouteExtractor parent;
 	
-	private Set<ErrorWebRoute> routes;
+	private Set<ErrorWebRoute<WebExchange.Context>> routes;
 	
 	private Class<? extends Throwable> error;
 	
@@ -103,7 +104,7 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 		return null;
 	}
 	
-	private void addRoute(ErrorWebRoute route) {
+	private void addRoute(ErrorWebRoute<WebExchange.Context> route) {
 		if(this.parent != null) {
 			this.parent.addRoute(route);
 		}
@@ -116,7 +117,7 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 	}
 	
 	@Override
-	public Set<ErrorWebRoute> getRoutes() {
+	public Set<ErrorWebRoute<WebExchange.Context>> getRoutes() {
 		if(this.parent != null) {
 			return this.parent.getRoutes();			
 		}
@@ -126,28 +127,28 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 	}
 	
 	@Override
-	public ErrorWebRouteExtractor error(Class<? extends Throwable> error) {
+	public ErrorWebRouteExtractor<WebExchange.Context> error(Class<? extends Throwable> error) {
 		GenericErrorWebRouteExtractor childExtractor = new GenericErrorWebRouteExtractor(this);
 		childExtractor.error = error;
 		return childExtractor;
 	}
 	
 	@Override
-	public ErrorWebRouteExtractor produces(String mediaType) {
+	public ErrorWebRouteExtractor<WebExchange.Context> produces(String mediaType) {
 		GenericErrorWebRouteExtractor childExtractor = new GenericErrorWebRouteExtractor(this);
 		childExtractor.produce = mediaType;
 		return childExtractor;
 	}
 
 	@Override
-	public ErrorWebRouteExtractor language(String language) {
+	public ErrorWebRouteExtractor<WebExchange.Context> language(String language) {
 		GenericErrorWebRouteExtractor childExtractor = new GenericErrorWebRouteExtractor(this);
 		childExtractor.language = language;
 		return childExtractor;
 	}
 
 	@Override
-	public void handler(ExchangeHandler<ErrorWebExchange<Throwable>> handler, boolean disabled) {
+	public void handler(ExchangeHandler<ErrorWebExchange<Throwable, WebExchange.Context>> handler, boolean disabled) {
 		if(handler != null) {
 			GenericErrorWebRoute route = new GenericErrorWebRoute(this.getRouter());
 			route.setDisabled(disabled);
