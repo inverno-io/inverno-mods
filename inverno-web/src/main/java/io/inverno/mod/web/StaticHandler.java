@@ -52,7 +52,7 @@ import io.inverno.mod.http.base.Parameter;
  * 
  * @see Resource
  */
-public class StaticHandler implements WebExchangeHandler<WebExchange> {
+public class StaticHandler implements WebExchangeHandler<WebExchange.Context> {
 
 	/**
 	 * The default name of the path parameter defining the path to the resource.
@@ -107,7 +107,7 @@ public class StaticHandler implements WebExchangeHandler<WebExchange> {
 	}
 	
 	@Override
-	public void handle(WebExchange exchange) throws HttpException {
+	public void handle(WebExchange<WebExchange.Context> exchange) throws HttpException {
 		String resourcePath = exchange.request().pathParameters().get(this.pathParameterName).map(Parameter::getValue).orElse("");
 		boolean isDirectory = resourcePath.endsWith("/");
 		

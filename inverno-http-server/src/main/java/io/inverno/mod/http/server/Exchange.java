@@ -61,11 +61,13 @@ public interface Exchange {
 	 * 
 	 * <p>
 	 * Note that using a finalizer actually impacts HTTP pipelining since the server
-	 * must wait for the response to be fully sent to the client in order to process
+	 * wait for the response to be fully sent to the client before processing
 	 * following requests.
 	 * </p>
 	 * 
 	 * @param finalizer a finalizer
+	 * 
+	 * @return the exchange
 	 */
 	Exchange finalizer(Mono<Void> finalizer);
 }

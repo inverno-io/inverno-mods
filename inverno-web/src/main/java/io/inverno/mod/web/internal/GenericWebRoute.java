@@ -29,7 +29,7 @@ import io.inverno.mod.web.WebRoute;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericWebRoute implements WebRoute<WebExchange> {
+class GenericWebRoute implements WebRoute<WebExchange.Context> {
 	
 	private final GenericWebRouter router;
 	
@@ -46,7 +46,7 @@ class GenericWebRoute implements WebRoute<WebExchange> {
 	
 	private String language;
 	
-	private ExchangeHandler<WebExchange> handler;
+	private ExchangeHandler<WebExchange<WebExchange.Context>> handler;
 	
 	/**
 	 * <p>
@@ -194,7 +194,7 @@ class GenericWebRoute implements WebRoute<WebExchange> {
 	}
 	
 	@Override
-	public ExchangeHandler<WebExchange> getHandler() {
+	public ExchangeHandler<WebExchange<WebExchange.Context>> getHandler() {
 		return this.handler;
 	}
 	
@@ -205,7 +205,7 @@ class GenericWebRoute implements WebRoute<WebExchange> {
 	 * 
 	 * @param handler an exchange handler
 	 */
-	public void setHandler(ExchangeHandler<WebExchange> handler) {
+	public void setHandler(ExchangeHandler<WebExchange<WebExchange.Context>> handler) {
 		this.handler = handler;
 	}
 	

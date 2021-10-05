@@ -16,44 +16,33 @@
 package io.inverno.mod.web.compiler.internal;
 
 import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.TypeMirror;
 
 import io.inverno.core.compiler.spi.ReporterInfo;
-import io.inverno.mod.web.compiler.spi.WebExchangeParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebExchangeContextParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebParameterQualifiedName;
 
 /**
  * <p>
- * Generic {@link WebExchangeParameterInfo} implementation.
+ * Generic {@link WebExchangeContextParameterInfo} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.3
  * 
  * @see AbstractWebParameterInfo
  */
-class GenericWebExchangeParameterInfo extends AbstractWebParameterInfo implements WebExchangeParameterInfo {
+class GenericWebExchangeContextParameterInfo extends AbstractWebParameterInfo implements WebExchangeContextParameterInfo {
 
-	private final TypeMirror contextType;
-	
 	/**
 	 * <p>
-	 * Creates a generic web exchange parameter info.
+	 * Creates a generic web exchange context parameter info.
 	 * </p>
 	 * 
 	 * @param name             the parameter qualified name
 	 * @param reporter         the parameter reporter
 	 * @param parameterElement the parameter element
-	 * @param contextType      the exchange context type
 	 */
-	public GenericWebExchangeParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, TypeMirror contextType) {
+	public GenericWebExchangeContextParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement) {
 		super(name, reporter, parameterElement, parameterElement.asType(), true);
-		
-		this.contextType = contextType;
-	}
-	
-	@Override
-	public TypeMirror getContextType() {
-		return this.contextType;
 	}
 }

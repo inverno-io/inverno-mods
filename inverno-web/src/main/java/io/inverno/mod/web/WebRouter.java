@@ -41,8 +41,8 @@ import io.inverno.mod.http.server.Exchange;
  * @see WebRoute
  * @see WebRouteManager
  *
- * @param <A> the type of web exchange handled by the route
+ * @param <A> the type of web exchange context
  */
-public interface WebRouter<A extends WebExchange> extends Router<A, WebRouter<A>, WebRouteManager<A>, WebRoute<A>, Exchange> {
+public interface WebRouter<A extends WebExchange.Context> extends Router<WebExchange<A>, WebRouter<A>, WebRouteManager<A>, WebRoute<A>, Exchange> {
 
 }

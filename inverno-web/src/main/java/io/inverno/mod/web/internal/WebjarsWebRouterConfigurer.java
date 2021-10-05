@@ -16,7 +16,6 @@
 package io.inverno.mod.web.internal;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
@@ -49,7 +48,7 @@ import io.inverno.mod.web.WebRouterConfigurer;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<WebExchange> {
+public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<WebExchange.Context> {
 
 	private static final Logger LOGGER = LogManager.getLogger(WebjarsWebRouterConfigurer.class);
 	
@@ -71,7 +70,7 @@ public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 	}
 	
 	@Override
-	public void accept(WebRouter<WebExchange> router) {
+	public <A extends WebExchange.Context> void configure(WebRouter<A> router) {
 		
 		/* 2 possibilities:
 		 * - modular webjar
@@ -92,27 +91,21 @@ public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 				router.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
 			});
 		}
-		else {
-			try {
-				this.resourceService.getResources(new URI("classpath:/META-INF/resources/webjars"))
-					.flatMap(resource -> {
-						return this.resourceService.getResources(URI.create(resource.getURI().toString() + "/*/*"));
-					})
-					.forEach(baseResource -> {
-						String spec = baseResource.getURI().getSchemeSpecificPart();
-						int versionIndex = spec.lastIndexOf("/");
-						int webjarIndex = spec.substring(0, versionIndex).lastIndexOf("/");
-						
-						String webjarName = toModuleName(spec.substring(webjarIndex + 1, versionIndex));
-						String webjarRootPath = WebjarsWebRouterConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
-						LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
-						router.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
-					});
-			} 
-			catch (URISyntaxException e) {
-				throw new IllegalStateException("Error resolving webjars", e);
-			}
-		}
+		
+		this.resourceService.getResources(URI.create("classpath:/META-INF/resources/webjars"))
+			.flatMap(resource -> {
+				return this.resourceService.getResources(URI.create(resource.getURI().toString() + "/*/*"));
+			})
+			.forEach(baseResource -> {
+				String spec = baseResource.getURI().getSchemeSpecificPart();
+				int versionIndex = spec.lastIndexOf("/");
+				int webjarIndex = spec.substring(0, versionIndex).lastIndexOf("/");
+				
+				String webjarName = toModuleName(spec.substring(webjarIndex + 1, versionIndex));
+				String webjarRootPath = WebjarsWebRouterConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
+				LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
+				router.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
+			});
 	}
 	
     private static final Pattern NON_ALPHANUM = Pattern.compile("[^A-Za-z0-9]");

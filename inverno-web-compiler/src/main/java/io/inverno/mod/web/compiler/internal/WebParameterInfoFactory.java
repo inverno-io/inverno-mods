@@ -16,18 +16,21 @@
 package io.inverno.mod.web.compiler.internal;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.WildcardType;
 
 import org.reactivestreams.Publisher;
 
-import io.netty.buffer.ByteBuf;
 import io.inverno.core.compiler.spi.ReporterInfo;
 import io.inverno.core.compiler.spi.plugin.PluginContext;
 import io.inverno.core.compiler.spi.plugin.PluginExecution;
@@ -46,10 +49,11 @@ import io.inverno.mod.web.annotation.SseEventFactory;
 import io.inverno.mod.web.annotation.WebRoute;
 import io.inverno.mod.web.compiler.spi.WebParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebParameterQualifiedName;
-import io.inverno.mod.web.compiler.spi.WebRouteQualifiedName;
 import io.inverno.mod.web.compiler.spi.WebRequestBodyParameterInfo.RequestBodyKind;
 import io.inverno.mod.web.compiler.spi.WebRequestBodyParameterInfo.RequestBodyReactiveKind;
+import io.inverno.mod.web.compiler.spi.WebRouteQualifiedName;
 import io.inverno.mod.web.compiler.spi.WebSseEventFactoryParameterInfo.SseEventFactoryKind;
+import io.netty.buffer.ByteBuf;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -80,6 +84,7 @@ class WebParameterInfoFactory {
 	
 	/* Contextual */
 	private final TypeMirror webExchangeType;
+	private final TypeMirror webExchangeContextType;
 	private final TypeMirror sseEventFactoryType;
 	private final TypeMirror sseEncoderEventFactoryType;
 	
@@ -123,7 +128,8 @@ class WebParameterInfoFactory {
 		this.webPartType = this.pluginContext.getElementUtils().getTypeElement(WebPart.class.getCanonicalName()).asType();
 		this.parameterType = this.pluginContext.getElementUtils().getTypeElement(Parameter.class.getCanonicalName()).asType();
 		
-		this.webExchangeType = this.pluginContext.getElementUtils().getTypeElement(WebExchange.class.getCanonicalName()).asType();
+		this.webExchangeType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebExchange.class.getCanonicalName()).asType());
+		this.webExchangeContextType = this.pluginContext.getElementUtils().getTypeElement(WebExchange.Context.class.getCanonicalName()).asType();
 		this.sseEventFactoryType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(ResponseBody.Sse.EventFactory.class.getCanonicalName()).asType());
 		this.sseEncoderEventFactoryType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebResponseBody.SseEncoder.EventFactory.class.getCanonicalName()).asType());
 	}
@@ -207,8 +213,11 @@ class WebParameterInfoFactory {
 		
 		// Contextual
 		if(result == null) {
-			if(this.pluginContext.getTypeUtils().isAssignable(this.webExchangeType, parameterElement.asType())) {
+			if(this.pluginContext.getTypeUtils().isSameType(this.pluginContext.getTypeUtils().erasure(parameterElement.asType()), this.webExchangeType)) {
 				result = this.createExchangeParameter(parameterReporter, parameterQName, parameterElement);
+			}
+			else if(this.pluginContext.getTypeUtils().isAssignable(parameterElement.asType(), this.webExchangeContextType)) {
+				result = this.createExchangeContextParameter(parameterReporter, parameterQName, parameterElement);
 			}
 		}
 		
@@ -241,23 +250,67 @@ class WebParameterInfoFactory {
 	}
 	
 	/**
-	 * <p>Creates an exchange parameter info.</p>
+	 * <p>
+	 * Creates an exchange parameter info.
+	 * </p>
 	 * 
-	 * @param reporter the parameter reporter
-	 * @param parameterQName the parameter qualified name
+	 * @param reporter         the parameter reporter
+	 * @param parameterQName   the parameter qualified name
 	 * @param parameterElement the parameter element
 	 * 
 	 * @return a web exchange parameter info
 	 */
 	private GenericWebExchangeParameterInfo createExchangeParameter(ReporterInfo reporter, WebParameterQualifiedName parameterQName, VariableElement parameterElement) {
-		return new GenericWebExchangeParameterInfo(parameterQName, reporter, parameterElement);
+		TypeMirror contextType = this.webExchangeContextType;
+		List<? extends TypeMirror> typeArguments = ((DeclaredType)parameterElement.asType()).getTypeArguments();
+		if(!typeArguments.isEmpty()) {
+			contextType = typeArguments.get(0);
+			if(contextType.getKind() == TypeKind.WILDCARD) {
+				TypeMirror extendsBound = ((WildcardType)contextType).getExtendsBound();
+				if(extendsBound != null) {
+					contextType = extendsBound;
+				}
+				else {
+					contextType = this.webExchangeContextType;
+				}
+			}
+		}
+		
+		if(this.pluginContext.getTypeUtils().asElement(contextType).getKind() != ElementKind.INTERFACE) {
+			reporter.error("Web exchange context must be an interface");
+		}
+		
+		GenericWebExchangeParameterInfo info = new GenericWebExchangeParameterInfo(parameterQName, reporter, parameterElement, contextType);
+		
+		return info;
 	}
 	
 	/**
-	 * <p>Creates a server-sent event factory parameter info.</p>
+	 * <p>
+	 * Creates an exchange context parameter info.
+	 * </p>
 	 * 
-	 * @param reporter the parameter reporter
-	 * @param parameterQName the parameter qualified name
+	 * @param reporter         the parameter reporter
+	 * @param parameterQName   the parameter qualified name
+	 * @param parameterElement the parameter element
+	 * 
+	 * @return a web exchange context parameter info
+	 */
+	private GenericWebExchangeContextParameterInfo createExchangeContextParameter(ReporterInfo reporter, WebParameterQualifiedName parameterQName, VariableElement parameterElement) {
+		GenericWebExchangeContextParameterInfo info = new GenericWebExchangeContextParameterInfo(parameterQName, reporter, parameterElement);
+		if(this.pluginContext.getTypeUtils().asElement(info.getType()).getKind() != ElementKind.INTERFACE) {
+			reporter.error("Web exchange context must be an interface");
+		}
+		return info;
+	}
+	
+	/**
+	 * <p>
+	 * Creates a server-sent event factory parameter info.
+	 * </p>
+	 * 
+	 * @param reporter         the parameter reporter
+	 * @param parameterQName   the parameter qualified name
 	 * @param parameterElement the parameter element
 	 * 
 	 * @return a web server-sent event factory parameter info

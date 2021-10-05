@@ -47,18 +47,18 @@ import io.inverno.mod.web.WebRouterConfigurer;
  * @since 1.0
  */
 @Bean( name = "webRouter" )
-public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
+public class GenericWebRouter implements @Provide WebRouter<WebExchange.Context> {
 
 	private final WebConfiguration configuration;
 	private final DataConversionService dataConversionService;
 	private final ResourceService resourceService;
 	private final ObjectConverter<String> parameterConverter;
 	
-	private final RoutingLink<WebExchange, ?, WebRoute<WebExchange>> firstLink;
+	private final RoutingLink<WebExchange<WebExchange.Context>, ?, WebRoute<WebExchange.Context>> firstLink;
 	private final OpenApiWebRouterConfigurer openApiConfigurer;
 	private final WebjarsWebRouterConfigurer webjarsConfigurer;
 	
-	private WebRouterConfigurer<WebExchange> configurer;
+	private WebRouterConfigurer<? extends WebExchange.Context> configurer;
 	
 	/**
 	 * <p>
@@ -92,6 +92,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 			.connect(new HandlerRoutingLink<>());
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Init
 	public void init() {
 		this.route().path("/favicon.ico").handler(exchange -> {
@@ -111,7 +112,8 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 		}
 		
 		if(this.configurer != null) {
-			this.configurer.accept(this);
+			// We know it's working because the context is provided by the configurer
+			((WebRouterConfigurer<WebExchange.Context>)this.configurer).accept(this);
 		}
 	}
 	
@@ -122,7 +124,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 	 * 
 	 * @param configurer a web router configurer
 	 */
-	public void setConfigurer(WebRouterConfigurer<WebExchange> configurer) {
+	public void setConfigurer(WebRouterConfigurer<? extends WebExchange.Context> configurer) {
 		this.configurer = configurer;
 	}
 	
@@ -133,7 +135,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 	 * 
 	 * @param route a web route
 	 */
-	void setRoute(WebRoute<WebExchange> route) {
+	void setRoute(WebRoute<WebExchange.Context> route) {
 		this.firstLink.setRoute(route);
 	}
 	
@@ -144,7 +146,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 	 * 
 	 * @param route the web route to enable
 	 */
-	void enableRoute(WebRoute<WebExchange> route) {
+	void enableRoute(WebRoute<WebExchange.Context> route) {
 		this.firstLink.enableRoute(route);
 	}
 	
@@ -155,7 +157,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 	 * 
 	 * @param route the web route to disable
 	 */
-	void disableRoute(WebRoute<WebExchange> route) {
+	void disableRoute(WebRoute<WebExchange.Context> route) {
 		this.firstLink.disableRoute(route);
 	}
 
@@ -166,17 +168,17 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 	 * 
 	 * @param route the web route to remove
 	 */
-	void removeRoute(WebRoute<WebExchange> route) {
+	void removeRoute(WebRoute<WebExchange.Context> route) {
 		this.firstLink.removeRoute(route);
 	}
 	
 	@Override
-	public WebRouteManager<WebExchange> route() {
+	public WebRouteManager<WebExchange.Context> route() {
 		return new GenericWebRouteManager(this);
 	}
 	
 	@Override
-	public Set<WebRoute<WebExchange>> getRoutes() {
+	public Set<WebRoute<WebExchange.Context>> getRoutes() {
 		GenericWebRouteExtractor routeExtractor = new GenericWebRouteExtractor(this);
 		this.firstLink.extractRoute(routeExtractor);
 		return routeExtractor.getRoutes();
@@ -184,7 +186,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 	
 	@Override
 	public void handle(Exchange exchange) throws HttpException {
-		this.firstLink.handle(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.dataConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange::finalizer));
+		this.firstLink.handle(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.dataConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange::finalizer, this.configurer.createContext()));
 	}
 	
 	/**
@@ -196,5 +198,5 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange> {
 	 * @since 1.0
 	 */
 	@Bean( name = "webRouterConfigurer")
-	public static interface ConfigurerSocket extends Supplier<WebRouterConfigurer<WebExchange>> {}
+	public static interface ConfigurerSocket extends Supplier<WebRouterConfigurer<? extends WebExchange.Context>> {}
 }

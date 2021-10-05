@@ -19,6 +19,7 @@ import java.util.List;
 
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeMirror;
 
 import io.inverno.core.compiler.spi.BeanInfo;
 import io.inverno.core.compiler.spi.support.AbstractInfo;
@@ -44,21 +45,26 @@ class GenericWebProvidedRouterConfigurerInfo extends AbstractInfo<WebRouterConfi
 	
 	private final List<? extends WebRouteInfo> routes;
 	
+	private final TypeMirror contextType;
+	
 	/**
 	 * <p>
 	 * Creates a generic web provided router configurer info.
 	 * </p>
 	 * 
-	 * @param element the type element of the router configurer
-	 * @param name    the router qualified name
-	 * @param bean    the router configurer bean info
-	 * @param routes  the routes defined in the router configuer
+	 * @param element     the type element of the router configurer
+	 * @param name        the router qualified name
+	 * @param bean        the router configurer bean info
+	 * @param routes      the routes defined in the router configuer
+	 * @param contextType the exchange context type required by the configured
+	 *                    routes
 	 */
-	public GenericWebProvidedRouterConfigurerInfo(TypeElement element, WebRouterConfigurerQualifiedName name, BeanInfo bean, List<? extends WebRouteInfo> routes) {
+	public GenericWebProvidedRouterConfigurerInfo(TypeElement element, WebRouterConfigurerQualifiedName name, BeanInfo bean, List<? extends WebRouteInfo> routes, TypeMirror contextType) {
 		super(name, bean);
 		this.element = element;
 		this.type = (DeclaredType)bean.getType();
 		this.routes = routes != null ? routes : List.of();
+		this.contextType = contextType;
 	}
 
 	@Override
@@ -73,6 +79,11 @@ class GenericWebProvidedRouterConfigurerInfo extends AbstractInfo<WebRouterConfi
 	
 	@Override
 	public WebRouteInfo[] getRoutes() {
-		return this.routes.stream().toArray(WebRouteInfo[]::new);
+		return this.routes.toArray(WebRouteInfo[]::new);
+	}
+	
+	@Override
+	public TypeMirror getContextType() {
+		return this.contextType;
 	}
 }

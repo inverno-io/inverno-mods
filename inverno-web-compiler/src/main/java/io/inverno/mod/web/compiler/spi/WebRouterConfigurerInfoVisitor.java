@@ -196,7 +196,19 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	 * @return a visitor result
 	 */
 	R visit(WebExchangeParameterInfo exchangeParameterInfo, P p);
-
+	
+	/**
+	 * <p>
+	 * Visits web context exchange parameter info.
+	 * </p>
+	 * 
+	 * @param exchangeContextParameterInfo the info to visit
+	 * @param p                            a visitor parameter
+	 * 
+	 * @return a visitor result
+	 */
+	R visit(WebExchangeContextParameterInfo exchangeContextParameterInfo, P p);
+	
 	/**
 	 * <p>
 	 * Visits web server-sent event factory parameter info.

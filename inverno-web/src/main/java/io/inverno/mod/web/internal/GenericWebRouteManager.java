@@ -42,7 +42,7 @@ import io.inverno.mod.web.WebRouter;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericWebRouteManager implements WebRouteManager<WebExchange> {
+class GenericWebRouteManager implements WebRouteManager<WebExchange.Context> {
 
 	private final GenericWebRouter router;
 	
@@ -57,7 +57,7 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange> {
 	
 	private Set<String> languages;
 
-	private ExchangeHandler<WebExchange> handler;
+	private ExchangeHandler<WebExchange<WebExchange.Context>> handler;
 	
 	/**
 	 * <p>
@@ -89,7 +89,7 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange> {
 	}
 
 	@Override
-	public Set<WebRoute<WebExchange>> findRoutes() {
+	public Set<WebRoute<WebExchange.Context>> findRoutes() {
 		// TODO Implement filtering in the route extractor
 		return this.router.getRoutes().stream().filter(route -> {
 			// We want all routes that share the same criteria as the one defined in this route manager
@@ -121,7 +121,7 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange> {
 	}
 
 	@Override
-	public WebRouteManager<WebExchange> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
+	public WebRouteManager<WebExchange.Context> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
 		Objects.requireNonNull(path);
 		if(!path.startsWith("/")) {
 			throw new IllegalArgumentException("Path must be absolute");
@@ -198,20 +198,28 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public WebRouter<WebExchange> handler(ExchangeHandler<? super WebExchange> handler) {
+	public WebRouter<WebExchange.Context> handler(ExchangeHandler<? super WebExchange<WebExchange.Context>> handler) {
 		Objects.requireNonNull(handler);
 		// This will work since we consider lower bounded types
-		this.handler = (ExchangeHandler<WebExchange>) handler;
+		this.handler = (ExchangeHandler<WebExchange<WebExchange.Context>>) handler;
 		this.commit();
 		return this.router;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public WebRouter<WebExchange> handler(WebExchangeHandler<? super WebExchange> handler) {
+	public WebRouter<WebExchange.Context> handler(WebExchangeHandler<? super WebExchange.Context> handler) {
 		Objects.requireNonNull(handler);
-		// This will work since we consider lower bounded types
-		this.handler = (ExchangeHandler<WebExchange>) handler;
+		/* 
+		 * This is not ideal, at least we must make sure this is safe:
+		 * - the handler is a ExchangeHandler<WebExchange>: we know it can accept
+		 * WebExchange because a WebExchangeHandler only accepts WebExchange
+		 * - we do not manipulate the context here, only the handler is interested in
+		 * that and this is handled in the WebRouterConfigurer which provides the proper
+		 * context type to the WebRouter which is the one providing the
+		 * GenericWebRouteManager instance
+		 */ 
+		this.handler = (ExchangeHandler)handler;
 		this.commit();
 		return this.router;
 	}

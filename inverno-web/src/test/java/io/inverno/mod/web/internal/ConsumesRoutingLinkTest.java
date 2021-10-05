@@ -41,9 +41,9 @@ public class ConsumesRoutingLinkTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testHandle() {
-		List<MockRoutingLink<WebExchange, WebRoute<WebExchange>>> linkRegistry = new ArrayList<>();
-		MockRoutingLink<WebExchange, WebRoute<WebExchange>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
-		ConsumesRoutingLink<WebExchange, WebRoute<WebExchange>> routingLink = new ConsumesRoutingLink<>(new AcceptCodec(false));
+		List<MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>>> linkRegistry = new ArrayList<>();
+		MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
+		ConsumesRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> routingLink = new ConsumesRoutingLink<>(new AcceptCodec(false));
 		routingLink.connect(mockRoutingLink);
 		
 		GenericWebRoute route1 = new GenericWebRoute(null);

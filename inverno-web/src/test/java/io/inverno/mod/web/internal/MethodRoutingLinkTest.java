@@ -38,9 +38,9 @@ public class MethodRoutingLinkTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testHandle() {
-		List<MockRoutingLink<WebExchange, WebRoute<WebExchange>>> linkRegistry = new ArrayList<>();
-		MockRoutingLink<WebExchange, WebRoute<WebExchange>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
-		MethodRoutingLink<WebExchange, WebRoute<WebExchange>> routingLink = new MethodRoutingLink<>();
+		List<MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>>> linkRegistry = new ArrayList<>();
+		MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
+		MethodRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> routingLink = new MethodRoutingLink<>();
 		routingLink.connect(mockRoutingLink);
 		
 		GenericWebRoute route_default = new GenericWebRoute(null);

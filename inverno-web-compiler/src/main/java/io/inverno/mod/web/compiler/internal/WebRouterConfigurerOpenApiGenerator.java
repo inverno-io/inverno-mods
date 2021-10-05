@@ -33,6 +33,7 @@ import io.inverno.mod.web.compiler.internal.WebRouterConfigurerOpenApiGeneration
 import io.inverno.mod.web.compiler.spi.WebBasicParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebControllerInfo;
 import io.inverno.mod.web.compiler.spi.WebCookieParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebExchangeContextParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebExchangeParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebFormParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebHeaderParameterInfo;
@@ -447,6 +448,11 @@ class WebRouterConfigurerOpenApiGenerator implements WebRouterConfigurerInfoVisi
 
 	@Override
 	public StringBuilder visit(WebExchangeParameterInfo exchangeParameterInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+		return new StringBuilder();
+	}
+	
+	@Override
+	public StringBuilder visit(WebExchangeContextParameterInfo exchangeContextParameterInfo, WebRouterConfigurerOpenApiGenerationContext p) {
 		return new StringBuilder();
 	}
 	

@@ -30,11 +30,11 @@ import io.inverno.mod.web.WebRoute;
  * @param <B> the route type
  * @param <C> the route extractor type
  */
-interface WebRouteExtractor<A extends WebExchange, B extends WebRoute<A>, C extends WebRouteExtractor<A, B, C>> extends 
-	PathAwareRouteExtractor<A, B, C>,
-	MethodAwareRouteExtractor<A, B, C>,
-	ContentAwareRouteExtractor<A, B, C>,
-	AcceptAwareRouteExtractor<A, B, C>,
-	RouteExtractor<A, B> {
+interface WebRouteExtractor<A extends WebExchange.Context, B extends WebRoute<A>, C extends WebRouteExtractor<A, B, C>> extends 
+	PathAwareRouteExtractor<WebExchange<A>, B, C>,
+	MethodAwareRouteExtractor<WebExchange<A>, B, C>,
+	ContentAwareRouteExtractor<WebExchange<A>, B, C>,
+	AcceptAwareRouteExtractor<WebExchange<A>, B, C>,
+	RouteExtractor<WebExchange<A>, B> {
 	
 }

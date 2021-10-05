@@ -26,6 +26,7 @@ import io.inverno.mod.http.base.internal.header.AcceptCodec;
 import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
 import io.inverno.mod.http.base.internal.header.GenericHeaderService;
+import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRequestBody;
 import io.inverno.mod.web.WebResponseBody;
 
@@ -52,6 +53,8 @@ public class MockExchangeBuilder {
 	private WebRequestBody mockRequestBody;
 	
 	private WebResponseBody mockResponseBody;
+	
+	private WebExchange.Context context;
 	
 	public MockExchangeBuilder authority(String authority) {
 		this.authority = authority;
@@ -113,11 +116,16 @@ public class MockExchangeBuilder {
 		return this;
 	}
 	
+	public MockExchangeBuilder context(WebExchange.Context context) {
+		this.context = context;
+		return this;
+	}
+	
 	public MockWebExchange build() {
 		MockWebRequest mockRequest = new MockWebRequest(this.authority, this.scheme, this.path, this.protocol, this.method, new MockRequestHeaders(HEADER_SERVICE, this.headers), new MockQueryParameters(this.requestQueryParameters), new MockRequestCookies(this.requestCookies), this.localAddress, this.remoteAddress, this.mockRequestBody);
 		MockWebResponse mockResponse = new MockWebResponse(HEADER_SERVICE, this.mockResponseBody);
 		
-		return new MockWebExchange(mockRequest, mockResponse);
+		return new MockWebExchange(mockRequest, mockResponse, this.context);
 	}
 
 }

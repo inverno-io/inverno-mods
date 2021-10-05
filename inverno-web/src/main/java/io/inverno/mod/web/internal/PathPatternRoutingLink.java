@@ -169,7 +169,7 @@ class PathPatternRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> ex
 				Map<String, String> rawPathParameters = bestMatchMatcher.getParameters();
 				if (!rawPathParameters.isEmpty()) {
 					if (exchange instanceof WebExchange) {
-						PathParameters requestPathParameters = ((WebExchange) exchange).request().pathParameters();
+						PathParameters requestPathParameters = ((WebExchange<?>) exchange).request().pathParameters();
 						if (requestPathParameters instanceof MutablePathParameters) {
 							((MutablePathParameters) requestPathParameters).putAll(bestMatchMatcher.getParameters());
 						}

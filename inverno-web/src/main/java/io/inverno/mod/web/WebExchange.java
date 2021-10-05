@@ -15,9 +15,6 @@
  */
 package io.inverno.mod.web;
 
-import java.util.Map;
-import java.util.Optional;
-
 import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.server.Exchange;
 
@@ -38,8 +35,10 @@ import io.inverno.mod.http.server.Exchange;
  * </p>
  * 
  * <p>
- * It also attributes that can be set and propagated in a chain of exchange
- * handlers.
+ * It also exposes a context which can be used to propagate information in a
+ * chain of exchange handlers. The {@link WebRouter} uses
+ * {@link WebRouterConfigurer#createContext()} to create the context attached to
+ * the Web exchange.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -48,8 +47,10 @@ import io.inverno.mod.http.server.Exchange;
  * @see WebRoute
  * @see WebRouteManager
  * @see WebRouter
+ * 
+ * @param <A> the type of web exchange context
  */
-public interface WebExchange extends Exchange {
+public interface WebExchange<A extends WebExchange.Context> extends Exchange {
 
 	@Override
 	WebRequest request();
@@ -59,42 +60,20 @@ public interface WebExchange extends Exchange {
 	
 	/**
 	 * <p>
-	 * Sets the specified attribute in the exchange.
+	 * Returns the context associated to the Web exchange.
 	 * </p>
 	 * 
-	 * @param name  the name of the attribute
-	 * @param value the value of the attribute
+	 * @return a context object
 	 */
-	void setAttribute(String name, Object value);
+	A context();
 	
 	/**
 	 * <p>
-	 * Removes the attribute with the specified name.
+	 * Base interface for all Web exchange context.
 	 * </p>
 	 * 
-	 * @param name the name of the attribute to remove
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.3
 	 */
-	void removeAttribute(String name);
-	
-	/**
-	 * <p>
-	 * Returns the value of the attribute with the specified name.
-	 * </p>
-	 * 
-	 * @param <T>  the expected type of the value
-	 * @param name the attribute name
-	 * 
-	 * @return an optional returning the attribute or an empty optional if there's
-	 *         no attribute with that name
-	 */
-	<T> Optional<T> getAttribute(String name);
-	
-	/**
-	 * <p>
-	 * Returns all attributes.
-	 * </p>
-	 * 
-	 * @return the attributes
-	 */
-	Map<String, Object> getAttributes();
+	interface Context {}
 }

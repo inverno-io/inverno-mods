@@ -17,12 +17,14 @@ package io.inverno.mod.web.compiler.internal;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,6 +47,8 @@ import io.inverno.mod.web.annotation.WebRoute;
 import io.inverno.mod.web.annotation.WebRoutes;
 import io.inverno.mod.web.compiler.internal.WebRouterConfigurerClassGenerationContext.GenerationMode;
 import io.inverno.mod.web.compiler.spi.WebControllerInfo;
+import io.inverno.mod.web.compiler.spi.WebExchangeContextParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebExchangeParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebProvidedRouterConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebRouteInfo;
 import io.inverno.mod.web.compiler.spi.WebRouterConfigurerQualifiedName;
@@ -80,6 +84,8 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 	private TypeMirror webControllerAnnotationType;
 	private TypeMirror webRoutesAnnotationType;
 	private TypeMirror webRouterConfigurerType;
+	private TypeMirror webExchangeContextType;
+	private TypeMirror objectType;
 	
 	private boolean enabled = true;
 	
@@ -113,11 +119,9 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 		}
 		this.webControllerAnnotationType = webControllerElement.asType();
 		this.webRoutesAnnotationType = this.pluginContext.getElementUtils().getTypeElement(WebRoutes.class.getCanonicalName()).asType();
-		
-		// WebRouterConfigurer<WebExchange> 
-		TypeMirror webExchangeType = this.pluginContext.getElementUtils().getTypeElement(WebExchange.class.getCanonicalName()).asType();
-		TypeElement webRouterConfigurerTypeElement = this.pluginContext.getElementUtils().getTypeElement(WebRouterConfigurer.class.getCanonicalName());
-		this.webRouterConfigurerType = this.pluginContext.getTypeUtils().getDeclaredType(webRouterConfigurerTypeElement, webExchangeType);
+		this.webRouterConfigurerType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebRouterConfigurer.class.getCanonicalName()).asType());
+		this.webExchangeContextType = this.pluginContext.getElementUtils().getTypeElement(WebExchange.Context.class.getCanonicalName()).asType();
+		this.objectType = this.pluginContext.getElementUtils().getTypeElement(Object.class.getCanonicalName()).asType();
 		
 		this.typeHierarchyExtractor = new TypeHierarchyExtractor(this.pluginContext.getTypeUtils());
 	}
@@ -136,7 +140,39 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 		List<? extends WebControllerInfo> webControllers = this.processWebControllers(execution, webRouteFactory);
 		List<? extends WebProvidedRouterConfigurerInfo> webRouters = this.processWebRouters(execution, webRouteFactory);
 
-		GenericWebRouterConfigurerInfo webRouterConfigurerInfo = new GenericWebRouterConfigurerInfo(execution.getModuleElement(), webRouterConfigurerQName, webControllers, webRouters);
+		Comparator<TypeMirror> contexTypeComparator = (t1,t2) -> {
+			if(this.pluginContext.getTypeUtils().isSameType(t1,t2)) {
+				return 0;
+			}
+			return t1.toString().compareTo(t2.toString());
+		};
+		
+		Set<TypeMirror> contextTypes = new TreeSet<>(contexTypeComparator);
+		
+		webControllers.stream()
+			.flatMap(controller -> Arrays.stream(controller.getRoutes())
+				.flatMap(route -> Arrays.stream(route.getParameters())
+					.flatMap(parameter -> {
+						if(parameter instanceof WebExchangeParameterInfo) {
+							TypeMirror contextType = ((WebExchangeParameterInfo)parameter).getContextType();
+							return Stream.concat(Stream.of(contextType), this.getAllSuperTypes(contextType).stream());
+						}
+						else if(parameter instanceof WebExchangeContextParameterInfo) {
+							TypeMirror contextType = parameter.getType();
+							return Stream.concat(Stream.of(contextType), this.getAllSuperTypes(contextType).stream());
+						}
+						return Stream.of();
+					})
+				)
+			)
+			.forEach(contextTypes::add);
+		
+		webRouters.stream().forEach(router -> {
+			contextTypes.add(router.getContextType());
+			contextTypes.addAll(this.getAllSuperTypes(router.getContextType()));
+		});
+		
+		GenericWebRouterConfigurerInfo webRouterConfigurerInfo = new GenericWebRouterConfigurerInfo(execution.getModuleElement(), webRouterConfigurerQName, webControllers, webRouters, contextTypes);
 		
 		for(Map.Entry<WebRouteInfo, Set<WebRouteInfo>> e : this.webRouteDuplicateDectector.findDuplicates(Stream.concat(webControllers.stream().flatMap(controller -> Arrays.stream(controller.getRoutes())), webRouters.stream().flatMap(router -> Arrays.stream(router.getRoutes()))).collect(Collectors.toList())).entrySet()) {
 			e.getKey().error("Route " + e.getKey().getQualifiedName() + " is conflicting with route(s):\n" + e.getValue().stream().map(route -> "- " + route.getQualifiedName()).collect(Collectors.joining("\n")));
@@ -203,7 +239,6 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 							bean.warning("Ignoring web controller which does not define any route");
 							return null;
 						}
-						
 						return new GenericWebControllerInfo(beanElement, bean.getQualifiedName(), bean, (DeclaredType)bean.getType(), controllerRootPath, webRoutes);
 					});
 			})
@@ -227,7 +262,11 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 						if(webRoutes.isEmpty()) {
 							return null;
 						}
-						return new GenericWebProvidedRouterConfigurerInfo(beanElement, new WebRouterConfigurerQualifiedName(bean.getQualifiedName(), this.pluginContext.getTypeUtils().asElement(this.pluginContext.getTypeUtils().erasure(bean.getType())).getSimpleName().toString()), bean, webRoutes);
+						
+						List<? extends TypeMirror> webRouterConfigurerTypeArguments = ((DeclaredType)this.findSuperType(bean.getType(), this.webRouterConfigurerType)).getTypeArguments();
+						TypeMirror contextType = !webRouterConfigurerTypeArguments.isEmpty() ? webRouterConfigurerTypeArguments.get(0) : this.webExchangeContextType;
+						
+						return new GenericWebProvidedRouterConfigurerInfo(beanElement, new WebRouterConfigurerQualifiedName(bean.getQualifiedName(), this.pluginContext.getTypeUtils().asElement(this.pluginContext.getTypeUtils().erasure(bean.getType())).getSimpleName().toString()), bean, webRoutes, contextType);
 					});
 				
 				if(!providedRouterConfigurerInfo.isPresent()) {
@@ -238,5 +277,57 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 			})
 			.filter(Objects::nonNull)
 			.collect(Collectors.toList());
+	}
+	
+	/**
+	 * <p>
+	 * Finds the super types matching the specified erased super type.
+	 * </p>
+	 * 
+	 * @param type            the type where to find the super type
+	 * @param erasedSuperType the erased super type to find
+	 * 
+	 * @return a type or null
+	 */
+	private TypeMirror findSuperType(TypeMirror type, TypeMirror erasedSuperType) {
+		for(TypeMirror superType : this.pluginContext.getTypeUtils().directSupertypes(type)) {
+			if(this.pluginContext.getTypeUtils().isSameType(this.pluginContext.getTypeUtils().erasure(superType), erasedSuperType)) {
+				return superType;
+			}
+			else {
+				TypeMirror result = this.findSuperType(superType, erasedSuperType);
+				if(result != null) {
+					return result;
+				}
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * <p>
+	 * Returns all the unique super types of the specified type, Object excluded.
+	 * </p>
+	 * 
+	 * @param type a type
+	 * 
+	 * @return a set of types
+	 */
+	private Set<TypeMirror> getAllSuperTypes(TypeMirror type) {
+		Set<TypeMirror> result = new TreeSet<>( (t1,t2) -> {
+			if(this.pluginContext.getTypeUtils().isSameType(t1, t2)) {
+				return 0;
+			}
+			return t1.toString().compareTo(t2.toString());
+		});
+		
+		for(TypeMirror superType : this.pluginContext.getTypeUtils().directSupertypes(type)) {
+			if(!this.pluginContext.getTypeUtils().isSameType(superType, this.objectType)) {
+				result.add(superType);
+				result.addAll(this.getAllSuperTypes(superType));
+			}
+		}
+		
+		return result;
 	}
 }

@@ -16,8 +16,10 @@
 package io.inverno.mod.web.compiler.internal;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.lang.model.element.ModuleElement;
+import javax.lang.model.type.TypeMirror;
 
 import io.inverno.mod.web.compiler.spi.WebControllerInfo;
 import io.inverno.mod.web.compiler.spi.WebProvidedRouterConfigurerInfo;
@@ -39,8 +41,9 @@ class GenericWebRouterConfigurerInfo implements WebRouterConfigurerInfo {
 	
 	private final WebRouterConfigurerQualifiedName name;
 	
-	private final List<? extends WebControllerInfo> webControllers; 
+	private final List<? extends WebControllerInfo> webControllers;
 	private final List<? extends WebProvidedRouterConfigurerInfo> webProvidedRouters;
+	private final Set<? extends TypeMirror> contextTypes;
 
 	/**
 	 * <p>
@@ -53,12 +56,15 @@ class GenericWebRouterConfigurerInfo implements WebRouterConfigurerInfo {
 	 * @param webControllers     the controllers aggregated in the router controller
 	 * @param webProvidedRouters the provided router configurers aggresgated in the
 	 *                           router controller
+	 * @param contextTypes       the set of context types required by the configured
+	 *                           routes
 	 */
-	public GenericWebRouterConfigurerInfo(ModuleElement element, WebRouterConfigurerQualifiedName name, List<? extends WebControllerInfo> webControllers, List<? extends WebProvidedRouterConfigurerInfo> webProvidedRouters) {
+	public GenericWebRouterConfigurerInfo(ModuleElement element, WebRouterConfigurerQualifiedName name, List<? extends WebControllerInfo> webControllers, List<? extends WebProvidedRouterConfigurerInfo> webProvidedRouters, Set<? extends TypeMirror> contextTypes) {
 		this.element = element;
 		this.name = name;
 		this.webControllers = webControllers != null ? webControllers : List.of();
 		this.webProvidedRouters = webProvidedRouters != null ? webProvidedRouters : List.of();
+		this.contextTypes = contextTypes != null ? contextTypes : Set.of();
 	}
 	
 	@Override
@@ -93,12 +99,17 @@ class GenericWebRouterConfigurerInfo implements WebRouterConfigurerInfo {
 
 	@Override
 	public WebControllerInfo[] getControllers() {
-		return this.webControllers.stream().toArray(WebControllerInfo[]::new);
+		return this.webControllers.toArray(WebControllerInfo[]::new);
 	}
 
 	@Override
 	public WebProvidedRouterConfigurerInfo[] getRouters() {
-		return this.webProvidedRouters.stream().toArray(WebProvidedRouterConfigurerInfo[]::new);
+		return this.webProvidedRouters.toArray(WebProvidedRouterConfigurerInfo[]::new);
+	}
+	
+	@Override
+	public TypeMirror[] getContextTypes() {
+		return this.contextTypes.toArray(TypeMirror[]::new);
 	}
 
 	@Override

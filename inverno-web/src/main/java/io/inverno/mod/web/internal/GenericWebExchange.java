@@ -15,10 +15,6 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 
 import io.inverno.mod.http.server.Exchange;
@@ -38,7 +34,7 @@ import reactor.core.publisher.Mono;
  * @see WebRequest
  * @see WebResponse
  */
-class GenericWebExchange implements WebExchange  {
+class GenericWebExchange implements WebExchange<WebExchange.Context> {
 
 	private final GenericWebRequest request;
 	
@@ -46,7 +42,7 @@ class GenericWebExchange implements WebExchange  {
 	
 	private final Function<Mono<Void>, Exchange> finalizerConsumer;
 	
-	private Map<String, Object> attributes;
+	private final WebExchange.Context context;
 	
 	/**
 	 * <p>
@@ -57,10 +53,11 @@ class GenericWebExchange implements WebExchange  {
 	 * @param response          a web response
 	 * @param finalizerSupplier the deferred exchange finalizer
 	 */
-	public GenericWebExchange(GenericWebRequest request, GenericWebResponse response, Function<Mono<Void>, Exchange> finalizerConsumer) {
+	public GenericWebExchange(GenericWebRequest request, GenericWebResponse response, Function<Mono<Void>, Exchange> finalizerConsumer, WebExchange.Context context) {
 		this.request = request;
 		this.response = response;
 		this.finalizerConsumer = finalizerConsumer;
+		this.context = context;
 	}
 
 	@Override
@@ -74,37 +71,13 @@ class GenericWebExchange implements WebExchange  {
 	}
 	
 	@Override
-	public Exchange finalizer(Mono<Void> finalizer) {
-		this.finalizerConsumer.apply(finalizer);
-		return this;
+	public Context context() {
+		return this.context;
 	}
 	
 	@Override
-	public void setAttribute(String name, Object value) {
-		if(this.attributes == null) {
-			this.attributes = new HashMap<>();
-		}
-		this.attributes.put(name, value);
-	}
-
-	@Override
-	public void removeAttribute(String name) {
-		if(this.attributes != null) {
-			this.attributes.remove(name);
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> Optional<T> getAttribute(String name) {
-		if(this.attributes != null) {
-			return Optional.ofNullable((T)this.attributes.get(name));
-		}
-		return Optional.empty();
-	}
-
-	@Override
-	public Map<String, Object> getAttributes() {
-		return Collections.unmodifiableMap(this.attributes);
+	public Exchange finalizer(Mono<Void> finalizer) {
+		this.finalizerConsumer.apply(finalizer);
+		return this;
 	}
 }

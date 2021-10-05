@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.web.compiler.spi;
 
+import javax.lang.model.type.TypeMirror;
+
 /**
  * <p>
  * Describes the exchange route parameter.
@@ -25,4 +27,13 @@ package io.inverno.mod.web.compiler.spi;
  */
 public interface WebExchangeParameterInfo extends WebParameterInfo {
 
+	/**
+	 * <p>
+	 * Returns the exchange context type.
+	 * </p>
+	 * 
+	 * @return the context type
+	 */
+	TypeMirror getContextType();
+	
 }

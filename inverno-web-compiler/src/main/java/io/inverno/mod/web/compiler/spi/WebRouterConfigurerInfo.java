@@ -16,6 +16,7 @@
 package io.inverno.mod.web.compiler.spi;
 
 import javax.lang.model.element.ModuleElement;
+import javax.lang.model.type.TypeMirror;
 
 import io.inverno.core.compiler.spi.Info;
 
@@ -63,6 +64,16 @@ public interface WebRouterConfigurerInfo extends Info {
 	 * @return an array of provided router configurer
 	 */
 	WebProvidedRouterConfigurerInfo[] getRouters();
+	
+	/**
+	 * <p>
+	 * Returns the list of exchange context types required by the routes defined by
+	 * the Web router configurer.
+	 * </p>
+	 * 
+	 * @return a list of context types
+	 */
+	TypeMirror[] getContextTypes();
 	
 	/**
 	 * <p>

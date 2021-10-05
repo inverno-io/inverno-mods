@@ -15,10 +15,6 @@
  */
 package io.inverno.mod.web.internal.mock;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.web.WebExchange;
@@ -28,17 +24,16 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  *
  */
-public class MockWebExchange implements WebExchange {
+public class MockWebExchange implements WebExchange<WebExchange.Context> {
 
 	private final MockWebRequest mockRequest;
 	private final MockWebResponse mockResponse;
+	private final WebExchange.Context context;
 	
-	private final Map<String, Object> attributes;
-	
-	public MockWebExchange(MockWebRequest mockRequest, MockWebResponse mockResponse) {
+	public MockWebExchange(MockWebRequest mockRequest, MockWebResponse mockResponse, WebExchange.Context context) {
 		this.mockRequest = mockRequest;
 		this.mockResponse = mockResponse;
-		this.attributes = new HashMap<>();
+		this.context = context;
 	}
 	
 	public static MockExchangeBuilder from(String path) {
@@ -60,28 +55,12 @@ public class MockWebExchange implements WebExchange {
 	}
 	
 	@Override
+	public Context context() {
+		return this.context;
+	}
+	
+	@Override
 	public Exchange finalizer(Mono<Void> finalizer) {
 		return this;
-	}
-
-	@Override
-	public void setAttribute(String name, Object value) {
-		this.attributes.put(name, value);
-	}
-
-	@Override
-	public void removeAttribute(String name) {
-		this.attributes.remove(name);
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public <T> Optional<T> getAttribute(String name) {
-		return Optional.ofNullable((T)this.attributes.get(name));
-	}
-
-	@Override
-	public Map<String, Object> getAttributes() {
-		return this.attributes;
 	}
 }

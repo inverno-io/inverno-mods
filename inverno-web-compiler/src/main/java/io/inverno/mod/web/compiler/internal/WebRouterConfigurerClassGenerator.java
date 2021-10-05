@@ -10,21 +10,27 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing contextermissions and
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 package io.inverno.mod.web.compiler.internal;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.PrimitiveType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.ElementFilter;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.net.URIs;
@@ -36,6 +42,7 @@ import io.inverno.mod.web.compiler.internal.WebRouterConfigurerClassGenerationCo
 import io.inverno.mod.web.compiler.spi.WebBasicParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebControllerInfo;
 import io.inverno.mod.web.compiler.spi.WebCookieParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebExchangeContextParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebExchangeParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebFormParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebHeaderParameterInfo;
@@ -73,11 +80,11 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 		if(context.getMode() == GenerationMode.CONFIGURER_CLASS) {
 			TypeMirror beanAnnotationType = context.getElementUtils().getTypeElement(Bean.class.getCanonicalName()).asType();
 
-			TypeMirror webExchangeType = context.getElementUtils().getTypeElement(WebExchange.class.getCanonicalName()).asType();
-			TypeMirror webRouterConfigurerType = context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement(WebRouterConfigurer.class.getCanonicalName()), webExchangeType);
-			TypeMirror routerType = context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement(WebRouter.class.getCanonicalName()), webExchangeType);
+			TypeMirror webRouterConfigurerType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(WebRouterConfigurer.class.getCanonicalName()).asType());
+			TypeMirror routerType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(WebRouter.class.getCanonicalName()).asType());
 			
 			context.addImport(configurerClassName, configurerPackageName + "." + configurerClassName);
+			context.addImport("Context", configurerPackageName + "." + configurerClassName + ".Context");
 			
 			StringBuilder configurerAnnotation = this.visit(routerConfigurerInfo, context.withIndentDepth(1).withMode(GenerationMode.CONFIGURER_ANNOTATION));
 			
@@ -106,7 +113,7 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			configurer_constructor.append("\n").append(context.indent(1)).append("}");
 					
 			StringBuilder configurer_accept = new StringBuilder(context.indent(1)).append("@Override\n");
-			configurer_accept.append(context.indent(1)).append("public void accept(").append(context.getTypeName(routerType)).append(" router) {");
+			configurer_accept.append(context.indent(1)).append("public <A extends ").append(configurerClassName).append(".Context> void configure(").append(context.getTypeName(routerType)).append("<A> router) {");
 			if(routerConfigurerInfo.getRouters().length > 0) {
 				configurer_accept.append("\n").append(Arrays.stream(routerConfigurerInfo.getRouters()).map(routerInfo -> this.visit(routerInfo, context.withIndentDepth(2).withMode(GenerationMode.CONFIGURER_INVOKE))).collect(context.joining("\n"))).append("\n");
 			}
@@ -118,11 +125,15 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			
 			configurer_accept.append(context.indent(1)).append("}");
 			
+			StringBuilder configurer_context_creator = this.visit(routerConfigurerInfo, context.withIndentDepth(1).withMode(GenerationMode.CONFIGURER_CONTEXT_CREATOR));
+			
+			StringBuilder configurer_context = this.visit(routerConfigurerInfo, context.withIndentDepth(1).withMode(GenerationMode.CONFIGURER_CONTEXT));
+			
 			StringBuilder configurer_class = new StringBuilder();
 			
 			configurer_class.append(configurerAnnotation).append("\n");
 			configurer_class.append("@").append(context.getTypeName(beanAnnotationType)).append("\n");
-			configurer_class.append("public final class ").append(configurerClassName).append(" implements ").append(context.getTypeName(webRouterConfigurerType)).append(" {\n\n");
+			configurer_class.append("public final class ").append(configurerClassName).append(" implements ").append(context.getTypeName(webRouterConfigurerType)).append("<").append(configurerClassName).append(".Context> {\n\n");
 			
 			if(routerConfigurerInfo.getControllers().length > 0) {
 				configurer_class.append(configurer_controller_fields).append("\n\n");
@@ -131,11 +142,14 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 				configurer_class.append(configurer_router_fields).append("\n\n");
 			}
 			configurer_class.append(configurer_constructor).append("\n\n");
-			configurer_class.append(configurer_accept).append("\n");
+			configurer_class.append(configurer_accept).append("\n\n");
+			configurer_class.append(configurer_context_creator).append("\n\n");
+			configurer_class.append(configurer_context).append("\n");
 			
 			configurer_class.append("}");
 			
 			context.removeImport(configurerClassName);
+			context.removeImport("Context");
 			
 			configurer_class.insert(0, "\n\n").insert(0, context.getImports().stream().sorted().filter(i -> i.lastIndexOf(".") > 0 && !i.substring(0, i.lastIndexOf(".")).equals(configurerPackageName)).map(i -> new StringBuilder().append("import ").append(i).append(";")).collect(context.joining("\n")));
 			if(!configurerPackageName.equals("")) {
@@ -144,7 +158,7 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			
 			return configurer_class;
 		}
-		if(context.getMode() == GenerationMode.CONFIGURER_ANNOTATION) {
+		else if(context.getMode() == GenerationMode.CONFIGURER_ANNOTATION) {
 			TypeMirror webRoutesAnnotationType = context.getElementUtils().getTypeElement(WebRoutes.class.getCanonicalName()).asType();
 			StringBuilder result = new StringBuilder();
 			result.append("@").append(context.getTypeName(webRoutesAnnotationType)).append("({\n");
@@ -157,6 +171,113 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			);
 			result.append("\n})");
 			return result;
+		}
+		else if(context.getMode() == GenerationMode.CONFIGURER_CONTEXT) {
+			StringBuilder result = new StringBuilder();
+			result.append(context.indent(0)).append("public static interface Context extends ");
+			if(routerConfigurerInfo.getContextTypes().length > 0) {
+				result.append(Arrays.stream(routerConfigurerInfo.getContextTypes()).map(context::getTypeName).collect(Collectors.joining(", ")));
+			}
+			else {
+				result.append(context.getTypeName(context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(WebExchange.class.getCanonicalName()).asType()))).append(".Context");
+			}
+			result.append(" {}");
+			
+			return result;
+		}
+		else if(context.getMode() == GenerationMode.CONFIGURER_CONTEXT_CREATOR) {
+			// For each context type I must define the methods in order to implement the context
+			// This can actually be tricky because some interface may override others
+			// Let's start by listing all methods
+			
+			Map<String, ExecutableElement> methodsToImplement = new HashMap<>();
+			Map<String, ExecutableElement> defaultMethods = new HashMap<>();
+			Arrays.stream(routerConfigurerInfo.getContextTypes())
+				.flatMap(type -> ElementFilter.methodsIn(context.getElementUtils().getAllMembers((TypeElement)context.getTypeUtils().asElement(type))).stream())
+				.filter(element -> element.getEnclosingElement().getKind() == ElementKind.INTERFACE)
+				.forEach(element -> {
+					StringBuilder signatureKeyBuilder = new StringBuilder();
+					signatureKeyBuilder.append(element.getSimpleName().toString());
+					element.getParameters().stream().map(variableElement -> context.getTypeUtils().erasure(variableElement.asType()).toString()).forEach(signatureKeyBuilder::append);
+					String signatureKey = signatureKeyBuilder.toString();
+					
+					if(element.isDefault()) {
+						defaultMethods.put(signatureKey, element);
+						if(methodsToImplement.containsKey(signatureKey)) {
+							methodsToImplement.remove(signatureKey);
+						}
+					}
+					else if(!defaultMethods.containsKey(signatureKey)) {
+						methodsToImplement.put(signatureKey, element);
+					}
+				});
+			
+			Map<String, TypeMirror> contextFields = new HashMap<>();
+			StringBuilder context_methods = methodsToImplement.values().stream().map(element -> {
+				StringBuilder contextMethod = new StringBuilder();
+				String methodName = element.getSimpleName().toString();
+				if(methodName.startsWith("get")) {
+					String fieldName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
+					if(!element.getParameters().isEmpty() || element.getReturnType().getKind() == TypeKind.VOID) {
+						// report invalid getter
+					}
+					contextFields.put(fieldName, element.getReturnType());
+					
+					contextMethod.append(context.indent(2)).append("public ").append(context.getTypeName(element.getReturnType())).append(" ").append(methodName).append("() {").append("\n");
+					contextMethod.append(context.indent(3)).append("return this.").append(fieldName).append(";").append("\n");
+					contextMethod.append(context.indent(2)).append("}");
+				}
+				else if(methodName.startsWith("set")) {
+					String fieldName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
+					if(element.getParameters().size() != 1 || element.getReturnType().getKind() != TypeKind.VOID) {
+						// report invalid setter
+					}
+					contextFields.put(fieldName, element.getParameters().get(0).asType());
+					
+					contextMethod.append(context.indent(2)).append("public void ").append(methodName).append("(").append(context.getTypeName(element.getParameters().get(0).asType())).append(" ").append(fieldName).append(") {").append("\n");
+					contextMethod.append(context.indent(3)).append("this.").append(fieldName).append(" = ").append(fieldName).append(";").append("\n");
+					contextMethod.append(context.indent(2)).append("}");
+				}
+				else {
+					contextMethod.append(context.indent(2)).append("public ").append(context.getTypeName(element.getReturnType())).append(" ").append(methodName).append("(").append(element.getParameters().stream().map(variableElement -> new StringBuilder().append(context.getTypeName(variableElement.asType())).append(" ").append(variableElement.getSimpleName().toString())).collect(context.joining(", "))).append(") {").append("\n");
+					if(element.getReturnType().getKind() != TypeKind.VOID) {
+						contextMethod.append(context.indent(3)).append("return ");
+						switch(element.getReturnType().getKind()) {
+							case BOOLEAN: contextMethod.append("false");
+								break;
+							case BYTE:
+							case CHAR:
+							case SHORT:
+							case INT:
+							case LONG:
+							case FLOAT:
+							case DOUBLE: contextMethod.append("0");
+								break;
+							default: contextMethod.append("null");
+						}
+						contextMethod.append(";").append("\n");
+					}
+					contextMethod.append(context.indent(2)).append("}");
+				}
+				return contextMethod;
+			}).collect(context.joining("\n\n"));
+			
+			StringBuilder context_fields = contextFields.entrySet().stream().map(e -> {
+				StringBuilder contextField = new StringBuilder();
+				contextField.append(context.indent(2)).append("private ").append(context.getTypeName(e.getValue())).append(" ").append(e.getKey()).append(";");
+				return contextField;
+			}).collect(context.joining("\n"));
+			
+			StringBuilder context_creator = new StringBuilder();
+			context_creator.append(context.indent(0)).append("@Override").append("\n");
+			context_creator.append(context.indent(0)).append("public Context createContext() {").append("\n");
+			context_creator.append(context.indent(1)).append("return new Context() {").append("\n");
+			context_creator.append(context_fields).append("\n\n");
+			context_creator.append(context_methods).append("\n");
+			context_creator.append(context.indent(1)).append("};").append("\n");
+			context_creator.append(context.indent(0)).append("}");
+			
+			return context_creator;
 		}
 		return new StringBuilder();
 	}
@@ -178,7 +299,7 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			return new StringBuilder(context.indent(0)).append("this.").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName())).append(" = ").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName())).append(";");
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURER_INVOKE) {
-			return new StringBuilder(context.indent(0)).append("this.").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName())).append(".accept(router);");
+			return new StringBuilder(context.indent(0)).append("this.").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName())).append(".configure(router);");
 		}
 		return new StringBuilder();
 	}
@@ -517,6 +638,9 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 		else if(parameterInfo instanceof WebExchangeParameterInfo) {
 			return this.visit((WebExchangeParameterInfo)parameterInfo, context);
 		}
+		else if(parameterInfo instanceof WebExchangeContextParameterInfo) {
+			return this.visit((WebExchangeContextParameterInfo)parameterInfo, context);
+		}
 		else if(parameterInfo instanceof WebFormParameterInfo) {
 			return this.visit((WebFormParameterInfo)parameterInfo, context);
 		}
@@ -801,6 +925,14 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 	public StringBuilder visit(WebExchangeParameterInfo exchangeParameterInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS || context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE) {
 			return new StringBuilder("exchange");
+		}
+		return new StringBuilder();
+	}
+	
+	@Override
+	public StringBuilder visit(WebExchangeContextParameterInfo exchangeContextParameterInfo, WebRouterConfigurerClassGenerationContext context) {
+		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS || context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE) {
+			return new StringBuilder("exchange.context()");
 		}
 		return new StringBuilder();
 	}

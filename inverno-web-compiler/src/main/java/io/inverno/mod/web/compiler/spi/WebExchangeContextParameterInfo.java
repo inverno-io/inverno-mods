@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.web;
-
-import io.inverno.mod.http.server.ExchangeHandler;
+package io.inverno.mod.web.compiler.spi;
 
 /**
  * <p>
- * An exchange handler used to handle {@link WebExchange}.
+ * Describes an exchange context route parameter.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
- * 
- * @param <A> the type of web exchange context
+ * @since 1.3
  */
-public interface WebExchangeHandler<A extends WebExchange.Context> extends ExchangeHandler<WebExchange<A>> {
+public interface WebExchangeContextParameterInfo extends WebParameterInfo {
 
 }
