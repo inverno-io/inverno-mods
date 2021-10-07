@@ -25,9 +25,9 @@ import io.inverno.mod.base.resource.ModuleResource;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceService;
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.StaticHandler;
 import io.inverno.mod.web.WebConfiguration;
-import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;
 
@@ -48,7 +48,7 @@ import io.inverno.mod.web.WebRouterConfigurer;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<WebExchange.Context> {
+public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<ExchangeContext> {
 
 	private static final Logger LOGGER = LogManager.getLogger(WebjarsWebRouterConfigurer.class);
 	
@@ -70,8 +70,7 @@ public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 	}
 	
 	@Override
-	public <A extends WebExchange.Context> void configure(WebRouter<A> router) {
-		
+	public void configure(WebRouter<? extends ExchangeContext> router) {
 		/* 2 possibilities:
 		 * - modular webjar
 		 *   - /[module_name]/webjars/* -> module://[module_name]/META-INF/resources/webjars/[module_name]/[module_version]/* 

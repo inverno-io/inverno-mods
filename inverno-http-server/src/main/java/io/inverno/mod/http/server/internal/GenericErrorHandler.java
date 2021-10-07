@@ -18,14 +18,14 @@ package io.inverno.mod.http.server.internal;
 import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
 
+import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.MethodNotAllowedException;
 import io.inverno.mod.http.base.ServiceUnavailableException;
 import io.inverno.mod.http.base.Status;
-import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ErrorExchangeHandler;
 
 /**
  * <p>
@@ -39,7 +39,7 @@ import io.inverno.mod.http.server.ExchangeHandler;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class GenericErrorHandler implements ExchangeHandler<ErrorExchange<Throwable>> {
+public class GenericErrorHandler implements ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> {
 
 	@Override
 	public void handle(ErrorExchange<Throwable> exchange) throws HttpException {

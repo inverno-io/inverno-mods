@@ -16,6 +16,7 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.base.net.URIBuilder;
+import io.inverno.mod.http.server.ExchangeContext;
 
 /**
  * <p>
@@ -44,13 +45,13 @@ import io.inverno.mod.base.net.URIBuilder;
  * @see WebExchange
  * @see WebRouter
  * 
- * @param <A> the type of web exchange handled by the route
+ * @param <A> the type of the exchange context
  */
-public interface WebRoute<A extends WebExchange.Context> extends 
-	PathAwareRoute<WebExchange<A>>, 
-	MethodAwareRoute<WebExchange<A>>, 
-	ContentAwareRoute<WebExchange<A>>, 
-	AcceptAwareRoute<WebExchange<A>>, 
-	Route<WebExchange<A>> {
+public interface WebRoute<A extends ExchangeContext> extends 
+	PathAwareRoute<A, WebExchange<A>>, 
+	MethodAwareRoute<A, WebExchange<A>>, 
+	ContentAwareRoute<A, WebExchange<A>>, 
+	AcceptAwareRoute<A, WebExchange<A>>, 
+	Route<A, WebExchange<A>> {
 
 }

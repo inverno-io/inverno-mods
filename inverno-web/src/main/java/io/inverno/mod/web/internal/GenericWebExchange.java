@@ -18,6 +18,7 @@ package io.inverno.mod.web.internal;
 import java.util.function.Function;
 
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRequest;
 import io.inverno.mod.web.WebResponse;
@@ -34,15 +35,15 @@ import reactor.core.publisher.Mono;
  * @see WebRequest
  * @see WebResponse
  */
-class GenericWebExchange implements WebExchange<WebExchange.Context> {
+class GenericWebExchange implements WebExchange<ExchangeContext> {
 
 	private final GenericWebRequest request;
 	
 	private final GenericWebResponse response;
 	
-	private final Function<Mono<Void>, Exchange> finalizerConsumer;
+	private final Function<Mono<Void>, Exchange<ExchangeContext>> finalizerConsumer;
 	
-	private final WebExchange.Context context;
+	private final ExchangeContext context;
 	
 	/**
 	 * <p>
@@ -53,7 +54,7 @@ class GenericWebExchange implements WebExchange<WebExchange.Context> {
 	 * @param response          a web response
 	 * @param finalizerSupplier the deferred exchange finalizer
 	 */
-	public GenericWebExchange(GenericWebRequest request, GenericWebResponse response, Function<Mono<Void>, Exchange> finalizerConsumer, WebExchange.Context context) {
+	public GenericWebExchange(GenericWebRequest request, GenericWebResponse response, Function<Mono<Void>, Exchange<ExchangeContext>> finalizerConsumer, ExchangeContext context) {
 		this.request = request;
 		this.response = response;
 		this.finalizerConsumer = finalizerConsumer;
@@ -71,12 +72,12 @@ class GenericWebExchange implements WebExchange<WebExchange.Context> {
 	}
 	
 	@Override
-	public WebExchange.Context context() {
+	public ExchangeContext context() {
 		return this.context;
 	}
 	
 	@Override
-	public Exchange finalizer(Mono<Void> finalizer) {
+	public Exchange<ExchangeContext> finalizer(Mono<Void> finalizer) {
 		this.finalizerConsumer.apply(finalizer);
 		return this;
 	}

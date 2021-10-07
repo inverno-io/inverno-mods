@@ -16,7 +16,7 @@
 package io.inverno.mod.web.internal.mock;
 
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.WebExchange;
 import reactor.core.publisher.Mono;
 
@@ -24,13 +24,13 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  *
  */
-public class MockWebExchange implements WebExchange<WebExchange.Context> {
+public class MockWebExchange implements WebExchange<ExchangeContext> {
 
 	private final MockWebRequest mockRequest;
 	private final MockWebResponse mockResponse;
-	private final WebExchange.Context context;
+	private final ExchangeContext context;
 	
-	public MockWebExchange(MockWebRequest mockRequest, MockWebResponse mockResponse, WebExchange.Context context) {
+	public MockWebExchange(MockWebRequest mockRequest, MockWebResponse mockResponse, ExchangeContext context) {
 		this.mockRequest = mockRequest;
 		this.mockResponse = mockResponse;
 		this.context = context;
@@ -55,12 +55,12 @@ public class MockWebExchange implements WebExchange<WebExchange.Context> {
 	}
 	
 	@Override
-	public Context context() {
+	public ExchangeContext context() {
 		return this.context;
 	}
 	
 	@Override
-	public Exchange finalizer(Mono<Void> finalizer) {
+	public MockWebExchange finalizer(Mono<Void> finalizer) {
 		return this;
 	}
 }

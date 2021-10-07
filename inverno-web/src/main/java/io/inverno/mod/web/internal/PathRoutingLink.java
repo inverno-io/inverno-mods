@@ -20,6 +20,7 @@ import java.util.Map;
 
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.PathAwareRoute;
 
 /**
@@ -36,12 +37,13 @@ import io.inverno.mod.web.PathAwareRoute;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
- * @param <A> the type of exchange handled by the route
- * @param <B> the route type
+ * @param <A> the type of the exchange context
+ * @param <B> the type of exchange handled by the route
+ * @param <C> the route type
  */
-class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends RoutingLink<A, PathRoutingLink<A, B>, B> {
+class PathRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends PathAwareRoute<A, B>> extends RoutingLink<A, B, PathRoutingLink<A, B, C>, C> {
 
-	private Map<String, RoutingLink<A, ?, B>> handlers;
+	private Map<String, RoutingLink<A, B, ?, C>> handlers;
 
 	/**
 	 * <p>
@@ -54,7 +56,7 @@ class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends R
 	}
 
 	@Override
-	public PathRoutingLink<A, B> setRoute(B route) {
+	public PathRoutingLink<A, B, C> setRoute(C route) {
 		String path = route.getPath();
 		if (path != null) {
 			// Exact match
@@ -66,7 +68,7 @@ class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends R
 		return this;
 	}
 
-	private void setRoute(String path, B route) {
+	private void setRoute(String path, C route) {
 		if (this.handlers.containsKey(path)) {
 			this.handlers.get(path).setRoute(route);
 		} 
@@ -76,10 +78,10 @@ class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends R
 	}
 
 	@Override
-	public void enableRoute(B route) {
+	public void enableRoute(C route) {
 		String path = route.getPath();
 		if (path != null) {
-			RoutingLink<A, ?, B> handler = this.handlers.get(path);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(path);
 			if (handler != null) {
 				handler.enableRoute(route);
 			}
@@ -91,10 +93,10 @@ class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends R
 	}
 
 	@Override
-	public void disableRoute(B route) {
+	public void disableRoute(C route) {
 		String path = route.getPath();
 		if (path != null) {
-			RoutingLink<A, ?, B> handler = this.handlers.get(path);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(path);
 			if (handler != null) {
 				handler.disableRoute(route);
 			}
@@ -106,10 +108,10 @@ class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends R
 	}
 
 	@Override
-	public void removeRoute(B route) {
+	public void removeRoute(C route) {
 		String path = route.getPath();
 		if (path != null) {
-			RoutingLink<A, ?, B> handler = this.handlers.get(path);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(path);
 			if (handler != null) {
 				handler.removeRoute(route);
 				if (!handler.hasRoute()) {
@@ -136,24 +138,24 @@ class PathRoutingLink<A extends Exchange, B extends PathAwareRoute<A>> extends R
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <F extends RouteExtractor<A, B>> void extractRoute(F extractor) {
+	public <F extends RouteExtractor<A, B, C>> void extractRoute(F extractor) {
 		if (!(extractor instanceof PathAwareRouteExtractor)) {
 			throw new IllegalArgumentException("Route extractor is not path aware");
 		}
 		this.handlers.entrySet().stream().forEach(e -> {
-			e.getValue().extractRoute(((PathAwareRouteExtractor<A, B, ?>) extractor).path(e.getKey()));
+			e.getValue().extractRoute(((PathAwareRouteExtractor<A, B, C, ?>) extractor).path(e.getKey()));
 		});
 		super.extractRoute(extractor);
 	}
 
 	@Override
-	public void handle(A exchange) throws HttpException {
+	public void handle(B exchange) throws HttpException {
 		if (this.handlers.isEmpty()) {
 			this.nextLink.handle(exchange);
 		} 
 		else {
 			// Path in the request headers is normalized as per API specification
-			RoutingLink<A, ?, B> handler = this.handlers.get(exchange.request().getPathAbsolute());
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(exchange.request().getPathAbsolute());
 			if (handler == null) {
 				handler = this.nextLink;
 			}

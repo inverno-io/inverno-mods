@@ -18,6 +18,7 @@ package io.inverno.mod.web;
 import java.util.function.Consumer;
 
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 
 /**
  * <p>
@@ -33,12 +34,13 @@ import io.inverno.mod.http.server.Exchange;
  * 
  * @see Router
  * 
- * @param <A> the route exchange type
- * @param <B> the router type
- * @param <C> the route manager type
- * @param <D> the route type
- * @param <E> the router exchange type
+ * @param <A> the type of the exchange context
+ * @param <B> the route exchange type
+ * @param <C> the router type
+ * @param <D> the route manager type
+ * @param <E> the route type
+ * @param <F> the router exchange type
  */
-public interface RouterConfigurer<A extends Exchange, B extends Router<A, B, C, D, E>, C extends RouteManager<A, B, C, D, E>, D extends Route<A>, E extends Exchange> extends Consumer<B> {
+public interface RouterConfigurer<A extends ExchangeContext, B extends Exchange<A>, C extends Router<A, B, C, D, E, F>, D extends RouteManager<A, B, C, D, E, F>, E extends Route<A, B>, F extends Exchange<A>> extends Consumer<C> {
 
 }

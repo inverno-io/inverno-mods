@@ -21,14 +21,15 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.ErrorExchangeHandler;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebExchangeHandler;
 import io.inverno.mod.web.ErrorWebRoute;
 import io.inverno.mod.web.ErrorWebRouteManager;
 import io.inverno.mod.web.ErrorWebRouter;
-import io.inverno.mod.web.WebExchange;
-import io.inverno.mod.web.WebExchange.Context;
 
 /**
  * <p>
@@ -38,7 +39,7 @@ import io.inverno.mod.web.WebExchange.Context;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericErrorWebRouteManager implements ErrorWebRouteManager<WebExchange.Context> {
+class GenericErrorWebRouteManager implements ErrorWebRouteManager {
 
 	private final GenericErrorWebRouter router;
 	
@@ -48,7 +49,7 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager<WebExchange.Co
 	
 	private Set<String> languages;
 	
-	private ExchangeHandler<ErrorWebExchange<Throwable, WebExchange.Context>> handler;
+	private ExchangeHandler<ExchangeContext, ErrorWebExchange<Throwable>> handler;
 	
 	/**
 	 * <p>
@@ -62,25 +63,25 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager<WebExchange.Co
 	}
 
 	@Override
-	public ErrorWebRouter<WebExchange.Context> enable() {
+	public ErrorWebRouter enable() {
 		this.findRoutes().stream().forEach(route -> route.enable());
 		return this.router;
 	}
 
 	@Override
-	public ErrorWebRouter<WebExchange.Context> disable() {
+	public ErrorWebRouter disable() {
 		this.findRoutes().stream().forEach(route -> route.disable());
 		return this.router;
 	}
 
 	@Override
-	public ErrorWebRouter<WebExchange.Context> remove() {
+	public ErrorWebRouter remove() {
 		this.findRoutes().stream().forEach(route -> route.remove());
 		return this.router;
 	}
 
 	@Override
-	public Set<ErrorWebRoute<WebExchange.Context>> findRoutes() {
+	public Set<ErrorWebRoute> findRoutes() {
 		// TODO Implement filtering in the route extractor
 		return this.router.getRoutes().stream().filter(route -> {
 			// We want all routes that share the same criteria as the one defined in this route manager
@@ -104,7 +105,7 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager<WebExchange.Co
 	}
 
 	@Override
-	public ErrorWebRouteManager<WebExchange.Context> error(Class<? extends Throwable> error) {
+	public ErrorWebRouteManager error(Class<? extends Throwable> error) {
 		if(this.errors == null) {
 			this.errors = new LinkedHashSet<>();
 		}
@@ -113,7 +114,7 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager<WebExchange.Co
 	}
 
 	@Override
-	public ErrorWebRouteManager<WebExchange.Context> produces(String mediaType) {
+	public ErrorWebRouteManager produces(String mediaType) {
 		if(this.produces == null) {
 			this.produces = new LinkedHashSet<>();
 		}
@@ -122,7 +123,7 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager<WebExchange.Co
 	}
 
 	@Override
-	public ErrorWebRouteManager<WebExchange.Context> language(String language) {
+	public ErrorWebRouteManager language(String language) {
 		if(this.languages == null) {
 			this.languages = new LinkedHashSet<>();
 		}
@@ -132,19 +133,17 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager<WebExchange.Co
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public ErrorWebRouter<Context> handler(ExchangeHandler<? super ErrorWebExchange<Throwable, Context>> handler) {
+	public ErrorWebRouter handler(ErrorExchangeHandler<? extends Throwable, ? extends ErrorExchange<? extends Throwable>> handler) {
 		Objects.requireNonNull(handler);
-		this.handler = (ExchangeHandler<ErrorWebExchange<Throwable, WebExchange.Context>>) handler;
+		this.handler = (ExchangeHandler<ExchangeContext, ErrorWebExchange<Throwable>>) handler;
 		this.commit();
 		return this.router;
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
-	public ErrorWebRouter<Context> handler(ErrorWebExchangeHandler<? extends Throwable, ? super Context> handler) {
+	public ErrorWebRouter handler(ErrorWebExchangeHandler<Throwable> handler) {
 		Objects.requireNonNull(handler);
-		// This might throw a class cast exception if the handler is not associated with corresponding class types
-		this.handler = (ErrorWebExchangeHandler<Throwable, WebExchange.Context>) handler;
+		this.handler = handler;
 		this.commit();
 		return this.router;
 	}

@@ -19,7 +19,9 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.RootExchangeHandler;
 
 /**
  * <p>
@@ -41,7 +43,7 @@ import io.inverno.mod.http.server.ExchangeHandler;
  * A router is itself an exchange handler that implements a routing logic to
  * delegate the actual exchange processing to the exchange handler defined in
  * the route matching the original request. A router is typically used as root
- * or error handler in a HTTP server.
+ * handler in a HTTP server.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -52,14 +54,15 @@ import io.inverno.mod.http.server.ExchangeHandler;
  * @see Route
  * @see RouteManager
  * 
- * @param <A> the type of exchange handled by the route
- * @param <B> the router type
- * @param <C> the route manager type
- * @param <D> the route type
- * @param <E> the type of exchange handled by the router
+ * @param <A> the type of the exchange context
+ * @param <B> the type of exchange handled by the route
+ * @param <C> the router type
+ * @param <D> the route manager type
+ * @param <E> the route type
+ * @param <F> the type of exchange handled by the router
  */
-public interface Router<A extends Exchange, B extends Router<A, B, C, D, E>, C extends RouteManager<A, B, C, D, E>, D extends Route<A>, E extends Exchange>
-		extends ExchangeHandler<E> {
+public interface Router<A extends ExchangeContext, B extends Exchange<A>, C extends Router<A, B, C, D, E, F>, D extends RouteManager<A, B, C, D, E, F>, E extends Route<A, B>, F extends Exchange<A>>
+		extends RootExchangeHandler<A, F> {
 
 	/**
 	 * <p>
@@ -69,7 +72,7 @@ public interface Router<A extends Exchange, B extends Router<A, B, C, D, E>, C e
 	 * 
 	 * @return a route manager
 	 */
-	C route();
+	D route();
 
 	/**
 	 * <p>
@@ -81,9 +84,9 @@ public interface Router<A extends Exchange, B extends Router<A, B, C, D, E>, C e
 	 * @return the router
 	 */
 	@SuppressWarnings("unchecked")
-	default B route(Consumer<C> routeConfigurer) {
+	default C route(Consumer<D> routeConfigurer) {
 		routeConfigurer.accept(this.route());
-		return (B) this;
+		return (C) this;
 	}
 
 	/**
@@ -93,5 +96,5 @@ public interface Router<A extends Exchange, B extends Router<A, B, C, D, E>, C e
 	 * 
 	 * @return a set of routes or an empty set if no route is defined in the router
 	 */
-	Set<D> getRoutes();
+	Set<E> getRoutes();
 }

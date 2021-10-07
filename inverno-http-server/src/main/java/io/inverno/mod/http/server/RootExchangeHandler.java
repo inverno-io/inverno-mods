@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,40 +15,37 @@
  */
 package io.inverno.mod.http.server;
 
-import io.inverno.mod.http.base.HttpException;
-
 /**
  * <p>
- * An exchange handler is used to handle server exchanges.
+ * A root exchange handler must be provided to the server to handle exchanges.
  * </p>
  * 
  * <p>
- * The HTTP server relies on an exchange handler to actually process a client
- * request and provide a response to the client. It will create an
- * {@link ErrorExchange} and invoke the {@link ErrorExchangeHandler} in case an
- * error is thrown during that process.
+ * It differs from a regular {@link ExchangeHandler} by the definition of the
+ * {@link #createContext()} method which is used by the server to create the
+ * exchange context associated to an {@link Exchange}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
- *
- * @see ErrorExchange
- * @see ExchangeHandler
+ * @since 1.33
  * 
  * @param <A> the type of the exchange context
  * @param <B> the type of exchange handled by the handler
  */
-@FunctionalInterface
-public interface ExchangeHandler<A extends ExchangeContext, B extends Exchange<A>> {
-
+public interface RootExchangeHandler<A extends ExchangeContext, B extends Exchange<A>> extends ExchangeHandler<A, B> {
+	
 	/**
 	 * <p>
-	 * Processes the specified server exchange.
+	 * Creates an exchange context eventually attached to an exchange.
 	 * </p>
 	 * 
-	 * @param exchange the exchange to process
+	 * <p>
+	 * This method returns null by default.
+	 * </p>
 	 * 
-	 * @throws HttpException if an error occurs during the processing of the exchange
+	 * @return a new context instanec or null
 	 */
-	void handle(B exchange) throws HttpException;
+	default A createContext() {
+		return null;
+	}
 }

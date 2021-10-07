@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 
 /**
@@ -27,6 +28,6 @@ import io.inverno.mod.http.server.ExchangeHandler;
  * 
  * @param <A> the type of web exchange context
  */
-public interface WebExchangeHandler<A extends WebExchange.Context> extends ExchangeHandler<WebExchange<A>> {
+public interface WebExchangeHandler<A extends ExchangeContext> extends ExchangeHandler<A, WebExchange<A>> {
 
 }

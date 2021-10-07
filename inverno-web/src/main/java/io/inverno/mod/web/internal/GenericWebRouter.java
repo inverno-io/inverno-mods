@@ -31,13 +31,14 @@ import io.inverno.mod.http.base.internal.header.AcceptCodec;
 import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.WebConfiguration;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.WebRouteManager;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;
-import io.inverno.mod.web.WebRouterException;
 
 /**
  * <p>
@@ -48,18 +49,18 @@ import io.inverno.mod.web.WebRouterException;
  * @since 1.0
  */
 @Bean( name = "webRouter" )
-public class GenericWebRouter implements @Provide WebRouter<WebExchange.Context> {
+public class GenericWebRouter implements @Provide WebRouter<ExchangeContext> {
 
 	private final WebConfiguration configuration;
 	private final DataConversionService dataConversionService;
 	private final ResourceService resourceService;
 	private final ObjectConverter<String> parameterConverter;
 	
-	private final RoutingLink<WebExchange<WebExchange.Context>, ?, WebRoute<WebExchange.Context>> firstLink;
+	private final RoutingLink<ExchangeContext, WebExchange<ExchangeContext>, ?, WebRoute<ExchangeContext>> firstLink;
 	private final OpenApiWebRouterConfigurer openApiConfigurer;
 	private final WebjarsWebRouterConfigurer webjarsConfigurer;
 	
-	private WebRouterConfigurer<? extends WebExchange.Context> configurer;
+	private WebRouterConfigurer<? extends ExchangeContext> configurer;
 	
 	/**
 	 * <p>
@@ -96,6 +97,18 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange.Context>
 	@SuppressWarnings("unchecked")
 	@Init
 	public void init() {
+		
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> h = exchange -> {
+			try(Resource favicon = resourceService.getResource(new URI("module://" + this.getClass().getModule().getName() + "/inverno_favicon.svg"))) {
+				exchange.response().body().resource().value(favicon);
+			} 
+			catch (Exception e) {
+				throw new NotFoundException();
+			}
+		};
+		
+		this.route().path("/favicon.ico").handler(h);
+		
 		this.route().path("/favicon.ico").handler(exchange -> {
 			try(Resource favicon = resourceService.getResource(new URI("module://" + this.getClass().getModule().getName() + "/inverno_favicon.svg"))) {
 				exchange.response().body().resource().value(favicon);
@@ -114,7 +127,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange.Context>
 		
 		if(this.configurer != null) {
 			// We know it's working because the context is provided by the configurer
-			((WebRouterConfigurer<WebExchange.Context>)this.configurer).accept(this);
+			((WebRouterConfigurer<ExchangeContext>)this.configurer).accept(this);
 		}
 	}
 	
@@ -125,7 +138,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange.Context>
 	 * 
 	 * @param configurer a web router configurer
 	 */
-	public void setConfigurer(WebRouterConfigurer<? extends WebExchange.Context> configurer) {
+	public void setConfigurer(WebRouterConfigurer<? extends ExchangeContext> configurer) {
 		this.configurer = configurer;
 	}
 	
@@ -136,7 +149,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange.Context>
 	 * 
 	 * @param route a web route
 	 */
-	void setRoute(WebRoute<WebExchange.Context> route) {
+	void setRoute(WebRoute<ExchangeContext> route) {
 		this.firstLink.setRoute(route);
 	}
 	
@@ -147,7 +160,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange.Context>
 	 * 
 	 * @param route the web route to enable
 	 */
-	void enableRoute(WebRoute<WebExchange.Context> route) {
+	void enableRoute(WebRoute<ExchangeContext> route) {
 		this.firstLink.enableRoute(route);
 	}
 	
@@ -158,7 +171,7 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange.Context>
 	 * 
 	 * @param route the web route to disable
 	 */
-	void disableRoute(WebRoute<WebExchange.Context> route) {
+	void disableRoute(WebRoute<ExchangeContext> route) {
 		this.firstLink.disableRoute(route);
 	}
 
@@ -169,31 +182,30 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange.Context>
 	 * 
 	 * @param route the web route to remove
 	 */
-	void removeRoute(WebRoute<WebExchange.Context> route) {
+	void removeRoute(WebRoute<ExchangeContext> route) {
 		this.firstLink.removeRoute(route);
 	}
 	
 	@Override
-	public WebRouteManager<WebExchange.Context> route() {
+	public WebRouteManager<ExchangeContext> route() {
 		return new GenericWebRouteManager(this);
 	}
 	
 	@Override
-	public Set<WebRoute<WebExchange.Context>> getRoutes() {
+	public Set<WebRoute<ExchangeContext>> getRoutes() {
 		GenericWebRouteExtractor routeExtractor = new GenericWebRouteExtractor(this);
 		this.firstLink.extractRoute(routeExtractor);
 		return routeExtractor.getRoutes();
 	}
 	
 	@Override
-	public void handle(Exchange exchange) throws HttpException {
-		WebExchange.Context context = this.configurer != null ? this.configurer.createContext() : null;
-		try {
-			this.firstLink.handle(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.dataConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange::finalizer, context));
-		}
-		catch(Throwable t) {
-			throw new WebRouterException(t, context);
-		}
+	public void handle(Exchange<ExchangeContext> exchange) throws HttpException {
+		this.firstLink.handle(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.dataConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange::finalizer, exchange.context()));
+	}
+	
+	@Override
+	public ExchangeContext createContext() {
+		return this.configurer != null ? this.configurer.createContext() : null;
 	}
 	
 	/**
@@ -205,5 +217,5 @@ public class GenericWebRouter implements @Provide WebRouter<WebExchange.Context>
 	 * @since 1.0
 	 */
 	@Bean( name = "webRouterConfigurer")
-	public static interface ConfigurerSocket extends Supplier<WebRouterConfigurer<? extends WebExchange.Context>> {}
+	public static interface ConfigurerSocket extends Supplier<WebRouterConfigurer<? extends ExchangeContext>> {}
 }

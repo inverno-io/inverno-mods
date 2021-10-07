@@ -27,6 +27,7 @@ import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.UnsupportedMediaTypeException;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.header.AcceptCodec;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
@@ -41,9 +42,9 @@ public class ConsumesRoutingLinkTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testHandle() {
-		List<MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>>> linkRegistry = new ArrayList<>();
-		MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
-		ConsumesRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> routingLink = new ConsumesRoutingLink<>(new AcceptCodec(false));
+		List<MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>>> linkRegistry = new ArrayList<>();
+		MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
+		ConsumesRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>> routingLink = new ConsumesRoutingLink<>(new AcceptCodec(false));
 		routingLink.connect(mockRoutingLink);
 		
 		GenericWebRoute route1 = new GenericWebRoute(null);

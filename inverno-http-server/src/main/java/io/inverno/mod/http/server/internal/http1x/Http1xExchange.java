@@ -29,9 +29,11 @@ import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.Part;
+import io.inverno.mod.http.server.RootExchangeHandler;
 import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.inverno.mod.http.server.internal.GenericErrorExchange;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
@@ -107,8 +109,8 @@ public class Http1xExchange extends AbstractExchange {
 			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder,
-			ExchangeHandler<Exchange> rootHandler, 
-			ExchangeHandler<ErrorExchange<Throwable>> errorHandler
+			RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler, 
+			ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler
 		) {
 		super(context, rootHandler, errorHandler, new Http1xRequest(context, httpRequest, new Http1xRequestHeaders(httpRequest, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http1xResponse(context, headerService, parameterConverter));
 		this.encoder = encoder;
@@ -130,7 +132,7 @@ public class Http1xExchange extends AbstractExchange {
 	
 	@Override
 	protected ErrorExchange<Throwable> createErrorExchange(Throwable error) {
-		return new GenericErrorExchange(this.request, new Http1xResponse(this.context, this.headerService, this.parameterConverter), this.finalizer, error);
+		return new GenericErrorExchange(this.request, new Http1xResponse(this.context, this.headerService, this.parameterConverter), this.finalizer, error, this.exchangeContext);
 	}
 	
 	private Charset getCharset() {

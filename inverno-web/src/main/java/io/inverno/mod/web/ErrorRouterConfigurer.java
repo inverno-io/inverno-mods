@@ -15,18 +15,30 @@
  */
 package io.inverno.mod.web;
 
-import io.inverno.mod.http.server.ErrorExchangeHandler;
+import java.util.function.Consumer;
+
+import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.ExchangeContext;
 
 /**
  * <p>
- * An error exchange handler used to handle {@link ErrorWebExchange}.
+ * Base error router configurer interface.
+ * </p>
+ * 
+ * <p>
+ * An error router configurer is used to configure an error router.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.3
  * 
- * @param <A> the error type
+ * @see Router
+ * 
+ * @param <A> the error route exchange type
+ * @param <B> the error router type
+ * @param <C> the error route manager type
+ * @param <D> the route type
  */
-public interface ErrorWebExchangeHandler<A extends Throwable> extends ErrorExchangeHandler<A, ErrorWebExchange<A>> {
+public interface ErrorRouterConfigurer<A extends ErrorExchange<Throwable>, B extends ErrorRouter<A, B, C, D>, C extends ErrorRouteManager<A, B, C, D>, D extends Route<ExchangeContext, A>> extends Consumer<B> {
 
 }

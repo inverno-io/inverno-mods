@@ -40,7 +40,7 @@ import io.inverno.core.compiler.spi.plugin.CompilerPlugin;
 import io.inverno.core.compiler.spi.plugin.PluginContext;
 import io.inverno.core.compiler.spi.plugin.PluginExecution;
 import io.inverno.core.compiler.spi.plugin.PluginExecutionException;
-import io.inverno.mod.web.WebExchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.WebRouterConfigurer;
 import io.inverno.mod.web.annotation.WebController;
 import io.inverno.mod.web.annotation.WebRoute;
@@ -84,7 +84,7 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 	private TypeMirror webControllerAnnotationType;
 	private TypeMirror webRoutesAnnotationType;
 	private TypeMirror webRouterConfigurerType;
-	private TypeMirror webExchangeContextType;
+	private TypeMirror exchangeContextType;
 	private TypeMirror objectType;
 	
 	private boolean enabled = true;
@@ -120,7 +120,7 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 		this.webControllerAnnotationType = webControllerElement.asType();
 		this.webRoutesAnnotationType = this.pluginContext.getElementUtils().getTypeElement(WebRoutes.class.getCanonicalName()).asType();
 		this.webRouterConfigurerType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebRouterConfigurer.class.getCanonicalName()).asType());
-		this.webExchangeContextType = this.pluginContext.getElementUtils().getTypeElement(WebExchange.Context.class.getCanonicalName()).asType();
+		this.exchangeContextType = this.pluginContext.getElementUtils().getTypeElement(ExchangeContext.class.getCanonicalName()).asType();
 		this.objectType = this.pluginContext.getElementUtils().getTypeElement(Object.class.getCanonicalName()).asType();
 		
 		this.typeHierarchyExtractor = new TypeHierarchyExtractor(this.pluginContext.getTypeUtils());
@@ -264,7 +264,7 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 						}
 						
 						List<? extends TypeMirror> webRouterConfigurerTypeArguments = ((DeclaredType)this.findSuperType(bean.getType(), this.webRouterConfigurerType)).getTypeArguments();
-						TypeMirror contextType = !webRouterConfigurerTypeArguments.isEmpty() ? webRouterConfigurerTypeArguments.get(0) : this.webExchangeContextType;
+						TypeMirror contextType = !webRouterConfigurerTypeArguments.isEmpty() ? webRouterConfigurerTypeArguments.get(0) : this.exchangeContextType;
 						
 						return new GenericWebProvidedRouterConfigurerInfo(beanElement, new WebRouterConfigurerQualifiedName(bean.getQualifiedName(), this.pluginContext.getTypeUtils().asElement(this.pluginContext.getTypeUtils().erasure(bean.getType())).getSimpleName().toString()), bean, webRoutes, contextType);
 					});

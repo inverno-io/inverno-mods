@@ -31,8 +31,11 @@ import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.RootExchangeHandler;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -60,7 +63,7 @@ import reactor.core.publisher.SignalType;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implements Exchange {
+public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implements Exchange<ExchangeContext> {
 
 	private static final Logger LOGGER = LogManager.getLogger(AbstractExchange.class);
 	private static final Marker MARKER_ERROR = MarkerManager.getMarker("HTTP_ERROR");
@@ -69,11 +72,12 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	protected final ChannelHandlerContext context;
 	protected final EventExecutor contextExecutor;
 	
-	protected final ExchangeHandler<Exchange> rootHandler;
-	protected final ExchangeHandler<ErrorExchange<Throwable>> errorHandler;
+	protected final RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler;
+	protected final ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler;
 	
 	protected final AbstractRequest request;
 	protected AbstractResponse response;
+	protected final ExchangeContext exchangeContext;
 	
 	protected Mono<Void> finalizer;
 	
@@ -86,7 +90,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	private ErrorSubscriber errorSubscriber;
 	
-	protected static final ExchangeHandler<ErrorExchange<Throwable>> LAST_RESORT_ERROR_HANDLER = new GenericErrorHandler();
+	protected static final ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> LAST_RESORT_ERROR_HANDLER = new GenericErrorHandler();
 	
 	/**
 	 * <p>
@@ -100,13 +104,17 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * @param request      the exchange request
 	 * @param response     the exchange response
 	 */
-	public AbstractExchange(ChannelHandlerContext context, ExchangeHandler<Exchange> rootHandler, ExchangeHandler<ErrorExchange<Throwable>> errorHandler, AbstractRequest request, AbstractResponse response) {
+	public AbstractExchange(ChannelHandlerContext context, RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler, ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler, AbstractRequest request, AbstractResponse response) {
 		this.context = context;
 		this.contextExecutor = this.context.executor();
 		this.rootHandler = rootHandler;
 		this.errorHandler = errorHandler;
 		this.request = request;
 		this.response = response;
+		this.exchangeContext = rootHandler.createContext();
+		if(this.exchangeContext != null) {
+			this.exchangeContext.init();
+		}
 	}
 	
 	@Override
@@ -117,6 +125,11 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	@Override
 	public AbstractResponse response() {
 		return this.response;
+	}
+	
+	@Override
+	public ExchangeContext context() {
+		return this.exchangeContext;
 	}
 	
 	@Override
@@ -168,62 +181,6 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		return finalPromise;
 	}
 	
-	
-	/**
-	 * <p>
-	 * Creates a new promise that shall be used to finalize the exchange.
-	 * </p>
-	 * 
-	 * <p>
-	 * If a finalizer has been requested on the exchange (see
-	 * {@link Exchange#finalizer()}), a listener terminating the finalizer sink is
-	 * added before the specified listener in the returned promise.
-	 * </p>
-	 * 
-	 * @param listener
-	 * @return
-	 */
-	/*protected ChannelPromise newFinalizerPromise(GenericFutureListener<? extends Future<? super Void>> listener) {
-		if(this.finalizer == null) {
-			return this.context.newPromise().addListener(listener);
-		}
-		
-		return this.context.newPromise()
-			.addListener(future -> {
-				if(future.isSuccess()) {
-					this.finalizer.tryEmitEmpty();
-				}
-				else {
-					this.finalizer.tryEmitError(future.cause());
-				}
-			})
-			.addListener(listener);
-	}*/
-	
-	/**
-	 * <p>
-	 * Completes the exchange finalizer if it was requested (see
-	 * {@link Exchange#finalizer()})
-	 * </p>
-	 */
-	/*protected void finalizerComplete() {
-		if(this.finalizer != null) {
-			this.finalizer.tryEmitEmpty();
-		}
-	}*/
-
-	/**
-	 * <p>
-	 * Fails the exchange finalizer if it was requested (see
-	 * {@link Exchange#finalizer()})
-	 * </p>
-	 */
-	/*protected void finalizerFails(Throwable error) {
-		if(this.finalizer != null) {
-			this.finalizer.tryEmitError(error);
-		}
-	}*/
-	
 	/**
 	 * <p>
 	 * Returns the root handler.
@@ -231,7 +188,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * 
 	 * @return the root handler
 	 */
-	public ExchangeHandler<Exchange> getRootHandler() {
+	public ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> getRootHandler() {
 		return this.rootHandler;
 	}
 	
@@ -242,7 +199,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * 
 	 * @return the error handler
 	 */
-	public ExchangeHandler<ErrorExchange<Throwable>> getErrorHandler() {
+	public ExchangeHandler<ExchangeContext, ErrorExchange<Throwable>> getErrorHandler() {
 		return this.errorHandler;
 	}
 	

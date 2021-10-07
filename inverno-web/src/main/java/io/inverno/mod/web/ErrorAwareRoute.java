@@ -16,6 +16,7 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 
 /**
  * <p>
@@ -28,8 +29,11 @@ import io.inverno.mod.http.server.Exchange;
  * @since 1.0
  * 
  * @see Route
+ * 
+ * @param <A> the type of the exchange context
+ * @param <B> the type of web exchange handled by the route
  */
-public interface ErrorAwareRoute<A extends Exchange> extends Route<A> {
+public interface ErrorAwareRoute<A extends ExchangeContext, B extends Exchange<A>> extends Route<A, B> {
 
 	/**
 	 * <p>

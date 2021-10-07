@@ -18,6 +18,7 @@ package io.inverno.mod.web.internal;
 import java.util.function.Supplier;
 
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.Route;
 import io.inverno.mod.web.Router;
@@ -51,16 +52,20 @@ import io.inverno.mod.web.Router;
  * 
  * @see GenericErrorWebRouter
  * @see GenericWebRouter
+ * 
+ * @param <A> the type of the exchange context
+ * @param <B> the type of exchange handled by the link
+ * @param <C> the routing link type
+ * @param <D> the route type
  */
-abstract class RoutingLink<A extends Exchange, B extends RoutingLink<A, B, C>, C extends Route<A>>
-		implements ExchangeHandler<A> {
+abstract class RoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends RoutingLink<A, B, C, D>, D extends Route<A, B>> implements ExchangeHandler<A, B> {
 
-	private final Supplier<B> linkSupplier;
+	private final Supplier<C> linkSupplier;
 
 	/**
 	 * The next link in the chain
 	 */
-	protected RoutingLink<A, ?, C> nextLink;
+	protected RoutingLink<A, B, ?, D> nextLink;
 
 	/**
 	 * <p>
@@ -69,7 +74,7 @@ abstract class RoutingLink<A extends Exchange, B extends RoutingLink<A, B, C>, C
 	 * 
 	 * @param linkSupplier a link factory
 	 */
-	public RoutingLink(Supplier<B> linkSupplier) {
+	public RoutingLink(Supplier<C> linkSupplier) {
 		this.linkSupplier = linkSupplier;
 	}
 
@@ -83,7 +88,7 @@ abstract class RoutingLink<A extends Exchange, B extends RoutingLink<A, B, C>, C
 	 * 
 	 * @return the next link
 	 */
-	public <T extends RoutingLink<A, T, C>> T connect(T nextLink) {
+	public <T extends RoutingLink<A, B, T, D>> T connect(T nextLink) {
 		this.nextLink = nextLink;
 		return nextLink;
 	}
@@ -95,7 +100,7 @@ abstract class RoutingLink<A extends Exchange, B extends RoutingLink<A, B, C>, C
 	 * 
 	 * @param nextLink the next link
 	 */
-	protected void connectUnbounded(RoutingLink<A, ?, C> nextLink) {
+	protected void connectUnbounded(RoutingLink<A, B, ?, D> nextLink) {
 		this.nextLink = nextLink;
 	}
 
@@ -106,8 +111,8 @@ abstract class RoutingLink<A extends Exchange, B extends RoutingLink<A, B, C>, C
 	 * 
 	 * @return the next link
 	 */
-	protected B createNextLink() {
-		B nextLink = this.linkSupplier.get();
+	protected C createNextLink() {
+		C nextLink = this.linkSupplier.get();
 		if (this.nextLink != null) {
 			nextLink.connectUnbounded(this.nextLink.createNextLink());
 		}
@@ -122,7 +127,7 @@ abstract class RoutingLink<A extends Exchange, B extends RoutingLink<A, B, C>, C
 	 * @param <F>       the route extractor type
 	 * @param extractor a route extractor
 	 */
-	public <F extends RouteExtractor<A, C>> void extractRoute(F extractor) {
+	public <F extends RouteExtractor<A, B, D>> void extractRoute(F extractor) {
 		if (this.nextLink != null) {
 			this.nextLink.extractRoute(extractor);
 		}
@@ -137,7 +142,7 @@ abstract class RoutingLink<A extends Exchange, B extends RoutingLink<A, B, C>, C
 	 * 
 	 * @return the routing link
 	 */
-	public abstract B setRoute(C route);
+	public abstract C setRoute(D route);
 
 	/**
 	 * <p>
@@ -146,7 +151,7 @@ abstract class RoutingLink<A extends Exchange, B extends RoutingLink<A, B, C>, C
 	 * 
 	 * @param route a route
 	 */
-	public abstract void enableRoute(C route);
+	public abstract void enableRoute(D route);
 
 	/**
 	 * <p>
@@ -155,7 +160,7 @@ abstract class RoutingLink<A extends Exchange, B extends RoutingLink<A, B, C>, C
 	 * 
 	 * @param route a route
 	 */
-	public abstract void disableRoute(C route);
+	public abstract void disableRoute(D route);
 
 	/**
 	 * <p>
@@ -164,7 +169,7 @@ abstract class RoutingLink<A extends Exchange, B extends RoutingLink<A, B, C>, C
 	 * 
 	 * @param route a route
 	 */
-	public abstract void removeRoute(C route);
+	public abstract void removeRoute(D route);
 
 	/**
 	 * <p>

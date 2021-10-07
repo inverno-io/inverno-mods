@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import io.netty.buffer.Unpooled;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Init;
 import io.inverno.core.annotation.Provide;
@@ -37,13 +36,14 @@ import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
 import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebExchangeHandler;
 import io.inverno.mod.web.ErrorWebRoute;
 import io.inverno.mod.web.ErrorWebRouteManager;
 import io.inverno.mod.web.ErrorWebRouter;
 import io.inverno.mod.web.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.WebExchange;
+import io.netty.buffer.Unpooled;
 
 /**
  * <p>
@@ -54,13 +54,13 @@ import io.inverno.mod.web.WebExchange;
  * @since 1.0
  */
 @Bean( name = "errorRouter" )
-public class GenericErrorWebRouter implements @Provide ErrorWebRouter<WebExchange.Context> {
+public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	
 	private final DataConversionService dataConversionService;
 	
-	private final RoutingLink<ErrorWebExchange<Throwable, WebExchange.Context>, ?, ErrorWebRoute<WebExchange.Context>> firstLink;
+	private final RoutingLink<ExchangeContext, ErrorWebExchange<Throwable>, ?, ErrorWebRoute> firstLink;
 	
-	private ErrorWebRouterConfigurer<WebExchange.Context> configurer;
+	private ErrorWebRouterConfigurer configurer;
 	
 	/**
 	 * <p>
@@ -102,7 +102,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter<WebExchang
 	 * 
 	 * @param configurer an error web router configurer
 	 */
-	public void setConfigurer(ErrorWebRouterConfigurer<WebExchange.Context> configurer) {
+	public void setConfigurer(ErrorWebRouterConfigurer configurer) {
 		this.configurer = configurer;
 	}
 	
@@ -113,7 +113,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter<WebExchang
 	 * 
 	 * @param route an error web route
 	 */
-	void setRoute(ErrorWebRoute<WebExchange.Context> route) {
+	void setRoute(ErrorWebRoute route) {
 		this.firstLink.setRoute(route);
 	}
 	
@@ -124,7 +124,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter<WebExchang
 	 * 
 	 * @param route the error web route to enable
 	 */
-	void enableRoute(ErrorWebRoute<WebExchange.Context> route) {
+	void enableRoute(ErrorWebRoute route) {
 		this.firstLink.enableRoute(route);
 	}
 	
@@ -135,7 +135,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter<WebExchang
 	 * 
 	 * @param route the error web route to disable
 	 */
-	void disableRoute(ErrorWebRoute<WebExchange.Context> route) {
+	void disableRoute(ErrorWebRoute route) {
 		this.firstLink.disableRoute(route);
 	}
 
@@ -146,17 +146,17 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter<WebExchang
 	 * 
 	 * @param route the error web route to remove
 	 */
-	void removeRoute(ErrorWebRoute<WebExchange.Context> route) {
+	void removeRoute(ErrorWebRoute route) {
 		this.firstLink.removeRoute(route);
 	}
 	
 	@Override
-	public ErrorWebRouteManager<WebExchange.Context> route() {
+	public ErrorWebRouteManager route() {
 		return new GenericErrorWebRouteManager(this);
 	}
 	
 	@Override
-	public Set<ErrorWebRoute<WebExchange.Context>> getRoutes() {
+	public Set<ErrorWebRoute> getRoutes() {
 		GenericErrorWebRouteExtractor routeExtractor = new GenericErrorWebRouteExtractor(this);
 		this.firstLink.extractRoute(routeExtractor);
 		return routeExtractor.getRoutes();
@@ -175,7 +175,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter<WebExchang
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<HttpException, WebExchange.Context> httpExceptionHandler() {
+	private ErrorWebExchangeHandler<HttpException> httpExceptionHandler() {
 		return exchange -> {
 			if(exchange.getError() instanceof MethodNotAllowedException) {
 				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
@@ -196,7 +196,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter<WebExchang
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<Throwable, WebExchange.Context> throwableHandler() {
+	private ErrorWebExchangeHandler<Throwable> throwableHandler() {
 		return exchange -> {
 			this.httpExceptionHandler().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
 		};
@@ -209,7 +209,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter<WebExchang
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<HttpException, WebExchange.Context> httpExceptionHandler_json() {
+	private ErrorWebExchangeHandler<HttpException> httpExceptionHandler_json() {
 		return exchange -> {
 			ByteArrayOutputStream errorOut = new ByteArrayOutputStream();
 			PrintStream error = new PrintStream(errorOut);
@@ -255,7 +255,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter<WebExchang
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<Throwable, WebExchange.Context> throwableHandler_json() {
+	private ErrorWebExchangeHandler<Throwable> throwableHandler_json() {
 		return exchange -> {
 			this.httpExceptionHandler_json().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
 		};
@@ -268,7 +268,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter<WebExchang
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<HttpException, WebExchange.Context> httpExceptionHandler_html() {
+	private ErrorWebExchangeHandler<HttpException> httpExceptionHandler_html() {
 		return exchange -> {
 			String status = Integer.toString(exchange.getError().getStatusCode());
 			
@@ -328,12 +328,12 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter<WebExchang
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<Throwable, WebExchange.Context> throwableHandler_html() {
+	private ErrorWebExchangeHandler<Throwable> throwableHandler_html() {
 		return exchange -> {
 			this.httpExceptionHandler_html().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
 		};
 	}
 	
 	@Bean( name = "errorRouterConfigurer")
-	public static interface ConfigurerSocket extends Supplier<ErrorWebRouterConfigurer<WebExchange.Context>> {}
+	public static interface ConfigurerSocket extends Supplier<ErrorWebRouterConfigurer> {}
 }

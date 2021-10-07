@@ -24,6 +24,7 @@ import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.MethodNotAllowedException;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.MethodAwareRoute;
 
 /**
@@ -35,13 +36,14 @@ import io.inverno.mod.web.MethodAwareRoute;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
- * @param <A> the type of exchange handled by the route
- * @param <B> the route type
+ * @param <A> the type of the exchange context
+ * @param <B> the type of exchange handled by the route
+ * @param <C> the route type
  */
-class MethodRoutingLink<A extends Exchange, B extends MethodAwareRoute<A>> extends RoutingLink<A, MethodRoutingLink<A, B>, B> {
+class MethodRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends MethodAwareRoute<A, B>> extends RoutingLink<A, B, MethodRoutingLink<A, B, C>, C> {
 
-	private Map<Method, RoutingLink<A, ?, B>> handlers;
-	private Map<Method, RoutingLink<A, ?, B>> enabledHandlers;
+	private Map<Method, RoutingLink<A, B, ?, C>> handlers;
+	private Map<Method, RoutingLink<A, B, ?, C>> enabledHandlers;
 
 	/**
 	 * <p>
@@ -61,7 +63,7 @@ class MethodRoutingLink<A extends Exchange, B extends MethodAwareRoute<A>> exten
 	}
 
 	@Override
-	public MethodRoutingLink<A, B> setRoute(B route) {
+	public MethodRoutingLink<A, B, C> setRoute(C route) {
 		Method method = route.getMethod();
 		if (method != null) {
 			if (this.handlers.containsKey(method)) {
@@ -79,10 +81,10 @@ class MethodRoutingLink<A extends Exchange, B extends MethodAwareRoute<A>> exten
 	}
 
 	@Override
-	public void enableRoute(B route) {
+	public void enableRoute(C route) {
 		Method method = route.getMethod();
 		if (method != null) {
-			RoutingLink<A, ?, B> handler = this.handlers.get(method);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(method);
 			if (handler != null) {
 				handler.enableRoute(route);
 				this.updateEnabledHandlers();
@@ -95,10 +97,10 @@ class MethodRoutingLink<A extends Exchange, B extends MethodAwareRoute<A>> exten
 	}
 
 	@Override
-	public void disableRoute(B route) {
+	public void disableRoute(C route) {
 		Method method = route.getMethod();
 		if (method != null) {
-			RoutingLink<A, ?, B> handler = this.handlers.get(method);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(method);
 			if (handler != null) {
 				handler.disableRoute(route);
 				this.updateEnabledHandlers();
@@ -111,10 +113,10 @@ class MethodRoutingLink<A extends Exchange, B extends MethodAwareRoute<A>> exten
 	}
 
 	@Override
-	public void removeRoute(B route) {
+	public void removeRoute(C route) {
 		Method method = route.getMethod();
 		if (method != null) {
-			RoutingLink<A, ?, B> handler = this.handlers.get(method);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(method);
 			if (handler != null) {
 				handler.removeRoute(route);
 				if (!handler.hasRoute()) {
@@ -142,23 +144,23 @@ class MethodRoutingLink<A extends Exchange, B extends MethodAwareRoute<A>> exten
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <F extends RouteExtractor<A, B>> void extractRoute(F extractor) {
+	public <F extends RouteExtractor<A, B, C>> void extractRoute(F extractor) {
 		if (!(extractor instanceof MethodAwareRouteExtractor)) {
 			throw new IllegalArgumentException("Route extractor is not method aware");
 		}
 		this.handlers.entrySet().stream().forEach(e -> {
-			e.getValue().extractRoute(((MethodAwareRouteExtractor<A, B, ?>) extractor).method(e.getKey()));
+			e.getValue().extractRoute(((MethodAwareRouteExtractor<A, B, C, ?>) extractor).method(e.getKey()));
 		});
 		super.extractRoute(extractor);
 	}
 
 	@Override
-	public void handle(A exchange) throws HttpException {
+	public void handle(B exchange) throws HttpException {
 		if (this.handlers.isEmpty()) {
 			this.nextLink.handle(exchange);
 		} 
 		else {
-			RoutingLink<A, ?, B> handler = this.enabledHandlers.get(exchange.request().getMethod());
+			RoutingLink<A, B, ?, C> handler = this.enabledHandlers.get(exchange.request().getMethod());
 			if (handler != null) {
 				handler.handle(exchange);
 			} 

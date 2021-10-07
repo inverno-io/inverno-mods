@@ -27,6 +27,7 @@ import io.inverno.mod.http.base.NotAcceptableException;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
@@ -41,9 +42,9 @@ public class ProducesRoutingLinkTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testHandle_with_default() {
-		List<MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>>> linkRegistry = new ArrayList<>();
-		MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
-		ProducesRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> routingLink = new ProducesRoutingLink<>(new ContentTypeCodec());
+		List<MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>>> linkRegistry = new ArrayList<>();
+		MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
+		ProducesRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>> routingLink = new ProducesRoutingLink<>(new ContentTypeCodec());
 		routingLink.connect(mockRoutingLink);
 		
 		GenericWebRoute route_default = new GenericWebRoute(null);
@@ -195,9 +196,9 @@ public class ProducesRoutingLinkTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testHandle_no_default_parameters() {
-		List<MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>>> linkRegistry = new ArrayList<>();
-		MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
-		ProducesRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> routingLink = new ProducesRoutingLink<>(new ContentTypeCodec());
+		List<MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>>> linkRegistry = new ArrayList<>();
+		MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
+		ProducesRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>> routingLink = new ProducesRoutingLink<>(new ContentTypeCodec());
 		routingLink.connect(mockRoutingLink);
 		
 		MockWebExchange exchange1 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT, List.of("application/json"))).build();
@@ -346,9 +347,9 @@ public class ProducesRoutingLinkTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testHandle_quality_no_default() {
-		List<MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>>> linkRegistry = new ArrayList<>();
-		MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
-		ProducesRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> routingLink = new ProducesRoutingLink<>(new ContentTypeCodec());
+		List<MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>>> linkRegistry = new ArrayList<>();
+		MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
+		ProducesRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>> routingLink = new ProducesRoutingLink<>(new ContentTypeCodec());
 		routingLink.connect(mockRoutingLink);
 		
 		GenericWebRoute route1 = new GenericWebRoute(null);

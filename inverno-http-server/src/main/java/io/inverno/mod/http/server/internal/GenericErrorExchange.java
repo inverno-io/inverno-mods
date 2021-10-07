@@ -16,6 +16,7 @@
 package io.inverno.mod.http.server.internal;
 
 import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.Response;
 import reactor.core.publisher.Mono;
@@ -34,21 +35,24 @@ public class GenericErrorExchange implements ErrorExchange<Throwable> {
 	private final AbstractResponse response;
 	private Mono<Void> finalizer;
 	private final Throwable error;
+	private final ExchangeContext exchangeContext;
 	
 	/**
 	 * <p>
 	 * Creates an error exchange with the specified request, response and error.
 	 * </p>
 	 * 
-	 * @param request  the request
-	 * @param response the response
-	 * @param error    the error
+	 * @param request         the request
+	 * @param response        the response
+	 * @param error           the error
+	 * @param exchangeContext the exchange context attached to the failed exchange
 	 */
-	public GenericErrorExchange(AbstractRequest request, AbstractResponse response, Mono<Void> finalizer, Throwable error) {
+	public GenericErrorExchange(AbstractRequest request, AbstractResponse response, Mono<Void> finalizer, Throwable error, ExchangeContext exchangeContext) {
 		this.request = request;
 		this.response = response;
 		this.finalizer = finalizer;
 		this.error = error;
+		this.exchangeContext = exchangeContext;
 	}
 
 	@Override
@@ -59,6 +63,11 @@ public class GenericErrorExchange implements ErrorExchange<Throwable> {
 	@Override
 	public Response response() {
 		return this.response;
+	}
+	
+	@Override
+	public ExchangeContext context() {
+		return exchangeContext;
 	}
 	
 	@Override

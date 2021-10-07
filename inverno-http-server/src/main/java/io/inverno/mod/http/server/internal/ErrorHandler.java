@@ -21,7 +21,7 @@ import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Overridable;
 import io.inverno.core.annotation.Wrapper;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ErrorExchangeHandler;
 
 /**
  * <p>
@@ -36,10 +36,10 @@ import io.inverno.mod.http.server.ExchangeHandler;
 @Bean
 @Wrapper
 @Overridable 
-public class ErrorHandler implements Supplier<ExchangeHandler<ErrorExchange<Throwable>>> {
+public class ErrorHandler implements Supplier<ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>>> {
 
 	@Override
-	public ExchangeHandler<ErrorExchange<Throwable>> get() {
+	public ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> get() {
 		return new GenericErrorHandler();
 	}
 }

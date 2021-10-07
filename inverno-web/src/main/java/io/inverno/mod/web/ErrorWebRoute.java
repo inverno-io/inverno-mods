@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.http.server.ExchangeContext;
+
 /**
  * <p>
  * An error web route specifies criteria used to determine the error web
@@ -37,12 +39,10 @@ package io.inverno.mod.web;
  * 
  * @see ErrorWebExchange
  * @see ErrorWebRouter
- * 
- * @param <A> the type of web exchange context
  */
-public interface ErrorWebRoute<A extends WebExchange.Context> extends 
-	ErrorAwareRoute<ErrorWebExchange<Throwable, A>>, 
-	AcceptAwareRoute<ErrorWebExchange<Throwable, A>>, 
-	Route<ErrorWebExchange<Throwable, A>> {
+public interface ErrorWebRoute extends 
+	ErrorAwareRoute<ExchangeContext, ErrorWebExchange<Throwable>>, 
+	AcceptAwareRoute<ExchangeContext, ErrorWebExchange<Throwable>>, 
+	Route<ExchangeContext, ErrorWebExchange<Throwable>> {
 
 }

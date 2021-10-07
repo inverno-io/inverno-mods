@@ -34,7 +34,7 @@ import javax.lang.model.util.ElementFilter;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.net.URIs;
-import io.inverno.mod.web.WebExchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;
 import io.inverno.mod.web.annotation.WebRoutes;
@@ -111,9 +111,9 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 				.collect(context.joining("\n"))
 			);
 			configurer_constructor.append("\n").append(context.indent(1)).append("}");
-					
+			
 			StringBuilder configurer_accept = new StringBuilder(context.indent(1)).append("@Override\n");
-			configurer_accept.append(context.indent(1)).append("public <A extends ").append(configurerClassName).append(".Context> void configure(").append(context.getTypeName(routerType)).append("<A> router) {");
+			configurer_accept.append(context.indent(1)).append("public void configure(").append(context.getTypeName(routerType)).append("<? extends ").append(configurerClassName).append(".Context> router) {");
 			if(routerConfigurerInfo.getRouters().length > 0) {
 				configurer_accept.append("\n").append(Arrays.stream(routerConfigurerInfo.getRouters()).map(routerInfo -> this.visit(routerInfo, context.withIndentDepth(2).withMode(GenerationMode.CONFIGURER_INVOKE))).collect(context.joining("\n"))).append("\n");
 			}
@@ -179,7 +179,7 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 				result.append(Arrays.stream(routerConfigurerInfo.getContextTypes()).map(context::getTypeName).collect(Collectors.joining(", ")));
 			}
 			else {
-				result.append(context.getTypeName(context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(WebExchange.class.getCanonicalName()).asType()))).append(".Context");
+				result.append(context.getTypeName(context.getElementUtils().getTypeElement(ExchangeContext.class.getCanonicalName()).asType()));
 			}
 			result.append(" {}");
 			

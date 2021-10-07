@@ -18,7 +18,7 @@ package io.inverno.mod.web;
 import java.util.function.Function;
 
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.Request;
 import reactor.core.publisher.Mono;
 
@@ -41,26 +41,16 @@ import reactor.core.publisher.Mono;
  * @see ErrorWebRouter
  * 
  * @param <A> the error type
- * @param <B> the type of web exchange context
  */
-public interface ErrorWebExchange<A extends Throwable, B extends WebExchange.Context> extends ErrorExchange<A> {
+public interface ErrorWebExchange<A extends Throwable> extends ErrorExchange<A> {
 
 	@Override
 	WebResponse response();
 	
-	/**
-	 * <p>
-	 * Returns the context associated to the Web exchange that caused the error.
-	 * </p>
-	 * 
-	 * @return a context object
-	 */
-	B context();
-	
 	@Override
-	default <T extends Throwable> ErrorWebExchange<T, B> mapError(Function<? super A, ? extends T> errorMapper) {
-		ErrorWebExchange<A, B> thisExchange = this;
-		return new ErrorWebExchange<T, B>() {
+	default <T extends Throwable> ErrorWebExchange<T> mapError(Function<? super A, ? extends T> errorMapper) {
+		ErrorWebExchange<A> thisExchange = this;
+		return new ErrorWebExchange<T>() {
 
 			@Override
 			public Request request() {
@@ -73,12 +63,12 @@ public interface ErrorWebExchange<A extends Throwable, B extends WebExchange.Con
 			}
 			
 			@Override
-			public B context() {
+			public ExchangeContext context() {
 				return thisExchange.context();
 			}
 			
 			@Override
-			public Exchange finalizer(Mono<Void> finalizer) {
+			public ErrorWebExchange<T> finalizer(Mono<Void> finalizer) {
 				thisExchange.finalizer(finalizer);
 				return this;
 			}

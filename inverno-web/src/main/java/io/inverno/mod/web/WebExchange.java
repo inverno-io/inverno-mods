@@ -17,6 +17,7 @@ package io.inverno.mod.web;
 
 import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 
 /**
  * <p>
@@ -48,32 +49,13 @@ import io.inverno.mod.http.server.Exchange;
  * @see WebRouteManager
  * @see WebRouter
  * 
- * @param <A> the type of web exchange context
+ * @param <A> the type of the exchange context
  */
-public interface WebExchange<A extends WebExchange.Context> extends Exchange {
+public interface WebExchange<A extends ExchangeContext> extends Exchange<A> {
 
 	@Override
 	WebRequest request();
 	
 	@Override
 	WebResponse response();
-	
-	/**
-	 * <p>
-	 * Returns the context associated to the Web exchange.
-	 * </p>
-	 * 
-	 * @return a context object
-	 */
-	A context();
-	
-	/**
-	 * <p>
-	 * Base interface for all Web exchange context.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.3
-	 */
-	interface Context {}
 }

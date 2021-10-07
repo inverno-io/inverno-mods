@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web.internal;
 
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
 
@@ -26,15 +27,15 @@ import io.inverno.mod.web.WebRoute;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
- * @param <A> the type of exchange handled by the route
+ * @param <A> the type of the exchange context
  * @param <B> the route type
  * @param <C> the route extractor type
  */
-interface WebRouteExtractor<A extends WebExchange.Context, B extends WebRoute<A>, C extends WebRouteExtractor<A, B, C>> extends 
-	PathAwareRouteExtractor<WebExchange<A>, B, C>,
-	MethodAwareRouteExtractor<WebExchange<A>, B, C>,
-	ContentAwareRouteExtractor<WebExchange<A>, B, C>,
-	AcceptAwareRouteExtractor<WebExchange<A>, B, C>,
-	RouteExtractor<WebExchange<A>, B> {
+interface WebRouteExtractor<A extends ExchangeContext, B extends WebRoute<A>, C extends WebRouteExtractor<A, B, C>> extends 
+	PathAwareRouteExtractor<A, WebExchange<A>, B, C>,
+	MethodAwareRouteExtractor<A, WebExchange<A>, B, C>,
+	ContentAwareRouteExtractor<A, WebExchange<A>, B, C>,
+	AcceptAwareRouteExtractor<A, WebExchange<A>, B, C>,
+	RouteExtractor<A, WebExchange<A>, B> {
 	
 }

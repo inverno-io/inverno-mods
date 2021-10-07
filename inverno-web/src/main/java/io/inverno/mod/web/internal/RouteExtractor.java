@@ -18,6 +18,7 @@ package io.inverno.mod.web.internal;
 import java.util.Set;
 
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.Route;
 
@@ -33,8 +34,12 @@ import io.inverno.mod.web.Route;
  * 
  * @see Route
  * @see RoutingLink
+ * 
+ * @param <A> the type of the exchange context
+ * @param <B> the type of exchange handled by the route
+ * @param <C> the route type
  */
-interface RouteExtractor<C extends Exchange, D extends Route<C>> {
+interface RouteExtractor<A extends ExchangeContext, B extends Exchange<A>, C extends Route<A, B>> {
 
 	/**
 	 * <p>
@@ -44,7 +49,7 @@ interface RouteExtractor<C extends Exchange, D extends Route<C>> {
 	 * @param handler
 	 * @param disabled
 	 */
-	void handler(ExchangeHandler<C> handler, boolean disabled);
+	void handler(ExchangeHandler<A, B> handler, boolean disabled);
 	
 	/**
 	 * <p>
@@ -53,5 +58,5 @@ interface RouteExtractor<C extends Exchange, D extends Route<C>> {
 	 * 
 	 * @return a set of routes
 	 */
-	Set<D> getRoutes();
+	Set<C> getRoutes();
 }

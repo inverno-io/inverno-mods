@@ -23,9 +23,11 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.Part;
+import io.inverno.mod.http.server.RootExchangeHandler;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 
 /**
@@ -40,8 +42,8 @@ import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 @Bean(visibility = Visibility.PRIVATE)
 public class Http1xChannelHandlerFactory implements Supplier<Http1xChannelHandler> {
 
-	private ExchangeHandler<Exchange> rootHandler;
-	private ExchangeHandler<ErrorExchange<Throwable>> errorHandler;
+	private RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler;
+	private ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler;
 	private HeaderService headerService;
 	private ObjectConverter<String> parameterConverter;
 	private MultipartDecoder<Parameter> urlEncodedBodyDecoder; 
@@ -59,15 +61,16 @@ public class Http1xChannelHandlerFactory implements Supplier<Http1xChannelHandle
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 */
+	@SuppressWarnings({ "unchecked" })
 	public Http1xChannelHandlerFactory(
-			ExchangeHandler<Exchange> rootHandler, 
-			ExchangeHandler<ErrorExchange<Throwable>> errorHandler, 
+			RootExchangeHandler<?, ? extends Exchange<?>> rootHandler, 
+			ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler, 
 			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder) {
 		
-		this.rootHandler = rootHandler;
+		this.rootHandler = (RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>>)rootHandler;
 		this.errorHandler = errorHandler;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;

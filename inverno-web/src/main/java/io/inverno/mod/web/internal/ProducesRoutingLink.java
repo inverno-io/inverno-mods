@@ -27,6 +27,7 @@ import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.AcceptAwareRoute;
 
 /**
@@ -38,15 +39,16 @@ import io.inverno.mod.web.AcceptAwareRoute;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
- * @param <A> the type of exchange handled by the route
- * @param <B> the route type
+ * @param <A> the type of the exchange context
+ * @param <B> the type of exchange handled by the route
+ * @param <C> the route type
  */
-class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> extends RoutingLink<A, ProducesRoutingLink<A, B>, B> {
+class ProducesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends AcceptAwareRoute<A, B>> extends RoutingLink<A, B, ProducesRoutingLink<A, B, C>, C> {
 
 	private final HeaderCodec<? extends Headers.ContentType> contentTypeCodec;
 
-	private Map<Headers.ContentType, RoutingLink<A, ?, B>> handlers;
-	private Map<Headers.ContentType, RoutingLink<A, ?, B>> enabledHandlers;
+	private Map<Headers.ContentType, RoutingLink<A, B, ?, C>> handlers;
+	private Map<Headers.ContentType, RoutingLink<A, B, ?, C>> enabledHandlers;
 	
 	/**
 	 * <p>
@@ -69,7 +71,7 @@ class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 	}
 
 	@Override
-	public ProducesRoutingLink<A, B> setRoute(B route) {
+	public ProducesRoutingLink<A, B, C> setRoute(C route) {
 		String produce = route.getProduce();
 		if (produce != null) {
 			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, produce);
@@ -91,11 +93,11 @@ class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 	}
 
 	@Override
-	public void enableRoute(B route) {
+	public void enableRoute(C route) {
 		String produce = route.getProduce();
 		if (produce != null) {
 			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, produce);
-			RoutingLink<A, ?, B> handler = this.handlers.get(contentType);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(contentType);
 			if (handler != null) {
 				handler.enableRoute(route);
 				this.updateEnabledHandlers();
@@ -108,11 +110,11 @@ class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 	}
 
 	@Override
-	public void disableRoute(B route) {
+	public void disableRoute(C route) {
 		String produce = route.getProduce();
 		if (produce != null) {
 			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, produce);
-			RoutingLink<A, ?, B> handler = this.handlers.get(contentType);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(contentType);
 			if (handler != null) {
 				handler.disableRoute(route);
 				this.updateEnabledHandlers();
@@ -125,11 +127,11 @@ class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 	}
 
 	@Override
-	public void removeRoute(B route) {
+	public void removeRoute(C route) {
 		String produce = route.getProduce();
 		if (produce != null) {
 			Headers.ContentType contentType = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, produce);
-			RoutingLink<A, ?, B> handler = this.handlers.get(contentType);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(contentType);
 			if (handler != null) {
 				handler.removeRoute(route);
 				if (!handler.hasRoute()) {
@@ -157,18 +159,18 @@ class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <F extends RouteExtractor<A, B>> void extractRoute(F extractor) {
+	public <F extends RouteExtractor<A, B, C>> void extractRoute(F extractor) {
 		super.extractRoute(extractor);
 		if (!(extractor instanceof AcceptAwareRouteExtractor)) {
 			throw new IllegalArgumentException("Route extractor is not accept aware");
 		}
 		this.handlers.entrySet().stream().forEach(e -> {
-			e.getValue().extractRoute(((AcceptAwareRouteExtractor<A, B, ?>) extractor).produces(e.getKey().getMediaType()));
+			e.getValue().extractRoute(((AcceptAwareRouteExtractor<A, B, C, ?>) extractor).produces(e.getKey().getMediaType()));
 		});
 	}
 
 	@Override
-	public void handle(A exchange) throws HttpException {
+	public void handle(B exchange) throws HttpException {
 		if (this.handlers.isEmpty()) {
 			this.nextLink.handle(exchange);
 		} 
@@ -178,12 +180,12 @@ class ProducesRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 				.orElse(Headers.Accept.ALL);
 
 			if (!this.enabledHandlers.isEmpty()) {
-				Iterator<Headers.AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, ?, B>>>> acceptMatchesIterator = accept
+				Iterator<Headers.AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, ?, C>>>> acceptMatchesIterator = accept
 					.findAllMatch(this.enabledHandlers.entrySet(), Entry::getKey).iterator();
 
 				boolean nextLinkInvoked = false;
 				while (acceptMatchesIterator.hasNext()) {
-					Headers.AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, ?, B>>> bestMatch = acceptMatchesIterator.next();
+					Headers.AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, ?, C>>> bestMatch = acceptMatchesIterator.next();
 					if (!nextLinkInvoked && bestMatch.getSource().getMediaType().equals("*/*") && bestMatch.getSource().getParameters().isEmpty()) {
 						nextLinkInvoked = true;
 						// First check if the next link can handle the request since this is the default

@@ -21,6 +21,7 @@ import java.util.Set;
 
 import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
@@ -33,13 +34,13 @@ import io.inverno.mod.web.WebRoute;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange.Context, WebRoute<WebExchange.Context>, GenericWebRouteExtractor> {
+class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, WebRoute<ExchangeContext>, GenericWebRouteExtractor> {
 
 	private final GenericWebRouter router;
 	
 	private GenericWebRouteExtractor parent;
 	
-	private Set<WebRoute<WebExchange.Context>> routes;
+	private Set<WebRoute<ExchangeContext>> routes;
 	
 	private String path;
 	
@@ -140,7 +141,7 @@ class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange.Context,
 		return null;
 	}
 	
-	private void addRoute(WebRoute<WebExchange.Context> route) {
+	private void addRoute(WebRoute<ExchangeContext> route) {
 		if(this.parent != null) {
 			this.parent.addRoute(route);
 		}
@@ -153,7 +154,7 @@ class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange.Context,
 	}
 	
 	@Override
-	public Set<WebRoute<WebExchange.Context>> getRoutes() {
+	public Set<WebRoute<ExchangeContext>> getRoutes() {
 		if(this.parent != null) {
 			return this.parent.getRoutes();			
 		}
@@ -205,7 +206,7 @@ class GenericWebRouteExtractor implements WebRouteExtractor<WebExchange.Context,
 	}
 
 	@Override
-	public void handler(ExchangeHandler<WebExchange<WebExchange.Context>> handler, boolean disabled) {
+	public void handler(ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler, boolean disabled) {
 		if(handler != null) {
 			GenericWebRoute route = new GenericWebRoute(this.getRouter());
 			route.setDisabled(disabled);

@@ -19,6 +19,7 @@ import java.util.List;
 
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.Route;
 
@@ -26,47 +27,47 @@ import io.inverno.mod.web.Route;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  *
  */
-public class MockRoutingLink<A extends Exchange, B extends Route<A>> extends RoutingLink<A, MockRoutingLink<A, B>, B> {
+public class MockRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends Route<A, B>> extends RoutingLink<A, B, MockRoutingLink<A, B, C>, C> {
 
-	private ExchangeHandler<A> handler;
+	private ExchangeHandler<A, B> handler;
 	
 	private boolean disabled;
 	
-	public MockRoutingLink(List<MockRoutingLink<A, B>> linkRegistry) {
+	public MockRoutingLink(List<MockRoutingLink<A, B, C>> linkRegistry) {
 		super(() -> {
-			MockRoutingLink<A,B> newLink = new MockRoutingLink<>(linkRegistry);
+			MockRoutingLink<A, B, C> newLink = new MockRoutingLink<>(linkRegistry);
 			linkRegistry.add(newLink);
 			return newLink;
 		});
 	}
 	
-	public MockRoutingLink<A, B> setRoute(B route) {
+	public MockRoutingLink<A, B, C> setRoute(C route) {
 		this.handler = route.getHandler();
 		return this;
 	}
 	
 	@Override
-	public <F extends RouteExtractor<A, B>> void extractRoute(F extractor) {
+	public <F extends RouteExtractor<A, B, C>> void extractRoute(F extractor) {
 		super.extractRoute(extractor);
 		extractor.handler(this.handler, this.disabled);
 	}
 	
 	@Override
-	public void enableRoute(B route) {
+	public void enableRoute(C route) {
 		if(this.handler != null) {
 			this.disabled = false;
 		}
 	}
 	
 	@Override
-	public void disableRoute(B route) {
+	public void disableRoute(C route) {
 		if(this.handler != null) {
 			this.disabled = true;
 		}
 	}
 	
 	@Override
-	public void removeRoute(B route) {
+	public void removeRoute(C route) {
 		this.handler = null;
 	}
 	
@@ -80,12 +81,12 @@ public class MockRoutingLink<A extends Exchange, B extends Route<A>> extends Rou
 		return this.disabled;
 	}
 	
-	public ExchangeHandler<A> getHandler() {
+	public ExchangeHandler<A, B> getHandler() {
 		return handler;
 	}
 	
 	@Override
-	public void handle(A exchange) throws HttpException {
+	public void handle(B exchange) throws HttpException {
 		if(this.handler == null) {
 			throw new RouteNotFoundException();
 		}
@@ -94,5 +95,4 @@ public class MockRoutingLink<A extends Exchange, B extends Route<A>> extends Rou
 		}
 		this.handler.handle(exchange);
 	}
-
 }

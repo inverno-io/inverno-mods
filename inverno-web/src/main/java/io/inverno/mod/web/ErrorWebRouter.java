@@ -42,10 +42,8 @@ import io.inverno.mod.http.server.ErrorExchange;
  * @see ErrorWebExchangeHandler
  * @see ErrorWebRoute
  * @see ErrorWebRouteManager
- * 
- * @param <A> the type of web exchange context
  */
-public interface ErrorWebRouter<A extends WebExchange.Context> extends Router<ErrorWebExchange<Throwable, A>, ErrorWebRouter<A>, ErrorWebRouteManager<A>, ErrorWebRoute<A>, ErrorExchange<Throwable>> {
+public interface ErrorWebRouter extends ErrorRouter<ErrorWebExchange<Throwable>, ErrorWebRouter, ErrorWebRouteManager, ErrorWebRoute> {
 	
 	@Override
 	default void handle(ErrorExchange<Throwable> exchange) throws HttpException {

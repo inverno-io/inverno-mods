@@ -38,7 +38,7 @@ import reactor.core.publisher.Mono;
  * 
  * @param <A> the error type
  */
-public interface ErrorExchange<A extends Throwable> extends Exchange {
+public interface ErrorExchange<A extends Throwable> extends Exchange<ExchangeContext> {
 
 	/**
 	 * <p>
@@ -75,7 +75,12 @@ public interface ErrorExchange<A extends Throwable> extends Exchange {
 			}
 			
 			@Override
-			public Exchange finalizer(Mono<Void> finalizer) {
+			public ExchangeContext context() {
+				return thisExchange.context();
+			}
+			
+			@Override
+			public ErrorExchange<T> finalizer(Mono<Void> finalizer) {
 				thisExchange.finalizer(finalizer);
 				return this;
 			}

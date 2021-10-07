@@ -19,10 +19,12 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.Part;
+import io.inverno.mod.http.server.RootExchangeHandler;
 import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.ByteBuf;
@@ -60,8 +62,8 @@ import reactor.core.publisher.Sinks.EmitResult;
 public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2FrameListener, Http2Connection.Listener {
 
 	private final HttpServerConfiguration configuration; 
-	private final ExchangeHandler<Exchange> rootHandler;
-	private final ExchangeHandler<ErrorExchange<Throwable>> errorHandler;
+	private final RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler;
+	private final ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler;
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
@@ -92,8 +94,8 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 			Http2ConnectionDecoder decoder, 
 			Http2ConnectionEncoder encoder,
 			Http2Settings initialSettings,
-			ExchangeHandler<Exchange> rootHandler,
-			ExchangeHandler<ErrorExchange<Throwable>> errorHandler,
+			RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler,
+			ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler,
 			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder,

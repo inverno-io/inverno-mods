@@ -19,6 +19,7 @@ import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.base.net.URIMatcher;
 import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 
 /**
  * <p>
@@ -46,9 +47,10 @@ import io.inverno.mod.http.server.Exchange;
  * @see URIPattern
  * @see URIMatcher
  * 
- * @param <A> the type of web exchange handled by the route
+ * @param <A> the type of the exchange context
+ * @param <B> the type of web exchange handled by the route
  */
-public interface PathAwareRoute<A extends Exchange> extends Route<A> {
+public interface PathAwareRoute<A extends ExchangeContext, B extends Exchange<A>> extends Route<A, B> {
 
 	/**
 	 * <p>

@@ -16,6 +16,7 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 
 /**
@@ -44,9 +45,10 @@ import io.inverno.mod.http.server.ExchangeHandler;
  * @see Exchange
  * @see Router
  * 
- * @param <A> the type of exchange handled by the route
+ * @param <A> the type of the exchange context
+ * @param <B> the type of exchange handled by the route
  */
-public interface Route<A extends Exchange> {
+public interface Route<A extends ExchangeContext, B extends Exchange<A>> {
 
 	/**
 	 * <p>
@@ -56,7 +58,7 @@ public interface Route<A extends Exchange> {
 	 * 
 	 * @return an exchange handler
 	 */
-	ExchangeHandler<A> getHandler();
+	ExchangeHandler<A, B> getHandler();
 	
 	/**
 	 * <p>Enables the route.</p>

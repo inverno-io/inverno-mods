@@ -35,6 +35,7 @@ import io.inverno.core.compiler.spi.ReporterInfo;
 import io.inverno.core.compiler.spi.plugin.PluginContext;
 import io.inverno.core.compiler.spi.plugin.PluginExecution;
 import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ResponseBody;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebPart;
@@ -84,7 +85,7 @@ class WebParameterInfoFactory {
 	
 	/* Contextual */
 	private final TypeMirror webExchangeType;
-	private final TypeMirror webExchangeContextType;
+	private final TypeMirror exchangeContextType;
 	private final TypeMirror sseEventFactoryType;
 	private final TypeMirror sseEncoderEventFactoryType;
 	
@@ -129,7 +130,7 @@ class WebParameterInfoFactory {
 		this.parameterType = this.pluginContext.getElementUtils().getTypeElement(Parameter.class.getCanonicalName()).asType();
 		
 		this.webExchangeType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebExchange.class.getCanonicalName()).asType());
-		this.webExchangeContextType = this.pluginContext.getElementUtils().getTypeElement(WebExchange.Context.class.getCanonicalName()).asType();
+		this.exchangeContextType = this.pluginContext.getElementUtils().getTypeElement(ExchangeContext.class.getCanonicalName()).asType();
 		this.sseEventFactoryType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(ResponseBody.Sse.EventFactory.class.getCanonicalName()).asType());
 		this.sseEncoderEventFactoryType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebResponseBody.SseEncoder.EventFactory.class.getCanonicalName()).asType());
 	}
@@ -216,7 +217,7 @@ class WebParameterInfoFactory {
 			if(this.pluginContext.getTypeUtils().isSameType(this.pluginContext.getTypeUtils().erasure(parameterElement.asType()), this.webExchangeType)) {
 				result = this.createExchangeParameter(parameterReporter, parameterQName, parameterElement);
 			}
-			else if(this.pluginContext.getTypeUtils().isAssignable(parameterElement.asType(), this.webExchangeContextType)) {
+			else if(this.pluginContext.getTypeUtils().isAssignable(parameterElement.asType(), this.exchangeContextType)) {
 				result = this.createExchangeContextParameter(parameterReporter, parameterQName, parameterElement);
 			}
 		}
@@ -261,7 +262,7 @@ class WebParameterInfoFactory {
 	 * @return a web exchange parameter info
 	 */
 	private GenericWebExchangeParameterInfo createExchangeParameter(ReporterInfo reporter, WebParameterQualifiedName parameterQName, VariableElement parameterElement) {
-		TypeMirror contextType = this.webExchangeContextType;
+		TypeMirror contextType = this.exchangeContextType;
 		List<? extends TypeMirror> typeArguments = ((DeclaredType)parameterElement.asType()).getTypeArguments();
 		if(!typeArguments.isEmpty()) {
 			contextType = typeArguments.get(0);
@@ -271,7 +272,7 @@ class WebParameterInfoFactory {
 					contextType = extendsBound;
 				}
 				else {
-					contextType = this.webExchangeContextType;
+					contextType = this.exchangeContextType;
 				}
 			}
 		}

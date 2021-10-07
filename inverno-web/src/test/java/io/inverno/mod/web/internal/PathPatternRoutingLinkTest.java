@@ -26,6 +26,7 @@ import org.mockito.Mockito;
 
 import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.http.base.NotFoundException;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
@@ -40,9 +41,9 @@ public class PathPatternRoutingLinkTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testHandle() {
-		List<MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>>> linkRegistry = new ArrayList<>();
-		MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
-		PathPatternRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> routingLink = new PathPatternRoutingLink<>();
+		List<MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>>> linkRegistry = new ArrayList<>();
+		MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
+		PathPatternRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>> routingLink = new PathPatternRoutingLink<>();
 		routingLink.connect(mockRoutingLink);
 		
 		GenericWebRoute route1 = new GenericWebRoute(null);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,24 +17,35 @@ package io.inverno.mod.http.server;
 
 /**
  * <p>
- * Exchange handler used to handle error server exchanges.
+ * Base Exchange context interface.
  * </p>
  * 
  * <p>
- * The HTTP server relies on an error exchange handler to handle errors thrown
- * during the processing of a client request in order to provide a proper
- * response to the client.
+ * An exchange context is attached to an exchange to expose contextual data and
+ * operation during the lifetime of an exchange. It is created by the HTTP
+ * server with the {@link Exchange} using
+ * {@link RootExchangeHandler#createContext()} at the earliest possible moment
+ * basically when a request is received.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
- *
- * @see ErrorExchange
- * @see ExchangeHandler
+ * @since 1.3
  * 
- * @param <A> the error type
- * @param <B> the error exchange type handled by the handler 
+ * @see Exchange
+ * @see RootExchangeHandler#createContext()
  */
-public interface ErrorExchangeHandler<A extends Throwable, B extends ErrorExchange<A>> extends ExchangeHandler<ExchangeContext, B> {
-
+public interface ExchangeContext {
+	
+	/**
+	 * <p>
+	 * Initializes the exchange context.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method is invoked by the HTTP server right after creation.
+	 * </p>
+	 */
+	default void init() {
+		
+	}
 }

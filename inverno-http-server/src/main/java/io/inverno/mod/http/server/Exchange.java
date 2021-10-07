@@ -22,13 +22,21 @@ import reactor.core.publisher.Mono;
  * Represents a server exchange between a client and a server.
  * </p>
  * 
+ * <p>
+ * The HTTP server attaches an exchange context created using
+ * {@link RootExchangeHandler#createContext()} when an exchange is created.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
  * @see Request
  * @see Response
+ * @see ExchangeContext
+ * 
+ * @param <A> the type of the exchange context
  */
-public interface Exchange {
+public interface Exchange<A extends ExchangeContext> {
 
 	/**
 	 * <p>
@@ -47,6 +55,15 @@ public interface Exchange {
 	 * @return the response part
 	 */
 	Response response();
+
+	/**
+	 * <p>
+	 * Returns the context attached to the exchange.
+	 * </p>
+	 * 
+	 * @return
+	 */
+	A context();
 	
 	/**
 	 * <p>
@@ -69,5 +86,5 @@ public interface Exchange {
 	 * 
 	 * @return the exchange
 	 */
-	Exchange finalizer(Mono<Void> finalizer);
+	Exchange<A> finalizer(Mono<Void> finalizer);
 }

@@ -28,6 +28,7 @@ import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.header.Headers.AcceptLanguage.LanguageRange;
 import io.inverno.mod.http.base.header.Headers.AcceptMatch;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.AcceptAwareRoute;
 
 /**
@@ -39,15 +40,16 @@ import io.inverno.mod.web.AcceptAwareRoute;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
- * @param <A> the type of exchange handled by the route
- * @param <B> the route type
+ * @param <A> the type of the exchange context
+ * @param <B> the type of exchange handled by the route
+ * @param <C> the route type
  */
-class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> extends RoutingLink<A, LanguageRoutingLink<A, B>, B> {
+class LanguageRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends AcceptAwareRoute<A, B>> extends RoutingLink<A, B, LanguageRoutingLink<A, B, C>, C> {
 
 	private final HeaderCodec<? extends Headers.AcceptLanguage> acceptLanguageCodec;
 
-	private Map<Headers.AcceptLanguage.LanguageRange, RoutingLink<A, ?, B>> handlers;
-	private Map<Headers.AcceptLanguage.LanguageRange, RoutingLink<A, ?, B>> enabledHandlers;
+	private Map<Headers.AcceptLanguage.LanguageRange, RoutingLink<A, B, ?, C>> handlers;
+	private Map<Headers.AcceptLanguage.LanguageRange, RoutingLink<A, B, ?, C>> enabledHandlers;
 
 	/**
 	 * <p>
@@ -70,7 +72,7 @@ class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 	}
 
 	@Override
-	public LanguageRoutingLink<A, B> setRoute(B route) {
+	public LanguageRoutingLink<A, B, C> setRoute(C route) {
 		String language = route.getLanguage();
 		if (language != null) {
 			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
@@ -95,11 +97,11 @@ class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 	}
 
 	@Override
-	public void enableRoute(B route) {
+	public void enableRoute(C route) {
 		String language = route.getLanguage();
 		if (language != null) {
 			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
-			RoutingLink<A, ?, B> handler = this.handlers.get(languageRange);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(languageRange);
 			if (handler != null) {
 				handler.enableRoute(route);
 				this.updateEnabledHandlers();
@@ -112,11 +114,11 @@ class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 	}
 
 	@Override
-	public void disableRoute(B route) {
+	public void disableRoute(C route) {
 		String language = route.getLanguage();
 		if (language != null) {
 			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
-			RoutingLink<A, ?, B> handler = this.handlers.get(languageRange);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(languageRange);
 			if (handler != null) {
 				handler.disableRoute(route);
 				this.updateEnabledHandlers();
@@ -129,11 +131,11 @@ class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 	}
 
 	@Override
-	public void removeRoute(B route) {
+	public void removeRoute(C route) {
 		String language = route.getLanguage();
 		if (language != null) {
 			Headers.AcceptLanguage.LanguageRange languageRange = this.acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, language).getLanguageRanges().get(0);
-			RoutingLink<A, ?, B> handler = this.handlers.get(languageRange);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(languageRange);
 			if (handler != null) {
 				handler.removeRoute(route);
 				if (!handler.hasRoute()) {
@@ -161,18 +163,18 @@ class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <F extends RouteExtractor<A, B>> void extractRoute(F extractor) {
+	public <F extends RouteExtractor<A, B, C>> void extractRoute(F extractor) {
 		if (!(extractor instanceof AcceptAwareRouteExtractor)) {
 			throw new IllegalArgumentException("Route extractor is not language aware");
 		}
 		this.handlers.entrySet().stream().forEach(e -> {
-			e.getValue().extractRoute(((AcceptAwareRouteExtractor<A, B, ?>) extractor).language(e.getKey().getLanguageTag()));
+			e.getValue().extractRoute(((AcceptAwareRouteExtractor<A, B, C, ?>) extractor).language(e.getKey().getLanguageTag()));
 		});
 		super.extractRoute(extractor);
 	}
 
 	@Override
-	public void handle(A exchange) throws HttpException {
+	public void handle(B exchange) throws HttpException {
 		if (this.enabledHandlers.isEmpty()) {
 			this.nextLink.handle(exchange);
 		} 
@@ -181,11 +183,11 @@ class LanguageRoutingLink<A extends Exchange, B extends AcceptAwareRoute<A>> ext
 				.merge(exchange.request().headers().<Headers.AcceptLanguage>getAllHeader(Headers.NAME_ACCEPT_LANGUAGE))
 				.orElse(Headers.AcceptLanguage.ALL);
 
-			Iterator<AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, ?, B>>>> acceptLanguageMatchesIterator = acceptLanguage
+			Iterator<AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, B, ?, C>>>> acceptLanguageMatchesIterator = acceptLanguage
 				.findAllMatch(this.handlers.entrySet(), Entry::getKey).iterator();
 
 			while (acceptLanguageMatchesIterator.hasNext()) {
-				AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, ?, B>>> bestMatch = acceptLanguageMatchesIterator.next();
+				AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, B, ?, C>>> bestMatch = acceptLanguageMatchesIterator.next();
 				if (bestMatch.getSource().getLanguageTag().equals("*")) {
 					// First check if the next link can handle the request since this is the default
 					try {

@@ -16,12 +16,10 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.web.ErrorWebExchange;
-import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebResponse;
-import io.inverno.mod.web.WebRouterException;
 import reactor.core.publisher.Mono;
 
 /**
@@ -34,29 +32,15 @@ import reactor.core.publisher.Mono;
  * 
  * @see WebResponse
  */
-class GenericErrorWebExchange implements ErrorWebExchange<Throwable, WebExchange.Context> {
+class GenericErrorWebExchange implements ErrorWebExchange<Throwable> {
 
 	private final ErrorExchange<Throwable> wrappedErrorExchange;
 	
 	private final GenericWebResponse response;
 	
-	private final Throwable unwrappedError;
-	
-	private final WebExchange.Context context;
-	
 	public GenericErrorWebExchange(ErrorExchange<Throwable> wrappedErrorExchange, GenericWebResponse response) {
 		this.wrappedErrorExchange = wrappedErrorExchange;
 		this.response = response;
-		
-		Throwable error = this.wrappedErrorExchange.getError();
-		if(error instanceof WebRouterException) {
-			this.unwrappedError = ((WebRouterException) error).getCause();
-			this.context = ((WebRouterException) error).getContext();
-		}
-		else {
-			this.unwrappedError = error;
-			this.context = null;
-		}
 	}
 
 	@Override
@@ -71,19 +55,17 @@ class GenericErrorWebExchange implements ErrorWebExchange<Throwable, WebExchange
 	
 	@Override
 	public Throwable getError() {
-		return this.unwrappedError;
+		return this.wrappedErrorExchange.getError();
 	}
 	
 	@Override
-	public WebExchange.Context context() {
-		return context;
+	public ExchangeContext context() {
+		return this.wrappedErrorExchange.context();
 	}
 	
 	@Override
-	public Exchange finalizer(Mono<Void> finalizer) {
+	public GenericErrorWebExchange finalizer(Mono<Void> finalizer) {
 		this.wrappedErrorExchange.finalizer(finalizer);
 		return this;
 	}
-
-	
 }

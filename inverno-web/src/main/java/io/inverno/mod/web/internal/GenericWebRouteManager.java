@@ -27,6 +27,8 @@ import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebExchangeHandler;
@@ -42,7 +44,7 @@ import io.inverno.mod.web.WebRouter;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericWebRouteManager implements WebRouteManager<WebExchange.Context> {
+class GenericWebRouteManager implements WebRouteManager<ExchangeContext> {
 
 	private final GenericWebRouter router;
 	
@@ -57,7 +59,7 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange.Context> {
 	
 	private Set<String> languages;
 
-	private ExchangeHandler<WebExchange<WebExchange.Context>> handler;
+	private ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler;
 	
 	/**
 	 * <p>
@@ -89,7 +91,7 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange.Context> {
 	}
 
 	@Override
-	public Set<WebRoute<WebExchange.Context>> findRoutes() {
+	public Set<WebRoute<ExchangeContext>> findRoutes() {
 		// TODO Implement filtering in the route extractor
 		return this.router.getRoutes().stream().filter(route -> {
 			// We want all routes that share the same criteria as the one defined in this route manager
@@ -121,7 +123,7 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange.Context> {
 	}
 
 	@Override
-	public WebRouteManager<WebExchange.Context> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
+	public WebRouteManager<ExchangeContext> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
 		Objects.requireNonNull(path);
 		if(!path.startsWith("/")) {
 			throw new IllegalArgumentException("Path must be absolute");
@@ -198,28 +200,17 @@ class GenericWebRouteManager implements WebRouteManager<WebExchange.Context> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public WebRouter<WebExchange.Context> handler(ExchangeHandler<? super WebExchange<WebExchange.Context>> handler) {
+	public WebRouter<ExchangeContext> handler(ExchangeHandler<? super ExchangeContext, ? extends Exchange<? super ExchangeContext>> handler) {
 		Objects.requireNonNull(handler);
-		// This will work since we consider lower bounded types
-		this.handler = (ExchangeHandler<WebExchange<WebExchange.Context>>) handler;
+		this.handler = (ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>)handler;
 		this.commit();
 		return this.router;
 	}
-
-	@SuppressWarnings({ "unchecked" })
+	
 	@Override
-	public WebRouter<WebExchange.Context> handler(WebExchangeHandler<? super WebExchange.Context> handler) {
+	public WebRouter<ExchangeContext> handler(WebExchangeHandler<ExchangeContext> handler) {
 		Objects.requireNonNull(handler);
-		/* 
-		 * This is not ideal, at least we must make sure this is safe:
-		 * - the handler is a ExchangeHandler<WebExchange>: we know it can accept
-		 * WebExchange because a WebExchangeHandler only accepts WebExchange
-		 * - we do not manipulate the context here, only the handler is interested in
-		 * that and this is handled in the WebRouterConfigurer which provides the proper
-		 * context type to the WebRouter which is the one providing the
-		 * GenericWebRouteManager instance
-		 */ 
-		this.handler = (WebExchangeHandler<WebExchange.Context>)handler;
+		this.handler = handler;
 		this.commit();
 		return this.router;
 	}

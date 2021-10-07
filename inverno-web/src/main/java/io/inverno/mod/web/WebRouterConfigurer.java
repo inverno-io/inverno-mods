@@ -16,6 +16,7 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 
 /**
  * <p>
@@ -27,24 +28,16 @@ import io.inverno.mod.http.server.Exchange;
  * 
  * @see WebRouter
  * 
- * @param <A> the type of web exchange context
+ * @param <A> the type of the exchange context
  */
-public interface WebRouterConfigurer<A extends WebExchange.Context> extends RouterConfigurer<WebExchange<A>, WebRouter<A>, WebRouteManager<A>, WebRoute<A>, Exchange> {
-
+public interface WebRouterConfigurer<A extends ExchangeContext> extends RouterConfigurer<A, WebExchange<A>, WebRouter<A>, WebRouteManager<A>, WebRoute<A>, Exchange<A>> {
+	
 	@Override
 	default void accept(WebRouter<A> router) {
 		this.configure(router);
 	}
 	
-	/**
-	 * <p>
-	 * Configures the Web router.
-	 * </p>
-	 * 
-	 * @param <B>
-	 * @param router
-	 */
-	<B extends A> void configure(WebRouter<B> router);
+	void configure(WebRouter<? extends A> router);
 	
 	/**
 	 * <p>

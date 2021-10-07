@@ -17,6 +17,7 @@ package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.Route;
 
@@ -33,12 +34,13 @@ import io.inverno.mod.web.Route;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
- * @param <A> the type of exchange handled by the route
- * @param <B> the route type
+ * @param <A> the type of the exchange context
+ * @param <B> the type of exchange handled by the route
+ * @param <C> the route type
  */
-class HandlerRoutingLink<A extends Exchange, B extends Route<A>> extends RoutingLink<A, HandlerRoutingLink<A, B>, B> {
+class HandlerRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends Route<A, B>> extends RoutingLink<A, B, HandlerRoutingLink<A, B, C>, C> {
 
-	private ExchangeHandler<A> handler;
+	private ExchangeHandler<A, B> handler;
 	
 	private boolean disabled;
 	
@@ -52,33 +54,33 @@ class HandlerRoutingLink<A extends Exchange, B extends Route<A>> extends Routing
 	}
 	
 	@Override
-	public HandlerRoutingLink<A, B> setRoute(B route) {
+	public HandlerRoutingLink<A, B, C> setRoute(C route) {
 		this.handler = route.getHandler();
 		return this;
 	}
 	
 	@Override
-	public <F extends RouteExtractor<A, B>> void extractRoute(F extractor) {
+	public <F extends RouteExtractor<A, B, C>> void extractRoute(F extractor) {
 		super.extractRoute(extractor);
 		extractor.handler(this.handler, this.disabled);
 	}
 	
 	@Override
-	public void enableRoute(B route) {
+	public void enableRoute(C route) {
 		if(this.handler != null) {
 			this.disabled = false;
 		}
 	}
 	
 	@Override
-	public void disableRoute(B route) {
+	public void disableRoute(C route) {
 		if(this.handler != null) {
 			this.disabled = true;
 		}
 	}
 	
 	@Override
-	public void removeRoute(B route) {
+	public void removeRoute(C route) {
 		this.handler = null;
 	}
 	
@@ -93,7 +95,7 @@ class HandlerRoutingLink<A extends Exchange, B extends Route<A>> extends Routing
 	}
 	
 	@Override
-	public void handle(A exchange) throws HttpException {
+	public void handle(B exchange) throws HttpException {
 		if(this.handler == null) {
 			throw new RouteNotFoundException();
 		}

@@ -27,6 +27,7 @@ import io.inverno.mod.http.base.NotAcceptableException;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
@@ -41,9 +42,9 @@ public class LanguageRoutingLinkTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testHandle_with_default() {
-		List<MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>>> linkRegistry = new ArrayList<>();
-		MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
-		LanguageRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> routingLink = new LanguageRoutingLink<>(new AcceptLanguageCodec(false));
+		List<MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>>> linkRegistry = new ArrayList<>();
+		MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
+		LanguageRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>> routingLink = new LanguageRoutingLink<>(new AcceptLanguageCodec(false));
 		routingLink.connect(mockRoutingLink);
 		
 		MockWebExchange exchange1 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("*"))).build();
@@ -147,9 +148,9 @@ public class LanguageRoutingLinkTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testHandle_no_default() {
-		List<MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>>> linkRegistry = new ArrayList<>();
-		MockRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
-		LanguageRoutingLink<WebExchange<WebExchange.Context>, WebRoute<WebExchange.Context>> routingLink = new LanguageRoutingLink<>(new AcceptLanguageCodec(false));
+		List<MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>>> linkRegistry = new ArrayList<>();
+		MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>> mockRoutingLink = new MockRoutingLink<>(linkRegistry);
+		LanguageRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>> routingLink = new LanguageRoutingLink<>(new AcceptLanguageCodec(false));
 		routingLink.connect(mockRoutingLink);
 		
 		MockWebExchange exchange1 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("*"))).build();

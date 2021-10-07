@@ -29,9 +29,9 @@ import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceService;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.NotFoundException;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.MissingRequiredParameterException;
 import io.inverno.mod.web.WebConfiguration;
-import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;
 import io.inverno.mod.web.annotation.PathParam;
@@ -58,7 +58,7 @@ import io.netty.buffer.Unpooled;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<WebExchange.Context> {
+public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<ExchangeContext> {
 
 	private static final Logger LOGGER = LogManager.getLogger(OpenApiWebRouterConfigurer.class);
 	
@@ -103,7 +103,7 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<WebExchan
 	}
 	
 	@Override
-	public <A extends WebExchange.Context> void configure(WebRouter<A> router) {
+	public void configure(WebRouter<? extends ExchangeContext> router) {
 		router
 			.route().path("/open-api", true).method(Method.GET).produces(MediaTypes.APPLICATION_JSON).handler(exchange -> {
 				exchange.response().body().raw().value(this.listSpec());

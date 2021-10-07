@@ -16,6 +16,7 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.Route;
 import io.inverno.mod.web.ErrorAwareRoute;
 
@@ -27,11 +28,12 @@ import io.inverno.mod.web.ErrorAwareRoute;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
- * @param <A> the type of exchange handled by the route
- * @param <B> the route type
- * @param <C> the route extractor type
+ * @param <A> the type of the exchange context
+ * @param <B> the type of exchange handled by the route
+ * @param <C> the route type
+ * @param <D> the route extractor type
  */
-interface ErrorAwareRouteExtractor<A extends Exchange, B extends Route<A>, C extends ErrorAwareRouteExtractor<A, B, C>> extends RouteExtractor<A, B> {
+interface ErrorAwareRouteExtractor<A extends ExchangeContext, B extends Exchange<A>, C extends Route<A, B>, D extends ErrorAwareRouteExtractor<A, B, C, D>> extends RouteExtractor<A, B, C> {
 
 	/**
 	 * <p>
@@ -43,5 +45,5 @@ interface ErrorAwareRouteExtractor<A extends Exchange, B extends Route<A>, C ext
 	 * 
 	 * @return the route extractor
 	 */
-	C error(Class<? extends Throwable> error);
+	D error(Class<? extends Throwable> error);
 }

@@ -9,11 +9,11 @@ import org.junit.jupiter.api.Test;
 import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.web.Route;
-import io.inverno.mod.web.WebExchange;
-import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.WebConfiguration;
+import io.inverno.mod.web.WebRoute;
 
 public class GenericWebRouterTest {
 
@@ -37,7 +37,7 @@ public class GenericWebRouterTest {
 			.route().path("/hello/{param1}").handler(exchange -> {})
 			.route().path("/hello/{param1}/{param2:[a-b]*}").handler(exchange -> {});
 		
-		Set<WebRoute<WebExchange.Context>> routes = router.getRoutes();
+		Set<WebRoute<ExchangeContext>> routes = router.getRoutes();
 		
 		// 1. consume=JSON *
 		// 2. consume=HTML *
@@ -122,7 +122,7 @@ public class GenericWebRouterTest {
 		route3.setMethod(Method.POST);
 		route3.setLanguage("fr-FR");
 		
-		Set<WebRoute<WebExchange.Context>> routes = router.route().language("fr-FR").findRoutes();
+		Set<WebRoute<ExchangeContext>> routes = router.route().language("fr-FR").findRoutes();
 		Assertions.assertEquals(2, routes.size());
 		Assertions.assertEquals(Set.of(route2, route3), routes);
 		
@@ -150,11 +150,11 @@ public class GenericWebRouterTest {
 			.route().path("/hello/{param1}").handler(exchange -> {})
 			.route().path("/hello/{param1}/{param2:[a-b]*}").handler(exchange -> {});
 		
-		Set<WebRoute<WebExchange.Context>> routes = router.getRoutes();
+		Set<WebRoute<ExchangeContext>> routes = router.getRoutes();
 		Assertions.assertEquals(12, routes.size());
 		
 		routes = router.route().consumes(MediaTypes.APPLICATION_JSON).findRoutes();
-		WebRoute<WebExchange.Context> removedRoute = routes.iterator().next();
+		WebRoute<ExchangeContext> removedRoute = routes.iterator().next();
 		removedRoute.remove();
 		
 		routes = router.getRoutes();
@@ -173,17 +173,17 @@ public class GenericWebRouterTest {
 			.route().path("/hello/{param1}").handler(exchange -> {})
 			.route().path("/hello/{param1}/{param2:[a-b]*}").handler(exchange -> {});
 		
-		Set<WebRoute<WebExchange.Context>> routes = router.getRoutes();
+		Set<WebRoute<ExchangeContext>> routes = router.getRoutes();
 		Assertions.assertEquals(12, routes.size());
 		
 		routes = router.route().consumes(MediaTypes.APPLICATION_JSON).findRoutes();
-		WebRoute<WebExchange.Context> disabledRoute = routes.iterator().next();
+		WebRoute<ExchangeContext> disabledRoute = routes.iterator().next();
 		disabledRoute.disable();
 		
 		routes = router.getRoutes();
 		Assertions.assertEquals(12, routes.size());
 		
-		Optional<WebRoute<WebExchange.Context>> disabledRouteOptional = routes.stream().filter(Route::isDisabled).findFirst();
+		Optional<WebRoute<ExchangeContext>> disabledRouteOptional = routes.stream().filter(Route::isDisabled).findFirst();
 		Assertions.assertTrue(disabledRouteOptional.isPresent());
 		Assertions.assertEquals(disabledRoute, disabledRouteOptional.get());
 		
@@ -205,7 +205,7 @@ public class GenericWebRouterTest {
 				.handler(exchange -> {});
 
 		// Should result in 4 routes
-		Set<WebRoute<WebExchange.Context>> routes = router.getRoutes();
+		Set<WebRoute<ExchangeContext>> routes = router.getRoutes();
 		Assertions.assertEquals(4, routes.size());
 	}
 	

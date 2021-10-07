@@ -27,6 +27,7 @@ import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.ContentAwareRoute;
 
 /**
@@ -38,14 +39,15 @@ import io.inverno.mod.web.ContentAwareRoute;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
- * @param <A> the type of exchange handled by the route
- * @param <B> the route type
+ * @param <A> the type of the exchange context
+ * @param <B> the type of exchange handled by the route
+ * @param <C> the route type
  */
-class ConsumesRoutingLink<A extends Exchange, B extends ContentAwareRoute<A>> extends RoutingLink<A, ConsumesRoutingLink<A, B>, B> {
+class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends ContentAwareRoute<A, B>> extends RoutingLink<A, B, ConsumesRoutingLink<A, B, C>, C> {
 
 	private final HeaderCodec<? extends Headers.Accept> acceptCodec;
 
-	private Map<Headers.Accept.MediaRange, RoutingLink<A, ?, B>> handlers;
+	private Map<Headers.Accept.MediaRange, RoutingLink<A, B, ?, C>> handlers;
 
 	/**
 	 * <p>
@@ -61,7 +63,7 @@ class ConsumesRoutingLink<A extends Exchange, B extends ContentAwareRoute<A>> ex
 	}
 
 	@Override
-	public ConsumesRoutingLink<A, B> setRoute(B route) {
+	public ConsumesRoutingLink<A, B, C> setRoute(C route) {
 		// Note if someone defines a route with a GET like method and a consumed media
 		// type, consumes will be ignored because such request does not provide content
 		// types headers
@@ -85,11 +87,11 @@ class ConsumesRoutingLink<A extends Exchange, B extends ContentAwareRoute<A>> ex
 	}
 
 	@Override
-	public void enableRoute(B route) {
+	public void enableRoute(C route) {
 		String consume = route.getConsume();
 		if (consume != null) {
 			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.NAME_ACCEPT, consume).getMediaRanges().get(0);
-			RoutingLink<A, ?, B> handler = this.handlers.get(mediaRange);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(mediaRange);
 			if (handler != null) {
 				handler.enableRoute(route);
 			}
@@ -101,11 +103,11 @@ class ConsumesRoutingLink<A extends Exchange, B extends ContentAwareRoute<A>> ex
 	}
 
 	@Override
-	public void disableRoute(B route) {
+	public void disableRoute(C route) {
 		String consume = route.getConsume();
 		if (consume != null) {
 			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.NAME_ACCEPT, consume).getMediaRanges().get(0);
-			RoutingLink<A, ?, B> handler = this.handlers.get(mediaRange);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(mediaRange);
 			if (handler != null) {
 				handler.disableRoute(route);
 			}
@@ -117,11 +119,11 @@ class ConsumesRoutingLink<A extends Exchange, B extends ContentAwareRoute<A>> ex
 	}
 
 	@Override
-	public void removeRoute(B route) {
+	public void removeRoute(C route) {
 		String consume = route.getConsume();
 		if (consume != null) {
 			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.NAME_ACCEPT, consume).getMediaRanges().get(0);
-			RoutingLink<A, ?, B> handler = this.handlers.get(mediaRange);
+			RoutingLink<A, B, ?, C> handler = this.handlers.get(mediaRange);
 			if (handler != null) {
 				handler.removeRoute(route);
 				if (!handler.hasRoute()) {
@@ -148,25 +150,25 @@ class ConsumesRoutingLink<A extends Exchange, B extends ContentAwareRoute<A>> ex
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <F extends RouteExtractor<A, B>> void extractRoute(F extractor) {
+	public <F extends RouteExtractor<A, B, C>> void extractRoute(F extractor) {
 		if (!(extractor instanceof ContentAwareRouteExtractor)) {
 			throw new IllegalArgumentException("Route extractor is not content aware");
 		}
 		this.handlers.entrySet().stream().forEach(e -> {
-			e.getValue().extractRoute(((ContentAwareRouteExtractor<A, B, ?>) extractor).consumes(e.getKey().getMediaType()));
+			e.getValue().extractRoute(((ContentAwareRouteExtractor<A, B, C, ?>) extractor).consumes(e.getKey().getMediaType()));
 		});
 		super.extractRoute(extractor);
 	}
 
 	@Override
-	public void handle(A exchange) throws HttpException {
+	public void handle(B exchange) throws HttpException {
 		if (this.handlers.isEmpty()) {
 			this.nextLink.handle(exchange);
 		} 
 		else {
 			Optional<Headers.ContentType> contentTypeHeader = exchange.request().headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE);
 
-			Optional<RoutingLink<A, ?, B>> handler = contentTypeHeader
+			Optional<RoutingLink<A, B, ?, C>> handler = contentTypeHeader
 				.flatMap(contentType -> Headers.Accept.MediaRange
 					.findFirstMatch(contentType, this.handlers.entrySet(), Entry::getKey)
 					.map(Headers.AcceptMatch::getSource)
