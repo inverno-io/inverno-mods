@@ -23,12 +23,12 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import io.inverno.mod.http.base.NotAcceptableException;
-import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.AcceptAwareRoute;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -170,9 +170,9 @@ class ProducesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 	}
 
 	@Override
-	public void handle(B exchange) throws HttpException {
+	public Mono<Void> defer(B exchange) {
 		if (this.handlers.isEmpty()) {
-			this.nextLink.handle(exchange);
+			return this.nextLink.defer(exchange);
 		} 
 		else {
 			Headers.Accept accept = Headers.Accept
@@ -190,15 +190,13 @@ class ProducesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 						nextLinkInvoked = true;
 						// First check if the next link can handle the request since this is the default
 						try {
-							this.nextLink.handle(exchange);
-							return;
+							return this.nextLink.defer(exchange);
 						} 
 						catch (RouteNotFoundException | DisabledRouteException e1) {
 							// There's no default handler defined, we can take the best match
 							try {
 								exchange.response().headers().set(bestMatch.getTarget().getKey());
-								bestMatch.getTarget().getValue().handle(exchange);
-								return;
+								return bestMatch.getTarget().getValue().defer(exchange);
 							} 
 							catch (RouteNotFoundException | DisabledRouteException e2) {
 								// continue with the next best match
@@ -210,8 +208,7 @@ class ProducesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 					else {
 						try {
 							exchange.response().headers().set(bestMatch.getTarget().getKey());
-							bestMatch.getTarget().getValue().handle(exchange);
-							return;
+							return bestMatch.getTarget().getValue().defer(exchange);
 						} 
 						catch (RouteNotFoundException | DisabledRouteException e) {
 							exchange.response().headers().remove(Headers.NAME_CONTENT_TYPE);
@@ -227,7 +224,7 @@ class ProducesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 			} 
 			else if (accept.getMediaRanges().stream().anyMatch(mediaRange -> mediaRange.getMediaType().equals("*/*"))) {
 				// We delegate to next link only if */* is accepted
-				this.nextLink.handle(exchange);
+				return this.nextLink.defer(exchange);
 			} 
 			else {
 				throw new NotAcceptableException();

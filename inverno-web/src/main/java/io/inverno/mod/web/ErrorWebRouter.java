@@ -15,7 +15,6 @@
  */
 package io.inverno.mod.web;
 
-import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.ErrorExchange;
 
 /**
@@ -45,10 +44,4 @@ import io.inverno.mod.http.server.ErrorExchange;
  */
 public interface ErrorWebRouter extends ErrorRouter<ErrorWebExchange<Throwable>, ErrorWebRouter, ErrorWebRouteManager, ErrorWebRoute> {
 	
-	@Override
-	default void handle(ErrorExchange<Throwable> exchange) throws HttpException {
-		if(exchange.response().isHeadersWritten()) {
-			throw new IllegalStateException("Headers already written", exchange.getError());
-		}
-	}
 }

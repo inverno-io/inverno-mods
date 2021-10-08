@@ -23,12 +23,12 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import io.inverno.mod.http.base.UnsupportedMediaTypeException;
-import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.ContentAwareRoute;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -161,9 +161,9 @@ class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 	}
 
 	@Override
-	public void handle(B exchange) throws HttpException {
+	public Mono<Void> defer(B exchange) {
 		if (this.handlers.isEmpty()) {
-			this.nextLink.handle(exchange);
+			return this.nextLink.defer(exchange);
 		} 
 		else {
 			Optional<Headers.ContentType> contentTypeHeader = exchange.request().headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE);
@@ -176,10 +176,10 @@ class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 				);
 
 			if (handler.isPresent()) {
-				handler.get().handle(exchange);
+				return handler.get().defer(exchange);
 			} 
 			else if (this.handlers.isEmpty() || !contentTypeHeader.isPresent()) {
-				this.nextLink.handle(exchange);
+				return this.nextLink.defer(exchange);
 			}
 			else {
 				throw new UnsupportedMediaTypeException();

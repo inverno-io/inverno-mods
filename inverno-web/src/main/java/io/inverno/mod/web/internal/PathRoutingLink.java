@@ -18,10 +18,10 @@ package io.inverno.mod.web.internal;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.PathAwareRoute;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -149,9 +149,9 @@ class PathRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extend
 	}
 
 	@Override
-	public void handle(B exchange) throws HttpException {
+	public Mono<Void> defer(B exchange) {
 		if (this.handlers.isEmpty()) {
-			this.nextLink.handle(exchange);
+			return this.nextLink.defer(exchange);
 		} 
 		else {
 			// Path in the request headers is normalized as per API specification
@@ -159,7 +159,7 @@ class PathRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extend
 			if (handler == null) {
 				handler = this.nextLink;
 			}
-			handler.handle(exchange);
+			return handler.defer(exchange);
 		}
 	}
 }

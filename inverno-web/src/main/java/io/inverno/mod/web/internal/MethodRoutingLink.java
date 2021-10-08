@@ -22,10 +22,10 @@ import java.util.stream.Collectors;
 
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.MethodNotAllowedException;
-import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.MethodAwareRoute;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -153,19 +153,19 @@ class MethodRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C exte
 		});
 		super.extractRoute(extractor);
 	}
-
+	
 	@Override
-	public void handle(B exchange) throws HttpException {
+	public Mono<Void> defer(B exchange) {
 		if (this.handlers.isEmpty()) {
-			this.nextLink.handle(exchange);
+			return this.nextLink.defer(exchange);
 		} 
 		else {
 			RoutingLink<A, B, ?, C> handler = this.enabledHandlers.get(exchange.request().getMethod());
 			if (handler != null) {
-				handler.handle(exchange);
+				return handler.defer(exchange);
 			} 
 			else if (this.enabledHandlers.isEmpty()) {
-				this.nextLink.handle(exchange);
+				return this.nextLink.defer(exchange);
 			} 
 			else {
 				throw new MethodNotAllowedException(this.handlers.keySet());

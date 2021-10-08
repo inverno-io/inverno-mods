@@ -20,8 +20,9 @@ import java.util.List;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.Route;
+import reactor.core.publisher.Mono;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -29,7 +30,7 @@ import io.inverno.mod.web.Route;
  */
 public class MockRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends Route<A, B>> extends RoutingLink<A, B, MockRoutingLink<A, B, C>, C> {
 
-	private ExchangeHandler<A, B> handler;
+	private ReactiveExchangeHandler<A, B> handler;
 	
 	private boolean disabled;
 	
@@ -81,18 +82,18 @@ public class MockRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C
 		return this.disabled;
 	}
 	
-	public ExchangeHandler<A, B> getHandler() {
+	public ReactiveExchangeHandler<A, B> getHandler() {
 		return handler;
 	}
 	
 	@Override
-	public void handle(B exchange) throws HttpException {
+	public Mono<Void> defer(B exchange) throws HttpException {
 		if(this.handler == null) {
 			throw new RouteNotFoundException();
 		}
 		if(this.disabled) {
 			throw new DisabledRouteException();
 		}
-		this.handler.handle(exchange);
+		return this.handler.defer(exchange);
 	}
 }

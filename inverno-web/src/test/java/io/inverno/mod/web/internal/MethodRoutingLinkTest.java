@@ -29,6 +29,7 @@ import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.internal.mock.MockWebExchange;
+import reactor.core.publisher.Mono;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -37,6 +38,12 @@ import io.inverno.mod.web.internal.mock.MockWebExchange;
 public class MethodRoutingLinkTest {
 
 	@SuppressWarnings("unchecked")
+	private static ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> mockExchangeHandler() {
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> mockExchangeHandler = Mockito.mock(ExchangeHandler.class);
+		Mockito.when(mockExchangeHandler.defer(Mockito.any())).thenReturn(Mono.empty());
+		return mockExchangeHandler;
+	}
+
 	@Test
 	public void testHandle() {
 		List<MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>>> linkRegistry = new ArrayList<>();
@@ -45,36 +52,40 @@ public class MethodRoutingLinkTest {
 		routingLink.connect(mockRoutingLink);
 		
 		GenericWebRoute route_default = new GenericWebRoute(null);
-		route_default.setHandler(Mockito.mock(ExchangeHandler.class));
+		
+		route_default.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route_default);
 		
 		MockWebExchange exchange1 = MockWebExchange.from("/", Method.PUT).build();
-		routingLink.handle(exchange1);
-		Mockito.verify(route_default.getHandler(), Mockito.times(1)).handle(exchange1);
+		routingLink.defer(exchange1).block();
+		Mockito.verify(route_default.getHandler(), Mockito.times(0)).handle(exchange1);
+		Mockito.verify(route_default.getHandler(), Mockito.times(1)).defer(exchange1);
 		
 		GenericWebRoute route1 = new GenericWebRoute(null);
 		route1.setMethod(Method.GET);
-		route1.setHandler(Mockito.mock(ExchangeHandler.class));
+		route1.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route1);
 		
 		GenericWebRoute route2 = new GenericWebRoute(null);
 		route2.setMethod(Method.POST);
-		route2.setHandler(Mockito.mock(ExchangeHandler.class));
+		route2.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route2);
 		
 		Assertions.assertEquals(2, linkRegistry.size());
 		
 		MockWebExchange exchange2 = MockWebExchange.from("/", Method.GET).build();
-		routingLink.handle(exchange2);
-		Mockito.verify(route1.getHandler(), Mockito.times(1)).handle(exchange2);
+		routingLink.defer(exchange2).block();
+		Mockito.verify(route1.getHandler(), Mockito.times(0)).handle(exchange2);
+		Mockito.verify(route1.getHandler(), Mockito.times(1)).defer(exchange2);
 		
 		MockWebExchange exchange3 = MockWebExchange.from("/", Method.POST).build();
-		routingLink.handle(exchange3);
-		Mockito.verify(route2.getHandler(), Mockito.times(1)).handle(exchange3);
+		routingLink.defer(exchange3).block();
+		Mockito.verify(route2.getHandler(), Mockito.times(0)).handle(exchange3);
+		Mockito.verify(route2.getHandler(), Mockito.times(1)).defer(exchange3);
 		
 		MockWebExchange exchange4 = MockWebExchange.from("/", Method.PUT).build();
 		try {
-			routingLink.handle(exchange4);
+			routingLink.defer(exchange4).block();
 			Assertions.fail("Should throw " + MethodNotAllowedException.class);
 		} 
 		catch (MethodNotAllowedException e) {

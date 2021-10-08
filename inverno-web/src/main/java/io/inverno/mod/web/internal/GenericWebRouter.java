@@ -39,6 +39,7 @@ import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.WebRouteManager;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -199,8 +200,18 @@ public class GenericWebRouter implements @Provide WebRouter<ExchangeContext> {
 	}
 	
 	@Override
+	public Mono<Void> defer(Exchange<ExchangeContext> exchange) {
+		return this.firstLink.defer(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.dataConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange::finalizer, exchange.context()));
+	}
+	
+	/**
+	 * <p>
+	 * Implements the ExchangeHandler contract, however this should not be invoked in order to remain reactive. 
+	 * </p>
+	 */
+	@Override
 	public void handle(Exchange<ExchangeContext> exchange) throws HttpException {
-		this.firstLink.handle(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.dataConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange::finalizer, exchange.context()));
+		this.defer(exchange).block();
 	}
 	
 	@Override

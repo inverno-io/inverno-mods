@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.header.Headers.AcceptLanguage.LanguageRange;
@@ -30,6 +29,7 @@ import io.inverno.mod.http.base.header.Headers.AcceptMatch;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.AcceptAwareRoute;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -172,11 +172,11 @@ class LanguageRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 		});
 		super.extractRoute(extractor);
 	}
-
+	
 	@Override
-	public void handle(B exchange) throws HttpException {
+	public Mono<Void> defer(B exchange) {
 		if (this.enabledHandlers.isEmpty()) {
-			this.nextLink.handle(exchange);
+			return this.nextLink.defer(exchange);
 		} 
 		else {
 			Headers.AcceptLanguage acceptLanguage = Headers.AcceptLanguage
@@ -191,14 +191,12 @@ class LanguageRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 				if (bestMatch.getSource().getLanguageTag().equals("*")) {
 					// First check if the next link can handle the request since this is the default
 					try {
-						this.nextLink.handle(exchange);
-						return;
+						return this.nextLink.defer(exchange);
 					} 
 					catch (RouteNotFoundException | DisabledRouteException e1) {
 						// There's no default handler defined, we can take the best match
 						try {
-							bestMatch.getTarget().getValue().handle(exchange);
-							return;
+							return bestMatch.getTarget().getValue().defer(exchange);
 						} 
 						catch (RouteNotFoundException | DisabledRouteException e2) {
 							// continue with the next best match
@@ -208,8 +206,7 @@ class LanguageRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 				} 
 				else {
 					try {
-						bestMatch.getTarget().getValue().handle(exchange);
-						return;
+						return bestMatch.getTarget().getValue().defer(exchange);
 					} 
 					catch (RouteNotFoundException | DisabledRouteException e) {
 						// continue with the next best match
@@ -223,7 +220,7 @@ class LanguageRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 			// Here we can possibly invoke the next link twice but in that case a
 			// RouteNotFoundException or DisabledRouteException is thrown so there shouldn't
 			// be complex processing involved.
-			this.nextLink.handle(exchange);
+			return this.nextLink.defer(exchange);
 		}
 	}
 }

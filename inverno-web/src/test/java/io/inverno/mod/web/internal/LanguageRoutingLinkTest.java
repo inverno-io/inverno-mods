@@ -32,6 +32,7 @@ import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.internal.mock.MockWebExchange;
+import reactor.core.publisher.Mono;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -40,6 +41,12 @@ import io.inverno.mod.web.internal.mock.MockWebExchange;
 public class LanguageRoutingLinkTest {
 
 	@SuppressWarnings("unchecked")
+	private static ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> mockExchangeHandler() {
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> mockExchangeHandler = Mockito.mock(ExchangeHandler.class);
+		Mockito.when(mockExchangeHandler.defer(Mockito.any())).thenReturn(Mono.empty());
+		return mockExchangeHandler;
+	}
+	
 	@Test
 	public void testHandle_with_default() {
 		List<MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>>> linkRegistry = new ArrayList<>();
@@ -49,103 +56,116 @@ public class LanguageRoutingLinkTest {
 		
 		MockWebExchange exchange1 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("*"))).build();
 		try {
-			routingLink.handle(exchange1);
+			routingLink.defer(exchange1).block();
 			Assertions.fail("Should throw " + NotFoundException.class);
 		}
 		catch (NotFoundException e) {
 		}
 		
 		GenericWebRoute route_default = new GenericWebRoute(null);
-		route_default.setHandler(Mockito.mock(ExchangeHandler.class));
+		route_default.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route_default);
 		
 		GenericWebRoute route1 = new GenericWebRoute(null);
 		route1.setLanguage("fr-FR");
-		route1.setHandler(Mockito.mock(ExchangeHandler.class));
+		route1.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route1);
 		
 		GenericWebRoute route2 = new GenericWebRoute(null);
 		route2.setLanguage("en-GB");
-		route2.setHandler(Mockito.mock(ExchangeHandler.class));
+		route2.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route2);
 		
 		GenericWebRoute route3 = new GenericWebRoute(null);
 		route3.setLanguage("en-US");
-		route3.setHandler(Mockito.mock(ExchangeHandler.class));
+		route3.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route3);
 		
 		GenericWebRoute route4 = new GenericWebRoute(null);
 		route4.setLanguage("en");
-		route4.setHandler(Mockito.mock(ExchangeHandler.class));
+		route4.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route4);
 		
 		
 		MockWebExchange exchange2 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("it-IT"))).build();
-		routingLink.handle(exchange2);
-		Mockito.verify(route_default.getHandler(), Mockito.times(1)).handle(exchange2);
+		routingLink.defer(exchange2).block();
+		Mockito.verify(route_default.getHandler(), Mockito.times(0)).handle(exchange2);
+		Mockito.verify(route_default.getHandler(), Mockito.times(1)).defer(exchange2);
 		
 		MockWebExchange exchange3 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("fr-FR"))).build();
-		routingLink.handle(exchange3);
-		Mockito.verify(route1.getHandler(), Mockito.times(1)).handle(exchange3);
+		routingLink.defer(exchange3).block();
+		Mockito.verify(route1.getHandler(), Mockito.times(0)).handle(exchange3);
+		Mockito.verify(route1.getHandler(), Mockito.times(1)).defer(exchange3);
 		
 		MockWebExchange exchange4 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("en-US"))).build();
-		routingLink.handle(exchange4);
-		Mockito.verify(route3.getHandler(), Mockito.times(1)).handle(exchange4);
+		routingLink.defer(exchange4).block();
+		Mockito.verify(route3.getHandler(), Mockito.times(0)).handle(exchange4);
+		Mockito.verify(route3.getHandler(), Mockito.times(1)).defer(exchange4);
 		
 		MockWebExchange exchange5 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("en-AU"))).build();
-		routingLink.handle(exchange5);
-		Mockito.verify(route4.getHandler(), Mockito.times(1)).handle(exchange5);
+		routingLink.defer(exchange5).block();
+		Mockito.verify(route4.getHandler(), Mockito.times(0)).handle(exchange5);
+		Mockito.verify(route4.getHandler(), Mockito.times(1)).defer(exchange5);
 		
 		MockWebExchange exchange6 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("*"))).build();
-		routingLink.handle(exchange6);
-		Mockito.verify(route_default.getHandler(), Mockito.times(1)).handle(exchange6);
+		routingLink.defer(exchange6).block();
+		Mockito.verify(route_default.getHandler(), Mockito.times(0)).handle(exchange6);
+		Mockito.verify(route_default.getHandler(), Mockito.times(1)).defer(exchange6);
 		
 		MockWebExchange exchange7 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("fr"))).build();
-		routingLink.handle(exchange7);
-		Mockito.verify(route1.getHandler(), Mockito.times(1)).handle(exchange7);
+		routingLink.defer(exchange7).block();
+		Mockito.verify(route1.getHandler(), Mockito.times(0)).handle(exchange7);
+		Mockito.verify(route1.getHandler(), Mockito.times(1)).defer(exchange7);
 		
 		MockWebExchange exchange8 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("fr-*"))).build();
 		try {
-			routingLink.handle(exchange8);
+			routingLink.defer(exchange8).block();
 			Assertions.fail("Should throw " + NotAcceptableException.class);
 		} catch (NotAcceptableException e) {
 			Assertions.assertEquals("Invalid language tag: fr-*", e.getMessage());
 		}
 		
 		MockWebExchange exchange9 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("en-US,en-GB;q=0.9,en;q=0.8"))).build();
-		routingLink.handle(exchange9);
-		Mockito.verify(route3.getHandler(), Mockito.times(1)).handle(exchange9);
+		routingLink.defer(exchange9).block();
+		Mockito.verify(route3.getHandler(), Mockito.times(0)).handle(exchange9);
+		Mockito.verify(route3.getHandler(), Mockito.times(1)).defer(exchange9);
 		
 		MockWebExchange exchange10 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("en-AU,en-GB;q=0.9,en;q=0.8"))).build();
-		routingLink.handle(exchange10);
-		Mockito.verify(route2.getHandler(), Mockito.times(1)).handle(exchange10);
+		routingLink.defer(exchange10).block();
+		Mockito.verify(route2.getHandler(), Mockito.times(0)).handle(exchange10);
+		Mockito.verify(route2.getHandler(), Mockito.times(1)).defer(exchange10);
 		
 		MockWebExchange exchange11 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("en-AU,en-ZA;q=0.9,en;q=0.8"))).build();
-		routingLink.handle(exchange11);
-		Mockito.verify(route4.getHandler(), Mockito.times(1)).handle(exchange11);
+		routingLink.defer(exchange11).block();
+		Mockito.verify(route4.getHandler(), Mockito.times(0)).handle(exchange11);
+		Mockito.verify(route4.getHandler(), Mockito.times(1)).defer(exchange11);
 		
 		MockWebExchange exchange12 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("en-AU,en-GB;q=0.9,en;q=0.8,fr-FR"))).build();
-		routingLink.handle(exchange12);
-		Mockito.verify(route1.getHandler(), Mockito.times(1)).handle(exchange12);
+		routingLink.defer(exchange12).block();
+		Mockito.verify(route1.getHandler(), Mockito.times(0)).handle(exchange12);
+		Mockito.verify(route1.getHandler(), Mockito.times(1)).defer(exchange12);
 		
 		MockWebExchange exchange13 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("en-AU,en-GB;q=0.9,en;q=0.8,fr-FR;q=0.8,fr;q=0.7"))).build();
-		routingLink.handle(exchange13);
-		Mockito.verify(route2.getHandler(), Mockito.times(1)).handle(exchange13);
+		routingLink.defer(exchange13).block();
+		Mockito.verify(route2.getHandler(), Mockito.times(0)).handle(exchange13);
+		Mockito.verify(route2.getHandler(), Mockito.times(1)).defer(exchange13);
 		
 		MockWebExchange exchange14 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("fr-CA,fr;q=0.9,en;q=0.8"))).build();
-		routingLink.handle(exchange14);
-		Mockito.verify(route4.getHandler(), Mockito.times(1)).handle(exchange14);
+		routingLink.defer(exchange14).block();
+		Mockito.verify(route4.getHandler(), Mockito.times(0)).handle(exchange14);
+		Mockito.verify(route4.getHandler(), Mockito.times(1)).defer(exchange14);
 		
 		MockWebExchange exchange15 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("fr-CA,fr;q=0.9"))).build();
-		routingLink.handle(exchange15);
-		Mockito.verify(route1.getHandler(), Mockito.times(1)).handle(exchange15);
+		routingLink.defer(exchange15).block();
+		Mockito.verify(route1.getHandler(), Mockito.times(0)).handle(exchange15);
+		Mockito.verify(route1.getHandler(), Mockito.times(1)).defer(exchange15);
 		
 		MockWebExchange exchange16 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("fr-CA"))).build();
-		routingLink.handle(exchange16);
-		Mockito.verify(route_default.getHandler(), Mockito.times(1)).handle(exchange16);
+		routingLink.defer(exchange16).block();
+		Mockito.verify(route_default.getHandler(), Mockito.times(0)).handle(exchange16);
+		Mockito.verify(route_default.getHandler(), Mockito.times(1)).defer(exchange16);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testHandle_no_default() {
 		List<MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>>> linkRegistry = new ArrayList<>();
@@ -155,7 +175,7 @@ public class LanguageRoutingLinkTest {
 		
 		MockWebExchange exchange1 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("*"))).build();
 		try {
-			routingLink.handle(exchange1);
+			routingLink.defer(exchange1).block();
 			Assertions.fail("Should throw " + NotFoundException.class);
 		}
 		catch (NotFoundException e) {
@@ -163,83 +183,95 @@ public class LanguageRoutingLinkTest {
 		
 		GenericWebRoute route1 = new GenericWebRoute(null);
 		route1.setLanguage("fr-FR");
-		route1.setHandler(Mockito.mock(ExchangeHandler.class));
+		route1.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route1);
 		
 		GenericWebRoute route2 = new GenericWebRoute(null);
 		route2.setLanguage("en-GB");
-		route2.setHandler(Mockito.mock(ExchangeHandler.class));
+		route2.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route2);
 		
 		GenericWebRoute route3 = new GenericWebRoute(null);
 		route3.setLanguage("en-US");
-		route3.setHandler(Mockito.mock(ExchangeHandler.class));
+		route3.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route3);
 		
 		GenericWebRoute route4 = new GenericWebRoute(null);
 		route4.setLanguage("en");
-		route4.setHandler(Mockito.mock(ExchangeHandler.class));
+		route4.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route4);
 		
 		MockWebExchange exchange2 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("it-IT"))).build();
 		try {
-			routingLink.handle(exchange2);
+			routingLink.defer(exchange2).block();
 			Assertions.fail("Should throw " + NotFoundException.class);
 		} 
 		catch (NotFoundException e) {
 		}
 		
 		MockWebExchange exchange3 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("fr-FR"))).build();
-		routingLink.handle(exchange3);
-		Mockito.verify(route1.getHandler(), Mockito.times(1)).handle(exchange3);
+		routingLink.defer(exchange3).block();
+		Mockito.verify(route1.getHandler(), Mockito.times(0)).handle(exchange3);
+		Mockito.verify(route1.getHandler(), Mockito.times(1)).defer(exchange3);
 		
 		MockWebExchange exchange4 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("en-US"))).build();
-		routingLink.handle(exchange4);
-		Mockito.verify(route3.getHandler(), Mockito.times(1)).handle(exchange4);
+		routingLink.defer(exchange4).block();
+		Mockito.verify(route3.getHandler(), Mockito.times(0)).handle(exchange4);
+		Mockito.verify(route3.getHandler(), Mockito.times(1)).defer(exchange4);
 		
 		MockWebExchange exchange5 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("en-AU"))).build();
-		routingLink.handle(exchange5);
-		Mockito.verify(route4.getHandler(), Mockito.times(1)).handle(exchange5);
+		routingLink.defer(exchange5).block();
+		Mockito.verify(route4.getHandler(), Mockito.times(0)).handle(exchange5);
+		Mockito.verify(route4.getHandler(), Mockito.times(1)).defer(exchange5);
 		
 		MockWebExchange exchange6 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("*"))).build();
-		routingLink.handle(exchange6);
-		Mockito.verify(route1.getHandler(), Mockito.times(1)).handle(exchange6);
+		routingLink.defer(exchange6).block();
+		Mockito.verify(route1.getHandler(), Mockito.times(0)).handle(exchange6);
+		Mockito.verify(route1.getHandler(), Mockito.times(1)).defer(exchange6);
 		
 		MockWebExchange exchange7 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("fr"))).build();
-		routingLink.handle(exchange7);
-		Mockito.verify(route1.getHandler(), Mockito.times(1)).handle(exchange7);
+		routingLink.defer(exchange7).block();
+		Mockito.verify(route1.getHandler(), Mockito.times(0)).handle(exchange7);
+		Mockito.verify(route1.getHandler(), Mockito.times(1)).defer(exchange7);
 		
 		MockWebExchange exchange9 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("en-US,en-GB;q=0.9,en;q=0.8"))).build();
-		routingLink.handle(exchange9);
-		Mockito.verify(route3.getHandler(), Mockito.times(1)).handle(exchange9);
+		routingLink.defer(exchange9).block();
+		Mockito.verify(route3.getHandler(), Mockito.times(0)).handle(exchange9);
+		Mockito.verify(route3.getHandler(), Mockito.times(1)).defer(exchange9);
 		
 		MockWebExchange exchange10 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("en-AU,en-GB;q=0.9,en;q=0.8"))).build();
-		routingLink.handle(exchange10);
-		Mockito.verify(route2.getHandler(), Mockito.times(1)).handle(exchange10);
+		routingLink.defer(exchange10).block();
+		Mockito.verify(route2.getHandler(), Mockito.times(0)).handle(exchange10);
+		Mockito.verify(route2.getHandler(), Mockito.times(1)).defer(exchange10);
 		
 		MockWebExchange exchange11 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("en-AU,en-ZA;q=0.9,en;q=0.8"))).build();
-		routingLink.handle(exchange11);
-		Mockito.verify(route4.getHandler(), Mockito.times(1)).handle(exchange11);
+		routingLink.defer(exchange11).block();
+		Mockito.verify(route4.getHandler(), Mockito.times(0)).handle(exchange11);
+		Mockito.verify(route4.getHandler(), Mockito.times(1)).defer(exchange11);
 		
 		MockWebExchange exchange12 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("en-AU,en-GB;q=0.9,en;q=0.8,fr-FR"))).build();
-		routingLink.handle(exchange12);
-		Mockito.verify(route1.getHandler(), Mockito.times(1)).handle(exchange12);
+		routingLink.defer(exchange12).block();
+		Mockito.verify(route1.getHandler(), Mockito.times(0)).handle(exchange12);
+		Mockito.verify(route1.getHandler(), Mockito.times(1)).defer(exchange12);
 		
 		MockWebExchange exchange13 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("en-AU,en-GB;q=0.9,en;q=0.8,fr-FR;q=0.8,fr;q=0.7"))).build();
-		routingLink.handle(exchange13);
-		Mockito.verify(route2.getHandler(), Mockito.times(1)).handle(exchange13);
+		routingLink.defer(exchange13).block();
+		Mockito.verify(route2.getHandler(), Mockito.times(0)).handle(exchange13);
+		Mockito.verify(route2.getHandler(), Mockito.times(1)).defer(exchange13);
 		
 		MockWebExchange exchange14 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("fr-CA,fr;q=0.9,en;q=0.8"))).build();
-		routingLink.handle(exchange14);
-		Mockito.verify(route4.getHandler(), Mockito.times(1)).handle(exchange14);
+		routingLink.defer(exchange14).block();
+		Mockito.verify(route4.getHandler(), Mockito.times(0)).handle(exchange14);
+		Mockito.verify(route4.getHandler(), Mockito.times(1)).defer(exchange14);
 		
 		MockWebExchange exchange15 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("fr-CA,fr;q=0.9"))).build();
-		routingLink.handle(exchange15);
-		Mockito.verify(route1.getHandler(), Mockito.times(1)).handle(exchange15);
+		routingLink.defer(exchange15).block();
+		Mockito.verify(route1.getHandler(), Mockito.times(0)).handle(exchange15);
+		Mockito.verify(route1.getHandler(), Mockito.times(1)).defer(exchange15);
 		
 		MockWebExchange exchange16 = MockWebExchange.from("/").headers(Map.of(Headers.NAME_ACCEPT_LANGUAGE, List.of("fr-CA"))).build();
 		try {
-			routingLink.handle(exchange16);
+			routingLink.defer(exchange16).block();
 			Assertions.fail("Should throw " + NotFoundException.class);
 		} 
 		catch (NotFoundException e) {

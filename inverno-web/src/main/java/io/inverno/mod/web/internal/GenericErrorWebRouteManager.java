@@ -23,8 +23,6 @@ import java.util.stream.Collectors;
 
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.ErrorExchangeHandler;
-import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebExchangeHandler;
 import io.inverno.mod.web.ErrorWebRoute;
@@ -49,7 +47,7 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager {
 	
 	private Set<String> languages;
 	
-	private ExchangeHandler<ExchangeContext, ErrorWebExchange<Throwable>> handler;
+	private ErrorExchangeHandler<Throwable, ErrorWebExchange<Throwable>> handler;
 	
 	/**
 	 * <p>
@@ -135,7 +133,7 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager {
 	@Override
 	public ErrorWebRouter handler(ErrorExchangeHandler<? extends Throwable, ? extends ErrorExchange<? extends Throwable>> handler) {
 		Objects.requireNonNull(handler);
-		this.handler = (ExchangeHandler<ExchangeContext, ErrorWebExchange<Throwable>>) handler;
+		this.handler = (ErrorExchangeHandler<Throwable, ErrorWebExchange<Throwable>>) handler;
 		this.commit();
 		return this.router;
 	}

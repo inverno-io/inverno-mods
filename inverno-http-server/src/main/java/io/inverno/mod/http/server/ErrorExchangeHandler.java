@@ -15,6 +15,9 @@
  */
 package io.inverno.mod.http.server;
 
+import io.inverno.mod.http.base.HttpException;
+import reactor.core.publisher.Mono;
+
 /**
  * <p>
  * Exchange handler used to handle error server exchanges.
@@ -35,6 +38,32 @@ package io.inverno.mod.http.server;
  * @param <A> the error type
  * @param <B> the error exchange type handled by the handler 
  */
-public interface ErrorExchangeHandler<A extends Throwable, B extends ErrorExchange<A>> extends ExchangeHandler<ExchangeContext, B> {
+public interface ErrorExchangeHandler<A extends Throwable, B extends ErrorExchange<A>> extends ReactiveExchangeHandler<ExchangeContext, B> {
 
+	/**
+	 * <p>
+	 * Returns a Mono that defers the execution of {@link #handle(Exchange)}.
+	 * </p>
+	 */
+	@Override
+	default Mono<Void> defer(B exchange) {
+		return Mono.fromRunnable(() -> this.handle(exchange));
+	}
+	
+	/**
+	 * <p>
+	 * Processes the specified server exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * The purpose of this method is to eventually inject a {@link ResponseBody} in
+	 * the response which basically completes the exchange
+	 * </p>
+	 * 
+	 * @param exchange the exchange to process
+	 * 
+	 * @throws HttpException if an error occurs during the processing of the
+	 *                       exchange
+	 */
+	void handle(B exchange) throws HttpException;
 }

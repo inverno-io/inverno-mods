@@ -21,11 +21,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.ErrorAwareRoute;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebRoute;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -152,15 +152,13 @@ class ThrowableRoutingLink extends RoutingLink<ExchangeContext, ErrorWebExchange
 	}
 	
 	@Override
-	public void handle(ErrorWebExchange<Throwable> exchange) throws HttpException {
+	public Mono<Void> defer(ErrorWebExchange<Throwable> exchange) {
 		// We take the first match, or we delegate to the next link
-		this.handlers.entrySet().stream()
+		return this.handlers.entrySet().stream()
 			.filter(e -> e.getKey().isAssignableFrom(exchange.getError().getClass()))
 			.findFirst()
 			.map(Entry::getValue)
-			.ifPresentOrElse(
-				handler -> handler.handle(exchange),
-				() -> this.nextLink.handle(exchange)
-			);
+			.map(handler -> handler.defer(exchange))
+			.orElseGet(() -> this.nextLink.defer(exchange));
 	}
 }

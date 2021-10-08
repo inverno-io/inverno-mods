@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.Route;
 import io.inverno.mod.web.Router;
 
@@ -58,7 +58,7 @@ import io.inverno.mod.web.Router;
  * @param <C> the routing link type
  * @param <D> the route type
  */
-abstract class RoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends RoutingLink<A, B, C, D>, D extends Route<A, B>> implements ExchangeHandler<A, B> {
+abstract class RoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends RoutingLink<A, B, C, D>, D extends Route<A, B>> implements ReactiveExchangeHandler<A, B> {
 
 	private final Supplier<C> linkSupplier;
 

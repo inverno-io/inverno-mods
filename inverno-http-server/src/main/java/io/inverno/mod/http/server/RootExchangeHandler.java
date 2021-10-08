@@ -21,6 +21,20 @@ package io.inverno.mod.http.server;
  * </p>
  * 
  * <p>
+ * The HTTP server relies on a root exchange handler to actually process a
+ * client request and provide a response to the client. It will create an
+ * {@link ErrorExchange} and invoke the {@link ErrorExchangeHandler} in case an
+ * error is thrown during that process.
+ * </p>
+ * 
+ * <p>
+ * The HTTP server shall only rely on the {@link #defer(Exchange)} method in
+ * order to remain reactive, the root exchange handler only extends
+ * {@link ExchangeHandler} to facilitate the definition of the handler using
+ * lambda.
+ * </p>
+ * 
+ * <p>
  * It differs from a regular {@link ExchangeHandler} by the definition of the
  * {@link #createContext()} method which is used by the server to create the
  * exchange context associated to an {@link Exchange}.
@@ -43,7 +57,7 @@ public interface RootExchangeHandler<A extends ExchangeContext, B extends Exchan
 	 * This method returns null by default.
 	 * </p>
 	 * 
-	 * @return a new context instanec or null
+	 * @return a new context instance or null
 	 */
 	default A createContext() {
 		return null;

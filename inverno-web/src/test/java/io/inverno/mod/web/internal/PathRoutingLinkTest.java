@@ -27,6 +27,7 @@ import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.internal.mock.MockWebExchange;
+import reactor.core.publisher.Mono;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -35,6 +36,12 @@ import io.inverno.mod.web.internal.mock.MockWebExchange;
 public class PathRoutingLinkTest {
 
 	@SuppressWarnings("unchecked")
+	private static ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> mockExchangeHandler() {
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> mockExchangeHandler = Mockito.mock(ExchangeHandler.class);
+		Mockito.when(mockExchangeHandler.defer(Mockito.any())).thenReturn(Mono.empty());
+		return mockExchangeHandler;
+	}
+	
 	@Test
 	public void testHandle() {
 		List<MockRoutingLink<ExchangeContext, WebExchange<ExchangeContext>, WebRoute<ExchangeContext>>> linkRegistry = new ArrayList<>();
@@ -43,12 +50,12 @@ public class PathRoutingLinkTest {
 		routingLink.connect(mockRoutingLink);
 		
 		GenericWebRoute route_default = new GenericWebRoute(null);
-		route_default.setHandler(Mockito.mock(ExchangeHandler.class));
+		route_default.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route_default);
 		
 		GenericWebRoute route1 = new GenericWebRoute(null);
 		route1.setPath("/a/b/c");
-		route1.setHandler(Mockito.mock(ExchangeHandler.class));
+		route1.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route1);
 		
 		GenericWebRoute route2 = new GenericWebRoute(null);
@@ -58,26 +65,30 @@ public class PathRoutingLinkTest {
 		
 		GenericWebRoute route3 = new GenericWebRoute(null);
 		route3.setPath("/a/b/c/d");
-		route3.setHandler(Mockito.mock(ExchangeHandler.class));
+		route3.setHandler(mockExchangeHandler());
 		routingLink.setRoute(route3);
 		
 		Assertions.assertEquals(3, linkRegistry.size());
 		
 		MockWebExchange exchange1 = MockWebExchange.from("/a/b/c").build();
-		routingLink.handle(exchange1);
-		Mockito.verify(route1.getHandler(), Mockito.times(1)).handle(exchange1);
+		routingLink.defer(exchange1).block();
+		Mockito.verify(route1.getHandler(), Mockito.times(0)).handle(exchange1);
+		Mockito.verify(route1.getHandler(), Mockito.times(1)).defer(exchange1);
 		
 		MockWebExchange exchange2 = MockWebExchange.from("/a/b/c/").build();
-		routingLink.handle(exchange2);
-		Mockito.verify(route2.getHandler(), Mockito.times(1)).handle(exchange2);
+		routingLink.defer(exchange2).block();
+		Mockito.verify(route2.getHandler(), Mockito.times(0)).handle(exchange2);
+		Mockito.verify(route2.getHandler(), Mockito.times(1)).defer(exchange2);
 		
 		MockWebExchange exchange3 = MockWebExchange.from("/a/b/c/d").build();
-		routingLink.handle(exchange3);
-		Mockito.verify(route3.getHandler(), Mockito.times(1)).handle(exchange3);
+		routingLink.defer(exchange3).block();
+		Mockito.verify(route3.getHandler(), Mockito.times(0)).handle(exchange3);
+		Mockito.verify(route3.getHandler(), Mockito.times(1)).defer(exchange3);
 		
 		MockWebExchange exchange4 = MockWebExchange.from("/unknown").build();
-		routingLink.handle(exchange4);
-		Mockito.verify(route_default.getHandler(), Mockito.times(1)).handle(exchange4);
+		routingLink.defer(exchange4).block();
+		Mockito.verify(route_default.getHandler(), Mockito.times(0)).handle(exchange4);
+		Mockito.verify(route_default.getHandler(), Mockito.times(1)).defer(exchange4);
 	}
 
 }

@@ -19,8 +19,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebRoute;
 
@@ -148,7 +149,7 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 	}
 
 	@Override
-	public void handler(ExchangeHandler<ExchangeContext, ErrorWebExchange<Throwable>> handler, boolean disabled) {
+	public void handler(ReactiveExchangeHandler<ExchangeContext, ErrorWebExchange<Throwable>> handler, boolean disabled) {
 		if(handler != null) {
 			GenericErrorWebRoute route = new GenericErrorWebRoute(this.getRouter());
 			route.setDisabled(disabled);
@@ -166,7 +167,7 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 			if(language != null) {
 				route.setLanguage(language);
 			}
-			route.setHandler(handler);
+			route.setHandler((ErrorExchangeHandler<Throwable, ErrorWebExchange<Throwable>>)handler);
 			this.addRoute(route);
 		}
 	}	

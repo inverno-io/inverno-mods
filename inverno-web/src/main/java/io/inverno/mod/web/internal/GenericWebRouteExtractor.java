@@ -23,6 +23,7 @@ import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
 
@@ -206,7 +207,7 @@ class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, Web
 	}
 
 	@Override
-	public void handler(ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler, boolean disabled) {
+	public void handler(ReactiveExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler, boolean disabled) {
 		if(handler != null) {
 			GenericWebRoute route = new GenericWebRoute(this.getRouter());
 			route.setDisabled(disabled);
@@ -236,7 +237,7 @@ class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, Web
 			if(language != null) {
 				route.setLanguage(language);
 			}
-			route.setHandler(handler);
+			route.setHandler((ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>)handler);
 			this.addRoute(route);
 		}
 	}

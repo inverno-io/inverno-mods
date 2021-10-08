@@ -15,8 +15,9 @@
  */
 package io.inverno.mod.web.internal;
 
+import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebRoute;
 
@@ -40,7 +41,7 @@ class GenericErrorWebRoute implements ErrorWebRoute {
 	
 	private String language;
 	
-	private ExchangeHandler<ExchangeContext, ErrorWebExchange<Throwable>> handler;
+	private ErrorExchangeHandler<Throwable, ErrorWebExchange<Throwable>> handler;
 	
 	/**
 	 * <p>
@@ -87,7 +88,7 @@ class GenericErrorWebRoute implements ErrorWebRoute {
 	}
 	
 	@Override
-	public ExchangeHandler<ExchangeContext ,ErrorWebExchange<Throwable>> getHandler() {
+	public ReactiveExchangeHandler<ExchangeContext ,ErrorWebExchange<Throwable>> getHandler() {
 		return this.handler;
 	}
 	
@@ -99,7 +100,7 @@ class GenericErrorWebRoute implements ErrorWebRoute {
 	 * 
 	 * @param handler an exchange handler
 	 */
-	public void setHandler(ExchangeHandler<ExchangeContext, ErrorWebExchange<Throwable>> handler) {
+	public void setHandler(ErrorExchangeHandler<Throwable, ErrorWebExchange<Throwable>> handler) {
 		this.handler = handler;
 	}
 	

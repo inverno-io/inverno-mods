@@ -19,7 +19,7 @@ import java.util.Set;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.Route;
 
 /**
@@ -49,7 +49,7 @@ interface RouteExtractor<A extends ExchangeContext, B extends Exchange<A>, C ext
 	 * @param handler
 	 * @param disabled
 	 */
-	void handler(ExchangeHandler<A, B> handler, boolean disabled);
+	void handler(ReactiveExchangeHandler<A, B> handler, boolean disabled);
 	
 	/**
 	 * <p>

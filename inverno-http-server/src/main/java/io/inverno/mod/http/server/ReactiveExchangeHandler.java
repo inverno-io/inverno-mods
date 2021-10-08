@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 package io.inverno.mod.http.server;
 
-import io.inverno.mod.http.base.HttpException;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * An exchange handler is used to handle server exchanges.
+ * A reactive exchange handler is used to handle server exchanges.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -33,32 +32,23 @@ import reactor.core.publisher.Mono;
  * @param <B> the type of exchange handled by the handler
  */
 @FunctionalInterface
-public interface ExchangeHandler<A extends ExchangeContext, B extends Exchange<A>> extends ReactiveExchangeHandler<A, B> {
+public interface ReactiveExchangeHandler<A extends ExchangeContext, B extends Exchange<A>> {
 
 	/**
 	 * <p>
-	 * Returns a Mono that defers the execution of {@link #handle(Exchange)}.
-	 * </p>
-	 */
-	@Override
-	default Mono<Void> defer(B exchange) {
-		return Mono.fromRunnable(() -> this.handle(exchange));
-	}
-	
-	/**
-	 * <p>
-	 * Processes the specified server exchange.
+	 * Returns a Mono that defers the processing of the exchange.
 	 * </p>
 	 * 
 	 * <p>
-	 * The purpose of this method is to eventually inject a {@link ResponseBody} in
-	 * the response which basically completes the exchange
+	 * The HTTP server must invoke this method rather than the
+	 * {@link #handle(Exchange)} to make exchange processing fully reactive. By
+	 * default this method simply wraps the {@link #handle(Exchange)} method in a
+	 * Mono. Implementor shouldn't need to change that behavior and only override
+	 * this method for specific use cases.
 	 * </p>
 	 * 
-	 * @param exchange the exchange to process
-	 * 
-	 * @throws HttpException if an error occurs during the processing of the
-	 *                       exchange
+	 * @param exchange
+	 * @return
 	 */
-	void handle(B exchange) throws HttpException;
+	Mono<Void> defer(B exchange);
 }

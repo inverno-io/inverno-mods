@@ -44,6 +44,7 @@ import io.inverno.mod.web.ErrorWebRouteManager;
 import io.inverno.mod.web.ErrorWebRouter;
 import io.inverno.mod.web.ErrorWebRouterConfigurer;
 import io.netty.buffer.Unpooled;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -163,9 +164,21 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	}
 	
 	@Override
+	public Mono<Void> defer(ErrorExchange<Throwable> exchange) {
+		if(exchange.response().isHeadersWritten()) {
+			throw new IllegalStateException("Headers already written", exchange.getError());
+		}
+		return this.firstLink.defer(new GenericErrorWebExchange(exchange, new GenericWebResponse(exchange.response(), this.dataConversionService)));
+	}
+	
+	/**
+	 * <p>
+	 * Implements the ErrorExchangeHandler contract, however this should not be invoked in order to remain reactive. 
+	 * </p>
+	 */
+	@Override
 	public void handle(ErrorExchange<Throwable> exchange) throws HttpException {
-		ErrorWebRouter.super.handle(exchange);
-		this.firstLink.handle(new GenericErrorWebExchange(exchange, new GenericWebResponse(exchange.response(), this.dataConversionService)));
+		this.defer(exchange).block();
 	}
 	
 	/**

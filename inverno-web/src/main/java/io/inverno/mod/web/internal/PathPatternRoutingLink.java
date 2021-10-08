@@ -21,12 +21,12 @@ import java.util.Map.Entry;
 
 import io.inverno.mod.base.net.URIMatcher;
 import io.inverno.mod.base.net.URIPattern;
-import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.PathAwareRoute;
 import io.inverno.mod.web.PathParameters;
 import io.inverno.mod.web.WebExchange;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -150,9 +150,9 @@ class PathPatternRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C
 	}
 
 	@Override
-	public void handle(B exchange) throws HttpException {
+	public Mono<Void> defer(B exchange) {
 		if (this.handlers.isEmpty()) {
-			this.nextLink.handle(exchange);
+			return this.nextLink.defer(exchange);
 		} 
 		else {
 			// Path in the request headers is normalized as per API specification
@@ -177,10 +177,10 @@ class PathPatternRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C
 						}
 					}
 				}
-				bestMatchHandler.handle(exchange);
+				return bestMatchHandler.defer(exchange);
 			} 
 			else {
-				nextLink.handle(exchange);
+				return this.nextLink.defer(exchange);
 			}
 		}
 	}
