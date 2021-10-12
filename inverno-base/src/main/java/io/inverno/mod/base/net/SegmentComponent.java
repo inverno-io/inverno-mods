@@ -31,13 +31,12 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * <p>
  * A URI component representing a segment part of a path in a URI as defined by
- * <a href="https://tools.ietf.org/html/rfc3986#section-3.3">RFC 3986 Section
- * 3.3</a>.
+ * <a href="https://tools.ietf.org/html/rfc3986#section-3.3">RFC 3986 Section 3.3</a>.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ParameterizedURIComponent
  */
 class SegmentComponent implements ParameterizedURIComponent {
@@ -56,11 +55,15 @@ class SegmentComponent implements ParameterizedURIComponent {
 	private final Charset charset;
 
 	private final List<URIParameter> parameters;
+	private boolean previousWildcard = false;
 	
 	private String pattern;
 	private List<String> patternGroupNames;
 	
 	private String segmentRawValue;
+	
+	private boolean directoriesPattern;
+	private boolean terminal;
 	
 	/**
 	 * <p>
@@ -80,42 +83,127 @@ class SegmentComponent implements ParameterizedURIComponent {
 		this.charset = charset;
 		this.parameters = new LinkedList<>();
 		
-		Consumer<URIParameter> parameterHandler = null;
-		if(this.flags.isParameterized()) {
-			parameterHandler = this.parameters::add;
+		BiPredicate<Integer, Byte> breakPredicate = null;
+		if(this.flags.isPathPattern()) {
+			breakPredicate = (i, nextByte) -> {
+				if(directoriesPattern && nextByte != '/') {
+					throw new URIBuilderException("Invalid usage of path pattern '**' which is exclusive: /" + path.substring(0, i+1));
+				}
+				if(nextByte == '?') {
+					this.parameters.add(new URIParameter(i, 1, null, "[^/]", charset));
+				}
+				else if(nextByte == '*') {
+					if(this.previousWildcard) {
+						if(i - 1 > 0) {
+							throw new URIBuilderException("Invalid usage of path pattern '**' which is exclusive: /" + path.substring(0, i+1));
+						}
+						this.parameters.add(new URIParameter(i-1, 2, null, ".*", charset));
+						this.previousWildcard = false;
+						this.directoriesPattern = true;
+					}
+					else {
+						this.previousWildcard = true;
+					}
+				}
+				else if(this.previousWildcard) {
+					this.parameters.add(new URIParameter(i-1, 1, null, "[^/]*", charset));
+					this.previousWildcard = false;
+				}
+				return false;
+			};
 		}
 		
-		BiPredicate<Integer, Byte> breakPredicate = null;
 		if(consumePath) {
-			breakPredicate = (i, nextByte) -> {
+			BiPredicate<Integer, Byte> consumeBreakPredicate = (i, nextByte) -> {
 				if(nextByte == '/') {
 					this.segmentRawValue = i == 0 ? "" : path.substring(0, i);
 					return true;
 				}
 				return false;
 			};
+			breakPredicate = breakPredicate != null ? breakPredicate.or(consumeBreakPredicate) : consumeBreakPredicate;
 		}
-		URIs.scanURIComponent(path, null, charset, parameterHandler, breakPredicate); 
+		
+		Consumer<URIParameter> parameterHandler = null;
+		if(this.flags.isParameterized()) {
+			parameterHandler = this.parameters::add;
+		}
+		
+		URIs.scanURIComponent(path, null, charset, parameterHandler, breakPredicate);
 		this.rawValue = this.segmentRawValue != null ? this.segmentRawValue : path;
+		if(this.previousWildcard) {
+			this.parameters.add(new URIParameter(this.rawValue.length() - 1, 1, null, "[^/]*", charset));
+		}
+	}
+
+	/**
+	 * <p>
+	 * Returns true if this segment represent a directories path pattern: {@code **}.
+	 * </p>
+	 *
+	 * @return true if the segment is a directories path pattern, false otherwise
+	 */
+	public boolean isDirectoriesPattern() {
+		return this.directoriesPattern;
 	}
 	
 	/**
 	 * <p>
-	 * Returns a list of segment components contained in the specified path
-	 * considering heading and trailing slashes or not.
+	 * Returns true if segment is terminal to indicate that no more segment can be added to the path.
 	 * </p>
 	 * 
 	 * <p>
-	 * When heading and/or trailing are not ignored, empty segment components are
-	 * added to to the resulting list.
+	 * A segment is terminal when it is preceeded by a directories path pattern segment ({@code **}) and matches a wildcard path pattern ({@code *}) which is the case of a regular path parameter.
 	 * </p>
 	 * 
+	 * @return true if the segment is terminal, false otherwise
+	 */
+	public boolean isTerminal() {
+		return this.terminal;
+	}
+	
+	/**
+	 * <p>
+	 * Injects the next segment into the segment to set the exit pattern when the segment represents a directories path pattern.
+	 * </p>
+	 * 
+	 * <p>
+	 * If the segment does not represent a directories path pattern, this is a noop.
+	 * </p>
+	 * 
+	 * @param nextSegment the next segment in the path
+	 */
+	public void setNextSegment(SegmentComponent nextSegment) throws IllegalStateException {
+		if(this.directoriesPattern) {
+			String nextSegmentUnnamedNonCapturingPattern = nextSegment.getUnnamedNonCapturingPattern();
+			if(nextSegmentUnnamedNonCapturingPattern.equals("(?:[^/]*)")) {
+				// The next segment is then terminal
+				this.pattern = "([^/]*(?<![^/]*$)(?:/[^/]*(?<!/[^/]*$))*)";
+				nextSegment.terminal = true;
+			}
+			else {
+				this.pattern = String.format("([^/]*(?<!%1$s)(?:/[^/]*(?<!/%1$s))*)", nextSegmentUnnamedNonCapturingPattern);
+			}
+			this.patternGroupNames = new LinkedList<>();
+			this.patternGroupNames.add(null);
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Returns a list of segment components contained in the specified path considering heading and trailing slashes or not.
+	 * </p>
+	 *
+	 * <p>
+	 * When heading and/or trailing are not ignored, empty segment components are added to to the resulting list.
+	 * </p>
+	 *
 	 * @param flags               URI flags
 	 * @param charset             a charset
 	 * @param path                a path
 	 * @param ignoreHeadingSlash  true to ignore heading slash
 	 * @param ignoreTrailingSlash true to ignore trailing slash
-	 * 
+	 *
 	 * @return a list of segment components or an empty list
 	 */
 	public static List<SegmentComponent> fromPath(URIFlags flags, Charset charset, String path, boolean ignoreHeadingSlash, boolean ignoreTrailingSlash) {
@@ -145,7 +233,14 @@ class SegmentComponent implements ParameterizedURIComponent {
 				}
 				nextSegment = new SegmentComponent(flags, charset, currentPath, true);
 				
-				if(flags.isNormalized()) {
+				if(nextSegment.isDirectoriesPattern()) {
+					// we have **, it can't be preceded by **
+					if(!segments.isEmpty() && segments.peekLast().isDirectoriesPattern()) {
+						throw new URIBuilderException("Invalid path: **/**");
+					}
+					segments.add(nextSegment);
+				}
+				else if(flags.isNormalized()) {
 					// Note that, this doesn't apply to parameterized segment that might be set to ../ or ./ as  a result, normalization will also take place during the build of a parameterized URI
 					String nextSegmentValue = nextSegment.getRawValue();
 					if(nextSegmentValue.equals(".")) {
@@ -168,10 +263,24 @@ class SegmentComponent implements ParameterizedURIComponent {
 						}
 					}
 					else {
+						if(!segments.isEmpty()) {
+							SegmentComponent lastSegment = segments.peekLast();
+							if(lastSegment.isTerminal()) {
+								throw new URIBuilderException("Invalid path: **/* is terminal");
+							}
+							lastSegment.setNextSegment(nextSegment);
+						}
 						segments.add(nextSegment);
 					}
 				}
 				else {
+					if(!segments.isEmpty()) {
+						SegmentComponent lastSegment = segments.peekLast();
+						if(lastSegment.isTerminal()) {
+							throw new URIBuilderException("Invalid path: **/* is terminal");
+						}
+						lastSegment.setNextSegment(nextSegment);
+					}
 					segments.add(nextSegment);
 				}
 			} while(currentPath.length() >= nextSegment.getRawValue().length() + 1);
@@ -219,6 +328,27 @@ class SegmentComponent implements ParameterizedURIComponent {
 		return this.pattern;
 	}
 	
+	private String getUnnamedNonCapturingPattern() {
+		if(this.rawValue == null) {
+			return "";
+		}
+		else {
+			StringBuilder patternBuilder = new StringBuilder();
+			int valueIndex = 0;
+			for(URIParameter parameter : this.parameters) {
+				if(parameter.getOffset() > valueIndex) {
+					patternBuilder.append("(?:").append(Pattern.quote(this.rawValue.substring(valueIndex, parameter.getOffset()))).append(")");
+				}
+				patternBuilder.append(parameter.getUnnamedNonCapturingPattern());
+				valueIndex = parameter.getOffset() + parameter.getLength();
+			}
+			if(valueIndex < this.rawValue.length()) {
+				patternBuilder.append("(?:").append(Pattern.quote(this.rawValue.substring(valueIndex))).append(")");
+			}
+			return patternBuilder.toString();
+		}
+	}
+	
 	@Override
 	public List<String> getPatternGroupNames() {
 		if(this.patternGroupNames == null) {
@@ -249,23 +379,20 @@ class SegmentComponent implements ParameterizedURIComponent {
 	
 	/**
 	 * <p>
-	 * Returns the segment component value after replacing the parameters with the
-	 * string representation of the specified values escaping or not slash it might
-	 * contain.
+	 * Returns the segment component value after replacing the parameters with the string representation of the specified values escaping or not slash it might contain.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section
-	 * 2.1</a>.
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
-	 * 
+	 *
 	 * @param values      an array of values to replace the component's parameters
 	 * @param escapeSlash true to escape the slash contained in the segment
-	 * 
+	 *
 	 * @return the segment value
-	 * @throws IllegalArgumentException if there's not enough values to replace all
-	 *                                  parameters
+	 *
+	 * @throws IllegalArgumentException if there's not enough values to replace all parameters
 	 */
 	public String getValue(Object[] values, boolean escapeSlash) throws IllegalArgumentException {
 		if(this.parameters.isEmpty()) {
@@ -296,21 +423,19 @@ class SegmentComponent implements ParameterizedURIComponent {
 	
 	/**
 	 * <p>
-	 * Returns the segment component value after replacing the parameters with the
-	 * string representation of the specified values escaping or not slash it might
-	 * contain.
+	 * Returns the segment component value after replacing the parameters with the string representation of the specified values escaping or not slash it might contain.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Note that the resulting value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section
-	 * 2.1</a>.
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
-	 * 
+	 *
 	 * @param values      a map of values to replace the component's parameters
 	 * @param escapeSlash true to escape the slash contained in the segment
-	 * 
+	 *
 	 * @return the segment value
+	 *
 	 * @throws IllegalArgumentException if there are missing values
 	 */
 	public String getValue(Map<String, ?> values, boolean escapeSlash) throws IllegalArgumentException {

@@ -60,6 +60,7 @@ import io.inverno.mod.web.compiler.spi.WebRouteInfo;
 import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfoVisitor;
 import io.inverno.mod.web.compiler.spi.WebSseEventFactoryParameterInfo;
+import org.apache.commons.text.StringEscapeUtils;
 
 /**
  * <p>
@@ -330,10 +331,10 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			result.append("path = { ");
 			if(routeInfo.getPaths().length > 0) {
 				result.append(Arrays.stream(routeInfo.getPaths())
-					.map(path -> "\"" + routeInfo.getController()
+					.map(path -> "\"" + StringEscapeUtils.escapeJava(routeInfo.getController()
 						.map(WebControllerInfo::getRootPath)
-						.map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).path(path, false).buildRawPath())
-						.orElse(path) + "\""
+						.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).path(path, false).buildRawPath())
+						.orElse(path)) + "\""
 					)
 					.collect(Collectors.joining(", "))
 				);	
@@ -341,7 +342,7 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			else {
 				routeInfo.getController()
 					.map(WebControllerInfo::getRootPath)
-					.map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).buildRawPath())
+					.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).buildRawPath())
 					.ifPresent(rootPath -> result.append("\"").append(rootPath).append("\""));
 			}
 			result.append(" }");
@@ -376,10 +377,10 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			
 			if(routeInfo.getPaths().length > 0) {
 				routeManager.append(Arrays.stream(routeInfo.getPaths())
-					.map(path -> ".path(\"" + routeInfo.getController()
+					.map(path -> ".path(\"" + StringEscapeUtils.escapeJava(routeInfo.getController()
 						.map(WebControllerInfo::getRootPath)
-						.map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).path(path, false).buildRawPath())
-						.orElse(path) + "\", " + routeInfo.isMatchTrailingSlash() + ")"
+						.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).path(path, false).buildRawPath())
+						.orElse(path)) + "\", " + routeInfo.isMatchTrailingSlash() + ")"
 					)
 					.collect(Collectors.joining())
 				);
@@ -387,8 +388,8 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			else {
 				routeInfo.getController()
 					.map(WebControllerInfo::getRootPath)
-					.map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).buildRawPath())
-					.ifPresent(rootPath -> routeManager.append(".path(\"").append(rootPath).append("\", ").append(routeInfo.isMatchTrailingSlash()).append(")"));
+					.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).buildRawPath())
+					.ifPresent(rootPath -> routeManager.append(".path(\"").append(StringEscapeUtils.escapeJava(rootPath)).append("\", ").append(routeInfo.isMatchTrailingSlash()).append(")"));
 			}
 			if(routeInfo.getMethods() != null && routeInfo.getMethods().length > 0) {
 				routeManager.append(Arrays.stream(routeInfo.getMethods()).map(method -> ".method(" + context.getMethodTypeName() + "." + method.toString() + ")").collect(Collectors.joining()));

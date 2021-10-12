@@ -28,11 +28,13 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * <p>A generic URI builder implementation.</p>
- * 
+ * <p>
+ * A generic URI builder implementation.
+ * </p>
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see URIBuilder
  */
 class GenericURIBuilder implements URIBuilder {
@@ -65,47 +67,58 @@ class GenericURIBuilder implements URIBuilder {
 	
 	/**
 	 * <p>
-	 * Creates a generic URI builder with the specified charset and options from the
-	 * specified path ignoring or not the trailing slash.
+	 * Creates a generic URI builder with the specified charset and options from the specified path ignoring or not the trailing slash.
 	 * </p>
-	 * 
-	 * @param path                a path with optional query and fragment components
+	 *
+	 * @param requestTarget       a request-target
+	 * @param requestTargetForm   the form of the request-target
 	 * @param ignoreTrailingSlash ignore or the trailing slash in the path
 	 * @param charset             a charset
 	 * @param options             an array of options
 	 */
-	public GenericURIBuilder(String path, boolean ignoreTrailingSlash, Charset charset, URIs.Option... options) {
+	public GenericURIBuilder(String requestTarget, URIs.RequestTargetForm requestTargetForm, boolean ignoreTrailingSlash, Charset charset, URIs.Option... options) {
 		this.charset = charset;
 		this.flags = new URIFlags(options);
 		this.segments = new LinkedList<>();
-		if(path != null) {
-			int queryIndex = path.indexOf('?');
-			int fragmentIndex = path.indexOf('#');
+		if(requestTarget != null) {
+			int queryIndex = -1;
+			int fragmentIndex = -1;
+			
+			switch(requestTargetForm) {
+				case ABSOLUTE:
+					break;
+				case ORIGIN_EXTENDED: fragmentIndex = requestTarget.indexOf('#');
+				case ORIGIN: queryIndex = requestTarget.indexOf('?');
+					if(this.flags.isPathPattern()) {
+						throw new URIBuilderException(URIs.RequestTargetForm.ORIGIN + " form request-target is incompatible with " + URIs.Option.PATH_PATTERN + " option");
+					}
+					break;
+			}
+			
 			if(queryIndex > 0 && fragmentIndex > 0) {
-				this.path(path.substring(0, queryIndex), ignoreTrailingSlash);
-				this.parseRawQuery(path.substring(queryIndex + 1, fragmentIndex));
-				this.fragment(path.substring(fragmentIndex + 1));
+				this.path(requestTarget.substring(0, queryIndex), ignoreTrailingSlash);
+				this.parseRawQuery(requestTarget.substring(queryIndex + 1, fragmentIndex));
+				this.fragment(requestTarget.substring(fragmentIndex + 1));
 			}
 			else if(queryIndex > 0 && fragmentIndex < 0) {
-				this.path(path.substring(0, queryIndex), ignoreTrailingSlash);
-				this.parseRawQuery(path.substring(queryIndex + 1));
+				this.path(requestTarget.substring(0, queryIndex), ignoreTrailingSlash);
+				this.parseRawQuery(requestTarget.substring(queryIndex + 1));
 			}
 			else if(fragmentIndex > 0) {
-				this.path(path.substring(0, fragmentIndex), ignoreTrailingSlash);
-				this.fragment(path.substring(fragmentIndex + 1));
+				this.path(requestTarget.substring(0, fragmentIndex), ignoreTrailingSlash);
+				this.fragment(requestTarget.substring(fragmentIndex + 1));
 			}
 			else {
-				this.path(path, ignoreTrailingSlash);
+				this.path(requestTarget, ignoreTrailingSlash);
 			}
 		}
 	}
 	
 	/**
 	 * <p>
-	 * Creates a generic URI builder with the specified charset and options from the
-	 * specified URI ignoring or not the trailing slash.
+	 * Creates a generic URI builder with the specified charset and options from the specified URI ignoring or not the trailing slash.
 	 * </p>
-	 * 
+	 *
 	 * @param uri                 a URI
 	 * @param ignoreTrailingSlash ignore or not trailing slash in the URI's path
 	 * @param charset             a charset
@@ -259,7 +272,14 @@ class GenericURIBuilder implements URIBuilder {
 	public URIBuilder segment(String segment) {
 		if(segment != null) {
 			SegmentComponent nextSegment = new SegmentComponent(this.flags, this.charset, segment);
-			if(this.flags.isNormalized()) {
+			if(nextSegment.isDirectoriesPattern()) {
+				// we have **, it can't be preceded by **
+				if(!this.segments.isEmpty() && this.segments.peekLast().isDirectoriesPattern()) {
+					throw new URIBuilderException("Invalid path: **/**");
+				}
+				this.segments.add(nextSegment);
+			}
+			else if(this.flags.isNormalized()) {
 				// Note that, this doesn't apply to parameterized segment that might be set to
 				// '.' or '..' as a result, normalization will also take place during the build of
 				// a parameterized URI
@@ -284,10 +304,24 @@ class GenericURIBuilder implements URIBuilder {
 					}
 				}
 				else {
+					if(!this.segments.isEmpty()) {
+						SegmentComponent lastSegment = this.segments.peekLast();
+						if(lastSegment.isTerminal()) {
+							throw new URIBuilderException("Invalid path: **/* is terminal");
+						}
+						lastSegment.setNextSegment(nextSegment);
+					}
 					this.segments.add(nextSegment);
 				}
 			}
 			else {
+				if(!this.segments.isEmpty()) {
+					SegmentComponent lastSegment = this.segments.peekLast();
+					if(lastSegment.isTerminal()) {
+						throw new URIBuilderException("Invalid path: **/* is terminal");
+					}
+					lastSegment.setNextSegment(nextSegment);
+				}
 				this.segments.add(nextSegment);
 			}
 		}
@@ -837,7 +871,18 @@ class GenericURIBuilder implements URIBuilder {
 					patternBuilder.append("/");
 					rawValueBuilder.append("/");
 				}
-				patternBuilder.append(this.segments.stream().map(segment -> segment.getPattern()).collect(Collectors.joining("/")));
+				patternBuilder.append(
+					this.segments.stream()
+						.map(segment -> {
+							if(segment.isDirectoriesPattern() && patternBuilder.length() > 0) {
+								return "?" + segment.getPattern();
+							}
+							else {
+								return segment.getPattern();
+							}
+						})
+						.collect(Collectors.joining("/"))
+				);
 				rawValueBuilder.append(this.segments.stream().map(segment -> segment.getRawValue()).collect(Collectors.joining("/")));
 				if(matchTrailingSlash) {
 					patternBuilder.append("/?");
@@ -906,7 +951,18 @@ class GenericURIBuilder implements URIBuilder {
 				if(abempty && !firstSegmentEmpty) {
 					pathPatternBuilder.append("/");
 				}
-				pathPatternBuilder.append(this.segments.stream().map(segment -> segment.getPattern()).collect(Collectors.joining("/")));
+				pathPatternBuilder.append(
+					this.segments.stream()
+						.map(segment -> {
+							if(segment.isDirectoriesPattern() && pathPatternBuilder.length() > 0) {
+								return "?" + segment.getPattern();
+							}
+							else {
+								return segment.getPattern();
+							}
+						})
+						.collect(Collectors.joining("/"))
+				);
 				if(matchTrailingSlash) {
 					pathPatternBuilder.append("/?");
 				}

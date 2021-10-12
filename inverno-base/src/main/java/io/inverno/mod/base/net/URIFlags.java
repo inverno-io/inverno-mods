@@ -19,13 +19,12 @@ import io.inverno.mod.base.net.URIs.Option;
 
 /**
  * <p>
- * URI flags providing bindings to the options specified when creating a URI
- * builder.
+ * URI flags providing bindings to the options specified when creating a URI builder.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see URIs.Option
  * @see URIBuilder
  */
@@ -36,6 +35,8 @@ class URIFlags {
 	private boolean normalized;
 
 	private boolean parameterized;
+	
+	private boolean pathPattern;
 
 	/**
 	 * <p>
@@ -53,6 +54,9 @@ class URIFlags {
 				break;
 			case PARAMETERIZED:
 				this.parameterized = true;
+				break;
+			case PATH_PATTERN:
+				this.pathPattern = true;
 				break;
 			default:
 				throw new IllegalArgumentException("Unsupported option: " + option);
@@ -79,6 +83,17 @@ class URIFlags {
 	 */
 	public boolean isParameterized() {
 		return parameterized;
+	}
+
+	/**
+	 * <p>
+	 * Returns when the {@link Option#PATH_PATTERN} was specified.
+	 * </p>
+	 * 
+	 * @return true if the path_pattern option is enabled, false otherwise
+	 */
+	public boolean isPathPattern() {
+		return pathPattern;
 	}
 	
 	/**

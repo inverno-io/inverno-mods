@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.server;
 
+import java.util.function.Function;
 import reactor.core.publisher.Mono;
 
 /**
@@ -36,17 +37,26 @@ public interface ReactiveExchangeHandler<A extends ExchangeContext, B extends Ex
 
 	/**
 	 * <p>
+	 * Returns a composed exchange handler that first applies the interceptor to transform the exchange and then invoke the {@link #defer(io.inverno.mod.http.server.Exchange) }.
+	 * </p>
+	 * 
+	 * @param interceptor the interceptor
+	 * @return a composed exchange handler
+	 */
+	default ReactiveExchangeHandler<A, B> intercept(Function<? super B, ? extends Mono<? extends B>> interceptor) {
+		return (B exchange) -> interceptor.apply(exchange).flatMap(ReactiveExchangeHandler.this::defer);
+	}
+	
+	/**
+	 * <p>
 	 * Returns a Mono that defers the processing of the exchange.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The HTTP server must invoke this method rather than the
-	 * {@link #handle(Exchange)} to make exchange processing fully reactive. By
-	 * default this method simply wraps the {@link #handle(Exchange)} method in a
-	 * Mono. Implementor shouldn't need to change that behavior and only override
-	 * this method for specific use cases.
+	 * The HTTP server must invoke this method rather than the {@link #handle(Exchange)} to make exchange processing fully reactive. By default this method simply wraps the {@link #handle(Exchange)}
+	 * method in a Mono. Implementor shouldn't need to change that behavior and only override this method for specific use cases.
 	 * </p>
-	 * 
+	 *
 	 * @param exchange
 	 * @return
 	 */

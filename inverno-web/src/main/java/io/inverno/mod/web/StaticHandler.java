@@ -112,7 +112,7 @@ public class StaticHandler implements WebExchangeHandler<ExchangeContext> {
 		String resourcePath = exchange.request().pathParameters().get(this.pathParameterName).map(Parameter::getValue).orElse("");
 		boolean isDirectory = resourcePath.endsWith("/");
 		
-		URIBuilder resourceUriBuilder = URIs.uri(resourcePath, URIs.Option.NORMALIZED);
+		URIBuilder resourceUriBuilder = URIs.uri(resourcePath, URIs.RequestTargetForm.ABSOLUTE ,URIs.Option.NORMALIZED);
 		if(isDirectory) {
 			resourceUriBuilder.segment("index.html");
 		}

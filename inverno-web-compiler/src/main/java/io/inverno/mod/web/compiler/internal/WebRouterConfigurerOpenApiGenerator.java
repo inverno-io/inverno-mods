@@ -102,7 +102,7 @@ class WebRouterConfigurerOpenApiGenerator implements WebRouterConfigurerInfoVisi
 							routePathStream = Arrays.stream(route.getPaths())
 								.map(path -> route.getController()
 									.map(WebControllerInfo::getRootPath)
-									.map(rootPath -> URIs.uri(rootPath, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED).path(path, false).buildRawPath())
+									.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).path(path, false).buildRawPath())
 									.orElse(path)
 								);
 						}

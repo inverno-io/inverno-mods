@@ -22,18 +22,16 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * Represents a parameter in a URI component specified in the component's raw
- * value in the form <code>{{@literal <name>[:<pattern>]}}</code>.
+ * Represents a parameter in a URI component specified in the component's raw value in the form <code>{{@literal <name>[:<pattern>]}}</code>.
  * </p>
- * 
+ *
  * <p>
- * A URI parameter has a name and a pattern which default to
- * <code>{@literal [^/]*}</code>.
+ * A URI parameter has a name and a pattern which default to <code>{@literal [^/]*}</code>.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see URIBuilder
  */
 class URIParameter {
@@ -54,11 +52,9 @@ class URIParameter {
 	
 	/**
 	 * <p>
-	 * Creates the URI parameter defined at the specified offset and of the
-	 * specified length within a component's raw value and with the specified name
-	 * and charset and default pattern.
+	 * Creates the URI parameter defined at the specified offset and of the specified length within a component's raw value and with the specified name and charset and default pattern.
 	 * </p>
-	 * 
+	 *
 	 * @param offset  the offset within a component's raw value
 	 * @param length  the length of the parameter within a component's raw value
 	 * @param name    the parameter name
@@ -70,14 +66,12 @@ class URIParameter {
 	
 	/**
 	 * <p>
-	 * Creates the URI parameter defined at the specified offset and of the
-	 * specified length within a component's raw value and with the specified name,
-	 * allowed characters predicate and charset and default pattern.
+	 * Creates the URI parameter defined at the specified offset and of the specified length within a component's raw value and with the specified name, allowed characters predicate and charset and
+	 * default pattern.
 	 * </p>
-	 * 
+	 *
 	 * @param offset            the offset within a component's raw value
-	 * @param length            the length of the parameter within a component's raw
-	 *                          value
+	 * @param length            the length of the parameter within a component's raw value
 	 * @param name              the parameter name
 	 * @param allowedCharacters the allowed characters predicate
 	 * @param charset           a charset
@@ -88,11 +82,9 @@ class URIParameter {
 	
 	/**
 	 * <p>
-	 * Creates the URI parameter defined at the specified offset and of the
-	 * specified length within a component's raw value and with the specified name,
-	 * pattern and charset.
+	 * Creates the URI parameter defined at the specified offset and of the specified length within a component's raw value and with the specified name, pattern and charset.
 	 * </p>
-	 * 
+	 *
 	 * @param offset  the offset within a component's raw value
 	 * @param length  the length of the parameter within a component's raw value
 	 * @param name    the parameter name
@@ -105,14 +97,12 @@ class URIParameter {
 
 	/**
 	 * <p>
-	 * Creates the URI parameter defined at the specified offset and of the
-	 * specified length within a component's raw value and with the specified name,
-	 * pattern, allowed characters predicate and charset.
+	 * Creates the URI parameter defined at the specified offset and of the specified length within a component's raw value and with the specified name, pattern, allowed characters predicate and
+	 * charset.
 	 * </p>
-	 * 
+	 *
 	 * @param offset            the offset within a component's raw value
-	 * @param length            the length of the parameter within a component's raw
-	 *                          value
+	 * @param length            the length of the parameter within a component's raw value
 	 * @param name              the parameter name
 	 * @param pattern           the parameter pattern
 	 * @param allowedCharacters the allowed characters predicate
@@ -131,7 +121,7 @@ class URIParameter {
 	 * <p>
 	 * Returns the position of the parameter within a component's raw value.
 	 * </p>
-	 * 
+	 *
 	 * @return the parameter position
 	 */
 	public int getOffset() {
@@ -142,7 +132,7 @@ class URIParameter {
 	 * <p>
 	 * Returns the length of the parameter within a component's raw value.
 	 * </p>
-	 * 
+	 *
 	 * @return the parameter length
 	 */
 	public int getLength() {
@@ -153,7 +143,7 @@ class URIParameter {
 	 * <p>
 	 * Returns the name of the parameter.
 	 * </p>
-	 * 
+	 *
 	 * @return the parameter name
 	 */
 	public String getName() {
@@ -164,7 +154,7 @@ class URIParameter {
 	 * <p>
 	 * Returns the pattern of the parameter.
 	 * </p>
-	 * 
+	 *
 	 * @return the parameter pattern
 	 */
 	public String getPattern() {
@@ -178,16 +168,29 @@ class URIParameter {
 	
 	/**
 	 * <p>
-	 * Checks that the specified value matches the parameter pattern and is valid
-	 * according to the allowed characters of the URI component that defines it.
+	 * Returns the unnamed non-capturing pattern of the parameter.
 	 * </p>
-	 * 
+	 *
+	 * @return the parameter pattern
+	 */
+	public String getUnnamedNonCapturingPattern() {
+		StringBuilder parameterPattern = new StringBuilder("(?:");
+		parameterPattern.append(this.pattern).append(")");
+		return parameterPattern.toString();
+	}
+	
+	/**
+	 * <p>
+	 * Checks that the specified value matches the parameter pattern and is valid according to the allowed characters of the URI component that defines it.
+	 * </p>
+	 *
 	 * @param value The value to check
+	 *
 	 * @return the value if it is valid
 	 */
 	public String checkValue(String value) {
 		if(!URIs.checkURIComponent(value, this.allowedCharacters, this.charset).matches(this.pattern)) {
-			throw new URIBuilderException("Value for parameter " + this.name + " does not match expected pattern " + this.pattern);
+			throw new URIBuilderException("Value for parameter " + (this.name != null ? this.name : "UNNAMED") + " does not match expected pattern " + this.pattern);
 		}
 		return value;
 	}

@@ -129,7 +129,7 @@ class GenericWebRouteManager implements WebRouteManager<ExchangeContext> {
 			throw new IllegalArgumentException("Path must be absolute");
 		}
 		
-		URIBuilder pathBuilder = URIs.uri(path, false, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED);
+		URIBuilder pathBuilder = URIs.uri(path, URIs.RequestTargetForm.ABSOLUTE, false, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
 		
 		String rawPath = pathBuilder.buildRawPath();
 		List<String> pathParameterNames = pathBuilder.getParameterNames();

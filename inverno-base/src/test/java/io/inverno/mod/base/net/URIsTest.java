@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.inverno.mod.base.Charsets;
-import io.inverno.mod.base.resource.ClasspathResource;
+import java.util.regex.Pattern;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -582,5 +582,121 @@ public class URIsTest {
 		Assertions.assertEquals("////a2billing/customer/templates/default/footer.tpl", URIs.uri(URIs.Option.NORMALIZED).path("////a2billing/customer/templates/default/footer.tpl").buildString());
 		
 		Assertions.assertEquals("////a2billing/customer/templates/default/footer.tpl", URIs.uri("////a2billing/customer/templates/default/footer.tpl", URIs.Option.NORMALIZED).buildString());
+	}
+	
+	@Test
+	public void testPathPattern() {
+		SegmentComponent sc = new SegmentComponent(new URIFlags(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN), Charsets.UTF_8, "abc*def?ghi*klm");
+		
+		Assertions.assertEquals("abc*def?ghi*klm", sc.getRawValue());
+		Assertions.assertEquals("(\\Qabc\\E)([^/]*)(\\Qdef\\E)([^/])(\\Qghi\\E)([^/]*)(\\Qklm\\E)", sc.getPattern());
+		Assertions.assertEquals("abcXXXdefYghiZZZklm", sc.getValue("XXX", "Y", "ZZZ"));
+		
+		sc = new SegmentComponent(new URIFlags(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN), Charsets.UTF_8, "abc*def{test}ghi?klm");
+		
+		Assertions.assertEquals("abc*def{test}ghi?klm", sc.getRawValue());
+		Assertions.assertEquals("(\\Qabc\\E)([^/]*)(\\Qdef\\E)(?<test>[^/]*)(\\Qghi\\E)([^/])(\\Qklm\\E)", sc.getPattern());
+		Assertions.assertEquals("abcXXXdefYYYghiZklm", sc.getValue("XXX", "YYY", "Z"));
+		
+		sc = new SegmentComponent(new URIFlags(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN), Charsets.UTF_8, "**");
+		
+		Assertions.assertEquals("(.*)", sc.getPattern());
+		Assertions.assertEquals("a/b/c", sc.getValue(new Object[]{"a/b/c"}, false));
+		
+		try {
+			new SegmentComponent(new URIFlags(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN), Charsets.UTF_8, "a**");
+			Assertions.fail("Should throw a URIBuilderException");
+		}
+		catch(URIBuilderException e) {
+			Assertions.assertEquals("Invalid usage of path pattern '**' which is exclusive: /a**", e.getMessage());
+		}
+		
+		try {
+			new SegmentComponent(new URIFlags(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN), Charsets.UTF_8, "**b");
+			Assertions.fail("Should throw a URIBuilderException");
+		}
+		catch(URIBuilderException e) {
+			Assertions.assertEquals("Invalid usage of path pattern '**' which is exclusive: /**b", e.getMessage());
+		}
+		
+		sc = new SegmentComponent(new URIFlags(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN), Charsets.UTF_8, "**");
+		
+		SegmentComponent sc_next = new SegmentComponent(new URIFlags(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN), Charsets.UTF_8, "{param:[^/]*\\.jsp}");
+		sc.setNextSegment(sc_next);
+		
+		Assertions.assertEquals("([^/]*(?<!(?:[^/]*\\.jsp))(?:/[^/]*(?<!/(?:[^/]*\\.jsp)))*)", sc.getPattern());
+		
+		try {
+			URIs.uri("/a/**/*", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
+			Assertions.fail("Should throw a URIBuilderException");
+		} catch (URIBuilderException e) {
+			Assertions.assertEquals("ORIGIN form request-target is incompatible with PATH_PATTERN option", e.getMessage());
+		}
+		
+		URIBuilder uriBuilder = URIs.uri("/a/**/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
+		
+		URIPattern uriPathPattern = uriBuilder.buildPathPattern();
+		URIMatcher uriMatcher = uriPathPattern.matcher("/a/b/c/toto.jsp");
+		Assertions.assertTrue(uriMatcher.matches());
+		Assertions.assertTrue(uriMatcher.getParameters().isEmpty());
+		
+		uriBuilder = URIs.uri("/a/**/*.jsp", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
+		uriPathPattern = uriBuilder.buildPathPattern();
+		uriMatcher = uriPathPattern.matcher("/a/b/c/toto.jsp");
+		Assertions.assertTrue(uriMatcher.matches());
+		uriMatcher = uriPathPattern.matcher("/a/b/c/toto.png");
+		Assertions.assertFalse(uriMatcher.matches());
+		
+		uriBuilder = URIs.uri("/a/**/{file}.jsp", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
+		uriPathPattern = uriBuilder.buildPathPattern();
+		uriMatcher = uriPathPattern.matcher("/a/b/c/toto.jsp");
+		Assertions.assertTrue(uriMatcher.matches());
+		Assertions.assertEquals(Map.of("file", "toto"), uriMatcher.getParameters());
+		uriMatcher = uriPathPattern.matcher("/a/b/c/toto.png");
+		Assertions.assertFalse(uriMatcher.matches());
+		
+		uriBuilder = URIs.uri("/a/**/test*/toto", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
+		uriPathPattern = uriBuilder.buildPathPattern();
+		uriMatcher = uriPathPattern.matcher("/a/b/c/test123/toto");
+		Assertions.assertTrue(uriMatcher.matches());
+		
+		uriBuilder = URIs.uri("/a/test_?/*.jsp", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
+		uriPathPattern = uriBuilder.buildPathPattern();
+		uriMatcher = uriPathPattern.matcher("/a/test_1/toto.jsp");
+		Assertions.assertTrue(uriMatcher.matches());
+		uriMatcher = uriPathPattern.matcher("/a/test_12/toto.jsp");
+		Assertions.assertFalse(uriMatcher.matches());
+		uriMatcher = uriPathPattern.matcher("/a/test_1/toto.png");
+		Assertions.assertFalse(uriMatcher.matches());
+		
+		uriBuilder = URIs.uri("/a/test_?/{file}.jsp", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
+		uriPathPattern = uriBuilder.buildPathPattern();
+		uriMatcher = uriPathPattern.matcher("/a/test_1/toto.jsp");
+		Assertions.assertTrue(uriMatcher.matches());
+		Assertions.assertEquals(Map.of("file", "toto"), uriMatcher.getParameters());
+		uriMatcher = uriPathPattern.matcher("/a/test_1/toto.png");
+		Assertions.assertFalse(uriMatcher.matches());
+		
+		uriBuilder = URIs.uri("/a/test_*_test/folder_?_?_*/**/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
+		uriPathPattern = uriBuilder.buildPathPattern();
+		uriMatcher = uriPathPattern.matcher("/a/test_abc_test/folder_1_2_name/a/b/c");
+		Assertions.assertTrue(uriMatcher.matches());
+		
+		uriBuilder = URIs.uri("/a/test_*_test/folder_?_?_*/**", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
+		uriPathPattern = uriBuilder.buildPathPattern();
+		uriMatcher = uriPathPattern.matcher("/a/test_abc_test/folder_1_2_name/a/b/c");
+		Assertions.assertTrue(uriMatcher.matches());
+		
+		uriBuilder = URIs.uri("/a/test_*_test/folder_?_?_*/**/{end}", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PATH_PATTERN);
+		uriPathPattern = uriBuilder.buildPathPattern();
+		uriMatcher = uriPathPattern.matcher("/a/test_abc_test/folder_1_2_name/a/b/c/{end}");
+		Assertions.assertTrue(uriMatcher.matches());
+		
+		uriBuilder = URIs.uri("/a/test_*_test/folder_?_?_*/**", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED);
+		uriPathPattern = uriBuilder.buildPathPattern();
+		uriMatcher = uriPathPattern.matcher("/a/test_abc_test/folder_1_2_name/a/b/c");
+		Assertions.assertFalse(uriMatcher.matches());
+		uriMatcher = uriPathPattern.matcher("/a/test_*_test/folder_?_?_*/**");
+		Assertions.assertTrue(uriMatcher.matches());
 	}
 }

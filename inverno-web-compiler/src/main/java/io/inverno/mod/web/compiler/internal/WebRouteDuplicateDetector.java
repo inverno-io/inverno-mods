@@ -94,7 +94,7 @@ class WebRouteDuplicateDetector {
 		if(route.getPaths().length > 0) {
 			List<WebRouteInfo> duplicates = new ArrayList<>();
 			for(String path : route.getPaths()) {
-				duplicates.addAll(this.visitPath(route, route.getController().map(WebControllerInfo::getRootPath).map(rootPath -> URIs.uri(rootPath).path(path, false).buildRawPath()).orElse(path), route.isMatchTrailingSlash(), routes));
+				duplicates.addAll(this.visitPath(route, route.getController().map(WebControllerInfo::getRootPath).map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE).path(path, false).buildRawPath()).orElse(path), route.isMatchTrailingSlash(), routes));
 			}
 			return duplicates;
 		}
