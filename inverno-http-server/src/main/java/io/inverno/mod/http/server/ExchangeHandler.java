@@ -27,7 +27,7 @@ import reactor.core.publisher.Mono;
  * @since 1.0
  *
  * @see ErrorExchange
- * @see ExchangeHandler
+ * @see ReactiveExchangeHandler
  * 
  * @param <A> the type of the exchange context
  * @param <B> the type of exchange handled by the handler

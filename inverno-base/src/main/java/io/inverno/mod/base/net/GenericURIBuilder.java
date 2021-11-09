@@ -272,9 +272,9 @@ class GenericURIBuilder implements URIBuilder {
 	public URIBuilder segment(String segment) {
 		if(segment != null) {
 			SegmentComponent nextSegment = new SegmentComponent(this.flags, this.charset, segment);
-			if(nextSegment.isDirectoriesPattern()) {
+			if(nextSegment.isDirectories()) {
 				// we have **, it can't be preceded by **
-				if(!this.segments.isEmpty() && this.segments.peekLast().isDirectoriesPattern()) {
+				if(!this.segments.isEmpty() && this.segments.peekLast().isDirectories()) {
 					throw new URIBuilderException("Invalid path: **/**");
 				}
 				this.segments.add(nextSegment);
@@ -304,24 +304,10 @@ class GenericURIBuilder implements URIBuilder {
 					}
 				}
 				else {
-					if(!this.segments.isEmpty()) {
-						SegmentComponent lastSegment = this.segments.peekLast();
-						if(lastSegment.isTerminal()) {
-							throw new URIBuilderException("Invalid path: **/* is terminal");
-						}
-						lastSegment.setNextSegment(nextSegment);
-					}
 					this.segments.add(nextSegment);
 				}
 			}
 			else {
-				if(!this.segments.isEmpty()) {
-					SegmentComponent lastSegment = this.segments.peekLast();
-					if(lastSegment.isTerminal()) {
-						throw new URIBuilderException("Invalid path: **/* is terminal");
-					}
-					lastSegment.setNextSegment(nextSegment);
-				}
 				this.segments.add(nextSegment);
 			}
 		}
@@ -874,7 +860,7 @@ class GenericURIBuilder implements URIBuilder {
 				patternBuilder.append(
 					this.segments.stream()
 						.map(segment -> {
-							if(segment.isDirectoriesPattern() && patternBuilder.length() > 0) {
+							if(segment.isDirectories() && patternBuilder.length() > 0) {
 								return "?" + segment.getPattern();
 							}
 							else {
@@ -954,7 +940,7 @@ class GenericURIBuilder implements URIBuilder {
 				pathPatternBuilder.append(
 					this.segments.stream()
 						.map(segment -> {
-							if(segment.isDirectoriesPattern() && pathPatternBuilder.length() > 0) {
+							if(segment.isDirectories() && pathPatternBuilder.length() > 0) {
 								return "?" + segment.getPattern();
 							}
 							else {
@@ -976,7 +962,7 @@ class GenericURIBuilder implements URIBuilder {
 			groupNames.addAll(segment.getPatternGroupNames());
 		}
 		
-		return new GenericURIPattern(rawValue, pathPatternBuilder.toString(), groupNames);
+		return new GenericURIPattern(rawValue, pathPatternBuilder.toString(), groupNames, this.segments);
 	}
 	
 	@Override

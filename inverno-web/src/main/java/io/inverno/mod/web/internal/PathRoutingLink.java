@@ -20,13 +20,14 @@ import java.util.Map;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.PathAwareRoute;
+import io.inverno.mod.web.spi.PathAware;
+import io.inverno.mod.web.spi.Route;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
  * A routing link responsible to route an exchange based on the absolute
- * normalized path as defined by {@link PathAwareRoute}.
+ * normalized path as defined by {@link PathAware}.
  * </p>
  * 
  * <p>
@@ -41,9 +42,9 @@ import reactor.core.publisher.Mono;
  * @param <B> the type of exchange handled by the route
  * @param <C> the route type
  */
-class PathRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends PathAwareRoute<A, B>> extends RoutingLink<A, B, PathRoutingLink<A, B, C>, C> {
+class PathRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends PathAware & Route<A, B>> extends RoutingLink<A, B, PathRoutingLink<A, B, C>, C> {
 
-	private Map<String, RoutingLink<A, B, ?, C>> handlers;
+	private final Map<String, RoutingLink<A, B, ?, C>> handlers;
 
 	/**
 	 * <p>

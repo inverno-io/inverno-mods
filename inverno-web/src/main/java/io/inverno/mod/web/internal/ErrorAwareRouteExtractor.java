@@ -17,12 +17,11 @@ package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.Route;
-import io.inverno.mod.web.ErrorAwareRoute;
+import io.inverno.mod.web.spi.Route;
 
 /**
  * <p>
- * A route extractor to extract {@link ErrorAwareRoute} routes.
+ * A route extractor to extract {@link ErrorAware} routes.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

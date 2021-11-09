@@ -16,6 +16,7 @@
 package io.inverno.mod.base.net;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -62,8 +63,9 @@ class SegmentComponent implements ParameterizedURIComponent {
 	
 	private String segmentRawValue;
 	
-	private boolean directoriesPattern;
-	private boolean terminal;
+	private boolean directories;
+	private Boolean wildcard;
+	private Boolean custom;
 	
 	/**
 	 * <p>
@@ -86,10 +88,14 @@ class SegmentComponent implements ParameterizedURIComponent {
 		BiPredicate<Integer, Byte> breakPredicate = null;
 		if(this.flags.isPathPattern()) {
 			breakPredicate = (i, nextByte) -> {
-				if(directoriesPattern && nextByte != '/') {
+				if(directories && nextByte != '/') {
 					throw new URIBuilderException("Invalid usage of path pattern '**' which is exclusive: /" + path.substring(0, i+1));
 				}
 				if(nextByte == '?') {
+					if(this.previousWildcard) {
+						this.parameters.add(new URIParameter(i-1, 1, null, "[^/]*", charset));
+						this.previousWildcard = false;
+					}
 					this.parameters.add(new URIParameter(i, 1, null, "[^/]", charset));
 				}
 				else if(nextByte == '*') {
@@ -99,7 +105,8 @@ class SegmentComponent implements ParameterizedURIComponent {
 						}
 						this.parameters.add(new URIParameter(i-1, 2, null, ".*", charset));
 						this.previousWildcard = false;
-						this.directoriesPattern = true;
+						this.directories = true;
+						this.wildcard = this.custom = false;
 					}
 					else {
 						this.previousWildcard = true;
@@ -141,52 +148,60 @@ class SegmentComponent implements ParameterizedURIComponent {
 	 * Returns true if this segment represent a directories path pattern: {@code **}.
 	 * </p>
 	 *
-	 * @return true if the segment is a directories path pattern, false otherwise
+	 * @return true if the segment represent a directories path pattern, false otherwise
 	 */
-	public boolean isDirectoriesPattern() {
-		return this.directoriesPattern;
+	public boolean isDirectories() {
+		return this.directories;
 	}
 	
 	/**
 	 * <p>
-	 * Returns true if segment is terminal to indicate that no more segment can be added to the path.
+	 * Returns true if this segment represents a wildcard pattern.
 	 * </p>
 	 * 
 	 * <p>
-	 * A segment is terminal when it is preceeded by a directories path pattern segment ({@code **}) and matches a wildcard path pattern ({@code *}) which is the case of a regular path parameter.
+	 * A wildcard segment contains only wildcard pattern parameters (see {@link URIParameter#isWildcardPattern() }) and no static part.
 	 * </p>
-	 * 
-	 * @return true if the segment is terminal, false otherwise
+	 *
+	 * @return true if the segment represent a wildcard pattern, false otherwise
 	 */
-	public boolean isTerminal() {
-		return this.terminal;
-	}
-	
-	/**
-	 * <p>
-	 * Injects the next segment into the segment to set the exit pattern when the segment represents a directories path pattern.
-	 * </p>
-	 * 
-	 * <p>
-	 * If the segment does not represent a directories path pattern, this is a noop.
-	 * </p>
-	 * 
-	 * @param nextSegment the next segment in the path
-	 */
-	public void setNextSegment(SegmentComponent nextSegment) throws IllegalStateException {
-		if(this.directoriesPattern) {
-			String nextSegmentUnnamedNonCapturingPattern = nextSegment.getUnnamedNonCapturingPattern();
-			if(nextSegmentUnnamedNonCapturingPattern.equals("(?:[^/]*)")) {
-				// The next segment is then terminal
-				this.pattern = "([^/]*(?<![^/]*$)(?:/[^/]*(?<!/[^/]*$))*)";
-				nextSegment.terminal = true;
+	public boolean isWildcard() {
+		if(this.wildcard == null) {
+			int index = 0;
+			for(URIParameter parameter : this.parameters) {
+				if(!parameter.isWildcard() || parameter.getOffset() != index) {
+					this.wildcard = false;
+					break;
+				}
+				index += parameter.getLength();
 			}
-			else {
-				this.pattern = String.format("([^/]*(?<!%1$s)(?:/[^/]*(?<!/%1$s))*)", nextSegmentUnnamedNonCapturingPattern);
-			}
-			this.patternGroupNames = new LinkedList<>();
-			this.patternGroupNames.add(null);
+			this.wildcard = !this.rawValue.isEmpty() && index == this.rawValue.length();
 		}
+		return this.wildcard;
+	}
+	
+	/**
+	 * <p>
+	 * Returns true if this segment represents a custom pattern.
+	 * </p>
+	 * 
+	 * <p>
+	 * A custom segment must contain at least one custom pattern parameter (see {@link URIParameter#isCustomPattern()}).
+	 * </p>
+	 *
+	 * @return true if the segment represents a custom pattern, false otherwise
+	 */
+	public boolean isCustom() {
+		if(this.custom == null) {
+			this.custom = false;
+			for(URIParameter parameter : this.parameters) {
+				if(parameter.isCustom()) {
+					this.custom = true;
+					break;
+				}
+			}
+		}
+		return this.custom;
 	}
 	
 	/**
@@ -233,9 +248,9 @@ class SegmentComponent implements ParameterizedURIComponent {
 				}
 				nextSegment = new SegmentComponent(flags, charset, currentPath, true);
 				
-				if(nextSegment.isDirectoriesPattern()) {
+				if(nextSegment.isDirectories()) {
 					// we have **, it can't be preceded by **
-					if(!segments.isEmpty() && segments.peekLast().isDirectoriesPattern()) {
+					if(!segments.isEmpty() && segments.peekLast().isDirectories()) {
 						throw new URIBuilderException("Invalid path: **/**");
 					}
 					segments.add(nextSegment);
@@ -263,24 +278,10 @@ class SegmentComponent implements ParameterizedURIComponent {
 						}
 					}
 					else {
-						if(!segments.isEmpty()) {
-							SegmentComponent lastSegment = segments.peekLast();
-							if(lastSegment.isTerminal()) {
-								throw new URIBuilderException("Invalid path: **/* is terminal");
-							}
-							lastSegment.setNextSegment(nextSegment);
-						}
 						segments.add(nextSegment);
 					}
 				}
 				else {
-					if(!segments.isEmpty()) {
-						SegmentComponent lastSegment = segments.peekLast();
-						if(lastSegment.isTerminal()) {
-							throw new URIBuilderException("Invalid path: **/* is terminal");
-						}
-						lastSegment.setNextSegment(nextSegment);
-					}
 					segments.add(nextSegment);
 				}
 			} while(currentPath.length() >= nextSegment.getRawValue().length() + 1);
@@ -305,6 +306,11 @@ class SegmentComponent implements ParameterizedURIComponent {
 				this.patternGroupNames = List.of();
 				this.pattern = "";
 			}
+			else if(this.directories) {
+				this.patternGroupNames = new LinkedList<>();
+				this.patternGroupNames.add(null);
+				this.pattern = "((?:/[^/]*)*)";
+			}
 			else {
 				this.patternGroupNames = new LinkedList<>();
 				StringBuilder patternBuilder = new StringBuilder();
@@ -328,9 +334,19 @@ class SegmentComponent implements ParameterizedURIComponent {
 		return this.pattern;
 	}
 	
-	private String getUnnamedNonCapturingPattern() {
+	/**
+	 * <p>
+	 * Returns an unnamed non-capturing pattern matching the segment.
+	 * </p>
+	 * 
+	 * @return an unnamed non-capturing pattern
+	 */
+	public String getUnnamedNonCapturingPattern() {
 		if(this.rawValue == null) {
 			return "";
+		}
+		else if(this.directories) {
+			return "(?:(?:/[^/]*)*)";
 		}
 		else {
 			StringBuilder patternBuilder = new StringBuilder();
@@ -348,7 +364,7 @@ class SegmentComponent implements ParameterizedURIComponent {
 			return patternBuilder.toString();
 		}
 	}
-	
+
 	@Override
 	public List<String> getPatternGroupNames() {
 		if(this.patternGroupNames == null) {
@@ -463,5 +479,279 @@ class SegmentComponent implements ParameterizedURIComponent {
 			result.append(URIs.encodeURIComponent(this.rawValue.substring(valueIndex), SegmentComponent.ESCAPED_CHARACTERS_SLASH, this.charset));
 		}
 		return result.toString();
+	}
+	
+	/**
+	 * <p>
+	 * Represents a static part in a segment component.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.3
+	 */
+	private static class StaticSegmentPart implements URIComponentPart {
+
+		private String value;
+		
+		public StaticSegmentPart(String value) {
+			this.value = value;
+		}
+		
+		@Override
+		public boolean isStatic() {
+			return true;
+		}
+
+		@Override
+		public boolean isQuestionMark() {
+			return false;
+		}
+
+		@Override
+		public boolean isWildcard() {
+			return false;
+		}
+
+		@Override
+		public boolean isCustom() {
+			return false;
+		}
+
+		@Override
+		public String getValue() {
+			return value;
+		}
+
+		/**
+		 * <p>
+		 * Sets the value of the part.
+		 * </p>
+		 * 
+		 * @param value a new value
+		 */
+		public void setValue(String value) {
+			this.value = value;
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Splits this segment component into parts.
+	 * </p>
+	 * 
+	 * @return a list of URI component parts
+	 */
+	private List<URIComponentPart> splitSegment() {
+		List<URIComponentPart> split = new ArrayList<>();
+		int valueIndex = 0;
+		for(URIParameter parameter : this.parameters) {
+			if(parameter.getOffset() > valueIndex) {
+				split.add(new StaticSegmentPart(this.rawValue.substring(valueIndex, parameter.getOffset())));
+			}
+			split.add(parameter);
+			valueIndex = parameter.getOffset() + parameter.getLength();
+		}
+		if(valueIndex < this.rawValue.length()) {
+			split.add(new StaticSegmentPart(this.rawValue.substring(valueIndex)));
+		}
+		return split;
+	}
+	
+	/**
+	 * <p>
+	 * Determines whether the other path segment is included into this path segment.
+	 * </p>
+	 *
+	 * @param other a path segment component
+	 *
+	 * @return {@link URIPattern.Inclusion#INCLUDED} if the segment is included, {@link URIPattern.Inclusion#DISJOINT} if segments are disjoint, {@link URIPattern.Inclusion#INDETERMINATE} otherwise
+	 */
+	public URIPattern.Inclusion includes(SegmentComponent other) {
+		// * and *, we have a match, how to determine this?
+		// if s1 has parameters they must be * (safe) or ? (in which case s2 must have ? at the same position)
+		// we can do this with parsing well, not so fast we don't know if path pattern is supported here
+		// we can find \Q and \S
+		// a pattern is (?:\Q<static>\S)(?:<dynamic>)...
+		// <static> must match, <dynamic> can be: * and ?, ? and ?
+		// if there's not the same number of groups, is it a no match? or indeterminate
+		// Actually if static differs it's a no match, then it's indeterminate, we can't determine things any further
+		
+		// Extract the groups of each segment
+		List<URIComponentPart> s1Parts = this.splitSegment();
+		List<URIComponentPart> s2Parts = other.splitSegment();
+
+		// Let's compare them
+		int i=0;
+		int j=0;
+		while(i < s1Parts.size() && j < s2Parts.size()) {
+			URIComponentPart s1Part = s1Parts.get(i);
+			URIComponentPart s2Part = s2Parts.get(j);
+			
+			if(s1Part.isStatic()) {
+				// s1Part is static
+				if(s2Part.isStatic()) {
+					// s2Part is static
+					int value1Length = s1Part.getValue().length();
+					int value2Length = s2Part.getValue().length();
+					
+					if(value1Length < value2Length && s2Part.getValue().startsWith(s1Part.getValue())) {
+						// s2Part starts with s1Part
+						i++;
+						((StaticSegmentPart)s2Part).setValue(s2Part.getValue().substring(value1Length));
+					}
+					else if(value1Length > value2Length && s1Part.getValue().startsWith(s2Part.getValue())) {
+						// s1Part starts with s2Part
+						((StaticSegmentPart)s1Part).setValue(s1Part.getValue().substring(value2Length));
+						j++;
+					}
+					else if(value1Length == value2Length && s1Part.getValue().equals(s2Part.getValue())) {
+						// s1Part == s2Part
+						i++;
+						j++;
+					}
+					else {
+						return URIPattern.Inclusion.DISJOINT;
+					}
+				}
+				else {
+					// SegmentGroup.QUESTION_MARK:
+					// we could check whether next s2 group matches s1.substring(1), if it doesn't, there's no match otherwise it is indeterminate
+					// but where do we stop, this also applies to *, let's keep it simple for now
+					
+					// SegmentGroup.WILDCARD:
+					// s2Part is * so we have a match but s2 matches more than s1
+					
+					// s2Part.equals(SegmentGroup.OTHER_PATTERN:
+					// s2Part is another pattern we can't do better
+					
+					return URIPattern.Inclusion.INDETERMINATE;
+				}
+			}
+			else if(s1Part.isCustom()) {
+				// s1Part is a custom regex
+				// We can't determine what to do here since we don't know what is matched by s1Part unless patterns are equals
+				if(s2Part.isCustom() && s1Part.getValue().equals(s2Part.getValue())) {
+					i++;
+					j++;
+				}
+				else {
+					return URIPattern.Inclusion.INDETERMINATE;
+				}
+			}
+			else if(s1Part.isQuestionMark()) {
+				// s1Part is ?
+				if(s2Part.isStatic()) {
+					// s2Part is static
+					// if s2Part is a single character s1 matches more than s2, otherwise we have to look forward => we must remove the first character and check next group in s1
+					if(s2Part.getValue().length() == 1) {
+						// if s2Part is a single character s1 matches more than s2
+						i++;
+						j++;
+					}
+					else {
+						// otherwise we can consider s2Part without the first character and consider next s1group
+						((StaticSegmentPart)s2Part).setValue(s2Part.getValue().substring(1));
+						i++;
+					}
+				}
+				else if(s2Part.isQuestionMark()) {
+					// s1Part == s2Part
+					i++;
+					j++;
+				}
+				else {
+					// SegmentGroup.WILDCARD:
+					// We can continue if the next s1Part is * (ie. ?*)
+					// This should hopefully barely happen, in any case returning INDETERMINATE is safe here since s2 is most likely to match more than s1
+					
+					// SegmentGroup.OTHER_PATTERN:
+					// s2Part is another pattern we can't do better
+					
+					return URIPattern.Inclusion.INDETERMINATE;
+				}
+			}
+			else {
+				// s1Part is *
+				// It can be followed by other * or ? (eg. {param1}?{param2}) in which case we can ignore them since they are not relevant
+				i++;
+				for(;i<s1Parts.size();i++) {
+					s1Part = s1Parts.get(i);
+					if(s1Part.isStatic()) {
+						break;
+					}
+					else if(s1Part.isCustom()) {
+						// We can stop here
+						return URIPattern.Inclusion.INDETERMINATE;
+					}
+				}
+				if(i == s1Parts.size()) {
+					// s1 ends with * => it matches everything unless s2 has a custom pattern group in which case outcome is indeterminate since it can consume segments
+					for(;j<s2Parts.size();j++) {
+						if(s2Part.isCustom()) {
+							 return URIPattern.Inclusion.INDETERMINATE;
+						}
+					}
+					return URIPattern.Inclusion.INCLUDED;
+				}
+
+				// we should advanced s2 as long as its groups are * or ?
+				for(;j<s2Parts.size();j++) {
+					s2Part = s2Parts.get(j);
+					if(s2Part.isStatic()) {
+						break;
+					}
+					else if(s2Part.isCustom()) {
+						// This other pattern can match s1 exit group: 
+						// s1 is of the form: ...([^/]*)(\Qexit\Q)...
+						// s2 must be of the form: ...([^/]*)(\Qexit\S)..., 
+						// For instance the following sequence is indeterminate since we can't guess what's inside the custom regex we can't see that it actually contain s1's exit group ...([^/]*)([^/]*\Qexit\S[^/]*)([^/]*)(\Qexit\S), 
+						return URIPattern.Inclusion.INDETERMINATE; 
+					}
+				}
+				if(j == s2Parts.size()) {
+					// s2 ends with * as well
+					return URIPattern.Inclusion.INCLUDED;
+				}
+				// s1Part and s2Part should now be both static
+				if(!s1Part.getValue().equals(s2Part.getValue())) {
+					return URIPattern.Inclusion.DISJOINT;
+				}
+				i++;
+				j++;
+			}
+		}
+		// If we get there, it means we consumed s1, s2 or both
+		if(i == s1Parts.size() && j == s2Parts.size()) {
+			// We have consumed both, we must have inclusion
+			return URIPattern.Inclusion.INCLUDED;
+		}
+		else if(i == s1Parts.size()) {
+			// s1 is the consumed segment, it doesn't end with *
+			for(;j<s2Parts.size();j++) {
+				URIComponentPart s2Part = s2Parts.get(j);
+				if(s2Part.isStatic() || s2Part.isQuestionMark()) {
+					// we know for sure s2 matches more data so we are disjointed
+					return URIPattern.Inclusion.DISJOINT; 
+				}
+			}
+			// s2 has only * or regex groups remaining inclusion is indeterminate
+			return URIPattern.Inclusion.INDETERMINATE;
+		}
+		else {
+			//  s2 is the consumed segment, it doesn't end with *
+			for(;i<s1Parts.size();i++) {
+				URIComponentPart s1Part = s1Parts.get(i);
+				if(s1Part.isStatic() || s1Part.isQuestionMark()) {
+					// we know for sure s1 matches more data so we are disjointed
+					return URIPattern.Inclusion.DISJOINT; 
+				}
+				if(s1Part.isCustom()) {
+					// we have a custom regex so we can't determine wheter s1 matches more data
+					return URIPattern.Inclusion.INDETERMINATE; 
+				}
+			}
+			// s1 has only * groups remaining, it matches more than s2
+			return URIPattern.Inclusion.INCLUDED;
+		}
 	}
 }

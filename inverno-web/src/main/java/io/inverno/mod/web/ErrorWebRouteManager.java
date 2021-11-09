@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.web.spi.ErrorRouteManager;
+
 /**
  * <p>
  * An error web route manager is used to manage the routes of an error web
@@ -43,9 +45,9 @@ public interface ErrorWebRouteManager extends ErrorRouteManager<ErrorWebExchange
 	 * 
 	 * @param handler the route error web exchange handler
 	 * 
-	 * @return the router
+	 * @return the error router
 	 */
-	ErrorWebRouter handler(ErrorWebExchangeHandler<Throwable> handler);
+	ErrorWebRouter handler(ErrorWebExchangeHandler<? extends Throwable> handler);
 	
 	/**
 	 * <p>

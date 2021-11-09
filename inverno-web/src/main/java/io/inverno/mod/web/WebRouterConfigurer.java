@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.web.spi.RouterConfigurer;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 
@@ -30,26 +31,17 @@ import io.inverno.mod.http.server.ExchangeContext;
  * 
  * @param <A> the type of the exchange context
  */
-public interface WebRouterConfigurer<A extends ExchangeContext> extends RouterConfigurer<A, WebExchange<A>, WebRouter<A>, WebRouteManager<A>, WebRoute<A>, Exchange<A>> {
-	
-	@Override
-	default void accept(WebRouter<A> router) {
-		this.configure(router);
-	}
-	
-	void configure(WebRouter<? extends A> router);
+public interface WebRouterConfigurer<A extends ExchangeContext> extends RouterConfigurer<A, WebExchange<A>, WebRouter<A>, WebInterceptedRouter<A>, WebRouteManager<A>, WebInterceptorManager<A>, WebRoute<A>, Exchange<A>> {
 	
 	/**
 	 * <p>
 	 * Creates a context matching routes requirement.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * This context supplier is used by the router to create a specific context
-	 * attached to {@link WebExchange} required by the routes configured by the
-	 * configurer.
+	 * This context supplier is used by the router to create a specific context attached to {@link WebExchange} required by the routes configured by the configurer.
 	 * </p>
-	 * 
+	 *
 	 * @return a new context instance
 	 */
 	default A createContext() {

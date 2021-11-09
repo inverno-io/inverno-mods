@@ -24,11 +24,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.inverno.mod.http.base.header.Headers.AcceptLanguage;
 import io.inverno.mod.http.base.internal.header.AcceptCodec;
 import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
+import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
 
 /**
  * 
@@ -72,9 +74,52 @@ public class AcceptCodecTest {
 		AcceptLanguageCodec acceptLanguageCodec = new AcceptLanguageCodec(false);
 		
 		AcceptLanguage allLanguage = acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, "*");
-		AcceptLanguage frLanguage = acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, "fr");
+		AcceptLanguage fr_language = acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, "fr");
+
+		AcceptLanguage fr_FR_language = acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, "fr-FR");
+		AcceptLanguage fr_CA_language = acceptLanguageCodec.decode(Headers.NAME_ACCEPT_LANGUAGE, "fr-CA");
+		
+		Assertions.assertTrue(allLanguage.getLanguageRanges().get(0).matches(fr_language.getLanguageRanges().get(0)));
+		Assertions.assertTrue(allLanguage.getLanguageRanges().get(0).matches(fr_FR_language.getLanguageRanges().get(0)));
+		Assertions.assertTrue(allLanguage.getLanguageRanges().get(0).matches(fr_CA_language.getLanguageRanges().get(0)));
+		
+		Assertions.assertTrue(fr_language.getLanguageRanges().get(0).matches(fr_FR_language.getLanguageRanges().get(0)));
+		Assertions.assertTrue(fr_language.getLanguageRanges().get(0).matches(fr_CA_language.getLanguageRanges().get(0)));
+		
+		
+		AcceptCodec.Accept.MediaRange range_a_b = new AcceptCodec.Accept.MediaRange("a/b", 1.0f, Map.of());
+		AcceptCodec.Accept.MediaRange range_a_all = new AcceptCodec.Accept.MediaRange("a/*", 1.0f, Map.of());
+		AcceptCodec.Accept.MediaRange range_all_b = new AcceptCodec.Accept.MediaRange("*/b", 1.0f, Map.of());
+		AcceptCodec.Accept.MediaRange range_all_all = new AcceptCodec.Accept.MediaRange("*/*", 1.0f, Map.of());
+		
+		Headers.ContentType content_a_b = new ContentTypeCodec.ContentType("a/b", null, null, Map.of());
+		Headers.ContentType content_a_all = new ContentTypeCodec.ContentType("a/*", null, null, Map.of());
+		Headers.ContentType content_all_b = new ContentTypeCodec.ContentType("*/b", null, null, Map.of());
+		Headers.ContentType content_all_all = new ContentTypeCodec.ContentType("*/*", null, null, Map.of());
+		
+		System.out.println(range_a_b.matches(content_a_b));
+		System.out.println(range_a_b.matches(content_a_all));
+		System.out.println(range_a_b.matches(content_all_b));
+		System.out.println(range_a_b.matches(content_all_all));
+		
+		System.out.println(range_a_all.matches(content_a_b));
+		System.out.println(range_a_all.matches(content_a_all));
+		System.out.println(range_a_all.matches(content_all_b));
+		System.out.println(range_a_all.matches(content_all_all));
+		
+		System.out.println(range_all_b.matches(content_a_b));
+		System.out.println(range_all_b.matches(content_a_all));
+		System.out.println(range_all_b.matches(content_all_b));
+		System.out.println(range_all_b.matches(content_all_all));
+		
+		System.out.println(range_all_all.matches(content_a_b));
+		System.out.println(range_all_all.matches(content_a_all));
+		System.out.println(range_all_all.matches(content_all_b));
+		System.out.println(range_all_all.matches(content_all_all));
+		
 		
 		// TODO
+		
 		
 	}
 

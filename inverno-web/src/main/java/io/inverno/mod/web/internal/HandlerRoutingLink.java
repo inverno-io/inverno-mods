@@ -17,8 +17,12 @@ package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.http.server.ReactiveExchangeHandler;
-import io.inverno.mod.web.Route;
+import io.inverno.mod.web.spi.InterceptableRoute;
+import io.inverno.mod.web.spi.Route;
+import java.util.LinkedList;
+import java.util.List;
 import reactor.core.publisher.Mono;
 
 /**
@@ -40,7 +44,13 @@ import reactor.core.publisher.Mono;
  */
 class HandlerRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends Route<A, B>> extends RoutingLink<A, B, HandlerRoutingLink<A, B, C>, C> {
 
+	private static final String CONTEXT_EXCHANGE_KEY = "exchange";
+	
 	private ReactiveExchangeHandler<A, B> handler;
+	
+	private List<ExchangeInterceptor<A,B>> interceptors;
+	
+	private Mono<Void> interceptedHandlerChain;
 	
 	private boolean disabled;
 	
@@ -52,16 +62,40 @@ class HandlerRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ext
 	public HandlerRoutingLink() {
 		super(HandlerRoutingLink::new);
 	}
-	
+
+	@SuppressWarnings("unchecked")
 	@Override
 	public HandlerRoutingLink<A, B, C> setRoute(C route) {
 		this.handler = route.getHandler();
+		if(route instanceof InterceptableRoute) {
+			this.setInterceptors(((InterceptableRoute<A, B>)route).getInterceptors());
+		}
 		return this;
 	}
 	
+	public void setInterceptors(List<? extends ExchangeInterceptor<A,B>> interceptors) {
+		this.interceptors = new LinkedList<>();
+		this.interceptedHandlerChain = null;
+		if(interceptors != null) {
+			this.interceptors.addAll(interceptors);
+		}
+
+		if(!this.interceptors.isEmpty() && this.handler != null) {
+			Mono<B> interceptorChain = Mono.deferContextual(context -> Mono.just(context.<B>get(CONTEXT_EXCHANGE_KEY)));
+			for(ExchangeInterceptor<A,B> interceptor : this.interceptors) {
+				interceptorChain = interceptorChain.flatMap(interceptor::intercept);
+			}
+			this.interceptedHandlerChain = interceptorChain.flatMap(this.handler::defer);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
 	@Override
 	public <F extends RouteExtractor<A, B, C>> void extractRoute(F extractor) {
 		super.extractRoute(extractor);
+		if(extractor instanceof InterceptableRouteExtractor) {
+			((InterceptableRouteExtractor<A, B, C, ?>) extractor).interceptors(this.interceptors, this::setInterceptors);
+		}
 		extractor.handler(this.handler, this.disabled);
 	}
 	
@@ -102,6 +136,12 @@ class HandlerRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ext
 		if(this.disabled) {
 			throw new DisabledRouteException();
 		}
-		return this.handler.defer(exchange);
+		
+		if(this.interceptedHandlerChain != null) {
+			return this.interceptedHandlerChain.contextWrite(ctx -> ctx.put(CONTEXT_EXCHANGE_KEY, exchange));
+		}
+		else {
+			return this.handler.defer(exchange);
+		}
 	}
 }

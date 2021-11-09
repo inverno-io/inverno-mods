@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * <p>
  * A URI builder is used for creating URIs as defined by
- * <a href="https://tools.ietf.org/html/rfc3986">RFC 3986 Section </a>.
+ * <a href="https://tools.ietf.org/html/rfc3986">RFC 3986</a>.
  * </p>
  * 
  * <p>
@@ -35,7 +35,7 @@ import java.util.Map;
  * <p>The following is a complete example of parameterized URI:</p>
  * 
  * <blockquote><pre>
- * {scheme}://{userinfo}@{host}:{port}/a/{segment}?parameter={parameter}#{fragment})
+ * {scheme}://{userinfo}@{host}:{port}/a/{segment}?parameter={parameter}#{fragment}
  * </pre></blockquote>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

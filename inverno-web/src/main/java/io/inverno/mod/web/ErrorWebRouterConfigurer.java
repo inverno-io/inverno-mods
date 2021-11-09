@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.web.spi.ErrorRouterConfigurer;
+
 /**
  * <p>
  * A configurer used to configure an error web router.

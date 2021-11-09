@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.web.spi.ErrorRouter;
 import io.inverno.mod.http.server.ErrorExchange;
 
 /**

@@ -27,14 +27,11 @@ import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceService;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.NotFoundException;
-import io.inverno.mod.http.base.internal.header.AcceptCodec;
-import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
-import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.WebConfiguration;
 import io.inverno.mod.web.WebExchange;
+import io.inverno.mod.web.WebInterceptorManager;
 import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.WebRouteManager;
 import io.inverno.mod.web.WebRouter;
@@ -50,7 +47,7 @@ import reactor.core.publisher.Mono;
  * @since 1.0
  */
 @Bean( name = "webRouter" )
-public class GenericWebRouter implements @Provide WebRouter<ExchangeContext> {
+public class GenericWebRouter extends AbstractWebRouter implements @Provide WebRouter<ExchangeContext> {
 
 	private final WebConfiguration configuration;
 	private final DataConversionService dataConversionService;
@@ -60,7 +57,7 @@ public class GenericWebRouter implements @Provide WebRouter<ExchangeContext> {
 	private final RoutingLink<ExchangeContext, WebExchange<ExchangeContext>, ?, WebRoute<ExchangeContext>> firstLink;
 	private final OpenApiWebRouterConfigurer openApiConfigurer;
 	private final WebjarsWebRouterConfigurer webjarsConfigurer;
-	
+
 	private WebRouterConfigurer<? extends ExchangeContext> configurer;
 	
 	/**
@@ -81,35 +78,19 @@ public class GenericWebRouter implements @Provide WebRouter<ExchangeContext> {
 		this.openApiConfigurer = this.configuration.enable_open_api() ? new OpenApiWebRouterConfigurer(configuration, resourceService) : null;
 		this.webjarsConfigurer = this.configuration.enable_webjars() ? new WebjarsWebRouterConfigurer(resourceService) : null;
 		
-		AcceptCodec acceptCodec = new AcceptCodec(false);
-		ContentTypeCodec contentTypeCodec = new ContentTypeCodec();
-		AcceptLanguageCodec acceptLanguageCodec = new AcceptLanguageCodec(false);
-		
 		this.firstLink = new PathRoutingLink<>();
 		this.firstLink
 			.connect(new PathPatternRoutingLink<>())
 			.connect(new MethodRoutingLink<>())
-			.connect(new ConsumesRoutingLink<>(acceptCodec))
-			.connect(new ProducesRoutingLink<>(contentTypeCodec))
-			.connect(new LanguageRoutingLink<>(acceptLanguageCodec))
+			.connect(new ConsumesRoutingLink<>(this.acceptCodec))
+			.connect(new ProducesRoutingLink<>(this.contentTypeCodec))
+			.connect(new LanguageRoutingLink<>(this.acceptLanguageCodec))
 			.connect(new HandlerRoutingLink<>());
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Init
 	public void init() {
-		
-		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> h = exchange -> {
-			try(Resource favicon = resourceService.getResource(new URI("module://" + this.getClass().getModule().getName() + "/inverno_favicon.svg"))) {
-				exchange.response().body().resource().value(favicon);
-			} 
-			catch (Exception e) {
-				throw new NotFoundException();
-			}
-		};
-		
-		this.route().path("/favicon.ico").handler(h);
-		
 		this.route().path("/favicon.ico").handler(exchange -> {
 			try(Resource favicon = resourceService.getResource(new URI("module://" + this.getClass().getModule().getName() + "/inverno_favicon.svg"))) {
 				exchange.response().body().resource().value(favicon);
@@ -120,15 +101,15 @@ public class GenericWebRouter implements @Provide WebRouter<ExchangeContext> {
 		});
 		
 		if(this.webjarsConfigurer != null) {
-			this.webjarsConfigurer.accept(this);
+			this.configure(this.webjarsConfigurer);
 		}
 		if(this.openApiConfigurer != null) {
-			this.openApiConfigurer.accept(this);
+			this.configure(this.openApiConfigurer);
 		}
 		
 		if(this.configurer != null) {
 			// We know it's working because the context is provided by the configurer
-			((WebRouterConfigurer<ExchangeContext>)this.configurer).accept(this);
+			this.configure((WebRouterConfigurer<ExchangeContext>)this.configurer);
 		}
 	}
 	
@@ -143,46 +124,22 @@ public class GenericWebRouter implements @Provide WebRouter<ExchangeContext> {
 		this.configurer = configurer;
 	}
 	
-	/**
-	 * <p>
-	 * Sets the specified web route in the router.
-	 * </p>
-	 * 
-	 * @param route a web route
-	 */
+	@Override
 	void setRoute(WebRoute<ExchangeContext> route) {
 		this.firstLink.setRoute(route);
 	}
 	
-	/**
-	 * <p>
-	 * Enables the specified web route if it exists.
-	 * </p>
-	 * 
-	 * @param route the web route to enable
-	 */
+	@Override
 	void enableRoute(WebRoute<ExchangeContext> route) {
 		this.firstLink.enableRoute(route);
 	}
 	
-	/**
-	 * <p>
-	 * Disables the specified web route if it exists.
-	 * </p>
-	 * 
-	 * @param route the web route to disable
-	 */
+	@Override
 	void disableRoute(WebRoute<ExchangeContext> route) {
 		this.firstLink.disableRoute(route);
 	}
 
-	/**
-	 * <p>
-	 * Removes the specified web route if it exists.
-	 * </p>
-	 * 
-	 * @param route the web route to remove
-	 */
+	@Override
 	void removeRoute(WebRoute<ExchangeContext> route) {
 		this.firstLink.removeRoute(route);
 	}
@@ -190,6 +147,11 @@ public class GenericWebRouter implements @Provide WebRouter<ExchangeContext> {
 	@Override
 	public WebRouteManager<ExchangeContext> route() {
 		return new GenericWebRouteManager(this);
+	}
+
+	@Override
+	public WebInterceptorManager<ExchangeContext> interceptRoute() {
+		return new GenericWebInterceptorManager(new GenericWebInterceptedRouter(this), this.contentTypeCodec, this.acceptLanguageCodec);
 	}
 	
 	@Override

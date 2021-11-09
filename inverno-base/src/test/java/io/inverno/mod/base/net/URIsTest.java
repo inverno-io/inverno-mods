@@ -26,7 +26,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.inverno.mod.base.Charsets;
-import java.util.regex.Pattern;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -600,7 +599,7 @@ public class URIsTest {
 		
 		sc = new SegmentComponent(new URIFlags(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN), Charsets.UTF_8, "**");
 		
-		Assertions.assertEquals("(.*)", sc.getPattern());
+		Assertions.assertEquals("((?:/[^/]*)*)", sc.getPattern());
 		Assertions.assertEquals("a/b/c", sc.getValue(new Object[]{"a/b/c"}, false));
 		
 		try {
@@ -619,13 +618,6 @@ public class URIsTest {
 			Assertions.assertEquals("Invalid usage of path pattern '**' which is exclusive: /**b", e.getMessage());
 		}
 		
-		sc = new SegmentComponent(new URIFlags(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN), Charsets.UTF_8, "**");
-		
-		SegmentComponent sc_next = new SegmentComponent(new URIFlags(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN), Charsets.UTF_8, "{param:[^/]*\\.jsp}");
-		sc.setNextSegment(sc_next);
-		
-		Assertions.assertEquals("([^/]*(?<!(?:[^/]*\\.jsp))(?:/[^/]*(?<!/(?:[^/]*\\.jsp)))*)", sc.getPattern());
-		
 		try {
 			URIs.uri("/a/**/*", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
 			Assertions.fail("Should throw a URIBuilderException");
@@ -636,6 +628,7 @@ public class URIsTest {
 		URIBuilder uriBuilder = URIs.uri("/a/**/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
 		
 		URIPattern uriPathPattern = uriBuilder.buildPathPattern();
+		
 		URIMatcher uriMatcher = uriPathPattern.matcher("/a/b/c/toto.jsp");
 		Assertions.assertTrue(uriMatcher.matches());
 		Assertions.assertTrue(uriMatcher.getParameters().isEmpty());
@@ -684,6 +677,10 @@ public class URIsTest {
 		
 		uriBuilder = URIs.uri("/a/test_*_test/folder_?_?_*/**", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
 		uriPathPattern = uriBuilder.buildPathPattern();
+		uriMatcher = uriPathPattern.matcher("/a/test_abc_test/folder_1_2_name");
+		Assertions.assertTrue(uriMatcher.matches());
+		uriMatcher = uriPathPattern.matcher("/a/test_abc_test/folder_1_2_name/");
+		Assertions.assertTrue(uriMatcher.matches());
 		uriMatcher = uriPathPattern.matcher("/a/test_abc_test/folder_1_2_name/a/b/c");
 		Assertions.assertTrue(uriMatcher.matches());
 		
@@ -698,5 +695,437 @@ public class URIsTest {
 		Assertions.assertFalse(uriMatcher.matches());
 		uriMatcher = uriPathPattern.matcher("/a/test_*_test/folder_?_?_*/**");
 		Assertions.assertTrue(uriMatcher.matches());
+		
+		uriBuilder = URIs.uri("/a/b/**/{param1}/c/{param2}/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
+		uriPathPattern = uriBuilder.buildPathPattern();
+		
+		uriMatcher = uriPathPattern.matcher("/a/b/value1/c/value2/d");
+		Assertions.assertTrue(uriMatcher.matches());
+		Assertions.assertEquals(Map.of("param1", "value1", "param2", "value2"), uriMatcher.getParameters());
+		
+		uriMatcher = uriPathPattern.matcher("/a/b/1/value1/c/value2/d");
+		Assertions.assertTrue(uriMatcher.matches());
+		Assertions.assertEquals(Map.of("param1", "value1", "param2", "value2"), uriMatcher.getParameters());
+		
+		uriMatcher = uriPathPattern.matcher("/a/b/1/2/3/value1/c/value2/d");
+		Assertions.assertTrue(uriMatcher.matches());
+		Assertions.assertEquals(Map.of("param1", "value1", "param2", "value2"), uriMatcher.getParameters());
+		
+		uriBuilder = URIs.uri("/a/b/**/*/*/{param1}/c/{param2}/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
+		uriPathPattern = uriBuilder.buildPathPattern();
+		
+		uriMatcher = uriPathPattern.matcher("/a/b/value1/c/value2/d");
+		Assertions.assertFalse(uriMatcher.matches());
+		
+		uriMatcher = uriPathPattern.matcher("/a/b/1/value1/c/value2/d");
+		Assertions.assertFalse(uriMatcher.matches());
+		
+		uriMatcher = uriPathPattern.matcher("/a/b/1/2/value1/c/value2/d");
+		Assertions.assertTrue(uriMatcher.matches());
+		Assertions.assertEquals(Map.of("param1", "value1", "param2", "value2"), uriMatcher.getParameters());
+		
+		uriMatcher = uriPathPattern.matcher("/a/b/1/2/3/4/value1/c/value2/d");
+		Assertions.assertTrue(uriMatcher.matches());
+		Assertions.assertEquals(Map.of("param1", "value1", "param2", "value2"), uriMatcher.getParameters());
+	}
+	
+	@Test
+	public void testInclusion() {
+		URIPattern routePattern = URIs.uri("/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		URIPattern interceptorPattern = URIs.uri("/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/b/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.DISJOINT, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/?/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/*/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/?*/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/*?/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/x?/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.DISJOINT, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/*/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/*/**/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/*/*/**", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/*/*/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.DISJOINT, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/b/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/*/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/?/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/?/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/b/?", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/b/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/b/*/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.DISJOINT, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/*/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/b*/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/b*x/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.DISJOINT, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/b/c/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**/*/*/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/*/*/*/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.DISJOINT, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/{toto:(?:abc|def)}", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/*/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/{:(?:abc|def)}", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/{toto:(?:abc|def)}/b", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/abc/b", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/*/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/{:(?:abc|def)}/b/**", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/x_{toto:(?:abc|def)}_y/b", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/abc/b", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.DISJOINT, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/x_abc_y/b", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/abc/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/{:(?:abc|def)}/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/x_{:(?:abc|def)}_y/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.DISJOINT, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/{toto:(?:abc|def)}/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/*/*/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/x/**/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**/*/*/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/{toto:(?:abc|def)}/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**/*/*/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/*/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/b/c/**", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/b/c/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/b/c/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+	
+		interceptorPattern = URIs.uri("/a/b/c/**", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/b/c/**/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/b/**/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**/*/*/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/*/*/*/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/b/**/*/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**/*/*/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/*/*/*/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/b/**/c/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**/*/*/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/*/*/*/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/b/**/x?y/c/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**/*/*/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/*/*/*/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/**/exit/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/**/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/*/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/*/b/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.DISJOINT, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/*/*/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/*/*/b/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.DISJOINT, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/x/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/x/y/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/*/**/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/**/*/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/*/**/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		interceptorPattern = URIs.uri("/a/*/**/b/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.DISJOINT, interceptorPattern.includes(routePattern));
+	
+		routePattern = URIs.uri("/a/{toto:(?:abc|def)}/{tata:(?:ghi|klm)}", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/*/{toto:(?:abc|def)}/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**/*/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		
+		/* ---- */
+		routePattern = URIs.uri("/*/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/*/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/*/c/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/**/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/{toto:(?:abc|def)}/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/{toto:(?:abc|def)}/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/{toto:(?:abc|def)}/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/{toto:(?:abc|def)}", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/b/c/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c/**", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/**/d/e/f/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/**/d/e", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.DISJOINT, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/**/a/a/b", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/a/a/b", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/x/y/z/**/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/x/y/z/**/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.DISJOINT, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/x/y/z/**/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c/**/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/**/b/**/c/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/**/c/**/c/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/b/c/b/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**/b/*", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INCLUDED, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/{toto:(?:abc|def)}/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**/*/*/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/x/**/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**/*/*/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/x/**/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/*/*/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/**/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/a/**/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/a/{toto:(?:abc|def)}/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		// We don't know what is matched by the custom pattern, we only know it matches at least one segment, since both path ends with /b/c we are indeterminate at best
+		interceptorPattern = URIs.uri("/a/{:(?:abc|def)}/a/b/c", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/x/y/z/**/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c/{:(?:abc|def)}/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/x/y/z/{:(?:abc|def)}/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c/**/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
+		
+		routePattern = URIs.uri("/x/y/z/{:(?:abc|def)}/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		
+		interceptorPattern = URIs.uri("/**/a/b/c/{:(?:abc|def|ghi)}/d", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN).buildPathPattern();
+		Assertions.assertEquals(URIPattern.Inclusion.INDETERMINATE, interceptorPattern.includes(routePattern));
 	}
 }

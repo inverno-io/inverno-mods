@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.web.spi.RouteManager;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.Exchange;
@@ -22,21 +23,23 @@ import io.inverno.mod.http.server.ExchangeContext;
 
 /**
  * <p>
- * A web route manager is used to manage the routes of an web router. It is
- * created by a web router and allows to define, enable, disable, remove and
- * find error routes in a web router.
+ * A web route manager is used to manage web routes in a web router.
+ * </p>
+ *
+ * <p>
+ * It is created by a web router and allows to define, enable, disable, remove and find error routes in a web router.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see WebExchange
  * @see WebRoute
  * @see WebRouter
- * 
+ *
  * @param <A> the type of the exchange context
  */
-public interface WebRouteManager<A extends ExchangeContext> extends RouteManager<A, WebExchange<A>, WebRouter<A>, WebRouteManager<A>, WebRoute<A>, Exchange<A>> {
+public interface WebRouteManager<A extends ExchangeContext> extends RouteManager<A, WebExchange<A>, WebRouter<A>, WebInterceptedRouter<A>, WebRouteManager<A>, WebInterceptorManager<A>, WebRoute<A>, Exchange<A>> {
 	
 	/**
 	 * <p>
@@ -44,33 +47,31 @@ public interface WebRouteManager<A extends ExchangeContext> extends RouteManager
 	 * </p>
 	 *
 	 * <p>
-	 * This method basically appends the route specified in the web route manager
-	 * to the web router it comes from.
+	 * This method basically appends the route specified in the web route manager to the web router it comes from.
 	 * </p>
-	 * 
+	 *
 	 * @param handler the route web exchange handler
-	 * 
+	 *
 	 * @return the router
 	 */
-	WebRouter<A> handler(WebExchangeHandler<A> handler);
+	WebRouter<A> handler(WebExchangeHandler<? super A> handler);
 	
 	/**
 	 * <p>
-	 * Specifies the path to the resource served by the web route without matching
-	 * trailing slash.
+	 * Specifies the path to the resource served by the web route without matching trailing slash.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The specified path can be a parameterized path including path parameters as
-	 * defined by {@link URIBuilder}.
+	 * The specified path can be a parameterized path including path parameters as defined by {@link URIBuilder}.
 	 * </p>
-	 * 
+	 *
 	 * @param path the path to the resource
-	 * 
+	 *
 	 * @return the web route manager
+	 *
 	 * @throws IllegalArgumentException if the specified path is not absolute
-	 * 
-	 * @see PathAwareRoute
+	 *
+	 * @see PathAware
 	 */
 	default WebRouteManager<A> path(String path) throws IllegalArgumentException {
 		return this.path(path, false);
@@ -78,23 +79,21 @@ public interface WebRouteManager<A extends ExchangeContext> extends RouteManager
 	
 	/**
 	 * <p>
-	 * Specifies the path to the resource served by the web route matching or not
-	 * trailing slash.
+	 * Specifies the path to the resource served by the web route matching or not trailing slash.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The specified path can be a parameterized path including path parameters as
-	 * defined by {@link URIBuilder}.
+	 * The specified path can be a parameterized path including path parameters as defined by {@link URIBuilder}.
 	 * </p>
-	 * 
+	 *
 	 * @param path               the path to the resource
-	 * @param matchTrailingSlash true to match path with or without trailing slash,
-	 *                           false otherwise
-	 * 
+	 * @param matchTrailingSlash true to match path with or without trailing slash, false otherwise
+	 *
 	 * @return the web route manager
+	 *
 	 * @throws IllegalArgumentException if the specified path is not absolute
-	 * 
-	 * @see PathAwareRoute
+	 *
+	 * @see PathAware
 	 */
 	WebRouteManager<A> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException;
 	
@@ -102,26 +101,24 @@ public interface WebRouteManager<A extends ExchangeContext> extends RouteManager
 	 * <p>
 	 * Specifies the method used to access the resource served by the web route.
 	 * </p>
-	 * 
+	 *
 	 * @param method a HTTP method
-	 * 
+	 *
 	 * @return the web route manager
 	 */
 	WebRouteManager<A> method(Method method);
 	
 	/**
 	 * <p>
-	 * Specifies the media range defining the content types accepted by the resource
-	 * served by the web route as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section
-	 * 5.3.2</a>
+	 * Specifies the media range defining the content types accepted by the resource served by the web route as defined by
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>
 	 * </p>
-	 * 
+	 *
 	 * @param mediaRange a media range
-	 * 
+	 *
 	 * @return the web route manager
-	 * 
-	 * @see ContentAwareRoute
+	 *
+	 * @see ContentAware
 	 */
 	WebRouteManager<A> consumes(String mediaRange);
 	
@@ -129,12 +126,12 @@ public interface WebRouteManager<A extends ExchangeContext> extends RouteManager
 	 * <p>
 	 * Specifies the media type of the resource served by the web route.
 	 * </p>
-	 * 
+	 *
 	 * @param mediaType a media type
-	 * 
+	 *
 	 * @return the web route manager
-	 * 
-	 * @see AcceptAwareRoute
+	 *
+	 * @see AcceptAware
 	 */
 	WebRouteManager<A> produces(String mediaType);
 	
@@ -142,12 +139,12 @@ public interface WebRouteManager<A extends ExchangeContext> extends RouteManager
 	 * <p>
 	 * Specifies the language of the resource served by the web route.
 	 * </p>
-	 * 
+	 *
 	 * @param language a language tag
-	 * 
+	 *
 	 * @return the web route manager
-	 * 
-	 * @see AcceptAwareRoute
+	 *
+	 * @see AcceptAware
 	 */
 	WebRouteManager<A> language(String language);
 }

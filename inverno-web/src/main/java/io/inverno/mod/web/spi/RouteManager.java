@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2020 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,68 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.web;
+package io.inverno.mod.web.spi;
 
 import java.util.Set;
 
-import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
+import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 
 /**
  * <p>
- * Base error route manager interface.
+ * Base route manager interface.
  * </p>
- * 
+ *
  * <p>
- * An error route manager is used to manage the routes of an error router. It is
- * created by an error router and allows to define, enable, disable, remove and
- * find routes in an error router.
+ * A route manager is used to manage the routes of a router. It is created by a router and allows to define, enable, disable, remove and find routes in a router.
  * </p>
- * 
+ *
+ * <p>
+ * A typical implementation should define methods to set criteria used by the router to match an incoming exchange to a route and an exchange handler that eventually handles the matched exchange.
+ * </p>
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.3
- * 
- * @see ErrorExchange
+ * @since 1.0
+ *
+ * @see Exchange
  * @see Route
- * @see ErrorRouter
- * 
- * @param <A> the type of exchange handled by the route
- * @param <B> the error router type
- * @param <C> the error route manager type
- * @param <D> the route type
+ * @see Router
+ *
+ * @param <A> the type of the exchange context
+ * @param <B> the type of exchange handled by the route
+ * @param <C> the router type
+ * @param <D> the route manager type
+ * @param <E> the route type
+ * @param <F> the router exchange type
+ * @param <G> the interceptable route type
+ * @param <H> the type of exchange handled by the router
  */
-public interface ErrorRouteManager<A extends ErrorExchange<Throwable>, B extends ErrorRouter<A, B, C, D>, C extends ErrorRouteManager<A, B, C, D>, D extends Route<ExchangeContext, A>> {
-
-	/**
-	 * <p>
-	 * Specifies the route error exchange handler.
-	 * </p>
-	 *
-	 * <p>
-	 * This method basically appends the route specified in the route manager to the
-	 * router it comes from.
-	 * </p>
-	 * 
-	 * @param handler the route error exchange handler
-	 * 
-	 * @return the error router
-	 */
-	B handler(ErrorExchangeHandler<? extends Throwable, ? extends ErrorExchange<? extends Throwable>> handler);
+public interface RouteManager<
+		A extends ExchangeContext, 
+		B extends Exchange<A>, 
+		C extends Router<A, B, C, D, E, F, G, H>, 
+		D extends InterceptedRouter<A, B, C, D, E, F, G, H>, 
+		E extends RouteManager<A, B, C, D, E, F, G, H>, 
+		F extends InterceptorManager<A, B, C, D, E, F, G, H>, 
+		G extends InterceptableRoute<A, B>, 
+		H extends Exchange<A>
+	> {
 	
-	/**
-	 * <p>
-	 * Specifies the type of errors accepted by the route.
-	 * </p>
-	 * 
-	 * @param error a type of error
-	 * 
-	 * @return the error route manager
-	 * 
-	 * @see ErrorAwareRoute
-	 */
-	C error(Class<? extends Throwable> error);
-
 	/**
 	 * <p>
 	 * Enables all the routes that matches the criteria specified in the route
@@ -83,7 +68,7 @@ public interface ErrorRouteManager<A extends ErrorExchange<Throwable>, B extends
 	 * 
 	 * @return the router
 	 */
-	B enable();
+	C enable();
 	
 	/**
 	 * <p>
@@ -93,7 +78,7 @@ public interface ErrorRouteManager<A extends ErrorExchange<Throwable>, B extends
 	 * 
 	 * @return the router
 	 */
-	B disable();
+	C disable();
 	
 	/**
 	 * <p>
@@ -103,7 +88,7 @@ public interface ErrorRouteManager<A extends ErrorExchange<Throwable>, B extends
 	 * 
 	 * @return the router
 	 */
-	B remove();
+	C remove();
 	
 	/**
 	 * <p>
@@ -113,5 +98,5 @@ public interface ErrorRouteManager<A extends ErrorExchange<Throwable>, B extends
 	 * 
 	 * @return a set of routes or an empty set if no route matches the criteria
 	 */
-	Set<D> findRoutes();
+	Set<G> findRoutes();
 }

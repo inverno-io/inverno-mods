@@ -15,6 +15,9 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.web.spi.ErrorAware;
+import io.inverno.mod.web.spi.AcceptAware;
+import io.inverno.mod.web.spi.Route;
 import io.inverno.mod.http.server.ExchangeContext;
 
 /**
@@ -40,9 +43,41 @@ import io.inverno.mod.http.server.ExchangeContext;
  * @see ErrorWebExchange
  * @see ErrorWebRouter
  */
-public interface ErrorWebRoute extends 
-	ErrorAwareRoute<ExchangeContext, ErrorWebExchange<Throwable>>, 
-	AcceptAwareRoute<ExchangeContext, ErrorWebExchange<Throwable>>, 
-	Route<ExchangeContext, ErrorWebExchange<Throwable>> {
+public interface ErrorWebRoute extends Route<ExchangeContext, ErrorWebExchange<Throwable>>, AcceptAware, ErrorAware {
 
+	/**
+	 * <p>
+	 * Returns the media type of the resource served by the route.
+	 * </p>
+	 * 
+	 * <p>
+	 * This criteria should match the request {@code accept} header field.
+	 * </p>
+	 * 
+	 * @return a media type or null
+	 */
+	@Override
+	String getProduce();
+	
+	/**
+	 * <p>
+	 * Returns the language of the resource served by the route.
+	 * </p>
+	 * 
+	 * <p>
+	 * This criteria should match the request {@code accept-language} header field.
+	 * </p>
+	 * 
+	 * @return a language tag or null
+	 */
+	@Override
+	String getLanguage();
+	
+	/**
+	 * <p>
+	 * Returns the type of errors supported by the resource served by the route.
+	 * </p>
+	 */
+	@Override
+	Class<? extends Throwable> getError();
 }

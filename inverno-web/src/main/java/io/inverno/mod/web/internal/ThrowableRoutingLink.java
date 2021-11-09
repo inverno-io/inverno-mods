@@ -22,7 +22,6 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.ErrorAwareRoute;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebRoute;
 import reactor.core.publisher.Mono;
@@ -30,7 +29,7 @@ import reactor.core.publisher.Mono;
 /**
  * <p>
  * A routing link responsible to route an error exchange based on the type of
- * error as defined by {@link ErrorAwareRoute}.
+ * error as defined by {@link ErrorAware}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

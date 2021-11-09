@@ -13,32 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.web;
-
-import java.util.function.Consumer;
-
-import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ExchangeContext;
+package io.inverno.mod.web.spi;
 
 /**
  * <p>
- * Base error router configurer interface.
- * </p>
- * 
- * <p>
- * An error router configurer is used to configure an error router.
+ * Specifies criteria required to match requests or resources based on a an error type.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
- * 
- * @see Router
- * 
- * @param <A> the error route exchange type
- * @param <B> the error router type
- * @param <C> the error route manager type
- * @param <D> the route type
  */
-public interface ErrorRouterConfigurer<A extends ErrorExchange<Throwable>, B extends ErrorRouter<A, B, C, D>, C extends ErrorRouteManager<A, B, C, D>, D extends Route<ExchangeContext, A>> extends Consumer<B> {
+public interface ErrorAware {
 
+	/**
+	 * <p>
+	 * Returns an error type.
+	 * </p>
+	 * 
+	 * @return an error type or null to match any error
+	 */
+	Class<? extends Throwable> getError();
 }

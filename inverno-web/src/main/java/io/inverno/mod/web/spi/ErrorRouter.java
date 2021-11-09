@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.web;
+package io.inverno.mod.web.spi;
 
 import java.util.Set;
 import java.util.function.Consumer;

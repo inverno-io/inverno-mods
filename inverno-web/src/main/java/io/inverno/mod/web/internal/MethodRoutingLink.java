@@ -24,13 +24,14 @@ import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.MethodNotAllowedException;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.MethodAwareRoute;
+import io.inverno.mod.web.spi.MethodAware;
+import io.inverno.mod.web.spi.Route;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
  * A routing link responsible to route an exchange based on the HTTP method as
- * defined by {@link MethodAwareRoute}.
+ * defined by {@link MethodAware}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -40,9 +41,9 @@ import reactor.core.publisher.Mono;
  * @param <B> the type of exchange handled by the route
  * @param <C> the route type
  */
-class MethodRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends MethodAwareRoute<A, B>> extends RoutingLink<A, B, MethodRoutingLink<A, B, C>, C> {
+class MethodRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends MethodAware & Route<A, B>> extends RoutingLink<A, B, MethodRoutingLink<A, B, C>, C> {
 
-	private Map<Method, RoutingLink<A, B, ?, C>> handlers;
+	private final Map<Method, RoutingLink<A, B, ?, C>> handlers;
 	private Map<Method, RoutingLink<A, B, ?, C>> enabledHandlers;
 
 	/**

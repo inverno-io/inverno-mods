@@ -19,8 +19,13 @@ import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ExchangeInterceptor;
+import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * <p>
@@ -32,7 +37,7 @@ import io.inverno.mod.web.WebRoute;
  */
 class GenericWebRoute implements WebRoute<ExchangeContext> {
 	
-	private final GenericWebRouter router;
+	private final AbstractWebRouter router;
 	
 	private boolean disabled;
 	
@@ -47,7 +52,10 @@ class GenericWebRoute implements WebRoute<ExchangeContext> {
 	
 	private String language;
 	
-	private ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler;
+	private List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>> interceptors;
+	private Consumer<List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>>> interceptorsUpdater;
+	
+	private ReactiveExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler;
 	
 	/**
 	 * <p>
@@ -56,7 +64,7 @@ class GenericWebRoute implements WebRoute<ExchangeContext> {
 	 * 
 	 * @param router a generic web router
 	 */
-	public GenericWebRoute(GenericWebRouter router) {
+	public GenericWebRoute(AbstractWebRouter router) {
 		this.router = router;
 	}
 
@@ -195,7 +203,33 @@ class GenericWebRoute implements WebRoute<ExchangeContext> {
 	}
 	
 	@Override
-	public ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> getHandler() {
+	public List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>> getInterceptors() {
+		return this.interceptors;
+	}
+
+	@Override
+	public void setInterceptors(List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>> interceptors) {
+		this.interceptors = interceptors != null ? Collections.unmodifiableList(interceptors) : List.of();
+		if(this.interceptorsUpdater != null) {
+			this.interceptorsUpdater.accept(this.interceptors);
+		}
+	}
+
+	/**
+	 * <p>
+	 * Used by a {@link WebRouteExtractor} to populate route interceptors.
+	 * </p>
+	 *
+	 * @param interceptors        the route interceptors
+	 * @param interceptorsUpdater a consumer used to update route interceptors in the actual handler routing link.
+	 */
+	public void setInterceptors(List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>> interceptors, Consumer<List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>>> interceptorsUpdater) {
+		this.interceptors = interceptors != null ? Collections.unmodifiableList(interceptors) : List.of();
+		this.interceptorsUpdater = interceptorsUpdater;
+	}
+	
+	@Override
+	public ReactiveExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> getHandler() {
 		return this.handler;
 	}
 	
@@ -206,8 +240,23 @@ class GenericWebRoute implements WebRoute<ExchangeContext> {
 	 * 
 	 * @param handler an exchange handler
 	 */
-	public void setHandler(ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler) {
+	public void setHandler(ReactiveExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler) {
 		this.handler = handler;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder routeStringBuilder = new StringBuilder();
+		
+		routeStringBuilder.append("{");
+		routeStringBuilder.append("\"method\":\"").append(this.method != null ? this.method : null).append("\",");
+		routeStringBuilder.append("\"path\":\"").append(this.path != null ? this.path : this.pathPattern).append("\",");
+		routeStringBuilder.append("\"consume\":\"").append(this.consume).append("\",");
+		routeStringBuilder.append("\"produce\":\"").append(this.produce).append("\",");
+		routeStringBuilder.append("\"language\":\"").append(this.language);
+		routeStringBuilder.append("}");
+		
+		return routeStringBuilder.toString();
 	}
 	
 	@Override

@@ -27,13 +27,14 @@ import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.ContentAwareRoute;
 import reactor.core.publisher.Mono;
+import io.inverno.mod.web.spi.Route;
+import io.inverno.mod.web.spi.ContentAware;
 
 /**
  * <p>
  * A routing link responsible to route an exchange based on the content type of
- * the request as defined by {@link ContentAwareRoute}.
+ * the request as defined by {@link ContentAware}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -43,7 +44,7 @@ import reactor.core.publisher.Mono;
  * @param <B> the type of exchange handled by the route
  * @param <C> the route type
  */
-class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends ContentAwareRoute<A, B>> extends RoutingLink<A, B, ConsumesRoutingLink<A, B, C>, C> {
+class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends ContentAware & Route<A, B>> extends RoutingLink<A, B, ConsumesRoutingLink<A, B, C>, C> {
 
 	private final HeaderCodec<? extends Headers.Accept> acceptCodec;
 
@@ -72,7 +73,7 @@ class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.NAME_ACCEPT, consume).getMediaRanges().get(0);
 			if (this.handlers.containsKey(mediaRange)) {
 				this.handlers.get(mediaRange).setRoute(route);
-			} 
+			}
 			else {
 				this.handlers.put(mediaRange, this.nextLink.createNextLink().setRoute(route));
 			}

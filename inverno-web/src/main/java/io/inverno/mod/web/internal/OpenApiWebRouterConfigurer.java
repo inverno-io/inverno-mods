@@ -103,7 +103,7 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
 	}
 	
 	@Override
-	public void configure(WebRouter<? extends ExchangeContext> router) {
+	public void accept(WebRouter<ExchangeContext> router) {
 		router
 			.route().path("/open-api", true).method(Method.GET).produces(MediaTypes.APPLICATION_JSON).handler(exchange -> {
 				exchange.response().body().raw().value(this.listSpec());

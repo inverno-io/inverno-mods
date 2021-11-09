@@ -27,13 +27,14 @@ import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.AcceptAwareRoute;
+import io.inverno.mod.web.spi.AcceptAware;
+import io.inverno.mod.web.spi.Route;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
  * A routing link responsible to route an exchange based on the content types
- * accepted by the client as defined by {@link AcceptAwareRoute}.
+ * accepted by the client as defined by {@link AcceptAware}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -43,7 +44,7 @@ import reactor.core.publisher.Mono;
  * @param <B> the type of exchange handled by the route
  * @param <C> the route type
  */
-class ProducesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends AcceptAwareRoute<A, B>> extends RoutingLink<A, B, ProducesRoutingLink<A, B, C>, C> {
+class ProducesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends AcceptAware & Route<A, B>> extends RoutingLink<A, B, ProducesRoutingLink<A, B, C>, C> {
 
 	private final HeaderCodec<? extends Headers.ContentType> contentTypeCodec;
 

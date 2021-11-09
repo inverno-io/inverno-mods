@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.web.spi.Router;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 
@@ -22,21 +23,18 @@ import io.inverno.mod.http.server.ExchangeContext;
  * <p>
  * A web router is used to handle HTTP requests.
  * </p>
- * 
+ *
  * <p>
- * It determines the web exchange handler to invoke based on the parameters of
- * the request including the absolute path, the method, the content type and the
- * accepted content type and language.
+ * It determines the web exchange handler to invoke based on the parameters of the request including the absolute path, the method, the content type and the accepted content type and language.
  * </p>
- * 
+ *
  * <p>
- * An web router is itself an exchange handler that can be used as root handler
- * of a HTTP server.
+ * An web router is itself an exchange handler that can be used as root handler of a HTTP server.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see WebExchange
  * @see WebExchangeHandler
  * @see WebRoute
@@ -44,6 +42,17 @@ import io.inverno.mod.http.server.ExchangeContext;
  *
  * @param <A> the type of the exchange context
  */
-public interface WebRouter<A extends ExchangeContext> extends Router<A, WebExchange<A>, WebRouter<A>, WebRouteManager<A>, WebRoute<A>, Exchange<A>> {
-
+public interface WebRouter<A extends ExchangeContext> extends Router<A, WebExchange<A>, WebRouter<A>, WebInterceptedRouter<A>, WebRouteManager<A>, WebInterceptorManager<A>, WebRoute<A>, Exchange<A>> {
+	
+	/**
+	 * <p>
+	 * Configures the Web router using the specified configurer.
+	 * </p>
+	 * 
+	 * @param configurer a Web router configurer
+	 */
+	@SuppressWarnings("unchecked")
+	default void configure(WebRouterConfigurer<? super A> configurer) {
+		configurer.accept((WebRouter)this);
+	}
 }

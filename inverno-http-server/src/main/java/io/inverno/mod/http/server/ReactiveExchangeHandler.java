@@ -15,7 +15,6 @@
  */
 package io.inverno.mod.http.server;
 
-import java.util.function.Function;
 import reactor.core.publisher.Mono;
 
 /**
@@ -43,8 +42,8 @@ public interface ReactiveExchangeHandler<A extends ExchangeContext, B extends Ex
 	 * @param interceptor the interceptor
 	 * @return a composed exchange handler
 	 */
-	default ReactiveExchangeHandler<A, B> intercept(Function<? super B, ? extends Mono<? extends B>> interceptor) {
-		return (B exchange) -> interceptor.apply(exchange).flatMap(ReactiveExchangeHandler.this::defer);
+	default ReactiveExchangeHandler<A, B> intercept(ExchangeInterceptor<A, B> interceptor) {
+		return (B exchange) -> interceptor.intercept(exchange).flatMap(ReactiveExchangeHandler.this::defer);
 	}
 	
 	/**

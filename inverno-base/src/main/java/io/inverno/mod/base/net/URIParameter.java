@@ -34,9 +34,11 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @see URIBuilder
  */
-class URIParameter {
+class URIParameter implements URIComponentPart {
 
-	private static final String DEFAULT_PATTERN = "[^/]*";
+	public static final String WILDCARD_PATTERN = "[^/]*";
+	
+	public static final String QUESTION_MARK_PATTERN = "[^/]";
 	
 	private final int offset;
 	
@@ -50,6 +52,10 @@ class URIParameter {
 	
 	private final String pattern;
 	
+	private final boolean custom;
+	private final boolean wildcard;
+	private final boolean questionMark;
+	
 	/**
 	 * <p>
 	 * Creates the URI parameter defined at the specified offset and of the specified length within a component's raw value and with the specified name and charset and default pattern.
@@ -61,7 +67,7 @@ class URIParameter {
 	 * @param charset a charset
 	 */
 	public URIParameter(int offset, int length, String name, Charset charset) {
-		this(offset, length, name, URIParameter.DEFAULT_PATTERN, null, charset);
+		this(offset, length, name, URIParameter.WILDCARD_PATTERN, null, charset);
 	}
 	
 	/**
@@ -77,7 +83,7 @@ class URIParameter {
 	 * @param charset           a charset
 	 */
 	public URIParameter(int offset, int length, String name, Predicate<Integer> allowedCharacters, Charset charset) {
-		this(offset, length, name, URIParameter.DEFAULT_PATTERN, allowedCharacters, charset);
+		this(offset, length, name, URIParameter.WILDCARD_PATTERN, allowedCharacters, charset);
 	}
 	
 	/**
@@ -115,6 +121,9 @@ class URIParameter {
 		this.charset = charset;
 		this.name = StringUtils.isNotBlank(name) ? name : null;
 		this.pattern = pattern;
+		this.wildcard = this.pattern.equals(WILDCARD_PATTERN);
+		this.questionMark = !this.wildcard && this.pattern.equals(QUESTION_MARK_PATTERN);
+		this.custom = !this.wildcard && !this.questionMark;
 	}
 
 	/**
@@ -149,6 +158,16 @@ class URIParameter {
 	public String getName() {
 		return name;
 	}
+
+	/**
+	 * <p>
+	 * Returns the pattern of the parameter.
+	 * </p>
+	 */
+	@Override
+	public String getValue() {
+		return this.pattern;
+	}
 	
 	/**
 	 * <p>
@@ -164,6 +183,51 @@ class URIParameter {
 		}
 		parameterPattern.append(this.pattern).append(")");
 		return parameterPattern.toString();
+	}
+
+	@Override
+	public boolean isStatic() {
+		return false;
+	}
+	
+	/**
+	 * <p>
+	 * Returns true if the parameter represents a custom pattern.
+	 * <p>
+	 * 
+	 * <p>
+	 * A custom pattern is anything other than the {@link #WILDCARD_PATTERN} or {@link #QUESTION_MARK_PATTERN} pattern.
+	 * </p>
+	 * 
+	 * @return true if this is a custom pattern parameter, false otherwise
+	 */
+	@Override
+	public boolean isCustom() {
+		return custom;
+	}
+	
+	/**
+	 * <p>
+	 * Returns true if the parameter represents a {@link #WILDCARD_PATTERN}.
+	 * <p>
+	 * 
+	 * @return true if this is a wildcard pattern parameter, false otherwise
+	 */
+	@Override
+	public boolean isWildcard() {
+		return wildcard;
+	}
+	
+	/**
+	 * <p>
+	 * Returns true if the parameter represents a {@link #QUESTION_MARK_PATTERN}.
+	 * <p>
+	 * 
+	 * @return true if this is a question mark pattern parameter, false otherwise
+	 */
+	@Override
+	public boolean isQuestionMark() {
+		return questionMark;
 	}
 	
 	/**

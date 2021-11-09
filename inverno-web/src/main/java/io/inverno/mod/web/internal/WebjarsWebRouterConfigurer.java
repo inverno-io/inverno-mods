@@ -70,7 +70,7 @@ public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
 	}
 	
 	@Override
-	public void configure(WebRouter<? extends ExchangeContext> router) {
+	public void accept(WebRouter<ExchangeContext> router) {
 		/* 2 possibilities:
 		 * - modular webjar
 		 *   - /[module_name]/webjars/* -> module://[module_name]/META-INF/resources/webjars/[module_name]/[module_version]/* 

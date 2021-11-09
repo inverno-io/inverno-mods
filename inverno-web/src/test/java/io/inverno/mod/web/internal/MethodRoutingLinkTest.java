@@ -58,7 +58,7 @@ public class MethodRoutingLinkTest {
 		
 		MockWebExchange exchange1 = MockWebExchange.from("/", Method.PUT).build();
 		routingLink.defer(exchange1).block();
-		Mockito.verify(route_default.getHandler(), Mockito.times(0)).handle(exchange1);
+		((ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>)Mockito.verify(route_default.getHandler(), Mockito.times(0))).handle(exchange1);
 		Mockito.verify(route_default.getHandler(), Mockito.times(1)).defer(exchange1);
 		
 		GenericWebRoute route1 = new GenericWebRoute(null);
@@ -75,12 +75,12 @@ public class MethodRoutingLinkTest {
 		
 		MockWebExchange exchange2 = MockWebExchange.from("/", Method.GET).build();
 		routingLink.defer(exchange2).block();
-		Mockito.verify(route1.getHandler(), Mockito.times(0)).handle(exchange2);
+		((ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>)Mockito.verify(route1.getHandler(), Mockito.times(0))).handle(exchange2);
 		Mockito.verify(route1.getHandler(), Mockito.times(1)).defer(exchange2);
 		
 		MockWebExchange exchange3 = MockWebExchange.from("/", Method.POST).build();
 		routingLink.defer(exchange3).block();
-		Mockito.verify(route2.getHandler(), Mockito.times(0)).handle(exchange3);
+		((ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>)Mockito.verify(route2.getHandler(), Mockito.times(0))).handle(exchange3);
 		Mockito.verify(route2.getHandler(), Mockito.times(1)).defer(exchange3);
 		
 		MockWebExchange exchange4 = MockWebExchange.from("/", Method.PUT).build();

@@ -24,6 +24,7 @@ import java.util.List;
  * 3</a>.
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.0
  *
  */
 interface URIComponent {

@@ -13,38 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.web;
+package io.inverno.mod.web.spi;
 
-import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.base.net.URIPattern;
 
 /**
  * <p>
- * A route that specifies criteria used to determine whether the resource served
- * by the route can process a request based on its HTTP method.
+ * Specifies criteria required to match requests or resources based on a path or a path pattern.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
- * 
- * @see Route
- * 
- * @param <A> the type of the exchange context
- * @param <B> the type of web exchange handled by the route
+ * @since 1.3
  */
-public interface MethodAwareRoute<A extends ExchangeContext, B extends Exchange<A>> extends Route<A, B> {
+public interface PathAware {
 
 	/**
 	 * <p>
-	 * Returns the HTTP method accepted by the resource served by the route.
+	 * Returns a static normalized absolute path.
 	 * </p>
 	 * 
-	 * <p>
-	 * This criteria should match the request HTTP method.
-	 * </p>
-	 * 
-	 * @return a HTTP method or null
+	 * @return an absolute normalized path or null
 	 */
-	Method getMethod();
+	String getPath();
+	
+	/**
+	 * <p>
+	 * Returns a URI pattern.
+	 * </p>
+	 * 
+	 * @return a URI pattern or null
+	 */
+	URIPattern getPathPattern();
 }

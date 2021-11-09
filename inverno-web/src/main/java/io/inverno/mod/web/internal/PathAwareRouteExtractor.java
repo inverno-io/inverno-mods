@@ -18,12 +18,11 @@ package io.inverno.mod.web.internal;
 import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.Route;
-import io.inverno.mod.web.PathAwareRoute;
+import io.inverno.mod.web.spi.Route;
 
 /**
  * <p>
- * A route extractor to extract {@link PathAwareRoute} routes.
+ * A route extractor to extract {@link PathAware} routes.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

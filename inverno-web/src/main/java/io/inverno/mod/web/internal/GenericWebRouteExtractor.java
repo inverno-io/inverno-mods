@@ -23,9 +23,13 @@ import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -54,6 +58,9 @@ class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, Web
 	private String produce;
 	
 	private String language;
+	
+	private List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>> interceptors;
+	private Consumer<List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>>> interceptorsUpdater;
 	
 	/**
 	 * <p>
@@ -207,36 +214,52 @@ class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, Web
 	}
 
 	@Override
+	public GenericWebRouteExtractor interceptors(List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>> interceptors, Consumer<List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>>> interceptorsUpdater) {
+		this.interceptors = interceptors != null ? interceptors.stream()
+			.map(interceptor -> {
+				ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>> current = interceptor;
+				while(current instanceof ExchangeInterceptorWrapper) {
+					current = ((ExchangeInterceptorWrapper<ExchangeContext, WebExchange<ExchangeContext>>) current).unwrap();
+				}
+				return current;
+			})
+			.collect(Collectors.toList()) : List.of();
+		this.interceptorsUpdater = interceptorsUpdater;
+		return this;
+	}
+	
+	@Override
 	public void handler(ReactiveExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler, boolean disabled) {
 		if(handler != null) {
 			GenericWebRoute route = new GenericWebRoute(this.getRouter());
 			route.setDisabled(disabled);
 			
-			String path = this.getPath();
-			URIPattern pathPattern = this.getPathPattern();
-			Method method = this.getMethod();
-			String consume = this.getConsume();
-			String produce = this.getProduce();
-			String language = this.getLanguage();
+			String routePath = this.getPath();
+			URIPattern routePathPattern = this.getPathPattern();
+			Method routeMethod = this.getMethod();
+			String routeConsume = this.getConsume();
+			String routeProduce = this.getProduce();
+			String routeLanguage = this.getLanguage();
 			
-			if(path != null) {
-				route.setPath(path);
+			if(routePath != null) {
+				route.setPath(routePath);
 			}
-			if(pathPattern != null) {
-				route.setPathPattern(pathPattern);
+			if(routePathPattern != null) {
+				route.setPathPattern(routePathPattern);
 			}
-			if(method != null) {
-				route.setMethod(method);
+			if(routeMethod != null) {
+				route.setMethod(routeMethod);
 			}
-			if(consume != null) {
-				route.setConsume(consume);
+			if(routeConsume != null) {
+				route.setConsume(routeConsume);
 			}
-			if(produce != null) {
-				route.setProduce(produce);
+			if(routeProduce != null) {
+				route.setProduce(routeProduce);
 			}
-			if(language != null) {
-				route.setLanguage(language);
+			if(routeLanguage != null) {
+				route.setLanguage(routeLanguage);
 			}
+			route.setInterceptors(this.interceptors, this.interceptorsUpdater);
 			route.setHandler((ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>)handler);
 			this.addRoute(route);
 		}

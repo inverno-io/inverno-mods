@@ -20,7 +20,7 @@ import java.util.Set;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ReactiveExchangeHandler;
-import io.inverno.mod.web.Route;
+import io.inverno.mod.web.spi.Route;
 
 /**
  * <p>

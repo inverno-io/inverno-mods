@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,34 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.web;
+package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeInterceptor;
 
 /**
  * <p>
- * A route that specifies criteria used to determine whether the resource served
- * by the route can process a request that failed with a particular type of
- * error.
+ * An exchange interceptor wrapper.
  * </p>
  * 
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
  * 
- * @see Route
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.3
  * 
  * @param <A> the type of the exchange context
- * @param <B> the type of web exchange handled by the route
+ * @param <B> the type of exchange handled by the handler
  */
-public interface ErrorAwareRoute<A extends ExchangeContext, B extends Exchange<A>> extends Route<A, B> {
-
-	/**
-	 * <p>
-	 * Returns the type of errors supported by the resource served by the route.
-	 * </p>
-	 * 
-	 * @return an error type or null
-	 */
-	Class<? extends Throwable> getError();
+abstract class ExchangeInterceptorWrapper<A extends ExchangeContext, B extends Exchange<A>> implements ExchangeInterceptor<A, B> {
+	
+	protected final ExchangeInterceptor<A, B> wrappedInterceptor;
+	
+	public ExchangeInterceptorWrapper(ExchangeInterceptor<A, B> interceptor) {
+		this.wrappedInterceptor = interceptor;
+	}
+		
+	public ExchangeInterceptor<A, B> unwrap() {
+		return this.wrappedInterceptor;
+	}
 }

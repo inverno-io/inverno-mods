@@ -36,6 +36,6 @@ interface WebRouteExtractor<A extends ExchangeContext, B extends WebRoute<A>, C 
 	MethodAwareRouteExtractor<A, WebExchange<A>, B, C>,
 	ContentAwareRouteExtractor<A, WebExchange<A>, B, C>,
 	AcceptAwareRouteExtractor<A, WebExchange<A>, B, C>,
-	RouteExtractor<A, WebExchange<A>, B> {
+	InterceptableRouteExtractor<A, WebExchange<A>, B, C> {
 	
 }

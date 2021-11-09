@@ -114,7 +114,7 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			configurer_constructor.append("\n").append(context.indent(1)).append("}");
 			
 			StringBuilder configurer_accept = new StringBuilder(context.indent(1)).append("@Override\n");
-			configurer_accept.append(context.indent(1)).append("public void configure(").append(context.getTypeName(routerType)).append("<? extends ").append(configurerClassName).append(".Context> router) {");
+			configurer_accept.append(context.indent(1)).append("public void accept(").append(context.getTypeName(routerType)).append("<").append(configurerClassName).append(".Context> router) {");
 			if(routerConfigurerInfo.getRouters().length > 0) {
 				configurer_accept.append("\n").append(Arrays.stream(routerConfigurerInfo.getRouters()).map(routerInfo -> this.visit(routerInfo, context.withIndentDepth(2).withMode(GenerationMode.CONFIGURER_INVOKE))).collect(context.joining("\n"))).append("\n");
 			}
@@ -224,6 +224,7 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 					}
 					contextFields.put(fieldName, element.getReturnType());
 					
+					contextMethod.append(context.indent(2)).append("@Override").append("\n");
 					contextMethod.append(context.indent(2)).append("public ").append(context.getTypeName(element.getReturnType())).append(" ").append(methodName).append("() {").append("\n");
 					contextMethod.append(context.indent(3)).append("return this.").append(fieldName).append(";").append("\n");
 					contextMethod.append(context.indent(2)).append("}");
@@ -235,6 +236,7 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 					}
 					contextFields.put(fieldName, element.getParameters().get(0).asType());
 					
+					contextMethod.append(context.indent(2)).append("@Override").append("\n");
 					contextMethod.append(context.indent(2)).append("public void ").append(methodName).append("(").append(context.getTypeName(element.getParameters().get(0).asType())).append(" ").append(fieldName).append(") {").append("\n");
 					contextMethod.append(context.indent(3)).append("this.").append(fieldName).append(" = ").append(fieldName).append(";").append("\n");
 					contextMethod.append(context.indent(2)).append("}");
@@ -291,7 +293,7 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 				.collect(context.joining(",\n"));
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURER_FIELD) {
-			return new StringBuilder(context.indent(0)).append("private ").append(context.getTypeName(providedRouterConfigurerInfo.getType())).append(" ").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName())).append(";");
+			return new StringBuilder(context.indent(0)).append("private final ").append(context.getTypeName(providedRouterConfigurerInfo.getType())).append(" ").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName())).append(";");
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURER_PARAMETER) {
 			return new StringBuilder(context.indent(0)).append(context.getTypeName(providedRouterConfigurerInfo.getType())).append(" ").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName()));
@@ -300,7 +302,7 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			return new StringBuilder(context.indent(0)).append("this.").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName())).append(" = ").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName())).append(";");
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURER_INVOKE) {
-			return new StringBuilder(context.indent(0)).append("this.").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName())).append(".configure(router);");
+			return new StringBuilder(context.indent(0)).append("router.configure(this.").append(context.getFieldName(providedRouterConfigurerInfo.getQualifiedName())).append(");");
 		}
 		return new StringBuilder();
 	}
@@ -308,7 +310,7 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 	@Override
 	public StringBuilder visit(WebControllerInfo controllerInfo, WebRouterConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.CONTROLLER_FIELD) {
-			return new StringBuilder(context.indent(0)).append("private ").append(context.getTypeName(controllerInfo.getType())).append(" ").append(context.getFieldName(controllerInfo.getQualifiedName())).append(";");
+			return new StringBuilder(context.indent(0)).append("private final ").append(context.getTypeName(controllerInfo.getType())).append(" ").append(context.getFieldName(controllerInfo.getQualifiedName())).append(";");
 		}
 		else if(context.getMode() == GenerationMode.CONTROLLER_PARAMETER) {
 			return new StringBuilder(context.indent(0)).append(context.getTypeName(controllerInfo.getType())).append(" ").append(context.getFieldName(controllerInfo.getQualifiedName()));

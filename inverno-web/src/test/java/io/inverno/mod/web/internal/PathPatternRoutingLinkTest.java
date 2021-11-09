@@ -92,37 +92,37 @@ public class PathPatternRoutingLinkTest {
 		
 		MockWebExchange exchange1 = MockWebExchange.from("/a/1_2").build();
 		routingLink.defer(exchange1).block();
-		Mockito.verify(route1.getHandler(), Mockito.times(0)).handle(exchange1);
+		((ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>)Mockito.verify(route1.getHandler(), Mockito.times(0))).handle(exchange1);
 		Mockito.verify(route1.getHandler(), Mockito.times(1)).defer(exchange1);
 		
 		MockWebExchange exchange2 = MockWebExchange.from("/a/b_1").build();
 		routingLink.defer(exchange2).block();
-		Mockito.verify(route3.getHandler(), Mockito.times(0)).handle(exchange2);
+		((ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>)Mockito.verify(route3.getHandler(), Mockito.times(0))).handle(exchange2);
 		Mockito.verify(route3.getHandler(), Mockito.times(1)).defer(exchange2);
 		
 		MockWebExchange exchange3 = MockWebExchange.from("/a/b/c").build();
 		routingLink.defer(exchange3).block();
-		Mockito.verify(route4.getHandler(), Mockito.times(0)).handle(exchange3);
+		((ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>)Mockito.verify(route4.getHandler(), Mockito.times(0))).handle(exchange3);
 		Mockito.verify(route4.getHandler(), Mockito.times(1)).defer(exchange3);
 		
 		MockWebExchange exchange4 = MockWebExchange.from("/a/b").build();
 		routingLink.defer(exchange4).block();
-		Mockito.verify(route2.getHandler(), Mockito.times(0)).handle(exchange4);
+		((ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>)Mockito.verify(route2.getHandler(), Mockito.times(0))).handle(exchange4);
 		Mockito.verify(route2.getHandler(), Mockito.times(1)).defer(exchange4);
 		
 		MockWebExchange exchange5 = MockWebExchange.from("/a/2/c").build();
 		routingLink.defer(exchange5).block();
-		Mockito.verify(route5.getHandler(), Mockito.times(0)).handle(exchange5);
+		((ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>)Mockito.verify(route5.getHandler(), Mockito.times(0))).handle(exchange5);
 		Mockito.verify(route5.getHandler(), Mockito.times(1)).defer(exchange5);
 		
 		MockWebExchange exchange6 = MockWebExchange.from("/a/b/c/d").build();
 		routingLink.defer(exchange6).block();
-		Mockito.verify(route6.getHandler(), Mockito.times(0)).handle(exchange6);
+		((ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>)Mockito.verify(route6.getHandler(), Mockito.times(0))).handle(exchange6);
 		Mockito.verify(route6.getHandler(), Mockito.times(1)).defer(exchange6);
 		
 		MockWebExchange exchange7 = MockWebExchange.from("/a/1/2").build();
 		routingLink.defer(exchange7).block();
-		Mockito.verify(route7.getHandler(), Mockito.times(0)).handle(exchange7);
+		((ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>)Mockito.verify(route7.getHandler(), Mockito.times(0))).handle(exchange7);
 		Mockito.verify(route7.getHandler(), Mockito.times(1)).defer(exchange7);
 		
 		MockWebExchange exchange8 = MockWebExchange.from("/unknown").build();

@@ -42,6 +42,29 @@ public interface URIPattern {
 
 	/**
 	 * <p>
+	 * Describes the inclusion state of a URI pattern in another URI pattern.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.3
+	 */
+	static enum Inclusion {
+		/**
+		 * One URI pattern is included in another URI pattern.
+		 */
+		INCLUDED,
+		/**
+		 * The sets of URIs matched by the URI patterns are disjoint.
+		 */
+		DISJOINT,
+		/**
+		 * It wasn't possible to determine with certainty whether a URI pattern is included into another.
+		 */
+		INDETERMINATE
+	}
+	
+	/**
+	 * <p>
 	 * Return the underlying JDK pattern.
 	 * </p>
 	 * 
@@ -57,6 +80,15 @@ public interface URIPattern {
 	 * @return a regular expression
 	 */
 	String getPatternString();
+	
+	/**
+	 * <p>
+	 * Returns the raw value of the pattern.
+	 * </p>
+	 * 
+	 * @return the pattern's raw value
+	 */
+	String getValue();
 
 	/**
 	 * <p>
@@ -69,4 +101,31 @@ public interface URIPattern {
 	 * @return a URI matcher
 	 */
 	URIMatcher matcher(String uri);
+	
+	/**
+	 * <p>
+	 * Determines whether the set of URIs matched by the specified URI pattern is included in the set of URIs matched by this URI pattern.
+	 * </p>
+	 * 
+	 * <p>
+	 * Considering A: the set of URIs matched by the specified URI pattern, and B: the set of URIs matched by this URI pattern, this method should return:
+	 * </p>
+	 * 
+	 * <ul>
+	 * <li>{@link URIPattern.Inclusion#INCLUDED} when A is included in B</li>
+	 * <li>{@link URIPattern.Inclusion#DISJOINT} when A and B are disjoint</li>
+	 * <li>{@link URIPattern.Inclusion#INDETERMINATE} when it wasn't possible to determine inclusion with certainty or if the difference between A and B is not empty</li>
+	 * </ul>
+	 * 
+	 * <p>
+	 * Implementations can choose to focus on specific URI components such as path in which case this method must return {@link URIPattern.PatternMatch#INDETERMINATE} when other components are
+	 * considered. Parameter names must also be ignored by implementations (eg. /{x} should be considered as equivalent to /{y}).
+	 * </p>
+	 * 
+	 * @param pattern a URI pattern
+	 * 
+	 * @return a pattern inclusion state specifying whether the specified pattern is included in this pattern
+	 */
+	URIPattern.Inclusion includes(URIPattern pattern);
+	
 }

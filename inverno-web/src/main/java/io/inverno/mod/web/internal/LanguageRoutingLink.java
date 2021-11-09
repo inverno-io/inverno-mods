@@ -28,13 +28,14 @@ import io.inverno.mod.http.base.header.Headers.AcceptLanguage.LanguageRange;
 import io.inverno.mod.http.base.header.Headers.AcceptMatch;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.AcceptAwareRoute;
+import io.inverno.mod.web.spi.AcceptAware;
+import io.inverno.mod.web.spi.Route;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
  * A routing link responsible to route an exchange based on the language as
- * defined by {@link AcceptAwareRoute}.
+ * defined by {@link AcceptAware}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -44,7 +45,7 @@ import reactor.core.publisher.Mono;
  * @param <B> the type of exchange handled by the route
  * @param <C> the route type
  */
-class LanguageRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends AcceptAwareRoute<A, B>> extends RoutingLink<A, B, LanguageRoutingLink<A, B, C>, C> {
+class LanguageRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends AcceptAware & Route<A, B>> extends RoutingLink<A, B, LanguageRoutingLink<A, B, C>, C> {
 
 	private final HeaderCodec<? extends Headers.AcceptLanguage> acceptLanguageCodec;
 

@@ -13,34 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.web;
-
-import java.util.function.Consumer;
+package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.web.spi.MethodAware;
+import io.inverno.mod.web.spi.Route;
 
 /**
  * <p>
- * Base router configurer interface.
- * </p>
- * 
- * <p>
- * A router configurer is used to configure a router.
+ * A route interceptor for intercepting method aware routes.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
- * 
- * @see Router
+ * @since 1.3
  * 
  * @param <A> the type of the exchange context
- * @param <B> the route exchange type
- * @param <C> the router type
- * @param <D> the route manager type
- * @param <E> the route type
- * @param <F> the router exchange type
+ * @param <B> the type of exchange intercepted by the interceptor
+ * @param <C> the route type
+ * @param <D> the route interceptor type
  */
-public interface RouterConfigurer<A extends ExchangeContext, B extends Exchange<A>, C extends Router<A, B, C, D, E, F>, D extends RouteManager<A, B, C, D, E, F>, E extends Route<A, B>, F extends Exchange<A>> extends Consumer<C> {
+public interface MethodAwareRouteInterceptor<A extends ExchangeContext, B extends Exchange<A>, C extends Route<A, B>, D extends MethodAwareRouteInterceptor<A, B, C, D>> extends RouteInterceptor<A, B, C, D> {
 
+	/**
+	 * <p>
+	 * Determines whether the specified method aware is matched by the route interceptor.
+	 * </p>
+	 * 
+	 * @param methodAware a method aware
+	 * 
+	 * @return a route interceptor if the method aware is a match, null otherwise
+	 */
+	D matches(MethodAware methodAware);
 }

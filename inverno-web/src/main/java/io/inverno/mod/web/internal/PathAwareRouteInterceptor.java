@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,40 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.web;
+package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.web.spi.PathAware;
+import io.inverno.mod.web.spi.Route;
 
 /**
  * <p>
- * A route that specifies criteria used to determine whether the resource served
- * by the route can process a request based on its content type.
+ * A route interceptor for intercepting path aware routes.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
- * 
- * @see Route
+ * @since 1.3
  * 
  * @param <A> the type of the exchange context
- * @param <B> the type of web exchange handled by the route
+ * @param <B> the type of exchange intercepted by the interceptor
+ * @param <C> the route type
+ * @param <D> the route interceptor type
  */
-public interface ContentAwareRoute<A extends ExchangeContext, B extends Exchange<A>> extends Route<A, B> {
+interface PathAwareRouteInterceptor<A extends ExchangeContext, B extends Exchange<A>, C extends Route<A, B>, D extends MethodAwareRouteInterceptor<A, B, C, D>> extends RouteInterceptor<A, B, C, D> {
 
 	/**
 	 * <p>
-	 * Returns the media range defining the content types accepted by the resource
-	 * served by the route as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section
-	 * 5.3.2</a>.
+	 * Determines whether the specified path aware is matched by the route interceptor.
 	 * </p>
 	 * 
-	 * <p>
-	 * This criteria should match the request {@code content-type} header field.
-	 * </p>
+	 * @param pathAware a path aware
 	 * 
-	 * @return a media range or null
+	 * @return a route interceptor if the path aware is a match, null otherwise
 	 */
-	String getConsume();
+	D matches(PathAware pathAware);
 }

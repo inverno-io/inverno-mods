@@ -84,7 +84,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	
 	@Init
 	public void init() {
-		this.route().produces(MediaTypes.APPLICATION_JSON).error(HttpException.class).handler(httpExceptionHandler_json())
+		this.route().produces(MediaTypes.APPLICATION_JSON).error(HttpException.class).handler(this.httpExceptionHandler_json())
 			.route().produces(MediaTypes.APPLICATION_JSON).handler(this.throwableHandler_json())
 			.route().produces(MediaTypes.TEXT_HTML).error(HttpException.class).handler(this.httpExceptionHandler_html())
 			.route().produces(MediaTypes.TEXT_HTML).handler(this.throwableHandler_html())

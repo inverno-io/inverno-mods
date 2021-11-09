@@ -21,9 +21,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
-import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebExchangeHandler;
 import io.inverno.mod.web.ErrorWebRoute;
 import io.inverno.mod.web.ErrorWebRouteManager;
@@ -47,7 +44,7 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager {
 	
 	private Set<String> languages;
 	
-	private ErrorExchangeHandler<Throwable, ErrorWebExchange<Throwable>> handler;
+	private ErrorWebExchangeHandler<Throwable> handler;
 	
 	/**
 	 * <p>
@@ -129,19 +126,11 @@ class GenericErrorWebRouteManager implements ErrorWebRouteManager {
 		return this;
 	}
 	
+	@Override
 	@SuppressWarnings("unchecked")
-	@Override
-	public ErrorWebRouter handler(ErrorExchangeHandler<? extends Throwable, ? extends ErrorExchange<? extends Throwable>> handler) {
+	public ErrorWebRouter handler(ErrorWebExchangeHandler<? extends Throwable> handler) {
 		Objects.requireNonNull(handler);
-		this.handler = (ErrorExchangeHandler<Throwable, ErrorWebExchange<Throwable>>) handler;
-		this.commit();
-		return this.router;
-	}
-	
-	@Override
-	public ErrorWebRouter handler(ErrorWebExchangeHandler<Throwable> handler) {
-		Objects.requireNonNull(handler);
-		this.handler = handler;
+		this.handler = (ErrorWebExchangeHandler<Throwable>) handler;
 		this.commit();
 		return this.router;
 	}
