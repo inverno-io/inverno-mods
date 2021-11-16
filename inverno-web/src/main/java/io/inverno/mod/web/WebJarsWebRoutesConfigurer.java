@@ -13,44 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.web.internal;
-
-import java.net.URI;
-import java.util.regex.Pattern;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+package io.inverno.mod.web;
 
 import io.inverno.mod.base.resource.ModuleResource;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceService;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.StaticHandler;
-import io.inverno.mod.web.WebConfiguration;
-import io.inverno.mod.web.WebRouter;
-import io.inverno.mod.web.WebRouterConfigurer;
+import java.net.URI;
+import java.util.regex.Pattern;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
- * Web router configurer used to configure routes to WebJars resources deployed
- * in the classpath.
+ * Web routes configurer used to configure routes exposing WebJars resources deployed on the module path or class path.
  * </p>
- * 
+ *
  * <p>
- * When activated in the {@link WebConfiguration#enable_webjars() web module
- * configuration}, this configurer defines as many routes as there are webjars
- * defined on the classpath. It assumes a webjar provides static content under <code>/META-INF/resources/webjars/{@literal <name>}/{@literal <version>}</code> as defined by <a href="https://www.webjars.org">WebJars</a>.
+ * This configurer defines as many routes as there are WebJars defined on the module path or class path. It assumes a webjar provides static content under
+ * <code>/META-INF/resources/webjars/{@literal <name>}/{@literal <version>}</code> as defined by <a href="https://www.webjars.org">WebJars</a>.
  * </p>
- * 
- * <p>For instance assuming {@code example-webjar} is on the classpath in version {@code 1.2.3}, its resource can be accessed at {@code /webjars/example-webjar/*}.</p> 
- * 
+ *
+ * <p>
+ * For instance assuming {@code example-webjar} is on the classpath in version {@code 1.2.3}, its resource can be accessed at {@code /webjars/example-webjar/*}.
+ * </p>
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.3
  */
-public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<ExchangeContext> {
-
-	private static final Logger LOGGER = LogManager.getLogger(WebjarsWebRouterConfigurer.class);
+public class WebJarsWebRoutesConfigurer implements WebRoutesConfigurer<ExchangeContext> {
+	
+	private static final Logger LOGGER = LogManager.getLogger(WebJarsWebRoutesConfigurer.class);
 	
 	private static final String WEBJARS_MODULE_PREFIX = "org.webjars";
 	
@@ -60,17 +54,17 @@ public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
 	
 	/**
 	 * <p>
-	 * Creates a WebJars web router configurer with the specified resource service.
+	 * Creates a WebJars web routes configurer with the specified resource service.
 	 * </p>
 	 * 
 	 * @param resourceService the resource service
 	 */
-	public WebjarsWebRouterConfigurer(ResourceService resourceService) {
+	public WebJarsWebRoutesConfigurer(ResourceService resourceService) {
 		this.resourceService = resourceService;
 	}
 	
 	@Override
-	public void accept(WebRouter<ExchangeContext> router) {
+	public void accept(WebRoutable<ExchangeContext, ?> routable) {
 		/* 2 possibilities:
 		 * - modular webjar
 		 *   - /[module_name]/webjars/* -> module://[module_name]/META-INF/resources/webjars/[module_name]/[module_version]/* 
@@ -85,9 +79,9 @@ public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
 				String webjarName = module.getDescriptor().name().substring(WEBJARS_MODULE_PREFIX.length() + 1);
 				String webjarVersion = module.getDescriptor().rawVersion().get();
 				Resource baseResource = this.resourceService.getResource(URI.create(ModuleResource.SCHEME_MODULE + "://" + module.getName() + "/META-INF/resources/webjars/" + webjarName + "/" + webjarVersion + "/"));
-				String webjarRootPath = WebjarsWebRouterConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
+				String webjarRootPath = WebJarsWebRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
 				LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
-				router.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
+				routable.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
 			});
 		}
 		
@@ -101,36 +95,38 @@ public class WebjarsWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
 				int webjarIndex = spec.substring(0, versionIndex).lastIndexOf("/");
 				
 				String webjarName = toModuleName(spec.substring(webjarIndex + 1, versionIndex));
-				String webjarRootPath = WebjarsWebRouterConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
+				String webjarRootPath = WebJarsWebRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
 				LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
-				router.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
+				routable.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
 			});
 	}
 	
-    private static final Pattern NON_ALPHANUM = Pattern.compile("[^A-Za-z0-9]");
-    private static final Pattern REPEATING_DOTS = Pattern.compile("(\\.)(\\1)+");
-    private static final Pattern LEADING_DOTS = Pattern.compile("^\\.");
-    private static final Pattern TRAILING_DOTS = Pattern.compile("\\.$");
-	
-    /*
+	private static final Pattern NON_ALPHANUM = Pattern.compile("[^A-Za-z0-9]");
+	private static final Pattern REPEATING_DOTS = Pattern.compile("(\\.)(\\1)+");
+	private static final Pattern LEADING_DOTS = Pattern.compile("^\\.");
+	private static final Pattern TRAILING_DOTS = Pattern.compile("\\.$");
+
+	/*
 	 * Borrowed from jdk.internal.module.ModulePath#cleanModuleName
 	 */
 	private static String toModuleName(String mn) {
-        // replace non-alphanumeric
-        mn = WebjarsWebRouterConfigurer.NON_ALPHANUM.matcher(mn).replaceAll(".");
+		// replace non-alphanumeric
+		mn = WebJarsWebRoutesConfigurer.NON_ALPHANUM.matcher(mn).replaceAll(".");
 
-        // collapse repeating dots
-        mn = WebjarsWebRouterConfigurer.REPEATING_DOTS.matcher(mn).replaceAll(".");
+		// collapse repeating dots
+		mn = WebJarsWebRoutesConfigurer.REPEATING_DOTS.matcher(mn).replaceAll(".");
 
-        // drop leading dots
-        if (!mn.isEmpty() && mn.charAt(0) == '.')
-            mn = WebjarsWebRouterConfigurer.LEADING_DOTS.matcher(mn).replaceAll("");
+		// drop leading dots
+		if (!mn.isEmpty() && mn.charAt(0) == '.') {
+			mn = WebJarsWebRoutesConfigurer.LEADING_DOTS.matcher(mn).replaceAll("");
+		}
 
-        // drop trailing dots
-        int len = mn.length();
-        if (len > 0 && mn.charAt(len-1) == '.')
-            mn = WebjarsWebRouterConfigurer.TRAILING_DOTS.matcher(mn).replaceAll("");
+		// drop trailing dots
+		int len = mn.length();
+		if (len > 0 && mn.charAt(len - 1) == '.') {
+			mn = WebJarsWebRoutesConfigurer.TRAILING_DOTS.matcher(mn).replaceAll("");
+		}
 
-        return mn;
-    }
+		return mn;
+	}
 }

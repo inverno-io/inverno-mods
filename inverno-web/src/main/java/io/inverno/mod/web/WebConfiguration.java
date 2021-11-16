@@ -39,28 +39,4 @@ public interface WebConfiguration {
 	 */
 	@NestedBean
 	HttpServerConfiguration http_server();
-	
-	/**
-	 * <p>
-	 * Enables/disables routes to generated <a href="https://www.openapis.org/">Open
-	 * API</a> specifications.
-	 * </p>
-	 * 
-	 * @return true to expose generated Open API specifications, false otherwise
-	 */
-	default boolean enable_open_api() {
-		return false;
-	}
-	
-	/**
-	 * <p>
-	 * Enables/disables routes to <a href="https://www.webjars.org/">WebJars</a>
-	 * resources.
-	 * </p>
-	 * 
-	 * @return true to expose WebJars resources, false otherwise
-	 */
-	default boolean enable_webjars() {
-		return false;
-	}
 }

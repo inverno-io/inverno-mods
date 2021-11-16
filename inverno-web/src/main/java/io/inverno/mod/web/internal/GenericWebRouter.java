@@ -59,8 +59,6 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 	private final ObjectConverter<String> parameterConverter;
 	
 	private final RoutingLink<ExchangeContext, WebExchange<ExchangeContext>, ?, WebRoute<ExchangeContext>> firstLink;
-	private final OpenApiWebRouterConfigurer openApiConfigurer;
-	private final WebjarsWebRouterConfigurer webjarsConfigurer;
 
 	private WebRouterConfigurer<? extends ExchangeContext> configurer;
 	
@@ -79,8 +77,6 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 		this.resourceService = resourceService;
 		this.dataConversionService = dataConversionService;
 		this.parameterConverter = parameterConverter;
-		this.openApiConfigurer = this.configuration.enable_open_api() ? new OpenApiWebRouterConfigurer(configuration, resourceService) : null;
-		this.webjarsConfigurer = this.configuration.enable_webjars() ? new WebjarsWebRouterConfigurer(resourceService) : null;
 		
 		this.firstLink = new PathRoutingLink<>();
 		this.firstLink
@@ -103,13 +99,6 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 				throw new NotFoundException();
 			}
 		});
-		
-		if(this.webjarsConfigurer != null) {
-			this.configure(this.webjarsConfigurer);
-		}
-		if(this.openApiConfigurer != null) {
-			this.configure(this.openApiConfigurer);
-		}
 		
 		if(this.configurer != null) {
 			// We know it's working because the context is provided by the configurer

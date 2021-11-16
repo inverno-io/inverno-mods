@@ -13,15 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.web.internal;
-
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+package io.inverno.mod.web;
 
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.resource.MediaTypes;
@@ -30,53 +22,61 @@ import io.inverno.mod.base.resource.ResourceService;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.MissingRequiredParameterException;
-import io.inverno.mod.web.WebConfiguration;
-import io.inverno.mod.web.WebRouter;
-import io.inverno.mod.web.WebRouterConfigurer;
 import io.inverno.mod.web.annotation.PathParam;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
- * Web router configurer used to configure routes to generated
- * <a href="https://www.openapis.org/">Open API</a> specifications.
+ * Web routes configurer used to configure routes exposing generated <a href="https://www.openapis.org/">Open API</a> specifications.
  * </p>
- * 
- * <p>When activated in the {@link WebConfiguration#enable_open_api() web module configuration}, this configurer defines the following routes:</p>
- * 
+ *
+ * <p>
+ * This configurer defines the following routes:
+ * </p>
+ *
  * <dl>
- * <dt>/open-api</dt>
- * <dd>return the JSON list the Open API specifications</dd>
- * <dd>if webjars are activated in the {@link WebConfiguration#enable_webjars() web module configuration} and requested with {@code accept: text/html}, it displays a Swagger UI presenting all the specifications</dd>
- * <dt>/open-api/{moduleName}</dt>
- * <dd>return the YAML Open API specification of the specified module</dd>
- * <dd>if webjars are activated in the {@link WebConfiguration#enable_webjars() web module configuration} and requested with {@code accept: text/html}, it displays a Swagger UI presenting the module's specification</dd>
+ * <dt>{@code /open-api}</dt>
+ * <dd>Returns the JSON list the Open API specifications</dd>
+ * <dd>If Swagger UI is enabled and request is made with {@code accept: text/html} header, a Swagger UI presenting all the specifications is returned</dd>
+ * <dt>{@code /open-api/{moduleName}}</dt>
+ * <dd>Returns the YAML Open API specification of the specified module</dd>
+ * <dd>If Swagger UI is enabled and request is made with {@code accept: text/html} header, a Swagger UI presenting the module's specification is returned</dd>
  * </dl>
- * 
+ *
+ * <p>
+ * Note that Swagger UI requires WebJars support and the {@code swagger-ui} WebJar.
+ * </p>
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.3
+ *
+ * @see WebJarsWebRoutesConfigurer
  */
-public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<ExchangeContext> {
-
-	private static final Logger LOGGER = LogManager.getLogger(OpenApiWebRouterConfigurer.class);
+public class OpenApiWebRoutesConfigurer implements WebRoutesConfigurer<ExchangeContext> {
 	
-	private final WebConfiguration configuration;
+	private static final Logger LOGGER = LogManager.getLogger(OpenApiWebRoutesConfigurer.class);
+	
 	private final Map<String, Resource> openApiSpecs;
+	private final boolean enableSwagger;
 	
 	/**
 	 * <p>
-	 * Creates an Open API web router configurer with the specified web module
-	 * configuration and resource service.
+	 * Creates an Open API web routes configurer with the specified resource service.
 	 * </p>
-	 * 
-	 * @param configuration   the web module configuration
+	 *
 	 * @param resourceService the resource service
+	 * @param enableSwagger   true to enable Swagger UI routes, false otherwise
 	 */
-	public OpenApiWebRouterConfigurer(WebConfiguration configuration, ResourceService resourceService) {
-		this.configuration = configuration;
+	public OpenApiWebRoutesConfigurer(ResourceService resourceService, boolean enableSwagger) {
 		this.openApiSpecs = new HashMap<>();
+		this.enableSwagger = enableSwagger;
 		
 		ModuleLayer moduleLayer = this.getClass().getModule().getLayer();
 		if(moduleLayer != null) {
@@ -101,10 +101,10 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
 				}
 			});
 	}
-	
+
 	@Override
-	public void accept(WebRouter<ExchangeContext> router) {
-		router
+	public void accept(WebRoutable<ExchangeContext, ?> routable) {
+		routable
 			.route().path("/open-api", true).method(Method.GET).produces(MediaTypes.APPLICATION_JSON).handler(exchange -> {
 				exchange.response().body().raw().value(this.listSpec());
 			})
@@ -112,8 +112,8 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
 				exchange.response().body().resource().value(this.getSpec(exchange.request().pathParameters().get("moduleName").map(parameter -> parameter.as(String.class)).orElseThrow(() -> new MissingRequiredParameterException("moduleName"))));
 			});
 		
-		if(this.configuration.enable_webjars()) {
-			router
+		if(this.enableSwagger) {
+			routable
 				.route().path("/open-api", true).method(Method.GET).produces(MediaTypes.TEXT_HTML).handler(exchange -> {
 					exchange.response().body().raw().value(this.listSpecSwaggerUI());
 				})
@@ -122,12 +122,12 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
 				});
 		}
 	}
-	
+
 	/**
 	 * <p>
 	 * Returns a JSON list including all available Open API specifications.
 	 * </p>
-	 * 
+	 *
 	 * @return a raw list of specifications
 	 */
 	public ByteBuf listSpec() {
@@ -136,10 +136,9 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
 	
 	/**
 	 * <p>
-	 * Returns the Swagger UI loading HTML for all available Open API
-	 * specifications.
+	 * Returns the Swagger UI loading HTML for all available Open API specifications.
 	 * </p>
-	 * 
+	 *
 	 * @return a raw Swagger UI loader
 	 */
 	public ByteBuf listSpecSwaggerUI() {
@@ -153,15 +152,14 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
 	
 	/**
 	 * <p>
-	 * Returns the Open API specification for the specified module usually in YAML
-	 * format.
+	 * Returns the Open API specification for the specified module usually in YAML format.
 	 * </p>
-	 * 
+	 *
 	 * @param moduleName the module name
-	 * 
+	 *
 	 * @return a raw Open API specification
-	 * @throws NotFoundException if there's no specification for the specified
-	 *                           module
+	 *
+	 * @throws NotFoundException if there's no specification for the specified module
 	 */
 	public Resource getSpec(@PathParam String moduleName) throws NotFoundException {
 		Resource spec = this.openApiSpecs.get(moduleName);
@@ -173,15 +171,14 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
 	
 	/**
 	 * <p>
-	 * Returns the Swagger UI loading HTML for the Open API specification of the
-	 * specified module
+	 * Returns the Swagger UI loading HTML for the Open API specification of the specified module
 	 * </p>
-	 * 
+	 *
 	 * @param moduleName the module name
-	 * 
+	 *
 	 * @return a raw Swagger UI loader
-	 * @throws NotFoundException if there's no specification for the specified
-	 *                           module
+	 *
+	 * @throws NotFoundException if there's no specification for the specified module
 	 */
 	public ByteBuf getSpecSwaggerUI(@PathParam String moduleName) throws NotFoundException {
 		if(!this.openApiSpecs.containsKey(moduleName)) {
