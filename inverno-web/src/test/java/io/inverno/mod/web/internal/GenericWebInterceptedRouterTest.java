@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.web.WebConfiguration;
@@ -76,9 +75,9 @@ public class GenericWebInterceptedRouterTest {
 		
 		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
 		router
-			.interceptRoute()
+			.intercept()
 				.interceptor(interceptor1)
-			.interceptRoute()
+			.intercept()
 				.path("/bar")
 				.interceptor(interceptor2)
 			.route()
@@ -147,9 +146,9 @@ public class GenericWebInterceptedRouterTest {
 		
 		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
 		router
-			.interceptRoute()
+			.intercept()
 				.interceptor(interceptor1)
-			.interceptRoute()
+			.intercept()
 				.path("/a/b/*")
 				.interceptor(interceptor2)
 			.route()
@@ -254,9 +253,9 @@ public class GenericWebInterceptedRouterTest {
 		
 		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
 		router
-			.interceptRoute()
+			.intercept()
 				.interceptor(interceptor1)
-			.interceptRoute()
+			.intercept()
 				.method(Method.GET)
 				.interceptor(interceptor2)
 			.route()
@@ -356,9 +355,9 @@ public class GenericWebInterceptedRouterTest {
 		
 		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
 		router
-			.interceptRoute()
+			.intercept()
 				.interceptor(interceptor1)
-			.interceptRoute()
+			.intercept()
 				.consumes(MediaTypes.APPLICATION_JSON)
 				.interceptor(interceptor2)
 			.route()
@@ -471,9 +470,9 @@ public class GenericWebInterceptedRouterTest {
 		
 		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
 		router
-			.interceptRoute()
+			.intercept()
 				.interceptor(interceptor1)
-			.interceptRoute()
+			.intercept()
 				.produces("*/json")
 				.interceptor(interceptor2)
 			.route()
@@ -564,9 +563,9 @@ public class GenericWebInterceptedRouterTest {
 		
 		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
 		router
-			.interceptRoute()
+			.intercept()
 				.interceptor(interceptor1)
-			.interceptRoute()
+			.intercept()
 				.language("fr")
 				.interceptor(interceptor2)
 			.route()
@@ -745,9 +744,9 @@ public class GenericWebInterceptedRouterTest {
 		
 		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
 		router
-			.interceptRoute()
+			.intercept()
 				.interceptor(interceptor1)
-			.interceptRoute()
+			.intercept()
 				.path("/a/b/c")
 				.method(Method.GET)
 				.interceptor(interceptor2)
@@ -791,5 +790,106 @@ public class GenericWebInterceptedRouterTest {
 		Assertions.assertEquals(2, routeInterceptors.size());
 		Assertions.assertTrue(routeInterceptors.contains(interceptor1));
 		Assertions.assertTrue(routeInterceptors.contains(interceptor2));
+	}
+	
+	@Test
+	public void testConfigure() {
+		WebExchangeInterceptor<ExchangeContext> interceptor1 = mockExchangeInterceptor();
+		WebExchangeInterceptor<ExchangeContext> interceptor2 = mockExchangeInterceptor();
+		
+		WebExchangeHandler<ExchangeContext> handler1 = mockExchangeHandler();
+		WebExchangeHandler<ExchangeContext> handler2 = mockExchangeHandler();
+		WebExchangeHandler<ExchangeContext> handler3 = mockExchangeHandler();
+		
+		GenericWebRouter genericRouter = new GenericWebRouter(CONFIGURATION, null, null, null);
+		
+		genericRouter
+			.configureInterceptors(interceptable -> {
+				interceptable
+					.intercept()
+						.interceptor(interceptor1);
+			})
+			.configure(router -> {
+				router
+					.intercept()
+						.interceptor(interceptor2)
+					.route()
+						.path("/a")
+						.handler(handler1);
+			})
+			.configureRoutes(routable -> {
+				routable
+					.route()
+						.path("/b")
+						.handler(handler2);
+			})
+			.route()
+				.path("/c")
+				.handler(handler3);
+		
+		
+		MockWebExchange a_exchange = MockWebExchange.from("/a", Method.GET).build();
+		genericRouter.defer(a_exchange).block();
+		
+		Mockito.verify(interceptor1, Mockito.times(1)).intercept(Mockito.any());
+		Mockito.verify(interceptor2, Mockito.times(1)).intercept(Mockito.any());
+		Mockito.verify(handler1, Mockito.times(1)).defer(Mockito.any());
+		Mockito.verify(handler2, Mockito.times(0)).defer(Mockito.any());
+		Mockito.verify(handler3, Mockito.times(0)).defer(Mockito.any());
+		
+		Mockito.clearInvocations(interceptor1, interceptor2, handler1, handler2, handler3);
+		
+		MockWebExchange b_exchange = MockWebExchange.from("/b", Method.GET).build();
+		genericRouter.defer(b_exchange).block();
+		
+		Mockito.verify(interceptor1, Mockito.times(1)).intercept(Mockito.any());
+		Mockito.verify(interceptor2, Mockito.times(0)).intercept(Mockito.any());
+		Mockito.verify(handler1, Mockito.times(0)).defer(Mockito.any());
+		Mockito.verify(handler2, Mockito.times(1)).defer(Mockito.any());
+		Mockito.verify(handler3, Mockito.times(0)).defer(Mockito.any());
+		
+		Mockito.clearInvocations(interceptor1, interceptor2, handler1, handler2, handler3);
+		
+		MockWebExchange c_exchange = MockWebExchange.from("/c", Method.GET).build();
+		genericRouter.defer(c_exchange).block();
+		
+		Mockito.verify(interceptor1, Mockito.times(1)).intercept(Mockito.any());
+		Mockito.verify(interceptor2, Mockito.times(0)).intercept(Mockito.any());
+		Mockito.verify(handler1, Mockito.times(0)).defer(Mockito.any());
+		Mockito.verify(handler2, Mockito.times(0)).defer(Mockito.any());
+		Mockito.verify(handler3, Mockito.times(1)).defer(Mockito.any());
+		
+		Mockito.clearInvocations(interceptor1, interceptor2, handler1, handler2, handler3);
+		
+		Set<WebRoute<ExchangeContext>> routes = genericRouter.getRoutes();
+		
+		Assertions.assertEquals(3, routes.size());
+		
+		Consumer<WebRoute<ExchangeContext>> routeAssert = route -> {
+			List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>> routeInterceptors = route.getInterceptors();
+			switch (route.getPath()) {
+				case "/a":
+					Assertions.assertEquals(2, routeInterceptors.size());
+					Assertions.assertTrue(routeInterceptors.contains(interceptor1));
+					Assertions.assertTrue(routeInterceptors.contains(interceptor2));
+					break;
+				case "/b":
+					Assertions.assertEquals(1, routeInterceptors.size());
+					Assertions.assertEquals(interceptor1, routeInterceptors.get(0));
+					break;
+				case "/c":
+					Assertions.assertEquals(1, routeInterceptors.size());
+					Assertions.assertEquals(interceptor1, routeInterceptors.get(0));
+					break;
+				default:
+					Assertions.fail("Unexpected route: " + route.toString());
+					break;
+			}
+		};
+		
+		Iterator<WebRoute<ExchangeContext>> routesIterator = routes.iterator();
+		while(routesIterator.hasNext()) {
+			routeAssert.accept(routesIterator.next());
+		}
 	}
 }

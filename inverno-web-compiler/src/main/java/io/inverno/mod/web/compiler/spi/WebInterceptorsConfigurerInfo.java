@@ -15,28 +15,27 @@
  */
 package io.inverno.mod.web.compiler.spi;
 
+import io.inverno.core.compiler.spi.Info;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
-import io.inverno.core.compiler.spi.Info;
-
 /**
  * <p>
- * Describes a web router configurer.
+ * Describes a web interceptors configurer.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.3
  */
-public interface WebProvidedRouterConfigurerInfo extends Info {
-	
+public interface WebInterceptorsConfigurerInfo extends Info {
+
 	@Override
-	WebConfigurerQualifiedName getQualifiedName();
-	
+	public WebConfigurerQualifiedName getQualifiedName();
+
 	/**
 	 * <p>
-	 * Returns the type element of the web router configurer.
+	 * Returns the type element of the web interceptors configurer.
 	 * </p>
 	 * 
 	 * @return a type element
@@ -45,7 +44,7 @@ public interface WebProvidedRouterConfigurerInfo extends Info {
 	
 	/**
 	 * <p>
-	 * Returns the type of the web router configurer.
+	 * Returns the type of the web interceptors configurer.
 	 * </p>
 	 * 
 	 * @return a type
@@ -54,19 +53,9 @@ public interface WebProvidedRouterConfigurerInfo extends Info {
 	
 	/**
 	 * <p>
-	 * Returns the web routes defined in the web router configurer.
+	 * Returns the exchange context type required by the routes defined by the Web interceptors configurer.
 	 * </p>
-	 * 
-	 * @return an array of web route info
-	 */
-	WebRouteInfo[] getRoutes();
-	
-	/**
-	 * <p>
-	 * Returns the exchange context type required by the routes defined by
-	 * the Web router configurer.
-	 * </p>
-	 * 
+	 *
 	 * @return a context type
 	 */
 	TypeMirror getContextType();

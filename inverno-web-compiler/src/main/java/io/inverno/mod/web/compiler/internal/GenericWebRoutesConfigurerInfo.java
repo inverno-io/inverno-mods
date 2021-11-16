@@ -15,30 +15,28 @@
  */
 package io.inverno.mod.web.compiler.internal;
 
+import io.inverno.core.compiler.spi.BeanInfo;
+import io.inverno.core.compiler.spi.support.AbstractInfo;
+import io.inverno.mod.web.compiler.spi.WebConfigurerQualifiedName;
+import io.inverno.mod.web.compiler.spi.WebRouteInfo;
+import io.inverno.mod.web.compiler.spi.WebRoutesConfigurerInfo;
 import java.util.List;
-
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
-import io.inverno.core.compiler.spi.BeanInfo;
-import io.inverno.core.compiler.spi.support.AbstractInfo;
-import io.inverno.mod.web.compiler.spi.WebConfigurerQualifiedName;
-import io.inverno.mod.web.compiler.spi.WebProvidedRouterConfigurerInfo;
-import io.inverno.mod.web.compiler.spi.WebRouteInfo;
-
 /**
  * <p>
- * Generic {@link WebProvidedRouterConfigurerInfo} implementation.
+ * Generic {@link WebRoutesConfigurerInfo} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.3
  * 
  * @see AbstractInfo
  */
-class GenericWebProvidedRouterConfigurerInfo extends AbstractInfo<WebConfigurerQualifiedName> implements WebProvidedRouterConfigurerInfo {
-
+public class GenericWebRoutesConfigurerInfo extends AbstractInfo<WebConfigurerQualifiedName> implements WebRoutesConfigurerInfo {
+	
 	private final TypeElement element;
 	
 	private final DeclaredType type;
@@ -49,7 +47,7 @@ class GenericWebProvidedRouterConfigurerInfo extends AbstractInfo<WebConfigurerQ
 	
 	/**
 	 * <p>
-	 * Creates a generic web provided router configurer info.
+	 * Creates a generic web routes configurer info.
 	 * </p>
 	 *
 	 * @param element     the type element of the router configurer
@@ -58,7 +56,7 @@ class GenericWebProvidedRouterConfigurerInfo extends AbstractInfo<WebConfigurerQ
 	 * @param routes      the routes defined in the router configuer
 	 * @param contextType the exchange context type required by the configured routes
 	 */
-	public GenericWebProvidedRouterConfigurerInfo(TypeElement element, WebConfigurerQualifiedName name, BeanInfo bean, List<? extends WebRouteInfo> routes, TypeMirror contextType) {
+	public GenericWebRoutesConfigurerInfo(TypeElement element, WebConfigurerQualifiedName name, BeanInfo bean, List<? extends WebRouteInfo> routes, TypeMirror contextType) {
 		super(name, bean);
 		this.element = element;
 		this.type = (DeclaredType)bean.getType();

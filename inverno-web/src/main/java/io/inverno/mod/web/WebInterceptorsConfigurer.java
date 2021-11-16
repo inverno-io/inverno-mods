@@ -15,35 +15,21 @@
  */
 package io.inverno.mod.web;
 
-import io.inverno.mod.web.spi.RouterConfigurer;
 import io.inverno.mod.http.server.ExchangeContext;
+import java.util.function.Consumer;
 
 /**
  * <p>
- * A configurer used to configure a web router.
+ * A configurer used to configure interceptors in a web router.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.3
  * 
  * @see WebRouter
  * 
  * @param <A> the type of the exchange context
  */
-public interface WebRouterConfigurer<A extends ExchangeContext> extends RouterConfigurer<A, WebExchange<A>, WebRouter<A>, WebInterceptedRouter<A>, WebRouteManager<A, WebRouter<A>>, WebRouteManager<A, WebInterceptedRouter<A>>, WebInterceptorManager<A, WebInterceptedRouter<A>>, WebRoute<A>> {
-	
-	/**
-	 * <p>
-	 * Creates a context matching routes requirement.
-	 * </p>
-	 *
-	 * <p>
-	 * This context supplier is used by the router to create a specific context attached to {@link WebExchange} required by the routes configured by the configurer.
-	 * </p>
-	 *
-	 * @return a new context instance
-	 */
-	default A createContext() {
-		return null;
-	}
+public interface WebInterceptorsConfigurer<A extends ExchangeContext> extends Consumer<WebInterceptable<A, ?>> {
+
 }

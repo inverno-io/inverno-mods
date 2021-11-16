@@ -37,6 +37,7 @@ import io.inverno.mod.web.compiler.spi.WebExchangeContextParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebExchangeParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebFormParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebHeaderParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebInterceptorsConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebPathParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebProvidedRouterConfigurerInfo;
@@ -48,6 +49,7 @@ import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfoVisitor;
 import io.inverno.mod.web.compiler.spi.WebSseEventFactoryParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebRequestBodyParameterInfo.RequestBodyKind;
+import io.inverno.mod.web.compiler.spi.WebRoutesConfigurerInfo;
 
 /**
  * <p>
@@ -134,8 +136,19 @@ class WebRouterConfigurerOpenApiGenerator implements WebRouterConfigurerInfoVisi
 	}
 
 	@Override
+	public StringBuilder visit(WebInterceptorsConfigurerInfo interceptorsConfigurerInfo, WebRouterConfigurerOpenApiGenerationContext p) {
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebRoutesConfigurerInfo routesConfigurerInfo, WebRouterConfigurerOpenApiGenerationContext p) {
+		// Does it really make sense to generate spec since we have neither access to request parameters or body nor to responses 
+		return new StringBuilder();
+	}
+
+	@Override
 	public StringBuilder visit(WebProvidedRouterConfigurerInfo providedRouterConfigurerInfo, WebRouterConfigurerOpenApiGenerationContext context) {
-		// Does it really make sense to generate spec for provided routes since we have neither access to request parameters or body nor to responses 
+		// Does it really make sense to generate spec since we have neither access to request parameters or body nor to responses 
 		return new StringBuilder();
 	}
 

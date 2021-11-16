@@ -50,7 +50,7 @@ import io.inverno.mod.web.compiler.spi.WebRouteInfo;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class WebRouteDuplicateDetector {
+class WebRouteClashDetector {
 	
 	/**
 	 * <p>

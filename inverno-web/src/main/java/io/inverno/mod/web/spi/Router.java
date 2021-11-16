@@ -15,8 +15,6 @@
  */
 package io.inverno.mod.web.spi;
 
-import java.util.Set;
-import java.util.function.Consumer;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
@@ -59,76 +57,19 @@ import io.inverno.mod.http.server.RootExchangeHandler;
  * @param <C> the router type
  * @param <D> the intercepted router type
  * @param <E> the route manager type
- * @param <F> the interceptor manager type
- * @param <G> the interceptable route type
- * @param <H> the type of exchange handled by the router
+ * @param <F> the intercepted route manager type
+ * @param <G> the interceptor manager type
+ * @param <H> the interceptable route type
  */
 public interface Router<
 		A extends ExchangeContext, 
-		B extends Exchange<A>, 
-		C extends Router<A, B, C, D, E, F, G, H>, 
-		D extends InterceptedRouter<A, B, C, D, E, F, G, H>, 
-		E extends RouteManager<A, B, C, D, E, F, G, H>, 
-		F extends InterceptorManager<A, B, C, D, E, F, G, H>, 
-		G extends InterceptableRoute<A, B>, 
-		H extends Exchange<A>
-	> extends RootExchangeHandler<A, H> {
-
-	/**
-	 * <p>
-	 * Returns a route manager to define, enable, disable, remove or find routes
-	 * in the router.
-	 * </p>
-	 * 
-	 * @return a route manager
-	 */
-	E route();
+		B extends Exchange<A>,
+		C extends Router<A, B, C, D, E, F, G, H>,
+		D extends InterceptedRouter<A, B, C, D, E, F, G, H>,
+		E extends RouteManager<A, B, C, E, H>,
+		F extends RouteManager<A, B, D, F, H>,
+		G extends InterceptorManager<A, B, D, G>,
+		H extends InterceptableRoute<A, B>
+	> extends Routable<A, B, C, E, H>, Interceptable<A, B, D, G>, RootExchangeHandler<A, Exchange<A>> {
 	
-	/**
-	 * <p>
-	 * Invokes the specified route configurer on a route manager.
-	 * </p>
-	 * 
-	 * @param routeConfigurer a route configurer
-	 * 
-	 * @return the router
-	 */
-	@SuppressWarnings("unchecked")
-	default C route(Consumer<E> routeConfigurer) {
-		routeConfigurer.accept(this.route());
-		return (C) this;
-	}
-	
-	/**
-	 * <p>
-	 * Returns an interceptor manager to define route interceptors.
-	 * </p>
-	 * 
-	 * @return an interceptor manager
-	 */
-	F interceptRoute();
-	
-	/**
-	 * <p>
-	 * Invokes the specified interceptor configurer on an interceptor manager.
-	 * </p>
-	 * 
-	 * @param interceptorConfigurer an interceptor configurer
-	 * 
-	 * @return an intercepted router
-	 */
-	@SuppressWarnings("unchecked")
-	default D interceptRoute(Consumer<F> interceptorConfigurer) {
-		interceptorConfigurer.accept(this.interceptRoute());
-		return (D) this;
-	}
-
-	/**
-	 * <p>
-	 * Returns the routes defined in the router.
-	 * </p>
-	 * 
-	 * @return a set of routes or an empty set if no route is defined in the router
-	 */
-	Set<G> getRoutes();
 }

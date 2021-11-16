@@ -15,10 +15,8 @@
  */
 package io.inverno.mod.web.spi;
 
-import java.util.Set;
 
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
 
 /**
@@ -49,8 +47,9 @@ import io.inverno.mod.http.server.ExchangeContext;
  * @param <C> the error route manager type
  * @param <D> the route type
  */
-public interface ErrorRouteManager<A extends ErrorExchange<Throwable>, B extends ErrorRouter<A, B, C, D>, C extends ErrorRouteManager<A, B, C, D>, D extends Route<ExchangeContext, A>> {
-	
+public interface ErrorRouteManager<A extends ErrorExchange<Throwable>, B extends ErrorRouter<A, B, C, D>, C extends ErrorRouteManager<A, B, C, D>, D extends 
+	Route<ExchangeContext, A>> extends RouteManager<ExchangeContext, A, B, C, D> {
+
 	/**
 	 * <p>
 	 * Specifies the type of errors accepted by the route.
@@ -63,44 +62,4 @@ public interface ErrorRouteManager<A extends ErrorExchange<Throwable>, B extends
 	 * @see ErrorAware
 	 */
 	C error(Class<? extends Throwable> error);
-
-	/**
-	 * <p>
-	 * Enables all the routes that matches the criteria specified in the route
-	 * manager and defined in the router it comes from.
-	 * </p>
-	 * 
-	 * @return the router
-	 */
-	B enable();
-	
-	/**
-	 * <p>
-	 * Disables all the routes that matches the criteria specified in the route
-	 * manager and defined in the router it comes from.
-	 * </p>
-	 * 
-	 * @return the router
-	 */
-	B disable();
-	
-	/**
-	 * <p>
-	 * Removes all the routes that matches the criteria specified in the route
-	 * manager and defined in the router it comes from.
-	 * </p>
-	 * 
-	 * @return the router
-	 */
-	B remove();
-	
-	/**
-	 * <p>
-	 * Finds all the routes that matches the criteria specified in the route manager
-	 * and defined in the router it comes from.
-	 * </p>
-	 * 
-	 * @return a set of routes or an empty set if no route matches the criteria
-	 */
-	Set<D> findRoutes();
 }

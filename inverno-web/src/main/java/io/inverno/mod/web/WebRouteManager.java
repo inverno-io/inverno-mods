@@ -18,8 +18,10 @@ package io.inverno.mod.web;
 import io.inverno.mod.web.spi.RouteManager;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.web.spi.AcceptAware;
+import io.inverno.mod.web.spi.ContentAware;
+import io.inverno.mod.web.spi.PathAware;
 
 /**
  * <p>
@@ -38,8 +40,9 @@ import io.inverno.mod.http.server.ExchangeContext;
  * @see WebRouter
  *
  * @param <A> the type of the exchange context
+ * @param <B> the type of web routable
  */
-public interface WebRouteManager<A extends ExchangeContext> extends RouteManager<A, WebExchange<A>, WebRouter<A>, WebInterceptedRouter<A>, WebRouteManager<A>, WebInterceptorManager<A>, WebRoute<A>, Exchange<A>> {
+public interface WebRouteManager<A extends ExchangeContext, B extends WebRoutable<A, B>> extends RouteManager<A, WebExchange<A>, B, WebRouteManager<A, B>, WebRoute<A>> {
 	
 	/**
 	 * <p>
@@ -54,7 +57,7 @@ public interface WebRouteManager<A extends ExchangeContext> extends RouteManager
 	 *
 	 * @return the router
 	 */
-	WebRouter<A> handler(WebExchangeHandler<? super A> handler);
+	B handler(WebExchangeHandler<? super A> handler);
 	
 	/**
 	 * <p>
@@ -73,7 +76,7 @@ public interface WebRouteManager<A extends ExchangeContext> extends RouteManager
 	 *
 	 * @see PathAware
 	 */
-	default WebRouteManager<A> path(String path) throws IllegalArgumentException {
+	default WebRouteManager<A, B> path(String path) throws IllegalArgumentException {
 		return this.path(path, false);
 	}
 	
@@ -95,7 +98,7 @@ public interface WebRouteManager<A extends ExchangeContext> extends RouteManager
 	 *
 	 * @see PathAware
 	 */
-	WebRouteManager<A> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException;
+	WebRouteManager<A, B> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException;
 	
 	/**
 	 * <p>
@@ -106,7 +109,7 @@ public interface WebRouteManager<A extends ExchangeContext> extends RouteManager
 	 *
 	 * @return the web route manager
 	 */
-	WebRouteManager<A> method(Method method);
+	WebRouteManager<A, B> method(Method method);
 	
 	/**
 	 * <p>
@@ -120,7 +123,7 @@ public interface WebRouteManager<A extends ExchangeContext> extends RouteManager
 	 *
 	 * @see ContentAware
 	 */
-	WebRouteManager<A> consumes(String mediaRange);
+	WebRouteManager<A, B> consumes(String mediaRange);
 	
 	/**
 	 * <p>
@@ -133,7 +136,7 @@ public interface WebRouteManager<A extends ExchangeContext> extends RouteManager
 	 *
 	 * @see AcceptAware
 	 */
-	WebRouteManager<A> produces(String mediaType);
+	WebRouteManager<A, B> produces(String mediaType);
 	
 	/**
 	 * <p>
@@ -146,5 +149,5 @@ public interface WebRouteManager<A extends ExchangeContext> extends RouteManager
 	 *
 	 * @see AcceptAware
 	 */
-	WebRouteManager<A> language(String language);
+	WebRouteManager<A, B> language(String language);
 }

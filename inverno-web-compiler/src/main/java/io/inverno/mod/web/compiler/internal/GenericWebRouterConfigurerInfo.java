@@ -22,10 +22,12 @@ import javax.lang.model.element.ModuleElement;
 import javax.lang.model.type.TypeMirror;
 
 import io.inverno.mod.web.compiler.spi.WebControllerInfo;
+import io.inverno.mod.web.compiler.spi.WebInterceptorsConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebProvidedRouterConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfoVisitor;
 import io.inverno.mod.web.compiler.spi.WebRouterConfigurerQualifiedName;
+import io.inverno.mod.web.compiler.spi.WebRoutesConfigurerInfo;
 
 /**
  * <p>
@@ -42,7 +44,9 @@ class GenericWebRouterConfigurerInfo implements WebRouterConfigurerInfo {
 	private final WebRouterConfigurerQualifiedName name;
 	
 	private final List<? extends WebControllerInfo> webControllers;
-	private final List<? extends WebProvidedRouterConfigurerInfo> webProvidedRouters;
+	private final List<? extends WebProvidedRouterConfigurerInfo> webRouterConfigurers;
+	private final List<? extends WebRoutesConfigurerInfo> webRoutesConfigurers;
+	private final List<? extends WebInterceptorsConfigurerInfo> webInterceptorsConfigurers;
 	private final Set<? extends TypeMirror> contextTypes;
 
 	/**
@@ -59,11 +63,13 @@ class GenericWebRouterConfigurerInfo implements WebRouterConfigurerInfo {
 	 * @param contextTypes       the set of context types required by the configured
 	 *                           routes
 	 */
-	public GenericWebRouterConfigurerInfo(ModuleElement element, WebRouterConfigurerQualifiedName name, List<? extends WebControllerInfo> webControllers, List<? extends WebProvidedRouterConfigurerInfo> webProvidedRouters, Set<? extends TypeMirror> contextTypes) {
+	public GenericWebRouterConfigurerInfo(ModuleElement element, WebRouterConfigurerQualifiedName name, List<? extends WebControllerInfo> webControllers, List<? extends WebInterceptorsConfigurerInfo> webInterceptorsConfigurers, List<? extends WebRoutesConfigurerInfo> webRoutesConfigurers, List<? extends WebProvidedRouterConfigurerInfo> webRouterConfigurers, Set<? extends TypeMirror> contextTypes) {
 		this.element = element;
 		this.name = name;
 		this.webControllers = webControllers != null ? webControllers : List.of();
-		this.webProvidedRouters = webProvidedRouters != null ? webProvidedRouters : List.of();
+		this.webRoutesConfigurers = webRoutesConfigurers != null ? webRoutesConfigurers : List.of();
+		this.webInterceptorsConfigurers = webInterceptorsConfigurers != null ? webInterceptorsConfigurers : List.of();
+		this.webRouterConfigurers = webRouterConfigurers != null ? webRouterConfigurers : List.of();
 		this.contextTypes = contextTypes != null ? contextTypes : Set.of();
 	}
 	
@@ -103,8 +109,18 @@ class GenericWebRouterConfigurerInfo implements WebRouterConfigurerInfo {
 	}
 
 	@Override
-	public WebProvidedRouterConfigurerInfo[] getRouters() {
-		return this.webProvidedRouters.toArray(WebProvidedRouterConfigurerInfo[]::new);
+	public WebProvidedRouterConfigurerInfo[] getRouterConfigurers() {
+		return this.webRouterConfigurers.toArray(WebProvidedRouterConfigurerInfo[]::new);
+	}
+
+	@Override
+	public WebRoutesConfigurerInfo[] getRoutesConfigurers() {
+		return this.webRoutesConfigurers.toArray(WebRoutesConfigurerInfo[]::new);
+	}
+
+	@Override
+	public WebInterceptorsConfigurerInfo[] getInterceptorsConfigurers() {
+		return this.webInterceptorsConfigurers.toArray(WebInterceptorsConfigurerInfo[]::new);
 	}
 	
 	@Override

@@ -34,7 +34,7 @@ import java.util.function.Consumer;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
  */
-class GenericWebInterceptorManager extends AbstractWebManager<GenericWebInterceptorManager> implements WebInterceptorManager<ExchangeContext> {
+class GenericWebInterceptorManager extends AbstractWebManager<GenericWebInterceptorManager> implements WebInterceptorManager<ExchangeContext, WebInterceptedRouter<ExchangeContext>> {
 
 	private final GenericWebInterceptedRouter router;
 	private final HeaderCodec<? extends Headers.ContentType> contentTypeCodec;

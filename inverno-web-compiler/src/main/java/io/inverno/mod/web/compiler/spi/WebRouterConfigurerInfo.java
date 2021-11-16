@@ -53,17 +53,42 @@ public interface WebRouterConfigurerInfo extends Info {
 	
 	/**
 	 * <p>
-	 * Returns the web router configurer provided in the module.
+	 * Returns the web router configurers provided in the module.
+	 * </p>
+	 *
+	 * <p>
+	 * These can be defined as beans in the module or in component modules.
+	 * </p>
+	 *
+	 * @return an array of provided router configurer
+	 */
+	WebProvidedRouterConfigurerInfo[] getRouterConfigurers();
+	
+	/**
+	 * <p>
+	 * Returns the web routes configurers provided in the module.
 	 * </p>
 	 * 
 	 * <p>
-	 * These can be defined as beans defined in the module or as beans exposed in
-	 * component modules.
+	 * These can be defined as beans in the module or in component modules.
 	 * </p>
 	 * 
-	 * @return an array of provided router configurer
+	 * @return an array of routes configurer
 	 */
-	WebProvidedRouterConfigurerInfo[] getRouters();
+	WebRoutesConfigurerInfo[] getRoutesConfigurers();
+	
+	/**
+	 * <p>
+	 * Returns the web interceptors configurers provided in the module.
+	 * </p>
+	 * 
+	 * <p>
+	 * These can be defined as beans in the module or in component modules.
+	 * </p>
+	 * 
+	 * @return an array of interceptors configurer
+	 */
+	WebInterceptorsConfigurerInfo[] getInterceptorsConfigurers();
 	
 	/**
 	 * <p>

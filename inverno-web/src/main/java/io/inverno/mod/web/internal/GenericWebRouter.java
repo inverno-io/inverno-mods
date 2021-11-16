@@ -31,11 +31,15 @@ import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.WebConfiguration;
 import io.inverno.mod.web.WebExchange;
+import io.inverno.mod.web.WebInterceptedRouter;
 import io.inverno.mod.web.WebInterceptorManager;
+import io.inverno.mod.web.WebInterceptorsConfigurer;
 import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.WebRouteManager;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;
+import io.inverno.mod.web.WebRoutesConfigurer;
+import java.util.List;
 import reactor.core.publisher.Mono;
 
 /**
@@ -82,9 +86,9 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 		this.firstLink
 			.connect(new PathPatternRoutingLink<>())
 			.connect(new MethodRoutingLink<>())
-			.connect(new ConsumesRoutingLink<>(this.acceptCodec))
-			.connect(new ProducesRoutingLink<>(this.contentTypeCodec))
-			.connect(new LanguageRoutingLink<>(this.acceptLanguageCodec))
+			.connect(new ConsumesRoutingLink<>(ACCEPT_CODEC ))
+			.connect(new ProducesRoutingLink<>(CONTENT_TYPE_CODEC))
+			.connect(new LanguageRoutingLink<>(ACCEPT_LANGUAGE_CODEC))
 			.connect(new HandlerRoutingLink<>());
 	}
 	
@@ -143,15 +147,15 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 	void removeRoute(WebRoute<ExchangeContext> route) {
 		this.firstLink.removeRoute(route);
 	}
-	
+
 	@Override
-	public WebRouteManager<ExchangeContext> route() {
-		return new GenericWebRouteManager(this);
+	public WebInterceptorManager<ExchangeContext, WebInterceptedRouter<ExchangeContext>> intercept() {
+		return new GenericWebInterceptorManager(new GenericWebInterceptedRouter(this), CONTENT_TYPE_CODEC, ACCEPT_LANGUAGE_CODEC);
 	}
 
 	@Override
-	public WebInterceptorManager<ExchangeContext> interceptRoute() {
-		return new GenericWebInterceptorManager(new GenericWebInterceptedRouter(this), this.contentTypeCodec, this.acceptLanguageCodec);
+	public WebRouteManager<ExchangeContext, WebRouter<ExchangeContext>> route() {
+		return new GenericWebRouteManager(this);
 	}
 	
 	@Override
@@ -179,6 +183,40 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 	@Override
 	public ExchangeContext createContext() {
 		return this.configurer != null ? this.configurer.createContext() : null;
+	}
+	
+	@Override
+	public WebInterceptedRouter<ExchangeContext> configureInterceptors(WebInterceptorsConfigurer<? super ExchangeContext> configurer) {
+		GenericWebInterceptedRouter interceptedRouter = new GenericWebInterceptedRouter(this);
+		if(configurer != null) {
+			GenericWebInterceptableFacade facade = new GenericWebInterceptableFacade(new GenericWebInterceptedRouter(this));
+			configurer.accept(facade);
+			
+			return facade.getInterceptedRouter();
+		}
+		return interceptedRouter;
+	}
+
+	@Override
+	public WebInterceptedRouter<ExchangeContext> configureInterceptors(List<WebInterceptorsConfigurer<? super ExchangeContext>> configurers) {
+		GenericWebInterceptedRouter interceptedRouter = new GenericWebInterceptedRouter(this);
+		if(configurers != null && !configurers.isEmpty()) {
+			GenericWebInterceptableFacade facade = new GenericWebInterceptableFacade(interceptedRouter);
+			for(WebInterceptorsConfigurer<? super ExchangeContext> configurer : configurers) {
+				configurer.accept(facade);
+			}
+			return facade.getInterceptedRouter();
+		}
+		return interceptedRouter;
+	}
+
+	@Override
+	public WebRouter<ExchangeContext> configureRoutes(WebRoutesConfigurer<? super ExchangeContext> configurer) {
+		if(configurer != null) {
+			GenericWebRoutableFacade<WebRouter<ExchangeContext>> facade = new GenericWebRoutableFacade<>(this);
+			configurer.accept(facade);
+		}
+		return this;
 	}
 	
 	/**

@@ -157,6 +157,8 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
 	 * format.
 	 * </p>
 	 * 
+	 * @param moduleName the module name
+	 * 
 	 * @return a raw Open API specification
 	 * @throws NotFoundException if there's no specification for the specified
 	 *                           module
@@ -174,6 +176,8 @@ public class OpenApiWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
 	 * Returns the Swagger UI loading HTML for the Open API specification of the
 	 * specified module
 	 * </p>
+	 * 
+	 * @param moduleName the module name
 	 * 
 	 * @return a raw Swagger UI loader
 	 * @throws NotFoundException if there's no specification for the specified

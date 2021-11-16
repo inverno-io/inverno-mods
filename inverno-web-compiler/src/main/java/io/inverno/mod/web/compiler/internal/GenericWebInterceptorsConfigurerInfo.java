@@ -15,35 +15,29 @@
  */
 package io.inverno.mod.web.compiler.internal;
 
-import java.util.List;
-
+import io.inverno.core.compiler.spi.BeanInfo;
+import io.inverno.core.compiler.spi.support.AbstractInfo;
+import io.inverno.mod.web.compiler.spi.WebConfigurerQualifiedName;
+import io.inverno.mod.web.compiler.spi.WebInterceptorsConfigurerInfo;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
-import io.inverno.core.compiler.spi.BeanInfo;
-import io.inverno.core.compiler.spi.support.AbstractInfo;
-import io.inverno.mod.web.compiler.spi.WebConfigurerQualifiedName;
-import io.inverno.mod.web.compiler.spi.WebProvidedRouterConfigurerInfo;
-import io.inverno.mod.web.compiler.spi.WebRouteInfo;
-
 /**
  * <p>
- * Generic {@link WebProvidedRouterConfigurerInfo} implementation.
+ * Generic {@link WebInterceptorsConfigurerInfo} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.3
  * 
  * @see AbstractInfo
  */
-class GenericWebProvidedRouterConfigurerInfo extends AbstractInfo<WebConfigurerQualifiedName> implements WebProvidedRouterConfigurerInfo {
+public class GenericWebInterceptorsConfigurerInfo extends AbstractInfo<WebConfigurerQualifiedName> implements WebInterceptorsConfigurerInfo {
 
 	private final TypeElement element;
 	
 	private final DeclaredType type;
-	
-	private final List<? extends WebRouteInfo> routes;
 	
 	private final TypeMirror contextType;
 	
@@ -52,17 +46,15 @@ class GenericWebProvidedRouterConfigurerInfo extends AbstractInfo<WebConfigurerQ
 	 * Creates a generic web provided router configurer info.
 	 * </p>
 	 *
-	 * @param element     the type element of the router configurer
+	 * @param element     the type element of the interceptors configurer
 	 * @param name        the configurer qualified name
 	 * @param bean        the configurer bean info
-	 * @param routes      the routes defined in the router configuer
-	 * @param contextType the exchange context type required by the configured routes
+	 * @param contextType the exchange context type required by the configured interceptors
 	 */
-	public GenericWebProvidedRouterConfigurerInfo(TypeElement element, WebConfigurerQualifiedName name, BeanInfo bean, List<? extends WebRouteInfo> routes, TypeMirror contextType) {
+	public GenericWebInterceptorsConfigurerInfo(TypeElement element, WebConfigurerQualifiedName name, BeanInfo bean, TypeMirror contextType) {
 		super(name, bean);
 		this.element = element;
 		this.type = (DeclaredType)bean.getType();
-		this.routes = routes != null ? routes : List.of();
 		this.contextType = contextType;
 	}
 
@@ -70,17 +62,12 @@ class GenericWebProvidedRouterConfigurerInfo extends AbstractInfo<WebConfigurerQ
 	public TypeElement getElement() {
 		return this.element;
 	}
-	
+
 	@Override
 	public DeclaredType getType() {
 		return this.type;
 	}
-	
-	@Override
-	public WebRouteInfo[] getRoutes() {
-		return this.routes.toArray(WebRouteInfo[]::new);
-	}
-	
+
 	@Override
 	public TypeMirror getContextType() {
 		return this.contextType;

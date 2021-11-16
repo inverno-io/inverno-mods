@@ -342,7 +342,7 @@ class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext>
 				 * - offensive: we can apply the interceptor and log a warning saying that the route is incomplete
 				 * we should go for the defensive option: if someone wants to apply inteceptors on routes producing a particular content, it is fair to assume these routes are defined with such information
 				 */
-				LOGGER.warn("Ignoring Web route Interceptor " + this.toString() + " on Web route " + acceptAware.toString() + ": content type is missing");
+				LOGGER.warn("Ignoring interceptor " + this.toString() + " on route " + acceptAware.toString() + ": content type is missing");
 				return null;
 			}
 		}
@@ -372,7 +372,7 @@ class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext>
 				 * - offensive: we can apply the interceptor and log a warning saying that the route is incomplete
 				 * we should go for the defensive option: if someone wants to apply inteceptors on routes producing a particular language, it is fair to assume these routes are defined with such information
 				 */
-				LOGGER.warn("Ignoring Web route Interceptor " + this.toString() + " on Web route " + acceptAware.toString() + ": language is missing");
+				LOGGER.warn("Ignoring interceptor " + this.toString() + " on route " + acceptAware.toString() + ": language is missing");
 				return null;
 			}
 		}

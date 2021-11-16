@@ -16,35 +16,33 @@
 package io.inverno.mod.web.compiler.spi;
 
 import io.inverno.core.compiler.spi.BeanQualifiedName;
-import io.inverno.core.compiler.spi.ModuleQualifiedName;
 
 /**
  * <p>
- * A qualified name identifying a web router configurer.
+ * A qualified name identifying a web routes, interceptors or provided router configurer.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class WebRouterConfigurerQualifiedName extends BeanQualifiedName {
+public class WebConfigurerQualifiedName extends BeanQualifiedName {
 
-	private static final String WEB_ROUTER_CONFIGURER_NAME = "webRouterConfigurer";
-	
-	private static final String WEB_ROUTER_CONFIGURER_CLASSNAME = Character.toUpperCase(WEB_ROUTER_CONFIGURER_NAME.charAt(0)) + WEB_ROUTER_CONFIGURER_NAME.substring(1);
-	
 	private final String className;
 	
 	/**
 	 * <p>
-	 * Creates the web router configurer qualified name of the specified module
-	 * qualifed name.
+	 * Creates a web router configurer qualified name with the specified bean
+	 * qualified name and class name.
 	 * </p>
 	 * 
-	 * @param moduleQName the module qualified name
+	 * @param beanQName the bean qualified name of the bean defining the web router
+	 *                  configurer
+	 * @param className the canonical class name of the class defining the web
+	 *                  router configurer
 	 */
-	public WebRouterConfigurerQualifiedName(ModuleQualifiedName moduleQName) {
-		super(moduleQName, WEB_ROUTER_CONFIGURER_NAME);
-		this.className = this.getModuleQName().getSourcePackageName() + "." + WEB_ROUTER_CONFIGURER_CLASSNAME;
+	public WebConfigurerQualifiedName(BeanQualifiedName beanQName, String className) {
+		super(beanQName.getModuleQName(), beanQName.getBeanName());
+		this.className = className;
 	}
 	
 	/**

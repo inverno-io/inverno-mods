@@ -42,24 +42,18 @@ import io.inverno.mod.http.server.ExchangeContext;
  *
  * @param <A> the type of the exchange context
  * @param <B> the type of exchange handled by the route
- * @param <C> the router type
+ * @param <C> the routable type
  * @param <D> the route manager type
  * @param <E> the route type
- * @param <F> the router exchange type
- * @param <G> the interceptable route type
- * @param <H> the type of exchange handled by the router
  */
 public interface RouteManager<
 		A extends ExchangeContext, 
 		B extends Exchange<A>, 
-		C extends Router<A, B, C, D, E, F, G, H>, 
-		D extends InterceptedRouter<A, B, C, D, E, F, G, H>, 
-		E extends RouteManager<A, B, C, D, E, F, G, H>, 
-		F extends InterceptorManager<A, B, C, D, E, F, G, H>, 
-		G extends InterceptableRoute<A, B>, 
-		H extends Exchange<A>
+		C extends Routable<A, B, C, D, E>, 
+		D extends RouteManager<A, B, C, D, E>,
+		E extends Route<A, B>
 	> {
-	
+
 	/**
 	 * <p>
 	 * Enables all the routes that matches the criteria specified in the route
@@ -98,5 +92,5 @@ public interface RouteManager<
 	 * 
 	 * @return a set of routes or an empty set if no route matches the criteria
 	 */
-	Set<G> findRoutes();
+	Set<E> findRoutes();
 }

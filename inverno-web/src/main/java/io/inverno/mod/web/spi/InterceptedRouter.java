@@ -37,20 +37,20 @@ import java.util.List;
  * @param <C> the router type
  * @param <D> the intercepted router type
  * @param <E> the route manager type
- * @param <F> the interceptor manager type
- * @param <G> the interceptable route type
- * @param <H> the type of exchange handled by the router
+ * @param <F> the intercepted route manager type
+ * @param <G> the interceptor manager type
+ * @param <H> the interceptable route type
  */
 public interface InterceptedRouter<
 		A extends ExchangeContext, 
-		B extends Exchange<A>, 
-		C extends Router<A, B, C, D, E, F, G, H>, 
-		D extends InterceptedRouter<A, B, C, D, E, F, G, H>, 
-		E extends RouteManager<A, B, C, D, E, F, G, H>, 
-		F extends InterceptorManager<A, B, C, D, E, F, G, H>, 
-		G extends InterceptableRoute<A, B>, 
-		H extends Exchange<A>
-	> extends Router<A, B, C, D, E, F, G, H> {
+		B extends Exchange<A>,
+		C extends Router<A, B, C, D, E, F, G, H>,
+		D extends InterceptedRouter<A, B, C, D, E, F, G, H>,
+		E extends RouteManager<A, B, C, E, H>,
+		F extends RouteManager<A, B, D, F, H>,
+		G extends InterceptorManager<A, B, D, G>,
+		H extends InterceptableRoute<A, B>
+	> extends Routable<A, B, D, F, H>, Interceptable<A, B, D, G> {
 	
 	/**
 	 * <p>
@@ -75,10 +75,10 @@ public interface InterceptedRouter<
 	
 	/**
 	 * <p>
-	 * Reverts to the underlying non-intercepting router.
+	 * Returns the underlying non-intercepting router.
 	 * </p>
 	 * 
 	 * @return the underlying non-intercepting router.
 	 */
-	C clearInterceptors();
+	C getRouter();
 }

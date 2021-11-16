@@ -15,8 +15,6 @@
  */
 package io.inverno.mod.web.spi;
 
-import java.util.Set;
-import java.util.function.Consumer;
 
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.ErrorExchangeHandler;
@@ -58,40 +56,8 @@ import io.inverno.mod.http.server.ExchangeContext;
  * @param <C> the route manager type
  * @param <D> the route type
  */
-public interface ErrorRouter<A extends ErrorExchange<Throwable>, B extends ErrorRouter<A, B, C, D>, C extends ErrorRouteManager<A, B, C, D>, D extends Route<ExchangeContext, A>>
-		extends ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> {
+public interface ErrorRouter<A extends ErrorExchange<Throwable>, B extends ErrorRouter<A, B, C, D>, C extends ErrorRouteManager<A, B, C, D>, D extends Route<ExchangeContext, A>> extends 
+	Routable<ExchangeContext, A, B, C, D>, 
+	ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> {
 
-	/**
-	 * <p>
-	 * Returns an error route manager to define, enable, disable, remove or find
-	 * routes in the router.
-	 * </p>
-	 * 
-	 * @return an error route manager
-	 */
-	C route();
-
-	/**
-	 * <p>
-	 * Invokes the specified route configurer on an error route manager.
-	 * </p>
-	 * 
-	 * @param routeConfigurer an error route configurer
-	 * 
-	 * @return the router
-	 */
-	@SuppressWarnings("unchecked")
-	default B route(Consumer<C> routeConfigurer) {
-		routeConfigurer.accept(this.route());
-		return (B) this;
-	}
-
-	/**
-	 * <p>
-	 * Returns the routes defined in the router.
-	 * </p>
-	 * 
-	 * @return a set of routes or an empty set if no route is defined in the router
-	 */
-	Set<D> getRoutes();
 }

@@ -16,8 +16,8 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.web.spi.Router;
-import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import java.util.List;
 
 /**
  * <p>
@@ -42,17 +42,49 @@ import io.inverno.mod.http.server.ExchangeContext;
  *
  * @param <A> the type of the exchange context
  */
-public interface WebRouter<A extends ExchangeContext> extends Router<A, WebExchange<A>, WebRouter<A>, WebInterceptedRouter<A>, WebRouteManager<A>, WebInterceptorManager<A>, WebRoute<A>, Exchange<A>> {
+public interface WebRouter<A extends ExchangeContext> extends 
+	Router<A, WebExchange<A>, WebRouter<A>, WebInterceptedRouter<A>, WebRouteManager<A, WebRouter<A>>, WebRouteManager<A, WebInterceptedRouter<A>>, WebInterceptorManager<A, WebInterceptedRouter<A>>, WebRoute<A>>, 
+	WebRoutable<A, WebRouter<A>>, 
+	WebInterceptable<A, WebInterceptedRouter<A>> {
 	
 	/**
 	 * <p>
-	 * Configures the Web router using the specified configurer.
+	 * Configures the web router using the specified configurer and returns it.
 	 * </p>
 	 * 
-	 * @param configurer a Web router configurer
+	 * <p>
+	 * If the specified configurer is null this method is a noop.
+	 * </p>
+	 * 
+	 * @param configurer a web router configurer
+	 * 
+	 * @return the web router
 	 */
 	@SuppressWarnings("unchecked")
-	default void configure(WebRouterConfigurer<? super A> configurer) {
+	default WebRouter<A> configure(WebRouterConfigurer<? super A> configurer) {
 		configurer.accept((WebRouter)this);
+		return this;
+	}
+	
+	/**
+	 * <p>
+	 * Configures the web router using the specified configurers and returns it.
+	 * </p>
+	 * 
+	 * <p>
+	 * If the specified list of configurers is null or empty this method is a noop.
+	 * </p>
+	 * 
+	 * @param configurers a list of web router configurers
+	 * 
+	 * @return the web router
+	 */
+	default WebRouter<A> configure(List<WebRouterConfigurer<? super A>> configurers) {
+		if(configurers != null) {
+			for(WebRouterConfigurer<? super A> configurer : configurers) {
+				this.configure(configurer);
+			}
+		}
+		return this;
 	}
 }

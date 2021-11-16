@@ -15,10 +15,13 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.web.spi.InterceptorManager;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.web.spi.AcceptAware;
+import io.inverno.mod.web.spi.ContentAware;
+import io.inverno.mod.web.spi.PathAware;
 
 /**
  * <p>
@@ -33,8 +36,9 @@ import io.inverno.mod.http.server.ExchangeContext;
  * @since 1.3
  * 
  * @param <A> the type of the exchange context
+ * @param <B> the type of Web interceptable
  */
-public interface WebInterceptorManager<A extends ExchangeContext> extends InterceptorManager<A, WebExchange<A>, WebRouter<A>, WebInterceptedRouter<A>, WebRouteManager<A>, WebInterceptorManager<A>, WebRoute<A>, Exchange<A>> {
+public interface WebInterceptorManager<A extends ExchangeContext, B extends WebInterceptable<A, B>> extends InterceptorManager<A, WebExchange<A>, B, WebInterceptorManager<A, B>> {
 	
 	/**
 	 * <p>
@@ -49,7 +53,7 @@ public interface WebInterceptorManager<A extends ExchangeContext> extends Interc
 	 * 
 	 * @return the router
 	 */
-	WebInterceptedRouter<A> interceptor(WebExchangeInterceptor<? super A> interceptor);
+	B interceptor(WebExchangeInterceptor<? super A> interceptor);
 	
 	/**
 	 * <p>
@@ -68,7 +72,7 @@ public interface WebInterceptorManager<A extends ExchangeContext> extends Interc
 	 * 
 	 * @see PathAware
 	 */
-	default WebInterceptorManager<A> path(String path) throws IllegalArgumentException {
+	default WebInterceptorManager<A, B> path(String path) throws IllegalArgumentException {
 		return this.path(path, false);
 	}
 	
@@ -91,7 +95,7 @@ public interface WebInterceptorManager<A extends ExchangeContext> extends Interc
 	 * 
 	 * @see PathAware
 	 */
-	WebInterceptorManager<A> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException;
+	WebInterceptorManager<A, B> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException;
 	
 	/**
 	 * <p>
@@ -102,7 +106,7 @@ public interface WebInterceptorManager<A extends ExchangeContext> extends Interc
 	 * 
 	 * @return the web interceptor manager
 	 */
-	WebInterceptorManager<A> method(Method method);
+	WebInterceptorManager<A, B> method(Method method);
 	
 	/**
 	 * <p>
@@ -116,7 +120,7 @@ public interface WebInterceptorManager<A extends ExchangeContext> extends Interc
 	 *
 	 * @see ContentAware
 	 */
-	WebInterceptorManager<A> consumes(String mediaRange);
+	WebInterceptorManager<A, B> consumes(String mediaRange);
 	
 	/**
 	 * <p>
@@ -129,7 +133,7 @@ public interface WebInterceptorManager<A extends ExchangeContext> extends Interc
 	 * 
 	 * @see AcceptAware
 	 */
-	WebInterceptorManager<A> produces(String mediaType);
+	WebInterceptorManager<A, B> produces(String mediaType);
 	
 	/**
 	 * <p>
@@ -142,5 +146,5 @@ public interface WebInterceptorManager<A extends ExchangeContext> extends Interc
 	 * 
 	 * @see AcceptAware
 	 */
-	WebInterceptorManager<A> language(String language);
+	WebInterceptorManager<A, B> language(String language);
 }

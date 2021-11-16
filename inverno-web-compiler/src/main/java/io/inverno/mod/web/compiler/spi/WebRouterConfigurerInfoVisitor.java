@@ -33,22 +33,46 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	 * <p>
 	 * Visits web router configurer info.
 	 * </p>
-	 * 
+	 *
 	 * @param routerConfigurerInfo the info to visit
 	 * @param p                    a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebRouterConfigurerInfo routerConfigurerInfo, P p);
 
 	/**
 	 * <p>
+	 * Visits web interceptors configurer info.
+	 * </p>
+	 *
+	 * @param interceptorsConfigurerInfo the info to visit
+	 * @param p                          a visitor parameter
+	 *
+	 * @return a visitor result
+	 */
+	R visit(WebInterceptorsConfigurerInfo interceptorsConfigurerInfo, P p);
+
+	/**
+	 * <p>
+	 * Visits web routes configurer info.
+	 * </p>
+	 *
+	 * @param routesConfigurerInfo the info to visit
+	 * @param p                    a visitor parameter
+	 *
+	 * @return a visitor result
+	 */
+	R visit(WebRoutesConfigurerInfo routesConfigurerInfo, P p);
+
+	/**
+	 * <p>
 	 * Visits web provided router configurer info.
 	 * </p>
-	 * 
+	 *
 	 * @param providedRouterConfigurerInfo the info to visit
 	 * @param p                            a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebProvidedRouterConfigurerInfo providedRouterConfigurerInfo, P p);
@@ -57,10 +81,10 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	 * <p>
 	 * Visits web controller info.
 	 * </p>
-	 * 
+	 *
 	 * @param controllerInfo the info to visit
 	 * @param p              a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebControllerInfo controllerInfo, P p);
@@ -69,10 +93,10 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	 * <p>
 	 * Visits web route info.
 	 * </p>
-	 * 
+	 *
 	 * @param routeInfo the info to visit
 	 * @param p         a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebRouteInfo routeInfo, P p);
@@ -81,10 +105,10 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	 * <p>
 	 * Visits web response body info.
 	 * </p>
-	 * 
+	 *
 	 * @param responseBodyInfo the info to visit
 	 * @param p                a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebResponseBodyInfo responseBodyInfo, P p);
@@ -93,10 +117,10 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	 * <p>
 	 * Visits web parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param parameterInfo the info to visit
 	 * @param p             a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebParameterInfo parameterInfo, P p);
@@ -105,10 +129,10 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	 * <p>
 	 * Visits web basic parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param basicParameterInfo the info to visit
 	 * @param p                  a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebBasicParameterInfo basicParameterInfo, P p);
@@ -117,10 +141,10 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	 * <p>
 	 * Visits web cookie parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param cookieParameterInfo the info to visit
 	 * @param p                   a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebCookieParameterInfo cookieParameterInfo, P p);
@@ -129,10 +153,10 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	 * <p>
 	 * Visits web form parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param formParameterInfo the info to visit
 	 * @param p                 a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebFormParameterInfo formParameterInfo, P p);
@@ -141,10 +165,10 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	 * <p>
 	 * Visits web header parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param headerParameterInfo the info to visit
 	 * @param p                   a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebHeaderParameterInfo headerParameterInfo, P p);
@@ -153,10 +177,10 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	 * <p>
 	 * Visits web path parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param pathParameterInfo the info to visit
 	 * @param p                 a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebPathParameterInfo pathParameterInfo, P p);
@@ -165,10 +189,10 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	 * <p>
 	 * Visits web query parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param queryParameterInfo the info to visit
 	 * @param p                  a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebQueryParameterInfo queryParameterInfo, P p);
@@ -177,10 +201,10 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	 * <p>
 	 * Visits web body parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param bodyParameterInfo the info to visit
 	 * @param p                 a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebRequestBodyParameterInfo bodyParameterInfo, P p);
@@ -189,34 +213,34 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 	 * <p>
 	 * Visits web exchange parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param exchangeParameterInfo the info to visit
 	 * @param p                     a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebExchangeParameterInfo exchangeParameterInfo, P p);
-	
+
 	/**
 	 * <p>
 	 * Visits web context exchange parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param exchangeContextParameterInfo the info to visit
 	 * @param p                            a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebExchangeContextParameterInfo exchangeContextParameterInfo, P p);
-	
+
 	/**
 	 * <p>
 	 * Visits web server-sent event factory parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param sseEventFactoryParameterInfo the info to visit
 	 * @param p                            a visitor parameter
-	 * 
+	 *
 	 * @return a visitor result
 	 */
 	R visit(WebSseEventFactoryParameterInfo sseEventFactoryParameterInfo, P p);

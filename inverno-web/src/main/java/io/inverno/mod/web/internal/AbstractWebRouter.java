@@ -20,7 +20,6 @@ import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.WebRoute;
-import io.inverno.mod.web.WebRouter;
 
 /**
  * <p>
@@ -30,17 +29,11 @@ import io.inverno.mod.web.WebRouter;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
  */
-abstract class AbstractWebRouter implements WebRouter<ExchangeContext> {
+abstract class AbstractWebRouter {
 
-	protected final AcceptCodec acceptCodec;
-	protected final ContentTypeCodec contentTypeCodec;
-	protected final AcceptLanguageCodec acceptLanguageCodec;
-	
-	public AbstractWebRouter() {
-		this.acceptCodec = new AcceptCodec(false);
-		this.contentTypeCodec = new ContentTypeCodec();
-		this.acceptLanguageCodec = new AcceptLanguageCodec(false);
-	}
+	protected static final AcceptCodec ACCEPT_CODEC = new AcceptCodec(false);
+	protected static final ContentTypeCodec CONTENT_TYPE_CODEC = new ContentTypeCodec();
+	protected static final AcceptLanguageCodec ACCEPT_LANGUAGE_CODEC = new AcceptLanguageCodec(false);
 	
 	/**
 	 * <p>

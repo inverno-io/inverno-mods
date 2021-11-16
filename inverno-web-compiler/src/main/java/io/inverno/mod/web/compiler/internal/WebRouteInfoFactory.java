@@ -345,7 +345,7 @@ class WebRouteInfoFactory {
 	/**
 	 * <p>
 	 * Compiles the specified provided web router configurer bean and extracts the
-	 * web routes is defines.
+	 * web routes it defines.
 	 * </p>
 	 * 
 	 * @param bean a provided web router configurer bean

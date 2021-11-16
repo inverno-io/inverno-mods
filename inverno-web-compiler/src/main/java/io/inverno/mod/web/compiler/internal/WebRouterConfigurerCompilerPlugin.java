@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.web.compiler.internal;
 
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.compiler.spi.ModuleBeanInfo;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -41,17 +43,23 @@ import io.inverno.core.compiler.spi.plugin.PluginContext;
 import io.inverno.core.compiler.spi.plugin.PluginExecution;
 import io.inverno.core.compiler.spi.plugin.PluginExecutionException;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.web.WebInterceptorsConfigurer;
 import io.inverno.mod.web.WebRouterConfigurer;
+import io.inverno.mod.web.WebRoutesConfigurer;
 import io.inverno.mod.web.annotation.WebController;
 import io.inverno.mod.web.annotation.WebRoute;
 import io.inverno.mod.web.annotation.WebRoutes;
 import io.inverno.mod.web.compiler.internal.WebRouterConfigurerClassGenerationContext.GenerationMode;
+import io.inverno.mod.web.compiler.spi.WebConfigurerQualifiedName;
 import io.inverno.mod.web.compiler.spi.WebControllerInfo;
 import io.inverno.mod.web.compiler.spi.WebExchangeContextParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebExchangeParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebInterceptorsConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebProvidedRouterConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebRouteInfo;
 import io.inverno.mod.web.compiler.spi.WebRouterConfigurerQualifiedName;
+import io.inverno.mod.web.compiler.spi.WebRoutesConfigurerInfo;
+import java.util.ArrayList;
 
 /**
  * <p>
@@ -76,13 +84,15 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 	
 	private final WebRouterConfigurerOpenApiGenerator openApiGenerator;
 	private final WebRouterConfigurerClassGenerator webRouterConfigurerClassGenerator;
-	private final WebRouteDuplicateDetector webRouteDuplicateDectector;
+	private final WebRouteClashDetector webRouteClashDectector;
 	
 	private PluginContext pluginContext;
 	private TypeHierarchyExtractor typeHierarchyExtractor;
 	
 	private TypeMirror webControllerAnnotationType;
 	private TypeMirror webRoutesAnnotationType;
+	private TypeMirror webInterceptorsConfigurerType;
+	private TypeMirror webRoutesConfigurerType;
 	private TypeMirror webRouterConfigurerType;
 	private TypeMirror exchangeContextType;
 	private TypeMirror objectType;
@@ -92,7 +102,7 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 	public WebRouterConfigurerCompilerPlugin() {
 		this.webRouterConfigurerClassGenerator = new WebRouterConfigurerClassGenerator();
 		this.openApiGenerator = new WebRouterConfigurerOpenApiGenerator();
-		this.webRouteDuplicateDectector = new WebRouteDuplicateDetector();
+		this.webRouteClashDectector = new WebRouteClashDetector();
 	}
 	
 	@Override
@@ -119,6 +129,8 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 		}
 		this.webControllerAnnotationType = webControllerElement.asType();
 		this.webRoutesAnnotationType = this.pluginContext.getElementUtils().getTypeElement(WebRoutes.class.getCanonicalName()).asType();
+		this.webInterceptorsConfigurerType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebInterceptorsConfigurer.class.getCanonicalName()).asType());
+		this.webRoutesConfigurerType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebRoutesConfigurer.class.getCanonicalName()).asType());
 		this.webRouterConfigurerType = this.pluginContext.getTypeUtils().erasure(this.pluginContext.getElementUtils().getTypeElement(WebRouterConfigurer.class.getCanonicalName()).asType());
 		this.exchangeContextType = this.pluginContext.getElementUtils().getTypeElement(ExchangeContext.class.getCanonicalName()).asType();
 		this.objectType = this.pluginContext.getElementUtils().getTypeElement(Object.class.getCanonicalName()).asType();
@@ -138,7 +150,9 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 		
 		this.processWebRoutes(execution, webRouteFactory);
 		List<? extends WebControllerInfo> webControllers = this.processWebControllers(execution, webRouteFactory);
-		List<? extends WebProvidedRouterConfigurerInfo> webRouters = this.processWebRouters(execution, webRouteFactory);
+		List<? extends WebInterceptorsConfigurerInfo> webInterceptorsConfigurers = this.processWebInterceptorsConfigurers(execution, webRouteFactory);
+		List<? extends WebRoutesConfigurerInfo> webRoutesConfigurers = this.processWebRoutesConfigurers(execution, webRouteFactory);
+		List<? extends WebProvidedRouterConfigurerInfo> webRouterConfigurers = this.processWebRouterConfigurers(execution, webRouteFactory);
 
 		Comparator<TypeMirror> contexTypeComparator = (t1,t2) -> {
 			if(this.pluginContext.getTypeUtils().isSameType(t1,t2)) {
@@ -167,18 +181,33 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 			)
 			.forEach(contextTypes::add);
 		
-		webRouters.stream().forEach(router -> {
-			contextTypes.add(router.getContextType());
-			contextTypes.addAll(this.getAllSuperTypes(router.getContextType()));
+		webInterceptorsConfigurers.stream().forEach(configurer -> {
+			contextTypes.add(configurer.getContextType());
+			contextTypes.addAll(this.getAllSuperTypes(configurer.getContextType()));
 		});
 		
-		GenericWebRouterConfigurerInfo webRouterConfigurerInfo = new GenericWebRouterConfigurerInfo(execution.getModuleElement(), webRouterConfigurerQName, webControllers, webRouters, contextTypes);
+		webRoutesConfigurers.stream().forEach(configurer -> {
+			contextTypes.add(configurer.getContextType());
+			contextTypes.addAll(this.getAllSuperTypes(configurer.getContextType()));
+		});
 		
-		for(Map.Entry<WebRouteInfo, Set<WebRouteInfo>> e : this.webRouteDuplicateDectector.findDuplicates(Stream.concat(webControllers.stream().flatMap(controller -> Arrays.stream(controller.getRoutes())), webRouters.stream().flatMap(router -> Arrays.stream(router.getRoutes()))).collect(Collectors.toList())).entrySet()) {
-			e.getKey().error("Route " + e.getKey().getQualifiedName() + " is conflicting with route(s):\n" + e.getValue().stream().map(route -> "- " + route.getQualifiedName()).collect(Collectors.joining("\n")));
+		webRouterConfigurers.stream().forEach(configurer -> {
+			contextTypes.add(configurer.getContextType());
+			contextTypes.addAll(this.getAllSuperTypes(configurer.getContextType()));
+		});
+		
+		GenericWebRouterConfigurerInfo webRouterConfigurerInfo = new GenericWebRouterConfigurerInfo(execution.getModuleElement(), webRouterConfigurerQName, webControllers, webInterceptorsConfigurers, webRoutesConfigurers, webRouterConfigurers, contextTypes);
+		
+		// Report route clash
+		List<WebRouteInfo> routes = new ArrayList<>();
+		webControllers.stream().flatMap(controller -> Arrays.stream(controller.getRoutes())).forEach(routes::add);
+		webRoutesConfigurers.stream().flatMap(controller -> Arrays.stream(controller.getRoutes())).forEach(routes::add);
+		webRouterConfigurers.stream().flatMap(router -> Arrays.stream(router.getRoutes())).forEach(routes::add);
+		for(Map.Entry<WebRouteInfo, Set<WebRouteInfo>> e : this.webRouteClashDectector.findDuplicates(routes).entrySet()) {
+			e.getKey().error("Route " + e.getKey().getQualifiedName() + " is clashing with route(s):\n" + e.getValue().stream().map(route -> "- " + route.getQualifiedName()).collect(Collectors.joining("\n")));
 		}
 		
-		if(!webRouterConfigurerInfo.hasError() && (webRouterConfigurerInfo.getControllers().length > 0 || webRouterConfigurerInfo.getRouters().length > 0)) {
+		if(!webRouterConfigurerInfo.hasError() && (webRouterConfigurerInfo.getControllers().length > 0 || webRouterConfigurerInfo.getRoutesConfigurers().length > 0 || webRouterConfigurerInfo.getRouterConfigurers().length > 0)) {
 			try {
 				execution.createSourceFile(webRouterConfigurerInfo.getQualifiedName().getClassName(), execution.getElements().stream().toArray(Element[]::new), () -> {
 					return webRouterConfigurerInfo.accept(this.webRouterConfigurerClassGenerator, new WebRouterConfigurerClassGenerationContext(this.pluginContext.getTypeUtils(), this.pluginContext.getElementUtils(), GenerationMode.CONFIGURER_CLASS)).toString();
@@ -247,33 +276,86 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 			.collect(Collectors.toList());
 	}
 	
-	private List<? extends WebProvidedRouterConfigurerInfo> processWebRouters(PluginExecution execution, WebRouteInfoFactory webRouteFactory) {
-		// Get component routers
+	private List<? extends WebInterceptorsConfigurerInfo> processWebInterceptorsConfigurers(PluginExecution execution, WebRouteInfoFactory webRouteFactory) {
+		// Get web interceptors configurers
+		return Arrays.stream(execution.getBeans())
+			.filter(bean -> this.pluginContext.getTypeUtils().isAssignable(bean.getType(), this.webInterceptorsConfigurerType))
+			.map(bean -> {
+				TypeElement beanElement = (TypeElement) this.pluginContext.getTypeUtils().asElement(bean.getType());
+				
+				// We want to include al web interceptors configurer
+				// - raise a warning if it is defined in the module and not private
+				if(bean.getQualifiedName().getModuleQName().equals(execution.getModuleQualifiedName()) && bean instanceof ModuleBeanInfo && ((ModuleBeanInfo)bean).getVisibility().equals(Bean.Visibility.PUBLIC)) {
+					bean.warning("Web interceptors configurer bean should be declared with Visibility.PRIVATE to prevent side effects when the module is composed");
+				}
+				
+				List<? extends TypeMirror> webInterceptorsConfigurerTypeArguments = ((DeclaredType)this.findSuperType(bean.getType(), this.webInterceptorsConfigurerType)).getTypeArguments();
+				TypeMirror contextType = !webInterceptorsConfigurerTypeArguments.isEmpty() ? webInterceptorsConfigurerTypeArguments.get(0) : this.exchangeContextType;
+				
+				return new GenericWebInterceptorsConfigurerInfo(beanElement, new WebConfigurerQualifiedName(bean.getQualifiedName(), this.pluginContext.getTypeUtils().asElement(this.pluginContext.getTypeUtils().erasure(bean.getType())).getSimpleName().toString()), bean, contextType);
+			})
+			.filter(Objects::nonNull)
+			.collect(Collectors.toList());
+	}
+	
+	private List<? extends WebRoutesConfigurerInfo> processWebRoutesConfigurers(PluginExecution execution, WebRouteInfoFactory webRouteFactory) {
+		// Get web interceptors configurers
+		return Arrays.stream(execution.getBeans())
+			.filter(bean -> this.pluginContext.getTypeUtils().isAssignable(bean.getType(), this.webRoutesConfigurerType))
+			.map(bean -> {
+				TypeElement beanElement = (TypeElement) this.pluginContext.getTypeUtils().asElement(bean.getType());
+				
+				// We want to include al web router configurer
+				// - raise a warning if it is defined in the module and not private
+				// - raise a warning if it is defined without @WebRoutes
+				Optional<List<ProvidedWebRouteInfo>> webRoutes = this.pluginContext.getElementUtils().getAllAnnotationMirrors(beanElement).stream()
+					.filter(annotation -> this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.webRoutesAnnotationType))
+					.findFirst()
+					.map(webRouterConfigurerAnnotation -> webRouteFactory.compileRouterRoutes(bean));
+				
+				if(!webRoutes.isPresent()) {
+					bean.warning("Unable to determine route clashes since no route is specified in @WebRoutes");
+				}
+				if(bean.getQualifiedName().getModuleQName().equals(execution.getModuleQualifiedName()) && bean instanceof ModuleBeanInfo && ((ModuleBeanInfo)bean).getVisibility().equals(Bean.Visibility.PUBLIC)) {
+					bean.warning("Web routes configurer bean should be declared with Visibility.PRIVATE to prevent side effects when the module is composed");
+				}
+				
+				List<? extends TypeMirror> webRouterConfigurerTypeArguments = ((DeclaredType)this.findSuperType(bean.getType(), this.webRoutesConfigurerType)).getTypeArguments();
+				TypeMirror contextType = !webRouterConfigurerTypeArguments.isEmpty() ? webRouterConfigurerTypeArguments.get(0) : this.exchangeContextType;
+				
+				return new GenericWebRoutesConfigurerInfo(beanElement, new WebConfigurerQualifiedName(bean.getQualifiedName(), this.pluginContext.getTypeUtils().asElement(this.pluginContext.getTypeUtils().erasure(bean.getType())).getSimpleName().toString()), bean, webRoutes.orElse(List.of()), contextType);
+			})
+			.filter(Objects::nonNull)
+			.collect(Collectors.toList());
+	}
+	
+	private List<? extends WebProvidedRouterConfigurerInfo> processWebRouterConfigurers(PluginExecution execution, WebRouteInfoFactory webRouteFactory) {
+		// Get web router configurers
 		return Arrays.stream(execution.getBeans())
 			.filter(bean -> this.pluginContext.getTypeUtils().isAssignable(bean.getType(), this.webRouterConfigurerType))
 			.map(bean -> {
 				TypeElement beanElement = (TypeElement) this.pluginContext.getTypeUtils().asElement(bean.getType());
 				
-				Optional<? extends WebProvidedRouterConfigurerInfo> providedRouterConfigurerInfo = this.pluginContext.getElementUtils().getAllAnnotationMirrors(beanElement).stream()
+				// We want to include al web router configurer
+				// - raise a warning if it is defined in the module and not private
+				// - raise a warning if it is defined without @WebRoutes
+				Optional<List<ProvidedWebRouteInfo>> webRoutes = this.pluginContext.getElementUtils().getAllAnnotationMirrors(beanElement).stream()
 					.filter(annotation -> this.pluginContext.getTypeUtils().isSameType(annotation.getAnnotationType(), this.webRoutesAnnotationType))
 					.findFirst()
-					.map(webRouterConfigurerAnnotation -> {
-						List<ProvidedWebRouteInfo> webRoutes = webRouteFactory.compileRouterRoutes(bean);
-						if(webRoutes.isEmpty()) {
-							return null;
-						}
-						
-						List<? extends TypeMirror> webRouterConfigurerTypeArguments = ((DeclaredType)this.findSuperType(bean.getType(), this.webRouterConfigurerType)).getTypeArguments();
-						TypeMirror contextType = !webRouterConfigurerTypeArguments.isEmpty() ? webRouterConfigurerTypeArguments.get(0) : this.exchangeContextType;
-						
-						return new GenericWebProvidedRouterConfigurerInfo(beanElement, new WebRouterConfigurerQualifiedName(bean.getQualifiedName(), this.pluginContext.getTypeUtils().asElement(this.pluginContext.getTypeUtils().erasure(bean.getType())).getSimpleName().toString()), bean, webRoutes, contextType);
-					});
+					.map(webRouterConfigurerAnnotation -> webRouteFactory.compileRouterRoutes(bean));
 				
-				if(!providedRouterConfigurerInfo.isPresent()) {
-					bean.warning("Ignoring web router configurer which does not define any route");
-					return null;
+				if(!webRoutes.isPresent()) {
+					bean.warning("Can't determine route clashes since no route is specified in @WebRoutes");
 				}
-				return providedRouterConfigurerInfo.get();
+				
+				if(bean.getQualifiedName().getModuleQName().equals(execution.getModuleQualifiedName()) && bean instanceof ModuleBeanInfo && ((ModuleBeanInfo)bean).getVisibility().equals(Bean.Visibility.PUBLIC)) {
+					bean.warning("Web Router configurer bean should be declared with Visibility.PRIVATE to prevent side effects when the module is composed");
+				}
+				
+				List<? extends TypeMirror> webRouterConfigurerTypeArguments = ((DeclaredType)this.findSuperType(bean.getType(), this.webRouterConfigurerType)).getTypeArguments();
+				TypeMirror contextType = !webRouterConfigurerTypeArguments.isEmpty() ? webRouterConfigurerTypeArguments.get(0) : this.exchangeContextType;
+				
+				return new GenericWebProvidedRouterConfigurerInfo(beanElement, new WebConfigurerQualifiedName(bean.getQualifiedName(), this.pluginContext.getTypeUtils().asElement(this.pluginContext.getTypeUtils().erasure(bean.getType())).getSimpleName().toString()), bean, webRoutes.orElse(List.of()), contextType);
 			})
 			.filter(Objects::nonNull)
 			.collect(Collectors.toList());

@@ -45,13 +45,13 @@ import io.inverno.mod.http.server.ExchangeContext;
  */
 public interface RouterConfigurer<
 		A extends ExchangeContext, 
-		B extends Exchange<A>, 
-		C extends Router<A, B, C, D, E, F, G, H>, 
-		D extends InterceptedRouter<A, B, C, D, E, F, G, H>, 
-		E extends RouteManager<A, B, C, D, E, F, G, H>, 
-		F extends InterceptorManager<A, B, C, D, E, F, G, H>, 
-		G extends InterceptableRoute<A, B>, 
-		H extends Exchange<A>
+		B extends Exchange<A>,
+		C extends Router<A, B, C, D, E, F, G, H>,
+		D extends InterceptedRouter<A, B, C, D, E, F, G, H>,
+		E extends RouteManager<A, B, C, E, H>,
+		F extends RouteManager<A, B, D, F, H>,
+		G extends InterceptorManager<A, B, D, G>,
+		H extends InterceptableRoute<A, B>
 	> extends Consumer<C> {
 
 }

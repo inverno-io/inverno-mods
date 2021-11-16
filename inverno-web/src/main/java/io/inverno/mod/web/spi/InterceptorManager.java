@@ -38,22 +38,14 @@ import io.inverno.mod.http.server.ExchangeContext;
  * 
  * @param <A> the type of the exchange context
  * @param <B> the type of exchange handled by the route
- * @param <C> the router type
- * @param <D> the intercepted router type
- * @param <E> the route manager type
- * @param <F> the interceptor manager type
- * @param <G> the interceptable route type
- * @param <H> the type of exchange handled by the router
+ * @param <C> the interceptable type
+ * @param <D> the interceptor manager type
  */
 public interface InterceptorManager<
 		A extends ExchangeContext, 
 		B extends Exchange<A>, 
-		C extends Router<A, B, C, D, E, F, G, H>, 
-		D extends InterceptedRouter<A, B, C, D, E, F, G, H>,
-		E extends RouteManager<A, B, C, D, E, F, G, H>, 
-		F extends InterceptorManager<A, B, C, D, E, F, G, H>, 
-		G extends InterceptableRoute<A, B>, 
-		H extends Exchange<A>
+		C extends Interceptable<A, B, C, D>,
+		D extends InterceptorManager<A, B, C, D>
 	> {
 	
 }
