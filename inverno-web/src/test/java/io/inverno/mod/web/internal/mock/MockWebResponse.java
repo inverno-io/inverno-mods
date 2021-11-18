@@ -18,6 +18,7 @@ package io.inverno.mod.web.internal.mock;
 import java.util.function.Consumer;
 
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.server.Response;
 import io.inverno.mod.http.server.ResponseCookies;
 import io.inverno.mod.http.server.ResponseHeaders;
 import io.inverno.mod.http.server.ResponseTrailers;
@@ -61,6 +62,11 @@ public class MockWebResponse implements WebResponse {
 	
 	public MockResponseCookies cookies() {
 		return this.cookies;
+	}
+
+	@Override
+	public Response sendContinue() {
+		return this;
 	}
 	
 	@Override

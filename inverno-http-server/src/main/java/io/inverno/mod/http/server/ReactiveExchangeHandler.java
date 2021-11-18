@@ -40,6 +40,7 @@ public interface ReactiveExchangeHandler<A extends ExchangeContext, B extends Ex
 	 * </p>
 	 * 
 	 * @param interceptor the interceptor
+	 * 
 	 * @return a composed exchange handler
 	 */
 	default ReactiveExchangeHandler<A, B> intercept(ExchangeInterceptor<A, B> interceptor) {
@@ -57,7 +58,8 @@ public interface ReactiveExchangeHandler<A extends ExchangeContext, B extends Ex
 	 * </p>
 	 *
 	 * @param exchange
-	 * @return
+	 * 
+	 * @return an empty mono that completes when the exchange has been processed
 	 */
 	Mono<Void> defer(B exchange);
 }

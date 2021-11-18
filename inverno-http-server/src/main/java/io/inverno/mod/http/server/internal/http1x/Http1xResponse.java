@@ -25,6 +25,10 @@ import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.Response;
 import io.inverno.mod.http.server.ResponseTrailers;
 import io.inverno.mod.http.server.internal.AbstractResponse;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 
 /**
  * <p>
@@ -83,6 +87,12 @@ class Http1xResponse extends AbstractResponse {
 	@Override
 	public Http1xResponseTrailers trailers() {
 		return (Http1xResponseTrailers)this.responseTrailers;
+	}
+
+	@Override
+	public Response sendContinue() {
+		this.context.writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE));
+		return this;
 	}
 	
 	@Override

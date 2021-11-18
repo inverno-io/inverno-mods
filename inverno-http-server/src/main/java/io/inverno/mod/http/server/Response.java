@@ -101,6 +101,19 @@ public interface Response {
 	
 	/**
 	 * <p>
+	 * Sends an interim 100 continue response to the client so it can send the rest of the request.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method should only be used when the request contains header {@code expect: 100-continue}.
+	 * </p>
+	 * 
+	 * @return the response
+	 */
+	Response sendContinue();
+	
+	/**
+	 * <p>
 	 * Returns the response body used to produce response payload.
 	 * </p>
 	 * 

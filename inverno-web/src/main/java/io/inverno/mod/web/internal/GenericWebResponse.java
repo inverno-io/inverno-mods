@@ -88,6 +88,12 @@ class GenericWebResponse implements WebResponse {
 	}
 
 	@Override
+	public Response sendContinue() {
+		this.response.sendContinue();
+		return this;
+	}
+
+	@Override
 	public WebResponseBody body() {
 		return this.responseBody;
 	}

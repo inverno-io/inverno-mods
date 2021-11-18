@@ -87,7 +87,7 @@ public class Http2Exchange extends AbstractExchange {
 			RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler, 
 			ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler
 		) {
-		super(context, rootHandler, errorHandler, new Http2Request(context, new Http2RequestHeaders(httpHeaders, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http2Response(context, headerService, parameterConverter));
+		super(context, rootHandler, errorHandler, new Http2Request(context, new Http2RequestHeaders(httpHeaders, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http2Response(context, stream, encoder, headerService, parameterConverter));
 		this.stream = stream;
 		this.encoder = encoder;
 		this.headerService = headerService;
@@ -110,7 +110,7 @@ public class Http2Exchange extends AbstractExchange {
 	
 	@Override
 	protected ErrorExchange<Throwable> createErrorExchange(Throwable error) {
-		return new GenericErrorExchange(this.request, new Http2Response(this.context, this.headerService, this.parameterConverter), this.finalizer, error, this.exchangeContext);
+		return new GenericErrorExchange(this.request, new Http2Response(this.context, this.stream, this.encoder, this.headerService, this.parameterConverter), this.finalizer, error, this.exchangeContext);
 	}
 	
 	@Override

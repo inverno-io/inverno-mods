@@ -76,18 +76,18 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	 * <p>
 	 * Creates a HTTP/2 channel handler.
 	 * </p>
-	 * 
-	 * @param configuration         the HTTP server configuration
-	 * @param decoder               HTTP/2 connection decoder
-	 * @param encoder               HTTP/2 connection encoder
-	 * @param initialSettings       HTTP/2 initial settings
-	 * @param rootHandler           the root exchange handler
-	 * @param errorHandler          the error exchange handler
-	 * @param headerService         the header service
-	 * @param parameterConverter    a string object converter
-	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body
-	 *                              decoder
-	 * @param multipartBodyDecoder  the multipart/form-data body decoder
+	 *
+	 * @param configuration           the HTTP server configuration
+	 * @param decoder                 HTTP/2 connection decoder
+	 * @param encoder                 HTTP/2 connection encoder
+	 * @param initialSettings         HTTP/2 initial settings
+	 * @param rootHandler             the root exchange handler
+	 * @param errorHandler            the error exchange handler
+	 * @param headerService           the header service
+	 * @param parameterConverter      a string object converter
+	 * @param urlEncodedBodyDecoder   the application/x-www-form-urlencoded body decoder
+	 * @param multipartBodyDecoder    the multipart/form-data body decoder
+	 * @param contentEncodingResolver a content encoding resolver
 	 */
 	public Http2ChannelHandler(
 			HttpServerConfiguration configuration,

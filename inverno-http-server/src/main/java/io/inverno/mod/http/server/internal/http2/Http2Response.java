@@ -24,6 +24,9 @@ import io.inverno.mod.http.server.Response;
 import io.inverno.mod.http.server.ResponseTrailers;
 import io.inverno.mod.http.server.internal.AbstractResponse;
 import io.inverno.mod.http.server.internal.GenericResponseBody;
+import io.netty.handler.codec.http2.DefaultHttp2Headers;
+import io.netty.handler.codec.http2.Http2ConnectionEncoder;
+import io.netty.handler.codec.http2.Http2Stream;
 
 /**
  * <p>
@@ -37,19 +40,27 @@ import io.inverno.mod.http.server.internal.GenericResponseBody;
  */
 class Http2Response extends AbstractResponse {
 
+	private final Http2Stream stream;
+	
+	private final Http2ConnectionEncoder encoder;
+	
 	private final ObjectConverter<String> parameterConverter;
 	
 	/**
 	 * <p>
 	 * Creates a HTTP/2 server response.
 	 * </p>
-	 * 
+	 *
 	 * @param context            the channel handler context
+	 * @param stream             the HTTP/2 the underlying HTTP/2 stream
+	 * @param encoder            the HTTP/2 connection encoder
 	 * @param headerService      the header service
 	 * @param parameterConverter a string object converter
 	 */
-	public Http2Response(ChannelHandlerContext context, HeaderService headerService, ObjectConverter<String> parameterConverter) {
+	public Http2Response(ChannelHandlerContext context, Http2Stream stream, Http2ConnectionEncoder encoder, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		super(context, headerService, new Http2ResponseHeaders(headerService, parameterConverter));
+		this.stream = stream;
+		this.encoder = encoder;
 		this.parameterConverter = parameterConverter;
 		this.responseBody = new GenericResponseBody(this);
 	}
@@ -71,5 +82,15 @@ class Http2Response extends AbstractResponse {
 	@Override
 	public Http2ResponseTrailers trailers() {
 		return (Http2ResponseTrailers)this.responseTrailers;
+	}
+
+	@Override
+	public Response sendContinue() {
+		if(this.isHeadersWritten()) {
+			throw new IllegalStateException("Headers already written");
+		}
+		// we might have an issue here if this run outside the event loop
+		this.encoder.writeHeaders(this.context, this.stream.id(), new DefaultHttp2Headers().status("100"), 0, false, this.context.voidPromise());
+		return this;
 	}
 }

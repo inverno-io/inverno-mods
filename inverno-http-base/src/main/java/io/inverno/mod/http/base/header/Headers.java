@@ -84,6 +84,10 @@ public final class Headers {
 	 */
 	public static final String NAME_CONTENT_ENCODING = "content-encoding";
 	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.1.1">RFC 7232 Section 5.1.1</a>
+	 */
+	public static final String NAME_EXPECT = "expect";
+	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-3.1.1.5">RFC 7231 Section 3.1.1.5</a>
 	 */
 	public static final String NAME_CONTENT_TYPE = "content-type";
@@ -175,6 +179,10 @@ public final class Headers {
 	public static final String NAME_PSEUDO_STATUS = ":status";
 	
 	/* Header Values */
+	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.1.1">RFC 7232 Section 5.1.1</a>
+	 */
+	public static final String VALUE_100_CONTINUE = "100-continue";
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.3.1">RFC 7230 Section 3.3.1</a>
 	 */
