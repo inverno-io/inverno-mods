@@ -55,6 +55,8 @@ import io.inverno.mod.web.compiler.spi.WebRequestBodyParameterInfo.RequestBodyRe
 import io.inverno.mod.web.compiler.spi.WebRouteQualifiedName;
 import io.inverno.mod.web.compiler.spi.WebSseEventFactoryParameterInfo.SseEventFactoryKind;
 import io.netty.buffer.ByteBuf;
+import javax.lang.model.type.IntersectionType;
+import javax.lang.model.type.TypeVariable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -275,15 +277,23 @@ class WebParameterInfoFactory {
 					contextType = this.exchangeContextType;
 				}
 			}
+			else if(contextType.getKind() == TypeKind.TYPEVAR) {
+				contextType = ((TypeVariable)contextType).getUpperBound();
+			}
 		}
 		
-		if(this.pluginContext.getTypeUtils().asElement(contextType).getKind() != ElementKind.INTERFACE) {
+		List<? extends TypeMirror> actualTypes;
+		if(contextType.getKind() == TypeKind.INTERSECTION) {
+			actualTypes = ((IntersectionType)contextType).getBounds();
+		}
+		else {
+			actualTypes = List.of(contextType);
+		}
+		
+		if(actualTypes.stream().anyMatch(type -> this.pluginContext.getTypeUtils().asElement(type).getKind() != ElementKind.INTERFACE)) {
 			reporter.error("Web exchange context must be an interface");
 		}
-		
-		GenericWebExchangeParameterInfo info = new GenericWebExchangeParameterInfo(parameterQName, reporter, parameterElement, contextType);
-		
-		return info;
+		return new GenericWebExchangeParameterInfo(parameterQName, reporter, parameterElement, contextType);
 	}
 	
 	/**
@@ -298,11 +308,23 @@ class WebParameterInfoFactory {
 	 * @return a web exchange context parameter info
 	 */
 	private GenericWebExchangeContextParameterInfo createExchangeContextParameter(ReporterInfo reporter, WebParameterQualifiedName parameterQName, VariableElement parameterElement) {
-		GenericWebExchangeContextParameterInfo info = new GenericWebExchangeContextParameterInfo(parameterQName, reporter, parameterElement);
-		if(this.pluginContext.getTypeUtils().asElement(info.getType()).getKind() != ElementKind.INTERFACE) {
+		TypeMirror contextType = parameterElement.asType();
+		if(contextType.getKind() == TypeKind.TYPEVAR) {
+			contextType = ((TypeVariable)contextType).getUpperBound();
+		}
+		
+		List<? extends TypeMirror> actualTypes;
+		if(contextType.getKind() == TypeKind.INTERSECTION) {
+			actualTypes = ((IntersectionType)contextType).getBounds();
+		}
+		else {
+			actualTypes = List.of(contextType);
+		}
+		
+		if(actualTypes.stream().anyMatch(type -> this.pluginContext.getTypeUtils().asElement(type).getKind() != ElementKind.INTERFACE)) {
 			reporter.error("Web exchange context must be an interface");
 		}
-		return info;
+		return new GenericWebExchangeContextParameterInfo(parameterQName, reporter, parameterElement, contextType);
 	}
 	
 	/**

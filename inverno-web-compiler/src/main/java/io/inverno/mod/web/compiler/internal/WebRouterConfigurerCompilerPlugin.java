@@ -60,6 +60,9 @@ import io.inverno.mod.web.compiler.spi.WebRouteInfo;
 import io.inverno.mod.web.compiler.spi.WebRouterConfigurerQualifiedName;
 import io.inverno.mod.web.compiler.spi.WebRoutesConfigurerInfo;
 import java.util.ArrayList;
+import java.util.function.Function;
+import javax.lang.model.type.IntersectionType;
+import javax.lang.model.type.TypeKind;
 
 /**
  * <p>
@@ -167,34 +170,46 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 			.flatMap(controller -> Arrays.stream(controller.getRoutes())
 				.flatMap(route -> Arrays.stream(route.getParameters())
 					.flatMap(parameter -> {
+						TypeMirror contextType;
 						if(parameter instanceof WebExchangeParameterInfo) {
-							TypeMirror contextType = ((WebExchangeParameterInfo)parameter).getContextType();
-							return Stream.concat(Stream.of(contextType), this.getAllSuperTypes(contextType).stream());
+							contextType = ((WebExchangeParameterInfo)parameter).getContextType();
 						}
 						else if(parameter instanceof WebExchangeContextParameterInfo) {
-							TypeMirror contextType = parameter.getType();
-							return Stream.concat(Stream.of(contextType), this.getAllSuperTypes(contextType).stream());
+							contextType = parameter.getType();
 						}
-						return Stream.of();
+						else {
+							return Stream.of();
+						}
+						
+						List<? extends TypeMirror> actualTypes;
+						if(contextType.getKind() == TypeKind.INTERSECTION) {
+							actualTypes = ((IntersectionType)contextType).getBounds();
+						}
+						else {
+							actualTypes = List.of(contextType);
+						}
+						return Stream.concat(actualTypes.stream(), actualTypes.stream().flatMap(type -> this.getAllSuperTypes(contextType).stream()));
 					})
 				)
 			)
 			.forEach(contextTypes::add);
 		
-		webInterceptorsConfigurers.stream().forEach(configurer -> {
-			contextTypes.add(configurer.getContextType());
-			contextTypes.addAll(this.getAllSuperTypes(configurer.getContextType()));
-		});
-		
-		webRoutesConfigurers.stream().forEach(configurer -> {
-			contextTypes.add(configurer.getContextType());
-			contextTypes.addAll(this.getAllSuperTypes(configurer.getContextType()));
-		});
-		
-		webRouterConfigurers.stream().forEach(configurer -> {
-			contextTypes.add(configurer.getContextType());
-			contextTypes.addAll(this.getAllSuperTypes(configurer.getContextType()));
-		});
+		Stream.of(webInterceptorsConfigurers.stream().map(WebInterceptorsConfigurerInfo::getContextType), 
+				webRoutesConfigurers.stream().map(WebRoutesConfigurerInfo::getContextType),
+				webRouterConfigurers.stream().map(WebProvidedRouterConfigurerInfo::getContextType)
+			)
+			.flatMap(Function.identity())
+			.flatMap(contextType -> {
+				List<? extends TypeMirror> actualTypes;
+				if(contextType.getKind() == TypeKind.INTERSECTION) {
+					actualTypes = ((IntersectionType)contextType).getBounds();
+				}
+				else {
+					actualTypes = List.of(contextType);
+				}
+				return Stream.concat(actualTypes.stream(), actualTypes.stream().flatMap(type -> this.getAllSuperTypes(contextType).stream()));
+			})
+			.forEach(contextTypes::add);
 		
 		GenericWebRouterConfigurerInfo webRouterConfigurerInfo = new GenericWebRouterConfigurerInfo(execution.getModuleElement(), webRouterConfigurerQName, webControllers, webInterceptorsConfigurers, webRoutesConfigurers, webRouterConfigurers, contextTypes);
 		

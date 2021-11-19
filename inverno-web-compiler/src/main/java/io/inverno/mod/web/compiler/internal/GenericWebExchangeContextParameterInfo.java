@@ -20,6 +20,7 @@ import javax.lang.model.element.VariableElement;
 import io.inverno.core.compiler.spi.ReporterInfo;
 import io.inverno.mod.web.compiler.spi.WebExchangeContextParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebParameterQualifiedName;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * <p>
@@ -42,7 +43,7 @@ class GenericWebExchangeContextParameterInfo extends AbstractWebParameterInfo im
 	 * @param reporter         the parameter reporter
 	 * @param parameterElement the parameter element
 	 */
-	public GenericWebExchangeContextParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement) {
-		super(name, reporter, parameterElement, parameterElement.asType(), true);
+	public GenericWebExchangeContextParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, TypeMirror contextType) {
+		super(name, reporter, parameterElement, contextType, true);
 	}
 }
