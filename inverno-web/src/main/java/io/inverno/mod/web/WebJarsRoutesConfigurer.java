@@ -42,9 +42,9 @@ import org.apache.logging.log4j.Logger;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
  */
-public class WebJarsWebRoutesConfigurer implements WebRoutesConfigurer<ExchangeContext> {
+public class WebJarsRoutesConfigurer implements WebRoutesConfigurer<ExchangeContext> {
 	
-	private static final Logger LOGGER = LogManager.getLogger(WebJarsWebRoutesConfigurer.class);
+	private static final Logger LOGGER = LogManager.getLogger(WebJarsRoutesConfigurer.class);
 	
 	private static final String WEBJARS_MODULE_PREFIX = "org.webjars";
 	
@@ -59,7 +59,7 @@ public class WebJarsWebRoutesConfigurer implements WebRoutesConfigurer<ExchangeC
 	 * 
 	 * @param resourceService the resource service
 	 */
-	public WebJarsWebRoutesConfigurer(ResourceService resourceService) {
+	public WebJarsRoutesConfigurer(ResourceService resourceService) {
 		this.resourceService = resourceService;
 	}
 	
@@ -79,7 +79,7 @@ public class WebJarsWebRoutesConfigurer implements WebRoutesConfigurer<ExchangeC
 				String webjarName = module.getDescriptor().name().substring(WEBJARS_MODULE_PREFIX.length() + 1);
 				String webjarVersion = module.getDescriptor().rawVersion().get();
 				Resource baseResource = this.resourceService.getResource(URI.create(ModuleResource.SCHEME_MODULE + "://" + module.getName() + "/META-INF/resources/webjars/" + webjarName + "/" + webjarVersion + "/"));
-				String webjarRootPath = WebJarsWebRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
+				String webjarRootPath = WebJarsRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
 				LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
 				routable.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
 			});
@@ -95,7 +95,7 @@ public class WebJarsWebRoutesConfigurer implements WebRoutesConfigurer<ExchangeC
 				int webjarIndex = spec.substring(0, versionIndex).lastIndexOf("/");
 				
 				String webjarName = toModuleName(spec.substring(webjarIndex + 1, versionIndex));
-				String webjarRootPath = WebJarsWebRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
+				String webjarRootPath = WebJarsRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
 				LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
 				routable.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
 			});
@@ -111,20 +111,20 @@ public class WebJarsWebRoutesConfigurer implements WebRoutesConfigurer<ExchangeC
 	 */
 	private static String toModuleName(String mn) {
 		// replace non-alphanumeric
-		mn = WebJarsWebRoutesConfigurer.NON_ALPHANUM.matcher(mn).replaceAll(".");
+		mn = WebJarsRoutesConfigurer.NON_ALPHANUM.matcher(mn).replaceAll(".");
 
 		// collapse repeating dots
-		mn = WebJarsWebRoutesConfigurer.REPEATING_DOTS.matcher(mn).replaceAll(".");
+		mn = WebJarsRoutesConfigurer.REPEATING_DOTS.matcher(mn).replaceAll(".");
 
 		// drop leading dots
 		if (!mn.isEmpty() && mn.charAt(0) == '.') {
-			mn = WebJarsWebRoutesConfigurer.LEADING_DOTS.matcher(mn).replaceAll("");
+			mn = WebJarsRoutesConfigurer.LEADING_DOTS.matcher(mn).replaceAll("");
 		}
 
 		// drop trailing dots
 		int len = mn.length();
 		if (len > 0 && mn.charAt(len - 1) == '.') {
-			mn = WebJarsWebRoutesConfigurer.TRAILING_DOTS.matcher(mn).replaceAll("");
+			mn = WebJarsRoutesConfigurer.TRAILING_DOTS.matcher(mn).replaceAll("");
 		}
 
 		return mn;

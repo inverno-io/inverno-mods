@@ -127,24 +127,24 @@ public interface WebInterceptorManager<A extends ExchangeContext, B extends WebI
 	 * Specifies the media range matching the content type produced by the resource to intercept.
 	 * </p>
 	 * 
-	 * @param mediaType a media type
+	 * @param mediaRange a media range
 	 * 
 	 * @return the web interceptor manager
 	 * 
 	 * @see AcceptAware
 	 */
-	WebInterceptorManager<A, B> produces(String mediaType);
+	WebInterceptorManager<A, B> produces(String mediaRange);
 	
 	/**
 	 * <p>
 	 * Specifies the language range matching the language tag produced by the resource to intercept.
 	 * </p>
 	 * 
-	 * @param language a language tag
+	 * @param languageRange a language range
 	 * 
 	 * @return the web interceptor manager
 	 * 
 	 * @see AcceptAware
 	 */
-	WebInterceptorManager<A, B> language(String language);
+	WebInterceptorManager<A, B> language(String languageRange);
 }

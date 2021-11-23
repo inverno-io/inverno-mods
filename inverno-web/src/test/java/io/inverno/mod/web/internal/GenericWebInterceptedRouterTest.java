@@ -66,6 +66,31 @@ public class GenericWebInterceptedRouterTest {
 	}
 	
 	@Test
+	public void testMultiInterceptor() {
+		WebExchangeInterceptor<ExchangeContext> interceptor = mockExchangeInterceptor();
+		
+		WebExchangeHandler<ExchangeContext> handler_book = mockExchangeHandler();
+		
+		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		router
+			.intercept()
+				.path("/hello")
+				.path("/book/**")
+				.interceptor(interceptor)
+			.route()
+				.path("/book/{id}", false)
+				.method(Method.GET)
+				.produces("application/json")
+				.handler(handler_book);
+
+		MockWebExchange mockExchange = MockWebExchange.from("/book/123").build();
+		router.defer(mockExchange).block();
+		
+		Mockito.verify(interceptor, Mockito.times(1)).intercept(Mockito.any());
+		Mockito.verify(handler_book, Mockito.times(1)).defer(Mockito.any());
+	}
+	
+	@Test
 	public void testPathInterceptor() {
 		WebExchangeInterceptor<ExchangeContext> interceptor1 = mockExchangeInterceptor();
 		WebExchangeInterceptor<ExchangeContext> interceptor2 = mockExchangeInterceptor();

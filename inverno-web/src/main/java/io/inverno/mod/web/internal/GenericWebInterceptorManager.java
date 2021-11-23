@@ -71,12 +71,12 @@ class GenericWebInterceptorManager extends AbstractWebManager<GenericWebIntercep
 				for(String language : this.languages) {
 					routeInterceptor.setLanguage(language);
 					routeInterceptor.setInterceptor(this.interceptor);
-					this.router.addRouteInterceptor(routeInterceptor);
+					this.router.addRouteInterceptor(routeInterceptor.clone());
 				}
 			}
 			else {
 				routeInterceptor.setInterceptor(this.interceptor);
-				this.router.addRouteInterceptor(routeInterceptor);
+				this.router.addRouteInterceptor(routeInterceptor.clone());
 			}
 		};
 		

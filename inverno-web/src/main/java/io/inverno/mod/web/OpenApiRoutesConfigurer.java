@@ -59,12 +59,23 @@ import org.apache.logging.log4j.Logger;
  *
  * @see WebJarsWebRoutesConfigurer
  */
-public class OpenApiWebRoutesConfigurer implements WebRoutesConfigurer<ExchangeContext> {
+public class OpenApiRoutesConfigurer implements WebRoutesConfigurer<ExchangeContext> {
 	
-	private static final Logger LOGGER = LogManager.getLogger(OpenApiWebRoutesConfigurer.class);
+	private static final Logger LOGGER = LogManager.getLogger(OpenApiRoutesConfigurer.class);
 	
 	private final Map<String, Resource> openApiSpecs;
 	private final boolean enableSwagger;
+	
+	/**
+	 * <p>
+	 * Creates an Open API web routes configurer with Swagger supprt and the specified resource service.
+	 * </p>
+	 * 
+	 * @param resourceService the resource service
+	 */
+	public OpenApiRoutesConfigurer(ResourceService resourceService) {
+		this(resourceService, true);
+	}
 	
 	/**
 	 * <p>
@@ -74,7 +85,7 @@ public class OpenApiWebRoutesConfigurer implements WebRoutesConfigurer<ExchangeC
 	 * @param resourceService the resource service
 	 * @param enableSwagger   true to enable Swagger UI routes, false otherwise
 	 */
-	public OpenApiWebRoutesConfigurer(ResourceService resourceService, boolean enableSwagger) {
+	public OpenApiRoutesConfigurer(ResourceService resourceService, boolean enableSwagger) {
 		this.openApiSpecs = new HashMap<>();
 		this.enableSwagger = enableSwagger;
 		

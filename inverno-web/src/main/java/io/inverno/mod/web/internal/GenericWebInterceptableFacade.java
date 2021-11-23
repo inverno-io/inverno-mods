@@ -102,14 +102,14 @@ class GenericWebInterceptableFacade implements WebInterceptable<ExchangeContext,
 		}
 
 		@Override
-		public WebInterceptorManager<ExchangeContext, GenericWebInterceptableFacade> produces(String mediaType) {
-			this.interceptorManager.produces(mediaType);
+		public WebInterceptorManager<ExchangeContext, GenericWebInterceptableFacade> produces(String mediaRange) {
+			this.interceptorManager.produces(mediaRange);
 			return this;
 		}
 
 		@Override
-		public WebInterceptorManager<ExchangeContext, GenericWebInterceptableFacade> language(String language) {
-			this.interceptorManager.language(language);
+		public WebInterceptorManager<ExchangeContext, GenericWebInterceptableFacade> language(String languageRange) {
+			this.interceptorManager.language(languageRange);
 			return this;
 		}
 	}

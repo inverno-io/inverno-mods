@@ -40,7 +40,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
  */
-class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext> {
+class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<ExchangeContext> {
 
 	private static final Logger LOGGER = LogManager.getLogger(GenericWebRouteInterceptor.class);
 	
@@ -76,8 +76,7 @@ class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext>
 		this.acceptLanguageCodec = acceptLanguageCodec;
 	}
 	
-	
-	private GenericWebRouteInterceptor(GenericWebRouteInterceptor parent, ExchangeInterceptorWrapper<ExchangeContext, WebExchange<ExchangeContext>> interceptor) {
+	/*private GenericWebRouteInterceptor(GenericWebRouteInterceptor parent, ExchangeInterceptorWrapper<ExchangeContext, WebExchange<ExchangeContext>> interceptor) {
 		this.contentTypeCodec = parent.contentTypeCodec;
 		this.acceptLanguageCodec = parent.acceptLanguageCodec;
 		
@@ -96,6 +95,12 @@ class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext>
 		this.languageRange = parent.languageRange;
 
 		this.interceptor = interceptor;
+	}*/
+	
+	private GenericWebRouteInterceptor withInterceptor(ExchangeInterceptorWrapper<ExchangeContext, WebExchange<ExchangeContext>> interceptor) {
+		GenericWebRouteInterceptor clone = this.clone();
+		clone.interceptor = interceptor;
+		return clone;
 	}
 
 	public void setPath(String path) {
@@ -153,13 +158,15 @@ class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext>
 			else if(pathAware.getPathPattern() != null) {
 				if(pathAware.getPathPattern().matcher(this.path).matches()) {
 					// B\A != {}
-					return new GenericWebRouteInterceptor(this, new FilteredPathExchangeInterceptorWrapper());
+					return this.withInterceptor(new FilteredPathExchangeInterceptorWrapper());
+//					return new GenericWebRouteInterceptor(this, new FilteredPathExchangeInterceptorWrapper());
 				}
 				return null;
 			}
 			else {
 				// B\A != {}
-				return new GenericWebRouteInterceptor(this, new FilteredPathExchangeInterceptorWrapper());
+				return this.withInterceptor(new FilteredPathExchangeInterceptorWrapper());
+//				return new GenericWebRouteInterceptor(this, new FilteredPathExchangeInterceptorWrapper());
 			}
 		}
 		else if(this.pathPattern != null) {
@@ -177,13 +184,15 @@ class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext>
 				
 				switch(includes) {
 					case INCLUDED: return this;
-					case INDETERMINATE: return new GenericWebRouteInterceptor(this, new FilteredPathExchangeInterceptorWrapper());
+					case INDETERMINATE: return this.withInterceptor(new FilteredPathExchangeInterceptorWrapper()); 
+						//return new GenericWebRouteInterceptor(this, new FilteredPathExchangeInterceptorWrapper());
 					default: return null;
 				}
 			}
 			else {
 				// B\A != {}
-				return new GenericWebRouteInterceptor(this, new FilteredPathExchangeInterceptorWrapper());
+				return this.withInterceptor(new FilteredPathExchangeInterceptorWrapper());
+//				return new GenericWebRouteInterceptor(this, new FilteredPathExchangeInterceptorWrapper());
 			}
 		}
 		else {
@@ -204,7 +213,8 @@ class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext>
 			}
 			else {
 				// B\A != {}
-				return new GenericWebRouteInterceptor(this, new FilteredMethodExchangeInterceptorWrapper());
+				return this.withInterceptor(new FilteredMethodExchangeInterceptorWrapper());
+//				return new GenericWebRouteInterceptor(this, new FilteredMethodExchangeInterceptorWrapper());
 			}
 		}
 		else {
@@ -241,7 +251,8 @@ class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext>
 							if(routeType.equals("*")) {
 								if(routeSubType.equals("*")) {
 									// route */* => B/A != {} && B/A != A
-									return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
+									return this.withInterceptor(new FilteredContentExchangeInterceptorWrapper());
+//									return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
 								}
 								else {
 									// route */x
@@ -254,7 +265,8 @@ class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext>
 							else {
 								if(routeSubType.equals("*")) {
 									// route x/* => B/A != {} && B/A != A
-									return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
+									return this.withInterceptor(new FilteredContentExchangeInterceptorWrapper());
+//									return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
 								}
 								else {
 									// route x/x
@@ -271,7 +283,8 @@ class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext>
 							// interceptor x/*
 							if(routeType.equals("*")) {
 								// route */? => B/A != {}
-								return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
+								return this.withInterceptor(new FilteredContentExchangeInterceptorWrapper());
+//								return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
 							}
 							else {
 								// route x/?
@@ -286,7 +299,8 @@ class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext>
 							if(routeType.equals("*")) {
 								if(routeSubType.equals("*") || interceptorSubType.equals(routeSubType)) {
 									// route */*|*/x => B/A != {}
-									return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
+									return this.withInterceptor(new FilteredContentExchangeInterceptorWrapper());
+//									return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
 								}
 								return null;
 							}
@@ -294,7 +308,8 @@ class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext>
 								if(interceptorType.equals(routeType)) {
 									if(routeSubType.equals("*")) {
 										// route x/* => B/A != {}
-										return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
+										return this.withInterceptor(new FilteredContentExchangeInterceptorWrapper());
+//										return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
 									}
 									else {
 										// route x/x 
@@ -313,7 +328,8 @@ class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext>
 			}
 			else {
 				// B\A != {}
-				return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
+				return this.withInterceptor(new FilteredContentExchangeInterceptorWrapper());
+//				return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
 			}
 		}
 		else {
@@ -522,5 +538,37 @@ class GenericWebRouteInterceptor implements WebRouteInterceptor<ExchangeContext>
 				throw new IllegalStateException("Filtered path interceptor has no defined path");
 			}
 		}
+	}
+
+	@Override
+	protected GenericWebRouteInterceptor clone() {
+		try {
+			GenericWebRouteInterceptor clone = (GenericWebRouteInterceptor)super.clone();
+			
+			return clone;
+		} 
+		catch (CloneNotSupportedException e) {
+			throw new RuntimeException(e);
+		}
+		
+		/*GenericWebRouteInterceptor clone = new GenericWebRouteInterceptor(this.contentTypeCodec, this.acceptLanguageCodec);
+		
+		clone.path = this.path;
+		clone.pathPattern = this.pathPattern;
+
+		clone.method = this.method;
+
+		clone.produce = this.produce;
+		clone.produceMediaRange = this.produceMediaRange;
+
+		clone.consume = this.consume;
+		clone.consumeMediaRange = this.consumeMediaRange;
+
+		clone.language = this.language;
+		clone.languageRange = this.languageRange;
+		
+		clone.interceptor = this.interceptor;
+		
+		return clone;*/
 	}
 }
