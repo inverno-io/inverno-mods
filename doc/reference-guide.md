@@ -576,6 +576,36 @@ if(matcher.matches()) {
 }
 ```
 
+Path patterns are also supported by enabling the `URIs.Option#PATH_PATTERN` option and allows to create URI patterns with question marks or wildcards.
+
+```java
+// Matches all .java files under /src path
+URIPattern uriPattern = URIs.uri("/src/**/*.java", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PATH_PATTERN)
+    .buildPathPattern();
+
+// Matches test.jsp, tast.jsp, t1st.jsp...
+uriPattern = URIs.uri("/t?st.java", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PATH_PATTERN)
+    .buildPathPattern();
+```
+
+> Note that the Path pattern option is not compatible with `ORIGIN` form request target, as a result the URI must be created using the `ABSOLUTE` request target form.
+
+It is possible to determine whether a path pattern is included into another. A path pattern is said to be included into another path pattern if and only if the set of URIs matched by this pattern is included in the set of URIs matched by the other pattern.
+
+̀```java
+URIPattern pathPattern1 = URIs.uri("/src/**", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PATH_PATTERN)
+    .buildPathPattern();
+
+URIPattern pathPattern2 = URIs.uri("/src/java/**/*.java", URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PATH_PATTERN)
+    .buildPathPattern();
+
+URIPattern.Inclusion inclusion = uriPattern1.includes(uriPattern2); // returns URIPattern.Inclusion.INCLUDED
+̀```
+
+The proposed implementation is not exact which is why the `includes()` method returns `INCLUDED` when inclusion could be determined with certainty, `DISJOINT` when exclusion could be determined with certainty and `INDETERMINATE` when inclusion could not be determined with certainty.
+
+> Note that inclusion can only be determined when considering path patterns, ie. created using `buildPathPattern()` method and containing only a path component. The `includes()` method will always return `INDETERMINATE` for any other type of URI patterns.
+
 #### Network service
 
 The `NetService` interface specifies a service for building optimized network clients and servers based on Netty. The *base* module doesn't provide any implementation, a base implementation is provided in the *boot* module.
@@ -1620,6 +1650,8 @@ It especially supports:
 - HTTP/2 over cleartext
 - HTTP Compression
 - TLS
+- Interceptors
+- Strongly typed contexts
 - `application/x-www-form-urlencoded` body decoding
 - `multipart/form-data` body decoding
 - Server-sent events
@@ -1675,17 +1707,26 @@ compile 'io.inverno.mod:inverno-http-server:${VERSION_INVERNO_MODS}'
 
 The module defines classes and interfaces to implement HTTP server exchange handlers used to handle HTTP requests sent by a client to the server.
 
-A server `ExchangeHandler` is defined to handle a server `Exchange` composed of the `Request` and `Response` pair in a HTTP communication between a client and a server. The API has been designed to be fluent and reactive in order for the request to be *streamed* down to the response.
+A server `ExchangeHandler` is defined to handle a server `Exchange` composed of a `Request`, a `Response` and an `ExchangeContext` in a HTTP communication between a client and a server. The API has been designed to be fluent and reactive in order for the request to be *streamed* down to the response.
 
-#### Basic exchange
+#### Basic exchange handler
 
-The `ExchangeHandler` is a functional interface, a basic exchange handler can then be created as follows:
+The `ReactiveExchangeHandler` is a functional interface defining method `Mono<Void> defer(Exchange<ExchangeContext> exchange);` which is used to handle server exchanges in a reactive way. It is for instance possible to execute non-blocking operations before actually handling the exchange. 
+
+> Authentication is a typical example of a non-blocking operation that might be executed before handling the request.
+
+> Under the hood, the server will first subscribe to the returned `Mono`, when it completes the server then subscribes to the response body data publisher and eventually sends a response to the client.
+
+The `ExchangeHandler` extends the `ReactiveExchangeHandler` with method `void handle(Exchange<ExchangeContext> exchange)` which is more convenient than `defer()` when no non-blocking operation other than the generation of the client response is required.
+
+A basic exchange handler can then be created as follows:
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.response()
         .headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-        .body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello, world!", Charsets.DEFAULT)));
+        .body()
+            .raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello, world!", Charsets.DEFAULT)));
 };
 ```
 
@@ -1694,7 +1735,7 @@ The above code creates an exchange handler sending a `Hello, world!` message in 
 We might also want to send the response in a reactive way in a stream of data in case the entire response payload is not available right away, if it doesn't fit in memory or if we simply want to send a response in multiple parts as soon as they become available (eg. progressive display).
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     Flux<ByteBuf> dataStream = Flux.just(
         Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello", Charsets.DEFAULT)),
         Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(", world!", Charsets.DEFAULT))
@@ -1710,7 +1751,7 @@ ExchangeHandler<Exchange> handler = exchange -> {
 Request body can be handled in a similar way. The reactive API allows to process the payload of a request as the server receives it and therefore progressively build and send the corresponding response.
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.response()
         .body().raw().stream(exchange.request().body()
             .map(body -> Flux.from(body.raw().stream()).map(chunk -> Unpooled.unreleasableBuffer(Unpooled.buffer(4).writeInt(chunk.readableBytes()))))
@@ -1726,7 +1767,7 @@ In the above example, if a client sends a payload in the request, the server res
 HTML form data are sent in the body of a POST request in the form of key/value pairs encoded in [application/x-www-form-urlencoded format][form-urlencoded]. The resulting list of `Parameter` can be obtained as follows:
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.response()
         .body().raw().stream(Flux.from(exchange.request().body().get().urlEncoded().stream())
             .map(parameter -> Unpooled.copiedBuffer(Unpooled.copiedBuffer("Received parameter " + parameter.getName() + " with value " + parameter.getValue(), Charsets.DEFAULT)))
@@ -1739,7 +1780,7 @@ In the above example, for each form parameters the server responds with a messag
 A more traditional example though would be to obtained the map of parameters grouped by names (because multiple parameters with the same name can be sent):
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.response()
         .body().raw().stream(Flux.from(exchange.request().body().get().urlEncoded().stream())
         .collectMultimap(Parameter::getName)
@@ -1755,7 +1796,7 @@ ExchangeHandler<Exchange> handler = exchange -> {
 A [multipart/form-data][rfc-7578] request can be handled in a similar way. Form parts can be obtained as follows:
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.response()
         .body().raw().stream(Flux.from(exchange.request().body().get().multipart().stream())
             .map(part -> Unpooled.copiedBuffer(Unpooled.copiedBuffer("Received part " + part.getName(), Charsets.DEFAULT)))
@@ -1768,7 +1809,7 @@ In the above example, the server responds with the name of the part it just rece
 Multipart form data is most commonly used for uploading files over HTTP. Such handler can be implemented as follows using the [resource API](#resource-api) to store uploaded files:
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.response()
         .body().raw().stream(Flux.from(exchange.request().body().get().multipart().stream())                                                                                                                // 1
             .single()                                                                                                                                                                                       // 2
@@ -1807,7 +1848,7 @@ The `Flux.using()` construct is the reactive counterpart of a try-with-resource 
 A [resource](#resource-api) can be sent as a response to a request. When this is possible the server uses low-level ([zero-copy][zero-copy]) API for fast resource transfer.
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.response()
         .body().resource().value(new FileResource("/path/to/resource"));
 };
@@ -1822,7 +1863,7 @@ The media type of the resource is resolved using a [media type service](#media-t
 [Server-sent events][server-sent-events] provide a way to send server push notifications to a client. It is based on [chunked transfer encoding][chunked-transfer-encoding] over HTTP/1.x and regular streams over HTTP/2. The API provides an easy way to create SSE endpoints.
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.response().body().sse().from(
         (events, data) -> data.stream(Flux.interval(Duration.ofSeconds(1))
             .map(seq -> events.create(event -> event
@@ -1843,7 +1884,7 @@ In the above example, server-sent events are emitted every second and streamed t
 An error exchange handler is a particular exchange handler which is defined to handle server error exchange. In other words it is used by the server to handle exceptions thrown during the processing of a regular exchange in order to send an appropriate response to the client when this is still possible (ie. assuming response headers haven't been sent yet).
 
 ```java
-ErrorExchangeHandler<Throwable> errorHandler = errorExchange -> {
+ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler = errorExchange -> {
     if(errorExchange.getError() instanceof BadRequestException) {
         errorExchange.response()
             .headers(headers -> headers.status(Status.BAD_REQUEST))
@@ -1857,6 +1898,84 @@ ErrorExchangeHandler<Throwable> errorHandler = errorExchange -> {
 };
 ```
 
+#### Exchange interceptor
+
+An exchange handler can be intercepted using an `ExchangeInterceptor`. An interceptor can be used to preprocess an exchange in order to check preconditions and potentially respond to the client instead of the handler, initialize a context (tracing, metrics...), decorate the exchange...
+
+The `intercept()` method returns a `Mono` which makes it reactive and allows to invoke non-blocking operations before invoking the handler.
+
+An intercepted exchange handler can be created as follows:
+
+```java
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {...};
+
+ExchangeInterceptor<ExchangeContext, Exchange<ExchangeContext>> interceptor = exchange -> {
+    LOGGER.info("Path: " + exchange.request().getPath());
+
+    return Mono.just(exchange); // exchange is returned unchanged and will be processed by the handler
+}
+
+ReactiveExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> interceptedHandler = handler.intercept(interceptor);
+```
+
+An interceptor can also fully process an exchange, in which case it must return an empty `Mono` to stop the exchange handling chain.
+
+```java
+ExchangeInterceptor<ExchangeContext, Exchange<ExchangeContext>> interceptor = exchange -> {
+    // Check some preconditions...
+    if(...) {
+        exchange.response().headers(headers -> headers.status(Status.BAD_REQUEST)).body().empty();
+
+        return Mono.empty(); // the exchange has been processed by the interceptor and it won't be processed by the handler
+    }
+    return Mono.just(exchange);
+}
+```
+
+We can chain interceptors, by invoking `intercept()` method mutliple times:
+
+```java
+// exchange handling chain: interceptor3 -> interceptor2 -> interceptor1 -> handler
+handler.intercept(interceptor1).intercept(interceptor2).interceptor(3);
+```
+
+#### Exchange context
+
+A strongly typed context is exposed in the `Exchange`, it allows to store or access data and to provide contextual operations throughout the process of the exchange. The context is created by the server along with the exchange using a user specific `RootExchangeHandler`. It is then possible to *customize* the exchange with a specific strongly types context. 
+
+The advantage of this approach is that the compiler can perform static type checking but also to avoid the usage of an untyped map of attributes which is more performant and allow more control over contextual data. Since the developer is defining the context type, he can implement logic inside.
+
+A context can be used to store security information, tracing information, metrics... For instance, if we combine this with exchange interceptors:
+
+```java
+ExchangeHandler<SecurityContext, Exchange<SecurityContext>> handler = exchange -> {
+    if(exchange.context().isAuthenticated()) {
+        exchange.response()
+            .headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+            .body()
+                .raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello, world!", Charsets.DEFAULT)));
+    }
+    else {
+        exchange.response()
+            .headers(headers -> headers.status(Status.UNAUTHORIZED))
+            .body()
+                .empty();
+    }
+};
+
+ExchangeInterceptor<SecurityContext, Exchange<SecurityContext>> securityInterceptor = exchange -> {
+    // Authenticate the request
+    if(...) {
+        exchange.context().setAuthenticated(true);
+    }
+    return Mono.just(exchange);
+}
+
+ReactiveExchangeHandler<SecurityContext, Exchange<SecurityContext>> interceptedHandler = handler.intercept(securityInterceptor);
+```
+
+> The server relies on a `RootExchangeHandler` which extends `ExchangeHandler` with the `createContext()` method in order to create the context. The server actually uses exactly one root exchange handler and one exchange error handler to handle server requests and errors. Please refer to the [HTTP server](#http-server) section which explains this in details and describes how to setup the HTTP server.
+
 #### Misc
 
 The API is fluent and mostly self-describing as a result it should be easy to find out how to do something in particular, even so here are some miscellaneous elements.
@@ -1866,7 +1985,7 @@ The API is fluent and mostly self-describing as a result it should be easy to fi
 A particular request header can be obtained as follows, if there are multiple headers with the same name, the first one shall be returned:
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     ...
     // get the raw value of a header
     String someHeader = exchange.request().headers().get("some-header").orElseThrow(() -> new BadRequestException("Missing some-header"));
@@ -1883,7 +2002,7 @@ ExchangeHandler<Exchange> handler = exchange -> {
 All headers with a particular names can be obtained as follows:
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     ...
     // get all raw values defined for a given header
     List<String> someHeaderList = exchange.request().headers().getAll("some-header");
@@ -1900,7 +2019,7 @@ ExchangeHandler<Exchange> handler = exchange -> {
 Finally we can retrieve all headers as follows:
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     ...
     // get all headers with raw values
     List<Map.Entry<String, String>> requestHeaders = exchange.request().headers().getAll();
@@ -1919,7 +2038,7 @@ ExchangeHandler<Exchange> handler = exchange -> {
 Query parameters in the request can be obtained as follows:
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     ...
     // get a specific query parameter, if there are multiple parameters with the same name, the first one is returned
     int someInteger = exchange.request().queryParameters().get("some-integer").map(Parameter::asInteger).orElseThrow(() -> new BadRequestException("Missing some-integer"));
@@ -1938,7 +2057,7 @@ ExchangeHandler<Exchange> handler = exchange -> {
 Request cookie can be obtained in a similar way as follows:
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     ...
     // get a specific cookie, if there are multiple cookie with the same name, the first one is returned
     int someInteger = exchange.request().cookies().get("some-integer").map(Parameter::asInteger).orElseThrow(() -> new BadRequestException("Missing some-integer"));
@@ -1972,7 +2091,7 @@ The API also gives access to multiple request related information such as:
 Response headers can be added or set fluently using a configurator as follows:
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.response()
         .headers(headers -> headers
             .contentType(MediaTypes.TEXT_PLAIN)
@@ -1986,7 +2105,7 @@ ExchangeHandler<Exchange> handler = exchange -> {
 Response trailers can be set in the exact same way:
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.response()
         .trailers(headers -> headers
             .add("some-trailer", "abc")
@@ -2000,7 +2119,7 @@ ExchangeHandler<Exchange> handler = exchange -> {
 The response status can be set in the response headers following HTTP/2 specification as defined by [RFC 7540 Section 8.1.2.4][rfc-7540-8.1.2.4].
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.response()
         .headers(headers -> headers.status(Status.OK))
         .body().raw();
@@ -2012,7 +2131,7 @@ ExchangeHandler<Exchange> handler = exchange -> {
 Response cookies can be set fluently using a configurator as follows:
 
 ```java
-ExchangeHandler<Exchange> handler = exchange -> {
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.response()
         .cookies(cookies -> cookies
             .addCookie(cookie -> cookie.name("cookie1")
@@ -2183,19 +2302,19 @@ The HTTP server can log access and error events at `INFO` and `ERROR` level resp
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration xmlns="http://logging.apache.org/log4j/2.0/config"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://logging.apache.org/log4j/2.0/config https://raw.githubusercontent.com/apache/logging-log4j2/rel/2.14.0/log4j-core/src/main/resources/Log4j-config.xsd" 
-	status="WARN" shutdownHook="disable">
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://logging.apache.org/log4j/2.0/config https://raw.githubusercontent.com/apache/logging-log4j2/rel/2.14.0/log4j-core/src/main/resources/Log4j-config.xsd" 
+    status="WARN" shutdownHook="disable">
 
     <Appenders>
         <Console name="LogToConsole" target="SYSTEM_OUT">
-             <PatternLayout pattern="%d{DEFAULT} %highlight{%-5level} [%t] %c{1.} - %msg%n%ex"/>
+            <PatternLayout pattern="%d{DEFAULT} %highlight{%-5level} [%t] %c{1.} - %msg%n%ex"/>
         </Console>
     </Appenders>
     <Loggers>
-    	<!-- Disable HTTP server access and error logs -->
-    	<Logger name="io.inverno.mod.http.server.internal.AbstractExchange" additivity="false" level="off"  />
-    	
+        <!-- Disable HTTP server access and error logs -->
+        <Logger name="io.inverno.mod.http.server.internal.AbstractExchange" additivity="false" level="off"  />
+
         <Root level="info">
             <AppenderRef ref="LogToConsole"/>
         </Root>
@@ -2213,52 +2332,52 @@ We can also create a more *production-like* logging configuration for a standard
              <PatternLayout pattern="%d{DEFAULT} %highlight{%-5level} [%t] %c{1.} - %msg%n%ex"/>
         </Console>
         <!-- Error log -->
-		<RollingRandomAccessFile name="ErrorRollingFile" fileName="logs/error.log" filePattern="logs/error-%d{yyyy-MM-dd}-%i.log.gz">
-			<JsonTemplateLayout/>
-			<NoMarkerFilter onMatch="ACCEPT" onMismatch="DENY"/>
-			<Policies>
-				<TimeBasedTriggeringPolicy />
-				<SizeBasedTriggeringPolicy size="10 MB"/>
-			</Policies>
-			<DefaultRolloverStrategy>
-				<Delete basePath="logs" maxDepth="2">
-					<IfFileName glob="error-*.log.gz" />
-					<IfLastModified age="10d" />
-				</Delete>
-			</DefaultRolloverStrategy>
-		</RollingRandomAccessFile>
-		<Async name="AsyncErrorRollingFile">
-			<AppenderRef ref="ErrorRollingFile"/>
-		</Async>
-		<!-- Access log -->
-		<RollingRandomAccessFile name="AccessRollingFile" fileName="logs/access.log" filePattern="logs/access-%d{yyyy-MM-dd}-%i.log.gz">
-			<JsonTemplateLayout/>
-			<MarkerFilter marker="HTTP_ACCESS" onMatch="ACCEPT" onMismatch="DENY"/>
-			<Policies>
-				<TimeBasedTriggeringPolicy />
-				<SizeBasedTriggeringPolicy size="10 MB"/>
-			</Policies>
-			<DefaultRolloverStrategy>
-				<Delete basePath="logs" maxDepth="2">
-					<IfFileName glob="access-*.log.gz" />
-					<IfLastModified age="10d" />
-				</Delete>
-			</DefaultRolloverStrategy>
-		</RollingRandomAccessFile>
-		<Async name="AsyncAccessRollingFile">
-			<AppenderRef ref="AccessRollingFile"/>
-		</Async>
-	</Appenders>
-    
+        <RollingRandomAccessFile name="ErrorRollingFile" fileName="logs/error.log" filePattern="logs/error-%d{yyyy-MM-dd}-%i.log.gz">
+            <JsonTemplateLayout/>
+            <NoMarkerFilter onMatch="ACCEPT" onMismatch="DENY"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy>
+                <Delete basePath="logs" maxDepth="2">
+                    <IfFileName glob="error-*.log.gz" />
+                    <IfLastModified age="10d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingRandomAccessFile>
+        <Async name="AsyncErrorRollingFile">
+            <AppenderRef ref="ErrorRollingFile"/>
+        </Async>
+        <!-- Access log -->
+        <RollingRandomAccessFile name="AccessRollingFile" fileName="logs/access.log" filePattern="logs/access-%d{yyyy-MM-dd}-%i.log.gz">
+            <JsonTemplateLayout/>
+            <MarkerFilter marker="HTTP_ACCESS" onMatch="ACCEPT" onMismatch="DENY"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy>
+                <Delete basePath="logs" maxDepth="2">
+                    <IfFileName glob="access-*.log.gz" />
+                    <IfLastModified age="10d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingRandomAccessFile>
+        <Async name="AsyncAccessRollingFile">
+            <AppenderRef ref="AccessRollingFile"/>
+        </Async>
+    </Appenders>
+
     <Loggers>
-		<Logger name="io.inverno.mod.http.server.internal.AbstractExchange" additivity="false" level="info">
-			<AppenderRef ref="AsyncAccessRollingFile" level="info"/>
-			<AppenderRef ref="AsyncErrorRollingFile" level="error"/>
-		</Logger>
+        <Logger name="io.inverno.mod.http.server.internal.AbstractExchange" additivity="false" level="info">
+            <AppenderRef ref="AsyncAccessRollingFile" level="info"/>
+            <AppenderRef ref="AsyncErrorRollingFile" level="error"/>
+        </Logger>
 
         <Root level="info" additivity="false">
-			<AppenderRef ref="Console" level="info" />
-			<AppenderRef ref="AsyncErrorRollingFile" level="error"/>
+            <AppenderRef ref="Console" level="info" />
+            <AppenderRef ref="AsyncErrorRollingFile" level="error"/>
         </Root>
     </Loggers>
 </Configuration>
@@ -2339,7 +2458,7 @@ or
 
 #### Root handler
 
-The HTTP server defines a root exchange handler to handle all HTTP requests. By default, it uses a basic handler implementation which returns `Hello` when a request is made to the root path `/` and return (404) not found errors otherwise. 
+The HTTP server defines a root exchange handler to handle all HTTP requests. By default, it uses a basic `RootExchangeHandler` implementation which returns `Hello` when a request is made to the root path `/` and (404) not found error otherwise. By default no context is created and `exchange.context()` returns `null`.
 
 In order to use our own handler, we must define an exchange handler bean in the *app_http* module:
 
@@ -2351,13 +2470,14 @@ import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 
 @Bean
-public class CustomHandler implements ExchangeHandler<Exchange> {
+public class CustomHandler implements RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> {
 
     @Override
-    public void handle(Exchange exchange) throws HttpException {
+    public void handle(Exchange<ExchangeContext> exchange) throws HttpException {
         exchange.response()
             .body().raw()
             .value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello from app_http module!", Charsets.DEFAULT)));
@@ -2377,16 +2497,17 @@ import io.inverno.core.annotation.Bean;
 import io.inverno.core.v1.Application;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 
 public class Main {
 
     @Bean
-    public static interface Handler extends Supplier<ExchangeHandler<Exchange>> {}
+    public static interface RootHandler extends Supplier<RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>>> {}
 
     public static void main(String[] args) {
         Application.with(new App_http.Builder()
-            .setHandler(exchange -> {
+            .setRootHandler(exchange -> {
                 exchange.response()
                     .body().raw()
                     .value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello from main!", Charsets.DEFAULT)));
@@ -2401,9 +2522,9 @@ Note that this socket bean is optional since the root handler socket on the *htt
 
 #### Error handler
 
-The HTTP server defines an error exchange handler to handle exceptions thrown when processing HTTP requests when this is still possible, basically when the response headers haven't been sent yet to the client. By default, it uses a basic error handler implementation which handles standard `HttpException` and responds empty body messages with HTTP error status corresponding to the exception.
+The HTTP server defines an error exchange handler to handle exceptions thrown when processing HTTP requests when this is still possible, basically when the response headers haven't been sent yet to the client. By default, it uses a basic `ErrorExchangeHandler` implementation which handles standard `HttpException` and responds empty body messages with HTTP error status corresponding to the exception.
 
-This default implementation should be enough for a basic HTTP server but a custom handler can be provided to produce custom error pages for specific types of error. This can be done in the exact same way as the [root handler](#root-handler) by defining an error exchange handler bean:
+This default implementation should be enough for a basic HTTP server but a custom handler should be provided to produce custom error pages or handle specific types of error. This can be done in the exact same way as for the [root handler](#root-handler) by defining an error exchange handler bean:
 
 ```java
 package io.inverno.example.app_http;
@@ -2411,10 +2532,10 @@ package io.inverno.example.app_http;
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ErrorExchangeHandler;
 
 @Bean
-public class CustomErrorHandler implements ExchangeHandler<ErrorExchange<Throwable>> {
+public class CustomErrorHandler implements ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> {
 
     @Override
     public void handle(ErrorExchange<Throwable> exchange) throws HttpException {
@@ -2444,16 +2565,18 @@ import io.inverno.core.annotation.Bean;
 import io.inverno.core.v1.Application;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 
 public class Main {
 
     @Bean
-    public static interface Handler extends Supplier<ExchangeHandler<Exchange>> {}
+    public static interface RootHandler extends Supplier<ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>>> {}
     
     @Bean
-    public static interface ErrorHandler extends Supplier<ErrorExchangeHandler<Throwable>> {}
+    public static interface ErrorHandler extends Supplier<ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>>> {}
 
     public static void main(String[] args) {
         Application.with(new App_http.Builder()
@@ -2584,16 +2707,18 @@ import io.inverno.core.annotation.Bean;
 import io.inverno.core.v1.Application;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 
 public class Main {
 
     @Bean
-    public static interface Handler extends Supplier<ExchangeHandler<Exchange>> {}
+    public static interface RootHandler extends Supplier<ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>>> {}
     
     @Bean
-    public static interface ErrorHandler extends Supplier<ErrorExchangeHandler<Throwable>> {}
+    public static interface ErrorHandler extends Supplier<ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>>> {}
 
     public static void main(String[] args) {
         Application.with(new App_http.Builder()
@@ -2614,7 +2739,7 @@ public class Main {
                     )
                 )
             )
-            .setHandler(exchange -> {
+            .setRootHandler(exchange -> {
                 exchange.response()
                     .body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello from main!", Charsets.DEFAULT)));
             })
@@ -2638,18 +2763,18 @@ Hello from main!
 
 ## Web
 
-The Inverno *web* module provides extended functionalities on top of the *http-server* module for developing Web and RESTfull applications.
+The Inverno *web* module provides extended functionalities on top of the *http-server* module for developing high-end Web and RESTfull applications.
 
 It especially provides:
 
-- HTTP request routing
+- advanced HTTP request routing and interception
 - content negotiation
 - automatic message payload conversion
 - path parameters
 - static handler for serving static resources
 - version agnostic [WebJars][webjars] support
-- easy Web/REST controller development
-- [OpenAPI][open-api] specifications generation using Web controllers JavaDoc comments
+- smooth Web/REST controller development
+- [OpenAPI][open-api] specifications generation using Web/REST controllers JavaDoc comments
 - SwaggerUI integration
 - an Inverno compiler plugin providing static validation of the routes and generation of Web router configurers
 
@@ -2695,56 +2820,32 @@ compile 'io.inverno.mod:inverno-web:${VERSION_INVERNO_MODS}'
 
 ### Routing
 
-The *web* module also defines an API for routing HTTP requests to the right handlers. 
+The *web* module defines an API for routing HTTP requests to the right handlers. 
 
-A **router** is a standard server exchange handler as defined by the *http-server* module API which can be used as root handler or error handler in the HTTP server, its role is to route an exchange to a handler based on a set of rules applied to the exchange.
+A **router** is a server exchange handler as defined by the *http-server* module API which can be used as root handler or error handler in the HTTP server, its role is to route an exchange to a handler based on a set of rules applied to the exchange.
 
-A **route** specifies the rules that an exchange must matched to be routed to a particular handler.
+A **route** specifies the rules that an exchange must matched to be routed to a particular handler. A **route interceptor** specifies the rules that a route must match to be intercepted by a particular exchange interceptor.
 
-A **route manager** is used to manage the routes in a router or, more explicitly, to list, create, enable or disable routes in a router.
+A **route manager** is used to manage the routes in a router or, more explicitly, to list, create, enable or disable routes in a router. An **interceptor manager** is used to configure the route interceptors in an intercepted router.
 
-> The module defines a high level routing API with `Router`, `Route`, `RouteManager` and `RouterConfigurer` that can be used as a base to implement custom routing implementations in addition to the provided Web and error routing implementations. Nevertheless, it is more of a guideline, one can choose a totally different approach to implement routing, in the end the HTTP server expects a `ExchangeHandler<ByteBuf>` what is done inside is completely opaque, the Web API only shows one way to do it.
+> The module defines a high level SPI in `io.inverno.mod.spi` package that can be used as a base to implement custom routing implementations in addition to the provided Web routing implementations. Nevertheless, it is more of a guideline, one can choose a totally different approach to implement routing, in the end the HTTP server expects a `RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>>` what is done inside is completely opaque, the SPI only shows one way to do it.
 
-#### Web routing
+A `WebRouter` is used to route a `WebExchange` to the right `WebExchangeHandler`, it implements `RootExchangeHandler` and it is typically used as root handler in the HTTP server.
 
-A `WebRouter` is used to route a `WebExchange` to the right `WebExchangeHandler`, it implements `ExchangeHandler<ByteBuf>` and it is typically used as root handler in the HTTP server.
+An `ErrorRouter` is used to route an `ErrorWebExchange` to the right `ErrorWebExchangeHandler` when an exception is thrown during the normal processing of an exchange, it implements `ErrorExchangeHandler` and it is typically used as error handler in the HTTP server.
 
-##### Web Server exchange
+#### Web exchange
 
-The *web* module API extends the [server exchange API](#http-server-exchange-api) defined in the *http-server* module and defines the server `WebExchangeHandler` to handle a server `WebExchange` composed of the `WebRequest` and `WebResponse` pair in a HTTP communication between a client and a server. These interfaces respectively extends the `ExchangeHandler`, `Exchange`, `Request` and `Response` interfaces which are defined in the *http-server* module. A Web exchange handler is typically attached to one or more Web routes defined in a `WebRouter`.
+The *web* module API extends the [server exchange API](#http-server-exchange-api) defined in the *http-server* module. It defines the server `WebExchangeHandler` to handle a server `WebExchange` composed of a `WebRequest`/`WebResponse` pair in a HTTP communication between a client and a server. These interfaces respectively extends the `ExchangeHandler`, `Exchange`, `Request` and `Response` interfaces defined in the *http-server* module. A Web exchange handler is typically attached to one or more Web routes defined in a `WebRouter`.
 
-###### Exchange attributes
-
-Attributes can be set on a `WebExchange` to propagate contextual information such as a security or functional context in a chain of Web exchange handlers:
-
-```java
-WebExchangeHandler<WebExchange> handler = exchange -> {
-    exchange.<SecurityContext>getAttribute("security_context")
-        .filter(SecurityContext::isAuthenticated)
-        .ifPresentOrElse(
-            securityContext -> {
-                ...
-            },
-            () -> exchange.response().headers(headers -> headers.status(Status.UNAUTHORIZED)).body().empty()
-        );
-};
-
-WebExchangeHandler<WebExchange> securityInterceptor = exchange -> {
-    SecurityContext securityContext = ...;
-    exchange.setAttribute("security_context", securityContext);
-    
-    handler.handle(exchange);
-};
-```
-
-###### Path parameters
+##### Path parameters
 
 Path parameters are exposed in the `WebRequest`, they are extracted from the requested path by the [Web router](#web-router) when the handler is attached to a route matching a parameterized path as defined in a [URI builder](#uris).
 
 For instance, if the handler is attached to a route matching `/book/{id}`, the `id` path parameter can be retrieved as follows:
 
 ```java
-WebExchangeHandler<WebExchange> handler = exchange -> {
+WebExchangeHandler<ExchangeContext> handler = exchange -> {
     exchange.request().pathParameters().get("id")
         .ifPresentOrElse(
             id -> {
@@ -2755,12 +2856,12 @@ WebExchangeHandler<WebExchange> handler = exchange -> {
 };
 ```
 
-###### Request body decoder
+##### Request body decoder
 
 The request body can be decoded based on the content type defined in the request headers.
 
 ```java
-WebExchangeHandler<WebExchange> handler = exchange -> {
+WebExchangeHandler<ExchangeContext> handler = exchange -> {
     Mono<Result> storeBook = exchange.request().body().get()
         .decoder(Book.class)
         .one()
@@ -2779,7 +2880,7 @@ As you can see in the above example the decoder is fully reactive, a request pay
 Decoding multiple payload objects is indicated when a client streams content to the server. For instance, it can send a request with `application/x-ndjson` content type in order to send multiple messages in a single request. Since everything is reactive the server doesn't have to wait for the full request and it can process a message as soon as it is received. What is remarkable is that the code is largely unchanged.
 
 ```java
-WebExchangeHandler<WebExchange> handler = exchange -> {
+WebExchangeHandler<ExchangeContext> handler = exchange -> {
     Flux<Result> storeBook = exchange.request().body().get()
         .decoder(Book.class)
         .many()
@@ -2792,7 +2893,7 @@ WebExchangeHandler<WebExchange> handler = exchange -> {
 Conversion of a multipart form data request body is also supported, the payload of each part being decoded independently based on the content type of the part. For instance we can upload multiple books in multiple files in a `multipart/form-data` request and decode them on the fly as follows:
 
 ```java
-WebExchangeHandler<WebExchange> handler = exchange -> {
+WebExchangeHandler<ExchangeContext> handler = exchange -> {
     exchange.response()
         .body().raw().stream(Flux.from(exchange.request().body().get().multipart().stream())                          // 1
             .flatMap(part -> part.decoder(Book.class).one())                                                          // 2
@@ -2811,12 +2912,12 @@ In the previous example:
 
 All this process is done in a reactive way, the first chunk of response can be sent before all parts have been processed.
 
-###### Response body encoder
+##### Response body encoder
 
 As for the request body, the response body can be encoded based on the content type defined in the response headers. Considering previous example we can do the following:
 
 ```java
-WebExchangeHandler<WebExchange> handler = exchange -> {
+WebExchangeHandler<ExchangeContext> handler = exchange -> {
     Mono<Result> storeBook = exchange.request().body().get()
         .decoder(Book.class)
         .one()
@@ -2834,7 +2935,7 @@ When invoking the `encoder()` method, a [media type converter](#media-type-conve
 A single object is encoded by invoking method `one()` on the encoder or multiple objects can be encoded by invoking method `many()` on the encoder. Returning multiple objects in a stream is particularly suitable to implement progressive display in a Web application, for example to display search results as soon as some are available.
 
 ```java
-WebExchangeHandler<WebExchange> handler = exchange -> {
+WebExchangeHandler<ExchangeContext> handler = exchange -> {
     Flux<SearchResult> searchResults = ...;
     exchange.response()
         .headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_NDJSON))
@@ -2844,16 +2945,16 @@ WebExchangeHandler<WebExchange> handler = exchange -> {
 };
 ```
 
-##### Web router
+#### Web route
 
-A `WebRouter` routes a Web server exchange to an exchange handler attached to a Web route by matching it against a combination of routing rules specified in the route. A Web route can combine the following routing rules which are matched in that order: the path, method and content type of the request, the media ranges and language ranges accepted by the client. For instance, the Web router matches an exchange against the path routing rule first, then the method routing rule... Multiples routes can then match a given exchange but only one will be retained to actually process the exchange which is the one matching the highest routing rules.
+A Web route specifies the routing rules and the exchange handler that shall be invoked to handle a matching exchange. It can combine the following routing rules which are matched in that order: the path, method and content type of the request, the media ranges and language ranges accepted by the client. For instance, a Web exchange is matched against the path routing rule first, then the method routing rule... Multiples routes can then match a given exchange but only one will be retained to actually process the exchange which is the one matching the highest routing rules.
 
 If a route doesn't define a particular routing rule, the routing rule is simply ignored and matches all exchanges. For instance, if a route doesn't define any method routing rule, exchanges are matched regardless of the method.
 
-The following is an example of a Web route which matches all exchanges, this is the simplest route that can be defined on a router:
+The `WebRoutable` interface defines a fluent API for the definition of Web routes. The following is an example of the definition of a Web route which matches all exchanges, this is the simplest route that can be defined:
 
 ```java
-router
+routable
     .route()                                                   // 1
         .handler(exchange -> {                                 // 2
             exchange.response()
@@ -2866,15 +2967,13 @@ router
         });
 ```
 
-1. A new `WebRouteManager` instance is obtained from the Web router to configure a `WebRoute`
+1. A new `WebRouteManager` instance is obtained to configure a `WebRoute`
 2. We only define the handler of the route as a result any exchange might be routed to that particular route unless a more specific route matching the exchange exists.
 
-> A `WebRouter` is exposed in the *web* module and wired to the *http-server* module to override the HTTP server's root handler, it can be configured in a `WebRouterConfigurer` as defined in the [Web Server documentation](#web-server).
-
-An exchange handler can be attached to multiple routes at once by providing multiple routing rules to the route manager, the following example actually results in 8 individual routes being created in the Web router:
+An exchange handler can be attached to multiple routes at once by providing multiple routing rules to the route manager, the following example actually results in 8 individual routes being defined:
 
 ```java
-router
+routable
     .route()
         .path("/doc")
         .path("/document")
@@ -2887,10 +2986,10 @@ router
         });
 ```
 
-The Web routes defined in a Web router can be queried as they are defined by invoking the `findRoutes()` method instead of the `handler()` method on the route manager. The following example select all routes matching `GET` method:
+The Web routable also allows to select all routes that matches the rules defined in a Web route manager using the `findRoutes()` method. The following example select all routes matching `GET` method:
 
 ```java
-Set<WebRoute<WebExchange>> routes = router
+Set<WebRoute<ExchangeContext>> routes = router
     .route()
         .method(Method.GET)
         .findRoutes();
@@ -2900,19 +2999,19 @@ It is also possible to enable, disable or remove a set of routes in a similar wa
 
 ```java
 // Disables all GET routes
-router
+routable
     .route()
         .method(Method.GET)
         .disable();
 
 // Enables all GET routes
-router
+routable
     .route()
         .method(Method.GET)
         .enable();
 
 // remove all GET routes
-router
+routable
     .route()
         .method(Method.GET)
         .remove();
@@ -2922,7 +3021,7 @@ Individual routes can also be enabled, disabled or removed as follows:
 
 ```java
 // Disables all GET routes producing 'application/json'
-router
+routable
     .route()
         .method(Method.GET)
         .findRoutes()
@@ -2931,7 +3030,7 @@ router
         .forEach(WebRoute::disable);
 
 // Enables all GET routes producing 'application/json'
-router
+routable
     .route()
         .method(Method.GET)
         .findRoutes()
@@ -2940,7 +3039,7 @@ router
         .forEach(WebRoute::enable);
 
 // Removes all GET routes producing 'application/json'
-router
+routable
     .route()
         .method(Method.GET)
         .findRoutes()
@@ -2949,14 +3048,36 @@ router
         .forEach(WebRoute::remove);
 ```
 
-###### Path routing rule
+Routes can also be configured as blocks in reusable `WebRoutesConfigurer` by invoking `configureRoutes()` methods:
+
+```java
+WebRoutesConfigurer<ExchangeContext> public_routes_configurer = routable -> {
+    routable
+        .route()
+        ...
+};
+
+WebRoutesConfigurer<ExchangeContext> private_routes_configurer = routable -> {
+    routable
+        .route()
+        ...
+};
+
+routable
+    .configureRoutes(public_routes_configurer)
+    .configureRoutes(private_routes_configurer)
+    .route()
+    ...
+```
+
+##### Path routing rule
 
 The path routing rule matches exchanges whose request targets a specific path or a path that matches against a particular pattern. The path or path pattern of a routing rule must be absolute (ie. start with `/`).
 
 We can for instance define a route to handle all requests to `/bar/foo` as follows:
 
 ```java
-router
+routable
     .route()
         .path("/foo/bar")
         .handler(exchange -> {
@@ -2967,7 +3088,7 @@ router
 The route in the preceding example specifies an exact match for the exchange request path, it is also possible to make the route match the path with or without a trailing slash as follows:
 
 ```java
-router
+routable
     .route()
         .path("/foo/bar", true)
         .handler(exchange -> {
@@ -2975,12 +3096,12 @@ router
         });
 ```
 
-A path pattern following the [parameterized URIs notation](#uris) can also be specified to create a routing rule matching multiple paths. This also allows to specify [path parameters](#path-parameters) that can be retrieved from the `WebExchange`.
+A path pattern following the parameterized or path pattern [URIs notation](#uris) can also be specified to create a routing rule matching multiple paths. This also allows to specify [path parameters](#path-parameters) that can be retrieved from the `WebExchange`.
 
-In the following example, the route will match exchanges whose request path is `/book/1`, `/book/abc`... and store the extracted parameter value in path parameter `id`:
+In the following example, the route will match all exchanges whose request path is `/book/1`, `/book/abc`... and store the extracted parameter value in path parameter `id`:
 
 ```java
-router
+routable
     .route()
         .path("/book/{id}")
         .handler(exchange -> {
@@ -2991,7 +3112,7 @@ router
 A parameter is matched against a regular expression set to `[^/]*` by default which is why previous route does not match `/book/a/b`. Parameterized URIs allow to specify the pattern matched by a particular path parameter using `{[<name>][:<pattern>]}` notation, we can then put some constraints on path parameters value. For instance, we can make sure the `id` parameter is a number between 1 and 999:
 
 ```java
-router
+routable
     .route()
         .path("/book/{id:[1-9][0-9]{0,2}}")
         .handler(exchange -> {
@@ -3002,7 +3123,7 @@ router
 If we just want to match a particular path without extracting path parameters, we can omit the parameter name and simply write:
 
 ```java
-router
+routable
     .route()
         .path("/book/{}")
         .handler(exchange -> {
@@ -3010,14 +3131,14 @@ router
         });
 ```
 
-###### Method routing rule
+##### Method routing rule
 
 The method routing rule matches exchanges that have been sent with a particular HTTP method.
 
 In order to handle all `GET` exchanges, we can do:
 
 ```java
-router
+routable
     .route()
         .method(Method.GET)
         .handler(exchange -> {
@@ -3025,14 +3146,14 @@ router
         });
 ```
 
-###### Consume routing rule
+##### Consume routing rule
 
 The consume routing rule matches exchanges whose request body content type matches a particular media range as defined by [RFC 7231 Section 5.3.2][rfc-7231-5.3.2].
 
-For instance, in order to match all exchanges with a `application/json` request payload, we can do:
+For instance, in order to match all exchanges with an `application/json` request payload, we can do:
 
 ```java
-router
+routable
     .route()
         .method(Method.POST)
         .consumes(MediaTypes.APPLICATION_JSON)
@@ -3044,7 +3165,7 @@ router
 We can also specify a media range to match, for example, all exchanges with a `*/json` request payload:
 
 ```java
-router
+routable
     .route()
         .method(Method.POST)
         .consumes("*/json")
@@ -3053,7 +3174,7 @@ router
         });
 ```
 
-The two previous routes are different and as a result they can be both defined in the router, a content negotiation algorithm is used to determine which route should process a particular exchange as defined in [RFC 7231 Section 5.3][rfc-7231-5.3].
+The two previous routes are different and as a result they can be both defined, a content negotiation algorithm is used to determine which route should process a particular exchange as defined in [RFC 7231 Section 5.3][rfc-7231-5.3].
 
 Routes are sorted by consumed media ranges as follows:
 
@@ -3061,14 +3182,14 @@ Routes are sorted by consumed media ranges as follows:
 - type and subtype wildcards are considered after: `a/b` > `a/*` > `*/b` > `*/*`
 - parameters are considered last, the most precise media range which is the one with the most parameters with values gets the highest priority (eg. `application/json;p1=a;p2=2` > `application/json;p1=b` > `application/json;p1`)
 
-The Web router then selects the first route whose media range matches the request `content-type` header field.
+The first route whose media range matches the request's `content-type` header field is selected.
 
-If we consider previous routes, an exchange with a `application/json` request payload will be matched by the first route while an exchange with a `text/json` request will be matched by the second route.
+If we consider previous routes, an exchange with an `application/json` request payload will be matched by the first route while an exchange with a `text/json` request will be matched by the second route.
 
 A media range can also be parameterized which allows for interesting setup such as:
 
 ```java
-router
+routable
     .route()
         .path("/document")
         .method(Method.POST)
@@ -3077,7 +3198,7 @@ router
             ...
         });
     
-router
+routable
     .route()
         .path("/document")
         .method(Method.POST)
@@ -3086,7 +3207,7 @@ router
             ...
         });
 
-router
+routable
     .route()
         .path("/document")
         .method(Method.POST)
@@ -3102,16 +3223,16 @@ If there is no route matching the content type of a request of an exchange match
 
 > As described before, if no route is defined with a consume routing rule, exchanges are matched regardless of the request content type, content negotiation is then eventually delegated to the handler which must be able to process the payload whatever the format.
 
-###### Produce routing rule
+##### Produce routing rule
 
 The produce routing rule matches exchanges based on the acceptable media ranges supplied by the client in the `accept` header field of the request as defined by [RFC 7231 Section 5.3.2][rfc-7231-5.3.2].
 
-A HTTP client (eg. Web browser) typically sends a `accept` header to indicate the server which response media types are acceptable in the response. The Web router determines the best matching route based on the media types produced by the routes matching previous routing rules.
+A HTTP client (eg. Web browser) typically sends a `accept` header to indicate the server which response media types are acceptable in the response. The best matching route is determined based on the media types produced by the routes matching previous routing rules.
 
 We can for instance define the following routes:
 
 ```java
-router
+routable
     .route()
         .path("/doc")
         .produces(MediaTypes.APPLICATION_JSON)
@@ -3119,14 +3240,13 @@ router
             ...
         });
     
-router
+routable
     .route()
         .path("/doc")
         .produces(MediaTypes.TEXT_XML)
         .handler(exchange -> {
             ...
         });
-
 ```
 
 Now let's consider the following `accept` request header field:
@@ -3135,7 +3255,7 @@ Now let's consider the following `accept` request header field:
 accept: application/json, application/xml;q=0.9, */xml;q=0.8
 ```
 
-This field basically tells the server that the client wants to receive first a `application/json` response payload, if not available a `application/xml` response payload and if not available any `*/xml` response payload.
+This field basically tells the server that the client wants to receive first an `application/json` response payload, if not available an `application/xml` response payload and if not available any `*/xml` response payload.
 
 The content negotiation algorithm is similar as the one described in the [consume routing rule](#consume-routing-rule), it is simply reversed in the sense that it is the acceptable media ranges defined in the `accept` header field that are sorted and the route producing the media type matching the media range with the highest priority is selected.
 
@@ -3157,11 +3277,11 @@ If there is no route producing a media type that matches any of the acceptable m
 
 > As described before, if no route is defined with a produce routing rule, exchanges are matched regardless of the acceptable media ranges, content negotiation is then eventually delegated to the handler which becomes responsible to return an acceptable response to the client. 
 
-###### Language routing rule
+##### Language routing rule
 
 Finally, the language routing rule matches exchanges based on the acceptable languages supplied by client in the `accept-language` header field of the request as defined by [RFC 7231 Section 5.3.5][rfc-7231-5.3.5].
 
-A HTTP client (eg. Web browser) typically sends a `accept-language` header to indicate the server which languages are acceptable for the response. The Web router determines the best matching route based on the language tags produced by the routes matching previous routing rules.
+A HTTP client (eg. Web browser) typically sends a `accept-language` header to indicate the server which languages are acceptable for the response. The best matching route is determined based on the language tags produced by the routes matching previous routing rules.
 
 We can defines the following routes to return a particular resource in English or in French:
 
@@ -3188,7 +3308,7 @@ The content negotiation is similar to the one described in the [produce routing 
 - quality value is compared first as defined by [RFC 7231 Section 5.3.1][rfc-7231-5.3.1], the default quality value is 1.
 - primary and secondary language tags and wildcards are considered after: `fr-FR` > `fr` > `*`
 
-The Web router then selects the route whose produced language tag matches the language range with the highest priority.
+The route whose produced language tag matches the language range with the highest priority is selected.
 
 As for the produce routing rule, if there is no route defined with a language tag that matches any of the acceptable language ranges, then a (406) not acceptable error is returned. However, unlike the produce routing rule, a default route can be defined to handle such unmatched exchanges.
 
@@ -3209,11 +3329,151 @@ A request with the following `accept-language` header field is then matched by t
 accept-language: it-IT
 ```
 
-#### Error routing
+#### Web route interceptor
 
-An `ErrorRouter` is used to route an `ErrorWebExchange` to the right `ErrorWebExchangeHandler` when an exception is thrown during the normal processing of an exchange, it implements `ExchangeHandler<ErrorExchange<Throwable>>` and it is typically used as error handler in the HTTP server.
+A Web route interceptor specifies the rules and the exchange interceptor that shall be applied to a matching route. It can combine the same rules as for the definition of a route: the path and method of the route, media range matching the content consumed by the route, media range and language range matching the media type and language produced by the route.
 
-##### Error web exchange
+The `WebExchangeInterceptor` interface extends the `ExchangeInterceptor` interface defined in the *http-server* module. It can be applied to one or more routes.
+
+The `WebInterceptable` interface defines a fluent API similar to the `WebRoutable` for the definition of Web interceptors. The following is an example of the definition of a Web route interceptor that is applied to routes matching `GET` methods and consuming `applicatio/json` payloads:
+
+```java
+interceptable.
+    .intercept()
+        .method(Method.GET)
+        .consumes(MediaTypes.APPLICATION_JSON)
+        .intercept(exchange -> {
+            LOGGER.info("Intercepted!");
+            return Mono.just(exchange);
+        });
+```
+
+As for an exchange handler, an exchange interceptor can be applied to multiple routes at once by providing multiple rules to the route interceptor manager, the following example is used to apply a route interceptor to `/doc` and `/document` routes which consumes `application/json` or `application/xml` payloads:
+
+```java
+interceptable
+    .intercept()
+        .path("/doc")
+        .path("/document")
+        .consumes(MediaTypes.APPLICATION_JSON)
+        .consumes(MediaTypes.APPLICATION_XML)
+        .intercept(exchange -> {
+            ...
+        });
+```
+
+The list of exchange interceptors applied to a route can be obtained from a `WebRoute` instance:
+
+```java
+// Use a WebRoutable to find a WebRoute
+WebRoute<ExchangeContext> route = ...
+
+List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>> routeInterceptors = route.getInterceptors();
+```
+
+In a similar way, it is possible to explicitly set exchange interceptors on a `WebRoute` instance:
+
+```java
+Set<WebRoute<ExchangeContext>> routes = router.getRoutes();
+
+WebExchangeInterceptor<ExchangeContext> serverHeaderInterceptor = exchange -> {
+    exchange.response()
+        .headers(headers -> headers.set(Headers.NAME_SERVER, "Inverno Web Server");
+
+    return Mono.just(exchange);
+};
+
+WebExchangeInterceptor<ExchangeContext> securityInterceptor = exchange -> {...};
+
+routes.stream().forEach(route -> route.setInterceptors(List.of(serverHeaderInterceptor, securityInterceptor));
+```
+
+Route interceptors can also be configured as blocks in reusable `WebInterceptorsConfigurer` by invoking `configureInterceptors()` methods:
+
+```java
+WebInterceptorsConfigurer<ExchangeContext> security_interceptors_configurer = interceptable -> {
+    interceptable
+        .intercept()
+        ...
+};
+
+WebInterceptorsConfigurer<ExchangeContext> tracing_interceptors_configurer = interceptable -> {
+    interceptable
+        .intercept()
+        ...
+};
+
+interceptable
+    .configureInterceptors(public_routes_configurer)
+    .configureInterceptors(private_routes_configurer)
+    .route()
+    ...
+```
+
+The definition of an interceptor is very similar to the definition of a route, however there are some peculiarities. For instance, a route can only produce one particular type of content in one particular language that are matched by a route interceptor with matching media and language ranges.
+
+For performance reasons, route interceptor's rules should not be evaluated each time an exchange is processed but once when a route is defined. Unfortunately, this is not always possible and sometimes some rules have to be evaluated when processing the exchange. This happens when the difference between the set of exhanges matched by a route and the set of exchanges matched by a route interceptor is not empty which basically means that the route matches more exchanges than the route interceptor.
+
+In these situations, the actual exchange interceptor is wrapped in order to evaluate the problematic rule on each exchange. A typical example is when a route defines a path pattern (eg. `/path/*.jsp`) that matches the specific path of a route interceptor (eg. `/path/private.jsp`), the exchange interceptor must only be invoked on an exchange that matches the route interceptor's path. This can also happens with method and consumes rules.
+
+> Path patterns are actually very tricky to match *offline*, the `WebInterceptedRouter` implementation uses the `URIPattern#includes()` to determine whether a given URIs set is included into another, when this couldn't be determine with certainty, the exchange interceptor is wrapped. Please refer to the [URIs](#uris) documentation for more information.
+
+> Particular care must be taken when listing the exchange interceptor attached to a route as these are the actual interceptors and not the wrappers. If you set interceptors explicitly on a `WebRoute` instance, they will be invoked whenever the route is invoked.
+
+When a route interceptor is defined with specific produce and language rules, it can only be applied on routes that actually specify matching produce and language rules. Since there is no way to determine which content type and language will be produced by an exchange handler, it is not possible to determine whether an exchange interceptor should be invoked prior to the exchange handler unless specified explicitly on the route. In such case, a warning will be logged to indicate that the interceptor is ignored for the route due to missing produce or language rules on the route.
+
+#### Web router
+
+The `WebRouter` extends both `WebRoutable` and `WebInterceptable` interfaces. As such routes and route interceptors are defined on the `WebRouter` implementation exposed in the *web* module and wired to the *http-server* module to override the HTTP server's root handler. 
+
+In addition to `configureRoutes()` and `configureInterceptors()` methods defined by `WebRoutable` and `WebInterceptable`, the `WebRouter` interface provides `configure()` methods that accept `WebRouterConfigurer` to fluently apply blocks of configuration.
+
+```java
+WebRouterConfigurer<ExchangeContext> configurer = ...
+List<WebRouterConfigurer<ExchangeContext>> configurers = ...
+
+router
+    .configure(configurers)
+    .configure(configurer)
+    .route()
+        .handler(exchange -> ...)
+```
+
+> Please refer to the [Web Server documentation](#web-server) to see in details how to configure Web server routes.
+
+Route interceptors are only applied to routes defined on a `WebInterceptedRouter` which is obtained by defining one or more route interceptor on the web router. The following example shows how it works:
+
+```java
+router
+    .route()
+        .path("/public")
+        .handler(exchange -> {...})
+    .intercept()
+        .interceptor(exchange -> {...})
+    .route()
+        .path("/private")
+        .handler(exchange -> {...})
+    .getRouter()
+    .route()
+        .path("/static/**")
+        .handler(new StaticHandler(resourceService.getResource("file:/path/to/web-root/")))
+```
+
+In the preceding snippet, only `/private` route is intercepted, both `/public` and `/static/**` are not intercepted since they are defined on the Web router which is not intercepted. Note the call to  `getRouter()` method which returns the originating web router instance and basically *rollbacks* the interceptors configuration.
+
+A Web intercepted router can also be used to apply interceptors to all routes previsously defined in a Web router.
+
+```java
+router
+    .intercept()
+        .method(Method.GET)
+        .interceptor(exchange -> {...})
+    .applyInterceptors()
+```
+
+In the previous example, all `GET` routes previsously defined in the Web router will be intercepted.
+
+#### Error web exchange
 
 The *web* module API extends the [server exchange API](#http-server-exchange-api) defined in the *http-server* module and defines the server `ErrorWebExchangeHandler` to handle a server `ErrorWebExchange`. These interfaces respectively extends the `ExchangeHandler` and `Exchange` interfaces which are defined in the *http-server* module. An error Web exchange handler is typically attached to one or more error Web routes defined in an `ErrorWebRouter`.
 
@@ -3232,9 +3492,13 @@ errorRouter
         );
 ```
 
-##### Error router
+#### Error router
 
 An `ErrorWebRouter` routes an error exchange to an error exchange handler attached to an `ErrorWebRoute` by matching it against a combination of routing rules specified in the route. An error route can combine the following routing rules which are matched in that order: the type of the error, the media ranges and language ranges accepted by the client. For instance, the error router matches an error exchange against the error type routing rule first, then the produce routing rule... Multiples routes can then match a given exchange but only one will be retained to actually process the exchange which is the one matching the highest routing rules.
+
+Unlike the `WebRouter`, the `ErrorWebRouter` only extends `WebRoutable` and doesn't extends `WebInterceptable`, as a result error web route can't be intercepted.
+
+> The choice to prevent error web route to be intercepted has been motivated by the fact that error web routes are usually invoked on errors thrown during the normal processing of an exchange ie. after the exchange handler and then route interceptors have been invoked.
 
 If a route doesn't define a particular routing rule, the routing rule is simply ignored and matches all exchanges. For instance, if a route doesn't define any error type routing rule, it matches error exchanges regardless of the error.
 
@@ -3359,34 +3623,6 @@ This is particularly useful to returned specific error responses to a particular
 
 The language routing rule, when applied to an error route behaves exactly the same as for a [Web route](#language-routing-rule). It allows to define error handlers that produce responses with different languages based on the set of language range accepted by the client fallbacking to the default route when content negotiation did not give any match.
 
-### Static handler
-
-The `StaticHandler` is a specific `WebExchangeHandler<WebExchange>` implementation that can be used to define routes for serving static resources resolved with the [Resource API](#resource-api).
-
-For instance, we can create a route to serve files stored in a `web-root` directory as follows:
-
-```java
-router
-    .route()
-        .path("/static/{path:.*}")                                 // 1
-        .handler(new StaticHandler(new FileResource("web-root/"))) // 2
-```
-
-1. The path must be parameterized with a `path` parameter which can include `/`, for the static handler to be able to determine the relative path of the resource in the `web-root` directory
-2. The base resource is defined directly as a `FileResource`, although it is also possible to use a `ResourceService` to be more flexible in terms of the kind of resource
-
-The static handler relies on the resource abstraction to resolve resources, as a result, these can be located on the file system, on the class path, on the module path...
-
-The static handler also looks for a welcome page when a directory resource is requested. For instance considering the following `web-root` directory:
-
-```plaintext
-web-root/
-├── index.html
-└── snowflake.svg
-```
-
-A request to `http://127.0.0.1/static/` would return the `index.html` file.
-
 ### Web Server
 
 The *web* module composes the *http-server* module and as a result it requires a `NetService` and a `ResourceService`. A set of [media type converters](#media-type-converter) is also required for message payload conversion. All these services are provided by the *boot* module, so one way to create an application with a Web server is to create an Inverno module composing *boot* and *web* modules.
@@ -3503,8 +3739,6 @@ public interface App_webConfiguration {
 
 The Web server can then be configured. For instance, we can enable HTTP/2 over cleartext, TLS, HTTP compression... as described in the [http-server module documentation](#http-server-1).
 
-For instance:
-
 ```java
 package io.inverno.example.app_web;
 
@@ -3534,7 +3768,7 @@ public class Main {
 
 As explained before, a [Web router](#web-router) is used to route a request to the right handler based on a set of rules defined in a route. The *web* module provides a `WebRouter` bean which is wired to the *http-server* module to override the default root handler and handle all incoming requests to the server. Unlike the root handler in the *http-server* module, this bean is not overridable but it can be configured in order to define Web routes for the *app_web* module.
 
-This can be done by defining a `WebRouterConfigurer` bean in the *app_web* module. A Web router configurer is basically a `Consumer<WebRouter>` invoked after the initialization of the Web router and more precisely after the default configuration has been applied.
+This can be done by defining a `WebRouterConfigurer` bean in the *app_web* module. A Web router configurer is invoked after the initialization of the Web router and more precisely after the default configuration has been applied.
 
 Using what we've learned from the [Web routing documentation](#web-routing), routes can then be defined as follows:
 
@@ -3543,15 +3777,15 @@ package io.inverno.example.app_web;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.resource.MediaTypes;
-import io.inverno.mod.web.WebExchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;
 
 @Bean
-public class App_webWebRouterConfigurer implements WebRouterConfigurer<WebExchange> {
+public class App_webWebRouterConfigurer implements WebRouterConfigurer<ExchangeContext> {
 
     @Override
-    public void accept(WebRouter<WebExchange> router) {
+    public void accept(WebRouter<ExchangeContext> router) {
         router
             .route()
                 .path("/hello")
@@ -3575,7 +3809,6 @@ public class App_webWebRouterConfigurer implements WebRouterConfigurer<WebExchan
                 );
     }
 }
-
 ```
 
 Now we can test the application:
@@ -3610,6 +3843,42 @@ content-length: 81
 {"status":"406","path":"/hello","error":"Not Acceptable","accept":["text/plain"]}
 ```
 
+The exchange context created by the HTTP server when processing an exchange is also provided by the web router configurer by implementing the `createContext()` method:
+
+```java
+public class App_webWebRouterConfigurer implements WebRouterConfigurer<SecurityContext> {
+
+    @Override
+    public void accept(WebRouter<SecurityContext> router) {
+        router
+            .intercept()
+                .path("/private")
+                .interceptor(new SecurityInterceptor()) // Populate the security context
+            .route()
+                .path("/private")
+                .handler(exchange -> {
+                    if(exchange.context().isAuthenticated()) {
+                        exchange
+                            .response()
+                                .body()
+                                .encoder(String.class)
+                                .value("Private resource!");
+                    }
+                    else {
+                        throw new UnauthorizedException();
+                    }
+                })
+    }
+
+    @Override
+    public SecurityContext createContext() {
+        return new SecurityContext();
+    }
+}
+``` 
+
+> The `WebRouter` interface extends `RootExchangeHandler` which defines the `createContext()` method used by the HTTP server to instantiate contexts, the Web router bean delegates to its single Web router configurer to provide context instances to the HTTP server. Although it is possible to use multiple Web router configurers to configure the Web router using the `configure()` methods, the Web router bean only accepts one configurer which is used to create the context.
+
 #### Configuring the error router
 
 The *web* module also provides an error router bean wired to the *http-server* module to override the default error handler and handle all errors thrown when processing an exchange. As a reminder, an [error router](#error-router) is used to route an error exchange to the right error handler based on a set of rules defined in an error route.
@@ -3622,10 +3891,10 @@ Now let's assume, we have created a route which might throw a particular custom 
 
 ```java
 @Bean
-public class App_webWebRouterConfigurer implements WebRouterConfigurer<WebExchange> {
+public class App_webWebRouterConfigurer implements WebRouterConfigurer<ExchangeContext> {
 
     @Override
-    public void accept(WebRouter<WebExchange> router) {
+    public void accept(WebRouter<ExchangeContext> router) {
         router
             ...
             .route()
@@ -3683,29 +3952,76 @@ content-length: 29
 A custom exception was raised
 ```
 
+#### Static handler
+
+The `StaticHandler` is a specific `WebExchangeHandler<WebExchange>` implementation that can be used to define routes for serving static resources resolved with the [Resource API](#resource-api).
+
+For instance, we can create a route to serve files stored in a `web-root` directory as follows:
+
+```java
+router
+    .route()
+        .path("/static/{path:.*}")                                 // 1
+        .handler(new StaticHandler(new FileResource("web-root/"))) // 2
+```
+
+1. The path must be parameterized with a `path` parameter which can include `/`, for the static handler to be able to determine the relative path of the resource in the `web-root` directory
+2. The base resource is defined directly as a `FileResource`, although it is also possible to use a `ResourceService` to be more flexible in terms of the kind of resource
+
+The static handler relies on the resource abstraction to resolve resources, as a result, these can be located on the file system, on the class path, on the module path...
+
+The static handler also looks for a welcome page when a directory resource is requested. For instance considering the following `web-root` directory:
+
+```plaintext
+web-root/
+├── index.html
+└── snowflake.svg
+```
+
+A request to `http://127.0.0.1/static/` would return the `index.html` file.
+
+#### 100-continue interceptor
+
+The API provides the `ContinueInterceptor` class which can be used to automatically handles `100-continue` as defined by [RFC 7231 Section 5.1.1](https://tools.ietf.org/html/rfc7231#section-5.1.1).
+
+```java
+router
+    .intercept()
+        .interceptor(new ContinueInterceptor())
+    .route()
+    ...
+```
+
 #### WebJars
 
-The Web server can also be configured to automatically serve static resources from [WebJars dependencies][webjars] using a version agnostic path: `/webjars/{webjar_module}/{path:.*}` where `{webjar_module}` corresponds to the *modularized* name of the WebJar minus `org.webjars`. For example the location of the Swagger UI WebJar would be `/webjars/swagger.ui/`.
+The `WebJarsRoutesConfigurer` is a `WebRoutesConfigurer` implementation used to configure routes to WebJars static resources available on the module path or class path. Paths to the resources are version agnostic: `/webjars/{webjar_module}/{path:.*}` where `{webjar_module}` corresponds to the *modularized* name of the WebJar minus `org.webjars`. For example the location of the Swagger UI WebJar would be `/webjars/swagger.ui/`.
 
-This feature can be activated with the following configuration:
+WebJars routes can be configured on the Web router as follows:
 
 ```java
 package io.inverno.example.app_web;
 
-import io.inverno.core.v1.Application;
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.base.resource.ResourceService;
+import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.web.WebJarsRoutesConfigurer;
+import io.inverno.mod.web.WebRouter;
+import io.inverno.mod.web.WebRouterConfigurer;
 
-public class Main {
+@Bean
+public class App_webWebRouterConfigurer implements WebRouterConfigurer<ExchangeContext> {
 
-    public static void main(String[] args) {
-        Application.with(new App_web.Builder()
-                .setApp_webConfiguration(
-                        App_webConfigurationLoader.load(configuration -> configuration
-                            .web(web -> web
-                                .enable_webjars(true)
-                            )
-                        )
-                    )
-            ).run();
+    private final ResourceService resourceService;
+
+    public App_webWebRouterConfigurer(ResourceService resourceService) {
+        this.resourceService = resourceService;
+    }
+
+    @Override
+    public void accept(WebRouter<ExchangeContext> router) {
+        router
+            .configureRoutes(new WebJarsRoutesConfigurer(this.resourceService))
+            ...
     }
 }
 ```
@@ -3723,9 +4039,9 @@ Then we can declare WebJars dependencies such as the Swagger UI in the build des
 </project>
 ```
 
-The Swagger UI should now be accessible at `http://locahost:8080/webjars/swagger.ui/`.
+The Swagger UI should be accessible at `http://locahost:8080/webjars/swagger.ui/`.
 
-Sadly WebJars are not modular JARs, they are not even named modules which causes several issues when dependencies are specified on the module path. That's why when an application is run or packaged using [Inverno tools][inverno-tools-root], such dependencies and WebJars in particular are *modularized*. A WebJar such as `swagger-ui` is modularized into `org.webjars.swagger.ui` module which explains why it is referred by its module name: `swagger.ui` in the WebJars resource path (the `org.webjars` part is omitted since the context is known).
+Sadly WebJars are rarely modular JARs, they are not even named modules which causes several issues when dependencies are specified on the module path. That's why when an application is run or packaged using [Inverno tools][inverno-tools-root], such dependencies and WebJars in particular are *modularized*. A WebJar such as `swagger-ui` is modularized into `org.webjars.swagger.ui` module which explains why it is referred by its module name: `swagger.ui` in the WebJars resource path (the `org.webjars` part is omitted since the context is known).
 
 When running a fully modular Inverno application, *modularized* WebJars modules must be added explicitly to the JVM using the `--add-modules` option, otherwise they are not resolved when the JVM starts. For instance:
 
@@ -3751,37 +4067,44 @@ Note that when the application is run with non-modular WebJars specified on the 
 
 #### OpenAPI specification
 
-The Web server can also be configured to expose [OpenAPI specifications][open-api] defined in `/META-INF/inverno/web/openapi.yml` resource in application modules.
+The `OpenApiRoutesConfigurer` is a `WebRoutesConfigurer` implementation used to configure routes to [OpenAPI specifications][open-api] defined in `/META-INF/inverno/web/openapi.yml` resources in application modules.
 
-This feature can be activated with the following configuration:
+OpenAPI routes can be configured on the Web router as follows:
 
 ```java
 package io.inverno.example.app_web;
 
-import io.inverno.core.v1.Application;
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.base.resource.ResourceService;
+import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.web.OpenApiRoutesConfigurer;
+import io.inverno.mod.web.WebRouter;
+import io.inverno.mod.web.WebRouterConfigurer;
 
-public class Main {
+@Bean
+public class App_webWebRouterConfigurer implements WebRouterConfigurer<ExchangeContext> {
 
-    public static void main(String[] args) {
-        Application.with(new App_web.Builder()
-                .setApp_webConfiguration(
-                        App_webConfigurationLoader.load(configuration -> configuration
-                            .web(web -> web
-                                .enable_open_api(true)
-                            )
-                        )
-                    )
-            ).run();
+    private final ResourceService resourceService;
+
+    public App_webWebRouterConfigurer(ResourceService resourceService) {
+        this.resourceService = resourceService;
+    }
+
+    @Override
+    public void accept(WebRouter<ExchangeContext> router) {
+        router
+            .configureRoutes(new OpenApiRoutesConfigurer(this.resourceService))
+            ...
     }
 }
 ```
 
-When the server starts, it will scan for OpenAPI specifications files `/META-INF/inverno/web/openapi.yml` in the application modules and configure the following routes:
+The configurer will scan for OpenAPI specifications files `/META-INF/inverno/web/openapi.yml` in the application modules and configure the following routes:
 
 - `/open-api` returning the list of available OpenAPI specifications in `application/json`
 - `/open-api/{moduleName}` returning the OpenAPI specifications defined for the specified module name or (404) not found error if there is no OpenAPI specification defined in the module or no module with that name.
 
-If the server is also configured to serve [WebJars](#webjars), previous routes can also be used to display OpenAPI specifications in a [Swagger UI][swagger-ui] assuming the Swagger UI WebJar dependency is present:
+By default the configurer also configures these routes to display OpenAPI specifications in a [Swagger UI][swagger-ui] when accessed from a Web browser (ie. with `accept: text/html`) assuming the Swagger UI WebJar dependency is present:
 
 ```xml
 <project>
@@ -3794,13 +4117,21 @@ If the server is also configured to serve [WebJars](#webjars), previous routes c
 </project>
 ```
 
+Swagger UI support can be disabled from the `OpenApiRoutesConfigurer` constructor:
+
+```java
+router
+    .configureRoutes(new OpenApiRoutesConfigurer(this.resourceService, false))
+    ...
+```
+
 > OpenAPI specifications are usually automatically generated by the Web Inverno compiler plugin for routes defined in a [Web controller](#web-controller) but you can provide manual or generated specifications using the tool of your choice, as long as it is not conflicting with the Web compiler plugin.
 
 ### Web Controller
 
 The [Web router](#web-router) and [Web server](#web-server) documentations describe a *programmatic* way of defining the Web routes of a Web server but the *web* module API also provides a set of annotations for defining Web routes in a more declarative way. 
 
-A **Web controller** is a regular module bean annotated with `@WebController` which defines methods annotated with `@WebRoute` describing Web routes. These beans are scanned at compile time by the Web Inverno compiler plugin in order to generate a single `WebRouterConfigurer` bean configuring the routes in the Web router.
+A **Web controller** is a regular module bean annotated with `@WebController` which defines methods annotated with `@WebRoute` describing Web routes. These beans are scanned at compile time by the Web Inverno compiler plugin in order to generate a single `WebRouterConfigurer` bean inside the module in order to configure the routes in the Web router.
 
 For instance, we can create a book resource with basic CRUD operations, to do so we must define a `Book` model in a dedicated `*.dto` package, we'll see later why this matters:
 
@@ -3922,7 +4253,7 @@ content-length: 161
 {"isbn":"978-0132143011","title":"Distributed Systems: Concepts and Design","author":"George Coulouris, Jean Dollimore, Tim Kindberg, Gordon Blair","pages":1080}
 ```
 
-> If you have carefully followed the *web* module documentation, you should have noticed that we have previously created a Web router configurer bean in the *app_web* module which is indeed conflicting with the generated Web router configurer resulting in the following self-explanatory compilation error:
+> If you carefully followed the *web* module documentation, you should have noticed that we have previously created a Web router configurer bean in the *app_web* module which is conflicting with the generated Web router configurer resulting in the following self-explanatory compilation error:
 > 
 > ```plaintext
 > [ERROR] /home/jkuhn/Devel/git/frmk/io.inverno.example.app_web/src/main/java/module-info.java:[4,1] Multiple beans matching socket io.inverno.mod.web:webRouterConfigurer were found
@@ -3931,7 +4262,8 @@ content-length: 161
 >  
 >  Consider specifying an explicit wiring in module io.inverno.example.app_web (eg. @io.inverno.core.annotation.Wire(beans="io.inverno.example.app_web:app_webWebRouterConfigurer", into="io.inverno.mod.web:webRouterConfigurer") )
 > ```
-> In order to resolve that conflict, you can remove the first router configurer or define an explicit wire in the module definition:
+> 
+> One way to resolve that conflict is to define an explicit wire in the module definition:
 > 
 > ```java
 > @io.inverno.core.annotation.Module
@@ -3942,6 +4274,8 @@ content-length: 161
 > ```
 >
 > Such situation can also occur when you are composing multiple modules defining Web controller beans and thus exposing multiple Web router configurers in the module. Hopefully it is safe to resolve these conflicts by wiring the Web router configurer of the module composing the *web* module as it aggregates all Web router configurers annotated with `@WebRoutes`. Please look at [Composite Web module documentation](#composite-web-module) for further details.
+> 
+> In order to avoid such issues, it is also recommended for *programmatic* router configuration to rely as much as possible on `WebRoutesConfigurer` and `WebInterceptorsConfigurer` which are injected in the generated `WebRouterConfigurer`.
 
 It is possible to separate the API from the implementation by defining the Web controller and the Web routes in an interface implemented in a module bean. For instance,
 
@@ -4077,7 +4411,7 @@ There is one remaining thing to do to make the book resource a proper REST resou
 public interface CRUD<T> {
 
     @WebRoute(method = Method.POST, consumes = MediaTypes.APPLICATION_JSON, produces = MediaTypes.APPLICATION_JSON)
-    Mono<Void> create(@Body Mono<T> resource, WebExchange exchange);
+    Mono<Void> create(@Body Mono<T> resource, WebExchange<?> exchange);
     ...
 }
 ```
@@ -4098,7 +4432,7 @@ import reactor.core.publisher.Mono;
 public class BookResourceImpl implements BookResource {
 
     @Override
-    public Mono<Void> create(Mono<Book> book, WebExchange exchange) {
+    public Mono<Void> create(Mono<Book> book, WebExchange<?> exchange) {
         ...
         exchange.response().headers(headers -> headers
             .status(Status.CREATED)
@@ -4118,7 +4452,6 @@ HTTP/1.1 201 Created
 content-type: application/json
 location: /book/978-0132143012
 content-length: 0
-
 ```
 
 #### Web route
@@ -4133,13 +4466,13 @@ A Web route or HTTP endpoint or REST endpoint... in short an HTTP request/respon
 
 Web routes are defined as methods in a Web controller which match this definition: the Web route input is defined in the parameters of the method, the Web route normal output is defined by the return type of the method and finally the exceptions thrown by the method define the Web route error outputs.
 
-It then remains to bind the Web route semantic to the method, this is done within various annotations on the method and its parameters.
+It then remains to bind the Web route semantic to the method, this is done using various annotations on the method and its parameters.
 
 ##### Routing rules
 
-Routing rules, as defined in the [Web router documentation](#web-router), are specified in a single `@WebRoute` annotation on a Web controller method. It allows to define the paths, the methods, the consumed media ranges, the produced media types and the produced languages of the Web routes that route a matching request to the handler implemented in the method.
+Routing rules, as defined in the [Web router documentation](#web-router), are specified in a single `@WebRoute` annotation on a Web controller method. It allows to define the paths, the methods, the consumed media ranges, the produced media types and the produced languages of the Web routes that route a matching request to the handler implemented by the method.
 
-For instance, we can define multiple paths and/or multiple produced media types in order to expose a resource at different locations in different formats:
+For instance, we can define multiple paths and/or multiple produced media types in order to expose a resource at different locations in various formats:
 
 ```java
 @WebRoute( path = { "/book/current", "/book/v1" }, produces = { MediaTypes.APPLICATION_JSON, MediaTypes.APPLICATION_XML } )
@@ -4148,7 +4481,7 @@ Flux<T> list();
 
 > Note that this exactly corresponds to the *web* module API
 
-The `matchTrailingSlash` parameter can be used to indicate that the defined path should be matched taking the trailing slash into account or not.
+The `matchTrailingSlash` parameter can be used to indicate that the defined paths should be matched taking the trailing slash into account or not.
 
 ##### Parameter bindings
 
@@ -4263,16 +4596,67 @@ Form parameters results from the parsing of the request body and as such, `@Form
 
 A contextual parameter is directly related to the context into which an exchange is processed in the route method, it can be injected in the route method by specifying a method parameter of a supported contextual parameter type.
 
-###### Exchange
+###### WebExchange
 
-Currently the only supported contextual parameter is the exchange which can be provided by specifying a method parameter of a type assignable from `WebExchange`.
+The current Web exchange can be injected by specifying a method parameter of a type assignable from `WebExchange`.
 
 ```java
 @WebRoute(method = Method.POST, consumes = MediaTypes.APPLICATION_JSON)
-Mono<Void> create(@Body Mono<T> book, WebExchange exchange);
+Mono<Void> create(@Body Mono<T> resource, WebExchange<?> exchange) throws BadRequestException;
 ```
 
-> The exchange gives a full access to the underlying request and response. Although it allows to manipulate the request and response bodies, this might conflict with the generated Web route and as a result the exchange should only be used to specify a specific response status, response cookies or headers...
+> The exchange gives a full access to the underlying request and response. Although it allows to manipulate the request and response bodies, this might conflict with the generated Web route and as a result the exchange should only be used to access request parameters, headers, cookies... or specify a specific response status, response cookies or headers...
+
+The Web exchange also gives access to the exchange context, if a route handler requires a particular context type, it can be specified as a type parameter as follows:
+
+```java
+@WebRoute(method = Method.POST, consumes = MediaTypes.APPLICATION_JSON)
+Mono<Void> create(@Body Mono<T> resource, WebExchange<SecurityContext> exchange) throws BadRequestException;
+```
+
+It is also possible to specify intersection types if multiple context types are expected:
+
+```java
+@WebRoute(method = Method.POST, consumes = MediaTypes.APPLICATION_JSON)
+Mono<Void> create(@Body Mono<T> resource, WebExchange<TracingContext & SecurityContext> exchange) throws BadRequestException;
+```
+
+##### Exchange Context
+
+The exchange context can also be injected directly by specifying a method parameter of a type assignable from `ExchangeContext`.
+
+```java
+@WebRoute(path = "/{id}", method = Method.GET, produces = MediaTypes.APPLICATION_JSON)
+Mono<T> get(@PathParam String id, WebContext webContext);
+```
+
+As for the exchange, it is possible to specify intersection types using a type variable:
+
+```java
+@WebRoute(path = "/{id}", method = Method.GET, produces = MediaTypes.APPLICATION_JSON)
+<E extends WebContext & InterceptorContext> Mono<T> get(@PathParam String id, E context);
+```
+
+The exchange context is basically provided by a single Web router configurer injected in the Web router bean. It is usually the configurer generated by the Web compiler. 
+
+In order to generate the Web router configurer, the Web compiler scans Web controller beans, Web routes configurer beans, Web interceptor configurer beans and Web router configurer beans in order to collect all the required context types and generate a concrete implementation used to provide exchange context instances that comply with all the routes. As a result, whether a context type is specified in a formal parameter of `WebExchange`, `WebRoutesConfigurer`, `WebInterceptorsConfigurer` or `WebRouterConfigurer` or in a method parameter, it must be an interface otherwise the Web compiler will raise an error.
+
+The Web compiler generates basic getter/setter implementations for the context. For instance, if a context type is defined as follows, the generated implementation will contain an instance variable that is returned and set using corresponding getter and setter methods:
+
+```java
+package io.inverno.example.app_web;
+
+import io.inverno.mod.http.server.ExchangeContext;
+
+public interface InterceptorContext extends ExchangeContext {
+
+    String getInterceptorValue();
+
+    void setInterceptorValue(String interceptorValue);
+}
+```
+
+> In addition, the compiler generates an interface extending all the required context types. An advanced user can then also provide a specific global context implementation by extending the generated Web router configurer and overrides the `createContext()` method.
 
 ##### Request body
 
@@ -4624,6 +5008,85 @@ info:
 ...
 ```
 
+#### Web interceptors and routes configurer
+
+Although the Web router can be configured programmatically by defining a `WebRouterConfigurer` bean, it is recommended to rather define `WebInterceptorsConfigurer` and `WebRoutesConfigurer` beans to configure respectively the interceptors and routes of a module. This will prevent conflicts with the `WebRouterConfigurer` bean generated by the Web compiler.
+
+Web interceptors configurer beans, Web routes configurer beans and Web router configurer beans are all injected in the generated Web router configurer which configures the Web router first with the Web interceptors configurers, then the Web router configurers, then the Web routes configurers and finally the Web routes decalred in `@WebController` annotated beans.
+
+Inside a module, Web routes interceptors are then typically defined in one or more `WebInterceptorsConfigurer` beans and apply to all the routes defined in the module whether they are defined in a Web routes configurer, a Web router configurer or a Web controller. 
+
+This basically means that if a component module exposes a Web router configurer, its routes will be potentially intercepted by the interceptors defined in the composite module.
+
+```java
+package io.inverno.example.app_web;
+
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.web.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import reactor.core.publisher.Mono;
+
+@Bean(visibility = Bean.Visibility.PRIVATE)
+public class App_webWebInterceptorsConfigurer implements WebInterceptorsConfigurer<InterceptorContext> {
+
+    private Logger logger = LogManager.getLogger(this.getClass());
+
+    @Override
+    public void accept(WebInterceptable<InterceptorContext, ?> interceptable) {
+        interceptable
+            .intercept()
+                .path("/hello")
+                .interceptor(exchange -> {
+                    logger.info("Smile, you've been intercepted");
+                    return Mono.just(exchange);
+                })
+            ...
+    }
+}
+```
+
+> Although it is possible to define multiple `WebInterceptorsConfigurer` beans, it is recommended to have only one because the order in which they are injected in the Web router configurer is not guaranteed which might be problematic under certain circumstances.
+
+Inside a module, Web routes should typically be defined in a declarative way in Web controllers or programmatically in one or more `WebRoutesConfigurer`.
+
+```java
+package io.inverno.example.app_web;
+
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.web.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import reactor.core.publisher.Mono;
+
+@Bean(visibility = Bean.Visibility.PRIVATE)
+public class App_webWebRoutesConfigurer implements WebRoutesConfigurer<InterceptorContext> {
+
+    private Logger logger = LogManager.getLogger(this.getClass());
+
+    @Override
+    public void accept(WebRoutable<InterceptorContext, ?> routable) {
+        routable
+            .configureRoutes(new WebJarsRoutesConfigurer(this.resourceService))
+            .configureRoutes(new OpenApiRoutesConfigurer(this.resourceService, true))
+            .route()
+                .path("/hello")
+                .method(Method.GET)
+                .produces(MediaTypes.TEXT_PLAIN)
+                .language("en-US")
+                .handler(exchange -> exchange
+                    .response()
+                        .body()
+                        .encoder(String.class)
+                        .value("Hello!")
+                )
+            ...
+    }
+}
+```
+
+> Particular care must still be taken when defining Web routes configurer beans, Web interceptor configurer beans and Web router configurer beans in a module. Since the generated Web router configurer aggregates all these types of beans, they should always be defined as private beans so that the generated Web router configurer is the only bean exposed by the module. This is necessary to avoid duplicate definitions of routes and interceptors in composite modules.
+
 ## Reactive Template
 
 The Inverno *reactive template* module provides a template engine for efficient reactive data rendering.
@@ -4695,22 +5158,22 @@ package io.inverno.example.app_irt.model;
 
 public class Message {
 
-	private final String message;
-	
-	private final boolean important;
-	
-	public Message(String message, boolean important) {
-		this.message = message;
-		this.important = important;
-	}
+    private final String message;
 
-	public String getMessage() {
-		return message;
-	}
-	
-	public boolean isImportant() {
-		return important;
-	}
+    private final boolean important;
+
+    public Message(String message, boolean important) {
+        this.message = message;
+        this.important = important;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public boolean isImportant() {
+        return important;
+    }
 }
 ```
 
@@ -4880,17 +5343,17 @@ An if statement can be used to render different contents based on one or more co
 
 ```plaintext
 (Message message, String lang) -> {
-	{@if
-		(lang.equals("fr")) -> {
-			Le message est: {@message.message}
-		};
-		(lang.equals("de")) -> {
-			Die Nachricht ist: {@message.message}
-		};
-		() -> {
-			The message is: {@message.message}
-		}
-	}
+    {@if
+        (lang.equals("fr")) -> {
+            Le message est: {@message.message}
+        };
+        (lang.equals("de")) -> {
+            Die Nachricht ist: {@message.message}
+        };
+        () -> {
+            The message is: {@message.message}
+        }
+    }
 }
 ```
 
@@ -5043,9 +5506,9 @@ A no-arg named template can be applied by omitting the data part in the statemen
 
 ```plaintext
 (Message message) -> {
-	{;header}
-	The message is: {@message.message}
-	{;footer}
+    {;header}
+    The message is: {@message.message}
+    {;footer}
 }
 
 header() -> {==== HEADER ====
@@ -5084,9 +5547,9 @@ import io.inverno.mod.irt.Pipe;
 
 public final class SamplePipes {
 
-	public static Pipe<String, String> uppercase() {
-		return String::toUpperCase;
-	}
+    public static Pipe<String, String> uppercase() {
+        return String::toUpperCase;
+    }
 }
 ```
 
@@ -5112,11 +5575,11 @@ import static io.inverno.mod.irt.PublisherPipes.*;
 import java.time.format.DateTimeFormatter;
 
 (Publisher<Item> items) -> {
-	{items|sort|map(Item::getDateTime)}
+    {items|sort|map(Item::getDateTime)}
 }
 
 (ZonedDateTime datetime) -> {
-	{@datetime|dateTime(DateTimeFormatter.ISO_DATE_TIME)}
+    {@datetime|dateTime(DateTimeFormatter.ISO_DATE_TIME)}
 }
 ```
 
