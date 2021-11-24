@@ -617,8 +617,8 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 				if(generatedSchemas.add(e.getValue().toString())) {
 					StringBuilder schema = e.getValue().accept(this.openApiSchemaGenerator, this.withIndentDepthAdd(1).withSchemaOptions(new SchemaGenerationOptions(false, false)));
 					if(schema.length() > 0) {
-						result.append(this.indent(0)).append(e.getKey()).append(": \n");
-						result.append(schema).append("\n");
+						result.append(this.indent(0)).append(e.getKey()).append(":").append(System.lineSeparator());
+						result.append(schema).append(System.lineSeparator());
 					}
 				}
 			}
@@ -664,7 +664,7 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 					}
 				}
 				result.append(nameBuilder).append("'");
-				linkBuilderOptional.ifPresent(link -> result.append("\n").append(link));
+				linkBuilderOptional.ifPresent(link -> result.append(System.lineSeparator()).append(link));
 				return result;
 			}
 			return new StringBuilder();
@@ -1017,19 +1017,19 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 				result.append("boolean");
 			}
 			else if(type.getKind() == TypeKind.BYTE || type.getKind() == TypeKind.SHORT || type.getKind() == TypeKind.INT) {
-				result.append("integer").append("\n");
+				result.append("integer").append(System.lineSeparator());
 				result.append(context.indent(0)).append("format: ").append("int32");
 			}
 			else if(type.getKind() == TypeKind.LONG) {
-				result.append("integer").append("\n");
+				result.append("integer").append(System.lineSeparator());
 				result.append(context.indent(0)).append("format: ").append("int64");
 			}
 			else if(type.getKind() == TypeKind.FLOAT) {
-				result.append("number").append("\n");
+				result.append("number").append(System.lineSeparator());
 				result.append(context.indent(0)).append("format: ").append("float");
 			}
 			else if(type.getKind() == TypeKind.DOUBLE) {
-				result.append("number").append("\n");
+				result.append("number").append(System.lineSeparator());
 				result.append(context.indent(0)).append("format: ").append("double");
 			}
 			return result;
@@ -1052,8 +1052,8 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 			}
 			result.append("type: ");
 			
-			result.append("array").append("\n");
-			result.append(context.indent(0)).append("items: ").append("\n");
+			result.append("array").append(System.lineSeparator());
+			result.append(context.indent(0)).append("items: ").append(System.lineSeparator());
 			
 			StringBuilder componentSchema = this.visit(type.getComponentType(), context.withIndentDepthAdd(1).withSchemaOptions(new SchemaGenerationOptions(false, true)));
 			if(componentSchema.length() > 0) {
@@ -1095,15 +1095,15 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 				result.append("string");
 			}
 			else if(context.typeUtils.isSameType(type, context.getLocalDateType())) {
-				result.append("string").append("\n");
+				result.append("string").append(System.lineSeparator());
 				result.append(context.indent(0)).append("format: ").append("date");
 			}
 			else if(context.typeUtils.isSameType(type, context.getLocalDateTimeType())) {
-				result.append("string").append("\n");
+				result.append("string").append(System.lineSeparator());
 				result.append(context.indent(0)).append("format: ").append("date-time");
 			}
 			else if(context.typeUtils.isSameType(type, context.getZonedDateTimeType())) {
-				result.append("string").append("\n");
+				result.append("string").append(System.lineSeparator());
 				result.append(context.indent(0)).append("format: ").append("date-time");
 			}
 			else if(context.typeUtils.isAssignable(context.typeUtils.erasure(type), context.getEnumType())) {
@@ -1121,18 +1121,18 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 					return reference;
 				}
 				else {
-					result.append("string").append("\n");
-					result.append(context.indent(0)).append("enum: ").append("\n");
+					result.append("string").append(System.lineSeparator());
+					result.append(context.indent(0)).append("enum: ").append(System.lineSeparator());
 					result.append(context.typeUtils.asElement(type).getEnclosedElements().stream()
 						.filter(element -> element.getKind() == ElementKind.ENUM_CONSTANT)
 						.map(enumConstant -> new StringBuilder(context.indentList(1)).append(enumConstant.toString()))
-						.collect(context.joining("\n"))
+						.collect(context.joining(System.lineSeparator()))
 					);
 				}
 			}
 			else if(context.typeUtils.isAssignable(context.typeUtils.erasure(type), context.getCollectionType())) {
-				result.append("array").append("\n");
-				result.append(context.indent(0)).append("items: ").append("\n");
+				result.append("array").append(System.lineSeparator());
+				result.append(context.indent(0)).append("items: ").append(System.lineSeparator());
 				StringBuilder componentSchema = this.visit(((DeclaredType)type).getTypeArguments().get(0), context.withIndentDepthAdd(1).withSchemaOptions(new SchemaGenerationOptions(false, true)));
 				if(componentSchema.length() > 0) {
 					result.append(componentSchema);
@@ -1142,8 +1142,8 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 				}
 			}
 			else if(context.typeUtils.isAssignable(context.typeUtils.erasure(type), context.getMapType())) {
-				result.append("object").append("\n");
-				result.append(context.indent(0)).append("additionalProperties: ").append("\n");
+				result.append("object").append(System.lineSeparator());
+				result.append(context.indent(0)).append("additionalProperties: ").append(System.lineSeparator());
 				StringBuilder componentSchema = this.visit(((DeclaredType)type).getTypeArguments().get(1), context.withIndentDepthAdd(1).withSchemaOptions(new SchemaGenerationOptions(false, true)));
 				if(componentSchema.length() > 0) {
 					result.append(componentSchema);
@@ -1181,7 +1181,7 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 							
 							TypeMirror propertyType = ((ExecutableType)context.typeUtils.asMemberOf(type, element)).getReturnType();
 							
-							property.append(context.indent(1)).append(element.getSimpleName().toString()).append(": ").append("\n");
+							property.append(context.indent(1)).append(element.getSimpleName().toString()).append(": ").append(System.lineSeparator());
 							StringBuilder propertySchema = this.visit(propertyType, context.withIndentDepthAdd(2).withSchemaOptions(new SchemaGenerationOptions(false, true)));
 							if(propertySchema.length() > 0) {
 								property.append(propertySchema);
@@ -1191,7 +1191,7 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 							}
 							return property;
 						})
-						.collect(context.joining("\n"));
+						.collect(context.joining(System.lineSeparator()));
 					
 					Map<String, List<ExecutableElement>> accessorsByPropertyName = ElementFilter.methodsIn(typeMemberElements).stream()
 						.filter(element -> element.getParameters().size() <= 1)
@@ -1236,21 +1236,21 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 							int propertyTypesCount = propertyTypeByName.size();
 							if(propertyTypesCount > 0) {
 								StringBuilder property = new StringBuilder();
-								property.append(context.indent(1)).append(propertyName).append(": ").append("\n");
+								property.append(context.indent(1)).append(propertyName).append(": ").append(System.lineSeparator());
 								if(hasGetter && !hasSetter) {
-									property.append(context.indent(2)).append("readOnly: true").append("\n");
+									property.append(context.indent(2)).append("readOnly: true").append(System.lineSeparator());
 								}
 								if(!hasGetter && hasSetter) {
-									property.append(context.indent(2)).append("writeOnly: true").append("\n");
+									property.append(context.indent(2)).append("writeOnly: true").append(System.lineSeparator());
 								}
 								if(propertyTypesCount > 1) {
 									StringBuilder propertySchema = propertyTypeByName.values().stream()
 										.map(propertyType -> this.visit(propertyType, context.withIndentDepthAdd(3).withSchemaOptions(new SchemaGenerationOptions(true, true))))
 										.filter(sb -> sb.length() > 0)
-										.collect(context.joining("\n"));
+										.collect(context.joining(System.lineSeparator()));
 									
 									if(propertySchema.length() > 0) {
-										property.append(context.indent(2)).append("oneOf: ").append("\n");
+										property.append(context.indent(2)).append("oneOf: ").append(System.lineSeparator());
 										property.append(propertySchema);
 									}
 									else {
@@ -1274,11 +1274,11 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 							}
 						})
 						.filter(Objects::nonNull)
-						.collect(context.joining("\n"));
+						.collect(context.joining(System.lineSeparator()));
 					
-					StringBuilder properties = Stream.of(publicFieldsProperties, accessorsProperties).filter(sb -> sb.length() > 0).collect(context.joining("\n"));
+					StringBuilder properties = Stream.of(publicFieldsProperties, accessorsProperties).filter(sb -> sb.length() > 0).collect(context.joining(System.lineSeparator()));
 					if(properties.length() > 0) {
-						result.append("\n").append(context.indent(0)).append("properties: ").append("\n");
+						result.append(System.lineSeparator()).append(context.indent(0)).append("properties: ").append(System.lineSeparator());
 						result.append(properties);
 					}
 				}

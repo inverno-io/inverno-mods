@@ -3251,7 +3251,7 @@ routable
 
 Now let's consider the following `accept` request header field:
 
-```http
+```plaintext
 accept: application/json, application/xml;q=0.9, */xml;q=0.8
 ```
 
@@ -3263,13 +3263,13 @@ Considering previous routes, a request with previous `accept` header field is th
 
 A request with the following `accept` header field is matched by the second route:
 
-```http
+```plaintext
 accept: application/xml;q=0.9, */xml;q=0.8
 ```
 
 The exchange is also matched by the second route with the following `accept` header field:
 
-```http
+```plaintext
 accept: application/json;q=0.5, text/xml;q=1.0
 ```
 
@@ -3325,7 +3325,7 @@ router
 
 A request with the following `accept-language` header field is then matched by the default route:
 
-```http
+```plaintext
 accept-language: it-IT
 ```
 
@@ -4580,7 +4580,7 @@ Mono<Void> createAuthor(
 
 Form parameters are sent in a request body using `application/x-www-form-urlencoded` format as defined by [living standard][form-urlencoded]. They can be sent using a HTML form submitted to the server resulting in the following request body:
 
-```http
+```plaintext
 forename=Leslie,middlename=B.,surname=Lamport,birthdate=19410207,nationality=US
 ```
 
