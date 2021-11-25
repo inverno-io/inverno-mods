@@ -16,8 +16,6 @@
 package io.inverno.mod.configuration.compiler.internal;
 
 import java.util.Arrays;
-import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import javax.lang.model.type.ArrayType;
@@ -40,6 +38,7 @@ import io.inverno.mod.configuration.compiler.spi.ConfigurationInfo;
 import io.inverno.mod.configuration.compiler.spi.ConfigurationInfoVisitor;
 import io.inverno.mod.configuration.compiler.spi.ConfigurationPropertyInfo;
 import io.inverno.mod.configuration.compiler.spi.NestedConfigurationPropertyInfo;
+import java.time.ZonedDateTime;
 
 /**
  * <p>
@@ -63,8 +62,8 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 		configurationClassName = configurationClassName.substring(packageName.length() + 1);
 		StringBuilder configurationLoaderClassName = new StringBuilder(configurationClassName).append(ConfigurationLoaderClassGenerationContext.CONFIGURATION_LOADER_CLASS_SUFFIX);
 		if(context.getMode() == GenerationMode.CONFIGURATION_LOADER_CLASS) {
+			TypeMirror generatedType = context.getElementUtils().getTypeElement(context.getElementUtils().getModuleElement("java.compiler"), "javax.annotation.processing.Generated").asType();
 			TypeMirror configurationLoaderSupportType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(ConfigurationLoaderSupport.class.getCanonicalName()).asType());
-			TypeMirror consumerType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(Consumer.class.getCanonicalName()).asType());
 			
 			context.addImport(ConfigurationLoaderClassGenerationContext.CONFIGURATION_INNER_CLASS, configurationClassName + ConfigurationLoaderClassGenerationContext.CONFIGURATION_LOADER_CLASS_SUFFIX + "." + ConfigurationLoaderClassGenerationContext.CONFIGURATION_INNER_CLASS);
 			context.addImport(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS, configurationClassName + ConfigurationLoaderClassGenerationContext.CONFIGURATION_LOADER_CLASS_SUFFIX + "." + ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS);
@@ -87,7 +86,7 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			configurationLoader_constructor.append(context.indent(2)).append(");").append(System.lineSeparator());
 			configurationLoader_constructor.append(context.indent(1)).append("}");
 			
-			StringBuilder configurationLoader_load_method = new StringBuilder(context.indent(1)).append("public static ").append(context.getTypeName(configurationInfo.getType())).append(" load(").append(context.getTypeName(consumerType)).append("<").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("> configurer) {").append(System.lineSeparator());
+			StringBuilder configurationLoader_load_method = new StringBuilder(context.indent(1)).append("public static ").append(context.getTypeName(configurationInfo.getType())).append(" load(").append(context.getTypeName(context.getConsumerType())).append("<").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("> configurer) {").append(System.lineSeparator());
 			configurationLoader_load_method.append(context.indent(2)).append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(" configurator = new ").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("();").append(System.lineSeparator());
 			configurationLoader_load_method.append(context.indent(2)).append("configurer.accept(configurator);").append(System.lineSeparator());
 			configurationLoader_load_method.append(context.indent(2)).append("return new ").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATION_INNER_CLASS).append("(");
@@ -100,7 +99,9 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			StringBuilder configurationLoader_configuration_class = this.visit(configurationInfo, context.withIndentDepth(1).withMode(GenerationMode.CONFIGURATION_IMPL_CLASS));
 			StringBuilder configurationLoader_configurator_class = this.visit(configurationInfo, context.withIndentDepth(1).withMode(GenerationMode.CONFIGURATION_CONFIGURATOR_CLASS));
 			
-			StringBuilder configurationLoader_class = new StringBuilder().append(context.indent(0)).append("public final class ").append(configurationLoaderClassName).append(" extends ").append(context.getTypeName(configurationLoaderSupportType)).append("<").append(context.getTypeName(configurationInfo.getType())).append(", ").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(", ").append(configurationLoaderClassName).append("> {").append(System.lineSeparator()).append(System.lineSeparator());
+			StringBuilder configurationLoader_class = new StringBuilder();
+			configurationLoader_class.append(context.indent(0)).append("@").append(context.getTypeName(generatedType)).append("(value=\"").append(ConfigurationCompilerPlugin.class.getCanonicalName()).append("\", date = \"").append(ZonedDateTime.now().toString()).append("\")").append(System.lineSeparator());
+			configurationLoader_class.append(context.indent(0)).append("public final class ").append(configurationLoaderClassName).append(" extends ").append(context.getTypeName(configurationLoaderSupportType)).append("<").append(context.getTypeName(configurationInfo.getType())).append(", ").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(", ").append(configurationLoaderClassName).append("> {").append(System.lineSeparator()).append(System.lineSeparator());
 			
 			configurationLoader_class.append(configurationLoader_constructor).append(System.lineSeparator()).append(System.lineSeparator());
 			configurationLoader_class.append(configurationLoader_load_method).append(System.lineSeparator()).append(System.lineSeparator());
@@ -193,7 +194,6 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			TypeMirror wrapperAnnotationType = context.getElementUtils().getTypeElement(Wrapper.class.getCanonicalName()).asType();
 			TypeMirror configurationLoaderSupportType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(ConfigurationLoaderSupport.class.getCanonicalName()).asType());
 			TypeMirror configurationSupplierType = context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement(Supplier.class.getCanonicalName()), configurationInfo.getType());
-			TypeMirror consumerType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(Consumer.class.getCanonicalName()).asType());
 			WildcardType unknownWildcardType = context.getTypeUtils().getWildcardType(null, null);
 			TypeMirror configurationSourceType = context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement(ConfigurationSource.class.getCanonicalName()), unknownWildcardType, unknownWildcardType, unknownWildcardType);
 			TypeMirror parameterType = context.getElementUtils().getTypeElement(Parameter.class.getCanonicalName()).asType();
@@ -214,7 +214,7 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			configurationBeanClass.append(context.indent(1)).append("public void setParameters(").append(context.getTypeName(parameterType)).append("[] parameters) {\n");
 			configurationBeanClass.append(context.indent(2)).append("this.loader.withParameters(parameters);\n");
 			configurationBeanClass.append(context.indent(1)).append("}\n\n");
-			configurationBeanClass.append(context.indent(1)).append("public void setConfigurer(").append(context.getTypeName(consumerType)).append("<").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("> configurer) {\n");
+			configurationBeanClass.append(context.indent(1)).append("public void setConfigurer(").append(context.getTypeName(context.getConsumerType())).append("<").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("> configurer) {\n");
 			configurationBeanClass.append(context.indent(2)).append("this.loader.withConfigurer(configurer);\n");
 			configurationBeanClass.append(context.indent(1)).append("}\n");
 			configurationBeanClass.append(context.indent(0)).append("}");
@@ -242,8 +242,7 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			return new StringBuilder().append(context.getTypeName(context.getTypeUtils().getDeclaredType(context.getElementUtils().getTypeElement(Supplier.class.getCanonicalName()), boxedType))).append(" ").append(configurationPropertyInfo.getQualifiedName().getPropertyName());
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURATION_IMPL_PROPERTY_ASSIGNMENT) {
-			TypeMirror optionalType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(Optional.class.getCanonicalName()).asType());
-			return new StringBuilder().append(context.indent(2)).append(context.getTypeName(optionalType)).append(".ofNullable(").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append(").ifPresent(s -> this.").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append(" = s.get());");
+			return new StringBuilder().append(context.indent(2)).append(context.getTypeName(context.getOptionalType())).append(".ofNullable(").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append(").ifPresent(s -> this.").append(configurationPropertyInfo.getQualifiedName().getPropertyName()).append(" = s.get());");
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURATION_IMPL_PROPERTY_ACCESSOR) {
 			StringBuilder result = new StringBuilder();
@@ -335,14 +334,12 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			return result;
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURATION_CONFIGURATOR_PROPERTY_INJECTOR) {
-			TypeMirror consumerType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(Consumer.class.getCanonicalName()).asType());
-			
 			// Loader class might not be there yet if the nested configuration is defined the current module so we must build the configuration type name without resolving a type element.
 //			TypeMirror nestedConfigurationLoaderType = context.getElementUtils().getTypeElement(nestedConfigurationPropertyInfo.getConfiguration().getType().toString() + ConfigurationLoaderClassGenerationContext.CONFIGURATION_LOADER_CLASS_SUFFIX).asType();
 			
 			String nestedConfigurationLoaderTypeName = context.getConfigurationLoaderTypeName(nestedConfigurationPropertyInfo.getConfiguration());
 			
-			StringBuilder result = new StringBuilder().append(context.indent(1)).append("public ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(" ").append(nestedConfigurationPropertyInfo.getQualifiedName().getPropertyName()).append("(").append(context.getTypeName(consumerType)).append("<").append(nestedConfigurationLoaderTypeName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("> ").append(nestedConfigurationPropertyInfo.getQualifiedName().getPropertyName()).append("_configurer) {\n");
+			StringBuilder result = new StringBuilder().append(context.indent(1)).append("public ").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(" ").append(nestedConfigurationPropertyInfo.getQualifiedName().getPropertyName()).append("(").append(context.getTypeName(context.getConsumerType())).append("<").append(nestedConfigurationLoaderTypeName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("> ").append(nestedConfigurationPropertyInfo.getQualifiedName().getPropertyName()).append("_configurer) {\n");
 			result.append(context.indent(2)).append("this.").append(nestedConfigurationPropertyInfo.getQualifiedName().getPropertyName()).append(" = () -> ").append(nestedConfigurationLoaderTypeName).append(".load(").append(nestedConfigurationPropertyInfo.getQualifiedName().getPropertyName()).append("_configurer);\n");
 			result.append(context.indent(2)).append("return this;\n");
 			result.append(context.indent(1)).append("}\n");

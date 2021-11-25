@@ -62,6 +62,7 @@ import io.inverno.mod.irt.compiler.spi.TemplateSetInfo;
 import io.inverno.mod.irt.compiler.spi.TemplateSetInfoVisitor;
 import io.inverno.mod.irt.compiler.spi.ValueInfo;
 import io.netty.buffer.ByteBuf;
+import java.time.ZonedDateTime;
 
 /**
  * <p>
@@ -93,6 +94,7 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 				irtClass.append(Arrays.stream(info.getIncludes()).map(includeInfo -> this.visit(includeInfo, context)).collect(context.joining(System.lineSeparator()))).append(System.lineSeparator()).append(System.lineSeparator());
 			}
 			
+			irtClass.append("@javax.annotation.processing.Generated").append("(value=\"").append(IrtCompilerPlugin.class.getCanonicalName()).append("\", date = \"").append(ZonedDateTime.now().toString()).append("\")").append(System.lineSeparator());
 			irtClass.append("public class ").append(context.getTemplateName()).append(" {").append(System.lineSeparator()).append(System.lineSeparator());
 
 			irtClass.append(context.indent(1)).append("private static final ").append(Charset.class.getCanonicalName()).append(" CHARSET = ").append(Charset.class.getCanonicalName()).append(".forName(\"").append(context.getOptions().getCharset().name()).append("\");").append(System.lineSeparator()).append(System.lineSeparator());

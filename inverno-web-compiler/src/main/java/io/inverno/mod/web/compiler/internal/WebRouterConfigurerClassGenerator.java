@@ -64,7 +64,7 @@ import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfoVisitor;
 import io.inverno.mod.web.compiler.spi.WebRoutesConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebSseEventFactoryParameterInfo;
-import java.util.List;
+import java.time.ZonedDateTime;
 import org.apache.commons.text.StringEscapeUtils;
 
 /**
@@ -84,8 +84,8 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 		String configurerPackageName = configurerClassName.lastIndexOf(".") != -1 ? configurerClassName.substring(0, configurerClassName.lastIndexOf(".")) : "";
 		configurerClassName = configurerClassName.substring(configurerPackageName.length() + 1);
 		if(context.getMode() == GenerationMode.CONFIGURER_CLASS) {
+			TypeMirror generatedType = context.getElementUtils().getTypeElement(context.getElementUtils().getModuleElement("java.compiler"), "javax.annotation.processing.Generated").asType();
 			TypeMirror beanAnnotationType = context.getElementUtils().getTypeElement(Bean.class.getCanonicalName()).asType();
-
 			TypeMirror webRouterConfigurerType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(WebRouterConfigurer.class.getCanonicalName()).asType());
 			TypeMirror routerType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(WebRouter.class.getCanonicalName()).asType());
 			
@@ -98,7 +98,6 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 				.map(controllerInfo -> this.visit(controllerInfo, context.withIndentDepth(1).withMode(GenerationMode.CONTROLLER_FIELD)))
 				.collect(context.joining(System.lineSeparator()));
 			
-			TypeMirror listType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(List.class.getCanonicalName()).asType());
 			//List<WebInterceptorsConfigurer<? super WebRouterConfigurer.Context>> routerConfs = null;
 			TypeMirror interceptorsConfigurerType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(WebInterceptorsConfigurer.class.getCanonicalName()).asType());
 			//List<WebRoutesConfigurer<? super WebRouterConfigurer.Context>> routerConfs = null;
@@ -106,13 +105,13 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			//List<WebRouterConfigurer<? super WebRouterConfigurer.Context>> routerConfs = null;
 			TypeMirror routerConfigurerType = context.getTypeUtils().erasure(context.getElementUtils().getTypeElement(WebRouterConfigurer.class.getCanonicalName()).asType());
 			
-			StringBuilder interceptorsConfigurersDecl = new StringBuilder(context.getTypeName(listType)).append("<").append(context.getTypeName(interceptorsConfigurerType)).append("<? super ").append(configurerClassName).append(".Context>> interceptorsConfigurers");
-			StringBuilder routesConfigurersDecl = new StringBuilder(context.getTypeName(listType)).append("<").append(context.getTypeName(routesConfigurerType)).append("<? super ").append(configurerClassName).append(".Context>> routesConfigurers");
-			StringBuilder routerConfigurersDecl = new StringBuilder(context.getTypeName(listType)).append("<").append(context.getTypeName(routerConfigurerType)).append("<? super ").append(configurerClassName).append(".Context>> routerConfigurers");
+			StringBuilder interceptorsConfigurersDecl = new StringBuilder(context.getListTypeName()).append("<").append(context.getTypeName(interceptorsConfigurerType)).append("<? super ").append(configurerClassName).append(".Context>> interceptorsConfigurers");
+			StringBuilder routesConfigurersDecl = new StringBuilder(context.getListTypeName()).append("<").append(context.getTypeName(routesConfigurerType)).append("<? super ").append(configurerClassName).append(".Context>> routesConfigurers");
+			StringBuilder routerConfigurersDecl = new StringBuilder(context.getListTypeName()).append("<").append(context.getTypeName(routerConfigurerType)).append("<? super ").append(configurerClassName).append(".Context>> routerConfigurers");
 			
-			StringBuilder interceptorsConfigurersField = new StringBuilder("private ").append(interceptorsConfigurersDecl).append(";");
-			StringBuilder routesConfigurersField = new StringBuilder("private ").append(routesConfigurersDecl).append(";");
-			StringBuilder routerConfigurersField = new StringBuilder("private ").append(routerConfigurersDecl).append(";");
+			StringBuilder interceptorsConfigurersField = new StringBuilder(context.indent(1)).append("private ").append(interceptorsConfigurersDecl).append(";");
+			StringBuilder routesConfigurersField = new StringBuilder(context.indent(1)).append("private ").append(routesConfigurersDecl).append(";");
+			StringBuilder routerConfigurersField = new StringBuilder(context.indent(1)).append("private ").append(routerConfigurersDecl).append(";");
 			
 			StringBuilder interceptorsConfigurersSetter = new StringBuilder(context.indent(1)).append("public void setInterceptorsConfigurers(").append(interceptorsConfigurersDecl).append(") {").append(System.lineSeparator());
 			interceptorsConfigurersSetter.append(context.indent(2)).append("this.interceptorsConfigurers = interceptorsConfigurers;").append(System.lineSeparator());
@@ -155,6 +154,7 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			
 			configurer_class.append(configurerAnnotation).append(System.lineSeparator());
 			configurer_class.append("@").append(context.getTypeName(beanAnnotationType)).append(System.lineSeparator());
+			configurer_class.append("@").append(context.getTypeName(generatedType)).append("(value=\"").append(WebRouterConfigurerCompilerPlugin.class.getCanonicalName()).append("\", date = \"").append(ZonedDateTime.now().toString()).append("\")").append(System.lineSeparator());
 			configurer_class.append("public final class ").append(configurerClassName).append(" implements ").append(context.getTypeName(webRouterConfigurerType)).append("<").append(configurerClassName).append(".Context> {").append(System.lineSeparator()).append(System.lineSeparator());
 			
 			configurer_class.append(interceptorsConfigurersField).append(System.lineSeparator());
