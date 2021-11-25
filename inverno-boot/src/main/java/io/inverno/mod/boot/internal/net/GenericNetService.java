@@ -42,6 +42,9 @@ import io.netty.channel.kqueue.KQueueSocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.unix.DomainSocketAddress;
+import io.netty.incubator.channel.uring.IOUringChannelOption;
+import io.netty.incubator.channel.uring.IOUringServerSocketChannel;
+import io.netty.incubator.channel.uring.IOUringSocketChannel;
 
 /**
  * <p>
@@ -114,6 +117,9 @@ public class GenericNetService implements @Provide NetService {
 				bootstrap.channelFactory(EpollSocketChannel::new);
 			}
 		}
+		else if(this.transportType == TransportType.IO_URING) {
+			bootstrap.channelFactory(IOUringSocketChannel::new);
+		}
 		else {
 			bootstrap.channelFactory(NioSocketChannel::new);
 		}
@@ -149,6 +155,12 @@ public class GenericNetService implements @Provide NetService {
 			bootstrap.option(EpollChannelOption.SO_REUSEPORT, this.configuration.reuse_port())
 				.childOption(EpollChannelOption.TCP_QUICKACK, this.configuration.tcp_quickack())
 				.childOption(EpollChannelOption.TCP_CORK, this.configuration.tcp_cork());
+		}
+		else if(this.transportType == TransportType.IO_URING) {
+			bootstrap.channelFactory(IOUringServerSocketChannel::new);
+			bootstrap.option(IOUringChannelOption.SO_REUSEPORT, this.configuration.reuse_port())
+				.childOption(IOUringChannelOption.TCP_QUICKACK, this.configuration.tcp_quickack())
+				.childOption(IOUringChannelOption.TCP_CORK, this.configuration.tcp_cork());
 		}
 		else {
 			bootstrap.channelFactory(NioServerSocketChannel::new);

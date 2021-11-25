@@ -28,6 +28,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.kqueue.KQueueEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.incubator.channel.uring.IOUringEventLoopGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 
@@ -86,9 +87,9 @@ public class GenericReactor implements Reactor, ReactorLifecycle {
 		else if(this.transportType == TransportType.EPOLL) {
 			return new EpollEventLoopGroup(nThreads, threadFactory);
 		}
-		/*else if(this.transportType == TransportType.IO_URING) {
+		else if(this.transportType == TransportType.IO_URING) {
 			return new IOUringEventLoopGroup(nThreads, threadFactory);
-		}*/
+		}
 		else {
 			return new NioEventLoopGroup(nThreads, threadFactory);
 		}

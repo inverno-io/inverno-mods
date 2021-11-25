@@ -69,7 +69,7 @@ public interface NetService {
 		/**
 		 * <a href="https://github.com/netty/netty-incubator-transport-io_uring">io_uring</a> transport type. 
 		 */
-//		IO_URING;
+		IO_URING;
 	}
 
 	/**

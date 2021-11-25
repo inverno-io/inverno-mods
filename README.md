@@ -153,6 +153,7 @@ The Inverno Web module provides advanced features on top of the HTTP server modu
 
 - request routing based on path, path pattern, HTTP method, request and response content negotiation including request and response content type and language of the response.
 - path parameters
+- interceptors
 - transparent payload conversion based on the content type of the request or the response from raw representation (arrays of bytes) to Java objects 
 - transparent parameter (path, cookie, header, query...) conversion from string to Java objects
 - static resource handler to serve static resources from various location based on the resource API

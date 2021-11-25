@@ -77,11 +77,11 @@
 			<artifactId>netty-transport-native-kqueue</artifactId>
 			<optional>true</optional>
 		</dependency>
-		<!--<dependency>
+		<dependency>
 			<groupId>io.netty.incubator</groupId>
 			<artifactId>netty-incubator-transport-native-io_uring</artifactId>
 			<optional>true</optional>
-		</dependency>-->
+		</dependency>
 		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-core</artifactId>

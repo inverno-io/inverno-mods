@@ -25,6 +25,7 @@ import java.util.function.Supplier;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
+import io.netty.incubator.channel.uring.IOUring;
 
 /**
  * <p>
@@ -65,9 +66,9 @@ public class Transport implements Supplier<TransportType> {
 			else if(isEpollAvailable()) {
 				return TransportType.EPOLL;
 			}
-//			else if(isIo_uringAvailable()) {
-//				return TransportType.IO_URING;
-//			}
+			else if(isIo_uringAvailable()) {
+				return TransportType.IO_URING;
+			}
 			else {
 				return TransportType.NIO;
 			}
@@ -95,13 +96,13 @@ public class Transport implements Supplier<TransportType> {
 		}
 	}
 	
-//	private static boolean isIo_uringAvailable() {
-//		try {
-//			return Epoll.isAvailable();
-//		}
-//		catch(NoClassDefFoundError e) {
-//			return false;
-//		}
-//	}
+	private static boolean isIo_uringAvailable() {
+		try {
+			return IOUring.isAvailable();
+		}
+		catch(NoClassDefFoundError e) {
+			return false;
+		}
+	}
 
 }
