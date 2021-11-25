@@ -23,7 +23,7 @@ import reactor.core.publisher.Mono;
  * </p>
  *
  * <p>
- * Multiple exchange interceptors can be chained on an exchange handler invoking the {@link ReactiveExchangeHandler#intercept(java.util.function.Function) } method in order to form an exchange
+ * Multiple exchange interceptors can be chained on an exchange handler invoking the {@link ReactiveExchangeHandler#intercept(io.inverno.mod.http.server.ExchangeInterceptor)} method in order to form an exchange
  * handling chain.
  * </p>
  *
@@ -49,7 +49,7 @@ public interface ExchangeInterceptor<A extends ExchangeContext, B extends Exchan
 	/**
 	 * <p>
 	 * Intercepts the exchange before the exchange handler is invoked.
-	 * <p>
+	 * </p>
 	 *
 	 * @param exchange the server exchange to handle
 	 *

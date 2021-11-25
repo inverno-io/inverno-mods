@@ -37,7 +37,7 @@ public interface ExchangeHandler<A extends ExchangeContext, B extends Exchange<A
 
 	/**
 	 * <p>
-	 * Returns a Mono that defers the execution of {@link #handle(Exchange)}.
+	 * Returns a Mono that defers the execution of {@link #handle(io.inverno.mod.http.server.Exchange) }.
 	 * </p>
 	 */
 	@Override
@@ -49,16 +49,14 @@ public interface ExchangeHandler<A extends ExchangeContext, B extends Exchange<A
 	 * <p>
 	 * Processes the specified server exchange.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The purpose of this method is to eventually inject a {@link ResponseBody} in
-	 * the response which basically completes the exchange
+	 * This method is more convenient than {@link #defer(io.inverno.mod.http.server.Exchange) } when the handling logic does not need to be reactive.
 	 * </p>
-	 * 
+	 *
 	 * @param exchange the exchange to process
-	 * 
-	 * @throws HttpException if an error occurs during the processing of the
-	 *                       exchange
+	 *
+	 * @throws HttpException if an error occurs during the processing of the exchange
 	 */
 	void handle(B exchange) throws HttpException;
 }

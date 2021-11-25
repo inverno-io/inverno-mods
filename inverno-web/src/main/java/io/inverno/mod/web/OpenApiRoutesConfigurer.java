@@ -57,7 +57,7 @@ import org.apache.logging.log4j.Logger;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
  *
- * @see WebJarsWebRoutesConfigurer
+ * @see WebJarsRoutesConfigurer
  */
 public class OpenApiRoutesConfigurer implements WebRoutesConfigurer<ExchangeContext> {
 	

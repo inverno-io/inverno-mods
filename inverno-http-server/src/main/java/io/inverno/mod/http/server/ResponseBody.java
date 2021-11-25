@@ -94,6 +94,8 @@ public interface ResponseBody {
 	 * );
 	 * </pre></blockquote>
 	 * 
+	 * @param <T> the type of char sequence
+	 * 
 	 * @return a string payload producer
 	 */
 	<T extends CharSequence> ResponseData<T> string();
@@ -161,6 +163,8 @@ public interface ResponseBody {
 	 *         )
 	 * );
 	 * </pre></blockquote>
+	 * 
+	 * @param <T> The type of char sequence
 	 * 
 	 * @return a server-sent events payload producer
 	 */

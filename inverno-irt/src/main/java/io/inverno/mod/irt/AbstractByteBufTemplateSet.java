@@ -44,6 +44,7 @@ public abstract class AbstractByteBufTemplateSet extends AbstractTemplateSet imp
 	 * </p>
 	 * 
 	 * @param charset the charset to use to encode data
+	 * @param buffer the buffer into which data must be rendered
 	 */
 	public AbstractByteBufTemplateSet(Charset charset, ByteBuf buffer) {
 		super(charset);

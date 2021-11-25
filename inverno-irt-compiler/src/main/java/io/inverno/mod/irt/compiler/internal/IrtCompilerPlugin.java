@@ -53,6 +53,11 @@ import io.inverno.mod.irt.compiler.spi.TemplateSetInfo;
  */
 public class IrtCompilerPlugin implements CompilerPlugin {
 
+	/**
+	 * <p>
+	 * The default irt file extension.
+	 * </p>
+	 */
 	public static final String DEFAULT_IRT_SOURCE_EXTENSION = ".irt";
 	
 	private final String irtFileExtension;

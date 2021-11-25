@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ErrorRouteManager;
 
 /**
@@ -58,7 +59,7 @@ public interface ErrorWebRouteManager extends ErrorRouteManager<ErrorWebExchange
 	 * 
 	 * @return the error web route manager
 	 * 
-	 * @see AcceptAwareRoute
+	 * @see AcceptAware
 	 */
 	ErrorWebRouteManager produces(String mediaType);
 	
@@ -71,7 +72,7 @@ public interface ErrorWebRouteManager extends ErrorRouteManager<ErrorWebExchange
 	 * 
 	 * @return the error web route manager
 	 * 
-	 * @see AcceptAwareRoute
+	 * @see AcceptAware
 	 */
 	ErrorWebRouteManager language(String language);
 }

@@ -118,7 +118,7 @@ public interface URIPattern {
 	 * </ul>
 	 * 
 	 * <p>
-	 * Implementations can choose to focus on specific URI components such as path in which case this method must return {@link URIPattern.PatternMatch#INDETERMINATE} when other components are
+	 * Implementations can choose to focus on specific URI components such as path in which case this method must return {@link URIPattern.Inclusion#INDETERMINATE} when other components are
 	 * considered. Parameter names must also be ignored by implementations (eg. /{x} should be considered as equivalent to /{y}).
 	 * </p>
 	 * 

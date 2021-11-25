@@ -63,7 +63,7 @@ public interface ResponseTrailers {
 	/**
 	 * <p>
 	 * Sets the value of the trailer with the specified name.
-	 * <p>
+	 * </p>
 	 * 
 	 * @param name  the trailer name
 	 * @param value the trailer value

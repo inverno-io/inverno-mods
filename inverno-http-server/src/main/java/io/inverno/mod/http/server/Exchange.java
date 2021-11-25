@@ -41,7 +41,7 @@ public interface Exchange<A extends ExchangeContext> {
 	/**
 	 * <p>
 	 * Returns the request part of the exchange.
-	 * <p>
+	 * </p>
 	 * 
 	 * @return the request part
 	 */
@@ -50,7 +50,7 @@ public interface Exchange<A extends ExchangeContext> {
 	/**
 	 * <p>
 	 * Returns the response part of the exchange.
-	 * <p>
+	 * </p>
 	 * 
 	 * @return the response part
 	 */
@@ -61,7 +61,7 @@ public interface Exchange<A extends ExchangeContext> {
 	 * Returns the context attached to the exchange.
 	 * </p>
 	 * 
-	 * @return
+	 * @return the exchange context or null
 	 */
 	A context();
 	

@@ -109,7 +109,7 @@ public interface ResponseHeaders {
 	/**
 	 * <p>
 	 * Sets the value of the header with the specified name.
-	 * <p>
+	 * </p>
 	 * 
 	 * @param name  the header name
 	 * @param value the header value

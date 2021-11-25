@@ -37,6 +37,8 @@ public interface PublisherTemplateSet<T> extends TemplateSet {
 	 * <p>
 	 * Returns the sink where rendered data are published.
 	 * </p>
+	 * 
+	 * @return the sink
 	 */
 	Sinks.Many<T> getSink();
 }

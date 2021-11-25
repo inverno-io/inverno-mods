@@ -53,11 +53,10 @@ public interface ReactiveExchangeHandler<A extends ExchangeContext, B extends Ex
 	 * </p>
 	 *
 	 * <p>
-	 * The HTTP server must invoke this method rather than the {@link #handle(Exchange)} to make exchange processing fully reactive. By default this method simply wraps the {@link #handle(Exchange)}
-	 * method in a Mono. Implementor shouldn't need to change that behavior and only override this method for specific use cases.
+	 * The HTTP server will subscribe to the returned Mono and after completion subscribe to the exchange response body data stream to respond to the client.
 	 * </p>
 	 *
-	 * @param exchange
+	 * @param exchange the exchange to process
 	 * 
 	 * @return an empty mono that completes when the exchange has been processed
 	 */

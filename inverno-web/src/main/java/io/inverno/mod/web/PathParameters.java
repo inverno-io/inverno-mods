@@ -21,6 +21,7 @@ import java.util.Set;
 
 import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.web.spi.PathAware;
 
 /**
  * <p>
@@ -33,7 +34,7 @@ import io.inverno.mod.http.base.Parameter;
  * @since 1.0
  * 
  * @see URIPattern
- * @see PathAwareRoute
+ * @see PathAware
  */
 public interface PathParameters {
 

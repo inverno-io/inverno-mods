@@ -42,7 +42,7 @@ public interface ErrorExchangeHandler<A extends Throwable, B extends ErrorExchan
 
 	/**
 	 * <p>
-	 * Returns a Mono that defers the execution of {@link #handle(Exchange)}.
+	 * Returns a Mono that defers the execution of {@link #handle(io.inverno.mod.http.server.ErrorExchange) }.
 	 * </p>
 	 */
 	@Override
