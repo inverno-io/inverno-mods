@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.base.header;
 
+import io.inverno.mod.base.Charsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,6 +32,8 @@ import io.inverno.mod.http.base.header.Headers.AcceptLanguage;
 import io.inverno.mod.http.base.internal.header.AcceptCodec;
 import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 /**
  * 
@@ -38,8 +41,16 @@ import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
  *
  */
 public class AcceptCodecTest {
-
+	
 	@Test
+	public void test() {
+		ByteBuf buffer = Unpooled.wrappedBuffer("*".getBytes(Charsets.UTF_8));
+		System.out.println(buffer.maxCapacity());
+//		buffer.writeByte(HeaderCodec.LF);
+//		System.out.println(buffer.readableBytes());
+	}
+
+//	@Test
 	public void testAcceptCodec() {
 		// application/*;q=1, text/*;q=0.8, */*;q=0.2, audio/basic, audio/*;q=0.6, application/json, text/html
 		List<AcceptCodec.Accept.MediaRange> ranges = new ArrayList<>();
@@ -97,25 +108,25 @@ public class AcceptCodecTest {
 		Headers.ContentType content_all_b = new ContentTypeCodec.ContentType("*/b", null, null, Map.of());
 		Headers.ContentType content_all_all = new ContentTypeCodec.ContentType("*/*", null, null, Map.of());
 		
-		System.out.println(range_a_b.matches(content_a_b));
-		System.out.println(range_a_b.matches(content_a_all));
-		System.out.println(range_a_b.matches(content_all_b));
-		System.out.println(range_a_b.matches(content_all_all));
+		Assertions.assertTrue(range_a_b.matches(content_a_b));
+		Assertions.assertTrue(range_a_b.matches(content_a_all));
+		Assertions.assertTrue(range_a_b.matches(content_all_b));
+		Assertions.assertTrue(range_a_b.matches(content_all_all));
 		
-		System.out.println(range_a_all.matches(content_a_b));
-		System.out.println(range_a_all.matches(content_a_all));
-		System.out.println(range_a_all.matches(content_all_b));
-		System.out.println(range_a_all.matches(content_all_all));
+		Assertions.assertTrue(range_a_all.matches(content_a_b));
+		Assertions.assertTrue(range_a_all.matches(content_a_all));
+		Assertions.assertTrue(range_a_all.matches(content_all_b));
+		Assertions.assertTrue(range_a_all.matches(content_all_all));
 		
-		System.out.println(range_all_b.matches(content_a_b));
-		System.out.println(range_all_b.matches(content_a_all));
-		System.out.println(range_all_b.matches(content_all_b));
-		System.out.println(range_all_b.matches(content_all_all));
+		Assertions.assertTrue(range_all_b.matches(content_a_b));
+		Assertions.assertTrue(range_all_b.matches(content_a_all));
+		Assertions.assertTrue(range_all_b.matches(content_all_b));
+		Assertions.assertTrue(range_all_b.matches(content_all_all));
 		
-		System.out.println(range_all_all.matches(content_a_b));
-		System.out.println(range_all_all.matches(content_a_all));
-		System.out.println(range_all_all.matches(content_all_b));
-		System.out.println(range_all_all.matches(content_all_all));
+		Assertions.assertTrue(range_all_all.matches(content_a_b));
+		Assertions.assertTrue(range_all_all.matches(content_a_all));
+		Assertions.assertTrue(range_all_all.matches(content_all_b));
+		Assertions.assertTrue(range_all_all.matches(content_all_all));
 		
 		
 		// TODO

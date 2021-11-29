@@ -112,21 +112,37 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 	
 	@Override
 	public A decode(String name, String rawValue) {
-		// TODO create a simpler ByteBuf backed by a byte array
-		ByteBuf buffer = Unpooled.copiedBuffer(rawValue, Charsets.DEFAULT);
-		buffer.writeByte(LF);
+		ByteBuf buffer = Unpooled.wrappedBuffer(rawValue.getBytes(Charsets.DEFAULT));
 		try {
-			return this.decode(name, buffer, Charsets.DEFAULT);
+			return this.decode(name, buffer, Charsets.DEFAULT, true);
 		}
 		finally {
 			buffer.release();
 		}
 	}
-
-	// This can be optimized if the buffer is backed by a byte array
-	// It is apparently faster to navigate through the available byte array rather than the bytebuf
+	
 	@Override
 	public A decode(String name, ByteBuf buffer, Charset charset) {
+		return this.decode(name, buffer, charset, false);
+	}
+
+	/**
+	 * <p>
+	 * Decodes the specified raw value ByteBuf for the specified header name using the specified charset.
+	 * </p>
+	 * 
+	 * name - a header name buffer - a header raw value charset - the charset to use for decoding 
+	 * 
+	 * @param name a header name
+	 * @param buffer a header raw value
+	 * @param charset the charset to use for decoding 
+	 * @param lf true to indicate that a silent LF byte is present after the last readable byte in the buffer to indicate the end of the header
+	 * 
+	 * @return a decoded header instance
+	 */
+	private A decode(String name, ByteBuf buffer, Charset charset, boolean lf) {
+		// This can be optimized if the buffer is backed by a byte array
+		// It is apparently faster to navigate through the available byte array rather than the bytebuf
 		int readerIndex = buffer.readerIndex();
 		
 		B builder = this.builderSupplier.get().headerName(name);
@@ -138,44 +154,56 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 		boolean quoted = false;
 		boolean blankValue = true;
 		boolean endSingle = false;
-		while(buffer.isReadable()) {
-			byte nextByte = buffer.readByte();
-			if(nextByte == CR) {
-				if(buffer.isReadable()) {
-					if(buffer.getByte(buffer.readerIndex()) == LF) {
-						buffer.readByte();
-						if(endIndex == null) {
-							endIndex = buffer.readerIndex() - 2;
+		while(true) {
+			byte nextByte;
+			if(buffer.isReadable()) {
+				nextByte = buffer.readByte();
+				if(nextByte == CR) {
+					if(buffer.isReadable()) {
+						if(buffer.getByte(buffer.readerIndex()) == LF) {
+							buffer.readByte();
+							if(endIndex == null) {
+								endIndex = buffer.readerIndex() - 2;
+							}
+							builder.headerValue(buffer.getCharSequence(readerIndex, buffer.readerIndex() - 2 - readerIndex, charset).toString());
+							end = true;
 						}
-						builder.headerValue(buffer.getCharSequence(readerIndex, buffer.readerIndex() - 2 - readerIndex, charset).toString());
-						end = true;
-//						break;
+						else {
+							buffer.readerIndex(readerIndex);
+							throw new MalformedHeaderException(name + ": Bad end of line");
+						}
 					}
 					else {
-						buffer.readerIndex(readerIndex);
-						throw new MalformedHeaderException(name + ": Bad end of line");
+						break;
 					}
 				}
-				else {
-					break;
+				else if(nextByte == LF) {
+					if(endIndex == null) {
+						endIndex = buffer.readerIndex() - 1;
+					}
+					builder.headerValue(buffer.getCharSequence(readerIndex, buffer.readerIndex() - 1 - readerIndex, charset).toString());
+					end = true;
+				}
+				else if(nextByte == this.valueDelimiter && this.allowMultiple && !quoted) {
+					if(endIndex == null) {
+						endIndex = buffer.readerIndex() - 1;
+					}
+					endSingle = true;
+				}
+				else if(!HeaderService.isContentCharacter((char)nextByte)) {
+					throw new MalformedHeaderException(name + ": Invalid character " + (char)nextByte);
 				}
 			}
-			else if(nextByte == LF) {
+			else if(lf) {
+				nextByte = LF;
 				if(endIndex == null) {
-					endIndex = buffer.readerIndex() - 1;
+					endIndex = buffer.readerIndex();
 				}
-				builder.headerValue(buffer.getCharSequence(readerIndex, buffer.readerIndex() - 1 - readerIndex, charset).toString());
+				builder.headerValue(buffer.getCharSequence(readerIndex, buffer.readerIndex() - readerIndex, charset).toString());
 				end = true;
-//				break;
 			}
-			else if(nextByte == this.valueDelimiter && this.allowMultiple && !quoted) {
-				if(endIndex == null) {
-					endIndex = buffer.readerIndex() - 1;
-				}
-				endSingle = true;
-			}
-			else if(!HeaderService.isContentCharacter((char)nextByte)) {
-				throw new MalformedHeaderException(name + ": Invalid character " + (char)nextByte);
+			else {
+				break;
 			}
 			
 			if(end || endSingle) {

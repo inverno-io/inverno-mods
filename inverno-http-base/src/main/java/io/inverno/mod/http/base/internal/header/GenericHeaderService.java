@@ -119,18 +119,18 @@ public class GenericHeaderService implements HeaderService {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Header> T decode(String header) {
-		ByteBuf buffer = Unpooled.copiedBuffer(header, Charsets.UTF_8);
-		buffer.writeByte(HeaderCodec.LF);
-		try {
-			return this.decode(buffer, Charsets.UTF_8);
+		String[] nameValue = this.splitNameValue(header);
+		
+		if(nameValue == null) {
+			return null;
 		}
-		finally {
-			buffer.release();
-		}
+		
+		return this.<T>getHeaderCodec(nameValue[0]).orElse((HeaderCodec<T>)this.defaultCodec).decode(nameValue[0], nameValue[1]);
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Header> T decode(ByteBuf buffer, Charset charset) {
@@ -148,7 +148,7 @@ public class GenericHeaderService implements HeaderService {
 		}
 		return result;
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Header> String encode(T header) {
@@ -162,16 +162,10 @@ public class GenericHeaderService implements HeaderService {
 		this.<T>getHeaderCodec(header.getHeaderName()).orElse((HeaderCodec<T>)this.defaultCodec).encode(header, buffer, charsetOrDefault);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Header> T decode(String name, String value) {
-		ByteBuf buffer = Unpooled.copiedBuffer(value, Charsets.UTF_8);
-		buffer.writeByte(HeaderCodec.LF);
-		try {
-			return this.decode(name, buffer, Charsets.UTF_8);
-		}
-		finally {
-			buffer.release();
-		}
+		return this.<T>getHeaderCodec(name).orElse((HeaderCodec<T>)this.defaultCodec).decode(name, value);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -214,36 +208,66 @@ public class GenericHeaderService implements HeaderService {
 		Integer startIndex = null;
 		Integer endIndex = null;
 		while(buffer.isReadable()) {
-			 byte nextByte = buffer.readByte();
+			byte nextByte = buffer.readByte();
 
-			 if(startIndex == null && Character.isWhitespace(nextByte)) {
-				 continue;
-			 }
+			if(startIndex == null && Character.isWhitespace(nextByte)) {
+				continue;
+			}
 			 
-			 if(startIndex == null) {
-				 startIndex = buffer.readerIndex() - 1;
-			 }
+			if(startIndex == null) {
+				startIndex = buffer.readerIndex() - 1;
+			}
 			 
-			 if(nextByte == ':') {
-				 endIndex = buffer.readerIndex() - 1;
-				 if(startIndex == endIndex) {
-					 buffer.readerIndex(readerIndex);
-					 throw new MalformedHeaderException("Malformed Header: empty name");
-				 }
-				 return buffer.slice(startIndex, endIndex - startIndex).toString(charset).toLowerCase();
-			 }
-			 else if(Character.isWhitespace(nextByte)) {
-				 // There's a white space between the header name and the colon
-				 buffer.readerIndex(readerIndex);
-				 throw new MalformedHeaderException("Malformed Header: name can't contain white space");
-			 }
-			 else if(!HeaderService.isTokenCharacter((char)nextByte)) {
-				 buffer.readerIndex(readerIndex);
-				 buffer.readerIndex(readerIndex);
-				 throw new MalformedHeaderException("Malformed Header: " + (buffer.readerIndex()-1) + " " + buffer.toString(Charsets.UTF_8) + " " + String.valueOf(Character.toChars(nextByte)));
-			 }
+			if(nextByte == ':') {
+				endIndex = buffer.readerIndex() - 1;
+				if(startIndex == endIndex) {
+					buffer.readerIndex(readerIndex);
+					throw new MalformedHeaderException("Malformed Header: empty name");
+				}
+				return buffer.slice(startIndex, endIndex - startIndex).toString(charset).toLowerCase();
+			}
+			else if(Character.isWhitespace(nextByte)) {
+				// There's a white space between the header name and the colon
+				buffer.readerIndex(readerIndex);
+				throw new MalformedHeaderException("Malformed Header: name can't contain white space");
+			}
+			else if(!HeaderService.isTokenCharacter((char)nextByte)) {
+				buffer.readerIndex(readerIndex);
+				throw new MalformedHeaderException("Malformed Header: " + (buffer.readerIndex()-1) + " " + buffer.toString(Charsets.UTF_8) + " " + String.valueOf(Character.toChars(nextByte)));
+			}
 		}
 		buffer.readerIndex(readerIndex);
+		return null;
+	}
+	
+	private String[] splitNameValue(String header) {
+		Integer startIndex = null;
+		Integer endIndex = null;
+		for(int i=0;i<header.length();i++) {
+			char nextChar = header.charAt(i);
+			
+			if(startIndex == null && Character.isWhitespace(nextChar)) {
+				continue;
+			}
+			
+			if(startIndex == null) {
+				startIndex = i;
+			}
+			
+			if(nextChar == ':') {
+				endIndex = i;
+				if(startIndex == endIndex) {
+					throw new MalformedHeaderException("Malformed Header: empty name");
+				}
+				return new String[] {header.substring(startIndex, endIndex).toLowerCase(), header.substring(i+1)};
+			}
+			else if(Character.isWhitespace(nextChar)) {
+				throw new MalformedHeaderException("Malformed Header: name can't contain white space");
+			}
+			else if(!HeaderService.isTokenCharacter(nextChar)) {
+				throw new MalformedHeaderException("Malformed Header: " + i + " " + header + " " + nextChar);
+			}
+		}
 		return null;
 	}
 	
