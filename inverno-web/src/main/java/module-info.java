@@ -129,5 +129,6 @@ module io.inverno.mod.web {
 	requires org.reactivestreams;
 	
 	exports io.inverno.mod.web;
+	exports io.inverno.mod.web.spi;
 	exports io.inverno.mod.web.annotation;
 }
