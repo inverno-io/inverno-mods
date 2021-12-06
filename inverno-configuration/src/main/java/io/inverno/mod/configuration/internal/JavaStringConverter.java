@@ -52,14 +52,12 @@ import io.inverno.mod.base.converter.ObjectConverter;
 
 /**
  * <p>
- * Java String {@link ObjectConverter} implementation that converts primitive
- * and common types from/to Java String literals (ie. escaping characters in a
- * String using Java String rules).
+ * Java String {@link ObjectConverter} implementation that converts primitive and common types from/to Java String literals (ie. escaping characters in a String using Java String rules).
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ObjectConverter
  */
 public class JavaStringConverter implements ObjectConverter<String> {

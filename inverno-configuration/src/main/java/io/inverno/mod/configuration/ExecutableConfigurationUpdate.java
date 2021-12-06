@@ -20,38 +20,33 @@ import reactor.core.publisher.Flux;
 
 /**
  * <p>
- * An executable configuration update can be executed to set configuration
- * properties for a particular context in a configuration source.
+ * An executable configuration update can be executed to set configuration properties for a particular context in a configuration source.
  * </p>
- * 
+ *
  * <p>
- * Multiple configuration updates can be chained by calling the
- * {@link ExecutableConfigurationUpdate#and} method to be executed in a batch
- * when the {@link ExecutableConfigurationUpdate#execute} method is invoked on
- * the last query.
+ * Multiple configuration updates can be chained by calling the {@link ExecutableConfigurationUpdate#and} method to be executed in a batch when the {@link ExecutableConfigurationUpdate#execute} method
+ * is invoked on the last query.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ConfigurationUpdate
  * @see ConfigurationUpdateResult
  *
  * @param <A> the update type
  * @param <B> the executable update type
- * @param <C> the update result type
  */
-public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B extends ExecutableConfigurationUpdate<A, B, C>, C extends ConfigurationUpdateResult<?>> {
+public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, B>, B extends ExecutableConfigurationUpdate<A, B>> {
 
 	/**
 	 * <p>
-	 * Defines one parameter that specifies the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines one parameter that specifies the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the parameter name
 	 * @param v1 the parameter value
-	 * 
+	 *
 	 * @return the executable configuration update
 	 */
 	default B withParameters(String k1, Object v1) {
@@ -60,16 +55,16 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	
 	/**
 	 * <p>
-	 * Defines two parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines two parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
 	 * @param v2 the second parameter value
-	 * 
+	 *
 	 * @return the executable configuration update
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2) throws IllegalArgumentException {
@@ -78,18 +73,18 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	
 	/**
 	 * <p>
-	 * Defines three parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines three parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
 	 * @param v2 the second parameter value
 	 * @param k3 the third parameter name
 	 * @param v3 the third parameter value
-	 * 
+	 *
 	 * @return the executable configuration update
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3) throws IllegalArgumentException {
@@ -98,10 +93,9 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	
 	/**
 	 * <p>
-	 * Defines four parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines four parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -110,8 +104,9 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @param v3 the third parameter value
 	 * @param k4 the fourth parameter name
 	 * @param v4 the fourth parameter value
-	 * 
+	 *
 	 * @return the executable configuration update
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) throws IllegalArgumentException {
@@ -120,10 +115,9 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	
 	/**
 	 * <p>
-	 * Defines five parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines five parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -134,8 +128,9 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @param v4 the fourth parameter value
 	 * @param k5 the fifth parameter name
 	 * @param v5 the fifth parameter value
-	 * 
+	 *
 	 * @return the executable configuration update
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) throws IllegalArgumentException {
@@ -144,10 +139,9 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	
 	/**
 	 * <p>
-	 * Defines six parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines six parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -160,8 +154,9 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @param v5 the fifth parameter value
 	 * @param k6 the sixth parameter name
 	 * @param v6 the sixth parameter value
-	 * 
+	 *
 	 * @return the executable configuration update
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) throws IllegalArgumentException {
@@ -170,10 +165,9 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	
 	/**
 	 * <p>
-	 * Defines seven parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines seven parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -188,8 +182,9 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @param v6 the sixth parameter value
 	 * @param k7 the seventh parameter name
 	 * @param v7 the seventh parameter value
-	 * 
+	 *
 	 * @return the executable configuration update
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) throws IllegalArgumentException {
@@ -198,10 +193,9 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	
 	/**
 	 * <p>
-	 * Defines eigth parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines eigth parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -218,8 +212,9 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @param v7 the seventh parameter value
 	 * @param k8 the eighth parameter name
 	 * @param v8 the eighth parameter value
-	 * 
+	 *
 	 * @return the executable configuration update
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) throws IllegalArgumentException {
@@ -228,10 +223,9 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	
 	/**
 	 * <p>
-	 * Defines nine parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines nine parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -250,8 +244,9 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @param v8 the eighth parameter value
 	 * @param k9 the ninth parameter name
 	 * @param v9 the ninth parameter value
-	 * 
+	 *
 	 * @return the executable configuration update
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) throws IllegalArgumentException {
@@ -260,10 +255,9 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	
 	/**
 	 * <p>
-	 * Defines ten parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines ten parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1  the first parameter name
 	 * @param v1  the first parameter value
 	 * @param k2  the second parameter name
@@ -284,8 +278,9 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @param v9  the ninth parameter value
 	 * @param k10 the tenth parameter name
 	 * @param v10 the tenth parameter value
-	 * 
+	 *
 	 * @return the executable configuration update
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) throws IllegalArgumentException {
@@ -294,13 +289,13 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	
 	/**
 	 * <p>
-	 * Defines parameters that specify the context in which configuration properties
-	 * are to be retrieved.
+	 * Defines parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param parameters an array of parameters
-	 * 
+	 *
 	 * @return the executable configuration update
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	B withParameters(Parameter... parameters) throws IllegalArgumentException;
@@ -325,5 +320,5 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * 
 	 * @return a stream of configuration update results
 	 */
-	Flux<C> execute();
+	Flux<ConfigurationUpdateResult> execute();
 }

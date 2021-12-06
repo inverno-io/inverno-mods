@@ -67,66 +67,54 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A configurable configuration source that stores and looks up properties in a
- * Redis data store.
+ * A configurable configuration source that stores and looks up properties in a Redis data store.
  * </p>
- * 
+ *
  * <p>
- * This implementation supports basic versioning which allows to set multiple
- * properties and activate or revert them atomically.
+ * This implementation supports basic versioning which allows to set multiple properties and activate or revert them atomically.
  * </p>
- * 
+ *
  * <p>
- * Properties can be viewed in a tree of properties whose nodes correspond to
- * parameters in natural order, a global revision is defined at the root of the
- * tree and finer revisions can also be created in child nodes to version
- * particular branches.
+ * Properties can be viewed in a tree of properties whose nodes correspond to parameters in natural order, a global revision is defined at the root of the tree and finer revisions can also be created
+ * in child nodes to version particular branches.
  * </p>
- * 
+ *
  * <p>
- * Particular care must be taken when deciding to version a specific branch, a
- * property can only be versioned once which is the case when versioned property
- * sets are disjointed. More specifically, a given property can't be versioned
- * twice which might happen when the configuration is activated with different
- * overlapping sets of parameters. An exception is normally thrown when such
- * situation is detected. On the other hand, it is quite possible to version
- * nested branches.
+ * Particular care must be taken when deciding to version a specific branch, a property can only be versioned once which is the case when versioned property sets are disjointed. More specifically, a
+ * given property can't be versioned twice which might happen when the configuration is activated with different overlapping sets of parameters. An exception is normally thrown when such situation is
+ * detected. On the other hand, it is quite possible to version nested branches.
  * </p>
- * 
+ *
  * <p>
- * For instance, the following setup is most likely to fail if properties can be
- * defined with both {@code environment="production"} and {@code zone="eu"}
- * parameters:
+ * For instance, the following setup is most likely to fail if properties can be defined with both {@code environment="production"} and {@code zone="eu"} parameters:
  * </p>
- * 
+ *
  * <ul>
  * <li>{@code []}: global tree</li>
  * <li>{@code [environment="production"]}: production environment tree</li>
  * <li>{@code [zone="eu"]}: eu zone tree</li>
  * </ul>
- * 
- * <p>While the following setup will work just fine:</p>
- * 
+ *
+ * <p>
+ * While the following setup will work just fine:</p>
+ *
  * <ul>
  * <li>{@code []}: global tree</li>
  * <li>{@code [environment="production"]}: production environment tree</li>
  * <li>{@code [environment="production", zone="eu"]}: eu zone tree</li>
  * </ul>
- * 
+ *
  * <p>
- * Properties are set for the working revision corresponding to their
- * parameters. The working revision is activated using the
- * {@link RedisConfigurationSource#activate(Parameter...)} method, the
- * {@link RedisConfigurationSource#activate(int, Parameter...)} is used to
- * activate a specific revision.
+ * Properties are set for the working revision corresponding to their parameters. The working revision is activated using the {@link RedisConfigurationSource#activate(Parameter...)} method, the
+ * {@link RedisConfigurationSource#activate(int, Parameter...)} is used to activate a specific revision.
  * </p>
- * 
+ *
  * <p>
  * A typical workflow to set properties is:
  * </p>
- * 
+ *
  * <blockquote>
- * 
+ *
  * <pre>
  * RedisConfigurationSource source = ...;
  * source
@@ -135,23 +123,23 @@ import reactor.core.publisher.Mono;
  *     .set("db.url", "jdbc:oracle:thin:@prod_us.db.server:1521:sid").withParameters("env", "prod", "zone", "us")
  *     .execute()
  *     .blockLast();
- * 
+ *
  * // Activate working revision globally
  * source.activate().block();
- * 
+ *
  * // Activate working revision for dev environment and prod environment independently
  * source.activate("env", "dev").block();
  * source.activate("env", "prod").block();
  * </pre>
- * 
+ *
  * </blockquote>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ConfigurableConfigurationSource
  */
-public class RedisConfigurationSource extends AbstractConfigurableConfigurationSource<RedisConfigurationSource.RedisConfigurationQuery, RedisConfigurationSource.RedisExecutableConfigurationQuery, RedisConfigurationSource.RedisConfigurationQueryResult, RedisConfigurationSource.RedisConfigurationUpdate, RedisConfigurationSource.RedisExecutableConfigurationUpdate, RedisConfigurationSource.RedisConfigurationUpdateResult, String> {
+public class RedisConfigurationSource extends AbstractConfigurableConfigurationSource<RedisConfigurationSource.RedisConfigurationQuery, RedisConfigurationSource.RedisExecutableConfigurationQuery, RedisConfigurationSource.RedisConfigurationUpdate, RedisConfigurationSource.RedisExecutableConfigurationUpdate, String> {
 
 	private static final String METADATA_FIELD_ACTIVE_REVISION = "active_revision";
 	private static final String METADATA_FIELD_WORKING_REVISION = "working_revision";
@@ -171,10 +159,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	
 	/**
 	 * <p>
-	 * Creates a redis configuration source with the specified redis client, string
-	 * value encoder and decoder.
+	 * Creates a redis configuration source with the specified redis client, string value encoder and decoder.
 	 * </p>
-	 * 
+	 *
 	 * @param redisClient a redis client
 	 * @param encoder     a string encoder
 	 * @param decoder     a string decoder
@@ -209,12 +196,11 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	
 	/**
 	 * <p>
-	 * Returns the configuration metadata for the specified list of parameters
-	 * extracted form a configuration query.
+	 * Returns the configuration metadata for the specified list of parameters extracted form a configuration query.
 	 * </p>
-	 * 
+	 *
 	 * @param metaDataParameters a list of parameters
-	 * 
+	 *
 	 * @return a mono emitting the metadata
 	 */
 	protected Mono<RedisConfigurationMetaData> getMetaData(List<Parameter> metaDataParameters) {
@@ -252,10 +238,11 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Returns the configuration metadata for the specified list of parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param parameters an array of parameters
-	 * 
+	 *
 	 * @return a mono emitting the metadata
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<RedisConfigurationMetaData> getMetaData(Parameter... parameters) throws IllegalArgumentException {
@@ -279,10 +266,11 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Activates the working revision for the properties defined with the specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param parameters an array of parameters
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<Void> activate(Parameter... parameters) throws IllegalArgumentException {
@@ -324,17 +312,15 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	
 	/**
 	 * <p>
-	 * Activates the specified revisions for the properties defined with the
-	 * specified parameters.
+	 * Activates the specified revisions for the properties defined with the specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param revision   the revision to activate
 	 * @param parameters an array of parameters
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 *                                  or if the specified revision is greater than
-	 *                                  the current working revision
+	 *
+	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
 	 */
 	public Mono<Void> activate(int revision, Parameter... parameters) throws IllegalArgumentException {
 		if(revision < 1) {
@@ -428,9 +414,8 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		 * <p>
 		 * Returns the working revision of the configuration branch.
 		 * </p>
-		 * 
-		 * @return an optional returning the working revision, or an empty optional if
-		 *         no working revision has been defined
+		 *
+		 * @return an optional returning the working revision, or an empty optional if no working revision has been defined
 		 */
 		public Optional<Integer> getWorkingRevision() {
 			return this.workingRevision;
@@ -440,9 +425,8 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		 * <p>
 		 * Returns the active revision of the configuration branch.
 		 * </p>
-		 * 
-		 * @return an optional returning the active revision, or an empty optional if no
-		 *         revision has been activated so far
+		 *
+		 * @return an optional returning the active revision, or an empty optional if no revision has been activated so far
 		 */
 		public Optional<Integer> getActiveRevision() {
 			return this.activeRevision;
@@ -463,10 +447,6 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 
 		private Optional<RedisConfigurationMetaData> metaData;
 		private Optional<Integer> revision;
-		
-		private RedisConfigurationKey(String name, RedisConfigurationMetaData metaData, Integer actualRevision) {
-			this(name, metaData, actualRevision, null);
-		}
 		
 		private RedisConfigurationKey(String name, RedisConfigurationMetaData metaData, Integer actualRevision, Collection<Parameter> parameters) {
 			super(name, parameters);
@@ -489,9 +469,8 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		 * <p>
 		 * Returns revision of the property identified by the key.
 		 * </p>
-		 * 
-		 * @return an optional returning the revision or an empty optional if there's no
-		 *         revision
+		 *
+		 * @return an optional returning the revision or an empty optional if there's no revision
 		 */
 		public Optional<Integer> getRevision() {
 			return this.revision;
@@ -508,7 +487,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * 
 	 * @see ConfigurationQuery
 	 */
-	public static class RedisConfigurationQuery implements ConfigurationQuery<RedisConfigurationQuery, RedisExecutableConfigurationQuery, RedisConfigurationQueryResult> {
+	public static class RedisConfigurationQuery implements ConfigurationQuery<RedisConfigurationQuery, RedisExecutableConfigurationQuery> {
 
 		private RedisExecutableConfigurationQuery executableQuery;
 		
@@ -544,7 +523,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * 
 	 * @see ExecutableConfigurationQuery
 	 */
-	public static class RedisExecutableConfigurationQuery implements ExecutableConfigurationQuery<RedisConfigurationQuery, RedisExecutableConfigurationQuery, RedisConfigurationQueryResult> {
+	public static class RedisExecutableConfigurationQuery implements ExecutableConfigurationQuery<RedisConfigurationQuery, RedisExecutableConfigurationQuery> {
 
 		private RedisConfigurationSource source;
 		
@@ -601,7 +580,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		}
 		
 		@Override
-		public Flux<RedisConfigurationQueryResult> execute() {
+		public Flux<ConfigurationQueryResult> execute() {
 			return this.source.getMetaDataParameterSets()
 				.flatMapMany(metaDataParameterSets -> {
 					Map<Integer, Map<List<Parameter>, List<RedisConfigurationQuery>>> queriesByMetaDataByCard = new TreeMap<>(Comparator.reverseOrder());
@@ -647,29 +626,6 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 								})
 							)
 						);
-						/*.concatMap(queriesByMetaData -> Mono.just(queriesByMetaData)
-							.doOnSubscribe(subscription -> {
-								queriesByMetaData.values().stream().forEach(queries -> {
-									for(Iterator<RedisConfigurationQuery> queriesIterator = queries.iterator(); queriesIterator.hasNext();) {
-										if(queriesIterator.next().metaData != null) {
-											queriesIterator.remove();
-										}
-									}
-								});
-							})
-							.flatMapIterable(Map::entrySet)
-							.filter(e -> !e.getValue().isEmpty())
-							.flatMap(e -> this.source.getMetaData(e.getKey())
-								.doOnNext(metaData -> {
-									for(RedisConfigurationQuery query : e.getValue()) {
-										if(query.metaData != null) {
-											throw new IllegalStateException("MetaData " + asMetaDataKey(e.getKey()) + " is conflicting with " + asMetaDataKey(query.metaData.getParameters()) + " when considering parameters [" + query.parameters.stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?
-										}
-										query.metaData = metaData;
-									}
-								})
-							)
-						);*/
 				})
 				.thenMany(Flux.fromIterable(this.queries))
 				.flatMap(query -> Flux.fromStream(query.names.stream().map(name -> new RedisConfigurationKey(name, query.metaData != null ? query.metaData : null, null, query.parameters)))
@@ -699,7 +655,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 										return new RedisConfigurationQueryResult(queryKey, this.source, new IllegalStateException("Invalid value found for key " + queryKey.toString() + " at revision " + (int)value.getScore(), e));
 									}
 								})
-								.orElse(new RedisConfigurationQueryResult(queryKey, (ConfigurationProperty<?, ?>)null))
+								.orElse(new RedisConfigurationQueryResult(queryKey, null))
 							);
 					})
 				);
@@ -716,14 +672,19 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * 
 	 * @see ConfigurationQueryResult
 	 */
-	public static class RedisConfigurationQueryResult extends GenericConfigurationQueryResult<RedisConfigurationKey, ConfigurationProperty<?, ?>> {
+	public static class RedisConfigurationQueryResult extends GenericConfigurationQueryResult {
 		
-		private RedisConfigurationQueryResult(RedisConfigurationKey queryKey, ConfigurationProperty<?, ?> queryResult) {
+		private RedisConfigurationQueryResult(RedisConfigurationKey queryKey, ConfigurationProperty queryResult) {
 			super(queryKey, queryResult);
 		}
 
 		private RedisConfigurationQueryResult(RedisConfigurationKey queryKey, RedisConfigurationSource source, Throwable error) {
 			super(queryKey, source, error);
+		}
+
+		@Override
+		public RedisConfigurationKey getQueryKey() {
+			return (RedisConfigurationKey)super.getQueryKey();
 		}
 	}
 	
@@ -737,7 +698,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * 
 	 * @see ConfigurationUpdate
 	 */
-	public static class RedisConfigurationUpdate implements ConfigurationUpdate<RedisConfigurationUpdate, RedisExecutableConfigurationUpdate, RedisConfigurationUpdateResult> {
+	public static class RedisConfigurationUpdate implements ConfigurationUpdate<RedisConfigurationUpdate, RedisExecutableConfigurationUpdate> {
 
 		private RedisExecutableConfigurationUpdate executableQuery;
 		
@@ -773,7 +734,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * 
 	 * @see ExecutableConfigurationUpdate
 	 */
-	public static class RedisExecutableConfigurationUpdate implements ExecutableConfigurationUpdate<RedisConfigurationUpdate, RedisExecutableConfigurationUpdate, RedisConfigurationUpdateResult> {
+	public static class RedisExecutableConfigurationUpdate implements ExecutableConfigurationUpdate<RedisConfigurationUpdate, RedisExecutableConfigurationUpdate> {
 
 		private RedisConfigurationSource source;
 		
@@ -811,7 +772,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		}
 
 		@Override
-		public Flux<RedisConfigurationUpdateResult> execute() {
+		public Flux<ConfigurationUpdateResult> execute() {
 			return this.source.getMetaDataParameterSets()
 				.flatMapMany(metaDataParameterSets -> {
 					Map<Integer, Map<List<Parameter>, List<RedisConfigurationUpdate>>> updatesByMetaDataByCard = new TreeMap<>(Comparator.reverseOrder());
@@ -907,13 +868,13 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * 
 	 * @see ConfigurationUpdateResult
 	 */
-	public static class RedisConfigurationUpdateResult extends GenericConfigurationUpdateResult<RedisConfigurationKey> {
+	public static class RedisConfigurationUpdateResult extends GenericConfigurationUpdateResult {
 
 		private RedisConfigurationUpdateResult(RedisConfigurationKey updateKey) {
 			super(updateKey);
 		}
 		
-		private RedisConfigurationUpdateResult(RedisConfigurationKey updateKey, ConfigurationSource<?, ?, ?> source, Throwable error) {
+		private RedisConfigurationUpdateResult(RedisConfigurationKey updateKey, ConfigurationSource<?,?> source, Throwable error) {
 			super(updateKey, source, error);
 		}
 	}
@@ -970,13 +931,14 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Returns the configuration metadata for two parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
 	 * @param v2 the second parameter value
-	 * 
+	 *
 	 * @return a mono emitting the metadata
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2) throws IllegalArgumentException {
@@ -987,15 +949,16 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Returns the configuration metadata for three parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
 	 * @param v2 the second parameter value
 	 * @param k3 the third parameter name
 	 * @param v3 the third parameter value
-	 * 
+	 *
 	 * @return a mono emitting the metadata
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3) throws IllegalArgumentException {
@@ -1006,7 +969,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Returns the configuration metadata for four parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -1015,8 +978,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v3 the third parameter value
 	 * @param k4 the fourth parameter name
 	 * @param v4 the fourth parameter value
-	 * 
+	 *
 	 * @return a mono emitting the metadata
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) throws IllegalArgumentException {
@@ -1027,7 +991,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Returns the configuration metadata for five parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -1038,8 +1002,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v4 the fourth parameter value
 	 * @param k5 the fifth parameter name
 	 * @param v5 the fifth parameter value
-	 * 
+	 *
 	 * @return a mono emitting the metadata
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) throws IllegalArgumentException {
@@ -1050,7 +1015,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Returns the configuration metadata for six parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -1063,8 +1028,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v5 the fifth parameter value
 	 * @param k6 the sixth parameter name
 	 * @param v6 the sixth parameter value
-	 * 
+	 *
 	 * @return a mono emitting the metadata
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) throws IllegalArgumentException {
@@ -1075,7 +1041,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Returns the configuration metadata for seven parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -1090,8 +1056,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v6 the sixth parameter value
 	 * @param k7 the seventh parameter name
 	 * @param v7 the seventh parameter value
-	 * 
+	 *
 	 * @return a mono emitting the metadata
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) throws IllegalArgumentException {
@@ -1102,7 +1069,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Returns the configuration metadata for eight parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -1119,8 +1086,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v7 the seventh parameter value
 	 * @param k8 the eighth parameter name
 	 * @param v8 the eighth parameter value
-	 * 
+	 *
 	 * @return a mono emitting the metadata
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) throws IllegalArgumentException {
@@ -1131,7 +1099,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Returns the configuration metadata for nine parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -1150,8 +1118,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v8 the eighth parameter value
 	 * @param k9 the ninth parameter name
 	 * @param v9 the ninth parameter value
-	 * 
+	 *
 	 * @return a mono emitting the metadata
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) throws IllegalArgumentException {
@@ -1162,7 +1131,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Returns the configuration metadata for ten parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1  the first parameter name
 	 * @param v1  the first parameter value
 	 * @param k2  the second parameter name
@@ -1183,8 +1152,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v9  the ninth parameter value
 	 * @param k10 the tenth parameter name
 	 * @param v10 the tenth parameter value
-	 * 
+	 *
 	 * @return a mono emitting the metadata
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) throws IllegalArgumentException {
@@ -1195,10 +1165,10 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Activates the working revision for the properties defined with the specified parameter.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the parameter name
 	 * @param v1 the parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
 	 */
 	public Mono<Void> activate(String k1, Object v1) {
@@ -1209,13 +1179,14 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Activates the working revision for the properties defined with the two specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
 	 * @param v2 the second parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<Void> activate(String k1, Object v1, String k2, Object v2) throws IllegalArgumentException {
@@ -1226,15 +1197,16 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Activates the working revision for the properties defined with the three specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
 	 * @param v2 the second parameter value
 	 * @param k3 the third parameter name
 	 * @param v3 the third parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3) throws IllegalArgumentException {
@@ -1245,7 +1217,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Activates the working revision for the properties defined with the four specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -1254,8 +1226,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v3 the third parameter value
 	 * @param k4 the fourth parameter name
 	 * @param v4 the fourth parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) throws IllegalArgumentException {
@@ -1266,7 +1239,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Activates the working revision for the properties defined with the five specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -1277,8 +1250,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v4 the fourth parameter value
 	 * @param k5 the fifth parameter name
 	 * @param v5 the fifth parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) throws IllegalArgumentException {
@@ -1289,7 +1263,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Activates the working revision for the properties defined with the six specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -1302,8 +1276,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v5 the fifth parameter value
 	 * @param k6 the sixth parameter name
 	 * @param v6 the sixth parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) throws IllegalArgumentException {
@@ -1314,7 +1289,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Activates the working revision for the properties defined with the seven specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -1329,8 +1304,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v6 the sixth parameter value
 	 * @param k7 the seventh parameter name
 	 * @param v7 the seventh parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) throws IllegalArgumentException {
@@ -1341,7 +1317,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Activates the working revision for the properties defined with the eight specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -1358,8 +1334,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v7 the seventh parameter value
 	 * @param k8 the eighth parameter name
 	 * @param v8 the eighth parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) throws IllegalArgumentException {
@@ -1370,7 +1347,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Activates the working revision for the properties defined with the nine specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -1389,8 +1366,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v8 the eighth parameter value
 	 * @param k9 the ninth parameter name
 	 * @param v9 the ninth parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) throws IllegalArgumentException {
@@ -1401,7 +1379,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * <p>
 	 * Activates the working revision for the properties defined with the ten specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param k1  the first parameter name
 	 * @param v1  the first parameter value
 	 * @param k2  the second parameter name
@@ -1422,8 +1400,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v9  the ninth parameter value
 	 * @param k10 the tenth parameter name
 	 * @param v10 the tenth parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) throws IllegalArgumentException {
@@ -1432,17 +1411,16 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 
 	/**
 	 * <p>
-	 * Activates the specified revisions for the properties defined with the
-	 * specified parameter.
+	 * Activates the specified revisions for the properties defined with the specified parameter.
 	 * </p>
-	 * 
+	 *
 	 * @param revision the revision to activate
 	 * @param k1       the parameter name
 	 * @param v1       the parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
-	 * @throws IllegalArgumentException if the specified revision is greater than
-	 *                                  the current working revision
+	 *
+	 * @throws IllegalArgumentException if the specified revision is greater than the current working revision
 	 */
 	public Mono<Void> activate(int revision, String k1, Object v1) {
 		return this.activate(revision, Parameter.of(k1, v1));
@@ -1450,20 +1428,18 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 
 	/**
 	 * <p>
-	 * Activates the specified revisions for the properties defined with the two
-	 * specified parameters.
+	 * Activates the specified revisions for the properties defined with the two specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param revision the revision to activate
 	 * @param k1       the first parameter name
 	 * @param v1       the first parameter value
 	 * @param k2       the second parameter name
 	 * @param v2       the second parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 *                                  or if the specified revision is greater than
-	 *                                  the current working revision
+	 *
+	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
 	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2));
@@ -1471,10 +1447,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	
 	/**
 	 * <p>
-	 * Activates the specified revisions for the properties defined with the three
-	 * specified parameters.
+	 * Activates the specified revisions for the properties defined with the three specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param revision the revision to activate
 	 * @param k1       the first parameter name
 	 * @param v1       the first parameter value
@@ -1482,11 +1457,10 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v2       the second parameter value
 	 * @param k3       the third parameter name
 	 * @param v3       the third parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 *                                  or if the specified revision is greater than
-	 *                                  the current working revision
+	 *
+	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
 	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3));
@@ -1494,10 +1468,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	
 	/**
 	 * <p>
-	 * Activates the specified revisions for the properties defined with the four
-	 * specified parameters.
+	 * Activates the specified revisions for the properties defined with the four specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param revision the revision to activate
 	 * @param k1       the first parameter name
 	 * @param v1       the first parameter value
@@ -1507,11 +1480,10 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v3       the third parameter value
 	 * @param k4       the fourth parameter name
 	 * @param v4       the fourth parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 *                                  or if the specified revision is greater than
-	 *                                  the current working revision
+	 *
+	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
 	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4));
@@ -1519,10 +1491,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	
 	/**
 	 * <p>
-	 * Activates the specified revisions for the properties defined with the five
-	 * specified parameters.
+	 * Activates the specified revisions for the properties defined with the five specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param revision the revision to activate
 	 * @param k1       the first parameter name
 	 * @param v1       the first parameter value
@@ -1534,11 +1505,10 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v4       the fourth parameter value
 	 * @param k5       the fifth parameter name
 	 * @param v5       the fifth parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 *                                  or if the specified revision is greater than
-	 *                                  the current working revision
+	 *
+	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
 	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5));
@@ -1546,10 +1516,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	
 	/**
 	 * <p>
-	 * Activates the specified revisions for the properties defined with the six
-	 * specified parameters.
+	 * Activates the specified revisions for the properties defined with the six specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param revision the revision to activate
 	 * @param k1       the first parameter name
 	 * @param v1       the first parameter value
@@ -1563,11 +1532,10 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v5       the fifth parameter value
 	 * @param k6       the sixth parameter name
 	 * @param v6       the sixth parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 *                                  or if the specified revision is greater than
-	 *                                  the current working revision
+	 *
+	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
 	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6));
@@ -1575,10 +1543,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	
 	/**
 	 * <p>
-	 * Activates the specified revisions for the properties defined with the seven
-	 * specified parameters.
+	 * Activates the specified revisions for the properties defined with the seven specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param revision the revision to activate
 	 * @param k1       the first parameter name
 	 * @param v1       the first parameter value
@@ -1594,11 +1561,10 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v6       the sixth parameter value
 	 * @param k7       the seventh parameter name
 	 * @param v7       the seventh parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 *                                  or if the specified revision is greater than
-	 *                                  the current working revision
+	 *
+	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
 	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7));
@@ -1606,10 +1572,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	
 	/**
 	 * <p>
-	 * Activates the specified revisions for the properties defined with the eight
-	 * specified parameters.
+	 * Activates the specified revisions for the properties defined with the eight specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param revision the revision to activate
 	 * @param k1       the first parameter name
 	 * @param v1       the first parameter value
@@ -1627,11 +1592,10 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v7       the seventh parameter value
 	 * @param k8       the eighth parameter name
 	 * @param v8       the eighth parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 *                                  or if the specified revision is greater than
-	 *                                  the current working revision
+	 *
+	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
 	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8));
@@ -1639,10 +1603,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	
 	/**
 	 * <p>
-	 * Activates the specified revisions for the properties defined with the nine
-	 * specified parameters.
+	 * Activates the specified revisions for the properties defined with the nine specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param revision the revision to activate
 	 * @param k1       the first parameter name
 	 * @param v1       the first parameter value
@@ -1662,11 +1625,10 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v8       the eighth parameter value
 	 * @param k9       the ninth parameter name
 	 * @param v9       the ninth parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 *                                  or if the specified revision is greater than
-	 *                                  the current working revision
+	 *
+	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
 	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9));
@@ -1674,10 +1636,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	
 	/**
 	 * <p>
-	 * Activates the specified revisions for the properties defined with the ten
-	 * specified parameters.
+	 * Activates the specified revisions for the properties defined with the ten specified parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param revision the revision to activate
 	 * @param k1       the first parameter name
 	 * @param v1       the first parameter value
@@ -1699,11 +1660,10 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param v9       the ninth parameter value
 	 * @param k10      the tenth parameter name
 	 * @param v10      the tenth parameter value
-	 * 
+	 *
 	 * @return a mono that completes when the operation succeeds or fails
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 *                                  or if the specified revision is greater than
-	 *                                  the current working revision
+	 *
+	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
 	 */
 	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) {
 		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9), Parameter.of(k10, v10));

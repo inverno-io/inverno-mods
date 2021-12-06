@@ -19,28 +19,26 @@ import java.util.Map;
 
 /**
  * <p>
- * A configuration update is used to set or update configuration properties in a
- * configurable configuration source.
+ * A configuration update is used to set or update configuration properties in a configurable configuration source.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ConfigurableConfigurationSource
  * @see ExecutableConfigurationUpdate
  * @see ConfigurationUpdateResult
- * 
+ *
  * @param <A> the update type
  * @param <B> the executable update type
- * @param <C> the update result type
  */
-public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B extends ExecutableConfigurationUpdate<A, B, C>, C extends ConfigurationUpdateResult<?>> {
+public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B>, B extends ExecutableConfigurationUpdate<A, B>> {
 
 	/**
 	 * <p>
 	 * Defines constants used to set special values.
 	 * </p>
-	 * 
+	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
@@ -57,13 +55,12 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	
 	/**
 	 * <p>
-	 * Creates a configuration update to set one
-	 * configuration property in the configuration source.
+	 * Creates a configuration update to set one configuration property in the configuration source.
 	 * </p>
-	 * 
+	 *
 	 * @param name1  the property key
 	 * @param value1 the property value
-	 * 
+	 *
 	 * @return an executable configuration update
 	 */
 	default B set(String name1, Object value1) {
@@ -72,15 +69,14 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	
 	/**
 	 * <p>
-	 * Creates a configuration update to set two configuration properties in the
-	 * configuration source.
+	 * Creates a configuration update to set two configuration properties in the configuration source.
 	 * </p>
-	 * 
+	 *
 	 * @param name1  the first property key
 	 * @param value1 the first property value
 	 * @param name2  the second property key
 	 * @param value2 the second property value
-	 * 
+	 *
 	 * @return an executable configuration update
 	 */
 	default B set(String name1, Object value1, String name2, Object value2) {
@@ -89,17 +85,16 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 
 	/**
 	 * <p>
-	 * Creates a configuration update to set three configuration properties in the
-	 * configuration source.
+	 * Creates a configuration update to set three configuration properties in the configuration source.
 	 * </p>
-	 * 
+	 *
 	 * @param name1  the first property key
 	 * @param value1 the first property value
 	 * @param name2  the second property key
 	 * @param value2 the second property value
 	 * @param name3  the third property key
 	 * @param value3 the third property value
-	 * 
+	 *
 	 * @return an executable configuration update
 	 */
 	default B set(String name1, Object value1, String name2, Object value2, String name3, Object value3) {
@@ -108,10 +103,9 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	
 	/**
 	 * <p>
-	 * Creates a configuration update to set four configuration properties in the
-	 * configuration source.
+	 * Creates a configuration update to set four configuration properties in the configuration source.
 	 * </p>
-	 * 
+	 *
 	 * @param name1  the first property key
 	 * @param value1 the first property value
 	 * @param name2  the second property key
@@ -120,7 +114,7 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	 * @param value3 the third property value
 	 * @param name4  the fourth property key
 	 * @param value4 the fourth property value
-	 * 
+	 *
 	 * @return an executable configuration update
 	 */
 	default B set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4) {
@@ -129,10 +123,9 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	
 	/**
 	 * <p>
-	 * Creates a configuration update to set five configuration properties in the
-	 * configuration source.
+	 * Creates a configuration update to set five configuration properties in the configuration source.
 	 * </p>
-	 * 
+	 *
 	 * @param name1  the first property key
 	 * @param value1 the first property value
 	 * @param name2  the second property key
@@ -143,7 +136,7 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	 * @param value4 the fourth property value
 	 * @param name5  the fifth property key
 	 * @param value5 the fifth property value
-	 * 
+	 *
 	 * @return an executable configuration update
 	 */
 	default B set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5) {
@@ -152,10 +145,9 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	
 	/**
 	 * <p>
-	 * Creates a configuration update to set six configuration properties in the
-	 * configuration source.
+	 * Creates a configuration update to set six configuration properties in the configuration source.
 	 * </p>
-	 * 
+	 *
 	 * @param name1  the first property key
 	 * @param value1 the first property value
 	 * @param name2  the second property key
@@ -168,7 +160,7 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	 * @param value5 the fifth property value
 	 * @param name6  the sixth property key
 	 * @param value6 the sixth property value
-	 * 
+	 *
 	 * @return an executable configuration update
 	 */
 	default B set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6) {
@@ -177,10 +169,9 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	
 	/**
 	 * <p>
-	 * Creates a configuration update to set seven configuration properties in the
-	 * configuration source.
+	 * Creates a configuration update to set seven configuration properties in the configuration source.
 	 * </p>
-	 * 
+	 *
 	 * @param name1  the first property key
 	 * @param value1 the first property value
 	 * @param name2  the second property key
@@ -195,7 +186,7 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	 * @param value6 the sixth property value
 	 * @param name7  the seventh property key
 	 * @param value7 the seventh property value
-	 * 
+	 *
 	 * @return an executable configuration update
 	 */
 	default B set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6, String name7, Object value7) {
@@ -204,10 +195,9 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	
 	/**
 	 * <p>
-	 * Creates a configuration update to set eight configuration properties in the
-	 * configuration source.
+	 * Creates a configuration update to set eight configuration properties in the configuration source.
 	 * </p>
-	 * 
+	 *
 	 * @param name1  the first property key
 	 * @param value1 the first property value
 	 * @param name2  the second property key
@@ -224,7 +214,7 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	 * @param value7 the seventh property value
 	 * @param name8  the eighth property key
 	 * @param value8 the eighth property value
-	 * 
+	 *
 	 * @return an executable configuration update
 	 */
 	default B set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6, String name7, Object value7, String name8, Object value8) {
@@ -233,10 +223,9 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	
 	/**
 	 * <p>
-	 * Creates a configuration update to set nine configuration properties in the
-	 * configuration source.
+	 * Creates a configuration update to set nine configuration properties in the configuration source.
 	 * </p>
-	 * 
+	 *
 	 * @param name1  the first property key
 	 * @param value1 the first property value
 	 * @param name2  the second property key
@@ -255,7 +244,7 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	 * @param value8 the eighth property value
 	 * @param name9  the ninth property key
 	 * @param value9 the ninth property value
-	 * 
+	 *
 	 * @return an executable configuration update
 	 */
 	default B set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6, String name7, Object value7, String name8, Object value8, String name9, Object value9) {
@@ -264,10 +253,9 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	
 	/**
 	 * <p>
-	 * Creates a configuration update to set ten configuration properties in the
-	 * configuration source.
+	 * Creates a configuration update to set ten configuration properties in the configuration source.
 	 * </p>
-	 * 
+	 *
 	 * @param name1   the first property key
 	 * @param value1  the first property value
 	 * @param name2   the second property key
@@ -288,7 +276,7 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	 * @param value9  the ninth property value
 	 * @param name10  the tenth property key
 	 * @param value10 the tenth property value
-	 * 
+	 *
 	 * @return an executable configuration update
 	 */
 	default B set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6, String name7, Object value7, String name8, Object value8, String name9, Object value9, String name10, Object value10) {
@@ -297,14 +285,13 @@ public interface ConfigurationUpdate<A extends ConfigurationUpdate<A, B, C>, B e
 	
 	/**
 	 * <p>
-	 * Creates a configuration update to set the configuration properties extracted
-	 * from the specified values.
+	 * Creates a configuration update to set the configuration properties extracted from the specified values.
 	 * </p>
-	 * 
-	 * @param values a map containing properties keys and values to set in the
-	 *               configuration source
-	 * 
+	 *
+	 * @param values a map containing properties keys and values to set in the configuration source
+	 *
 	 * @return an executable configuration update
+	 *
 	 * @throws IllegalArgumentException if the map of properties is null or empty
 	 */
 	B set(Map<String, Object> values) throws IllegalArgumentException;

@@ -23,16 +23,14 @@ import io.inverno.mod.configuration.internal.JavaStringConverter;
  * <p>
  * A configuration source that looks up properties from the system properties.
  * </p>
- * 
+ *
  * <p>
- * Note that this source doesn't support parameterized queries, regardless of
- * the parameters specified in a query, only the configuration key name is
- * considered when resolving a value.
+ * Note that this source doesn't support parameterized queries, regardless of the parameters specified in a query, only the configuration key name is considered when resolving a value.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see AbstractPropertiesConfigurationSource
  */
 public class SystemPropertiesConfigurationSource extends AbstractPropertiesConfigurationSource<String, SystemPropertiesConfigurationSource> {
@@ -48,10 +46,9 @@ public class SystemPropertiesConfigurationSource extends AbstractPropertiesConfi
 	
 	/**
 	 * <p>
-	 * Creates a system properties configuration source with the specified string
-	 * value decoder.
+	 * Creates a system properties configuration source with the specified string value decoder.
 	 * </p>
-	 * 
+	 *
 	 * @param decoder a string decoder
 	 */
 	public SystemPropertiesConfigurationSource(SplittablePrimitiveDecoder<String> decoder) {

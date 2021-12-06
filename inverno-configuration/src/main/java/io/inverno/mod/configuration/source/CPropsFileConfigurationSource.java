@@ -30,7 +30,6 @@ import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceException;
 import io.inverno.mod.configuration.AbstractHashConfigurationSource;
-import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.internal.JavaStringConverter;
 import io.inverno.mod.configuration.internal.parser.properties.ConfigurationPropertiesParser;
@@ -40,17 +39,15 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A configuration source that looks up properties in a configuration properties
- * file following the {@code .cprops} file format.
+ * A configuration source that looks up properties in a configuration properties file following the {@code .cprops} file format.
  * </p>
- * 
+ *
  * <p>
- * This source supports parameterized configuration properties defined in a
- * configuration file as follows:
+ * This source supports parameterized configuration properties defined in a configuration file as follows:
  * </p>
- * 
+ *
  * <blockquote>
- * 
+ *
  * <pre>
  * web {
  *     server_port=8080
@@ -58,11 +55,11 @@ import reactor.core.publisher.Mono;
  *         server_port=8443
  *     }
  * }
- * 
+ *
  * [ env="dev" ] {
  *     db.url="jdbc:oracle:thin:@dev.db.server:1521:sid"
  * }
- * 
+ *
  * [ env="prod" ] {
  *     db.url="jdbc:oracle:thin:@dev.db.server:1521:sid"
  *     [ zone="eu" ] {
@@ -73,17 +70,16 @@ import reactor.core.publisher.Mono;
  *     }
  * }
  * </pre>
- * 
+ *
  * </blockquote>
- * 
+ *
  * <p>
- * Please refer to the {@code .cprops} format definition for more information on
- * how to create parameterized configuration in the {@code .cprops} format.
+ * Please refer to the {@code .cprops} format definition for more information on how to create parameterized configuration in the {@code .cprops} format.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see AbstractHashConfigurationSource
  */
 public class CPropsFileConfigurationSource extends AbstractHashConfigurationSource<String, CPropsFileConfigurationSource> {
@@ -98,14 +94,13 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 	
 	private Duration propertiesTTL;
 	
-	private Mono<List<ConfigurationProperty<ConfigurationKey, CPropsFileConfigurationSource>>> properties;
+	private Mono<List<ConfigurationProperty>> properties;
 	
 	/**
 	 * <p>
-	 * Creates a {@code .cprops} file configuration source with the file at the
-	 * specified path.
+	 * Creates a {@code .cprops} file configuration source with the file at the specified path.
 	 * </p>
-	 * 
+	 *
 	 * @param propertyFile the path to the {@code .cprops} file
 	 */
 	public CPropsFileConfigurationSource(Path propertyFile) {
@@ -114,10 +109,9 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 	
 	/**
 	 * <p>
-	 * Creates a {@code .cprops} file configuration source with the file at the
-	 * specified path and the specified string value decoder.
+	 * Creates a {@code .cprops} file configuration source with the file at the specified path and the specified string value decoder.
 	 * </p>
-	 * 
+	 *
 	 * @param propertyFile the path to the {@code .cprops} file
 	 * @param decoder      a string decoder
 	 */
@@ -128,10 +122,9 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 
 	/**
 	 * <p>
-	 * Creates a {@code .cprops} file configuration source with the specified input
-	 * stream.
+	 * Creates a {@code .cprops} file configuration source with the specified input stream.
 	 * </p>
-	 * 
+	 *
 	 * @param propertyInput the {@code .cprops} input
 	 */
 	public CPropsFileConfigurationSource(InputStream propertyInput) {
@@ -140,10 +133,9 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 	
 	/**
 	 * <p>
-	 * Creates a {@code .cprops} file configuration source with the specified input
-	 * stream and string value decoder.
+	 * Creates a {@code .cprops} file configuration source with the specified input stream and string value decoder.
 	 * </p>
-	 * 
+	 *
 	 * @param propertyInput the {@code .cprops} input
 	 * @param decoder       a string decoder
 	 */
@@ -165,10 +157,9 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 	
 	/**
 	 * <p>
-	 * Creates a {@code .cprops} file configuration source with the specified resource and
-	 * string value decoder.
+	 * Creates a {@code .cprops} file configuration source with the specified resource and string value decoder.
 	 * </p>
-	 * 
+	 *
 	 * @param propertyResource the {@code .properties} resource
 	 * @param decoder          a string decoder
 	 */
@@ -181,19 +172,16 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 	 * <p>
 	 * Sets the time-to-live duration of the properties loaded with {@link #load()}.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * If set to null, which is the default, properties are cached indefinitely.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * Note that this ttl doesn't apply to a source created with an
-	 * {@link InputStream} which is cached indefinitely since the steam can't be
-	 * read twice.
+	 * Note that this ttl doesn't apply to a source created with an {@link InputStream} which is cached indefinitely since the steam can't be read twice.
 	 * </p>
-	 * 
-	 * @param ttl the properties time-to-live or null to cache properties
-	 *            indefinitely
+	 *
+	 * @param ttl the properties time-to-live or null to cache properties indefinitely
 	 */
 	public void setPropertiesTTL(Duration ttl) {
 		this.propertiesTTL = ttl;
@@ -202,12 +190,10 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 	
 	/**
 	 * <p>
-	 * Returns the time-to-live duration of the properties loaded with
-	 * {@link #load()}.
+	 * Returns the time-to-live duration of the properties loaded with {@link #load()}.
 	 * </p>
-	 * 
-	 * @return the properties time-to-live or null if properties are cached
-	 *         indefinitely
+	 *
+	 * @return the properties time-to-live or null if properties are cached indefinitely
 	 */
 	public Duration getPropertiesTTL() {
 		return this.propertiesTTL;
@@ -217,8 +203,9 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 	 * <p>
 	 * Opens an input stream to read the {@code .cprops} file.
 	 * </p>
-	 * 
+	 *
 	 * @return An input stream
+	 *
 	 * @throws IOException       if there was an I/O error opening the file
 	 * @throws ResourceException if there was an error opening the resource
 	 */
@@ -235,7 +222,7 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 	}
 	
 	@Override
-	protected Mono<List<ConfigurationProperty<ConfigurationKey, CPropsFileConfigurationSource>>> load() {
+	protected Mono<List<ConfigurationProperty>> load() {
 		if(this.properties == null) {
 			this.properties = Mono.defer(() -> {
 				try(InputStream input = this.open()) {

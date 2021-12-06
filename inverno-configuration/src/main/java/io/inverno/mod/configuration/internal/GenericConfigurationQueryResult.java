@@ -32,54 +32,49 @@ import io.inverno.mod.configuration.ConfigurationSourceException;
  * @since 1.0
  * 
  * @see ConfigurationQueryResult
- *
- * @param <A> the key type
- * @param <B> the property type
  */
-public class GenericConfigurationQueryResult<A extends ConfigurationKey, B extends ConfigurationProperty<?,?>> implements ConfigurationQueryResult<A, B> {
+public class GenericConfigurationQueryResult implements ConfigurationQueryResult {
 
-	protected A queryKey;
-	protected Optional<B> queryResult;
+	protected ConfigurationKey queryKey;
+	protected Optional<ConfigurationProperty> queryResult;
 	protected Throwable error;
-	protected ConfigurationSource<?,?,?> errorSource;
+	protected ConfigurationSource<?,?> errorSource;
 	
 	/**
 	 * <p>
-	 * Creates a generic successful configuration query result with the specified
-	 * query key and result property.
+	 * Creates a generic successful configuration query result with the specified query key and result property.
 	 * </p>
-	 * 
+	 *
 	 * @param queryKey    the query key
 	 * @param queryResult the result property
 	 */
-	public GenericConfigurationQueryResult(A queryKey, B queryResult) {
+	public GenericConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationProperty queryResult) {
 		this.queryKey = queryKey;
 		this.queryResult = Optional.ofNullable(queryResult);
 	}
 	
 	/**
 	 * <p>
-	 * Creates a generic faulty configuration query result with the specified query
-	 * key, configuration source and error.
+	 * Creates a generic faulty configuration query result with the specified query key, configuration source and error.
 	 * </p>
-	 * 
+	 *
 	 * @param queryKey the query key
 	 * @param source   the configuration source
 	 * @param error    the error
 	 */
-	public GenericConfigurationQueryResult(A queryKey, ConfigurationSource<?,?,?> source, Throwable error) {
+	public GenericConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationSource<?, ?> source, Throwable error) {
 		this.queryKey = queryKey;
 		this.errorSource = source;
 		this.error = error;
 	}
 	
 	@Override
-	public A getQueryKey() {
+	public ConfigurationKey getQueryKey() {
 		return this.queryKey;
 	}
 
 	@Override
-	public Optional<B> getResult() throws ConfigurationSourceException {
+	public Optional<ConfigurationProperty> getResult() throws ConfigurationSourceException {
 		if(this.error != null) {
 			throw new ConfigurationSourceException(this.errorSource, this.error);
 		}

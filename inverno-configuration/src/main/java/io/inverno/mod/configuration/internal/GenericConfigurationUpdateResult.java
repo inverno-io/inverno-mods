@@ -29,45 +29,41 @@ import io.inverno.mod.configuration.ConfigurationUpdateResult;
  * @since 1.0
  * 
  * @see ConfigurationUpdateResult
- *
- * @param <A> the key type
  */
-public class GenericConfigurationUpdateResult<A extends ConfigurationKey> implements ConfigurationUpdateResult<A> {
+public class GenericConfigurationUpdateResult implements ConfigurationUpdateResult {
 
-	protected A updateKey;
+	protected final ConfigurationKey updateKey;
 	protected Throwable error;
-	protected ConfigurationSource<?,?,?> errorSource;
+	protected ConfigurationSource<?,?> errorSource;
 	
 	/**
 	 * <p>
-	 * Creates a generic successful configuration update result with the specified
-	 * query key.
+	 * Creates a generic successful configuration update result with the specified query key.
 	 * </p>
-	 * 
-	 * @param queryKey the query key
+	 *
+	 * @param updateKey the query key
 	 */
-	public GenericConfigurationUpdateResult(A updateKey) {
+	public GenericConfigurationUpdateResult(ConfigurationKey updateKey) {
 		this.updateKey = updateKey;
 	}
 	
 	/**
 	 * <p>
-	 * Creates a generic faulty configuration update result with the specified
-	 * query key, configuration source and error.
+	 * Creates a generic faulty configuration update result with the specified query key, configuration source and error.
 	 * </p>
-	 * 
-	 * @param queryKey the query key
-	 * @param source   the configuration source
-	 * @param error    the error
+	 *
+	 * @param updateKey the query key
+	 * @param source    the configuration source
+	 * @param error     the error
 	 */
-	public GenericConfigurationUpdateResult(A updateKey, ConfigurationSource<?,?,?> source, Throwable error) {
+	public GenericConfigurationUpdateResult(ConfigurationKey updateKey, ConfigurationSource<?,?> source, Throwable error) {
 		this.updateKey = updateKey;
 		this.errorSource = source;
 		this.error = error;
 	}
 	
 	@Override
-	public A getUpdateKey() {
+	public ConfigurationKey getUpdateKey() {
 		return this.updateKey;
 	}
 

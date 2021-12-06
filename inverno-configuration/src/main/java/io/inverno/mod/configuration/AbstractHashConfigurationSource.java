@@ -32,32 +32,26 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * Base implementation for {@link ConfigurationSource} where configuration
- * properties are resolved using a hash code of a {@link ConfigurationKey}
- * corresponding to a {@link HashConfigurationQuery}.
+ * Base implementation for {@link ConfigurationSource} where configuration properties are resolved using a hash code of a {@link ConfigurationKey} corresponding to a {@link HashConfigurationQuery}.
  * </p>
- * 
+ *
  * <p>
- * This implementation is intended for configuration sources whose data can be
- * loaded in-memory typically as a hash table (eg. command line parameters,
- * property files...).
+ * This implementation is intended for configuration sources whose data can be loaded in-memory typically as a hash table (eg. command line parameters, property files...).
  * </p>
- * 
+ *
  * <p>
- * Implementors must implement the
- * {@link AbstractHashConfigurationSource#load()} method which is called to load
- * the configuration properties in memory.
+ * Implementors must implement the {@link AbstractHashConfigurationSource#load()} method which is called to load the configuration properties in memory.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ConfigurationSource
  *
  * @param <A> raw configuration value type
  * @param <B> the hash configuration source type
  */
-public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashConfigurationSource<A, B>> extends AbstractConfigurationSource<AbstractHashConfigurationSource.HashConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashExecutableConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashConfigurationQueryResult<A, B>, A> {
+public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashConfigurationSource<A, B>> extends AbstractConfigurationSource<AbstractHashConfigurationSource.HashConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashExecutableConfigurationQuery<A, B>, A> {
 	
 	/**
 	 * <p>
@@ -79,7 +73,7 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 	 * 
 	 * @return A mono emitting the list of configuration properties
 	 */
-	protected abstract Mono<List<ConfigurationProperty<ConfigurationKey, B>>> load();
+	protected abstract Mono<List<ConfigurationProperty>> load();
 	
 	@Override
 	public HashExecutableConfigurationQuery<A, B> get(String... names) throws IllegalArgumentException {
@@ -99,7 +93,7 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 	 * @param <A> raw configuration value type
 	 * @param <B> the hash configuration source type
 	 */
-	public static class HashConfigurationQuery<A, B extends AbstractHashConfigurationSource<A, B>> implements ConfigurationQuery<HashConfigurationQuery<A, B>, HashExecutableConfigurationQuery<A, B>, HashConfigurationQueryResult<A, B>> {
+	public static class HashConfigurationQuery<A, B extends AbstractHashConfigurationSource<A, B>> implements ConfigurationQuery<HashConfigurationQuery<A, B>, HashExecutableConfigurationQuery<A, B>> {
 
 		private HashExecutableConfigurationQuery<A, B> executableQuery;
 		
@@ -136,7 +130,7 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 	 * @param <A> raw configuration value type
 	 * @param <B> the hash configuration source type
 	 */
-	public static class HashExecutableConfigurationQuery<A, B extends AbstractHashConfigurationSource<A, B>> implements ExecutableConfigurationQuery<HashConfigurationQuery<A, B>, HashExecutableConfigurationQuery<A, B>, HashConfigurationQueryResult<A, B>> {
+	public static class HashExecutableConfigurationQuery<A, B extends AbstractHashConfigurationSource<A, B>> implements ExecutableConfigurationQuery<HashConfigurationQuery<A, B>, HashExecutableConfigurationQuery<A, B>> {
 		
 		private B source;
 		
@@ -167,7 +161,7 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 						duplicateParameters.add(parameter.getKey());
 					}
 				}
-				if(duplicateParameters != null && duplicateParameters.size() > 0) {
+				if(!duplicateParameters.isEmpty()) {
 					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
 				}
 			}
@@ -175,15 +169,16 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		}
 
 		@Override
-		public Flux<HashConfigurationQueryResult<A, B>> execute() {
+		public Flux<ConfigurationQueryResult> execute() {
 			return this.source.load()
 				.map(properties -> properties.stream().collect(Collectors.toMap(property -> new GenericConfigurationKey(property.getKey().getName(), property.getKey().getParameters()), Function.identity())))
-				.flatMapMany(indexedProperties -> Flux.fromStream(this.queries.stream()
+				.flatMapMany(indexedProperties -> Flux.<ConfigurationQueryResult>fromStream(this.queries.stream()
 					.flatMap(query -> query.names.stream().map(name -> new GenericConfigurationKey(name, query.parameters)))
-					.map(key -> new HashConfigurationQueryResult<>(key, indexedProperties.get(key))))
+					.map(key -> new HashConfigurationQueryResult<A, B>(key, indexedProperties.get(key))))
 				)
-				.onErrorResume(ex -> true, ex -> Flux.fromStream(this.queries.stream()
-					.flatMap(query -> query.names.stream().map(name -> new HashConfigurationQueryResult<>(new GenericConfigurationKey(name, query.parameters), this.source, ex))))
+				.onErrorResume(ex -> Flux.<ConfigurationQueryResult>fromStream(this.queries.stream()
+						.flatMap(query -> query.names.stream().map(name -> new HashConfigurationQueryResult<A, B>(new GenericConfigurationKey(name, query.parameters), this.source, ex)))
+					)
 				);
 		}
 	}
@@ -201,9 +196,9 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 	 * @param <A> raw configuration value type
 	 * @param <B> the hash configuration source type
 	 */
-	public static class HashConfigurationQueryResult<A, B extends AbstractHashConfigurationSource<A,B>> extends GenericConfigurationQueryResult<ConfigurationKey, ConfigurationProperty<ConfigurationKey, B>> {
+	public static class HashConfigurationQueryResult<A, B extends AbstractHashConfigurationSource<A, B>> extends GenericConfigurationQueryResult {
 
-		private HashConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationProperty<ConfigurationKey, B> queryResult) {
+		private HashConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationProperty queryResult) {
 			super(queryKey, queryResult);
 		}
 		

@@ -19,16 +19,14 @@ package io.inverno.mod.configuration;
  * <p>
  * Represents a single update result.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ConfigurationUpdate
  * @see ConfigurableConfigurationSource
- * 
- * @param <A> the type of the configuration key
  */
-public interface ConfigurationUpdateResult<A extends ConfigurationKey> {
+public interface ConfigurationUpdateResult {
 
 	/**
 	 * <p>
@@ -37,7 +35,7 @@ public interface ConfigurationUpdateResult<A extends ConfigurationKey> {
 	 * 
 	 * @return a configuration key
 	 */
-	A getUpdateKey();
+	ConfigurationKey getUpdateKey();
 	
 	/**
 	 * <p>

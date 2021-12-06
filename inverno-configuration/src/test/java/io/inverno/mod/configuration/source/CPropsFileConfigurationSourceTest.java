@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import io.inverno.mod.base.resource.ClasspathResource;
 import io.inverno.mod.configuration.AbstractHashConfigurationSource.HashConfigurationQueryResult;
 import io.inverno.mod.configuration.ConfigurationKey.Parameter;
+import io.inverno.mod.configuration.ConfigurationQueryResult;
 
 public class CPropsFileConfigurationSourceTest {
 
@@ -24,7 +25,7 @@ public class CPropsFileConfigurationSourceTest {
 	public void testConfigurationPropertyFileConfigurationSource() throws URISyntaxException {
 //		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
 		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(new ClasspathResource(URI.create("classpath:/test-configuration.cprops")));
-		List<HashConfigurationQueryResult<String, CPropsFileConfigurationSource>> results = src
+		List<ConfigurationQueryResult> results = src
 			.get("tata.toto").withParameters("tutu", "plop","test", 5).and()
 			.get("tata.toto").withParameters("tutu", "plop").and()
 			.get("url", "table").and()
@@ -41,9 +42,9 @@ public class CPropsFileConfigurationSourceTest {
 		
 		Assertions.assertEquals(7, results.size());
 		
-		Iterator<HashConfigurationQueryResult<String, CPropsFileConfigurationSource>> resultIterator = results.iterator();
+		Iterator<ConfigurationQueryResult> resultIterator = results.iterator();
 		
-		HashConfigurationQueryResult<String, CPropsFileConfigurationSource> current = resultIterator.next();
+		ConfigurationQueryResult current = resultIterator.next();
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("test", 5), Parameter.of("tutu", "plop"))));
@@ -104,7 +105,7 @@ public class CPropsFileConfigurationSourceTest {
 	@Test
 	public void testNull() throws URISyntaxException {
 		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
-		List<HashConfigurationQueryResult<String, CPropsFileConfigurationSource>> results = src
+		List<ConfigurationQueryResult> results = src
 			.get("testNull")
 			.execute()
 			.collectList()
@@ -118,7 +119,7 @@ public class CPropsFileConfigurationSourceTest {
 	@Test
 	public void testUnset() throws URISyntaxException {
 		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
-		List<HashConfigurationQueryResult<String, CPropsFileConfigurationSource>> results = src
+		List<ConfigurationQueryResult> results = src
 			.get("testUnset")
 			.execute()
 			.collectList()

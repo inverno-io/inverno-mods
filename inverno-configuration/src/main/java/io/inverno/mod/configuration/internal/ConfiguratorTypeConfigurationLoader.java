@@ -31,48 +31,43 @@ import io.inverno.mod.configuration.ConfigurationLoaderException;
 import io.inverno.mod.configuration.ConfigurationQuery;
 import io.inverno.mod.configuration.ConfigurationQueryResult;
 import io.inverno.mod.configuration.ExecutableConfigurationQuery;
+import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A {@link ConfigurationLoader} implementation that determines the
- * configuration properties to load by analyzing a configurator class through
- * reflection and eventually returns a configuration instance created by a
- * creator function.
+ * A {@link ConfigurationLoader} implementation that determines the configuration properties to load by analyzing a configurator class through reflection and eventually returns a configuration
+ * instance created by a creator function.
  * </p>
- * 
+ *
  * <p>
- * Configuration properties must be declared as void single-argument methods in
- * the configurator type.
+ * Configuration properties must be declared as void single-argument methods in the configurator type.
  * </p>
- * 
+ *
  * <p>
- * Unlike {@link ConfigurationTypeConfigurationLoader}, it is possible to load a
- * configuration for any kind of object and not only interface since the
- * creation of the configuration instance is delegated to a supplied
- * configuration creator.
+ * Unlike {@link ConfigurationTypeConfigurationLoader}, it is possible to load a configuration for any kind of object and not only interface since the creation of the configuration instance is
+ * delegated to a supplied configuration creator.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ConfigurationLoader
- * 
+ *
  * @param <A> the configuration type
  * @param <B> the configurator type
  */
 public class ConfiguratorTypeConfigurationLoader<A, B> extends AbstractReflectiveConfigurationLoader<A, ConfiguratorTypeConfigurationLoader<A, B>> {
 
-	private Class<B> configuratorType;
+	private final Class<B> configuratorType;
 	
-	private Function<Consumer<B>, A> configurationCreator;
+	private final Function<Consumer<B>, A> configurationCreator;
 	
 	/**
 	 * <p>
-	 * Creates a configuration loader with the specified configurator type and
-	 * configuration creator.
+	 * Creates a configuration loader with the specified configurator type and configuration creator.
 	 * </p>
-	 * 
+	 *
 	 * @param configuratorType     the configurator type
 	 * @param configurationCreator the configuration creator function
 	 */
@@ -84,7 +79,7 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends AbstractReflectiv
 	@Override
 	public Mono<A> load() {
 		List<ConfiguratorQuery> configuratorQueries = new LinkedList<>();
-		ExecutableConfigurationQuery<?,?,?> configurationQuery = this.visitConfiguratorType(this.configuratorType, "", null, configuratorQueries);
+		ExecutableConfigurationQuery<?,?> configurationQuery = this.visitConfiguratorType(this.configuratorType, "", null, configuratorQueries);
 		if(configurationQuery == null) {
 			return Mono.just(null);
 		}
@@ -95,7 +90,7 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends AbstractReflectiv
 	}
 
 
-	private <E> Consumer<E> createConfigurer(Class<E> configuratorType, List<ConfiguratorQuery> configuratorQueries, List<? extends ConfigurationQueryResult<?,?>> results) {
+	private <E> Consumer<E> createConfigurer(Class<E> configuratorType, List<ConfiguratorQuery> configuratorQueries, List<? extends ConfigurationQueryResult> results) {
 		return configurator -> {
 			for(int i = 0, j = 0; i < configuratorQueries.size() && j < results.size(); i++, j++) {
 				ConfiguratorQuery configuratorQuery = configuratorQueries.get(i);
@@ -140,8 +135,8 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends AbstractReflectiv
 		};
 	}
 	
-	private ExecutableConfigurationQuery<?, ?, ?> visitConfiguratorType(Class<?> configuratorType, String prefix, ConfigurationQuery<?,?,?> configurationQuery, List<ConfiguratorQuery> accumulator) throws ConfigurationLoaderException, IllegalArgumentException {
-		ExecutableConfigurationQuery<?,?,?> exectuableConfigurationQuery = null;
+	private ExecutableConfigurationQuery<?,?> visitConfiguratorType(Class<?> configuratorType, String prefix, ConfigurationQuery<?,?> configurationQuery, List<ConfiguratorQuery> accumulator) throws ConfigurationLoaderException, IllegalArgumentException {
+		ExecutableConfigurationQuery<?,?> exectuableConfigurationQuery = null;
 		for(Method method : configuratorType.getMethods()) {
 			if(method.getParameters().length == 1 && method.getReturnType().equals(configuratorType)) {
 				ConfiguratorQuery configuratorQuery;
@@ -189,7 +184,7 @@ public class ConfiguratorTypeConfigurationLoader<A, B> extends AbstractReflectiv
 		
 		private ConfiguratorQuery(String prefix, Method method) throws ClassNotFoundException {
 			this.method = method;
-			this.name = (prefix != null && prefix != "" ? prefix + "." : "") + method.getName();
+			this.name = (StringUtils.isNotEmpty(prefix) ? prefix + "." : "") + method.getName();
 			
 			java.lang.reflect.Parameter parameter = method.getParameters()[0];
 			this.nested = parameter.getType().equals(Consumer.class);

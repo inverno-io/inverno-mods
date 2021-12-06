@@ -18,16 +18,14 @@ package io.inverno.mod.configuration.internal;
 import io.inverno.mod.configuration.AbstractConfigurationLoader;
 import io.inverno.mod.configuration.ConfigurationLoader;
 
-
 /**
  * <p>
- * Base implementation for {@link ConfigurationLoader} that uses reflection to
- * determine configuration properties to load.
+ * Base implementation for {@link ConfigurationLoader} that uses reflection to determine configuration properties to load.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ConfigurationLoader
  *
  * @param <A> the configuration type

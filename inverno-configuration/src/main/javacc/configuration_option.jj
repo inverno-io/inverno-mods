@@ -35,7 +35,7 @@ import io.inverno.mod.configuration.ConfigurationKey.Parameter;
 import io.inverno.mod.configuration.internal.GenericConfigurationProperty;
 import io.inverno.mod.configuration.internal.GenericConfigurationKey;
 
-public class ConfigurationOptionParser<A extends AbstractConfigurationSource<?,?,?,String>> {
+public class ConfigurationOptionParser<A extends AbstractConfigurationSource<?,?,String>> {
 
 	private A inverno_source;
 
@@ -773,9 +773,9 @@ TOKEN : /* IDENTIFIERS */
 	>
 }
 
-ConfigurationProperty<ConfigurationKey, A> StartOption():
+ConfigurationProperty StartOption():
 {
-	ConfigurationProperty<ConfigurationKey, A> entry;
+	ConfigurationProperty entry;
 }
 {
 	entry = Option()
@@ -809,7 +809,7 @@ Optional<String> StartValueRevision():
 	}
 }
 
-ConfigurationProperty<ConfigurationKey, A> Option():
+ConfigurationProperty Option():
 {
 	ConfigurationKey key;
 	Optional<String> value;

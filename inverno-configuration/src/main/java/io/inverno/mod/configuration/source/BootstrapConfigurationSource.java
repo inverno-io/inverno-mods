@@ -28,58 +28,52 @@ import io.inverno.mod.base.resource.ModuleResource;
 
 /**
  * <p>
- * A configuration source that considers multiple local sources to load the
- * bootstrap configuration of an application.
+ * A configuration source that considers multiple local sources to load the bootstrap configuration of an application.
  * </p>
- * 
+ *
  * <p>
- * It resolves configuration properties from the following sources in that
- * order:
+ * It resolves configuration properties from the following sources in that order:
  * </p>
- * 
+ *
  * <ul>
  * <li>command line arguments</li>
  * <li>system properties</li>
  * <li>system environment variables</li>
- * <li>the {@code configuration.cprops} file in {@code ./conf/} or
- * <code>${inverno.config.path}/</code> directories if one exists (if the first one exists the second
- * one is ignored)</li>
+ * <li>the {@code configuration.cprops} file in {@code ./conf/} or <code>${inverno.config.path}/</code> directories if one exists (if the first one exists the second one is ignored)</li>
  * <li>the {@code configuration.cprops} file in <code>${java.home}/conf/</code> directory if it exists</li>
- * <li>the {@code configuration.cprops} file in the application module if it
- * exists</li>
+ * <li>the {@code configuration.cprops} file in the application module if it exists</li>
  * </ul>
- * 
+ *
  * <p>
- * This source is typically created in a {@code main} method to load the
- * application configuration at startup.
+ * This source is typically created in a {@code main} method to load the application configuration at startup.
  * </p>
- * 
+ *
  * <blockquote>
- * 
+ *
  * <pre>
  * public class Application {
- * 
+ *
  *     public static void main(String[] args) {
- *         ApplicationConfigurationSource source = new ApplicationConfigurationSource(App.class.getModule(), args);
- *         
+ *         BootstrapConfigurationSource source = new BootstrapConfigurationSource(App.class.getModule(), args);
+ *
  *         // Load configuration
  *         ApplicationConfiguration configuration = ConfigurationLoader
  *             .withConfiguration(ApplicationConfiguration.class)
  *             .withSource(source)
  *             .load()
  *             .block();
- * 
+ *
  *         // Start the application with the configuration
  *         ...
  *     }
  * }
  * </pre>
- * 
+ *
  * </blockquote>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see CompositeConfigurationSource
  * @see CommandLineConfigurationSource
  * @see SystemPropertiesConfigurationSource
@@ -94,12 +88,12 @@ public class BootstrapConfigurationSource extends CompositeConfigurationSource {
 	
 	/**
 	 * <p>
-	 * Creates a bootstrap configuration source for the specified application
-	 * module and with the specified command line arguments.
+	 * Creates a bootstrap configuration source for the specified application module and with the specified command line arguments.
 	 * </p>
-	 * 
+	 *
 	 * @param module the application module
 	 * @param args   the command line arguments
+	 *
 	 * @throws IOException if something goes wrong creating the configuration source
 	 */
 	public BootstrapConfigurationSource(Module module, String... args) throws IOException {

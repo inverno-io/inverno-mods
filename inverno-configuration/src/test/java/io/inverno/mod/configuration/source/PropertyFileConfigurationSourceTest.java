@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import io.inverno.mod.base.resource.ClasspathResource;
 import io.inverno.mod.configuration.AbstractHashConfigurationSource.HashConfigurationQueryResult;
 import io.inverno.mod.configuration.ConfigurationKey.Parameter;
+import io.inverno.mod.configuration.ConfigurationQueryResult;
 
 public class PropertyFileConfigurationSourceTest {
 
@@ -23,7 +24,7 @@ public class PropertyFileConfigurationSourceTest {
 	public void testPropertyFileConfigurationSource() throws URISyntaxException {
 //		PropertyFileConfigurationSource src = new PropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.properties").toURI()));
 		PropertyFileConfigurationSource src = new PropertyFileConfigurationSource(new ClasspathResource(URI.create("classpath:/test-configuration.properties")));
-		List<HashConfigurationQueryResult<String, PropertyFileConfigurationSource>> results = src
+		List<ConfigurationQueryResult> results = src
 			.get("tata.toto").withParameters("tutu", "plop", "test", 5).and()
 			.get("tata.toto").withParameters("tutu", "plop").and()
 			.get("url", "table").and()
@@ -38,9 +39,9 @@ public class PropertyFileConfigurationSourceTest {
 		
 		Assertions.assertEquals(5, results.size());
 		
-		Iterator<HashConfigurationQueryResult<String, PropertyFileConfigurationSource>> resultIterator = results.iterator();
+		Iterator<ConfigurationQueryResult> resultIterator = results.iterator();
 		
-		HashConfigurationQueryResult<String, PropertyFileConfigurationSource> current = resultIterator.next();
+		ConfigurationQueryResult current = resultIterator.next();
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("test", 5), Parameter.of("tutu", "plop"))));

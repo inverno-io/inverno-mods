@@ -35,28 +35,25 @@ import io.inverno.mod.configuration.ConfigurationLoaderException;
 import io.inverno.mod.configuration.ConfigurationQuery;
 import io.inverno.mod.configuration.ConfigurationQueryResult;
 import io.inverno.mod.configuration.ExecutableConfigurationQuery;
+import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A {@link ConfigurationLoader} implementation that determines the
- * configuration properties to load by analyzing a configuration interface as
- * defined by {@link Configuration @Configuration} through reflection and
- * eventually returns a Java proxy for the configuration interface providing the
- * retrieved values.
+ * A {@link ConfigurationLoader} implementation that determines the configuration properties to load by analyzing a configuration interface as defined by {@link Configuration @Configuration} through
+ * reflection and eventually returns a Java proxy for the configuration interface providing the retrieved values.
  * </p>
- * 
+ *
  * <p>
- * Configuration properties must be declared as non-void no-argument methods in
- * the interface. Default values can be specified in default methods.
+ * Configuration properties must be declared as non-void no-argument methods in the interface. Default values can be specified in default methods.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see Configuration
  * @see ConfigurationLoader
- * 
+ *
  * @param <A> the configuration type
  */
 public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveConfigurationLoader<A, ConfigurationTypeConfigurationLoader<A>> {
@@ -67,9 +64,9 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 	 * <p>
 	 * Creates a configuration loader for the specified type.
 	 * </p>
-	 * 
+	 *
 	 * @param configurationType the configuration type
-	 * 
+	 *
 	 * @throws IllegalArgumentException if the specified type is not an interface
 	 */
 	public ConfigurationTypeConfigurationLoader(Class<A> configurationType) {
@@ -83,7 +80,7 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 	@Override
 	public Mono<A> load() {
 		List<ConfigurationProxyQuery> proxyQueries = new LinkedList<>();
-		ExecutableConfigurationQuery<?,?,?> configurationQuery = this.visitConfigurationType(this.configurationType, "", null, proxyQueries);
+		ExecutableConfigurationQuery<?,?> configurationQuery = this.visitConfigurationType(this.configurationType, "", null, proxyQueries);
 
 		if(configurationQuery == null) {
 			return Mono.just(null);
@@ -93,7 +90,7 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 			.collectList()
 			.map(results -> {
 				Map<String, Object> properties = new HashMap<>();
-				Iterator<? extends ConfigurationQueryResult<?,?>> resultsIterator = results.iterator();
+				Iterator<? extends ConfigurationQueryResult> resultsIterator = results.iterator();
 				for(ConfigurationProxyQuery proxyQuery : proxyQueries) {
 					if(proxyQuery.nested) {
 						properties.put(proxyQuery.name, Proxy.newProxyInstance(proxyQuery.type.getClassLoader(), new Class[] {proxyQuery.type}, new ConfigurationProxyInvocationHandler(properties, proxyQuery.name))); 
@@ -115,12 +112,12 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 						});
 					}
 				}
-				return (A)Proxy.newProxyInstance(configurationType.getClassLoader(), new Class[] { this.configurationType }, new ConfigurationProxyInvocationHandler(properties, ""));
+				return (A)Proxy.newProxyInstance(configurationType.getClassLoader(), new Class<?>[] { this.configurationType }, new ConfigurationProxyInvocationHandler(properties, ""));
 			});
 	}
 	
-	private ExecutableConfigurationQuery<?, ?, ?> visitConfigurationType(Class<?> configurationType, String prefix, ConfigurationQuery<?,?,?> configurationQuery, List<ConfigurationProxyQuery> accumulator) throws ConfigurationLoaderException, IllegalArgumentException {
-		ExecutableConfigurationQuery<?,?,?> exectuableConfigurationQuery = null;
+	private ExecutableConfigurationQuery<?,?> visitConfigurationType(Class<?> configurationType, String prefix, ConfigurationQuery<?,?> configurationQuery, List<ConfigurationProxyQuery> accumulator) throws ConfigurationLoaderException, IllegalArgumentException {
+		ExecutableConfigurationQuery<?,?> exectuableConfigurationQuery = null;
 		for(Method method : configurationType.getMethods()) {
 			if(method.getParameters().length == 0) {
 				ConfigurationProxyQuery query;
@@ -144,7 +141,7 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 	
 	private class ConfigurationProxyQuery {
 		
-		private Method method;
+		private final Method method;
 		
 		private String name;
 		
@@ -164,7 +161,7 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 		
 		private ConfigurationProxyQuery(String prefix, Method method) throws ClassNotFoundException {
 			this.method = method;
-			this.name = (prefix != null && prefix != "" ? prefix + "." : "") + this.method.getName();
+			this.name = (StringUtils.isNotEmpty(prefix) ? prefix + "." : "") + method.getName();
 			
 			this.type = this.method.getReturnType();
 			
@@ -186,9 +183,9 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 	
 	private static class ConfigurationProxyInvocationHandler implements InvocationHandler {
 
-		private Map<String, Object> properties;
+		private final Map<String, Object> properties;
 		
-		private String prefix;
+		private final String prefix;
 		
 		public ConfigurationProxyInvocationHandler(Map<String, Object> properties, String prefix) {
 			this.properties = properties;
@@ -198,7 +195,7 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 		@Override
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 			String propertyName = method.getName();
-			if(this.prefix != null && this.prefix != "") {
+			if(StringUtils.isNotEmpty(prefix)) {
 				propertyName = this.prefix + "." + propertyName;
 			}
 			
@@ -210,7 +207,7 @@ public class ConfigurationTypeConfigurationLoader<A> extends AbstractReflectiveC
 					.findSpecial( 
 						method.getDeclaringClass(), 
 						method.getName(),  
-						MethodType.methodType(method.getReturnType(), new Class[0]),  
+						MethodType.methodType(method.getReturnType(), new Class<?>[0]),  
 						method.getDeclaringClass())
 					.bindTo(proxy)
 					.invokeWithArguments(args);

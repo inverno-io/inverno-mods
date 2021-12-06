@@ -25,16 +25,14 @@ import io.inverno.mod.configuration.internal.ObjectDecoder;
  * <p>
  * A configuration source that looks up properties from a map.
  * </p>
- * 
+ *
  * <p>
- * Note that this source doesn't support parameterized queries, regardless of
- * the parameters specified in a query, only the configuration key name is
- * considered when resolving a value.
+ * Note that this source doesn't support parameterized queries, regardless of the parameters specified in a query, only the configuration key name is considered when resolving a value.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see AbstractPropertiesConfigurationSource
  */
 public class MapConfigurationSource extends AbstractPropertiesConfigurationSource<Object, MapConfigurationSource> {
@@ -52,10 +50,9 @@ public class MapConfigurationSource extends AbstractPropertiesConfigurationSourc
 	
 	/**
 	 * <p>
-	 * Creates a map configuration source with the specified map and string value
-	 * decoder.
+	 * Creates a map configuration source with the specified map and string value decoder.
 	 * </p>
-	 * 
+	 *
 	 * @param properties a map of properties
 	 * @param decoder    a string decoder
 	 */

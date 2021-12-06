@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import io.inverno.mod.configuration.AbstractHashConfigurationSource.HashConfigurationQueryResult;
 import io.inverno.mod.configuration.ConfigurationKey.Parameter;
+import io.inverno.mod.configuration.ConfigurationQueryResult;
 
 public class CommandLineConfigurationSourceTest {
 
@@ -31,7 +32,7 @@ public class CommandLineConfigurationSourceTest {
 		
 		CommandLineConfigurationSource src = new CommandLineConfigurationSource(args);
 		
-		List<HashConfigurationQueryResult<String, CommandLineConfigurationSource>> results = src
+		List<ConfigurationQueryResult> results = src
 			.get("tata.toto").withParameters("tutu", "plop","test", 5).and()
 			.get("tata.toto").withParameters("tutu", "plop").and()
 			.get("url", "table")
@@ -51,9 +52,9 @@ public class CommandLineConfigurationSourceTest {
 		
 		Assertions.assertEquals(4, results.size());
 		
-		Iterator<HashConfigurationQueryResult<String, CommandLineConfigurationSource>> resultIterator = results.iterator();
+		Iterator<ConfigurationQueryResult> resultIterator = results.iterator();
 		
-		HashConfigurationQueryResult<String, CommandLineConfigurationSource> current = resultIterator.next();
+		ConfigurationQueryResult current = resultIterator.next();
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("test", 5), Parameter.of("tutu", "plop"))));

@@ -20,38 +20,33 @@ import reactor.core.publisher.Flux;
 
 /**
  * <p>
- * An executable configuration query can be executed to retrieve configuration
- * properties defined for a particular context from a configuration source.
+ * An executable configuration query can be executed to retrieve configuration properties defined for a particular context from a configuration source.
  * </p>
- * 
+ *
  * <p>
- * Multiple configuration queries can be chained by calling the
- * {@link ExecutableConfigurationQuery#and} method to be executed in a batch
- * when the {@link ExecutableConfigurationQuery#execute} method is invoked on
- * the last query.
+ * Multiple configuration queries can be chained by calling the {@link ExecutableConfigurationQuery#and} method to be executed in a batch when the {@link ExecutableConfigurationQuery#execute} method
+ * is invoked on the last query.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ConfigurationQuery
  * @see ConfigurationQueryResult
- * 
+ *
  * @param <A> the query type
  * @param <B> the executable query type
- * @param <C> the query result type
  */
-public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B, C>, B extends ExecutableConfigurationQuery<A, B, C>, C extends ConfigurationQueryResult<?,?>> {
+public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B>, B extends ExecutableConfigurationQuery<A, B>> {
 	
 	/**
 	 * <p>
-	 * Defines one parameter that specifies the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines one parameter that specifies the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the parameter name
 	 * @param v1 the parameter value
-	 * 
+	 *
 	 * @return the executable configuration query
 	 */
 	default B withParameters(String k1, Object v1) {
@@ -60,16 +55,16 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	
 	/**
 	 * <p>
-	 * Defines two parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines two parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
 	 * @param v2 the second parameter value
-	 * 
+	 *
 	 * @return the executable configuration query
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2) throws IllegalArgumentException {
@@ -78,18 +73,18 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	
 	/**
 	 * <p>
-	 * Defines three parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines three parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
 	 * @param v2 the second parameter value
 	 * @param k3 the third parameter name
 	 * @param v3 the third parameter value
-	 * 
+	 *
 	 * @return the executable configuration query
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3) throws IllegalArgumentException {
@@ -98,10 +93,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	
 	/**
 	 * <p>
-	 * Defines four parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines four parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -110,8 +104,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	 * @param v3 the third parameter value
 	 * @param k4 the fourth parameter name
 	 * @param v4 the fourth parameter value
-	 * 
+	 *
 	 * @return the executable configuration query
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) throws IllegalArgumentException {
@@ -120,10 +115,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	
 	/**
 	 * <p>
-	 * Defines five parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines five parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -134,8 +128,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	 * @param v4 the fourth parameter value
 	 * @param k5 the fifth parameter name
 	 * @param v5 the fifth parameter value
-	 * 
+	 *
 	 * @return the executable configuration query
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) throws IllegalArgumentException {
@@ -144,10 +139,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	
 	/**
 	 * <p>
-	 * Defines six parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines six parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -160,8 +154,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	 * @param v5 the fifth parameter value
 	 * @param k6 the sixth parameter name
 	 * @param v6 the sixth parameter value
-	 * 
+	 *
 	 * @return the executable configuration query
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) throws IllegalArgumentException {
@@ -170,10 +165,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	
 	/**
 	 * <p>
-	 * Defines seven parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines seven parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -188,8 +182,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	 * @param v6 the sixth parameter value
 	 * @param k7 the seventh parameter name
 	 * @param v7 the seventh parameter value
-	 * 
+	 *
 	 * @return the executable configuration query
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) throws IllegalArgumentException {
@@ -198,10 +193,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	
 	/**
 	 * <p>
-	 * Defines eigth parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines eigth parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -218,8 +212,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	 * @param v7 the seventh parameter value
 	 * @param k8 the eighth parameter name
 	 * @param v8 the eighth parameter value
-	 * 
+	 *
 	 * @return the executable configuration query
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) throws IllegalArgumentException {
@@ -228,10 +223,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	
 	/**
 	 * <p>
-	 * Defines nine parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines nine parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1 the first parameter name
 	 * @param v1 the first parameter value
 	 * @param k2 the second parameter name
@@ -250,8 +244,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	 * @param v8 the eighth parameter value
 	 * @param k9 the ninth parameter name
 	 * @param v9 the ninth parameter value
-	 * 
+	 *
 	 * @return the executable configuration query
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) throws IllegalArgumentException {
@@ -260,10 +255,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	
 	/**
 	 * <p>
-	 * Defines ten parameters that specify the context in which configuration
-	 * properties are to be retrieved.
+	 * Defines ten parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param k1  the first parameter name
 	 * @param v1  the first parameter value
 	 * @param k2  the second parameter name
@@ -284,8 +278,9 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	 * @param v9  the ninth parameter value
 	 * @param k10 the tenth parameter name
 	 * @param v10 the tenth parameter value
-	 * 
+	 *
 	 * @return the executable configuration query
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) throws IllegalArgumentException {
@@ -294,13 +289,13 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	
 	/**
 	 * <p>
-	 * Defines parameters that specify the context in which configuration properties
-	 * are to be retrieved.
+	 * Defines parameters that specify the context in which configuration properties are to be retrieved.
 	 * </p>
-	 * 
+	 *
 	 * @param parameters an array of parameters
-	 * 
+	 *
 	 * @return the executable configuration query
+	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	B withParameters(Parameter... parameters) throws IllegalArgumentException;
@@ -325,5 +320,5 @@ public interface ExecutableConfigurationQuery<A extends ConfigurationQuery<A, B,
 	 * 
 	 * @return a stream of configuration query results
 	 */
-	Flux<C> execute();
+	Flux<ConfigurationQueryResult> execute();
 }

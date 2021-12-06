@@ -33,32 +33,27 @@ import reactor.core.publisher.Flux;
 
 /**
  * <p>
- * Base implementation for {@link ConfigurationSource} where configuration
- * properties are resolved using a property accessor function to retrieve
- * property values.
+ * Base implementation for {@link ConfigurationSource} where configuration properties are resolved using a property accessor function to retrieve property values.
  * </p>
- * 
+ *
  * <p>
- * This implementation is intended for configuration sources whose properties
- * are uniquely identified by a single key such as system properties, system
- * environment variables or maps in general.
+ * This implementation is intended for configuration sources whose properties are uniquely identified by a single key such as system properties, system environment variables or maps in general.
  * </p>
- * 
+ *
  * <p>
- * As a result, parameterized query are not supported with this kind of
- * configuration source, regardless of the parameters specified when building a
- * query, only the configuration key name is considered when resolving a value.
+ * As a result, parameterized query are not supported with this kind of configuration source, regardless of the parameters specified when building a query, only the configuration key name is
+ * considered when resolving a value.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ConfigurationSource
  *
  * @param <A> raw configuration value type
  * @param <B> the properties configuration source type
  */
-public abstract class AbstractPropertiesConfigurationSource<A, B extends AbstractPropertiesConfigurationSource<A,B>> extends AbstractConfigurationSource<AbstractPropertiesConfigurationSource.PropertyConfigurationQuery<A, B>, AbstractPropertiesConfigurationSource.PropertyExecutableConfigurationQuery<A, B>, AbstractPropertiesConfigurationSource.PropertyConfigurationQueryResult<A, B>, A> {
+public abstract class AbstractPropertiesConfigurationSource<A, B extends AbstractPropertiesConfigurationSource<A,B>> extends AbstractConfigurationSource<AbstractPropertiesConfigurationSource.PropertyConfigurationQuery<A, B>, AbstractPropertiesConfigurationSource.PropertyExecutableConfigurationQuery<A, B>, A> {
 
 	/**
 	 * The property accessor.
@@ -67,13 +62,12 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 	
 	/**
 	 * <p>
-	 * Creates a properties configuration source with the specified decoder and
-	 * property accessor.
+	 * Creates a properties configuration source with the specified decoder and property accessor.
 	 * </p>
-	 * 
+	 *
 	 * @param decoder          a value decoder
 	 * @param propertyAccessor a property accessor
-	 * 
+	 *
 	 * @throws NullPointerException if the specified decoder is null
 	 */
 	public AbstractPropertiesConfigurationSource(SplittablePrimitiveDecoder<A> decoder, Function<String, A> propertyAccessor) {
@@ -99,7 +93,7 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 	 * @param <A> raw configuration value type
 	 * @param <B> the properties configuration source type
 	 */
-	public static class PropertyConfigurationQuery<A, B extends AbstractPropertiesConfigurationSource<A,B>> implements ConfigurationQuery<PropertyConfigurationQuery<A, B>, PropertyExecutableConfigurationQuery<A, B>, PropertyConfigurationQueryResult<A, B>> {
+	public static class PropertyConfigurationQuery<A, B extends AbstractPropertiesConfigurationSource<A,B>> implements ConfigurationQuery<PropertyConfigurationQuery<A, B>, PropertyExecutableConfigurationQuery<A, B>> {
 		
 		private List<String> names;
 		
@@ -136,7 +130,7 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 	 * @param <A> raw configuration value type
 	 * @param <B> the properties configuration source type
 	 */
-	public static class PropertyExecutableConfigurationQuery<A, B extends AbstractPropertiesConfigurationSource<A,B>> implements ExecutableConfigurationQuery<PropertyConfigurationQuery<A, B>, PropertyExecutableConfigurationQuery<A, B>, PropertyConfigurationQueryResult<A, B>> {
+	public static class PropertyExecutableConfigurationQuery<A, B extends AbstractPropertiesConfigurationSource<A,B>> implements ExecutableConfigurationQuery<PropertyConfigurationQuery<A, B>, PropertyExecutableConfigurationQuery<A, B>> {
 
 		private B source;
 		
@@ -161,7 +155,7 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 						duplicateParameters.add(parameter.getKey());
 					}
 				}
-				if(duplicateParameters != null && duplicateParameters.size() > 0) {
+				if(!duplicateParameters.isEmpty()) {
 					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
 				}
 			}
@@ -175,7 +169,7 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 		}
 
 		@Override
-		public Flux<PropertyConfigurationQueryResult<A, B>> execute() {
+		public Flux<ConfigurationQueryResult> execute() {
 			return Flux.fromStream(this.queries.stream().flatMap(query -> query.names.stream().map(name -> new GenericConfigurationKey(name, query.parameters)))
 				.map(key -> new PropertyConfigurationQueryResult<>(key, 
 						Optional.ofNullable(this.source.propertyAccessor.apply(key.getName()))
@@ -200,9 +194,9 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 	 * @param <A> raw configuration value type
 	 * @param <B> the properties configuration source type
 	 */
-	public static class PropertyConfigurationQueryResult<A, B extends AbstractPropertiesConfigurationSource<A,B>> extends GenericConfigurationQueryResult<ConfigurationKey, ConfigurationProperty<ConfigurationKey, B>> {
+	public static class PropertyConfigurationQueryResult<A, B extends AbstractPropertiesConfigurationSource<A,B>> extends GenericConfigurationQueryResult {
 
-		private PropertyConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationProperty<ConfigurationKey, B> queryResult) {
+		private PropertyConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationProperty queryResult) {
 			super(queryKey, queryResult);
 		}
 	}

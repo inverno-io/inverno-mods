@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.inverno.mod.configuration.ConfigurationKey.Parameter;
+import io.inverno.mod.configuration.ConfigurationQueryResult;
 import io.inverno.mod.configuration.source.CompositeConfigurationSource.CompositeConfigurationQueryResult;
 
 public class CompositeConfigurationSourceTest {
@@ -27,7 +28,7 @@ public class CompositeConfigurationSourceTest {
 		
 		CompositeConfigurationSource src = new CompositeConfigurationSource(List.of(src0, src2, src1));
 		
-		List<CompositeConfigurationQueryResult> results = src
+		List<ConfigurationQueryResult> results = src
 			.get("datasource.url", "datasource.user", "datasource.password").withParameters("node", "node1", "zone", "US", "environment", "production").and()
 			.get("datasource.url").withParameters("node", "node2", "zone", "EU", "environment", "production").and()
 			.get("datasource.url", "datasource.user", "datasource.password").withParameters("zone", "EU", "environment", "production").and()
@@ -47,9 +48,9 @@ public class CompositeConfigurationSourceTest {
 		
 		Assertions.assertEquals(13, results.size());
 		
-		Iterator<CompositeConfigurationQueryResult> resultIterator = results.iterator();
+		Iterator<ConfigurationQueryResult> resultIterator = results.iterator();
 		
-		CompositeConfigurationQueryResult current = resultIterator.next(); // datasource.url[node=node1,zone=US,environment=production] -> datasource.url[node=node1,environment=production,zone=US] = jdbc:h2:file:/opt/1/node1-us-production
+		ConfigurationQueryResult current = resultIterator.next(); // datasource.url[node=node1,zone=US,environment=production] -> datasource.url[node=node1,environment=production,zone=US] = jdbc:h2:file:/opt/1/node1-us-production
 		Assertions.assertEquals("datasource.url", current.getQueryKey().getName());
 		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("node","node1"), Parameter.of("zone","US"), Parameter.of("environment","production"))));
 		Assertions.assertTrue(current.getResult().isPresent());
@@ -171,7 +172,7 @@ public class CompositeConfigurationSourceTest {
 		
 		CompositeConfigurationSource src = new CompositeConfigurationSource(List.of(src0, src2, src1));
 		
-		List<CompositeConfigurationQueryResult> results = src
+		List<ConfigurationQueryResult> results = src
 			.get("datasource.password").and()
 			.get("datasource.password").withParameters("environment", "testUnset")
 			.execute()
@@ -184,9 +185,9 @@ public class CompositeConfigurationSourceTest {
 		
 		Assertions.assertEquals(2, results.size());
 		
-		Iterator<CompositeConfigurationQueryResult> resultIterator = results.iterator();
+		Iterator<ConfigurationQueryResult> resultIterator = results.iterator();
 		
-		CompositeConfigurationQueryResult current = resultIterator.next();
+		ConfigurationQueryResult current = resultIterator.next();
 		
 		Assertions.assertEquals("datasource.password", current.getQueryKey().getName());
 		Assertions.assertTrue(current.getQueryKey().getParameters().isEmpty());

@@ -21,22 +21,17 @@ import org.apache.commons.text.StringEscapeUtils;
 
 /**
  * <p>
- * A configuration key uniquely identifies a configuration property in a
- * configuration source. It is composed of a name and a collection of
- * parameters.
+ * A configuration key uniquely identifies a configuration property in a configuration source. It is composed of a name and a collection of parameters.
  * </p>
- * 
+ *
  * <p>
- * The use of parameters in the key makes it possible to define different values
- * for the same configuration property name and retrieve them within a
- * particular context. For instance, it is possible to define a value in a test
- * environment and different value for the same property in a production
- * environment.
+ * The use of parameters in the key makes it possible to define different values for the same configuration property name and retrieve them within a particular context. For instance, it is possible to
+ * define a value in a test environment and different value for the same property in a production environment.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ExecutableConfigurationQuery
  * @see ConfigurationQueryResult
  */
@@ -44,10 +39,9 @@ public interface ConfigurationKey {
 
 	/**
 	 * <p>
-	 * A parameter is used to specify the context in which a property value is
-	 * defined.
+	 * A parameter is used to specify the context in which a property value is defined.
 	 * </p>
-	 * 
+	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
@@ -97,13 +91,13 @@ public interface ConfigurationKey {
 		 * <p>
 		 * Creates a parameter with the specified key and value.
 		 * </p>
-		 * 
+		 *
 		 * @param key   the parameter key
 		 * @param value the parameter value
-		 * 
+		 *
 		 * @return a parameter
-		 * @throws IllegalArgumentException if the key is null or empty of if the value
-		 *                                  is null or not a string, nor a primitive
+		 *
+		 * @throws IllegalArgumentException if the key is null or empty of if the value is null or not a string, nor a primitive
 		 */
 		public static Parameter of(String key, Object value) throws IllegalArgumentException {
 			return new Parameter(key, value);
@@ -166,12 +160,10 @@ public interface ConfigurationKey {
 	
 	/**
 	 * <p>
-	 * Returns the list of parameters specifying the context in which a property
-	 * value is defined.
+	 * Returns the list of parameters specifying the context in which a property value is defined.
 	 * </p>
-	 * 
-	 * @return a collection of parameters or an empty collection if the key does not
-	 *         define any parameter
+	 *
+	 * @return a collection of parameters or an empty collection if the key does not define any parameter
 	 */
 	Collection<Parameter> getParameters();
 }

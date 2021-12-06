@@ -35,7 +35,7 @@ import io.inverno.mod.configuration.ConfigurationKey.Parameter;
 import io.inverno.mod.configuration.internal.GenericConfigurationProperty;
 import io.inverno.mod.configuration.internal.GenericConfigurationKey;
 
-public class ConfigurationPropertiesParser<A extends AbstractConfigurationSource<?,?,?,String>> {
+public class ConfigurationPropertiesParser<A extends AbstractConfigurationSource<?,?,String>> {
 
 	private A inverno_source;
 
@@ -807,12 +807,12 @@ TOKEN : /* IDENTIFIERS */
 	>
 }
 
-List<ConfigurationProperty<ConfigurationKey, A>> StartConfigurationProperties():
+List<ConfigurationProperty> StartConfigurationProperties():
 {
 	String propertyName = null;
 	Collection<Parameter> parameters = List.of();
-	List<ConfigurationProperty<ConfigurationKey, A>> current;
-	List<ConfigurationProperty<ConfigurationKey, A>> result = new ArrayList<>();
+	List<ConfigurationProperty> current;
+	List<ConfigurationProperty> result = new ArrayList<>();
 }
 {
 	( current = Declaration(propertyName, parameters) { result.addAll(current); } | < LINE_END > )*
@@ -822,10 +822,10 @@ List<ConfigurationProperty<ConfigurationKey, A>> StartConfigurationProperties():
 	}
 }
 
-List<ConfigurationProperty<ConfigurationKey, A>> Declaration(String propertyName, Collection<Parameter> parameters):
+List<ConfigurationProperty> Declaration(String propertyName, Collection<Parameter> parameters):
 {
-	List<ConfigurationProperty<ConfigurationKey, A>> entries;
-	ConfigurationProperty<ConfigurationKey, A> entry;
+	List<ConfigurationProperty> entries;
+	ConfigurationProperty entry;
 }
 {
 	(
@@ -840,7 +840,7 @@ List<ConfigurationProperty<ConfigurationKey, A>> Declaration(String propertyName
 	}
 }
 
-ConfigurationProperty<ConfigurationKey, A> Property(String propertyName, Collection<Parameter> parameters):
+ConfigurationProperty Property(String propertyName, Collection<Parameter> parameters):
 {
 	String name;
 	Optional<String> value;
@@ -857,12 +857,12 @@ ConfigurationProperty<ConfigurationKey, A> Property(String propertyName, Collect
 	}
 }
 
-List<ConfigurationProperty<ConfigurationKey, A>> PropertyBlock(String propertyName, Collection<Parameter> parameters):
+List<ConfigurationProperty> PropertyBlock(String propertyName, Collection<Parameter> parameters):
 {
 	String newName = propertyName != null ? propertyName + "." : "";
 	String name;
-	List<ConfigurationProperty<ConfigurationKey, A>> current;
-	List<ConfigurationProperty<ConfigurationKey, A>> result = new ArrayList<>();
+	List<ConfigurationProperty> current;
+	List<ConfigurationProperty> result = new ArrayList<>();
 }
 {
 	name = PropertyName() { newName += name; } < LBRACE > ( current = Declaration(newName, parameters) { result.addAll(current); } | < LINE_END > )* < RBRACE >
@@ -904,12 +904,12 @@ Optional<String> PropertyValue():
 	}
 }
 
-List<ConfigurationProperty<ConfigurationKey, A>> ConfigurationBlock(String propertyName, Collection<Parameter> parameters):
+List<ConfigurationProperty> ConfigurationBlock(String propertyName, Collection<Parameter> parameters):
 {
 	Collection<Parameter> newParameters;
 	List<Parameter> mergedParameters = new ArrayList<>(parameters);
-	List<ConfigurationProperty<ConfigurationKey, A>> current;
-	List<ConfigurationProperty<ConfigurationKey, A>> result = new ArrayList<>();
+	List<ConfigurationProperty> current;
+	List<ConfigurationProperty> result = new ArrayList<>();
 }
 {
 	newParameters = ParameterList() { mergedParameters.addAll(newParameters); } ( < LINE_END > )* < LBRACE > ( current = Declaration(propertyName, mergedParameters) { result.addAll(current); } | < LINE_END > )* < RBRACE >

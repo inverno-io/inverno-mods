@@ -61,10 +61,9 @@ public class ConfigurationLoaderException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a configuration loader exception with the specified message and
-	 * cause.
+	 * Creates a configuration loader exception with the specified message and cause.
 	 * </p>
-	 * 
+	 *
 	 * @param message the message
 	 * @param cause   the cause
 	 */
@@ -74,15 +73,13 @@ public class ConfigurationLoaderException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a configuration loader exception with the specified message, cause,
-	 * suppression enabled or disabled and writable stack trace enabled or disabled.
+	 * Creates a configuration loader exception with the specified message, cause, suppression enabled or disabled and writable stack trace enabled or disabled.
 	 * </p>
-	 * 
+	 *
 	 * @param message            the message
 	 * @param cause              the cause
 	 * @param enableSuppression  true to enable suppression, false otherwise
-	 * @param writableStackTrace true to make the stack trace writable, false
-	 *                           otherwise
+	 * @param writableStackTrace true to make the stack trace writable, false otherwise
 	 */
 	public ConfigurationLoaderException(String message, Throwable cause, boolean enableSuppression,	boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);

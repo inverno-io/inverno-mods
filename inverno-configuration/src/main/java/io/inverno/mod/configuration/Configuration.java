@@ -26,47 +26,39 @@ import java.util.function.Consumer;
  * <p>
  * Used on an interface to indicate a configuration.
  * </p>
- * 
+ *
  * <p>
- * A configuration should be created when there's a need to provide
- * configuration data in a module. Configuration properties are declared as
- * non-void no-argument methods in an interface. Default values can be specified
- * in default methods.
+ * A configuration should be created when there's a need to provide configuration data in a module. Configuration properties are declared as non-void no-argument methods in an interface. Default
+ * values can be specified in default methods.
  * </p>
- * 
+ *
  * <blockquote><pre>
  * {@literal @Configuration}
  * public interface SomeConfig {
- *     
+ *
  *     String property1();
- *     
+ *
  *     default int property2() {
  *         return 0;
  *     }
  * }
  * </pre></blockquote>
- * 
+ *
  * <p>
- * For a given configuration, a module bean named after the configuration
- * interface [ConfigurationInterface]Bean will be generated to provide a
- * concrete configuration inside the enclosing module. This bean will load
- * configuration data from a {@link ConfigurationSource} and a list of
- * parameters when provided within the module, when no configuration source is
- * specified, the default implementation is loaded. A configurer can also be
- * provided to override all or part of the loaded data.
+ * For a given configuration, a module bean named after the configuration interface [ConfigurationInterface]Bean will be generated to provide a concrete configuration inside the enclosing module. This
+ * bean will load configuration data from a {@link ConfigurationSource} and a list of parameters when provided within the module, when no configuration source is specified, the default implementation
+ * is loaded. A configurer can also be provided to override all or part of the loaded data.
  * </p>
- * 
+ *
  * <p>
- * The generated bean also provides a configurator to programmatically create a
- * concrete configuration in an efficient way. A {@link Consumer} of such
- * configurator is called a configurer:
+ * The generated bean also provides a configurator to programmatically create a concrete configuration in an efficient way. A {@link Consumer} of such configurator is called a configurer:
  * </p>
- * 
+ *
  * <blockquote><pre>
  * Config config = SomeConfigBean.ConfigConfigurator
  *     .create(configConfigurator -> configConfigurator.property1("someValue").property2(42));
  * </pre></blockquote>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
@@ -76,20 +68,18 @@ public @interface Configuration {
 
 	/**
 	 * <p>
-	 * Indicates a name identifying the configuration bean in the module, defaults
-	 * to the name of the class.
+	 * Indicates a name identifying the configuration bean in the module, defaults to the name of the class.
 	 * </p>
-	 * 
+	 *
 	 * @return A name
 	 */
 	String name() default "";
 	
 	/**
 	 * <p>
-	 * Indicates whether a bean should be generated in addition to the configuration
-	 * loader.
+	 * Indicates whether a bean should be generated in addition to the configuration loader.
 	 * </p>
-	 * 
+	 *
 	 * @return true to generate a bean, false otherwise
 	 */
 	boolean generateBean() default true;
@@ -98,7 +88,7 @@ public @interface Configuration {
 	 * <p>
 	 * Indicates whether the generated bean should be overridable.
 	 * </p>
-	 * 
+	 *
 	 * @return true to generate a bean, false otherwise
 	 */
 	boolean overridable() default true;

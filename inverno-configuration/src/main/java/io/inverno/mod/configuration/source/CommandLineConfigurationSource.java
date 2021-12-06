@@ -25,7 +25,6 @@ import org.apache.logging.log4j.Logger;
 
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
 import io.inverno.mod.configuration.AbstractHashConfigurationSource;
-import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.internal.JavaStringConverter;
 import io.inverno.mod.configuration.internal.parser.option.ConfigurationOptionParser;
@@ -37,55 +36,53 @@ import reactor.core.publisher.Mono;
  * <p>
  * A configuration source that looks up properties from command line arguments.
  * </p>
- * 
+ *
  * <p>
- * Configuration properties are specified as application arguments using the
- * following syntax (ABNF):
+ * Configuration properties are specified as application arguments using the following syntax (ABNF):
  * </p>
- * 
+ *
  * <blockquote>
- * 
+ *
  * <pre>
  * argument        = "--" {@literal property_name} [ "[" *(parameter ",") "]" ] "=" property_value
- * 
+ *
  * property_name   = java_name
- * 
- * property_value  = java_integer_literal 
- *                 / java_floating_point_literal 
- *                 / java_string_literal 
+ *
+ * property_value  = java_integer_literal
+ *                 / java_floating_point_literal
+ *                 / java_string_literal
  *                 / java_boolean_literal
  *                 / "unset"
  *                 / "null"
- * 
+ *
  * parameter       = parameter_name "=" parameter_value
- * 
+ *
  * parameter_name  = java_identifier
- * 
- * parameter_value = java_integer_literal 
- *                 / java_floating_point_literal 
- *                 / java_string_literal 
+ *
+ * parameter_value = java_integer_literal
+ *                 / java_floating_point_literal
+ *                 / java_string_literal
  *                 / java_boolean_literal
- * 
+ *
  * </pre>
- * 
+ *
  * </blockquote>
- * 
+ *
  * <p>
- * The following are valid configuration properties passed as command line
- * arguments:
+ * The following are valid configuration properties passed as command line arguments:
  * </p>
- * 
+ *
  * <ul>
- *   <li>{@code --web.server_port=8080}</li>
- *   <li>{@code --web.server_port[profile="ssl"]=8443}</li>
- *   <li>{@code --db.url[env="dev"]="jdbc:oracle:thin:@dev.db.server:1521:sid"}</li>
- *   <li>{@code --db.url[env="prod",zone="eu"]="jdbc:oracle:thin:@prod_eu.db.server:1521:sid"}</li>
- *   <li>{@code --db.url[env="prod",zone="us"]="jdbc:oracle:thin:@prod_us.db.server:1521:sid"}</li>
+ * <li>{@code --web.server_port=8080}</li>
+ * <li>{@code --web.server_port[profile="ssl"]=8443}</li>
+ * <li>{@code --db.url[env="dev"]="jdbc:oracle:thin:@dev.db.server:1521:sid"}</li>
+ * <li>{@code --db.url[env="prod",zone="eu"]="jdbc:oracle:thin:@prod_eu.db.server:1521:sid"}</li>
+ * <li>{@code --db.url[env="prod",zone="us"]="jdbc:oracle:thin:@prod_us.db.server:1521:sid"}</li>
  * </ul>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see AbstractHashConfigurationSource
  */
 public class CommandLineConfigurationSource extends AbstractHashConfigurationSource<String, CommandLineConfigurationSource> {
@@ -96,10 +93,9 @@ public class CommandLineConfigurationSource extends AbstractHashConfigurationSou
 	
 	/**
 	 * <p>
-	 * Creates a command line configuration source with the specified arguments
-	 * using a Java String value decoder.
+	 * Creates a command line configuration source with the specified arguments using a Java String value decoder.
 	 * </p>
-	 * 
+	 *
 	 * @param args the command line arguments
 	 */
 	public CommandLineConfigurationSource(String[] args) {
@@ -110,8 +106,8 @@ public class CommandLineConfigurationSource extends AbstractHashConfigurationSou
 	 * <p>
 	 * Creates a command line configuration source with the specified arguments and the specified string value decoder.
 	 * </p>
-	 * 
-	 * @param args the command line arguments
+	 *
+	 * @param args    the command line arguments
 	 * @param decoder a string decoder
 	 */
 	public CommandLineConfigurationSource(String[] args, SplittablePrimitiveDecoder<String> decoder) {
@@ -123,7 +119,7 @@ public class CommandLineConfigurationSource extends AbstractHashConfigurationSou
 	}
 	
 	@Override
-	protected Mono<List<ConfigurationProperty<ConfigurationKey, CommandLineConfigurationSource>>> load() {
+	protected Mono<List<ConfigurationProperty>> load() {
 		return Mono.defer(() -> Mono.just(this.args.stream()
 				.map(option -> {
 					ConfigurationOptionParser<CommandLineConfigurationSource> parser = new ConfigurationOptionParser<>(new StringProvider(option));

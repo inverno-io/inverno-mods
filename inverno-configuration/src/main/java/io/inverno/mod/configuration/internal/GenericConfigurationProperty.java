@@ -51,7 +51,7 @@ import io.inverno.mod.configuration.ConfigurationProperty;
  * @param <B> the source type
  * @param <C> the raw value type
  */
-public class GenericConfigurationProperty<A extends ConfigurationKey, B extends AbstractConfigurationSource<?,?,?, C>, C> implements ConfigurationProperty<A, B> {
+public class GenericConfigurationProperty<A extends ConfigurationKey, B extends AbstractConfigurationSource<?,?, C>, C> implements ConfigurationProperty {
 
 	protected A key;
 
@@ -63,10 +63,9 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	
 	/**
 	 * <p>
-	 * Creates a generic configuration property with the specified key, raw value
-	 * and source.
+	 * Creates a generic configuration property with the specified key, raw value and source.
 	 * </p>
-	 * 
+	 *
 	 * @param key    the property key
 	 * @param value  the property raw value
 	 * @param source the property source
@@ -79,10 +78,9 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	
 	/**
 	 * <p>
-	 * Creates a generic unset configuration property with the specified key and
-	 * source.
+	 * Creates a generic unset configuration property with the specified key and source.
 	 * </p>
-	 * 
+	 *
 	 * @param key    the property key
 	 * @param source the property source
 	 */

@@ -21,19 +21,16 @@ import io.inverno.mod.configuration.internal.JavaStringConverter;
 
 /**
  * <p>
- * A configuration source that looks up properties from the system environment
- * variables.
+ * A configuration source that looks up properties from the system environment variables.
  * </p>
- * 
+ *
  * <p>
- * Note that this source doesn't support parameterized queries, regardless of
- * the parameters specified in a query, only the configuration key name is
- * considered when resolving a value.
+ * Note that this source doesn't support parameterized queries, regardless of the parameters specified in a query, only the configuration key name is considered when resolving a value.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see AbstractPropertiesConfigurationSource
  */
 public class SystemEnvironmentConfigurationSource extends AbstractPropertiesConfigurationSource<String, SystemEnvironmentConfigurationSource> {
@@ -49,10 +46,9 @@ public class SystemEnvironmentConfigurationSource extends AbstractPropertiesConf
 	
 	/**
 	 * <p>
-	 * Creates a system environment configuration source with the specified string
-	 * value decoder.
+	 * Creates a system environment configuration source with the specified string value decoder.
 	 * </p>
-	 * 
+	 *
 	 * @param decoder a string decoder
 	 */
 	public SystemEnvironmentConfigurationSource(SplittablePrimitiveDecoder<String> decoder) {

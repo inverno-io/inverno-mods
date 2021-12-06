@@ -46,12 +46,11 @@ import reactor.core.publisher.Mono;
  * <p>
  * A configuration source that looks up properties in a regular property file.
  * </p>
- * 
+ *
  * <p>
- * This source supports parameterized configuration properties defined in a
- * configuration file as follows:
+ * This source supports parameterized configuration properties defined in a configuration file as follows:
  * </p>
- * 
+ *
  * <blockquote><pre>
  * web.server_port=8080
  * web.server_port[profile="ssl"]=8443
@@ -59,10 +58,10 @@ import reactor.core.publisher.Mono;
  * db.url[env="prod",zone="eu"]=jdbc:oracle:thin:@prod_eu.db.server:1521:sid
  * db.url[env="prod",zone="us"]=jdbc:oracle:thin:@prod_us.db.server:1521:sid
  * </pre></blockquote>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see AbstractHashConfigurationSource
  */
 public class PropertyFileConfigurationSource extends AbstractHashConfigurationSource<String, PropertyFileConfigurationSource> {
@@ -77,14 +76,13 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	
 	private Duration propertiesTTL;
 	
-	private Mono<List<ConfigurationProperty<ConfigurationKey, PropertyFileConfigurationSource>>> properties;
+	private Mono<List<ConfigurationProperty>> properties;
 	
 	/**
 	 * <p>
-	 * Creates a property file configuration source with the {@code .properties}
-	 * file at the specified path.
+	 * Creates a property file configuration source with the {@code .properties} file at the specified path.
 	 * </p>
-	 * 
+	 *
 	 * @param propertyFile the path to the {@code .properties} file
 	 */
 	public PropertyFileConfigurationSource(Path propertyFile) {
@@ -93,10 +91,9 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	
 	/**
 	 * <p>
-	 * Creates a property file configuration source with the {@code .properties}
-	 * file at the specified path and the specified string value decoder.
+	 * Creates a property file configuration source with the {@code .properties} file at the specified path and the specified string value decoder.
 	 * </p>
-	 * 
+	 *
 	 * @param propertyFile the path to the {@code .properties} file
 	 * @param decoder      a string decoder
 	 */
@@ -107,10 +104,9 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	
 	/**
 	 * <p>
-	 * Creates a property file configuration source with the specified input
-	 * stream.
+	 * Creates a property file configuration source with the specified input stream.
 	 * </p>
-	 * 
+	 *
 	 * @param propertyInput the {@code .properties} input
 	 */
 	public PropertyFileConfigurationSource(InputStream propertyInput) {
@@ -119,10 +115,9 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	
 	/**
 	 * <p>
-	 * Creates a property file configuration source with the specified input stream
-	 * and string value decoder.
+	 * Creates a property file configuration source with the specified input stream and string value decoder.
 	 * </p>
-	 * 
+	 *
 	 * @param propertyInput the {@code .properties} input
 	 * @param decoder       a string decoder
 	 */
@@ -135,7 +130,7 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	 * <p>
 	 * Creates a property file configuration source with the specified resource
 	 * </p>
-	 * 
+	 *
 	 * @param propertyResource the {@code .properties} resource
 	 */
 	public PropertyFileConfigurationSource(Resource propertyResource) {
@@ -144,10 +139,9 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	
 	/**
 	 * <p>
-	 * Creates a property file configuration source with the specified resource and
-	 * string value decoder.
+	 * Creates a property file configuration source with the specified resource and string value decoder.
 	 * </p>
-	 * 
+	 *
 	 * @param propertyResource the {@code .properties} resource
 	 * @param decoder          a string decoder
 	 */
@@ -160,19 +154,16 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	 * <p>
 	 * Sets the time-to-live duration of the properties loaded with {@link #load()}.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * If set to null, which is the default, properties are cached indefinitely.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * Note that this ttl doesn't apply to a source created with an
-	 * {@link InputStream} which is cached indefinitely since the steam can't be
-	 * read twice.
+	 * Note that this ttl doesn't apply to a source created with an {@link InputStream} which is cached indefinitely since the steam can't be read twice.
 	 * </p>
-	 * 
-	 * @param ttl the properties time-to-live or null to cache properties
-	 *            indefinitely
+	 *
+	 * @param ttl the properties time-to-live or null to cache properties indefinitely
 	 */
 	public void setPropertiesTTL(Duration ttl) {
 		this.propertiesTTL = ttl;
@@ -180,12 +171,10 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	
 	/**
 	 * <p>
-	 * Returns the time-to-live duration of the properties loaded with
-	 * {@link #load()}.
+	 * Returns the time-to-live duration of the properties loaded with {@link #load()}.
 	 * </p>
-	 * 
-	 * @return the properties time-to-live or null if properties are cached
-	 *         indefinitely
+	 *
+	 * @return the properties time-to-live or null if properties are cached indefinitely
 	 */
 	public Duration getPropertiesTTL() {
 		return this.propertiesTTL;
@@ -195,8 +184,9 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	 * <p>
 	 * Opens an input stream to read the {@code .properties} file.
 	 * </p>
-	 * 
+	 *
 	 * @return An input stream
+	 *
 	 * @throws IOException       if there was an I/O error opening the file
 	 * @throws ResourceException if there was an error opening the resource
 	 */
@@ -213,7 +203,7 @@ public class PropertyFileConfigurationSource extends AbstractHashConfigurationSo
 	}
 	
 	@Override
-	protected Mono<List<ConfigurationProperty<ConfigurationKey, PropertyFileConfigurationSource>>> load() {
+	protected Mono<List<ConfigurationProperty>> load() {
 		if(this.properties == null) {
 			this.properties = Mono.defer(() -> {
 				try(InputStream input = this.open()) {

@@ -40,63 +40,51 @@ import reactor.core.publisher.Flux;
 
 /**
  * <p>
- * A composite configuration source that uses multiple configuration sources to
- * resolve configuration properties.
+ * A composite configuration source that uses multiple configuration sources to resolve configuration properties.
  * </p>
- * 
+ *
  * <p>
- * A composite configuration source uses a
- * {@link CompositeConfigurationStrategy} to determine the best matching value
- * among the different sources for a given query.
+ * A composite configuration source uses a {@link CompositeConfigurationStrategy} to determine the best matching value among the different sources for a given query.
  * </p>
- * 
+ *
  * <p>
- * This allows to define priorities to the configuration sources so that if two
- * sources define a value for a given property the value of the source with the
- * highest priority is chosen. It also allows to implement more complex
- * resolving strategies to determine the best matching value whose key does not
- * necessarily exactly match the query. This is especially usefull when one
- * needs to define a base configuration and customize it based on a context
- * given by configuration parameters.
+ * This allows to define priorities to the configuration sources so that if two sources define a value for a given property the value of the source with the highest priority is chosen. It also allows
+ * to implement more complex resolving strategies to determine the best matching value whose key does not necessarily exactly match the query. This is especially usefull when one needs to define a
+ * base configuration and customize it based on a context given by configuration parameters.
  * </p>
- * 
+ *
  * <p>
  * A composite configuration source queries its sources in sequence.
  * </p>
- * 
+ *
  * <p>
- * At each round, the actual queries executed on the source are populated by
- * the strategy (@see
- * {@link CompositeConfigurationStrategy#populateSourceQuery(ConfigurationKey, ConfigurationQuery, ConfigurationProperty)})
- * so that multiple queries can actually be requested for a single original
+ * At each round, the actual queries executed on the source are populated by the strategy (@see
+ * {@link CompositeConfigurationStrategy#populateSourceQuery(ConfigurationKey, ConfigurationQuery, ConfigurationProperty)}) so that multiple queries can actually be requested for a single original
  * query to the composite source.
  * </p>
- * 
+ *
  * <p>
- * It then retains the first non-empty result that supersedes the one resolved
- * in previous rounds for that original query (see @link
+ * It then retains the first non-empty result that supersedes the one resolved in previous rounds for that original query (see @link
  * {@link CompositeConfigurationStrategy#isSuperseded(ConfigurationKey, ConfigurationProperty, ConfigurationProperty)}}.
  * </p>
- * 
+ *
  * <p>
- * A property value is retained and the sequence stops when the query is
- * considered as resolved according to the strategy (see
- * {@link CompositeConfigurationStrategy#isResolved(ConfigurationKey, ConfigurationProperty)})
- * or if there's no more source to query.
+ * A property value is retained and the sequence stops when the query is considered as resolved according to the strategy (see
+ * {@link CompositeConfigurationStrategy#isResolved(ConfigurationKey, ConfigurationProperty)}) or if there's no more source to query.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ConfigurationSource
  * @see CompositeConfigurationStrategy
  */
-public class CompositeConfigurationSource implements ConfigurationSource<CompositeConfigurationSource.CompositeConfigurationQuery, CompositeConfigurationSource.CompositeExecutableConfigurationQuery, CompositeConfigurationSource.CompositeConfigurationQueryResult> {
+public class CompositeConfigurationSource implements ConfigurationSource<CompositeConfigurationSource.CompositeConfigurationQuery, CompositeConfigurationSource.CompositeExecutableConfigurationQuery> {
 
 	/**
 	 * The configuration sources.
 	 */
-	protected List<ConfigurationSource<?,?,?>> sources;
+	protected List<ConfigurationSource<?,?>> sources;
 	
 	private CompositeConfigurationStrategy strategy;
 	
@@ -104,31 +92,30 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	 * <p>
 	 * Creates a composite configuration query with the specified list of sources using the default strategy.
 	 * </p>
-	 * 
+	 *
 	 * @param sources a list of configuration sources from the highest priority to the lowest
-	 * 
+	 *
 	 * @throws NullPointerException if the specified strategy is null
-	 * 
+	 *
 	 * @see DefaultCompositeConfigurationStrategy
 	 */
-	public CompositeConfigurationSource(List<ConfigurationSource<?,?,?>> sources) throws NullPointerException {
+	public CompositeConfigurationSource(List<ConfigurationSource<?,?>> sources) throws NullPointerException {
 		this(sources, new DefaultCompositeConfigurationStrategy());
 	}
 	
 	/**
 	 * <p>
-	 * Creates a composite configuration query with the specified list of sources
-	 * using the specified strategy.
+	 * Creates a composite configuration query with the specified list of sources using the specified strategy.
 	 * </p>
-	 * 
+	 *
 	 * @param sources  a list of configuration sources from the highest priority to the lowest
 	 * @param strategy a composite configuration strategy
-	 * 
+	 *
 	 * @throws NullPointerException if the specified strategy is null
-	 * 
+	 *
 	 * @see CompositeConfigurationStrategy
 	 */
-	public CompositeConfigurationSource(List<ConfigurationSource<?,?,?>> sources, CompositeConfigurationStrategy strategy) throws NullPointerException {
+	public CompositeConfigurationSource(List<ConfigurationSource<?,?>> sources, CompositeConfigurationStrategy strategy) throws NullPointerException {
 		this.sources = sources != null ? sources.stream().filter(Objects::nonNull).collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList)) : List.of();
 		this.strategy = Objects.requireNonNull(strategy, "strategy");
 	}
@@ -140,7 +127,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	 * 
 	 * @return a list of configuration sources
 	 */
-	public List<ConfigurationSource<?, ?, ?>> getSources() {
+	public List<ConfigurationSource<?,?>> getSources() {
 		return sources;
 	}
 	
@@ -179,20 +166,20 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	@SuppressWarnings("rawtypes")
 	private static class SourceConfigurationQueryWrapper implements ConfigurationQuery {
 
-		private int counter;
+		private final ConfigurationSource source;
 		
-		private ConfigurationSource source;
+		private int counter;
 		
 		private ConfigurationQuery query;
 		
 		private SourceExecutableConfigurationQueryWrapper executableQueryWrapper;
 		
-		private SourceConfigurationQueryWrapper(ConfigurationSource<?,?,?> source) {
+		private SourceConfigurationQueryWrapper(ConfigurationSource<?,?> source) {
 			this.source = source;
 		}
 		
 		@SuppressWarnings("unchecked")
-		public Flux<ConfigurationQueryResult<?,?>> execute() {
+		public Flux<ConfigurationQueryResult> execute() {
 			if(this.executableQueryWrapper != null) {
 				return this.executableQueryWrapper.query.execute();
 			}
@@ -234,9 +221,9 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	@SuppressWarnings("rawtypes")
 	private static class SourceExecutableConfigurationQueryWrapper implements ExecutableConfigurationQuery {
 
+		private final SourceConfigurationQueryWrapper queryWrapper;
+
 		private ExecutableConfigurationQuery query;
-		
-		private SourceConfigurationQueryWrapper queryWrapper;
 		
 		private SourceExecutableConfigurationQueryWrapper(SourceConfigurationQueryWrapper queryWrapper) {
 			this.queryWrapper = queryWrapper;
@@ -270,13 +257,13 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	 * 
 	 * @see ConfigurationQuery
 	 */
-	public static class CompositeConfigurationQuery implements ConfigurationQuery<CompositeConfigurationQuery, CompositeExecutableConfigurationQuery, CompositeConfigurationQueryResult> {
+	public static class CompositeConfigurationQuery implements ConfigurationQuery<CompositeConfigurationQuery, CompositeExecutableConfigurationQuery> {
 
-		private CompositeExecutableConfigurationQuery executableQuery;
+		private final CompositeExecutableConfigurationQuery executableQuery;
 		
-		private List<String> names;
+		private final List<String> names;
 		
-		private LinkedList<Parameter> parameters;
+		private final LinkedList<Parameter> parameters;
 		
 		private CompositeConfigurationQuery(CompositeExecutableConfigurationQuery executableQuery) {
 			this.executableQuery = executableQuery;
@@ -304,11 +291,11 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	 * 
 	 * @see ExecutableConfigurationQuery
 	 */
-	public static class CompositeExecutableConfigurationQuery implements ExecutableConfigurationQuery<CompositeConfigurationQuery, CompositeExecutableConfigurationQuery, CompositeConfigurationQueryResult> {
+	public static class CompositeExecutableConfigurationQuery implements ExecutableConfigurationQuery<CompositeConfigurationQuery, CompositeExecutableConfigurationQuery> {
 
-		private CompositeConfigurationSource source;
+		private final CompositeConfigurationSource source;
 		
-		private LinkedList<CompositeConfigurationQuery> queries;
+		private final LinkedList<CompositeConfigurationQuery> queries;
 		
 		private CompositeExecutableConfigurationQuery(CompositeConfigurationSource source) {
 			this.source = source;
@@ -334,7 +321,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 						duplicateParameters.add(parameter.getKey());
 					}
 				}
-				if(duplicateParameters != null && duplicateParameters.size() > 0) {
+				if(duplicateParameters.size() > 0) {
 					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
 				}
 			}
@@ -342,7 +329,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		}
 
 		@Override
-		public Flux<CompositeConfigurationQueryResult> execute() {
+		public Flux<ConfigurationQueryResult> execute() {
 			return Flux.create(sink -> {
 				LinkedList<CompositeConfigurationQueryResult> results = this.queries.stream()
 					.flatMap(query -> query.names.stream().map(name -> new CompositeConfigurationQueryResult(this.source.strategy, new GenericConfigurationKey(name, query.parameters))))
@@ -394,16 +381,16 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	 * 
 	 * @see ConfigurationQueryResult
 	 */
-	public static class CompositeConfigurationQueryResult extends GenericConfigurationQueryResult<ConfigurationKey, ConfigurationProperty<?, ?>> {
+	public static class CompositeConfigurationQueryResult extends GenericConfigurationQueryResult {
 
-		private CompositeConfigurationStrategy strategy;
+		private final CompositeConfigurationStrategy strategy;
 		
 		private int counter;
 		
 		private boolean resolved;
 		
 		private CompositeConfigurationQueryResult(CompositeConfigurationStrategy strategy, ConfigurationKey queryKey) {
-			super(queryKey, (ConfigurationProperty<?,?>)null);
+			super(queryKey, (ConfigurationProperty)null);
 			this.strategy = strategy;
 		}
 		
@@ -423,7 +410,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		
 		private int consumeCounter = 0;
 		
-		private boolean consumeResult(ConfigurationQueryResult<?,?> result) {
+		private boolean consumeResult(ConfigurationQueryResult result) {
 			if(this.consumeCounter == 0) {
 				this.consumeCounter = this.counter;
 			}

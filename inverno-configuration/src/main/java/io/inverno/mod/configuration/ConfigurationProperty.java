@@ -39,56 +39,47 @@ import io.inverno.mod.configuration.source.CompositeConfigurationSource;
  * <p>
  * A configuration property.
  * </p>
- * 
+ *
  * <p>
- * A configuration property is identified by a configuration key which is
- * composed of a name and a collection of parameters defining the context for
- * which a property value is defined. This means that for a given property name,
- * multiple values can be defined in a configuration source for different
- * contexts.
+ * A configuration property is identified by a configuration key which is composed of a name and a collection of parameters defining the context for which a property value is defined. This means that
+ * for a given property name, multiple values can be defined in a configuration source for different contexts.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * 
+ *
  * @see ConfigurationKey
  * @see ConfigurationQuery
  * @see ConfigurationQueryResult
- *
- * @param <A> the type of the configuration key
- * @param <B> the type of the configuration source that loaded the property
  */
-public interface ConfigurationProperty<A extends ConfigurationKey, B extends ConfigurationSource<?, ?, ?>> {
+public interface ConfigurationProperty {
 	
 	/**
 	 * <p>
-	 * Returns the key identifying the property and the context in which it has been
-	 * defined.
+	 * Returns the key identifying the property and the context in which it has been defined.
 	 * </p>
-	 * 
+	 *
 	 * @return a configuration key
 	 */
-	A getKey();
+	ConfigurationKey getKey();
 	
 	/**
 	 * <p>
 	 * Returns the configuration source that loaded the property.
 	 * </p>
-	 * 
+	 *
 	 * @return a configuration source.
 	 */
-	B getSource();
+	ConfigurationSource<?,?> getSource();
 	
 	/**
 	 * <p>
 	 * Determines whether this property is unset.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * Unset properties are always empty, they are used in a
-	 * {@link CompositeConfigurationSource} to cancel non-empty properties retrieved
-	 * from sources with lower priority.
+	 * Unset properties are always empty, they are used in a {@link CompositeConfigurationSource} to cancel non-empty properties retrieved from sources with lower priority.
 	 * </p>
-	 * 
+	 *
 	 * @return true if the property is unset, false otherwise
 	 */
 	boolean isUnset();
@@ -97,7 +88,7 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Determines whether the value is present (ie. value is not null).
 	 * </p>
-	 * 
+	 *
 	 * @return true if the property value is not null, false otherwise
 	 */
 	boolean isPresent();
@@ -115,12 +106,11 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to the specified type.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the target type
 	 * @param type a class of type T
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<T> as(Class<T> type);
 	
@@ -128,12 +118,11 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to the specified type.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the target type
 	 * @param type the target type
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<T> as(Type type);
 	
@@ -141,12 +130,11 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to an array of the specified type.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the target component type
 	 * @param type a class of type T
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<T[]> asArrayOf(Class<T> type);
 	
@@ -154,12 +142,11 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to an array of the specified type.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the target component type
 	 * @param type the target component type
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<T[]> asArrayOf(Type type);
 	
@@ -167,12 +154,11 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a list of the specified type.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the target list argument type
 	 * @param type a class of type T
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<List<T>> asListOf(Class<T> type);
 	
@@ -180,12 +166,11 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a list of the specified type.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the target list argument type
 	 * @param type the target list argument type
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<List<T>> asListOf(Type type);
 	
@@ -193,12 +178,11 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a set of the specified type.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the target set argument type
 	 * @param type a class of type T
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<Set<T>> asSetOf(Class<T> type);
 	
@@ -206,12 +190,11 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a set of the specified type.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the target set argument type
 	 * @param type the target set argument type
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	<T> Optional<Set<T>> asSetOf(Type type);
 	
@@ -219,9 +202,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a byte.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Byte> asByte();
 
@@ -229,9 +211,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a short.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Short> asShort();
 
@@ -239,9 +220,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to an integer.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Integer> asInteger();
 
@@ -249,9 +229,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a long.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Long> asLong();
 
@@ -259,9 +238,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a float.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Float> asFloat();
 
@@ -269,9 +247,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a double.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Double> asDouble();
 
@@ -279,9 +256,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a character.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Character> asCharacter();
 
@@ -289,9 +265,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a string.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<String> asString();
 
@@ -299,9 +274,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a boolean.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Boolean> asBoolean();
 
@@ -309,9 +283,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a big integer.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<BigInteger> asBigInteger();
 
@@ -319,9 +292,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a big decimal.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<BigDecimal> asBigDecimal();
 
@@ -329,9 +301,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a local date.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<LocalDate> asLocalDate();
 
@@ -339,9 +310,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a local date time.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<LocalDateTime> asLocalDateTime();
 
@@ -349,9 +319,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a zoned date time.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<ZonedDateTime> asZonedDateTime();
 
@@ -359,9 +328,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a currency.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Currency> asCurrency();
 
@@ -369,9 +337,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a locale.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Locale> asLocale();
 
@@ -379,9 +346,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a file.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<File> asFile();
 
@@ -389,9 +355,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a path.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Path> asPath();
 
@@ -399,9 +364,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a URI.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<URI> asURI();
 
@@ -409,9 +373,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a URL.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<URL> asURL();
 
@@ -419,9 +382,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a pattern.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Pattern> asPattern();
 
@@ -429,9 +391,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to an inet address.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<InetAddress> asInetAddress();
 
@@ -439,9 +400,8 @@ public interface ConfigurationProperty<A extends ConfigurationKey, B extends Con
 	 * <p>
 	 * Converts the property value to a class.
 	 * </p>
-	 * 
-	 * @return an optional returning the converted value or an empty optional if the
-	 *         property is empty
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
 	 */
 	Optional<Class<?>> asClass();
 }

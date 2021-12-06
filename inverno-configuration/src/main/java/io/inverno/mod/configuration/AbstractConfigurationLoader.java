@@ -38,7 +38,7 @@ public abstract class AbstractConfigurationLoader<A, B extends AbstractConfigura
 	/**
 	 * The configuration source to use to load the configuration.
 	 */
-	protected ConfigurationSource<?, ?, ?> source;
+	protected ConfigurationSource<?, ?> source;
 	
 	/**
 	 * The parameters to use to retrieve configuration values.
@@ -55,7 +55,7 @@ public abstract class AbstractConfigurationLoader<A, B extends AbstractConfigura
 				duplicateParameters.add(parameter.getKey());
 			}
 		}
-		if(duplicateParameters != null && duplicateParameters.size() > 0) {
+		if(duplicateParameters.size() > 0) {
 			throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
 		}
 		this.parameters = parameters;
@@ -64,7 +64,7 @@ public abstract class AbstractConfigurationLoader<A, B extends AbstractConfigura
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public B withSource(ConfigurationSource<?, ?, ?> source) {
+	public B withSource(ConfigurationSource<?, ?> source) {
 		this.source = source;
 		return (B)this;
 	}

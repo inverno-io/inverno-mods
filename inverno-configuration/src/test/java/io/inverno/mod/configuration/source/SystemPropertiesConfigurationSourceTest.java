@@ -8,8 +8,8 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import io.inverno.mod.configuration.AbstractPropertiesConfigurationSource.PropertyConfigurationQueryResult;
 import io.inverno.mod.configuration.ConfigurationKey.Parameter;
+import io.inverno.mod.configuration.ConfigurationQueryResult;
 
 public class SystemPropertiesConfigurationSourceTest {
 
@@ -22,7 +22,7 @@ public class SystemPropertiesConfigurationSourceTest {
 		
 		SystemPropertiesConfigurationSource src = new SystemPropertiesConfigurationSource();
 		
-		List<PropertyConfigurationQueryResult<String, SystemPropertiesConfigurationSource>> results = src
+		List<ConfigurationQueryResult> results = src
 			.get("tata.toto").withParameters("tutu", "plop","test", 5).and()
 			.get("tata.toto").withParameters("tutu", "plop").and()
 			.get("url", "table")
@@ -36,9 +36,9 @@ public class SystemPropertiesConfigurationSourceTest {
 		
 		Assertions.assertEquals(4, results.size());
 		
-		Iterator<PropertyConfigurationQueryResult<String, SystemPropertiesConfigurationSource>> resultIterator = results.iterator();
+		Iterator<ConfigurationQueryResult> resultIterator = results.iterator();
 		
-		PropertyConfigurationQueryResult<String, SystemPropertiesConfigurationSource> current = resultIterator.next();
+		ConfigurationQueryResult current = resultIterator.next();
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("test", 5), Parameter.of("tutu", "plop"))));
