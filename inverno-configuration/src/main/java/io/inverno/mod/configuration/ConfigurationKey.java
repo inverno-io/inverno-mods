@@ -151,7 +151,7 @@ public interface ConfigurationKey {
 			else {
 				str.append("\"").append(StringEscapeUtils.escapeJava(this.value.toString())).append("\"");
 			}
-			return this.key + "=" + (this.value instanceof Number ? this.value : "\"" + StringEscapeUtils.escapeJava(this.value.toString()) +"\""); 
+			return str.toString();
 		}
 	}
 
