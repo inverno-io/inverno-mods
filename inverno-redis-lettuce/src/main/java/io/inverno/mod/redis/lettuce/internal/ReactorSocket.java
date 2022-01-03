@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.sql.vertx.internal;
+package io.inverno.mod.redis.lettuce.internal;
 
 import java.util.function.Supplier;
 
