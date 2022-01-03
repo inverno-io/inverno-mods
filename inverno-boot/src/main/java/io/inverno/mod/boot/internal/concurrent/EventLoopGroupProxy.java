@@ -21,6 +21,12 @@ import io.netty.channel.EventLoop;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.MultithreadEventLoopGroup;
 import io.inverno.mod.base.net.NetService;
+import io.netty.util.concurrent.DefaultPromise;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GlobalEventExecutor;
+import io.netty.util.concurrent.Promise;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -53,4 +59,44 @@ class EventLoopGroupProxy extends MultithreadEventLoopGroup {
 	protected EventLoop newChild(Executor executor, Object... args) throws Exception {
 		return ((EventLoopGroup) args[0]).next();
 	}
+
+	/**
+	 * Event loop group is shutdown when the coreEventLoopGroup is shutdown.
+	 */
+	@Override
+	@Deprecated
+	public void shutdown() {
+	}
+
+	/**
+	 * Event loop group is shutdown when the coreEventLoopGroup is shutdown.
+	 */
+	@Override
+	@Deprecated
+	public List<Runnable> shutdownNow() {
+		return List.of();
+	}
+	
+	/**
+	 * Event loop group is shutdown when the coreEventLoopGroup is shutdown.
+	 */
+	@Override
+	public Future<?> shutdownGracefully() {
+		return new DefaultPromise<>(GlobalEventExecutor.INSTANCE).setSuccess(null);
+	}
+
+	/**
+	 * Event loop group is shutdown when the coreEventLoopGroup is shutdown.
+	 */
+	@Override
+	public Future<?> shutdownGracefully(long quietPeriod, long timeout, TimeUnit unit) {
+		return new DefaultPromise<>(GlobalEventExecutor.INSTANCE).setSuccess(null);
+	}
+	
+	
+
+	
+	
+	
+	
 }
