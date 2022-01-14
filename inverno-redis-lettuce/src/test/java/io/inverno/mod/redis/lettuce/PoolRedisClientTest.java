@@ -1,18 +1,29 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/UnitTests/JUnit5TestClass.java to edit this template
+ * Copyright 2022 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.inverno.mod.redis.lettuce;
 
+import io.inverno.mod.redis.RedisTransactionResult;
+import io.inverno.mod.redis.operations.RedisGeoReactiveOperations;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
-import io.lettuce.core.TransactionResult;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
 import io.lettuce.core.support.AsyncConnectionPoolSupport;
 import io.lettuce.core.support.BoundedAsyncPool;
 import io.lettuce.core.support.BoundedPoolConfig;
-import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -36,7 +47,7 @@ public class PoolRedisClientTest {
 			BoundedPoolConfig.create()
 		);
 		
-		return new PoolRedisClient<>(pool);
+		return new PoolRedisClient<>(pool, String.class, String.class);
 	}
 	
 	private static void flushAll() {
@@ -59,7 +70,7 @@ public class PoolRedisClientTest {
 			BoundedPoolConfig.create()
 		);
 		
-		return new PoolRedisClient<>(pool);
+		return new PoolRedisClient<>(pool, String.class, String.class);
 	}
 	
 	@Test
@@ -144,7 +155,7 @@ public class PoolRedisClientTest {
 	public void multiTest() {
 		var client = createClient();
 		try {
-			Mono<TransactionResult> multi1 = client.multi()
+			Mono<RedisTransactionResult> multi1 = client.multi()
 				.flatMap(ops -> {
 					ops.set("key_1", "value_1").subscribe();
 					ops.set("key_2", "value_2").subscribe();
@@ -152,14 +163,14 @@ public class PoolRedisClientTest {
 					return ops.exec();
 				});
 			
-			TransactionResult multi1_result = multi1.block();
+			RedisTransactionResult multi1_result = multi1.block();
 			
 			Assertions.assertFalse(multi1_result.wasDiscarded());
 			Assertions.assertEquals(2, multi1_result.size());
 			Assertions.assertEquals("OK", multi1_result.get(0));
 			Assertions.assertEquals("OK", multi1_result.get(1));
 			
-			Mono<TransactionResult> multi2 = client.multi("key_3")
+			Mono<RedisTransactionResult> multi2 = client.multi("key_3")
 				.doOnNext(ign -> client.set("key_3", "value_3").block())
 				.flatMap(ops -> {
 					ops.set("key_3", "value_3").subscribe();
@@ -167,25 +178,25 @@ public class PoolRedisClientTest {
 					return ops.exec();
 				});
 			
-			TransactionResult multi2_result = multi2.block();
+			RedisTransactionResult multi2_result = multi2.block();
 			
 			Assertions.assertTrue(multi2_result.wasDiscarded());
 			Assertions.assertTrue(multi2_result.isEmpty());
 
 			flushAll();
 			
-			Mono<TransactionResult> multi3 = client.multi(ops -> {
+			Mono<RedisTransactionResult> multi3 = client.multi(ops -> {
 				return Flux.just(ops.set("key_1", "value_1").cast(Object.class), ops.set("key_2", "value_2").cast(Object.class));
 			});
 			
-			TransactionResult multi3_result = multi3.block();
+			RedisTransactionResult multi3_result = multi3.block();
 			
 			Assertions.assertFalse(multi3_result.wasDiscarded());
 			Assertions.assertEquals(2, multi3_result.size());
 			Assertions.assertEquals("OK", multi3_result.get(0));
 			Assertions.assertEquals("OK", multi3_result.get(1));
 			
-			Mono<TransactionResult> multi4 = client.multi("key_3")
+			Mono<RedisTransactionResult> multi4 = client.multi("key_3")
 				.doOnNext(ign -> client.set("key_3", "value_3").block())
 				.flatMap(ops -> {
 					ops.set("key_3", "value_3").subscribe();
@@ -193,10 +204,44 @@ public class PoolRedisClientTest {
 					return ops.exec();
 				});
 			
-			TransactionResult multi4_result = multi4.block();
+			RedisTransactionResult multi4_result = multi4.block();
 			
 			Assertions.assertTrue(multi4_result.wasDiscarded());
 			Assertions.assertTrue(multi4_result.isEmpty());
+		}
+		finally {
+			client.close().block();
+			flushAll();
+		}
+	}
+	
+	@Test
+	public void testBuilders() {
+		var client = createClient();
+		try {
+//			GEOADD Sicily 13.361389 38.115556 "Palermo" 15.087269 37.502669 "Catania"
+			Long geoadd_result = client.geoadd().build("Sicily", items -> items.item(13.361389, 38.115556, "Palermo").item(15.087269, 37.502669, "Catania")).block();
+			
+			Assertions.assertEquals(2, geoadd_result);
+			
+//			 GEORADIUS Sicily 15 37 200 km WITHCOORD
+			List<RedisGeoReactiveOperations.GeoWithin<String>> georadius_result = client.georadiusExtended().withcoord().build("Sicily", 15, 37, 200, RedisGeoReactiveOperations.GeoUnit.km).collectList().block();
+
+			Assertions.assertEquals(2, georadius_result.size());
+			
+			RedisGeoReactiveOperations.GeoWithin<String> geoWithin = georadius_result.get(0);
+			
+			Assertions.assertEquals("Palermo", geoWithin.getMember());
+			Assertions.assertTrue(geoWithin.getCoordinates().isPresent());
+			Assertions.assertEquals(13.36138933897018433, geoWithin.getCoordinates().get().getLongitude());
+			Assertions.assertEquals(38.11555639549629859, geoWithin.getCoordinates().get().getLatitude());
+			
+			geoWithin = georadius_result.get(1);
+			
+			Assertions.assertEquals("Catania", geoWithin.getMember());
+			Assertions.assertTrue(geoWithin.getCoordinates().isPresent());
+			Assertions.assertEquals(15.08726745843887329, geoWithin.getCoordinates().get().getLongitude());
+			Assertions.assertEquals(37.50266842333162032, geoWithin.getCoordinates().get().getLatitude());
 		}
 		finally {
 			client.close().block();

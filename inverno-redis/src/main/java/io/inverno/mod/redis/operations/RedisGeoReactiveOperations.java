@@ -1,23 +1,37 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ * Copyright 2022 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package io.inverno.mod.redis.operations;
 
-import io.inverno.mod.redis.util.Values;
 import java.util.Optional;
 import java.util.function.Consumer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- *
- * @author jkuhn
- * @param <A>
- * @param <B>
+ * <p>
+ * Redis Geo reactive commands.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.4
+ * 
+ * @param <A> key type
+ * @param <B> value type
  */
-public interface RedisGeoReactiveOperations<A, B> /*extends RedisGeoReactiveCommands<A, B>*/ {
+public interface RedisGeoReactiveOperations<A, B> {
 	
 	/**
 	 * <a href="https://redis.io/commands/geoadd">GEOADD</a> key longitude latitude member
@@ -187,232 +201,540 @@ public interface RedisGeoReactiveOperations<A, B> /*extends RedisGeoReactiveComm
 	/**
 	 * <a href="https://redis.io/commands/geoadd">GEOADD</a> key [NX|XX] [CH] longitude latitude member [longitude latitude member ...] 
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface GeoaddBuilder<A, B> {
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		GeoaddBuilder<A, B> nx();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		GeoaddBuilder<A, B> xx();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		GeoaddBuilder<A, B> ch();
 
+		/**
+		 * 
+		 * @param key
+		 * @param longitude
+		 * @param latitude
+		 * @param member
+		 * @return 
+		 */
 		Mono<Long> build(A key, double longitude, double latitude, B member);
+		
+		/**
+		 * 
+		 * @param key
+		 * @param items
+		 * @return 
+		 */
 		Mono<Long> build(A key, Consumer<GeoItems<B>> items);
 	}
 	
 	/**
-	 * <a href="https://redis.io/commands/georadius">GEORADIUS</a> key longitude latitude radius m|km|ft|mi [COUNT count [ANY]] [ASC|DESC] 
-	 * <a href="https://redis.io/commands/georadiusbymember">GEORADIUSBYMEMBER</a> key member radius m|km|ft|mi [COUNT count [ANY]] [ASC|DESC]
+	 * <ul>
+	 * <li><a href="https://redis.io/commands/georadius">GEORADIUS</a> key longitude latitude radius m|km|ft|mi [COUNT count [ANY]] [ASC|DESC]</li>
+	 * <li><a href="https://redis.io/commands/georadiusbymember">GEORADIUSBYMEMBER</a> key member radius m|km|ft|mi [COUNT count [ANY]] [ASC|DESC]</li>
+	 * </ul>
 	 * 
-	 * @param <A>
-	 * @param <B> 
-	 * @param <C> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 * @param <C> builder type
 	 */
 	interface AbstractGeoradiusBuilder<A, B, C extends AbstractGeoradiusBuilder<A, B, C>> {
+		
+		/**
+		 * 
+		 * @param count
+		 * @return 
+		 */
 		C count(long count);
+		
+		/**
+		 * 
+		 * @param count
+		 * @return 
+		 */
 		C countany(long count);
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C asc();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C desc();
 	}
 	
 	/**
-	 * <a href="https://redis.io/commands/georadius">GEORADIUS</a> key longitude latitude radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH] [COUNT count [ANY]] [ASC|DESC]
-	 * <a href="https://redis.io/commands/georadiusbymember">GEORADIUSBYMEMBER</a> key member radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH] [COUNT count [ANY]] [ASC|DESC]
+	 * <ul>
+	 * <li><a href="https://redis.io/commands/georadius">GEORADIUS</a> key longitude latitude radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH] [COUNT count [ANY]] [ASC|DESC]</li>
+	 * <li><a href="https://redis.io/commands/georadiusbymember">GEORADIUSBYMEMBER</a> key member radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH] [COUNT count [ANY]] [ASC|DESC]</li>
+	 * </ul>
 	 * 
-	 * @param <A>
-	 * @param <B> 
-	 * @param <C> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 * @param <C> builder type
 	 */
 	interface AbstractGeoradiusExtendedBuilder<A, B, C extends AbstractGeoradiusExtendedBuilder<A, B, C>> extends AbstractGeoradiusBuilder<A, B, C> {
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C withcoord();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C withdist();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C withhash();
 	}
 	
 	/**
-	 * <a href="https://redis.io/commands/georadius">GEORADIUS</a> key longitude latitude radius m|km|ft|mi [COUNT count [ANY]] [ASC|DESC] [STORE key] [STOREDIST key] 
-	 * <a href="https://redis.io/commands/georadiusbymember">GEORADIUSBYMEMBER</a> key member radius m|km|ft|mi [COUNT count [ANY]] [ASC|DESC] [STORE key] [STOREDIST key] 
+	 * <ul>
+	 * <li><a href="https://redis.io/commands/georadius">GEORADIUS</a> key longitude latitude radius m|km|ft|mi [COUNT count [ANY]] [ASC|DESC] [STORE key] [STOREDIST key]</li>
+	 * <li><a href="https://redis.io/commands/georadiusbymember">GEORADIUSBYMEMBER</a> key member radius m|km|ft|mi [COUNT count [ANY]] [ASC|DESC] [STORE key] [STOREDIST key]</li>
+	 * </ul>
 	 * 
-	 * @param <A>
-	 * @param <B> 
-	 * @param <C> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 * @param <C> builder type
 	 */
 	interface AbstractGeoradiusStoreBuilder<A, B, C extends AbstractGeoradiusStoreBuilder<A, B, C>> extends AbstractGeoradiusBuilder<A, B, C> {
-		C store(A key);
-		C storedist(A key);
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		C storedist();
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/georadius">GEORADIUS</a> key longitude latitude radius m|km|ft|mi [COUNT count [ANY]] [ASC|DESC]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface GeoradiusBuilder<A, B> extends AbstractGeoradiusBuilder<A, B, GeoradiusBuilder<A, B>> {
+		
+		/**
+		 * 
+		 * @param key
+		 * @param longitude
+		 * @param latitude
+		 * @param radius
+		 * @param unit
+		 * @return 
+		 */
 		Flux<B> build(A key, double longitude, double latitude, double radius, GeoUnit unit);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/georadius">GEORADIUS</a> key longitude latitude radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH] [COUNT count [ANY]] [ASC|DESC]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface GeoradiusExtendedBuilder<A, B> extends AbstractGeoradiusExtendedBuilder<A, B, GeoradiusExtendedBuilder<A, B>> {
+		
+		/**
+		 * 
+		 * @param key
+		 * @param longitude
+		 * @param latitude
+		 * @param radius
+		 * @param unit
+		 * @return 
+		 */
 		Flux<GeoWithin<B>> build(A key, double longitude, double latitude, double radius, GeoUnit unit);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/georadius">GEORADIUS</a> key longitude latitude radius m|km|ft|mi [COUNT count [ANY]] [ASC|DESC] [STORE key] [STOREDIST key] 
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface GeoradiusStoreBuilder<A, B> extends AbstractGeoradiusStoreBuilder<A, B, GeoradiusStoreBuilder<A, B>> {
-		Mono<Long> build(A key, double longitude, double latitude, double radius, GeoUnit unit);
+		
+		/**
+		 * 
+		 * @param source
+		 * @param destination
+		 * @param longitude
+		 * @param latitude
+		 * @param radius
+		 * @param unit
+		 * @return 
+		 */
+		Mono<Long> build(A source, A destination, double longitude, double latitude, double radius, GeoUnit unit);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/georadiusbymember">GEORADIUSBYMEMBER</a> key member radius m|km|ft|mi [COUNT count [ANY]] [ASC|DESC]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface GeoradiusbymemberBuilder<A, B> extends AbstractGeoradiusBuilder<A, B, GeoradiusbymemberBuilder<A, B>> {
+		
+		/**
+		 * 
+		 * @param key
+		 * @param member
+		 * @param radius
+		 * @param unit
+		 * @return 
+		 */
 		Flux<B> build(A key, B member, double radius, GeoUnit unit);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/georadiusbymember">GEORADIUSBYMEMBER</a> key member radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH] [COUNT count [ANY]] [ASC|DESC]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface GeoradiusbymemberExtendedBuilder<A, B> extends AbstractGeoradiusExtendedBuilder<A, B, GeoradiusbymemberExtendedBuilder<A, B>> {
+		
+		/**
+		 * 
+		 * @param key
+		 * @param member
+		 * @param radius
+		 * @param unit
+		 * @return 
+		 */
 		Flux<GeoWithin<B>> build(A key, B member, double radius, GeoUnit unit);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/georadiusbymember">GEORADIUSBYMEMBER</a> key member radius m|km|ft|mi [COUNT count [ANY]] [ASC|DESC] [STORE key] [STOREDIST key] 
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface GeoradiusbymemberStoreBuilder<A, B> extends AbstractGeoradiusStoreBuilder<A, B, GeoradiusbymemberStoreBuilder<A, B>> {
-		Mono<Long> build(A key, B member, double radius, GeoUnit unit);
+		
+		/**
+		 * 
+		 * @param source
+		 * @param destination
+		 * @param member
+		 * @param radius
+		 * @param unit
+		 * @return 
+		 */
+		Mono<Long> build(A source, A destination, B member, double radius, GeoUnit unit);
 	}
 	
 	/**
-	 * <a href="https://redis.io/commands/geosearch">GEOSEARCH</a> key [FROMMEMBER member] [FROMLONLAT longitude latitude] [BYRADIUS radius m|km|ft|mi] [BYBOX width height m|km|ft|mi] [ASC|DESC] [COUNT count [ANY]]
-	 * <a href="https://redis.io/commands/geosearchstore">GEOSEARCHSTORE</a> destination source [FROMMEMBER member] [FROMLONLAT longitude latitude] [BYRADIUS radius m|km|ft|mi] [BYBOX width height m|km|ft|mi] [ASC|DESC] [COUNT count [ANY]]
+	 * <ul>
+	 * <li><a href="https://redis.io/commands/geosearch">GEOSEARCH</a> key [FROMMEMBER member] [FROMLONLAT longitude latitude] [BYRADIUS radius m|km|ft|mi] [BYBOX width height m|km|ft|mi] [ASC|DESC] [COUNT count [ANY]]</li>
+	 * <li><a href="https://redis.io/commands/geosearchstore">GEOSEARCHSTORE</a> destination source [FROMMEMBER member] [FROMLONLAT longitude latitude] [BYRADIUS radius m|km|ft|mi] [BYBOX width height m|km|ft|mi] [ASC|DESC] [COUNT count [ANY]]</li>
+	 * </ul>
 	 * 
-	 * @param <A>
-	 * @param <B>
-	 * @param <C> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 * @param <C> builder type
 	 */
 	interface AbstractGeosearchBuilder<A, B, C extends AbstractGeosearchBuilder<A, B, C>> {
+		
+		/**
+		 * 
+		 * @param member
+		 * @return 
+		 */
 		C fromMember(B member);
+		
+		/**
+		 * 
+		 * @param longitude
+		 * @param latitude
+		 * @return 
+		 */
 		C fromCoordinates(double longitude, double latitude);
+		
+		/**
+		 * 
+		 * @param radius
+		 * @param unit
+		 * @return 
+		 */
 		C byRadius(double radius, GeoUnit unit);
+		
+		/**
+		 * 
+		 * @param width
+		 * @param height
+		 * @param unit
+		 * @return 
+		 */
 		C byBox(double width, double height, GeoUnit unit);
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C asc();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C desc();
+		
+		/**
+		 * 
+		 * @param count
+		 * @return 
+		 */
 		C count(long count);
+		
+		/**
+		 * 
+		 * @param count
+		 * @return 
+		 */
 		C countany(long count);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/geosearch">GEOSEARCH</a> key [FROMMEMBER member] [FROMLONLAT longitude latitude] [BYRADIUS radius m|km|ft|mi] [BYBOX width height m|km|ft|mi] [ASC|DESC] [COUNT count [ANY]]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface GeosearchBuilder<A, B> extends AbstractGeosearchBuilder<A, B, GeosearchBuilder<A, B>> {
+		
+		/**
+		 * 
+		 * @param key
+		 * @return 
+		 */
 		Flux<B> build(A key);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/geosearch">GEOSEARCH</a> key [FROMMEMBER member] [FROMLONLAT longitude latitude] [BYRADIUS radius m|km|ft|mi] [BYBOX width height m|km|ft|mi] [ASC|DESC] [COUNT count [ANY]] [WITHCOORD] [WITHDIST] [WITHHASH] 
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
-	interface GeosearchExtendedBuilder<A, B> extends AbstractGeosearchBuilder<A, B, GeosearchBuilder<A, B>> {
-		GeosearchBuilder<A, B> withcoord();
-		GeosearchBuilder<A, B> withdist();
-		GeosearchBuilder<A, B> withhash();
+	interface GeosearchExtendedBuilder<A, B> extends AbstractGeosearchBuilder<A, B, GeosearchExtendedBuilder<A, B>> {
 		
+		/**
+		 * 
+		 * @return 
+		 */
+		GeosearchExtendedBuilder<A, B> withcoord();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		GeosearchExtendedBuilder<A, B> withdist();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		GeosearchExtendedBuilder<A, B> withhash();
+		
+		/**
+		 * 
+		 * @param key
+		 * @return 
+		 */
 		Flux<GeoWithin<B>> build(A key);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/geosearchstore">GEOSEARCHSTORE</a> destination source [FROMMEMBER member] [FROMLONLAT longitude latitude] [BYRADIUS radius m|km|ft|mi] [BYBOX width height m|km|ft|mi] [ASC|DESC] [COUNT count [ANY]] [STOREDIST] 
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface GeosearchstoreBuilder<A, B> extends AbstractGeosearchBuilder<A, B, GeosearchstoreBuilder<A, B>> {
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		GeosearchstoreBuilder<A, B> storedist();
 		
-		Mono<Long> build(A destination, A source);
+		/**
+		 * 
+		 * @param source
+		 * @param destination
+		 * @return 
+		 */
+		Mono<Long> build(A source, A destination);
 	}
 	
 	/**
 	 * 
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
 	 */
 	enum GeoUnit {
 
         /**
-         * meter.
+         * Meter.
          */
         m,
 
         /**
-         * kilometer.
+         * Kilometer.
          */
         km,
 
         /**
-         * feet.
+         * Feet.
          */
         ft,
 
         /**
-         * mile.
+         * Mile.
          */
         mi;
     }
 	
 	/**
-	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
 	 */
 	interface GeoCoordinates {
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		double getLongitude();
 		
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		double getLatitude();
 	}
 	
 	/**
 	 * 
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <B> value type
 	 */
 	interface GeoWithin<B> {
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		Optional<Double> getDistance();
 
-		Optional<Long> gethash();
+		/**
+		 * 
+		 * @return 
+		 */
+		Optional<Long> getHash();
 
+		/**
+		 * 
+		 * @return 
+		 */
 		Optional<GeoCoordinates> getCoordinates();
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		B getMember();
 	}
 	
 	/**
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
 	 * 
-	 * @param <B> 
+	 * @param <B> value type
 	 */
 	interface GeoItems<B> {
+		
+		/**
+		 * 
+		 * @param longitude
+		 * @param latitude
+		 * @param member
+		 * @return 
+		 */
 		GeoItems<B> item(double longitude, double latitude, B member);
 	}
 }

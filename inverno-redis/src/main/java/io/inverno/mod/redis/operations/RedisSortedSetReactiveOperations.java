@@ -1,16 +1,20 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ * Copyright 2022 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package io.inverno.mod.redis.operations;
 
-import io.inverno.mod.redis.util.AbstractScanBuilder;
-import io.inverno.mod.redis.util.AbstractScanResult;
-import io.inverno.mod.redis.util.Bound;
-import io.inverno.mod.redis.util.EntryOptional;
-import io.inverno.mod.redis.util.Keys;
-import io.inverno.mod.redis.util.Values;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -18,12 +22,17 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * Redis Sorted Sets reactive commands.
+ * </p>
  * 
- * @author jkuhn
- * @param <A>
- * @param <B>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.4
+ * 
+ * @param <A> key type
+ * @param <B> value type
  */
-public interface RedisSortedSetReactiveOperations<A, B> /*extends RedisSortedSetReactiveCommands<A, B>*/ {
+public interface RedisSortedSetReactiveOperations<A, B> {
 
 	/**
 	 * <a href="https://redis.io/commands/bzmpop">BZMPOP</a> timeout numkeys key [key ...] MIN|MAX [COUNT count]
@@ -69,7 +78,7 @@ public interface RedisSortedSetReactiveOperations<A, B> /*extends RedisSortedSet
 	Mono<EntryOptional<A, SortedSetScoredMember<B>>> bzpopmin(double timeout, Consumer<Keys<A>> keys);
 
 	/**
-	 * <a href="https://redis.io/commands/zadd">ZADD</a> key [NX|XX] [GT|LT] [CH] [INCR] score member [score member ...] 
+	 * <a href="https://redis.io/commands/zadd">ZADD</a> key [NX|XX] [GT|LT] [CH] score member
 	 * 
 	 * @param key
 	 * @param score
@@ -79,7 +88,7 @@ public interface RedisSortedSetReactiveOperations<A, B> /*extends RedisSortedSet
 	Mono<Long> zadd(A key, double score, B member);
 	
 	/**
-	 * <a href="https://redis.io/commands/zadd">ZADD</a> key [NX|XX] [GT|LT] [CH] [INCR] score member [score member ...] 
+	 * <a href="https://redis.io/commands/zadd">ZADD</a> key [NX|XX] [GT|LT] [CH] score member [score member ...] 
 	 * 
 	 * @param key
 	 * @param members
@@ -88,11 +97,28 @@ public interface RedisSortedSetReactiveOperations<A, B> /*extends RedisSortedSet
 	Mono<Long> zadd(A key, Consumer<SortedSetScoredMembers<B>> members);
 	
 	/**
-	 * <a href="https://redis.io/commands/zadd">ZADD</a> key [NX|XX] [GT|LT] [CH] [INCR] score member [score member ...]
+	 * <a href="https://redis.io/commands/zadd">ZADD</a> key [NX|XX] [GT|LT] [CH] score member [score member ...]
 	 * 
 	 * @return 
 	 */
 	SortedSetZaddBuilder<A, B> zadd();
+	
+	/**
+	 * <a href="https://redis.io/commands/zadd">ZADD</a> key [NX|XX] [GT|LT] [CH] INCR score member
+	 * 
+	 * @param key
+	 * @param score
+	 * @param member
+	 * @return 
+	 */
+	Mono<Double> zaddIncr(A key, double score, B member);
+	
+	/**
+	 * <a href="https://redis.io/commands/zadd">ZADD</a> key [NX|XX] [GT|LT] [CH] INCR score member [score member ...]
+	 * 
+	 * @return 
+	 */
+	SortedSetZaddIncrBuilder<A, B> zaddIncr();
 	
 	/**
 	 * <a href="https://redis.io/commands/zcard">ZCARD</a> key
@@ -286,7 +312,7 @@ public interface RedisSortedSetReactiveOperations<A, B> /*extends RedisSortedSet
 	 * @param max
 	 * @return 
 	 */
-	Mono<Long> zlexcount(A key, Bound<? extends Number> min, Bound<? extends Number> max);
+	Mono<Long> zlexcount(A key, Bound<B> min, Bound<B> max);
 	
 	/**
 	 * <a href="https://redis.io/commands/zmpop">ZMPOP</a> numkeys key [key ...] MIN|MAX [COUNT count]
@@ -311,7 +337,7 @@ public interface RedisSortedSetReactiveOperations<A, B> /*extends RedisSortedSet
 	 * @param members
 	 * @return 
 	 */
-	Flux<Optional<Double>> zmscore(A key, Consumer<Keys<B>> members);
+	Flux<Optional<Double>> zmscore(A key, Consumer<Values<B>> members);
 	
 	/**
 	 * <a href="https://redis.io/commands/zpopmax">ZPOPMAX</a> key
@@ -590,246 +616,652 @@ public interface RedisSortedSetReactiveOperations<A, B> /*extends RedisSortedSet
 	SortedSetZunionstoreBuilder<A, B> zunionstore();
 	
 	/**
-	 * <a href="https://redis.io/commands/bzmpop">BZMPOP</a> timeout numkeys key [key ...] MIN|MAX [COUNT count]
-	 * <a href="https://redis.io/commands/zmpop">ZMPOP</a> numkeys key [key ...] MIN|MAX [COUNT count] 
+	 * <ul>
+	 * <li><a href="https://redis.io/commands/bzmpop">BZMPOP</a> timeout numkeys key [key ...] MIN|MAX [COUNT count]</li>
+	 * <li><a href="https://redis.io/commands/zmpop">ZMPOP</a> numkeys key [key ...] MIN|MAX [COUNT count]</li>
+	 * </ul>
 	 * 
-	 * @param <A>
-	 * @param <B> 
-	 * @param <C> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 * @param <C> builder type
 	 */
 	interface AbstractSortedSetZmpopBuilder<A, B, C extends AbstractSortedSetZmpopBuilder<A, B, C>> {
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C min();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C max();
+		
+		/**
+		 * 
+		 * @param count
+		 * @return 
+		 */
 		C count(long count);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/bzmpop">BZMPOP</a> timeout numkeys key [key ...] MIN|MAX [COUNT count]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface SortedSetBzmpopBuilder<A, B> extends AbstractSortedSetZmpopBuilder<A, B, SortedSetBzmpopBuilder<A, B>> {
+		
+		/**
+		 * 
+		 * @param timeout
+		 * @param key
+		 * @return 
+		 */
 		Flux<EntryOptional<A, SortedSetScoredMember<B>>> build(double timeout, A key);
+		
+		/**
+		 * 
+		 * @param timeout
+		 * @param keys
+		 * @return 
+		 */
 		Flux<EntryOptional<A, SortedSetScoredMember<B>>> build(double timeout, Consumer<Keys<A>> keys);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/bzmpop">BZMPOP</a> timeout numkeys key [key ...] MIN|MAX [COUNT count]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface SortedSetZmpopBuilder<A, B> extends AbstractSortedSetZmpopBuilder<A, B, SortedSetZmpopBuilder<A, B>> {
+		
+		/**
+		 * 
+		 * @param key
+		 * @return 
+		 */
 		Flux<EntryOptional<A, SortedSetScoredMember<B>>> build(A key);
+		
+		/**
+		 * 
+		 * @param keys
+		 * @return 
+		 */
 		Flux<EntryOptional<A, SortedSetScoredMember<B>>> build(Consumer<Keys<A>> keys);
 	}
 	
 	/**
-	 * <a href="https://redis.io/commands/zadd">ZADD</a> key [NX|XX] [GT|LT] [CH] [INCR] score member [score member ...]
+	 * <a href="https://redis.io/commands/zadd">ZADD</a> key [NX|XX] [GT|LT] [CH] score member [score member ...]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface SortedSetZaddBuilder<A, B> {
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		SortedSetZaddBuilder<A, B> nx();
-		SortedSetZaddBuilder<A, B> xx();
-		SortedSetZaddBuilder<A, B> ch();
-		SortedSetZaddBuilder<A, B> incr();
 		
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZaddBuilder<A, B> xx();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZaddBuilder<A, B> gt();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZaddBuilder<A, B> lt();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZaddBuilder<A, B> ch();
+		
+		/**
+		 * 
+		 * @param key
+		 * @param score
+		 * @param member
+		 * @return 
+		 */
 		Mono<Long> build(A key, double score, B member);
+		
+		/**
+		 * 
+		 * @param key
+		 * @param members
+		 * @return 
+		 */
 		Mono<Long> build(A key, Consumer<SortedSetScoredMembers<B>> members);
 	}
 	
 	/**
-	 * <a href="https://redis.io/commands/zinter">ZINTER</a> numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX] [WITHSCORES]
-	 * <a href="https://redis.io/commands/zinterstore">ZINTERSTORE</a> destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]
+	 * <a href="https://redis.io/commands/zadd">ZADD</a> key [NX|XX] [GT|LT] [CH] INCR score member
 	 * 
-	 * @param <A>
-	 * @param <B>
-	 * @param <C> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 */
+	interface SortedSetZaddIncrBuilder<A, B> {
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZaddIncrBuilder<A, B> nx();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZaddIncrBuilder<A, B> xx();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZaddIncrBuilder<A, B> gt();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZaddIncrBuilder<A, B> lt();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZaddIncrBuilder<A, B> ch();
+		
+		/**
+		 * 
+		 * @param key
+		 * @param score
+		 * @param member
+		 * @return 
+		 */
+		Mono<Double> build(A key, double score, B member);
+	}
+	
+	/**
+	 * <ul>
+	 * <li><a href="https://redis.io/commands/zinter">ZINTER</a> numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX] [WITHSCORES]</li>
+	 * <li><a href="https://redis.io/commands/zinterstore">ZINTERSTORE</a> destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]</li>
+	 * </ul>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 * @param <C> builder type
 	 */
 	interface AbstractSortedSetZinterBuilder<A, B, C extends AbstractSortedSetZinterBuilder<A, B, C>> {
 		
+		/**
+		 * 
+		 * @param weight
+		 * @return 
+		 */
 		C weight(double weight);
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		C sum();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C min();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C max();
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/zinter">ZINTER</a> numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]
 	 * 
-	 * @param <A>
-	 * @param <B>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface SortedSetZinterBuilder<A, B> extends AbstractSortedSetZinterBuilder<A, B, SortedSetZinterBuilder<A, B>> {
 		
+		/**
+		 * 
+		 * @param key
+		 * @return 
+		 */
 		Flux<B> build(A key);
+		
+		/**
+		 * 
+		 * @param keys
+		 * @return 
+		 */
 		Flux<B> build(Consumer<Keys<A>> keys);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/zinter">ZINTER</a> numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX] [WITHSCORES]
 	 * 
-	 * @param <A>
-	 * @param <B>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface SortedSetZinterWithScoresBuilder<A, B> extends AbstractSortedSetZinterBuilder<A, B, SortedSetZinterWithScoresBuilder<A, B>> {
 		
+		/**
+		 * 
+		 * @param key
+		 * @return 
+		 */
 		Flux<SortedSetScoredMember<B>> build(A key);
+		
+		/**
+		 * 
+		 * @param keys
+		 * @return 
+		 */
 		Flux<SortedSetScoredMember<B>> build(Consumer<Keys<A>> keys);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/zinterstore">ZINTERSTORE</a> destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]
 	 * 
-	 * @param <A>
-	 * @param <B>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
-	interface SortedSetZinterstoreBuilder<A, B> extends AbstractSortedSetZinterBuilder<A, B, SortedSetZinterBuilder<A, B>> {
+	interface SortedSetZinterstoreBuilder<A, B> extends AbstractSortedSetZinterBuilder<A, B, SortedSetZinterstoreBuilder<A, B>> {
 		
+		/**
+		 * 
+		 * @param destination
+		 * @param key
+		 * @return 
+		 */
 		Mono<Long> build(A destination, A key);
+		
+		/**
+		 * 
+		 * @param destination
+		 * @param keys
+		 * @return 
+		 */
 		Mono<Long> build(A destination, Consumer<Keys<A>> keys);
 	}
 	
 	/**
-	 * <a href="https://redis.io/commands/zrange">ZRANGE</a> key min max [BYSCORE|BYLEX] [REV] [LIMIT offset count] [WITHSCORES] 
-	 * <a href="https://redis.io/commands/zrangestore">ZRANGESTORE</a> dst src min max [BYSCORE|BYLEX] [REV] [LIMIT offset count] 
+	 * <ul>
+	 * <li><a href="https://redis.io/commands/zrange">ZRANGE</a> key min max [BYSCORE|BYLEX] [REV] [LIMIT offset count] [WITHSCORES]</li>
+	 * <li><a href="https://redis.io/commands/zrangestore">ZRANGESTORE</a> dst src min max [BYSCORE|BYLEX] [REV] [LIMIT offset count]</li>
+	 * </ul>
 	 * 
-	 * @param <A>
-	 * @param <B>
-	 * @param <C> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 * @param <C> builder type
 	 */
 	interface AbstractSortedSetZrangeBuilder<A, B, C extends AbstractSortedSetZrangeBuilder<A, B, C>> {
 
+		/**
+		 * 
+		 * @return 
+		 */
 		C reverse();
+		
+		/**
+		 * 
+		 * @param offset
+		 * @param count
+		 * @return 
+		 */
 		C limit(long offset, long count);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/zrange">ZRANGE</a> key min max [BYSCORE|BYLEX] [REV] [LIMIT offset count] [WITHSCORES] 
 	 * 
-	 * @param <A>
-	 * @param <B> 
-	 * @param <C> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 * @param <C> builder type
 	 */
 	interface SortedSetZrangeBuilder<A, B, C> extends AbstractSortedSetZrangeBuilder<A, B, SortedSetZrangeBuilder<A, B, C>> {
 		
-		SortedSetZrangeBuilder<A, B, Bound<? extends Number>> byScore();
-		SortedSetZrangeBuilder<A, B, Bound<? extends B>> byLex();
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZrangeBuilder<A, B, ? extends Number> byScore();
 		
-		Flux<B> build(A key, C min, C max);
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZrangeBuilder<A, B, ? extends B> byLex();
+		
+		/**
+		 * 
+		 * @param key
+		 * @param min
+		 * @param max
+		 * @return 
+		 */
+		Flux<B> build(A key, Bound<C> min, Bound<C> max);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/zrange">ZRANGE</a> key min max [BYSCORE|BYLEX] [REV] [LIMIT offset count] [WITHSCORES] 
 	 * 
-	 * @param <A>
-	 * @param <B> 
-	 * @param <C> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 * @param <C> builder type
 	 */
 	interface SortedSetZrangeWithScoresBuilder<A, B, C> extends AbstractSortedSetZrangeBuilder<A, B, SortedSetZrangeWithScoresBuilder<A, B, C>> {
 		
-		SortedSetZrangeWithScoresBuilder<A, B, Bound<? extends Number>> byScore();
-		SortedSetZrangeWithScoresBuilder<A, B, Bound<? extends B>> byLex();
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZrangeWithScoresBuilder<A, B, ? extends Number> byScore();
 		
-		Flux<SortedSetScoredMember<B>> build(A key, C min, C max);
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZrangeWithScoresBuilder<A, B, ? extends B> byLex();
+		
+		/**
+		 * 
+		 * @param key
+		 * @param min
+		 * @param max
+		 * @return 
+		 */
+		Flux<SortedSetScoredMember<B>> build(A key, Bound<C> min, Bound<C> max);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/zrangestore">ZRANGESTORE</a> dst src min max [BYSCORE|BYLEX] [REV] [LIMIT offset count] 
 	 * 
-	 * @param <A>
-	 * @param <B> 
-	 * @param <C> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 * @param <C> builder type
 	 */
 	interface SortedSetZrangestoreBuilder<A, B, C> extends AbstractSortedSetZrangeBuilder<A, B, SortedSetZrangestoreBuilder<A, B, C>> {
 		
-		SortedSetZrangestoreBuilder<A, B, Bound<? extends Number>> byScore();
-		SortedSetZrangestoreBuilder<A, B, Bound<? extends B>> byLex();
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZrangestoreBuilder<A, B, ? extends Number> byScore();
 		
-		Mono<Long> build(A destination, A source, C min, C max);
+		/**
+		 * 
+		 * @return 
+		 */
+		SortedSetZrangestoreBuilder<A, B, ? extends B> byLex();
+		
+		/**
+		 * 
+		 * @param source
+		 * @param destination
+		 * @param min
+		 * @param max
+		 * @return 
+		 */
+		Mono<Long> build(A source, A destination, Bound<C> min, Bound<C> max);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/zscan">ZSCAN</a> key cursor [MATCH pattern] [COUNT count]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface SortedSetScanBuilder<A, B> extends AbstractScanBuilder<SortedSetScanBuilder<A, B>> {
+		
+		/**
+		 * 
+		 * @param key
+		 * @param cursor
+		 * @return 
+		 */
 		Mono<SortedSetScanResult<B>> build(A key, String cursor);
 	}
 
 	/**
-	 * <a href="https://redis.io/commands/zunion">ZUNION</a> numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX] [WITHSCORES] 
-	 * <a href="https://redis.io/commands/zunionstore">ZUNIONSTORE</a> destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX] 
-	 *
-	 * @param <A> 
-	 * @param <B> 
-	 * @param <C> 
+	 * <ul>
+	 * <li><a href="https://redis.io/commands/zunion">ZUNION</a> numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX] [WITHSCORES]</li>
+	 * <li><a href="https://redis.io/commands/zunionstore">ZUNIONSTORE</a> destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX]</li>
+	 * </ul>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 * @param <C> builder type
 	 */
 	interface AbstractSortedSetZunionBuilder<A, B, C extends AbstractSortedSetZunionBuilder<A, B, C>> {
 		
+		/**
+		 * 
+		 * @param weight
+		 * @return 
+		 */
 		C weight(double weight);
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		C sum();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C min();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C max();
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/zunion">ZUNION</a> numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX] [WITHSCORES] 
 	 * 
-	 * @param <A>
-	 * @param <B>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface SortedSetZunionBuilder<A, B> extends AbstractSortedSetZinterBuilder<A, B, SortedSetZunionBuilder<A, B>> {
 		
+		/**
+		 * 
+		 * @param key
+		 * @return 
+		 */
 		Flux<B> build(A key);
+		
+		/**
+		 * 
+		 * @param keys
+		 * @return 
+		 */
 		Flux<B> build(Consumer<Keys<A>> keys);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/zunion">ZUNION</a> numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX] [WITHSCORES] 
 	 * 
-	 * @param <A>
-	 * @param <B>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface SortedSetZunionWithScoresBuilder<A, B> extends AbstractSortedSetZinterBuilder<A, B, SortedSetZunionWithScoresBuilder<A, B>> {
 		
+		/**
+		 * 
+		 * @param key
+		 * @return 
+		 */
 		Flux<SortedSetScoredMember<B>> build(A key);
+		
+		/**
+		 * 
+		 * @param keys
+		 * @return 
+		 */
 		Flux<SortedSetScoredMember<B>> build(Consumer<Keys<A>> keys);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/zunionstore">ZUNIONSTORE</a> destination numkeys key [key ...] [WEIGHTS weight [weight ...]] [AGGREGATE SUM|MIN|MAX] 
 	 * 
-	 * @param <A>
-	 * @param <B>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface SortedSetZunionstoreBuilder<A, B> extends AbstractSortedSetZinterBuilder<A, B, SortedSetZunionstoreBuilder<A, B>> {
 		
+		/**
+		 * 
+		 * @param destination
+		 * @param key
+		 * @return 
+		 */
 		Mono<Long> build(A destination, A key);
+		
+		/**
+		 * 
+		 * @param destination
+		 * @param keys
+		 * @return 
+		 */
 		Mono<Long> build(A destination, Consumer<Keys<A>> keys);
 	}
 	
-	
+	/**
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <B> value type
+	 */
 	interface SortedSetScanResult<B> extends AbstractScanResult {
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		List<SortedSetScoredMember<B>> getMembers();
 	}
 	
+	/**
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <B> value type
+	 */
 	interface SortedSetScoredMember<B> {
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		B getValue();
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		double getScore();
 	}
 	
+	/**
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <B> value type
+	 */
 	interface SortedSetScoredMembers<B> {
+		
+		/**
+		 * 
+		 * @param score
+		 * @param value
+		 * @return 
+		 */
 		SortedSetScoredMembers<B> entry(double score, B value);
 	}
 }

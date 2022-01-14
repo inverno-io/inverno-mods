@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import java.util.function.Supplier;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.concurrent.Reactor;
-import io.inverno.mod.base.concurrent.VertxReactor;
 
 /**
  * <p>
@@ -27,13 +26,11 @@ import io.inverno.mod.base.concurrent.VertxReactor;
  * </p>
  * 
  * <p>
- * The reactor is required to access the underlying Vert.x instance when the
- * reactor is a {@link VertxReactor}. This instance is then used to create
- * Vert.x SQL clients and pools.
+ * The reactor is providing event loop group to the Lettuce client.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.2
+ * @since 1.4
  */
 @Bean( name = "reactor")
 public interface ReactorSocket extends Supplier<Reactor> {

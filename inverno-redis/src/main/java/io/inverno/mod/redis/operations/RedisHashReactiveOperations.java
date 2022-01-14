@@ -1,27 +1,37 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ * Copyright 2022 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package io.inverno.mod.redis.operations;
 
-import io.inverno.mod.redis.util.AbstractScanBuilder;
-import io.inverno.mod.redis.util.EntryOptional;
 import java.util.Map;
 import java.util.function.Consumer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import io.inverno.mod.redis.util.AbstractScanResult;
-import io.inverno.mod.redis.util.Entries;
-import io.inverno.mod.redis.util.Keys;
 
 /**
+ * <p>
+ * Redis Hashes reactive commands.
+ * </p>
  * 
- * @author jkuhn
- * @param <A>
- * @param <B>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.4
+ * 
+ * @param <A> key type
+ * @param <B> value type
  */
-public interface RedisHashReactiveOperations<A, B> /*extends RedisHashReactiveCommands<A, B>*/ {
+public interface RedisHashReactiveOperations<A, B> {
 
 	/**
 	 * <a href="https://redis.io/commands/hdel">HDEL</a> key field
@@ -102,15 +112,6 @@ public interface RedisHashReactiveOperations<A, B> /*extends RedisHashReactiveCo
 	 * @return 
 	 */
 	Mono<Long> hlen(A key);
-	
-	/**
-	 * <a href="https://redis.io/commands/hmget">HMGET</a> key field
-	 * 
-	 * @param key
-	 * @param field
-	 * @return 
-	 */
-	Flux<EntryOptional<A, B>> hmget(A key, A field);
 	
 	/**
 	 * <a href="https://redis.io/commands/hmget">HMGET</a> key field [field ...] 
@@ -221,14 +222,37 @@ public interface RedisHashReactiveOperations<A, B> /*extends RedisHashReactiveCo
 	/**
 	 * <a href="https://redis.io/commands/hscan">HSCAN</a> key cursor [MATCH pattern] [COUNT count]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface HashScanBuilder<A, B> extends AbstractScanBuilder<HashScanBuilder<A, B>> {
+		
+		/**
+		 * 
+		 * @param key
+		 * @param cursor
+		 * @return 
+		 */
 		Mono<HashScanResult<A, B>> build(A key, String cursor);
 	}
 	
+	/**
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 */
 	interface HashScanResult<A, B> extends AbstractScanResult {
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		Map<A, B> getEntries();
 	}
 }

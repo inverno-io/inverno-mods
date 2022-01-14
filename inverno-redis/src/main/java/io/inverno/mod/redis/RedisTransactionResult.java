@@ -1,53 +1,82 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ * Copyright 2022 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package io.inverno.mod.redis;
 
 import java.util.stream.Stream;
 
 /**
- *
- * @author jkuhn
+ * <p>
+ * Redis MULTI/EXEC sequence result.
+ * <p>
+ * 
+ * <p>
+ * It indicates whether a Redis transaction was discarded and exposes commands results.
+ * <p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.4
  */
 public interface RedisTransactionResult {
 
 	/**
-     * @return {@code true} if the transaction batch was discarded.
-     * @since 5.1
+	 * <p>
+	 * Indicates whether the transaction was discarded.
+	 * </p>
+	 * 
+     * @return true if the transaction batch was discarded.
      */
     boolean wasDiscarded();
 	
 	/**
-     * Returns the number of elements in this collection. If this {@link TransactionResult} contains more than
-     * {@link Integer#MAX_VALUE} elements, returns {@link Integer#MAX_VALUE}.
+	 * <p>
+	 * Returns the number of commands executed within the transaction.
+	 * </p>
      *
-     * @return the number of elements in this collection
+     * @return the number of commands
      */
     int size();
 	
 	/**
-     * Returns {@code true} if this {@link TransactionResult} contains no elements.
+	 * <p>
+	 * Returns true if the transaction result contains no elements.
+	 * </p>
      *
-     * @return {@code true} if this {@link TransactionResult} contains no elements
+     * @return true if the transaction result contains no elements, false otherwise
      */
     boolean isEmpty();
 	
 	/**
-     * Returns the element at the specified position in this {@link TransactionResult}.
+	 * <p>
+	 * Returns the command result at the specified index.
+	 * </p>
      *
-     * @param index index of the element to return
+     * @param index index of the result to return
      * @param <T> inferred type
-     * @return the element at the specified position in this {@link TransactionResult}
-     * @throws IndexOutOfBoundsException if the index is out of range (<tt>index &lt; 0 || index &gt;= size()</tt>)
+	 * 
+     * @return the command result at the specified index
+     * @throws IndexOutOfBoundsException if the index is out of range
      */
-    <T> T get(int index);
+    <T> T get(int index) throws IndexOutOfBoundsException;
 
     /**
-     * Returns a sequential {@code Stream} with this {@link TransactionResult} as its source.
+	 * <p>
+	 * Returns commands results as stream.
+	 * </p>
      *
-     * @return a sequential {@code Stream} over the elements in this {@link TransactionResult}
+     * @return a stream of commands results
      */
     Stream<Object> stream();
 }

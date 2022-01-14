@@ -1,24 +1,36 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ * Copyright 2022 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package io.inverno.mod.redis.operations;
 
-import io.inverno.mod.redis.util.EntryOptional;
-import io.inverno.mod.redis.util.Keys;
-import io.inverno.mod.redis.util.Values;
 import java.util.function.Consumer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * Redis Lists reactive commands.
+ * </p>
  * 
- * @author jkuhn
- * @param <A>
- * @param <B>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.4
+ * 
+ * @param <A> key type
+ * @param <B> value type
  */
-public interface RedisListReactiveOperations<A, B> /*extends RedisListReactiveCommands<A, B>*/ {
+public interface RedisListReactiveOperations<A, B> {
 
 	/**
 	 * <a href="https://redis.io/commands/blmove">BLMOVE</a> source destination LEFT|RIGHT LEFT|RIGHT timeout 
@@ -305,91 +317,215 @@ public interface RedisListReactiveOperations<A, B> /*extends RedisListReactiveCo
 	Mono<Long> rpushx(A key, Consumer<Values<B>> elements);
 
 	/**
-	 * <a href="https://redis.io/commands/blmove">BLMOVE</a> source destination LEFT|RIGHT LEFT|RIGHT timeout 
-	 * <a href="https://redis.io/commands/lmove">LMOVE</a> source destination LEFT|RIGHT LEFT|RIGHT 
+	 * <ul>
+	 * <li><a href="https://redis.io/commands/blmove">BLMOVE</a> source destination LEFT|RIGHT LEFT|RIGHT timeout</li>
+	 * <li><a href="https://redis.io/commands/lmove">LMOVE</a> source destination LEFT|RIGHT LEFT|RIGHT</li>
+	 * </ul>
 	 * 
-	 * @param <A>
-	 * @param <B> 
-	 * @param <C> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 * @param <C> builder type
 	 */
 	interface AbstractListLmoveBuilder<A, B, C extends AbstractListLmoveBuilder<A, B, C>> {
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C leftLeft();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C leftRight();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C rightLeft();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C rightRight();
 	}
 	
 	/**
-	 * <a href="https://redis.io/commands/blmpop">BLMPOP</a> timeout numkeys key [key ...] LEFT|RIGHT [COUNT count] 
-	 * <a href="https://redis.io/commands/lmpop">LMPOP</a> numkeys key [key ...] LEFT|RIGHT [COUNT count] 
+	 * <ul>
+	 * <li><a href="https://redis.io/commands/blmpop">BLMPOP</a> timeout numkeys key [key ...] LEFT|RIGHT [COUNT count]</li>
+	 * <li><a href="https://redis.io/commands/lmpop">LMPOP</a> numkeys key [key ...] LEFT|RIGHT [COUNT count]</li>
+	 * </ul>
 	 * 
-	 * @param <A>
-	 * @param <B> 
-	 * @param <C> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 * @param <C> builder type
 	 */
 	interface AbstractListLmpopBuilder<A, B, C extends AbstractListLmpopBuilder<A, B, C>> {
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C left();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		C right();
+		
+		/**
+		 * 
+		 * @param count
+		 * @return 
+		 */
 		C count(long count);
 	}
 
 	/**
 	 * <a href="https://redis.io/commands/blmove">BLMOVE</a> source destination LEFT|RIGHT LEFT|RIGHT timeout 
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface ListBlmoveBuilder<A, B> extends AbstractListLmoveBuilder<A, B, ListBlmoveBuilder<A, B>> {
+		
+		/**
+		 * 
+		 * @param source
+		 * @param destination
+		 * @param timeout
+		 * @return 
+		 */
 		Mono<B> build(A source, A destination, double timeout);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/blmpop">BLMPOP</a> timeout numkeys key [key ...] LEFT|RIGHT [COUNT count] 
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface ListBlmpopBuilder<A, B> extends AbstractListLmpopBuilder<A, B, ListBlmpopBuilder<A, B>> {
 		
-		Flux<EntryOptional<A, B>> build(double timeout, int numkeys, A key);
-		Flux<EntryOptional<A, B>> build(double timeout, int numkeys, Consumer<Keys<A>> keys);
+		/**
+		 * 
+		 * @param timeout
+		 * @param key
+		 * @return 
+		 */
+		Flux<EntryOptional<A, B>> build(double timeout, A key);
+		
+		/**
+		 * 
+		 * @param timeout
+		 * @param keys
+		 * @return 
+		 */
+		Flux<EntryOptional<A, B>> build(double timeout, Consumer<Keys<A>> keys);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/lmove">LMOVE</a> source destination LEFT|RIGHT LEFT|RIGHT 
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
-	interface ListLmoveBuilder<A, B> extends AbstractListLmoveBuilder<A, B, ListBlmoveBuilder<A, B>> {
+	interface ListLmoveBuilder<A, B> extends AbstractListLmoveBuilder<A, B, ListLmoveBuilder<A, B>> {
+		
+		/**
+		 * 
+		 * @param source
+		 * @param destination
+		 * @return 
+		 */
 		Mono<B> build(A source, A destination);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/lmpop">LMPOP</a> numkeys key [key ...] LEFT|RIGHT [COUNT count] 
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
-	interface ListLmpopBuilder<A, B> extends AbstractListLmpopBuilder<A, B, ListBlmpopBuilder<A, B>> {
+	interface ListLmpopBuilder<A, B> extends AbstractListLmpopBuilder<A, B, ListLmpopBuilder<A, B>> {
 		
-		Flux<EntryOptional<A, B>> build(int numkeys, A key);
-		Flux<EntryOptional<A, B>> build(int numkeys, Consumer<Keys<A>> keys);
+		/**
+		 * 
+		 * @param key
+		 * @return 
+		 */
+		Flux<EntryOptional<A, B>> build(A key);
+		
+		/**
+		 * 
+		 * @param keys
+		 * @return 
+		 */
+		Flux<EntryOptional<A, B>> build(Consumer<Keys<A>> keys);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/lpos">LPOS</a> key element [RANK rank] [COUNT num-matches] [MAXLEN len] 
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface ListLposBuilder<A, B> {
 		
+		/**
+		 * 
+		 * @param rank
+		 * @return 
+		 */
 		ListLposBuilder<A, B> rank(long rank);
+		
+		/**
+		 * 
+		 * @param maxlen
+		 * @return 
+		 */
 		ListLposBuilder<A, B> maxlen(long maxlen);
 		
+		/**
+		 * 
+		 * @param key
+		 * @param element
+		 * @return 
+		 */
 		Mono<Long> build(A key, B element);
+		
+		/**
+		 * 
+		 * @param key
+		 * @param element
+		 * @param count
+		 * @return 
+		 */
 		Flux<Long> build(A key, B element, long count);
 	}
-	
 }

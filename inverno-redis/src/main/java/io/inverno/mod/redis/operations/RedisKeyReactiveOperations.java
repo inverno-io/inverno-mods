@@ -1,30 +1,40 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ * Copyright 2022 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package io.inverno.mod.redis.operations;
 
-import io.inverno.mod.redis.util.AbstractScanBuilder;
-import io.inverno.mod.redis.util.AbstractScanResult;
-import io.inverno.mod.redis.util.Keys;
-import io.inverno.mod.redis.util.RedisType;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * Redis Keys reactive commands.
+ * </p>
  * 
- * @author jkuhn
- * @param <A>
- * @param <B>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.4
+ * 
+ * @param <A> key type
+ * @param <B> value type
  */
-public interface RedisKeyReactiveOperations<A, B> /*extends RedisKeyReactiveCommands<A, B>*/ {
+public interface RedisKeyReactiveOperations<A, B> {
 
 	/**
 	 * <a href="https://redis.io/commands/copy">COPY</a> source destination
@@ -438,167 +448,485 @@ public interface RedisKeyReactiveOperations<A, B> /*extends RedisKeyReactiveComm
 	/**
 	 * <a href="https://redis.io/commands/copy">COPY</a> source destination [DB destination-db] [REPLACE] 
 	 * 
-	 * @param <A> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
 	 */
 	interface KeyCopyBuilder<A> {
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		KeyCopyBuilder<A> replace();
+		
+		/**
+		 * 
+		 * @param destinationDb
+		 * @return 
+		 */
 		KeyCopyBuilder<A> db(long destinationDb);
 		
+		/**
+		 * 
+		 * @param source
+		 * @param destination
+		 * @return 
+		 */
 		Mono<Boolean> build(A source, A destination);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/expire">EXPIRE</a> key seconds [NX|XX|GT|LT]
 	 * 
-	 * @param <A> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
 	 */
 	interface KeyExpireBuilder<A> {
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		KeyExpireBuilder<A> nx();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		KeyExpireBuilder<A> xx();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		KeyExpireBuilder<A> gt();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		KeyExpireBuilder<A> lt();
 		
-		Mono<Boolean> build(A key, long seconds);	
+		/**
+		 * 
+		 * @param key
+		 * @param seconds
+		 * @return 
+		 */
+		Mono<Boolean> build(A key, long seconds);
+		
+		/**
+		 * 
+		 * @param key
+		 * @param duration
+		 * @return 
+		 */
 		Mono<Boolean> build(A key, Duration duration);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/expire">EXPIREAT</a> key timestamp [NX|XX|GT|LT] 
 	 * 
-	 * @param <A> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
 	 */
 	interface KeyExpireatBuilder<A> {
-		KeyExpireBuilder<A> nx();
-		KeyExpireBuilder<A> xx();
-		KeyExpireBuilder<A> gt();
-		KeyExpireBuilder<A> lt();
 		
+		/**
+		 * 
+		 * @return 
+		 */
+		KeyExpireatBuilder<A> nx();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		KeyExpireatBuilder<A> xx();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		KeyExpireatBuilder<A> gt();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		KeyExpireatBuilder<A> lt();
+		
+		/**
+		 * 
+		 * @param key
+		 * @param epochSeconds
+		 * @return 
+		 */
 		Mono<Boolean> build(A key, long epochSeconds);
+		
+		/**
+		 * 
+		 * @param key
+		 * @param datetime
+		 * @return 
+		 */
 		Mono<Boolean> build(A key, ZonedDateTime datetime);
+		
+		/**
+		 * 
+		 * @param key
+		 * @param instant
+		 * @return 
+		 */
 		Mono<Boolean> build(A key, Instant instant);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/pexpire">PEXPIRE</a> key milliseconds [NX|XX|GT|LT] 
 	 * 
-	 * @param <A> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
 	 */
 	interface KeyPexpireBuilder<A> {
-		KeyExpireBuilder<A> nx();
-		KeyExpireBuilder<A> xx();
-		KeyExpireBuilder<A> gt();
-		KeyExpireBuilder<A> lt();
 		
-		Mono<Boolean> build(A key, long milliseconds);	
+		/**
+		 * 
+		 * @return 
+		 */
+		KeyPexpireBuilder<A> nx();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		KeyPexpireBuilder<A> xx();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		KeyPexpireBuilder<A> gt();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		KeyPexpireBuilder<A> lt();
+		
+		/**
+		 * 
+		 * @param key
+		 * @param milliseconds
+		 * @return 
+		 */
+		Mono<Boolean> build(A key, long milliseconds);
+		
+		/**
+		 * 
+		 * @param key
+		 * @param duration
+		 * @return 
+		 */
 		Mono<Boolean> build(A key, Duration duration);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/pexpireat">PEXPIREAT</a> key milliseconds-timestamp [NX|XX|GT|LT]
 	 * 
-	 * @param <A> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
 	 */
 	interface KeyPexpireatBuilder<A> {
-		KeyExpireBuilder<A> nx();
-		KeyExpireBuilder<A> xx();
-		KeyExpireBuilder<A> gt();
-		KeyExpireBuilder<A> lt();
 		
+		/**
+		 * 
+		 * @return 
+		 */
+		KeyPexpireatBuilder<A> nx();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		KeyPexpireatBuilder<A> xx();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		KeyPexpireatBuilder<A> gt();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		KeyPexpireatBuilder<A> lt();
+		
+		/**
+		 * 
+		 * @param key
+		 * @param epochMilliseconds
+		 * @return 
+		 */
 		Mono<Boolean> build(A key, long epochMilliseconds);
+		
+		/**
+		 * 
+		 * @param key
+		 * @param datetime
+		 * @return 
+		 */
 		Mono<Boolean> build(A key, ZonedDateTime datetime);
+		
+		/**
+		 * 
+		 * @param key
+		 * @param instant
+		 * @return 
+		 */
 		Mono<Boolean> build(A key, Instant instant);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/migrate">MIGRATE</a> host port key|"" destination-db timeout [COPY] [REPLACE] [AUTH password] [AUTH2 username password] [KEYS key [key ...]] 
 	 * 
-	 * @param <A> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
 	 */
 	interface KeyMigrateBuilder<A> {
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		KeyMigrateBuilder<A> copy();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		KeyMigrateBuilder<A> replace();
+		
+		/**
+		 * 
+		 * @param password
+		 * @return 
+		 */
 		KeyMigrateBuilder<A> auth(String password);
+		
+		/**
+		 * 
+		 * @param username
+		 * @param password
+		 * @return 
+		 */
 		KeyMigrateBuilder<A> auth(String username, String password);
+		
+		/**
+		 * 
+		 * @param keys
+		 * @return 
+		 */
 		KeyMigrateBuilder<A> keys(Consumer<Keys<A>> keys);
 		
+		/**
+		 * 
+		 * @param host
+		 * @param port
+		 * @param key
+		 * @param db
+		 * @param timeout
+		 * @return 
+		 */
 		Mono<String> build(String host, int port, A key, int db, long timeout);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/restore">RESTORE</a> key ttl serialized-value [REPLACE] [ABSTTL] [IDLETIME seconds] [FREQ frequency]
 	 * 
-	 * @param <A> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
 	 */
 	interface KeyRestoreBuilder<A> {
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		KeyRestoreBuilder<A> replace();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		KeyRestoreBuilder<A> absttl();
+		
+		/**
+		 * 
+		 * @param seconds
+		 * @return 
+		 */
 		KeyRestoreBuilder<A> idletime(long seconds);
+		
+		/**
+		 * 
+		 * @param frequency
+		 * @return 
+		 */
 		KeyRestoreBuilder<A> freq(long frequency);
 		
+		/**
+		 * 
+		 * @param key
+		 * @param ttl
+		 * @param serializedValue
+		 * @return 
+		 */
 		Mono<String> build(A key, long ttl, byte[] serializedValue);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/scan">SCAN</a> cursor [MATCH pattern] [COUNT count] [TYPE type] 
 	 * 
-	 * @param <A>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
 	 */
 	interface KeyScanBuilder<A> extends AbstractScanBuilder<KeyScanBuilder<A>> {
 		
+		/**
+		 * 
+		 * @param type
+		 * @return 
+		 */
 		KeyScanBuilder<A> type(RedisType type);
 		
+		/**
+		 * 
+		 * @param cursor
+		 * @return 
+		 */
 		Mono<KeyScanResult<A>> build(String cursor);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/sort">SORT</a> key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination] 
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <C> builder type
 	 */
-	interface AbstractKeySortBuilder<A, B extends AbstractKeySortBuilder<A, B>> {
+	interface AbstractKeySortBuilder<A, C extends AbstractKeySortBuilder<A, C>> {
 		
-		B by(String pattern);
-		B limit(long offset, long count);
-		B asc();
-		B desc();
-		B alpha();
+		/**
+		 * 
+		 * @param pattern
+		 * @return 
+		 */
+		C by(String pattern);
+		
+		/**
+		 * 
+		 * @param offset
+		 * @param count
+		 * @return 
+		 */
+		C limit(long offset, long count);
+		
+		/**
+		 * 
+		 * @param patterns
+		 * @return 
+		 */
+		C get(String... patterns);
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		C asc();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		C desc();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		C alpha();
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/sort">SORT</a> key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination] 
 	 * 
-	 * @param <A> 
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface KeySortBuilder<A, B> extends AbstractKeySortBuilder<A, KeySortBuilder<A, B>> {
 		
-		KeySortBuilder<A, List<Optional<B>>> get(String... patterns);
-		
+		/**
+		 * 
+		 * @param key
+		 * @return 
+		 */
 		Flux<B> build(A key);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/sort">SORT</a> key [BY pattern] [LIMIT offset count] [GET pattern [GET pattern ...]] [ASC|DESC] [ALPHA] [STORE destination] 
 	 * 
-	 * @param <A> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
 	 */
 	interface KeySortStoreBuilder<A> extends AbstractKeySortBuilder<A, KeySortStoreBuilder<A>> {
 		
-		KeySortStoreBuilder<A> store(A destination);
-		
-		Mono<Long> build(A key);
+		/**
+		 * 
+		 * @param source
+		 * @param destination
+		 * @return 
+		 */
+		Mono<Long> build(A source, A destination);
 	}
 	
 	/**
 	 * 
-	 * @param <A> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
 	 */
 	interface KeyScanResult<A> extends AbstractScanResult {
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		List<A> getKeys();
 	}
-	
 }

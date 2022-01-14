@@ -1,6 +1,17 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ * Copyright 2022 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.inverno.mod.redis.lettuce.internal;
 
@@ -9,23 +20,35 @@ import io.inverno.core.annotation.Destroy;
 import io.inverno.core.annotation.Init;
 import io.inverno.core.annotation.Wrapper;
 import io.inverno.mod.base.concurrent.Reactor;
-import io.inverno.mod.redis.lettuce.RedisClientConfiguration;
 import io.lettuce.core.resource.ClientResources;
 import java.util.function.Supplier;
+import io.inverno.mod.redis.lettuce.LettuceRedisClientConfiguration;
 
 /**
- *
- * @author jkuhn
+ * <p>
+ * Lettuce client resources wrapper bean that uses Inverno's reactor as event loop group provider.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.4
  */
 @Wrapper @Bean( name = "clientResources", visibility = Bean.Visibility.PRIVATE)
 public class ClientResourcesWrapper implements Supplier<ClientResources> {
 
-	private final RedisClientConfiguration configuration;
+	private final LettuceRedisClientConfiguration configuration;
 	private final Reactor reactor;
 	
 	private ClientResources instance;
 	
-	public ClientResourcesWrapper(RedisClientConfiguration configuration, Reactor reactor) {
+	/**
+	 * <p>
+	 * Creates a Client resources wrapper
+	 * </p>
+	 *
+	 * @param configuration Lettuce redis client module configuration
+	 * @param reactor       Inverno's reactor
+	 */
+	public ClientResourcesWrapper(LettuceRedisClientConfiguration configuration, Reactor reactor) {
 		this.configuration = configuration;
 		this.reactor = reactor;
 	}

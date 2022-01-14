@@ -1,24 +1,37 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ * Copyright 2022 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package io.inverno.mod.redis.operations;
 
-import io.inverno.mod.redis.util.Entries;
-import io.inverno.mod.redis.util.EntryOptional;
-import io.inverno.mod.redis.util.Keys;
 import java.util.Optional;
 import java.util.function.Consumer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * @author jkuhn
- * @param <A>
- * @param <B>
+ * <p>
+ * Redis Strings reactive commands.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.4
+ * 
+ * @param <A> key type
+ * @param <B> value type
  */
-public interface RedisStringReactiveOperations<A, B> /*extends RedisStringReactiveCommands<A, B>*/ {
+public interface RedisStringReactiveOperations<A, B> {
 
 	/**
 	 * <a href="https://redis.io/commands/append">APPEND</a> key value
@@ -382,73 +395,215 @@ public interface RedisStringReactiveOperations<A, B> /*extends RedisStringReacti
 	/**
 	 * <a href="https://redis.io/commands/getex">GETEX</a> key [EX seconds|PX milliseconds|EXAT unix-time|PXAT unix-time|PERSIST]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface StringGetexBuilder<A, B> {
 		
+		/**
+		 * 
+		 * @param seconds
+		 * @return 
+		 */
 		StringGetexBuilder<A, B> ex(long seconds);
+		
+		/**
+		 * 
+		 * @param milliseconds
+		 * @return 
+		 */
 		StringGetexBuilder<A, B> px(long milliseconds);
+		
+		/**
+		 * 
+		 * @param unixTime
+		 * @return 
+		 */
 		StringGetexBuilder<A, B> exat(long unixTime);
+		
+		/**
+		 * 
+		 * @param unixTime
+		 * @return 
+		 */
 		StringGetexBuilder<A, B> pxat(long unixTime);
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		StringGetexBuilder<A, B> persist();
 		
+		/**
+		 * 
+		 * @param key
+		 * @return 
+		 */
 		Mono<B> build(A key);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/set">SET</a> key value [EX seconds|PX milliseconds|EXAT unix-time-seconds|PXAT unix-time-milliseconds|KEEPTTL] [NX|XX] [GET]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 * @param <C> builder type
 	 */
-	interface AbstractStringSetBuilder<A, B> {
+	interface AbstractStringSetBuilder<A, B, C extends AbstractStringSetBuilder<A, B, C>> {
 		
-		StringGetexBuilder<A, B> ex(long seconds);
-		StringGetexBuilder<A, B> px(long milliseconds);
-		StringGetexBuilder<A, B> exat(long unixTime);
-		StringGetexBuilder<A, B> pxat(long unixTime);
-		StringGetexBuilder<A, B> keepttl();
-		StringGetexBuilder<A, B> nx();
-		StringGetexBuilder<A, B> xx();
-		StringGetexBuilder<A, B> get();
+		/**
+		 * 
+		 * @param seconds
+		 * @return 
+		 */
+		C ex(long seconds);
+		
+		/**
+		 * 
+		 * @param milliseconds
+		 * @return 
+		 */
+		C px(long milliseconds);
+		
+		/**
+		 * 
+		 * @param unixTime
+		 * @return 
+		 */
+		C exat(long unixTime);
+		
+		/**
+		 * 
+		 * @param unixTime
+		 * @return 
+		 */
+		C pxat(long unixTime);
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		C keepttl();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		C nx();
+		
+		/**
+		 * 
+		 * @return 
+		 */
+		C xx();
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/set">SET</a> key value [EX seconds|PX milliseconds|EXAT unix-time-seconds|PXAT unix-time-milliseconds|KEEPTTL] [NX|XX]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
-	interface StringSetBuilder<A, B> extends AbstractStringSetBuilder<A, B> {
+	interface StringSetBuilder<A, B> extends AbstractStringSetBuilder<A, B, StringSetBuilder<A, B>> {
+		
+		/**
+		 * 
+		 * @param key
+		 * @param value
+		 * @return 
+		 */
 		Mono<String> build(A key, B value);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/set">SET</a> key value [EX seconds|PX milliseconds|EXAT unix-time-seconds|PXAT unix-time-milliseconds|KEEPTTL] [NX|XX] [GET]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
-	interface StringSetGetBuilder<A, B> extends AbstractStringSetBuilder<A, B> {
+	interface StringSetGetBuilder<A, B> extends AbstractStringSetBuilder<A, B, StringSetGetBuilder<A, B>> {
+		
+		/**
+		 * 
+		 * @param key
+		 * @param value
+		 * @return 
+		 */
 		Mono<B> build(A key, B value);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/bitfield">BITFIELD</a> key [GET encoding offset] [SET encoding offset value] [INCRBY encoding offset increment] [OVERFLOW WRAP|SAT|FAIL] 
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface StringBitfieldBuilder<A, B> {
 		
-		StringBitfieldBuilder<A, B> get(String encoding, long offset);
-		StringBitfieldBuilder<A, B> set(String encoding, long offset, long value);
-		StringBitfieldBuilder<A, B> incrby(String encoding, long offset, long increment);
+		/**
+		 * 
+		 * @param encoding
+		 * @param offset
+		 * @return 
+		 */
+		StringBitfieldBuilder<A, B> get(String encoding, int offset);
+		
+		/**
+		 * 
+		 * @param encoding
+		 * @param offset
+		 * @param value
+		 * @return 
+		 */
+		StringBitfieldBuilder<A, B> set(String encoding, int offset, long value);
+		
+		/**
+		 * 
+		 * @param encoding
+		 * @param offset
+		 * @param increment
+		 * @return 
+		 */
+		StringBitfieldBuilder<A, B> incrby(String encoding, int offset, long increment);
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		StringBitfieldBuilder<A, B> wrap();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		StringBitfieldBuilder<A, B> sat();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		StringBitfieldBuilder<A, B> fail();
 		
+		/**
+		 * 
+		 * @param key
+		 * @return 
+		 */
 		Flux<Optional<Long>> build(A key);
 	}
 }

@@ -1,8 +1,18 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ * Copyright 2022 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 package io.inverno.mod.redis.operations;
 
 import java.util.List;
@@ -12,12 +22,17 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * Redis Streams reactive commands.
+ * </p>
  * 
- * @author jkuhn
- * @param <A>
- * @param <B>
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.4
+ * 
+ * @param <A> key type
+ * @param <B> value type
  */
-public interface RedisStreamReactiveOperations<A, B> /*extends RedisStreamReactiveCommands<A, B>*/ {
+public interface RedisStreamReactiveOperations<A, B> {
 
 	/**
 	 * <a href="https://redis.io/commands/xack">XACK</a> key group id
@@ -149,7 +164,7 @@ public interface RedisStreamReactiveOperations<A, B> /*extends RedisStreamReacti
 	 * 
 	 * @return 
 	 */
-	StreamGroupCreateBuilder<A> xgroupCreate();
+	StreamXgroupCreateBuilder<A> xgroupCreate();
 
 	/**
 	 * <a href="https://redis.io/commands/xgroup-createconsumer">XGROUP CREATECONSUMER</a> key groupname consumername 
@@ -411,178 +426,545 @@ public interface RedisStreamReactiveOperations<A, B> /*extends RedisStreamReacti
 	/**
 	 * <a href="https://redis.io/commands/xadd">XADD</a> key [NOMKSTREAM] [MAXLEN|MINID [=|~] threshold [LIMIT count]] *|id field value [field value ...]
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
-	interface StreamXaddBuilder<A, B> {	
+	interface StreamXaddBuilder<A, B> {
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		StreamXaddBuilder<A, B> nomkstream();
+		
+		/**
+		 * 
+		 * @param threshold
+		 * @return 
+		 */
 		StreamXaddBuilder<A, B> maxlen(long threshold);
-		StreamXaddBuilder<A, B> minid(String streamId);
+		
+		/**
+		 * 
+		 * @param minid
+		 * @return 
+		 */
+		StreamXaddBuilder<A, B> minid(String minid);
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		StreamXaddBuilder<A, B> exact();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		StreamXaddBuilder<A, B> approximate();
+		
+		/**
+		 * 
+		 * @param limit
+		 * @return 
+		 */
 		StreamXaddBuilder<A, B> limit(long limit);
 		
+		/**
+		 * 
+		 * @param id
+		 * @return 
+		 */
+		StreamXaddBuilder<A, B> id(String id);
+		
+		/**
+		 * 
+		 * @param key
+		 * @param field
+		 * @param value
+		 * @return 
+		 */
 		Mono<String> build(A key, A field, B value);
+		
+		/**
+		 * 
+		 * @param key
+		 * @param entries
+		 * @return 
+		 */
 		Mono<String> build(A key, Consumer<StreamEntries<A, B>> entries);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/xautoclaim">XAUTOCLAIM</a> key group consumer min-idle-time start [COUNT count] [JUSTID] 
 	 * 
-	 * @param <A>
-	 * @param <B> 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface StreamXautoclaimBuilder<A, B> {	
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		StreamXautoclaimBuilder<A, B> justid();
+		
+		/**
+		 * 
+		 * @param count
+		 * @return 
+		 */
 		StreamXautoclaimBuilder<A, B> count(long count);
 		
+		/**
+		 * 
+		 * @param key
+		 * @param group
+		 * @param consumer
+		 * @param minIdleTime
+		 * @param start
+		 * @return 
+		 */
 		Mono<StreamClaimedMessages<A, B>> build(A key, A group, A consumer, long minIdleTime, String start);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/xclaim">XCLAIM</a> key group consumer min-idle-time id [id ...] [IDLE ms] [TIME ms-unix-time] [RETRYCOUNT count] [FORCE] [JUSTID] 
 	 * 
-	 * @param <A>
-	 * @param <B>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface StreamXclaimBuilder<A, B> {
 		
+		/**
+		 * 
+		 * @param ms
+		 * @return 
+		 */
 		StreamXclaimBuilder<A, B> idle(long ms);
+		
+		/**
+		 * 
+		 * @param msUnixTime
+		 * @return 
+		 */
 		StreamXclaimBuilder<A, B> time(long msUnixTime);
+		
+		/**
+		 * 
+		 * @param count
+		 * @return 
+		 */
 		StreamXclaimBuilder<A, B> retrycount(long count);
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		StreamXclaimBuilder<A, B> force();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		StreamXclaimBuilder<A, B> justid();
 		
+		/**
+		 * 
+		 * @param key
+		 * @param group
+		 * @param consumer
+		 * @param minIdleTime
+		 * @param messageId
+		 * @return 
+		 */
 		Flux<StreamMessage<A, B>> build(A key, A group, A consumer, long minIdleTime, String messageId);
 		
+		/**
+		 * 
+		 * @param key
+		 * @param group
+		 * @param consumer
+		 * @param minIdleTime
+		 * @param messageIds
+		 * @return 
+		 */
 		Flux<StreamMessage<A, B>> build(A key, A group, A consumer, long minIdleTime, Consumer<StreamMessageIds> messageIds);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/xgroup-create">XGROUP CREATE</a> key groupname id|$ [MKSTREAM]
 	 * 
-	 * @param <A>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
 	 */
-	interface StreamGroupCreateBuilder<A> {	
+	interface StreamXgroupCreateBuilder<A> {	
 		
-		StreamGroupCreateBuilder<A> mkstream();
+		/**
+		 * 
+		 * @return 
+		 */
+		StreamXgroupCreateBuilder<A> mkstream();
 		
-		Mono<String> build(A key, String groupname, String id);
+		/**
+		 * 
+		 * @param key
+		 * @param groupname
+		 * @param id
+		 * @return 
+		 */
+		Mono<String> build(A key, A groupname, String id);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/xpending">XPENDING</a> key group [IDLE min-idle-time] start end count [consumer]
 	 * 
-	 * @param <A>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
 	 */
 	interface StreamXpendingExtendedBuilder<A> {	
 		
+		/**
+		 * 
+		 * @param minIdleTime
+		 * @return 
+		 */
 		StreamXpendingExtendedBuilder<A> idle(long minIdleTime);
 		
+		/**
+		 * 
+		 * @param consumer
+		 * @return 
+		 */
 		StreamXpendingExtendedBuilder<A> consumer(A consumer);
 		
+		/**
+		 * 
+		 * @param key
+		 * @param group
+		 * @param start
+		 * @param end
+		 * @param count
+		 * @return 
+		 */
 		Flux<StreamPendingMessage> build(A key, A group, String start, String end, long count);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/xread">XREAD</a> [COUNT count] [BLOCK milliseconds] STREAMS key [key ...] id [id ...] 
 	 * 
-	 * @param <A>
-	 * @param <B>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface StreamXreadBuilder<A, B> {	
 		
+		/**
+		 * 
+		 * @param count
+		 * @return 
+		 */
 		StreamXreadBuilder<A, B> count(long count);
 		
+		/**
+		 * 
+		 * @param milliseconds
+		 * @return 
+		 */
 		StreamXreadBuilder<A, B> block(long milliseconds);
 		
+		/**
+		 * 
+		 * @param key
+		 * @param messageId
+		 * @return 
+		 */
 		Flux<StreamMessage<A, B>> build(A key, String messageId);
 		
+		/**
+		 * 
+		 * @param streams
+		 * @return 
+		 */
 		Flux<StreamMessage<A, B>> build(Consumer<StreamStreams<A>> streams);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/xreadgroup">XREADGROUP</a> GROUP group consumer [COUNT count] [BLOCK milliseconds] [NOACK] STREAMS key [key ...] id [id ...] 
 	 * 
-	 * @param <A>
-	 * @param <B>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
 	 */
 	interface StreamXreadgroupBuilder<A, B> {
 		
+		/**
+		 * 
+		 * @param count
+		 * @return 
+		 */
 		StreamXreadgroupBuilder<A, B> count(long count);
 		
+		/**
+		 * 
+		 * @param milliseconds
+		 * @return 
+		 */
 		StreamXreadgroupBuilder<A, B> block(long milliseconds);
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		StreamXreadgroupBuilder<A, B> noack();
 		
+		/**
+		 * 
+		 * @param group
+		 * @param consumer
+		 * @param key
+		 * @param messageId
+		 * @return 
+		 */
 		Flux<StreamMessage<A, B>> build(A group, A consumer, A key, String messageId);
 		
+		/**
+		 * 
+		 * @param group
+		 * @param consumer
+		 * @param streams
+		 * @return 
+		 */
 		Flux<StreamMessage<A, B>> build(A group, A consumer, Consumer<StreamStreams<A>> streams);
 	}
 	
 	/**
 	 * <a href="https://redis.io/commands/xtrim">XTRIM</a> key MAXLEN|MINID [=|~] threshold [LIMIT count]
 	 * 
-	 * @param <A>
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
 	 */
 	interface StreamXtrimBuilder<A> {
 		
+		/**
+		 * 
+		 * @param threshold
+		 * @return 
+		 */
 		StreamXtrimBuilder<A> maxlen(long threshold);
+		
+		/**
+		 * 
+		 * @param streamId
+		 * @return 
+		 */
 		StreamXtrimBuilder<A> minid(String streamId);
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		StreamXtrimBuilder<A> exact();
+		
+		/**
+		 * 
+		 * @return 
+		 */
 		StreamXtrimBuilder<A> approximate();
+		
+		/**
+		 * 
+		 * @param limit
+		 * @return 
+		 */
 		StreamXtrimBuilder<A> limit(long limit);
 
+		/**
+		 * 
+		 * @param key
+		 * @return 
+		 */
 		Mono<Long> build(A key);
 	}
 
+	/**
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 */
 	interface StreamClaimedMessages<A, B> {
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		String getStreamId();
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		List<StreamMessage<A, B>> getMessages();
 	}
 	
+	/**
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 */
 	interface StreamMessage<A, B> {
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		String getId();
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		Map<A, B> getEntries();
 	}
 	
+	/**
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 */
 	interface StreamPendingMessages {
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		long getCount();
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		String getLowerMessageId();
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		String getUpperMessageId();
 
+		/**
+		 * 
+		 * @return 
+		 */
 		Map<String, Long> getConsumerCount();
 	}
 	
+	/**
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 */
 	interface StreamPendingMessage {
 		
+		/**
+		 * 
+		 * @return 
+		 */
 		String getId();
 
+		/**
+		 * 
+		 * @return 
+		 */
 		String getConsumer();
 
+		/**
+		 * 
+		 * @return 
+		 */
 		long getMsSinceLastDelivery();
 
+		/**
+		 * 
+		 * @return 
+		 */
 		long getRedeliveryCount();
 	}
 	
+	/**
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 */
 	interface StreamMessageIds {
+		
+		/**
+		 * 
+		 * @param id
+		 * @return 
+		 */
 		StreamMessageIds id(String id);
 	}
 	
+	/**
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 * @param <B> value type
+	 */
 	interface StreamEntries<A, B> {
+		
+		/**
+		 * 
+		 * @param field
+		 * @param value
+		 * @return 
+		 */
 		StreamEntries<A, B> entry(A field, B value);
 	}
 	
+	/**
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @param <A> key type
+	 */
 	interface StreamStreams<A> {
 		
+		/**
+		 * 
+		 * @param key
+		 * @param messageId
+		 * @return 
+		 */
 		StreamStreams<A> stream(A key, String messageId);
 	}
 }
