@@ -42,6 +42,24 @@ public interface VertxSqlClientConfiguration {
 	
 	/**
 	 * <p>
+	 * The RDBMS user.
+	 * </p>
+	 * 
+	 * @return the user
+	 */
+	String db_user();
+	
+	/**
+	 * <p>
+	 * The RDBMS password.
+	 * </p>
+	 * 
+	 * @return the password
+	 */
+	String db_password();
+	
+	/**
+	 * <p>
 	 * A JSON containing database connection options.
 	 * </p>
 	 * 

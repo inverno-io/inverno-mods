@@ -50,8 +50,8 @@ import io.vertx.core.Vertx;
  * <dl>
  * <dt>vertxSqlClientConfiguration</dt>
  * <dd>the Vert.x SQL client module configuration</dd>
- * <dt>sqlClient</dt>
- * <dd>the pool SQL client to execute SQL operations on the RDBMS</dd>
+ * <dt>vertxSqlClient</dt>
+ * <dd>the Vert.x  pool SQL client to execute SQL operations on the RDBMS</dd>
  * </dl>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -71,10 +71,8 @@ module io.inverno.mod.sql.vertx {
 	requires java.sql;
 	requires io.vertx.core;
 	requires transitive io.vertx.client.sql;
-	requires static io.vertx.client.sql.db2;
-	requires static io.vertx.client.sql.mssql;
-	requires static io.vertx.client.sql.mysql;
-	requires static io.vertx.client.sql.pg;
 	
 	exports io.inverno.mod.sql.vertx;
+	
+	uses io.vertx.sqlclient.spi.Driver;
 }

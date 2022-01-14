@@ -23,7 +23,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A SQL Client expose reactive method to query a RDBMS using SQL.
+ * A SQL Client exposes reactive method to query a RDBMS using SQL.
  * </p>
  *
  * <p>

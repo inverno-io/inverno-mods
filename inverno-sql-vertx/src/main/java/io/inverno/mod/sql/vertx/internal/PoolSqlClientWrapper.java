@@ -26,19 +26,11 @@ import io.inverno.mod.sql.vertx.PoolSqlClient;
 import io.inverno.mod.sql.vertx.VertxSqlClientConfiguration;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.db2client.DB2ConnectOptions;
-import io.vertx.db2client.DB2ConnectOptionsConverter;
-import io.vertx.db2client.DB2Pool;
-import io.vertx.mssqlclient.MSSQLConnectOptions;
-import io.vertx.mssqlclient.MSSQLConnectOptionsConverter;
-import io.vertx.mssqlclient.MSSQLPool;
-import io.vertx.mysqlclient.MySQLConnectOptions;
-import io.vertx.mysqlclient.MySQLConnectOptionsConverter;
-import io.vertx.mysqlclient.MySQLPool;
-import io.vertx.pgclient.PgConnectOptions;
-import io.vertx.pgclient.PgConnectOptionsConverter;
-import io.vertx.pgclient.PgPool;
 import io.vertx.sqlclient.PoolOptions;
+import io.vertx.sqlclient.SqlConnectOptions;
+import io.vertx.sqlclient.spi.Driver;
+import java.util.List;
+import java.util.ServiceLoader;
 
 /**
  * <p>
@@ -54,17 +46,8 @@ import io.vertx.sqlclient.PoolOptions;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
  */
-@Wrapper @Bean( name = "sqlClient" )
+@Wrapper @Bean( name = "vertxSqlClient" )
 public class PoolSqlClientWrapper implements Supplier<SqlClient> {
-
-	private static final String DB2_SCHEME = "db2";
-	
-	private static final String MSSQL_SCHEME = "sqlserver";
-	
-	private static final String MYSQL_SCHEME = "mysql";
-	private static final String MARIADB_SCHEME = "mariadb";
-	
-	private static final String POSTGRES_SCHEME = "postgres";
 	
 	private final VertxSqlClientConfiguration configuration;
 	private final Vertx vertx;
@@ -92,21 +75,33 @@ public class PoolSqlClientWrapper implements Supplier<SqlClient> {
 	
 	@Init
 	public void init() {
-		if(this.configuration.db_uri().startsWith(DB2_SCHEME)) {
-			this.instance = createDB2Client(this.configuration, this.vertx);
-		}
-		else if(this.configuration.db_uri().startsWith(MSSQL_SCHEME)) {
-			this.instance = createMSSQLClient(this.configuration, this.vertx);
-		}
-		else if(this.configuration.db_uri().startsWith(MYSQL_SCHEME) || this.configuration.db_uri().startsWith(MARIADB_SCHEME)) {
-			this.instance = createMySQLClient(this.configuration, this.vertx);
-		}
-		else if(this.configuration.db_uri().startsWith(POSTGRES_SCHEME)) {
-			this.instance = createPgClient(this.configuration, this.vertx);
+		String db_uri = this.configuration.db_uri();
+		
+		ServiceLoader<Driver> loader;
+		if(PoolSqlClientWrapper.class.getModule().isNamed()) {
+			loader = ServiceLoader.load(PoolSqlClientWrapper.class.getModule().getLayer(), Driver.class);
 		}
 		else {
-			throw new IllegalArgumentException("Unknown DB scheme: " + this.configuration.db_uri());
+			loader = ServiceLoader.load(Driver.class, PoolSqlClientWrapper.class.getClassLoader());
 		}
+		
+		for (Driver driver : loader) {
+			SqlConnectOptions connectOptions = driver.parseConnectionUri(db_uri);
+			if(connectOptions != null) {
+				String db_json_options = this.configuration.db_json_options();
+				if(db_json_options != null) {
+					connectOptions.merge(new JsonObject(this.configuration.db_json_options()));
+				}
+				connectOptions.setUser(this.configuration.db_user());
+				connectOptions.setPassword(this.configuration.db_password());
+				
+				PoolOptions poolOptions = createPoolOptions(this.configuration);
+				
+				this.instance = new PoolSqlClient(driver.createPool(this.vertx, List.of(connectOptions), poolOptions));
+				return;
+			}
+		}
+		throw new IllegalArgumentException("Unknown DB scheme: " + this.configuration.db_uri());
 	}
 	
 	@Destroy
@@ -135,97 +130,5 @@ public class PoolSqlClientWrapper implements Supplier<SqlClient> {
 		options.setPoolCleanerPeriod(configuration.pool_poolCleanerPeriod());
 		
 		return options;
-	}
-	
-	/**
-	 * <p>
-	 * Creates a DB2 pool SQL client.
-	 * </p>
-	 * 
-	 * @param configuration the Vert.x SQL client module configuration
-	 * @param vertx         the Vert.x instance to use
-	 * 
-	 * @return a pool SQL client
-	 */
-	private static SqlClient createDB2Client(VertxSqlClientConfiguration configuration, Vertx vertx) {
-		DB2ConnectOptions connectOptions = DB2ConnectOptions.fromUri(configuration.db_uri());
-		
-		String json_options = configuration.db_json_options();
-		if(json_options != null) {
-			DB2ConnectOptionsConverter.fromJson(new JsonObject(configuration.db_json_options()), connectOptions);
-		}
-		
-		PoolOptions poolOptions = createPoolOptions(configuration);
-		
-		return new PoolSqlClient(DB2Pool.pool(vertx, connectOptions, poolOptions));
-	}
-	
-	/**
-	 * <p>
-	 * Creates a MSSQL pool SQL client.
-	 * </p>
-	 * 
-	 * @param configuration the Vert.x SQL client module configuration
-	 * @param vertx         the Vert.x instance to use
-	 * 
-	 * @return a pool SQL client
-	 */
-	private static SqlClient createMSSQLClient(VertxSqlClientConfiguration configuration, Vertx vertx) {
-		MSSQLConnectOptions connectOptions = MSSQLConnectOptions.fromUri(configuration.db_uri());
-		
-		String json_options = configuration.db_json_options();
-		if(json_options != null) {
-			MSSQLConnectOptionsConverter.fromJson(new JsonObject(configuration.db_json_options()), connectOptions);
-		}
-		
-		PoolOptions poolOptions = createPoolOptions(configuration);
-		
-		return new PoolSqlClient(MSSQLPool.pool(vertx, connectOptions, poolOptions));
-	}
-	
-	/**
-	 * <p>
-	 * Creates a MySQL pool SQL client.
-	 * </p>
-	 * 
-	 * @param configuration the Vert.x SQL client module configuration
-	 * @param vertx         the Vert.x instance to use
-	 * 
-	 * @return a pool SQL client
-	 */
-	private static SqlClient createMySQLClient(VertxSqlClientConfiguration configuration, Vertx vertx) {
-		MySQLConnectOptions connectOptions = MySQLConnectOptions.fromUri(configuration.db_uri());
-		
-		String json_options = configuration.db_json_options();
-		if(json_options != null) {
-			MySQLConnectOptionsConverter.fromJson(new JsonObject(configuration.db_json_options()), connectOptions);
-		}
-		
-		PoolOptions poolOptions = createPoolOptions(configuration);
-		
-		return new PoolSqlClient(MySQLPool.pool(vertx, connectOptions, poolOptions));
-	}
-	
-	/**
-	 * <p>
-	 * Creates a Postgres pool SQL client.
-	 * </p>
-	 * 
-	 * @param configuration the Vert.x SQL client module configuration
-	 * @param vertx         the Vert.x instance to use
-	 * 
-	 * @return a pool SQL client
-	 */
-	private static SqlClient createPgClient(VertxSqlClientConfiguration configuration, Vertx vertx) {
-		PgConnectOptions connectOptions = PgConnectOptions.fromUri(configuration.db_uri());
-		
-		String json_options = configuration.db_json_options();
-		if(json_options != null) {
-			PgConnectOptionsConverter.fromJson(new JsonObject(configuration.db_json_options()), connectOptions);
-		}
-		
-		PoolOptions poolOptions = createPoolOptions(configuration);
-		
-		return new PoolSqlClient(PgPool.pool(vertx, connectOptions, poolOptions));
 	}
 }
