@@ -107,9 +107,9 @@ module io.inverno.mod.boot {
 	requires io.netty.common;
 	requires transitive io.netty.transport;
 	requires static io.netty.transport.unix.common;
-	requires static io.netty.transport.epoll;
-	requires static io.netty.transport.kqueue;
-	requires static io.netty.incubator.transport.io_uring;
+	requires static io.netty.transport.classes.epoll;
+	requires static io.netty.transport.classes.kqueue;
+	requires static io.netty.incubator.transport.classes.io_uring;
 	
 	requires static io.vertx.core;
 	

@@ -376,7 +376,7 @@ public interface ConfigurationLoader<A, B extends ConfigurationLoader<A, B>> {
 	 *
 	 * @return the configuration loader
 	 */
-	B withSource(ConfigurationSource<?, ?> source);
+	B withSource(ConfigurationSource<?,?,?> source);
 
 	/**
 	 * <p>

@@ -53,7 +53,7 @@ import reactor.core.publisher.Flux;
  * @param <A> raw configuration value type
  * @param <B> the properties configuration source type
  */
-public abstract class AbstractPropertiesConfigurationSource<A, B extends AbstractPropertiesConfigurationSource<A,B>> extends AbstractConfigurationSource<AbstractPropertiesConfigurationSource.PropertyConfigurationQuery<A, B>, AbstractPropertiesConfigurationSource.PropertyExecutableConfigurationQuery<A, B>, A> {
+public abstract class AbstractPropertiesConfigurationSource<A, B extends AbstractPropertiesConfigurationSource<A,B>> extends AbstractConfigurationSource<AbstractPropertiesConfigurationSource.PropertyConfigurationQuery<A, B>, AbstractPropertiesConfigurationSource.PropertyExecutableConfigurationQuery<A, B>, AbstractPropertiesConfigurationSource.PropertyListConfigurationQuery<A, B> ,A> {
 
 	/**
 	 * The property accessor.
@@ -78,6 +78,11 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 	@Override
 	public PropertyExecutableConfigurationQuery<A, B> get(String... names) throws IllegalArgumentException {
 		return new PropertyExecutableConfigurationQuery<>(this).and().get(names);
+	}
+
+	@Override
+	public PropertyListConfigurationQuery<A, B> list(String name) throws IllegalArgumentException {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
 	
 	/**
@@ -130,7 +135,7 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 	 * @param <A> raw configuration value type
 	 * @param <B> the properties configuration source type
 	 */
-	public static class PropertyExecutableConfigurationQuery<A, B extends AbstractPropertiesConfigurationSource<A,B>> implements ExecutableConfigurationQuery<PropertyConfigurationQuery<A, B>, PropertyExecutableConfigurationQuery<A, B>> {
+	public static class PropertyExecutableConfigurationQuery<A, B extends AbstractPropertiesConfigurationSource<A, B>> implements ExecutableConfigurationQuery<PropertyConfigurationQuery<A, B>, PropertyExecutableConfigurationQuery<A, B>> {
 
 		private B source;
 		
@@ -198,6 +203,31 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 
 		private PropertyConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationProperty queryResult) {
 			super(queryKey, queryResult);
+		}
+	}
+	
+	public static class PropertyListConfigurationQuery<A, B extends AbstractPropertiesConfigurationSource<A, B>> implements ListConfigurationQuery<PropertyListConfigurationQuery<A, B>> {
+
+		private B source;
+		
+		@SuppressWarnings("unchecked")
+		private PropertyListConfigurationQuery(AbstractPropertiesConfigurationSource<A, B> source) {
+			this.source = (B)source;
+		}
+		
+		@Override
+		public PropertyListConfigurationQuery<A, B> withParameters(Parameter... parameters) throws IllegalArgumentException {
+			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		}
+
+		@Override
+		public List<ConfigurationProperty> execute() {
+			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		}
+
+		@Override
+		public List<ConfigurationProperty> executeAll() {
+			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 		}
 	}
 }

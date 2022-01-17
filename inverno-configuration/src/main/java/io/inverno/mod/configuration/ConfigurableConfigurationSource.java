@@ -27,7 +27,7 @@ import java.util.Map;
  * </p>
  *
  * <blockquote><pre>
- * ConfigurableConfigurationSource{@literal <?,?,?,?>} source = ...;
+ * ConfigurableConfigurationSource{@literal <?,?,?,?,?>} source = ...;
  *
  * source.set("prop1", "value1")
  *     .and().set("prop2", "value2")
@@ -48,10 +48,11 @@ import java.util.Map;
  *
  * @param <A> source specific query type
  * @param <B> source specific executable query type
- * @param <C> source specific update type
- * @param <D> source specific executable update type
+ * @param <C> source specific list query type
+ * @param <D> source specific update type
+ * @param <E> source specific executable update type
  */
-public interface ConfigurableConfigurationSource<A extends ConfigurationQuery<A, B>, B extends ExecutableConfigurationQuery<A, B>, C extends ConfigurationUpdate<C, D>, D extends ExecutableConfigurationUpdate<C, D>> extends ConfigurationSource<A, B> {
+public interface ConfigurableConfigurationSource<A extends ConfigurationQuery<A, B>, B extends ExecutableConfigurationQuery<A, B>, C extends ListConfigurationQuery<C>, D extends ConfigurationUpdate<D, E>, E extends ExecutableConfigurationUpdate<D, E>> extends ConfigurationSource<A, B, C> {
 
 	/**
 	 * <p>
@@ -63,7 +64,7 @@ public interface ConfigurableConfigurationSource<A extends ConfigurationQuery<A,
 	 *
 	 * @return an executable configuration update
 	 */
-	default D set(String name1, Object value1) {
+	default E set(String name1, Object value1) {
 		return this.set(Map.of(name1, value1));
 	}
 	
@@ -79,7 +80,7 @@ public interface ConfigurableConfigurationSource<A extends ConfigurationQuery<A,
 	 *
 	 * @return an executable configuration update
 	 */
-	default D set(String name1, Object value1, String name2, Object value2) {
+	default E set(String name1, Object value1, String name2, Object value2) {
 		return this.set(Map.of(name1, value1, name2, value2));
 	}
 
@@ -97,7 +98,7 @@ public interface ConfigurableConfigurationSource<A extends ConfigurationQuery<A,
 	 *
 	 * @return an executable configuration update
 	 */
-	default D set(String name1, Object value1, String name2, Object value2, String name3, Object value3) {
+	default E set(String name1, Object value1, String name2, Object value2, String name3, Object value3) {
 		return this.set(Map.of(name1, value1, name2, value2, name3, value3));
 	}
 	
@@ -117,7 +118,7 @@ public interface ConfigurableConfigurationSource<A extends ConfigurationQuery<A,
 	 *
 	 * @return an executable configuration update
 	 */
-	default D set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4) {
+	default E set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4) {
 		return this.set(Map.of(name1, value1, name2, value2, name3, value3, name4, value4));
 	}
 	
@@ -139,7 +140,7 @@ public interface ConfigurableConfigurationSource<A extends ConfigurationQuery<A,
 	 *
 	 * @return an executable configuration update
 	 */
-	default D set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5) {
+	default E set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5) {
 		return this.set(Map.of(name1, value1, name2, value2, name3, value3, name4, value4, name5, value5));
 	}
 	
@@ -163,7 +164,7 @@ public interface ConfigurableConfigurationSource<A extends ConfigurationQuery<A,
 	 *
 	 * @return an executable configuration update
 	 */
-	default D set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6) {
+	default E set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6) {
 		return this.set(Map.of(name1, value1, name2, value2, name3, value3, name4, value4, name5, value5, name6, value6));
 	}
 	
@@ -189,7 +190,7 @@ public interface ConfigurableConfigurationSource<A extends ConfigurationQuery<A,
 	 *
 	 * @return an executable configuration update
 	 */
-	default D set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6, String name7, Object value7) {
+	default E set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6, String name7, Object value7) {
 		return this.set(Map.of(name1, value1, name2, value2, name3, value3, name4, value4, name5, value5, name6, value6, name7, value7));
 	}
 	
@@ -217,7 +218,7 @@ public interface ConfigurableConfigurationSource<A extends ConfigurationQuery<A,
 	 *
 	 * @return an executable configuration update
 	 */
-	default D set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6, String name7, Object value7, String name8, Object value8) {
+	default E set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6, String name7, Object value7, String name8, Object value8) {
 		return this.set(Map.of(name1, value1, name2, value2, name3, value3, name4, value4, name5, value5, name6, value6, name7, value7, name8, value8));
 	}
 	
@@ -247,7 +248,7 @@ public interface ConfigurableConfigurationSource<A extends ConfigurationQuery<A,
 	 *
 	 * @return an executable configuration update
 	 */
-	default D set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6, String name7, Object value7, String name8, Object value8, String name9, Object value9) {
+	default E set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6, String name7, Object value7, String name8, Object value8, String name9, Object value9) {
 		return this.set(Map.of(name1, value1, name2, value2, name3, value3, name4, value4, name5, value5, name6, value6, name7, value7, name8, value8, name9, value9));
 	}
 	
@@ -279,7 +280,7 @@ public interface ConfigurableConfigurationSource<A extends ConfigurationQuery<A,
 	 *
 	 * @return an executable configuration update
 	 */
-	default D set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6, String name7, Object value7, String name8, Object value8, String name9, Object value9, String name10, Object value10) {
+	default E set(String name1, Object value1, String name2, Object value2, String name3, Object value3, String name4, Object value4, String name5, Object value5, String name6, Object value6, String name7, Object value7, String name8, Object value8, String name9, Object value9, String name10, Object value10) {
 		return this.set(Map.of(name1, value1, name2, value2, name3, value3, name4, value4, name5, value5, name6, value6, name7, value7, name8, value8, name9, value9, name10, value10));
 	}
 
@@ -294,5 +295,5 @@ public interface ConfigurableConfigurationSource<A extends ConfigurationQuery<A,
 	 *
 	 * @throws IllegalArgumentException if the map of properties is null or empty
 	 */
-	D set(Map<String, Object> values) throws IllegalArgumentException;
+	E set(Map<String, Object> values) throws IllegalArgumentException;
 }

@@ -69,7 +69,7 @@ public interface ConfigurationProperty {
 	 *
 	 * @return a configuration source.
 	 */
-	ConfigurationSource<?,?> getSource();
+	ConfigurationSource<?,?,?> getSource();
 	
 	/**
 	 * <p>

@@ -51,7 +51,7 @@ import reactor.core.publisher.Mono;
  * @param <A> raw configuration value type
  * @param <B> the hash configuration source type
  */
-public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashConfigurationSource<A, B>> extends AbstractConfigurationSource<AbstractHashConfigurationSource.HashConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashExecutableConfigurationQuery<A, B>, A> {
+public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashConfigurationSource<A, B>> extends AbstractConfigurationSource<AbstractHashConfigurationSource.HashConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashExecutableConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashListConfigurationQuery<A, B>, A> {
 	
 	/**
 	 * <p>
@@ -79,6 +79,11 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 	public HashExecutableConfigurationQuery<A, B> get(String... names) throws IllegalArgumentException {
 		return new HashExecutableConfigurationQuery<>(this).and().get(names);
 	}
+
+	@Override
+	public HashListConfigurationQuery<A, B> list(String name) throws IllegalArgumentException {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
 	
 	/**
 	 * <p>
@@ -95,11 +100,11 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 	 */
 	public static class HashConfigurationQuery<A, B extends AbstractHashConfigurationSource<A, B>> implements ConfigurationQuery<HashConfigurationQuery<A, B>, HashExecutableConfigurationQuery<A, B>> {
 
-		private HashExecutableConfigurationQuery<A, B> executableQuery;
+		private final HashExecutableConfigurationQuery<A, B> executableQuery;
 		
-		private List<String> names;
+		private final List<String> names;
 		
-		private LinkedList<Parameter> parameters;
+		private final LinkedList<Parameter> parameters;
 		
 		private HashConfigurationQuery(HashExecutableConfigurationQuery<A, B> executableQuery) {
 			this.executableQuery = executableQuery;
@@ -132,9 +137,9 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 	 */
 	public static class HashExecutableConfigurationQuery<A, B extends AbstractHashConfigurationSource<A, B>> implements ExecutableConfigurationQuery<HashConfigurationQuery<A, B>, HashExecutableConfigurationQuery<A, B>> {
 		
-		private B source;
+		private final B source;
 		
-		private LinkedList<HashConfigurationQuery<A, B>> queries;
+		private final LinkedList<HashConfigurationQuery<A, B>> queries;
 		
 		@SuppressWarnings("unchecked")
 		private HashExecutableConfigurationQuery(AbstractHashConfigurationSource<A, B> source) {
@@ -204,6 +209,31 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		
 		private HashConfigurationQueryResult(ConfigurationKey queryKey, B source, Throwable error) {
 			super(queryKey, source, error);
+		}
+	}
+	
+	public static class HashListConfigurationQuery<A, B extends AbstractHashConfigurationSource<A, B>> implements ListConfigurationQuery<HashListConfigurationQuery<A, B>> {
+
+		private B source;
+		
+		@SuppressWarnings("unchecked")
+		private HashListConfigurationQuery(AbstractHashConfigurationSource<A, B> source) {
+			this.source = (B)source;
+		}
+		
+		@Override
+		public HashListConfigurationQuery<A, B> withParameters(Parameter... parameters) throws IllegalArgumentException {
+			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		}
+
+		@Override
+		public List<ConfigurationProperty> execute() {
+			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		}
+
+		@Override
+		public List<ConfigurationProperty> executeAll() {
+			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 		}
 	}
 }

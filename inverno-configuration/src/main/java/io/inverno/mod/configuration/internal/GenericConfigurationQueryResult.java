@@ -38,7 +38,7 @@ public class GenericConfigurationQueryResult implements ConfigurationQueryResult
 	protected ConfigurationKey queryKey;
 	protected Optional<ConfigurationProperty> queryResult;
 	protected Throwable error;
-	protected ConfigurationSource<?,?> errorSource;
+	protected ConfigurationSource<?,?,?> errorSource;
 	
 	/**
 	 * <p>
@@ -62,7 +62,7 @@ public class GenericConfigurationQueryResult implements ConfigurationQueryResult
 	 * @param source   the configuration source
 	 * @param error    the error
 	 */
-	public GenericConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationSource<?, ?> source, Throwable error) {
+	public GenericConfigurationQueryResult(ConfigurationKey queryKey, ConfigurationSource<?,?,?> source, Throwable error) {
 		this.queryKey = queryKey;
 		this.errorSource = source;
 		this.error = error;

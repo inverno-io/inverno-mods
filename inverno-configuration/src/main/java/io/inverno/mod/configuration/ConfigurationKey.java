@@ -47,10 +47,37 @@ public interface ConfigurationKey {
 	 */
 	public static class Parameter {
 		
-		private String key;
+		private final String key;
 		
-		private Object value;
+		private final Object value;
 		
+		/**
+		 * <p>
+		 * Creates a configuration property parameter with a null value corresponding to a wildcard parameter. 
+		 * </p>
+		 * 
+		 * @param key the parameter key
+		 * 
+		 * @throws IllegalArgumentException if the key is null or empty
+		 */
+		private Parameter(String key) throws IllegalArgumentException {
+			if(key == null || key.equals("")) {
+				throw new IllegalArgumentException("Parameter key can't be null or empty");
+			}
+			this.key = key;
+			this.value = null;
+		}
+		
+		/**
+		 * <p>
+		 * Creates a basic configuration property parameter.
+		 * </p>
+		 * 
+		 * @param key   the parameter key
+		 * @param value the parameter value
+		 * 
+		 * @throws IllegalArgumentException if the key is null or empty or if the value is null or not a string, nor a primitive
+		 */
 		private Parameter(String key, Object value) throws IllegalArgumentException {
 			if(key == null || key.equals("")) {
 				throw new IllegalArgumentException("Parameter key can't be null or empty");
@@ -97,10 +124,24 @@ public interface ConfigurationKey {
 		 *
 		 * @return a parameter
 		 *
-		 * @throws IllegalArgumentException if the key is null or empty of if the value is null or not a string, nor a primitive
+		 * @throws IllegalArgumentException if the key is null or empty or if the value is null or not a string, nor a primitive
 		 */
 		public static Parameter of(String key, Object value) throws IllegalArgumentException {
 			return new Parameter(key, value);
+		}
+		
+		/**
+		 * <p>
+		 * Creates a wildcard parameter with the specified key.
+		 * </p>
+		 * 
+		 * @param key the parameter key
+		 * @return a wildcard parameter
+		 * 
+		 * @throws IllegalArgumentException if the key is null or empty
+		 */
+		public static Parameter wildcard(String key) throws IllegalArgumentException {
+			return new WildcardParameter(key);
 		}
 
 		@Override
@@ -146,6 +187,30 @@ public interface ConfigurationKey {
 				str.append("\"").append(StringEscapeUtils.escapeJava(this.value.toString())).append("\"");
 			}
 			return str.toString();
+		}
+	}
+	
+	/**
+	 * <p>
+	 * A wildcard parameter is used to match all values for a parameter in a list configuration query.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @see ListConfigurationQuery
+	 */
+	public static class WildcardParameter extends Parameter {
+		
+		/**
+		 * <p>
+		 * Creates a wildcard configuration property parameter.
+		 * </p>
+		 * 
+		 * @param key the parameter key
+		 */
+		private WildcardParameter(String key) {
+			super(key);
 		}
 	}
 

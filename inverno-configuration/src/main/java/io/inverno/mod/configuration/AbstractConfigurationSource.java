@@ -34,14 +34,15 @@ import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
  *
  * @param <A> source specific configuration query type
  * @param <B> source specific executable configuration query type
- * @param <C> raw configuration value type
+ * @param <C> source specific list configuration query type
+ * @param <D> raw configuration value type
  */
-public abstract class AbstractConfigurationSource<A extends ConfigurationQuery<A, B>, B extends ExecutableConfigurationQuery<A, B>, C> implements ConfigurationSource<A, B> {
+public abstract class AbstractConfigurationSource<A extends ConfigurationQuery<A, B>, B extends ExecutableConfigurationQuery<A, B>, C extends ListConfigurationQuery<C>, D> implements ConfigurationSource<A, B, C> {
 
 	/**
 	 * The data encoder to use to decode configuration data from the data source.
 	 */
-	protected SplittablePrimitiveDecoder<C> decoder;
+	protected SplittablePrimitiveDecoder<D> decoder;
 	
 	/**
 	 * <p>
@@ -52,7 +53,7 @@ public abstract class AbstractConfigurationSource<A extends ConfigurationQuery<A
 	 * 
 	 * @throws NullPointerException if the specified decoder is null
 	 */
-	public AbstractConfigurationSource(SplittablePrimitiveDecoder<C> decoder) {
+	public AbstractConfigurationSource(SplittablePrimitiveDecoder<D> decoder) {
 		this.setDecoder(decoder);
 	}
 	
@@ -63,7 +64,7 @@ public abstract class AbstractConfigurationSource<A extends ConfigurationQuery<A
 	 * 
 	 * @return a splittable primitive decoder
 	 */
-	public SplittablePrimitiveDecoder<C> getDecoder() {
+	public SplittablePrimitiveDecoder<D> getDecoder() {
 		return decoder;
 	}
 
@@ -76,7 +77,7 @@ public abstract class AbstractConfigurationSource<A extends ConfigurationQuery<A
 	 * 
 	 * @throws NullPointerException if the specified decoder is null
 	 */
-	public void setDecoder(SplittablePrimitiveDecoder<C> decoder) {
+	public void setDecoder(SplittablePrimitiveDecoder<D> decoder) {
 		Objects.requireNonNull(decoder, "Value decoder can't be null");
 		this.decoder = decoder;
 	}

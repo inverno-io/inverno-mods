@@ -24,7 +24,7 @@ package io.inverno.mod.configuration;
  * Configuration properties can be queries as follows:</p>
  *
  * <blockquote><pre>
- * ConfigurationSource{@literal <?,?>} source = ...
+ * ConfigurationSource{@literal <?,?,?>} source = ...
  *
  * Map{@literal <String, String>} propertiesAsString = source
  *     .get("prop1", "prop2")
@@ -78,8 +78,9 @@ package io.inverno.mod.configuration;
  *
  * @param <A> source specific query type
  * @param <B> source specific executable query type
+ * @param <C> source specific list query type
  */
-public interface ConfigurationSource<A extends ConfigurationQuery<A, B>, B extends ExecutableConfigurationQuery<A, B>> {
+public interface ConfigurationSource<A extends ConfigurationQuery<A, B>, B extends ExecutableConfigurationQuery<A, B>, C extends ListConfigurationQuery<C>> {
 	
 	/**
 	 * <p>
@@ -93,4 +94,17 @@ public interface ConfigurationSource<A extends ConfigurationQuery<A, B>, B exten
 	 * @throws IllegalArgumentException if the array of names is null or empty
 	 */
 	B get(String... names) throws IllegalArgumentException;
+	
+	/**
+	 * <p>
+	 * Creates a list configuration to list configuration properties defined with the specified property name.
+	 * </p>
+	 * 
+	 * @param name a property name
+	 * 
+	 * @return a list configuration query
+	 * @throws IllegalArgumentException  if the name is null or empty
+	 */
+	C list(String name) throws IllegalArgumentException;
+	
 }

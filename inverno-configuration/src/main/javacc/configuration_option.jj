@@ -35,7 +35,7 @@ import io.inverno.mod.configuration.ConfigurationKey.Parameter;
 import io.inverno.mod.configuration.internal.GenericConfigurationProperty;
 import io.inverno.mod.configuration.internal.GenericConfigurationKey;
 
-public class ConfigurationOptionParser<A extends AbstractConfigurationSource<?,?,String>> {
+public class ConfigurationOptionParser<A extends AbstractConfigurationSource<?,?,?,String>> {
 
 	private A inverno_source;
 

@@ -42,17 +42,18 @@ import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
  *
  * @param <A> source specific query type
  * @param <B> source specific executable query type
- * @param <C> source specific update type
- * @param <D> source specific executable update type
- * @param <E> raw configuration value type
+ * @param <C> source specific list query type
+ * @param <D> source specific update type
+ * @param <E> source specific executable update type
+ * @param <F> raw configuration value type
  */
-public abstract class AbstractConfigurableConfigurationSource<A extends ConfigurationQuery<A, B>, B extends ExecutableConfigurationQuery<A, B>, C extends ConfigurationUpdate<C, D>, D extends ExecutableConfigurationUpdate<C, D>, E>
-		extends AbstractConfigurationSource<A, B, E> implements ConfigurableConfigurationSource<A, B, C, D> {
+public abstract class AbstractConfigurableConfigurationSource<A extends ConfigurationQuery<A, B>, B extends ExecutableConfigurationQuery<A, B>, C extends ListConfigurationQuery<C>, D extends ConfigurationUpdate<D, E>, E extends ExecutableConfigurationUpdate<D, E>, F>
+		extends AbstractConfigurationSource<A, B, C, F> implements ConfigurableConfigurationSource<A, B, C, D, E> {
 
 	/**
 	 * The data encoder to use to encode configuration data into the data source.
 	 */
-	protected JoinablePrimitiveEncoder<E> encoder;
+	protected JoinablePrimitiveEncoder<F> encoder;
 	
 	/**
 	 * <p>
@@ -64,7 +65,7 @@ public abstract class AbstractConfigurableConfigurationSource<A extends Configur
 	 *
 	 * @throws NullPointerException if one of the specified decoder or encoder is null
 	 */
-	public AbstractConfigurableConfigurationSource(JoinablePrimitiveEncoder<E> encoder, SplittablePrimitiveDecoder<E> decoder) {
+	public AbstractConfigurableConfigurationSource(JoinablePrimitiveEncoder<F> encoder, SplittablePrimitiveDecoder<F> decoder) {
 		super(decoder);
 		this.setEncoder(encoder);
 	}
@@ -76,7 +77,7 @@ public abstract class AbstractConfigurableConfigurationSource<A extends Configur
 	 * 
 	 * @return a joinable primitive encoder
 	 */
-	public JoinablePrimitiveEncoder<E> getEncoder() {
+	public JoinablePrimitiveEncoder<F> getEncoder() {
 		return encoder;
 	}
 
@@ -89,7 +90,7 @@ public abstract class AbstractConfigurableConfigurationSource<A extends Configur
 	 * 
 	 * @throws NullPointerException if the specified encoder is null
 	 */
-	public void setEncoder(JoinablePrimitiveEncoder<E> encoder) {
+	public void setEncoder(JoinablePrimitiveEncoder<F> encoder) {
 		Objects.requireNonNull(encoder, "Value encoder can't be null");
 		this.encoder = encoder;
 	}

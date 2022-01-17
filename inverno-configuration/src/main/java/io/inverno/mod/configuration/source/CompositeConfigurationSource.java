@@ -34,6 +34,7 @@ import io.inverno.mod.configuration.ConfigurationQueryResult;
 import io.inverno.mod.configuration.ConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationSourceException;
 import io.inverno.mod.configuration.ExecutableConfigurationQuery;
+import io.inverno.mod.configuration.ListConfigurationQuery;
 import io.inverno.mod.configuration.internal.GenericConfigurationKey;
 import io.inverno.mod.configuration.internal.GenericConfigurationQueryResult;
 import reactor.core.publisher.Flux;
@@ -79,12 +80,12 @@ import reactor.core.publisher.Flux;
  * @see ConfigurationSource
  * @see CompositeConfigurationStrategy
  */
-public class CompositeConfigurationSource implements ConfigurationSource<CompositeConfigurationSource.CompositeConfigurationQuery, CompositeConfigurationSource.CompositeExecutableConfigurationQuery> {
+public class CompositeConfigurationSource implements ConfigurationSource<CompositeConfigurationSource.CompositeConfigurationQuery, CompositeConfigurationSource.CompositeExecutableConfigurationQuery, CompositeConfigurationSource.CompositeListConfigurationQuery> {
 
 	/**
 	 * The configuration sources.
 	 */
-	protected List<ConfigurationSource<?,?>> sources;
+	protected List<ConfigurationSource<?,?,?>> sources;
 	
 	private CompositeConfigurationStrategy strategy;
 	
@@ -99,7 +100,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	 *
 	 * @see DefaultCompositeConfigurationStrategy
 	 */
-	public CompositeConfigurationSource(List<ConfigurationSource<?,?>> sources) throws NullPointerException {
+	public CompositeConfigurationSource(List<ConfigurationSource<?,?,?>> sources) throws NullPointerException {
 		this(sources, new DefaultCompositeConfigurationStrategy());
 	}
 	
@@ -115,7 +116,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	 *
 	 * @see CompositeConfigurationStrategy
 	 */
-	public CompositeConfigurationSource(List<ConfigurationSource<?,?>> sources, CompositeConfigurationStrategy strategy) throws NullPointerException {
+	public CompositeConfigurationSource(List<ConfigurationSource<?,?,?>> sources, CompositeConfigurationStrategy strategy) throws NullPointerException {
 		this.sources = sources != null ? sources.stream().filter(Objects::nonNull).collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList)) : List.of();
 		this.strategy = Objects.requireNonNull(strategy, "strategy");
 	}
@@ -127,7 +128,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	 * 
 	 * @return a list of configuration sources
 	 */
-	public List<ConfigurationSource<?,?>> getSources() {
+	public List<ConfigurationSource<?,?,?>> getSources() {
 		return sources;
 	}
 	
@@ -162,6 +163,11 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	public CompositeExecutableConfigurationQuery get(String... names) throws IllegalArgumentException {
 		return new CompositeExecutableConfigurationQuery(this).and().get(names);
 	}
+
+	@Override
+	public CompositeListConfigurationQuery list(String name) throws IllegalArgumentException {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
 	
 	@SuppressWarnings("rawtypes")
 	private static class SourceConfigurationQueryWrapper implements ConfigurationQuery {
@@ -174,7 +180,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		
 		private SourceExecutableConfigurationQueryWrapper executableQueryWrapper;
 		
-		private SourceConfigurationQueryWrapper(ConfigurationSource<?,?> source) {
+		private SourceConfigurationQueryWrapper(ConfigurationSource<?,?,?> source) {
 			this.source = source;
 		}
 		
@@ -442,6 +448,24 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 				}
 			}
 			return this.consumeCounter == 0;
+		}
+	}
+	
+	public static class CompositeListConfigurationQuery implements ListConfigurationQuery<CompositeListConfigurationQuery> {
+
+		@Override
+		public CompositeListConfigurationQuery withParameters(Parameter... parameters) throws IllegalArgumentException {
+			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		}
+
+		@Override
+		public List<ConfigurationProperty> execute() {
+			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		}
+
+		@Override
+		public List<ConfigurationProperty> executeAll() {
+			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 		}
 	}
 }

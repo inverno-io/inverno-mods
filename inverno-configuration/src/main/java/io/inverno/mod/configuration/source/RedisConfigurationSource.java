@@ -54,6 +54,7 @@ import io.inverno.mod.configuration.ConfigurationUpdate.SpecialValue;
 import io.inverno.mod.configuration.ConfigurationUpdateResult;
 import io.inverno.mod.configuration.ExecutableConfigurationQuery;
 import io.inverno.mod.configuration.ExecutableConfigurationUpdate;
+import io.inverno.mod.configuration.ListConfigurationQuery;
 import io.inverno.mod.configuration.internal.GenericConfigurationKey;
 import io.inverno.mod.configuration.internal.GenericConfigurationProperty;
 import io.inverno.mod.configuration.internal.GenericConfigurationQueryResult;
@@ -62,6 +63,10 @@ import io.inverno.mod.configuration.internal.JavaStringConverter;
 import io.inverno.mod.configuration.internal.parser.option.ConfigurationOptionParser;
 import io.inverno.mod.configuration.internal.parser.option.ParseException;
 import io.inverno.mod.configuration.internal.parser.option.StringProvider;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.support.AsyncConnectionPoolSupport;
+import io.lettuce.core.support.BoundedPoolConfig;
+import io.lettuce.core.support.ConnectionPoolSupport;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -139,7 +144,7 @@ import reactor.core.publisher.Mono;
  *
  * @see ConfigurableConfigurationSource
  */
-public class RedisConfigurationSource extends AbstractConfigurableConfigurationSource<RedisConfigurationSource.RedisConfigurationQuery, RedisConfigurationSource.RedisExecutableConfigurationQuery, RedisConfigurationSource.RedisConfigurationUpdate, RedisConfigurationSource.RedisExecutableConfigurationUpdate, String> {
+public class RedisConfigurationSource extends AbstractConfigurableConfigurationSource<RedisConfigurationSource.RedisConfigurationQuery, RedisConfigurationSource.RedisExecutableConfigurationQuery, RedisConfigurationSource.RedisListConfigurationQuery, RedisConfigurationSource.RedisConfigurationUpdate, RedisConfigurationSource.RedisExecutableConfigurationUpdate, String> {
 
 	private static final String METADATA_FIELD_ACTIVE_REVISION = "active_revision";
 	private static final String METADATA_FIELD_WORKING_REVISION = "working_revision";
@@ -176,6 +181,11 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		return new RedisExecutableConfigurationQuery(this).and().get(names);
 	}
 	
+	@Override
+	public RedisListConfigurationQuery list(String name) throws IllegalArgumentException {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
 	@Override
 	public RedisExecutableConfigurationUpdate set(Map<String, Object> values) throws IllegalArgumentException {
 		return new RedisExecutableConfigurationUpdate(this).and().set(values);
@@ -874,8 +884,40 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 			super(updateKey);
 		}
 		
-		private RedisConfigurationUpdateResult(RedisConfigurationKey updateKey, ConfigurationSource<?,?> source, Throwable error) {
+		private RedisConfigurationUpdateResult(RedisConfigurationKey updateKey, ConfigurationSource<?,?,?> source, Throwable error) {
 			super(updateKey, source, error);
+		}
+	}
+	
+	/**
+	 * <p>
+	 * The list configuration query used by the Redis configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 */
+	public static class RedisListConfigurationQuery implements ListConfigurationQuery<RedisListConfigurationQuery> {
+
+		private final String name;
+		
+		public RedisListConfigurationQuery(String name) {
+			this.name = name;
+		}
+		
+		@Override
+		public RedisListConfigurationQuery withParameters(Parameter... parameters) throws IllegalArgumentException {
+			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		}
+
+		@Override
+		public List<ConfigurationProperty> execute() {
+			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		}
+
+		@Override
+		public List<ConfigurationProperty> executeAll() {
+			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 		}
 	}
 	

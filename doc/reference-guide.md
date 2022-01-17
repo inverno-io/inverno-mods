@@ -5987,3 +5987,15 @@ Finally, the `PoolSqlClient` wraps a Vert.x SQL pool. This is a common implement
 ```java
 SqlClient client = new PoolSqlClient(PgPool.pool(...));
 ```
+
+### Redis Client
+
+TODO
+
+#### Redis Client API
+
+TODO
+
+#### Lettuce Redis Client implementation
+
+TODO
