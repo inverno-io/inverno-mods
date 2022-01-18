@@ -77,6 +77,7 @@ import io.inverno.mod.redis.operations.EntryOptional;
 import io.inverno.mod.redis.operations.Keys;
 import io.inverno.mod.redis.operations.Values;
 import io.lettuce.core.api.StatefulConnection;
+import io.lettuce.core.support.AsyncPool;
 import io.lettuce.core.support.BoundedAsyncPool;
 import java.time.Duration;
 import java.time.Instant;
@@ -102,7 +103,7 @@ import reactor.core.publisher.Mono;
  */
 public abstract class AbstractRedisClient<A, B, C extends StatefulConnection<A, B>> implements RedisClient<A, B> {
 	
-	protected final BoundedAsyncPool<C> pool;
+	protected final AsyncPool<C> pool;
 	
 	protected final Class<A> keyType;
 	
@@ -113,11 +114,11 @@ public abstract class AbstractRedisClient<A, B, C extends StatefulConnection<A, 
 	 * Creates a Redis client with the specified Lettuce pool.
 	 * </p>
 	 * 
-	 * @param pool      a bounded async pool
+	 * @param pool      an async pool
 	 * @param keyType   the key type
 	 * @param valueType the value type
 	 */
-	public AbstractRedisClient(BoundedAsyncPool<C> pool, Class<A> keyType, Class<B> valueType) {
+	public AbstractRedisClient(AsyncPool<C> pool, Class<A> keyType, Class<B> valueType) {
 		this.pool = pool;
 		this.keyType = keyType;
 		this.valueType = valueType;

@@ -54,6 +54,13 @@
 		</dependency>
 
 		<dependency>
+			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-redis-lettuce</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+
+		<dependency>
 			<groupId>org.junit.platform</groupId>
 			<artifactId>junit-platform-launcher</artifactId>
 			<scope>test</scope>

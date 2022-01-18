@@ -76,11 +76,11 @@ import io.inverno.mod.configuration.source.SystemPropertiesConfigurationSource;
  */
 module io.inverno.mod.configuration {
 	requires transitive io.inverno.mod.base;
+	requires static io.inverno.mod.redis;
 	
 	requires jdk.unsupported; // required by netty for low level API for accessing direct buffers
 	requires transitive reactor.core;
 	requires transitive org.reactivestreams;
-	requires static lettuce.core;
 	requires org.apache.logging.log4j;
 	requires org.apache.commons.text;
 	

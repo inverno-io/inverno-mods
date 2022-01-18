@@ -18,7 +18,7 @@ package io.inverno.mod.redis.lettuce;
 import io.inverno.mod.redis.lettuce.internal.AbstractRedisClient;
 import io.inverno.mod.redis.lettuce.internal.operations.StatefulRedisConnectionOperations;
 import io.lettuce.core.cluster.api.StatefulRedisClusterConnection;
-import io.lettuce.core.support.BoundedAsyncPool;
+import io.lettuce.core.support.AsyncPool;
 import reactor.core.publisher.Mono;
 
 /**
@@ -44,11 +44,11 @@ public class PoolRedisClusterClient<A, B, C extends StatefulRedisClusterConnecti
 	 * Creates a Redis client with the specified Lettuce cluster pool.
 	 * </p>
 	 *
-	 * @param pool      a bounded async pool
+	 * @param pool      an async pool
 	 * @param keyType   the key type
 	 * @param valueType the value type
 	 */
-	public PoolRedisClusterClient(BoundedAsyncPool<C> pool, Class<A> keyType, Class<B> valueType) {
+	public PoolRedisClusterClient(AsyncPool<C> pool, Class<A> keyType, Class<B> valueType) {
 		super(pool, keyType, valueType);
 	}
 

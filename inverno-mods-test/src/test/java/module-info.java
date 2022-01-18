@@ -25,6 +25,9 @@
 module io.inverno.mod.test {
 	requires java.compiler;
 	
+	requires io.inverno.mod.configuration;
+	requires io.inverno.mod.redis.lettuce;
+	
 	requires io.inverno.test;
 	
 	requires org.junit.jupiter.api;

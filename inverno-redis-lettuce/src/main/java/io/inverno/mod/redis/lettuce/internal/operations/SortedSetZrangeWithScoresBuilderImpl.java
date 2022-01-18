@@ -76,14 +76,14 @@ public class SortedSetZrangeWithScoresBuilderImpl<A, B, C extends StatefulConnec
 	}
 	
 	@Override
-	public SortedSetZrangeWithScoresBuilderImpl<A, B, C, ? extends Number> byScore() {
+	public SortedSetZrangeWithScoresBuilderImpl<A, B, C, Number> byScore() {
 		this.byScore = true;
 		this.byLex = false;
-		return new SortedSetZrangeWithScoresBuilderImpl<A, B, C, Long>(this);
+		return new SortedSetZrangeWithScoresBuilderImpl<>(this);
 	}
 
 	@Override
-	public SortedSetZrangeWithScoresBuilderImpl<A, B, C, ? extends B> byLex() {
+	public SortedSetZrangeWithScoresBuilderImpl<A, B, C, B> byLex() {
 		this.byScore = false;
 		this.byLex = true;
 		return new SortedSetZrangeWithScoresBuilderImpl<>(this);
@@ -103,7 +103,7 @@ public class SortedSetZrangeWithScoresBuilderImpl<A, B, C extends StatefulConnec
 	}
 	
 	@Override
-	public Flux<RedisSortedSetReactiveOperations.SortedSetScoredMember<B>> build(A key, Bound<D> min, Bound<D> max) {
+	public <T extends D> Flux<RedisSortedSetReactiveOperations.SortedSetScoredMember<B>> build(A key, Bound<T> min, Bound<T> max) {
 		if(this.commands != null) {
 			return this.build(this.commands, key, min, max);
 		}
@@ -125,7 +125,7 @@ public class SortedSetZrangeWithScoresBuilderImpl<A, B, C extends StatefulConnec
 	 * @return 
 	 */
 	@SuppressWarnings("unchecked")
-	private Flux<RedisSortedSetReactiveOperations.SortedSetScoredMember<B>> build(RedisSortedSetReactiveCommands<A, B> localCommands, A key, Bound<D> min, Bound<D> max) {
+	private <T extends D> Flux<RedisSortedSetReactiveOperations.SortedSetScoredMember<B>> build(RedisSortedSetReactiveCommands<A, B> localCommands, A key, Bound<T> min, Bound<T> max) {
 		if(this.byScore) {
 			// score
 			if(this.reverse) {

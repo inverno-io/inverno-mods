@@ -18,6 +18,7 @@ package io.inverno.mod.redis.lettuce;
 import io.inverno.mod.redis.RedisTransactionResult;
 import io.inverno.mod.redis.operations.RedisGeoReactiveOperations;
 import io.lettuce.core.RedisClient;
+import io.lettuce.core.RedisConnectionException;
 import io.lettuce.core.RedisURI;
 import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.codec.StringCodec;
@@ -30,6 +31,7 @@ import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -37,6 +39,7 @@ import reactor.core.publisher.Mono;
  *
  * @author jkuhn
  */
+@EnabledIf( value = "isEnabled", disabledReason = "Failed to connect to test Redis database" )
 public class PoolRedisClientTest {
 	
 	private static final RedisClient REDIS_CLIENT = io.lettuce.core.RedisClient.create();
@@ -48,6 +51,15 @@ public class PoolRedisClientTest {
 		);
 		
 		return new PoolRedisClient<>(pool, String.class, String.class);
+	}
+	
+	public static boolean isEnabled() {
+		try (StatefulRedisConnection<String, String> connection = REDIS_CLIENT.connect(RedisURI.create("redis://localhost:6379"))) {
+			return true;
+		}
+		catch (RedisConnectionException e) {
+			return false;
+		}	
 	}
 	
 	private static void flushAll() {
@@ -186,7 +198,7 @@ public class PoolRedisClientTest {
 			flushAll();
 			
 			Mono<RedisTransactionResult> multi3 = client.multi(ops -> {
-				return Flux.just(ops.set("key_1", "value_1").cast(Object.class), ops.set("key_2", "value_2").cast(Object.class));
+				return Flux.just(ops.set("key_1", "value_1"), ops.set("key_2", "value_2"));
 			});
 			
 			RedisTransactionResult multi3_result = multi3.block();

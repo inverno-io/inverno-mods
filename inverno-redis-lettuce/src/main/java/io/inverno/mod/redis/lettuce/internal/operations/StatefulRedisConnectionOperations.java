@@ -42,7 +42,7 @@ import io.lettuce.core.api.reactive.RedisSetReactiveCommands;
 import io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands;
 import io.lettuce.core.api.reactive.RedisStreamReactiveCommands;
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
-import io.lettuce.core.support.BoundedAsyncPool;
+import io.lettuce.core.support.AsyncPool;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -68,7 +68,7 @@ public class StatefulRedisConnectionOperations<A, B, C extends StatefulConnectio
 	
 	protected final D commands;
 	
-	protected final BoundedAsyncPool<C> pool;
+	protected final AsyncPool<C> pool;
 	
 	protected final Class<A> keyType;
 	
@@ -82,7 +82,7 @@ public class StatefulRedisConnectionOperations<A, B, C extends StatefulConnectio
 	 * @param keyType
 	 * @param valueType 
 	 */
-	public StatefulRedisConnectionOperations(C connection, D commands, BoundedAsyncPool<C> pool, Class<A> keyType, Class<B> valueType) {
+	public StatefulRedisConnectionOperations(C connection, D commands, AsyncPool<C> pool, Class<A> keyType, Class<B> valueType) {
 		this.connection = connection;
 		this.commands = commands;
 		this.pool = pool;
@@ -293,7 +293,9 @@ public class StatefulRedisConnectionOperations<A, B, C extends StatefulConnectio
 
 	@Override
 	public Mono<Long> hset(A key, Consumer<Entries<A, B>> entries) {
-		throw new UnsupportedOperationException("Implementation doesn't support HSET key field value [field value ...]");
+		EntriesImpl<A, B> entriesConfigurator = new EntriesImpl<>();
+		entries.accept(entriesConfigurator);
+		return this.commands.hset(key, entriesConfigurator.getEntries());
 	}
 
 	@Override

@@ -97,7 +97,7 @@ public interface ConfigurationSource<A extends ConfigurationQuery<A, B>, B exten
 	
 	/**
 	 * <p>
-	 * Creates a list configuration to list configuration properties defined with the specified property name.
+	 * Creates a list configuration query to list configuration properties defined with the specified property name.
 	 * </p>
 	 * 
 	 * @param name a property name

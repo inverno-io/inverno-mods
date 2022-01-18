@@ -30,7 +30,7 @@ import io.lettuce.core.api.reactive.RedisSortedSetReactiveCommands;
 import io.lettuce.core.api.reactive.RedisStreamReactiveCommands;
 import io.lettuce.core.api.reactive.RedisStringReactiveCommands;
 import io.lettuce.core.api.reactive.RedisTransactionalReactiveCommands;
-import io.lettuce.core.support.BoundedAsyncPool;
+import io.lettuce.core.support.AsyncPool;
 import reactor.core.publisher.Mono;
 
 /**
@@ -54,7 +54,7 @@ public class StatefulRedisConnectionTransactionalOperations<A, B, C extends Stat
 	 * @param keyType
 	 * @param valueType 
 	 */
-	public StatefulRedisConnectionTransactionalOperations(C connection, D commands, BoundedAsyncPool<C> pool, Class<A> keyType, Class<B> valueType) {
+	public StatefulRedisConnectionTransactionalOperations(C connection, D commands, AsyncPool<C> pool, Class<A> keyType, Class<B> valueType) {
 		super(connection, commands, pool, keyType, valueType);
 	}
 

@@ -90,5 +90,5 @@ public interface RedisTransactionalClient<A, B> extends RedisClient<A, B> {
 	 * 
 	 * @return a mono emitting transaction result
 	 */
-	Mono<RedisTransactionResult> multi(Function<RedisOperations<A, B>, Publisher<Publisher<Object>>> function, A... watches);
+	Mono<RedisTransactionResult> multi(Function<RedisOperations<A, B>, Publisher<Publisher<?>>> function, A... watches);
 }

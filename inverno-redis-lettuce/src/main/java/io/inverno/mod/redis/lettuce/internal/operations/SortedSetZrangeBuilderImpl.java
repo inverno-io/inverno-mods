@@ -31,6 +31,7 @@ import reactor.core.publisher.Mono;
  * @param <A>
  * @param <B>
  * @param <C>
+ * @param <D>
  */
 public class SortedSetZrangeBuilderImpl<A, B, C extends StatefulConnection<A, B>, D> implements RedisSortedSetReactiveOperations.SortedSetZrangeBuilder<A, B, D> {
 
@@ -74,16 +75,16 @@ public class SortedSetZrangeBuilderImpl<A, B, C extends StatefulConnection<A, B>
 		this.offset = parent.offset;
 		this.count = parent.count;
 	}
-	
+
 	@Override
-	public SortedSetZrangeBuilderImpl<A, B, C, ? extends Number> byScore() {
+	public RedisSortedSetReactiveOperations.SortedSetZrangeBuilder<A, B, Number> byScore() {
 		this.byScore = true;
 		this.byLex = false;
-		return new SortedSetZrangeBuilderImpl<A, B, C, Long>(this);
+		return new SortedSetZrangeBuilderImpl<>(this);
 	}
 
 	@Override
-	public SortedSetZrangeBuilderImpl<A, B, C, ? extends B> byLex() {
+	public RedisSortedSetReactiveOperations.SortedSetZrangeBuilder<A, B, B> byLex() {
 		this.byScore = false;
 		this.byLex = true;
 		return new SortedSetZrangeBuilderImpl<>(this);
@@ -103,7 +104,7 @@ public class SortedSetZrangeBuilderImpl<A, B, C extends StatefulConnection<A, B>
 	}
 
 	@Override
-	public Flux<B> build(A key, Bound<D> min, Bound<D> max) {
+	public <T extends D> Flux<B> build(A key, Bound<T> min, Bound<T> max) {
 		if(this.commands != null) {
 			return this.build(this.commands, key, min, max);
 		}
@@ -115,7 +116,7 @@ public class SortedSetZrangeBuilderImpl<A, B, C extends StatefulConnection<A, B>
 			);
 		}
 	}
-	
+
 	/**
 	 * 
 	 * @param localCommands
@@ -125,7 +126,7 @@ public class SortedSetZrangeBuilderImpl<A, B, C extends StatefulConnection<A, B>
 	 * @return 
 	 */
 	@SuppressWarnings("unchecked")
-	private Flux<B> build(RedisSortedSetReactiveCommands<A, B> localCommands, A key, Bound<D> min, Bound<D> max) {
+	private <T extends D> Flux<B> build(RedisSortedSetReactiveCommands<A, B> localCommands, A key, Bound<T> min, Bound<T> max) {
 		if(this.byScore) {
 			// score
 			if(this.reverse) {

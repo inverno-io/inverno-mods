@@ -981,22 +981,23 @@ public interface RedisSortedSetReactiveOperations<A, B> {
 		 * 
 		 * @return 
 		 */
-		SortedSetZrangeBuilder<A, B, ? extends Number> byScore();
+		SortedSetZrangeBuilder<A, B, Number> byScore();
 		
 		/**
 		 * 
 		 * @return 
 		 */
-		SortedSetZrangeBuilder<A, B, ? extends B> byLex();
+		SortedSetZrangeBuilder<A, B, B> byLex();
 		
 		/**
 		 * 
+		 * @param <T>
 		 * @param key
 		 * @param min
 		 * @param max
 		 * @return 
 		 */
-		Flux<B> build(A key, Bound<C> min, Bound<C> max);
+		<T extends C> Flux<B> build(A key, Bound<T> min, Bound<T> max);
 	}
 	
 	/**
@@ -1015,22 +1016,23 @@ public interface RedisSortedSetReactiveOperations<A, B> {
 		 * 
 		 * @return 
 		 */
-		SortedSetZrangeWithScoresBuilder<A, B, ? extends Number> byScore();
+		SortedSetZrangeWithScoresBuilder<A, B, Number> byScore();
 		
 		/**
 		 * 
 		 * @return 
 		 */
-		SortedSetZrangeWithScoresBuilder<A, B, ? extends B> byLex();
+		SortedSetZrangeWithScoresBuilder<A, B, B> byLex();
 		
 		/**
 		 * 
+		 * @param <T>
 		 * @param key
 		 * @param min
 		 * @param max
 		 * @return 
 		 */
-		Flux<SortedSetScoredMember<B>> build(A key, Bound<C> min, Bound<C> max);
+		<T extends C> Flux<SortedSetScoredMember<B>> build(A key, Bound<T> min, Bound<T> max);
 	}
 	
 	/**
@@ -1049,23 +1051,24 @@ public interface RedisSortedSetReactiveOperations<A, B> {
 		 * 
 		 * @return 
 		 */
-		SortedSetZrangestoreBuilder<A, B, ? extends Number> byScore();
+		SortedSetZrangestoreBuilder<A, B, Number> byScore();
 		
 		/**
 		 * 
 		 * @return 
 		 */
-		SortedSetZrangestoreBuilder<A, B, ? extends B> byLex();
+		SortedSetZrangestoreBuilder<A, B, B> byLex();
 		
 		/**
 		 * 
+		 * @param <T>
 		 * @param source
 		 * @param destination
 		 * @param min
 		 * @param max
 		 * @return 
 		 */
-		Mono<Long> build(A source, A destination, Bound<C> min, Bound<C> max);
+		<T extends C> Mono<Long> build(A source, A destination, Bound<T> min, Bound<T> max);
 	}
 	
 	/**

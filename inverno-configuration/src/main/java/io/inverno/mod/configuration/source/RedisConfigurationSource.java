@@ -32,12 +32,6 @@ import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import io.lettuce.core.KeyValue;
-import io.lettuce.core.Limit;
-import io.lettuce.core.Range;
-import io.lettuce.core.Range.Boundary;
-import io.lettuce.core.RedisClient;
-import io.lettuce.core.api.reactive.RedisReactiveCommands;
 import io.inverno.mod.base.converter.ConverterException;
 import io.inverno.mod.base.converter.JoinablePrimitiveEncoder;
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
@@ -63,10 +57,8 @@ import io.inverno.mod.configuration.internal.JavaStringConverter;
 import io.inverno.mod.configuration.internal.parser.option.ConfigurationOptionParser;
 import io.inverno.mod.configuration.internal.parser.option.ParseException;
 import io.inverno.mod.configuration.internal.parser.option.StringProvider;
-import io.lettuce.core.codec.StringCodec;
-import io.lettuce.core.support.AsyncConnectionPoolSupport;
-import io.lettuce.core.support.BoundedPoolConfig;
-import io.lettuce.core.support.ConnectionPoolSupport;
+import io.inverno.mod.redis.RedisOperations;
+import io.inverno.mod.redis.operations.Bound;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -149,7 +141,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	private static final String METADATA_FIELD_ACTIVE_REVISION = "active_revision";
 	private static final String METADATA_FIELD_WORKING_REVISION = "working_revision";
 	
-	private RedisReactiveCommands<String, String> commands;
+	private io.inverno.mod.redis.RedisTransactionalClient<String, String> redisClient;
 	
 	/**
 	 * <p>
@@ -158,7 +150,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * 
 	 * @param redisClient a redis client
 	 */
-	public RedisConfigurationSource(RedisClient redisClient) {
+	public RedisConfigurationSource(io.inverno.mod.redis.RedisTransactionalClient<String, String> redisClient) {
 		this(redisClient, new JavaStringConverter(), new JavaStringConverter());
 	}
 	
@@ -171,9 +163,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param encoder     a string encoder
 	 * @param decoder     a string decoder
 	 */
-	public RedisConfigurationSource(RedisClient redisClient, JoinablePrimitiveEncoder<String> encoder, SplittablePrimitiveDecoder<String> decoder) {
+	public RedisConfigurationSource(io.inverno.mod.redis.RedisTransactionalClient<String, String> redisClient, JoinablePrimitiveEncoder<String> encoder, SplittablePrimitiveDecoder<String> decoder) {
 		super(encoder, decoder);
-		this.commands = redisClient.connect().reactive();
+		this.redisClient = redisClient;
 	}
 	
 	@Override
@@ -196,10 +188,12 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * Returns the list of metadata parameters.
 	 * </p>
 	 * 
+	 * @param operations
+	 * 
 	 * @return a mono emitting the list of metadata parameters
 	 */
-	protected Mono<List<List<String>>> getMetaDataParameterSets() {
-		return this.commands.smembers(META_DATA_CONTROL_KEY)
+	protected Mono<List<List<String>>> getMetaDataParameterSets(RedisOperations<String, String> operations) {
+		return operations.smembers(META_DATA_CONTROL_KEY)
 			.map(value -> Arrays.stream(value.split(",")).filter(s -> !s.isEmpty()).collect(Collectors.toList()))
 			.collectList();
 	}
@@ -209,14 +203,15 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * Returns the configuration metadata for the specified list of parameters extracted form a configuration query.
 	 * </p>
 	 *
+	 * @param operations a Redis connection
 	 * @param metaDataParameters a list of parameters
 	 *
 	 * @return a mono emitting the metadata
 	 */
-	protected Mono<RedisConfigurationMetaData> getMetaData(List<Parameter> metaDataParameters) {
+	protected Mono<RedisConfigurationMetaData> getMetaData(RedisOperations<String, String> operations, List<Parameter> metaDataParameters) {
 		String metaDataKey = asMetaDataKey(metaDataParameters);
-		return this.commands.hgetall(metaDataKey)
-			.collectMap(KeyValue::getKey, KeyValue::getValue)
+		return operations.hgetall(metaDataKey)
+			.collectMap(e -> e.getKey(), e -> e.getValue().get())
 			.doOnNext(data -> {
 				if(!data.containsKey(METADATA_FIELD_WORKING_REVISION)) {
 					throw new IllegalStateException("Invalid meta data found for key " + metaDataKey + ": Missing " + METADATA_FIELD_WORKING_REVISION);
@@ -225,7 +220,14 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 			.map(data -> new RedisConfigurationMetaData(metaDataParameters, data));
 	}
 	
-	private Mono<RedisConfigurationMetaData> getMetaData(List<Parameter> parameters, List<List<String>> metaDataParameterSets) {
+	/**
+	 * 
+	 * @param operations
+	 * @param parameters
+	 * @param metaDataParameterSets
+	 * @return 
+	 */
+	private Mono<RedisConfigurationMetaData> getMetaData(RedisOperations<String, String> operations, List<Parameter> parameters, List<List<String>> metaDataParameterSets) {
 		Map<String, Parameter> parametersByKey = parameters.stream().collect(Collectors.toMap(Parameter::getKey, Function.identity()));
 		return Flux.fromStream(metaDataParameterSets.stream()
 				.filter(set -> parametersByKey.keySet().containsAll(set))
@@ -234,9 +236,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 			.groupBy(queryParameters -> queryParameters.size())
 			.sort(Collections.reverseOrder(Comparator.comparing(cardGroup -> cardGroup.key())))
 			.flatMap(cardGroup -> cardGroup
-				.flatMap(queryParameters -> {
-					return this.getMetaData(queryParameters);
-				})
+				.flatMap(queryParameters -> this.getMetaData(operations, queryParameters))
 				.singleOrEmpty()
 				// TODO make this conflict explicit what are the problematic metadata
 				.onErrorMap(IndexOutOfBoundsException.class, ex -> new IllegalStateException("A conflict of MetaData has been detected when considering parameters [" + parameters.stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"))
@@ -263,13 +263,14 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 				duplicateParameters.add(parameter.getKey());
 			}
 		}
-		if(duplicateParameters.size() > 0) {
+		if(!duplicateParameters.isEmpty()) {
 			throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
 		}
 		
 		List<Parameter> parametersList = parameters != null ? Arrays.asList(parameters) : List.of();
-		return this.getMetaDataParameterSets()
-			.flatMap(metaDataParameterSets -> this.getMetaData(parametersList, metaDataParameterSets));
+		
+		return Mono.from(this.redisClient.connection(operations -> this.getMetaDataParameterSets(operations)
+			.flatMap(metaDataParameterSets -> this.getMetaData(operations, parametersList, metaDataParameterSets))));
 	}
 	
 	/**
@@ -291,24 +292,25 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 				duplicateParameters.add(parameter.getKey());
 			}
 		}
-		if(duplicateParameters.size() > 0) {
+		if(!duplicateParameters.isEmpty()) {
 			throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
 		}
 		
 		List<Parameter> parametersList = parameters != null ? Arrays.asList(parameters) : List.of();
 		String metaDataKey = asMetaDataKey(parametersList);
-		return this.getMetaDataParameterSets()
-			.flatMap(metaDataParameterSets -> this.getMetaData(parametersList, metaDataParameterSets))
+		
+		return Mono.from(this.redisClient.connection(operations -> this.getMetaDataParameterSets(operations)
+			.flatMap(metaDataParameterSets -> this.getMetaData(operations, parametersList, metaDataParameterSets))
 			.defaultIfEmpty(new RedisConfigurationMetaData(null, 1))
 			.flatMap(metaData -> {
 				int workingRevision = metaData.getWorkingRevision().get();
-				return this.commands.multi()
-					.flatMap(multiResponse -> {
-						// TODO Parameter key should be a valid Java identifier, idem for property name actually
-						this.commands.sadd(META_DATA_CONTROL_KEY, parametersList.stream().map(Parameter::getKey).sorted().collect(Collectors.joining(","))).subscribe();
-						// We always set the working revision since metadata might not exist for the specified parameters
-						this.commands.hset(metaDataKey, Map.of(METADATA_FIELD_ACTIVE_REVISION, Integer.toString(workingRevision), METADATA_FIELD_WORKING_REVISION, Integer.toString(workingRevision + 1))).subscribe();
-						return this.commands.exec();
+				return this.redisClient.multi(ops -> {
+						return Flux.just(
+							// TODO Parameter key should be a valid Java identifier, idem for property name actually
+							ops.sadd(META_DATA_CONTROL_KEY, parametersList.stream().map(Parameter::getKey).sorted().collect(Collectors.joining(","))),
+							// We always set the working revision since metadata might not exist for the specified parameters
+							ops.hset(metaDataKey, entries -> entries.entry(METADATA_FIELD_ACTIVE_REVISION, Integer.toString(workingRevision)).entry(METADATA_FIELD_WORKING_REVISION, Integer.toString(workingRevision + 1)))
+						);
 					})
 					.map(transactionResult -> {
 						if(transactionResult.wasDiscarded()) {
@@ -317,7 +319,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 						return Mono.empty();
 					});
 			})
-			.then();
+			.then()));
 	}
 	
 	/**
@@ -343,14 +345,15 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 				duplicateParameters.add(parameter.getKey());
 			}
 		}
-		if(duplicateParameters.size() > 0) {
+		if(!duplicateParameters.isEmpty()) {
 			throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
 		}
 		
 		List<Parameter> parametersList = parameters != null ? Arrays.asList(parameters) : List.of();
 		String metaDataKey = asMetaDataKey(parametersList);
-		return this.getMetaDataParameterSets()
-			.flatMap(metaDataParameterSets -> this.getMetaData(parametersList, metaDataParameterSets))
+		
+		return Mono.from(this.redisClient.connection(operations -> this.getMetaDataParameterSets(operations)
+			.flatMap(metaDataParameterSets -> this.getMetaData(operations, parametersList, metaDataParameterSets))
 			.defaultIfEmpty(new RedisConfigurationMetaData(null, 1))
 			.flatMap(metaData -> {
 				int workingRevision = metaData.getWorkingRevision().get();
@@ -361,13 +364,13 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 					return Mono.empty();
 				}
 				else {
-					return this.commands.multi()
-						.flatMap(multiResponse -> {
-							// TODO Parameter key should be a valid Java identifier, idem for property name actually
-							this.commands.sadd(META_DATA_CONTROL_KEY, parametersList.stream().map(Parameter::getKey).sorted().collect(Collectors.joining(","))).subscribe();
-							// We always set the working revision since metadata might not exist for the specified parameters
-							this.commands.hset(metaDataKey, Map.of(METADATA_FIELD_ACTIVE_REVISION, Integer.toString(revision), METADATA_FIELD_WORKING_REVISION, Integer.toString(revision == workingRevision ? workingRevision + 1 : workingRevision))).subscribe();
-							return this.commands.exec();
+					return this.redisClient.multi(ops -> {
+							return Flux.just(
+								// TODO Parameter key should be a valid Java identifier, idem for property name actually
+								ops.sadd(META_DATA_CONTROL_KEY, parametersList.stream().map(Parameter::getKey).sorted().collect(Collectors.joining(","))),
+								// We always set the working revision since metadata might not exist for the specified parameters
+								ops.hset(metaDataKey, entries -> entries.entry(METADATA_FIELD_ACTIVE_REVISION, Integer.toString(revision)).entry(METADATA_FIELD_WORKING_REVISION, Integer.toString(revision == workingRevision ? workingRevision + 1 : workingRevision)))
+							);
 						})
 						.map(transactionResult -> {
 							if(transactionResult.wasDiscarded()) {
@@ -377,7 +380,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 						});
 				}
 			})
-			.then();
+			.then()));
 	}
 	
 	/**
@@ -591,84 +594,92 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		
 		@Override
 		public Flux<ConfigurationQueryResult> execute() {
-			return this.source.getMetaDataParameterSets()
-				.flatMapMany(metaDataParameterSets -> {
-					Map<Integer, Map<List<Parameter>, List<RedisConfigurationQuery>>> queriesByMetaDataByCard = new TreeMap<>(Comparator.reverseOrder());
-					for(RedisConfigurationQuery query : this.queries) {
-						if(query.metaData != null) {
-							continue;
+			return Flux.from(this.source.redisClient.connection(operations -> {
+				return this.source.getMetaDataParameterSets(operations)
+					.flatMapMany(metaDataParameterSets -> {
+						Map<Integer, Map<List<Parameter>, List<RedisConfigurationQuery>>> queriesByMetaDataByCard = new TreeMap<>(Comparator.reverseOrder());
+						for(RedisConfigurationQuery query : this.queries) {
+							if(query.metaData != null) {
+								continue;
+							}
+							Map<String, Parameter> parametersByKey = query.parameters.stream().collect(Collectors.toMap(Parameter::getKey, Function.identity()));
+							metaDataParameterSets.stream()
+								.filter(set -> parametersByKey.keySet().containsAll(set))
+								.map(parametersSet -> parametersSet.stream().map(parametersByKey::get).collect(Collectors.toList()))
+								.forEach(metaKeyParameters -> {
+									if(queriesByMetaDataByCard.get(metaKeyParameters.size()) == null) {
+										queriesByMetaDataByCard.put(metaKeyParameters.size(), new HashMap<>());
+									}
+									Map<List<Parameter>, List<RedisConfigurationQuery>> currentCard = queriesByMetaDataByCard.get(metaKeyParameters.size());
+									if(!currentCard.containsKey(metaKeyParameters)) {
+										currentCard.put(metaKeyParameters, new ArrayList<>());
+									}
+									currentCard.get(metaKeyParameters).add(query);
+								});
 						}
-						Map<String, Parameter> parametersByKey = query.parameters.stream().collect(Collectors.toMap(Parameter::getKey, Function.identity()));
-						metaDataParameterSets.stream()
-							.filter(set -> parametersByKey.keySet().containsAll(set))
-							.map(parametersSet -> parametersSet.stream().map(parametersByKey::get).collect(Collectors.toList()))
-							.forEach(metaKeyParameters -> {
-								if(queriesByMetaDataByCard.get(metaKeyParameters.size()) == null) {
-									queriesByMetaDataByCard.put(metaKeyParameters.size(), new HashMap<>());
-								}
-								Map<List<Parameter>, List<RedisConfigurationQuery>> currentCard = queriesByMetaDataByCard.get(metaKeyParameters.size());
-								if(!currentCard.containsKey(metaKeyParameters)) {
-									currentCard.put(metaKeyParameters, new ArrayList<>());
-								}
-								currentCard.get(metaKeyParameters).add(query);
-							});
-					}
 
-					return Flux.fromIterable(queriesByMetaDataByCard.values())
-						.concatMap(queriesByMetaData -> Flux.fromStream(() -> queriesByMetaData.entrySet().stream().filter(e -> {
-									List<RedisConfigurationQuery> queries = e.getValue();
-									for(Iterator<RedisConfigurationQuery> queriesIterator = queries.iterator(); queriesIterator.hasNext();) {
-										if(queriesIterator.next().metaData != null) {
-											queriesIterator.remove();
+						return Flux.fromIterable(queriesByMetaDataByCard.values())
+							.concatMap(queriesByMetaData -> Flux.fromStream(() -> queriesByMetaData.entrySet().stream().filter(e -> {
+										List<RedisConfigurationQuery> queries = e.getValue();
+										for(Iterator<RedisConfigurationQuery> queriesIterator = queries.iterator(); queriesIterator.hasNext();) {
+											if(queriesIterator.next().metaData != null) {
+												queriesIterator.remove();
+											}
 										}
-									}
-									return !queries.isEmpty();
-								})
-							)
-							.flatMap(e -> this.source.getMetaData(e.getKey())
-								.doOnNext(metaData -> {
-									for(RedisConfigurationQuery query : e.getValue()) {
-										if(query.metaData != null) {
-											throw new IllegalStateException("MetaData " + asMetaDataKey(e.getKey()) + " is conflicting with " + asMetaDataKey(query.metaData.getParameters()) + " when considering parameters [" + query.parameters.stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?
+										return !queries.isEmpty();
+									})
+								)
+								.flatMap(e -> this.source.getMetaData(operations, e.getKey())
+									.doOnNext(metaData -> {
+										for(RedisConfigurationQuery query : e.getValue()) {
+											if(query.metaData != null) {
+												throw new IllegalStateException("MetaData " + asMetaDataKey(e.getKey()) + " is conflicting with " + asMetaDataKey(query.metaData.getParameters()) + " when considering parameters [" + query.parameters.stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?
+											}
+											query.metaData = metaData;
 										}
-										query.metaData = metaData;
-									}
-								})
-							)
-						);
-				})
-				.thenMany(Flux.fromIterable(this.queries))
-				.flatMap(query -> Flux.fromStream(query.names.stream().map(name -> new RedisConfigurationKey(name, query.metaData != null ? query.metaData : null, null, query.parameters)))
-					.flatMap(queryKey -> {
-						if(query.metaData != null && !query.metaData.getActiveRevision().isPresent()) {
-							// property is managed (ie. we found metadata) but there's no active or selected revision
-							return Mono.just(new RedisConfigurationQueryResult(queryKey, null));
-						}
-						
-						return this.source.commands
-							.zrevrangebyscoreWithScores(asPropertyKey(queryKey), Range.from(Boundary.including(0), query.metaData != null && query.metaData.activeRevision.isPresent() ? Boundary.including(query.metaData.getActiveRevision().get()) : Boundary.unbounded()), Limit.create(0, 1))
-							.next()
-							.map(result -> Optional.of(result))
-							.defaultIfEmpty(Optional.empty())
-							.map(result -> result.map(value -> {
-									try {
-										Optional<String> actualValue = new ConfigurationOptionParser<RedisConfigurationSource>(new StringProvider(value.getValue())).StartValueRevision();
-										if(actualValue != null) {
-											return new RedisConfigurationQueryResult(queryKey, new GenericConfigurationProperty<ConfigurationKey, RedisConfigurationSource, String>(new RedisConfigurationKey(queryKey.getName(), query.metaData != null ? query.metaData : null, (int)value.getScore(), queryKey.getParameters()), actualValue.orElse(null), this.source));
-										}
-										else {
-											// unset
-											return new RedisConfigurationQueryResult(queryKey, new GenericConfigurationProperty<ConfigurationKey, RedisConfigurationSource, String>(new RedisConfigurationKey(queryKey.getName(), query.metaData != null ? query.metaData : null, (int)value.getScore(), queryKey.getParameters()), this.source));
-										}
-									} 
-									catch (ParseException e) {
-										return new RedisConfigurationQueryResult(queryKey, this.source, new IllegalStateException("Invalid value found for key " + queryKey.toString() + " at revision " + (int)value.getScore(), e));
-									}
-								})
-								.orElse(new RedisConfigurationQueryResult(queryKey, null))
+									})
+								)
 							);
 					})
-				);
+					// TODO batch
+					.thenMany(Flux.fromIterable(this.queries)
+							.flatMap(query -> Flux.fromStream(query.names.stream().map(name -> new RedisConfigurationKey(name, query.metaData != null ? query.metaData : null, null, query.parameters)))
+							.flatMap(queryKey -> {
+								if(query.metaData != null && !query.metaData.getActiveRevision().isPresent()) {
+									// property is managed (ie. we found metadata) but there's no active or selected revision
+									return Mono.just(new RedisConfigurationQueryResult(queryKey, null));
+								}
+
+								return operations
+									.zrangeWithScores()
+									.reverse()
+									.byScore()
+									.limit(0, 1)
+									.build(asPropertyKey(queryKey), Bound.inclusive(0), query.metaData != null && query.metaData.activeRevision.isPresent() ? Bound.inclusive(query.metaData.getActiveRevision().get()) : Bound.unbounded())
+									.next()
+									.map(result -> Optional.of(result))
+									.defaultIfEmpty(Optional.empty())
+									.map(result -> result.map(value -> {
+											try {
+												Optional<String> actualValue = new ConfigurationOptionParser<RedisConfigurationSource>(new StringProvider(value.getValue())).StartValueRevision();
+												if(actualValue != null) {
+													return new RedisConfigurationQueryResult(queryKey, new GenericConfigurationProperty<ConfigurationKey, RedisConfigurationSource, String>(new RedisConfigurationKey(queryKey.getName(), query.metaData != null ? query.metaData : null, (int)value.getScore(), queryKey.getParameters()), actualValue.orElse(null), this.source));
+												}
+												else {
+													// unset
+													return new RedisConfigurationQueryResult(queryKey, new GenericConfigurationProperty<ConfigurationKey, RedisConfigurationSource, String>(new RedisConfigurationKey(queryKey.getName(), query.metaData != null ? query.metaData : null, (int)value.getScore(), queryKey.getParameters()), this.source));
+												}
+											} 
+											catch (ParseException e) {
+												return new RedisConfigurationQueryResult(queryKey, this.source, new IllegalStateException("Invalid value found for key " + queryKey.toString() + " at revision " + (int)value.getScore(), e));
+											}
+										})
+										.orElse(new RedisConfigurationQueryResult(queryKey, null))
+									);
+							})
+						)
+					);
+			}));
 		}
 	}
 	
@@ -783,88 +794,92 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 
 		@Override
 		public Flux<ConfigurationUpdateResult> execute() {
-			return this.source.getMetaDataParameterSets()
-				.flatMapMany(metaDataParameterSets -> {
-					Map<Integer, Map<List<Parameter>, List<RedisConfigurationUpdate>>> updatesByMetaDataByCard = new TreeMap<>(Comparator.reverseOrder());
-					for(RedisConfigurationUpdate update : this.updates) {
-						Map<String, Parameter> parametersByKey = update.parameters.stream().collect(Collectors.toMap(Parameter::getKey, Function.identity()));
-						metaDataParameterSets.stream()
-							.filter(set -> parametersByKey.keySet().containsAll(set))
-							.map(parametersSet -> parametersSet.stream().map(parametersByKey::get).collect(Collectors.toList()))
-							.forEach(metaKeyParameters -> {
-								if(updatesByMetaDataByCard.get(metaKeyParameters.size()) == null) {
-									updatesByMetaDataByCard.put(metaKeyParameters.size(), new HashMap<>());
-								}
-								Map<List<Parameter>, List<RedisConfigurationUpdate>> currentCard = updatesByMetaDataByCard.get(metaKeyParameters.size());
-								if(!currentCard.containsKey(metaKeyParameters)) {
-									currentCard.put(metaKeyParameters, new ArrayList<>());
-								}
-								currentCard.get(metaKeyParameters).add(update);
-							});
-					}
-					
-					return Flux.fromIterable(updatesByMetaDataByCard.values())
-						.concatMap(updatesByMetaData -> Mono.just(updatesByMetaData)
-							.doOnSubscribe(subscription -> {
-								updatesByMetaData.values().stream().forEach(updates -> {
-									for(Iterator<RedisConfigurationUpdate> updatesIterator = updates.iterator(); updatesIterator.hasNext();) {
-										if(updatesIterator.next().metaData != null) {
-											updatesIterator.remove();
-										}
+			return Flux.from(this.source.redisClient.connection(operations -> {
+				return this.source.getMetaDataParameterSets(operations)
+					.flatMapMany(metaDataParameterSets -> {
+						Map<Integer, Map<List<Parameter>, List<RedisConfigurationUpdate>>> updatesByMetaDataByCard = new TreeMap<>(Comparator.reverseOrder());
+						for(RedisConfigurationUpdate update : this.updates) {
+							Map<String, Parameter> parametersByKey = update.parameters.stream().collect(Collectors.toMap(Parameter::getKey, Function.identity()));
+							metaDataParameterSets.stream()
+								.filter(set -> parametersByKey.keySet().containsAll(set))
+								.map(parametersSet -> parametersSet.stream().map(parametersByKey::get).collect(Collectors.toList()))
+								.forEach(metaKeyParameters -> {
+									if(updatesByMetaDataByCard.get(metaKeyParameters.size()) == null) {
+										updatesByMetaDataByCard.put(metaKeyParameters.size(), new HashMap<>());
 									}
+									Map<List<Parameter>, List<RedisConfigurationUpdate>> currentCard = updatesByMetaDataByCard.get(metaKeyParameters.size());
+									if(!currentCard.containsKey(metaKeyParameters)) {
+										currentCard.put(metaKeyParameters, new ArrayList<>());
+									}
+									currentCard.get(metaKeyParameters).add(update);
 								});
-							})
-							.flatMapIterable(Map::entrySet)
-							.filter(e -> !e.getValue().isEmpty())
-							.flatMap(e -> this.source.getMetaData(e.getKey())
-								.doOnNext(metaData -> {
-									for(RedisConfigurationUpdate update : e.getValue()) {
-										if(update.metaData != null) {
-											throw new IllegalStateException("MetaData " + asMetaDataKey(e.getKey()) + " is conflicting with " + asMetaDataKey(update.metaData.getParameters()) + " when considering parameters [" + update.parameters.stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?, propagate error in the query result?
+						}
+
+						return Flux.fromIterable(updatesByMetaDataByCard.values())
+							.concatMap(updatesByMetaData -> Mono.just(updatesByMetaData)
+								.doOnSubscribe(subscription -> {
+									updatesByMetaData.values().stream().forEach(updates -> {
+										for(Iterator<RedisConfigurationUpdate> updatesIterator = updates.iterator(); updatesIterator.hasNext();) {
+											if(updatesIterator.next().metaData != null) {
+												updatesIterator.remove();
+											}
 										}
-										update.metaData = metaData;
-									}
+									});
 								})
-							)
-						);
-				})
-				.thenMany(Flux.fromStream(this.updates.stream()))
-				.flatMap(update -> Flux.fromStream(update.values.entrySet().stream())
-					.flatMap(valueEntry -> {
-						RedisConfigurationKey updateKey = new RedisConfigurationKey(valueEntry.getKey(), update.metaData != null ? update.metaData : new RedisConfigurationMetaData(null, 1), null, update.parameters);
-						
-						String redisKey = asPropertyKey(updateKey);
-						int workingRevision = updateKey.getMetaData().get().getWorkingRevision().get();
-						StringBuilder redisEncodedValue = new StringBuilder().append(workingRevision).append("{");
-						if(valueEntry.getValue() == null) {
-							redisEncodedValue.append("null");
-						}
-						if(valueEntry.getValue() instanceof SpecialValue) {
-							redisEncodedValue.append(valueEntry.getValue().toString().toLowerCase());
-						}
-						else {
-							try {
-								redisEncodedValue.append("\"").append(this.source.encoder.encode(valueEntry.getValue())).append("\"");
-							} 
-							catch (ConverterException e) {
-								return Mono.just(new RedisConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey.toString() + " at revision " + updateKey.revision, e)));
-							}
-						}
-						redisEncodedValue.append("}");
-						
-						this.source.commands.multi().subscribe();
-						this.source.commands.zremrangebyscore(redisKey, Range.from(Boundary.including(workingRevision), Boundary.including(workingRevision))).subscribe();
-						this.source.commands.zadd(redisKey, workingRevision, redisEncodedValue.toString()).subscribe();
-						
-						return this.source.commands.exec()
-							.map(transactionResult -> {
-								if(transactionResult.wasDiscarded()) {
-									return new RedisConfigurationUpdateResult(updateKey, this.source, new RuntimeException("Error setting key " + updateKey.toString() + " at revision " + workingRevision + ": Transaction was discarded"));
-								}
-								return new RedisConfigurationUpdateResult(updateKey);
-							});
+								.flatMapIterable(Map::entrySet)
+								.filter(e -> !e.getValue().isEmpty())
+								.flatMap(e -> this.source.getMetaData(operations, e.getKey())
+									.doOnNext(metaData -> {
+										for(RedisConfigurationUpdate update : e.getValue()) {
+											if(update.metaData != null) {
+												throw new IllegalStateException("MetaData " + asMetaDataKey(e.getKey()) + " is conflicting with " + asMetaDataKey(update.metaData.getParameters()) + " when considering parameters [" + update.parameters.stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?, propagate error in the query result?
+											}
+											update.metaData = metaData;
+										}
+									})
+								)
+							);
 					})
-				);
+					.thenMany(Flux.fromStream(this.updates.stream()))
+					.flatMap(update -> Flux.fromStream(update.values.entrySet().stream())
+						.flatMap(valueEntry -> {
+							RedisConfigurationKey updateKey = new RedisConfigurationKey(valueEntry.getKey(), update.metaData != null ? update.metaData : new RedisConfigurationMetaData(null, 1), null, update.parameters);
+
+							String redisKey = asPropertyKey(updateKey);
+							int workingRevision = updateKey.getMetaData().get().getWorkingRevision().get();
+							StringBuilder redisEncodedValue = new StringBuilder().append(workingRevision).append("{");
+							if(valueEntry.getValue() == null) {
+								redisEncodedValue.append("null");
+							}
+							if(valueEntry.getValue() instanceof SpecialValue) {
+								redisEncodedValue.append(valueEntry.getValue().toString().toLowerCase());
+							}
+							else {
+								try {
+									redisEncodedValue.append("\"").append(this.source.encoder.encode(valueEntry.getValue())).append("\"");
+								} 
+								catch (ConverterException e) {
+									return Mono.just(new RedisConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey.toString() + " at revision " + updateKey.revision, e)));
+								}
+							}
+							redisEncodedValue.append("}");
+
+							// TODO we should put all updates in a single multi
+							return this.source.redisClient.multi(ops -> {
+									return Flux.just(
+										ops.zremrangebyscore(redisKey, Bound.inclusive(workingRevision), Bound.inclusive(workingRevision)),
+										ops.zadd(redisKey, workingRevision, redisEncodedValue.toString())
+									);
+								})
+								.map(transactionResult -> {
+									if(transactionResult.wasDiscarded()) {
+										return new RedisConfigurationUpdateResult(updateKey, this.source, new RuntimeException("Error setting key " + updateKey.toString() + " at revision " + workingRevision + ": Transaction was discarded"));
+									}
+									return new RedisConfigurationUpdateResult(updateKey);
+								});
+						})
+					);
+			}));
 		}
 	}
 	

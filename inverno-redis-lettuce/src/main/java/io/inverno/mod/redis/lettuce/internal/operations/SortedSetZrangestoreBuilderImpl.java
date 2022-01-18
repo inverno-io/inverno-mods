@@ -75,14 +75,14 @@ public class SortedSetZrangestoreBuilderImpl<A, B, C extends StatefulConnection<
 	}
 	
 	@Override
-	public SortedSetZrangestoreBuilderImpl<A, B, C, ? extends Number> byScore() {
+	public SortedSetZrangestoreBuilderImpl<A, B, C, Number> byScore() {
 		this.byScore = true;
 		this.byLex = false;
-		return new SortedSetZrangestoreBuilderImpl<A, B, C, Long>(this);
+		return new SortedSetZrangestoreBuilderImpl<>(this);
 	}
 
 	@Override
-	public SortedSetZrangestoreBuilderImpl<A, B, C, ? extends B> byLex() {
+	public SortedSetZrangestoreBuilderImpl<A, B, C, B> byLex() {
 		this.byScore = false;
 		this.byLex = true;
 		return new SortedSetZrangestoreBuilderImpl<>(this);
@@ -102,7 +102,7 @@ public class SortedSetZrangestoreBuilderImpl<A, B, C extends StatefulConnection<
 	}
 	
 	@Override
-	public Mono<Long> build(A source, A destination, Bound<D> min, Bound<D> max) {
+	public <T extends D> Mono<Long> build(A source, A destination, Bound<T> min, Bound<T> max) {
 		if(this.commands != null) {
 			return this.build(this.commands, source, destination, min, max);
 		}
@@ -125,7 +125,7 @@ public class SortedSetZrangestoreBuilderImpl<A, B, C extends StatefulConnection<
 	 * @return 
 	 */
 	@SuppressWarnings("unchecked")
-	private Mono<Long> build(RedisSortedSetReactiveCommands<A, B> localCommands, A source, A destination, Bound<D> min, Bound<D> max) {
+	private <T extends D> Mono<Long> build(RedisSortedSetReactiveCommands<A, B> localCommands, A source, A destination, Bound<T> min, Bound<T> max) {
 		if(this.byScore) {
 			// score
 			if(this.reverse) {

@@ -1,23 +1,33 @@
-package io.inverno.mod.configuration.source;
+package io.inverno.mod.test.configuration;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
 import io.inverno.mod.configuration.ConfigurationKey.Parameter;
 import io.inverno.mod.configuration.ConfigurationQueryResult;
 import io.inverno.mod.configuration.ConfigurationUpdate.SpecialValue;
+import io.inverno.mod.configuration.source.RedisConfigurationSource;
 import io.inverno.mod.configuration.source.RedisConfigurationSource.RedisConfigurationKey;
 import io.inverno.mod.configuration.source.RedisConfigurationSource.RedisConfigurationQueryResult;
 import io.inverno.mod.configuration.source.RedisConfigurationSource.RedisExecutableConfigurationQuery;
-import io.lettuce.core.RedisClient;
+import io.inverno.mod.redis.RedisTransactionalClient;
+import io.inverno.mod.redis.lettuce.PoolRedisClient;
 import io.lettuce.core.RedisConnectionException;
+import io.lettuce.core.RedisURI;
+import io.lettuce.core.api.StatefulRedisConnection;
+import io.lettuce.core.codec.StringCodec;
+import io.lettuce.core.support.AsyncConnectionPoolSupport;
+import io.lettuce.core.support.BoundedAsyncPool;
+import io.lettuce.core.support.BoundedPoolConfig;
+import java.util.Set;
+import java.util.concurrent.CompletionException;
 
 @EnabledIf( value = "isEnabled", disabledReason = "Failed to connect to test Redis database" )
 public class RedisConfigurationSourceTest {
@@ -26,29 +36,34 @@ public class RedisConfigurationSourceTest {
 		System.setProperty("org.apache.logging.log4j.simplelog.level", "INFO");
 		System.setProperty("org.apache.logging.log4j.simplelog.logFile", "system.out");
 	}
+
+	private static final io.lettuce.core.RedisClient REDIS_CLIENT = io.lettuce.core.RedisClient.create();
 	
-	private static RedisClient createClient() {
-		return RedisClient.create("redis://localhost:6379");
+	private static PoolRedisClient<String, String, StatefulRedisConnection<String, String>> createClient() {
+		
+		BoundedAsyncPool<StatefulRedisConnection<String, String>> pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
+			() -> REDIS_CLIENT.connectAsync(StringCodec.UTF8, RedisURI.create("redis://localhost:6379")), 
+			BoundedPoolConfig.create()
+		);
+		return new PoolRedisClient<>(pool, String.class, String.class);
+	}
+	
+	private static void flushAll() {
+		REDIS_CLIENT.connect(RedisURI.create("redis://localhost:6379")).reactive().flushall().block();
 	}
 	
 	public static boolean isEnabled() {
-		RedisClient client = createClient();
-		
-		try {
-			client.connect();
+		try (StatefulRedisConnection<String, String> connection = REDIS_CLIENT.connect(RedisURI.create("redis://localhost:6379"))) {
 			return true;
 		}
 		catch (RedisConnectionException e) {
 			return false;
-		}
-		finally {
-			client.shutdown();
-		}
+		}	
 	}
 	
 	@Test
 	public void testRedisConfigurationSourceRedisClient() throws IllegalArgumentException, URISyntaxException {
-		RedisClient client = createClient();
+		RedisTransactionalClient<String, String> client = createClient();
 
 		try {
 			RedisConfigurationSource source = new RedisConfigurationSource(client);
@@ -438,14 +453,14 @@ public class RedisConfigurationSourceTest {
 			Assertions.assertEquals(4, source.getMetaData(Parameter.of("env", "production"), Parameter.of("customer", "cust1"), Parameter.of("application", "app")).block().getActiveRevision().get());
 		}
 		finally {
-			client.connect().reactive().flushall().block();
-			client.shutdown();
+			client.close().block();
+			flushAll();
 		}
 	}
 	
 	@Test
-	public void testConflictDetection() {
-		RedisClient client = RedisClient.create("redis://localhost:6379");
+	public void testConflictDetection() throws InterruptedException {
+		RedisTransactionalClient<String, String> client = createClient();
 
 		try {
 			RedisConfigurationSource source = new RedisConfigurationSource(client);
@@ -473,7 +488,8 @@ public class RedisConfigurationSourceTest {
 				Assertions.fail("Should throw an IllegalStateException");
 			} 
 			catch (IllegalStateException e) {
-				Assertions.assertEquals("MetaData CONF:META:[app=\"someApp\"] is conflicting with CONF:META:[customer=\"cust1\"] when considering parameters [customer=\"cust1\", app=\"someApp\"]", e.getMessage());
+				Assertions.assertEquals(Byte.MAX_VALUE, Byte.MAX_VALUE);
+				Assertions.assertTrue(Set.of("MetaData CONF:META:[customer=\"cust1\"] is conflicting with CONF:META:[app=\"someApp\"] when considering parameters [customer=\"cust1\", app=\"someApp\"]", "MetaData CONF:META:[app=\"someApp\"] is conflicting with CONF:META:[customer=\"cust1\"] when considering parameters [customer=\"cust1\", app=\"someApp\"]").contains(e.getMessage()));
 			}
 			
 			try {
@@ -486,14 +502,14 @@ public class RedisConfigurationSourceTest {
 			}
 		}
 		finally {
-			client.connect().reactive().flushall().block();
-			client.shutdown();
+			client.close().block();
+			flushAll();
 		}
 	}
 	
 	@Test
 	public void testUnset() {
-		RedisClient client = RedisClient.create("redis://localhost:6379");
+		RedisTransactionalClient<String, String> client = createClient();
 		try {
 			RedisConfigurationSource source = new RedisConfigurationSource(client);
 			
@@ -508,14 +524,14 @@ public class RedisConfigurationSourceTest {
 			Assertions.assertTrue(result.getResult().get().isUnset());
 		}
 		finally {
-			client.connect().reactive().flushall().block();
-			client.shutdown();
+			client.close().block();
+			flushAll();
 		}
 	}
 	
 	@Test
 	public void testNull() {
-		RedisClient client = createClient();
+		RedisTransactionalClient<String, String> client = createClient();
 
 		try {
 			RedisConfigurationSource source = new RedisConfigurationSource(client);
@@ -531,14 +547,14 @@ public class RedisConfigurationSourceTest {
 			Assertions.assertFalse(result.getResult().get().isPresent());
 		}
 		finally {
-			client.connect().reactive().flushall().block();
-			client.shutdown();
+			client.close().block();
+			flushAll();
 		}
 	}
 	
 	@Test
 	public void testSinglePerf() {
-		RedisClient client = createClient();
+		RedisTransactionalClient<String, String> client = createClient();
 
 		try {
 			RedisConfigurationSource source = new RedisConfigurationSource(client);
@@ -560,15 +576,15 @@ public class RedisConfigurationSourceTest {
 			Assertions.assertEquals(600000, avgPerf, 200000);
 		}
 		finally {
-			client.connect().reactive().flushall().block();
-			client.shutdown();
+			client.close().block();
+			flushAll();
 		}
 	}
 	
 	@Test
 //	@Disabled
 	public void testHeavyPerf() throws IllegalArgumentException, URISyntaxException {
-		RedisClient client = createClient();
+		RedisTransactionalClient<String, String> client = createClient();
 
 		try {
 			RedisConfigurationSource source = new RedisConfigurationSource(client);
@@ -635,8 +651,8 @@ public class RedisConfigurationSourceTest {
 			Assertions.assertEquals(120000000, avgPerf, 20000000);
 		}
 		finally {
-			client.connect().reactive().flushall().block();
-			client.shutdown();
+			client.close().block();
+			flushAll();
 		}
 	}
 }

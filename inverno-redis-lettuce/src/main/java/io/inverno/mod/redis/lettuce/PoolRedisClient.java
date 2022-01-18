@@ -103,7 +103,7 @@ public class PoolRedisClient<A, B, C extends StatefulRedisConnection<A, B>> exte
 	}
 
 	@Override
-	public Mono<RedisTransactionResult> multi(Function<RedisOperations<A, B>, Publisher<Publisher<Object>>> function, A... watches) {
+	public Mono<RedisTransactionResult> multi(Function<RedisOperations<A, B>, Publisher<Publisher<?>>> function, A... watches) {
 		// commands must be subscibed in the function: .set(...).subscribe() which basically returns QUEUED
 		return Mono.usingWhen(
 			this.multi(watches),
