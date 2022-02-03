@@ -44,6 +44,7 @@ import io.inverno.mod.web.ErrorWebRouteManager;
 import io.inverno.mod.web.ErrorWebRouter;
 import io.inverno.mod.web.ErrorWebRouterConfigurer;
 import io.netty.buffer.Unpooled;
+import org.apache.commons.text.StringEscapeUtils;
 import reactor.core.publisher.Mono;
 
 /**
@@ -253,7 +254,7 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 			}
 			
 			if(exchange.getError().getMessage() != null) {
-				error.append(",\"message\":\"").append(exchange.getError().getMessage()).append("\"");
+				error.append(",\"message\":\"").append(StringEscapeUtils.escapeJson(exchange.getError().getMessage())).append("\"");
 			}
 			error.append("}");
 			

@@ -123,7 +123,8 @@ module io.inverno.mod.web {
 	requires transitive io.inverno.mod.base;
 	requires io.inverno.mod.configuration;
 	requires transitive io.inverno.mod.http.server;
-	
+
+	requires org.apache.commons.text;
 	requires org.apache.logging.log4j;
 	requires reactor.core;
 	requires org.reactivestreams;
