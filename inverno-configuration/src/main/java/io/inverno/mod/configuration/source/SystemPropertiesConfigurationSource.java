@@ -18,6 +18,9 @@ package io.inverno.mod.configuration.source;
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
 import io.inverno.mod.configuration.AbstractPropertiesConfigurationSource;
 import io.inverno.mod.configuration.internal.JavaStringConverter;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -52,6 +55,16 @@ public class SystemPropertiesConfigurationSource extends AbstractPropertiesConfi
 	 * @param decoder a string decoder
 	 */
 	public SystemPropertiesConfigurationSource(SplittablePrimitiveDecoder<String> decoder) {
-		super(decoder, System::getProperty);
+		super(decoder);
+	}
+
+	@Override
+	protected Optional<String> getPropertyValue(String name) {
+		return Optional.ofNullable(System.getProperty(name));
+	}
+
+	@Override
+	protected Set<String> listProperties() {
+		return System.getProperties().keySet().stream().map(Object::toString).collect(Collectors.toSet());
 	}
 }

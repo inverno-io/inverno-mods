@@ -82,7 +82,7 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 
 	@Override
 	public HashListConfigurationQuery<A, B> list(String name) throws IllegalArgumentException {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		return new HashListConfigurationQuery<>(this, name);
 	}
 	
 	/**
@@ -155,10 +155,10 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		
 		@Override
 		public HashExecutableConfigurationQuery<A, B> withParameters(Parameter... parameters) throws IllegalArgumentException {
+			HashConfigurationQuery<A, B> currentQuery = this.queries.peekLast();
+			currentQuery.parameters.clear();
 			if(parameters != null && parameters.length > 0) {
-				HashConfigurationQuery<A, B> currentQuery = this.queries.peekLast();
 				Set<String> parameterKeys = new HashSet<>();
-				currentQuery.parameters.clear();
 				List<String> duplicateParameters = new LinkedList<>();
 				for(Parameter parameter : parameters) {
 					currentQuery.parameters.add(parameter);
@@ -214,26 +214,50 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 	
 	public static class HashListConfigurationQuery<A, B extends AbstractHashConfigurationSource<A, B>> implements ListConfigurationQuery<HashListConfigurationQuery<A, B>> {
 
-		private B source;
+		private final B source;
+		
+		private final String name;
+		
+		private final LinkedList<Parameter> parameters;
 		
 		@SuppressWarnings("unchecked")
-		private HashListConfigurationQuery(AbstractHashConfigurationSource<A, B> source) {
+		private HashListConfigurationQuery(AbstractHashConfigurationSource<A, B> source, String name) {
 			this.source = (B)source;
+			this.name = name;
+			this.parameters = new LinkedList<>();
 		}
 		
 		@Override
 		public HashListConfigurationQuery<A, B> withParameters(Parameter... parameters) throws IllegalArgumentException {
-			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+			this.parameters.clear();
+			if(parameters != null && parameters.length > 0) {
+				Set<String> parameterKeys = new HashSet<>();
+				List<String> duplicateParameters = new LinkedList<>();
+				for(Parameter parameter : parameters) {
+					this.parameters.add(parameter);
+					if(!parameterKeys.add(parameter.getKey())) {
+						duplicateParameters.add(parameter.getKey());
+					}
+				}
+				if(!duplicateParameters.isEmpty()) {
+					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
+				}
+			}
+			return this;
 		}
 
 		@Override
-		public List<ConfigurationProperty> execute() {
-			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		public Flux<ConfigurationProperty> execute() {
+			ConfigurationKey matchingKey = new GenericConfigurationKey(this.name, this.parameters);
+			return this.source.load()
+				.flatMapMany(properties -> Flux.fromStream(properties.stream().filter(property -> property.getKey().matches(matchingKey, true))));
 		}
 
 		@Override
-		public List<ConfigurationProperty> executeAll() {
-			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		public Flux<ConfigurationProperty> executeAll() {
+			ConfigurationKey matchingKey = new GenericConfigurationKey(this.name, this.parameters);
+			return this.source.load()
+				.flatMapMany(properties -> Flux.fromStream(properties.stream().filter(property -> property.getKey().matches(matchingKey, false))));
 		}
 	}
 }

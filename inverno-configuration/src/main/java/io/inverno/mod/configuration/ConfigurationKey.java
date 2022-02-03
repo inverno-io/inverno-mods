@@ -15,7 +15,14 @@
  */
 package io.inverno.mod.configuration;
 
+import io.inverno.mod.configuration.internal.GenericConfigurationKey;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -116,6 +123,17 @@ public interface ConfigurationKey {
 		
 		/**
 		 * <p>
+		 * Determines whether the parameter is a wildcard parameter.
+		 * </p>
+		 * 
+		 * @return true if the parameter is a wildcard parameter, false otherwise
+		 */
+		public boolean isWildcard() {
+			return false;
+		}
+		
+		/**
+		 * <p>
 		 * Creates a parameter with the specified key and value.
 		 * </p>
 		 *
@@ -143,7 +161,7 @@ public interface ConfigurationKey {
 		public static Parameter wildcard(String key) throws IllegalArgumentException {
 			return new WildcardParameter(key);
 		}
-
+		
 		@Override
 		public int hashCode() {
 			final int prime = 31;
@@ -212,6 +230,11 @@ public interface ConfigurationKey {
 		private WildcardParameter(String key) {
 			super(key);
 		}
+
+		@Override
+		public boolean isWildcard() {
+			return true;
+		}
 	}
 
 	/**
@@ -231,4 +254,306 @@ public interface ConfigurationKey {
 	 * @return a collection of parameters or an empty collection if the key does not define any parameter
 	 */
 	Collection<Parameter> getParameters();
+	
+	/**
+	 * <p>
+	 * Returns the parameter with the specified key.
+	 * </p>
+	 * 
+	 * @param key the parameter key
+	 * 
+	 * @return an optional returning the parameter or an empty optional if there's no parameter with the specified key
+	 */
+	Optional<Parameter> getParameter(String key);
+	
+	/**
+	 * <p>
+	 * Determines whether this configuration key macthes the other key.
+	 * <p>
+	 * 
+	 * <p>
+	 * When the match is exact, this method returns true only if the this key defines the exact same parameters as the other key with matching values.
+	 * </p>
+	 * 
+	 * <p>
+	 * When the match is not exact, it returns true when the other key defines the same parameters as the other key with matching values, it can define other parameters.
+	 * </p>
+	 * 
+	 * @param other the other key to match
+	 * @param exact true for exact matching, false otherwise
+	 * 
+	 * @return true if this key matches the other key, false otherwise
+	 */
+	boolean matches(ConfigurationKey other, boolean exact);
+	
+	/**
+	 * <p>
+	 * Creates a configuration key with the specified name and list of parameters specifying the context in which a property value is defined.
+	 * </p>
+	 * 
+	 * @param name       the configuration property name
+	 * @param parameters the configuration property parameters
+	 * 
+	 * @return a configuration key
+	 */
+	public static ConfigurationKey of(String name, Parameter... parameters) {
+		if(parameters != null) {
+			Set<String> parameterKeys = new HashSet<>();
+			List<Parameter> parametersList = new LinkedList<>();
+			List<String> duplicateParameters = new LinkedList<>();
+			for(Parameter parameter : parameters) {
+				parametersList.add(parameter);
+				if(!parameterKeys.add(parameter.getKey())) {
+					duplicateParameters.add(parameter.getKey());
+				}
+			}
+			if(!duplicateParameters.isEmpty()) {
+				throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
+			}
+			return new GenericConfigurationKey(name, parametersList);
+		}
+		else {
+			return new GenericConfigurationKey(name);
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Creates a configuration key with the specified name and parameter specifying the context in which a property value is defined.
+	 * </p>
+	 *
+	 * @param name the configuration property name
+	 * @param k1   the parameter name
+	 * @param v1   the parameter value
+	 *
+	 * @return a configuration key
+	 */
+	public static ConfigurationKey of(String name, String k1, Object v1) {
+		return of(name, Parameter.of(k1, v1));
+	}
+	
+	/**
+	 * <p>
+	 * Creates a configuration key with the specified name and parameters specifying the context in which a property value is defined.
+	 * </p>
+	 *
+	 * @param name the configuration property name
+	 * @param k1   the first parameter name
+	 * @param v1   the first parameter value
+	 * @param k2   the second parameter name
+	 * @param v2   the second parameter value
+	 *
+	 * @return a configuration key
+	 */
+	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2) {
+		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2));
+	}
+	
+	/**
+	 * <p>
+	 * Creates a configuration key with the specified name and parameters specifying the context in which a property value is defined.
+	 * </p>
+	 *
+	 * @param name the configuration property name
+	 * @param k1   the first parameter name
+	 * @param v1   the first parameter value
+	 * @param k2   the second parameter name
+	 * @param v2   the second parameter value
+	 * @param k3   the third parameter name
+	 * @param v3   the third parameter value
+	 * 
+	 * @return a configuration key
+	 */
+	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3) {
+		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3));
+	}
+	
+	/**
+	 * <p>
+	 * Creates a configuration key with the specified name and parameters specifying the context in which a property value is defined.
+	 * </p>
+	 *
+	 * @param name the configuration property name
+	 * @param k1   the first parameter name
+	 * @param v1   the first parameter value
+	 * @param k2   the second parameter name
+	 * @param v2   the second parameter value
+	 * @param k3   the third parameter name
+	 * @param v3   the third parameter value
+	 * @param k4   the fourth parameter name
+	 * @param v4   the fourth parameter value
+	 * 
+	 * @return a configuration key
+	 */
+	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) {
+		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4));
+	}
+	
+	/**
+	 * <p>
+	 * Creates a configuration key with the specified name and parameters specifying the context in which a property value is defined.
+	 * </p>
+	 *
+	 * @param name the configuration property name
+	 * @param k1   the first parameter name
+	 * @param v1   the first parameter value
+	 * @param k2   the second parameter name
+	 * @param v2   the second parameter value
+	 * @param k3   the third parameter name
+	 * @param v3   the third parameter value
+	 * @param k4   the fourth parameter name
+	 * @param v4   the fourth parameter value
+	 * @param k5   the fifth parameter name
+	 * @param v5   the fifth parameter value
+	 * 
+	 * @return a configuration key
+	 */
+	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) {
+		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5));
+	}
+	
+	/**
+	 * <p>
+	 * Creates a configuration key with the specified name and parameters specifying the context in which a property value is defined.
+	 * </p>
+	 *
+	 * @param name the configuration property name
+	 * @param k1   the first parameter name
+	 * @param v1   the first parameter value
+	 * @param k2   the second parameter name
+	 * @param v2   the second parameter value
+	 * @param k3   the third parameter name
+	 * @param v3   the third parameter value
+	 * @param k4   the fourth parameter name
+	 * @param v4   the fourth parameter value
+	 * @param k5   the fifth parameter name
+	 * @param v5   the fifth parameter value
+	 * @param k6   the sixth parameter name
+	 * @param v6   the sixth parameter value
+	 * 
+	 * @return a configuration key
+	 */
+	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) {
+		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6));
+	}
+	
+	/**
+	 * <p>
+	 * Creates a configuration key with the specified name and parameters specifying the context in which a property value is defined.
+	 * </p>
+	 *
+	 * @param name the configuration property name
+	 * @param k1   the first parameter name
+	 * @param v1   the first parameter value
+	 * @param k2   the second parameter name
+	 * @param v2   the second parameter value
+	 * @param k3   the third parameter name
+	 * @param v3   the third parameter value
+	 * @param k4   the fourth parameter name
+	 * @param v4   the fourth parameter value
+	 * @param k5   the fifth parameter name
+	 * @param v5   the fifth parameter value
+	 * @param k6   the sixth parameter name
+	 * @param v6   the sixth parameter value
+	 * @param k7   the seventh parameter name
+	 * @param v7   the seventh parameter value
+	 * 
+	 * @return a configuration key
+	 */
+	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) {
+		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7));
+	}
+	
+	/**
+	 * <p>
+	 * Creates a configuration key with the specified name and parameters specifying the context in which a property value is defined.
+	 * </p>
+	 *
+	 * @param name the configuration property name
+	 * @param k1   the first parameter name
+	 * @param v1   the first parameter value
+	 * @param k2   the second parameter name
+	 * @param v2   the second parameter value
+	 * @param k3   the third parameter name
+	 * @param v3   the third parameter value
+	 * @param k4   the fourth parameter name
+	 * @param v4   the fourth parameter value
+	 * @param k5   the fifth parameter name
+	 * @param v5   the fifth parameter value
+	 * @param k6   the sixth parameter name
+	 * @param v6   the sixth parameter value
+	 * @param k7   the seventh parameter name
+	 * @param v7   the seventh parameter value
+	 * @param k8   the eighth parameter name
+	 * @param v8   the eighth parameter value
+	 * 
+	 * @return a configuration key
+	 */
+	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) {
+		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8));
+	}
+	
+	/**
+	 * <p>
+	 * Creates a configuration key with the specified name and parameters specifying the context in which a property value is defined.
+	 * </p>
+	 *
+	 * @param name the configuration property name
+	 * @param k1   the first parameter name
+	 * @param v1   the first parameter value
+	 * @param k2   the second parameter name
+	 * @param v2   the second parameter value
+	 * @param k3   the third parameter name
+	 * @param v3   the third parameter value
+	 * @param k4   the fourth parameter name
+	 * @param v4   the fourth parameter value
+	 * @param k5   the fifth parameter name
+	 * @param v5   the fifth parameter value
+	 * @param k6   the sixth parameter name
+	 * @param v6   the sixth parameter value
+	 * @param k7   the seventh parameter name
+	 * @param v7   the seventh parameter value
+	 * @param k8   the eighth parameter name
+	 * @param v8   the eighth parameter value
+	 * @param k9   the nineth parameter name
+	 * @param v9   the nineth parameter value
+	 * 
+	 * @return a configuration key
+	 */
+	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) {
+		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9));
+	}
+	
+	/**
+	 * <p>
+	 * Creates a configuration key with the specified name and parameters specifying the context in which a property value is defined.
+	 * </p>
+	 *
+	 * @param name the configuration property name
+	 * @param k1   the first parameter name
+	 * @param v1   the first parameter value
+	 * @param k2   the second parameter name
+	 * @param v2   the second parameter value
+	 * @param k3   the third parameter name
+	 * @param v3   the third parameter value
+	 * @param k4   the fourth parameter name
+	 * @param v4   the fourth parameter value
+	 * @param k5   the fifth parameter name
+	 * @param v5   the fifth parameter value
+	 * @param k6   the sixth parameter name
+	 * @param v6   the sixth parameter value
+	 * @param k7   the seventh parameter name
+	 * @param v7   the seventh parameter value
+	 * @param k8   the eighth parameter name
+	 * @param v8   the eighth parameter value
+	 * @param k9   the nineth parameter name
+	 * @param v9   the nineth parameter value
+	 * @param k10  the tenth parameter name
+	 * @param v10  the tenth parameter value
+	 *
+	 * @return a configuration key
+	 */
+	public static ConfigurationKey of(String name, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) {
+		return of(name, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9), Parameter.of(k10, v10));
+	}
 }

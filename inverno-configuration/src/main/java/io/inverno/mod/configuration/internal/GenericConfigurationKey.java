@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import io.inverno.mod.configuration.ConfigurationKey;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -34,9 +37,11 @@ import io.inverno.mod.configuration.ConfigurationKey;
  */
 public class GenericConfigurationKey implements ConfigurationKey {
 
-	protected String name;
+	protected final String name;
 	
-	protected Collection<Parameter> parameters;
+	protected final Collection<Parameter> parameters;
+	
+	protected Map<String, Parameter> parametersByKey;
 	
 	/**
 	 * <p>
@@ -79,6 +84,45 @@ public class GenericConfigurationKey implements ConfigurationKey {
 		return this.parameters;
 	}
 
+	@Override
+	public Optional<Parameter> getParameter(String key) {
+		if(this.parametersByKey == null) {
+			this.parametersByKey = this.parameters.stream().collect(Collectors.toMap(Parameter::getKey, Function.identity()));
+		}
+		return Optional.ofNullable(this.parametersByKey.get(key));
+	}
+
+	@Override
+	public boolean matches(ConfigurationKey other, boolean exact) {
+		if(!this.name.equals(other.getName())) {
+			return false;
+		}
+		if(exact && this.parameters.size() != other.getParameters().size()) {
+			return false;
+		}
+		
+		Map<String, Parameter> thisParameters = this.parameters.stream().collect(Collectors.toMap(Parameter::getKey, p -> p));
+		Map<String, Parameter> otherParameters = other.getParameters().stream().collect(Collectors.toMap(Parameter::getKey, p -> p));
+		
+		for(String key : otherParameters.keySet()) {
+			Parameter otherParameter = otherParameters.get(key);
+			Parameter thisParameter = thisParameters.get(key);
+			
+			if(thisParameter == null) {
+				return false;
+			}
+			
+			if(otherParameter.isWildcard() || thisParameter.isWildcard()) {
+				continue;
+			}
+
+			if(!otherParameter.getValue().equals(thisParameter.getValue())) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

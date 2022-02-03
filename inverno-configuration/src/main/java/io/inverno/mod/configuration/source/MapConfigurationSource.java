@@ -18,8 +18,20 @@ package io.inverno.mod.configuration.source;
 import java.util.Map;
 
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
+import io.inverno.mod.configuration.AbstractHashConfigurationSource;
 import io.inverno.mod.configuration.AbstractPropertiesConfigurationSource;
+import io.inverno.mod.configuration.ConfigurationKey;
+import io.inverno.mod.configuration.ConfigurationProperty;
+import io.inverno.mod.configuration.internal.GenericConfigurationProperty;
 import io.inverno.mod.configuration.internal.ObjectDecoder;
+import io.inverno.mod.configuration.internal.parser.option.ConfigurationOptionParser;
+import io.inverno.mod.configuration.internal.parser.option.ParseException;
+import io.inverno.mod.configuration.internal.parser.option.StringProvider;
+import java.util.LinkedList;
+import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -27,16 +39,30 @@ import io.inverno.mod.configuration.internal.ObjectDecoder;
  * </p>
  *
  * <p>
- * Note that this source doesn't support parameterized queries, regardless of the parameters specified in a query, only the configuration key name is considered when resolving a value.
+ * This source supports parameterized configuration properties defined as follows:
  * </p>
+ * 
+ * <blockquote><pre>
+ * Map<String, Object> map = Map.of(
+ *     "web.server_port", 8080,
+ *     "db.url[env=\"dev\"]", "jdbc:oracle:thin:@dev.db.server:1521:sid",
+ *     "db.url[env=\"prod\",zone=\"eu\"]", "jdbc:oracle:thin:@prod_eu.db.server:1521:sid",
+ *     "db.url[env=\"prod\",zone=\"eu\"]", "jdbc:oracle:thin:@prod_eu.db.server:1521:sid",
+ *     "db.url[env=\"prod\",zone=\"us\"]", "jdbc:oracle:thin:@prod_us.db.server:1521:sid"
+ * );
+ * </pre></blockquote>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
  * @see AbstractPropertiesConfigurationSource
  */
-public class MapConfigurationSource extends AbstractPropertiesConfigurationSource<Object, MapConfigurationSource> {
+public class MapConfigurationSource extends AbstractHashConfigurationSource<Object, MapConfigurationSource> {
 
+	private static final Logger LOGGER = LogManager.getLogger(MapConfigurationSource.class);
+	
+	protected final Map<String, Object> map;
+	
 	/**
 	 * <p>
 	 * Creates a map configuration source with the specified map.
@@ -53,10 +79,30 @@ public class MapConfigurationSource extends AbstractPropertiesConfigurationSourc
 	 * Creates a map configuration source with the specified map and string value decoder.
 	 * </p>
 	 *
-	 * @param properties a map of properties
+	 * @param map a map defining the properties
 	 * @param decoder    a string decoder
 	 */
-	public MapConfigurationSource(Map<String, Object> properties, SplittablePrimitiveDecoder<Object> decoder) {
-		super(decoder, properties::get);
+	public MapConfigurationSource(Map<String, Object> map, SplittablePrimitiveDecoder<Object> decoder) {
+		super(decoder);
+		this.map = map;
+	}
+
+	@Override
+	protected Mono<List<ConfigurationProperty>> load() {
+		return Mono.fromSupplier(() -> {
+			List<ConfigurationProperty> properties = new LinkedList<>();
+			for(Map.Entry<String, Object> entry : this.map.entrySet()) {
+				try {
+					ConfigurationOptionParser<?> parser = new ConfigurationOptionParser<>(new StringProvider(entry.getKey()));
+					ConfigurationKey configurationKey = parser.StartKey();
+					ConfigurationProperty configurationProperty = new GenericConfigurationProperty<>(configurationKey, entry.getValue().toString(), this);
+					properties.add(configurationProperty);
+				} 
+				catch (ParseException e) {
+					LOGGER.warn(() -> "Ignoring property " + entry.getKey() + " after parsing error: " + e.getMessage());
+				}
+			}
+			return properties;
+		});
 	}
 }

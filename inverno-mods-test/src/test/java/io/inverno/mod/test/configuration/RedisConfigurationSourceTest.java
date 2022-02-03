@@ -2,7 +2,6 @@ package io.inverno.mod.test.configuration;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -11,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
 import io.inverno.mod.configuration.ConfigurationKey.Parameter;
+import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.ConfigurationQueryResult;
 import io.inverno.mod.configuration.ConfigurationUpdate.SpecialValue;
 import io.inverno.mod.configuration.source.RedisConfigurationSource;
@@ -27,7 +27,7 @@ import io.lettuce.core.support.AsyncConnectionPoolSupport;
 import io.lettuce.core.support.BoundedAsyncPool;
 import io.lettuce.core.support.BoundedPoolConfig;
 import java.util.Set;
-import java.util.concurrent.CompletionException;
+import java.util.stream.Collectors;
 
 @EnabledIf( value = "isEnabled", disabledReason = "Failed to connect to test Redis database" )
 public class RedisConfigurationSourceTest {
@@ -503,7 +503,7 @@ public class RedisConfigurationSourceTest {
 		}
 		finally {
 			client.close().block();
-			flushAll();
+//			flushAll();
 		}
 	}
 	
@@ -553,6 +553,68 @@ public class RedisConfigurationSourceTest {
 	}
 	
 	@Test
+	public void testList() {
+		RedisTransactionalClient<String, String> client = createClient();
+		
+		try {
+			RedisConfigurationSource source = new RedisConfigurationSource(client);
+			
+			source
+				.set("logging.level", "info").withParameters("environment", "prod", "name", "test1").and()
+				.set("logging.level", "debug").withParameters("environment", "dev", "name", "test1").and()
+				.set("logging.level", "info").withParameters("environment", "prod", "name", "test2").and()
+				.set("logging.level", "error").withParameters("environment", "prod", "name", "test3")
+				.execute()
+				.collectList()
+				.block();
+
+			source.activate().block();
+			
+			List<ConfigurationProperty> result = source.list("logging.level").executeAll().collectList().block();
+			Assertions.assertEquals(4, result.size());
+			Assertions.assertEquals(
+				Set.of(
+					"logging.level[environment=\"prod\",name=\"test1\"] = info", 
+					"logging.level[environment=\"dev\",name=\"test1\"] = debug", 
+					"logging.level[environment=\"prod\",name=\"test3\"] = error", 
+					"logging.level[environment=\"prod\",name=\"test2\"] = info"
+				), 
+				result.stream().map(p -> p.toString()).collect(Collectors.toSet())
+			);
+			
+			result = source.list("logging.level").execute().collectList().block();
+			Assertions.assertEquals(0, result.size());
+			
+			result = source.list("logging.level").withParameters(Parameter.of("environment", "prod"), Parameter.wildcard("name")).execute().collectList().block();
+			Assertions.assertEquals(3, result.size());
+			Assertions.assertEquals(
+				Set.of(
+					"logging.level[environment=\"prod\",name=\"test1\"] = info", 
+					"logging.level[environment=\"prod\",name=\"test3\"] = error", 
+					"logging.level[environment=\"prod\",name=\"test2\"] = info"
+				), 
+				result.stream().map(p -> p.toString()).collect(Collectors.toSet())
+			);
+			
+			result = source.list("logging.level").withParameters(Parameter.of("environment", "dev")).execute().collectList().block();
+			Assertions.assertEquals(0, result.size());
+			
+			result = source.list("logging.level").withParameters(Parameter.of("environment", "dev")).executeAll().collectList().block();
+			Assertions.assertEquals(1, result.size());
+			Assertions.assertEquals(
+				Set.of(
+					"logging.level[environment=\"dev\",name=\"test1\"] = debug"
+				), 
+				result.stream().map(p -> p.toString()).collect(Collectors.toSet())
+			);
+		}
+		finally {
+			client.close().block();
+			flushAll();
+		}
+	}
+	
+	@Test
 	public void testSinglePerf() {
 		RedisTransactionalClient<String, String> client = createClient();
 
@@ -573,7 +635,8 @@ public class RedisConfigurationSourceTest {
 			double avgPerf = (total / count);
 			System.out.println("AVG: " + (total / count));
 			
-			Assertions.assertEquals(600000, avgPerf, 200000);
+			// This obviously depends on the hardware
+			Assertions.assertEquals(750000, avgPerf, 400000); // 0.75ms to fetch 1 property
 		}
 		finally {
 			client.close().block();
@@ -648,7 +711,8 @@ public class RedisConfigurationSourceTest {
 			double avgPerf = (total / count);
 			System.out.println("AVG: " + (total / count));
 			
-			Assertions.assertEquals(120000000, avgPerf, 20000000);
+			// This obviously depends on the hardware
+			Assertions.assertEquals(65000000, avgPerf, 10000000); // 65ms to fetch 4000 properties
 		}
 		finally {
 			client.close().block();

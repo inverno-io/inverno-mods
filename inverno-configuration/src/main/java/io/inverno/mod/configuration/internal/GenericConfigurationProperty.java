@@ -53,9 +53,9 @@ import io.inverno.mod.configuration.ConfigurationProperty;
  */
 public class GenericConfigurationProperty<A extends ConfigurationKey, B extends AbstractConfigurationSource<?, ?, ?, C>, C> implements ConfigurationProperty {
 
-	protected A key;
+	protected final A key;
 
-	protected B source;
+	protected final B source;
 	
 	protected C value;
 	

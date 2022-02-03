@@ -23,3 +23,30 @@ datasource.password = "password"
 [ environment="testUnset" ] {
 	datasource.password = unset
 }
+
+[ environment="dev" ] {
+	[node="node-1"] {
+		logging.level = "info"
+	}
+	[name="test1"] { 
+		logging.level = "debug" 
+	}
+	[name="test2"] {
+		logging.level = "debug"
+	}
+	[name="test2",node="node-1"] {
+		logging.level = "debug"
+	}
+}
+
+[ environment="prod" ] {
+	[name="test1"] {
+		logging.level = "warn"
+	}
+	[name="test3"] {
+		logging.level = "error"
+	}
+	[name="test2"] {
+		logging.level = "info"
+	}
+}

@@ -166,7 +166,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 
 	@Override
 	public CompositeListConfigurationQuery list(String name) throws IllegalArgumentException {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		return new CompositeListConfigurationQuery(this, name);
 	}
 	
 	@SuppressWarnings("rawtypes")
@@ -316,10 +316,10 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		
 		@Override
 		public CompositeExecutableConfigurationQuery withParameters(Parameter... parameters) throws IllegalArgumentException {
+			CompositeConfigurationQuery currentQuery = this.queries.peekLast();
+			currentQuery.parameters.clear();
 			if(parameters != null && parameters.length > 0) {
-				CompositeConfigurationQuery currentQuery = this.queries.peekLast();
 				Set<String> parameterKeys = new HashSet<>();
-				currentQuery.parameters.clear();
 				List<String> duplicateParameters = new LinkedList<>();
 				for(Parameter parameter : parameters) {
 					currentQuery.parameters.add(parameter);
@@ -327,7 +327,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 						duplicateParameters.add(parameter.getKey());
 					}
 				}
-				if(duplicateParameters.size() > 0) {
+				if(!duplicateParameters.isEmpty()) {
 					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
 				}
 			}
@@ -405,7 +405,7 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		}
 		
 		private SourceExecutableConfigurationQueryWrapper populateSourceQuery(SourceConfigurationQueryWrapper queryWrapper) {
-			SourceExecutableConfigurationQueryWrapper executableQueryWrapper = (SourceExecutableConfigurationQueryWrapper)this.strategy.populateSourceQuery(this.queryKey, queryWrapper, this.queryResult.orElse(null));
+			SourceExecutableConfigurationQueryWrapper executableQueryWrapper = (SourceExecutableConfigurationQueryWrapper)this.strategy.populateSourceQuery(this.queryKey, queryWrapper, this.queryResult.map(ConfigurationProperty::getKey).orElse(null));
 			if(executableQueryWrapper != null && executableQueryWrapper.queryWrapper != queryWrapper) {
 				// Make sure the strategy respects the rules
 				throw new IllegalStateException("Broken query chain");
@@ -424,9 +424,9 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 				try {
 					if(!this.resolved) {
 						result.getResult().ifPresent(property -> {
-							if(this.strategy.isSuperseded(this.queryKey, this.queryResult.orElse(null), property)) {
+							if(this.strategy.isSuperseded(this.queryKey, this.queryResult.map(ConfigurationProperty::getKey).orElse(null), property.getKey())) {
 								this.queryResult = property.isUnset() ? Optional.empty() : Optional.of(property);
-								this.resolved = this.strategy.isResolved(this.queryKey, property);
+								this.resolved = this.strategy.isResolved(this.queryKey, property.getKey());
 							}
 						});
 					}
@@ -453,19 +453,47 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 	
 	public static class CompositeListConfigurationQuery implements ListConfigurationQuery<CompositeListConfigurationQuery> {
 
+		private final CompositeConfigurationSource source;
+		
+		private final String name;
+		
+		private final LinkedList<Parameter> parameters;
+
+		public CompositeListConfigurationQuery(CompositeConfigurationSource source, String name) {
+			this.source = source;
+			this.name = name;
+			this.parameters = new LinkedList<>();
+		}
+		
 		@Override
 		public CompositeListConfigurationQuery withParameters(Parameter... parameters) throws IllegalArgumentException {
-			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+			this.parameters.clear();
+			if(parameters != null && parameters.length > 0) {
+				Set<String> parameterKeys = new HashSet<>();
+				List<String> duplicateParameters = new LinkedList<>();
+				for(Parameter parameter : parameters) {
+					this.parameters.add(parameter);
+					if(!parameterKeys.add(parameter.getKey())) {
+						duplicateParameters.add(parameter.getKey());
+					}
+				}
+				if(!duplicateParameters.isEmpty()) {
+					throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
+				}
+			}
+			return this;
 		}
 
 		@Override
-		public List<ConfigurationProperty> execute() {
-			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		public Flux<ConfigurationProperty> execute() {
+			// We must get ALL properties defined for name for each source and invoke strategy#combineList
+			return this.source.strategy.combineList(new GenericConfigurationKey(this.name, this.parameters), this.source.sources.stream().map(src -> src.list(this.name).executeAll()).collect(Collectors.toList()));
 		}
 
 		@Override
-		public List<ConfigurationProperty> executeAll() {
-			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		public Flux<ConfigurationProperty> executeAll() {
+			// We must get ALL properties defined for name for each source and invoke strategy#combineListAll
+			return this.source.strategy.combineListAll(new GenericConfigurationKey(this.name, this.parameters), this.source.sources.stream().map(src -> src.list(this.name).executeAll()).collect(Collectors.toList()));
 		}
 	}
 }

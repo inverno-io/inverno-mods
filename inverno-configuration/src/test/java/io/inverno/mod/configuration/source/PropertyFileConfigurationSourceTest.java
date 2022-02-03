@@ -9,9 +9,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.inverno.mod.base.resource.ClasspathResource;
-import io.inverno.mod.configuration.AbstractHashConfigurationSource.HashConfigurationQueryResult;
+import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationKey.Parameter;
+import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.ConfigurationQueryResult;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PropertyFileConfigurationSourceTest {
 
@@ -72,5 +75,48 @@ public class PropertyFileConfigurationSourceTest {
 		Assertions.assertEquals("some_string", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals("toto\ntata", current.getResult().get().asString().get());
+	}
+	
+	@Test
+	public void testList() {
+		PropertyFileConfigurationSource source = new PropertyFileConfigurationSource(new ClasspathResource(URI.create("classpath:/test-configuration.properties")));
+		
+		List<ConfigurationProperty> result = source.list("logging.level").executeAll().collectList().block();
+		Assertions.assertEquals(4, result.size());
+		Assertions.assertEquals(
+			Set.of(
+				"logging.level[environment=\"prod\",name=\"test1\"] = info", 
+				"logging.level[environment=\"dev\",name=\"test1\"] = debug", 
+				"logging.level[environment=\"prod\",name=\"test3\"] = error", 
+				"logging.level[environment=\"prod\",name=\"test2\"] = info"
+			), 
+			result.stream().map(p -> p.toString()).collect(Collectors.toSet())
+		);
+
+		result = source.list("logging.level").execute().collectList().block();
+		Assertions.assertEquals(0, result.size());
+
+		result = source.list("logging.level").withParameters(Parameter.of("environment", "prod"), Parameter.wildcard("name")).execute().collectList().block();
+		Assertions.assertEquals(3, result.size());
+		Assertions.assertEquals(
+			Set.of(
+				"logging.level[environment=\"prod\",name=\"test1\"] = info", 
+				"logging.level[environment=\"prod\",name=\"test3\"] = error", 
+				"logging.level[environment=\"prod\",name=\"test2\"] = info"
+			), 
+			result.stream().map(p -> p.toString()).collect(Collectors.toSet())
+		);
+
+		result = source.list("logging.level").withParameters(Parameter.of("environment", "dev")).execute().collectList().block();
+		Assertions.assertEquals(0, result.size());
+
+		result = source.list("logging.level").withParameters(Parameter.of("environment", "dev")).executeAll().collectList().block();
+		Assertions.assertEquals(1, result.size());
+		Assertions.assertEquals(
+			Set.of(
+				"logging.level[environment=\"dev\",name=\"test1\"] = debug"
+			), 
+			result.stream().map(p -> p.toString()).collect(Collectors.toSet())
+		);
 	}
 }

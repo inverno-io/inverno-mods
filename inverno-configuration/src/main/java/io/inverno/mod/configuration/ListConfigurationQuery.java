@@ -15,7 +15,8 @@
  */
 package io.inverno.mod.configuration;
 
-import java.util.List;
+import io.inverno.mod.configuration.ConfigurationKey.WildcardParameter;
+import reactor.core.publisher.Flux;
 
 /**
  * <p>
@@ -300,23 +301,23 @@ public interface ListConfigurationQuery<A extends ListConfigurationQuery<A>> {
 	 * </p>
 	 *
 	 * <p>
-	 * This method returns properties that exactly define the parameters specified in the query and exclude those defined with more or less parameters.
+	 * This method returns properties whose parameters exactly match the parameters specified in the query and exclude those defined with extra parameters.
 	 * </p>
 	 *
-	 * @return a list of configuration properties
+	 * @return a stream of configuration properties
 	 */
-	List<ConfigurationProperty> execute();
+	Flux<ConfigurationProperty> execute();
 	
 	/**
 	 * <p>
-	 * Lists all properties with the specified property name and whose parameter match the query.
+	 * Lists all properties with the specified property name and whose parameters match the query.
 	 * </p>
 	 * 
 	 * <p>
-	 * This method returns all properties that define the parameters specified in the query without excluding those defined with more parameters.
+	 * This method returns all properties whose parameters match the parameters specified in the query without excluding those defined with extra parameters.
 	 * </p>
 	 * 
-	 * @return a list of configuration properties 
+	 * @return a stream of configuration properties
 	 */
-	List<ConfigurationProperty> executeAll();
+	Flux<ConfigurationProperty> executeAll();
 }

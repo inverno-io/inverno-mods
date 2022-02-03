@@ -20,7 +20,9 @@ import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationQuery;
 import io.inverno.mod.configuration.ConfigurationSourceException;
 import io.inverno.mod.configuration.ExecutableConfigurationQuery;
+import io.inverno.mod.configuration.ListConfigurationQuery;
 import io.inverno.mod.configuration.source.CompositeConfigurationSource.CompositeConfigurationQuery;
+import reactor.core.publisher.Flux;
 
 /**
  * <p>
@@ -33,11 +35,11 @@ import io.inverno.mod.configuration.source.CompositeConfigurationSource.Composit
  *
  * <ol>
  * <li>for an original query, the source query which will actually be executed on a source is populated by invoking
- * {@link CompositeConfigurationStrategy#populateSourceQuery(ConfigurationKey, ConfigurationQuery, ConfigurationProperty)} method, this can result in multiple queries</li>
+ * {@link CompositeConfigurationStrategy#populateSourceQuery(ConfigurationKey, ConfigurationQuery, ConfigurationKey)} method, this can result in multiple queries</li>
  * <li>the composite source executes the populated source query and retains the first non-empty result that supersedes current best result using the
- * {@link CompositeConfigurationStrategy#isSuperseded(ConfigurationKey, ConfigurationProperty, ConfigurationProperty)} method</li>
+ * {@link CompositeConfigurationStrategy#isSuperseded(ConfigurationKey, ConfigurationKey, ConfigurationKey)} method</li>
  * <li>the composite source then determined whether the result resolves the query (ie. there can't be any better result) using the
- * {@link CompositeConfigurationStrategy#isResolved(ConfigurationKey, ConfigurationProperty)} method, if so, the composite source finally retains the result and does not query remaining sources for
+ * {@link CompositeConfigurationStrategy#isResolved(ConfigurationKey, ConfigurationKey)} method, if so, the composite source finally retains the result and does not query remaining sources for
  * the original query.</li>
  * </ol>
  *
@@ -67,28 +69,28 @@ public interface CompositeConfigurationStrategy {
 	
 	/**
 	 * <p>
-	 * Determines whether the specified result supersedes the previous result retained from previous sources for the specified original query.
+	 * Determines whether the specified result key supersedes the previous result key retained from previous sources for the specified original query key.
 	 * </p>
 	 *
-	 * @param queryKey       the configuration key representing the original query
-	 * @param previousResult the previous result
-	 * @param result         the result to test
+	 * @param queryKey    the configuration key representing the original query
+	 * @param previousKey the configuration key of the previous result
+	 * @param resultKey   the configuration key of the current result
 	 *
-	 * @return true if the result superseds the previous result, false otherwise
+	 * @return true if the result key superseds the previous result key, false otherwise
 	 */
-	boolean isSuperseded(ConfigurationKey queryKey, ConfigurationProperty previousResult, ConfigurationProperty result);
+	boolean isSuperseded(ConfigurationKey queryKey, ConfigurationKey previousKey, ConfigurationKey resultKey);
 
 	/**
 	 * <p>
-	 * Determines whether the specified result resolves the specified original query (ie. there can't be any better result).
+	 * Determines whether the specified result key resolves the specified original query key (ie. there can't be any better result).
 	 * </p>
 	 *
-	 * @param queryKey the configuration key representing the original query
-	 * @param result   the result to test
+	 * @param queryKey  the configuration key representing the original query
+	 * @param resultKey the result to test
 	 *
 	 * @return true if the result resolves the query, false otherwise
 	 */
-	boolean isResolved(ConfigurationKey queryKey, ConfigurationProperty result);
+	boolean isResolved(ConfigurationKey queryKey, ConfigurationKey resultKey);
 
 	/**
 	 * <p>
@@ -96,14 +98,56 @@ public interface CompositeConfigurationStrategy {
 	 * </p>
 	 *
 	 * <p>
-	 * This method takes the previous result retained from previous sources into account to filter out queries that can't possibly supersedes it.
+	 * This method takes the previous result key retained from previous sources into account to filter out queries that can't possibly supersedes it.
 	 * </p>
 	 *
-	 * @param queryKey       the configuration key representing the original query
-	 * @param sourceQuery    the source query
-	 * @param previousResult the previous result
+	 * @param queryKey    the configuration key representing the original query
+	 * @param sourceQuery the source query
+	 * @param previousKey the configuration key of the previous result
 	 *
 	 * @return a populated executable configuration query
 	 */
-	ExecutableConfigurationQuery<?,?> populateSourceQuery(ConfigurationKey queryKey, ConfigurationQuery<?,?> sourceQuery, ConfigurationProperty previousResult);
+	ExecutableConfigurationQuery<?,?> populateSourceQuery(ConfigurationKey queryKey, ConfigurationQuery<?,?> sourceQuery, ConfigurationKey previousKey);
+	
+	/**
+	 * <p>
+	 * Combines the properties listed using the configuration sources defined in the composite configuration source for the property name of the original query.
+	 * </p>
+	 * 
+	 * <p>
+	 * A {@link CompositeConfigurationSource} will list all properties with the property name of the original query for all sources and delegates the actual filtering and combination logic based on
+	 * the parameters of the original query to the strategy. This can have an impact on performances when many properties are considered.
+	 * </p>
+	 *
+	 * <p>
+	 * Following {@link ListConfigurationQuery#execute()} contract, this method must exclude properties defined with extra parameters.
+	 * </p>
+	 *
+	 * @param queryKey the configuration key representing the original query
+	 * @param sources  the results of the various sources from the highest priority to the lowest
+	 *
+	 * @return the combined stream of configuration properties
+	 */
+	Flux<ConfigurationProperty> combineList(ConfigurationKey queryKey, Iterable<Flux<ConfigurationProperty>> sources);
+	
+	/**
+	 * <p>
+	 * Combines the properties listed using the configuration sources defined in the composite configuration source for the property name of the original query.
+	 * </p>
+	 *
+	 * <p>
+	 * A {@link CompositeConfigurationSource} will list all properties with the property name of the original query for all sources and delegates the actual filtering and combination logic based on
+	 * the parameters of the original query to the strategy. This can have an impact on performances when many properties are considered.
+	 * </p>
+	 *
+	 * <p>
+	 * Following {@link ListConfigurationQuery#executeAll()} contract, this method should include properties defined with extra parameters.
+	 * </p>
+	 *
+	 * @param queryKey the configuration key representing the original query
+	 * @param sources  the results of the various sources from the highest priority to the lowest
+	 *
+	 * @return the combined stream of configuration properties
+	 */
+	Flux<ConfigurationProperty> combineListAll(ConfigurationKey queryKey, Iterable<Flux<ConfigurationProperty>> sources);
 }

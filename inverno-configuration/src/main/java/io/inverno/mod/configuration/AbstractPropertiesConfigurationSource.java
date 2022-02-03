@@ -21,7 +21,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
@@ -54,11 +53,6 @@ import reactor.core.publisher.Flux;
  * @param <B> the properties configuration source type
  */
 public abstract class AbstractPropertiesConfigurationSource<A, B extends AbstractPropertiesConfigurationSource<A,B>> extends AbstractConfigurationSource<AbstractPropertiesConfigurationSource.PropertyConfigurationQuery<A, B>, AbstractPropertiesConfigurationSource.PropertyExecutableConfigurationQuery<A, B>, AbstractPropertiesConfigurationSource.PropertyListConfigurationQuery<A, B> ,A> {
-
-	/**
-	 * The property accessor.
-	 */
-	protected Function<String, A> propertyAccessor;
 	
 	/**
 	 * <p>
@@ -66,14 +60,36 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 	 * </p>
 	 *
 	 * @param decoder          a value decoder
-	 * @param propertyAccessor a property accessor
 	 *
 	 * @throws NullPointerException if the specified decoder is null
 	 */
-	public AbstractPropertiesConfigurationSource(SplittablePrimitiveDecoder<A> decoder, Function<String, A> propertyAccessor) {
+	public AbstractPropertiesConfigurationSource(SplittablePrimitiveDecoder<A> decoder) {
 		super(decoder);
-		this.propertyAccessor = propertyAccessor;
 	}
+	
+	/**
+	 * <p>
+	 * Returns the value of the property identified by the specified name.
+	 * </p>
+	 * 
+	 * <p>
+	 * This methods should rely on an underlying synchronous property accessor.
+	 * </p>
+	 * 
+	 * @param name the configuration property name
+	 * 
+	 * @return an optional returning the configuration property value, or an empty optional if there's no value defined for the specified key
+	 */
+	protected abstract Optional<A> getPropertyValue(String name);
+	
+	/**
+	 * <p>
+	 * Returns the list of property names managed by the source.
+	 * </p>
+	 * 
+	 * @return a list of configuration property names
+	 */
+	protected abstract Set<String> listProperties();
 	
 	@Override
 	public PropertyExecutableConfigurationQuery<A, B> get(String... names) throws IllegalArgumentException {
@@ -82,7 +98,7 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 
 	@Override
 	public PropertyListConfigurationQuery<A, B> list(String name) throws IllegalArgumentException {
-		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		return new PropertyListConfigurationQuery<>(this, name);
 	}
 	
 	/**
@@ -100,11 +116,11 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 	 */
 	public static class PropertyConfigurationQuery<A, B extends AbstractPropertiesConfigurationSource<A,B>> implements ConfigurationQuery<PropertyConfigurationQuery<A, B>, PropertyExecutableConfigurationQuery<A, B>> {
 		
-		private List<String> names;
+		private final List<String> names;
 		
-		private LinkedList<Parameter> parameters;
+		private final LinkedList<Parameter> parameters;
 		
-		private PropertyExecutableConfigurationQuery<A, B> executableQuery;
+		private final PropertyExecutableConfigurationQuery<A, B> executableQuery;
 		
 		private PropertyConfigurationQuery(PropertyExecutableConfigurationQuery<A, B> executableQuery) {
 			this.executableQuery = executableQuery;
@@ -137,9 +153,9 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 	 */
 	public static class PropertyExecutableConfigurationQuery<A, B extends AbstractPropertiesConfigurationSource<A, B>> implements ExecutableConfigurationQuery<PropertyConfigurationQuery<A, B>, PropertyExecutableConfigurationQuery<A, B>> {
 
-		private B source;
+		private final B source;
 		
-		private LinkedList<PropertyConfigurationQuery<A, B>> queries;
+		private final LinkedList<PropertyConfigurationQuery<A, B>> queries;
 		
 		@SuppressWarnings("unchecked")
 		private PropertyExecutableConfigurationQuery(AbstractPropertiesConfigurationSource<A, B> source) {
@@ -149,10 +165,10 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 		
 		@Override
 		public PropertyExecutableConfigurationQuery<A, B> withParameters(Parameter... parameters) throws IllegalArgumentException {
+			PropertyConfigurationQuery<A, B> currentQuery = this.queries.peekLast();
+			currentQuery.parameters.clear();
 			if(parameters != null && parameters.length > 0) {
-				PropertyConfigurationQuery<A, B> currentQuery = this.queries.peekLast();
 				Set<String> parameterKeys = new HashSet<>();
-				currentQuery.parameters.clear();
 				List<String> duplicateParameters = new LinkedList<>();
 				for(Parameter parameter : parameters) {
 					currentQuery.parameters.add(parameter);
@@ -177,7 +193,7 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 		public Flux<ConfigurationQueryResult> execute() {
 			return Flux.fromStream(this.queries.stream().flatMap(query -> query.names.stream().map(name -> new GenericConfigurationKey(name, query.parameters)))
 				.map(key -> new PropertyConfigurationQueryResult<>(key, 
-						Optional.ofNullable(this.source.propertyAccessor.apply(key.getName()))
+						this.source.getPropertyValue(key.getName())
 						.map(value -> new GenericConfigurationProperty<ConfigurationKey, B, A>(key, value, this.source))
 						.orElse(null)
 					)
@@ -208,26 +224,30 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 	
 	public static class PropertyListConfigurationQuery<A, B extends AbstractPropertiesConfigurationSource<A, B>> implements ListConfigurationQuery<PropertyListConfigurationQuery<A, B>> {
 
-		private B source;
+		private final B source;
+		
+		private final String name;
 		
 		@SuppressWarnings("unchecked")
-		private PropertyListConfigurationQuery(AbstractPropertiesConfigurationSource<A, B> source) {
+		private PropertyListConfigurationQuery(AbstractPropertiesConfigurationSource<A, B> source, String name) {
 			this.source = (B)source;
+			this.name = name;
 		}
 		
 		@Override
 		public PropertyListConfigurationQuery<A, B> withParameters(Parameter... parameters) throws IllegalArgumentException {
-			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+			// parameters are ignored
+			return this;
 		}
 
 		@Override
-		public List<ConfigurationProperty> execute() {
-			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		public Flux<ConfigurationProperty> execute() {
+			return Flux.fromStream(() -> this.source.listProperties().stream().filter(name -> name.equals(this.name)).map(name -> new GenericConfigurationProperty<ConfigurationKey, B, A>(new GenericConfigurationKey(name), this.source.getPropertyValue(name).get(), this.source)));
 		}
 
 		@Override
-		public List<ConfigurationProperty> executeAll() {
-			throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+		public Flux<ConfigurationProperty> executeAll() {
+			return Flux.fromStream(() -> this.source.listProperties().stream().filter(name -> name.equals(this.name)).map(name -> new GenericConfigurationProperty<ConfigurationKey, B, A>(new GenericConfigurationKey(name), this.source.getPropertyValue(name).get(), this.source)));
 		}
 	}
 }

@@ -13,3 +13,25 @@
 [ node="node2", zone="EU", environment="production" ] {
 	datasource.url = "jdbc:h2:file:/opt/2/node2-eu-production"
 }
+
+[ environment="dev" ] {
+	logging.level = "info"
+	[ name="test1" ] { 
+		logging.level = "info" 
+	}
+}
+
+[ environment="prod" ] {
+	[name="test1"] { 
+		logging.level = "info" 
+	}
+	[name="test4"] { 
+		logging.level = "error" 
+	}
+	[name="test5"] { 
+		logging.level = "info" 
+	}
+	[name="test2",node="node-1"] { 
+		logging.level = "trace" 
+	}
+}
