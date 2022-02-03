@@ -544,7 +544,7 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 					}
 				}
 				else if(hasFormParameters) {
-					controllerInvoke.insert(0, new StringBuilder(context.getFluxTypeName()).append(".from(exchange.request().body().get().urlEncoded().stream()).collectMultimap(").append(context.getParameterTypeName()).append("::getName)").append(".map(formParameters -> ")).append(")");
+					controllerInvoke.insert(0, new StringBuilder(context.getFluxTypeName()).append(".from(exchange.request().body().get().urlEncoded().stream()).collectMultimap(").append(context.getParameterTypeName()).append("::getName)").append(".flatMap(formParameters -> ")).append(")");
 				}
 				
 				if(responseBodyInfo.getBodyKind() == ResponseBodyKind.EMPTY) {
