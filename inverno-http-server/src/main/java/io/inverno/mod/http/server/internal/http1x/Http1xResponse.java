@@ -28,7 +28,6 @@ import io.inverno.mod.http.server.internal.AbstractResponse;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
-import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 
 /**
  * <p>

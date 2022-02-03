@@ -148,24 +148,31 @@ public abstract class AbstractRequest implements Request {
 	public Optional<RequestBody> body() {
 		if(this.requestBody == null) {
 			Method method = this.getMethod();
-			if(method == Method.POST || method == Method.PUT || method == Method.PATCH) {
-				if(this.requestBody == null) {
-					// TODO deal with backpressure using a custom queue: if the queue reach a given threshold we should suspend the read on the channel: this.context.channel().config().setAutoRead(false)
-					// and resume when this flux is actually consumed (doOnRequest? this might impact performance)
-					this.data = Sinks.many().unicast().onBackpressureBuffer();
-					Flux<ByteBuf> requestBodyData = this.data.asFlux()
-						.doOnDiscard(ByteBuf.class, ByteBuf::release);
-					
-					this.requestBody = Optional.of(new GenericRequestBody(
-						this.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE),
-						this.urlEncodedBodyDecoder, 
-						this.multipartBodyDecoder, 
-						requestBodyData
-					));
+			switch(method) {
+				case POST:
+				case PUT:
+				case PATCH:
+				case DELETE: {
+					if(this.requestBody == null) {
+						// TODO deal with backpressure using a custom queue: if the queue reach a given threshold we should suspend the read on the channel: this.context.channel().config().setAutoRead(false)
+						// and resume when this flux is actually consumed (doOnRequest? this might impact performance)
+						this.data = Sinks.many().unicast().onBackpressureBuffer();
+						Flux<ByteBuf> requestBodyData = this.data.asFlux()
+							.doOnDiscard(ByteBuf.class, ByteBuf::release);
+
+						this.requestBody = Optional.of(new GenericRequestBody(
+							this.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE),
+							this.urlEncodedBodyDecoder, 
+							this.multipartBodyDecoder, 
+							requestBodyData
+						));
+					}
+					break;
 				}
-			}
-			else {
-				this.requestBody = Optional.empty();
+				default: {
+					this.requestBody = Optional.empty();
+					break;
+				}
 			}
 		}
 		return this.requestBody;
