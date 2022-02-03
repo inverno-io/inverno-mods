@@ -58,15 +58,16 @@ public interface RedisClient<A, B> extends RedisOperations<A, B> {
 	
 	/**
 	 * <p>
-	 * Executes queries in a batch on a single connection.
+	 * Executes multiple queries in a batch on a single connection.
 	 * </p>
 	 *
 	 * <p>
-	 * The specified function shall return queries publishers created from the Redis operations argument, these queries are then pipelined on a single Redis connection.
+	 * The specified function shall return queries publishers created from the Redis operations argument, these queries are then pipelined on a single Redis connection, defering the flush of queries
+	 * over the network.
 	 * </p>
 	 *
 	 * <p>
-	 * The connection is obtained when the returned publisher is subscribed and closed when it terminates (complete, error or cancel).
+	 * A connection is obtained when the returned publisher is subscribed and closed when it terminates (complete, error or cancel).
 	 * </p>
 	 *
 	 * <p>
