@@ -114,6 +114,7 @@ module io.inverno.mod.boot {
 	requires static io.vertx.core;
 	
 	requires transitive com.fasterxml.jackson.databind;
+	requires transitive com.fasterxml.jackson.datatype.jsr310;
 	
 	exports io.inverno.mod.boot;
 }

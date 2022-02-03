@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.boot.internal;
 
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.util.function.Supplier;
 
 import io.inverno.core.annotation.Bean;
@@ -34,8 +36,15 @@ import io.inverno.core.annotation.Wrapper;
 @Overridable
 public class ObjectMapper implements Supplier<com.fasterxml.jackson.databind.ObjectMapper> {
 
+	private com.fasterxml.jackson.databind.ObjectMapper mapper;
+	
 	@Override
 	public com.fasterxml.jackson.databind.ObjectMapper get() {
-		return new com.fasterxml.jackson.databind.ObjectMapper();
+		if(this.mapper == null) {
+			this.mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+			this.mapper.registerModule(new JavaTimeModule());
+			this.mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+		}
+		return this.mapper;
 	}
 }
