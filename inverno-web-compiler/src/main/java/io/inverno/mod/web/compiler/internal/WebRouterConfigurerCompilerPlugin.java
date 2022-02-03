@@ -87,7 +87,7 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 	
 	private final WebRouterConfigurerOpenApiGenerator openApiGenerator;
 	private final WebRouterConfigurerClassGenerator webRouterConfigurerClassGenerator;
-	private final WebRouteClashDetector webRouteClashDectector;
+	private final WebRouteClashDetector webRouteClashDetector;
 	
 	private PluginContext pluginContext;
 	private TypeHierarchyExtractor typeHierarchyExtractor;
@@ -105,7 +105,7 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 	public WebRouterConfigurerCompilerPlugin() {
 		this.webRouterConfigurerClassGenerator = new WebRouterConfigurerClassGenerator();
 		this.openApiGenerator = new WebRouterConfigurerOpenApiGenerator();
-		this.webRouteClashDectector = new WebRouteClashDetector();
+		this.webRouteClashDetector = new WebRouteClashDetector();
 	}
 	
 	@Override
@@ -218,7 +218,7 @@ public class WebRouterConfigurerCompilerPlugin implements CompilerPlugin {
 		webControllers.stream().flatMap(controller -> Arrays.stream(controller.getRoutes())).forEach(routes::add);
 		webRoutesConfigurers.stream().flatMap(controller -> Arrays.stream(controller.getRoutes())).forEach(routes::add);
 		webRouterConfigurers.stream().flatMap(router -> Arrays.stream(router.getRoutes())).forEach(routes::add);
-		for(Map.Entry<WebRouteInfo, Set<WebRouteInfo>> e : this.webRouteClashDectector.findDuplicates(routes).entrySet()) {
+		for(Map.Entry<WebRouteInfo, Set<WebRouteInfo>> e : this.webRouteClashDetector.findDuplicates(routes).entrySet()) {
 			e.getKey().error("Route " + e.getKey().getQualifiedName() + " is clashing with route(s):\n" + e.getValue().stream().map(route -> "- " + route.getQualifiedName()).collect(Collectors.joining("\n")));
 		}
 		
