@@ -27,10 +27,13 @@ import io.inverno.mod.sql.PreparedStatement;
 import io.inverno.mod.sql.Row;
 import io.inverno.mod.sql.SqlOperations;
 import io.inverno.mod.sql.Statement;
+import io.inverno.mod.sql.UnsafeSqlOperations;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.Tuple;
+import io.vertx.sqlclient.impl.SqlClientInternal;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.concurrent.Queues;
 
 /**
  * <p>
@@ -40,12 +43,12 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
  */
-public abstract class AbstractSqlOperations implements SqlOperations {
+public abstract class AbstractSqlOperations implements SqlOperations, UnsafeSqlOperations {
 
 	/**
 	 * The underlying Vertx SQL client
 	 */
-	protected final SqlClient client;
+	protected SqlClient client;
 	
 	/**
 	 * <p>
@@ -103,6 +106,27 @@ public abstract class AbstractSqlOperations implements SqlOperations {
 	}
 	
 	@Override
+	public <T> Publisher<T> batchQueries(Function<SqlOperations, Publisher<Publisher<T>>> function) {
+		if(!(this.client instanceof SqlClientInternal)) {
+			throw new UnsupportedOperationException("Implementation doesn't support batch operations");
+		}
+
+		BatchedSqlOperations batchedOperations = new BatchedSqlOperations();
+		return Flux.from(function.apply(batchedOperations))
+			.buffer(Queues.SMALL_BUFFER_SIZE) // use default mergeSequential() concurrency size: 256
+			.flatMap(queries -> {
+				return Flux.create(sink -> {
+					// group is not always implemented in Vertx which is why this is considered unsafe operation
+					((SqlClientInternal)this.client).group(c -> {
+						batchedOperations.setClient(c);
+						// We must subscribe here and return the result
+						Flux.mergeSequential(queries).subscribe(sink::next, sink::error, sink::complete);
+					});
+				});
+			});
+	}
+	
+	@Override
 	public Mono<Integer> update(String sql, Object... args) {
 		return Mono
 			.fromCompletionStage(() -> this.client
@@ -133,5 +157,37 @@ public abstract class AbstractSqlOperations implements SqlOperations {
 				.toCompletionStage()
 			)
 			.map(rowSet -> rowSet.rowCount());
+	}
+	
+	/**
+	 * <p>
+	 * Batched SQL operations created within {@link #batchQueries(java.util.function.Function)} to be able to set the group SqlClient provided by {@link SqlClientInternal#group(io.vertx.core.Handler)}
+	 * when the batch published is subscribed.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 */
+	private static class BatchedSqlOperations extends AbstractSqlOperations {
+
+		public BatchedSqlOperations() {
+			super(null);
+		}
+
+		/**
+		 * <p>
+		 * Sets the group SqlClient.
+		 * </p>
+		 * 
+		 * @param client the group SqlClient to set
+		 */
+		public void setClient(SqlClient client) {
+			this.client = client;
+		}
+		
+		@Override
+		public <T> Publisher<T> batchQueries(Function<SqlOperations, Publisher<Publisher<T>>> function) {
+			throw new IllegalStateException("Already in a batch");
+		}
 	}
 }

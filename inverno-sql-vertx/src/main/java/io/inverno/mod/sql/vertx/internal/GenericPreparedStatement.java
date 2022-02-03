@@ -81,8 +81,7 @@ public class GenericPreparedStatement implements PreparedStatement {
 	
 	@Override
 	public PreparedStatement and() {
-		// TODO what happens when a parameter is null
-		this.batch.add(this.currentParameters);
+		this.batch.add(this.getCurrentParameters());
 		this.currentParameters = null;
 		return this;
 	}
@@ -147,12 +146,12 @@ public class GenericPreparedStatement implements PreparedStatement {
 	
 	@Override
 	public Publisher<SqlResult> execute() {
-		this.batch.add(this.currentParameters);
+		this.batch.add(this.getCurrentParameters());
 		
 		if(this.batch.size() == 1) {
 			 return Mono.fromCompletionStage(() -> this.client
 					.preparedQuery(this.sql)
-					.execute(this.currentParameters)
+					.execute(this.batch.get(0))
 					.toCompletionStage()
 				)
 				.map(GenericSqlResult::new);
@@ -174,5 +173,4 @@ public class GenericPreparedStatement implements PreparedStatement {
 				});
 		}
 	}
-	
 }

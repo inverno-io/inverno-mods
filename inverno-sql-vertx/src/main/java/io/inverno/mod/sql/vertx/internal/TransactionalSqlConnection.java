@@ -65,7 +65,7 @@ public class TransactionalSqlConnection extends AbstractSqlOperations implements
 	public Mono<Void> commit() {
 		Mono<Void> result = Mono.fromCompletionStage(() -> this.transaction.commit().toCompletionStage());
 		if(this.closeConnection) {
-			result = Mono.usingWhen(result, ign -> Mono.empty(), ign -> this.close());
+			result = result.then(this.close());
 		}
 		return result;
 	}
@@ -74,7 +74,7 @@ public class TransactionalSqlConnection extends AbstractSqlOperations implements
 	public Mono<Void> rollback() {
 		Mono<Void> result = Mono.fromCompletionStage(() -> this.transaction.rollback().toCompletionStage());
 		if(this.closeConnection) {
-			result = Mono.usingWhen(result, ign -> Mono.empty(), ign -> this.close());
+			result = result.then(this.close());
 		}
 		return result;
 	}

@@ -19,10 +19,9 @@ import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
 
-import io.inverno.mod.sql.SqlClient;
 import io.inverno.mod.sql.SqlOperations;
 import io.inverno.mod.sql.TransactionalSqlOperations;
-import io.inverno.mod.sql.vertx.internal.AbstractSqlOperations;
+import io.inverno.mod.sql.vertx.internal.AbstractSqlClient;
 import io.inverno.mod.sql.vertx.internal.TransactionalSqlConnection;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.TransactionRollbackException;
@@ -41,7 +40,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
  */
-public class ConnectionSqlClient extends AbstractSqlOperations implements SqlClient {
+public class ConnectionSqlClient extends AbstractSqlClient {
 
 	/**
 	 * <p>
@@ -88,10 +87,5 @@ public class ConnectionSqlClient extends AbstractSqlOperations implements SqlCli
 	@Override
 	public <T> Publisher<T> connection(Function<SqlOperations, Publisher<T>> function) {
 		return function.apply(this);
-	}
-
-	@Override
-	public Mono<Void> close() {
-		return Mono.fromCompletionStage(() -> this.client.close().toCompletionStage());
 	}
 }

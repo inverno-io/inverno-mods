@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,39 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.sql;
+package io.inverno.mod.sql.vertx.internal;
 
+import io.inverno.mod.sql.SqlClient;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * SQL operations with support for transactions.
- * </p>
- * 
- * <p>
- * All SQL operations are executed within a transaction which is eventually commited or rolled back.
+ * Base {@link SqlClient} Vert.x implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.2
+ * @since 1.4
  */
-public interface TransactionalSqlOperations extends SqlOperations {
+public abstract class AbstractSqlClient extends AbstractSqlOperations implements SqlClient {
 
 	/**
 	 * <p>
-	 * Commits the transaction.
+	 * Creates SQL client with the specified Vert.x SQL client.
 	 * </p>
 	 * 
-	 * @return a Mono that completes when the transaction is commited
+	 * @param client a Vert.x SQL client
 	 */
-	Mono<Void> commit();
+	public AbstractSqlClient(io.vertx.sqlclient.SqlClient client) {
+		super(client);
+	}
 
-	/**
-	 * <p>
-	 * Rolls back the transaction.
-	 * </p>
-	 * 
-	 * @return a Mono that completes when the transaction is rolled back
-	 */
-	Mono<Void> rollback();
+	@Override
+	public Mono<Void> close() {
+		return Mono.fromCompletionStage(() -> this.client.close().toCompletionStage());
+	}
 }

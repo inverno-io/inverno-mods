@@ -17,6 +17,7 @@ import io.inverno.mod.sql.RowMetadata;
 import io.inverno.mod.sql.SqlClient;
 import io.inverno.mod.sql.SqlResult;
 import io.inverno.mod.sql.Statement;
+import io.inverno.mod.sql.UnsafeSqlOperations;
 import io.vertx.core.Future;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.pgclient.PgPool;
@@ -76,7 +77,7 @@ public class PoolSqlClientTest {
 			Flux.from(client.statement("CREATE TABLE test (id integer NOT NULL, message varchar(2048) NOT NULL, PRIMARY KEY (id))").execute()).blockLast();
 		}
 		finally {
-			client.close();
+			client.close().block();
 		}
 	}
 	
@@ -94,7 +95,7 @@ public class PoolSqlClientTest {
 			Assertions.assertEquals(1, results.get(0).rowsUpdated().block());
 		}
 		finally {
-			client.close();
+			client.close().block();
 		}
 	}
 	
@@ -340,7 +341,7 @@ public class PoolSqlClientTest {
 				.block());
 		}
 		finally {
-			client.close();
+			client.close().block();
 		}
 	}
 	
@@ -370,7 +371,7 @@ public class PoolSqlClientTest {
 				.block());
 		}
 		finally {
-			client.close();
+			client.close().block();
 		}
 	}
 	
@@ -381,7 +382,7 @@ public class PoolSqlClientTest {
 		SqlClient client = this.createClient();
 		
 		try {
-			List<Row> queryResults = Flux.from(client.transaction(ops -> Flux
+			List<Row> queryResults = Flux.from(client.connection(ops -> Flux
 				.from(ops.preparedStatement("SELECT * FROM test").execute())
 				.flatMap(SqlResult::rows)
 			)).collectList().block();
@@ -411,12 +412,58 @@ public class PoolSqlClientTest {
 			Assertions.assertEquals("message 5", row.getString("message"));
 		}
 		finally {
-			client.close();
+			client.close().block();
 		}
 	}
 	
 	@Test
 	@Order(10)
+	public void testBatchQueries() {
+		SqlClient client = this.createClient();
+		try {
+			List<Row> queryResults = Flux.from(client.connection(ops -> ((UnsafeSqlOperations)ops)
+				.batchQueries(bops -> {
+					return Flux.just(
+						bops.query("SELECT * FROM test"),
+						bops.query("SELECT * FROM test"),
+						bops.query("SELECT * FROM test")
+					);
+				})
+			)).collectList().block();
+			
+			Assertions.assertEquals(15, queryResults.size());
+			
+			Iterator<Row>  queryResultsIterator = queryResults.iterator();
+			
+			for(int i=0;i<3;i++) {
+				Row row = queryResultsIterator.next();
+				Assertions.assertEquals(1, row.getInteger("id"));
+				Assertions.assertEquals("message 1", row.getString("message"));
+
+				row = queryResultsIterator.next();
+				Assertions.assertEquals(2, row.getInteger("id"));
+				Assertions.assertEquals("message 2", row.getString("message"));
+
+				row = queryResultsIterator.next();
+				Assertions.assertEquals(3, row.getInteger("id"));
+				Assertions.assertEquals("message 3", row.getString("message"));
+
+				row = queryResultsIterator.next();
+				Assertions.assertEquals(4, row.getInteger("id"));
+				Assertions.assertEquals("message 4", row.getString("message"));
+
+				row = queryResultsIterator.next();
+				Assertions.assertEquals(5, row.getInteger("id"));
+				Assertions.assertEquals("message 5", row.getString("message"));
+			}
+		}
+		finally {
+			client.close().block();
+		}
+	}
+
+	@Test
+	@Order(11)
 	public void testDropTable() {
 		SqlClient client = this.createClient();
 		
@@ -424,7 +471,7 @@ public class PoolSqlClientTest {
 			Flux.from(client.statement("DROP TABLE test;").execute()).blockLast();  
 		}
 		finally {
-			client.close();
+			client.close().block();
 		}
 	}
 }
