@@ -99,7 +99,11 @@ class WebRouteClashDetector {
 			return duplicates;
 		}
 		else {
-			return this.visitPath(route, null, false, routes);
+			return route.getController()
+				.map(WebControllerInfo::getRootPath)
+				.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).buildRawPath())
+				.map(rootPath -> this.visitPath(route, rootPath, route.isMatchTrailingSlash(), routes))
+				.orElseGet(() -> this.visitPath(route, null, false, routes));
 		}
 	}
 	
