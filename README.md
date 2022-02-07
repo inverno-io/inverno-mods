@@ -5,6 +5,9 @@
 [inverno-mods-root-doc]: https://github.com/inverno-io/inverno-mods/tree/master/doc/reference-guide.md
 [inverno-examples-root]: https://github.com/inverno-io/inverno-examples
 
+[redis]: https://redis.io/
+[lettuce]: https://lettuce.io
+[vertx-sql-client]: https://github.com/eclipse-vertx/vertx-sql-client
 [apache-license]: https://www.apache.org/licenses/LICENSE-2.0
 
 # Inverno Modules
@@ -133,6 +136,19 @@ The Inverno Reactive Template module provides a reactive template engine includi
 - pipes for data transformation
 - functional syntax inspired from XSLT and Erlang on top of the Java language that perfectly embraces reactive principles
 
+### inverno-redis
+
+The Inverno Redis client module specified a reactive API for executing Redis commands on a [Redis][redis] data store. It supports:
+
+- batch queries
+- transaction
+
+### inverno-redis-lettuce
+
+The Inverno Redis client Lettuce implementation module provides Redis implementation on top of [Lettuce][lettuce] async pool.
+
+It also exposes a Redis Client bean backed by a Lettuce client and created using the module's configuration. It can be used as is to send commands to a Redis data store.
+
 ### inverno-sql
 
 The Inverno SQL client module specifies a reactive API for executing SQL statements on a RDBMS. It supports:
@@ -143,9 +159,9 @@ The Inverno SQL client module specifies a reactive API for executing SQL stateme
 
 ### inverno-sql-vertx
 
-The Inverno SQL client Vert.x implementation module provides Sql Client implementations on top of Vert.x pool and pooled client.
+The Inverno SQL client Vert.x implementation module provides SQL Client implementations on top of [Vert.x][vertx-sql-client] pool and pooled client.
 
-It also exposes a pool based Sql Client bean created using the module's configuration which can be used as is to query a RDBMS.
+It also exposes a pool based Sql Client bean created using the module's configuration that can be used as is to query a RDBMS.
 
 ### inverno-web
 

@@ -52,7 +52,7 @@ Using Maven:
 
 Using Gradle:
 
-```groovy
+```java
 ...
 compile 'io.inverno.mod:inverno-configuration:${VERSION_INVERNO_MODS}'
 ...
@@ -166,6 +166,67 @@ A configuration source relies on a `SplittablePrimitiveDecoder` to decode proper
 SplittablePrimitiveDecoder<String> customDecoder = ...
 
 PropertyFileConfigurationSource source = new PropertyFileConfigurationSource(new ClasspathResource(URI.create("classpath:/path/to/configuration")), customDecoder)
+```
+
+The regular and most efficient way to query a configuration source is to target specific configuration properties identified by a name and a set of parameters, however there are some cases that actually require to list all values defined for a particular property name and matching a particular set of parameters. 
+
+for instance, this is typically the case when configuring log levels, since we can hardly know the name of each and every loggers used in an application, it is easier, safer and more efficient in that case to list all the configuration properties defined for a `logging.level` property and apply the configuration to the loggers based on the parameters of the returned properties.
+
+For instance, the following properties can be defined in the configuration:
+
+```
+logging.level[]=info
+logging.level[logger="logger1"]=debug
+logging.level[logger="logger2"]=trace
+logging.level[logger="logger3"]=error
+```
+
+These configuration properties can then be listed in the application as follows:
+
+```java
+// Returns all logging.level properties defined in the configuration source
+List<ConfigurationProperty> result = source.list("logging.level")
+	.executeAll()
+	.collectList()
+	.block();
+
+// Apply logging configuration
+for(ConfigurationProperty p : result) {
+    Optional<String> loggerName = p.getKey().getParameter("logger");
+    Level level = p.as(Level.class).get();
+	// Configure logger...
+}
+```
+
+The `executeAll()` method returns all the properties defined in the configuration source for a particular property name and matching the set of parameters defined in the query whether they are defined with extra parameters or not. For instance, if we extend our example by adding an `environment` parameter:
+
+```
+logging.level[]=info
+logging.level[environment="dev",logger="logger1"]=debug
+logging.level[environment="prod",logger="logger2"]=trace
+logging.level[logger="logger3"]=error
+```
+
+The following list query will return all values that are defined with a `logger` parameter whether they are defined with an `environment` parameter or not. Please note how the `logger` parameter is specified in the query as a wildcard:
+
+```java
+// Returns logging.level[environment="dev", logger="logger1"], logging.level[environment="prod", logger="logger2"] and logging.level[logger="logger3"]=error which are all defined with parameter logger
+List<ConfigurationProperty> result = source.list("logging.level")
+	.withParameters(Parameter.wildcard("logger"))
+	.executeAll()
+	.collectList()
+	.block();
+```
+
+On the other hand, the `execute()` method is exact and returns all the properties defined in the configuration source for a particular property name and which parameters exactly match the set of parameters defined in the query, excluding those that are defined with extra parameters:
+
+```java
+// Returns logging.level[logger="logger3"]=error which exactly defines parameter logger
+List<ConfigurationProperty> result = source.list("logging.level")
+	.withParameters(Parameter.wildcard("logger"))
+	.execute()
+	.collectList()
+	.block();
 ```
 
 ### Map configuration source
@@ -389,7 +450,7 @@ The property returned for a configuration query key then depends on two factors:
 
 The `CompositeConfigurationSource` resolves a configuration property by querying its sources in sequence from the highest priority to the lowest. It relies on a `CompositeConfigurationStrategy` to determine at each round which queries to execute and retain the best matching property from the results. The best matching property is the property whose key is the closest to the original configuration query key according to a metric implemented in the strategy. The algorithm stops when an exact match is found or when there's no more configuration source to query.
 
-The `DefaultCompositeConfigurationStrategy` defines the default strategy implementation. It determines the best matching property for a given original query by prioritizing query parameters from left to right: the best matching property is the one matching the most continuous parameters from right to left. In practice, if we consider query key `property[p1=v1,...pn=vn]`, it supersedes key `property[p2=v2,...pn=vn]` which supersedes key `property[p3=v3,...pn=vn]`... which supersedes key `property[]`. As a result, an original query with `n` parameters results in `n+1` queries being actually executed if no property was retained in previous rounds and `n-p` queries if a property with p parameters (p<n) was retained in previous rounds. The order into which parameters are specified in the original query is then significant: `property[p1=v1,p2=v2] != property[p2=v2,p1=v1]`.
+The `DefaultCompositeConfigurationStrategy` defines the default strategy implementation. It determines the best matching property for a given original query by prioritizing query parameters from left to right: the best matching property is then the one matching the most continuous parameters from right to left. In practice, if we consider query key `property[p1=v1,...pn=vn]`, it supersedes key `property[p2=v2,...pn=vn]` which supersedes key `property[p3=v3,...pn=vn]`... which supersedes key `property[]`. As a result, an original query with `n` parameters results in `n+1` queries being actually executed if no property was retained in previous rounds and `n-p` queries if a property with p parameters (p<n) was retained in previous rounds. The order into which parameters are specified in the original query is then significant: `property[p1=v1,p2=v2] != property[p2=v2,p1=v1]`.
 
 When defining configuration parameters, we should then order them from the most specific to the most general when querying a composite source. For example, the `node` parameter which is more specific than the `zone` parameter should come first then the `zone` parameter which is more specific than the `environment` parameter should come next and finally the `environment` parameter which is the most general should come last.
 
@@ -460,6 +521,73 @@ When considering multiple configuration sources, properties can be defined with 
 
 For instance, considering previous example, we could have defined `server.url[]=unset` instead of `server.url[]=null` in `source1`, the query would then have returned an empty query result indicating an undefined property.
 
+Prioritization and defaulting also apply when listing configuration properties on a composite configuration source. In case of conflict between two configuration sources, the default strategy retains the one defined by the source with the highest priority. Results also contains all properties defined with less parameters than the list query from right to left.
+
+For instance, if we consider the following sources: `source1` and `source2`.
+
+`source1` holds the following properties:
+
+- `logging.level[environment="dev"]=info`
+- `logging.level[environment="dev",name="test1"]=info`
+- `logging.level[environment="prod",name="test1"]=info`
+- `logging.level[environment="prod",name="test4"]=error`
+- `logging.level[environment="prod",name="test5"]=info`
+- `logging.level[environment="prod",name="test1",node="node-1"]=trace`
+
+`source2` holds the following properties:
+
+- `logging.level[environment="dev",node="node-1"]=info`
+- `logging.level[environment="dev",name="test1"]=debug`
+- `logging.level[environment="dev",name="test2"]=debug`
+- `logging.level[environment="dev",name="test2",node="node-1"]=debug`
+- `logging.level[environment="prod",name="test1"]=warn`
+- `logging.level[environment="prod",name="test2"]=error`
+- `logging.level[environment="prod",name="test3"]=info`
+
+If we can compose them in a composite configuration source, we can list configuration properties as follows:
+
+```java
+ConfigurationSource<?, ?, ?> source1 = ...
+ConfigurationSource<?, ?, ?> source2 = ...
+
+CompositeConfigurationSource source = new CompositeConfigurationSource(List.of(source1, source2));
+
+source                                       // 1
+    .list("logging.level")
+    .withParameters(
+        Parameter.of("environment", "prod"), 
+        Parameter.wildcard("name")
+    )
+    .execute()
+    ...
+
+source                                       // 2
+    .list("logging.level")
+    .withParameters(
+        Parameter.of("environment", "dev"), 
+        Parameter.wildcard("name")
+    )
+    .executeAll()
+    ...
+
+```
+
+In the example above:
+
+1. `execute()` is exact and returns properties defined with parameters `environment` and `name`, with parameter `environment` only and with no parameter following defaulting rules implemented in the default strategy. As a result the following properties are returned: 
+    - `logging.level[environment="prod",name="test1"]=info` defined in `source1` and overriding the property defined in `source2`
+    - `logging.level[environment="prod",name="test2"]=error` defined in `source2`
+    - `logging.level[environment="prod",name="test3"]=info` defined in `source2`
+    - `logging.level[environment="prod",name="test4"]=error` defined in `source1`
+    - `logging.level[environment="prod",name="test5"]=info` defined in `source1`
+2. `executeAll()` returns all properties defined with parameters `environment`, `name` and any other parameter, with parameter `environment` only and with no parameter following defaulting rules implemented in the default strategy. As a result the following properties are returned: 
+    - `logging.level[environment="dev"]=info` defined in `source1` which is the property that would be returned when querying the source with an unspecified name (eg. `logging.level[environment="dev",name="unspecifiedLogger"]`)
+    - `logging.level[environment="dev",name="test1"]=info` defined in `source1` and overriding the property defined in `source2`
+    - `logging.level[environment="dev",name="test2"]=debug` defined in `source2`
+    - `logging.level[environment="dev",name="test2",node="node-1"]=debug` defined in `source2`
+
+> it is important to note that list operations, especially on a very large set of data can become quite expensive and impact performances, as a result they must be used wisely.
+
 ### Configurable configuration source
 
 A configurable configuration source is a particular configuration source which supports configuration properties updates. The [Redis configuration source](#redis-configuration-source) is an example of configurable configuration source.
@@ -471,7 +599,7 @@ It extends the `ConfigurationSource` with one method for creating a `Configurati
 For instance, a parameterized property `server.port` can be set in a configuration source as follows:
 
 ```java
-ConfigurableConfigurationSource<?, ?, ?, ?, ?, ?> source = null;
+ConfigurableConfigurationSource<?, ?, ?, ?, ?> source = null;
 
 source.set("server.port", 8080)
     .withParameters("environment", "production", "zone", "us")

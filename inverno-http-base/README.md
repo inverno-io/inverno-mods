@@ -35,7 +35,7 @@ Using Maven:
 
 Using Gradle:
 
-```groovy
+```java
 ...
 compile 'io.inverno.mod:inverno-http-base:${VERSION_INVERNO_MODS}'
 ...

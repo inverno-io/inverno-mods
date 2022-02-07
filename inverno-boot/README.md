@@ -38,7 +38,7 @@ Using Maven:
 
 Using Gradle:
 
-```groovy
+```java
 ...
 compile 'io.inverno.mod:inverno-boot:${VERSION_INVERNO_MODS}'
 ...
@@ -131,4 +131,4 @@ The default worker pool bean is a simple [cached Thread pool][jdk-executors-newC
 
 A standard JSON reader/writer based on Jackson `ObjectMapper` is also provided. This instance is used across the application to perform JSON conversion operations, a global configuration can then be applied to that particular instance or it can be overridden when creating the *boot* module.
 
-By default, the global object mapper is configured to use JSR310 for date formatting.
+The global object mapper is configured to use JSR310 for dates which are serialized as timestamps following ISO 8601 representation.

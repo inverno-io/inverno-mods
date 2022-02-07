@@ -7,7 +7,7 @@
 
 The Inverno Vert.x SQL client module is an implementation of the SQL client API on top of the [Vert.x Reactive SQL client][vertx-sql-client].
 
-It provides multiple `SqlClient` implementations that wraps Vert.x SQL pooled client, pool or connection and exposes a `SqlCLient` bean created from the module's configuration and backed by a Vert.x pool. It can be used to execute SQL statements in an application.
+It provides multiple `SqlClient` implementations that wrap Vert.x SQL pooled client, pool or connection and exposes a `SqlCLient` bean created from the module's configuration and backed by a Vert.x pool. It can be used to execute SQL statements in an application.
 
 In order to use the Inverno *Vert.x SQL client* module, we need to declare a dependency in the module descriptor:
 
@@ -40,7 +40,7 @@ Using Maven:
 
 Using Gradle:
 
-```groovy
+```java
 ...
 compile 'io.inverno.mod:inverno-sql-vertx:${VERSION_INVERNO_MODS}'
 compile 'io.vertx:vertx-pg-client:4.1.2'
@@ -63,9 +63,9 @@ For instance, the following configuration can be used to connect to a PostgreSQL
 db_uri="postgres://user:password@localhost:5432/sample_db"
 ```
 
-> If you want to connect to a particular RDBMS, don't forget to add a dependency to the corresponding Vert.x SQL client implementation. Vert.x currently supports DB2, MSSQL, MySQL and PostgreSQL.
+> If you want to connect to a particular RDBMS, don't forget to add a dependency to the corresponding Vert.x SQL client implementation. Vert.x currently supports DB2, MSSQL, MySQL, PostgreSQL and Oracle.
 
-The pool can be configured as well: 
+The connection pool can be configured as well: 
 
 ```plaintext
 pool_maxSize=20

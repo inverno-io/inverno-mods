@@ -36,7 +36,7 @@ Using Maven:
 
 Using Gradle:
 
-```groovy
+```java
 ...
 compile 'io.inverno.mod:inverno-sql:${VERSION_INVERNO_MODS}'
 compile 'io.inverno.mod:inverno-sql-vertx:${VERSION_INVERNO_MODS}'
@@ -187,7 +187,7 @@ long resultCount = Flux.from(results).count().block(); // returns 3 since we hav
 
 The API provides two ways to execute statement in a transaction which can be managed explicitly or implicitly.
 
-We can choose to manage transaction explicitly by obtaining a `TransactionalSqlOperations` which expose `commit()` and `rollback()` methods that we must invoke explicitly to close the transaction:
+We can choose to manage transaction explicitly by obtaining a `TransactionalSqlOperations` which exposes `commit()` and `rollback()` methods that we must invoke explicitly to close the transaction:
 
 In the following example we perform a common `SELECT/UPDATE` operation within a transaction:
 
