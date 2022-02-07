@@ -192,7 +192,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * Returns the list of metadata parameters.
 	 * </p>
 	 * 
-	 * @param operations
+	 * @param operations The Redis operations used to query the data store
 	 * 
 	 * @return a mono emitting the list of metadata parameters
 	 */
@@ -1017,9 +1017,9 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		/**
 		 * 
 		 * @param source
-		 * @param name 
+		 * @param name
 		 */
-		public RedisListConfigurationQuery(RedisConfigurationSource source, String name) {
+		private RedisListConfigurationQuery(RedisConfigurationSource source, String name) {
 			this.source = source;
 			this.name = name;
 			this.parameters = new LinkedList<>();

@@ -60,18 +60,18 @@ import reactor.core.publisher.Flux;
  *
  * <p>
  * At each round, the actual queries executed on the source are populated by the strategy (@see
- * {@link CompositeConfigurationStrategy#populateSourceQuery(ConfigurationKey, ConfigurationQuery, ConfigurationProperty)}) so that multiple queries can actually be requested for a single original
- * query to the composite source.
+ * {@link CompositeConfigurationStrategy#populateSourceQuery(io.inverno.mod.configuration.ConfigurationKey, io.inverno.mod.configuration.ConfigurationQuery, io.inverno.mod.configuration.ConfigurationKey)})
+ * so that multiple queries can actually be requested for a single original query to the composite source.
  * </p>
  *
  * <p>
  * It then retains the first non-empty result that supersedes the one resolved in previous rounds for that original query (see @link
- * {@link CompositeConfigurationStrategy#isSuperseded(ConfigurationKey, ConfigurationProperty, ConfigurationProperty)}}.
+ * {@link CompositeConfigurationStrategy#isSuperseded(io.inverno.mod.configuration.ConfigurationKey, io.inverno.mod.configuration.ConfigurationKey, io.inverno.mod.configuration.ConfigurationKey)}}.
  * </p>
  *
  * <p>
  * A property value is retained and the sequence stops when the query is considered as resolved according to the strategy (see
- * {@link CompositeConfigurationStrategy#isResolved(ConfigurationKey, ConfigurationProperty)}) or if there's no more source to query.
+ * {@link CompositeConfigurationStrategy#isResolved(io.inverno.mod.configuration.ConfigurationKey, io.inverno.mod.configuration.ConfigurationKey)}) or if there's no more source to query.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -303,6 +303,10 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		
 		private final LinkedList<CompositeConfigurationQuery> queries;
 		
+		/**
+		 * 
+		 * @param source
+		 */
 		private CompositeExecutableConfigurationQuery(CompositeConfigurationSource source) {
 			this.source = source;
 			this.queries = new LinkedList<>();
@@ -451,6 +455,16 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The list configuration query used by the composite configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 * 
+	 * @see ListConfigurationQuery
+	 */
 	public static class CompositeListConfigurationQuery implements ListConfigurationQuery<CompositeListConfigurationQuery> {
 
 		private final CompositeConfigurationSource source;
@@ -459,7 +473,12 @@ public class CompositeConfigurationSource implements ConfigurationSource<Composi
 		
 		private final LinkedList<Parameter> parameters;
 
-		public CompositeListConfigurationQuery(CompositeConfigurationSource source, String name) {
+		/**
+		 * 
+		 * @param source
+		 * @param name
+		 */
+		private CompositeListConfigurationQuery(CompositeConfigurationSource source, String name) {
 			this.source = source;
 			this.name = name;
 			this.parameters = new LinkedList<>();

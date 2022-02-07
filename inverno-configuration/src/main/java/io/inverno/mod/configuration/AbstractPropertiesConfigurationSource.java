@@ -222,6 +222,19 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The list configuration query used by a properties configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @see ListConfigurationQuery
+	 *
+	 * @param <A> raw configuration value type
+	 * @param <B> the properties configuration source type
+	 */
 	public static class PropertyListConfigurationQuery<A, B extends AbstractPropertiesConfigurationSource<A, B>> implements ListConfigurationQuery<PropertyListConfigurationQuery<A, B>> {
 
 		private final B source;

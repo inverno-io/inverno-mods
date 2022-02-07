@@ -269,7 +269,7 @@ public interface ConfigurationKey {
 	/**
 	 * <p>
 	 * Determines whether this configuration key macthes the other key.
-	 * <p>
+	 * </p>
 	 * 
 	 * <p>
 	 * When the match is exact, this method returns true only if the this key defines the exact same parameters as the other key with matching values.

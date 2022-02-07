@@ -43,7 +43,7 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <blockquote><pre>
- * Map<String, Object> map = Map.of(
+ * Map&lt;String, Object&gt; map = Map.of(
  *     "web.server_port", 8080,
  *     "db.url[env=\"dev\"]", "jdbc:oracle:thin:@dev.db.server:1521:sid",
  *     "db.url[env=\"prod\",zone=\"eu\"]", "jdbc:oracle:thin:@prod_eu.db.server:1521:sid",
@@ -61,6 +61,9 @@ public class MapConfigurationSource extends AbstractHashConfigurationSource<Obje
 
 	private static final Logger LOGGER = LogManager.getLogger(MapConfigurationSource.class);
 	
+	/**
+	 * The map holding configuration data
+	 */
 	protected final Map<String, Object> map;
 	
 	/**

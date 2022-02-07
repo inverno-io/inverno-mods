@@ -212,6 +212,19 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The list configuration query used by a hash configuration source.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.4
+	 * 
+	 * @see ListConfigurationQuery
+	 *
+	 * @param <A> raw configuration value type
+	 * @param <B> the hash configuration source type
+	 */
 	public static class HashListConfigurationQuery<A, B extends AbstractHashConfigurationSource<A, B>> implements ListConfigurationQuery<HashListConfigurationQuery<A, B>> {
 
 		private final B source;
