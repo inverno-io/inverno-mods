@@ -544,7 +544,25 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 					}
 				}
 				else if(hasFormParameters) {
-					controllerInvoke.insert(0, new StringBuilder(context.getFluxTypeName()).append(".from(exchange.request().body().get().urlEncoded().stream()).collectMultimap(").append(context.getParameterTypeName()).append("::getName)").append(".flatMap(formParameters -> ")).append(")");
+					String mapFunction;
+					if(responseBodyInfo.getBodyReactiveKind() == ResponseBodyReactiveKind.NONE) {
+						mapFunction = "map";
+					}
+					else if(responseBodyInfo.getBodyReactiveKind() == ResponseBodyReactiveKind.ONE) {
+						if(responseBodyInfo.getBodyKind() == ResponseBodyKind.EMPTY) {
+							mapFunction = "flatMap";
+						}
+						else {
+							mapFunction = "map";
+						}
+					}
+					else if(responseBodyInfo.getBodyReactiveKind() == ResponseBodyReactiveKind.PUBLISHER || responseBodyInfo.getBodyReactiveKind() == ResponseBodyReactiveKind.MANY) {
+						mapFunction = "flatMapMany";
+					}
+					else {
+						throw new IllegalStateException("Unknown response body reactive kind: " + responseBodyInfo.getBodyReactiveKind());
+					}
+					controllerInvoke.insert(0, new StringBuilder(context.getFluxTypeName()).append(".from(exchange.request().body().get().urlEncoded().stream()).collectMultimap(").append(context.getParameterTypeName()).append("::getName)").append(".").append(mapFunction).append("(formParameters -> ")).append(")");
 				}
 				
 				if(responseBodyInfo.getBodyKind() == ResponseBodyKind.EMPTY) {
