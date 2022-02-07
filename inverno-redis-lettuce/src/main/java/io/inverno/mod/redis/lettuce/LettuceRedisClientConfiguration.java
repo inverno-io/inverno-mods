@@ -51,7 +51,7 @@ public interface LettuceRedisClientConfiguration {
 	 * @return a Redis datastore URI
 	 */
 	String uri();
-	
+
 	/**
 	 * <p>
 	 * Redis datastore user name.

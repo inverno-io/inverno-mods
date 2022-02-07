@@ -26,7 +26,7 @@ import io.inverno.mod.redis.lettuce.LettuceRedisClientConfiguration;
 
 /**
  * <p>
- * Lettuce client resources wrapper bean that uses Inverno's reactor as event loop group provider.
+ * Lettuce client resources wrapper bean that allows to use Inverno's reactor as event loop group provider.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -36,8 +36,8 @@ import io.inverno.mod.redis.lettuce.LettuceRedisClientConfiguration;
 public class ClientResourcesWrapper implements Supplier<ClientResources> {
 
 	private final LettuceRedisClientConfiguration configuration;
-	private final Reactor reactor;
-	
+	private Reactor reactor;
+
 	private ClientResources instance;
 	
 	/**
@@ -46,13 +46,22 @@ public class ClientResourcesWrapper implements Supplier<ClientResources> {
 	 * </p>
 	 *
 	 * @param configuration Lettuce redis client module configuration
-	 * @param reactor       Inverno's reactor
 	 */
-	public ClientResourcesWrapper(LettuceRedisClientConfiguration configuration, Reactor reactor) {
+	public ClientResourcesWrapper(LettuceRedisClientConfiguration configuration) {
 		this.configuration = configuration;
-		this.reactor = reactor;
 	}
 
+	/**
+	 * <p>
+	 * Sets Inverno's reactor in order to use Inverno's reactor as event loop group provider.
+	 * </p>
+	 * 
+	 * @param reactor Inverno's reactor
+	 */
+	public void setReactor(Reactor reactor) {
+		this.reactor = reactor;
+	}
+	
 	@Override
 	public ClientResources get() {
 		return this.instance;
@@ -60,7 +69,12 @@ public class ClientResourcesWrapper implements Supplier<ClientResources> {
 	
 	@Init
 	public void init() {
-		this.instance = ClientResources.builder().eventLoopGroupProvider(new ReactorEventLoopGroupProvider(this.reactor, this.configuration.event_loop_group_size())).build();
+		if(this.reactor != null) {
+			this.instance = ClientResources.builder().eventLoopGroupProvider(new ReactorEventLoopGroupProvider(this.reactor, this.configuration.event_loop_group_size())).build();
+		}
+		else {
+			this.instance = ClientResources.builder().ioThreadPoolSize(this.configuration.event_loop_group_size()).build();
+		}
 	}
 	
 	@Destroy

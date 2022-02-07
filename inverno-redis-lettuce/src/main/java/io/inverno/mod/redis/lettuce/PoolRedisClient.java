@@ -23,7 +23,7 @@ import io.inverno.mod.redis.RedisTransactionalOperations;
 import io.inverno.mod.redis.lettuce.internal.operations.StatefulRedisConnectionOperations;
 import io.inverno.mod.redis.lettuce.internal.operations.StatefulRedisConnectionTransactionalOperations;
 import io.lettuce.core.api.StatefulRedisConnection;
-import io.lettuce.core.support.BoundedAsyncPool;
+import io.lettuce.core.support.AsyncPool;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -52,11 +52,11 @@ public class PoolRedisClient<A, B, C extends StatefulRedisConnection<A, B>> exte
 	 * Creates a Redis client with the specified Lettuce pool.
 	 * </p>
 	 *
-	 * @param pool      a bounded async pool
+	 * @param pool      an async pool
 	 * @param keyType   the key type
 	 * @param valueType the value type
 	 */
-	public PoolRedisClient(BoundedAsyncPool<C> pool, Class<A> keyType, Class<B> valueType) {
+	public PoolRedisClient(AsyncPool<C> pool, Class<A> keyType, Class<B> valueType) {
 		super(pool, keyType, valueType);
 	}
 
