@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.sql.vertx;
 
+import io.inverno.mod.sql.PreparedStatement;
 import java.util.function.Function;
 
 import org.reactivestreams.Publisher;
@@ -22,6 +23,7 @@ import org.reactivestreams.Publisher;
 import io.inverno.mod.sql.SqlOperations;
 import io.inverno.mod.sql.TransactionalSqlOperations;
 import io.inverno.mod.sql.vertx.internal.AbstractSqlClient;
+import io.inverno.mod.sql.vertx.internal.ConnectionPreparedStatement;
 import io.inverno.mod.sql.vertx.internal.TransactionalSqlConnection;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.TransactionRollbackException;
@@ -54,6 +56,11 @@ public class ConnectionSqlClient extends AbstractSqlClient {
 	}
 
 	@Override
+	public PreparedStatement preparedStatement(String sql) {
+		return new ConnectionPreparedStatement((SqlConnection)this.client, sql);
+	}
+
+	@Override
 	public Mono<TransactionalSqlOperations> transaction() {
 		return Mono.fromCompletionStage(((SqlConnection)this.client)
 			.begin()
@@ -61,7 +68,7 @@ public class ConnectionSqlClient extends AbstractSqlClient {
 			.toCompletionStage()
 		);
 	}
-
+	
 	@Override
 	public <T> Publisher<T> transaction(Function<SqlOperations, Publisher<T>> function) {
 		return Flux.usingWhen(

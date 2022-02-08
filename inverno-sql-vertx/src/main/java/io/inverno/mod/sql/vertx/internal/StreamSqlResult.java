@@ -86,7 +86,7 @@ public class StreamSqlResult implements SqlResult {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.2
 	 */
-	private static class RowStreamPublisher implements Publisher<Row>, Subscription {
+	static class RowStreamPublisher implements Publisher<Row>, Subscription {
 
 		private final RowStream<io.vertx.sqlclient.Row> rowStream;
 		

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package io.inverno.mod.sql.vertx.internal;
 
-import org.reactivestreams.Publisher;
-
 import io.inverno.mod.sql.PreparedStatement;
 import io.inverno.mod.sql.Row;
 import io.inverno.mod.sql.SqlResult;
@@ -24,23 +22,23 @@ import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.RowStream;
 import io.vertx.sqlclient.SqlConnection;
 import java.util.function.Function;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A {@link PreparedStatement} implementation that runs in a transaction with
- * support for result streaming.
+ * A {@link PreparedStatement} implementation that runs in a connection with support for result streaming.
  * </p>
- * 
+ *
  * <p>
  * Note that result streaming doesn't apply to batch operations.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.2
+ * @since 1.4
  */
-public class TransactionalPreparedStatement extends GenericPreparedStatement {
+public class ConnectionPreparedStatement extends GenericPreparedStatement {
 
 	public static final int DEFAULT_FETCH_SIZE = 50;
 	
@@ -50,13 +48,13 @@ public class TransactionalPreparedStatement extends GenericPreparedStatement {
 	
 	/**
 	 * <p>
-	 * Creates a transactional prepared statement.
+	 * Creates a connection prepared statement.
 	 * </p>
 	 * 
-	 * @param connection the underlying Vert.x connection with an opened transaction
+	 * @param connection the underlying Vert.x connection
 	 * @param sql        a SQL operation
 	 */
-	public TransactionalPreparedStatement(SqlConnection connection, String sql) {
+	public ConnectionPreparedStatement(SqlConnection connection, String sql) {
 		super(connection, sql);
 		this.preparedStatement = Mono.fromCompletionStage(connection.prepare(sql).toCompletionStage());
 	}
@@ -93,7 +91,7 @@ public class TransactionalPreparedStatement extends GenericPreparedStatement {
 				});
 		}
 	}
-	
+
 	@Override
 	public <T> Publisher<T> execute(Function<Row, T> rowMapper) {
 		if(this.batch.size() == 1) {
