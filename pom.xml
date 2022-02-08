@@ -79,7 +79,7 @@
 		<maven.compiler.target>11</maven.compiler.target>
 		<maven.compiler.release>11</maven.compiler.release>
 
-		<version.inverno>1.4.1</version.inverno>
+		<version.inverno>1.5.0-SNAPSHOT</version.inverno>
 	</properties>
 
 	<dependencyManagement>
