@@ -15,14 +15,17 @@
  */
 package io.inverno.mod.sql.vertx.internal;
 
+import java.util.function.Function;
+
+import org.reactivestreams.Publisher;
+
 import io.inverno.mod.sql.PreparedStatement;
 import io.inverno.mod.sql.Row;
 import io.inverno.mod.sql.SqlResult;
+import io.vertx.sqlclient.Cursor;
+import io.vertx.sqlclient.PreparedQuery;
 import io.vertx.sqlclient.RowSet;
-import io.vertx.sqlclient.RowStream;
 import io.vertx.sqlclient.SqlConnection;
-import java.util.function.Function;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -38,13 +41,12 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.4
  */
-public class ConnectionPreparedStatement extends GenericPreparedStatement {
+public class ConnectionPreparedStatement extends AbstractPreparedStatement {
 
-	public static final int DEFAULT_FETCH_SIZE = 50;
-	
-	private int fetchSize = DEFAULT_FETCH_SIZE;
+	protected int fetchSize = 0;
 	
 	protected final Mono<io.vertx.sqlclient.PreparedStatement> preparedStatement;
+	protected final Mono<PreparedQuery<RowSet<io.vertx.sqlclient.Row>>> preparedQuery;
 	
 	/**
 	 * <p>
@@ -55,8 +57,8 @@ public class ConnectionPreparedStatement extends GenericPreparedStatement {
 	 * @param sql        a SQL operation
 	 */
 	public ConnectionPreparedStatement(SqlConnection connection, String sql) {
-		super(connection, sql);
-		this.preparedStatement = Mono.fromCompletionStage(connection.prepare(sql).toCompletionStage());
+		this.preparedStatement = Mono.fromCompletionStage(connection.prepare(sql).toCompletionStage()).cache();
+		this.preparedQuery = this.preparedStatement.map(statement -> statement.query()).cache();
 	}
 	
 	@Override
@@ -68,54 +70,61 @@ public class ConnectionPreparedStatement extends GenericPreparedStatement {
 	@Override
 	public Publisher<SqlResult> execute() {
 		if(this.batch.size() == 1) {
-			// We can do streaming
-			return this.preparedStatement
-				.map(statement -> {
-					Mono<RowSet<io.vertx.sqlclient.Row>> rowSet = this.preparedQuery.flatMap(query -> Mono.fromCompletionStage(query.execute(this.currentParameters).toCompletionStage()));
-					Mono<RowStream<io.vertx.sqlclient.Row>> rowStream = Mono.fromSupplier(() -> statement.createStream(this.fetchSize));
-					
-					return new StreamSqlResult(rowSet, rowStream);
-				});
+			if(this.fetchSize > 0) {
+				// Streaming
+				return this.preparedStatement
+					.map(statement -> new StreamSqlResult(statement.cursor(this.currentParameters), this.fetchSize));
+			}
+			else {
+				return this.preparedQuery.flatMapMany(query -> 
+					Mono.fromCompletionStage(query.execute(this.currentParameters).toCompletionStage())
+						.map(GenericSqlResult::new)
+				);
+			}
 		}
 		else {
-			return this.preparedQuery
-				.flatMap(query -> Mono.fromCompletionStage(query.executeBatch(this.batch).toCompletionStage()))
-				.flatMapMany(rowSet -> {
-					return Flux.create(sink -> {
-						RowSet<io.vertx.sqlclient.Row> current = rowSet;
-						do {
-							sink.next(new GenericSqlResult(current));
-						} while( (current = current.next()) != null);
-						sink.complete();
-					});
-				});
+			return this.preparedQuery.flatMapMany(query -> 
+				Mono.fromCompletionStage(query.executeBatch(this.batch).toCompletionStage())
+					.flatMapMany(rowSet -> 
+						Mono.just(rowSet)
+							.expand(current -> Mono.justOrEmpty(current.next()))
+							.map(GenericSqlResult::new)
+					)
+			);
 		}
 	}
 
 	@Override
 	public <T> Publisher<T> execute(Function<Row, T> rowMapper) {
 		if(this.batch.size() == 1) {
-			// We can do streaming
-			return this.preparedStatement
-				.flatMapMany(statement -> {
-					return Flux.from(new StreamSqlResult.RowStreamPublisher(statement.createStream(this.fetchSize, this.currentParameters)))
-						.map(rowMapper);
-				});
+			if(this.fetchSize > 0) {
+				// Streaming
+				return this.preparedStatement
+					.flatMapMany(statement -> {
+						Cursor cursor = statement.cursor(this.currentParameters);
+						return Mono.fromCompletionStage(() -> cursor.read(this.fetchSize).toCompletionStage())
+							.repeat(() -> cursor.hasMore())
+							.map(rowSet -> rowSet.size() > 0 ? rowMapper.apply(new GenericRow(rowSet.iterator().next())) : null)
+							.doFinally(ign -> cursor.close());
+					});
+			}
+			else {
+				return this.preparedQuery.flatMapMany(query -> 
+					Mono.fromCompletionStage(query.execute(this.currentParameters).toCompletionStage())
+						.flatMapMany(rowSet -> Flux.fromIterable(rowSet).map(row -> rowMapper.apply(new GenericRow(row))))
+				);
+			}
 		}
 		else {
-			return this.preparedQuery
-				.flatMap(query -> Mono.fromCompletionStage(query.executeBatch(this.batch).toCompletionStage()))
-				.flatMapMany(rowSet -> {
-					return Flux.create(sink -> {
-						RowSet<io.vertx.sqlclient.Row> current = rowSet;
-						do {
-							current.iterator().forEachRemaining(row -> {
-								sink.next(rowMapper.apply(new GenericRow(row)));
-							});
-						} while( (current = current.next()) != null);
-						sink.complete();
-					});
-				});
+			return this.preparedQuery.flatMapMany(query -> 
+				Mono.fromCompletionStage(query.executeBatch(this.batch).toCompletionStage())
+					.flatMapMany(rowSet -> 
+						Mono.just(rowSet)
+							.expand(current -> Mono.justOrEmpty(current.next()))
+							.flatMapIterable(Function.identity())
+							.map(row -> rowMapper.apply(new GenericRow(row)))
+					)
+			);
 		}
 	}
 }

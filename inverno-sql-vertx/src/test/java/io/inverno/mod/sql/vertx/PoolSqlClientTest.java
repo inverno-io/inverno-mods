@@ -382,8 +382,8 @@ public class PoolSqlClientTest {
 		SqlClient client = this.createClient();
 		
 		try {
-			List<Row> queryResults = Flux.from(client.connection(ops -> Flux
-				.from(ops.preparedStatement("SELECT * FROM test").execute())
+			List<Row> queryResults = Flux.from(client.transaction(ops -> Flux
+				.from(ops.preparedStatement("SELECT * FROM test").fetchSize(2).execute())
 				.flatMap(SqlResult::rows)
 			)).collectList().block();
 			

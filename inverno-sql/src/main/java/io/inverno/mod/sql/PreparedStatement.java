@@ -121,12 +121,16 @@ public interface PreparedStatement {
 	 * <p>
 	 * Specifies the fetch size when rows are retrieved in a stream.
 	 * </p>
-	 *
+	 * 
+	 * <p>
+	 * The fetch size is set to 0 by default and streaming is disabled.
+	 * </p>
+	 * 
 	 * <p>
 	 * If streaming is not available, this is a noop method.
 	 * </p>
-	 *
-	 * @param rows the number of rows to fetch
+	 * 
+	 * @param rows the number of rows to fetch or 0 to disable streaming
 	 *
 	 * @return this statement
 	 */
