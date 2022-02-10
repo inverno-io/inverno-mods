@@ -20,10 +20,13 @@ import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceService;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
-import java.net.URI;
-import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.net.URI;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * <p>
@@ -46,8 +49,15 @@ public class WebJarsRoutesConfigurer implements WebRoutesConfigurer<ExchangeCont
 	
 	private static final Logger LOGGER = LogManager.getLogger(WebJarsRoutesConfigurer.class);
 	
-	private static final String WEBJARS_MODULE_PREFIX = "org.webjars";
-	
+	private static final String WEBJARS_MODULE_PREFIX = "org.webjars.";
+	private static final int WEBJARS_MODULE_PREFIX_LENGTH = WEBJARS_MODULE_PREFIX.length();
+	private static final String NPM_PREFIX = "npm.";
+	private static final int NPM_PREFIX_LENGTH = NPM_PREFIX.length();
+	private static final String BOWER_PREFIX = "bower.";
+	private static final int BOWER_PREFIX_LENGTH = BOWER_PREFIX.length();
+	private static final String BOWERGITHUB_PREFIX = "bowergithub.";
+	private static final int BOWERGITHUB_PREFIX_LENGTH = BOWERGITHUB_PREFIX.length();
+
 	private static final String BASE_WEBJARS_PATH = "/webjars";
 	
 	private final ResourceService resourceService;
@@ -72,19 +82,34 @@ public class WebJarsRoutesConfigurer implements WebRoutesConfigurer<ExchangeCont
 		 * - no modular webjar (ie. we haven't found the requested module) fallback to classpath
 		 *   - /[module_name]/webjars/* -> classpath:/META-INF/resources/webjars
 		 */
-		
+
+		final Set<String> webjarNames = new HashSet<>();
+
 		ModuleLayer moduleLayer = this.getClass().getModule().getLayer();
 		if(moduleLayer != null) {
 			moduleLayer.modules().stream().filter(module -> module.getName().startsWith(WEBJARS_MODULE_PREFIX) && module.getDescriptor().rawVersion().isPresent()).forEach(module -> {
-				String webjarName = module.getDescriptor().name().substring(WEBJARS_MODULE_PREFIX.length() + 1);
-				String webjarVersion = module.getDescriptor().rawVersion().get();
-				Resource baseResource = this.resourceService.getResource(URI.create(ModuleResource.SCHEME_MODULE + "://" + module.getName() + "/META-INF/resources/webjars/" + webjarName + "/" + webjarVersion + "/"));
-				String webjarRootPath = WebJarsRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
-				LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
-				routable.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
+				String webjarName = module.getDescriptor().name().substring(WEBJARS_MODULE_PREFIX_LENGTH);
+				if (webjarName.startsWith(NPM_PREFIX)) {
+					// org.webjars.npm.<name>
+					webjarName = webjarName.substring(NPM_PREFIX_LENGTH);
+				} else if (webjarName.startsWith(BOWER_PREFIX)) {
+					// org.webjars.bower.<name>
+					webjarName = webjarName.substring(BOWER_PREFIX_LENGTH);
+				} else if (webjarName.startsWith(BOWERGITHUB_PREFIX)) {
+					// org.webjars.bowergithub.<org|user>.<name>
+					webjarName = webjarName.substring(BOWERGITHUB_PREFIX_LENGTH);
+					webjarName = webjarName.substring(webjarName.indexOf('.') + 1);
+				}
+				if(webjarNames.add(webjarName)) {
+					String webjarVersion = module.getDescriptor().rawVersion().get();
+					Resource baseResource = this.resourceService.getResource(URI.create(ModuleResource.SCHEME_MODULE + "://" + module.getName() + "/META-INF/resources/webjars/" + webjarName + "/" + webjarVersion + "/"));
+					String webjarRootPath = WebJarsRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
+					LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
+					routable.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
+				}
 			});
 		}
-		
+
 		this.resourceService.getResources(URI.create("classpath:/META-INF/resources/webjars"))
 			.flatMap(resource -> {
 				return this.resourceService.getResources(URI.create(resource.getURI().toString() + "/*/*"));
@@ -93,11 +118,13 @@ public class WebJarsRoutesConfigurer implements WebRoutesConfigurer<ExchangeCont
 				String spec = baseResource.getURI().getSchemeSpecificPart();
 				int versionIndex = spec.lastIndexOf("/");
 				int webjarIndex = spec.substring(0, versionIndex).lastIndexOf("/");
-				
+
 				String webjarName = toModuleName(spec.substring(webjarIndex + 1, versionIndex));
-				String webjarRootPath = WebJarsRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
-				LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
-				routable.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
+				if(webjarNames.add(webjarName)) {
+					String webjarRootPath = WebJarsRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
+					LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
+					routable.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
+				}
 			});
 	}
 	
