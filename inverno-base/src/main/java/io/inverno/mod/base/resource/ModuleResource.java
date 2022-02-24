@@ -41,7 +41,7 @@ import java.util.Optional;
  * </p>
  * 
  * <p>
- * When the application runs without modules, the unamed module is used whatever
+ * When the application runs without modules, the unnamed module is used whatever
  * the module specified in the URI.
  * </p>
  * 
