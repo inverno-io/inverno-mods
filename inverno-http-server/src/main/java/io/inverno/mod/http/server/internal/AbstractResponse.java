@@ -15,10 +15,6 @@
  */
 package io.inverno.mod.http.server.internal;
 
-import java.util.function.Consumer;
-
-import org.reactivestreams.Publisher;
-
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.Response;
 import io.inverno.mod.http.server.ResponseCookies;
@@ -26,6 +22,9 @@ import io.inverno.mod.http.server.ResponseHeaders;
 import io.inverno.mod.http.server.ResponseTrailers;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import org.reactivestreams.Subscriber;
+
+import java.util.function.Consumer;
 
 /**
  * <p>
@@ -74,18 +73,18 @@ public abstract class AbstractResponse implements Response {
 	public boolean isSingle() {
 		return this.responseBody.isSingle();
 	}
-	
+
 	/**
 	 * <p>
-	 * Returns the response data publisher.
+	 * Subscribes to the response data publisher.
 	 * </p>
-	 * 
-	 * @return the data publisher
+	 *
+	 * @param s the Subscriber that will consume signals from this Publisher
 	 */
-	public Publisher<ByteBuf> data() {
-		return this.responseBody.getData();
+	public void dataSubscribe(Subscriber<ByteBuf> s) {
+		this.responseBody.dataSubscribe(s);
 	}
-	
+
 	/**
 	 * <p>
 	 * Returns the response cookies.

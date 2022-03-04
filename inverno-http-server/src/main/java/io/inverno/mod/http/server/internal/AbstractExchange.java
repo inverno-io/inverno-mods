@@ -15,9 +15,15 @@
  */
 package io.inverno.mod.http.server.internal;
 
-import java.net.InetSocketAddress;
-import java.util.function.Supplier;
-
+import io.inverno.mod.http.base.HttpException;
+import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.server.*;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
+import io.netty.util.concurrent.EventExecutor;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,24 +32,13 @@ import org.apache.logging.log4j.MarkerManager;
 import org.apache.logging.log4j.message.MultiformatMessage;
 import org.apache.logging.log4j.util.Strings;
 import org.reactivestreams.Subscription;
-
-import io.inverno.mod.http.base.HttpException;
-import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
-import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.RootExchangeHandler;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.util.concurrent.EventExecutor;
 import reactor.core.Disposable;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SignalType;
+
+import java.net.InetSocketAddress;
+import java.util.function.Supplier;
 
 /**
  * <p>
@@ -758,7 +753,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		protected void hookOnComplete() {
 			AbstractExchange.this.single = AbstractExchange.this.response.isSingle();
 			AbstractExchange.this.disposable = AbstractExchange.this;
-			AbstractExchange.this.response.data().subscribe(AbstractExchange.this);
+			AbstractExchange.this.response.dataSubscribe(AbstractExchange.this);
 		}
 	}
 	
@@ -791,7 +786,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			AbstractExchange.this.single = AbstractExchange.this.response.isSingle();
 			ErrorSubscriber errorSubscriber = new ErrorSubscriber(this.originalError);
 			AbstractExchange.this.disposable = errorSubscriber;
-			AbstractExchange.this.response.data().subscribe(errorSubscriber);
+			AbstractExchange.this.response.dataSubscribe(errorSubscriber);
 		}
 	}
 }

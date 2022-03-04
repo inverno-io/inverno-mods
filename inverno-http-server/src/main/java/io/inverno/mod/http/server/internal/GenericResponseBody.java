@@ -32,6 +32,7 @@ import io.inverno.mod.http.server.ResponseBody;
 import io.inverno.mod.http.server.ResponseBody.Sse.Event;
 import io.inverno.mod.http.server.ResponseBody.Sse.EventFactory;
 import io.inverno.mod.http.server.ResponseData;
+import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
@@ -58,7 +59,8 @@ public class GenericResponseBody implements ResponseBody {
 	
 	private MonoSink<Publisher<ByteBuf>> dataEmitter;
 	private Publisher<ByteBuf> data;
-	
+
+	private boolean subscribed;
 	private boolean dataSet;
 	private boolean single;
 	
@@ -83,7 +85,7 @@ public class GenericResponseBody implements ResponseBody {
 	 * @throws IllegalStateException if response data have already been set
 	 */
 	protected final void setData(Publisher<ByteBuf> data) {
-		if(this.dataSet) {
+		if(this.subscribed && this.dataSet) {
 			throw new IllegalStateException("Response data already posted");
 		}
 		if(data instanceof Mono) {
@@ -93,21 +95,26 @@ public class GenericResponseBody implements ResponseBody {
 			this.dataEmitter.success(data);
 		}
 		this.data = data;
+		this.dataSet = true;
 	}
-	
+
 	/**
 	 * <p>
-	 * Returns the response payload data publisher.
+	 * Subscribes to the response payload data publisher, creates a switchable publisher if unset.
 	 * </p>
-	 * 
-	 * @return the payload data publisher
+	 *
+	 * @param s the Subscriber that will consume signals from this Publisher
 	 */
-	public Publisher<ByteBuf> getData() {
+	public void dataSubscribe(Subscriber<? super ByteBuf> s) {
+		// No need to synchronize this code since we are in an EventLoop
+		if(this.subscribed) {
+			throw new IllegalStateException("Response data already subscribed");
+		}
 		if(this.data == null) {
 			this.setData(Flux.switchOnNext(Mono.<Publisher<ByteBuf>>create(emitter -> this.dataEmitter = emitter)));
-			this.dataSet = false;
 		}
-		return this.data;
+		this.data.subscribe(s);
+		this.subscribed = true;
 	}
 
 	/**
