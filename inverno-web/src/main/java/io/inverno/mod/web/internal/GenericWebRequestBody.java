@@ -15,11 +15,6 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.lang.reflect.Type;
-
-import org.reactivestreams.Publisher;
-
-import io.netty.buffer.ByteBuf;
 import io.inverno.mod.http.base.BadRequestException;
 import io.inverno.mod.http.base.UnsupportedMediaTypeException;
 import io.inverno.mod.http.base.header.Headers;
@@ -29,7 +24,12 @@ import io.inverno.mod.web.RequestDataDecoder;
 import io.inverno.mod.web.WebPart;
 import io.inverno.mod.web.WebRequest;
 import io.inverno.mod.web.WebRequestBody;
+import io.netty.buffer.ByteBuf;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
+
+import java.lang.reflect.Type;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -61,6 +61,12 @@ class GenericWebRequestBody implements WebRequestBody {
 		this.request = request;
 		this.requestBody = requestBody;
 		this.dataConversionService = dataConversionService;
+	}
+
+	@Override
+	public WebRequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
+		this.requestBody.transform(transformer);
+		return this;
 	}
 
 	@Override

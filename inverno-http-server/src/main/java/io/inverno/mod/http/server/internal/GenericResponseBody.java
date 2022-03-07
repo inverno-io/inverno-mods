@@ -15,14 +15,6 @@
  */
 package io.inverno.mod.http.server.internal;
 
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-
-import org.reactivestreams.Publisher;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.http.HttpConstants;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.InternalServerErrorException;
@@ -32,10 +24,20 @@ import io.inverno.mod.http.server.ResponseBody;
 import io.inverno.mod.http.server.ResponseBody.Sse.Event;
 import io.inverno.mod.http.server.ResponseBody.Sse.EventFactory;
 import io.inverno.mod.http.server.ResponseData;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.HttpConstants;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -63,6 +65,8 @@ public class GenericResponseBody implements ResponseBody {
 	private boolean subscribed;
 	private boolean dataSet;
 	private boolean single;
+
+	private Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer;
 	
 	/**
 	 * <p>
@@ -88,13 +92,16 @@ public class GenericResponseBody implements ResponseBody {
 		if(this.subscribed && this.dataSet) {
 			throw new IllegalStateException("Response data already posted");
 		}
-		if(data instanceof Mono) {
+
+		Publisher<ByteBuf> transformedData = this.transformer != null ? this.transformer.apply(data) : data;
+
+		if(transformedData instanceof Mono) {
 			this.single = true;
 		}
 		if(this.dataEmitter != null) {
-			this.dataEmitter.success(data);
+			this.dataEmitter.success(transformedData);
 		}
-		this.data = data;
+		this.data = transformedData;
 		this.dataSet = true;
 	}
 
@@ -127,7 +134,26 @@ public class GenericResponseBody implements ResponseBody {
 	public boolean isSingle() {
 		return this.single;
 	}
-	
+
+	@Override
+	public ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
+		if(this.subscribed && this.dataSet) {
+			throw new IllegalStateException("Response data already posted");
+		}
+
+		if(this.transformer == null) {
+			this.transformer = transformer;
+		}
+		else {
+			this.transformer = this.transformer.andThen(transformer);
+		}
+
+		if(this.dataSet) {
+			this.data = transformer.apply(this.data);
+		}
+		return this;
+	}
+
 	@Override
 	public void empty() {
 		if(!this.dataSet) {

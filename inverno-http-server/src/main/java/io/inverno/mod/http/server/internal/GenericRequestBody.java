@@ -15,18 +15,18 @@
  */
 package io.inverno.mod.http.server.internal;
 
-import java.util.Optional;
-
-import org.reactivestreams.Publisher;
-
-import io.netty.buffer.ByteBuf;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.RequestBody;
 import io.inverno.mod.http.server.RequestData;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
+import io.netty.buffer.ByteBuf;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
+
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -65,7 +65,13 @@ public class GenericRequestBody implements RequestBody {
 		this.multipartBodyDecoder = multipartBodyDecoder;
 		this.data = data;
 	}
-	
+
+	@Override
+	public RequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
+		this.data = Flux.from(transformer.apply(this.data));
+		return this;
+	}
+
 	@Override
 	public RequestData<ByteBuf> raw() {
 		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made

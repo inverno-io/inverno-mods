@@ -15,18 +15,20 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.lang.reflect.Type;
-
-import io.netty.buffer.ByteBuf;
 import io.inverno.mod.http.base.InternalServerErrorException;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ResponseBody;
-import io.inverno.mod.http.server.ResponseData;
 import io.inverno.mod.http.server.ResponseBody.Sse.Event;
 import io.inverno.mod.http.server.ResponseBody.Sse.EventFactory;
+import io.inverno.mod.http.server.ResponseData;
 import io.inverno.mod.web.ResponseDataEncoder;
 import io.inverno.mod.web.WebResponse;
 import io.inverno.mod.web.WebResponseBody;
+import io.netty.buffer.ByteBuf;
+import org.reactivestreams.Publisher;
+
+import java.lang.reflect.Type;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -58,6 +60,12 @@ class GenericWebResponseBody implements WebResponseBody {
 		this.response = response;
 		this.dataConversionService = dataConversionService;
 		this.responseBody = responseBody;
+	}
+
+	@Override
+	public WebResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
+		this.responseBody.transform(transformer);
+		return this;
 	}
 
 	@Override

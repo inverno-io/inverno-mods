@@ -15,10 +15,13 @@
  */
 package io.inverno.mod.web;
 
-import java.lang.reflect.Type;
-
 import io.inverno.mod.base.converter.MediaTypeConverter;
 import io.inverno.mod.http.server.RequestBody;
+import io.netty.buffer.ByteBuf;
+import org.reactivestreams.Publisher;
+
+import java.lang.reflect.Type;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -37,6 +40,9 @@ import io.inverno.mod.http.server.RequestBody;
  * @see MediaTypeConverter
  */
 public interface WebRequestBody extends RequestBody {
+
+	@Override
+	WebRequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer);
 
 	/**
 	 * <p>

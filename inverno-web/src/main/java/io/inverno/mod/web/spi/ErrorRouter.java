@@ -56,8 +56,11 @@ import io.inverno.mod.http.server.ExchangeContext;
  * @param <C> the route manager type
  * @param <D> the route type
  */
-public interface ErrorRouter<A extends ErrorExchange<Throwable>, B extends ErrorRouter<A, B, C, D>, C extends ErrorRouteManager<A, B, C, D>, D extends Route<ExchangeContext, A>> extends 
-	Routable<ExchangeContext, A, B, C, D>, 
-	ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> {
+public interface ErrorRouter<
+		A extends ErrorExchange<Throwable>,
+		B extends ErrorRouter<A, B, C, D>,
+		C extends ErrorRouteManager<A, B, C, D>,
+		D extends Route<ExchangeContext, A>
+	> extends Routable<ExchangeContext, A, B, C, D>, ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> {
 
 }

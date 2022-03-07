@@ -47,5 +47,4 @@ public interface InterceptorManager<
 		C extends Interceptable<A, B, C, D>,
 		D extends InterceptorManager<A, B, C, D>
 	> {
-	
 }

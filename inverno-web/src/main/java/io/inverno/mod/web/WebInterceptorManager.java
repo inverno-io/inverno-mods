@@ -16,11 +16,11 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.base.net.URIBuilder;
-import io.inverno.mod.web.spi.InterceptorManager;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ContentAware;
+import io.inverno.mod.web.spi.InterceptorManager;
 import io.inverno.mod.web.spi.PathAware;
 
 /**
@@ -54,7 +54,7 @@ public interface WebInterceptorManager<A extends ExchangeContext, B extends WebI
 	 * @return the router
 	 */
 	B interceptor(WebExchangeInterceptor<? super A> interceptor);
-	
+
 	/**
 	 * <p>
 	 * Specifies the path without matching trailing slash to the resource to intercept.

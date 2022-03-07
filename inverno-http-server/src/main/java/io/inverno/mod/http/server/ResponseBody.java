@@ -15,10 +15,12 @@
  */
 package io.inverno.mod.http.server;
 
+import io.netty.buffer.ByteBuf;
+import org.reactivestreams.Publisher;
+
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-
-import io.netty.buffer.ByteBuf;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -36,6 +38,21 @@ import io.netty.buffer.ByteBuf;
  * @see Response
  */
 public interface ResponseBody {
+
+	/**
+	 * <p>
+	 * Transforms the payload publisher.
+	 * </p>
+	 *
+	 * <p>
+	 * This can be used in an exchange interceptor in order to decorate response data publisher.
+	 * </p>
+	 *
+	 * @param transformer a request payload publisher transformer
+	 *
+	 * @return the request body
+	 */
+	ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer);
 
 	/**
 	 * <p>
