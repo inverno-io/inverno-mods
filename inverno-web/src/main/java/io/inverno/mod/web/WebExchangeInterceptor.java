@@ -29,5 +29,20 @@ import io.inverno.mod.http.server.ExchangeInterceptor;
  * @param <A> the type of the exchange context
  */
 public interface WebExchangeInterceptor<A extends ExchangeContext> extends ExchangeInterceptor<A, WebExchange<A>> {
-	
+
+	/**
+	 * <p>
+	 * Wraps the specified Exchange interceptor into a Web Exchange interceptor.
+	 * </p>
+	 *
+	 * @param interceptor the interceptor to wrap
+	 * @param <A> the type of the exchange context
+	 *
+	 * @return a Web Exchange interceptor
+	 */
+	static <A extends ExchangeContext> WebExchangeInterceptor<A> wrap(ExchangeInterceptor<A, WebExchange<A>> interceptor) {
+		return exchange -> {
+			return interceptor.intercept(exchange);
+		};
+	}
 }
