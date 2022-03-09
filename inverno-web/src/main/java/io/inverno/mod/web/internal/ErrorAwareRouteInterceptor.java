@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,32 +17,32 @@ package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.spi.PathAware;
+import io.inverno.mod.web.spi.ErrorAware;
 import io.inverno.mod.web.spi.Route;
 
 /**
  * <p>
- * A route interceptor for intercepting path aware routes.
+ * A route interceptor for intercepting error aware routes.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.3
- * 
+ * @since 1.5
+ *
  * @param <A> the type of the exchange context
  * @param <B> the type of exchange intercepted by the interceptor
  * @param <C> the route type
  * @param <D> the route interceptor type
  */
-interface PathAwareRouteInterceptor<A extends ExchangeContext, B extends Exchange<A>, C extends Route<A, B>, D extends PathAwareRouteInterceptor<A, B, C, D>> extends RouteInterceptor<A, B, C, D> {
+interface ErrorAwareRouteInterceptor<A extends ExchangeContext, B extends Exchange<A>, C extends Route<A, B>, D extends ErrorAwareRouteInterceptor<A, B, C, D>> extends RouteInterceptor<A, B, C, D> {
 
 	/**
 	 * <p>
-	 * Determines whether the specified path aware is matched by the route interceptor.
+	 * Determines whether the specified error aware is matched by the route interceptor.
 	 * </p>
-	 * 
-	 * @param pathAware a path aware
-	 * 
-	 * @return a route interceptor if the path aware is a match, null otherwise
+	 *
+	 * @param errorAware a content aware
+	 *
+	 * @return a route interceptor if the error aware is a match, null otherwise
 	 */
-	D matches(PathAware pathAware);
+	D matches(ErrorAware errorAware);
 }

@@ -15,37 +15,28 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
-import java.time.format.DateTimeFormatter;
-import java.util.Set;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Init;
 import io.inverno.core.annotation.Provide;
 import io.inverno.mod.base.resource.MediaTypes;
-import io.inverno.mod.http.base.HttpException;
-import io.inverno.mod.http.base.InternalServerErrorException;
-import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.base.MethodNotAllowedException;
-import io.inverno.mod.http.base.NotAcceptableException;
-import io.inverno.mod.http.base.ServiceUnavailableException;
+import io.inverno.mod.http.base.*;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.ErrorWebExchange;
-import io.inverno.mod.web.ErrorWebExchangeHandler;
-import io.inverno.mod.web.ErrorWebRoute;
-import io.inverno.mod.web.ErrorWebRouteManager;
-import io.inverno.mod.web.ErrorWebRouter;
-import io.inverno.mod.web.ErrorWebRouterConfigurer;
+import io.inverno.mod.web.*;
 import io.netty.buffer.Unpooled;
 import org.apache.commons.text.StringEscapeUtils;
 import reactor.core.publisher.Mono;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -56,7 +47,7 @@ import reactor.core.publisher.Mono;
  * @since 1.0
  */
 @Bean( name = "errorRouter" )
-public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
+public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Provide ErrorWebRouter {
 	
 	private final DataConversionService dataConversionService;
 	
@@ -78,7 +69,10 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 		AcceptLanguageCodec acceptLanguageCodec = new AcceptLanguageCodec(false);
 		
 		this.firstLink = new ThrowableRoutingLink();
-		this.firstLink.connect(new ProducesRoutingLink<>(contentTypeCodec))
+		this.firstLink
+			.connect(new PathRoutingLink<>())
+			.connect(new PathPatternRoutingLink<>())
+			.connect(new ProducesRoutingLink<>(contentTypeCodec))
 			.connect(new LanguageRoutingLink<>(acceptLanguageCodec))
 			.connect(new HandlerRoutingLink<>());
 	}
@@ -101,59 +95,40 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 	 * <p>
 	 * Sets the error web router configurer used to initialize the router.
 	 * </p>
-	 * 
+	 *
 	 * @param configurer an error web router configurer
 	 */
 	public void setConfigurer(ErrorWebRouterConfigurer configurer) {
 		this.configurer = configurer;
 	}
 	
-	/**
-	 * <p>
-	 * Sets the specified error web route in the router.
-	 * </p>
-	 * 
-	 * @param route an error web route
-	 */
+	@Override
 	void setRoute(ErrorWebRoute route) {
 		this.firstLink.setRoute(route);
 	}
-	
-	/**
-	 * <p>
-	 * Enables the specified error web route if it exists.
-	 * </p>
-	 * 
-	 * @param route the error web route to enable
-	 */
+
+	@Override
 	void enableRoute(ErrorWebRoute route) {
 		this.firstLink.enableRoute(route);
 	}
-	
-	/**
-	 * <p>
-	 * Disables the specified error web route if it exists.
-	 * </p>
-	 * 
-	 * @param route the error web route to disable
-	 */
+
+	@Override
 	void disableRoute(ErrorWebRoute route) {
 		this.firstLink.disableRoute(route);
 	}
 
-	/**
-	 * <p>
-	 * Removes the specified error web route if it exists.
-	 * </p>
-	 * 
-	 * @param route the error web route to remove
-	 */
+	@Override
 	void removeRoute(ErrorWebRoute route) {
 		this.firstLink.removeRoute(route);
 	}
-	
+
 	@Override
-	public ErrorWebRouteManager route() {
+	public ErrorWebInterceptorManager<ErrorWebInterceptedRouter> intercept() {
+		return new GenericErrorWebInterceptorManager(new GenericErrorWebInterceptedRouter(this), CONTENT_TYPE_CODEC, ACCEPT_LANGUAGE_CODEC);
+	}
+
+	@Override
+	public ErrorWebRouteManager<ErrorWebRouter> route() {
 		return new GenericErrorWebRouteManager(this);
 	}
 	
@@ -347,7 +322,41 @@ public class GenericErrorWebRouter implements @Provide ErrorWebRouter {
 			this.httpExceptionHandler_html().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
 		};
 	}
-	
+
+	@Override
+	public ErrorWebInterceptedRouter configureInterceptors(ErrorWebInterceptorsConfigurer configurer) {
+		GenericErrorWebInterceptedRouter interceptedRouter = new GenericErrorWebInterceptedRouter(this);
+		if(configurer != null) {
+			GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(interceptedRouter);
+			configurer.accept(facade);
+
+			return facade.getInterceptedRouter();
+		}
+		return interceptedRouter;
+	}
+
+	@Override
+	public ErrorWebInterceptedRouter configureInterceptors(List<ErrorWebInterceptorsConfigurer> configurers) {
+		GenericErrorWebInterceptedRouter interceptedRouter = new GenericErrorWebInterceptedRouter(this);
+		if(configurers != null && !configurers.isEmpty()) {
+			GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(interceptedRouter);
+			for(ErrorWebInterceptorsConfigurer configurer : configurers) {
+				configurer.accept(facade);
+			}
+			return facade.getInterceptedRouter();
+		}
+		return interceptedRouter;
+	}
+
+	@Override
+	public ErrorWebRouter configureRoutes(ErrorWebRoutesConfigurer configurer) {
+		if(configurer != null) {
+			GenericErrorWebRoutableFacade<ErrorWebRouter> facade = new GenericErrorWebRoutableFacade<>(this);
+			configurer.accept(facade);
+		}
+		return this;
+	}
+
 	@Bean( name = "errorRouterConfigurer")
 	public static interface ConfigurerSocket extends Supplier<ErrorWebRouterConfigurer> {}
 }

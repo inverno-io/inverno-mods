@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,58 +17,58 @@ package io.inverno.mod.web;
 
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.spi.Routable;
+
 import java.util.List;
 
 /**
  * <p>
- * A web routable allows to defined Web routes.
+ * An error web routable allows to defined Error Web routes.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.3
- * 
- * @see WebRouter
- * 
- * @param <A> the type of the exchange context
- * @param <B> the Web routable type
+ * @since 1.5
+ *
+ * @see ErrorWebRouter
+ *
+ * @param <A> the Error Web routable type
  */
-public interface WebRoutable<A extends ExchangeContext, B extends WebRoutable<A, B>> extends Routable<A, WebExchange<A>, B, WebRouteManager<A, B>, WebRoute<A>> {
+public interface ErrorWebRoutable<A extends ErrorWebRoutable<A>> extends Routable<ExchangeContext, ErrorWebExchange<Throwable>, A, ErrorWebRouteManager<A>, ErrorWebRoute> {
 
 	/**
 	 * <p>
-	 * Configures web routes using the specified configurer and returns the web routable.
+	 * Configures error web routes using the specified configurer and returns the error web routable.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * If the specified configurer is null this method is a noop.
 	 * </p>
-	 * 
-	 * @param configurer a web routes configurer
-	 * 
-	 * @return the web routable
+	 *
+	 * @param configurer an error web routes configurer
+	 *
+	 * @return the error web routable
 	 */
-	B configureRoutes(WebRoutesConfigurer<? super A> configurer);
-	
+	A configureRoutes(ErrorWebRoutesConfigurer configurer);
+
 	/**
 	 * <p>
-	 * Configures web routes using the specified configurers and returns the web routable.
+	 * Configures error web routes using the specified configurers and returns the error web routable.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * If the specified list of configurers is null or empty this method is a noop.
 	 * </p>
-	 * 
-	 * @param configurers a list of web routes configurers
-	 * 
-	 * @return the web routable
+	 *
+	 * @param configurers a list of error web routes configurers
+	 *
+	 * @return the error web routable
 	 */
 	@SuppressWarnings("unchecked")
-	default B configureRoutes(List<WebRoutesConfigurer<? super A>> configurers) {
+	default A configureRoutes(List<ErrorWebRoutesConfigurer> configurers) {
 		if(configurers != null) {
-			for(WebRoutesConfigurer<? super A> configurer : configurers) {
+			for(ErrorWebRoutesConfigurer configurer : configurers) {
 				this.configureRoutes(configurer);
 			}
 		}
-		return (B)this;
+		return (A)this;
 	}
 }

@@ -15,7 +15,9 @@
  */
 package io.inverno.mod.web;
 
-import io.inverno.mod.http.server.ErrorExchangeHandler;
+import io.inverno.mod.http.base.HttpException;
+import io.inverno.mod.http.server.*;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -29,4 +31,33 @@ import io.inverno.mod.http.server.ErrorExchangeHandler;
  */
 public interface ErrorWebExchangeHandler<A extends Throwable> extends ErrorExchangeHandler<A, ErrorWebExchange<A>> {
 
+	/**
+	 * <p>
+	 * Wraps the specified Error Exchange handler into an Error Web Exchange handler.
+	 * </p>
+	 *
+	 * @param handler the handler to wrap
+	 * @param <A> the error type
+	 *
+	 * @return an Error Web Exchange handler
+	 */
+	static <A extends Throwable> ErrorWebExchangeHandler<A> wrap(ErrorExchangeHandler<A, ErrorWebExchange<A>> handler) {
+		return new ErrorWebExchangeHandler<A>() {
+
+			@Override
+			public ReactiveExchangeHandler<ExchangeContext, ErrorWebExchange<A>> intercept(ExchangeInterceptor<ExchangeContext, ErrorWebExchange<A>> interceptor) {
+				return handler.intercept(interceptor);
+			}
+
+			@Override
+			public Mono<Void> defer(ErrorWebExchange<A> exchange) {
+				return handler.defer(exchange);
+			}
+
+			@Override
+			public void handle(ErrorWebExchange<A> exchange) throws HttpException {
+				handler.handle(exchange);
+			}
+		};
+	}
 }

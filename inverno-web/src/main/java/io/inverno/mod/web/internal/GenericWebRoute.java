@@ -18,11 +18,11 @@ package io.inverno.mod.web.internal;
 import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -129,7 +129,7 @@ class GenericWebRoute implements WebRoute<ExchangeContext> {
 	 * {@link WebRoute#getPathPattern()}.
 	 * </p>
 	 * 
-	 * @param path a path pattern
+	 * @param pathPattern a path pattern
 	 */
 	public void setPathPattern(URIPattern pathPattern) {
 		this.path = null;

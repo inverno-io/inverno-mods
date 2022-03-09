@@ -82,7 +82,7 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 		this.firstLink
 			.connect(new PathPatternRoutingLink<>())
 			.connect(new MethodRoutingLink<>())
-			.connect(new ConsumesRoutingLink<>(ACCEPT_CODEC ))
+			.connect(new ConsumesRoutingLink<>(ACCEPT_CODEC))
 			.connect(new ProducesRoutingLink<>(CONTENT_TYPE_CODEC))
 			.connect(new LanguageRoutingLink<>(ACCEPT_LANGUAGE_CODEC))
 			.connect(new HandlerRoutingLink<>());
@@ -178,7 +178,7 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 	public WebInterceptedRouter<ExchangeContext> configureInterceptors(WebInterceptorsConfigurer<? super ExchangeContext> configurer) {
 		GenericWebInterceptedRouter interceptedRouter = new GenericWebInterceptedRouter(this);
 		if(configurer != null) {
-			GenericWebInterceptableFacade facade = new GenericWebInterceptableFacade(new GenericWebInterceptedRouter(this));
+			GenericWebInterceptableFacade facade = new GenericWebInterceptableFacade(interceptedRouter);
 			configurer.accept(facade);
 			
 			return facade.getInterceptedRouter();

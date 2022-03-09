@@ -37,7 +37,7 @@ import io.inverno.mod.http.server.ExchangeContext;
  * @since 1.3
  * 
  * @param <A> the type of the exchange context
- * @param <B> the type of exchange handled by the route
+ * @param <B> the type of exchange handled by the interceptor
  * @param <C> the interceptable type
  * @param <D> the interceptor manager type
  */

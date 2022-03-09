@@ -15,10 +15,6 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
@@ -27,7 +23,11 @@ import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
+
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -48,7 +48,6 @@ class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, Web
 	private Set<WebRoute<ExchangeContext>> routes;
 	
 	private String path;
-	
 	private URIPattern pathPattern;
 	
 	private Method method;

@@ -25,7 +25,7 @@ import io.inverno.mod.web.WebRoute;
 
 /**
  * <p>
- * A Web route interceptor specified criteria that determine whether a a web exchange interceptor should be applied on a web route.
+ * A Web route interceptor specifies criteria that determine whether a web exchange interceptor should be applied on a web route.
  * <p>
  *
  * <p>

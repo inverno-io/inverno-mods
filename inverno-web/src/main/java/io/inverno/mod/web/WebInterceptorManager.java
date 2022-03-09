@@ -49,7 +49,7 @@ public interface WebInterceptorManager<A extends ExchangeContext, B extends WebI
 	 * This method basically appends the interceptor and the associated route criteria to the web intercepted router it comes from.
 	 * </p>
 	 * 
-	 * @param interceptor the route web exchange handler
+	 * @param interceptor the web exchange interceptor
 	 * 
 	 * @return the router
 	 */
@@ -57,7 +57,7 @@ public interface WebInterceptorManager<A extends ExchangeContext, B extends WebI
 
 	/**
 	 * <p>
-	 * Specifies the path without matching trailing slash to the resource to intercept.
+	 * Specifies the path without matching trailing slash to the route to intercept.
 	 * </p>
 	 * 
 	 * <p>
@@ -78,7 +78,7 @@ public interface WebInterceptorManager<A extends ExchangeContext, B extends WebI
 	
 	/**
 	 * <p>
-	 * Specifies the path matching or not trailing slash to the resource to intercept.
+	 * Specifies the path matching or not trailing slash to the route to intercept.
 	 * </p>
 	 * 
 	 * <p>
@@ -110,7 +110,7 @@ public interface WebInterceptorManager<A extends ExchangeContext, B extends WebI
 	
 	/**
 	 * <p>
-	 * Specifies the media range defining the content types accepted by the resource to intercept as defined by
+	 * Specifies the media range defining the content types accepted by the route to intercept as defined by
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>
 	 * </p>
 	 *
@@ -124,7 +124,7 @@ public interface WebInterceptorManager<A extends ExchangeContext, B extends WebI
 	
 	/**
 	 * <p>
-	 * Specifies the media range matching the content type produced by the resource to intercept.
+	 * Specifies the media range matching the content type produced by the route to intercept.
 	 * </p>
 	 * 
 	 * @param mediaRange a media range
@@ -137,7 +137,7 @@ public interface WebInterceptorManager<A extends ExchangeContext, B extends WebI
 	
 	/**
 	 * <p>
-	 * Specifies the language range matching the language tag produced by the resource to intercept.
+	 * Specifies the language range matching the language tag produced by the route to intercept.
 	 * </p>
 	 * 
 	 * @param languageRange a language range

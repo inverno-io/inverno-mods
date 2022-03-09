@@ -75,8 +75,35 @@ class GenericWebRouteManager extends AbstractWebManager<GenericWebRouteManager> 
 		// TODO Implement filtering in the route extractor
 		return this.router.getRoutes().stream().filter(route -> {
 			// We want all routes that share the same criteria as the one defined in this route manager
-			if(this.paths != null && !this.paths.contains(route.getPath())) {
-				return false;
+			if(this.paths != null) {
+				if(route.getPath() != null) {
+					if(!this.paths.contains(route.getPath())) {
+						return false;
+					}
+				}
+				else if(route.getPathPattern() != null) {
+					if(this.paths.stream().noneMatch(path -> route.getPathPattern().matcher(path).matches())) {
+						return false;
+					}
+				}
+				else {
+					return false;
+				}
+			}
+			if(this.pathPatterns != null) {
+				if(route.getPath() != null) {
+					if(this.pathPatterns.stream().noneMatch(pattern -> pattern.matcher(route.getPath()).matches())) {
+						return false;
+					}
+				}
+				else if(route.getPathPattern() != null) {
+					if(this.pathPatterns.stream().noneMatch(pattern -> pattern.includes(route.getPathPattern()) != URIPattern.Inclusion.DISJOINT)) {
+						return false;
+					}
+				}
+				else {
+					return false;
+				}
 			}
 			if(this.methods != null && !this.methods.isEmpty()) {
 				if(route.getMethod() == null || !this.methods.contains(route.getMethod())) {
@@ -105,7 +132,7 @@ class GenericWebRouteManager extends AbstractWebManager<GenericWebRouteManager> 
 	@Override
 	public WebRouter<ExchangeContext> handler(WebExchangeHandler<? super ExchangeContext> handler) {
 		Objects.requireNonNull(handler);
-		this.handler = handler;
+		this.handler = (WebExchangeHandler<ExchangeContext>) handler;
 		this.commit();
 		return this.router;
 	}

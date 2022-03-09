@@ -15,10 +15,10 @@
  */
 package io.inverno.mod.web.spi;
 
-import java.util.function.Consumer;
-
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.ExchangeContext;
+
+import java.util.function.Consumer;
 
 /**
  * <p>
@@ -32,13 +32,24 @@ import io.inverno.mod.http.server.ExchangeContext;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
  * 
- * @see Router
+ * @see ErrorRouter
  * 
- * @param <A> the error route exchange type
+ * @param <A> the type of exchange handled by the route
  * @param <B> the error router type
- * @param <C> the error route manager type
- * @param <D> the route type
+ * @param <C> the intercepted error router type
+ * @param <D> the error route manager type
+ * @param <E> the intercepted error route manager type
+ * @param <F> the error interceptor manager type
+ * @param <G> the interceptable route type
  */
-public interface ErrorRouterConfigurer<A extends ErrorExchange<Throwable>, B extends ErrorRouter<A, B, C, D>, C extends ErrorRouteManager<A, B, C, D>, D extends Route<ExchangeContext, A>> extends Consumer<B> {
+public interface ErrorRouterConfigurer<
+		A extends ErrorExchange<Throwable>,
+		B extends ErrorRouter<A, B, C, D, E, F, G>,
+		C extends ErrorInterceptedRouter<A, B, C, D, E, F, G>,
+		D extends ErrorRouteManager<A, B, D, G>,
+		E extends ErrorRouteManager<A, C, E, G>,
+		F extends ErrorInterceptorManager<A, C, F>,
+		G extends InterceptableRoute<ExchangeContext, A>
+	> extends Consumer<B> {
 
 }

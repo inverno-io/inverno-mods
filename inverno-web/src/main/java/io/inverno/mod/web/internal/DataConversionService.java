@@ -15,16 +15,6 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.Supplier;
-
-import org.reactivestreams.Publisher;
-
-import io.netty.buffer.ByteBuf;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.mod.base.converter.ConverterException;
@@ -37,8 +27,17 @@ import io.inverno.mod.web.RequestDataDecoder;
 import io.inverno.mod.web.ResponseDataEncoder;
 import io.inverno.mod.web.WebResponseBody;
 import io.inverno.mod.web.WebResponseBody.SseEncoder;
+import io.netty.buffer.ByteBuf;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 /**
  * <p>
@@ -496,6 +495,7 @@ public class DataConversionService {
 					new ResponseData<WebResponseBody.SseEncoder.Event<A>>() {
 	
 						@Override
+						@SuppressWarnings("unchecked")
 						public <T extends WebResponseBody.SseEncoder.Event<A>> void stream(Publisher<T> value) {
 							rawData.stream(Flux.from(value)
 								.cast(GenericEvent.class)

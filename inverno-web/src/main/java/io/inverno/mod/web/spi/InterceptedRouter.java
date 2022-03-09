@@ -67,7 +67,8 @@ public interface InterceptedRouter<
 	 * </p>
 	 *
 	 * <p>
-	 * If a matching route is already intercepted by a given interceptor, the interceptor will be moved to the top of the list.</p>
+	 * If a matching route is already intercepted by a given interceptor, the interceptor will be moved to the top of the list.
+	 * </p>
 	 *
 	 * @return this router
 	 */

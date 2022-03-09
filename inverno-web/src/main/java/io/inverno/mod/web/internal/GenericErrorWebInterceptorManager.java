@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,57 +16,57 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.base.net.URIPattern;
-import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.WebExchangeInterceptor;
-import io.inverno.mod.web.WebInterceptedRouter;
-import io.inverno.mod.web.WebInterceptorManager;
+import io.inverno.mod.web.ErrorWebExchangeInterceptor;
+import io.inverno.mod.web.ErrorWebInterceptedRouter;
+import io.inverno.mod.web.ErrorWebInterceptorManager;
+
 import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
  * <p>
- * Generic {@link WebInterceptorManager} implementation.
+ * Generic {@link ErrorWebInterceptorManager} implementation.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.3
+ * @since 1.5
  */
-class GenericWebInterceptorManager extends AbstractWebManager<GenericWebInterceptorManager> implements WebInterceptorManager<ExchangeContext, WebInterceptedRouter<ExchangeContext>> {
+class GenericErrorWebInterceptorManager extends AbstractErrorWebManager<GenericErrorWebInterceptorManager> implements ErrorWebInterceptorManager<ErrorWebInterceptedRouter> {
 
-	private final GenericWebInterceptedRouter router;
+	private final GenericErrorWebInterceptedRouter router;
 	private final HeaderCodec<? extends Headers.ContentType> contentTypeCodec;
 	private final HeaderCodec<? extends Headers.AcceptLanguage> acceptLanguageCodec;
-	
-	private WebExchangeInterceptor<ExchangeContext> interceptor;
+
+	private ErrorWebExchangeInterceptor<Throwable> interceptor;
 
 	/**
 	 * <p>
-	 * Creates a generic web interceptor manager.
+	 * Creates a generic error web interceptor manager.
 	 * </p>
-	 * 
-	 * @param router a generic web intercepted router
+	 *
+	 * @param router a generic error web intercepted router
 	 * @param contentTypeCodec a content type header codec
 	 * @param acceptLanguageCodec an accept language header codec
 	 */
-	public GenericWebInterceptorManager(GenericWebInterceptedRouter router, HeaderCodec<? extends Headers.ContentType> contentTypeCodec, HeaderCodec<? extends Headers.AcceptLanguage> acceptLanguageCodec) {
+	public GenericErrorWebInterceptorManager(GenericErrorWebInterceptedRouter router, HeaderCodec<? extends Headers.ContentType> contentTypeCodec, HeaderCodec<? extends Headers.AcceptLanguage> acceptLanguageCodec) {
 		this.router = router;
 		this.contentTypeCodec = contentTypeCodec;
 		this.acceptLanguageCodec = acceptLanguageCodec;
 	}
-	
+
 	@Override
-	public WebInterceptedRouter<ExchangeContext> interceptor(WebExchangeInterceptor<? super ExchangeContext> interceptor) {
+	@SuppressWarnings("unchecked")
+	public ErrorWebInterceptedRouter interceptor(ErrorWebExchangeInterceptor<? extends Throwable> interceptor) {
 		Objects.requireNonNull(interceptor);
-		this.interceptor = (WebExchangeInterceptor<ExchangeContext>) interceptor;
+		this.interceptor = (ErrorWebExchangeInterceptor<Throwable>) interceptor;
 		this.commit();
 		return this.router;
 	}
-	
+
 	private void commit() {
-		Consumer<GenericWebRouteInterceptor> languagesCommitter = routeInterceptor -> {
+		Consumer<GenericErrorWebRouteInterceptor> languagesCommitter = routeInterceptor -> {
 			if(this.languages != null && !this.languages.isEmpty()) {
 				for(String language : this.languages) {
 					routeInterceptor.setLanguage(language);
@@ -79,8 +79,8 @@ class GenericWebInterceptorManager extends AbstractWebManager<GenericWebIntercep
 				this.router.addRouteInterceptor(routeInterceptor.clone());
 			}
 		};
-		
-		Consumer<GenericWebRouteInterceptor> producesCommitter = routeInterceptor -> {
+
+		Consumer<GenericErrorWebRouteInterceptor> producesCommitter = routeInterceptor -> {
 			if(this.produces != null && !this.produces.isEmpty()) {
 				for(String produce : this.produces) {
 					routeInterceptor.setProduce(produce);
@@ -91,50 +91,39 @@ class GenericWebInterceptorManager extends AbstractWebManager<GenericWebIntercep
 				languagesCommitter.accept(routeInterceptor);
 			}
 		};
-		
-		Consumer<GenericWebRouteInterceptor> consumesCommitter = routeInterceptor -> {
-			if(this.consumes != null && !this.consumes.isEmpty()) {
-				for(String consume : this.consumes) {
-					routeInterceptor.setConsume(consume);
-					producesCommitter.accept(routeInterceptor);
+
+		Consumer<GenericErrorWebRouteInterceptor> pathCommitter = routeInterceptor -> {
+			if(this.paths != null && !this.paths.isEmpty() || this.pathPatterns != null && !this.pathPatterns.isEmpty()) {
+				if(this.paths != null) {
+					for(String path : this.paths) {
+						routeInterceptor.setPath(path);
+						producesCommitter.accept(routeInterceptor);
+					}
+				}
+				if(this.pathPatterns != null) {
+					for(URIPattern pathPattern : this.pathPatterns) {
+						routeInterceptor.setPathPattern(pathPattern);
+						producesCommitter.accept(routeInterceptor);
+					}
 				}
 			}
 			else {
 				producesCommitter.accept(routeInterceptor);
 			}
 		};
-		
-		Consumer<GenericWebRouteInterceptor> methodsCommitter = routeInterceptor -> {
-			if(this.methods != null && !this.methods.isEmpty()) {
-				for(Method method : this.methods) {
-					routeInterceptor.setMethod(method);
-					consumesCommitter.accept(routeInterceptor);
+
+		Consumer<GenericErrorWebRouteInterceptor> errorsCommitter = routeInterceptor -> {
+			if(this.errors != null && !this.errors.isEmpty()) {
+				for(Class<? extends Throwable> error : this.errors) {
+					routeInterceptor.setError(error);
+					pathCommitter.accept(routeInterceptor);
 				}
 			}
 			else {
-				consumesCommitter.accept(routeInterceptor);
+				pathCommitter.accept(routeInterceptor);
 			}
 		};
-		
-		Consumer<GenericWebRouteInterceptor> pathCommitter = routeInterceptor -> {
-			if(this.paths != null && !this.paths.isEmpty() || this.pathPatterns != null && !this.pathPatterns.isEmpty()) {
-				if(this.paths != null) {
-					for(String path : this.paths) {
-						routeInterceptor.setPath(path);
-						methodsCommitter.accept(routeInterceptor);
-					}
-				}
-				if(this.pathPatterns != null) {
-					for(URIPattern pathPattern : this.pathPatterns) {
-						routeInterceptor.setPathPattern(pathPattern);
-						methodsCommitter.accept(routeInterceptor);
-					}
-				}
-			}
-			else {
-				methodsCommitter.accept(routeInterceptor);
-			}
-		};
-		pathCommitter.accept(new GenericWebRouteInterceptor(this.contentTypeCodec, this.acceptLanguageCodec));
+
+		pathCommitter.accept(new GenericErrorWebRouteInterceptor(this.contentTypeCodec, this.acceptLanguageCodec));
 	}
 }

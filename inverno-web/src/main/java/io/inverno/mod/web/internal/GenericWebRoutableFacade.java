@@ -26,36 +26,36 @@ import java.util.Set;
 
 /**
  * <p>
- * A {@link WebRoutable} facade for web routers.
+ * A {@link WebRoutable} facade for Web routers.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
  * 
- * @param <A> 
+ * @param <A> the type of the initial Web routable
  */
 class GenericWebRoutableFacade<A extends WebRoutable<ExchangeContext, A>> implements WebRoutable<ExchangeContext, GenericWebRoutableFacade<A>> {
 
-	private final A initialRoutabe;
+	private final A initialRoutable;
 	
-	public GenericWebRoutableFacade(A initialRoutabe) {
-		this.initialRoutabe = initialRoutabe;
+	public GenericWebRoutableFacade(A initialRoutable) {
+		this.initialRoutable = initialRoutable;
 	}
 
 	@Override
 	public WebRouteManager<ExchangeContext, GenericWebRoutableFacade<A>> route() {
-		return new WebRouteManagerFacade(this.initialRoutabe.route());
+		return new WebRouteManagerFacade(this.initialRoutable.route());
 	}
 	
 	@Override
 	public GenericWebRoutableFacade<A> configureRoutes(WebRoutesConfigurer<? super ExchangeContext> configurer) {
-		this.initialRoutabe.configureRoutes(configurer);
+		this.initialRoutable.configureRoutes(configurer);
 		return this;
 	}
 
 	@Override
 	public Set<WebRoute<ExchangeContext>> getRoutes() {
-		return this.initialRoutabe.getRoutes();
+		return this.initialRoutable.getRoutes();
 	}
 	
 	private class WebRouteManagerFacade implements WebRouteManager<ExchangeContext, GenericWebRoutableFacade<A>> {

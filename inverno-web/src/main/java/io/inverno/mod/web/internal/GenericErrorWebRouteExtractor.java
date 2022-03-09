@@ -15,15 +15,20 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
+import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebRoute;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -42,10 +47,16 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 	private Set<ErrorWebRoute> routes;
 	
 	private Class<? extends Throwable> error;
+
+	private String path;
+	private URIPattern pathPattern;
 	
 	private String produce;
 	
 	private String language;
+
+	private List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>> interceptors;
+	private Consumer<List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>>> interceptorsUpdater;
 	
 	/**
 	 * <p>
@@ -74,13 +85,33 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 	private GenericErrorWebRouter getRouter() {
 		return this.router;
 	}
-	
+
 	private Class<? extends Throwable> getError() {
 		if(this.error != null) {
 			return this.error;
 		}
 		else if(parent != null) {
 			return this.parent.getError();
+		}
+		return null;
+	}
+
+	private String getPath() {
+		if(this.path != null) {
+			return this.path;
+		}
+		else if(parent != null) {
+			return this.parent.getPath();
+		}
+		return null;
+	}
+
+	private URIPattern getPathPattern() {
+		if(this.pathPattern != null) {
+			return this.pathPattern;
+		}
+		else if(parent != null) {
+			return this.parent.getPathPattern();
 		}
 		return null;
 	}
@@ -133,6 +164,20 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 		childExtractor.error = error;
 		return childExtractor;
 	}
+
+	@Override
+	public ErrorWebRouteExtractor path(String path) {
+		GenericErrorWebRouteExtractor childExtractor = new GenericErrorWebRouteExtractor(this);
+		childExtractor.path = path;
+		return childExtractor;
+	}
+
+	@Override
+	public ErrorWebRouteExtractor pathPattern(URIPattern pathPattern) {
+		GenericErrorWebRouteExtractor childExtractor = new GenericErrorWebRouteExtractor(this);
+		childExtractor.pathPattern = pathPattern;
+		return childExtractor;
+	}
 	
 	@Override
 	public ErrorWebRouteExtractor produces(String mediaType) {
@@ -149,6 +194,22 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 	}
 
 	@Override
+	public ErrorWebRouteExtractor interceptors(List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>> exchangeInterceptors, Consumer<List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>>> updater) {
+		this.interceptors = interceptors != null ? interceptors.stream()
+				.map(interceptor -> {
+					ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>> current = interceptor;
+					while(current instanceof ExchangeInterceptorWrapper) {
+						current = ((ExchangeInterceptorWrapper<ExchangeContext, ErrorWebExchange<Throwable>>) current).unwrap();
+					}
+					return current;
+				})
+				.collect(Collectors.toList()) : List.of();
+		this.interceptorsUpdater = interceptorsUpdater;
+		return this;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
 	public void handler(ReactiveExchangeHandler<ExchangeContext, ErrorWebExchange<Throwable>> handler, boolean disabled) {
 		if(handler != null) {
 			GenericErrorWebRoute route = new GenericErrorWebRoute(this.getRouter());

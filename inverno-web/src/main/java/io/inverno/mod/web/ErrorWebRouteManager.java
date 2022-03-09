@@ -15,8 +15,10 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ErrorRouteManager;
+import io.inverno.mod.web.spi.PathAware;
 
 /**
  * <p>
@@ -32,8 +34,8 @@ import io.inverno.mod.web.spi.ErrorRouteManager;
  * @see ErrorWebRoute
  * @see ErrorWebRouter
  */
-public interface ErrorWebRouteManager extends ErrorRouteManager<ErrorWebExchange<Throwable>, ErrorWebRouter, ErrorWebRouteManager, ErrorWebRoute> {
-	
+public interface ErrorWebRouteManager<A extends ErrorWebRoutable<A>> extends ErrorRouteManager<ErrorWebExchange<Throwable>, A, ErrorWebRouteManager<A>, ErrorWebRoute> {
+
 	/**
 	 * <p>
 	 * Specifies the route error web exchange handler.
@@ -48,8 +50,49 @@ public interface ErrorWebRouteManager extends ErrorRouteManager<ErrorWebExchange
 	 * 
 	 * @return the error router
 	 */
-	ErrorWebRouter handler(ErrorWebExchangeHandler<? extends Throwable> handler);
-	
+	A handler(ErrorWebExchangeHandler<? extends Throwable> handler);
+
+	/**
+	 * <p>
+	 * Specifies the path to the resource served by the error web route without matching trailing slash.
+	 * </p>
+	 *
+	 * <p>
+	 * The specified path can be a parameterized path including path parameters as defined by {@link URIBuilder}.
+	 * </p>
+	 *
+	 * @param path the path to the resource
+	 *
+	 * @return the error web route manager
+	 *
+	 * @throws IllegalArgumentException if the specified path is not absolute
+	 *
+	 * @see PathAware
+	 */
+	default ErrorWebRouteManager<A> path(String path) throws IllegalArgumentException {
+		return this.path(path, false);
+	}
+
+	/**
+	 * <p>
+	 * Specifies the path to the resource served by the error web route matching or not trailing slash.
+	 * </p>
+	 *
+	 * <p>
+	 * The specified path can be a parameterized path including path parameters as defined by {@link URIBuilder}.
+	 * </p>
+	 *
+	 * @param path               the path to the resource
+	 * @param matchTrailingSlash true to match path with or without trailing slash, false otherwise
+	 *
+	 * @return the error web route manager
+	 *
+	 * @throws IllegalArgumentException if the specified path is not absolute
+	 *
+	 * @see PathAware
+	 */
+	ErrorWebRouteManager<A> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException;
+
 	/**
 	 * <p>
 	 * Specifies the media type of the resource served by the error web route.
@@ -61,7 +104,7 @@ public interface ErrorWebRouteManager extends ErrorRouteManager<ErrorWebExchange
 	 * 
 	 * @see AcceptAware
 	 */
-	ErrorWebRouteManager produces(String mediaType);
+	ErrorWebRouteManager<A> produces(String mediaType);
 	
 	/**
 	 * <p>
@@ -74,5 +117,5 @@ public interface ErrorWebRouteManager extends ErrorRouteManager<ErrorWebExchange
 	 * 
 	 * @see AcceptAware
 	 */
-	ErrorWebRouteManager language(String language);
+	ErrorWebRouteManager<A> language(String language);
 }

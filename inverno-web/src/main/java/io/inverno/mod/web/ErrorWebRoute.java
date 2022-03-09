@@ -15,35 +15,69 @@
  */
 package io.inverno.mod.web;
 
-import io.inverno.mod.web.spi.ErrorAware;
-import io.inverno.mod.web.spi.AcceptAware;
-import io.inverno.mod.web.spi.Route;
+import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.web.spi.AcceptAware;
+import io.inverno.mod.web.spi.ErrorAware;
+import io.inverno.mod.web.spi.InterceptableRoute;
+import io.inverno.mod.web.spi.PathAware;
 
 /**
  * <p>
- * An error web route specifies criteria used to determine the error web
- * exchange handler to execute to handle a failing request.
+ * An error web route specifies criteria used to determine the error web exchange handler to execute to handle a failing
+ * request.
  * </p>
- * 
+ *
  * <p>
  * It basically supports the following criteria:
  * </p>
- * 
+ *
  * <ul>
- * <li>the type of the error thrown during the regular processing of a
- * request</li>
+ * <li>the type of the error thrown during the regular processing of a request</li>
+ * <li>the path to the resource which can be parameterized as defined by {@link io.inverno.mod.base.net.URIBuilder}.</li>
  * <li>the content type of the resource</li>
  * <li>the language tag of the resource</li>
  * </ul>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ErrorWebExchange
  * @see ErrorWebRouter
  */
-public interface ErrorWebRoute extends Route<ExchangeContext, ErrorWebExchange<Throwable>>, AcceptAware, ErrorAware {
+public interface ErrorWebRoute extends InterceptableRoute<ExchangeContext, ErrorWebExchange<Throwable>>, ErrorAware, PathAware, AcceptAware {
+
+	/**
+	 * <p>
+	 * Returns the type of errors supported by the resource served by the route.
+	 * </p>
+	 */
+	@Override
+	Class<? extends Throwable> getError();
+
+	/**
+	 * <p>
+	 * Returns the static normalized absolute path to the resource served by the route.
+	 * </p>
+	 *
+	 * <p>
+	 * This criteria should exactly match the absolute path of the request.
+	 * </p>
+	 */
+	@Override
+	String getPath();
+
+	/**
+	 * <p>
+	 * Returns the URI pattern that matches all the paths to the resource served by the route.
+	 * </p>
+	 *
+	 * <p>
+	 * This criteria should match the absolute path of the request.
+	 * </p>
+	 */
+	@Override
+	URIPattern getPathPattern();
 
 	/**
 	 * <p>
@@ -72,12 +106,4 @@ public interface ErrorWebRoute extends Route<ExchangeContext, ErrorWebExchange<T
 	 */
 	@Override
 	String getLanguage();
-	
-	/**
-	 * <p>
-	 * Returns the type of errors supported by the resource served by the route.
-	 * </p>
-	 */
-	@Override
-	Class<? extends Throwable> getError();
 }

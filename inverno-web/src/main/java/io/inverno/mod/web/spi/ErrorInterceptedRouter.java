@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,42 +16,24 @@
 package io.inverno.mod.web.spi;
 
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeInterceptor;
 
+import java.util.List;
 
 /**
  * <p>
- * Base error router interface.
+ * An error router that applies interceptors to matching route as they are created or to all the routes currently defined in the error router.
  * </p>
  *
  * <p>
- * An error router uses route definitions to determine the error exchange
- * handler to invoke in order to process an error.
- * </p>
- *
- * <p>
- * Routes are defined in the router using an error route manager that allows to
- * specify route criteria and eventually the error exchange handler to invoke to
- * process an error that matches the criteria.
- * </p>
- *
- * <p>
- * An error router is itself an error exchange handler that implements a routing
- * logic to delegate the actual error exchange processing to the error exchange
- * handler defined in the route matching the original request. An error router
- * is typically used as error handler in a HTTP server.
+ * An intercepting error router typically wraps an underlying {@link ErrorRouter} and intercepts route creation.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.3
+ * @since 1.5
  *
- * @see ErrorExchange
- * @see ErrorExchangeHandler
- * @see Route
- * @see ErrorRouteManager
- *
- * @param <A> the type of exchange handled by the route
+ * @param <A> the type of exchange handled by the interceptor
  * @param <B> the error router type
  * @param <C> the intercepted error router type
  * @param <D> the error route manager type
@@ -59,7 +41,7 @@ import io.inverno.mod.http.server.ExchangeContext;
  * @param <F> the error interceptor manager type
  * @param <G> the interceptable route type
  */
-public interface ErrorRouter<
+public interface ErrorInterceptedRouter<
 		A extends ErrorExchange<Throwable>,
 		B extends ErrorRouter<A, B, C, D, E, F, G>,
 		C extends ErrorInterceptedRouter<A, B, C, D, E, F, G>,
@@ -67,6 +49,36 @@ public interface ErrorRouter<
 		E extends ErrorRouteManager<A, C, E, G>,
 		F extends ErrorInterceptorManager<A, C, F>,
 		G extends InterceptableRoute<ExchangeContext, A>
-	> extends Routable<ExchangeContext, A, B, D, G>, Interceptable<ExchangeContext, A, C, F>, ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> {
+	> extends Routable<ExchangeContext, A, C, E, G>, Interceptable<ExchangeContext, A, C, F> {
 
+	/**
+	 * <p>
+	 * Returns the list of interceptors configured in the error router.
+	 * </p>
+	 *
+	 * @return a list of exchange interceptors
+	 */
+	List<? extends ExchangeInterceptor<ExchangeContext, A>> getInterceptors();
+
+	/**
+	 * <p>
+	 * Applies the interceptors to all the routes previously defined in the error router.
+	 * </p>
+	 *
+	 * <p>
+	 * If a matching route is already intercepted by a given interceptor, the interceptor will be moved to the top of the list.
+	 * </p>
+	 *
+	 * @return this error router
+	 */
+	C applyInterceptors();
+
+	/**
+	 * <p>
+	 * Returns the underlying non-intercepting error router.
+	 * </p>
+	 *
+	 * @return the underlying non-intercepting error router.
+	 */
+	B getRouter();
 }

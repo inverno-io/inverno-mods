@@ -15,8 +15,8 @@
  */
 package io.inverno.mod.web;
 
-import io.inverno.mod.web.spi.RouterConfigurer;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.web.spi.RouterConfigurer;
 
 /**
  * <p>
@@ -31,7 +31,7 @@ import io.inverno.mod.http.server.ExchangeContext;
  * @param <A> the type of the exchange context
  */
 public interface WebRouterConfigurer<A extends ExchangeContext> extends RouterConfigurer<A, WebExchange<A>, WebRouter<A>, WebInterceptedRouter<A>, WebRouteManager<A, WebRouter<A>>, WebRouteManager<A, WebInterceptedRouter<A>>, WebInterceptorManager<A, WebInterceptedRouter<A>>, WebRoute<A>> {
-	
+
 	/**
 	 * <p>
 	 * Creates a context matching routes requirement.

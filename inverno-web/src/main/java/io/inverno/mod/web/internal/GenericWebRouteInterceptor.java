@@ -22,15 +22,16 @@ import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeInterceptor;
+import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ContentAware;
 import io.inverno.mod.web.spi.MethodAware;
 import io.inverno.mod.web.spi.PathAware;
-import io.inverno.mod.web.WebExchange;
-import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 /**
  * <p>
@@ -75,27 +76,6 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 		this.contentTypeCodec = contentTypeCodec;
 		this.acceptLanguageCodec = acceptLanguageCodec;
 	}
-	
-	/*private GenericWebRouteInterceptor(GenericWebRouteInterceptor parent, ExchangeInterceptorWrapper<ExchangeContext, WebExchange<ExchangeContext>> interceptor) {
-		this.contentTypeCodec = parent.contentTypeCodec;
-		this.acceptLanguageCodec = parent.acceptLanguageCodec;
-		
-		this.path = parent.path;
-		this.pathPattern = parent.pathPattern;
-
-		this.method = parent.method;
-
-		this.produce = parent.produce;
-		this.produceMediaRange = parent.produceMediaRange;
-
-		this.consume = parent.consume;
-		this.consumeMediaRange = parent.consumeMediaRange;
-
-		this.language = parent.language;
-		this.languageRange = parent.languageRange;
-
-		this.interceptor = interceptor;
-	}*/
 	
 	private GenericWebRouteInterceptor withInterceptor(ExchangeInterceptorWrapper<ExchangeContext, WebExchange<ExchangeContext>> interceptor) {
 		GenericWebRouteInterceptor clone = this.clone();
@@ -159,14 +139,12 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 				if(pathAware.getPathPattern().matcher(this.path).matches()) {
 					// B\A != {}
 					return this.withInterceptor(new FilteredPathExchangeInterceptorWrapper());
-//					return new GenericWebRouteInterceptor(this, new FilteredPathExchangeInterceptorWrapper());
 				}
 				return null;
 			}
 			else {
 				// B\A != {}
 				return this.withInterceptor(new FilteredPathExchangeInterceptorWrapper());
-//				return new GenericWebRouteInterceptor(this, new FilteredPathExchangeInterceptorWrapper());
 			}
 		}
 		else if(this.pathPattern != null) {
@@ -185,14 +163,12 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 				switch(includes) {
 					case INCLUDED: return this;
 					case INDETERMINATE: return this.withInterceptor(new FilteredPathExchangeInterceptorWrapper()); 
-						//return new GenericWebRouteInterceptor(this, new FilteredPathExchangeInterceptorWrapper());
 					default: return null;
 				}
 			}
 			else {
 				// B\A != {}
 				return this.withInterceptor(new FilteredPathExchangeInterceptorWrapper());
-//				return new GenericWebRouteInterceptor(this, new FilteredPathExchangeInterceptorWrapper());
 			}
 		}
 		else {
@@ -214,7 +190,6 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 			else {
 				// B\A != {}
 				return this.withInterceptor(new FilteredMethodExchangeInterceptorWrapper());
-//				return new GenericWebRouteInterceptor(this, new FilteredMethodExchangeInterceptorWrapper());
 			}
 		}
 		else {
@@ -252,7 +227,6 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 								if(routeSubType.equals("*")) {
 									// route */* => B/A != {} && B/A != A
 									return this.withInterceptor(new FilteredContentExchangeInterceptorWrapper());
-//									return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
 								}
 								else {
 									// route */x
@@ -266,7 +240,6 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 								if(routeSubType.equals("*")) {
 									// route x/* => B/A != {} && B/A != A
 									return this.withInterceptor(new FilteredContentExchangeInterceptorWrapper());
-//									return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
 								}
 								else {
 									// route x/x
@@ -284,7 +257,6 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 							if(routeType.equals("*")) {
 								// route */? => B/A != {}
 								return this.withInterceptor(new FilteredContentExchangeInterceptorWrapper());
-//								return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
 							}
 							else {
 								// route x/?
@@ -300,7 +272,6 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 								if(routeSubType.equals("*") || interceptorSubType.equals(routeSubType)) {
 									// route */*|*/x => B/A != {}
 									return this.withInterceptor(new FilteredContentExchangeInterceptorWrapper());
-//									return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
 								}
 								return null;
 							}
@@ -309,7 +280,6 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 									if(routeSubType.equals("*")) {
 										// route x/* => B/A != {}
 										return this.withInterceptor(new FilteredContentExchangeInterceptorWrapper());
-//										return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
 									}
 									else {
 										// route x/x 
@@ -329,7 +299,6 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 			else {
 				// B\A != {}
 				return this.withInterceptor(new FilteredContentExchangeInterceptorWrapper());
-//				return new GenericWebRouteInterceptor(this, new FilteredContentExchangeInterceptorWrapper());
 			}
 		}
 		else {
@@ -404,9 +373,21 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 	}
 
 	@Override
+	protected GenericWebRouteInterceptor clone() {
+		try {
+			GenericWebRouteInterceptor clone = (GenericWebRouteInterceptor)super.clone();
+
+			return clone;
+		}
+		catch (CloneNotSupportedException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
 	public String toString() {
 		StringBuilder routeStringBuilder = new StringBuilder();
-		
+
 		routeStringBuilder.append("{");
 		routeStringBuilder.append("\"method\":\"").append(this.method != null ? this.method : null).append("\",");
 		routeStringBuilder.append("\"path\":\"").append(this.path != null ? this.path : this.pathPattern).append("\",");
@@ -414,7 +395,7 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 		routeStringBuilder.append("\"produce\":\"").append(this.produce).append("\",");
 		routeStringBuilder.append("\"language\":\"").append(this.language);
 		routeStringBuilder.append("}");
-		
+
 		return routeStringBuilder.toString();
 	}
 	
@@ -472,7 +453,7 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 			return false;
 		return true;
 	}
-	
+
 	private class FilteredMethodExchangeInterceptorWrapper extends ExchangeInterceptorWrapper<ExchangeContext, WebExchange<ExchangeContext>> {
 
 		public FilteredMethodExchangeInterceptorWrapper() {
@@ -538,37 +519,5 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 				throw new IllegalStateException("Filtered path interceptor has no defined path");
 			}
 		}
-	}
-
-	@Override
-	protected GenericWebRouteInterceptor clone() {
-		try {
-			GenericWebRouteInterceptor clone = (GenericWebRouteInterceptor)super.clone();
-			
-			return clone;
-		} 
-		catch (CloneNotSupportedException e) {
-			throw new RuntimeException(e);
-		}
-		
-		/*GenericWebRouteInterceptor clone = new GenericWebRouteInterceptor(this.contentTypeCodec, this.acceptLanguageCodec);
-		
-		clone.path = this.path;
-		clone.pathPattern = this.pathPattern;
-
-		clone.method = this.method;
-
-		clone.produce = this.produce;
-		clone.produceMediaRange = this.produceMediaRange;
-
-		clone.consume = this.consume;
-		clone.consumeMediaRange = this.consumeMediaRange;
-
-		clone.language = this.language;
-		clone.languageRange = this.languageRange;
-		
-		clone.interceptor = this.interceptor;
-		
-		return clone;*/
 	}
 }

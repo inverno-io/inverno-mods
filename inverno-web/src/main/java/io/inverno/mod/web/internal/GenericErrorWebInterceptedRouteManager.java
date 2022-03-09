@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package io.inverno.mod.web.internal;
 
 import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.web.ErrorWebExchangeHandler;
+import io.inverno.mod.web.ErrorWebInterceptedRouter;
 import io.inverno.mod.web.ErrorWebRoute;
 import io.inverno.mod.web.ErrorWebRouteManager;
-import io.inverno.mod.web.ErrorWebRouter;
 
 import java.util.Objects;
 import java.util.Set;
@@ -28,43 +28,43 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * Generic {@link ErrorWebRouteManager} implementation.
+ * Generic {@link ErrorWebRouteManager} implementation for Error Web intercepted router.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.5
  */
-class GenericErrorWebRouteManager extends AbstractErrorWebManager<GenericErrorWebRouteManager> implements ErrorWebRouteManager<ErrorWebRouter> {
+class GenericErrorWebInterceptedRouteManager extends AbstractErrorWebManager<GenericErrorWebInterceptedRouteManager> implements ErrorWebRouteManager<ErrorWebInterceptedRouter> {
 
-	private final GenericErrorWebRouter router;
+	private final GenericErrorWebInterceptedRouter router;
 
 	private ErrorWebExchangeHandler<Throwable> handler;
-	
+
 	/**
 	 * <p>
-	 * Creates a generic error web route manager.
+	 * Creates a generic error web intercepted route manager.
 	 * </p>
-	 * 
-	 * @param router the generic error web router
+	 *
+	 * @param router a generic web router
 	 */
-	public GenericErrorWebRouteManager(GenericErrorWebRouter router) {
+	public GenericErrorWebInterceptedRouteManager(GenericErrorWebInterceptedRouter router) {
 		this.router = router;
 	}
 
 	@Override
-	public ErrorWebRouter enable() {
+	public ErrorWebInterceptedRouter enable() {
 		this.findRoutes().stream().forEach(route -> route.enable());
 		return this.router;
 	}
 
 	@Override
-	public ErrorWebRouter disable() {
+	public ErrorWebInterceptedRouter disable() {
 		this.findRoutes().stream().forEach(route -> route.disable());
 		return this.router;
 	}
 
 	@Override
-	public ErrorWebRouter remove() {
+	public ErrorWebInterceptedRouter remove() {
 		this.findRoutes().stream().forEach(route -> route.remove());
 		return this.router;
 	}
@@ -125,68 +125,64 @@ class GenericErrorWebRouteManager extends AbstractErrorWebManager<GenericErrorWe
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public ErrorWebRouter handler(ErrorWebExchangeHandler<? extends Throwable> handler) {
+	public ErrorWebInterceptedRouter handler(ErrorWebExchangeHandler<? extends Throwable> handler) {
 		Objects.requireNonNull(handler);
 		this.handler = (ErrorWebExchangeHandler<Throwable>) handler;
 		this.commit();
 		return this.router;
 	}
-	
+
 	private void commit() {
 		Consumer<GenericErrorWebRoute> languagesCommitter = route -> {
-			if(this.languages != null && !this.languages.isEmpty()) {
-				for(String language : this.languages) {
+			if (this.languages != null && !this.languages.isEmpty()) {
+				for (String language : this.languages) {
 					route.setLanguage(language);
 					route.setHandler(this.handler);
 					this.router.setRoute(route);
 				}
-			}
-			else {
+			} else {
 				route.setHandler(this.handler);
 				this.router.setRoute(route);
 			}
 		};
-		
+
 		Consumer<GenericErrorWebRoute> producesCommitter = route -> {
-			if(this.produces != null && !this.produces.isEmpty()) {
-				for(String produce : this.produces) {
+			if (this.produces != null && !this.produces.isEmpty()) {
+				for (String produce : this.produces) {
 					route.setProduce(produce);
 					languagesCommitter.accept(route);
 				}
-			}
-			else {
+			} else {
 				languagesCommitter.accept(route);
 			}
 		};
 
 		Consumer<GenericErrorWebRoute> pathCommitter = route -> {
-			if(this.paths != null && !this.paths.isEmpty() || this.pathPatterns != null && !this.pathPatterns.isEmpty()) {
-				if(this.paths != null) {
-					for(String path : this.paths) {
+			if (this.paths != null && !this.paths.isEmpty() || this.pathPatterns != null && !this.pathPatterns.isEmpty()) {
+				if (this.paths != null) {
+					for (String path : this.paths) {
 						route.setPath(path);
 						producesCommitter.accept(route);
 					}
 				}
-				if(this.pathPatterns != null) {
-					for(URIPattern pathPattern : this.pathPatterns) {
+				if (this.pathPatterns != null) {
+					for (URIPattern pathPattern : this.pathPatterns) {
 						route.setPathPattern(pathPattern);
 						producesCommitter.accept(route);
 					}
 				}
-			}
-			else {
+			} else {
 				producesCommitter.accept(route);
 			}
 		};
-		
+
 		Consumer<GenericErrorWebRoute> errorsCommitter = route -> {
-			if(this.errors != null && !this.errors.isEmpty()) {
-				for(Class<? extends Throwable> error : this.errors) {
+			if (this.errors != null && !this.errors.isEmpty()) {
+				for (Class<? extends Throwable> error : this.errors) {
 					route.setError(error);
 					pathCommitter.accept(route);
 				}
-			}
-			else {
+			} else {
 				pathCommitter.accept(route);
 			}
 		};

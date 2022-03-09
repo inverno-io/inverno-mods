@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,18 @@
  */
 package io.inverno.mod.web;
 
-import io.inverno.mod.web.spi.ErrorRouterConfigurer;
+import java.util.function.Consumer;
 
 /**
  * <p>
- * A configurer used to configure an error web router.
+ * A configurer used to configure interceptors in an error web router.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
- * 
+ * @since 1.5
+ *
  * @see ErrorWebRouter
  */
-public interface ErrorWebRouterConfigurer extends ErrorRouterConfigurer<ErrorWebExchange<Throwable>, ErrorWebRouter, ErrorWebInterceptedRouter, ErrorWebRouteManager<ErrorWebRouter>, ErrorWebRouteManager<ErrorWebInterceptedRouter>, ErrorWebInterceptorManager<ErrorWebInterceptedRouter>, ErrorWebRoute> {
+public interface ErrorWebInterceptorsConfigurer extends Consumer<ErrorWebInterceptable<?>> {
 
 }

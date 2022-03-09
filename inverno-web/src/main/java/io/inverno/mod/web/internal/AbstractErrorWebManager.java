@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,35 +18,38 @@ package io.inverno.mod.web.internal;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.base.net.URIs;
-import io.inverno.mod.http.base.Method;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+
+import java.util.*;
 
 /**
  * <p>
- * Base Web manager class.
+ * Base Error Web manager class.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.3
- * 
- * @param <A> the type of Web manager
+ * @since 1.5
+ *
+ * @param <A> the type of Error Web manager
  */
-abstract class AbstractWebManager<A extends AbstractWebManager<A>> {
+abstract class AbstractErrorWebManager<A extends AbstractErrorWebManager<A>> {
+
+	protected Set<Class<? extends Throwable>> errors;
 
 	protected Set<String> paths;
 	protected Set<URIPattern> pathPatterns;
 
-	protected Set<Method> methods;
-
-	protected Set<String> consumes;
-
 	protected Set<String> produces;
 
 	protected Set<String> languages;
+
+	@SuppressWarnings("unchecked")
+	public A error(Class<? extends Throwable> error) {
+		if(this.errors == null) {
+			this.errors = new LinkedHashSet<>();
+		}
+		this.errors.add(error);
+		return (A)this;
+	}
 
 	@SuppressWarnings("unchecked")
 	public A path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
@@ -84,29 +87,8 @@ abstract class AbstractWebManager<A extends AbstractWebManager<A>> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public A method(Method method) {
-		Objects.requireNonNull(method);
-		if (this.methods == null) {
-			this.methods = new HashSet<>();
-		}
-		this.methods.add(method);
-		return (A)this;
-	}
-
-	@SuppressWarnings("unchecked")
-	public A consumes(String mediaRange) {
-		Objects.requireNonNull(mediaRange);
-		if (this.consumes == null) {
-			this.consumes = new LinkedHashSet<>();
-		}
-		this.consumes.add(mediaRange);
-		return (A)this;
-	}
-
-	@SuppressWarnings("unchecked")
 	public A produces(String mediaType) {
-		Objects.requireNonNull(mediaType);
-		if (this.produces == null) {
+		if(this.produces == null) {
 			this.produces = new LinkedHashSet<>();
 		}
 		this.produces.add(mediaType);
@@ -115,8 +97,7 @@ abstract class AbstractWebManager<A extends AbstractWebManager<A>> {
 
 	@SuppressWarnings("unchecked")
 	public A language(String language) {
-		Objects.requireNonNull(language);
-		if (this.languages == null) {
+		if(this.languages == null) {
 			this.languages = new LinkedHashSet<>();
 		}
 		this.languages.add(language);

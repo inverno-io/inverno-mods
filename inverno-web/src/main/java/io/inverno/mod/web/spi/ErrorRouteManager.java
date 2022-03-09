@@ -15,7 +15,6 @@
  */
 package io.inverno.mod.web.spi;
 
-
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.ExchangeContext;
 
@@ -23,42 +22,46 @@ import io.inverno.mod.http.server.ExchangeContext;
  * <p>
  * Base error route manager interface.
  * </p>
- * 
+ *
  * <p>
  * An error route manager is used to manage the routes of an error router. It is
  * created by an error router and allows to define, enable, disable, remove and
  * find routes in an error router.
  * </p>
- * 
+ *
  * <p>
  * A typical implementation should define methods to set criteria used by the router to match an error exchange to an error route and an error exchange handler that eventually handles the matched
  * error exchange.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
- * 
+ *
  * @see ErrorExchange
  * @see Route
  * @see ErrorRouter
- * 
+ *
  * @param <A> the type of exchange handled by the route
- * @param <B> the error router type
+ * @param <B> the routable type
  * @param <C> the error route manager type
  * @param <D> the route type
  */
-public interface ErrorRouteManager<A extends ErrorExchange<Throwable>, B extends ErrorRouter<A, B, C, D>, C extends ErrorRouteManager<A, B, C, D>, D extends 
-	Route<ExchangeContext, A>> extends RouteManager<ExchangeContext, A, B, C, D> {
+public interface ErrorRouteManager<
+		A extends ErrorExchange<Throwable>,
+		B extends Routable<ExchangeContext, A, B, C, D>,
+		C extends ErrorRouteManager<A, B, C, D>,
+		D extends Route<ExchangeContext, A>
+		> extends RouteManager<ExchangeContext, A, B, C, D> {
 
 	/**
 	 * <p>
 	 * Specifies the type of errors accepted by the route.
 	 * </p>
-	 * 
+	 *
 	 * @param error a type of error
-	 * 
+	 *
 	 * @return the error route manager
-	 * 
+	 *
 	 * @see ErrorAware
 	 */
 	C error(Class<? extends Throwable> error);

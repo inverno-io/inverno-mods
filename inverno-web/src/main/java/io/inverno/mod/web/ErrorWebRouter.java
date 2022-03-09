@@ -15,8 +15,10 @@
  */
 package io.inverno.mod.web;
 
-import io.inverno.mod.web.spi.ErrorRouter;
 import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.web.spi.ErrorRouter;
+
+import java.util.List;
 
 /**
  * <p>
@@ -43,6 +45,48 @@ import io.inverno.mod.http.server.ErrorExchange;
  * @see ErrorWebRoute
  * @see ErrorWebRouteManager
  */
-public interface ErrorWebRouter extends ErrorRouter<ErrorWebExchange<Throwable>, ErrorWebRouter, ErrorWebRouteManager, ErrorWebRoute> {
-	
+public interface ErrorWebRouter extends
+	ErrorRouter<ErrorWebExchange<Throwable>, ErrorWebRouter, ErrorWebInterceptedRouter, ErrorWebRouteManager<ErrorWebRouter>, ErrorWebRouteManager<ErrorWebInterceptedRouter>, ErrorWebInterceptorManager<ErrorWebInterceptedRouter>, ErrorWebRoute>,
+	ErrorWebRoutable<ErrorWebRouter>,
+	ErrorWebInterceptable<ErrorWebInterceptedRouter> {
+
+	/**
+	 * <p>
+	 * Configures the error web router using the specified configurer and returns it.
+	 * </p>
+	 *
+	 * <p>
+	 * If the specified configurer is null this method is a noop.
+	 * </p>
+	 *
+	 * @param configurer an error web router configurer
+	 *
+	 * @return the error web router
+	 */
+	default ErrorWebRouter configure(ErrorWebRouterConfigurer configurer) {
+		configurer.accept(this);
+		return this;
+	}
+
+	/**
+	 * <p>
+	 * Configures the web router using the specified configurers and returns it.
+	 * </p>
+	 *
+	 * <p>
+	 * If the specified list of configurers is null or empty this method is a noop.
+	 * </p>
+	 *
+	 * @param configurers a list of error web router configurers
+	 *
+	 * @return the error web router
+	 */
+	default ErrorWebRouter configure(List<ErrorWebRouterConfigurer> configurers) {
+		if(configurers != null) {
+			for(ErrorWebRouterConfigurer configurer : configurers) {
+				this.configure(configurer);
+			}
+		}
+		return this;
+	}
 }

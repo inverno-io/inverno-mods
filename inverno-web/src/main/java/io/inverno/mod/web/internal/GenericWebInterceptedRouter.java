@@ -154,8 +154,9 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 
 	/**
 	 * <p>
-	 * Scans all routes from the wrapped router and apply the interceptors. If an interceptor already exists in a route, we just move it to the top of the list, that might not be the most appropriate
-	 * behavior but at least it's consistent, we'll see in practice where it goes and maybe provide ways to control this.
+	 * Scans all routes from the wrapped router and apply the interceptors. If an interceptor already exists in a route,
+	 * we just move it to the top of the list, that might not be the most appropriate behavior but at least it's
+	 * consistent, we'll see in practice where it goes and maybe provide ways to control this.
 	 * </p>
 	 */
 	@Override
@@ -261,7 +262,7 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 		public WebInterceptedRouter<ExchangeContext> configureInterceptors(WebInterceptorsConfigurer<? super ExchangeContext> configurer) {
 			GenericWebInterceptedRouter interceptedRouter = new GenericWebInterceptedRouter(this);
 			if(configurer != null) {
-				GenericWebInterceptableFacade facade = new GenericWebInterceptableFacade(new GenericWebInterceptedRouter(this));
+				GenericWebInterceptableFacade facade = new GenericWebInterceptableFacade(interceptedRouter);
 				configurer.accept(facade);
 
 				return facade.getInterceptedRouter();
@@ -298,7 +299,7 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 
 			@Override
 			public WebRouteManager<ExchangeContext, WebRouter<ExchangeContext>> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
-				this.routeManager.path(path);
+				this.routeManager.path(path, matchTrailingSlash);
 				return this;
 			}
 
