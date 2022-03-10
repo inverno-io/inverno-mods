@@ -15,24 +15,17 @@
  */
 package io.inverno.mod.http.base.header;
 
-import java.nio.charset.Charset;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 import io.inverno.mod.http.base.header.Headers.Accept.MediaRange;
 import io.inverno.mod.http.base.internal.header.AcceptCodec;
 import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
+
+import java.nio.charset.Charset;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -67,6 +60,10 @@ public final class Headers {
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-7.4.1">RFC 7231 Section 7.4.1</a>
 	 */
 	public static final String NAME_ALLOW = "allow";
+	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.1">RFC 7235 Section 4.1</a>
+	 */
+	public static final String NAME_AUTHORIZATION = "authorization";
 	/**
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc7234#section-5.2">RFC 7234 Section 5.2</a>
 	 */
@@ -155,7 +152,11 @@ public final class Headers {
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.5.3">RFC 7231 Section 5.5.3</a>
 	 */
 	public static final String NAME_USER_AGENT = "user-agent";
-	
+	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.1">RFC 7235 Section 4.1</a>
+	 */
+	public static final String NAME_WWW_AUTHENTICATE = "www-authenticate";
+
 	/* HTTP/2 pseudo headers */
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7540#section-8.1.2.3">RFC 7540 Section 8.1.2.3</a>
