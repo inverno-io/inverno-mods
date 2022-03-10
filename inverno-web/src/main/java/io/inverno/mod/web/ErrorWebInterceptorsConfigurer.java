@@ -15,8 +15,6 @@
  */
 package io.inverno.mod.web;
 
-import java.util.function.Consumer;
-
 /**
  * <p>
  * A configurer used to configure interceptors in an error web router.
@@ -27,6 +25,14 @@ import java.util.function.Consumer;
  *
  * @see ErrorWebRouter
  */
-public interface ErrorWebInterceptorsConfigurer extends Consumer<ErrorWebInterceptable<?>> {
+public interface ErrorWebInterceptorsConfigurer {
 
+	/**
+	 * <p>
+	 * Configures error web interceptors.
+	 * </p>
+	 *
+	 * @param interceptors the interceptable to configure
+	 */
+	void configure(ErrorWebInterceptable<?> interceptors);
 }

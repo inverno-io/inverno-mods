@@ -80,6 +80,12 @@ class GenericErrorWebInterceptableFacade implements ErrorWebInterceptable<Generi
 		}
 
 		@Override
+		public GenericErrorWebInterceptableFacade interceptors(List<ErrorWebExchangeInterceptor<? extends Throwable>> interceptors) {
+			interceptors.forEach(this::interceptor);
+			return GenericErrorWebInterceptableFacade.this;
+		}
+
+		@Override
 		public ErrorWebInterceptorManager<GenericErrorWebInterceptableFacade> error(Class<? extends Throwable> error) {
 			this.interceptorManager.error(error);
 			return this;

@@ -87,7 +87,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 			.route().handler(this.throwableHandler());
 		
 		if(this.configurer != null) {
-			this.configurer.accept(this);
+			this.configurer.configure(this);
 		}
 	}
 
@@ -328,7 +328,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 		GenericErrorWebInterceptedRouter interceptedRouter = new GenericErrorWebInterceptedRouter(this);
 		if(configurer != null) {
 			GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(interceptedRouter);
-			configurer.accept(facade);
+			configurer.configure(facade);
 
 			return facade.getInterceptedRouter();
 		}
@@ -341,7 +341,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 		if(configurers != null && !configurers.isEmpty()) {
 			GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(interceptedRouter);
 			for(ErrorWebInterceptorsConfigurer configurer : configurers) {
-				configurer.accept(facade);
+				configurer.configure(facade);
 			}
 			return facade.getInterceptedRouter();
 		}
@@ -352,7 +352,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	public ErrorWebRouter configureRoutes(ErrorWebRoutesConfigurer configurer) {
 		if(configurer != null) {
 			GenericErrorWebRoutableFacade<ErrorWebRouter> facade = new GenericErrorWebRoutableFacade<>(this);
-			configurer.accept(facade);
+			configurer.configure(facade);
 		}
 		return this;
 	}

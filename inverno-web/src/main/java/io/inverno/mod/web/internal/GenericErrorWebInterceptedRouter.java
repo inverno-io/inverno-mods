@@ -180,7 +180,7 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 	public ErrorWebInterceptedRouter configureInterceptors(ErrorWebInterceptorsConfigurer configurer) {
 		if(configurer != null) {
 			GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(this);
-			configurer.accept(facade);
+			configurer.configure(facade);
 
 			return facade.getInterceptedRouter();
 		}
@@ -192,7 +192,7 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 		if(configurers != null && !configurers.isEmpty()) {
 			GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(this);
 			for(ErrorWebInterceptorsConfigurer configurer : configurers) {
-				configurer.accept(facade);
+				configurer.configure(facade);
 			}
 			return facade.getInterceptedRouter();
 		}
@@ -202,7 +202,7 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 	@Override
 	public ErrorWebInterceptedRouter configureRoutes(ErrorWebRoutesConfigurer configurer) {
 		GenericErrorWebRoutableFacade<ErrorWebInterceptedRouter> facade = new GenericErrorWebRoutableFacade<>(this);
-		configurer.accept(facade);
+		configurer.configure(facade);
 		return this;
 	}
 
@@ -250,7 +250,7 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 			GenericErrorWebInterceptedRouter interceptedRouter = new GenericErrorWebInterceptedRouter(this);
 			if(configurer != null) {
 				GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(interceptedRouter);
-				configurer.accept(facade);
+				configurer.configure(facade);
 
 				return facade.getInterceptedRouter();
 			}
@@ -263,7 +263,7 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 			if(configurers != null && !configurers.isEmpty()) {
 				GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(interceptedRouter);
 				for(ErrorWebInterceptorsConfigurer configurer : configurers) {
-					configurer.accept(facade);
+					configurer.configure(facade);
 				}
 				return facade.getInterceptedRouter();
 			}

@@ -133,7 +133,7 @@ class WebRouterConfigurerClassGenerator implements WebRouterConfigurerInfoVisito
 			configurer_constructor.append(System.lineSeparator()).append(context.indent(1)).append("}");
 			
 			StringBuilder configurer_accept = new StringBuilder(context.indent(1)).append("@Override").append(System.lineSeparator());
-			configurer_accept.append(context.indent(1)).append("public void accept(").append(context.getTypeName(routerType)).append("<").append(configurerClassName).append(".Context> router) {");
+			configurer_accept.append(context.indent(1)).append("public void configure(").append(context.getTypeName(routerType)).append("<").append(configurerClassName).append(".Context> router) {");
 			
 			configurer_accept.append(System.lineSeparator()).append(context.indent(2)).append("router").append(System.lineSeparator());
 			configurer_accept.append(context.indent(3)).append(".configureInterceptors(this.interceptorsConfigurers)").append(System.lineSeparator());

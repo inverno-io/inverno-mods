@@ -15,8 +15,6 @@
  */
 package io.inverno.mod.web;
 
-import java.util.function.Consumer;
-
 /**
  * <p>
  * A configurer used to configure routes in an Error Web router.
@@ -27,5 +25,14 @@ import java.util.function.Consumer;
  *
  * @see ErrorWebRouter
  */
-public interface ErrorWebRoutesConfigurer extends Consumer<ErrorWebRoutable<?>> {
+public interface ErrorWebRoutesConfigurer {
+
+	/**
+	 * <p>
+	 * Configures error web routes.
+	 * </p>
+	 *
+	 * @param routes the error web routable to configure
+	 */
+	void configure(ErrorWebRoutable<?> routes);
 }

@@ -22,6 +22,7 @@ import io.inverno.mod.web.ErrorWebExchangeInterceptor;
 import io.inverno.mod.web.ErrorWebInterceptedRouter;
 import io.inverno.mod.web.ErrorWebInterceptorManager;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -62,6 +63,13 @@ class GenericErrorWebInterceptorManager extends AbstractErrorWebManager<GenericE
 		Objects.requireNonNull(interceptor);
 		this.interceptor = (ErrorWebExchangeInterceptor<Throwable>) interceptor;
 		this.commit();
+
+		return this.router;
+	}
+
+	@Override
+	public ErrorWebInterceptedRouter interceptors(List<ErrorWebExchangeInterceptor<? extends Throwable>> interceptors) {
+		interceptors.forEach(this::interceptor);
 		return this.router;
 	}
 

@@ -179,7 +179,7 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 		GenericWebInterceptedRouter interceptedRouter = new GenericWebInterceptedRouter(this);
 		if(configurer != null) {
 			GenericWebInterceptableFacade facade = new GenericWebInterceptableFacade(interceptedRouter);
-			configurer.accept(facade);
+			configurer.configure(facade);
 			
 			return facade.getInterceptedRouter();
 		}
@@ -192,7 +192,7 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 		if(configurers != null && !configurers.isEmpty()) {
 			GenericWebInterceptableFacade facade = new GenericWebInterceptableFacade(interceptedRouter);
 			for(WebInterceptorsConfigurer<? super ExchangeContext> configurer : configurers) {
-				configurer.accept(facade);
+				configurer.configure(facade);
 			}
 			return facade.getInterceptedRouter();
 		}
@@ -203,7 +203,7 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 	public WebRouter<ExchangeContext> configureRoutes(WebRoutesConfigurer<? super ExchangeContext> configurer) {
 		if(configurer != null) {
 			GenericWebRoutableFacade<WebRouter<ExchangeContext>> facade = new GenericWebRoutableFacade<>(this);
-			configurer.accept(facade);
+			configurer.configure(facade);
 		}
 		return this;
 	}

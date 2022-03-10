@@ -25,12 +25,13 @@ import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.annotation.PathParam;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -114,17 +115,17 @@ public class OpenApiRoutesConfigurer implements WebRoutesConfigurer<ExchangeCont
 	}
 
 	@Override
-	public void accept(WebRoutable<ExchangeContext, ?> routable) {
-		routable
+	public void configure(WebRoutable<ExchangeContext, ?> routes) {
+		routes
 			.route().path("/open-api", true).method(Method.GET).produces(MediaTypes.APPLICATION_JSON).handler(exchange -> {
 				exchange.response().body().raw().value(this.listSpec());
 			})
 			.route().path("/open-api/{moduleName}", false).method(Method.GET).handler(exchange -> {
 				exchange.response().body().resource().value(this.getSpec(exchange.request().pathParameters().get("moduleName").map(parameter -> parameter.as(String.class)).orElseThrow(() -> new MissingRequiredParameterException("moduleName"))));
 			});
-		
+
 		if(this.enableSwagger) {
-			routable
+			routes
 				.route().path("/open-api", true).method(Method.GET).produces(MediaTypes.TEXT_HTML).handler(exchange -> {
 					exchange.response().body().raw().value(this.listSpecSwaggerUI());
 				})

@@ -23,6 +23,8 @@ import io.inverno.mod.web.spi.ContentAware;
 import io.inverno.mod.web.spi.InterceptorManager;
 import io.inverno.mod.web.spi.PathAware;
 
+import java.util.List;
+
 /**
  * <p>
  * A web interceptor manager is used to define interceptors in a web intercepting router.
@@ -49,11 +51,28 @@ public interface WebInterceptorManager<A extends ExchangeContext, B extends WebI
 	 * This method basically appends the interceptor and the associated route criteria to the web intercepted router it comes from.
 	 * </p>
 	 * 
-	 * @param interceptor the web exchange interceptor
-	 * 
+	 * @param interceptor  the web exchange interceptor
+	 *
 	 * @return the router
 	 */
 	B interceptor(WebExchangeInterceptor<? super A> interceptor);
+
+	/**
+	 * <p>
+	 * Specifies multiple web exchange interceptors to apply to the resources matching the criteria defined in the web
+	 * interceptor manager.
+	 * </p>
+	 *
+	 * <p>
+	 * This method basically appends the interceptors and the associated route criteria to the web intercepted router it
+	 * comes from.
+	 * </p>
+	 *
+	 * @param interceptors a list of web exchange interceptors
+	 *
+	 * @return the router
+	 */
+	B interceptors(List<WebExchangeInterceptor<? super A>> interceptors);
 
 	/**
 	 * <p>

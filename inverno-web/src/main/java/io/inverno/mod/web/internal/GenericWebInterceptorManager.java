@@ -23,6 +23,8 @@ import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.WebExchangeInterceptor;
 import io.inverno.mod.web.WebInterceptedRouter;
 import io.inverno.mod.web.WebInterceptorManager;
+
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -62,9 +64,16 @@ class GenericWebInterceptorManager extends AbstractWebManager<GenericWebIntercep
 		Objects.requireNonNull(interceptor);
 		this.interceptor = (WebExchangeInterceptor<ExchangeContext>) interceptor;
 		this.commit();
+
 		return this.router;
 	}
-	
+
+	@Override
+	public WebInterceptedRouter<ExchangeContext> interceptors(List<WebExchangeInterceptor<? super ExchangeContext>> interceptors) {
+		interceptors.forEach(this::interceptor);
+		return this.router;
+	}
+
 	private void commit() {
 		Consumer<GenericWebRouteInterceptor> languagesCommitter = routeInterceptor -> {
 			if(this.languages != null && !this.languages.isEmpty()) {

@@ -20,6 +20,8 @@ import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ErrorInterceptorManager;
 import io.inverno.mod.web.spi.PathAware;
 
+import java.util.List;
+
 /**
  * <p>
  * An error web interceptor manager is used to define interceptors in an error web router.
@@ -38,7 +40,7 @@ public interface ErrorWebInterceptorManager<A extends ErrorWebInterceptable<A>> 
 
 	/**
 	 * <p>
-	 * Specifies the error web exchange interceptor to apply to the resources matching the criteria defined in the web
+	 * Specifies an error web exchange interceptor to apply to the resources matching the criteria defined in the web
 	 * interceptor manager.
 	 * </p>
 	 *
@@ -52,6 +54,23 @@ public interface ErrorWebInterceptorManager<A extends ErrorWebInterceptable<A>> 
 	 * @return the error router
 	 */
 	A interceptor(ErrorWebExchangeInterceptor<? extends Throwable> interceptor);
+
+	/**
+	 * <p>
+	 * Specifies multiple error web exchange interceptors to apply to the resources matching the criteria defined in the
+	 * web interceptor manager.
+	 * </p>
+	 *
+	 * <p>
+	 * This method basically appends the interceptors and the associated route criteria to the web intercepted router it
+	 * comes from.
+	 * </p>
+	 *
+	 * @param interceptors a list of error web exchange interceptors
+	 *
+	 * @return the error router
+	 */
+	A interceptors(List<ErrorWebExchangeInterceptor<? extends Throwable>> interceptors);
 
 	/**
 	 * <p>

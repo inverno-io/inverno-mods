@@ -16,7 +16,6 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.http.server.ExchangeContext;
-import java.util.function.Consumer;
 
 /**
  * <p>
@@ -30,6 +29,14 @@ import java.util.function.Consumer;
  * 
  * @param <A> the type of the exchange context
  */
-public interface WebInterceptorsConfigurer<A extends ExchangeContext> extends Consumer<WebInterceptable<A, ?>> {
+public interface WebInterceptorsConfigurer<A extends ExchangeContext> {
 
+	/**
+	 * <p>
+	 * Configures interceptors.
+	 * </p>
+	 *
+	 * @param interceptors the web interceptable to configure
+	 */
+	void configure(WebInterceptable<A, ?> interceptors);
 }

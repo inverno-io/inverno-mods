@@ -15,8 +15,6 @@
  */
 package io.inverno.mod.web.spi;
 
-import java.util.function.Consumer;
-
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 
@@ -24,11 +22,11 @@ import io.inverno.mod.http.server.ExchangeContext;
  * <p>
  * Base router configurer interface.
  * </p>
- * 
+ *
  * <p>
- * A router configurer is used to configure a router.
+ * A router configurer is used to configure interceptors and routes in a router.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
@@ -52,6 +50,14 @@ public interface RouterConfigurer<
 		F extends RouteManager<A, B, D, F, H>,
 		G extends InterceptorManager<A, B, D, G>,
 		H extends InterceptableRoute<A, B>
-	> extends Consumer<C> {
+	> {
 
+	/**
+	 * <p>
+	 * Configures the specified router.
+	 * </p>
+	 *
+	 * @param router the router to configure
+	 */
+	void configure(C router);
 }

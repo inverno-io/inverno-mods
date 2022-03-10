@@ -85,6 +85,12 @@ class GenericWebInterceptableFacade implements WebInterceptable<ExchangeContext,
 		}
 
 		@Override
+		public GenericWebInterceptableFacade interceptors(List<WebExchangeInterceptor<? super ExchangeContext>> interceptors) {
+			interceptors.forEach(this::interceptor);
+			return GenericWebInterceptableFacade.this;
+		}
+
+		@Override
 		public WebInterceptorManager<ExchangeContext, GenericWebInterceptableFacade> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
 			this.interceptorManager.path(path, matchTrailingSlash);
 			return this;

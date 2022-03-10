@@ -64,7 +64,7 @@ public interface ErrorWebRouter extends
 	 * @return the error web router
 	 */
 	default ErrorWebRouter configure(ErrorWebRouterConfigurer configurer) {
-		configurer.accept(this);
+		configurer.configure(this);
 		return this;
 	}
 

@@ -16,7 +16,6 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.http.server.ExchangeContext;
-import java.util.function.Consumer;
 
 /**
  * <p>
@@ -30,6 +29,14 @@ import java.util.function.Consumer;
  * 
  * @param <A> the type of the exchange context
  */
-public interface WebRoutesConfigurer<A extends ExchangeContext> extends Consumer<WebRoutable<A, ?>> {
-	
+public interface WebRoutesConfigurer<A extends ExchangeContext> {
+
+	/**
+	 * <p>
+	 * Configures routes.
+	 * </p>
+	 *
+	 * @param routes the web routable to configure
+	 */
+	void configure(WebRoutable<A, ?> routes);
 }

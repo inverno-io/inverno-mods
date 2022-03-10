@@ -62,7 +62,7 @@ public interface WebRouter<A extends ExchangeContext> extends
 	 */
 	@SuppressWarnings("unchecked")
 	default WebRouter<A> configure(WebRouterConfigurer<? super A> configurer) {
-		configurer.accept((WebRouter)this);
+		configurer.configure((WebRouter)this);
 		return this;
 	}
 	

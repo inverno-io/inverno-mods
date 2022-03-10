@@ -18,15 +18,13 @@ package io.inverno.mod.web.spi;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.ExchangeContext;
 
-import java.util.function.Consumer;
-
 /**
  * <p>
  * Base error router configurer interface.
  * </p>
  * 
  * <p>
- * An error router configurer is used to configure an error router.
+ * An error router configurer is used to configure interceptors and routes in an error router.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -50,6 +48,14 @@ public interface ErrorRouterConfigurer<
 		E extends ErrorRouteManager<A, C, E, G>,
 		F extends ErrorInterceptorManager<A, C, F>,
 		G extends InterceptableRoute<ExchangeContext, A>
-	> extends Consumer<B> {
+	> {
 
+	/**
+	 * <p>
+	 * Configures the specified error router.
+	 * </p>
+	 *
+	 * @param errorRouter the error router to configure
+	 */
+	void configure(B errorRouter);
 }

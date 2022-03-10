@@ -72,12 +72,12 @@ public class WebJarsRoutesConfigurer implements WebRoutesConfigurer<ExchangeCont
 	public WebJarsRoutesConfigurer(ResourceService resourceService) {
 		this.resourceService = resourceService;
 	}
-	
+
 	@Override
-	public void accept(WebRoutable<ExchangeContext, ?> routable) {
+	public void configure(WebRoutable<ExchangeContext, ?> routes) {
 		/* 2 possibilities:
 		 * - modular webjar
-		 *   - /[module_name]/webjars/* -> module://[module_name]/META-INF/resources/webjars/[module_name]/[module_version]/* 
+		 *   - /[module_name]/webjars/* -> module://[module_name]/META-INF/resources/webjars/[module_name]/[module_version]/*
 		 *   => WE HAVE TO modify the modularized webjars so that the path is correct
 		 * - no modular webjar (ie. we haven't found the requested module) fallback to classpath
 		 *   - /[module_name]/webjars/* -> classpath:/META-INF/resources/webjars
@@ -105,7 +105,10 @@ public class WebJarsRoutesConfigurer implements WebRoutesConfigurer<ExchangeCont
 					Resource baseResource = this.resourceService.getResource(URI.create(ModuleResource.SCHEME_MODULE + "://" + module.getName() + "/META-INF/resources/webjars/" + webjarName + "/" + webjarVersion + "/"));
 					String webjarRootPath = WebJarsRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
 					LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
-					routable.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
+					routes.route()
+						.path(webjarRootPath)
+						.method(Method.GET)
+						.handler(new StaticHandler(baseResource));
 				}
 			});
 		}
@@ -123,11 +126,14 @@ public class WebJarsRoutesConfigurer implements WebRoutesConfigurer<ExchangeCont
 				if(webjarNames.add(webjarName)) {
 					String webjarRootPath = WebJarsRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
 					LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
-					routable.route().path(webjarRootPath).method(Method.GET).handler(new StaticHandler(baseResource));
+					routes.route()
+						.path(webjarRootPath)
+						.method(Method.GET)
+						.handler(new StaticHandler(baseResource));
 				}
 			});
 	}
-	
+
 	private static final Pattern NON_ALPHANUM = Pattern.compile("[^A-Za-z0-9]");
 	private static final Pattern REPEATING_DOTS = Pattern.compile("(\\.)(\\1)+");
 	private static final Pattern LEADING_DOTS = Pattern.compile("^\\.");

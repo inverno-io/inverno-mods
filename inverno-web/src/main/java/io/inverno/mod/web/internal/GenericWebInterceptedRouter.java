@@ -193,7 +193,7 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 	public WebInterceptedRouter<ExchangeContext> configureInterceptors(WebInterceptorsConfigurer<? super ExchangeContext> configurer) {
 		if(configurer != null) {
 			GenericWebInterceptableFacade facade = new GenericWebInterceptableFacade(this);
-			configurer.accept(facade);
+			configurer.configure(facade);
 			
 			return facade.getInterceptedRouter();
 		}
@@ -205,7 +205,7 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 		if(configurers != null && !configurers.isEmpty()) {
 			GenericWebInterceptableFacade facade = new GenericWebInterceptableFacade(this);
 			for(WebInterceptorsConfigurer<? super ExchangeContext> configurer : configurers) {
-				configurer.accept(facade);
+				configurer.configure(facade);
 			}
 			return facade.getInterceptedRouter();
 		}
@@ -215,10 +215,10 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 	@Override
 	public WebInterceptedRouter<ExchangeContext> configureRoutes(WebRoutesConfigurer<? super ExchangeContext> configurer) {
 		GenericWebRoutableFacade<WebInterceptedRouter<ExchangeContext>> facade = new GenericWebRoutableFacade<>(this);
-		configurer.accept(facade);
+		configurer.configure(facade);
 		return this;
 	}
-	
+
 	private class WebRouterFacade implements WebRouter<ExchangeContext> {
 		
 		private final GenericWebInterceptedRouter interceptedRouter;
@@ -263,7 +263,7 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 			GenericWebInterceptedRouter interceptedRouter = new GenericWebInterceptedRouter(this);
 			if(configurer != null) {
 				GenericWebInterceptableFacade facade = new GenericWebInterceptableFacade(interceptedRouter);
-				configurer.accept(facade);
+				configurer.configure(facade);
 
 				return facade.getInterceptedRouter();
 			}
@@ -276,7 +276,7 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 			if(configurers != null && !configurers.isEmpty()) {
 				GenericWebInterceptableFacade facade = new GenericWebInterceptableFacade(interceptedRouter);
 				for(WebInterceptorsConfigurer<? super ExchangeContext> configurer : configurers) {
-					configurer.accept(facade);
+					configurer.configure(facade);
 				}
 				return facade.getInterceptedRouter();
 			}
