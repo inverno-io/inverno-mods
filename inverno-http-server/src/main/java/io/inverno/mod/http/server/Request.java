@@ -101,13 +101,12 @@ public interface Request {
 	 * <p>
 	 * Returns the path to the resource targeted in the request.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * This path corresponds to the origin form as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-5.3.1">RFC 7230 Section
-	 * 5.3.1</a>, as such it may contain a query URI component.
+	 * <a href="https://tools.ietf.org/html/rfc7230#section-5.3.1">RFC 7230 Section 5.3.1</a>, as such it may contain a query URI component.
 	 * </p>
-	 * 
+	 *
 	 * @return the path to the targeted resource
 	 */
 	String getPath();
@@ -116,19 +115,17 @@ public interface Request {
 	 * <p>
 	 * Returns the absolute path to the resource targeted in the request.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * This path corresponds to the absolute path of the origin form as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-5.3.1">RFC 7230 Section
-	 * 5.3.1</a>, as such it only contains the path URI component.
+	 * <a href="https://tools.ietf.org/html/rfc7230#section-5.3.1">RFC 7230 Section 5.3.1</a>, as such it only contains the path URI component.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * The resulting path is also normalized as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-6">RFC 3986 Section
-	 * 6</a>.
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-6">RFC 3986 Section 6</a>.
 	 * </p>
-	 * 
+	 *
 	 * @return the normalized absolute path to the targeted resource
 	 */
 	String getPathAbsolute();
@@ -137,13 +134,12 @@ public interface Request {
 	 * <p>
 	 * Returns a path builder initialized with the path of the request.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * This method always returns a new {@link URIBuilder} instance with
-	 * {@link URIs.Option#NORMALIZED} option. It is then safe to use it to build
+	 * This method always returns a new {@link URIBuilder} instance with {@link URIs.Option#NORMALIZED} option. It is then safe to use it to build
 	 * relative paths.
 	 * </p>
-	 * 
+	 *
 	 * @return a new URI builder
 	 */
 	URIBuilder getPathBuilder();
@@ -179,9 +175,8 @@ public interface Request {
 	 * <p>
 	 * Returns the request body used to consume request payload.
 	 * </p>
-	 * 
-	 * @return an optional returning the request body or an empty optional if the
-	 *         request has no payload
+	 *
+	 * @return an optional returning the request body or an empty optional if the request has no payload
 	 */
 	Optional<? extends RequestBody> body();
 }

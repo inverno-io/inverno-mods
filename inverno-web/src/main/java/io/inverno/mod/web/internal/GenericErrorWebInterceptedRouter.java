@@ -33,13 +33,13 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements ErrorWebInterceptedRouter {
+class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements ErrorWebInterceptedRouter<ExchangeContext> {
 
 	private final GenericErrorWebRouter router;
 
 	private final ErrorWebRouterFacade routerFacade;
 
-	private final List<ErrorWebRouteInterceptor> routeInterceptors;
+	private final List<ErrorWebRouteInterceptor<ExchangeContext>> routeInterceptors;
 
 	/**
 	 * <p>
@@ -89,12 +89,12 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 	 *
 	 * @param routeInterceptor an error web route interceptor
 	 */
-	void addRouteInterceptor(ErrorWebRouteInterceptor routeInterceptor) {
+	void addRouteInterceptor(ErrorWebRouteInterceptor<ExchangeContext> routeInterceptor) {
 		this.routeInterceptors.add(routeInterceptor);
 	}
 
 	@Override
-	void setRoute(ErrorWebRoute route) {
+	void setRoute(ErrorWebRoute<ExchangeContext> route) {
 		route.setInterceptors(this.routeInterceptors.stream()
 			.map(interceptor -> interceptor.matches(route))
 			.filter(Objects::nonNull)
@@ -105,37 +105,37 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 	}
 
 	@Override
-	void enableRoute(ErrorWebRoute route) {
+	void enableRoute(ErrorWebRoute<ExchangeContext> route) {
 		this.router.enableRoute(route);
 	}
 
 	@Override
-	void disableRoute(ErrorWebRoute route) {
+	void disableRoute(ErrorWebRoute<ExchangeContext> route) {
 		this.router.disableRoute(route);
 	}
 
 	@Override
-	void removeRoute(ErrorWebRoute route) {
+	void removeRoute(ErrorWebRoute<ExchangeContext> route) {
 		this.router.removeRoute(route);
 	}
 
 	@Override
-	public ErrorWebInterceptorManager<ErrorWebInterceptedRouter> intercept() {
+	public ErrorWebInterceptorManager<ExchangeContext, ErrorWebInterceptedRouter<ExchangeContext>> intercept() {
 		return new GenericErrorWebInterceptorManager(new GenericErrorWebInterceptedRouter(this), CONTENT_TYPE_CODEC, ACCEPT_LANGUAGE_CODEC);
 	}
 
 	@Override
-	public ErrorWebRouteManager<ErrorWebInterceptedRouter> route() {
+	public ErrorWebRouteManager<ExchangeContext, ErrorWebInterceptedRouter<ExchangeContext>> route() {
 		return new GenericErrorWebInterceptedRouteManager(this);
 	}
 
 	@Override
-	public Set<ErrorWebRoute> getRoutes() {
+	public Set<ErrorWebRoute<ExchangeContext>> getRoutes() {
 		return this.router.getRoutes();
 	}
 
 	@Override
-	public List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>> getInterceptors() {
+	public List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>> getInterceptors() {
 		return this.routeInterceptors.stream().map(routeInterceptor -> routeInterceptor.getInterceptor()).collect(Collectors.toList());
 	}
 
@@ -147,9 +147,9 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 	 * </p>
 	 */
 	@Override
-	public ErrorWebInterceptedRouter applyInterceptors() {
+	public ErrorWebInterceptedRouter<ExchangeContext> applyInterceptors() {
 		this.router.getRoutes().stream().forEach(route -> {
-			LinkedList<ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>> interceptors = new LinkedList<>(route.getInterceptors());
+			LinkedList<ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>> interceptors = new LinkedList<>(route.getInterceptors());
 			this.routeInterceptors.stream()
 					.map(routeInterceptor -> routeInterceptor.matches(route))
 					.filter(Objects::nonNull)
@@ -164,12 +164,12 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 	}
 
 	@Override
-	public ErrorWebRouter getRouter() {
+	public ErrorWebRouter<ExchangeContext> getRouter() {
 		return (this.router != null ? this.router : this.routerFacade);
 	}
 
 	@Override
-	public ErrorWebInterceptedRouter configure(ErrorWebRouterConfigurer configurer) {
+	public ErrorWebInterceptedRouter<ExchangeContext> configure(ErrorWebRouterConfigurer<? super ExchangeContext> configurer) {
 		if(configurer != null) {
 			new ErrorWebRouterFacade().configure(configurer);
 		}
@@ -177,7 +177,7 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 	}
 
 	@Override
-	public ErrorWebInterceptedRouter configureInterceptors(ErrorWebInterceptorsConfigurer configurer) {
+	public ErrorWebInterceptedRouter<ExchangeContext> configureInterceptors(ErrorWebInterceptorsConfigurer<? super ExchangeContext> configurer) {
 		if(configurer != null) {
 			GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(this);
 			configurer.configure(facade);
@@ -188,10 +188,10 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 	}
 
 	@Override
-	public ErrorWebInterceptedRouter configureInterceptors(List<ErrorWebInterceptorsConfigurer> configurers) {
+	public ErrorWebInterceptedRouter<ExchangeContext> configureInterceptors(List<ErrorWebInterceptorsConfigurer<? super ExchangeContext>> configurers) {
 		if(configurers != null && !configurers.isEmpty()) {
 			GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(this);
-			for(ErrorWebInterceptorsConfigurer configurer : configurers) {
+			for(ErrorWebInterceptorsConfigurer<? super ExchangeContext> configurer : configurers) {
 				configurer.configure(facade);
 			}
 			return facade.getInterceptedRouter();
@@ -200,13 +200,13 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 	}
 
 	@Override
-	public ErrorWebInterceptedRouter configureRoutes(ErrorWebRoutesConfigurer configurer) {
-		GenericErrorWebRoutableFacade<ErrorWebInterceptedRouter> facade = new GenericErrorWebRoutableFacade<>(this);
+	public ErrorWebInterceptedRouter<ExchangeContext> configureRoutes(ErrorWebRoutesConfigurer<? super ExchangeContext> configurer) {
+		GenericErrorWebRoutableFacade<ErrorWebInterceptedRouter<ExchangeContext>> facade = new GenericErrorWebRoutableFacade<>(this);
 		configurer.configure(facade);
 		return this;
 	}
 
-	private class ErrorWebRouterFacade implements ErrorWebRouter {
+	private class ErrorWebRouterFacade implements ErrorWebRouter<ExchangeContext> {
 
 		private final GenericErrorWebInterceptedRouter interceptedRouter;
 
@@ -215,119 +215,119 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 		}
 
 		@Override
-		public ErrorWebInterceptorManager<ErrorWebInterceptedRouter> intercept() {
+		public ErrorWebInterceptorManager<ExchangeContext, ErrorWebInterceptedRouter<ExchangeContext>> intercept() {
 			return new GenericErrorWebInterceptorManager(new GenericErrorWebInterceptedRouter(this), CONTENT_TYPE_CODEC, ACCEPT_LANGUAGE_CODEC);
 		}
 
 		@Override
-		public ErrorWebRouteManager<ErrorWebRouter> route() {
+		public ErrorWebRouteManager<ExchangeContext, ErrorWebRouter<ExchangeContext>> route() {
 			return new ErrorWebRouteManagerFacade(GenericErrorWebInterceptedRouter.this.route());
 		}
 
 		@Override
-		public Set<ErrorWebRoute> getRoutes() {
+		public Set<ErrorWebRoute<ExchangeContext>> getRoutes() {
 			return GenericErrorWebInterceptedRouter.this.getRoutes();
 		}
 
 		@Override
-		public void handle(ErrorExchange<Throwable> exchange) throws HttpException {
+		public void handle(ErrorExchange<ExchangeContext> exchange) throws HttpException {
 			GenericErrorWebInterceptedRouter.this.getRouter().handle(exchange);
 		}
 
 		@Override
-		public Mono<Void> defer(ErrorExchange<Throwable> exchange) {
+		public Mono<Void> defer(ErrorExchange<ExchangeContext> exchange) {
 			return GenericErrorWebInterceptedRouter.this.getRouter().defer(exchange);
 		}
 
 		@Override
-		public ErrorWebRouter configureRoutes(ErrorWebRoutesConfigurer configurer) {
+		public ErrorWebRouter<ExchangeContext> configureRoutes(ErrorWebRoutesConfigurer<? super ExchangeContext> configurer) {
 			GenericErrorWebInterceptedRouter.this.configureRoutes(configurer);
 			return this;
 		}
 
 		@Override
-		public ErrorWebInterceptedRouter configureInterceptors(ErrorWebInterceptorsConfigurer configurer) {
-			GenericErrorWebInterceptedRouter interceptedRouter = new GenericErrorWebInterceptedRouter(this);
+		public ErrorWebInterceptedRouter<ExchangeContext> configureInterceptors(ErrorWebInterceptorsConfigurer<? super ExchangeContext> configurer) {
+			GenericErrorWebInterceptedRouter childInterceptedRouter = new GenericErrorWebInterceptedRouter(this);
 			if(configurer != null) {
-				GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(interceptedRouter);
+				GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(childInterceptedRouter);
 				configurer.configure(facade);
 
 				return facade.getInterceptedRouter();
 			}
-			return interceptedRouter;
+			return childInterceptedRouter;
 		}
 
 		@Override
-		public ErrorWebInterceptedRouter configureInterceptors(List<ErrorWebInterceptorsConfigurer> configurers) {
-			GenericErrorWebInterceptedRouter interceptedRouter = new GenericErrorWebInterceptedRouter(this);
+		public ErrorWebInterceptedRouter<ExchangeContext> configureInterceptors(List<ErrorWebInterceptorsConfigurer<? super ExchangeContext>> configurers) {
+			GenericErrorWebInterceptedRouter childInterceptedRouter = new GenericErrorWebInterceptedRouter(this);
 			if(configurers != null && !configurers.isEmpty()) {
-				GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(interceptedRouter);
-				for(ErrorWebInterceptorsConfigurer configurer : configurers) {
+				GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(childInterceptedRouter);
+				for(ErrorWebInterceptorsConfigurer<? super ExchangeContext> configurer : configurers) {
 					configurer.configure(facade);
 				}
 				return facade.getInterceptedRouter();
 			}
-			return interceptedRouter;
+			return childInterceptedRouter;
 		}
 
-		private class ErrorWebRouteManagerFacade implements ErrorWebRouteManager<ErrorWebRouter> {
+		private class ErrorWebRouteManagerFacade implements ErrorWebRouteManager<ExchangeContext, ErrorWebRouter<ExchangeContext>> {
 
-			private final ErrorWebRouteManager<ErrorWebInterceptedRouter> routeManager;
+			private final ErrorWebRouteManager<ExchangeContext, ErrorWebInterceptedRouter<ExchangeContext>> routeManager;
 
-			public ErrorWebRouteManagerFacade(ErrorWebRouteManager<ErrorWebInterceptedRouter> routeManager) {
+			public ErrorWebRouteManagerFacade(ErrorWebRouteManager<ExchangeContext, ErrorWebInterceptedRouter<ExchangeContext>> routeManager) {
 				this.routeManager = routeManager;
 			}
 
 			@Override
-			public ErrorWebRouter handler(ErrorWebExchangeHandler<? extends Throwable> handler) {
+			public ErrorWebRouter<ExchangeContext> handler(ErrorWebExchangeHandler<? super ExchangeContext> handler) {
 				this.routeManager.handler(handler);
 				return ErrorWebRouterFacade.this;
 			}
 
 			@Override
-			public ErrorWebRouteManager<ErrorWebRouter> error(Class<? extends Throwable> error) {
+			public ErrorWebRouteManager<ExchangeContext, ErrorWebRouter<ExchangeContext>> error(Class<? extends Throwable> error) {
 				this.routeManager.error(error);
 				return this;
 			}
 
 			@Override
-			public ErrorWebRouteManager<ErrorWebRouter> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
+			public ErrorWebRouteManager<ExchangeContext, ErrorWebRouter<ExchangeContext>> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
 				this.routeManager.path(path, matchTrailingSlash);
 				return this;
 			}
 
 			@Override
-			public ErrorWebRouteManager<ErrorWebRouter> produces(String mediaType) {
+			public ErrorWebRouteManager<ExchangeContext, ErrorWebRouter<ExchangeContext>> produces(String mediaType) {
 				this.routeManager.produces(mediaType);
 				return this;
 			}
 
 			@Override
-			public ErrorWebRouteManager<ErrorWebRouter> language(String language) {
+			public ErrorWebRouteManager<ExchangeContext, ErrorWebRouter<ExchangeContext>> language(String language) {
 				this.routeManager.language(language);
 				return this;
 			}
 
 			@Override
-			public ErrorWebRouter enable() {
+			public ErrorWebRouter<ExchangeContext> enable() {
 				this.routeManager.enable();
 				return ErrorWebRouterFacade.this;
 			}
 
 			@Override
-			public ErrorWebRouter disable() {
+			public ErrorWebRouter<ExchangeContext> disable() {
 				this.routeManager.disable();
 				return ErrorWebRouterFacade.this;
 			}
 
 			@Override
-			public ErrorWebRouter remove() {
+			public ErrorWebRouter<ExchangeContext> remove() {
 				this.routeManager.remove();
 				return ErrorWebRouterFacade.this;
 			}
 
 			@Override
-			public Set<ErrorWebRoute> findRoutes() {
+			public Set<ErrorWebRoute<ExchangeContext>> findRoutes() {
 				return this.routeManager.findRoutes();
 			}
 		}

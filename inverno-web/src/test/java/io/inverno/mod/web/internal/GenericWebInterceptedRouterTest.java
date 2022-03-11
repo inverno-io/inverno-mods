@@ -23,8 +23,6 @@ import org.junit.jupiter.api.Test;
 
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeInterceptor;
-import io.inverno.mod.http.server.HttpServerConfiguration;
-import io.inverno.mod.web.WebConfiguration;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebExchangeHandler;
 import io.inverno.mod.web.WebExchangeInterceptor;
@@ -42,14 +40,6 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public class GenericWebInterceptedRouterTest {
-	
-	private static final WebConfiguration CONFIGURATION = new WebConfiguration() {
-		@Override
-		public HttpServerConfiguration http_server() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-	};
 	
 	@SuppressWarnings("unchecked")
 	private static WebExchangeHandler<ExchangeContext> mockExchangeHandler() {
@@ -71,7 +61,7 @@ public class GenericWebInterceptedRouterTest {
 		
 		WebExchangeHandler<ExchangeContext> handler_book = mockExchangeHandler();
 		
-		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.intercept()
 				.path("/hello")
@@ -98,7 +88,7 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeHandler<ExchangeContext> handler_foo = mockExchangeHandler();
 		WebExchangeHandler<ExchangeContext> handler_bar = mockExchangeHandler();
 		
-		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.intercept()
 				.interceptor(interceptor1)
@@ -169,7 +159,7 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeHandler<ExchangeContext> handler_2 = mockExchangeHandler();
 		WebExchangeHandler<ExchangeContext> handler_default = mockExchangeHandler();
 		
-		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.intercept()
 				.interceptor(interceptor1)
@@ -276,7 +266,7 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeHandler<ExchangeContext> handler_post = mockExchangeHandler();
 		WebExchangeHandler<ExchangeContext> handler_default = mockExchangeHandler();
 		
-		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.intercept()
 				.interceptor(interceptor1)
@@ -378,7 +368,7 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeHandler<ExchangeContext> handler_xml = mockExchangeHandler();
 		WebExchangeHandler<ExchangeContext> handler_default = mockExchangeHandler();
 		
-		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.intercept()
 				.interceptor(interceptor1)
@@ -493,7 +483,7 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeHandler<ExchangeContext> handler_xml = mockExchangeHandler();
 		WebExchangeHandler<ExchangeContext> handler_undefined = mockExchangeHandler();
 		
-		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.intercept()
 				.interceptor(interceptor1)
@@ -586,7 +576,7 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeHandler<ExchangeContext> handler_en = mockExchangeHandler();
 		WebExchangeHandler<ExchangeContext> handler_undefined = mockExchangeHandler();
 		
-		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.intercept()
 				.interceptor(interceptor1)
@@ -678,7 +668,7 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeHandler<ExchangeContext> handler_1 = mockExchangeHandler();
 		WebExchangeHandler<ExchangeContext> handler_2 = mockExchangeHandler();
 		
-		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.route()
 				.path("/1")
@@ -767,7 +757,7 @@ public class GenericWebInterceptedRouterTest {
 		
 		WebExchangeHandler<ExchangeContext> handler = mockExchangeHandler();
 		
-		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.intercept()
 				.interceptor(interceptor1)
@@ -826,7 +816,7 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeHandler<ExchangeContext> handler2 = mockExchangeHandler();
 		WebExchangeHandler<ExchangeContext> handler3 = mockExchangeHandler();
 		
-		GenericWebRouter genericRouter = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter genericRouter = new GenericWebRouter(null, null, null);
 		
 		genericRouter
 			.configureInterceptors(interceptable -> {

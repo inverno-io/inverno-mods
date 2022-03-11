@@ -40,7 +40,7 @@ import io.inverno.mod.http.server.ResponseTrailers;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class Http2ResponseTrailers implements ResponseTrailers {
+class Http2ResponseTrailers implements ResponseTrailers {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;

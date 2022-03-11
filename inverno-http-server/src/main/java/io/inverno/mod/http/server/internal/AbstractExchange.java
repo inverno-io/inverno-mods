@@ -67,8 +67,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	protected final ChannelHandlerContext context;
 	protected final EventExecutor contextExecutor;
 	
-	protected final RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler;
-	protected final ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler;
+	protected final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
 	
 	protected final AbstractRequest request;
 	protected AbstractResponse response;
@@ -88,7 +87,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 */
 	private Disposable disposable;
 	
-	protected static final ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> LAST_RESORT_ERROR_HANDLER = new GenericErrorHandler();
+	protected static final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> LAST_RESORT_ERROR_CONTROLLER = exchange -> {};
 	
 	/**
 	 * <p>
@@ -97,19 +96,17 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * </p>
 	 * 
 	 * @param context      the channel handler context
-	 * @param rootHandler  the server root exchange handler
-	 * @param errorHandler the server error exchange handler
+	 * @param controller   the server controller
 	 * @param request      the exchange request
 	 * @param response     the exchange response
 	 */
-	public AbstractExchange(ChannelHandlerContext context, RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler, ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler, AbstractRequest request, AbstractResponse response) {
+	public AbstractExchange(ChannelHandlerContext context, ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller, AbstractRequest request, AbstractResponse response) {
 		this.context = context;
 		this.contextExecutor = this.context.executor();
-		this.rootHandler = rootHandler;
-		this.errorHandler = errorHandler;
+		this.controller = controller;
 		this.request = request;
 		this.response = response;
-		this.exchangeContext = rootHandler.createContext();
+		this.exchangeContext = controller.createContext();
 		if(this.exchangeContext != null) {
 			this.exchangeContext.init();
 		}
@@ -181,24 +178,13 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	/**
 	 * <p>
-	 * Returns the root handler.
+	 * Returns the controller.
 	 * </p>
 	 * 
 	 * @return the root handler
 	 */
-	public RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> getRootHandler() {
-		return this.rootHandler;
-	}
-	
-	/**
-	 * <p>
-	 * Returns the error handler.
-	 * </p>
-	 * 
-	 * @return the error handler
-	 */
-	public ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> getErrorHandler() {
-		return this.errorHandler;
+	public ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> getController() {
+		return this.controller;
 	}
 	
 	/**
@@ -241,24 +227,24 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 		this.handler = handler;
 		this.handler.exchangeStart(this.context, this);
-		Mono<Void> deferHandle = null;
+		Mono<Void> deferHandle;
 		try {
-			deferHandle = this.rootHandler.defer(this);
+			deferHandle = this.controller.defer(this);
 		}
 		catch(Throwable throwable) {
 			this.logError(() -> "Exchange handler error", throwable);
 			// We need to create a new error exchange each time we try to handle the error in order to have a fresh response 
-			ErrorExchange<Throwable> errorExchange = this.createErrorExchange(throwable);
+			ErrorExchange<ExchangeContext> errorExchange = this.createErrorExchange(throwable);
 			this.response = (AbstractResponse) errorExchange.response();
 			try {
-				deferHandle = this.errorHandler.defer(errorExchange);
+				deferHandle = this.controller.defer(errorExchange);
 			} 
 			catch (Throwable t) {
 				this.logError(() -> "ErrorExchange handler error", t);
 				errorExchange = this.createErrorExchange(throwable);
 				this.response = (AbstractResponse) errorExchange.response();
 				// TODO This may fail as well what do we do in such situations?
-				deferHandle = LAST_RESORT_ERROR_HANDLER.defer(errorExchange);
+				deferHandle = LAST_RESORT_ERROR_CONTROLLER.defer(errorExchange);
 			}
 		}
 		RootHandlerSubscriber rootHandlerSubscriber = new RootHandlerSubscriber();
@@ -334,7 +320,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * 
 	 * @return a new error exchange based on the exchange
 	 */
-	protected abstract ErrorExchange<Throwable> createErrorExchange(Throwable error);
+	protected abstract ErrorExchange<ExchangeContext> createErrorExchange(Throwable error);
 	
 	@Override
 	protected final void hookOnSubscribe(Subscription subscription) {
@@ -408,10 +394,10 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 		else {
 			this.transferedLength = 0;
-			ErrorExchange<Throwable> errorExchange = this.createErrorExchange(throwable);
+			ErrorExchange<ExchangeContext> errorExchange = this.createErrorExchange(throwable);
 			this.response = (AbstractResponse) errorExchange.response();
 			try {
-				Mono<Void> deferHandle = this.errorHandler.defer(errorExchange);
+				Mono<Void> deferHandle = this.controller.defer(errorExchange);
 				this.executeInEventLoop(() -> {
 					ErrorHandlerSubscriber errorHandlerSubscriber = new ErrorHandlerSubscriber(throwable);
 					this.disposable = errorHandlerSubscriber;
@@ -423,7 +409,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				errorExchange = this.createErrorExchange(throwable);
 				this.response = (AbstractResponse) errorExchange.response();
 				// TODO This may fail as well what do we do in such situations?
-				Mono<Void> deferHandle = LAST_RESORT_ERROR_HANDLER.defer(errorExchange);
+				Mono<Void> deferHandle = LAST_RESORT_ERROR_CONTROLLER.defer(errorExchange);
 				this.executeInEventLoop(() -> {
 					ErrorHandlerSubscriber errorHandlerSubscriber = new ErrorHandlerSubscriber(throwable);
 					this.disposable = errorHandlerSubscriber;

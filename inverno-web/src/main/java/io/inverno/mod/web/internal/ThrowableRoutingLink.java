@@ -35,10 +35,12 @@ import java.util.stream.Collectors;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
+ * 
+ * @param <A> the type of the exchange context
  */
-class ThrowableRoutingLink extends RoutingLink<ExchangeContext, ErrorWebExchange<Throwable>, ThrowableRoutingLink, ErrorWebRoute> {
+class ThrowableRoutingLink<A extends ExchangeContext> extends RoutingLink<A, ErrorWebExchange<A>, ThrowableRoutingLink<A>, ErrorWebRoute<A>> {
 
-	private Map<Class<? extends Throwable>, RoutingLink<ExchangeContext, ErrorWebExchange<Throwable>, ?, ErrorWebRoute>> handlers;
+	private Map<Class<? extends Throwable>, RoutingLink<A, ErrorWebExchange<A>, ?, ErrorWebRoute<A>>> handlers;
 	
 	private static final Comparator<Class<? extends Throwable>> CLASS_COMPARATOR = (t1, t2) -> {
 		if(t1.isAssignableFrom(t2)) {
@@ -63,7 +65,7 @@ class ThrowableRoutingLink extends RoutingLink<ExchangeContext, ErrorWebExchange
 	}
 
 	@Override
-	public ThrowableRoutingLink setRoute(ErrorWebRoute route) {
+	public ThrowableRoutingLink<A> setRoute(ErrorWebRoute<A> route) {
 		Class<? extends Throwable> error = route.getError();
 		if(error != null) {
 			if(this.handlers.containsKey(error)) {
@@ -81,10 +83,10 @@ class ThrowableRoutingLink extends RoutingLink<ExchangeContext, ErrorWebExchange
 	}
 	
 	@Override
-	public void enableRoute(ErrorWebRoute route) {
+	public void enableRoute(ErrorWebRoute<A> route) {
 		Class<? extends Throwable> error = route.getError();
 		if(error != null) {
-			RoutingLink<ExchangeContext, ErrorWebExchange<Throwable>, ?, ErrorWebRoute> handler = this.handlers.get(error);
+			RoutingLink<A, ErrorWebExchange<A>, ?, ErrorWebRoute<A>> handler = this.handlers.get(error);
 			if(handler != null) {
 				handler.enableRoute(route);
 			}
@@ -96,10 +98,10 @@ class ThrowableRoutingLink extends RoutingLink<ExchangeContext, ErrorWebExchange
 	}
 	
 	@Override
-	public void disableRoute(ErrorWebRoute route) {
+	public void disableRoute(ErrorWebRoute<A> route) {
 		Class<? extends Throwable> error = route.getError();
 		if(error != null) {
-			RoutingLink<ExchangeContext, ErrorWebExchange<Throwable>, ?, ErrorWebRoute> handler = this.handlers.get(error);
+			RoutingLink<A, ErrorWebExchange<A>, ?, ErrorWebRoute<A>> handler = this.handlers.get(error);
 			if(handler != null) {
 				handler.disableRoute(route);
 			}
@@ -111,10 +113,10 @@ class ThrowableRoutingLink extends RoutingLink<ExchangeContext, ErrorWebExchange
 	}
 	
 	@Override
-	public void removeRoute(ErrorWebRoute route) {
+	public void removeRoute(ErrorWebRoute<A> route) {
 		Class<? extends Throwable> error = route.getError();
 		if(error != null) {
-			RoutingLink<ExchangeContext, ErrorWebExchange<Throwable>, ?, ErrorWebRoute> handler = this.handlers.get(error);
+			RoutingLink<A, ErrorWebExchange<A>, ?, ErrorWebRoute<A>> handler = this.handlers.get(error);
 			if(handler != null) {
 				handler.removeRoute(route);
 				if(!handler.hasRoute()) {
@@ -141,18 +143,18 @@ class ThrowableRoutingLink extends RoutingLink<ExchangeContext, ErrorWebExchange
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <F extends RouteExtractor<ExchangeContext, ErrorWebExchange<Throwable>, ErrorWebRoute>> void extractRoute(F extractor) {
+	public <F extends RouteExtractor<A, ErrorWebExchange<A>, ErrorWebRoute<A>>> void extractRoute(F extractor) {
 		super.extractRoute(extractor);
 		if(!(extractor instanceof ErrorAwareRouteExtractor)) {
 			throw new IllegalArgumentException("Route extractor is not error aware");
 		}
 		this.handlers.entrySet().stream().forEach(e -> {
-			e.getValue().extractRoute(((ErrorAwareRouteExtractor<ExchangeContext, ErrorWebExchange<Throwable>, ErrorWebRoute, ?>)extractor).error(e.getKey()));
+			e.getValue().extractRoute(((ErrorAwareRouteExtractor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ?>)extractor).error(e.getKey()));
 		});
 	}
 	
 	@Override
-	public Mono<Void> defer(ErrorWebExchange<Throwable> exchange) {
+	public Mono<Void> defer(ErrorWebExchange<A> exchange) {
 		// We take the first match, or we delegate to the next link
 		return this.handlers.entrySet().stream()
 			.filter(e -> e.getKey().isAssignableFrom(exchange.getError().getClass()))

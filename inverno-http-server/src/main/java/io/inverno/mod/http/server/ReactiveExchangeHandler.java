@@ -19,7 +19,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A reactive exchange handler is used to handle server exchanges.
+ * A reactive exchange handler is used to handle server exchanges following reactive principles.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -36,11 +36,12 @@ public interface ReactiveExchangeHandler<A extends ExchangeContext, B extends Ex
 
 	/**
 	 * <p>
-	 * Returns a composed exchange handler that first applies the interceptor to transform the exchange and then invoke the {@link #defer(io.inverno.mod.http.server.Exchange) }.
+	 * Returns a composed exchange handler that first applies the interceptor to transform the exchange and then invoke the 
+	 * {@link #defer(io.inverno.mod.http.server.Exchange)}.
 	 * </p>
-	 * 
+	 *
 	 * @param interceptor the interceptor
-	 * 
+	 *
 	 * @return a composed exchange handler
 	 */
 	default ReactiveExchangeHandler<A, B> intercept(ExchangeInterceptor<A, B> interceptor) {
@@ -53,11 +54,12 @@ public interface ReactiveExchangeHandler<A extends ExchangeContext, B extends Ex
 	 * </p>
 	 *
 	 * <p>
-	 * The HTTP server will subscribe to the returned Mono and after completion subscribe to the exchange response body data stream to respond to the client.
+	 * The HTTP server subscribes to the returned Mono and after completion, subscribes to the exchange response body data stream to respond to the
+	 * client.
 	 * </p>
 	 *
 	 * @param exchange the exchange to process
-	 * 
+	 *
 	 * @return an empty mono that completes when the exchange has been processed
 	 */
 	Mono<Void> defer(B exchange);

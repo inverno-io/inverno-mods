@@ -42,7 +42,7 @@ import reactor.core.publisher.Sinks.Many;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class Http1xRequest extends AbstractRequest {
+class Http1xRequest extends AbstractRequest {
 
 	private static final String PROTOCOL = "HTTP/1.1";
 	

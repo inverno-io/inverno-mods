@@ -39,7 +39,7 @@ import io.inverno.mod.http.server.internal.netty.LinkedHttpHeaders;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class Http1xRequestHeaders implements RequestHeaders {
+class Http1xRequestHeaders implements RequestHeaders {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;

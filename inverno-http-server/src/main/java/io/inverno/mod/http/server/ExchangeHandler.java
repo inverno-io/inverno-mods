@@ -37,7 +37,7 @@ public interface ExchangeHandler<A extends ExchangeContext, B extends Exchange<A
 
 	/**
 	 * <p>
-	 * Returns a Mono that defers the execution of {@link #handle(io.inverno.mod.http.server.Exchange) }.
+	 * By default, returns a Mono that defers the execution of {@link #handle(io.inverno.mod.http.server.Exchange) }.
 	 * </p>
 	 */
 	@Override

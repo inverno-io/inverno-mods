@@ -26,21 +26,21 @@ import io.inverno.mod.http.server.ExchangeInterceptor;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  *
- * @param <A> the error type
+ * @param <A> the type of the exchange context
  */
-public interface ErrorWebExchangeInterceptor<A extends Throwable> extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<A>> {
+public interface ErrorWebExchangeInterceptor<A extends ExchangeContext> extends ExchangeInterceptor<A, ErrorWebExchange<A>> {
 
 	/**
 	 * <p>
 	 * Wraps the specified Error Exchange interceptor into an Error Web Exchange interceptor.
 	 * </p>
 	 *
+	 * @param <A> the type of the exchange context
 	 * @param interceptor the interceptor to wrap
-	 * @param <A> the error type
 	 *
 	 * @return an Error Web Exchange interceptor
 	 */
-	static <A extends Throwable> ErrorWebExchangeInterceptor<A> wrap(ExchangeInterceptor<ExchangeContext, ErrorWebExchange<A>> interceptor) {
+	static <A extends ExchangeContext> ErrorWebExchangeInterceptor<A> wrap(ExchangeInterceptor<A, ErrorWebExchange<A>> interceptor) {
 		return exchange -> {
 			return interceptor.intercept(exchange);
 		};

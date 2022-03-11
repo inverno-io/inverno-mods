@@ -37,7 +37,7 @@ import io.inverno.mod.web.compiler.spi.WebRouteInfo;
  * 
  * @see AbstractInfo
  */
-class GenericWebControllerInfo extends AbstractInfo<BeanQualifiedName> implements WebControllerInfo {
+class GenericServerWebControllerInfo extends AbstractInfo<BeanQualifiedName> implements WebControllerInfo {
 
 	private final TypeElement element;
 	
@@ -59,7 +59,7 @@ class GenericWebControllerInfo extends AbstractInfo<BeanQualifiedName> implement
 	 * @param rootPath the root path of the routes defined in the controller
 	 * @param routes   the routes defined in the controller
 	 */
-	public GenericWebControllerInfo(TypeElement element, BeanQualifiedName name, ReporterInfo reporter, DeclaredType type, String rootPath, List<GenericWebRouteInfo> routes) {
+	public GenericServerWebControllerInfo(TypeElement element, BeanQualifiedName name, ReporterInfo reporter, DeclaredType type, String rootPath, List<GenericWebRouteInfo> routes) {
 		super(name, reporter instanceof NoOpReporterInfo ? ((NoOpReporterInfo)reporter).getReporter() : reporter);
 		this.element = element;
 		this.type = Objects.requireNonNull(type);

@@ -20,11 +20,9 @@ import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.Part;
-import io.inverno.mod.http.server.RootExchangeHandler;
 import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.inverno.mod.http.server.internal.GenericErrorExchange;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
@@ -35,6 +33,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
+import io.inverno.mod.http.server.ServerController;
 
 /**
  * <p>
@@ -51,7 +50,7 @@ import io.netty.handler.codec.http2.Http2Stream;
  * 
  * @see AbstractExchange
  */
-public class Http2Exchange extends AbstractExchange {
+class Http2Exchange extends AbstractExchange {
 
 	private final Http2Stream stream;
 	private final Http2ConnectionEncoder encoder;
@@ -72,8 +71,7 @@ public class Http2Exchange extends AbstractExchange {
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body
 	 *                              decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
-	 * @param rootHandler           the server root exchange handler
-	 * @param errorHandler          the server error exchange handler
+	 * @param controller            the server controller
 	 */
 	public Http2Exchange(
 			ChannelHandlerContext context, 
@@ -84,10 +82,9 @@ public class Http2Exchange extends AbstractExchange {
 			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder,
-			RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler, 
-			ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler
+			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller
 		) {
-		super(context, rootHandler, errorHandler, new Http2Request(context, new Http2RequestHeaders(httpHeaders, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http2Response(context, stream, encoder, headerService, parameterConverter));
+		super(context, controller, new Http2Request(context, new Http2RequestHeaders(httpHeaders, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http2Response(context, stream, encoder, headerService, parameterConverter));
 		this.stream = stream;
 		this.encoder = encoder;
 		this.headerService = headerService;
@@ -109,7 +106,7 @@ public class Http2Exchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected ErrorExchange<Throwable> createErrorExchange(Throwable error) {
+	protected ErrorExchange<ExchangeContext> createErrorExchange(Throwable error) {
 		return new GenericErrorExchange(this.request, new Http2Response(this.context, this.stream, this.encoder, this.headerService, this.parameterConverter), this.finalizer, error, this.exchangeContext);
 	}
 	

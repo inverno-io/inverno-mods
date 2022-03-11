@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,23 +17,23 @@ package io.inverno.mod.web.compiler.internal;
 
 import io.inverno.core.compiler.spi.BeanInfo;
 import io.inverno.core.compiler.spi.support.AbstractInfo;
+import io.inverno.mod.web.compiler.spi.ErrorWebInterceptorsConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebConfigurerQualifiedName;
-import io.inverno.mod.web.compiler.spi.WebInterceptorsConfigurerInfo;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /**
  * <p>
- * Generic {@link WebInterceptorsConfigurerInfo} implementation.
+ * Generic {@link ErrorWebInterceptorsConfigurerInfo} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.3
+ * @since 1.5
  * 
  * @see AbstractInfo
  */
-public class GenericWebInterceptorsConfigurerInfo extends AbstractInfo<WebConfigurerQualifiedName> implements WebInterceptorsConfigurerInfo {
+class GenericErrorWebInterceptorsConfigurerInfo extends AbstractInfo<WebConfigurerQualifiedName> implements ErrorWebInterceptorsConfigurerInfo {
 
 	private final TypeElement element;
 	
@@ -43,7 +43,7 @@ public class GenericWebInterceptorsConfigurerInfo extends AbstractInfo<WebConfig
 	
 	/**
 	 * <p>
-	 * Creates a generic web interceptors configurer info.
+	 * Creates a generic error web interceptors configurer info.
 	 * </p>
 	 *
 	 * @param element     the type element of the interceptors configurer
@@ -51,13 +51,13 @@ public class GenericWebInterceptorsConfigurerInfo extends AbstractInfo<WebConfig
 	 * @param bean        the configurer bean info
 	 * @param contextType the exchange context type required by the configured interceptors
 	 */
-	public GenericWebInterceptorsConfigurerInfo(TypeElement element, WebConfigurerQualifiedName name, BeanInfo bean, TypeMirror contextType) {
+	public GenericErrorWebInterceptorsConfigurerInfo(TypeElement element, WebConfigurerQualifiedName name, BeanInfo bean, TypeMirror contextType) {
 		super(name, bean);
 		this.element = element;
 		this.type = (DeclaredType)bean.getType();
 		this.contextType = contextType;
 	}
-
+	
 	@Override
 	public TypeElement getElement() {
 		return this.element;

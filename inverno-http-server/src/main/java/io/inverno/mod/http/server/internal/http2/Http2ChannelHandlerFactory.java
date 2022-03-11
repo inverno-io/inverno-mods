@@ -26,12 +26,10 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.Part;
-import io.inverno.mod.http.server.RootExchangeHandler;
 import io.inverno.mod.http.server.internal.http1x.Http1xChannelHandler;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.handler.codec.compression.CompressionOptions;
@@ -42,6 +40,7 @@ import io.netty.handler.codec.http2.CompressorHttp2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2ConnectionDecoder;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Settings;
+import io.inverno.mod.http.server.ServerController;
 
 /**
  * <p>
@@ -56,8 +55,7 @@ import io.netty.handler.codec.http2.Http2Settings;
 public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler> {
 
 	private final HttpServerConfiguration configuration;
-	private final RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler; 
-	private final ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler;
+	private final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
@@ -71,8 +69,7 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 	 * <p>
 	 * 
 	 * @param configuration         the HTTP server configuration
-	 * @param rootHandler           the root exchange handler
-	 * @param errorHandler          the error exchange handler
+	 * @param controller            the controller server
 	 * @param headerService         the header service
 	 * @param parameterConverter    a string object converter
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
@@ -81,15 +78,13 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 	@SuppressWarnings({ "unchecked" })
 	public Http2ChannelHandlerFactory(
 			HttpServerConfiguration configuration, 
-			RootExchangeHandler<?, ? extends Exchange<?>> rootHandler, 
-			ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler, 
+			ServerController<?, ? extends Exchange<?>, ? extends ErrorExchange<?>> controller,
 			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder) {
 		this.configuration = configuration;
-		this.rootHandler = (RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>>)rootHandler;
-		this.errorHandler = errorHandler;
+		this.controller = (ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>>)controller;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
@@ -151,8 +146,7 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 				decoder, 
 				encoder, 
 				initialSettings,
-				Http2ChannelHandlerFactory.this.rootHandler, 
-				Http2ChannelHandlerFactory.this.errorHandler,
+				Http2ChannelHandlerFactory.this.controller, 
 				Http2ChannelHandlerFactory.this.headerService,
 				Http2ChannelHandlerFactory.this.parameterConverter,
 				Http2ChannelHandlerFactory.this.urlEncodedBodyDecoder,

@@ -44,8 +44,10 @@ import io.inverno.mod.web.spi.PathAware;
  *
  * @see ErrorWebExchange
  * @see ErrorWebRouter
+ * 
+ * @param <A> the type of the exchange context
  */
-public interface ErrorWebRoute extends InterceptableRoute<ExchangeContext, ErrorWebExchange<Throwable>>, ErrorAware, PathAware, AcceptAware {
+public interface ErrorWebRoute<A extends ExchangeContext> extends InterceptableRoute<A, ErrorWebExchange<A>>, ErrorAware, PathAware, AcceptAware {
 
 	/**
 	 * <p>

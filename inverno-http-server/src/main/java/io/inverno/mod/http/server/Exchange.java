@@ -21,19 +21,18 @@ import reactor.core.publisher.Mono;
  * <p>
  * Represents a server exchange between a client and a server.
  * </p>
- * 
+ *
  * <p>
- * The HTTP server attaches an exchange context created using
- * {@link RootExchangeHandler#createContext()} when an exchange is created.
+ * The HTTP server attaches an exchange context created using {@link RootExchangeHandler#createContext()} when an exchange is created.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see Request
  * @see Response
  * @see ExchangeContext
- * 
+ *
  * @param <A> the type of the exchange context
  */
 public interface Exchange<A extends ExchangeContext> {
@@ -67,23 +66,20 @@ public interface Exchange<A extends ExchangeContext> {
 	
 	/**
 	 * <p>
-	 * Adds a finalizer to the exchange which completes once the exchange is fully
-	 * processed.
+	 * Adds a finalizer to the exchange which completes once the exchange is fully processed.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * A exchange is considered fully processed when the last chunk of the response
-	 * has been fully sent to the client or following an error.
+	 * A exchange is considered fully processed when the last chunk of the response has been fully sent to the client or following an error.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * Note that using a finalizer actually impacts HTTP pipelining since the server
-	 * wait for the response to be fully sent to the client before processing
-	 * following requests.
+	 * Note that using a finalizer actually impacts HTTP pipelining since the server wait for the response to be fully sent to the client before
+	 * processing following requests.
 	 * </p>
-	 * 
+	 *
 	 * @param finalizer a finalizer
-	 * 
+	 *
 	 * @return the exchange
 	 */
 	Exchange<A> finalizer(Mono<Void> finalizer);

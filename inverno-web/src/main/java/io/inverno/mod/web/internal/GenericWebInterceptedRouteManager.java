@@ -132,7 +132,7 @@ class GenericWebInterceptedRouteManager extends AbstractWebManager<GenericWebInt
 	@Override
 	public WebInterceptedRouter<ExchangeContext> handler(WebExchangeHandler<? super ExchangeContext> handler) {
 		Objects.requireNonNull(handler);
-		this.handler = (WebExchangeHandler<ExchangeContext>) handler;
+		this.handler = handler;
 		this.commit();
 		return this.router;
 	}

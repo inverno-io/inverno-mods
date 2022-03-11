@@ -18,6 +18,7 @@ package io.inverno.mod.web.internal;
 import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.ErrorWebExchangeInterceptor;
 import io.inverno.mod.web.ErrorWebInterceptedRouter;
 import io.inverno.mod.web.ErrorWebInterceptorManager;
@@ -34,13 +35,13 @@ import java.util.function.Consumer;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-class GenericErrorWebInterceptorManager extends AbstractErrorWebManager<GenericErrorWebInterceptorManager> implements ErrorWebInterceptorManager<ErrorWebInterceptedRouter> {
+class GenericErrorWebInterceptorManager extends AbstractErrorWebManager<GenericErrorWebInterceptorManager> implements ErrorWebInterceptorManager<ExchangeContext, ErrorWebInterceptedRouter<ExchangeContext>> {
 
 	private final GenericErrorWebInterceptedRouter router;
 	private final HeaderCodec<? extends Headers.ContentType> contentTypeCodec;
 	private final HeaderCodec<? extends Headers.AcceptLanguage> acceptLanguageCodec;
 
-	private ErrorWebExchangeInterceptor<Throwable> interceptor;
+	private ErrorWebExchangeInterceptor<ExchangeContext> interceptor;
 
 	/**
 	 * <p>
@@ -59,16 +60,16 @@ class GenericErrorWebInterceptorManager extends AbstractErrorWebManager<GenericE
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public ErrorWebInterceptedRouter interceptor(ErrorWebExchangeInterceptor<? extends Throwable> interceptor) {
+	public ErrorWebInterceptedRouter<ExchangeContext> interceptor(ErrorWebExchangeInterceptor<? super ExchangeContext> interceptor) {
 		Objects.requireNonNull(interceptor);
-		this.interceptor = (ErrorWebExchangeInterceptor<Throwable>) interceptor;
+		this.interceptor = interceptor;
 		this.commit();
 
 		return this.router;
 	}
 
 	@Override
-	public ErrorWebInterceptedRouter interceptors(List<ErrorWebExchangeInterceptor<? extends Throwable>> interceptors) {
+	public ErrorWebInterceptedRouter<ExchangeContext> interceptors(List<ErrorWebExchangeInterceptor<? super ExchangeContext>> interceptors) {
 		interceptors.forEach(this::interceptor);
 		return this.router;
 	}
@@ -132,6 +133,6 @@ class GenericErrorWebInterceptorManager extends AbstractErrorWebManager<GenericE
 			}
 		};
 
-		pathCommitter.accept(new GenericErrorWebRouteInterceptor(this.contentTypeCodec, this.acceptLanguageCodec));
+		errorsCommitter.accept(new GenericErrorWebRouteInterceptor(this.contentTypeCodec, this.acceptLanguageCodec));
 	}
 }

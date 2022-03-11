@@ -25,7 +25,6 @@ import io.inverno.core.compiler.spi.support.AbstractInfo;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.web.compiler.spi.WebControllerInfo;
 import io.inverno.mod.web.compiler.spi.WebParameterInfo;
-import io.inverno.mod.web.compiler.spi.WebProvidedRouterConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebResponseBodyInfo;
 import io.inverno.mod.web.compiler.spi.WebRouteInfo;
 import io.inverno.mod.web.compiler.spi.WebRouteQualifiedName;

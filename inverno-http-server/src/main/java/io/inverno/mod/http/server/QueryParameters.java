@@ -58,16 +58,14 @@ public interface QueryParameters {
 	 * <p>
 	 * Returns the query parameter with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * If there are multiple parameters with the same name, this method returns the
-	 * first one.
+	 * If there are multiple parameters with the same name, this method returns the first one.
 	 * </p>
-	 * 
+	 *
 	 * @param name a query parameter name
-	 * 
-	 * @return an optional returning the parameter or an empty optional if there's
-	 *         no parameter with the specified name
+	 *
+	 * @return an optional returning the parameter or an empty optional if there's no parameter with the specified name
 	 */
 	Optional<Parameter> get(String name);
 	
@@ -75,11 +73,10 @@ public interface QueryParameters {
 	 * <p>
 	 * Returns all query parameters with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * @param name a query parameter name
-	 * 
-	 * @return a list of parameters or an empty list if there's no parameter with
-	 *         the specified name
+	 *
+	 * @return a list of parameters or an empty list if there's no parameter with the specified name
 	 */
 	List<Parameter> getAll(String name);
 	

@@ -40,16 +40,18 @@ import io.inverno.mod.web.spi.PathAware;
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @param <A> the type of the exchange context
  */
-interface ErrorWebRouteInterceptor extends
-	ErrorAwareRouteInterceptor<ExchangeContext, ErrorWebExchange<Throwable>, ErrorWebRoute, ErrorWebRouteInterceptor>,
-	PathAwareRouteInterceptor<ExchangeContext, ErrorWebExchange<Throwable>, ErrorWebRoute, ErrorWebRouteInterceptor>,
-	AcceptAwareRouteInterceptor<ExchangeContext, ErrorWebExchange<Throwable>, ErrorWebRoute, ErrorWebRouteInterceptor>,
-	RouteInterceptor<ExchangeContext, ErrorWebExchange<Throwable>, ErrorWebRoute, ErrorWebRouteInterceptor> {
+interface ErrorWebRouteInterceptor<A extends ExchangeContext> extends
+	ErrorAwareRouteInterceptor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteInterceptor<A>>,
+	PathAwareRouteInterceptor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteInterceptor<A>>,
+	AcceptAwareRouteInterceptor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteInterceptor<A>>,
+	RouteInterceptor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteInterceptor<A>> {
 
 	@Override
-	default ErrorWebRouteInterceptor matches(ErrorWebRoute route) {
-		ErrorWebRouteInterceptor matcher = this.matches((ErrorAware) route);
+	default ErrorWebRouteInterceptor<A> matches(ErrorWebRoute<A> route) {
+		ErrorWebRouteInterceptor<A> matcher = this.matches((ErrorAware) route);
 		if(matcher != null) {
 			matcher = matcher.matches((PathAware)route);
 		}

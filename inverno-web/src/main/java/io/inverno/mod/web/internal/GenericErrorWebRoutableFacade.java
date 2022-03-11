@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web.internal;
 
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.*;
 import java.util.Set;
 
@@ -28,7 +29,7 @@ import java.util.Set;
  *
  * @param <A> the type of the initial Error Web routable
  */
-class GenericErrorWebRoutableFacade<A extends ErrorWebRoutable<A>> implements ErrorWebRoutable<GenericErrorWebRoutableFacade<A>> {
+class GenericErrorWebRoutableFacade<A extends ErrorWebRoutable<ExchangeContext, A>> implements ErrorWebRoutable<ExchangeContext, GenericErrorWebRoutableFacade<A>> {
 
 	private final A initialRoutable;
 
@@ -37,55 +38,55 @@ class GenericErrorWebRoutableFacade<A extends ErrorWebRoutable<A>> implements Er
 	}
 
 	@Override
-	public ErrorWebRouteManager<GenericErrorWebRoutableFacade<A>> route() {
+	public ErrorWebRouteManager<ExchangeContext, GenericErrorWebRoutableFacade<A>> route() {
 		return new ErrorWebRouteManagerFacade(this.initialRoutable.route());
 	}
 
 	@Override
-	public GenericErrorWebRoutableFacade<A> configureRoutes(ErrorWebRoutesConfigurer configurer) {
+	public GenericErrorWebRoutableFacade<A> configureRoutes(ErrorWebRoutesConfigurer<? super ExchangeContext> configurer) {
 		this.initialRoutable.configureRoutes(configurer);
 		return this;
 	}
 
 	@Override
-	public Set<ErrorWebRoute> getRoutes() {
+	public Set<ErrorWebRoute<ExchangeContext>> getRoutes() {
 		return this.initialRoutable.getRoutes();
 	}
 
-	private class ErrorWebRouteManagerFacade implements ErrorWebRouteManager<GenericErrorWebRoutableFacade<A>> {
+	private class ErrorWebRouteManagerFacade implements ErrorWebRouteManager<ExchangeContext, GenericErrorWebRoutableFacade<A>> {
 
-		private final ErrorWebRouteManager<A> routeManager;
+		private final ErrorWebRouteManager<ExchangeContext, A> routeManager;
 
-		public ErrorWebRouteManagerFacade(ErrorWebRouteManager<A> routeManager) {
+		public ErrorWebRouteManagerFacade(ErrorWebRouteManager<ExchangeContext, A> routeManager) {
 			this.routeManager = routeManager;
 		}
 
 		@Override
-		public GenericErrorWebRoutableFacade<A> handler(ErrorWebExchangeHandler<? extends Throwable> handler) {
+		public GenericErrorWebRoutableFacade<A> handler(ErrorWebExchangeHandler<? super ExchangeContext> handler) {
 			this.routeManager.handler(handler);
 			return GenericErrorWebRoutableFacade.this;
 		}
 
 		@Override
-		public ErrorWebRouteManager<GenericErrorWebRoutableFacade<A>> error(Class<? extends Throwable> error) {
+		public ErrorWebRouteManager<ExchangeContext, GenericErrorWebRoutableFacade<A>> error(Class<? extends Throwable> error) {
 			this.routeManager.error(error);
 			return this;
 		}
 
 		@Override
-		public ErrorWebRouteManager<GenericErrorWebRoutableFacade<A>> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
+		public ErrorWebRouteManager<ExchangeContext, GenericErrorWebRoutableFacade<A>> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
 			this.routeManager.path(path, matchTrailingSlash);
 			return this;
 		}
 
 		@Override
-		public ErrorWebRouteManager<GenericErrorWebRoutableFacade<A>> produces(String mediaType) {
+		public ErrorWebRouteManager<ExchangeContext, GenericErrorWebRoutableFacade<A>> produces(String mediaType) {
 			this.routeManager.produces(mediaType);
 			return this;
 		}
 
 		@Override
-		public ErrorWebRouteManager<GenericErrorWebRoutableFacade<A>> language(String language) {
+		public ErrorWebRouteManager<ExchangeContext, GenericErrorWebRoutableFacade<A>> language(String language) {
 			this.routeManager.language(language);
 			return this;
 		}
@@ -109,7 +110,7 @@ class GenericErrorWebRoutableFacade<A extends ErrorWebRoutable<A>> implements Er
 		}
 
 		@Override
-		public Set<ErrorWebRoute> findRoutes() {
+		public Set<ErrorWebRoute<ExchangeContext>> findRoutes() {
 			return this.routeManager.findRoutes();
 		}
 	}

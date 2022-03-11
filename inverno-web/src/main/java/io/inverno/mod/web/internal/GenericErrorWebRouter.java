@@ -18,6 +18,7 @@ package io.inverno.mod.web.internal;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Init;
 import io.inverno.core.annotation.Provide;
+import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.*;
 import io.inverno.mod.http.base.header.Headers;
@@ -35,7 +36,6 @@ import java.io.PrintStream;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -47,13 +47,12 @@ import java.util.stream.Collectors;
  * @since 1.0
  */
 @Bean( name = "errorRouter" )
-public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Provide ErrorWebRouter {
+public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Provide ErrorWebRouter<ExchangeContext> {
 	
 	private final DataConversionService dataConversionService;
+	private final ObjectConverter<String> parameterConverter;
 	
-	private final RoutingLink<ExchangeContext, ErrorWebExchange<Throwable>, ?, ErrorWebRoute> firstLink;
-	
-	private ErrorWebRouterConfigurer configurer;
+	private final RoutingLink<ExchangeContext, ErrorWebExchange<ExchangeContext>, ?, ErrorWebRoute<ExchangeContext>> firstLink;
 	
 	/**
 	 * <p>
@@ -61,14 +60,16 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	 * </p>
 	 * 
 	 * @param dataConversionService the data conversion service
+	 * @param parameterConverter    the parameter converter
 	 */
-	public GenericErrorWebRouter(DataConversionService dataConversionService) {
+	public GenericErrorWebRouter(DataConversionService dataConversionService, ObjectConverter<String> parameterConverter) {
 		this.dataConversionService = dataConversionService;
+		this.parameterConverter = parameterConverter;
 		
 		ContentTypeCodec contentTypeCodec = new ContentTypeCodec();
 		AcceptLanguageCodec acceptLanguageCodec = new AcceptLanguageCodec(false);
 		
-		this.firstLink = new ThrowableRoutingLink();
+		this.firstLink = new ThrowableRoutingLink<>();
 		this.firstLink
 			.connect(new PathRoutingLink<>())
 			.connect(new PathPatternRoutingLink<>())
@@ -78,73 +79,56 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	}
 	
 	@Init
+	@SuppressWarnings("unchecked")
 	public void init() {
-		this.route().produces(MediaTypes.APPLICATION_JSON).error(HttpException.class).handler(this.httpExceptionHandler_json())
-			.route().produces(MediaTypes.APPLICATION_JSON).handler(this.throwableHandler_json())
-			.route().produces(MediaTypes.TEXT_HTML).error(HttpException.class).handler(this.httpExceptionHandler_html())
-			.route().produces(MediaTypes.TEXT_HTML).handler(this.throwableHandler_html())
-			.route().error(HttpException.class).handler(this.httpExceptionHandler())
-			.route().handler(this.throwableHandler());
-		
-		if(this.configurer != null) {
-			this.configurer.configure(this);
-		}
-	}
-
-	/**
-	 * <p>
-	 * Sets the error web router configurer used to initialize the router.
-	 * </p>
-	 *
-	 * @param configurer an error web router configurer
-	 */
-	public void setConfigurer(ErrorWebRouterConfigurer configurer) {
-		this.configurer = configurer;
+		this.route().produces(MediaTypes.APPLICATION_JSON).handler(this.httpExceptionHandler_json())
+			.route().produces(MediaTypes.TEXT_HTML).handler(this.httpExceptionHandler_html())
+			.route().handler(this.httpExceptionHandler());
 	}
 	
 	@Override
-	void setRoute(ErrorWebRoute route) {
+	void setRoute(ErrorWebRoute<ExchangeContext> route) {
 		this.firstLink.setRoute(route);
 	}
 
 	@Override
-	void enableRoute(ErrorWebRoute route) {
+	void enableRoute(ErrorWebRoute<ExchangeContext> route) {
 		this.firstLink.enableRoute(route);
 	}
 
 	@Override
-	void disableRoute(ErrorWebRoute route) {
+	void disableRoute(ErrorWebRoute<ExchangeContext> route) {
 		this.firstLink.disableRoute(route);
 	}
 
 	@Override
-	void removeRoute(ErrorWebRoute route) {
+	void removeRoute(ErrorWebRoute<ExchangeContext> route) {
 		this.firstLink.removeRoute(route);
 	}
 
 	@Override
-	public ErrorWebInterceptorManager<ErrorWebInterceptedRouter> intercept() {
+	public ErrorWebInterceptorManager<ExchangeContext, ErrorWebInterceptedRouter<ExchangeContext>> intercept() {
 		return new GenericErrorWebInterceptorManager(new GenericErrorWebInterceptedRouter(this), CONTENT_TYPE_CODEC, ACCEPT_LANGUAGE_CODEC);
 	}
 
 	@Override
-	public ErrorWebRouteManager<ErrorWebRouter> route() {
+	public ErrorWebRouteManager<ExchangeContext, ErrorWebRouter<ExchangeContext>> route() {
 		return new GenericErrorWebRouteManager(this);
 	}
 	
 	@Override
-	public Set<ErrorWebRoute> getRoutes() {
+	public Set<ErrorWebRoute<ExchangeContext>> getRoutes() {
 		GenericErrorWebRouteExtractor routeExtractor = new GenericErrorWebRouteExtractor(this);
 		this.firstLink.extractRoute(routeExtractor);
 		return routeExtractor.getRoutes();
 	}
 	
 	@Override
-	public Mono<Void> defer(ErrorExchange<Throwable> exchange) {
+	public Mono<Void> defer(ErrorExchange<ExchangeContext> exchange) {
 		if(exchange.response().isHeadersWritten()) {
 			throw new IllegalStateException("Headers already written", exchange.getError());
 		}
-		return this.firstLink.defer(new GenericErrorWebExchange(exchange, new GenericWebResponse(exchange.response(), this.dataConversionService)));
+		return this.firstLink.defer(new GenericErrorWebExchange(new GenericWebRequest(exchange.request(), this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange.getError(), exchange.context(), exchange::finalizer));
 	}
 	
 	/**
@@ -153,7 +137,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	 * </p>
 	 */
 	@Override
-	public void handle(ErrorExchange<Throwable> exchange) throws HttpException {
+	public void handle(ErrorExchange<ExchangeContext> exchange) throws HttpException {
 		this.defer(exchange).block();
 	}
 	
@@ -164,30 +148,18 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<HttpException> httpExceptionHandler() {
+	private ErrorWebExchangeHandler<ExchangeContext> httpExceptionHandler() {
 		return exchange -> {
-			if(exchange.getError() instanceof MethodNotAllowedException) {
-				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
+			final HttpException error = HttpException.wrap(exchange.getError());
+			if(error instanceof MethodNotAllowedException) {
+				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)error).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
 			}
-			else if(exchange.getError() instanceof ServiceUnavailableException) {
-				((ServiceUnavailableException)exchange.getError()).getRetryAfter().ifPresent(retryAfter -> {
+			else if(error instanceof ServiceUnavailableException) {
+				((ServiceUnavailableException)error).getRetryAfter().ifPresent(retryAfter -> {
 					exchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
 				});
 			}
-			exchange.response().headers(h -> h.status(exchange.getError().getStatusCode())).body().empty();
-		};
-	}
-	
-	/**
-	 * <p>
-	 * Returns the default Throwable error handler.
-	 * </p>
-	 * 
-	 * @return an error web exchange handler
-	 */
-	private ErrorWebExchangeHandler<Throwable> throwableHandler() {
-		return exchange -> {
-			this.httpExceptionHandler().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
+			exchange.response().headers(h -> h.status(error.getStatusCode())).body().empty();
 		};
 	}
 	
@@ -198,55 +170,44 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<HttpException> httpExceptionHandler_json() {
+	private ErrorWebExchangeHandler<ExchangeContext> httpExceptionHandler_json() {
 		return exchange -> {
+			final HttpException error = HttpException.wrap(exchange.getError());
+			
 			ByteArrayOutputStream errorOut = new ByteArrayOutputStream();
-			PrintStream error = new PrintStream(errorOut);
-			
-			error.append("{");
-			error.append("\"status\":\"").append(Integer.toString(exchange.getError().getStatusCode())).append("\",");
-			error.append("\"path\":\"").append(exchange.request().getPath()).append("\",");
-			error.append("\"error\":\"").append(exchange.getError().getStatusReasonPhrase()).append("\"");
-			
-			if(exchange.getError() instanceof MethodNotAllowedException) {
-				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
-				error.append(",\"allowedMethods\":[");
-				error.append(((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(method -> "\"" + method + "\"").collect(Collectors.joining(", ")));
-				error.append("]");
+			PrintStream errorStream = new PrintStream(errorOut);
+
+			errorStream.append("{");
+			errorStream.append("\"status\":\"").append(Integer.toString(error.getStatusCode())).append("\",");
+			errorStream.append("\"path\":\"").append(exchange.request().getPath()).append("\",");
+			errorStream.append("\"error\":\"").append(error.getStatusReasonPhrase()).append("\"");
+
+			if(error instanceof MethodNotAllowedException) {
+				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)error).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
+				errorStream.append(",\"allowedMethods\":[");
+				errorStream.append(((MethodNotAllowedException)error).getAllowedMethods().stream().map(method -> "\"" + method + "\"").collect(Collectors.joining(", ")));
+				errorStream.append("]");
 			}
-			else if(exchange.getError() instanceof NotAcceptableException) {
-				((NotAcceptableException)exchange.getError()).getAcceptableMediaTypes().ifPresent(acceptableMediaTypes -> {
-					error.append(",\"accept\":[");
-					error.append(acceptableMediaTypes.stream().map(acceptableMediaType -> "\"" + acceptableMediaType + "\"").collect(Collectors.joining(", ")));
-					error.append("]");
+			else if(error instanceof NotAcceptableException) {
+				((NotAcceptableException)error).getAcceptableMediaTypes().ifPresent(acceptableMediaTypes -> {
+					errorStream.append(",\"accept\":[");
+					errorStream.append(acceptableMediaTypes.stream().map(acceptableMediaType -> "\"" + acceptableMediaType + "\"").collect(Collectors.joining(", ")));
+					errorStream.append("]");
 				});
 			}
-			else if(exchange.getError() instanceof ServiceUnavailableException) {
-				((ServiceUnavailableException)exchange.getError()).getRetryAfter().ifPresent(retryAfter -> {
+			else if(error instanceof ServiceUnavailableException) {
+				((ServiceUnavailableException)error).getRetryAfter().ifPresent(retryAfter -> {
 					exchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
-					error.append(",\"retryAfter\":\"").append(retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)).append("\"");
+					errorStream.append(",\"retryAfter\":\"").append(retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)).append("\"");
 				});
 			}
-			
-			if(exchange.getError().getMessage() != null) {
-				error.append(",\"message\":\"").append(StringEscapeUtils.escapeJson(exchange.getError().getMessage())).append("\"");
+
+			if(error.getMessage() != null) {
+				errorStream.append(",\"message\":\"").append(StringEscapeUtils.escapeJson(error.getMessage())).append("\"");
 			}
-			error.append("}");
-			
-			exchange.response().headers(h -> h.status(exchange.getError().getStatusCode()).contentType(MediaTypes.APPLICATION_JSON)).body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(errorOut.toByteArray())));
-		};
-	}
-	
-	/**
-	 * <p>
-	 * Returns the {@code application/json} Throwable error handler.
-	 * </p>
-	 * 
-	 * @return an error web exchange handler
-	 */
-	private ErrorWebExchangeHandler<Throwable> throwableHandler_json() {
-		return exchange -> {
-			this.httpExceptionHandler_json().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
+			errorStream.append("}");
+
+			exchange.response().headers(h -> h.status(error.getStatusCode()).contentType(MediaTypes.APPLICATION_JSON)).body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(errorOut.toByteArray())));
 		};
 	}
 	
@@ -257,74 +218,62 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<HttpException> httpExceptionHandler_html() {
+	private ErrorWebExchangeHandler<ExchangeContext> httpExceptionHandler_html() {
 		return exchange -> {
-			String status = Integer.toString(exchange.getError().getStatusCode());
+			final HttpException error = HttpException.wrap(exchange.getError());
+			String status = Integer.toString(error.getStatusCode());
 			
 			ByteArrayOutputStream errorOut = new ByteArrayOutputStream();
-			PrintStream error = new PrintStream(errorOut);
-			error.append("<html><head><title>").append(status).append(" ").append(exchange.getError().getStatusReasonPhrase()).append("</title></head><body style=\"font-family: arial,sans-serif;padding:30px;max-width: 1280px;margin: auto;\">");
-			error.append("<h1 style=\"font-size: 3em;\"><span style=\"color:red;\">").append(status).append("</span> ").append(exchange.getError().getStatusReasonPhrase()).append("</h1>");
+			PrintStream errorStream = new PrintStream(errorOut);
+			errorStream.append("<html><head><title>").append(status).append(" ").append(error.getStatusReasonPhrase()).append("</title></head><body style=\"font-family: arial,sans-serif;padding:30px;max-width: 1280px;margin: auto;\">");
+			errorStream.append("<h1 style=\"font-size: 3em;\"><span style=\"color:red;\">").append(status).append("</span> ").append(error.getStatusReasonPhrase()).append("</h1>");
 			
-			if(exchange.getError() instanceof MethodNotAllowedException) {
-				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
-				error.append("<p>");
-				error.append("Allowed Methods:");
-				error.append("<ul>");
-				((MethodNotAllowedException)exchange.getError()).getAllowedMethods().stream().forEach(allowedMethod -> error.append("<li>").append(allowedMethod.toString()).append("</li>"));
-				error.append("</ul>");
-				error.append("</p>");
+			if(error instanceof MethodNotAllowedException) {
+				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)error).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
+				errorStream.append("<p>");
+				errorStream.append("Allowed Methods:");
+				errorStream.append("<ul>");
+				((MethodNotAllowedException)error).getAllowedMethods().stream().forEach(allowedMethod -> errorStream.append("<li>").append(allowedMethod.toString()).append("</li>"));
+				errorStream.append("</ul>");
+				errorStream.append("</p>");
 			}
-			else if(exchange.getError() instanceof NotAcceptableException) {
-				((NotAcceptableException)exchange.getError()).getAcceptableMediaTypes().ifPresent(acceptableMediaTypes -> {
-					error.append("<p>");
-					error.append("Accept:");
-					error.append("<ul>");
-					acceptableMediaTypes.stream().forEach(acceptableMediaType -> error.append("<li>").append(acceptableMediaType).append("</li>"));
-					error.append("</ul>");
-					error.append("</p>");
+			else if(error instanceof NotAcceptableException) {
+				((NotAcceptableException)error).getAcceptableMediaTypes().ifPresent(acceptableMediaTypes -> {
+					errorStream.append("<p>");
+					errorStream.append("Accept:");
+					errorStream.append("<ul>");
+					acceptableMediaTypes.stream().forEach(acceptableMediaType -> errorStream.append("<li>").append(acceptableMediaType).append("</li>"));
+					errorStream.append("</ul>");
+					errorStream.append("</p>");
 				});
 			}
-			else if(exchange.getError() instanceof ServiceUnavailableException) {
-				((ServiceUnavailableException)exchange.getError()).getRetryAfter().ifPresent(retryAfter -> {
-					error.append("<p>");
-					error.append("Retry After: ").append(retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME));
+			else if(error instanceof ServiceUnavailableException) {
+				((ServiceUnavailableException)error).getRetryAfter().ifPresent(retryAfter -> {
+					errorStream.append("<p>");
+					errorStream.append("Retry After: ").append(retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME));
 					exchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
-					error.append("</p>");
+					errorStream.append("</p>");
 				});
 			}
 			
-			if(exchange.getError().getMessage() != null) {
-				error.append("<p>").append(exchange.getError().getMessage()).append("</p>");
+			if(error.getMessage() != null) {
+				errorStream.append("<p>").append(error.getMessage()).append("</p>");
 			}
 			
-			error.append("<pre style=\"color:#444444;background-color: #F7F7F7;border:1px solid #E7E7E7;border-radius: 3px;box-shadow: rgba(0, 0, 0, 0.1) 2px 2px 10px;padding:20px;overflow:auto;\">");
-			exchange.getError().printStackTrace(new PrintStream(error));
-			error.append("</pre>");
-			error.append("<footer style=\"text-align:center;color: #444444;\">");
-			error.append("<p><small>This is a whitelabel error page, providing a custom error handler is recommended.</small></p>");
-			error.append("</footer>");
-			error.append("</body>");
+			errorStream.append("<pre style=\"color:#444444;background-color: #F7F7F7;border:1px solid #E7E7E7;border-radius: 3px;box-shadow: rgba(0, 0, 0, 0.1) 2px 2px 10px;padding:20px;overflow:auto;\">");
+			error.printStackTrace(new PrintStream(errorStream));
+			errorStream.append("</pre>");
+			errorStream.append("<footer style=\"text-align:center;color: #444444;\">");
+			errorStream.append("<p><small>This is a whitelabel error page, providing a custom error handler is recommended.</small></p>");
+			errorStream.append("</footer>");
+			errorStream.append("</body>");
 			
-			exchange.response().headers(headers -> headers.status(exchange.getError().getStatusCode()).contentType(MediaTypes.TEXT_HTML)).body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(errorOut.toByteArray())));
-		};
-	}
-	
-	/**
-	 * <p>
-	 * Returns the whitelabel {@code text/html} Throwable error handler.
-	 * </p>
-	 * 
-	 * @return an error web exchange handler
-	 */
-	private ErrorWebExchangeHandler<Throwable> throwableHandler_html() {
-		return exchange -> {
-			this.httpExceptionHandler_html().handle(exchange.mapError(t -> new InternalServerErrorException(t)));
+			exchange.response().headers(headers -> headers.status(error.getStatusCode()).contentType(MediaTypes.TEXT_HTML)).body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(errorOut.toByteArray())));
 		};
 	}
 
 	@Override
-	public ErrorWebInterceptedRouter configureInterceptors(ErrorWebInterceptorsConfigurer configurer) {
+	public ErrorWebInterceptedRouter<ExchangeContext> configureInterceptors(ErrorWebInterceptorsConfigurer<? super ExchangeContext> configurer) {
 		GenericErrorWebInterceptedRouter interceptedRouter = new GenericErrorWebInterceptedRouter(this);
 		if(configurer != null) {
 			GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(interceptedRouter);
@@ -336,27 +285,22 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	}
 
 	@Override
-	public ErrorWebInterceptedRouter configureInterceptors(List<ErrorWebInterceptorsConfigurer> configurers) {
+	public ErrorWebInterceptedRouter<ExchangeContext> configureInterceptors(List<ErrorWebInterceptorsConfigurer<? super ExchangeContext>> configurers) {
 		GenericErrorWebInterceptedRouter interceptedRouter = new GenericErrorWebInterceptedRouter(this);
 		if(configurers != null && !configurers.isEmpty()) {
 			GenericErrorWebInterceptableFacade facade = new GenericErrorWebInterceptableFacade(interceptedRouter);
-			for(ErrorWebInterceptorsConfigurer configurer : configurers) {
-				configurer.configure(facade);
-			}
+			configurers.forEach(c -> c.configure(facade));
 			return facade.getInterceptedRouter();
 		}
 		return interceptedRouter;
 	}
 
 	@Override
-	public ErrorWebRouter configureRoutes(ErrorWebRoutesConfigurer configurer) {
+	public ErrorWebRouter<ExchangeContext> configureRoutes(ErrorWebRoutesConfigurer<? super ExchangeContext> configurer) {
 		if(configurer != null) {
-			GenericErrorWebRoutableFacade<ErrorWebRouter> facade = new GenericErrorWebRoutableFacade<>(this);
+			GenericErrorWebRoutableFacade<ErrorWebRouter<ExchangeContext>> facade = new GenericErrorWebRoutableFacade<>(this);
 			configurer.configure(facade);
 		}
 		return this;
 	}
-
-	@Bean( name = "errorRouterConfigurer")
-	public static interface ConfigurerSocket extends Supplier<ErrorWebRouterConfigurer> {}
 }

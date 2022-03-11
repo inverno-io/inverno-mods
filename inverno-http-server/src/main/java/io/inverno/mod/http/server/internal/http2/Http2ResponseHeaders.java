@@ -46,7 +46,7 @@ import io.inverno.mod.http.server.internal.AbstractResponseHeaders;
  * 
  * @see AbstractResponseHeaders
  */
-public class Http2ResponseHeaders implements AbstractResponseHeaders {
+class Http2ResponseHeaders implements AbstractResponseHeaders {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;

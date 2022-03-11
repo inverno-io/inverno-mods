@@ -24,10 +24,10 @@ import io.netty.buffer.ByteBuf;
  * Represents a part in a multipart/form-data request body as defined by
  * <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see RequestBody.Multipart
  */
 public interface Part {
@@ -45,9 +45,8 @@ public interface Part {
 	 * <p>
 	 * Returns the part's file name.
 	 * </p>
-	 * 
-	 * @return an optional returning the file name or an empty optional if the part
-	 *         is not a file
+	 *
+	 * @return an optional returning the file name or an empty optional if the part is not a file
 	 */
 	Optional<String> getFilename();
 	

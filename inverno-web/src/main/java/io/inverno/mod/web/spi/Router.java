@@ -19,7 +19,6 @@ package io.inverno.mod.web.spi;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
-import io.inverno.mod.http.server.RootExchangeHandler;
 
 /**
  * <p>
@@ -70,6 +69,6 @@ public interface Router<
 		F extends RouteManager<A, B, D, F, H>,
 		G extends InterceptorManager<A, B, D, G>,
 		H extends InterceptableRoute<A, B>
-	> extends Routable<A, B, C, E, H>, Interceptable<A, B, D, G>, RootExchangeHandler<A, Exchange<A>> {
+	> extends Routable<A, B, C, E, H>, Interceptable<A, B, D, G>, ExchangeHandler<A, Exchange<A>> {
 	
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,20 +22,20 @@ import javax.lang.model.type.TypeMirror;
 
 /**
  * <p>
- * Describes a Web interceptors configurer.
+ * Describes an Error Web interceptors configurer.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.3
+ * @since 1.5
  */
-public interface WebInterceptorsConfigurerInfo extends Info {
+public interface ErrorWebInterceptorsConfigurerInfo extends Info {
 
 	@Override
 	public WebConfigurerQualifiedName getQualifiedName();
 
 	/**
 	 * <p>
-	 * Returns the type element of the error web interceptors configurer.
+	 * Returns the type element of the web interceptors configurer.
 	 * </p>
 	 * 
 	 * @return a type element
@@ -44,7 +44,7 @@ public interface WebInterceptorsConfigurerInfo extends Info {
 	
 	/**
 	 * <p>
-	 * Returns the type of the error web interceptors configurer.
+	 * Returns the type of the web interceptors configurer.
 	 * </p>
 	 * 
 	 * @return a type

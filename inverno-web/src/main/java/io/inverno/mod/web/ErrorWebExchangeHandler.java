@@ -16,7 +16,10 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.http.base.HttpException;
-import io.inverno.mod.http.server.*;
+import io.inverno.mod.http.server.ErrorExchangeHandler;
+import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeInterceptor;
+import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import reactor.core.publisher.Mono;
 
 /**
@@ -27,25 +30,25 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @param <A> the error type
+ * @param <A> the type of the exchange context
  */
-public interface ErrorWebExchangeHandler<A extends Throwable> extends ErrorExchangeHandler<A, ErrorWebExchange<A>> {
+public interface ErrorWebExchangeHandler<A extends ExchangeContext> extends ErrorExchangeHandler<A, ErrorWebExchange<A>> {
 
 	/**
 	 * <p>
 	 * Wraps the specified Error Exchange handler into an Error Web Exchange handler.
 	 * </p>
 	 *
+	 * @param <A> the type of the exchange context
 	 * @param handler the handler to wrap
-	 * @param <A> the error type
 	 *
 	 * @return an Error Web Exchange handler
 	 */
-	static <A extends Throwable> ErrorWebExchangeHandler<A> wrap(ErrorExchangeHandler<A, ErrorWebExchange<A>> handler) {
+	static <A extends ExchangeContext> ErrorWebExchangeHandler<A> wrap(ErrorExchangeHandler<A, ErrorWebExchange<A>> handler) {
 		return new ErrorWebExchangeHandler<A>() {
-
+			
 			@Override
-			public ReactiveExchangeHandler<ExchangeContext, ErrorWebExchange<A>> intercept(ExchangeInterceptor<ExchangeContext, ErrorWebExchange<A>> interceptor) {
+			public ReactiveExchangeHandler<A, ErrorWebExchange<A>> intercept(ExchangeInterceptor<A, ErrorWebExchange<A>> interceptor) {
 				return handler.intercept(interceptor);
 			}
 

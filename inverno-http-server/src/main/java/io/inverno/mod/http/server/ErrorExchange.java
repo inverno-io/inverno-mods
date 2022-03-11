@@ -16,29 +16,26 @@
 package io.inverno.mod.http.server;
 
 import java.util.function.Function;
-
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
  * Represents a failing server exchange.
  * </p>
- * 
+ *
  * <p>
- * The HTTP server creates a failing exchange when an exception is thrown during
- * the normal processing of a server {@link Exchange}. They are handled in an
- * {@link ErrorExchangeHandler} that formats the actual response returned to the
- * client.
+ * The HTTP server creates a failing exchange when an exception is thrown during the normal processing of a server {@link Exchange}. They are handled
+ * in an {@link ErrorExchangeHandler} that formats the actual response returned to the client.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see Exchange
- * 
- * @param <A> the error type
+ *
+ * @param <A> the type of the exchange context
  */
-public interface ErrorExchange<A extends Throwable> extends Exchange<ExchangeContext> {
+public interface ErrorExchange<A extends ExchangeContext> extends Exchange<A> {
 
 	/**
 	 * <p>
@@ -47,22 +44,20 @@ public interface ErrorExchange<A extends Throwable> extends Exchange<ExchangeCon
 	 * 
 	 * @return a throwable of type A
 	 */
-	A getError();
-
+	Throwable getError();
+	
 	/**
 	 * <p>
-	 * Returns an error exchange consisting of the result of applying the given
-	 * function to the error of the exchange.
+	 * Returns an error exchange consisting of the result of applying the given function to the error of the exchange.
 	 * </p>
-	 * 
-	 * @param <T>         the error type of the new exchange
+	 *
 	 * @param errorMapper an error mapper
-	 * 
+	 *
 	 * @return a new error exchange
 	 */
-	default <T extends Throwable> ErrorExchange<T> mapError(Function<? super A, ? extends T> errorMapper) {
+	default ErrorExchange<A> mapError(Function<? super Throwable, ? extends Throwable> errorMapper) {
 		ErrorExchange<A> thisExchange = this;
-		return new ErrorExchange<T>() {
+		return new ErrorExchange<A>() {
 
 			@Override
 			public Request request() {
@@ -75,18 +70,18 @@ public interface ErrorExchange<A extends Throwable> extends Exchange<ExchangeCon
 			}
 			
 			@Override
-			public ExchangeContext context() {
+			public A context() {
 				return thisExchange.context();
 			}
 			
 			@Override
-			public ErrorExchange<T> finalizer(Mono<Void> finalizer) {
+			public ErrorExchange<A> finalizer(Mono<Void> finalizer) {
 				thisExchange.finalizer(finalizer);
 				return this;
 			}
 
 			@Override
-			public T getError() {
+			public Throwable getError() {
 				return errorMapper.apply(thisExchange.getError());
 			}
 			

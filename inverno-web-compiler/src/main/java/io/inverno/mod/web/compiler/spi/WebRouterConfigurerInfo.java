@@ -15,102 +15,58 @@
  */
 package io.inverno.mod.web.compiler.spi;
 
-import javax.lang.model.element.ModuleElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 import io.inverno.core.compiler.spi.Info;
 
 /**
  * <p>
- * Describes the module's web router configurer to generate.
+ * Describes a web router configurer.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 public interface WebRouterConfigurerInfo extends Info {
-
+	
 	@Override
-	WebRouterConfigurerQualifiedName getQualifiedName();
+	WebConfigurerQualifiedName getQualifiedName();
 	
 	/**
 	 * <p>
-	 * Returns the module element for which a web router configurer is generated.
+	 * Returns the type element of the web router configurer.
 	 * </p>
 	 * 
-	 * @return a module element
+	 * @return a type element
 	 */
-	ModuleElement getElement();
+	TypeElement getElement();
 	
 	/**
 	 * <p>
-	 * Returns the web controllers defined in the module.
+	 * Returns the type of the web router configurer.
 	 * </p>
 	 * 
-	 * @return an array of web controllers
+	 * @return a type
 	 */
-	WebControllerInfo[] getControllers();
+	DeclaredType getType();
 	
 	/**
 	 * <p>
-	 * Returns the web router configurers provided in the module.
+	 * Returns the web routes defined in the web router configurer.
+	 * </p>
+	 * 
+	 * @return an array of web route info
+	 */
+	WebRouteInfo[] getRoutes();
+	
+	/**
+	 * <p>
+	 * Returns the exchange context type required by the routes defined by the web router configurer.
 	 * </p>
 	 *
-	 * <p>
-	 * These can be defined as beans in the module or in component modules.
-	 * </p>
-	 *
-	 * @return an array of provided router configurer
+	 * @return a context type
 	 */
-	WebProvidedRouterConfigurerInfo[] getRouterConfigurers();
-	
-	/**
-	 * <p>
-	 * Returns the web routes configurers provided in the module.
-	 * </p>
-	 * 
-	 * <p>
-	 * These can be defined as beans in the module or in component modules.
-	 * </p>
-	 * 
-	 * @return an array of routes configurer
-	 */
-	WebRoutesConfigurerInfo[] getRoutesConfigurers();
-	
-	/**
-	 * <p>
-	 * Returns the web interceptors configurers provided in the module.
-	 * </p>
-	 * 
-	 * <p>
-	 * These can be defined as beans in the module or in component modules.
-	 * </p>
-	 * 
-	 * @return an array of interceptors configurer
-	 */
-	WebInterceptorsConfigurerInfo[] getInterceptorsConfigurers();
-	
-	/**
-	 * <p>
-	 * Returns the list of exchange context types required by the routes defined by
-	 * the Web router configurer.
-	 * </p>
-	 * 
-	 * @return a list of context types
-	 */
-	TypeMirror[] getContextTypes();
-	
-	/**
-	 * <p>
-	 * Accepts the specified web router configurer info visitor.
-	 * </p>
-	 * 
-	 * @param <R>     the type of the visitor result
-	 * @param <P>     the type of the visitor parameter
-	 * @param visitor the visitor to invoke
-	 * @param p       the parameter
-	 * 
-	 * @return the visitor result
-	 */
-	<R, P> R accept(WebRouterConfigurerInfoVisitor<R, P> visitor, P p);
+	TypeMirror getContextType();
 }

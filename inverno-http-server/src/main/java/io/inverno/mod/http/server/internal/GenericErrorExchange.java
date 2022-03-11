@@ -29,7 +29,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class GenericErrorExchange implements ErrorExchange<Throwable> {
+public class GenericErrorExchange implements ErrorExchange<ExchangeContext> {
 
 	private final Request request;
 	private final AbstractResponse response;
@@ -44,6 +44,7 @@ public class GenericErrorExchange implements ErrorExchange<Throwable> {
 	 * 
 	 * @param request         the request
 	 * @param response        the response
+	 * @param finalizer       the exchange finalizer
 	 * @param error           the error
 	 * @param exchangeContext the exchange context attached to the failed exchange
 	 */

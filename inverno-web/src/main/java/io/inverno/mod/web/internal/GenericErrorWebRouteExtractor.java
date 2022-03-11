@@ -38,13 +38,13 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
+class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor<ExchangeContext> {
 
 	private final GenericErrorWebRouter router;
 	
 	private GenericErrorWebRouteExtractor parent;
 	
-	private Set<ErrorWebRoute> routes;
+	private Set<ErrorWebRoute<ExchangeContext>> routes;
 	
 	private Class<? extends Throwable> error;
 
@@ -55,8 +55,8 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 	
 	private String language;
 
-	private List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>> interceptors;
-	private Consumer<List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>>> interceptorsUpdater;
+	private List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>> interceptors;
+	private Consumer<List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>>> interceptorsUpdater;
 	
 	/**
 	 * <p>
@@ -136,7 +136,7 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 		return null;
 	}
 	
-	private void addRoute(ErrorWebRoute route) {
+	private void addRoute(ErrorWebRoute<ExchangeContext> route) {
 		if(this.parent != null) {
 			this.parent.addRoute(route);
 		}
@@ -149,7 +149,7 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 	}
 	
 	@Override
-	public Set<ErrorWebRoute> getRoutes() {
+	public Set<ErrorWebRoute<ExchangeContext>> getRoutes() {
 		if(this.parent != null) {
 			return this.parent.getRoutes();			
 		}
@@ -159,47 +159,47 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 	}
 	
 	@Override
-	public ErrorWebRouteExtractor error(Class<? extends Throwable> error) {
+	public GenericErrorWebRouteExtractor error(Class<? extends Throwable> error) {
 		GenericErrorWebRouteExtractor childExtractor = new GenericErrorWebRouteExtractor(this);
 		childExtractor.error = error;
 		return childExtractor;
 	}
 
 	@Override
-	public ErrorWebRouteExtractor path(String path) {
+	public GenericErrorWebRouteExtractor path(String path) {
 		GenericErrorWebRouteExtractor childExtractor = new GenericErrorWebRouteExtractor(this);
 		childExtractor.path = path;
 		return childExtractor;
 	}
 
 	@Override
-	public ErrorWebRouteExtractor pathPattern(URIPattern pathPattern) {
+	public GenericErrorWebRouteExtractor pathPattern(URIPattern pathPattern) {
 		GenericErrorWebRouteExtractor childExtractor = new GenericErrorWebRouteExtractor(this);
 		childExtractor.pathPattern = pathPattern;
 		return childExtractor;
 	}
 	
 	@Override
-	public ErrorWebRouteExtractor produces(String mediaType) {
+	public GenericErrorWebRouteExtractor produces(String mediaType) {
 		GenericErrorWebRouteExtractor childExtractor = new GenericErrorWebRouteExtractor(this);
 		childExtractor.produce = mediaType;
 		return childExtractor;
 	}
 
 	@Override
-	public ErrorWebRouteExtractor language(String language) {
+	public GenericErrorWebRouteExtractor language(String language) {
 		GenericErrorWebRouteExtractor childExtractor = new GenericErrorWebRouteExtractor(this);
 		childExtractor.language = language;
 		return childExtractor;
 	}
 
 	@Override
-	public ErrorWebRouteExtractor interceptors(List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>> exchangeInterceptors, Consumer<List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>>> updater) {
+	public GenericErrorWebRouteExtractor interceptors(List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>> exchangeInterceptors, Consumer<List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>>> interceptorsUpdater) {
 		this.interceptors = interceptors != null ? interceptors.stream()
 				.map(interceptor -> {
-					ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>> current = interceptor;
+					ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>> current = interceptor;
 					while(current instanceof ExchangeInterceptorWrapper) {
-						current = ((ExchangeInterceptorWrapper<ExchangeContext, ErrorWebExchange<Throwable>>) current).unwrap();
+						current = ((ExchangeInterceptorWrapper<ExchangeContext, ErrorWebExchange<ExchangeContext>>) current).unwrap();
 					}
 					return current;
 				})
@@ -210,25 +210,34 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public void handler(ReactiveExchangeHandler<ExchangeContext, ErrorWebExchange<Throwable>> handler, boolean disabled) {
+	public void handler(ReactiveExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> handler, boolean disabled) {
 		if(handler != null) {
 			GenericErrorWebRoute route = new GenericErrorWebRoute(this.getRouter());
 			route.setDisabled(disabled);
-	
-			Class<? extends Throwable> error = this.getError();
-			String produce = this.getProduce();
-			String language = this.getLanguage();
 			
-			if(error != null) {
-				route.setError(error);
+			Class<? extends Throwable> routeError = this.getError();
+			String routePath = this.getPath();
+			URIPattern routePathPattern = this.getPathPattern();
+			String routeProduce = this.getProduce();
+			String routeLanguage = this.getLanguage();
+			
+			if(routeError != null) {
+				route.setError(routeError);
 			}
-			if(produce != null) {
-				route.setProduce(produce);
+			if(routePath != null) {
+				route.setPath(routePath);
 			}
-			if(language != null) {
-				route.setLanguage(language);
+			if(routePathPattern != null) {
+				route.setPathPattern(routePathPattern);
 			}
-			route.setHandler((ErrorExchangeHandler<Throwable, ErrorWebExchange<Throwable>>)handler);
+			if(routeProduce != null) {
+				route.setProduce(routeProduce);
+			}
+			if(routeLanguage != null) {
+				route.setLanguage(routeLanguage);
+			}
+			route.setInterceptors(this.interceptors, this.interceptorsUpdater);
+			route.setHandler((ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>>)handler);
 			this.addRoute(route);
 		}
 	}	

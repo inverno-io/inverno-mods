@@ -40,7 +40,7 @@ import io.inverno.mod.http.server.RequestHeaders;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class Http2RequestHeaders implements RequestHeaders {
+class Http2RequestHeaders implements RequestHeaders {
 
 	private final Http2Headers underlyingHeaders;
 	

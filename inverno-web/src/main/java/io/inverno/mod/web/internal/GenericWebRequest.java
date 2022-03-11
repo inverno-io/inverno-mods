@@ -52,20 +52,35 @@ class GenericWebRequest implements WebRequest {
 	
 	/**
 	 * <p>
-	 * Creates a generic web request with the specified underlying request, data
-	 * conversion service and parameter value converter.
+	 * Creates a generic web request with the specified underlying request and parameter value converter.
+	 * </p>
+	 * 
+	 * <p>
+	 * Since no data conversion service is specified, the request body is assumed to be empty. This is particularly the case in an error exchange.
 	 * </p>
 	 * 
 	 * @param request               the underlying request
-	 * @param dataConversionService the data conversion service
 	 * @param parameterConverter    a string object converter
 	 */
-	public GenericWebRequest(Request request, DataConversionService dataConversionService, ObjectConverter<String> parameterConverter) {
+	public GenericWebRequest(Request request, ObjectConverter<String> parameterConverter) {
+		this(request, parameterConverter, null);
+	}
+	
+	/**
+	 * <p>
+	 * Creates a generic web request with the specified underlying request, data conversion service and parameter value converter.
+	 * </p>
+	 *
+	 * @param request               the underlying request
+	 * @param parameterConverter    a string object converter
+	 * @param dataConversionService the data conversion service
+	 */
+	public GenericWebRequest(Request request, ObjectConverter<String> parameterConverter, DataConversionService dataConversionService) {
 		this.request = request;
 		this.dataConversionService = dataConversionService;
 		this.parameterConverter = parameterConverter;
 	}
-
+	
 	@Override
 	public RequestHeaders headers() {
 		return this.request.headers();
@@ -132,7 +147,12 @@ class GenericWebRequest implements WebRequest {
 	@Override
 	public Optional<WebRequestBody> body() {
 		if(this.webRequestBody == null) {
-			this.webRequestBody = this.request.body().map(requestBody -> new GenericWebRequestBody(this, requestBody, this.dataConversionService));
+			if(this.dataConversionService != null) {
+				this.webRequestBody = this.request.body().map(requestBody -> new GenericWebRequestBody(this, requestBody, this.dataConversionService));
+			}
+			else {
+				this.webRequestBody = Optional.empty();
+			}
 		}
 		return this.webRequestBody;
 	}

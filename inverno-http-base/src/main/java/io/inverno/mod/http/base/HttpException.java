@@ -258,4 +258,24 @@ public class HttpException extends RuntimeException {
 	public Category getStatusCategory() {
 		return this.statusCategory;
 	}
+	
+	/**
+	 * <p>
+	 * Wraps the specified error into an HttpException.
+	 * </p>
+	 * 
+	 * <p>
+	 * The specified error is returned untouched if it is already an HttpException instance, ohterwise it is wrapped in an {@link InternalServerErrorException}.
+	 * </p>
+	 * 
+	 * @param error the error to wrap
+	 * 
+	 * @return the specified error if it is an HttpException, an HttpException wrapping the specified error otherwise
+	 */
+	public static HttpException wrap(Throwable error) {
+		if(error instanceof HttpException) {
+			return (HttpException)error;
+		}
+		return new InternalServerErrorException(error);
+	}
 }

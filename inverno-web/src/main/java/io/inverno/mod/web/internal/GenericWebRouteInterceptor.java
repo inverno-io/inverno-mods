@@ -68,8 +68,8 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 	 * <p>
 	 * Creates a generic web route interceptor.
 	 * </p>
-	 * 
-	 * @param contentTypeCodec a content type header codec
+	 *
+	 * @param contentTypeCodec    a content type header codec
 	 * @param acceptLanguageCodec an accept language header codec
 	 */
 	public GenericWebRouteInterceptor(HeaderCodec<? extends Headers.ContentType> contentTypeCodec, HeaderCodec<? extends Headers.AcceptLanguage> acceptLanguageCodec) {

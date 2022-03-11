@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,41 +15,44 @@
  */
 package io.inverno.mod.http.server.internal;
 
-import java.util.function.Supplier;
-
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Overridable;
 import io.inverno.core.annotation.Wrapper;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.http.base.NotFoundException;
+import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.RootExchangeHandler;
 import io.netty.buffer.Unpooled;
+import java.util.function.Supplier;
+import io.inverno.mod.http.server.ServerController;
 
 /**
  * <p>
- * The server root exchange handler which by default returns {@code Hello} when
- * a request is made to the {@code /} resource.
+ * The controller used by the HTTP server to handle exchanges, error exchanges and create exchange contexts.
+ * </p>
+ * 
+ * <p>
+ * By default this returns {@code Hello} when a request is made to the root path {@code /}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.5
  */
-@Bean
+@Bean( name = "controller" )
 @Wrapper
 @Overridable 
-public class RootHandler implements Supplier<RootExchangeHandler<? extends ExchangeContext, ? extends Exchange<? extends ExchangeContext>>> {
+public class HttpServerController implements Supplier<ServerController<? extends ExchangeContext, ? extends Exchange<? extends ExchangeContext>, ? extends ErrorExchange<? extends ExchangeContext>>> {
 
 	@Override
-	public RootExchangeHandler<? extends ExchangeContext, ? extends Exchange<? extends ExchangeContext>> get() {
-		return (RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>>)(exchange -> {
+	public ServerController<? extends ExchangeContext, ? extends Exchange<? extends ExchangeContext>, ? extends ErrorExchange<? extends ExchangeContext>> get() {
+		return (ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>>)exchange -> {
 			if(exchange.request().getPathAbsolute().equalsIgnoreCase("/")) {
 				exchange.response().body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello", Charsets.DEFAULT)));
 			}
 			else {
 				throw new NotFoundException();
 			}
-		});
+		};
 	}
 }

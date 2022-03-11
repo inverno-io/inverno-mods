@@ -49,7 +49,7 @@ import io.inverno.mod.http.server.internal.netty.LinkedHttpHeaders;
  * 
  * @see AbstractResponseHeaders
  */
-public class Http1xResponseHeaders implements AbstractResponseHeaders {
+class Http1xResponseHeaders implements AbstractResponseHeaders {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;

@@ -30,9 +30,10 @@ import java.util.List;
  *
  * @see ErrorWebRouter
  *
- * @param <A> the Error Web interceptable type
+ * @param <A> the type of the exchange context
+ * @param <B> the Error Web interceptable type
  */
-public interface ErrorWebInterceptable<A extends ErrorWebInterceptable<A>> extends Interceptable<ExchangeContext, ErrorWebExchange<Throwable>, A, ErrorWebInterceptorManager<A>> {
+public interface ErrorWebInterceptable<A extends ExchangeContext, B extends ErrorWebInterceptable<A, B>> extends Interceptable<A, ErrorWebExchange<A>, B, ErrorWebInterceptorManager<A, B>> {
 
 	/**
 	 * <p>
@@ -47,7 +48,7 @@ public interface ErrorWebInterceptable<A extends ErrorWebInterceptable<A>> exten
 	 *
 	 * @return an error web interceptable
 	 */
-	A configureInterceptors(ErrorWebInterceptorsConfigurer configurer);
+	B configureInterceptors(ErrorWebInterceptorsConfigurer<? super A> configurer);
 
 	/**
 	 * <p>
@@ -62,5 +63,5 @@ public interface ErrorWebInterceptable<A extends ErrorWebInterceptable<A>> exten
 	 *
 	 * @return an error web interceptable
 	 */
-	A configureInterceptors(List<ErrorWebInterceptorsConfigurer> configurers);
+	B configureInterceptors(List<ErrorWebInterceptorsConfigurer<? super A>> configurers);
 }

@@ -26,15 +26,14 @@ import java.util.function.Function;
  * <p>
  * Represents the payload body of a server response in a server exchange.
  * </p>
- * 
+ *
  * <p>
- * The response body basically provides multiple ways to produce the response
- * payload.
+ * The response body basically provides multiple ways to produce the response payload.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see Response
  */
 public interface ResponseBody {
@@ -58,13 +57,15 @@ public interface ResponseBody {
 	 * <p>
 	 * Produces an empty payload.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * If a payload has already been provided this method does nothing.
 	 * </p>
-	 * 
-	 * <p>A typical usage is:</p>
-	 * 
+	 *
+	 * <p>
+	 * A typical usage is:
+	 * </p>
+	 *
 	 * <blockquote><pre>
 	 * exchange.response().body().empty();
 	 * </pre></blockquote>
@@ -219,7 +220,7 @@ public interface ResponseBody {
 	 * A server-sent events payload producer as defined by
 	 * <a href="https://www.w3.org/TR/eventsource/">Server-Sent Events</a>.
 	 * </p>
-	 * 
+	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 *
@@ -231,11 +232,10 @@ public interface ResponseBody {
 		
 		/**
 		 * <p>
-		 * Sets the server-sent events stream in the specified consumer using the
-		 * server-sent event factory to create events and the server-sent events
-		 * producer to sets the stream of events.
+		 * Sets the server-sent events stream in the specified consumer using the server-sent event factory to create events and the server-sent
+		 * events producer to sets the stream of events.
 		 * </p>
-		 * 
+		 *
 		 * @param data a function in which server-sent events stream must be set
 		 */
 		void from(BiConsumer<C, ResponseData<B>> data);

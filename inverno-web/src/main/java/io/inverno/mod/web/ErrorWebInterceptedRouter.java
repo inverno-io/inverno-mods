@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.spi.ErrorInterceptedRouter;
 
 import java.util.List;
@@ -27,11 +28,13 @@ import java.util.List;
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @param <A> the type of the exchange context
  */
-public interface ErrorWebInterceptedRouter extends
-	ErrorInterceptedRouter<ErrorWebExchange<Throwable>, ErrorWebRouter, ErrorWebInterceptedRouter, ErrorWebRouteManager<ErrorWebRouter>, ErrorWebRouteManager<ErrorWebInterceptedRouter>, ErrorWebInterceptorManager<ErrorWebInterceptedRouter>, ErrorWebRoute>,
-	ErrorWebRoutable<ErrorWebInterceptedRouter>,
-	ErrorWebInterceptable<ErrorWebInterceptedRouter> {
+public interface ErrorWebInterceptedRouter<A extends ExchangeContext> extends
+	ErrorInterceptedRouter<A, ErrorWebExchange<A>, ErrorWebRouter<A>, ErrorWebInterceptedRouter<A>, ErrorWebRouteManager<A, ErrorWebRouter<A>>, ErrorWebRouteManager<A, ErrorWebInterceptedRouter<A>>, ErrorWebInterceptorManager<A, ErrorWebInterceptedRouter<A>>, ErrorWebRoute<A>>,
+	ErrorWebRoutable<A, ErrorWebInterceptedRouter<A>>,
+	ErrorWebInterceptable<A, ErrorWebInterceptedRouter<A>> {
 
 	/**
 	 * <p>
@@ -51,7 +54,7 @@ public interface ErrorWebInterceptedRouter extends
 	 *
 	 * @return the error web intercepted router
 	 */
-	ErrorWebInterceptedRouter configure(ErrorWebRouterConfigurer configurer);
+	ErrorWebInterceptedRouter<A> configure(ErrorWebRouterConfigurer<? super A> configurer);
 
 	/**
 	 * <p>
@@ -71,9 +74,9 @@ public interface ErrorWebInterceptedRouter extends
 	 *
 	 * @return the web intercepted router
 	 */
-	default ErrorWebInterceptedRouter configure(List<ErrorWebRouterConfigurer> configurers) {
+	default ErrorWebInterceptedRouter<A> configure(List<ErrorWebRouterConfigurer<? super A>> configurers) {
 		if(configurers != null) {
-			for(ErrorWebRouterConfigurer configurer : configurers) {
+			for(ErrorWebRouterConfigurer<? super A> configurer : configurers) {
 				this.configure(configurer);
 			}
 		}

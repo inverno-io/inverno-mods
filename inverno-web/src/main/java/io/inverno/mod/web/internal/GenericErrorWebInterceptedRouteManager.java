@@ -16,6 +16,7 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.base.net.URIPattern;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.ErrorWebExchangeHandler;
 import io.inverno.mod.web.ErrorWebInterceptedRouter;
 import io.inverno.mod.web.ErrorWebRoute;
@@ -34,11 +35,11 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-class GenericErrorWebInterceptedRouteManager extends AbstractErrorWebManager<GenericErrorWebInterceptedRouteManager> implements ErrorWebRouteManager<ErrorWebInterceptedRouter> {
+class GenericErrorWebInterceptedRouteManager extends AbstractErrorWebManager<GenericErrorWebInterceptedRouteManager> implements ErrorWebRouteManager<ExchangeContext, ErrorWebInterceptedRouter<ExchangeContext>> {
 
 	private final GenericErrorWebInterceptedRouter router;
 
-	private ErrorWebExchangeHandler<Throwable> handler;
+	private ErrorWebExchangeHandler<ExchangeContext> handler;
 
 	/**
 	 * <p>
@@ -52,25 +53,25 @@ class GenericErrorWebInterceptedRouteManager extends AbstractErrorWebManager<Gen
 	}
 
 	@Override
-	public ErrorWebInterceptedRouter enable() {
+	public GenericErrorWebInterceptedRouter enable() {
 		this.findRoutes().stream().forEach(route -> route.enable());
 		return this.router;
 	}
 
 	@Override
-	public ErrorWebInterceptedRouter disable() {
+	public GenericErrorWebInterceptedRouter disable() {
 		this.findRoutes().stream().forEach(route -> route.disable());
 		return this.router;
 	}
 
 	@Override
-	public ErrorWebInterceptedRouter remove() {
+	public GenericErrorWebInterceptedRouter remove() {
 		this.findRoutes().stream().forEach(route -> route.remove());
 		return this.router;
 	}
 
 	@Override
-	public Set<ErrorWebRoute> findRoutes() {
+	public Set<ErrorWebRoute<ExchangeContext>> findRoutes() {
 		// TODO Implement filtering in the route extractor
 		return this.router.getRoutes().stream().filter(route -> {
 			// We want all routes that share the same criteria as the one defined in this route manager
@@ -125,9 +126,9 @@ class GenericErrorWebInterceptedRouteManager extends AbstractErrorWebManager<Gen
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public ErrorWebInterceptedRouter handler(ErrorWebExchangeHandler<? extends Throwable> handler) {
+	public ErrorWebInterceptedRouter<ExchangeContext> handler(ErrorWebExchangeHandler<? super ExchangeContext> handler) {
 		Objects.requireNonNull(handler);
-		this.handler = (ErrorWebExchangeHandler<Throwable>) handler;
+		this.handler = handler;
 		this.commit();
 		return this.router;
 	}

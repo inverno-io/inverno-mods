@@ -33,13 +33,12 @@ public interface Response {
 	 * <p>
 	 * Determines whether the response headers have been sent to the client.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * Any attempts to specify new headers in the response, once headers haven been
-	 * sent to the client, will result in an {@link IllegalStateException} being
-	 * thrown.
+	 * Any attempts to specify new headers in the response, once headers haven been sent to the client, will result in an
+	 * {@link IllegalStateException} being thrown.
 	 * </p>
-	 * 
+	 *
 	 * @return true if headers have been sent, false otherwise
 	 */
 	boolean isHeadersWritten();
@@ -57,12 +56,12 @@ public interface Response {
 	 * <p>
 	 * Configures the HTTP headers to send in the response.
 	 * </p>
-	 * 
+	 *
 	 * @param headersConfigurer a response headers configurer
-	 * 
+	 *
 	 * @return the response
-	 * @throws IllegalStateException if response headers have already been sent to
-	 *                               the client
+	 *
+	 * @throws IllegalStateException if response headers have already been sent to the client
 	 */
 	Response headers(Consumer<ResponseHeaders> headersConfigurer) throws IllegalStateException;
 	
@@ -90,12 +89,12 @@ public interface Response {
 	 * <p>
 	 * Configures the cookies to set in the response.
 	 * </p>
-	 * 
+	 *
 	 * @param cookiesConfigurer a response cookies configurer
-	 * 
+	 *
 	 * @return the response
-	 * @throws IllegalStateException if response headers have already been sent to
-	 *                               the client
+	 *
+	 * @throws IllegalStateException if response headers have already been sent to the client
 	 */
 	Response cookies(Consumer<ResponseCookies> cookiesConfigurer) throws IllegalStateException;
 	
@@ -103,11 +102,11 @@ public interface Response {
 	 * <p>
 	 * Sends an interim 100 continue response to the client so it can send the rest of the request.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * This method should only be used when the request contains header {@code expect: 100-continue}.
 	 * </p>
-	 * 
+	 *
 	 * @return the response
 	 */
 	Response sendContinue();

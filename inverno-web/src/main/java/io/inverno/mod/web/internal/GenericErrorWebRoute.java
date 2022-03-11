@@ -35,7 +35,7 @@ import java.util.function.Consumer;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericErrorWebRoute implements ErrorWebRoute {
+class GenericErrorWebRoute implements ErrorWebRoute<ExchangeContext> {
 
 	private final AbstractErrorWebRouter router;
 	
@@ -50,10 +50,10 @@ class GenericErrorWebRoute implements ErrorWebRoute {
 	
 	private String language;
 
-	private List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>> interceptors;
-	private Consumer<List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>>> interceptorsUpdater;
+	private List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>> interceptors;
+	private Consumer<List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>>> interceptorsUpdater;
 
-	private ErrorExchangeHandler<Throwable, ErrorWebExchange<Throwable>> handler;
+	private ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> handler;
 	
 	/**
 	 * <p>
@@ -183,12 +183,12 @@ class GenericErrorWebRoute implements ErrorWebRoute {
 	}
 
 	@Override
-	public List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>> getInterceptors() {
+	public List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>> getInterceptors() {
 		return this.interceptors;
 	}
 
 	@Override
-	public void setInterceptors(List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>> interceptors) {
+	public void setInterceptors(List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>> interceptors) {
 		this.interceptors = interceptors != null ? Collections.unmodifiableList(interceptors) : List.of();
 		if(this.interceptorsUpdater != null) {
 			this.interceptorsUpdater.accept(this.interceptors);
@@ -203,13 +203,13 @@ class GenericErrorWebRoute implements ErrorWebRoute {
 	 * @param interceptors        the route interceptors
 	 * @param interceptorsUpdater a consumer used to update route interceptors in the actual handler routing link.
 	 */
-	public void setInterceptors(List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>> interceptors, Consumer<List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>>>> interceptorsUpdater) {
+	public void setInterceptors(List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>> interceptors, Consumer<List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>>> interceptorsUpdater) {
 		this.interceptors = interceptors != null ? Collections.unmodifiableList(interceptors) : List.of();
 		this.interceptorsUpdater = interceptorsUpdater;
 	}
 
 	@Override
-	public ReactiveExchangeHandler<ExchangeContext, ErrorWebExchange<Throwable>> getHandler() {
+	public ReactiveExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> getHandler() {
 		return this.handler;
 	}
 
@@ -220,7 +220,7 @@ class GenericErrorWebRoute implements ErrorWebRoute {
 	 *
 	 * @param handler an exchange handler
 	 */
-	public void setHandler(ErrorExchangeHandler<Throwable, ErrorWebExchange<Throwable>> handler) {
+	public void setHandler(ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> handler) {
 		this.handler = handler;
 	}
 

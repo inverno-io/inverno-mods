@@ -69,7 +69,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class WebRouterConfigurerClassGenerationContext extends AbstractSourceGenerationContext<WebRouterConfigurerClassGenerationContext, WebRouterConfigurerClassGenerationContext.GenerationMode> {
+class WebServerControllerConfigurerClassGenerationContext extends AbstractSourceGenerationContext<WebServerControllerConfigurerClassGenerationContext, WebServerControllerConfigurerClassGenerationContext.GenerationMode> {
 
 	public static enum GenerationMode {
 		CONFIGURER_CLASS,
@@ -117,7 +117,7 @@ class WebRouterConfigurerClassGenerationContext extends AbstractSourceGeneration
 	private TypeMirror voidType;
 	private TypeMirror byteBufType;
 	
-	public WebRouterConfigurerClassGenerationContext(Types typeUtils, Elements elementUtils, GenerationMode mode) {
+	public WebServerControllerConfigurerClassGenerationContext(Types typeUtils, Elements elementUtils, GenerationMode mode) {
 		super(typeUtils, elementUtils, mode);
 		
 		this.typeGenerator = new TypeGenerator();
@@ -142,7 +142,7 @@ class WebRouterConfigurerClassGenerationContext extends AbstractSourceGeneration
 		this.byteBufType = elementUtils.getTypeElement(ByteBuf.class.getCanonicalName()).asType();
 	}
 	
-	private WebRouterConfigurerClassGenerationContext(WebRouterConfigurerClassGenerationContext parentGeneration) {
+	private WebServerControllerConfigurerClassGenerationContext(WebServerControllerConfigurerClassGenerationContext parentGeneration) {
 		super(parentGeneration);
 		this.typeGenerator = parentGeneration.typeGenerator;
 		this.webController = parentGeneration.webController;
@@ -151,40 +151,40 @@ class WebRouterConfigurerClassGenerationContext extends AbstractSourceGeneration
 	}
 	
 	@Override
-	public WebRouterConfigurerClassGenerationContext withMode(GenerationMode mode) {
-		WebRouterConfigurerClassGenerationContext context = new WebRouterConfigurerClassGenerationContext(this);
+	public WebServerControllerConfigurerClassGenerationContext withMode(GenerationMode mode) {
+		WebServerControllerConfigurerClassGenerationContext context = new WebServerControllerConfigurerClassGenerationContext(this);
 		context.mode = mode;
 		return context;
 	}
 
 	@Override
-	public WebRouterConfigurerClassGenerationContext withIndentDepth(int indentDepth) {
-		WebRouterConfigurerClassGenerationContext context = new WebRouterConfigurerClassGenerationContext(this);
+	public WebServerControllerConfigurerClassGenerationContext withIndentDepth(int indentDepth) {
+		WebServerControllerConfigurerClassGenerationContext context = new WebServerControllerConfigurerClassGenerationContext(this);
 		context.indentDepth = indentDepth;
 		return context;
 	}
 
 	@Override
-	public WebRouterConfigurerClassGenerationContext withModule(ModuleQualifiedName moduleQualifiedName) {
-		WebRouterConfigurerClassGenerationContext context = new WebRouterConfigurerClassGenerationContext(this);
+	public WebServerControllerConfigurerClassGenerationContext withModule(ModuleQualifiedName moduleQualifiedName) {
+		WebServerControllerConfigurerClassGenerationContext context = new WebServerControllerConfigurerClassGenerationContext(this);
 		context.moduleQualifiedName = moduleQualifiedName;
 		return context;
 	}
 	
-	public WebRouterConfigurerClassGenerationContext withWebController(WebControllerInfo webController) {
-		WebRouterConfigurerClassGenerationContext context = new WebRouterConfigurerClassGenerationContext(this);
+	public WebServerControllerConfigurerClassGenerationContext withWebController(WebControllerInfo webController) {
+		WebServerControllerConfigurerClassGenerationContext context = new WebServerControllerConfigurerClassGenerationContext(this);
 		context.webController = webController;
 		return context;
 	}
 	
-	public WebRouterConfigurerClassGenerationContext withWebRoute(WebRouteInfo webRoute) {
-		WebRouterConfigurerClassGenerationContext context = new WebRouterConfigurerClassGenerationContext(this);
+	public WebServerControllerConfigurerClassGenerationContext withWebRoute(WebRouteInfo webRoute) {
+		WebServerControllerConfigurerClassGenerationContext context = new WebServerControllerConfigurerClassGenerationContext(this);
 		context.webRoute = webRoute;
 		return context;
 	}
 	
-	public WebRouterConfigurerClassGenerationContext withParameterIndex(int parameterIndex) {
-		WebRouterConfigurerClassGenerationContext context = new WebRouterConfigurerClassGenerationContext(this);
+	public WebServerControllerConfigurerClassGenerationContext withParameterIndex(int parameterIndex) {
+		WebServerControllerConfigurerClassGenerationContext context = new WebServerControllerConfigurerClassGenerationContext(this);
 		context.parameterIndex = parameterIndex;
 		return context;
 	}
@@ -456,7 +456,7 @@ class WebRouterConfigurerClassGenerationContext extends AbstractSourceGeneration
 			// .type(Integer.class).and()
 			// Types.type(int.class).build()
 			if(kind == null) {
-				return new StringBuilder(WebRouterConfigurerClassGenerationContext.this.getTypesTypeName()).append(".type(").append(WebRouterConfigurerClassGenerationContext.this.getTypeName(type)).append(".class).build()");
+				return new StringBuilder(WebServerControllerConfigurerClassGenerationContext.this.getTypesTypeName()).append(".type(").append(WebServerControllerConfigurerClassGenerationContext.this.getTypeName(type)).append(".class).build()");
 			}
 			else {
 				StringBuilder result = new StringBuilder();
@@ -477,7 +477,7 @@ class WebRouterConfigurerClassGenerationContext extends AbstractSourceGeneration
 					throw new IllegalStateException("A primitive type can't appear as a " + kind + " type");
 				}
 				
-				result.append(WebRouterConfigurerClassGenerationContext.this.getTypeName(WebRouterConfigurerClassGenerationContext.this.typeUtils.boxedClass(type).asType())).append(".class).and()");
+				result.append(WebServerControllerConfigurerClassGenerationContext.this.getTypeName(WebServerControllerConfigurerClassGenerationContext.this.typeUtils.boxedClass(type).asType())).append(".class).and()");
 				
 				return result;
 			}
@@ -491,7 +491,7 @@ class WebRouterConfigurerClassGenerationContext extends AbstractSourceGeneration
 		@Override
 		public StringBuilder visitArray(ArrayType type, TypeGenerationKind kind) {
 			if(kind == null) {
-				return new StringBuilder(WebRouterConfigurerClassGenerationContext.this.getTypesTypeName()).append(".arrayType()").append(this.visit(type.getComponentType(), TypeGenerationKind.COMPONENT)).append(".build()");
+				return new StringBuilder(WebServerControllerConfigurerClassGenerationContext.this.getTypesTypeName()).append(".arrayType()").append(this.visit(type.getComponentType(), TypeGenerationKind.COMPONENT)).append(".build()");
 			}
 			else {
 				StringBuilder result = new StringBuilder();
@@ -521,7 +521,7 @@ class WebRouterConfigurerClassGenerationContext extends AbstractSourceGeneration
 		@Override
 		public StringBuilder visitDeclared(DeclaredType type, TypeGenerationKind kind) {
 			if(kind == null) {
-				StringBuilder result = new StringBuilder(WebRouterConfigurerClassGenerationContext.this.getTypesTypeName()).append(".type(").append(WebRouterConfigurerClassGenerationContext.this.getTypeName(WebRouterConfigurerClassGenerationContext.this.typeUtils.erasure(type))).append(".class)");
+				StringBuilder result = new StringBuilder(WebServerControllerConfigurerClassGenerationContext.this.getTypesTypeName()).append(".type(").append(WebServerControllerConfigurerClassGenerationContext.this.getTypeName(WebServerControllerConfigurerClassGenerationContext.this.typeUtils.erasure(type))).append(".class)");
 				if(type.getEnclosingType() instanceof DeclaredType) {
 					result.append(this.visit(type.getEnclosingType(), TypeGenerationKind.OWNER));
 				}
@@ -553,7 +553,7 @@ class WebRouterConfigurerClassGenerationContext extends AbstractSourceGeneration
 					throw new IllegalStateException("A declared type can't appear as a " + kind + " type");
 				}
 				
-				result.append(WebRouterConfigurerClassGenerationContext.this.getTypeName(WebRouterConfigurerClassGenerationContext.this.typeUtils.erasure(type))).append(".class)");
+				result.append(WebServerControllerConfigurerClassGenerationContext.this.getTypeName(WebServerControllerConfigurerClassGenerationContext.this.typeUtils.erasure(type))).append(".class)");
 				if(type.getEnclosingType() instanceof DeclaredType) {
 					result.append(this.visit(type.getEnclosingType(), TypeGenerationKind.OWNER));
 				}
@@ -622,7 +622,7 @@ class WebRouterConfigurerClassGenerationContext extends AbstractSourceGeneration
 			}
 			
 			if(kind == null) {
-				return new StringBuilder(WebRouterConfigurerClassGenerationContext.this.getTypesTypeName()).append(".type(").append(WebRouterConfigurerClassGenerationContext.this.getVoidTypeName()).append(".class).build()");
+				return new StringBuilder(WebServerControllerConfigurerClassGenerationContext.this.getTypesTypeName()).append(".type(").append(WebServerControllerConfigurerClassGenerationContext.this.getVoidTypeName()).append(".class).build()");
 			}
 			else {
 				StringBuilder result = new StringBuilder();
@@ -643,7 +643,7 @@ class WebRouterConfigurerClassGenerationContext extends AbstractSourceGeneration
 					throw new IllegalStateException("Void type can't appear as a " + kind + " type");
 				}
 				
-				result.append(WebRouterConfigurerClassGenerationContext.this.getVoidTypeName()).append(".class).build()");
+				result.append(WebServerControllerConfigurerClassGenerationContext.this.getVoidTypeName()).append(".class).build()");
 				
 				return result;
 			}

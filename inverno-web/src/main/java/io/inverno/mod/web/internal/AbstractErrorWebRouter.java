@@ -17,6 +17,7 @@ package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.ErrorWebRoute;
 
 /**
@@ -39,7 +40,7 @@ abstract class AbstractErrorWebRouter {
 	 *
 	 * @param route an error web route
 	 */
-	abstract void setRoute(ErrorWebRoute route);
+	abstract void setRoute(ErrorWebRoute<ExchangeContext> route);
 
 	/**
 	 * <p>
@@ -48,7 +49,7 @@ abstract class AbstractErrorWebRouter {
 	 *
 	 * @param route the error web route to enable
 	 */
-	abstract void enableRoute(ErrorWebRoute route);
+	abstract void enableRoute(ErrorWebRoute<ExchangeContext> route);
 
 	/**
 	 * <p>
@@ -57,7 +58,7 @@ abstract class AbstractErrorWebRouter {
 	 *
 	 * @param route the error web route to disable
 	 */
-	abstract void disableRoute(ErrorWebRoute route);
+	abstract void disableRoute(ErrorWebRoute<ExchangeContext> route);
 
 	/**
 	 * <p>
@@ -66,5 +67,5 @@ abstract class AbstractErrorWebRouter {
 	 *
 	 * @param route the error web route to remove
 	 */
-	abstract void removeRoute(ErrorWebRoute route);
+	abstract void removeRoute(ErrorWebRoute<ExchangeContext> route);
 }

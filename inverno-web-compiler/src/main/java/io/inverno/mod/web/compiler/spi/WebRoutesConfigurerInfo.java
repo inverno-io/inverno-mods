@@ -22,7 +22,7 @@ import javax.lang.model.type.TypeMirror;
 
 /**
  * <p>
- * Describes a Web interceptors configurer.
+ * Describes a Web routes configurer.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

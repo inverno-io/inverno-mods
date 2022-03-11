@@ -41,18 +41,20 @@ import io.inverno.mod.http.server.ExchangeContext;
  * @see Route
  * @see ErrorRouter
  *
- * @param <A> the type of exchange handled by the route
- * @param <B> the routable type
- * @param <C> the error route manager type
- * @param <D> the route type
+ * @param <A> the type of the exchange context
+ * @param <B> the type of error exchange handled by the route
+ * @param <C> the routable type
+ * @param <D> the error route manager type
+ * @param <E> the route type
  */
 public interface ErrorRouteManager<
-		A extends ErrorExchange<Throwable>,
-		B extends Routable<ExchangeContext, A, B, C, D>,
-		C extends ErrorRouteManager<A, B, C, D>,
-		D extends Route<ExchangeContext, A>
-		> extends RouteManager<ExchangeContext, A, B, C, D> {
-
+		A extends ExchangeContext,
+		B extends ErrorExchange<A>,
+		C extends Routable<A, B, C, D, E>,
+		D extends ErrorRouteManager<A, B, C, D, E>,
+		E extends Route<A, B>
+	> extends RouteManager<A, B, C, D, E> {
+	
 	/**
 	 * <p>
 	 * Specifies the type of errors accepted by the route.
@@ -64,5 +66,5 @@ public interface ErrorRouteManager<
 	 *
 	 * @see ErrorAware
 	 */
-	C error(Class<? extends Throwable> error);
+	D error(Class<? extends Throwable> error);
 }

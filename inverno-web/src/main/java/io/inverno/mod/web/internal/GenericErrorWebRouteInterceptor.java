@@ -1,3 +1,18 @@
+/*
+ * Copyright 2022 Jeremy KUHN
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.base.net.URIMatcher;
@@ -16,7 +31,15 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-public class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRouteInterceptor {
+/**
+ * <p>
+ * Generic {@link ErrorWebRouteInterceptor} implementation.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.5
+ */
+class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRouteInterceptor<ExchangeContext> {
 
 	private static final Logger LOGGER = LogManager.getLogger(GenericErrorWebRouteInterceptor.class);
 
@@ -34,14 +57,22 @@ public class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRoute
 
 	private Class<? extends Throwable> error;
 
-	private ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>> interceptor;
+	private ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>> interceptor;
 
+	/**
+	 * <p>
+	 * Creates a generic error web route interceptor.
+	 * </p>
+	 *
+	 * @param contentTypeCodec    a content type header codec
+	 * @param acceptLanguageCodec an accept language header codec
+	 */
 	public GenericErrorWebRouteInterceptor(HeaderCodec<? extends Headers.ContentType> contentTypeCodec, HeaderCodec<? extends Headers.AcceptLanguage> acceptLanguageCodec) {
 		this.contentTypeCodec = contentTypeCodec;
 		this.acceptLanguageCodec = acceptLanguageCodec;
 	}
 
-	private GenericErrorWebRouteInterceptor withInterceptor(ExchangeInterceptorWrapper<ExchangeContext, ErrorWebExchange<Throwable>> interceptor) {
+	private GenericErrorWebRouteInterceptor withInterceptor(ExchangeInterceptorWrapper<ExchangeContext, ErrorWebExchange<ExchangeContext>> interceptor) {
 		GenericErrorWebRouteInterceptor clone = this.clone();
 		clone.interceptor = interceptor;
 		return clone;
@@ -75,12 +106,12 @@ public class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRoute
 		this.languageRange = languageRanges.get(0);
 	}
 
-	public void setInterceptor(ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>> interceptor) {
+	public void setInterceptor(ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>> interceptor) {
 		this.interceptor = interceptor;
 	}
 
 	@Override
-	public ErrorWebRouteInterceptor matches(ErrorAware errorAware) {
+	public ErrorWebRouteInterceptor<ExchangeContext> matches(ErrorAware errorAware) {
 		if(this.error != null) {
 			if(errorAware.getError() != null) {
 				if(this.error.isAssignableFrom(errorAware.getError())) {
@@ -101,7 +132,7 @@ public class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRoute
 	}
 
 	@Override
-	public ErrorWebRouteInterceptor matches(PathAware pathAware) {
+	public ErrorWebRouteInterceptor<ExchangeContext> matches(PathAware pathAware) {
 		if(this.path != null) {
 			if(pathAware.getPath() != null) {
 				if(this.path.equals(pathAware.getPath())) {
@@ -153,7 +184,7 @@ public class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRoute
 	}
 
 	@Override
-	public ErrorWebRouteInterceptor matchesContentType(AcceptAware acceptAware) {
+	public ErrorWebRouteInterceptor<ExchangeContext> matchesContentType(AcceptAware acceptAware) {
 		String routeMediaType = acceptAware.getProduce();
 		if(this.produce != null) {
 			if(routeMediaType != null) {
@@ -183,7 +214,7 @@ public class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRoute
 	}
 
 	@Override
-	public ErrorWebRouteInterceptor matchesContentLanguage(AcceptAware acceptAware) {
+	public ErrorWebRouteInterceptor<ExchangeContext> matchesContentLanguage(AcceptAware acceptAware) {
 		String routeLanguageTag = acceptAware.getLanguage();
 		if(this.language != null) {
 			if(routeLanguageTag != null) {
@@ -213,7 +244,7 @@ public class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRoute
 	}
 
 	@Override
-	public ExchangeInterceptor<ExchangeContext, ErrorWebExchange<Throwable>> getInterceptor() {
+	public ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>> getInterceptor() {
 		return this.interceptor;
 	}
 
@@ -292,14 +323,14 @@ public class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRoute
 		return true;
 	}
 
-	private class FilteredErrorExchangeInterceptorWrapper extends ExchangeInterceptorWrapper<ExchangeContext, ErrorWebExchange<Throwable>> {
+	private class FilteredErrorExchangeInterceptorWrapper extends ExchangeInterceptorWrapper<ExchangeContext, ErrorWebExchange<ExchangeContext>> {
 
 		public FilteredErrorExchangeInterceptorWrapper() {
 			super(GenericErrorWebRouteInterceptor.this.interceptor);
 		}
 
 		@Override
-		public Mono<? extends ErrorWebExchange<Throwable>> intercept(ErrorWebExchange<Throwable> exchange) {
+		public Mono<? extends ErrorWebExchange<ExchangeContext>> intercept(ErrorWebExchange<ExchangeContext> exchange) {
 			if(GenericErrorWebRouteInterceptor.this.error.isAssignableFrom(exchange.getError().getClass())) {
 				// Interceptor error is assignable from the exchange error type: the exchange must be intercepted
 				return GenericErrorWebRouteInterceptor.this.interceptor.intercept(exchange);
@@ -309,14 +340,14 @@ public class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRoute
 		}
 	}
 
-	private class FilteredPathExchangeInterceptorWrapper extends ExchangeInterceptorWrapper<ExchangeContext, ErrorWebExchange<Throwable>> {
+	private class FilteredPathExchangeInterceptorWrapper extends ExchangeInterceptorWrapper<ExchangeContext, ErrorWebExchange<ExchangeContext>> {
 
 		public FilteredPathExchangeInterceptorWrapper() {
 			super(GenericErrorWebRouteInterceptor.this.interceptor);
 		}
 
 		@Override
-		public Mono<? extends ErrorWebExchange<Throwable>> intercept(ErrorWebExchange<Throwable> exchange) {
+		public Mono<? extends ErrorWebExchange<ExchangeContext>> intercept(ErrorWebExchange<ExchangeContext> exchange) {
 			String normalizedPath = exchange.request().getPathAbsolute();
 			if(GenericErrorWebRouteInterceptor.this.path != null) {
 				if(GenericErrorWebRouteInterceptor.this.path.equals(normalizedPath)) {

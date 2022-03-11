@@ -32,22 +32,24 @@ import io.inverno.mod.http.server.ExchangeContext;
  * 
  * @see ErrorRouter
  * 
- * @param <A> the type of exchange handled by the route
- * @param <B> the error router type
- * @param <C> the intercepted error router type
- * @param <D> the error route manager type
- * @param <E> the intercepted error route manager type
- * @param <F> the error interceptor manager type
- * @param <G> the interceptable route type
+ * @param <A> the type of the exchange context
+ * @param <B> the type of error exchange handled by the route
+ * @param <C> the error router type
+ * @param <D> the intercepted error router type
+ * @param <E> the error route manager type
+ * @param <F> the intercepted error route manager type
+ * @param <G> the error interceptor manager type
+ * @param <H> the interceptable route type
  */
 public interface ErrorRouterConfigurer<
-		A extends ErrorExchange<Throwable>,
-		B extends ErrorRouter<A, B, C, D, E, F, G>,
-		C extends ErrorInterceptedRouter<A, B, C, D, E, F, G>,
-		D extends ErrorRouteManager<A, B, D, G>,
-		E extends ErrorRouteManager<A, C, E, G>,
-		F extends ErrorInterceptorManager<A, C, F>,
-		G extends InterceptableRoute<ExchangeContext, A>
+		A extends ExchangeContext,
+		B extends ErrorExchange<A>,
+		C extends ErrorRouter<A, B, C, D, E, F, G, H>,
+		D extends ErrorInterceptedRouter<A, B, C, D, E, F, G, H>,
+		E extends ErrorRouteManager<A, B, C, E, H>,
+		F extends ErrorRouteManager<A, B, D, F, H>,
+		G extends ErrorInterceptorManager<A, B, D, G>,
+		H extends InterceptableRoute<A, B>
 	> {
 
 	/**
@@ -57,5 +59,5 @@ public interface ErrorRouterConfigurer<
 	 *
 	 * @param errorRouter the error router to configure
 	 */
-	void configure(B errorRouter);
+	void configure(C errorRouter);
 }

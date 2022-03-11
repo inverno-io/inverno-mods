@@ -49,5 +49,5 @@ module io.inverno.mod.web.compiler {
 	
 	exports io.inverno.mod.web.compiler.spi;
 	
-	provides io.inverno.core.compiler.spi.plugin.CompilerPlugin with io.inverno.mod.web.compiler.internal.WebRouterConfigurerCompilerPlugin;
+	provides io.inverno.core.compiler.spi.plugin.CompilerPlugin with io.inverno.mod.web.compiler.internal.WebServerControllerConfigurerCompilerPlugin;
 }

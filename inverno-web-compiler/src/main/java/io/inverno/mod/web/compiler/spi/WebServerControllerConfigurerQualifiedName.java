@@ -26,11 +26,11 @@ import io.inverno.core.compiler.spi.ModuleQualifiedName;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class WebRouterConfigurerQualifiedName extends BeanQualifiedName {
+public class WebServerControllerConfigurerQualifiedName extends BeanQualifiedName {
 
-	private static final String WEB_ROUTER_CONFIGURER_NAME = "webRouterConfigurer";
+	private static final String WEB_CONTROLLER_CONFIGURER_NAME = "webServerContollerConfigurer";
 	
-	private static final String WEB_ROUTER_CONFIGURER_CLASSNAME = Character.toUpperCase(WEB_ROUTER_CONFIGURER_NAME.charAt(0)) + WEB_ROUTER_CONFIGURER_NAME.substring(1);
+	private static final String WEB_CONTROLLER_CONFIGURER_CLASSNAME = Character.toUpperCase(WEB_CONTROLLER_CONFIGURER_NAME.charAt(0)) + WEB_CONTROLLER_CONFIGURER_NAME.substring(1);
 	
 	private final String className;
 	
@@ -42,9 +42,10 @@ public class WebRouterConfigurerQualifiedName extends BeanQualifiedName {
 	 * 
 	 * @param moduleQName the module qualified name
 	 */
-	public WebRouterConfigurerQualifiedName(ModuleQualifiedName moduleQName) {
-		super(moduleQName, WEB_ROUTER_CONFIGURER_NAME);
-		this.className = this.getModuleQName().getSourcePackageName() + "." + WEB_ROUTER_CONFIGURER_CLASSNAME;
+	public WebServerControllerConfigurerQualifiedName(ModuleQualifiedName moduleQName) {
+		super(moduleQName, WEB_CONTROLLER_CONFIGURER_NAME);
+		this.className = this.getModuleQName().getSourcePackageName() + "." + Character.toUpperCase(moduleQName.getModuleName().charAt(0))
+				+ moduleQName.getModuleName().substring(1)+ "_" + WEB_CONTROLLER_CONFIGURER_CLASSNAME;
 	}
 	
 	/**

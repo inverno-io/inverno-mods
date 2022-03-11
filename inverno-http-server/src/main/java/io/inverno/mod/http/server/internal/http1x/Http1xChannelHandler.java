@@ -19,11 +19,9 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.Part;
-import io.inverno.mod.http.server.RootExchangeHandler;
 import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.Unpooled;
@@ -40,6 +38,7 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
+import io.inverno.mod.http.server.ServerController;
 
 /**
  * <p>
@@ -61,12 +60,11 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	
 	private Http1xExchange exchangeQueue;
 	
-	private RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler;
-	private ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler; 
-	private HeaderService headerService;
-	private ObjectConverter<String> parameterConverter;
-	private MultipartDecoder<Parameter> urlEncodedBodyDecoder; 
-	private MultipartDecoder<Part> multipartBodyDecoder;
+	private final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
+	private final HeaderService headerService;
+	private final ObjectConverter<String> parameterConverter;
+	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder; 
+	private final MultipartDecoder<Part> multipartBodyDecoder;
 	
 	private boolean read;
 	private boolean flush;
@@ -76,22 +74,19 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	 * Creates a HTTP1.x channel handler.
 	 * </p>
 	 * 
-	 * @param rootHandler           the root exchange handler
-	 * @param errorHandler          the error exchange handler
+	 * @param controller           the server controller
 	 * @param headerService         the header service
 	 * @param parameterConverter    a string object converter
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 */
 	public Http1xChannelHandler(
-			RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler, 
-			ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler, 
+			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller,
 			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder) {
-		this.rootHandler = rootHandler;
-		this.errorHandler = errorHandler;
+		this.controller = controller;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
@@ -108,7 +103,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 				this.onDecoderError(ctx, httpRequest);
 				return;
 			}
-			this.requestingExchange = new Http1xExchange(ctx, httpRequest, this, this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.rootHandler, this.errorHandler);
+			this.requestingExchange = new Http1xExchange(ctx, httpRequest, this, this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.controller);
 			if(this.exchangeQueue == null) {
 				this.exchangeQueue = this.requestingExchange;
 				this.requestingExchange.start(this);

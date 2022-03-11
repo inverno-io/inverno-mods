@@ -22,23 +22,22 @@ import reactor.core.publisher.Mono;
  * <p>
  * Exchange handler used to handle error server exchanges.
  * </p>
- * 
+ *
  * <p>
- * The HTTP server relies on an error exchange handler to handle errors thrown
- * during the processing of a client request in order to provide a proper
+ * The HTTP server relies on an error exchange handler to handle errors thrown during the processing of a client request in order to provide a proper
  * response to the client.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
  * @see ErrorExchange
  * @see ExchangeHandler
- * 
- * @param <A> the error type
- * @param <B> the error exchange type handled by the handler 
+ *
+ * @param <A> the type of the exchange context
+ * @param <B> the error exchange type handled by the handler
  */
-public interface ErrorExchangeHandler<A extends Throwable, B extends ErrorExchange<A>> extends ReactiveExchangeHandler<ExchangeContext, B> {
+public interface ErrorExchangeHandler<A extends ExchangeContext, B extends ErrorExchange<A>> extends ReactiveExchangeHandler<A, B> {
 
 	/**
 	 * <p>
@@ -52,18 +51,16 @@ public interface ErrorExchangeHandler<A extends Throwable, B extends ErrorExchan
 	
 	/**
 	 * <p>
-	 * Processes the specified server exchange.
+	 * Processes the specified server error exchange.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The purpose of this method is to eventually inject a {@link ResponseBody} in
-	 * the response which basically completes the exchange
+	 * The purpose of this method is to eventually inject a {@link ResponseBody} in the response which basically completes the exchange.
 	 * </p>
-	 * 
+	 *
 	 * @param exchange the exchange to process
-	 * 
-	 * @throws HttpException if an error occurs during the processing of the
-	 *                       exchange
+	 *
+	 * @throws HttpException if an error occurs during the processing of the exchange
 	 */
 	void handle(B exchange) throws HttpException;
 }

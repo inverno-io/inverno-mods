@@ -16,6 +16,7 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.base.net.URIPattern;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.ErrorWebExchangeHandler;
 import io.inverno.mod.web.ErrorWebRoute;
 import io.inverno.mod.web.ErrorWebRouteManager;
@@ -34,11 +35,11 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericErrorWebRouteManager extends AbstractErrorWebManager<GenericErrorWebRouteManager> implements ErrorWebRouteManager<ErrorWebRouter> {
+class GenericErrorWebRouteManager extends AbstractErrorWebManager<GenericErrorWebRouteManager> implements ErrorWebRouteManager<ExchangeContext, ErrorWebRouter<ExchangeContext>> {
 
 	private final GenericErrorWebRouter router;
 
-	private ErrorWebExchangeHandler<Throwable> handler;
+	private ErrorWebExchangeHandler<ExchangeContext> handler;
 	
 	/**
 	 * <p>
@@ -52,25 +53,25 @@ class GenericErrorWebRouteManager extends AbstractErrorWebManager<GenericErrorWe
 	}
 
 	@Override
-	public ErrorWebRouter enable() {
+	public GenericErrorWebRouter enable() {
 		this.findRoutes().stream().forEach(route -> route.enable());
 		return this.router;
 	}
 
 	@Override
-	public ErrorWebRouter disable() {
+	public GenericErrorWebRouter disable() {
 		this.findRoutes().stream().forEach(route -> route.disable());
 		return this.router;
 	}
 
 	@Override
-	public ErrorWebRouter remove() {
+	public GenericErrorWebRouter remove() {
 		this.findRoutes().stream().forEach(route -> route.remove());
 		return this.router;
 	}
 
 	@Override
-	public Set<ErrorWebRoute> findRoutes() {
+	public Set<ErrorWebRoute<ExchangeContext>> findRoutes() {
 		// TODO Implement filtering in the route extractor
 		return this.router.getRoutes().stream().filter(route -> {
 			// We want all routes that share the same criteria as the one defined in this route manager
@@ -125,9 +126,9 @@ class GenericErrorWebRouteManager extends AbstractErrorWebManager<GenericErrorWe
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public ErrorWebRouter handler(ErrorWebExchangeHandler<? extends Throwable> handler) {
+	public ErrorWebRouter<ExchangeContext> handler(ErrorWebExchangeHandler<? super ExchangeContext> handler) {
 		Objects.requireNonNull(handler);
-		this.handler = (ErrorWebExchangeHandler<Throwable>) handler;
+		this.handler = handler;
 		this.commit();
 		return this.router;
 	}

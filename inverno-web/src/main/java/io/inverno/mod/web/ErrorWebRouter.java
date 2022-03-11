@@ -16,6 +16,7 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.spi.ErrorRouter;
 
 import java.util.List;
@@ -44,11 +45,13 @@ import java.util.List;
  * @see ErrorWebExchangeHandler
  * @see ErrorWebRoute
  * @see ErrorWebRouteManager
+ * 
+ * @param <A> the type of the exchange context
  */
-public interface ErrorWebRouter extends
-	ErrorRouter<ErrorWebExchange<Throwable>, ErrorWebRouter, ErrorWebInterceptedRouter, ErrorWebRouteManager<ErrorWebRouter>, ErrorWebRouteManager<ErrorWebInterceptedRouter>, ErrorWebInterceptorManager<ErrorWebInterceptedRouter>, ErrorWebRoute>,
-	ErrorWebRoutable<ErrorWebRouter>,
-	ErrorWebInterceptable<ErrorWebInterceptedRouter> {
+public interface ErrorWebRouter<A extends ExchangeContext> extends
+	ErrorRouter<A, ErrorWebExchange<A>, ErrorWebRouter<A>, ErrorWebInterceptedRouter<A>, ErrorWebRouteManager<A, ErrorWebRouter<A>>, ErrorWebRouteManager<A, ErrorWebInterceptedRouter<A>>, ErrorWebInterceptorManager<A, ErrorWebInterceptedRouter<A>>, ErrorWebRoute<A>>,
+	ErrorWebRoutable<A, ErrorWebRouter<A>>,
+	ErrorWebInterceptable<A, ErrorWebInterceptedRouter<A>> {
 
 	/**
 	 * <p>
@@ -63,8 +66,9 @@ public interface ErrorWebRouter extends
 	 *
 	 * @return the error web router
 	 */
-	default ErrorWebRouter configure(ErrorWebRouterConfigurer configurer) {
-		configurer.configure(this);
+	@SuppressWarnings("unchecked")
+	default ErrorWebRouter<A> configure(ErrorWebRouterConfigurer<? super A> configurer) {
+		configurer.configure((ErrorWebRouter)this);
 		return this;
 	}
 
@@ -81,9 +85,9 @@ public interface ErrorWebRouter extends
 	 *
 	 * @return the error web router
 	 */
-	default ErrorWebRouter configure(List<ErrorWebRouterConfigurer> configurers) {
+	default ErrorWebRouter<A> configure(List<ErrorWebRouterConfigurer<? super A>> configurers) {
 		if(configurers != null) {
-			for(ErrorWebRouterConfigurer configurer : configurers) {
+			for(ErrorWebRouterConfigurer<? super A> configurer : configurers) {
 				this.configure(configurer);
 			}
 		}

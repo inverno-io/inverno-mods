@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web.internal;
 
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.*;
 
 import java.util.List;
@@ -27,31 +28,31 @@ import java.util.List;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-class GenericErrorWebInterceptableFacade implements ErrorWebInterceptable<GenericErrorWebInterceptableFacade> {
+class GenericErrorWebInterceptableFacade implements ErrorWebInterceptable<ExchangeContext, GenericErrorWebInterceptableFacade> {
 
-	private ErrorWebInterceptedRouter interceptedRouter;
+	private ErrorWebInterceptedRouter<ExchangeContext> interceptedRouter;
 
-	public GenericErrorWebInterceptableFacade(ErrorWebInterceptedRouter initialRouter) {
+	public GenericErrorWebInterceptableFacade(ErrorWebInterceptedRouter<ExchangeContext> initialRouter) {
 		this.interceptedRouter = initialRouter;
 	}
 
-	public ErrorWebInterceptedRouter getInterceptedRouter() {
+	public ErrorWebInterceptedRouter<ExchangeContext> getInterceptedRouter() {
 		return interceptedRouter;
 	}
 
 	@Override
-	public ErrorWebInterceptorManager<GenericErrorWebInterceptableFacade> intercept() {
+	public ErrorWebInterceptorManager<ExchangeContext, GenericErrorWebInterceptableFacade> intercept() {
 		return new ErrorWebInterceptorManagerFacade(this.interceptedRouter.intercept());
 	}
 
 	@Override
-	public GenericErrorWebInterceptableFacade configureInterceptors(ErrorWebInterceptorsConfigurer configurer) {
+	public GenericErrorWebInterceptableFacade configureInterceptors(ErrorWebInterceptorsConfigurer<? super ExchangeContext> configurer) {
 		this.interceptedRouter = this.interceptedRouter.configureInterceptors(configurer);
 		return this;
 	}
 
 	@Override
-	public GenericErrorWebInterceptableFacade configureInterceptors(List<ErrorWebInterceptorsConfigurer> configurers) {
+	public GenericErrorWebInterceptableFacade configureInterceptors(List<ErrorWebInterceptorsConfigurer<? super ExchangeContext>> configurers) {
 		this.interceptedRouter = this.interceptedRouter.configureInterceptors(configurers);
 		return this;
 	}
@@ -65,46 +66,46 @@ class GenericErrorWebInterceptableFacade implements ErrorWebInterceptable<Generi
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.5
 	 */
-	private class ErrorWebInterceptorManagerFacade implements ErrorWebInterceptorManager<GenericErrorWebInterceptableFacade> {
+	private class ErrorWebInterceptorManagerFacade implements ErrorWebInterceptorManager<ExchangeContext, GenericErrorWebInterceptableFacade> {
 
-		private final ErrorWebInterceptorManager<ErrorWebInterceptedRouter> interceptorManager;
+		private final ErrorWebInterceptorManager<ExchangeContext, ErrorWebInterceptedRouter<ExchangeContext>> interceptorManager;
 
-		public ErrorWebInterceptorManagerFacade(ErrorWebInterceptorManager<ErrorWebInterceptedRouter> interceptorManager) {
+		public ErrorWebInterceptorManagerFacade(ErrorWebInterceptorManager<ExchangeContext, ErrorWebInterceptedRouter<ExchangeContext>> interceptorManager) {
 			this.interceptorManager = interceptorManager;
 		}
 
 		@Override
-		public GenericErrorWebInterceptableFacade interceptor(ErrorWebExchangeInterceptor<? extends Throwable> interceptor) {
+		public GenericErrorWebInterceptableFacade interceptor(ErrorWebExchangeInterceptor<? super ExchangeContext> interceptor) {
 			GenericErrorWebInterceptableFacade.this.interceptedRouter = this.interceptorManager.interceptor(interceptor);
 			return GenericErrorWebInterceptableFacade.this;
 		}
 
 		@Override
-		public GenericErrorWebInterceptableFacade interceptors(List<ErrorWebExchangeInterceptor<? extends Throwable>> interceptors) {
+		public GenericErrorWebInterceptableFacade interceptors(List<ErrorWebExchangeInterceptor<? super ExchangeContext>> interceptors) {
 			interceptors.forEach(this::interceptor);
 			return GenericErrorWebInterceptableFacade.this;
 		}
 
 		@Override
-		public ErrorWebInterceptorManager<GenericErrorWebInterceptableFacade> error(Class<? extends Throwable> error) {
+		public ErrorWebInterceptorManager<ExchangeContext, GenericErrorWebInterceptableFacade> error(Class<? extends Throwable> error) {
 			this.interceptorManager.error(error);
 			return this;
 		}
-
+		
 		@Override
-		public ErrorWebInterceptorManager<GenericErrorWebInterceptableFacade> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
+		public ErrorWebInterceptorManager<ExchangeContext, GenericErrorWebInterceptableFacade> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
 			this.interceptorManager.path(path, matchTrailingSlash);
 			return this;
 		}
 
 		@Override
-		public ErrorWebInterceptorManager<GenericErrorWebInterceptableFacade> produces(String mediaRange) {
+		public ErrorWebInterceptorManager<ExchangeContext, GenericErrorWebInterceptableFacade> produces(String mediaRange) {
 			this.interceptorManager.produces(mediaRange);
 			return this;
 		}
 
 		@Override
-		public ErrorWebInterceptorManager<GenericErrorWebInterceptableFacade> language(String languageRange) {
+		public ErrorWebInterceptorManager<ExchangeContext, GenericErrorWebInterceptableFacade> language(String languageRange) {
 			this.interceptorManager.language(languageRange);
 			return this;
 		}

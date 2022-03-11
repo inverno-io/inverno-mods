@@ -116,7 +116,7 @@ import io.inverno.mod.web.compiler.spi.WebRouteInfo;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerationContext<WebRouterConfigurerOpenApiGenerationContext, WebRouterConfigurerOpenApiGenerationContext.GenerationMode> {
+class WebServerControllerConfigurerOpenApiGenerationContext extends AbstractSourceGenerationContext<WebServerControllerConfigurerOpenApiGenerationContext, WebServerControllerConfigurerOpenApiGenerationContext.GenerationMode> {
 
 	protected static final String DEFAULT_INDENT = "    ";
 	
@@ -187,7 +187,7 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 
 	private String indentList;
 	
-	public WebRouterConfigurerOpenApiGenerationContext(Types typeUtils, Elements elementUtils, DocTrees docUtils, GenerationMode mode) {
+	public WebServerControllerConfigurerOpenApiGenerationContext(Types typeUtils, Elements elementUtils, DocTrees docUtils, GenerationMode mode) {
 		super(typeUtils, elementUtils, mode, DEFAULT_INDENT);
 		this.docUtils = docUtils;
 		this.javadocToOpenApi = new JavadocToOpenApi();
@@ -217,7 +217,7 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		this.byteBufType = this.elementUtils.getTypeElement(ByteBuf.class.getCanonicalName()).asType();
 	}
 	
-	private WebRouterConfigurerOpenApiGenerationContext(WebRouterConfigurerOpenApiGenerationContext parentGeneration) {
+	private WebServerControllerConfigurerOpenApiGenerationContext(WebServerControllerConfigurerOpenApiGenerationContext parentGeneration) {
 		super(parentGeneration);
 		this.docUtils = parentGeneration.docUtils;
 		this.javadocToOpenApi = parentGeneration.javadocToOpenApi;
@@ -271,34 +271,34 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 	}
 	
 	@Override
-	public WebRouterConfigurerOpenApiGenerationContext withMode(GenerationMode mode) {
-		WebRouterConfigurerOpenApiGenerationContext context = new WebRouterConfigurerOpenApiGenerationContext(this);
+	public WebServerControllerConfigurerOpenApiGenerationContext withMode(GenerationMode mode) {
+		WebServerControllerConfigurerOpenApiGenerationContext context = new WebServerControllerConfigurerOpenApiGenerationContext(this);
 		context.mode = mode;
 		return context;
 	}
 
 	@Override
-	public WebRouterConfigurerOpenApiGenerationContext withIndentDepth(int indentDepth) {
-		WebRouterConfigurerOpenApiGenerationContext context = new WebRouterConfigurerOpenApiGenerationContext(this);
+	public WebServerControllerConfigurerOpenApiGenerationContext withIndentDepth(int indentDepth) {
+		WebServerControllerConfigurerOpenApiGenerationContext context = new WebServerControllerConfigurerOpenApiGenerationContext(this);
 		context.indentDepth = indentDepth;
 		return context;
 	}
 
 	@Override
-	public WebRouterConfigurerOpenApiGenerationContext withModule(ModuleQualifiedName moduleQualifiedName) {
-		WebRouterConfigurerOpenApiGenerationContext context = new WebRouterConfigurerOpenApiGenerationContext(this);
+	public WebServerControllerConfigurerOpenApiGenerationContext withModule(ModuleQualifiedName moduleQualifiedName) {
+		WebServerControllerConfigurerOpenApiGenerationContext context = new WebServerControllerConfigurerOpenApiGenerationContext(this);
 		context.moduleQualifiedName = moduleQualifiedName;
 		return context;
 	}
 	
-	public WebRouterConfigurerOpenApiGenerationContext withWebRoute(WebRouteInfo webRoute) {
-		WebRouterConfigurerOpenApiGenerationContext context = new WebRouterConfigurerOpenApiGenerationContext(this);
+	public WebServerControllerConfigurerOpenApiGenerationContext withWebRoute(WebRouteInfo webRoute) {
+		WebServerControllerConfigurerOpenApiGenerationContext context = new WebServerControllerConfigurerOpenApiGenerationContext(this);
 		context.webRoute = webRoute;
 		return context;
 	}
 	
-	public WebRouterConfigurerOpenApiGenerationContext withDocElement(Element element) {
-		WebRouterConfigurerOpenApiGenerationContext context = new WebRouterConfigurerOpenApiGenerationContext(this);
+	public WebServerControllerConfigurerOpenApiGenerationContext withDocElement(Element element) {
+		WebServerControllerConfigurerOpenApiGenerationContext context = new WebServerControllerConfigurerOpenApiGenerationContext(this);
 		if(element == null) {
 			context.docCommentTrees = List.of();
 		}
@@ -326,8 +326,8 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		return context;
 	}
 	
-	private WebRouterConfigurerOpenApiGenerationContext withDocMode(DocGenerationMode docMode) {
-		WebRouterConfigurerOpenApiGenerationContext context = new WebRouterConfigurerOpenApiGenerationContext(this);
+	private WebServerControllerConfigurerOpenApiGenerationContext withDocMode(DocGenerationMode docMode) {
+		WebServerControllerConfigurerOpenApiGenerationContext context = new WebServerControllerConfigurerOpenApiGenerationContext(this);
 		if(docMode == DocGenerationMode.DESCRIPTION) {
 			context.docInheritMode = DocGenerationMode.DESCRIPTION;
 		}
@@ -341,26 +341,26 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		return context;
 	}
 	
-	private WebRouterConfigurerOpenApiGenerationContext withDocCommentTrees(List<DocCommentTree> docCommentTrees) {
-		WebRouterConfigurerOpenApiGenerationContext context = new WebRouterConfigurerOpenApiGenerationContext(this);
+	private WebServerControllerConfigurerOpenApiGenerationContext withDocCommentTrees(List<DocCommentTree> docCommentTrees) {
+		WebServerControllerConfigurerOpenApiGenerationContext context = new WebServerControllerConfigurerOpenApiGenerationContext(this);
 		context.docCommentTrees = docCommentTrees;
 		return context;
 	}
 	
-	private WebRouterConfigurerOpenApiGenerationContext withDocParameterName(String parameterName) {
-		WebRouterConfigurerOpenApiGenerationContext context = new WebRouterConfigurerOpenApiGenerationContext(this);
+	private WebServerControllerConfigurerOpenApiGenerationContext withDocParameterName(String parameterName) {
+		WebServerControllerConfigurerOpenApiGenerationContext context = new WebServerControllerConfigurerOpenApiGenerationContext(this);
 		context.docParameterName = parameterName;
 		return context;
 	}
 	
-	private WebRouterConfigurerOpenApiGenerationContext withDocExceptionName(String exceptionName) {
-		WebRouterConfigurerOpenApiGenerationContext context = new WebRouterConfigurerOpenApiGenerationContext(this);
+	private WebServerControllerConfigurerOpenApiGenerationContext withDocExceptionName(String exceptionName) {
+		WebServerControllerConfigurerOpenApiGenerationContext context = new WebServerControllerConfigurerOpenApiGenerationContext(this);
 		context.docExceptionName = exceptionName;
 		return context;
 	}
 	
-	private WebRouterConfigurerOpenApiGenerationContext withSchemaOptions(SchemaGenerationOptions schemaOptions) {
-		WebRouterConfigurerOpenApiGenerationContext context = new WebRouterConfigurerOpenApiGenerationContext(this);
+	private WebServerControllerConfigurerOpenApiGenerationContext withSchemaOptions(SchemaGenerationOptions schemaOptions) {
+		WebServerControllerConfigurerOpenApiGenerationContext context = new WebServerControllerConfigurerOpenApiGenerationContext(this);
 		context.schemaOptions = schemaOptions;
 		return context;
 	}
@@ -626,10 +626,10 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		return Optional.of(result).filter(sb -> sb.length() > 0);
 	}
 	
-	private static class JavadocToOpenApi implements DocTreeVisitor<StringBuilder, WebRouterConfigurerOpenApiGenerationContext> {
+	private static class JavadocToOpenApi implements DocTreeVisitor<StringBuilder, WebServerControllerConfigurerOpenApiGenerationContext> {
 
 		@Override
-		public StringBuilder visitAttribute(AttributeTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitAttribute(AttributeTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			if(context.docMode == DocGenerationMode.RICH_TEXT) {
 				return new StringBuilder(node.getName().toString()).append("=\"").append(node.getValue().stream().map(docTree -> docTree.accept(this, context.withDocMode(DocGenerationMode.PLAIN_TEXT))).collect(context.joining())).append("\"");
 			}
@@ -637,7 +637,7 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitAuthor(AuthorTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitAuthor(AuthorTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			if(context.docMode == DocGenerationMode.CONTACT) {
 				StringBuilder result = new StringBuilder();
 				StringBuilder nameBuilder = new StringBuilder(context.indent(1)).append("name: '");
@@ -671,18 +671,18 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitComment(CommentTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitComment(CommentTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			// HTML comment
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitDeprecated(DeprecatedTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitDeprecated(DeprecatedTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitDocComment(DocCommentTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitDocComment(DocCommentTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			if(context.docMode == DocGenerationMode.SUMMARY) {
 				return new StringBuilder().append("'").append(node.getFirstSentence().stream().map(docTree -> docTree.accept(this, context.withDocMode(DocGenerationMode.PLAIN_TEXT))).collect(context.joining())).append("'");
 			}
@@ -703,12 +703,12 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitDocRoot(DocRootTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitDocRoot(DocRootTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitEndElement(EndElementTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitEndElement(EndElementTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			if(context.docMode == DocGenerationMode.RICH_TEXT) {
 				return new StringBuilder("</").append(node.getName().toString()).append(">");
 			}
@@ -716,33 +716,33 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitEntity(EntityTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitEntity(EntityTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder(node.getName().toString());
 		}
 
 		@Override
-		public StringBuilder visitErroneous(ErroneousTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitErroneous(ErroneousTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitHidden(HiddenTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitHidden(HiddenTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitIdentifier(IdentifierTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitIdentifier(IdentifierTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			// TODO seems to be the identifier after the @parameter tag for instance
 			return new StringBuilder(node.getName().toString());
 		}
 
 		@Override
-		public StringBuilder visitIndex(IndexTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitIndex(IndexTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitInheritDoc(InheritDocTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitInheritDoc(InheritDocTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			// This basically just indicates that the doc is inherited but it doesn't provide anything...
 			// We could maybe navigate here in the type hierarchy but this would require to have:
 			// - the executable element for a method description
@@ -815,7 +815,7 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitLink(LinkTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitLink(LinkTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			// {@link reference label} 
 			StringBuilder result = new StringBuilder();
 			if(node.getLabel().isEmpty()) {
@@ -828,13 +828,13 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitLiteral(LiteralTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitLiteral(LiteralTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			// {@literal a<b>c}
 			return node.getBody().accept(this, context);
 		}
 
 		@Override
-		public StringBuilder visitParam(ParamTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitParam(ParamTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			if(context.docMode == DocGenerationMode.PARAMETER) {
 				return new StringBuilder("'").append(node.getDescription().stream().map(docTree -> docTree.accept(this, context.withDocParameterName(node.getName().toString()).withDocMode(DocGenerationMode.RICH_TEXT))).collect(context.joining())).append("'");
 			}
@@ -842,17 +842,17 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitProvides(ProvidesTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitProvides(ProvidesTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitReference(ReferenceTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitReference(ReferenceTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitReturn(ReturnTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitReturn(ReturnTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			if(context.docMode == DocGenerationMode.RESPONSE) {
 				// @return {@inverno.web.status 201} dslgdfjgdf {@inverno.web.status 200} dslgdfjgdf
 				StringBuilder result = new StringBuilder();
@@ -867,32 +867,32 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitSee(SeeTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitSee(SeeTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitSerial(SerialTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitSerial(SerialTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitSerialData(SerialDataTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitSerialData(SerialDataTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitSerialField(SerialFieldTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitSerialField(SerialFieldTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitSince(SinceTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitSince(SinceTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitStartElement(StartElementTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitStartElement(StartElementTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			if(context.docMode == DocGenerationMode.RICH_TEXT) {
 				StringBuilder result = new StringBuilder();
 				result.append("<").append(node.getName().toString());
@@ -913,12 +913,12 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitText(TextTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitText(TextTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder().append(node.getBody().replace("\'", "''"));
 		}
 
 		@Override
-		public StringBuilder visitThrows(ThrowsTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitThrows(ThrowsTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			if(context.docMode == DocGenerationMode.RESPONSE) {
 				// @throws Exception {@inverno.web.status 500} dsfdg
 				StringBuilder result = new StringBuilder();
@@ -933,12 +933,12 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitUnknownBlockTag(UnknownBlockTagTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitUnknownBlockTag(UnknownBlockTagTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitUnknownInlineTag(UnknownInlineTagTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitUnknownInlineTag(UnknownInlineTagTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			if(context.docMode == DocGenerationMode.RESPONSE) {
 				if(node.getTagName().equalsIgnoreCase("inverno.web.status")) {
 					// TODO support reference?: {@inverno.web.status Status#UNSUPPORTED_MEDIA_TYPE}
@@ -949,17 +949,17 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitUses(UsesTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitUses(UsesTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitValue(ValueTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitValue(ValueTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitVersion(VersionTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitVersion(VersionTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			if(context.docMode == DocGenerationMode.VERSION) {
 				return new StringBuilder().append("'").append(node.getBody().stream().map(docTree -> docTree.accept(this, context.withDocMode(DocGenerationMode.PLAIN_TEXT))).collect(Collectors.joining())).append("'");
 			}
@@ -967,15 +967,15 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitOther(DocTree node, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitOther(DocTree node, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 	}
 	
-	private static class OpenApiSchemaGenerator implements TypeVisitor<StringBuilder, WebRouterConfigurerOpenApiGenerationContext> {
+	private static class OpenApiSchemaGenerator implements TypeVisitor<StringBuilder, WebServerControllerConfigurerOpenApiGenerationContext> {
 
 		@Override
-		public StringBuilder visit(TypeMirror type, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visit(TypeMirror type, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			Objects.requireNonNull(type, "type");
 			if(type instanceof PrimitiveType) {
 				return this.visitPrimitive((PrimitiveType)type, context);
@@ -999,7 +999,7 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitPrimitive(PrimitiveType type, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitPrimitive(PrimitiveType type, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			Objects.requireNonNull(type, "type");
 			StringBuilder result = new StringBuilder();
 			if(context.schemaOptions.inList) {
@@ -1036,12 +1036,12 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitNull(NullType type, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitNull(NullType type, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitArray(ArrayType type, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitArray(ArrayType type, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			Objects.requireNonNull(type, "type");
 			StringBuilder result = new StringBuilder();
 			if(context.schemaOptions.inList) {
@@ -1066,7 +1066,7 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitDeclared(DeclaredType type, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitDeclared(DeclaredType type, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			Objects.requireNonNull(type, "type");
 			
 			try {
@@ -1287,12 +1287,12 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitError(ErrorType type, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitError(ErrorType type, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitTypeVariable(TypeVariable type, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitTypeVariable(TypeVariable type, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			Objects.requireNonNull(type, "type");
 			if(type.getLowerBound() != null && type.getLowerBound().getKind() != TypeKind.NULL) {
 				return this.visit(type.getLowerBound(), context);
@@ -1311,7 +1311,7 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitWildcard(WildcardType type, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitWildcard(WildcardType type, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			Objects.requireNonNull(type, "type");
 			if(type.getExtendsBound() != null) {
 				return this.visit(type.getExtendsBound(), context);
@@ -1330,22 +1330,22 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitExecutable(ExecutableType t, WebRouterConfigurerOpenApiGenerationContext p) {
+		public StringBuilder visitExecutable(ExecutableType t, WebServerControllerConfigurerOpenApiGenerationContext p) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitNoType(NoType t, WebRouterConfigurerOpenApiGenerationContext p) {
+		public StringBuilder visitNoType(NoType t, WebServerControllerConfigurerOpenApiGenerationContext p) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitUnknown(TypeMirror t, WebRouterConfigurerOpenApiGenerationContext p) {
+		public StringBuilder visitUnknown(TypeMirror t, WebServerControllerConfigurerOpenApiGenerationContext p) {
 			return new StringBuilder();
 		}
 
 		@Override
-		public StringBuilder visitUnion(UnionType type, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitUnion(UnionType type, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			Objects.requireNonNull(type, "type");
 			StringBuilder result = new StringBuilder();
 			if(context.schemaOptions.inList) {
@@ -1359,7 +1359,7 @@ class WebRouterConfigurerOpenApiGenerationContext extends AbstractSourceGenerati
 		}
 
 		@Override
-		public StringBuilder visitIntersection(IntersectionType type, WebRouterConfigurerOpenApiGenerationContext context) {
+		public StringBuilder visitIntersection(IntersectionType type, WebServerControllerConfigurerOpenApiGenerationContext context) {
 			StringBuilder result = new StringBuilder();
 			if(context.schemaOptions.inList) {
 				result.append(context.indentList(0));

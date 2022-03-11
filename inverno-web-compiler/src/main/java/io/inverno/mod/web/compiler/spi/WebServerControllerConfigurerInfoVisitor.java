@@ -27,19 +27,19 @@ package io.inverno.mod.web.compiler.spi;
  * @param <R> the visitor result type
  * @param <P> the visitor parameter type
  */
-public interface WebRouterConfigurerInfoVisitor<R, P> {
+public interface WebServerControllerConfigurerInfoVisitor<R, P> {
 
 	/**
 	 * <p>
-	 * Visits web router configurer info.
+	 * Visits web server controller configurer info.
 	 * </p>
 	 *
-	 * @param routerConfigurerInfo the info to visit
-	 * @param p                    a visitor parameter
+	 * @param controllerConfigurerInfo the info to visit
+	 * @param p					       a visitor parameter
 	 *
 	 * @return a visitor result
 	 */
-	R visit(WebRouterConfigurerInfo routerConfigurerInfo, P p);
+	R visit(WebServerControllerConfigurerInfo controllerConfigurerInfo, P p);
 
 	/**
 	 * <p>
@@ -67,16 +67,52 @@ public interface WebRouterConfigurerInfoVisitor<R, P> {
 
 	/**
 	 * <p>
-	 * Visits web provided router configurer info.
+	 * Visits web router configurer info.
 	 * </p>
 	 *
-	 * @param providedRouterConfigurerInfo the info to visit
-	 * @param p                            a visitor parameter
+	 * @param routerConfigurerInfo the info to visit
+	 * @param p                    a visitor parameter
 	 *
 	 * @return a visitor result
 	 */
-	R visit(WebProvidedRouterConfigurerInfo providedRouterConfigurerInfo, P p);
+	R visit(WebRouterConfigurerInfo routerConfigurerInfo, P p);
+	
+	/**
+	 * <p>
+	 * Visits error web interceptors configurer info.
+	 * </p>
+	 *
+	 * @param errorInterceptorsConfigurerInfo the info to visit
+	 * @param p                               a visitor parameter
+	 *
+	 * @return a visitor result
+	 */
+	R visit(ErrorWebInterceptorsConfigurerInfo errorInterceptorsConfigurerInfo, P p);
 
+	/**
+	 * <p>
+	 * Visits error web routes configurer info.
+	 * </p>
+	 *
+	 * @param errorRoutesConfigurerInfo the info to visit
+	 * @param p                         a visitor parameter
+	 *
+	 * @return a visitor result
+	 */
+	R visit(ErrorWebRoutesConfigurerInfo errorRoutesConfigurerInfo, P p);
+
+	/**
+	 * <p>
+	 * Visits error web router configurer info.
+	 * </p>
+	 *
+	 * @param errorRouterConfigurerInfo the info to visit
+	 * @param p                         a visitor parameter
+	 *
+	 * @return a visitor result
+	 */
+	R visit(ErrorWebRouterConfigurerInfo errorRouterConfigurerInfo, P p);
+	
 	/**
 	 * <p>
 	 * Visits web controller info.

@@ -25,27 +25,17 @@ import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.web.spi.Route;
-import io.inverno.mod.web.WebConfiguration;
 import io.inverno.mod.web.WebRoute;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public class GenericWebRouterTest {
-
-	private static final WebConfiguration CONFIGURATION = new WebConfiguration() {
-		@Override
-		public HttpServerConfiguration http_server() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-	};
 	
 	@Test
 	public void testGetRoutes() {
-		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.route().consumes(MediaTypes.APPLICATION_JSON).consumes(MediaTypes.TEXT_HTML).handler(exhange -> {})
 			.route().method(Method.GET).method(Method.POST).language("fr-FR").language("en-US").handler(exhange -> {})
@@ -119,7 +109,7 @@ public class GenericWebRouterTest {
 	
 	@Test
 	public void testFindRoutes() {
-		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.route().consumes(MediaTypes.APPLICATION_JSON).consumes(MediaTypes.TEXT_HTML).handler(exhange -> {})
 			.route().method(Method.GET).method(Method.POST).language("fr-FR").language("en-US").handler(exhange -> {})
@@ -158,7 +148,7 @@ public class GenericWebRouterTest {
 	
 	@Test
 	public void testRouteRemove() {
-		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.route().consumes(MediaTypes.APPLICATION_JSON).consumes(MediaTypes.TEXT_HTML).handler(exhange -> {})
 			.route().method(Method.GET).method(Method.POST).language("fr-FR").language("en-US").handler(exhange -> {})
@@ -181,7 +171,7 @@ public class GenericWebRouterTest {
 	
 	@Test
 	public void testRouteEnableDisable() {
-		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.route().consumes(MediaTypes.APPLICATION_JSON).consumes(MediaTypes.TEXT_HTML).handler(exhange -> {})
 			.route().method(Method.GET).method(Method.POST).language("fr-FR").language("en-US").handler(exhange -> {})
@@ -214,7 +204,7 @@ public class GenericWebRouterTest {
 	
 	@Test
 	public void testMixPathroute() {
-		GenericWebRouter router = new GenericWebRouter(CONFIGURATION, null, null, null);
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
 			.route()
 				.path("/hello", true)

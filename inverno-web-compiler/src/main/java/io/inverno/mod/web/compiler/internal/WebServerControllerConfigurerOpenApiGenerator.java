@@ -28,8 +28,11 @@ import javax.lang.model.type.TypeMirror;
 
 import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.base.resource.MediaTypes;
-import io.inverno.mod.web.compiler.internal.WebRouterConfigurerOpenApiGenerationContext.GenerationMode;
-import io.inverno.mod.web.compiler.internal.WebRouterConfigurerOpenApiGenerationContext.ResponseSpec;
+import io.inverno.mod.web.compiler.internal.WebServerControllerConfigurerOpenApiGenerationContext.GenerationMode;
+import io.inverno.mod.web.compiler.internal.WebServerControllerConfigurerOpenApiGenerationContext.ResponseSpec;
+import io.inverno.mod.web.compiler.spi.ErrorWebInterceptorsConfigurerInfo;
+import io.inverno.mod.web.compiler.spi.ErrorWebRouterConfigurerInfo;
+import io.inverno.mod.web.compiler.spi.ErrorWebRoutesConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebBasicParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebControllerInfo;
 import io.inverno.mod.web.compiler.spi.WebCookieParameterInfo;
@@ -40,40 +43,40 @@ import io.inverno.mod.web.compiler.spi.WebHeaderParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebInterceptorsConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebPathParameterInfo;
-import io.inverno.mod.web.compiler.spi.WebProvidedRouterConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebQueryParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebRequestBodyParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebResponseBodyInfo;
 import io.inverno.mod.web.compiler.spi.WebRouteInfo;
-import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
-import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfoVisitor;
 import io.inverno.mod.web.compiler.spi.WebSseEventFactoryParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebRequestBodyParameterInfo.RequestBodyKind;
 import io.inverno.mod.web.compiler.spi.WebRoutesConfigurerInfo;
+import io.inverno.mod.web.compiler.spi.WebServerControllerConfigurerInfo;
+import io.inverno.mod.web.compiler.spi.WebServerControllerConfigurerInfoVisitor;
+import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
 
 /**
  * <p>
- * A {@link WebRouterConfigurerInfoVisitor} implementation used to generates an
+ * A {@link WebServerControllerConfigurerInfoVisitor} implementation used to generates an
  * Open API specification for the web controllers defined in an Inverno module.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class WebRouterConfigurerOpenApiGenerator implements WebRouterConfigurerInfoVisitor<StringBuilder, WebRouterConfigurerOpenApiGenerationContext> {
+class WebServerControllerConfigurerOpenApiGenerator implements WebServerControllerConfigurerInfoVisitor<StringBuilder, WebServerControllerConfigurerOpenApiGenerationContext> {
 	
 	private static final String OPENAPI_VERSION = "3.0.3";
 	
 	@Override
-	public StringBuilder visit(WebRouterConfigurerInfo routerConfigurerInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(WebServerControllerConfigurerInfo routerConfigurerInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTER_SPEC) {
 			StringBuilder result = new StringBuilder();
 			
-			result.append("openapi: ").append(WebRouterConfigurerOpenApiGenerator.OPENAPI_VERSION).append(System.lineSeparator());
+			result.append("openapi: ").append(WebServerControllerConfigurerOpenApiGenerator.OPENAPI_VERSION).append(System.lineSeparator());
 			result.append("info:").append(System.lineSeparator());
 			result.append(context.indent(1)).append("title: '").append(routerConfigurerInfo.getQualifiedName().getModuleQName().toString()).append("'").append(System.lineSeparator());
 			
-			WebRouterConfigurerOpenApiGenerationContext dctContext = context.withDocElement(routerConfigurerInfo.getElement());
+			WebServerControllerConfigurerOpenApiGenerationContext dctContext = context.withDocElement(routerConfigurerInfo.getElement());
 			
 			dctContext.withIndentDepthAdd(1).getDescription().ifPresent(description -> result.append(context.indent(1)).append("description: ").append(description).append(System.lineSeparator()));
 			dctContext.withIndentDepthAdd(1).getContact().ifPresent(contact -> result.append(context.indent(1)).append("contact: ").append(System.lineSeparator()).append(contact).append(System.lineSeparator()));
@@ -136,29 +139,44 @@ class WebRouterConfigurerOpenApiGenerator implements WebRouterConfigurerInfoVisi
 	}
 
 	@Override
-	public StringBuilder visit(WebInterceptorsConfigurerInfo interceptorsConfigurerInfo, WebRouterConfigurerOpenApiGenerationContext p) {
+	public StringBuilder visit(WebInterceptorsConfigurerInfo interceptorsConfigurerInfo, WebServerControllerConfigurerOpenApiGenerationContext p) {
 		return new StringBuilder();
 	}
 
 	@Override
-	public StringBuilder visit(WebRoutesConfigurerInfo routesConfigurerInfo, WebRouterConfigurerOpenApiGenerationContext p) {
+	public StringBuilder visit(WebRoutesConfigurerInfo routesConfigurerInfo, WebServerControllerConfigurerOpenApiGenerationContext p) {
 		// Does it really make sense to generate spec since we have neither access to request parameters or body nor to responses 
 		return new StringBuilder();
 	}
 
 	@Override
-	public StringBuilder visit(WebProvidedRouterConfigurerInfo providedRouterConfigurerInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(WebRouterConfigurerInfo providedRouterConfigurerInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		// Does it really make sense to generate spec since we have neither access to request parameters or body nor to responses 
 		return new StringBuilder();
 	}
 
 	@Override
-	public StringBuilder visit(WebControllerInfo controllerInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(ErrorWebInterceptorsConfigurerInfo errorInterceptorsConfigurerInfo, WebServerControllerConfigurerOpenApiGenerationContext p) {
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(ErrorWebRoutesConfigurerInfo errorRoutesConfigurerInfo, WebServerControllerConfigurerOpenApiGenerationContext p) {
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(ErrorWebRouterConfigurerInfo errorRouterConfigurerInfo, WebServerControllerConfigurerOpenApiGenerationContext p) {
+		return new StringBuilder();
+	}
+	
+	@Override
+	public StringBuilder visit(WebControllerInfo controllerInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		if(context.getMode() == GenerationMode.CONTROLLER_TAG) {
 			StringBuilder result = new StringBuilder();
 			result.append(context.indentList(0)).append("name: '").append(controllerInfo.getQualifiedName().getSimpleValue()).append("'");
 			
-			WebRouterConfigurerOpenApiGenerationContext dctContext = context.withDocElement(controllerInfo.getElement());
+			WebServerControllerConfigurerOpenApiGenerationContext dctContext = context.withDocElement(controllerInfo.getElement());
 			dctContext.getDescription().ifPresent(description -> result.append(System.lineSeparator()).append(context.indent(0)).append("description: ").append(description));
 
 			return result;
@@ -167,7 +185,7 @@ class WebRouterConfigurerOpenApiGenerator implements WebRouterConfigurerInfoVisi
 	}
 
 	@Override
-	public StringBuilder visit(WebRouteInfo routeInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(WebRouteInfo routeInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_PATH) {
 			// tags, operationId, summary, description, responses, parameters, requestBody
 			StringBuilder operation = new StringBuilder();
@@ -175,7 +193,7 @@ class WebRouterConfigurerOpenApiGenerator implements WebRouterConfigurerInfoVisi
 			operation.append(context.indent(1)).append("tags: ");
 			routeInfo.getController().ifPresent(controller -> operation.append(System.lineSeparator()).append(context.indentList(2)).append(controller.getQualifiedName().getSimpleValue()));
 			
-			WebRouterConfigurerOpenApiGenerationContext dctContext = routeInfo.getElement().map(context::withDocElement).orElse(context);
+			WebServerControllerConfigurerOpenApiGenerationContext dctContext = routeInfo.getElement().map(context::withDocElement).orElse(context);
 			dctContext.getSummary().ifPresent(summary -> operation.append(System.lineSeparator()).append(context.indent(1)).append("summary: ").append(summary));
 			dctContext.getDescription().ifPresent(description -> operation.append(System.lineSeparator()).append(context.indent(1)).append("description: ").append(description));
 			routeInfo.getElement().filter(element -> context.getElementUtils().isDeprecated(element)).ifPresent(element -> operation.append(System.lineSeparator()).append(context.indent(1)).append("deprecated: true"));
@@ -324,12 +342,12 @@ class WebRouterConfigurerOpenApiGenerator implements WebRouterConfigurerInfoVisi
 	}
 
 	@Override
-	public StringBuilder visit(WebResponseBodyInfo responseBodyInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(WebResponseBodyInfo responseBodyInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		return new StringBuilder();
 	}
 
 	@Override
-	public StringBuilder visit(WebParameterInfo parameterInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(WebParameterInfo parameterInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		if(parameterInfo instanceof WebFormParameterInfo) {
 			return this.visit((WebFormParameterInfo)parameterInfo, context);
 		}
@@ -349,7 +367,7 @@ class WebRouterConfigurerOpenApiGenerator implements WebRouterConfigurerInfoVisi
 	}
 
 	@Override
-	public StringBuilder visit(WebBasicParameterInfo basicParameterInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(WebBasicParameterInfo basicParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_PARAMETER) {
 			StringBuilder result = new StringBuilder();
 			
@@ -389,12 +407,12 @@ class WebRouterConfigurerOpenApiGenerator implements WebRouterConfigurerInfoVisi
 	}
 
 	@Override
-	public StringBuilder visit(WebCookieParameterInfo cookieParameterInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(WebCookieParameterInfo cookieParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		return this.visit((WebBasicParameterInfo)cookieParameterInfo, context);
 	}
 
 	@Override
-	public StringBuilder visit(WebFormParameterInfo formParameterInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(WebFormParameterInfo formParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_BODY) {
 			StringBuilder result = new StringBuilder();
 			
@@ -410,22 +428,22 @@ class WebRouterConfigurerOpenApiGenerator implements WebRouterConfigurerInfoVisi
 	}
 
 	@Override
-	public StringBuilder visit(WebHeaderParameterInfo headerParameterInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(WebHeaderParameterInfo headerParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		return this.visit((WebBasicParameterInfo)headerParameterInfo, context);
 	}
 
 	@Override
-	public StringBuilder visit(WebPathParameterInfo pathParameterInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(WebPathParameterInfo pathParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		return this.visit((WebBasicParameterInfo)pathParameterInfo, context);
 	}
 
 	@Override
-	public StringBuilder visit(WebQueryParameterInfo queryParameterInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(WebQueryParameterInfo queryParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		return this.visit((WebBasicParameterInfo)queryParameterInfo, context);
 	}
 
 	@Override
-	public StringBuilder visit(WebRequestBodyParameterInfo bodyParameterInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(WebRequestBodyParameterInfo bodyParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_BODY) {
 			StringBuilder result = new StringBuilder();
 			WebRouteInfo routeInfo = context.getWebRoute();
@@ -460,17 +478,17 @@ class WebRouterConfigurerOpenApiGenerator implements WebRouterConfigurerInfoVisi
 	}
 
 	@Override
-	public StringBuilder visit(WebExchangeParameterInfo exchangeParameterInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(WebExchangeParameterInfo exchangeParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		return new StringBuilder();
 	}
 	
 	@Override
-	public StringBuilder visit(WebExchangeContextParameterInfo exchangeContextParameterInfo, WebRouterConfigurerOpenApiGenerationContext p) {
+	public StringBuilder visit(WebExchangeContextParameterInfo exchangeContextParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext p) {
 		return new StringBuilder();
 	}
 	
 	@Override
-	public StringBuilder visit(WebSseEventFactoryParameterInfo sseEventFactoryParameterInfo, WebRouterConfigurerOpenApiGenerationContext context) {
+	public StringBuilder visit(WebSseEventFactoryParameterInfo sseEventFactoryParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
 		return new StringBuilder();
 	}
 }

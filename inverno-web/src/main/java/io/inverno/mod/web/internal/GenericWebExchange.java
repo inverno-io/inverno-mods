@@ -52,13 +52,14 @@ class GenericWebExchange implements WebExchange<ExchangeContext> {
 	 * 
 	 * @param request           a web request
 	 * @param response          a web response
+	 * @param context           the exchange context
 	 * @param finalizerSupplier the deferred exchange finalizer
 	 */
-	public GenericWebExchange(GenericWebRequest request, GenericWebResponse response, Function<Mono<Void>, Exchange<ExchangeContext>> finalizerConsumer, ExchangeContext context) {
+	public GenericWebExchange(GenericWebRequest request, GenericWebResponse response, ExchangeContext context, Function<Mono<Void>, Exchange<ExchangeContext>> finalizerConsumer) {
 		this.request = request;
 		this.response = response;
-		this.finalizerConsumer = finalizerConsumer;
 		this.context = context;
+		this.finalizerConsumer = finalizerConsumer;
 	}
 
 	@Override

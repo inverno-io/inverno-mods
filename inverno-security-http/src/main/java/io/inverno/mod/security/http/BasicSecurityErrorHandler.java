@@ -5,10 +5,11 @@ import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.ErrorExchangeHandler;
+import io.inverno.mod.http.server.ExchangeContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 
-public class BasicSecurityErrorHandler<A extends Throwable, B extends ErrorExchange<A>> implements ErrorExchangeHandler<A, B> {
+public class BasicSecurityErrorHandler<A extends ExchangeContext, B extends ErrorExchange<A>> implements ErrorExchangeHandler<A, B> {
 
 	/**
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc7617#section-2">RFC 7617 Section 2</a>

@@ -17,24 +17,24 @@ package io.inverno.mod.web.compiler.internal;
 
 import io.inverno.core.compiler.spi.BeanInfo;
 import io.inverno.core.compiler.spi.support.AbstractInfo;
+import io.inverno.mod.web.compiler.spi.ErrorWebRouterConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebConfigurerQualifiedName;
-import io.inverno.mod.web.compiler.spi.WebInterceptorsConfigurerInfo;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 
 /**
  * <p>
- * Generic {@link WebInterceptorsConfigurerInfo} implementation.
+ * Generic {@link ErrorWebRouterConfigurerInfo} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.3
+ * @since 1.5
  * 
  * @see AbstractInfo
  */
-public class GenericWebInterceptorsConfigurerInfo extends AbstractInfo<WebConfigurerQualifiedName> implements WebInterceptorsConfigurerInfo {
-
+public class GenericErrorWebRouterConfigurerInfo extends AbstractInfo<WebConfigurerQualifiedName> implements ErrorWebRouterConfigurerInfo {
+	
 	private final TypeElement element;
 	
 	private final DeclaredType type;
@@ -43,15 +43,15 @@ public class GenericWebInterceptorsConfigurerInfo extends AbstractInfo<WebConfig
 	
 	/**
 	 * <p>
-	 * Creates a generic web interceptors configurer info.
+	 * Creates a generic error web router configurer info.
 	 * </p>
 	 *
-	 * @param element     the type element of the interceptors configurer
+	 * @param element     the type element of the router configurer
 	 * @param name        the configurer qualified name
 	 * @param bean        the configurer bean info
-	 * @param contextType the exchange context type required by the configured interceptors
+	 * @param contextType the exchange context type required by the configured routes
 	 */
-	public GenericWebInterceptorsConfigurerInfo(TypeElement element, WebConfigurerQualifiedName name, BeanInfo bean, TypeMirror contextType) {
+	public GenericErrorWebRouterConfigurerInfo(TypeElement element, WebConfigurerQualifiedName name, BeanInfo bean, TypeMirror contextType) {
 		super(name, bean);
 		this.element = element;
 		this.type = (DeclaredType)bean.getType();
@@ -62,12 +62,12 @@ public class GenericWebInterceptorsConfigurerInfo extends AbstractInfo<WebConfig
 	public TypeElement getElement() {
 		return this.element;
 	}
-
+	
 	@Override
 	public DeclaredType getType() {
 		return this.type;
 	}
-
+	
 	@Override
 	public TypeMirror getContextType() {
 		return this.contextType;

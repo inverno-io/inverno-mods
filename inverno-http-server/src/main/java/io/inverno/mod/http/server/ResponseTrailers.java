@@ -25,14 +25,13 @@ import io.inverno.mod.http.base.header.Header;
 
 /**
  * <p>
- * Represents the HTTP trailers of a server response in a server exchange as
- * defined by <a href="https://tools.ietf.org/html/rfc7230#section-4.3">RFC 7230
- * Section 4.3</a>.
+ * Represents the HTTP trailers of a server response in a server exchange as defined by <a href="https://tools.ietf.org/html/rfc7230#section-4.3">RFC
+ * 7230 Section 4.3</a>.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see Response
  */
 public interface ResponseTrailers {
@@ -130,16 +129,14 @@ public interface ResponseTrailers {
 	 * <p>
 	 * Returns the value of the trailer with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * If there are multiple trailers with the same name, this method returns the
-	 * first one.
+	 * If there are multiple trailers with the same name, this method returns the first one.
 	 * </p>
-	 * 
+	 *
 	 * @param name a trailer name
-	 * 
-	 * @return an optional returning the value of the trailer or an empty optional if
-	 *         there's no trailer with the specified name
+	 *
+	 * @return an optional returning the value of the trailer or an empty optional if there's no trailer with the specified name
 	 */
 	Optional<String> get(CharSequence name);
 
@@ -147,11 +144,10 @@ public interface ResponseTrailers {
 	 * <p>
 	 * Returns the values of all trailers with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * @param name a trailer name
-	 * 
-	 * @return a list of trailer values or an empty list if there's no trailer with
-	 *         the specified name
+	 *
+	 * @return a list of trailer values or an empty list if there's no trailer with the specified name
 	 */
 	List<String> getAll(CharSequence name);
 
@@ -168,17 +164,15 @@ public interface ResponseTrailers {
 	 * <p>
 	 * Decodes and returns the trailer with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * If there are multiple trailers with the same name, this method returns the
-	 * first one.
+	 * If there are multiple trailers with the same name, this method returns the first one.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the decoded trailer type
 	 * @param name a trailer name
-	 * 
-	 * @return an optional returning the decoded trailer or an empty optional if
-	 *         there's no trailer with the specified name
+	 *
+	 * @return an optional returning the decoded trailer or an empty optional if there's no trailer with the specified name
 	 */
 	<T extends Header> Optional<T> getHeader(CharSequence name);
 
@@ -186,12 +180,11 @@ public interface ResponseTrailers {
 	 * <p>
 	 * Decodes and returns all trailers with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the decoded trailer type
 	 * @param name a trailer name
-	 * 
-	 * @return a list of trailer values or an empty list if there's no trailer with
-	 *         the specified name
+	 *
+	 * @return a list of trailer values or an empty list if there's no trailer with the specified name
 	 */
 	<T extends Header> List<T> getAllHeader(CharSequence name);
 
@@ -208,16 +201,14 @@ public interface ResponseTrailers {
 	 * <p>
 	 * Returns the trailer with the specified name as a parameter.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * If there are multiple trailers with the same name, this method returns the
-	 * first one.
+	 * If there are multiple trailers with the same name, this method returns the first one.
 	 * </p>
-	 * 
+	 *
 	 * @param name a trailer name
-	 * 
-	 * @return an optional returning the parameter or an empty optional if there's
-	 *         no trailer with the specified name
+	 *
+	 * @return an optional returning the parameter or an empty optional if there's no trailer with the specified name
 	 */
 	Optional<Parameter> getParameter(CharSequence name);
 
@@ -225,11 +216,10 @@ public interface ResponseTrailers {
 	 * <p>
 	 * Returns all trailers with the specified name as parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param name a trailer name
-	 * 
-	 * @return a list of parameters or an empty list if there's no trailer with the
-	 *         specified name
+	 *
+	 * @return a list of parameters or an empty list if there's no trailer with the specified name
 	 */
 	List<Parameter> getAllParameter(CharSequence name);
 

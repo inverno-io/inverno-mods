@@ -23,12 +23,11 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.Part;
-import io.inverno.mod.http.server.RootExchangeHandler;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
+import io.inverno.mod.http.server.ServerController;
 
 /**
  * <p>
@@ -42,20 +41,18 @@ import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 @Bean(visibility = Visibility.PRIVATE)
 public class Http1xChannelHandlerFactory implements Supplier<Http1xChannelHandler> {
 
-	private RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler;
-	private ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler;
-	private HeaderService headerService;
-	private ObjectConverter<String> parameterConverter;
-	private MultipartDecoder<Parameter> urlEncodedBodyDecoder; 
-	private MultipartDecoder<Part> multipartBodyDecoder;
+	private final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
+	private final HeaderService headerService;
+	private final ObjectConverter<String> parameterConverter;
+	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder; 
+	private final MultipartDecoder<Part> multipartBodyDecoder;
 	
 	/**
 	 * <p>
 	 * Creates a HTTP1.x channel handler factory.
 	 * <p>
 	 * 
-	 * @param rootHandler           the root exchange handler
-	 * @param errorHandler          the error exchange handler
+	 * @param controller            the server controller
 	 * @param headerService         the header service
 	 * @param parameterConverter    a string object converter
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
@@ -63,15 +60,12 @@ public class Http1xChannelHandlerFactory implements Supplier<Http1xChannelHandle
 	 */
 	@SuppressWarnings({ "unchecked" })
 	public Http1xChannelHandlerFactory(
-			RootExchangeHandler<?, ? extends Exchange<?>> rootHandler, 
-			ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler, 
+			ServerController<?, ? extends Exchange<?>, ? extends ErrorExchange<?>> controller,
 			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder) {
-		
-		this.rootHandler = (RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>>)rootHandler;
-		this.errorHandler = errorHandler;
+		this.controller = (ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>>)controller;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
@@ -80,6 +74,6 @@ public class Http1xChannelHandlerFactory implements Supplier<Http1xChannelHandle
 
 	@Override
 	public Http1xChannelHandler get() {
-		return new Http1xChannelHandler(this.rootHandler, this.errorHandler, this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder);
+		return new Http1xChannelHandler(this.controller, this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder);
 	}
 }

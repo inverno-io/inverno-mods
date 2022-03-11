@@ -30,9 +30,10 @@ import java.util.List;
  *
  * @see ErrorWebRouter
  *
- * @param <A> the Error Web routable type
+ * @param <A> the type of the exchange context
+ * @param <B> the Error Web routable type
  */
-public interface ErrorWebRoutable<A extends ErrorWebRoutable<A>> extends Routable<ExchangeContext, ErrorWebExchange<Throwable>, A, ErrorWebRouteManager<A>, ErrorWebRoute> {
+public interface ErrorWebRoutable<A extends ExchangeContext, B extends ErrorWebRoutable<A, B>> extends Routable<A, ErrorWebExchange<A>, B, ErrorWebRouteManager<A, B>, ErrorWebRoute<A>> {
 
 	/**
 	 * <p>
@@ -47,7 +48,7 @@ public interface ErrorWebRoutable<A extends ErrorWebRoutable<A>> extends Routabl
 	 *
 	 * @return the error web routable
 	 */
-	A configureRoutes(ErrorWebRoutesConfigurer configurer);
+	B configureRoutes(ErrorWebRoutesConfigurer<? super A> configurer);
 
 	/**
 	 * <p>
@@ -63,12 +64,12 @@ public interface ErrorWebRoutable<A extends ErrorWebRoutable<A>> extends Routabl
 	 * @return the error web routable
 	 */
 	@SuppressWarnings("unchecked")
-	default A configureRoutes(List<ErrorWebRoutesConfigurer> configurers) {
+	default B configureRoutes(List<ErrorWebRoutesConfigurer<? super A>> configurers) {
 		if(configurers != null) {
-			for(ErrorWebRoutesConfigurer configurer : configurers) {
+			for(ErrorWebRoutesConfigurer<? super A> configurer : configurers) {
 				this.configureRoutes(configurer);
 			}
 		}
-		return (A)this;
+		return (B)this;
 	}
 }

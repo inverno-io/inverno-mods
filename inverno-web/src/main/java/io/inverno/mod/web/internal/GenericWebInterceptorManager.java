@@ -62,7 +62,7 @@ class GenericWebInterceptorManager extends AbstractWebManager<GenericWebIntercep
 	@Override
 	public WebInterceptedRouter<ExchangeContext> interceptor(WebExchangeInterceptor<? super ExchangeContext> interceptor) {
 		Objects.requireNonNull(interceptor);
-		this.interceptor = (WebExchangeInterceptor<ExchangeContext>) interceptor;
+		this.interceptor = interceptor;
 		this.commit();
 
 		return this.router;

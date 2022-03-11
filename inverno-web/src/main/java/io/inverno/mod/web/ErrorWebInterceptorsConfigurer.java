@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.http.server.ExchangeContext;
+
 /**
  * <p>
  * A configurer used to configure interceptors in an error web router.
@@ -24,8 +26,10 @@ package io.inverno.mod.web;
  * @since 1.5
  *
  * @see ErrorWebRouter
+ * 
+ * @param <A> the type of the exchange context
  */
-public interface ErrorWebInterceptorsConfigurer {
+public interface ErrorWebInterceptorsConfigurer<A extends ExchangeContext> {
 
 	/**
 	 * <p>
@@ -34,5 +38,5 @@ public interface ErrorWebInterceptorsConfigurer {
 	 *
 	 * @param interceptors the interceptable to configure
 	 */
-	void configure(ErrorWebInterceptable<?> interceptors);
+	void configure(ErrorWebInterceptable<A, ?> interceptors);
 }

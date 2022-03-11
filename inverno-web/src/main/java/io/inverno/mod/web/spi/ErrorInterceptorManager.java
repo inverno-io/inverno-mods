@@ -36,16 +36,18 @@ import io.inverno.mod.http.server.ExchangeContext;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  *
- * @param <A> the type of exchange handled by the interceptor
- * @param <B> the interceptable type
- * @param <C> the error interceptor manager type
+ * @param <A> the type of the exchange context
+ * @param <B> the type of error exchange handled by the interceptor
+ * @param <C> the interceptable type
+ * @param <D> the error interceptor manager type
  */
 public interface ErrorInterceptorManager<
-		A extends ErrorExchange<Throwable>,
-		B extends Interceptable<ExchangeContext, A, B, C>,
-		C extends ErrorInterceptorManager<A, B, C>
-	> extends InterceptorManager<ExchangeContext, A, B, C> {
-
+		A extends ExchangeContext,
+		B extends ErrorExchange<A>,
+		C extends Interceptable<A, B, C, D>,
+		D extends ErrorInterceptorManager<A, B, C, D>
+	> extends InterceptorManager<A, B, C, D> {
+	
 	/**
 	 * <p>
 	 * Specifies the type of errors accepted by the interceptor.
@@ -57,5 +59,5 @@ public interface ErrorInterceptorManager<
 	 *
 	 * @see ErrorAware
 	 */
-	C error(Class<? extends Throwable> error);
+	D error(Class<? extends Throwable> error);
 }

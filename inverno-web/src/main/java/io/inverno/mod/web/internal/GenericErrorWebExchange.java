@@ -15,11 +15,12 @@
  */
 package io.inverno.mod.web.internal;
 
-import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.Request;
 import io.inverno.mod.web.ErrorWebExchange;
+import io.inverno.mod.web.WebRequest;
 import io.inverno.mod.web.WebResponse;
+import java.util.function.Function;
 import reactor.core.publisher.Mono;
 
 /**
@@ -32,20 +33,29 @@ import reactor.core.publisher.Mono;
  * 
  * @see WebResponse
  */
-class GenericErrorWebExchange implements ErrorWebExchange<Throwable> {
+class GenericErrorWebExchange implements ErrorWebExchange<ExchangeContext> {
 
-	private final ErrorExchange<Throwable> wrappedErrorExchange;
+	private final GenericWebRequest request;
 	
 	private final GenericWebResponse response;
 	
-	public GenericErrorWebExchange(ErrorExchange<Throwable> wrappedErrorExchange, GenericWebResponse response) {
-		this.wrappedErrorExchange = wrappedErrorExchange;
+	private final Throwable error;
+	
+	private final ExchangeContext context;
+	
+	private final Function<Mono<Void>, Exchange<ExchangeContext>> finalizerConsumer;
+	
+	public GenericErrorWebExchange(GenericWebRequest request, GenericWebResponse response, Throwable error, ExchangeContext context, Function<Mono<Void>, Exchange<ExchangeContext>> finalizerConsumer) {
+		this.request = request;
 		this.response = response;
+		this.error = error;
+		this.context = context;
+		this.finalizerConsumer = finalizerConsumer;
 	}
 
 	@Override
-	public Request request() {
-		return this.wrappedErrorExchange.request();
+	public WebRequest request() {
+		return this.request;
 	}
 	
 	@Override
@@ -55,17 +65,17 @@ class GenericErrorWebExchange implements ErrorWebExchange<Throwable> {
 	
 	@Override
 	public Throwable getError() {
-		return this.wrappedErrorExchange.getError();
+		return this.error;
 	}
 	
 	@Override
 	public ExchangeContext context() {
-		return this.wrappedErrorExchange.context();
+		return this.context;
 	}
 	
 	@Override
 	public GenericErrorWebExchange finalizer(Mono<Void> finalizer) {
-		this.wrappedErrorExchange.finalizer(finalizer);
+		this.finalizerConsumer.apply(finalizer);
 		return this;
 	}
 }

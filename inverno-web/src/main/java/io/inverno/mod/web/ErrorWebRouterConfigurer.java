@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.spi.ErrorRouterConfigurer;
 
 /**
@@ -26,7 +27,9 @@ import io.inverno.mod.web.spi.ErrorRouterConfigurer;
  * @since 1.0
  * 
  * @see ErrorWebRouter
+ * 
+ * @param <A> the type of the exchange context
  */
-public interface ErrorWebRouterConfigurer extends ErrorRouterConfigurer<ErrorWebExchange<Throwable>, ErrorWebRouter, ErrorWebInterceptedRouter, ErrorWebRouteManager<ErrorWebRouter>, ErrorWebRouteManager<ErrorWebInterceptedRouter>, ErrorWebInterceptorManager<ErrorWebInterceptedRouter>, ErrorWebRoute> {
+public interface ErrorWebRouterConfigurer<A extends ExchangeContext> extends ErrorRouterConfigurer<A, ErrorWebExchange<A>, ErrorWebRouter<A>, ErrorWebInterceptedRouter<A>, ErrorWebRouteManager<A, ErrorWebRouter<A>>, ErrorWebRouteManager<A, ErrorWebInterceptedRouter<A>>, ErrorWebInterceptorManager<A, ErrorWebInterceptedRouter<A>>, ErrorWebRoute<A>> {
 
 }

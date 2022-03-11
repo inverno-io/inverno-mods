@@ -36,7 +36,7 @@ import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class Http2Request extends AbstractRequest {
+class Http2Request extends AbstractRequest {
 
 	private static final String PROTOCOL = "HTTP/2";
 	

@@ -19,12 +19,10 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.Part;
-import io.inverno.mod.http.server.RootExchangeHandler;
 import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.ByteBuf;
@@ -45,6 +43,7 @@ import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
 import reactor.core.publisher.Sinks.EmitResult;
+import io.inverno.mod.http.server.ServerController;
 
 /**
  * <p>
@@ -62,8 +61,7 @@ import reactor.core.publisher.Sinks.EmitResult;
 public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2FrameListener, Http2Connection.Listener {
 
 	private final HttpServerConfiguration configuration; 
-	private final RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler;
-	private final ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler;
+	private final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
@@ -81,8 +79,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	 * @param decoder                 HTTP/2 connection decoder
 	 * @param encoder                 HTTP/2 connection encoder
 	 * @param initialSettings         HTTP/2 initial settings
-	 * @param rootHandler             the root exchange handler
-	 * @param errorHandler            the error exchange handler
+	 * @param controller              the server controller
 	 * @param headerService           the header service
 	 * @param parameterConverter      a string object converter
 	 * @param urlEncodedBodyDecoder   the application/x-www-form-urlencoded body decoder
@@ -94,8 +91,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 			Http2ConnectionDecoder decoder, 
 			Http2ConnectionEncoder encoder,
 			Http2Settings initialSettings,
-			RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler,
-			ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler,
+			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller,
 			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder,
@@ -104,8 +100,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 		super(decoder, encoder, initialSettings);
 
 		this.configuration = configuration;
-		this.rootHandler = rootHandler;
-		this.errorHandler = errorHandler;
+		this.controller = controller;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
@@ -170,7 +165,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 //        System.out.println("onHeaderReads(2) " + streamId + " - " + endOfStream + " - " + this.hashCode());
 		Http2Exchange exchange = this.serverStreams.get(streamId);
 		if (exchange == null) {
-			Http2Exchange streamExchange = new Http2Exchange(ctx, this.connection().stream(streamId), headers, this.encoder(), this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.rootHandler, this.errorHandler);
+			Http2Exchange streamExchange = new Http2Exchange(ctx, this.connection().stream(streamId), headers, this.encoder(), this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.controller);
 			if(this.configuration.compression_enabled()) {
 				String acceptEncoding = headers.get(HttpHeaderNames.ACCEPT_ENCODING) != null ? headers.get(HttpHeaderNames.ACCEPT_ENCODING).toString() : null;
 				if(acceptEncoding != null) {

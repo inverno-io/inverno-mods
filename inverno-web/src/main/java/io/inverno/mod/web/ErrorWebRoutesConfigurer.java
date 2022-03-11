@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.http.server.ExchangeContext;
+
 /**
  * <p>
  * A configurer used to configure routes in an Error Web router.
@@ -24,8 +26,10 @@ package io.inverno.mod.web;
  * @since 1.5
  *
  * @see ErrorWebRouter
+ * 
+ * @param <A> the type of the exchange context
  */
-public interface ErrorWebRoutesConfigurer {
+public interface ErrorWebRoutesConfigurer<A extends ExchangeContext> {
 
 	/**
 	 * <p>
@@ -34,5 +38,5 @@ public interface ErrorWebRoutesConfigurer {
 	 *
 	 * @param routes the error web routable to configure
 	 */
-	void configure(ErrorWebRoutable<?> routes);
+	void configure(ErrorWebRoutable<A, ?> routes);
 }

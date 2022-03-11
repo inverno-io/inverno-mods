@@ -32,18 +32,4 @@ import io.inverno.mod.web.spi.RouterConfigurer;
  */
 public interface WebRouterConfigurer<A extends ExchangeContext> extends RouterConfigurer<A, WebExchange<A>, WebRouter<A>, WebInterceptedRouter<A>, WebRouteManager<A, WebRouter<A>>, WebRouteManager<A, WebInterceptedRouter<A>>, WebInterceptorManager<A, WebInterceptedRouter<A>>, WebRoute<A>> {
 
-	/**
-	 * <p>
-	 * Creates a context matching routes requirement.
-	 * </p>
-	 *
-	 * <p>
-	 * This context supplier is used by the router to create a specific context attached to {@link WebExchange} required by the routes configured by the configurer.
-	 * </p>
-	 *
-	 * @return a new context instance
-	 */
-	default A createContext() {
-		return null;
-	}
 }

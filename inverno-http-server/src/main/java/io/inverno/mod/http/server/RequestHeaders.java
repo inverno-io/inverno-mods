@@ -25,14 +25,13 @@ import io.inverno.mod.http.base.header.Header;
 
 /**
  * <p>
- * Represents the HTTP headers of a client request in a server exchange as
- * defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230
- * Section 3.2</a>.
+ * Represents the HTTP headers of a client request in a server exchange as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC
+ * 7230 Section 3.2</a>.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see Request
  */
 public interface RequestHeaders {
@@ -91,16 +90,14 @@ public interface RequestHeaders {
 	 * <p>
 	 * Returns the value of the header with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * If there are multiple headers with the same name, this method returns the
-	 * first one.
+	 * If there are multiple headers with the same name, this method returns the first one.
 	 * </p>
-	 * 
+	 *
 	 * @param name a header name
-	 * 
-	 * @return an optional returning the value of the header or an empty optional if
-	 *         there's no header with the specified name
+	 *
+	 * @return an optional returning the value of the header or an empty optional if there's no header with the specified name
 	 */
 	Optional<String> get(CharSequence name);
 	
@@ -108,11 +105,10 @@ public interface RequestHeaders {
 	 * <p>
 	 * Returns the values of all headers with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * @param name a header name
-	 * 
-	 * @return a list of header values or an empty list if there's no header with
-	 *         the specified name
+	 *
+	 * @return a list of header values or an empty list if there's no header with the specified name
 	 */
 	List<String> getAll(CharSequence name);
 	
@@ -129,17 +125,15 @@ public interface RequestHeaders {
 	 * <p>
 	 * Decodes and returns the header with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * If there are multiple headers with the same name, this method returns the
-	 * first one.
+	 * If there are multiple headers with the same name, this method returns the first one.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the decoded header type
 	 * @param name a header name
-	 * 
-	 * @return an optional returning the decoded header or an empty optional if
-	 *         there's no header with the specified name
+	 *
+	 * @return an optional returning the decoded header or an empty optional if there's no header with the specified name
 	 */
 	<T extends Header> Optional<T> getHeader(CharSequence name);
 
@@ -147,12 +141,11 @@ public interface RequestHeaders {
 	 * <p>
 	 * Decodes and returns all headers with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the decoded header type
 	 * @param name a header name
-	 * 
-	 * @return a list of header values or an empty list if there's no header with
-	 *         the specified name
+	 *
+	 * @return a list of header values or an empty list if there's no header with the specified name
 	 */
 	<T extends Header> List<T> getAllHeader(CharSequence name);
 	
@@ -169,16 +162,14 @@ public interface RequestHeaders {
 	 * <p>
 	 * Returns the header with the specified name as a parameter.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * If there are multiple headers with the same name, this method returns the
-	 * first one.
+	 * If there are multiple headers with the same name, this method returns the first one.
 	 * </p>
-	 * 
+	 *
 	 * @param name a header name
-	 * 
-	 * @return an optional returning the parameter or an empty optional if there's
-	 *         no header with the specified name
+	 *
+	 * @return an optional returning the parameter or an empty optional if there's no header with the specified name
 	 */
 	Optional<Parameter> getParameter(CharSequence name);
 	
@@ -186,11 +177,10 @@ public interface RequestHeaders {
 	 * <p>
 	 * Returns all headers with the specified name as parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param name a header name
-	 * 
-	 * @return a list of parameters or an empty list if there's no header with the
-	 *         specified name
+	 *
+	 * @return a list of parameters or an empty list if there's no header with the specified name
 	 */
 	List<Parameter> getAllParameter(CharSequence name);
 	

@@ -16,6 +16,7 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.base.net.URIBuilder;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ErrorInterceptorManager;
 import io.inverno.mod.web.spi.PathAware;
@@ -34,9 +35,10 @@ import java.util.List;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  *
- * @param <A> the type of Error Web interceptable
+ * @param <A> the type of the exchange context
+ * @param <B> the type of Error Web interceptable
  */
-public interface ErrorWebInterceptorManager<A extends ErrorWebInterceptable<A>> extends ErrorInterceptorManager<ErrorWebExchange<Throwable>, A, ErrorWebInterceptorManager<A>> {
+public interface ErrorWebInterceptorManager<A extends ExchangeContext, B extends ErrorWebInterceptable<A, B>> extends ErrorInterceptorManager<A, ErrorWebExchange<A>, B, ErrorWebInterceptorManager<A, B>> {
 
 	/**
 	 * <p>
@@ -53,7 +55,7 @@ public interface ErrorWebInterceptorManager<A extends ErrorWebInterceptable<A>> 
 	 *
 	 * @return the error router
 	 */
-	A interceptor(ErrorWebExchangeInterceptor<? extends Throwable> interceptor);
+	B interceptor(ErrorWebExchangeInterceptor<? super A> interceptor);
 
 	/**
 	 * <p>
@@ -70,7 +72,7 @@ public interface ErrorWebInterceptorManager<A extends ErrorWebInterceptable<A>> 
 	 *
 	 * @return the error router
 	 */
-	A interceptors(List<ErrorWebExchangeInterceptor<? extends Throwable>> interceptors);
+	B interceptors(List<ErrorWebExchangeInterceptor<? super A>> interceptors);
 
 	/**
 	 * <p>
@@ -90,7 +92,7 @@ public interface ErrorWebInterceptorManager<A extends ErrorWebInterceptable<A>> 
 	 *
 	 * @see PathAware
 	 */
-	default ErrorWebInterceptorManager<A> path(String path) throws IllegalArgumentException {
+	default ErrorWebInterceptorManager<A, B> path(String path) throws IllegalArgumentException {
 		return this.path(path, false);
 	}
 
@@ -113,7 +115,7 @@ public interface ErrorWebInterceptorManager<A extends ErrorWebInterceptable<A>> 
 	 *
 	 * @see PathAware
 	 */
-	ErrorWebInterceptorManager<A> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException;
+	ErrorWebInterceptorManager<A, B> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException;
 
 	/**
 	 * <p>
@@ -126,7 +128,7 @@ public interface ErrorWebInterceptorManager<A extends ErrorWebInterceptable<A>> 
 	 *
 	 * @see AcceptAware
 	 */
-	ErrorWebInterceptorManager<A> produces(String mediaRange);
+	ErrorWebInterceptorManager<A, B> produces(String mediaRange);
 
 	/**
 	 * <p>
@@ -139,5 +141,5 @@ public interface ErrorWebInterceptorManager<A extends ErrorWebInterceptable<A>> 
 	 *
 	 * @see AcceptAware
 	 */
-	ErrorWebInterceptorManager<A> language(String languageRange);
+	ErrorWebInterceptorManager<A, B> language(String languageRange);
 }

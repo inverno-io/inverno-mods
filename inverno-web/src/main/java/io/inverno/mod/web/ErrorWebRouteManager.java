@@ -16,6 +16,7 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.base.net.URIBuilder;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ErrorRouteManager;
 import io.inverno.mod.web.spi.PathAware;
@@ -33,8 +34,11 @@ import io.inverno.mod.web.spi.PathAware;
  * @see ErrorWebExchange
  * @see ErrorWebRoute
  * @see ErrorWebRouter
+ * 
+ * @param <A> the type of the exchange context
+ * @param <B> the Error Web routable type
  */
-public interface ErrorWebRouteManager<A extends ErrorWebRoutable<A>> extends ErrorRouteManager<ErrorWebExchange<Throwable>, A, ErrorWebRouteManager<A>, ErrorWebRoute> {
+public interface ErrorWebRouteManager<A extends ExchangeContext, B extends ErrorWebRoutable<A, B>> extends ErrorRouteManager<A, ErrorWebExchange<A>, B, ErrorWebRouteManager<A, B>, ErrorWebRoute<A>> {
 
 	/**
 	 * <p>
@@ -50,7 +54,7 @@ public interface ErrorWebRouteManager<A extends ErrorWebRoutable<A>> extends Err
 	 * 
 	 * @return the error router
 	 */
-	A handler(ErrorWebExchangeHandler<? extends Throwable> handler);
+	B handler(ErrorWebExchangeHandler<? super A> handler);
 
 	/**
 	 * <p>
@@ -69,7 +73,7 @@ public interface ErrorWebRouteManager<A extends ErrorWebRoutable<A>> extends Err
 	 *
 	 * @see PathAware
 	 */
-	default ErrorWebRouteManager<A> path(String path) throws IllegalArgumentException {
+	default ErrorWebRouteManager<A, B> path(String path) throws IllegalArgumentException {
 		return this.path(path, false);
 	}
 
@@ -91,7 +95,7 @@ public interface ErrorWebRouteManager<A extends ErrorWebRoutable<A>> extends Err
 	 *
 	 * @see PathAware
 	 */
-	ErrorWebRouteManager<A> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException;
+	ErrorWebRouteManager<A, B> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException;
 
 	/**
 	 * <p>
@@ -104,7 +108,7 @@ public interface ErrorWebRouteManager<A extends ErrorWebRoutable<A>> extends Err
 	 * 
 	 * @see AcceptAware
 	 */
-	ErrorWebRouteManager<A> produces(String mediaType);
+	ErrorWebRouteManager<A, B> produces(String mediaType);
 	
 	/**
 	 * <p>
@@ -117,5 +121,5 @@ public interface ErrorWebRouteManager<A extends ErrorWebRoutable<A>> extends Err
 	 * 
 	 * @see AcceptAware
 	 */
-	ErrorWebRouteManager<A> language(String language);
+	ErrorWebRouteManager<A, B> language(String language);
 }

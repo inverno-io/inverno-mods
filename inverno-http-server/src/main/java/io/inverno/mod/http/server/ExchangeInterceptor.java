@@ -23,8 +23,8 @@ import reactor.core.publisher.Mono;
  * </p>
  *
  * <p>
- * Multiple exchange interceptors can be chained on an exchange handler invoking the {@link ReactiveExchangeHandler#intercept(io.inverno.mod.http.server.ExchangeInterceptor)} method in order to form an exchange
- * handling chain.
+ * Multiple exchange interceptors can be chained on an exchange handler invoking the
+ * {@link ReactiveExchangeHandler#intercept(io.inverno.mod.http.server.ExchangeInterceptor)} method in order to form an exchange handling chain.
  * </p>
  *
  * <p>
@@ -39,7 +39,7 @@ import reactor.core.publisher.Mono;
  * @since 1.3
  *
  * @see ReactiveExchangeHandler
- * 
+ *
  * @param <A> the type of the exchange context
  * @param <B> the type of exchange handled by the handler
  */
@@ -53,7 +53,8 @@ public interface ExchangeInterceptor<A extends ExchangeContext, B extends Exchan
 	 *
 	 * @param exchange the server exchange to handle
 	 *
-	 * @return a Mono emitting the exchange or an instrumented exchange to continue the exchange handling chain or an empty Mono to stop the exchange handling chain
+	 * @return a Mono emitting the exchange or an instrumented exchange to continue the exchange handling chain or an empty Mono to stop the exchange
+	 *         handling chain
 	 */
 	Mono<? extends B> intercept(B exchange);
 }

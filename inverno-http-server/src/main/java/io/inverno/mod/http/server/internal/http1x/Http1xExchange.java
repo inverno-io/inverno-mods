@@ -29,11 +29,9 @@ import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.Part;
-import io.inverno.mod.http.server.RootExchangeHandler;
 import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.inverno.mod.http.server.internal.GenericErrorExchange;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
@@ -56,6 +54,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import reactor.core.publisher.BaseSubscriber;
+import io.inverno.mod.http.server.ServerController;
 
 /**
  * <p>
@@ -72,7 +71,7 @@ import reactor.core.publisher.BaseSubscriber;
  * 
  * @see AbstractExchange
  */
-public class Http1xExchange extends AbstractExchange {
+class Http1xExchange extends AbstractExchange {
 
 	private final Http1xConnectionEncoder encoder;
 	private final HeaderService headerService;
@@ -98,8 +97,7 @@ public class Http1xExchange extends AbstractExchange {
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body
 	 *                              decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
-	 * @param rootHandler           the root exchange handler
-	 * @param errorHandler          the error exchange handler
+	 * @param controller            the server controller
 	 */
 	public Http1xExchange(
 			ChannelHandlerContext context, 
@@ -109,10 +107,9 @@ public class Http1xExchange extends AbstractExchange {
 			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder,
-			RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> rootHandler, 
-			ErrorExchangeHandler<Throwable, ErrorExchange<Throwable>> errorHandler
+			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller
 		) {
-		super(context, rootHandler, errorHandler, new Http1xRequest(context, httpRequest, new Http1xRequestHeaders(httpRequest, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http1xResponse(context, headerService, parameterConverter));
+		super(context, controller, new Http1xRequest(context, httpRequest, new Http1xRequestHeaders(httpRequest, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http1xResponse(context, headerService, parameterConverter));
 		this.encoder = encoder;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
@@ -131,7 +128,7 @@ public class Http1xExchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected ErrorExchange<Throwable> createErrorExchange(Throwable error) {
+	protected ErrorExchange<ExchangeContext> createErrorExchange(Throwable error) {
 		return new GenericErrorExchange(this.request, new Http1xResponse(this.context, this.headerService, this.parameterConverter), this.finalizer, error, this.exchangeContext);
 	}
 	

@@ -17,7 +17,6 @@ package io.inverno.mod.web.internal;
 
 import java.net.URI;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Init;
@@ -29,7 +28,6 @@ import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.WebConfiguration;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebInterceptedRouter;
 import io.inverno.mod.web.WebInterceptorManager;
@@ -37,7 +35,6 @@ import io.inverno.mod.web.WebInterceptorsConfigurer;
 import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.WebRouteManager;
 import io.inverno.mod.web.WebRouter;
-import io.inverno.mod.web.WebRouterConfigurer;
 import io.inverno.mod.web.WebRoutesConfigurer;
 import java.util.List;
 import reactor.core.publisher.Mono;
@@ -53,27 +50,22 @@ import reactor.core.publisher.Mono;
 @Bean( name = "webRouter" )
 public class GenericWebRouter extends AbstractWebRouter implements @Provide WebRouter<ExchangeContext> {
 
-	private final WebConfiguration configuration;
 	private final DataConversionService dataConversionService;
 	private final ResourceService resourceService;
 	private final ObjectConverter<String> parameterConverter;
 	
 	private final RoutingLink<ExchangeContext, WebExchange<ExchangeContext>, ?, WebRoute<ExchangeContext>> firstLink;
 
-	private WebRouterConfigurer<? extends ExchangeContext> configurer;
-	
 	/**
 	 * <p>
 	 * Creates a generic web router.
 	 * </p>
 	 * 
-	 * @param configuration         the web module configuration
 	 * @param resourceService       the resource service
 	 * @param dataConversionService the data conversion service
 	 * @param parameterConverter    the parameter converter
 	 */
-	public GenericWebRouter(WebConfiguration configuration, ResourceService resourceService, DataConversionService dataConversionService, ObjectConverter<String> parameterConverter) {
-		this.configuration = configuration;
+	public GenericWebRouter(ResourceService resourceService, DataConversionService dataConversionService, ObjectConverter<String> parameterConverter) {
 		this.resourceService = resourceService;
 		this.dataConversionService = dataConversionService;
 		this.parameterConverter = parameterConverter;
@@ -99,22 +91,6 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 				throw new NotFoundException();
 			}
 		});
-		
-		if(this.configurer != null) {
-			// We know it's working because the context is provided by the configurer
-			this.configure((WebRouterConfigurer<ExchangeContext>)this.configurer);
-		}
-	}
-	
-	/**
-	 * <p>
-	 * Sets the web router configurer used to initialize the router.
-	 * </p>
-	 * 
-	 * @param configurer a web router configurer
-	 */
-	public void setConfigurer(WebRouterConfigurer<? extends ExchangeContext> configurer) {
-		this.configurer = configurer;
 	}
 	
 	@Override
@@ -156,22 +132,17 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 	
 	@Override
 	public Mono<Void> defer(Exchange<ExchangeContext> exchange) {
-		return this.firstLink.defer(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.dataConversionService, this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange::finalizer, exchange.context()));
+		return this.firstLink.defer(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.parameterConverter, this.dataConversionService), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange.context(), exchange::finalizer));
 	}
 	
 	/**
 	 * <p>
-	 * Implements the ExchangeHandler contract, however this should not be invoked in order to remain reactive. 
+	 * Implements the ExchangeHandler contract, however this should never be invoked in order to remain reactive. 
 	 * </p>
 	 */
 	@Override
 	public void handle(Exchange<ExchangeContext> exchange) throws HttpException {
 		this.defer(exchange).block();
-	}
-	
-	@Override
-	public ExchangeContext createContext() {
-		return this.configurer != null ? this.configurer.createContext() : null;
 	}
 	
 	@Override
@@ -191,9 +162,7 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 		GenericWebInterceptedRouter interceptedRouter = new GenericWebInterceptedRouter(this);
 		if(configurers != null && !configurers.isEmpty()) {
 			GenericWebInterceptableFacade facade = new GenericWebInterceptableFacade(interceptedRouter);
-			for(WebInterceptorsConfigurer<? super ExchangeContext> configurer : configurers) {
-				configurer.configure(facade);
-			}
+			configurers.forEach(c -> c.configure(facade));
 			return facade.getInterceptedRouter();
 		}
 		return interceptedRouter;
@@ -207,15 +176,4 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 		}
 		return this;
 	}
-	
-	/**
-	 * <p>
-	 * The web router configurer socket.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 */
-	@Bean( name = "webRouterConfigurer")
-	public static interface ConfigurerSocket extends Supplier<WebRouterConfigurer<? extends ExchangeContext>> {}
 }

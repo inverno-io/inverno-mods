@@ -27,14 +27,13 @@ import io.inverno.mod.http.base.header.Headers;
 
 /**
  * <p>
- * Represents the HTTP headers of a server response in a server exchange as
- * defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230
- * Section 3.2</a>.
+ * Represents the HTTP headers of a server response in a server exchange as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC
+ * 7230 Section 3.2</a>.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see Response
  */
 public interface ResponseHeaders {
@@ -162,9 +161,8 @@ public interface ResponseHeaders {
 	 * <p>
 	 * Returns the response content type header field value.
 	 * </p>
-	 * 
-	 * @return an optional returning the content type or an empty optional if
-	 *         there's no content type header
+	 *
+	 * @return an optional returning the content type or an empty optional if there's no content type header
 	 */
 	Optional<String> getContentType();
 
@@ -172,9 +170,8 @@ public interface ResponseHeaders {
 	 * <p>
 	 * Decodes and returns the response content type header.
 	 * </p>
-	 * 
-	 * @return an optional returning the content type header or an empty optional if
-	 *         there's no content type header
+	 *
+	 * @return an optional returning the content type header or an empty optional if there's no content type header
 	 */
 	Optional<Headers.ContentType> getContentTypeHeader();
 
@@ -214,16 +211,14 @@ public interface ResponseHeaders {
 	 * <p>
 	 * Returns the value of the header with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * If there are multiple headers with the same name, this method returns the
-	 * first one.
+	 * If there are multiple headers with the same name, this method returns the first one.
 	 * </p>
-	 * 
+	 *
 	 * @param name a header name
-	 * 
-	 * @return an optional returning the value of the header or an empty optional if
-	 *         there's no header with the specified name
+	 *
+	 * @return an optional returning the value of the header or an empty optional if there's no header with the specified name
 	 */
 	Optional<String> get(CharSequence name);
 
@@ -231,11 +226,10 @@ public interface ResponseHeaders {
 	 * <p>
 	 * Returns the values of all headers with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * @param name a header name
-	 * 
-	 * @return a list of header values or an empty list if there's no header with
-	 *         the specified name
+	 *
+	 * @return a list of header values or an empty list if there's no header with the specified name
 	 */
 	List<String> getAll(CharSequence name);
 
@@ -252,17 +246,15 @@ public interface ResponseHeaders {
 	 * <p>
 	 * Decodes and returns the header with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * If there are multiple headers with the same name, this method returns the
-	 * first one.
+	 * If there are multiple headers with the same name, this method returns the first one.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the decoded header type
 	 * @param name a header name
-	 * 
-	 * @return an optional returning the decoded header or an empty optional if
-	 *         there's no header with the specified name
+	 *
+	 * @return an optional returning the decoded header or an empty optional if there's no header with the specified name
 	 */
 	<T extends Header> Optional<T> getHeader(CharSequence name);
 
@@ -270,12 +262,11 @@ public interface ResponseHeaders {
 	 * <p>
 	 * Decodes and returns all headers with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the decoded header type
 	 * @param name a header name
-	 * 
-	 * @return a list of header values or an empty list if there's no header with
-	 *         the specified name
+	 *
+	 * @return a list of header values or an empty list if there's no header with the specified name
 	 */
 	<T extends Header> List<T> getAllHeader(CharSequence name);
 
@@ -292,16 +283,14 @@ public interface ResponseHeaders {
 	 * <p>
 	 * Returns the header with the specified name as a parameter.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * If there are multiple headers with the same name, this method returns the
-	 * first one.
+	 * If there are multiple headers with the same name, this method returns the first one.
 	 * </p>
-	 * 
+	 *
 	 * @param name a header name
-	 * 
-	 * @return an optional returning the parameter or an empty optional if there's
-	 *         no header with the specified name
+	 *
+	 * @return an optional returning the parameter or an empty optional if there's no header with the specified name
 	 */
 	Optional<Parameter> getParameter(CharSequence name);
 
@@ -309,11 +298,10 @@ public interface ResponseHeaders {
 	 * <p>
 	 * Returns all headers with the specified name as parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param name a header name
-	 * 
-	 * @return a list of parameters or an empty list if there's no header with the
-	 *         specified name
+	 *
+	 * @return a list of parameters or an empty list if there's no header with the specified name
 	 */
 	List<Parameter> getAllParameter(CharSequence name);
 

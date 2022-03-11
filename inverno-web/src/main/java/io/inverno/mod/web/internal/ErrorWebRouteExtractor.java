@@ -26,11 +26,13 @@ import io.inverno.mod.web.ErrorWebRoute;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
+ * 
+ * @param <A> the type of the exchange context
  */
-interface ErrorWebRouteExtractor extends
-	PathAwareRouteExtractor<ExchangeContext, ErrorWebExchange<Throwable>, ErrorWebRoute, ErrorWebRouteExtractor>,
-	AcceptAwareRouteExtractor<ExchangeContext, ErrorWebExchange<Throwable>, ErrorWebRoute, ErrorWebRouteExtractor>,
-	ErrorAwareRouteExtractor<ExchangeContext, ErrorWebExchange<Throwable>, ErrorWebRoute, ErrorWebRouteExtractor>, 
-	InterceptableRouteExtractor<ExchangeContext, ErrorWebExchange<Throwable>, ErrorWebRoute, ErrorWebRouteExtractor> {
+interface ErrorWebRouteExtractor<A extends ExchangeContext> extends
+	PathAwareRouteExtractor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteExtractor<A>>,
+	AcceptAwareRouteExtractor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteExtractor<A>>,
+	ErrorAwareRouteExtractor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteExtractor<A>>, 
+	InterceptableRouteExtractor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteExtractor<A>> {
 
 }
