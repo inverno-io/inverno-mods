@@ -74,6 +74,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import io.inverno.mod.web.compiler.spi.WebServerControllerConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebServerControllerConfigurerInfoVisitor;
 import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -244,11 +245,14 @@ class WebServerControllerConfigurerClassGenerator implements WebServerController
 			TypeMirror webRoutesAnnotationType = context.getElementUtils().getTypeElement(WebRoutes.class.getCanonicalName()).asType();
 			StringBuilder result = new StringBuilder();
 			result.append("@").append(context.getTypeName(webRoutesAnnotationType)).append("({").append(System.lineSeparator());
-			result.append(Stream.concat(
+			result.append(Stream.of(
+					Arrays.stream(controllerConfigurerInfo.getRoutesConfigurers()).map(routesInfo -> this.visit(routesInfo, context)),
 					Arrays.stream(controllerConfigurerInfo.getRouterConfigurers()).map(routerInfo -> this.visit(routerInfo, context)),
 					Arrays.stream(controllerConfigurerInfo.getControllers())
 						.flatMap(controllerInfo -> Arrays.stream(controllerInfo.getRoutes()).map(routeInfo -> this.visit(routeInfo, context.withWebController(controllerInfo).withMode(GenerationMode.ROUTE_ANNOTATION))))
 				)
+				.flatMap(Function.identity())
+				.filter(s -> s.length() > 0)
 				.collect(context.joining("," + System.lineSeparator()))
 			);
 			result.append(System.lineSeparator()).append("})");
