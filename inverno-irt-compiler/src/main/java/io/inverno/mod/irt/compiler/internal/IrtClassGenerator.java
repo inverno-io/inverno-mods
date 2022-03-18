@@ -521,6 +521,7 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 			
 			result.append("{").append(System.lineSeparator());
 			result.append(context.indent(1)).append(Arrays.stream(info.getCases()).map(caseInfo -> this.visit(caseInfo, context.withIndentDepthAdd(1))).collect(context.joining(System.lineSeparator() + context.indent(1) + "else "))).append(System.lineSeparator());
+			info.getCases()[info.getCases().length - 1].getGuardExpression().ifPresent(ign -> result.append(context.indent(1)).append("return ").append(TemplateSet.class.getCanonicalName()).append(".COMPLETED_FUTURE;").append(System.lineSeparator()));
 			result.append(context.indent(0)).append("}");
 			
 			return result;

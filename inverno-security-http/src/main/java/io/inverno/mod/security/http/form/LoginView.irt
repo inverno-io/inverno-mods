@@ -114,19 +114,13 @@ option charset = "utf-8";
 					<path d="M 7.9999999,14 C 2.9527721,14 3,12 3,12 3,11.5 3.625,8.5554254 4.5,7.6804254 c 0.875,-0.875 1,0.9526545 3.5,0.9526545 2.5,0 2.625,-1.8276545 3.5,-0.9526545 C 12.375,8.5554254 13,11.5 13,12 c 0,0 0.04723,2 -5.0000001,2 z M 8,7.8881443 C 11.999998,7.8881443 11.999998,2 8,2 4.0000017,2 4.0000017,7.8881443 8,7.8881443 Z" />
 				</svg>
 			</div>
-			{@if 
-				(redirect_uri != null) -> {<input type="hidden" name="redirect_uri" value="{@redirect_uri}"/>};
-				() -> {}
-			}
+			{@if (redirect_uri != null) -> {<input type="hidden" name="redirect_uri" value="{@redirect_uri}"/>}}
 			<label for="username"><b>Username</b></label>
 			<input class="login-input" type="text" id="username" name="username" placeholder="Enter Username" autocomplete="off"/>
 			<label for="password"><b>Password</b></label>
 			<input class="login-input" type="password" id="password" name="password" placeholder="Enter Password"/>
 			<button class="login-submit" type="submit">Log in</button>
-			{@if 
-				(error != null) -> {<p class="login-error">{@error}</p>};
-				() -> {}
-			}
+			{@if (error != null) -> {<p class="login-error">{@error}</p>}}
 		</form>
 		<footer><p><small>This is a whitelabel login page, providing a custom login page is recommended.</small></p></footer>
 	</body>
