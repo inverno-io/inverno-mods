@@ -69,6 +69,7 @@ import java.util.function.Function;
 import javax.lang.model.type.IntersectionType;
 import javax.lang.model.type.TypeKind;
 import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
+import javax.lang.model.element.Modifier;
 
 /**
  * <p>
@@ -211,7 +212,13 @@ public class WebServerControllerConfigurerCompilerPlugin implements CompilerPlug
 						else {
 							actualTypes = List.of(contextType);
 						}
-						return Stream.concat(actualTypes.stream(), actualTypes.stream().flatMap(type -> this.getAllSuperTypes(contextType).stream()));
+						return Stream.concat(
+							actualTypes.stream(), 
+							actualTypes.stream()
+								// we only keep public super types, hidden super types should be included
+								// this means we could have compile errors if the user specified a non-public context type explicitly
+								.flatMap(type -> this.getAllSuperTypes(contextType).stream().filter(superContextType -> ((DeclaredType)superContextType).asElement().getModifiers().contains(Modifier.PUBLIC)))
+						);
 					})
 				)
 			)
@@ -234,7 +241,13 @@ public class WebServerControllerConfigurerCompilerPlugin implements CompilerPlug
 				else {
 					actualTypes = List.of(contextType);
 				}
-				return Stream.concat(actualTypes.stream(), actualTypes.stream().flatMap(type -> this.getAllSuperTypes(contextType).stream()));
+				return Stream.concat(
+					actualTypes.stream(), 
+					actualTypes.stream()
+						// we only keep public super types, hidden super types should be included
+						// this means we could have compile errors if the user specified a non-public context type explicitly
+						.flatMap(type -> this.getAllSuperTypes(contextType).stream().filter(superContextType -> ((DeclaredType)superContextType).asElement().getModifiers().contains(Modifier.PUBLIC)))
+				);
 			})
 			.forEach(contextTypes::add);
 		
