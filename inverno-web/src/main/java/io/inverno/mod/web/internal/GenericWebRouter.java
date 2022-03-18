@@ -137,12 +137,12 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 	
 	/**
 	 * <p>
-	 * Implements the ExchangeHandler contract, however this should never be invoked in order to remain reactive. 
+	 * Throws an UnsupportedOperationException as we must always prefer {@link #defer(io.inverno.mod.http.server.Exchange) }
 	 * </p>
 	 */
 	@Override
 	public void handle(Exchange<ExchangeContext> exchange) throws HttpException {
-		this.defer(exchange).block();
+		throw new UnsupportedOperationException();
 	}
 	
 	@Override

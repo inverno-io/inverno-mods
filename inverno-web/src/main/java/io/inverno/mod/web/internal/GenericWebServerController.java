@@ -113,6 +113,6 @@ public class GenericWebServerController implements @Provide ServerController<Exc
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	@Bean( name = "webControllerConfigurer")
+	@Bean( name = "controllerConfigurer")
 	public static interface ConfigurerSocket extends Supplier<WebServerControllerConfigurer<? extends ExchangeContext>> {}
 }
