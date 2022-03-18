@@ -223,6 +223,57 @@ public interface HeaderService {
 	
 	/**
 	 * <p>
+	 * Determines whether the specified character is a valid header base64 character as defined by
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.2">RFC 7235 Section 2.1</a>.
+	 * </p>
+	 *
+	 * @param character the character to test
+	 *
+	 * @return true if the character is a header token68 character, false otherwise
+	 */
+	public static boolean isB64TokenCharacter(char character) {
+		return Character.isLetterOrDigit(character) || 
+				character == '-' || 
+				character == '.' ||
+				character == '_' ||
+				character == '~' ||
+				character == '+' ||
+				character == '/';
+	}
+	
+	/**
+	 * <p>
+	 * Determines whether the specified value is a valid header base64 token as defined by
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.2">RFC 7235 Section 2.1</a>.
+	 * </p>
+	 *
+	 * @param value the value to test
+	 *
+	 * @return true if the value is a header base64 token, false otherwise
+	 */
+	public static boolean isB64Token(String value) {
+		if(value == null || value.length() == 0) {
+			return false;
+		}
+		for(int i=0;i<value.length();i++) {
+			if(!isB64TokenCharacter(value.charAt(i))) {
+				if(value.charAt(i) == '=') {
+					for(;i<value.length();i++) {
+						if(value.charAt(i) != '=') {
+							return false;
+						}
+					}
+				}
+				else {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * <p>
 	 * Determines whether the specified character is a valid header content
 	 * character as defined by
 	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.2.6">RFC 7230 Section

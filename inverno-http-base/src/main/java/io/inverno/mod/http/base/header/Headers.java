@@ -303,11 +303,56 @@ public final class Headers {
 	
 	/**
 	 * <p>
-	 * Content-disposition HTTP header as defined by
-	 * <a href="https://tools.ietf.org/html/rfc6266#section-4.1">RFC 6266 Section
-	 * 4.1</a>.
+	 * Authorization HTTP header as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.2">RFC 7235 Section 4.2</a>.
 	 * </p>
-	 * 
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.5
+	 */
+	public static interface Authorization extends Header {
+		
+		public static final String AUTH_SCHEME_BASIC = "basic";
+		
+		public static final String AUTH_SCHEME_BEARER = "bearer";
+		
+		public static final String AUTH_SCHEME_DIGEST = "digest";
+		
+		public static final String AUTH_SCHEME_NEGOTIATE = "negotiate";
+		
+		/**
+		 * <p>
+		 * Returns the authentication scheme.
+		 * </p>
+		 * 
+		 * @return the authentication scheme
+		 */
+		String getAuthScheme();
+		
+		/**
+		 * <p>
+		 * Returns authentication parameters.
+		 * </p>
+		 * 
+		 * @return the authentication parameters map
+		 */
+		Map<String, String> getParameters();
+		
+		/**
+		 * <p>
+		 * Returns the base64-encoded authentication token.
+		 * </p>
+		 * 
+		 * @return the authentication token
+		 */
+		String getToken();
+	}
+	
+		/**
+	 * <p>
+	 * Content-disposition HTTP header as defined by
+	 * <a href="https://tools.ietf.org/html/rfc6266#section-4.1">RFC 6266 Section 4.1</a>.
+	 * </p>
+	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */

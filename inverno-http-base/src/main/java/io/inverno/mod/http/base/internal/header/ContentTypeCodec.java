@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.http.base.internal.header;
 
+import io.inverno.mod.http.base.header.ParameterizedHeader;
+import io.inverno.mod.http.base.header.ParameterizedHeaderCodec;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +49,7 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 	 * </p>
 	 */
 	public ContentTypeCodec() {
-		super(ContentTypeCodec.ContentType.Builder::new, Set.of(Headers.NAME_CONTENT_TYPE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, false);
+		super(ContentTypeCodec.ContentType.Builder::new, Set.of(Headers.NAME_CONTENT_TYPE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, false);
 	}
 	
 	@Override

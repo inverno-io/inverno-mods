@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.http.base.internal.header;
 
+import io.inverno.mod.http.base.header.ParameterizedHeader;
+import io.inverno.mod.http.base.header.ParameterizedHeaderCodec;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -61,7 +63,7 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 	 * @param allowMultiple true to allow multiple language ranges, false otherwise
 	 */
 	public AcceptLanguageCodec(boolean allowMultiple) {
-		super(AcceptLanguageCodec.AcceptLanguage.Builder::new, Set.of(Headers.NAME_ACCEPT_LANGUAGE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, allowMultiple);
+		super(AcceptLanguageCodec.AcceptLanguage.Builder::new, Set.of(Headers.NAME_ACCEPT_LANGUAGE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, allowMultiple);
 	}
 	
 	@Override
@@ -72,7 +74,7 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 			result.append(range.getLanguageTag());
 			result.append(";q=").append(String.format("%.3f", range.getWeight()));
 			return result.toString();
-		}).collect(Collectors.joining(Character.toString(this.valueDelimiter)));
+		}).collect(Collectors.joining(Character.toString(this.parameterValueDelimiter)));
 	}
 
 	/**

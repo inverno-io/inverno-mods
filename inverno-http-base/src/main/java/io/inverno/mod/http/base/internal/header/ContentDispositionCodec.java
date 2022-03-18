@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.http.base.internal.header;
 
+import io.inverno.mod.http.base.header.ParameterizedHeader;
+import io.inverno.mod.http.base.header.ParameterizedHeaderCodec;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,7 +44,7 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 	 * <p>Creates a content-disposition header codec.</p>
 	 */
 	public ContentDispositionCodec() {
-		super(ContentDispositionCodec.ContentDisposition.Builder::new, Set.of(Headers.NAME_CONTENT_DISPOSITION), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, false);
+		super(ContentDispositionCodec.ContentDisposition.Builder::new, Set.of(Headers.NAME_CONTENT_DISPOSITION), DEFAULT_PARAMETER_DELIMITER, DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, false);
 	}
 
 	/**

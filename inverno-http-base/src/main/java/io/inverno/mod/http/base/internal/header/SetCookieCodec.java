@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.http.base.internal.header;
 
+import io.inverno.mod.http.base.header.ParameterizedHeader;
+import io.inverno.mod.http.base.header.ParameterizedHeaderCodec;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,7 +45,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 	 * </p>
 	 */
 	public SetCookieCodec() {
-		super(SetCookieCodec.SetCookie.Builder::new, Set.of(Headers.NAME_SET_COOKIE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, true, true, true, true, false, false);
+		super(SetCookieCodec.SetCookie.Builder::new, Set.of(Headers.NAME_SET_COOKIE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, true, true, true, true, false, false);
 	}
 	
 	@Override
@@ -156,7 +158,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		@Override
 		public Configurator name(String name) {
 			this.name = name;
-			return null;
+			return this;
 		}
 
 		@Override

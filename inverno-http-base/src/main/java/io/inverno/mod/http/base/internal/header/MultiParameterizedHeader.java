@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.base.internal.header;
+package io.inverno.mod.http.base.header;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import io.inverno.mod.http.base.header.HeaderBuilder;
 
 /**
  * <p>

@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.http.base.internal.header;
 
+import io.inverno.mod.http.base.header.ParameterizedHeader;
+import io.inverno.mod.http.base.header.ParameterizedHeaderCodec;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -64,7 +66,7 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 	 * @param allowMultiple true to allow multiple media ranges, false otherwise
 	 */
 	public AcceptCodec(boolean allowMultiple) {
-		super(AcceptCodec.Accept.Builder::new, Set.of(Headers.NAME_ACCEPT), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, allowMultiple);
+		super(AcceptCodec.Accept.Builder::new, Set.of(Headers.NAME_ACCEPT), DEFAULT_PARAMETER_DELIMITER, DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, false, false, false, false, true, allowMultiple);
 	}
 	
 	@Override
@@ -82,7 +84,7 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 				});
 			}
 			return result.toString();
-		}).collect(Collectors.joining(Character.toString(this.valueDelimiter)));
+		}).collect(Collectors.joining(Character.toString(this.parameterValueDelimiter)));
 	}
 
 	/**
@@ -192,15 +194,16 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 			private void setMediaType(String mediaType) {
 				this.mediaType = mediaType.toLowerCase();
 				String[] splitMediaType = this.mediaType.split("/");
-				if(splitMediaType.length == 2) {
-					this.setType(splitMediaType[0]);
-					this.setSubType(splitMediaType[1]);
-				}
-				else if(splitMediaType.length == 1) {
-					this.setType(splitMediaType[0]);
-					this.setSubType("*");
-				}
-				else {
+				switch (splitMediaType.length) {
+					case 2:
+						this.setType(splitMediaType[0]);
+						this.setSubType(splitMediaType[1]);
+						break;
+					case 1:
+						this.setType(splitMediaType[0]);
+						this.setSubType("*");
+						break;
+					default:
 					throw new NotAcceptableException("Empty media type");
 				}
 			}

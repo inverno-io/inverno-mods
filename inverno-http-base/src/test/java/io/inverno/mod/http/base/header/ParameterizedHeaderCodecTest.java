@@ -24,9 +24,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.inverno.mod.http.base.internal.header.MalformedHeaderException;
-import io.inverno.mod.http.base.internal.header.MultiParameterizedHeader;
-import io.inverno.mod.http.base.internal.header.ParameterizedHeader;
-import io.inverno.mod.http.base.internal.header.ParameterizedHeaderCodec;
 
 /**
  * 
@@ -37,7 +34,7 @@ public class ParameterizedHeaderCodecTest {
 
 	@Test
 	public void testAllowEmptyValue() {
-		ParameterizedHeaderCodec<ParameterizedHeader, ParameterizedHeader.Builder> codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ',', true, false, false, false, false, false);
+		ParameterizedHeaderCodec<ParameterizedHeader, ParameterizedHeader.Builder> codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ';', ',', true, false, false, false, false, false);
 		
 		ParameterizedHeader header = codec.decode("toto", "value;tata=132");
 		
@@ -57,7 +54,7 @@ public class ParameterizedHeaderCodecTest {
 	
 	@Test
 	public void testNotAllowEmptyValue() {
-		ParameterizedHeaderCodec<ParameterizedHeader, ParameterizedHeader.Builder> codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ',', false, false, false, false, false, false);
+		ParameterizedHeaderCodec<ParameterizedHeader, ParameterizedHeader.Builder> codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ';', ',', false, false, false, false, false, false);
 		
 		ParameterizedHeader header = codec.decode("toto", "value;tata=132");
 		
@@ -83,7 +80,7 @@ public class ParameterizedHeaderCodecTest {
 	
 	@Test
 	public void testExpectNoValue() {
-		ParameterizedHeaderCodec<ParameterizedHeader, ParameterizedHeader.Builder> codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ',', true, true, false, false, false, false);
+		ParameterizedHeaderCodec<ParameterizedHeader, ParameterizedHeader.Builder> codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ';', ',', true, true, false, false, false, false);
 		
 		ParameterizedHeader header = codec.decode("toto", "tata=132");
 		
@@ -115,7 +112,7 @@ public class ParameterizedHeaderCodecTest {
 		}
 		
 		try {
-			new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ',', false, true, false, false, false, false);
+			new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ';', ',', false, true, false, false, false, false);
 			Assertions.fail("Expect " + IllegalArgumentException.class.getName());
 		}
 		catch(IllegalArgumentException e) {
@@ -125,7 +122,7 @@ public class ParameterizedHeaderCodecTest {
 	
 	@Test
 	public void testAllowFlagParameter() {
-		ParameterizedHeaderCodec<ParameterizedHeader, ParameterizedHeader.Builder> codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ',', false, false, true, false, false, false);
+		ParameterizedHeaderCodec<ParameterizedHeader, ParameterizedHeader.Builder> codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ';', ',', false, false, true, false, false, false);
 		
 		ParameterizedHeader header = codec.decode("toto", "value;flag;tata=132;");
 		
@@ -155,7 +152,7 @@ public class ParameterizedHeaderCodecTest {
 		Assertions.assertEquals("132", header.getParameters().get("tata"));
 		Assertions.assertNull(header.getParameters().get("flag"));
 		
-		codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ',', false, false, false, false, false, false);
+		codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ';', ',', false, false, false, false, false, false);
 		
 		try {
 			codec.decode("toto", "value;flag;tata=132;");
@@ -192,7 +189,7 @@ public class ParameterizedHeaderCodecTest {
 
 	@Test
 	public void testAllowSpaceInValue() {
-		ParameterizedHeaderCodec<ParameterizedHeader, ParameterizedHeader.Builder> codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ',', false, false, false, true, false, false);
+		ParameterizedHeaderCodec<ParameterizedHeader, ParameterizedHeader.Builder> codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ';', ',', false, false, false, true, false, false);
 		
 		ParameterizedHeader header = codec.decode("toto", "  value   ;titi=abc;tata=  132  ;toto=1 3 6;tutu= 4 6 9  ");
 		
@@ -213,7 +210,7 @@ public class ParameterizedHeaderCodecTest {
 		
 		Assertions.assertEquals("  value  d ", header.getParameterizedValue());
 		
-		codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ',', false, false, false, false, false, false);
+		codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ';', ',', false, false, false, false, false, false);
 		
 		try {
 			codec.decode("toto", "  value   ;titi=abc;tata=  132  ;toto=1 3 6;tutu= 4 6 9  ;   ");
@@ -236,7 +233,7 @@ public class ParameterizedHeaderCodecTest {
 			Assertions.assertEquals("toto: space not allowed in value", e.getMessage());
 		}
 		
-		codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ',', false, false, false, false, true, false);
+		codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ';', ',', false, false, false, false, true, false);
 		
 		header = codec.decode("toto", "  value   ;titi=\"abc\";tata=\"  132  \";toto=\"1 3 6\";tutu=\" 4 6 9  \";   ");
 		
@@ -246,14 +243,14 @@ public class ParameterizedHeaderCodecTest {
 	
 	@Test
 	public void testAllowQuotedValue() {
-		ParameterizedHeaderCodec<ParameterizedHeader, ParameterizedHeader.Builder> codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ',', false, false, false, true, true, false);
+		ParameterizedHeaderCodec<ParameterizedHeader, ParameterizedHeader.Builder> codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ';', ',', false, false, false, true, true, false);
 		
 		ParameterizedHeader header = codec.decode("toto", "  value   ;titi=abc;tata=  \"132\"  ;toto=1 3 6;tutu= \"4 6 9  \"  ");
 		
 		Assertions.assertEquals("  value   ", header.getParameterizedValue());
 		Assertions.assertEquals(Map.of("titi","abc", "tata","132","toto", "1 3 6", "tutu", "4 6 9  "), header.getParameters());
 		
-		codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ',', false, false, false, false, true, false);
+		codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ';', ',', false, false, false, false, true, false);
 		
 		try {
 			codec.decode("toto", "  value   ;titi=abc;tata=  \"132\"  ;toto=1 3 6;tutu= \"4 6 9  \"  ");
@@ -268,7 +265,7 @@ public class ParameterizedHeaderCodecTest {
 		Assertions.assertEquals("value", header.getParameterizedValue());
 		Assertions.assertEquals(Map.of("titi","abc", "tata","132","toto", "136", "tutu", "4 6 9  "), header.getParameters());
 		
-		codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ',', false, false, false, false, false, false);
+		codec = new ParameterizedHeaderCodec<>(ParameterizedHeader.Builder::new, Set.of("*"), ';', ';', ',', false, false, false, false, false, false);
 		
 		header = codec.decode("toto", "  value   ;titi=abc;tata=  \"132\"  ;toto=136;tutu= \"469\"  ");
 		
@@ -278,7 +275,7 @@ public class ParameterizedHeaderCodecTest {
 	
 	@Test
 	public void testAllowMultiple() {
-		ParameterizedHeaderCodec<MultiParameterizedHeader, MultiParameterizedHeader.Builder> codec = new ParameterizedHeaderCodec<>(MultiParameterizedHeader.Builder::new, Set.of("*"), ';', ',', false, false, false, false, false, true);
+		ParameterizedHeaderCodec<MultiParameterizedHeader, MultiParameterizedHeader.Builder> codec = new ParameterizedHeaderCodec<>(MultiParameterizedHeader.Builder::new, Set.of("*"), ';', ';', ',', false, false, false, false, false, true);
 		
 		// TODO deal with empty parameter ;param=;
 		

@@ -20,8 +20,11 @@ import java.util.Set;
 
 import io.netty.buffer.ByteBuf;
 import io.inverno.mod.http.base.header.AbstractHeaderCodec;
+import io.inverno.mod.http.base.header.Header;
+import io.inverno.mod.http.base.header.HeaderBuilder;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.HeaderService;
+import java.util.function.Supplier;
 
 /**
  * <p>
@@ -33,27 +36,27 @@ import io.inverno.mod.http.base.header.HeaderService;
  * 
  * @see AbstractHeaderCodec
  */
-public class GenericHeaderCodec extends AbstractHeaderCodec<GenericHeader, GenericHeader.Builder> {
+public class GenericHeaderCodec<A extends Header, B extends HeaderBuilder<A, B>> extends AbstractHeaderCodec<A, B> {
 
 	/**
 	 * <p>
 	 * Creates a generic HTTP header codec.
 	 * </p>
 	 */
-	protected GenericHeaderCodec() {
-		super(GenericHeader.Builder::new, Set.of("*"));
+	protected GenericHeaderCodec(Supplier<B> builderSupplier, Set<String> supportedHeaderNames) {
+		super(builderSupplier, supportedHeaderNames);
+	}
+	
+	@Override
+	public A decode(String name, String value) {
+		return this.builderSupplier.get().headerName(name).headerValue(value.trim()).build();
 	}
 
 	@Override
-	public GenericHeader decode(String name, String value) {
-		return this.builderSupplier.get().headerName(name).headerValue(value).build();
-	}
-
-	@Override
-	public GenericHeader decode(String name, ByteBuf buffer, Charset charset) {
+	public A decode(String name, ByteBuf buffer, Charset charset) {
 		int readerIndex = buffer.readerIndex();
 		
-		GenericHeader.Builder builder = this.builderSupplier.get().headerName(name);
+		B builder = this.builderSupplier.get().headerName(name);
 		
 		Integer startIndex = null;
 		Integer endIndex = null;
@@ -94,14 +97,14 @@ public class GenericHeaderCodec extends AbstractHeaderCodec<GenericHeader, Gener
 	}
 
 	@Override
-	public String encode(GenericHeader headerField) {
+	public String encode(A headerField) {
 		StringBuilder result = new StringBuilder();
 		result.append(headerField.getHeaderName()).append(": ").append(this.encodeValue(headerField));
 		return result.toString();
 	}
 
 	@Override
-	public String encodeValue(GenericHeader headerField) {
+	public String encodeValue(A headerField) {
 		return headerField.getHeaderValue();
 	}
 }

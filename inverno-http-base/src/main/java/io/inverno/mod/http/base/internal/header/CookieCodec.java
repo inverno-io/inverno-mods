@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.http.base.internal.header;
 
+import io.inverno.mod.http.base.header.ParameterizedHeader;
+import io.inverno.mod.http.base.header.ParameterizedHeaderCodec;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -52,7 +54,7 @@ public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, Co
 	 * @param parameterConverter a string object converter
 	 */
 	public CookieCodec(ObjectConverter<String> parameterConverter) {
-		super(() -> new CookieCodec.Cookie.Builder(parameterConverter), Set.of(Headers.NAME_COOKIE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, true, true, false, false, false, false);
+		super(() -> new CookieCodec.Cookie.Builder(parameterConverter), Set.of(Headers.NAME_COOKIE), DEFAULT_PARAMETER_DELIMITER, DEFAULT_PARAMETER_DELIMITER, DEFAULT_VALUE_DELIMITER, true, true, false, false, false, false);
 	}
 	
 	@Override

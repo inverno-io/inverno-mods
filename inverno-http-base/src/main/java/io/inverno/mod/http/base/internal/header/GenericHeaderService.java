@@ -23,13 +23,13 @@ import java.util.Optional;
 import java.util.function.Supplier;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.BeanSocket;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.HeaderService;
+import java.util.Set;
 
 /**
  * <p>
@@ -84,7 +84,7 @@ public class GenericHeaderService implements HeaderService {
 		this.setHeaderCodecs(codecs);
 		this.defaultCodec = this.codecs.get("*");
 		if(this.defaultCodec == null) {
-			this.defaultCodec = new GenericHeaderCodec();
+			this.defaultCodec = new GenericHeaderCodec<>(GenericHeader.Builder::new, Set.of("*"));
 		}
 	}
 	

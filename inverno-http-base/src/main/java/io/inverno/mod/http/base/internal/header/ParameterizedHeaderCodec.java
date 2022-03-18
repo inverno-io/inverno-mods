@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.base.internal.header;
+package io.inverno.mod.http.base.header;
 
 import java.nio.charset.Charset;
 import java.util.Map;
@@ -23,9 +23,8 @@ import java.util.function.Supplier;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.inverno.mod.base.Charsets;
-import io.inverno.mod.http.base.header.AbstractHeaderCodec;
-import io.inverno.mod.http.base.header.HeaderCodec;
-import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.internal.header.MalformedHeaderException;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -52,6 +51,11 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 	public static final char DEFAULT_VALUE_DELIMITER = ',';
 	
 	/**
+	 * The value delimiter.
+	 */
+	protected final char valueDelimiter;
+	
+	/**
 	 * The parameter delimiter.
 	 */
 	protected final char parameterDelimiter;
@@ -59,7 +63,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 	/**
 	 * The value delimiter. 
 	 */
-	protected final char valueDelimiter;
+	protected final char parameterValueDelimiter;
 	
 	private final boolean allowEmptyValue; 
 	
@@ -75,16 +79,16 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 	
 	/**
 	 * <p>
-	 * Creates a parameterized header codec with the specified header builder
-	 * supplier, list of supported header names, parameter delimiter, value
-	 * delimiter and options.
+	 * Creates a parameterized header codec with the specified header builder supplier, list of supported header names, value delimiter, parameter
+	 * delimiter, parameter value delimiter and options.
 	 * </p>
 	 * 
 	 * @param builderSupplier      a supplier to create header builder instances
 	 *                             when decoding a header
 	 * @param supportedHeaderNames the list of header names supported by the codec
-	 * @param parameterDelimiter   a parameter delimiter
 	 * @param valueDelimiter       a value delimiter
+	 * @param parameterDelimiter   a parameter delimiter
+	 * @param parameterValueDelimiter       a parameter value delimiter
 	 * @param allowEmptyValue      allow empty parameterized value
 	 * @param expectNoValue        expect no parameterized value
 	 * @param allowFlagParameter   allow flag parameters (ie. parameter with no
@@ -93,11 +97,12 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 	 * @param allowQuotedValue     allow quoted values
 	 * @param allowMultiple        allow multiple header values
 	 */
-	public ParameterizedHeaderCodec(Supplier<B> builderSupplier, Set<String> supportedHeaderNames, char parameterDelimiter, char valueDelimiter, boolean allowEmptyValue, boolean expectNoValue, boolean allowFlagParameter, boolean allowSpaceInValue, boolean allowQuotedValue, boolean allowMultiple) {
+	public ParameterizedHeaderCodec(Supplier<B> builderSupplier, Set<String> supportedHeaderNames, char valueDelimiter, char parameterDelimiter, char parameterValueDelimiter, boolean allowEmptyValue, boolean expectNoValue, boolean allowFlagParameter, boolean allowSpaceInValue, boolean allowQuotedValue, boolean allowMultiple) {
 		super(builderSupplier, supportedHeaderNames);
 		
-		this.parameterDelimiter = parameterDelimiter;
 		this.valueDelimiter = valueDelimiter;
+		this.parameterDelimiter = parameterDelimiter;
+		this.parameterValueDelimiter = parameterValueDelimiter;
 		this.allowEmptyValue = allowEmptyValue;
 		this.expectNoValue = expectNoValue;
 		this.allowFlagParameter = allowFlagParameter;
@@ -184,7 +189,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					builder.headerValue(buffer.getCharSequence(readerIndex, buffer.readerIndex() - 1 - readerIndex, charset).toString());
 					end = true;
 				}
-				else if(nextByte == this.valueDelimiter && this.allowMultiple && !quoted) {
+				else if(nextByte == this.parameterValueDelimiter && this.allowMultiple && !quoted) {
 					if(endIndex == null) {
 						endIndex = buffer.readerIndex() - 1;
 					}
@@ -265,7 +270,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					startIndex = buffer.readerIndex() - 1;
 				}
 				
-				if(nextByte == ';') {
+				if(nextByte == this.valueDelimiter) {
 					if(this.expectNoValue) {
 						buffer.readerIndex(readerIndex);
 						throw new MalformedHeaderException(name + ": expect no value");
@@ -339,7 +344,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						parameterName = buffer.getCharSequence(startIndex, endIndex - startIndex, charset).toString();
 						startIndex = endIndex = null;
 					}
-					else if(nextByte == ';') {
+					else if(nextByte == this.parameterDelimiter) {
 						if(endIndex == null) {
 							endIndex = buffer.readerIndex() - 1;
 						}
@@ -436,24 +441,27 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 	}
 	
 	@Override
-	public String encode(A headerField) {
+	public String encode(A header) {
 		StringBuilder result = new StringBuilder();
-		result.append(headerField.getHeaderName()).append(": ").append(this.encodeValue(headerField));
+		result.append(header.getHeaderName()).append(": ").append(this.encodeValue(header));
 		return result.toString();
 	}
 	
 	@Override
-	public String encodeValue(A headerField) {
+	public String encodeValue(A header) {
 		StringBuilder result = new StringBuilder();
 		
-		result.append(headerField.getParameterizedValue());
-		
-		Map<String, String> parameters = headerField.getParameters();
-		if(!parameters.isEmpty()) {
-			parameters.entrySet().stream().forEach(e -> {
-				result.append(this.parameterDelimiter).append(e.getKey()).append("=").append(e.getValue());
-			});
+		if(!this.expectNoValue) {
+			result.append(header.getParameterizedValue());
 		}
-		return result.toString();
+		
+		Map<String, String> parameters = header.getParameters();
+		if(!parameters.isEmpty()) {
+			result.append(this.valueDelimiter);
+			for(Map.Entry<String, String> e : parameters.entrySet()) {
+				result.append(e.getKey()).append("=").append(e.getValue()).append(this.parameterDelimiter);
+			}
+		}
+		return result.substring(0, result.length() - 1);
 	}
 }
