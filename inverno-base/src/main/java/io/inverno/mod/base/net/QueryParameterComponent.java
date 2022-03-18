@@ -29,13 +29,12 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * <p>
  * A URI component representing a query parameter in an URI as defined by
- * <a href="https://tools.ietf.org/html/rfc3986#section-3.4">RFC 3986 Section
- * 3.4</a>.
+ * <a href="https://tools.ietf.org/html/rfc3986#section-3.4">RFC 3986 Section 3.4</a>.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ParameterizedURIComponent
  */
 class QueryParameterComponent implements ParameterizedURIComponent {
@@ -57,10 +56,9 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 	
 	/**
 	 * <p>
-	 * Creates a query parameter component with the specified flags, charset, raw
-	 * parameter name and parameter value.
+	 * Creates a query parameter component with the specified flags, charset, raw parameter name and parameter value.
 	 * </p>
-	 * 
+	 *
 	 * @param flags   URI flags
 	 * @param charset a charset
 	 * @param rawName a raw parameter name
@@ -104,40 +102,27 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 	 * Return the parameter name.
 	 * </p>
 	 * 
-	 * <p>
-	 * Note that the returned value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section
-	 * 2.1</a>.
-	 * </p>
-	 * 
 	 * @return the parameter name
 	 */
 	public String getParameterName() {
-		return URIs.encodeURIComponent(this.rawName, QueryParameterComponent.ESCAPED_CHARACTERS, this.charset);
+		return this.rawName;
 	}
 	
 	/**
 	 * <p>
-	 * Return the parameter value after replacing the parameters with the string
-	 * representation of the specified values.
+	 * Return the parameter value after replacing the parameters with the string representation of the specified values.
 	 * </p>
-	 * 
-	 * <p>
-	 * Note that the returned value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section
-	 * 2.1</a>.
-	 * </p>
-	 * 
+	 *
 	 * @param values an array of values to replace the component's parameters
-	 * 
+	 *
 	 * @return the parameter value
-	 * @throws IllegalArgumentException if there's not enough values to replace all
-	 *                                  parameters
+	 *
+	 * @throws IllegalArgumentException if there's not enough values to replace all parameters
 	 */
 	public String getParameterValue(Object... values) throws IllegalArgumentException {
 		StringBuilder result = new StringBuilder();
 		if(this.parameters.isEmpty()) {
-			return result.append(URIs.encodeURIComponent(this.rawValue, QueryParameterComponent.ESCAPED_CHARACTERS, this.charset)).toString();
+			return result.append(this.rawValue).toString();
 		}
 		if(values.length != this.parameters.size()) {
 			throw new IllegalArgumentException("Missing values to generate query parameter " + this.rawName + ": " + this.parameters.stream().map(URIParameter::getName).skip(values.length).collect(Collectors.joining(", ")));
@@ -148,38 +133,37 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 			URIParameter parameter = this.parameters.get(i);
 			String parameterValue = parameter.checkValue(values[i].toString());
 			if(parameter.getOffset() > valueIndex) {
-				result.append(URIs.encodeURIComponent(this.rawValue.substring(valueIndex, parameter.getOffset()), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset));
+				result.append(this.rawValue.substring(valueIndex, parameter.getOffset()));
 			}
-			result.append(URIs.encodeURIComponent(parameterValue, QueryParameterComponent.ESCAPED_CHARACTERS, this.charset));
+			result.append(parameterValue);
 			valueIndex = parameter.getOffset() + parameter.getLength();
 		}
 		if(valueIndex < this.rawValue.length()) {
-			result.append(URIs.encodeURIComponent(this.rawValue.substring(valueIndex), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset));
+			result.append(this.rawValue.substring(valueIndex));
 		}
 		return result.toString();
 	}
 	
 	/**
 	 * <p>
-	 * Return the parameter value after replacing the parameters with the string
-	 * representation of the specified values.
+	 * Return the parameter value after replacing the parameters with the string representation of the specified values.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Note that the returned value is percent encoded as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section
-	 * 2.1</a>.
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
-	 * 
+	 *
 	 * @param values a map of values to replace the component's parameters
-	 * 
+	 *
 	 * @return the parameter value
+	 *
 	 * @throws IllegalArgumentException if there are missing values
 	 */
 	public String getParameterValue(Map<String, ?> values) {
 		StringBuilder result = new StringBuilder();
 		if(this.parameters.isEmpty()) {
-			return result.append(URIs.encodeURIComponent(this.rawValue, QueryParameterComponent.ESCAPED_CHARACTERS, this.charset)).toString();
+			return result.append(this.rawValue).toString();
 		}
 		String missingValues = this.parameters.stream().map(URIParameter::getName).filter(name -> !values.containsKey(name)).collect(Collectors.joining(", "));
 		if(!StringUtils.isEmpty(missingValues)) {
@@ -190,13 +174,13 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 		for(URIParameter parameter : this.parameters) {
 			String parameterValue = parameter.checkValue(values.get(parameter.getName()).toString());
 			if(parameter.getOffset() > valueIndex) {
-				result.append(URIs.encodeURIComponent(this.rawValue.substring(valueIndex, parameter.getOffset()), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset));
+				result.append(this.rawValue.substring(valueIndex, parameter.getOffset()));
 			}
-			result.append(URIs.encodeURIComponent(parameterValue, QueryParameterComponent.ESCAPED_CHARACTERS, this.charset));
+			result.append(parameterValue);
 			valueIndex = parameter.getOffset() + parameter.getLength();
 		}
 		if(valueIndex < this.rawValue.length()) {
-			result.append(URIs.encodeURIComponent(this.rawValue.substring(valueIndex), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset));
+			result.append(this.rawValue.substring(valueIndex));
 		}
 		return result.toString();
 	}
@@ -267,11 +251,11 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 	
 	@Override
 	public String getValue(Object... values) {
-		return new StringBuilder().append(this.getParameterName()).append("=").append(this.getParameterValue(values)).toString();
+		return new StringBuilder().append(URIs.encodeURIComponent(this.getParameterName(), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset)).append("=").append(URIs.encodeURIComponent(this.getParameterValue(values), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset)).toString();
 	}
 	
 	@Override
 	public String getValue(Map<String, ?> values) {
-		return new StringBuilder().append(this.getParameterName()).append("=").append(this.getParameterValue(values)).toString();
+		return new StringBuilder().append(URIs.encodeURIComponent(this.getParameterName(), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset)).append("=").append(URIs.encodeURIComponent(this.getParameterValue(values), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset)).toString();
 	}
 }
