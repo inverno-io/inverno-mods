@@ -133,12 +133,12 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	
 	/**
 	 * <p>
-	 * Implements the ErrorExchangeHandler contract, however this should not be invoked in order to remain reactive. 
+	 * Throws an UnsupportedOperationException as we must always prefer {@link #defer(io.inverno.mod.http.server.ErrorExchange) }
 	 * </p>
 	 */
 	@Override
 	public void handle(ErrorExchange<ExchangeContext> exchange) throws HttpException {
-		this.defer(exchange).block();
+		throw new UnsupportedOperationException();
 	}
 	
 	/**
@@ -225,8 +225,22 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 			
 			ByteArrayOutputStream errorOut = new ByteArrayOutputStream();
 			PrintStream errorStream = new PrintStream(errorOut);
-			errorStream.append("<html><head><title>").append(status).append(" ").append(error.getStatusReasonPhrase()).append("</title></head><body style=\"font-family: arial,sans-serif;padding:30px;max-width: 1280px;margin: auto;\">");
-			errorStream.append("<h1 style=\"font-size: 3em;\"><span style=\"color:red;\">").append(status).append("</span> ").append(error.getStatusReasonPhrase()).append("</h1>");
+			
+			errorStream.append("<html>");
+			errorStream.append("<head>");
+			errorStream.append("<title>").append(status).append(" ").append(error.getStatusReasonPhrase()).append("</title>");
+			errorStream.append("<meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">");
+			errorStream.append("<style>");
+			errorStream.append("body {font-family: system-ui,-apple-system,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,\"Noto Sans\",\"Liberation Sans\",sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\",\"Noto Color Emoji\";margin: 0px;display: flex;justify-content: center;flex-direction: column;align-items: center;}");
+			errorStream.append("footer {text-align: center;color: #6C757D;margin: 1rem;}");
+			errorStream.append(".title {font-size: 3em;}");
+			errorStream.append(".code {color: #DC3545;}");
+			errorStream.append(".stacktrace {color: rgb(33, 37, 41);border: 1px solid #DEE2E6;background-color: #F8F9FA;box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);padding: 1rem;overflow: auto;border-radius: 0.25rem;max-width: 80vw;}");
+			errorStream.append("</style>");
+			errorStream.append("</head>");
+			errorStream.append("<body>");
+			errorStream.append("<div>");
+			errorStream.append("<h1 class=\"title\"><span class=\"code\">").append(status).append("</span> ").append(error.getStatusReasonPhrase()).append("</h1>");
 			
 			if(error instanceof MethodNotAllowedException) {
 				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)error).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
@@ -260,13 +274,15 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 				errorStream.append("<p>").append(error.getMessage()).append("</p>");
 			}
 			
-			errorStream.append("<pre style=\"color:#444444;background-color: #F7F7F7;border:1px solid #E7E7E7;border-radius: 3px;box-shadow: rgba(0, 0, 0, 0.1) 2px 2px 10px;padding:20px;overflow:auto;\">");
+			errorStream.append("<pre class=\"stacktrace\">");
 			error.printStackTrace(new PrintStream(errorStream));
 			errorStream.append("</pre>");
-			errorStream.append("<footer style=\"text-align:center;color: #444444;\">");
+			errorStream.append("</div>");
+			errorStream.append("<footer>");
 			errorStream.append("<p><small>This is a whitelabel error page, providing a custom error handler is recommended.</small></p>");
 			errorStream.append("</footer>");
 			errorStream.append("</body>");
+			errorStream.append("</html>");
 			
 			exchange.response().headers(headers -> headers.status(error.getStatusCode()).contentType(MediaTypes.TEXT_HTML)).body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(errorOut.toByteArray())));
 		};
