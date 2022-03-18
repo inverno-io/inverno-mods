@@ -17,9 +17,11 @@ package io.inverno.mod.http.server;
 
 import io.inverno.mod.http.base.Parameter;
 import io.netty.buffer.ByteBuf;
+import java.util.Map;
 import org.reactivestreams.Publisher;
 
 import java.util.function.Function;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -104,10 +106,23 @@ public interface RequestBody {
 	 * An application/x-www-form-urlencoded data consumer as defined by <a href=
 	 * "https://url.spec.whatwg.org/#application/x-www-form-urlencoded">application/x-www-form-urlencoded</a>.
 	 * </p>
+	 * 
+	 * <p>
+	 * Note that, unlike other the body decoders, parameters publishers are cached and can be subscribed by mutliple subscribers.
+	 * </p>
 	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
 	public static interface UrlEncoded extends RequestData<Parameter> {
+		
+		/**
+		 * <p>
+		 * Collects all parameters in a map that is emitted by the resulting Mono.
+		 * </p>
+		 * 
+		 * @return a Mono of a map with parameter name as key and parameter as value
+		 */
+		Mono<Map<String, Parameter>> collectMap();
 	}
 }

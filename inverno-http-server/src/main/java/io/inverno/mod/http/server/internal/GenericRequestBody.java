@@ -22,11 +22,13 @@ import io.inverno.mod.http.server.RequestBody;
 import io.inverno.mod.http.server.RequestData;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.ByteBuf;
+import java.util.Map;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 import java.util.Optional;
 import java.util.function.Function;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -119,6 +121,8 @@ public class GenericRequestBody implements RequestBody {
 
 		private Publisher<Parameter> parameters;
 		
+		private Mono<Map<String, Parameter>> parametersMap;
+		
 		/**
 		 * <p>
 		 * Creates an application/x-www-form-urlencoded data consumer with the specified
@@ -128,12 +132,20 @@ public class GenericRequestBody implements RequestBody {
 		 * @param parameters the parameter publisher
 		 */
 		public GenericRequestBodyUrlEncodedData(Publisher<Parameter> parameters) {
-			this.parameters = parameters;
+			this.parameters = Flux.from(parameters).cache();
 		}
 
 		@Override
 		public Publisher<Parameter> stream() {
 			return this.parameters;
+		}
+
+		@Override
+		public Mono<Map<String, Parameter>> collectMap() {
+			if(this.parametersMap == null) {
+				this.parametersMap = Flux.from(this.parameters).collectMap(Parameter::getName).cache();
+			}
+			return this.parametersMap;
 		}
 	}
 	
