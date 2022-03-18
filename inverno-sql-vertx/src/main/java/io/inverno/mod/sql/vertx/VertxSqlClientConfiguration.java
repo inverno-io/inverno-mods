@@ -28,7 +28,7 @@ import io.vertx.sqlclient.PoolOptions;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
  */
-@Configuration
+@Configuration( name = "configuration" )
 public interface VertxSqlClientConfiguration {
 
 	/**

@@ -27,7 +27,7 @@ import io.inverno.mod.configuration.Configuration;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-@Configuration
+@Configuration( name = "configuration" )
 public interface HttpServerConfiguration {
 	
 	/**
