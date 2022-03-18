@@ -16,17 +16,11 @@
 package io.inverno.mod.http.server;
 
 import io.inverno.mod.http.base.HttpException;
-import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.base.MethodNotAllowedException;
-import io.inverno.mod.http.base.ServiceUnavailableException;
-import io.inverno.mod.http.base.Status;
-import io.inverno.mod.http.base.header.Headers;
-import java.time.format.DateTimeFormatter;
+import io.inverno.mod.http.server.internal.GenericErrorExchangeHandler;
 import java.util.Objects;
 import reactor.core.publisher.Mono;
 
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -110,25 +104,9 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 	 *
 	 * @throws HttpException if an error occurs during the processing of the exchange
 	 */
+	@SuppressWarnings("unchecked")
 	default void handle(C errorExchange) throws HttpException {
-		if(errorExchange.response().isHeadersWritten()) {
-			throw new IllegalStateException("Headers already written", errorExchange.getError());
-		}
-		if(errorExchange.getError() instanceof HttpException) {
-			HttpException webError = (HttpException)errorExchange.getError();
-			if(webError instanceof MethodNotAllowedException) {
-				errorExchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)webError).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
-			}
-			else if(errorExchange.getError() instanceof ServiceUnavailableException) {
-				((ServiceUnavailableException)webError).getRetryAfter().ifPresent(retryAfter -> {
-					errorExchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
-				});
-			}
-			errorExchange.response().headers(h -> h.status(webError.getStatusCode())).body().empty();
-		}
-		else {
-			errorExchange.response().headers(h -> h.status(Status.INTERNAL_SERVER_ERROR)).body().empty();
-		}
+		GenericErrorExchangeHandler.INSTANCE.handle((ErrorExchange<ExchangeContext>) errorExchange);
 	}
 
 	/**
@@ -144,6 +122,46 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 	 */
 	default A createContext() {
 		return null;
+	}
+	
+	/**
+	 * <p>
+	 * Returns a server controller that delegates to the specified exchange handler.
+	 * </p>
+	 *
+	 * @param <U>          the type of the exchange context
+	 * @param <V>          the type of exchange handled by the controller
+	 * @param <W>          the type of error exchange handled by the controller
+	 * @param handler      an exchange handler
+	 *
+	 * @return a server controller
+	 */
+	static <U extends ExchangeContext, V extends Exchange<U>, W extends ErrorExchange<U>> ServerController<U, V, W> from(ExchangeHandler<U, V> handler) {
+		Objects.requireNonNull(handler);
+		return new ServerController<U, V, W>() {
+
+			@Override
+			public Mono<Void> defer(V exchange) {
+				return handler.defer(exchange);
+			}
+
+			@Override
+			public void handle(V exchange) {
+				handler.handle(exchange);
+			}
+
+			@Override
+			@SuppressWarnings("unchecked")
+			public Mono<Void> defer(W errorExchange) {
+				return GenericErrorExchangeHandler.INSTANCE.defer((ErrorExchange<ExchangeContext>) errorExchange);
+			}
+
+			@Override
+			@SuppressWarnings("unchecked")
+			public void handle(W errorExchange) {
+				GenericErrorExchangeHandler.INSTANCE.handle((ErrorExchange<ExchangeContext>) errorExchange);
+			}
+		};
 	}
 
 	/**

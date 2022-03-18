@@ -60,7 +60,7 @@ public class GenericQueryParameters implements QueryParameters {
 	
 	@Override
 	public List<Parameter> getAll(String name) {
-		List<String> parameters = queryParameters.get(name);
+		List<String> parameters = this.queryParameters.get(name);
 		if(parameters != null) {
 			return parameters.stream().map(value -> new GenericParameter(name, value, this.parameterConverter)).collect(Collectors.toList());
 		}
@@ -70,7 +70,7 @@ public class GenericQueryParameters implements QueryParameters {
 	@Override
 	public Map<String, List<Parameter>> getAll() {
 		Map<String, List<Parameter>> result = new HashMap<>();
-		for(Entry<String, List<String>> e : queryParameters.entrySet()) {
+		for(Entry<String, List<String>> e : this.queryParameters.entrySet()) {
 			result.put(e.getKey(), e.getValue().stream().map(value -> new GenericParameter(e.getKey(), value, this.parameterConverter)).collect(Collectors.toList()));
 		}
 		return Collections.unmodifiableMap(result);
