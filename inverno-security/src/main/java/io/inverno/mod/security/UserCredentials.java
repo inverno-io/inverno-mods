@@ -2,25 +2,34 @@ package io.inverno.mod.security;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class UsernamePasswordCredentials implements Credentials {
+/**
+ * <p>
+ * Username/password credentials.
+ * </p>
+ * 
+ * TODO We could include the realm here as well in order to be able to use multiple Credentialsresolver per realm.
+ * 
+ * @author jkuhn
+ */
+public class UserCredentials implements Credentials {
 
-	private final String user;
+	private final String username;
 
 	private final String password;
 
-	public UsernamePasswordCredentials(String user, String password) {
-		if(StringUtils.isBlank(user)) {
-			throw new IllegalArgumentException("User is blank");
+	public UserCredentials(String username, String password) throws InvalidCredentialsException {
+		if(StringUtils.isBlank(username)) {
+			throw new InvalidCredentialsException("Username is blank");
 		}
-		if(password == null) {
-			throw new IllegalArgumentException("Password is null");
+		if(StringUtils.isBlank(password)) {
+			throw new InvalidCredentialsException("Password is blank");
 		}
-		this.user = user;
+		this.username = username;
 		this.password = password;
 	}
 
-	public String getUser() {
-		return user;
+	public String getUsername() {
+		return username;
 	}
 
 	public String getPassword() {

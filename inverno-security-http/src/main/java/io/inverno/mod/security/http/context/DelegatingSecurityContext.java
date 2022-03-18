@@ -1,21 +1,21 @@
-package io.inverno.mod.security.http;
+package io.inverno.mod.security.http.context;
 
+import io.inverno.mod.security.Authentication;
 import io.inverno.mod.security.Authorizations;
 import io.inverno.mod.security.Identity;
 
 import java.util.Optional;
 
-public interface DelegatingSecurityContext extends SecurityContext {
+interface DelegatingSecurityContext extends SecurityContext {
 
-    @Override
-    default boolean isAuthenticated() {
-        var ctx = this.getSecurityContext();
+	@Override
+	public default Authentication getAuthentication() {
+		var ctx = this.getSecurityContext();
         if(ctx != null) {
-            boolean auth = ctx.isAuthenticated();
-            return ctx.isAuthenticated();
+            return ctx.getAuthentication();
         }
-        return false;
-    }
+		return SecurityContext.super.getAuthentication();
+	}
 
     @Override
     default Optional<Identity> getIdentity() {
@@ -23,7 +23,7 @@ public interface DelegatingSecurityContext extends SecurityContext {
         if(ctx != null) {
             return ctx.getIdentity();
         }
-        return Optional.empty();
+        return SecurityContext.super.getIdentity();
     }
 
     @Override
@@ -32,7 +32,7 @@ public interface DelegatingSecurityContext extends SecurityContext {
         if(ctx != null) {
             return ctx.getAuthorizations();
         }
-        return Optional.empty();
+        return SecurityContext.super.getAuthorizations();
     }
 
     io.inverno.mod.security.SecurityContext getSecurityContext();

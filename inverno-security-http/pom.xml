@@ -34,6 +34,11 @@
 	<dependencies>
 		<dependency>
 			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-base</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.inverno.mod</groupId>
 			<artifactId>inverno-security</artifactId>
 			<version>${project.version}</version>
 		</dependency>
@@ -42,10 +47,19 @@
 			<artifactId>inverno-http-server</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-irt</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -78,4 +92,35 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<configuration>
+						<annotationProcessorPaths>
+							<path>
+								<groupId>io.inverno.mod</groupId>
+								<artifactId>inverno-irt-compiler</artifactId>
+								<version>${project.version}</version>
+							</path>
+							<!-- MCOMPILER-272 -->
+							<path>
+								<groupId>io.inverno.mod</groupId>
+								<artifactId>inverno-base</artifactId>
+								<version>${project.version}</version>
+							</path>
+							<path>
+								<groupId>io.inverno.mod</groupId>
+								<artifactId>inverno-irt</artifactId>
+								<version>${project.version}</version>
+							</path>
+						</annotationProcessorPaths>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
 </project>

@@ -1,8 +1,15 @@
 package io.inverno.mod.security.http;
 
+import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeInterceptor;
-import io.inverno.mod.security.*;
+import io.inverno.mod.security.Authentication;
+import io.inverno.mod.security.Authenticator;
+import io.inverno.mod.security.Authorizations;
+import io.inverno.mod.security.AuthorizationsResolver;
+import io.inverno.mod.security.Credentials;
+import io.inverno.mod.security.Identity;
+import io.inverno.mod.security.IdentityResolver;
 import io.inverno.mod.security.SecurityContext;
 import reactor.core.publisher.Mono;
 
@@ -37,25 +44,39 @@ public class AuthenticationInterceptor<A extends Exchange<InterceptingSecurityCo
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public Mono<? extends A> intercept(A exchange) {
-		return this.credentialsExtractor.extract(exchange) // 1. Extract credentials
-			.flatMap(this.authenticator::authenticate) // 2. Authenticate
-			.flatMap(authentication -> Mono.zip( // 3. Resolve identity and authorizations
+		// 1. Extract credentials
+		return this.credentialsExtractor.extract(exchange)
+			// 2. Authenticate
+			.flatMap(this.authenticator::authenticate)
+			// 3. Resolve identity and authorizations
+			.onErrorContinue(io.inverno.mod.security.SecurityException.class, (error, ign) -> {
+				System.out.println("CONTINUE ERROR");
+				exchange.context().setSecurityContext(SecurityContext.of(Authentication.denied((io.inverno.mod.security.SecurityException)error)));
+			})
+			.flatMap(authentication -> Mono.zip(
 				Mono.just(authentication),
 				this.identityResolver
+					.filter(ign -> authentication.isAuthenticated())
 					.map(resolver -> resolver.resolveIdentity(authentication).map(Optional::of))
 					.orElse(Mono.just(Optional.empty())),
 				this.authorizationsResolver
+					.filter(ign -> authentication.isAuthenticated())
 					.map(resolver -> resolver.resolveAuthorizations(authentication).map(Optional::of))
 					.orElse(Mono.just(Optional.empty()))
 			))
-			.doOnNext(tuple3 -> exchange.context().setSecurityContext( // 4. Create and set SecurityContext
+			// 4. Create and set SecurityContext
+			.doOnNext(tuple3 -> exchange.context().setSecurityContext( 
 				SecurityContext.of(
 					(Authentication) tuple3.getT1(),
 					(Optional<Identity>) tuple3.getT2(),
 					(Optional<Authorizations>) tuple3.getT3()
 				)
 			))
+			// 4'. Create and set failed SecurityContext
+			.doOnError(io.inverno.mod.security.SecurityException.class, error -> exchange.context().setSecurityContext(SecurityContext.of(Authentication.denied(error))))
+			.onErrorResume(io.inverno.mod.security.SecurityException.class, error -> Mono.empty())
 			.thenReturn(exchange);
 	}
 }

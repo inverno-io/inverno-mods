@@ -1,4 +1,4 @@
-package io.inverno.mod.security.http;
+package io.inverno.mod.security.http.context;
 
 import io.inverno.mod.security.SecurityContext;
 

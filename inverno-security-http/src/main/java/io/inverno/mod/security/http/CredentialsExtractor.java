@@ -7,5 +7,5 @@ import reactor.core.publisher.Mono;
 @FunctionalInterface
 public interface CredentialsExtractor<A extends Credentials> {
 
-	Mono<A> extract(Exchange<?> exchange);
+	Mono<A> extract(Exchange<?> exchange) throws MalformedCredentialsException;
 }

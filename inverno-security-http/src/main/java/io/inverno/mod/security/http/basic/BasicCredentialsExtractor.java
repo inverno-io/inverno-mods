@@ -1,23 +1,23 @@
-package io.inverno.mod.security.http;
+package io.inverno.mod.security.http.basic;
 
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.security.UsernamePasswordCredentials;
+import io.inverno.mod.security.UserCredentials;
+import io.inverno.mod.security.http.CredentialsExtractor;
 import reactor.core.publisher.Mono;
 
 import java.util.Base64;
 
-public class BasicCredentialsExtractor implements CredentialsExtractor<UsernamePasswordCredentials> {
-
-	private static final int INDEX_AUTHORIZATION_CREDENTIALS = 6;
-
+public class BasicCredentialsExtractor implements CredentialsExtractor<UserCredentials> {
+	
 	@Override
-	public Mono<UsernamePasswordCredentials> extract(Exchange<?> exchange) {
+	public Mono<UserCredentials> extract(Exchange<?> exchange) {
 		return Mono.fromSupplier(() -> exchange.request().headers()
-			.get(Headers.NAME_AUTHORIZATION)
-			.map(authorization -> {
-				String[] splitCredentials = new String(Base64.getDecoder().decode(authorization.substring(INDEX_AUTHORIZATION_CREDENTIALS))).split(":");
-				return new UsernamePasswordCredentials(splitCredentials[0], splitCredentials[1]);
+			.<Headers.Authorization>getHeader(Headers.NAME_AUTHORIZATION)
+			.filter(authorizationHeader -> authorizationHeader.getAuthScheme().equals(Headers.Authorization.AUTH_SCHEME_BASIC))
+			.map(authorizationHeader -> {
+				String[] splitCredentials = new String(Base64.getDecoder().decode(authorizationHeader.getToken())).split(":");
+				return new UserCredentials(splitCredentials[0], splitCredentials[1]);
 			})
 			.orElse(null)
 		);

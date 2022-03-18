@@ -35,10 +35,12 @@ public interface SecurityContext {
 	}
 
 	default boolean isAuthenticated() {
-		return false;
+		return this.getAuthentication().isAuthenticated();
 	}
 
-	default Authentication getAuthentication() { return Authentication.denied(); }
+	default Authentication getAuthentication() { 
+		return Authentication.anonymous();
+	}
 
 	default Optional<Identity> getIdentity() {
 		return Optional.empty();
