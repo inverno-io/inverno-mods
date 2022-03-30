@@ -35,4 +35,6 @@ module io.inverno.mod.test {
 	requires org.junit.platform.commons;
 	requires org.junit.jupiter.engine;
 	requires org.mockito;
+	
+	exports io.inverno.mod.test.configuration;
 }

@@ -113,7 +113,7 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
 					<!-- This seems to be required for Java 16 -->
-					<argLine>--add-opens java.base/java.lang.invoke=ALL-UNNAMED,io.inverno.test</argLine>
+					<argLine>--add-opens java.base/java.lang.invoke=ALL-UNNAMED,io.inverno.mod.test</argLine>
 					<includes>
 <!-- 						<include>**/*.java</include> -->
 					</includes>
