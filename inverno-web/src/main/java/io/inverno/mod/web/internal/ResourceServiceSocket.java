@@ -26,7 +26,7 @@ import io.inverno.mod.base.resource.ResourceService;
  * </p>
  * 
  * <p>
- * A net service is required by the HTTP server module and to load Open API
+ * A resource service is required by the HTTP server module and to load Open API
  * specifications among other things.
  * </p>
  * 

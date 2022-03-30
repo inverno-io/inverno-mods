@@ -76,21 +76,6 @@ public interface HttpServerConfiguration {
 
 	/**
 	 * <p>
-	 * The type of key store.
-	 * </p>
-	 * 
-	 * <p>
-	 * Defaults to "JKS".
-	 * </p>
-	 * 
-	 * @return the key store type
-	 */
-	default String key_store_type() {
-		return "JKS";
-	}
-	
-	/**
-	 * <p>
 	 * Enables/Disables HTTP compression.
 	 * </p>
 	 * 
@@ -378,6 +363,21 @@ public interface HttpServerConfiguration {
 	 * @return the key store URI
 	 */
 	URI key_store();
+	
+	/**
+	 * <p>
+	 * The type of key store.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to "JKS".
+	 * </p>
+	 * 
+	 * @return the key store type
+	 */
+	default String key_store_type() {
+		return "JKS";
+	}
 
 	/**
 	 * <p>

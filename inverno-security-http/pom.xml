@@ -33,6 +33,10 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>io.inverno</groupId>
+			<artifactId>inverno-core</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>io.inverno.mod</groupId>
 			<artifactId>inverno-base</artifactId>
 			<version>${project.version}</version>

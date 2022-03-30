@@ -85,8 +85,7 @@ public class SslContextWrapper implements Supplier<SslContext> {
 				fileChannel -> {
 					try {
 						KeyStore ks = KeyStore.getInstance(this.configuration.key_store_type());
-						ks.load(Channels.newInputStream(fileChannel),
-							this.configuration.key_store_password().toCharArray());
+						ks.load(Channels.newInputStream(fileChannel), this.configuration.key_store_password().toCharArray());
 						
 						final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 						kmf.init(ks, this.configuration.key_store_password().toCharArray());
