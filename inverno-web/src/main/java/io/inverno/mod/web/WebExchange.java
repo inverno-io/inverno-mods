@@ -38,7 +38,7 @@ import io.inverno.mod.http.server.ExchangeContext;
  * <p>
  * It also exposes a context which can be used to propagate information in a
  * chain of exchange handlers. The {@link WebRouter} uses
- * {@link WebRouterConfigurer#createContext()} to create the context attached to
+ * {@link WebServerControllerConfigurer#createContext()} to create the context attached to
  * the Web exchange.
  * </p>
  * 

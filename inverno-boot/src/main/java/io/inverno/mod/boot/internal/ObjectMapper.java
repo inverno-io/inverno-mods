@@ -15,13 +15,13 @@
  */
 package io.inverno.mod.boot.internal;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import java.util.function.Supplier;
-
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Overridable;
 import io.inverno.core.annotation.Wrapper;
+import java.util.function.Supplier;
 
 /**
  * <p>
@@ -36,15 +36,16 @@ import io.inverno.core.annotation.Wrapper;
 @Overridable
 public class ObjectMapper implements Supplier<com.fasterxml.jackson.databind.ObjectMapper> {
 
-	private com.fasterxml.jackson.databind.ObjectMapper mapper;
+	private com.fasterxml.jackson.databind.ObjectMapper instance;
 	
 	@Override
 	public com.fasterxml.jackson.databind.ObjectMapper get() {
-		if(this.mapper == null) {
-			this.mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-			this.mapper.registerModule(new JavaTimeModule());
-			this.mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+		if(this.instance == null) {
+			this.instance = new com.fasterxml.jackson.databind.ObjectMapper();
+			this.instance.enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);
+			this.instance.registerModule(new JavaTimeModule());
+			this.instance.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 		}
-		return this.mapper;
+		return this.instance;
 	}
 }

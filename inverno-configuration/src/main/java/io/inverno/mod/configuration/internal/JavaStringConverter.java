@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.configuration.internal;
 
+import io.inverno.mod.base.converter.ConverterException;
+import io.inverno.mod.base.converter.ObjectConverter;
 import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.GenericArrayType;
@@ -44,11 +46,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
-
 import org.apache.commons.text.StringEscapeUtils;
-
-import io.inverno.mod.base.converter.ConverterException;
-import io.inverno.mod.base.converter.ObjectConverter;
 
 /**
  * <p>
@@ -122,7 +120,7 @@ public class JavaStringConverter implements ObjectConverter<String> {
 			return null;
 		}
 		if(type.isArray()) {
-			return this.encodeArray((Object[])value, type);
+			return this.encodeArray((Object[])value, type.getComponentType());
 		}
 		if(Collection.class.isAssignableFrom(type)) {
 			return this.encodeCollection((Collection<?>)value);
@@ -423,79 +421,79 @@ public class JavaStringConverter implements ObjectConverter<String> {
 		if(value == null) {
 			return null;
 		}
-		if (CharSequence.class.isAssignableFrom(type)) {
+		if(CharSequence.class.isAssignableFrom(type)) {
 			return (T) this.decodeString(value);
 		}
-		if (type.isArray()) {
+		if(type.isArray()) {
 			return (T) this.decodeToArray(value, type.getComponentType());
 		}
-		if (Boolean.class.equals(type) || Boolean.TYPE.equals(type)) {
+		if(Boolean.class.equals(type) || Boolean.TYPE.equals(type)) {
 			return (T) this.decodeBoolean(value);
 		}
-		if (Character.class.equals(type) || Character.TYPE.equals(type)) {
+		if(Character.class.equals(type) || Character.TYPE.equals(type)) {
 			return (T) this.decodeCharacter(value);
 		}
-		if (Integer.class.equals(type) || Integer.TYPE.equals(type)) {
+		if(Integer.class.equals(type) || Integer.TYPE.equals(type)) {
 			return (T) this.decodeInteger(value);
 		}
-		if (Long.class.equals(type) || Long.TYPE.equals(type)) {
+		if(Long.class.equals(type) || Long.TYPE.equals(type)) {
 			return (T) this.decodeLong(value);
 		}
-		if (Byte.class.equals(type) || Byte.TYPE.equals(type)) {
+		if(Byte.class.equals(type) || Byte.TYPE.equals(type)) {
 			return (T) this.decodeByte(value);
 		}
-		if (Short.class.equals(type) || Short.TYPE.equals(type)) {
+		if(Short.class.equals(type) || Short.TYPE.equals(type)) {
 			return (T) this.decodeShort(value);
 		}
-		if (Float.class.equals(type) || Float.TYPE.equals(type)) {
+		if(Float.class.equals(type) || Float.TYPE.equals(type)) {
 			return (T) this.decodeFloat(value);
 		}
-		if (Double.class.equals(type) || Double.TYPE.equals(type)) {
+		if(Double.class.equals(type) || Double.TYPE.equals(type)) {
 			return (T) this.decodeDouble(value);
 		}
-		if (BigInteger.class.equals(type)) {
+		if(BigInteger.class.equals(type)) {
 			return (T) this.decodeBigInteger(value);
 		}
-		if (BigDecimal.class.equals(type)) {
+		if(BigDecimal.class.equals(type)) {
 			return (T) this.decodeBigDecimal(value);
 		}
-		if (LocalDate.class.equals(type)) {
+		if(LocalDate.class.equals(type)) {
 			return (T) this.decodeLocalDate(value);
 		}
-		if (LocalDateTime.class.equals(type)) {
+		if(LocalDateTime.class.equals(type)) {
 			return (T) this.decodeLocalDateTime(value);
 		}
-		if (ZonedDateTime.class.equals(type)) {
+		if(ZonedDateTime.class.equals(type)) {
 			return (T) this.decodeZonedDateTime(value);
 		}
-		if (Currency.class.equals(type)) {
+		if(Currency.class.equals(type)) {
 			return (T) this.decodeCurrency(value);
 		}
-		if (File.class.equals(type)) {
+		if(File.class.equals(type)) {
 			return (T) this.decodeFile(value);
 		}
-		if (Path.class.equals(type)) {
+		if(Path.class.equals(type)) {
 			return (T) this.decodePath(value);
 		}
-		if (URI.class.equals(type)) {
+		if(URI.class.equals(type)) {
 			return (T) this.decodeURI(value);
 		}
-		if (URL.class.equals(type)) {
+		if(URL.class.equals(type)) {
 			return (T) this.decodeURL(value);
 		}
-		if (Pattern.class.equals(type)) {
+		if(Pattern.class.equals(type)) {
 			return (T) this.decodePattern(value);
 		}
-		if (Locale.class.equals(type)) {
+		if(Locale.class.equals(type)) {
 			return (T) this.decodeLocale(value);
 		}
-		if (type.isEnum()) {
+		if(type.isEnum()) {
 			return (T) this.decodeEnum(value, type.asSubclass(Enum.class));
 		}
-		if (type.equals(Class.class)) {
+		if(type.equals(Class.class)) {
 			return (T) this.decodeClass(value);
 		}
-		if (InetAddress.class.isAssignableFrom(type)) {
+		if(InetAddress.class.isAssignableFrom(type)) {
 			return (T) this.decodeInetAddress(value);
 		}
 		// TODO we could inject another String to object decoder based on json, xml...
@@ -730,7 +728,7 @@ public class JavaStringConverter implements ObjectConverter<String> {
 	@Override
 	public Currency decodeCurrency(String value) throws ConverterException {
 		try {
-			return Currency.getInstance(StringEscapeUtils.unescapeJava(value));
+			return value != null ? Currency.getInstance(StringEscapeUtils.unescapeJava(value)) : null;
 		} 
 		catch (IllegalArgumentException e) {
 			throw new ConverterException(value + " can't be decoded to the requested type", e);
@@ -744,8 +742,7 @@ public class JavaStringConverter implements ObjectConverter<String> {
 		}
 		String[] elements = StringEscapeUtils.unescapeJava(value).split("_");
 		if (elements.length >= 1 && (elements[0].length() == 2 || elements[0].length() == 0)) {
-			return new Locale(elements[0], elements.length >= 2 ? elements[1] : "",
-					elements.length >= 3 ? elements[2] : "");
+			return new Locale(elements[0], elements.length >= 2 ? elements[1] : "",	elements.length >= 3 ? elements[2] : "");
 		}
 		throw new ConverterException(value + " can't be decoded to the requested type");
 	}
@@ -768,7 +765,8 @@ public class JavaStringConverter implements ObjectConverter<String> {
 	public URI decodeURI(String value) throws ConverterException {
 		try {
 			return value != null ? new URI(StringEscapeUtils.unescapeJava(value)) : null;
-		} catch (URISyntaxException e) {
+		} 
+		catch (URISyntaxException e) {
 			throw new ConverterException(value + " can't be decoded to the requested type", e);
 		}
 	}
@@ -777,7 +775,8 @@ public class JavaStringConverter implements ObjectConverter<String> {
 	public URL decodeURL(String value) throws ConverterException {
 		try {
 			return value != null ? new URL(StringEscapeUtils.unescapeJava(value)) : null;
-		} catch (MalformedURLException e) {
+		} 
+		catch (MalformedURLException e) {
 			throw new ConverterException(value + " can't be decoded to the requested type", e);
 		}
 	}
@@ -786,7 +785,8 @@ public class JavaStringConverter implements ObjectConverter<String> {
 	public Pattern decodePattern(String value) throws ConverterException {
 		try {
 			return value != null ? Pattern.compile(StringEscapeUtils.unescapeJava(value)) : null;
-		} catch (PatternSyntaxException e) {
+		} 
+		catch (PatternSyntaxException e) {
 			throw new ConverterException(value + " can't be decoded to the requested type", e);
 		}
 	}
@@ -795,7 +795,8 @@ public class JavaStringConverter implements ObjectConverter<String> {
 	public InetAddress decodeInetAddress(String value) throws ConverterException {
 		try {
 			return value != null ? InetAddress.getByName(StringEscapeUtils.unescapeJava(value)) : null;
-		} catch (UnknownHostException e) {
+		} 
+		catch (UnknownHostException e) {
 			throw new ConverterException(value + " can't be decoded to the requested type", e);
 		}
 	}
@@ -803,8 +804,9 @@ public class JavaStringConverter implements ObjectConverter<String> {
 	@Override
 	public Class<?> decodeClass(String value) throws ConverterException {
 		try {
-			return value != null ? Class.forName(value) : null;
-		} catch (ClassNotFoundException e) {
+			return value != null ? Class.forName(StringEscapeUtils.unescapeJava(value)) : null;
+		} 
+		catch (ClassNotFoundException e) {
 			throw new ConverterException(value + " can't be decoded to the requested type", e);
 		}
 	}
@@ -812,7 +814,8 @@ public class JavaStringConverter implements ObjectConverter<String> {
 	private <T extends Enum<T>> T decodeEnum(String value, Class<T> type) {
 		try {
 			return value != null ? Enum.valueOf(type, value) : null;
-		} catch (IllegalArgumentException e) {
+		} 
+		catch (IllegalArgumentException e) {
 			throw new ConverterException(value + " can't be decoded to the requested type", e);
 		}
 	}

@@ -15,20 +15,17 @@
  */
 package io.inverno.mod.http.base.internal.header;
 
-import io.inverno.mod.http.base.header.ParameterizedHeader;
-import io.inverno.mod.http.base.header.ParameterizedHeaderCodec;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import io.inverno.core.annotation.Bean;
-import io.inverno.core.annotation.BeanSocket;
 import io.inverno.core.annotation.Bean.Visibility;
+import io.inverno.core.annotation.BeanSocket;
 import io.inverno.mod.http.base.NotAcceptableException;
 import io.inverno.mod.http.base.header.HeaderBuilder;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>

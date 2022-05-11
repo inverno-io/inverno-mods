@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.base.header;
+package io.inverno.mod.http.base.internal.header;
 
+import io.inverno.mod.base.Charsets;
+import io.inverno.mod.http.base.header.AbstractHeaderCodec;
+import io.inverno.mod.http.base.header.HeaderCodec;
+import io.inverno.mod.http.base.header.HeaderService;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.inverno.mod.base.Charsets;
-import io.inverno.mod.http.base.internal.header.MalformedHeaderException;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -37,6 +37,9 @@ import java.util.stream.Collectors;
  * 
  * @see ParameterizedHeader
  * @see HeaderCodec
+ * 
+ * @param <A> parameterized header type
+ * @param <B> parameterized header builder type
  */
 public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends ParameterizedHeader.AbstractBuilder<A, B>> extends AbstractHeaderCodec<A, B> {
 
@@ -79,23 +82,20 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 	
 	/**
 	 * <p>
-	 * Creates a parameterized header codec with the specified header builder supplier, list of supported header names, value delimiter, parameter
-	 * delimiter, parameter value delimiter and options.
+	 * Creates a parameterized header codec with the specified header builder supplier, list of supported header names, value delimiter, parameter delimiter, parameter value delimiter and options.
 	 * </p>
-	 * 
-	 * @param builderSupplier      a supplier to create header builder instances
-	 *                             when decoding a header
-	 * @param supportedHeaderNames the list of header names supported by the codec
-	 * @param valueDelimiter       a value delimiter
-	 * @param parameterDelimiter   a parameter delimiter
-	 * @param parameterValueDelimiter       a parameter value delimiter
-	 * @param allowEmptyValue      allow empty parameterized value
-	 * @param expectNoValue        expect no parameterized value
-	 * @param allowFlagParameter   allow flag parameters (ie. parameter with no
-	 *                             value)
-	 * @param allowSpaceInValue    allow space in values
-	 * @param allowQuotedValue     allow quoted values
-	 * @param allowMultiple        allow multiple header values
+	 *
+	 * @param builderSupplier         a supplier to create header builder instances when decoding a header
+	 * @param supportedHeaderNames    the list of header names supported by the codec
+	 * @param valueDelimiter          a value delimiter
+	 * @param parameterDelimiter      a parameter delimiter
+	 * @param parameterValueDelimiter a parameter value delimiter
+	 * @param allowEmptyValue         allow empty parameterized value
+	 * @param expectNoValue           expect no parameterized value
+	 * @param allowFlagParameter      allow flag parameters (ie. parameter with no value)
+	 * @param allowSpaceInValue       allow space in values
+	 * @param allowQuotedValue        allow quoted values
+	 * @param allowMultiple           allow multiple header values
 	 */
 	public ParameterizedHeaderCodec(Supplier<B> builderSupplier, Set<String> supportedHeaderNames, char valueDelimiter, char parameterDelimiter, char parameterValueDelimiter, boolean allowEmptyValue, boolean expectNoValue, boolean allowFlagParameter, boolean allowSpaceInValue, boolean allowQuotedValue, boolean allowMultiple) {
 		super(builderSupplier, supportedHeaderNames);
@@ -135,14 +135,14 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 	 * <p>
 	 * Decodes the specified raw value ByteBuf for the specified header name using the specified charset.
 	 * </p>
-	 * 
-	 * name - a header name buffer - a header raw value charset - the charset to use for decoding 
-	 * 
-	 * @param name a header name
-	 * @param buffer a header raw value
-	 * @param charset the charset to use for decoding 
-	 * @param lf true to indicate that a silent LF byte is present after the last readable byte in the buffer to indicate the end of the header
-	 * 
+	 *
+	 * name - a header name buffer - a header raw value charset - the charset to use for decoding
+	 *
+	 * @param name    a header name
+	 * @param buffer  a header raw value
+	 * @param charset the charset to use for decoding
+	 * @param lf      true to indicate that a silent LF byte is present after the last readable byte in the buffer to indicate the end of the header
+	 *
 	 * @return a decoded header instance
 	 */
 	private A decode(String name, ByteBuf buffer, Charset charset, boolean lf) {
@@ -163,9 +163,9 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 			byte nextByte;
 			if(buffer.isReadable()) {
 				nextByte = buffer.readByte();
-				if(nextByte == CR) {
+				if(nextByte == HeaderCodec.CR) {
 					if(buffer.isReadable()) {
-						if(buffer.getByte(buffer.readerIndex()) == LF) {
+						if(buffer.getByte(buffer.readerIndex()) == HeaderCodec.LF) {
 							buffer.readByte();
 							if(endIndex == null) {
 								endIndex = buffer.readerIndex() - 2;
@@ -182,7 +182,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						break;
 					}
 				}
-				else if(nextByte == LF) {
+				else if(nextByte == HeaderCodec.LF) {
 					if(endIndex == null) {
 						endIndex = buffer.readerIndex() - 1;
 					}
@@ -200,7 +200,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 				}
 			}
 			else if(lf) {
-				nextByte = LF;
+				nextByte = HeaderCodec.LF;
 				if(endIndex == null) {
 					endIndex = buffer.readerIndex();
 				}
@@ -234,7 +234,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					if(endIndex == null) {
 						endIndex = buffer.readerIndex() - 1;
 					}
-					if(startIndex == endIndex) {
+					if(startIndex.equals(endIndex)) {
 						buffer.readerIndex(readerIndex);
 						throw new MalformedHeaderException(name);
 					}
@@ -278,7 +278,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 					if(endIndex == null) {
 						endIndex = buffer.readerIndex() - 1;
 					}
-					if(startIndex == endIndex) {
+					if(startIndex.equals(endIndex)) {
 						if(!this.allowEmptyValue) {
 							buffer.readerIndex(readerIndex);
 							throw new MalformedHeaderException(name + ": empty value not allowed");
@@ -337,7 +337,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						if(endIndex == null) {
 							endIndex = buffer.readerIndex() - 1;
 						}
-						if(startIndex == endIndex) {
+						if(startIndex.equals(endIndex)) {
 							buffer.readerIndex(readerIndex);
 							throw new MalformedHeaderException(name);
 						}
@@ -348,7 +348,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						if(endIndex == null) {
 							endIndex = buffer.readerIndex() - 1;
 						}
-						if(startIndex == endIndex) {
+						if(startIndex.equals(endIndex)) {
 							buffer.readerIndex(readerIndex);
 							throw new MalformedHeaderException(name);
 						}
@@ -396,7 +396,7 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 						if(endIndex == null) {
 							endIndex = buffer.readerIndex() - 1;
 						}
-						if(startIndex == endIndex) {
+						if(startIndex.equals(endIndex)) {
 							buffer.readerIndex(readerIndex);
 							throw new MalformedHeaderException(name);
 						}

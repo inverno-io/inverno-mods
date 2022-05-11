@@ -10,8 +10,6 @@ import io.inverno.mod.http.base.header.HeaderBuilder;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.base.header.ParameterizedHeader;
-import io.inverno.mod.http.base.header.ParameterizedHeaderCodec;
 import io.netty.buffer.ByteBuf;
 import java.nio.charset.Charset;
 import java.util.HashMap;

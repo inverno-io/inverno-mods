@@ -423,11 +423,11 @@ public class StringConverter implements ObjectConverter<String> {
 		if(value == null) {
 			return null;
 		}
-		if (String.class.equals(type)) {
+		if(String.class.equals(type)) {
 			return (T) value;
 		}
 		if(type.isArray()) {
-			return (T)this.decodeToArray(value, type.getComponentType());
+			return (T) this.decodeToArray(value, type.getComponentType());
 		}
 		if(Boolean.class.equals(type) || Boolean.TYPE.equals(type)) {
 			return (T) this.decodeBoolean(value);
@@ -468,7 +468,7 @@ public class StringConverter implements ObjectConverter<String> {
 		if(ZonedDateTime.class.equals(type)) {
 			return (T) this.decodeZonedDateTime(value);
 		}
-		if (Currency.class.equals(type)) {
+		if(Currency.class.equals(type)) {
 			return (T) this.decodeCurrency(value);
 		}
 		if(File.class.equals(type)) {
@@ -645,7 +645,7 @@ public class StringConverter implements ObjectConverter<String> {
 	@Override
 	public Double decodeDouble(String value) throws ConverterException {
 		try {
-			return value !=null ? Double.valueOf(value) : null;
+			return value != null ? Double.valueOf(value) : null;
 		} 
 		catch (NumberFormatException e) {
 			throw new ConverterException(value + " can't be decoded to the requested type", e);
@@ -654,6 +654,9 @@ public class StringConverter implements ObjectConverter<String> {
 
 	@Override
 	public Character decodeCharacter(String value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
 		if(value.length() == 1) {
 			return value.charAt(0);
 		}

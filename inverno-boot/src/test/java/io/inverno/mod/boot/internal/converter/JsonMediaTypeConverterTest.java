@@ -36,7 +36,7 @@ import reactor.core.publisher.Flux;
  */
 public class JsonMediaTypeConverterTest {
 
-	private static final JsonMediaTypeConverter CONVERTER = new JsonMediaTypeConverter(new JacksonByteBufConverter(new ObjectMapper()));
+	private static final JsonByteBufMediaTypeConverter CONVERTER = new JsonByteBufMediaTypeConverter(new JacksonByteBufConverter(new ObjectMapper()));
 	
 	@Test
 	public void testEncodeMany() throws IOException {

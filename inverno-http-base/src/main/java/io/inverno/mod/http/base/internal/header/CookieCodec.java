@@ -15,16 +15,6 @@
  */
 package io.inverno.mod.http.base.internal.header;
 
-import io.inverno.mod.http.base.header.ParameterizedHeader;
-import io.inverno.mod.http.base.header.ParameterizedHeaderCodec;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.mod.base.converter.ObjectConverter;
@@ -32,6 +22,13 @@ import io.inverno.mod.http.base.header.CookieParameter;
 import io.inverno.mod.http.base.header.HeaderBuilder;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>

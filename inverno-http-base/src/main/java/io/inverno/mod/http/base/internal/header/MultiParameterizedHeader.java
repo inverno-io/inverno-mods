@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.base.header;
+package io.inverno.mod.http.base.internal.header;
 
+import io.inverno.mod.http.base.header.HeaderBuilder;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,9 +24,7 @@ import java.util.Map;
 
 /**
  * <p>
- * A parameterized header implementation that supports multiple values as
- * defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2.2">RFC
- * 7230 Section 3.2.2</a>.
+ * A parameterized header implementation that supports multiple values as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2.2">RFC 7230 Section 3.2.2</a>.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -52,6 +51,7 @@ public class MultiParameterizedHeader extends ParameterizedHeader {
 		 */
 		protected List<ParameterizedHeader> headers;
 		
+		@Override
 		@SuppressWarnings("unchecked")
 		public B parameterizedValue(String parameterizedValue) {
 			if(this.parameterizedValue != null || this.parameters != null) {

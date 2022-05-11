@@ -36,7 +36,7 @@ import reactor.core.publisher.Mono;
  */
 public class NdJsonMediaTypeConverterTest {
 
-	private static final NdJsonMediaTypeConverter CONVERTER = new NdJsonMediaTypeConverter(new JacksonByteBufConverter(new ObjectMapper()));
+	private static final NdJsonByteBufMediaTypeConverter CONVERTER = new NdJsonByteBufMediaTypeConverter(new JacksonByteBufConverter(new ObjectMapper()));
 	
 	@Test
 	public void testEncodeOne() {

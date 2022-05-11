@@ -15,20 +15,19 @@
  */
 package io.inverno.mod.configuration.source;
 
-import java.util.Map;
-
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
 import io.inverno.mod.configuration.AbstractHashConfigurationSource;
 import io.inverno.mod.configuration.AbstractPropertiesConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.internal.GenericConfigurationProperty;
-import io.inverno.mod.configuration.internal.ObjectDecoder;
+import io.inverno.mod.base.converter.ObjectDecoder;
 import io.inverno.mod.configuration.internal.parser.option.ConfigurationOptionParser;
 import io.inverno.mod.configuration.internal.parser.option.ParseException;
 import io.inverno.mod.configuration.internal.parser.option.StringProvider;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
@@ -98,7 +97,7 @@ public class MapConfigurationSource extends AbstractHashConfigurationSource<Obje
 				try {
 					ConfigurationOptionParser<?> parser = new ConfigurationOptionParser<>(new StringProvider(entry.getKey()));
 					ConfigurationKey configurationKey = parser.StartKey();
-					ConfigurationProperty configurationProperty = new GenericConfigurationProperty<>(configurationKey, entry.getValue().toString(), this);
+					ConfigurationProperty configurationProperty = new GenericConfigurationProperty<>(configurationKey, entry.getValue(), this);
 					properties.add(configurationProperty);
 				} 
 				catch (ParseException e) {

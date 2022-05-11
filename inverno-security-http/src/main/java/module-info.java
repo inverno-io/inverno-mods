@@ -1,6 +1,8 @@
 @io.inverno.core.annotation.Module(excludes = {"io.inverno.mod.http.server"})
 module io.inverno.mod.security.http {
 	requires io.inverno.core;
+	requires static io.inverno.core.annotation; // for javadoc...
+	
 	requires io.inverno.mod.base;
     requires transitive io.inverno.mod.security;
     requires transitive io.inverno.mod.http.server;

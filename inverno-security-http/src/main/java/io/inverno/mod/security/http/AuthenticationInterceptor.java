@@ -52,7 +52,6 @@ public class AuthenticationInterceptor<A extends Exchange<InterceptingSecurityCo
 			.flatMap(this.authenticator::authenticate)
 			// 3. Resolve identity and authorizations
 			.onErrorContinue(io.inverno.mod.security.SecurityException.class, (error, ign) -> {
-				System.out.println("CONTINUE ERROR");
 				exchange.context().setSecurityContext(SecurityContext.of(Authentication.denied((io.inverno.mod.security.SecurityException)error)));
 			})
 			.flatMap(authentication -> Mono.zip(

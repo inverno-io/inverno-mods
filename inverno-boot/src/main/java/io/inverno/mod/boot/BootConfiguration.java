@@ -22,7 +22,7 @@ import io.vertx.core.Vertx;
 
 /**
  * <p>
- * Net specific configuration.
+ * Boot module configuration.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

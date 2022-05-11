@@ -89,6 +89,7 @@ public class DataConversionService {
 	 *                              specified media type
 	 */
 	public MediaTypeConverter<ByteBuf> getConverter(String mediaType) throws NoConverterException {
+		mediaType = mediaType.toLowerCase();
 		MediaTypeConverter<ByteBuf> result = this.convertersCache.get(mediaType);
 		if (result == null && !this.convertersCache.containsKey(mediaType)) {
 			for (MediaTypeConverter<ByteBuf> converter : this.converters) {

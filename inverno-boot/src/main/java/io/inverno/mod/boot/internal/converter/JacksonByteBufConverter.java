@@ -63,14 +63,14 @@ import reactor.core.publisher.Mono;
  * @see ReactiveConverter
  * @see ObjectMapper
  */
-@Bean( name = "jsonByteBufConverter")
+@Bean( name = "jsonByteBufConverter" )
 public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteBuf, Object>, SplittableDecoder<ByteBuf, Object>, JoinableEncoder<Object, ByteBuf> {
 
-	private static final ByteBuf EMPTY_LAST_CHUNK = Unpooled.unreleasableBuffer(Unpooled.EMPTY_BUFFER);
+	private static final ByteBuf LAST_CHUNK = Unpooled.unreleasableBuffer(Unpooled.EMPTY_BUFFER);
 	
-	private static final Mono<ByteBuf> LAST_CHUNK_PUBLISHER = Mono.just(EMPTY_LAST_CHUNK);
+	private static final Mono<ByteBuf> LAST_CHUNK_PUBLISHER = Mono.just(LAST_CHUNK);
 	
-	private ObjectMapper mapper;
+	private final ObjectMapper mapper;
 
 	public JacksonByteBufConverter(ObjectMapper mapper) {
 		this.mapper = mapper;
@@ -138,12 +138,12 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 
 	@Override
 	public <T> ByteBuf encodeList(List<T> value, Class<T> type) {
-		return this.encode(value, type);
+		return this.encode(value);
 	}
 	
 	@Override
 	public <T> ByteBuf encodeList(List<T> value, Type type) {
-		return this.encode(value, type);
+		return this.encode(value);
 	}
 	
 	@Override
@@ -153,12 +153,12 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 	
 	@Override
 	public <T> ByteBuf encodeSet(Set<T> value, Class<T> type) {
-		return this.encode(value, type);
+		return this.encode(value);
 	}
 	
 	@Override
 	public <T> ByteBuf encodeSet(Set<T> value, Type type) {
-		return this.encode(value, type);
+		return this.encode(value);
 	}
 
 	@Override
@@ -168,22 +168,22 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 	
 	@Override
 	public <T> ByteBuf encodeArray(T[] value, Class<T> type) {
-		return this.encode(value, type);
+		return this.encode(value);
 	}
 	
 	@Override
 	public <T> ByteBuf encodeArray(T[] value, Type type) {
-		return this.encode(value, type);
+		return this.encode(value);
 	}
 	
 	@Override
 	public <T> Mono<T> decodeOne(Publisher<ByteBuf> value, Class<T> type) {
-		return this.<T>decodeMany(value, type, true).single();
+		return this.<T>decodeMany(value, type, false).single();
 	}
 	
 	@Override
 	public <T> Mono<T> decodeOne(Publisher<ByteBuf> value, Type type) {
-		return this.<T>decodeMany(value, type, true).single();
+		return this.<T>decodeMany(value, type, false).single();
 	}
 
 	@Override
@@ -210,7 +210,7 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 				},
 				(scanner, chunk) -> {
 					try {
-						if(chunk == EMPTY_LAST_CHUNK) {
+						if(chunk == LAST_CHUNK) {
 							scanner.endOfInput();
 						}
 						else {
@@ -227,7 +227,7 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 			.concatMap(scanner -> {
 				try {
 					List<T> objects = new LinkedList<>();
-					T object = null;
+					T object;
 					while( (object = scanner.nextObject()) != null) {
 						objects.add(object);
 					}
@@ -270,7 +270,7 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 			scanner.endOfInput();
 			
 			List<T> objects = new LinkedList<>();
-			T object = null;
+			T object;
 			while( (object = scanner.nextObject()) != null) {
 				objects.add(object);
 			}
@@ -294,7 +294,7 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 			scanner.endOfInput();
 			
 			Set<T> objects = new HashSet<>();
-			T object = null;
+			T object;
 			while( (object = scanner.nextObject()) != null) {
 				objects.add(object);
 			}
@@ -331,16 +331,16 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 	
 	private static class ObjectScanner<T> {
 		
-		private Type type;
+		private final Type type;
 		
-		private ObjectMapper mapper;
-		private ObjectReader reader;
+		private final ObjectMapper mapper;
+		private final ObjectReader reader;
 		
-		private boolean scanRootArray;
+		private final boolean scanRootArray;
 		
-		private JsonParser parser;
+		private final JsonParser parser;
 		
-		private ByteArrayFeeder feeder;
+		private final ByteArrayFeeder feeder;
 		
 		private DeserializationContext deserializationContext;
 
@@ -364,7 +364,7 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 			this((Type)type, mapper, scanRootArray);
 		}
 		
-		protected TokenBuffer getTokenBuffer() {
+		private TokenBuffer getTokenBuffer() {
 			if(this.tokenBuffer == null) {
 				this.tokenBuffer = new TokenBuffer(this.parser, this.deserializationContext);
 				this.tokenBuffer.forceUseOfBigDecimal(this.mapper.isEnabled(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS));

@@ -26,9 +26,34 @@ package io.inverno.mod.base.resource;
 public final class MediaTypes {
 
 	/**
+	 * {@code application/jose}
+	 */
+	public static final String APPLICATION_JOSE = "application/jose";
+	
+	/**
+	 * {@code application/jose+json}
+	 */
+	public static final String APPLICATION_JOSE_JSON = "application/jose+json";
+	
+	/**
 	 * {@code application/json}
 	 */
 	public static final String APPLICATION_JSON = "application/json";
+	
+	/**
+	 * {@code application/jwk+json}
+	 */
+	public static final String APPLICATION_JWK_JSON = "application/jwk+json";
+	
+	/**
+	 * {@code application/jwk-set+json}
+	 */
+	public static final String APPLICATION_JWK_SET_JSON = "application/jwk-set+json";
+	
+	/**
+	 * {@code application/jwt}
+	 */
+	public static final String APPLICATION_JWT = "application/jwt";
 	
 	/**
 	 * {@code application/octet-stream}

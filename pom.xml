@@ -118,6 +118,7 @@
 		<module>inverno-redis-lettuce</module>
 		<module>inverno-security</module>
 		<module>inverno-security-http</module>
+		<module>inverno-security-jose</module>
 		<module>inverno-sql</module>
 		<module>inverno-sql-vertx</module>
 		<module>inverno-web</module>

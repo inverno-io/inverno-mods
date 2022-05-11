@@ -1,13 +1,3 @@
-import java.util.concurrent.ExecutorService;
-
-import io.inverno.mod.base.concurrent.Reactor;
-import io.inverno.mod.base.converter.CompoundDecoder;
-import io.inverno.mod.base.converter.CompoundEncoder;
-import io.inverno.mod.base.net.NetService;
-import io.inverno.mod.base.resource.MediaTypeService;
-import io.inverno.mod.base.resource.Resource;
-import io.inverno.mod.base.resource.ResourceService;
-
 /*
  * Copyright 2021 Jeremy KUHN
  *
@@ -24,6 +14,16 @@ import io.inverno.mod.base.resource.ResourceService;
  * limitations under the License.
  */
 
+import java.util.concurrent.ExecutorService;
+
+import io.inverno.mod.base.concurrent.Reactor;
+import io.inverno.mod.base.converter.CompoundDecoder;
+import io.inverno.mod.base.converter.CompoundEncoder;
+import io.inverno.mod.base.net.NetService;
+import io.inverno.mod.base.resource.MediaTypeService;
+import io.inverno.mod.base.resource.Resource;
+import io.inverno.mod.base.resource.ResourceService;
+
 /**
  * <p>
  * The Inverno framework boot module provides basic services.
@@ -34,7 +34,7 @@ import io.inverno.mod.base.resource.ResourceService;
  * </p>
  * 
  * <dl>
- * <dt>bootConfiguration</dt>
+ * <dt>configuration</dt>
  * <dd>the boot module configuration</dd>
  * <dt>compoundDecoders</dt>
  * <dd>extend the parameter converter decoding capabilities with a list of
@@ -53,7 +53,7 @@ import io.inverno.mod.base.resource.ResourceService;
  * </p>
  * 
  * <dl>
- * <dt>bootConfiguration</dt>
+ * <dt>configuration</dt>
  * <dd>the boot module configuration</dd>
  * <dt>reactor</dt>
  * <dd>the {@link Reactor} used to create optimized threading model based on
@@ -90,19 +90,19 @@ import io.inverno.mod.base.resource.ResourceService;
  */
 @io.inverno.core.annotation.Module
 
-@io.inverno.core.annotation.Wire(beans="io.inverno.mod.boot:jsonByteBufConverter", into="io.inverno.mod.boot:jsonMediaTypeConverter:jsonByteBufConverter")
-@io.inverno.core.annotation.Wire(beans="io.inverno.mod.boot:jsonByteBufConverter", into="io.inverno.mod.boot:ndjsonMediaTypeConverter:jsonByteBufConverter")
+@io.inverno.core.annotation.Wire(beans="io.inverno.mod.boot:jsonByteBufConverter", into="io.inverno.mod.boot:jsonByteBufMediaTypeConverter:jsonByteBufConverter")
+@io.inverno.core.annotation.Wire(beans="io.inverno.mod.boot:jsonByteBufConverter", into="io.inverno.mod.boot:ndjsonByteBufMediaTypeConverter:jsonByteBufConverter")
+@io.inverno.core.annotation.Wire(beans="io.inverno.mod.boot:jsonStringConverter", into="io.inverno.mod.boot:jsonStringMediaTypeConverter:jsonStringConverter")
 module io.inverno.mod.boot {
 	requires transitive io.inverno.core;
 	requires static io.inverno.core.annotation; // for javadoc...
-	
 	requires transitive io.inverno.mod.base;
 	requires transitive io.inverno.mod.configuration;
 	
+	requires transitive com.fasterxml.jackson.databind;
+	requires transitive com.fasterxml.jackson.datatype.jsr310;
 	requires org.apache.logging.log4j;
-	requires transitive reactor.core;
 	requires transitive org.reactivestreams;
-	
 	requires transitive io.netty.buffer;
 	requires io.netty.common;
 	requires transitive io.netty.transport;
@@ -110,11 +110,8 @@ module io.inverno.mod.boot {
 	requires static io.netty.transport.classes.epoll;
 	requires static io.netty.transport.classes.kqueue;
 	requires static io.netty.incubator.transport.classes.io_uring;
-	
 	requires static io.vertx.core;
-	
-	requires transitive com.fasterxml.jackson.databind;
-	requires transitive com.fasterxml.jackson.datatype.jsr310;
+	requires transitive reactor.core;
 	
 	exports io.inverno.mod.boot;
 }

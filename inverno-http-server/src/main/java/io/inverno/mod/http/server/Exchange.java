@@ -23,7 +23,7 @@ import reactor.core.publisher.Mono;
  * </p>
  *
  * <p>
- * The HTTP server attaches an exchange context created using {@link RootExchangeHandler#createContext()} when an exchange is created.
+ * The HTTP server attaches an exchange context created using {@link ServerController#createContext()} when an exchange is created.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

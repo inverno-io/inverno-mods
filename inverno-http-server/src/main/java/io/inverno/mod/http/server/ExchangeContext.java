@@ -21,16 +21,15 @@ package io.inverno.mod.http.server;
  * </p>
  *
  * <p>
- * An exchange context is attached to an exchange to expose contextual data and operation during the lifetime of an exchange. It is created by the
- * HTTP server with the {@link Exchange} using {@link RootExchangeHandler#createContext()} at the earliest possible moment basically when a request is
- * received.
+ * An exchange context is attached to an exchange to expose contextual data and operation during the lifetime of an exchange. It is created by the HTTP server with the {@link Exchange} using
+ * {@link ServerController#createContext()} at the earliest possible moment basically when a request is received.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
  *
  * @see Exchange
- * @see RootExchangeHandler#createContext()
+ * @see ServerController#createContext()
  */
 public interface ExchangeContext {
 	
