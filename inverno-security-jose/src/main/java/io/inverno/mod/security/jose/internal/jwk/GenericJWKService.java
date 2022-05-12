@@ -211,7 +211,7 @@ public final class GenericJWKService implements @Provide JWKService {
 				keysValue = (List<Object>)parsedJWK.get("keys");
 			} 
 			catch (ClassCastException e) {
-				throw new JWSReadException("Invalid JWK set", e);
+				throw new JWKReadException("Invalid JWK set", e);
 			}
 			
 			// We are parsing a JWK set
@@ -226,7 +226,7 @@ public final class GenericJWKService implements @Provide JWKService {
 						keyElement = (Map<String, Object>)keyElementValue;
 					} 
 					catch (ClassCastException e) {
-						throw new JWSReadException("Invalid JWK set", e);
+						throw new JWKReadException("Invalid JWK set", e);
 					}
 					return this.read(keyElement, true);
 				});

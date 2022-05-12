@@ -24,6 +24,7 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
@@ -224,4 +225,29 @@ public abstract class AbstractX509JWK<A extends PublicKey, B extends PrivateKey>
 		return Arrays.equals(x5c, other.x5c) && Objects.equals(x5t, other.x5t)
 				&& Objects.equals(x5t_S256, other.x5t_S256) && Objects.equals(x5u, other.x5u);
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+		
+		str.append("{");
+		
+		String jwkStr = super.toString();
+		str.append(jwkStr, 1, jwkStr.length() - 1);
+		
+		if(this.x5u != null) {
+			str.append(",\"x5u\":\"").append(this.x5u).append("\"");
+		}
+		if(StringUtils.isNotBlank(this.x5t)) {
+			str.append(",\"x5t\":\"").append(this.x5t).append("\"");
+		}
+		if(StringUtils.isNotBlank(this.x5t_S256)) {
+			str.append(",\"x5t#S256\":\"").append(this.x5t_S256).append("\"");
+		}
+		str.append("}");
+		
+		return str.toString();
+	}
+	
+	
 }

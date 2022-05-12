@@ -140,28 +140,35 @@ public class GenericJWSReader<A> extends AbstractJOSEObjectReader<A, JWSHeader, 
 			final byte[] signingInput = (jwsHeader.getEncoded() + "." + jwsPayload.getEncoded()).getBytes();
 			final byte[] signature = Base64.getUrlDecoder().decode(encodedSignature);
 
-			// 2. Get the jwk
-			return keys
-				.onErrorStop()
-				.map(key -> {
-					// 3. Get signer
-					JWASigner signer = key.signer(jwsHeader.getAlgorithm());
-					
-					// 4. Check critical parameters
-					this.checkCriticalParameters(jwsHeader.getCritical(), signer);
-					
-					// 5. Verify signature
-					if(signer.verify(signingInput, signature)) {
-						jwsHeader.setKey(key);
-						return (JWS<A>)new GenericJWS<>(jwsHeader, jwsPayload, encodedSignature);
-					}
-					else {
-						throw new JWSReadException("JWS signature is invalid with key: " + key);
-					}
-				})
-				.onErrorContinue((e, key) -> LOGGER.warn(() -> "Failed to read JWS with key: " + key, e))
-				.next()
-				.switchIfEmpty(Mono.error(() -> new JWSBuildException("Failed to read JWS")));
+			return Mono.defer(() -> {
+				JWSReadException error = new JWSReadException("Failed to read JWS");
+				
+				// 2. Get the jwk
+				return keys
+					.onErrorStop()
+					.map(key -> {
+						// 3. Get signer
+						JWASigner signer = key.signer(jwsHeader.getAlgorithm());
+
+						// 4. Check critical parameters
+						this.checkCriticalParameters(jwsHeader.getCritical(), signer);
+
+						// 5. Verify signature
+						if(signer.verify(signingInput, signature)) {
+							jwsHeader.setKey(key);
+							return (JWS<A>)new GenericJWS<>(jwsHeader, jwsPayload, encodedSignature);
+						}
+						else {
+							throw new JWSReadException("JWS signature is invalid with key: " + key);
+						}
+					})
+					.onErrorContinue((e, key) -> {
+						error.addSuppressed(e);
+						LOGGER.debug(() -> "Failed to read JWS with key: " + key, e);
+					})
+					.next()
+					.switchIfEmpty(Mono.error(error));
+			});
 		}
 	}
 	

@@ -28,6 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -334,5 +335,28 @@ public abstract class AbstractJWK implements JWK {
 		AbstractJWK other = (AbstractJWK) obj;
 		return Objects.equals(alg, other.alg) && Objects.equals(key_ops, other.key_ops)
 				&& Objects.equals(kid, other.kid) && Objects.equals(kty, other.kty) && Objects.equals(use, other.use);
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+		
+		str.append("{");
+		str.append("\"kty\":\"").append(this.kty).append("\"");
+		if(StringUtils.isNotBlank(this.kid)) {
+			str.append(",\"kid\":\"").append(this.kid).append("\"");
+		}
+		if(StringUtils.isNotBlank(this.alg)) {
+			str.append(",\"alg\":\"").append(this.alg).append("\"");
+		}
+		if(StringUtils.isNotBlank(this.use)) {
+			str.append(",\"use\":\"").append(this.use).append("\"");
+		}
+		if(this.key_ops != null && !this.key_ops.isEmpty()) {
+			str.append(",\"key_ops\":[").append(this.key_ops.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(", "))).append("]");
+		}
+		str.append("}");
+		
+		return str.toString();
 	}
 }

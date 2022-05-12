@@ -25,6 +25,7 @@ import io.inverno.mod.security.jose.jwa.DirectJWAKeyManager;
 import io.inverno.mod.security.jose.jwa.EncryptingJWAKeyManager;
 import io.inverno.mod.security.jose.jwa.JWACipher;
 import io.inverno.mod.security.jose.jwa.JWAKeyManager;
+import io.inverno.mod.security.jose.jwa.JWAProcessingException;
 import io.inverno.mod.security.jose.jwa.NoAlgorithm;
 import io.inverno.mod.security.jose.jwa.WrappingJWAKeyManager;
 import io.inverno.mod.security.jose.jwe.JWE;
@@ -165,125 +166,138 @@ public class GenericJWEReader<A> extends AbstractJOSEObjectReader<A, JWEHeader, 
 				throw new JWEReadException("Direct encryption JWE has a non-blank encrypted key");
 			}
 			
-			return keys
-				.onErrorStop()
-				.flatMap(key -> {
-					// 1. Get cipher
-					JWACipher cipher = key.cipher(jweHeader.getEncryptionAlgorithm());
+			return Mono.defer(() -> {
+				JWEReadException error = new JWEReadException("Failed to read JWE");
+				return keys
+					.onErrorStop()
+					.flatMap(key -> {
+						// 1. Get cipher
+						JWACipher cipher = key.cipher(jweHeader.getEncryptionAlgorithm());
 
-					// 2. Check critical parameters
-					this.checkCriticalParameters(jweHeader.getCritical(), cipher);
+						// 2. Check critical parameters
+						this.checkCriticalParameters(jweHeader.getCritical(), cipher);
 
-					// 3. Decrypt payload
-					// directly decrypt payload with the key
-					byte[] decryptedPayload = cipher.decrypt(cipherText, aad, iv, tag);
+						// 3. Decrypt payload
+						// directly decrypt payload with the key
+						byte[] decryptedPayload = cipher.decrypt(cipherText, aad, iv, tag);
 
-					// 4. Unzip payload
-					final String payloadRaw;
-					if(payloadZip != null) {
-						payloadRaw = new String(payloadZip.decompress(decryptedPayload));
-					}
-					else {
-						payloadRaw = new String(decryptedPayload);
-					}
-
-					// 5. Decode payload
-					return payloadDecoder.apply(payloadRaw)
-						.map(payload -> {
-							GenericJWEPayload<A> jwePayload = new GenericJWEPayload<>(payload);
-							jwePayload.setRaw(payloadRaw);
-							jwePayload.setEncoded(encodedCipherText);
-
-							// 4. Assemble JWE
-							return (JWE<A>)new GenericJWE<>(
-								jweHeader, 
-								jwePayload, 
-								encodedInitializationVector, 
-								encodedAuthenticationTag
-							);
-						});
-				})
-				.onErrorContinue((e, key) -> LOGGER.warn(() -> "Failed to read JWE with key: " + key, e))
-				.next()
-				.switchIfEmpty(Mono.error(() -> new JWEBuildException("Failed to read JWE")));
-		}
-		else {
-			return keys
-				.onErrorStop()
-				.flatMap(key -> {
-					// 1. Determine CEK
-					final JWK cek;
-					JWAKeyManager keyManager = key.keyManager(jweHeader.getAlgorithm());
-					if(keyManager instanceof DirectJWAKeyManager) {
-						if(StringUtils.isNotBlank(encodedEncryptedKey)) {
-							throw new JWEReadException("Direct encryption JWE has a non-blank encrypted key");
-						}
-						DirectJWAKeyManager.DirectCEK directCEK = ((DirectJWAKeyManager)keyManager).deriveCEK(jweHeader.getEncryptionAlgorithm(), jweHeader.getCustomParameters());
-						// This is done to replace EPK as Map<String, Object> to the corresponding JWK type in order to get equals() to work
-						Map<String, Object> moreHeaderParameters = directCEK.getMoreHeaderParameters();
-						if(moreHeaderParameters != null) {
-							jweHeader.getCustomParameters().putAll(moreHeaderParameters);
-						}
-						cek = directCEK.getEncryptionKey();
-					}
-					else {
-						byte[] decodedEncryptedKey = Base64.getUrlDecoder().decode(encodedEncryptedKey);
-						if(keyManager instanceof EncryptingJWAKeyManager) {
-							if(decodedEncryptedKey.length == 0) {
-								throw new JWEReadException("Failed to decrypt JWE because encrypted key is blank and an encrypting key manager was returned by the key");
-							}
-							cek = ((EncryptingJWAKeyManager)keyManager).decryptCEK(decodedEncryptedKey, jweHeader.getEncryptionAlgorithm(), jweHeader.getCustomParameters());
-						}
-						else if(keyManager instanceof WrappingJWAKeyManager) {
-							if(decodedEncryptedKey.length == 0) {
-								throw new JWEReadException("Failed to decrypt JWE because encrypted key is blank and a wrapping key manager was returned by the key");
-							}
-							cek = ((WrappingJWAKeyManager)keyManager).unwrapCEK(decodedEncryptedKey, jweHeader.getEncryptionAlgorithm(), jweHeader.getCustomParameters());
+						// 4. Unzip payload
+						final String payloadRaw;
+						if(payloadZip != null) {
+							payloadRaw = new String(payloadZip.decompress(decryptedPayload));
 						}
 						else {
-							throw new IllegalStateException("Key manager must implement " + DirectJWAKeyManager.class + ", " + EncryptingJWAKeyManager.class + " or " + WrappingJWAKeyManager.class);
+							payloadRaw = new String(decryptedPayload);
 						}
-					}
-					
-					// 2. Get cipher
-					final JWACipher cipher = cek.cipher(jweHeader.getEncryptionAlgorithm());
-					
-					// 3. Check critical parameters
-					this.checkCriticalParameters(jweHeader.getCritical(), keyManager, cipher);
-					
-					// 4. Decrypt payload
-					final byte[] decryptedPayload = cipher.decrypt(cipherText, aad, iv, tag);
-					
-					// 5. Unzip payload
-					final String payloadRaw;
-					if(payloadZip != null) {
-						payloadRaw = new String(payloadZip.decompress(decryptedPayload));
-					}
-					else {
-						payloadRaw = new String(decryptedPayload);
-					}
-					
-					// 6. Decode payload
-					return payloadDecoder.apply(payloadRaw)
-						.map(payload -> {
-							GenericJWEPayload<A> jwePayload = new GenericJWEPayload<>(payload);
-							jwePayload.setRaw(payloadRaw);
-							jwePayload.setEncoded(encodedCipherText);
 
-							// 7. Assemble JWE
-							return (JWE<A>)new GenericJWE<>(
-								jweHeader, 
-								jwePayload, 
-								encodedInitializationVector, 
-								encodedAuthenticationTag,
-								encodedEncryptedKey.isBlank() ? null : encodedEncryptedKey, 
-								cek
-							);
-						});
-				})
-				.onErrorContinue((e, key) -> LOGGER.warn(() -> "Failed to read JWE with key: " + key, e))
-				.next()
-				.switchIfEmpty(Mono.error(() -> new JWEBuildException("Failed to read JWE")));
+						// 5. Decode payload
+						return payloadDecoder.apply(payloadRaw)
+							.map(payload -> {
+								GenericJWEPayload<A> jwePayload = new GenericJWEPayload<>(payload);
+								jwePayload.setRaw(payloadRaw);
+								jwePayload.setEncoded(encodedCipherText);
+
+								// 4. Assemble JWE
+								return (JWE<A>)new GenericJWE<>(
+									jweHeader, 
+									jwePayload, 
+									encodedInitializationVector, 
+									encodedAuthenticationTag
+								);
+							});
+					})
+					.onErrorContinue((e, key) -> {
+						error.addSuppressed(e);
+						LOGGER.debug(() -> "Failed to read JWE with key: " + key, e);
+					})
+					.next()
+					.switchIfEmpty(Mono.error(error));
+			});
+		}
+		else {
+			
+			return Mono.defer(() -> {
+				JWEReadException error = new JWEReadException("Failed to read JWE");
+				return keys
+					.onErrorStop()
+					.flatMap(key -> {
+						// 1. Determine CEK
+						final JWK cek;
+						JWAKeyManager keyManager = key.keyManager(jweHeader.getAlgorithm());
+						if(keyManager instanceof DirectJWAKeyManager) {
+							if(StringUtils.isNotBlank(encodedEncryptedKey)) {
+								throw new JWEReadException("Direct encryption JWE has a non-blank encrypted key");
+							}
+							DirectJWAKeyManager.DirectCEK directCEK = ((DirectJWAKeyManager)keyManager).deriveCEK(jweHeader.getEncryptionAlgorithm(), jweHeader.getCustomParameters());
+							// This is done to replace EPK as Map<String, Object> to the corresponding JWK type in order to get equals() to work
+							Map<String, Object> moreHeaderParameters = directCEK.getMoreHeaderParameters();
+							if(moreHeaderParameters != null) {
+								jweHeader.getCustomParameters().putAll(moreHeaderParameters);
+							}
+							cek = directCEK.getEncryptionKey();
+						}
+						else {
+							byte[] decodedEncryptedKey = Base64.getUrlDecoder().decode(encodedEncryptedKey);
+							if(keyManager instanceof EncryptingJWAKeyManager) {
+								if(decodedEncryptedKey.length == 0) {
+									throw new JWEReadException("Failed to decrypt JWE because encrypted key is blank and an encrypting key manager was returned by the key");
+								}
+								cek = ((EncryptingJWAKeyManager)keyManager).decryptCEK(decodedEncryptedKey, jweHeader.getEncryptionAlgorithm(), jweHeader.getCustomParameters());
+							}
+							else if(keyManager instanceof WrappingJWAKeyManager) {
+								if(decodedEncryptedKey.length == 0) {
+									throw new JWEReadException("Failed to decrypt JWE because encrypted key is blank and a wrapping key manager was returned by the key");
+								}
+								cek = ((WrappingJWAKeyManager)keyManager).unwrapCEK(decodedEncryptedKey, jweHeader.getEncryptionAlgorithm(), jweHeader.getCustomParameters());
+							}
+							else {
+								throw new JWAProcessingException("Key manager must implement " + DirectJWAKeyManager.class + ", " + EncryptingJWAKeyManager.class + " or " + WrappingJWAKeyManager.class);
+							}
+						}
+
+						// 2. Get cipher
+						final JWACipher cipher = cek.cipher(jweHeader.getEncryptionAlgorithm());
+
+						// 3. Check critical parameters
+						this.checkCriticalParameters(jweHeader.getCritical(), keyManager, cipher);
+
+						// 4. Decrypt payload
+						final byte[] decryptedPayload = cipher.decrypt(cipherText, aad, iv, tag);
+
+						// 5. Unzip payload
+						final String payloadRaw;
+						if(payloadZip != null) {
+							payloadRaw = new String(payloadZip.decompress(decryptedPayload));
+						}
+						else {
+							payloadRaw = new String(decryptedPayload);
+						}
+
+						// 6. Decode payload
+						return payloadDecoder.apply(payloadRaw)
+							.map(payload -> {
+								GenericJWEPayload<A> jwePayload = new GenericJWEPayload<>(payload);
+								jwePayload.setRaw(payloadRaw);
+								jwePayload.setEncoded(encodedCipherText);
+
+								// 7. Assemble JWE
+								return (JWE<A>)new GenericJWE<>(
+									jweHeader, 
+									jwePayload, 
+									encodedInitializationVector, 
+									encodedAuthenticationTag,
+									encodedEncryptedKey.isBlank() ? null : encodedEncryptedKey, 
+									cek
+								);
+							});
+					})
+					.onErrorContinue((e, key) -> {
+						error.addSuppressed(e);
+						LOGGER.debug(() -> "Failed to read JWE with key: " + key, e);
+					})
+					.next()
+					.switchIfEmpty(Mono.error(error));
+			});
 		}
 	}
 	

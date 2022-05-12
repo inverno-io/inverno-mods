@@ -142,16 +142,22 @@ public class GenericJWSBuilder<A> extends AbstractJOSEObjectBuilder<A, JWSHeader
 			return Mono.just(new GenericJWS<>(jwsHeader, jwsPayload, null));
 		}
 		else {
-			return keys
-				.onErrorStop()
-				.map(key -> {
-					String joseSignature = JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(key.signer(jwsHeader.getAlgorithm()).sign(signingInput));
-					jwsHeader.setKey(key);
-					return (JWS<A>)new GenericJWS<>(jwsHeader, jwsPayload, joseSignature);
-				})
-				.onErrorContinue((e, key) -> LOGGER.warn(() -> "Failed to build JWS with key: " + key, e))
-				.next()
-				.switchIfEmpty(Mono.error(() -> new JWSBuildException("Failed to build JWS")));
+			return Mono.defer(() -> {
+				JWSBuildException error = new JWSBuildException("Failed to build JWS");
+				return keys
+					.onErrorStop()
+					.map(key -> {
+						String joseSignature = JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(key.signer(jwsHeader.getAlgorithm()).sign(signingInput));
+						jwsHeader.setKey(key);
+						return (JWS<A>)new GenericJWS<>(jwsHeader, jwsPayload, joseSignature);
+					})
+					.onErrorContinue((e, key) -> {
+						error.addSuppressed(e);
+						LOGGER.debug(() -> "Failed to build JWS with key: " + key, e);
+					})
+					.next()
+					.switchIfEmpty(Mono.error(error));
+			});
 		}
 	}
 	
