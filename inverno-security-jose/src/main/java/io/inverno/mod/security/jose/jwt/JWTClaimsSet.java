@@ -15,14 +15,6 @@
  */
 package io.inverno.mod.security.jose.jwt;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.inverno.mod.base.converter.ObjectDecoder;
-import io.inverno.mod.security.jose.internal.jwt.StringOrURI;
 import java.io.File;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -47,6 +39,17 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import io.inverno.mod.base.converter.Convertible;
+import io.inverno.mod.base.converter.ObjectDecoder;
+import io.inverno.mod.security.jose.internal.jwt.StringOrURI;
 
 /**
  * <p>
@@ -389,10 +392,10 @@ public class JWTClaimsSet {
 	 */
 	protected void validate() throws InvalidJWTException {
 		ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
-		if(now.isAfter(this.exp)) {
+		if(this.exp != null && now.isAfter(this.exp)) {
 			throw new ExpiredJWTException("Token has expired");
 		}
-		if(now.isBefore(this.nbf)) {
+		if(this.nbf != null && now.isBefore(this.nbf)) {
 			throw new InactiveJWTException("Token is not active yet");
 		}
 	}
@@ -532,7 +535,7 @@ public class JWTClaimsSet {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.5
 	 */
-	public interface Claim {
+	public interface Claim extends Convertible<Object> {
 		
 		/**
 		 * <p>
@@ -542,318 +545,6 @@ public class JWTClaimsSet {
 		 * @return a name
 		 */
 		String getName();
-
-		/**
-		 * <p>
-		 * Returns the claim raw value.
-		 * </p>
-		 *
-		 * @return a raw value
-		 */
-		Object getValue();
-
-		/**
-		 * <p>
-		 * Converts the claim value to the specified type.
-		 * </p>
-		 *
-		 * @param <T>  the target type
-		 * @param type a class of type T
-		 *
-		 * @return the converted claim value or null
-		 */
-		<T> T as(Class<T> type);
-
-		/**
-		 * <p>
-		 * Converts the claim value to the specified type.
-		 * </p>
-		 *
-		 * @param <T>  the target type
-		 * @param type the target type
-		 *
-		 * @return the converted claim value or null
-		 */
-		<T> T as(Type type);
-
-		/**
-		 * <p>
-		 * Converts the claim value to an array of the specified type.
-		 * </p>
-		 *
-		 * @param <T>  the target component type
-		 * @param type a class of type T
-		 *
-		 * @return the claim value converted to an array of T or null
-		 */
-		<T> T[] asArrayOf(Class<T> type);
-
-		/**
-		 * <p>
-		 * Converts the claim value to an array of the specified type.
-		 * </p>
-		 *
-		 * @param <T>  the target component type
-		 * @param type the target component type
-		 *
-		 * @return the claim value converted to an array of T or null
-		 */
-		<T> T[] asArrayOf(Type type);
-
-		/**
-		 * <p>
-		 * Converts the claim value to a list of the specified type.
-		 * </p>
-		 *
-		 * @param <T>  the target list argument type
-		 * @param type a class of type T
-		 *
-		 * @return the claim value converted to a list of T or null
-		 */
-		<T> List<T> asListOf(Class<T> type);
-
-		/**
-		 * <p>
-		 * Converts the claim value to a list of the specified type.
-		 * </p>
-		 *
-		 * @param <T>  the target list argument type
-		 * @param type the target list argument type
-		 *
-		 * @return the claim value converted to a list of T or null
-		 */
-		<T> List<T> asListOf(Type type);
-
-		/**
-		 * <p>
-		 * Converts the claim value to a set of the specified type.
-		 * </p>
-		 *
-		 * @param <T>  the target set argument type
-		 * @param type a class of type T
-		 *
-		 * @return the claim value converted to a set of T or null
-		 */
-		<T> Set<T> asSetOf(Class<T> type);
-
-		/**
-		 * <p>
-		 * Converts the claim value to a set of the specified type.
-		 * </p>
-		 *
-		 * @param <T>  the target set argument type
-		 * @param type the target set argument type
-		 *
-		 * @return the claim value converted to a set of T or null
-		 */
-		<T> Set<T> asSetOf(Type type);
-
-		/**
-		 * <p>
-		 * Converts the claim value to a byte.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		Byte asByte();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a short.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		Short asShort();
-
-		/**
-		 * <p>
-		 * Converts the claim value to an integer.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		Integer asInteger();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a long.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		Long asLong();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a float.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		Float asFloat();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a double.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		Double asDouble();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a character.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		Character asCharacter();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a string.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		String asString();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a boolean.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		Boolean asBoolean();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a big integer.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		BigInteger asBigInteger();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a big decimal.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		BigDecimal asBigDecimal();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a local date.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		LocalDate asLocalDate();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a loca date time.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		LocalDateTime asLocalDateTime();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a zoned date time.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		ZonedDateTime asZonedDateTime();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a currency.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		Currency asCurrency();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a locale.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		Locale asLocale();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a file.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		File asFile();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a path.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		Path asPath();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a URI.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		URI asURI();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a URL.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		URL asURL();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a pattern.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		Pattern asPattern();
-
-		/**
-		 * <p>
-		 * Converts the claim value to an inet address.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		InetAddress asInetAddress();
-
-		/**
-		 * <p>
-		 * Converts the claim value to a class.
-		 * </p>
-		 *
-		 * @return the converted claim value or null
-		 */
-		Class<?> asClass();
 	}
 	
 	/**
