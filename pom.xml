@@ -114,11 +114,13 @@
 		<module>inverno-http-base</module>
 		<module>inverno-http-server</module>
 		<module>inverno-irt</module>
+		<module>inverno-ldap</module>
 		<module>inverno-redis</module>
 		<module>inverno-redis-lettuce</module>
 		<module>inverno-security</module>
 		<module>inverno-security-http</module>
 		<module>inverno-security-jose</module>
+		<module>inverno-security-ldap</module>
 		<module>inverno-sql</module>
 		<module>inverno-sql-vertx</module>
 		<module>inverno-web</module>
