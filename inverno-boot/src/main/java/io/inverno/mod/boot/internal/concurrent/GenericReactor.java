@@ -81,17 +81,11 @@ public class GenericReactor implements Reactor, ReactorLifecycle {
 	 * @return an new event loop group
 	 */
 	private EventLoopGroup createEventLoopGroup(int nThreads, ThreadFactory threadFactory) {
-		if(this.transportType == TransportType.KQUEUE) {
-			return new KQueueEventLoopGroup(nThreads, threadFactory);
-		}
-		else if(this.transportType == TransportType.EPOLL) {
-			return new EpollEventLoopGroup(nThreads, threadFactory);
-		}
-		else if(this.transportType == TransportType.IO_URING) {
-			return new IOUringEventLoopGroup(nThreads, threadFactory);
-		}
-		else {
-			return new NioEventLoopGroup(nThreads, threadFactory);
+		switch(this.transportType) {
+			case KQUEUE: return new KQueueEventLoopGroup(nThreads, threadFactory);
+			case EPOLL: return new EpollEventLoopGroup(nThreads, threadFactory);
+			case IO_URING: return new IOUringEventLoopGroup(nThreads, threadFactory);
+			default: return new NioEventLoopGroup(nThreads, threadFactory);
 		}
 	}
 	

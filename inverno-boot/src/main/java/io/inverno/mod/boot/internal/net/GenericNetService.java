@@ -101,27 +101,32 @@ public class GenericNetService implements @Provide NetService {
 	public Bootstrap createClient(SocketAddress socketAddress, int nThreads) {
 		Bootstrap bootstrap = new Bootstrap();
 		bootstrap.group(this.reactor.createIoEventLoopGroup(nThreads));
-		if(this.transportType == TransportType.KQUEUE) {
-			if(socketAddress instanceof DomainSocketAddress) {
-				bootstrap.channelFactory(KQueueDomainSocketChannel::new);
+		switch(this.transportType) {
+			case KQUEUE: {
+				if(socketAddress instanceof DomainSocketAddress) {
+					bootstrap.channelFactory(KQueueDomainSocketChannel::new);
+				}
+				else {
+					bootstrap.channelFactory(KQueueSocketChannel::new);
+				}
+				break;
 			}
-			else {
-				bootstrap.channelFactory(KQueueSocketChannel::new);
+			case EPOLL: {
+				if(socketAddress instanceof DomainSocketAddress) {
+					bootstrap.channelFactory(EpollDomainSocketChannel::new);
+				}
+				else {
+					bootstrap.channelFactory(EpollSocketChannel::new);
+				}
+				break;
 			}
-		}
-		else if(this.transportType == TransportType.EPOLL) {
-			if(socketAddress instanceof DomainSocketAddress) {
-				bootstrap.channelFactory(EpollDomainSocketChannel::new);
+			case IO_URING: {
+				bootstrap.channelFactory(IOUringSocketChannel::new);
+				break;
 			}
-			else {
-				bootstrap.channelFactory(EpollSocketChannel::new);
+			default: {
+				bootstrap.channelFactory(NioSocketChannel::new);
 			}
-		}
-		else if(this.transportType == TransportType.IO_URING) {
-			bootstrap.channelFactory(IOUringSocketChannel::new);
-		}
-		else {
-			bootstrap.channelFactory(NioSocketChannel::new);
 		}
 		
 		// TODO client bootstrap configuration 
@@ -137,33 +142,40 @@ public class GenericNetService implements @Provide NetService {
 	public ServerBootstrap createServer(SocketAddress socketAddress, int nThreads) {
 		ServerBootstrap bootstrap = new ServerBootstrap();
 		bootstrap.group(this.reactor.getAcceptorEventLoopGroup(), this.reactor.createIoEventLoopGroup(nThreads));
-		if(this.transportType == TransportType.KQUEUE) {
-			if(socketAddress instanceof DomainSocketAddress) {
-				bootstrap.channelFactory(KQueueServerDomainSocketChannel::new);
+		
+		switch(this.transportType) {
+			case KQUEUE: {
+				if(socketAddress instanceof DomainSocketAddress) {
+					bootstrap.channelFactory(KQueueServerDomainSocketChannel::new);
+				}
+				else {
+					bootstrap.channelFactory(KQueueServerSocketChannel::new);
+				}
+				break;
 			}
-			else {
-				bootstrap.channelFactory(KQueueServerSocketChannel::new);
+			case EPOLL: {
+				if(socketAddress instanceof DomainSocketAddress) {
+					bootstrap.channelFactory(EpollServerDomainSocketChannel::new);
+				}
+				else {
+					bootstrap.channelFactory(EpollServerSocketChannel::new);
+				}
+				bootstrap.option(EpollChannelOption.SO_REUSEPORT, this.configuration.reuse_port())
+					.childOption(EpollChannelOption.TCP_QUICKACK, this.configuration.tcp_quickack())
+					.childOption(EpollChannelOption.TCP_CORK, this.configuration.tcp_cork());
+				break;
 			}
-		}
-		else if(this.transportType == TransportType.EPOLL) {
-			if(socketAddress instanceof DomainSocketAddress) {
-				bootstrap.channelFactory(EpollServerDomainSocketChannel::new);
+			case IO_URING: {
+				bootstrap.channelFactory(IOUringServerSocketChannel::new);
+				bootstrap.option(IOUringChannelOption.SO_REUSEPORT, this.configuration.reuse_port())
+					.childOption(IOUringChannelOption.TCP_QUICKACK, this.configuration.tcp_quickack())
+					.childOption(IOUringChannelOption.TCP_CORK, this.configuration.tcp_cork());
+				break;
 			}
-			else {
-				bootstrap.channelFactory(EpollServerSocketChannel::new);
+			default: {
+				bootstrap.channelFactory(NioServerSocketChannel::new);
 			}
-			bootstrap.option(EpollChannelOption.SO_REUSEPORT, this.configuration.reuse_port())
-				.childOption(EpollChannelOption.TCP_QUICKACK, this.configuration.tcp_quickack())
-				.childOption(EpollChannelOption.TCP_CORK, this.configuration.tcp_cork());
-		}
-		else if(this.transportType == TransportType.IO_URING) {
-			bootstrap.channelFactory(IOUringServerSocketChannel::new);
-			bootstrap.option(IOUringChannelOption.SO_REUSEPORT, this.configuration.reuse_port())
-				.childOption(IOUringChannelOption.TCP_QUICKACK, this.configuration.tcp_quickack())
-				.childOption(IOUringChannelOption.TCP_CORK, this.configuration.tcp_cork());
-		}
-		else {
-			bootstrap.channelFactory(NioServerSocketChannel::new);
+		
 		}
 		
 		bootstrap.option(ChannelOption.SO_REUSEADDR, this.configuration.reuse_address())
