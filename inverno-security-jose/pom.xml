@@ -46,6 +46,12 @@
 			<artifactId>inverno-configuration</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-security</artifactId>
+			<version>${project.version}</version>
+			<optional>true</optional>
+		</dependency>
 		
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>

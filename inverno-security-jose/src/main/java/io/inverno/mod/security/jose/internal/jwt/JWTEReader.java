@@ -45,7 +45,7 @@ import reactor.core.publisher.Mono;
  * 
  * @param <A> the JWT Claims Set type
  */
-class JWTJWEReader<A> extends GenericJWEReader<A> {
+class JWTEReader<A> extends GenericJWEReader<A> {
 
 	/**
 	 * <p>
@@ -59,7 +59,7 @@ class JWTJWEReader<A> extends GenericJWEReader<A> {
 	 * @param keys                  the keys to consider to decrypt the CEK
 	 * @param zips                  a list of supported JWE compression algorithms
 	 */
-	public JWTJWEReader(ObjectMapper mapper, GenericDataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys, List<JWEZip> zips) {
+	public JWTEReader(ObjectMapper mapper, GenericDataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys, List<JWEZip> zips) {
 		super(mapper, dataConversionService, jwkService, type, keys, zips);
 	}
 

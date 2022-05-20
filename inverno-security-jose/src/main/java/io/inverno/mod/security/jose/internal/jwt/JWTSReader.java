@@ -44,7 +44,7 @@ import reactor.core.publisher.Mono;
  * 
  * @param <A> the JWT Claims Set type
  */
-class JWTJWSReader<A extends JWTClaimsSet> extends GenericJWSReader<A> {
+class JWTSReader<A extends JWTClaimsSet> extends GenericJWSReader<A> {
 
 	/**
 	 * <p>
@@ -57,7 +57,7 @@ class JWTJWSReader<A extends JWTClaimsSet> extends GenericJWSReader<A> {
 	 * @param type                  the expected JWT Claims Set type
 	 * @param keys                  the keys to consider to decrypt the CEK
 	 */
-	public JWTJWSReader(ObjectMapper mapper, GenericDataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys) {
+	public JWTSReader(ObjectMapper mapper, GenericDataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys) {
 		super(mapper, dataConversionService, jwkService, type, keys);
 	}
 	

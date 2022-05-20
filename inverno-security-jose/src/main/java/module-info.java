@@ -1,3 +1,20 @@
+import java.security.cert.PKIXParameters;
+import java.util.concurrent.ExecutorService;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.inverno.mod.base.converter.MediaTypeConverter;
+import io.inverno.mod.base.resource.ResourceService;
+import io.inverno.mod.security.jose.jwe.JWEService;
+import io.inverno.mod.security.jose.jwe.JWEZip;
+import io.inverno.mod.security.jose.jwk.JWKKeyResolver;
+import io.inverno.mod.security.jose.jwk.JWKService;
+import io.inverno.mod.security.jose.jwk.JWKStore;
+import io.inverno.mod.security.jose.jwk.JWKURLResolver;
+import io.inverno.mod.security.jose.jwk.X509JWKCertPathValidator;
+import io.inverno.mod.security.jose.jws.JWSService;
+import io.inverno.mod.security.jose.jwt.JWTService;
+
 /*
  * Copyright 2022 Jeremy KUHN
  *
@@ -40,25 +57,25 @@
  * <dt>configuration</dt>
  * <dd>the JOSE module configuration</dd>
  * <dt>jwkKeyResolver</dt>
- * <dd>A {@code JWKKeyResolver} used to resolve private and public (X.509 certificate) keys from a key store based on Key ids or X.509 thumbprints.</dd>
+ * <dd>A {@link JWKKeyResolver} used to resolve private and public (X.509 certificate) keys from a key store based on Key ids or X.509 thumbprints.</dd>
  * <dt>jwkURLResolver</dt>
- * <dd>A {@code JWKURLResolver} used to resolve JWK Set URLs.</dd>
+ * <dd>A {@link JWKURLResolver} used to resolve JWK Set URLs.</dd>
  * <dt>jwkStore</dt>
- * <dd>A {@code JWKStore} used to store and cache JWKs.</dd>
+ * <dd>A {@link JWKStore} used to store and cache JWKs.</dd>
  * <dt>jwkPKIXParameters</dt>
- * <dd>{@code PKIXParameters} providing the parameters used to validate X.509 certificate paths.</dd>
+ * <dd>{@link PKIXParameters} providing the parameters used to validate X.509 certificate paths.</dd>
  * <dt>jwkX509CertPathValidator</dt>
  * <dd>An {@code X509JWKCertPathValidator} used to validate X.509 certificate paths.</dd>
  * <dt>jweZips</dt>
- * <dd>A set of {@code JWEZip} used to compress/decompress JWE payloads.</dd>
+ * <dd>A set of {@link JWEZip} used to compress/decompress JWE payloads.</dd>
  * <dt>mediaTypeConverters (required)</dt>
- * <dd>A list of {@code MediaTypeConverter} used to encode/decode JOSE objects payloads.</dd>
+ * <dd>A list of {@link MediaTypeConverter} used to encode/decode JOSE objects payloads.</dd>
  * <dt>resourceService</dt>
- * <dd>The {@code ResourceService} used to resolve external resources such as key store, JWK Set URL, X.509 URL...</dd>
+ * <dd>The {@link ResourceService} used to resolve external resources such as key store, JWK Set URL, X.509 URL...</dd>
  * <dt>objectMapper</dt>
- * <dd>The {@code ObjectMapper} used to serialize/deserialize JSON.</dd>
+ * <dd>The {@link ObjectMapper} used to serialize/deserialize JSON.</dd>
  * <dt>workerPool</dt>
- * <dd>The {@code ExecutorService} used to execute blocking operations.</dd>
+ * <dd>The {@linl ExecutorService} used to execute blocking operations.</dd>
  * </dl>
  * 
  * <p>
@@ -67,13 +84,13 @@
  * 
  * <dl>
  * <dt>jwkService</dt>
- * <dd>A {@code JWKService} used to build, resolve, generate, store or load JSON Web Keys.</dd>
+ * <dd>A {@link JWKService} used to build, resolve, generate, store or load JSON Web Keys.</dd>
  * <dt>jwsService</dt>
- * <dd>A {@code JWSService} used to build and read JSON Web Signatures.</dd>
+ * <dd>A {@link JWSService} used to build and read JSON Web Signatures.</dd>
  * <dt>jweService</dt>
- * <dd>A {@code JWSService} used to build and read JSON Web Encryptions.</dd>
+ * <dd>A {@link JWEService} used to build and read JSON Web Encryptions.</dd>
  * <dt>jwtService</dt>
- * <dd>A {@code JWSService} used to build and read JSON Web Tokens.</dd>
+ * <dd>A {@link JWTService} used to build and read JSON Web Tokens.</dd>
  * </dl>
  * 
  * <p>The JOSE module can be started as follows:</p>
@@ -149,6 +166,7 @@ module io.inverno.mod.security.jose {
 	requires static io.inverno.core.annotation; // for javadoc...
 	requires transitive io.inverno.mod.base;
 	requires io.inverno.mod.configuration;
+	requires static io.inverno.mod.security;
 
 	requires transitive com.fasterxml.jackson.annotation;
 	requires transitive com.fasterxml.jackson.core; // for javadoc...

@@ -134,25 +134,25 @@ public class GenericJWTService implements @Provide JWTService {
 	@Override
 	public <T extends JWTClaimsSet> JWSBuilder<T, ?, ?> jwsBuilder(Type type, Publisher<? extends JWK> keys) throws JOSEProcessingException {
 		this.checkJWTClaimsSetType(type);
-		return new JWTJWSBuilder<>(this.mapper, this.jwtDataConversionService, this.jwkService, type, keys);
+		return new JWTSBuilder<>(this.mapper, this.jwtDataConversionService, this.jwkService, type, keys);
 	}
 
 	@Override
 	public <T extends JWTClaimsSet> JWEBuilder<T, ?, ?> jweBuilder(Type type, Publisher<? extends JWK> keys) throws JOSEProcessingException {
 		this.checkJWTClaimsSetType(type);
-		return new JWTJWEBuilder<>(this.mapper, this.jwtDataConversionService, this.jwkService, type, keys, this.zips);
+		return new JWTEBuilder<>(this.mapper, this.jwtDataConversionService, this.jwkService, type, keys, this.zips);
 	}
 
 	@Override
 	public <T extends JWTClaimsSet> JWSReader<T, ?> jwsReader(Type type, Publisher<? extends JWK> keys) throws JOSEProcessingException {
 		this.checkJWTClaimsSetType(type);
-		return new JWTJWSReader<>(this.mapper, this.dataConversionService, this.jwkService, type, keys);
+		return new JWTSReader<>(this.mapper, this.dataConversionService, this.jwkService, type, keys);
 	}
 
 	@Override
 	public <T extends JWTClaimsSet> JWEReader<T, ?> jweReader(Type type, Publisher<? extends JWK> keys) throws JOSEProcessingException {
 		this.checkJWTClaimsSetType(type);
-		return new JWTJWEReader<>(this.mapper, this.dataConversionService, this.jwkService, type, keys, this.zips);
+		return new JWTEReader<>(this.mapper, this.dataConversionService, this.jwkService, type, keys, this.zips);
 	}
 
 	@Override

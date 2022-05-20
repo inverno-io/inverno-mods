@@ -15,12 +15,13 @@
  */
 package io.inverno.mod.security.jose.internal;
 
-import io.inverno.core.annotation.Bean;
-import io.inverno.core.annotation.Overridable;
-import io.inverno.core.annotation.Wrapper;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
+
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.annotation.Overridable;
+import io.inverno.core.annotation.Wrapper;
 
 /**
  * <p>
@@ -28,7 +29,7 @@ import java.util.function.Supplier;
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.5
  */
 @Wrapper
 @Overridable

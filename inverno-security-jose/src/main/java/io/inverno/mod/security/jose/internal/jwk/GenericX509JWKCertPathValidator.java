@@ -15,12 +15,6 @@
  */
 package io.inverno.mod.security.jose.internal.jwk;
 
-import io.inverno.core.annotation.Bean;
-import io.inverno.core.annotation.Overridable;
-import io.inverno.core.annotation.Provide;
-import io.inverno.mod.security.jose.JOSEConfiguration;
-import io.inverno.mod.security.jose.jwk.JWKResolveException;
-import io.inverno.mod.security.jose.jwk.X509JWKCertPathValidator;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertPath;
@@ -32,7 +26,15 @@ import java.security.cert.PKIXParameters;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.annotation.Overridable;
+import io.inverno.core.annotation.Provide;
+import io.inverno.mod.security.jose.JOSEConfiguration;
+import io.inverno.mod.security.jose.jwk.JWKResolveException;
+import io.inverno.mod.security.jose.jwk.X509JWKCertPathValidator;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 /**
@@ -61,7 +63,7 @@ public class GenericX509JWKCertPathValidator implements @Provide X509JWKCertPath
 
 	private final JOSEConfiguration configuration;
 	private final PKIXParameters pkixParameters;
-	private final ExecutorService executor;
+	private final Scheduler scheduler;
 
 	/**
 	 * <p>
@@ -75,7 +77,8 @@ public class GenericX509JWKCertPathValidator implements @Provide X509JWKCertPath
 	public GenericX509JWKCertPathValidator(JOSEConfiguration configuration, PKIXParameters pkixParameters, ExecutorService executor) {
 		this.configuration = configuration;
 		this.pkixParameters = pkixParameters;
-		this.executor = executor;
+		this.scheduler = Schedulers.fromExecutor(executor);
+		
 	}
 	
 	@Override
@@ -98,6 +101,6 @@ public class GenericX509JWKCertPathValidator implements @Provide X509JWKCertPath
 				throw new JWKResolveException("Error validating X.509 certificate: ", e);
 			}
 		})
-		.subscribeOn(Schedulers.fromExecutor(this.executor));
+		.subscribeOn(this.scheduler);
 	}
 }

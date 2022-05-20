@@ -42,7 +42,7 @@ import reactor.core.publisher.Mono;
  * 
  * @param <A> the JWT Claims Set type
  */
-class JWTJWSBuilder<A extends JWTClaimsSet> extends GenericJWSBuilder<A> {
+class JWTSBuilder<A extends JWTClaimsSet> extends GenericJWSBuilder<A> {
 
 	/**
 	 * <p>
@@ -55,7 +55,7 @@ class JWTJWSBuilder<A extends JWTClaimsSet> extends GenericJWSBuilder<A> {
 	 * @param type                  the JWT Claims Set type
 	 * @param keys                  the keys to consider to secure the CEK
 	 */
-	public JWTJWSBuilder(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys) {
+	public JWTSBuilder(ObjectMapper mapper, DataConversionService dataConversionService, JWKService jwkService, Type type, Publisher<? extends JWK> keys) {
 		super(mapper, dataConversionService, jwkService, type, keys);
 	}
 

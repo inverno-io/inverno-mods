@@ -1,6 +1,17 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ * Copyright 2022 Jeremy Kuhn
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package io.inverno.mod.security.http.digest;
 
@@ -17,7 +28,8 @@ import reactor.core.publisher.Mono;
 
 /**
  *
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.5
  */
 public class DigestCredentialsExtractor implements CredentialsExtractor<DigestCredentials> {
 
@@ -47,11 +59,7 @@ public class DigestCredentialsExtractor implements CredentialsExtractor<DigestCr
 	public Mono<DigestCredentials> extract(Exchange<?> exchange) throws MalformedCredentialsException {
 		return Mono.fromSupplier(() -> exchange.request().headers()
 			.<Headers.Authorization>getHeader(Headers.NAME_AUTHORIZATION)
-			.filter(authorizationHeader -> {
-				System.out.println(authorizationHeader.getHeaderValue());
-				
-				return authorizationHeader.getAuthScheme().equals(Headers.Authorization.AUTH_SCHEME_DIGEST);
-			})
+			.filter(authorizationHeader -> authorizationHeader.getAuthScheme().equals(Headers.Authorization.AUTH_SCHEME_DIGEST))
 			.map(authorizationHeader -> from(authorizationHeader, exchange.request().getMethod()))
 			.orElse(null)
 		);
