@@ -1,0 +1,86 @@
+# inverno.io
+dn: dc=inverno,dc=io
+objectClass: dcObject
+objectClass: organization
+dc: inverno
+o: inverno
+
+# users, inverno.io
+dn: ou=users,dc=inverno,dc=io
+objectClass: organizationalUnit
+ou: users
+
+# jsmith, users, inverno.io
+dn: cn=jsmith,ou=users,dc=inverno,dc=io
+cn: jsmith
+objectClass: inetOrgPerson
+userPassword:: cGFzc3dvcmQ=
+uid: jsmith
+givenName: John
+sn: Smith
+displayName: John Smith
+mail: jsmith@inverno.io
+employeeType: dummy
+title: Chief
+telephoneNumber: +1 408 555 1862
+mobile: +1 408 555 1941
+jpegPhoto:: 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
+ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAf/2Q==
+
+# jdoe, users, inverno.io
+dn: cn=jdoe,ou=users,dc=inverno,dc=io
+cn: jdoe
+objectClass: inetOrgPerson
+userPassword:: cGFzc3dvcmQ=
+uid: jdoe
+givenName: John
+sn: Doe
+displayName: John Doe
+mail: jdoe@inverno.io
+employeeType: dummy
+
+# readers, users, inverno.io
+dn: cn=readers,ou=users,dc=inverno,dc=io
+cn: readers
+objectClass: groupOfNames
+member: cn=jsmith,ou=users,dc=inverno,dc=io
+member: cn=jdoe,ou=users,dc=inverno,dc=io
+
+# writers
+dn: cn=writers,ou=users,dc=inverno,dc=io
+cn: writers
+objectClass: groupOfNames
+member: cn=jsmith,ou=users,dc=inverno,dc=io

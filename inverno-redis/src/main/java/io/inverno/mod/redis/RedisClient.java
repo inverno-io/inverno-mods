@@ -21,7 +21,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A Redis Client exposes reactive method to query a Redis datastore.
+ * A Redis Client exposes reactive methods to query a Redis datastore.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
