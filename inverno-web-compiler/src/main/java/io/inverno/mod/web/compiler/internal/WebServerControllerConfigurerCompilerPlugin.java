@@ -17,27 +17,7 @@ package io.inverno.mod.web.compiler.internal;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.compiler.spi.ModuleBeanInfo;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.lang.model.element.AnnotationValue;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.ModuleElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
-
+import io.inverno.core.compiler.spi.ReporterInfo;
 import io.inverno.core.compiler.spi.plugin.CompilerPlugin;
 import io.inverno.core.compiler.spi.plugin.PluginContext;
 import io.inverno.core.compiler.spi.plugin.PluginExecution;
@@ -62,14 +42,34 @@ import io.inverno.mod.web.compiler.spi.WebExchangeContextParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebExchangeParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebInterceptorsConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebRouteInfo;
-import io.inverno.mod.web.compiler.spi.WebServerControllerConfigurerQualifiedName;
+import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebRoutesConfigurerInfo;
+import io.inverno.mod.web.compiler.spi.WebServerControllerConfigurerQualifiedName;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.ModuleElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.IntersectionType;
 import javax.lang.model.type.TypeKind;
-import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
-import javax.lang.model.element.Modifier;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.WildcardType;
 
 /**
  * <p>
@@ -165,6 +165,52 @@ public class WebServerControllerConfigurerCompilerPlugin implements CompilerPlug
 		return this.enabled && this.pluginContext.getElementUtils().getTypeElement(moduleElement, WebController.class.getCanonicalName()) != null;
 	}
 	
+	private TypeMirror unwildContextType(ReporterInfo reporter, DeclaredType contextType) throws IllegalArgumentException {
+		DeclaredType contextDeclaredType = (DeclaredType)contextType;
+		if(!contextDeclaredType.getTypeArguments().isEmpty()) {
+			TypeElement typeElement = (TypeElement)this.pluginContext.getTypeUtils().asElement(contextDeclaredType);
+
+			List<? extends TypeMirror> typeArguments = contextDeclaredType.getTypeArguments();
+			TypeMirror[] unwildTypeArgs = new TypeMirror[typeArguments.size()];
+			for(int i=0;i<typeArguments.size();i++) {
+				TypeMirror typeArg = typeArguments.get(i);
+				if(typeArg.getKind() == TypeKind.WILDCARD) {
+					TypeMirror extendsBound = ((WildcardType)typeArg).getExtendsBound();
+					TypeMirror superBound = ((WildcardType)typeArg).getExtendsBound();
+					if(extendsBound != null) {
+						unwildTypeArgs[i] = extendsBound;
+					}
+					else if(superBound != null) {
+						unwildTypeArgs[i] = superBound;
+					}
+					else {
+						List<? extends TypeMirror> bounds = typeElement.getTypeParameters().get(i).getBounds();
+							switch(bounds.size()) {
+							case 0: {
+								//Object
+								this.pluginContext.getElementUtils().getTypeElement(Object.class.getCanonicalName());
+								break;
+							}
+							case 1: {
+								unwildTypeArgs[i] = bounds.get(0);
+								break;
+							}
+							default: {
+								// TODO if there are more than one bounds we have a union type: T extends Number & Runnable and we must fail because the context can't be parameterized
+								reporter.error("Context type with union type bound is not allowed");
+							}
+						}
+					}
+				}
+				else {
+					unwildTypeArgs[i] = typeArg;
+				}
+			}
+			return this.pluginContext.getTypeUtils().getDeclaredType(typeElement, unwildTypeArgs);
+		}
+		return contextType;
+	}
+
 	@Override
 	public void execute(PluginExecution execution) throws PluginExecutionException {
 		WebRouteInfoFactory webRouteFactory = new WebRouteInfoFactory(this.pluginContext, execution);
@@ -189,67 +235,69 @@ public class WebServerControllerConfigurerCompilerPlugin implements CompilerPlug
 		};
 		
 		Set<TypeMirror> contextTypes = new TreeSet<>(contexTypeComparator);
-		
-		webControllers.stream()
-			.flatMap(controller -> Arrays.stream(controller.getRoutes())
-				.flatMap(route -> Arrays.stream(route.getParameters())
-					.flatMap(parameter -> {
-						TypeMirror contextType;
-						if(parameter instanceof WebExchangeParameterInfo) {
-							contextType = ((WebExchangeParameterInfo)parameter).getContextType();
-						}
-						else if(parameter instanceof WebExchangeContextParameterInfo) {
-							contextType = parameter.getType();
-						}
-						else {
-							return Stream.of();
-						}
-						
-						List<? extends TypeMirror> actualTypes;
-						if(contextType.getKind() == TypeKind.INTERSECTION) {
-							actualTypes = ((IntersectionType)contextType).getBounds();
-						}
-						else {
-							actualTypes = List.of(contextType);
-						}
-						return Stream.concat(
-							actualTypes.stream(), 
-							actualTypes.stream()
-								// we only keep public super types, hidden super types should be included
-								// this means we could have compile errors if the user specified a non-public context type explicitly
-								.flatMap(type -> this.getAllSuperTypes(contextType).stream().filter(superContextType -> ((DeclaredType)superContextType).asElement().getModifiers().contains(Modifier.PUBLIC)))
-						);
-					})
-				)
-			)
-			.forEach(contextTypes::add);
-		
 		Stream.of(
-				webInterceptorsConfigurers.stream().map(WebInterceptorsConfigurerInfo::getContextType), 
-				webRoutesConfigurers.stream().map(WebRoutesConfigurerInfo::getContextType),
-				webRouterConfigurers.stream().map(WebRouterConfigurerInfo::getContextType),
-				errorWebInterceptorsConfigurers.stream().map(ErrorWebInterceptorsConfigurerInfo::getContextType), 
-				errorWebRoutesConfigurers.stream().map(ErrorWebRoutesConfigurerInfo::getContextType),
-				errorWebRouterConfigurers.stream().map(ErrorWebRouterConfigurerInfo::getContextType)
+			webControllers.stream()
+				.flatMap(controller -> Arrays.stream(controller.getRoutes()))
+				.flatMap(route -> Arrays.stream(route.getParameters())),
+			webInterceptorsConfigurers.stream(),
+			webRoutesConfigurers.stream(),
+			webRouterConfigurers.stream(),
+			errorWebInterceptorsConfigurers.stream(), 
+			errorWebRoutesConfigurers.stream(),
+			errorWebRouterConfigurers.stream()
+		)
+		.flatMap(Function.identity())
+		.flatMap(info -> {
+			TypeMirror contextType;
+			if(info instanceof WebExchangeParameterInfo) {
+				contextType = ((WebExchangeParameterInfo)info).getContextType();
+			}
+			else if(info instanceof WebExchangeContextParameterInfo) {
+				contextType = ((WebExchangeContextParameterInfo)info).getType();
+			}
+			else if(info instanceof WebInterceptorsConfigurerInfo) {
+				contextType = ((WebInterceptorsConfigurerInfo)info).getContextType();
+			}
+			else if(info instanceof WebRoutesConfigurerInfo) {
+				contextType = ((WebRoutesConfigurerInfo)info).getContextType();
+			}
+			else if(info instanceof WebRouterConfigurerInfo) {
+				contextType = ((WebRouterConfigurerInfo)info).getContextType();
+			}
+			else if(info instanceof ErrorWebInterceptorsConfigurerInfo) {
+				contextType = ((ErrorWebInterceptorsConfigurerInfo)info).getContextType();
+			}
+			else if(info instanceof ErrorWebRoutesConfigurerInfo) {
+				contextType = ((ErrorWebRoutesConfigurerInfo)info).getContextType();
+			}
+			else if(info instanceof ErrorWebRouterConfigurerInfo) {
+				contextType = ((ErrorWebRouterConfigurerInfo)info).getContextType();
+			}
+			else {
+				return Stream.of();
+			}
+			
+			List<? extends TypeMirror> actualTypes;
+			if(contextType.getKind() == TypeKind.INTERSECTION) {
+				actualTypes = ((IntersectionType)contextType).getBounds();
+			}
+			else {
+				actualTypes = List.of(contextType);
+			}
+			return Stream.concat(
+				actualTypes.stream(), 
+				actualTypes.stream()
+					// we only keep public super types, hidden super types should be included
+					// this means we could have compile errors if the user specified a non-public context type explicitly
+					.flatMap(type -> this.getAllSuperTypes(contextType).stream().filter(superContextType -> ((DeclaredType)superContextType).asElement().getModifiers().contains(Modifier.PUBLIC)))
 			)
-			.flatMap(Function.identity())
-			.flatMap(contextType -> {
-				List<? extends TypeMirror> actualTypes;
-				if(contextType.getKind() == TypeKind.INTERSECTION) {
-					actualTypes = ((IntersectionType)contextType).getBounds();
-				}
-				else {
-					actualTypes = List.of(contextType);
-				}
-				return Stream.concat(
-					actualTypes.stream(), 
-					actualTypes.stream()
-						// we only keep public super types, hidden super types should be included
-						// this means we could have compile errors if the user specified a non-public context type explicitly
-						.flatMap(type -> this.getAllSuperTypes(contextType).stream().filter(superContextType -> ((DeclaredType)superContextType).asElement().getModifiers().contains(Modifier.PUBLIC)))
-				);
-			})
-			.forEach(contextTypes::add);
+			.map(type -> this.unwildContextType((ReporterInfo)info, (DeclaredType)type));
+		})
+		.forEach(contextTypes::add);
+		
+		// Filter types to remove duplicates: same type but with different parameters
+		// SecurityContext<Identity, RoleBasedAccessController> can be casted to SecurityContext<? extends Identity, ? extends RoleBasedAccessController>
+		// => we need to remove wildcard because it simply doesn't compile: <? extends A> => <A>
 		
 		GenericWebServerControllerConfigurerInfo webRouterConfigurerInfo = new GenericWebServerControllerConfigurerInfo(
 			execution.getModuleElement(), 

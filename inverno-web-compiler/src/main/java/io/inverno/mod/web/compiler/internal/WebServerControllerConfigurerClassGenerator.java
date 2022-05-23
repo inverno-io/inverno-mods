@@ -74,7 +74,11 @@ import org.apache.commons.text.StringEscapeUtils;
 import io.inverno.mod.web.compiler.spi.WebServerControllerConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebServerControllerConfigurerInfoVisitor;
 import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Function;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.type.ExecutableType;
 
 /**
  * <p>
@@ -276,92 +280,86 @@ class WebServerControllerConfigurerClassGenerator implements WebServerController
 			// This can actually be tricky because some interface may override others
 			// Let's start by listing all methods
 			
-			Map<String, ExecutableElement> methodsToImplement = new HashMap<>();
-			Map<String, ExecutableElement> defaultMethods = new HashMap<>();
-			Arrays.stream(controllerConfigurerInfo.getContextTypes())
-				.flatMap(type -> ElementFilter.methodsIn(context.getElementUtils().getAllMembers((TypeElement)context.getTypeUtils().asElement(type))).stream())
-				.filter(element -> element.getEnclosingElement().getKind() == ElementKind.INTERFACE)
-				.forEach(element -> {
-					StringBuilder signatureKeyBuilder = new StringBuilder();
-					signatureKeyBuilder.append(element.getSimpleName().toString());
-					element.getParameters().stream().map(variableElement -> context.getTypeUtils().erasure(variableElement.asType()).toString()).forEach(signatureKeyBuilder::append);
-					String signatureKey = signatureKeyBuilder.toString();
-					
-					if(element.isDefault()) {
-						defaultMethods.put(signatureKey, element);
-						if(methodsToImplement.containsKey(signatureKey)) {
-							methodsToImplement.remove(signatureKey);
+			Map<String, String> context_fields = new HashMap<>();
+			Map<String, String> context_methods = new HashMap<>();
+			Set<String> defaultMethods = new HashSet<>();
+			for(TypeMirror contextType : controllerConfigurerInfo.getContextTypes()) {
+				ElementFilter.methodsIn(context.getElementUtils().getAllMembers((TypeElement)context.getTypeUtils().asElement(contextType))).stream()
+					.filter(exectuableElement -> exectuableElement.getEnclosingElement().getKind() == ElementKind.INTERFACE && !exectuableElement.getModifiers().contains(Modifier.STATIC))
+					.forEach(exectuableElement -> {
+						ExecutableType executableType =  (ExecutableType)context.getTypeUtils().asMemberOf((DeclaredType)contextType, exectuableElement);
+						
+						StringBuilder signatureKeyBuilder = new StringBuilder();
+						signatureKeyBuilder.append(exectuableElement.getSimpleName().toString());
+						exectuableElement.getParameters().stream().map(variableElement -> context.getTypeUtils().erasure(variableElement.asType()).toString()).forEach(signatureKeyBuilder::append);
+						String signatureKey = signatureKeyBuilder.toString();
+						
+						if(exectuableElement.isDefault()) {
+							defaultMethods.add(signatureKey);
+							context_methods.remove(signatureKey);
+							context_fields.remove(signatureKey);
 						}
-					}
-					else if(!defaultMethods.containsKey(signatureKey)) {
-						methodsToImplement.put(signatureKey, element);
-					}
-				});
-			
-			Map<String, TypeMirror> contextFields = new HashMap<>();
-			StringBuilder context_methods = methodsToImplement.values().stream().map(element -> {
-				StringBuilder contextMethod = new StringBuilder();
-				String methodName = element.getSimpleName().toString();
-				if(methodName.startsWith("get")) {
-					String fieldName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
-					if(!element.getParameters().isEmpty() || element.getReturnType().getKind() == TypeKind.VOID) {
-						// report invalid getter
-					}
-					contextFields.put(fieldName, element.getReturnType());
-					
-					contextMethod.append(context.indent(2)).append("@Override").append(System.lineSeparator());
-					contextMethod.append(context.indent(2)).append("public ").append(context.getTypeName(element.getReturnType())).append(" ").append(methodName).append("() {").append(System.lineSeparator());
-					contextMethod.append(context.indent(3)).append("return this.").append(fieldName).append(";").append(System.lineSeparator());
-					contextMethod.append(context.indent(2)).append("}");
-				}
-				else if(methodName.startsWith("set")) {
-					String fieldName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
-					if(element.getParameters().size() != 1 || element.getReturnType().getKind() != TypeKind.VOID) {
-						// report invalid setter
-					}
-					contextFields.put(fieldName, element.getParameters().get(0).asType());
-					
-					contextMethod.append(context.indent(2)).append("@Override").append(System.lineSeparator());
-					contextMethod.append(context.indent(2)).append("public void ").append(methodName).append("(").append(context.getTypeName(element.getParameters().get(0).asType())).append(" ").append(fieldName).append(") {").append(System.lineSeparator());
-					contextMethod.append(context.indent(3)).append("this.").append(fieldName).append(" = ").append(fieldName).append(";").append(System.lineSeparator());
-					contextMethod.append(context.indent(2)).append("}");
-				}
-				else {
-					contextMethod.append(context.indent(2)).append("public ").append(context.getTypeName(element.getReturnType())).append(" ").append(methodName).append("(").append(element.getParameters().stream().map(variableElement -> new StringBuilder().append(context.getTypeName(variableElement.asType())).append(" ").append(variableElement.getSimpleName().toString())).collect(context.joining(", "))).append(") {").append(System.lineSeparator());
-					if(element.getReturnType().getKind() != TypeKind.VOID) {
-						contextMethod.append(context.indent(3)).append("return ");
-						switch(element.getReturnType().getKind()) {
-							case BOOLEAN: contextMethod.append("false");
-								break;
-							case BYTE:
-							case CHAR:
-							case SHORT:
-							case INT:
-							case LONG:
-							case FLOAT:
-							case DOUBLE: contextMethod.append("0");
-								break;
-							default: contextMethod.append("null");
+						else if(!defaultMethods.contains(signatureKey)) {
+							String fieldName = null;
+							TypeMirror fieldType = null;
+							StringBuilder contextMethod = new StringBuilder();
+							String methodName = exectuableElement.getSimpleName().toString();
+							if( (methodName.startsWith("get") || methodName.startsWith("is")) && executableType.getParameterTypes().isEmpty() && executableType.getReturnType().getKind() != TypeKind.VOID) {
+								fieldName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
+								fieldType = executableType.getReturnType();
+
+								contextMethod.append(context.indent(2)).append("@Override").append(System.lineSeparator());
+								contextMethod.append(context.indent(2)).append("public ").append(context.getTypeName(executableType.getReturnType())).append(" ").append(methodName).append("() {").append(System.lineSeparator());
+								contextMethod.append(context.indent(3)).append("return this.").append(fieldName).append(";").append(System.lineSeparator());
+								contextMethod.append(context.indent(2)).append("}");
+							}
+							else if(methodName.startsWith("set") && executableType.getParameterTypes().size() == 1 && executableType.getReturnType().getKind() == TypeKind.VOID) {
+								fieldName = Character.toLowerCase(methodName.charAt(3)) + methodName.substring(4);
+								fieldType = executableType.getParameterTypes().get(0);
+
+								contextMethod.append(context.indent(2)).append("@Override").append(System.lineSeparator());
+								contextMethod.append(context.indent(2)).append("public void ").append(methodName).append("(").append(context.getTypeName(executableType.getParameterTypes().get(0))).append(" ").append(fieldName).append(") {").append(System.lineSeparator());
+								contextMethod.append(context.indent(3)).append("this.").append(fieldName).append(" = ").append(fieldName).append(";").append(System.lineSeparator());
+								contextMethod.append(context.indent(2)).append("}");
+							}
+							else {
+								contextMethod.append(context.indent(2)).append("public ").append(context.getTypeName(executableType.getReturnType())).append(" ").append(methodName).append("(").append(executableType.getParameterTypes().stream().map(parameterType -> new StringBuilder().append(context.getTypeName(parameterType)).append(" ").append(methodName)).collect(context.joining(", "))).append(") {").append(System.lineSeparator());
+								if(executableType.getReturnType().getKind() != TypeKind.VOID) {
+									contextMethod.append(context.indent(3)).append("return ");
+									switch(executableType.getReturnType().getKind()) {
+										case BOOLEAN: contextMethod.append("false");
+											break;
+										case BYTE:
+										case CHAR:
+										case SHORT:
+										case INT:
+										case LONG:
+										case FLOAT:
+										case DOUBLE: contextMethod.append("0");
+											break;
+										default: contextMethod.append("null");
+									}
+									contextMethod.append(";").append(System.lineSeparator());
+								}
+								contextMethod.append(context.indent(2)).append("}");
+							}
+							
+							if(fieldName != null && fieldType != null) {
+								StringBuilder contextField = new StringBuilder();
+								contextField.append(context.indent(2)).append("private ").append(context.getTypeName(fieldType)).append(" ").append(fieldName).append(";");
+								context_fields.put(signatureKey, contextField.toString());
+							}
+							context_methods.put(signatureKey, contextMethod.toString());
 						}
-						contextMethod.append(";").append(System.lineSeparator());
-					}
-					contextMethod.append(context.indent(2)).append("}");
-				}
-				return contextMethod;
-			}).collect(context.joining(System.lineSeparator() + System.lineSeparator()));
-			
-			StringBuilder context_fields = contextFields.entrySet().stream().map(e -> {
-				StringBuilder contextField = new StringBuilder();
-				contextField.append(context.indent(2)).append("private ").append(context.getTypeName(e.getValue())).append(" ").append(e.getKey()).append(";");
-				return contextField;
-			}).collect(context.joining(System.lineSeparator()));
+					});
+			}
 			
 			StringBuilder context_creator = new StringBuilder();
 			context_creator.append(context.indent(0)).append("@Override").append(System.lineSeparator());
 			context_creator.append(context.indent(0)).append("public Context createContext() {").append(System.lineSeparator());
 			context_creator.append(context.indent(1)).append("return new Context() {").append(System.lineSeparator());
-			context_creator.append(context_fields).append(System.lineSeparator()).append(System.lineSeparator());
-			context_creator.append(context_methods).append(System.lineSeparator());
+			context_creator.append(context_fields.values().stream().distinct().collect(Collectors.joining(System.lineSeparator()))).append(System.lineSeparator()).append(System.lineSeparator());
+			context_creator.append(context_methods.values().stream().collect(Collectors.joining(System.lineSeparator() + System.lineSeparator()))).append(System.lineSeparator());
 			context_creator.append(context.indent(1)).append("};").append(System.lineSeparator());
 			context_creator.append(context.indent(0)).append("}");
 			
