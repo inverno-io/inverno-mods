@@ -66,10 +66,6 @@ public interface InterceptedRouter<
 	 * Applies the interceptors to all the routes previously defined in the router.
 	 * </p>
 	 *
-	 * <p>
-	 * If a matching route is already intercepted by a given interceptor, the interceptor will be moved to the top of the list.
-	 * </p>
-	 *
 	 * @return this router
 	 */
 	D applyInterceptors();

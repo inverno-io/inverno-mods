@@ -31,10 +31,13 @@ import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;
 import io.inverno.mod.web.WebRoutesConfigurer;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import reactor.core.publisher.Mono;
 
@@ -154,21 +157,21 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 
 	/**
 	 * <p>
-	 * Scans all routes from the wrapped router and apply the interceptors. If an interceptor already exists in a route,
-	 * we just move it to the top of the list, that might not be the most appropriate behavior but at least it's
-	 * consistent, we'll see in practice where it goes and maybe provide ways to control this.
+	 * Scans all routes from the wrapped router and apply the interceptors defined in the intercepted router. 
+	 * </p>
+	 * 
+	 * <p>
+	 * If interceptors are already specified on the route, they will be evaluated after the ones defined in the intercepted router. 
 	 * </p>
 	 */
 	@Override
 	public WebInterceptedRouter<ExchangeContext> applyInterceptors() {
-		this.router.getRoutes().stream().forEach(route -> {
+		this.router.getFilteredRoutes().stream().forEach(route -> {
 			LinkedList<ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>> interceptors = new LinkedList<>(route.getInterceptors());
 			this.routeInterceptors.stream()
 				.map(routeInterceptor -> routeInterceptor.matches(route))
 				.filter(Objects::nonNull)
 				.forEach(routeInterceptor -> {
-					// TODO deal with wrapped interceptors
-					interceptors.remove(routeInterceptor.getInterceptor());
 					interceptors.add(routeInterceptor.getInterceptor());
 				});
 			route.setInterceptors(interceptors);

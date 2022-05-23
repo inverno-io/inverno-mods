@@ -40,8 +40,9 @@ public interface InterceptableRoute<A extends ExchangeContext, B extends Exchang
 	 * 
 	 * <p>
 	 * Note that this method returns the raw interceptors that were specified on the route either by using an {@link InterceptorManager} or explicitly by invoking
-	 * {@link #setInterceptors(java.util.List)}. When specified with an interceptor manager and depending on the criteria that were specified at the time, an interceptor might not always intercept all
-	 * exchanges. For instance, an interceptor that intercepts GET exchanges will be defined on the default route (ie. defined with no criteria) but it will only be invoked on GET exchange.
+	 * {@link #setInterceptors(java.util.List)}. When specified with an interceptor manager and depending on the criteria that were specified at the time, a raw interceptor might be filtered to only
+	 * intercept routes that are matching these criteria. For instance, an interceptor that intercepts GET exchanges will be defined on the default route (ie. defined with no criteria)
+	 * but it will only be invoked on GET exchange.
 	 * </p>
 	 *
 	 * @return a list of interceptors
@@ -58,8 +59,8 @@ public interface InterceptableRoute<A extends ExchangeContext, B extends Exchang
 	 * </p>
 	 * 
 	 * <p>
-	 * This method is explicit and replaces the interceptors previously defined on the route. Unlike interceptors defined using an {@link InterceptorManager}, the specified interceptors intercept all
-	 * exchanges handled by the route.
+	 * This method is explicit and replaces the interceptors previously defined on the route. Unlike interceptors defined using an {@link InterceptorManager}, the specified interceptors won't be
+	 * filtered and intercept all exchanges handled by the route.
 	 * </p>
 	 *
 	 * @param interceptors a list of interceptors

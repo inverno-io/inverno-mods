@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, WebRoute<ExchangeContext>, GenericWebRouteExtractor> {
 
 	private final GenericWebRouter router;
+	private final boolean unwrapInterceptors;
 	
 	private GenericWebRouteExtractor parent;
 	
@@ -68,8 +69,9 @@ class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, Web
 	 * 
 	 * @param router a generic web router
 	 */
-	public GenericWebRouteExtractor(GenericWebRouter router) {
+	public GenericWebRouteExtractor(GenericWebRouter router, boolean unwrapInterceptors) {
 		this.router = router;
+		this.unwrapInterceptors = unwrapInterceptors;
 	}
 	
 	/**
@@ -82,6 +84,7 @@ class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, Web
 	private GenericWebRouteExtractor(GenericWebRouteExtractor parent) {
 		this.parent = parent;
 		this.router = parent.router;
+		this.unwrapInterceptors = parent.unwrapInterceptors;
 	}
 	
 	private GenericWebRouter getRouter() {
@@ -214,7 +217,9 @@ class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, Web
 
 	@Override
 	public GenericWebRouteExtractor interceptors(List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>> interceptors, Consumer<List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>>> interceptorsUpdater) {
-		this.interceptors = interceptors != null ? interceptors.stream()
+		this.interceptors = interceptors != null ? interceptors : List.of();
+		if(this.unwrapInterceptors) {
+			this.interceptors = this.interceptors.stream()
 			.map(interceptor -> {
 				ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>> current = interceptor;
 				while(current instanceof ExchangeInterceptorWrapper) {
@@ -222,7 +227,8 @@ class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, Web
 				}
 				return current;
 			})
-			.collect(Collectors.toList()) : List.of();
+			.collect(Collectors.toList());
+		}
 		this.interceptorsUpdater = interceptorsUpdater;
 		return this;
 	}

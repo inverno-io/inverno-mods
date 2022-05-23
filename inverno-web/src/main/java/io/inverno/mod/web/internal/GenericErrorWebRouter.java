@@ -118,7 +118,20 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	
 	@Override
 	public Set<ErrorWebRoute<ExchangeContext>> getRoutes() {
-		GenericErrorWebRouteExtractor routeExtractor = new GenericErrorWebRouteExtractor(this);
+		GenericErrorWebRouteExtractor routeExtractor = new GenericErrorWebRouteExtractor(this, true);
+		this.firstLink.extractRoute(routeExtractor);
+		return routeExtractor.getRoutes();
+	}
+	
+	/**
+	 * <p>
+	 * Returns the routes defined without unwrapping their interceptors.
+	 * </p>
+	 * 
+	 * @return the set of routes
+	 */
+	public Set<ErrorWebRoute<ExchangeContext>> getFilteredRoutes() {
+		GenericErrorWebRouteExtractor routeExtractor = new GenericErrorWebRouteExtractor(this, false);
 		this.firstLink.extractRoute(routeExtractor);
 		return routeExtractor.getRoutes();
 	}

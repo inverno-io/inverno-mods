@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor<ExchangeContext> {
 
 	private final GenericErrorWebRouter router;
+	private final boolean unwrapInterceptors;
 	
 	private GenericErrorWebRouteExtractor parent;
 	
@@ -66,8 +67,9 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor<ExchangeCo
 	 * 
 	 * @param router a generic error web router
 	 */
-	public GenericErrorWebRouteExtractor(GenericErrorWebRouter router) {
+	public GenericErrorWebRouteExtractor(GenericErrorWebRouter router, boolean unwrapInterceptors) {
 		this.router = router;
+		this.unwrapInterceptors = unwrapInterceptors;
 	}
 
 	/**
@@ -80,6 +82,7 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor<ExchangeCo
 	private GenericErrorWebRouteExtractor(GenericErrorWebRouteExtractor parent) {
 		this.parent = parent;
 		this.router = parent.router;
+		this.unwrapInterceptors = parent.unwrapInterceptors;
 	}
 	
 	private GenericErrorWebRouter getRouter() {
@@ -195,15 +198,18 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor<ExchangeCo
 
 	@Override
 	public GenericErrorWebRouteExtractor interceptors(List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>> exchangeInterceptors, Consumer<List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>>> interceptorsUpdater) {
-		this.interceptors = interceptors != null ? interceptors.stream()
-				.map(interceptor -> {
-					ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>> current = interceptor;
-					while(current instanceof ExchangeInterceptorWrapper) {
-						current = ((ExchangeInterceptorWrapper<ExchangeContext, ErrorWebExchange<ExchangeContext>>) current).unwrap();
-					}
-					return current;
-				})
-				.collect(Collectors.toList()) : List.of();
+		this.interceptors = exchangeInterceptors != null ? exchangeInterceptors : List.of();
+		if(this.unwrapInterceptors) {
+			this.interceptors = this.interceptors.stream()
+			.map(interceptor -> {
+				ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>> current = interceptor;
+				while(current instanceof ExchangeInterceptorWrapper) {
+					current = ((ExchangeInterceptorWrapper<ExchangeContext, ErrorWebExchange<ExchangeContext>>) current).unwrap();
+				}
+				return current;
+			})
+			.collect(Collectors.toList());
+		}
 		this.interceptorsUpdater = interceptorsUpdater;
 		return this;
 	}

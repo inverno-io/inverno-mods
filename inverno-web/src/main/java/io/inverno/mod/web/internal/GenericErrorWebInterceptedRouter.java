@@ -141,14 +141,16 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 
 	/**
 	 * <p>
-	 * Scans all routes from the wrapped router and apply the interceptors. If an interceptor already exists in a route,
-	 * we just move it to the top of the list, that might not be the most appropriate behavior but at least it's
-	 * consistent, we'll see in practice where it goes and maybe provide ways to control this.
+	 * Scans all routes from the wrapped router and apply the interceptors defined in the intercepted router. 
+	 * </p>
+	 * 
+	 * <p>
+	 * If interceptors are already specified on the route, they will be evaluated after the ones defined in the intercepted router. 
 	 * </p>
 	 */
 	@Override
 	public ErrorWebInterceptedRouter<ExchangeContext> applyInterceptors() {
-		this.router.getRoutes().stream().forEach(route -> {
+		this.router.getFilteredRoutes().stream().forEach(route -> {
 			LinkedList<ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>> interceptors = new LinkedList<>(route.getInterceptors());
 			this.routeInterceptors.stream()
 					.map(routeInterceptor -> routeInterceptor.matches(route))

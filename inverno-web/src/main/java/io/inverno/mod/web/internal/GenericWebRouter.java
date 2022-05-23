@@ -125,7 +125,20 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 	
 	@Override
 	public Set<WebRoute<ExchangeContext>> getRoutes() {
-		GenericWebRouteExtractor routeExtractor = new GenericWebRouteExtractor(this);
+		GenericWebRouteExtractor routeExtractor = new GenericWebRouteExtractor(this, true);
+		this.firstLink.extractRoute(routeExtractor);
+		return routeExtractor.getRoutes();
+	}
+	
+	/**
+	 * <p>
+	 * Returns the routes defined without unwrapping their interceptors.
+	 * </p>
+	 * 
+	 * @return the set of routes
+	 */
+	public Set<WebRoute<ExchangeContext>> getFilteredRoutes() {
+		GenericWebRouteExtractor routeExtractor = new GenericWebRouteExtractor(this, false);
 		this.firstLink.extractRoute(routeExtractor);
 		return routeExtractor.getRoutes();
 	}
