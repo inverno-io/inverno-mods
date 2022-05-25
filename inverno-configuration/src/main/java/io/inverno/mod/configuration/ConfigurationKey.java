@@ -134,6 +134,17 @@ public interface ConfigurationKey {
 		
 		/**
 		 * <p>
+		 * Determines whether the parameter is an undefined parameter.
+		 * </p>
+		 * 
+		 * @return true if the parameter is an undefined parameter, false otherwise
+		 */
+		public boolean isUndefined() {
+			return false;
+		}
+		
+		/**
+		 * <p>
 		 * Creates a parameter with the specified key and value.
 		 * </p>
 		 *
@@ -154,12 +165,28 @@ public interface ConfigurationKey {
 		 * </p>
 		 * 
 		 * @param key the parameter key
+		 * 
 		 * @return a wildcard parameter
 		 * 
 		 * @throws IllegalArgumentException if the key is null or empty
 		 */
 		public static Parameter wildcard(String key) throws IllegalArgumentException {
 			return new WildcardParameter(key);
+		}
+		
+		/**
+		 * <p>
+		 * Creates an undefined parameter with the specified key.
+		 * </p>
+		 * 
+		 * @param key the parameter key
+		 * 
+		 * @return an undefined parameter
+		 * 
+		 * @throws IllegalArgumentException if the key is null or empty
+		 */
+		public static Parameter undefined(String key) throws IllegalArgumentException {
+			return new UndefinedParameter(key);
 		}
 		
 		@Override
@@ -236,6 +263,36 @@ public interface ConfigurationKey {
 			return true;
 		}
 	}
+	
+	/**
+	 * <p>
+	 * An undefined parameter is used to match properties that do not defined a particular parameter in a list configuration query.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.5
+	 * 
+	 * @see ListConfigurationQuery
+	 */
+	public static class UndefinedParameter extends Parameter {
+		
+		/**
+		 * <p>
+		 * Creates an undefined configuration property parameter.
+		 * </p>
+		 * 
+		 * @param key the parameter key
+		 */
+		private UndefinedParameter(String key) {
+			super(key);
+		}
+
+		@Override
+		public boolean isUndefined() {
+			return true;
+		}
+	}
+	
 
 	/**
 	 * <p>

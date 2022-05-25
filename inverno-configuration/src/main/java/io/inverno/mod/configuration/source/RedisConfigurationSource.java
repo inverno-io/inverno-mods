@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,36 +15,15 @@
  */
 package io.inverno.mod.configuration.source;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 import io.inverno.mod.base.converter.ConverterException;
 import io.inverno.mod.base.converter.JoinablePrimitiveEncoder;
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
 import io.inverno.mod.configuration.AbstractConfigurableConfigurationSource;
-import io.inverno.mod.configuration.ConfigurableConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationKey;
-import io.inverno.mod.configuration.ConfigurationKey.Parameter;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.ConfigurationQuery;
 import io.inverno.mod.configuration.ConfigurationQueryResult;
-import io.inverno.mod.configuration.ConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationUpdate;
-import io.inverno.mod.configuration.ConfigurationUpdate.SpecialValue;
 import io.inverno.mod.configuration.ConfigurationUpdateResult;
 import io.inverno.mod.configuration.ExecutableConfigurationQuery;
 import io.inverno.mod.configuration.ExecutableConfigurationUpdate;
@@ -57,95 +36,35 @@ import io.inverno.mod.configuration.internal.JavaStringConverter;
 import io.inverno.mod.configuration.internal.parser.option.ConfigurationOptionParser;
 import io.inverno.mod.configuration.internal.parser.option.ParseException;
 import io.inverno.mod.configuration.internal.parser.option.StringProvider;
-import io.inverno.mod.redis.RedisOperations;
-import io.inverno.mod.redis.operations.Bound;
+import io.inverno.mod.redis.RedisClient;
+import io.inverno.mod.redis.RedisTransactionalClient;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * <p>
- * A configurable configuration source that stores and looks up properties in a Redis data store.
- * </p>
- *
- * <p>
- * This implementation supports basic versioning which allows to set multiple properties and activate or revert them atomically.
- * </p>
- *
- * <p>
- * Properties can be viewed in a tree of properties whose nodes correspond to parameters in natural order, a global revision is defined at the root of the tree and finer revisions can also be created
- * in child nodes to version particular branches.
- * </p>
- *
- * <p>
- * Particular care must be taken when deciding to version a specific branch, a property can only be versioned once which is the case when versioned property sets are disjointed. More specifically, a
- * given property can't be versioned twice which might happen when the configuration is activated with different overlapping sets of parameters. An exception is normally thrown when such situation is
- * detected. On the other hand, it is quite possible to version nested branches.
- * </p>
- *
- * <p>
- * For instance, the following setup is most likely to fail if properties can be defined with both {@code environment="production"} and {@code zone="eu"} parameters:
- * </p>
- *
- * <ul>
- * <li>{@code []}: global tree</li>
- * <li>{@code [environment="production"]}: production environment tree</li>
- * <li>{@code [zone="eu"]}: eu zone tree</li>
- * </ul>
- *
- * <p>
- * While the following setup will work just fine:</p>
- *
- * <ul>
- * <li>{@code []}: global tree</li>
- * <li>{@code [environment="production"]}: production environment tree</li>
- * <li>{@code [environment="production", zone="eu"]}: eu zone tree</li>
- * </ul>
- *
- * <p>
- * Properties are set for the working revision corresponding to their parameters. The working revision is activated using the {@link RedisConfigurationSource#activate(Parameter...)} method, the
- * {@link RedisConfigurationSource#activate(int, Parameter...)} is used to activate a specific revision.
- * </p>
- *
- * <p>
- * A typical workflow to set properties is:
- * </p>
- *
- * <blockquote>
- *
- * <pre>
- * RedisConfigurationSource source = ...;
- * source
- *     .set("db.url", "jdbc:oracle:thin:@dev.db.server:1521:sid").withParameters("env", "dev").and()
- *     .set("db.url", "jdbc:oracle:thin:@prod_eu.db.server:1521:sid").withParameters("env", "prod", "zone", "eu").and()
- *     .set("db.url", "jdbc:oracle:thin:@prod_us.db.server:1521:sid").withParameters("env", "prod", "zone", "us")
- *     .execute()
- *     .blockLast();
- *
- * // Activate working revision globally
- * source.activate().block();
- *
- * // Activate working revision for dev environment and prod environment independently
- * source.activate("env", "dev").block();
- * source.activate("env", "prod").block();
- * </pre>
- *
- * </blockquote>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
- *
- * @see ConfigurableConfigurationSource
  */
 public class RedisConfigurationSource extends AbstractConfigurableConfigurationSource<RedisConfigurationSource.RedisConfigurationQuery, RedisConfigurationSource.RedisExecutableConfigurationQuery, RedisConfigurationSource.RedisListConfigurationQuery, RedisConfigurationSource.RedisConfigurationUpdate, RedisConfigurationSource.RedisExecutableConfigurationUpdate, String> {
-
-	private static final Logger LOGGER = LogManager.getLogger(RedisConfigurationSource.class);
 	
-	private static final String METADATA_FIELD_ACTIVE_REVISION = "active_revision";
-	private static final String METADATA_FIELD_WORKING_REVISION = "working_revision";
+	private static final Logger LOGGER = LogManager.getLogger(VersionedRedisConfigurationSource.class);
 	
-	private io.inverno.mod.redis.RedisTransactionalClient<String, String> redisClient;
+	private static final String KEY_PREFIX = "CONF:";
+	private static final String PROPERTY_KEY_PREFIX = KEY_PREFIX + "PROP:";
+	
+	private RedisClient<String, String> redisClient;
 	
 	/**
 	 * <p>
@@ -154,7 +73,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * 
 	 * @param redisClient a redis client
 	 */
-	public RedisConfigurationSource(io.inverno.mod.redis.RedisTransactionalClient<String, String> redisClient) {
+	public RedisConfigurationSource(RedisClient<String, String> redisClient) {
 		this(redisClient, new JavaStringConverter(), new JavaStringConverter());
 	}
 	
@@ -167,331 +86,24 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * @param encoder     a string encoder
 	 * @param decoder     a string decoder
 	 */
-	public RedisConfigurationSource(io.inverno.mod.redis.RedisTransactionalClient<String, String> redisClient, JoinablePrimitiveEncoder<String> encoder, SplittablePrimitiveDecoder<String> decoder) {
+	public RedisConfigurationSource(RedisClient<String, String> redisClient, JoinablePrimitiveEncoder<String> encoder, SplittablePrimitiveDecoder<String> decoder) {
 		super(encoder, decoder);
 		this.redisClient = redisClient;
 	}
-	
+
 	@Override
 	public RedisExecutableConfigurationQuery get(String... names) throws IllegalArgumentException {
-		return new RedisExecutableConfigurationQuery(this).and().get(names);
+		return new RedisConfigurationSource.RedisExecutableConfigurationQuery(this).and().get(names);
 	}
-	
+
 	@Override
 	public RedisListConfigurationQuery list(String name) throws IllegalArgumentException {
-		return new RedisListConfigurationQuery(this, name);
+		return new RedisConfigurationSource.RedisListConfigurationQuery(this, name);
 	}
 
 	@Override
 	public RedisExecutableConfigurationUpdate set(Map<String, Object> values) throws IllegalArgumentException {
-		return new RedisExecutableConfigurationUpdate(this).and().set(values);
-	}
-	
-	/**
-	 * <p>
-	 * Returns the list of metadata parameters.
-	 * </p>
-	 * 
-	 * @param operations The Redis operations used to query the data store
-	 * 
-	 * @return a mono emitting the list of metadata parameters
-	 */
-	protected Mono<List<List<String>>> getMetaDataParameterSets(RedisOperations<String, String> operations) {
-		return operations.smembers(META_DATA_CONTROL_KEY)
-			.map(value -> Arrays.stream(value.split(",")).filter(s -> !s.isEmpty()).collect(Collectors.toList()))
-			.collectList();
-	}
-	
-	/**
-	 * <p>
-	 * Returns the configuration metadata for the specified list of parameters extracted form a configuration query.
-	 * </p>
-	 *
-	 * @param operations a Redis connection
-	 * @param metaDataParameters a list of parameters
-	 *
-	 * @return a mono emitting the metadata
-	 */
-	protected Mono<RedisConfigurationMetaData> getMetaData(RedisOperations<String, String> operations, List<Parameter> metaDataParameters) {
-		String metaDataKey = asMetaDataKey(metaDataParameters);
-		return operations.hgetall(metaDataKey)
-			.collectMap(e -> e.getKey(), e -> e.getValue().get())
-			.doOnNext(data -> {
-				if(!data.containsKey(METADATA_FIELD_WORKING_REVISION)) {
-					throw new IllegalStateException("Invalid meta data found for key " + metaDataKey + ": Missing " + METADATA_FIELD_WORKING_REVISION);
-				}
-			})
-			.map(data -> new RedisConfigurationMetaData(metaDataParameters, data));
-	}
-	
-	/**
-	 * 
-	 * @param operations
-	 * @param parameters
-	 * @param metaDataParameterSets
-	 * @return 
-	 */
-	private Mono<RedisConfigurationMetaData> getMetaData(RedisOperations<String, String> operations, List<Parameter> parameters, List<List<String>> metaDataParameterSets) {
-		Map<String, Parameter> parametersByKey = parameters.stream().collect(Collectors.toMap(Parameter::getKey, Function.identity()));
-		return Flux.fromStream(metaDataParameterSets.stream()
-				.filter(set -> parametersByKey.keySet().containsAll(set))
-				.map(parametersSet -> parametersSet.stream().map(parametersByKey::get).collect(Collectors.toList()))
-			)
-			.groupBy(queryParameters -> queryParameters.size())
-			.sort(Collections.reverseOrder(Comparator.comparing(cardGroup -> cardGroup.key())))
-			.flatMap(cardGroup -> cardGroup
-				.flatMap(queryParameters -> this.getMetaData(operations, queryParameters))
-				.singleOrEmpty()
-				// TODO make this conflict explicit what are the problematic metadata
-				.onErrorMap(IndexOutOfBoundsException.class, ex -> new IllegalStateException("A conflict of MetaData has been detected when considering parameters [" + parameters.stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"))
-			)
-			.next();
-	}
-	
-	/**
-	 * <p>
-	 * Returns the configuration metadata for the specified list of parameters.
-	 * </p>
-	 *
-	 * @param parameters an array of parameters
-	 *
-	 * @return a mono emitting the metadata
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<RedisConfigurationMetaData> getMetaData(Parameter... parameters) throws IllegalArgumentException {
-		Set<String> parameterKeys = new HashSet<>();
-		List<String> duplicateParameters = new LinkedList<>();
-		for(Parameter parameter : parameters) {
-			if(!parameterKeys.add(parameter.getKey())) {
-				duplicateParameters.add(parameter.getKey());
-			}
-		}
-		if(!duplicateParameters.isEmpty()) {
-			throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
-		}
-		
-		List<Parameter> parametersList = parameters != null ? Arrays.asList(parameters) : List.of();
-		
-		return Mono.from(this.redisClient.connection(operations -> this.getMetaDataParameterSets(operations)
-			.flatMap(metaDataParameterSets -> this.getMetaData(operations, parametersList, metaDataParameterSets))));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the working revision for the properties defined with the specified parameters.
-	 * </p>
-	 *
-	 * @param parameters an array of parameters
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<Void> activate(Parameter... parameters) throws IllegalArgumentException {
-		Set<String> parameterKeys = new HashSet<>();
-		List<String> duplicateParameters = new LinkedList<>();
-		for(Parameter parameter : parameters) {
-			if(!parameterKeys.add(parameter.getKey())) {
-				duplicateParameters.add(parameter.getKey());
-			}
-		}
-		if(!duplicateParameters.isEmpty()) {
-			throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
-		}
-		
-		List<Parameter> parametersList = parameters != null ? Arrays.asList(parameters) : List.of();
-		String metaDataKey = asMetaDataKey(parametersList);
-		
-		return Mono.from(this.redisClient.connection(operations -> this.getMetaDataParameterSets(operations)
-			.flatMap(metaDataParameterSets -> this.getMetaData(operations, parametersList, metaDataParameterSets))
-			.defaultIfEmpty(new RedisConfigurationMetaData(null, 1))
-			.flatMap(metaData -> {
-				int workingRevision = metaData.getWorkingRevision().get();
-				return this.redisClient.multi(ops -> {
-						return Flux.just(
-							// TODO Parameter key should be a valid Java identifier, idem for property name actually
-							ops.sadd(META_DATA_CONTROL_KEY, parametersList.stream().map(Parameter::getKey).sorted().collect(Collectors.joining(","))),
-							// We always set the working revision since metadata might not exist for the specified parameters
-							ops.hset(metaDataKey, entries -> entries.entry(METADATA_FIELD_ACTIVE_REVISION, Integer.toString(workingRevision)).entry(METADATA_FIELD_WORKING_REVISION, Integer.toString(workingRevision + 1)))
-						);
-					})
-					.map(transactionResult -> {
-						if(transactionResult.wasDiscarded()) {
-							return Mono.error(new RuntimeException("Error activating revision " + workingRevision + " for key " + metaDataKey + ": Transaction was discarded"));
-						}
-						return Mono.empty();
-					});
-			})
-			.then()));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the specified revisions for the properties defined with the specified parameters.
-	 * </p>
-	 *
-	 * @param revision   the revision to activate
-	 * @param parameters an array of parameters
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
-	 */
-	public Mono<Void> activate(int revision, Parameter... parameters) throws IllegalArgumentException {
-		if(revision < 1) {
-			throw new IllegalArgumentException("Revision must be a positive integer");
-		}
-		Set<String> parameterKeys = new HashSet<>();
-		List<String> duplicateParameters = new LinkedList<>();
-		for(Parameter parameter : parameters) {
-			if(!parameterKeys.add(parameter.getKey())) {
-				duplicateParameters.add(parameter.getKey());
-			}
-		}
-		if(!duplicateParameters.isEmpty()) {
-			throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
-		}
-		
-		List<Parameter> parametersList = parameters != null ? Arrays.asList(parameters) : List.of();
-		String metaDataKey = asMetaDataKey(parametersList);
-		
-		return Mono.from(this.redisClient.connection(operations -> this.getMetaDataParameterSets(operations)
-			.flatMap(metaDataParameterSets -> this.getMetaData(operations, parametersList, metaDataParameterSets))
-			.defaultIfEmpty(new RedisConfigurationMetaData(null, 1))
-			.flatMap(metaData -> {
-				int workingRevision = metaData.getWorkingRevision().get();
-				if(revision > workingRevision) {
-					return Mono.error(new IllegalArgumentException("The revision to activate: " + revision + " can't be greater than the current working revision: " + workingRevision));
-				}
-				else if(metaData.getActiveRevision().filter(activeRevision -> activeRevision  == revision).isPresent()) {
-					return Mono.empty();
-				}
-				else {
-					return this.redisClient.multi(ops -> {
-							return Flux.just(
-								// TODO Parameter key should be a valid Java identifier, idem for property name actually
-								ops.sadd(META_DATA_CONTROL_KEY, parametersList.stream().map(Parameter::getKey).sorted().collect(Collectors.joining(","))),
-								// We always set the working revision since metadata might not exist for the specified parameters
-								ops.hset(metaDataKey, entries -> entries.entry(METADATA_FIELD_ACTIVE_REVISION, Integer.toString(revision)).entry(METADATA_FIELD_WORKING_REVISION, Integer.toString(revision == workingRevision ? workingRevision + 1 : workingRevision)))
-							);
-						})
-						.map(transactionResult -> {
-							if(transactionResult.wasDiscarded()) {
-								return Mono.error(new RuntimeException("Error activating revision " + revision + " for key " + metaDataKey + ": Transaction was discarded"));
-							}
-							return Mono.empty();
-						});
-				}
-			})
-			.then()));
-	}
-	
-	/**
-	 * <p>
-	 * Provides information about a particular configuration branch.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 * 
-	 * @see RedisConfigurationSource
-	 */
-	public static class RedisConfigurationMetaData {
-		
-		private List<Parameter> parameters;
-		
-		private Optional<Integer> activeRevision;
-		
-		private Optional<Integer> workingRevision;
-		
-		private RedisConfigurationMetaData(List<Parameter> parameters, Map<String, String> data) throws IllegalArgumentException {
-			this.parameters = parameters;
-			this.activeRevision = Optional.ofNullable(data.get(METADATA_FIELD_ACTIVE_REVISION)).map(Integer::parseInt);
-			this.workingRevision = Optional.ofNullable(data.get(METADATA_FIELD_WORKING_REVISION)).map(Integer::parseInt);
-		}
-		
-		private RedisConfigurationMetaData(Integer activeRevision, Integer workingRevision) throws IllegalArgumentException {
-			this.activeRevision = Optional.ofNullable(activeRevision);
-			this.workingRevision = Optional.ofNullable(workingRevision);
-		}
-		
-		/**
-		 * <p>
-		 * Returns the parameters representing a configuration branch.
-		 * </p>
-		 * 
-		 * @return a list of parameters
-		 */
-		public List<Parameter> getParameters() {
-			return this.parameters;
-		}
-		
-		/**
-		 * <p>
-		 * Returns the working revision of the configuration branch.
-		 * </p>
-		 *
-		 * @return an optional returning the working revision, or an empty optional if no working revision has been defined
-		 */
-		public Optional<Integer> getWorkingRevision() {
-			return this.workingRevision;
-		}
-		
-		/**
-		 * <p>
-		 * Returns the active revision of the configuration branch.
-		 * </p>
-		 *
-		 * @return an optional returning the active revision, or an empty optional if no revision has been activated so far
-		 */
-		public Optional<Integer> getActiveRevision() {
-			return this.activeRevision;
-		}
-	}
-	
-	/**
-	 * <p>
-	 * The configuration key used by the Redis configuration source.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 * 
-	 * @see ConfigurationKey
-	 */
-	public static class RedisConfigurationKey extends GenericConfigurationKey {
-
-		private Optional<RedisConfigurationMetaData> metaData;
-		private Optional<Integer> revision;
-		
-		private RedisConfigurationKey(String name, RedisConfigurationMetaData metaData, Integer actualRevision, Collection<Parameter> parameters) {
-			super(name, parameters);
-			this.metaData = Optional.ofNullable(metaData);
-			this.revision = Optional.ofNullable(actualRevision);
-		}
-		
-		/**
-		 * <p>
-		 * Returns the meta data associated with the key.
-		 * </p>
-		 * 
-		 * @return the meta data
-		 */
-		public Optional<RedisConfigurationMetaData> getMetaData() {
-			return metaData;
-		}
-		
-		/**
-		 * <p>
-		 * Returns revision of the property identified by the key.
-		 * </p>
-		 *
-		 * @return an optional returning the revision or an empty optional if there's no revision
-		 */
-		public Optional<Integer> getRevision() {
-			return this.revision;
-		}
+		return new RedisConfigurationSource.RedisExecutableConfigurationUpdate(this).and().set(values);
 	}
 	
 	/**
@@ -504,24 +116,22 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * 
 	 * @see ConfigurationQuery
 	 */
-	public static class RedisConfigurationQuery implements ConfigurationQuery<RedisConfigurationQuery, RedisExecutableConfigurationQuery> {
+	public static class RedisConfigurationQuery implements ConfigurationQuery<RedisConfigurationQuery, RedisConfigurationSource.RedisExecutableConfigurationQuery> {
 
-		private final RedisExecutableConfigurationQuery executableQuery;
+		private final RedisConfigurationSource.RedisExecutableConfigurationQuery executableQuery;
 		
 		private final List<String> names;
 		
-		private final LinkedList<Parameter> parameters;
+		private final LinkedList<ConfigurationKey.Parameter> parameters;
 		
-		private RedisConfigurationMetaData metaData;
-		
-		private RedisConfigurationQuery(RedisExecutableConfigurationQuery executableQuery) {
+		private RedisConfigurationQuery(RedisConfigurationSource.RedisExecutableConfigurationQuery executableQuery) {
 			this.executableQuery = executableQuery;
 			this.names = new LinkedList<>();
 			this.parameters = new LinkedList<>();
 		}
 		
 		@Override
-		public RedisExecutableConfigurationQuery get(String... names) throws IllegalArgumentException {
+		public RedisConfigurationSource.RedisExecutableConfigurationQuery get(String... names) throws IllegalArgumentException {
 			if(names == null || names.length == 0) {
 				throw new IllegalArgumentException("You can't query an empty list of configuration properties");
 			}
@@ -540,7 +150,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * 
 	 * @see ExecutableConfigurationQuery
 	 */
-	public static class RedisExecutableConfigurationQuery implements ExecutableConfigurationQuery<RedisConfigurationQuery, RedisExecutableConfigurationQuery> {
+	public static class RedisExecutableConfigurationQuery implements ExecutableConfigurationQuery<RedisConfigurationSource.RedisConfigurationQuery, RedisExecutableConfigurationQuery> {
 
 		private RedisConfigurationSource source;
 		
@@ -556,15 +166,15 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 			this.queries.add(new RedisConfigurationQuery(this));
 			return this.queries.peekLast();
 		}
-
+		
 		@Override
-		public RedisExecutableConfigurationQuery withParameters(Parameter... parameters) throws IllegalArgumentException {
-			RedisConfigurationQuery currentQuery = this.queries.peekLast();
+		public RedisExecutableConfigurationQuery withParameters(ConfigurationKey.Parameter... parameters) throws IllegalArgumentException {
+			RedisConfigurationSource.RedisConfigurationQuery currentQuery = this.queries.peekLast();
 			currentQuery.parameters.clear();
 			if(parameters != null && parameters.length > 0) {
 				Set<String> parameterKeys = new HashSet<>();
 				List<String> duplicateParameters = new LinkedList<>();
-				for(Parameter parameter : parameters) {
+				for(ConfigurationKey.Parameter parameter : parameters) {
 					currentQuery.parameters.add(parameter);
 					if(!parameterKeys.add(parameter.getKey())) {
 						duplicateParameters.add(parameter.getKey());
@@ -576,230 +186,36 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 			}
 			return this;
 		}
-		
-		/**
-		 * <p>
-		 * Specifies the revision (inclusive) up to which properties should be searched.
-		 * </p>
-		 * 
-		 * @param revision a revision
-		 * 
-		 * @return the executable configuration query
-		 * @throws IllegalArgumentException if the revision is invalid
-		 */
-		public RedisExecutableConfigurationQuery atRevision(int revision) throws IllegalArgumentException {
-			if(revision < 1) {
-				throw new IllegalArgumentException("Revision must be a positive integer");
-			}
-			RedisConfigurationQuery currentQuery = this.queries.peekLast();
-			currentQuery.metaData = new RedisConfigurationMetaData(revision, null);
-			return this;
-		}
-		
+
 		@Override
 		public Flux<ConfigurationQueryResult> execute() {
-			// This ends in dead lock...
-			// one possibility is when a commands returns an empty result
-			// performances are lower...
-			return Mono.when(this.source.redisClient.connection(operations -> {
-				return this.source.getMetaDataParameterSets(operations)
-					.flatMapMany(metaDataParameterSets -> {
-						Map<Integer, Map<List<Parameter>, List<RedisConfigurationQuery>>> queriesByMetaDataByCard = new TreeMap<>(Comparator.reverseOrder());
-						for(RedisConfigurationQuery query : this.queries) {
-							if(query.metaData != null) {
-								continue;
-							}
-							Map<String, Parameter> parametersByKey = query.parameters.stream().collect(Collectors.toMap(Parameter::getKey, Function.identity()));
-							metaDataParameterSets.stream()
-								.filter(set -> parametersByKey.keySet().containsAll(set))
-								.map(parametersSet -> parametersSet.stream().map(parametersByKey::get).collect(Collectors.toList()))
-								.forEach(metaKeyParameters -> {
-									if(queriesByMetaDataByCard.get(metaKeyParameters.size()) == null) {
-										queriesByMetaDataByCard.put(metaKeyParameters.size(), new HashMap<>());
-									}
-									Map<List<Parameter>, List<RedisConfigurationQuery>> currentCard = queriesByMetaDataByCard.get(metaKeyParameters.size());
-									if(!currentCard.containsKey(metaKeyParameters)) {
-										currentCard.put(metaKeyParameters, new ArrayList<>());
-									}
-									currentCard.get(metaKeyParameters).add(query);
-								});
-						}
-
-						return Flux.fromIterable(queriesByMetaDataByCard.values())
-							.concatMap(queriesByMetaData -> Flux.fromStream(() -> queriesByMetaData.entrySet().stream().filter(e -> {
-										List<RedisConfigurationQuery> queries = e.getValue();
-										for(Iterator<RedisConfigurationQuery> queriesIterator = queries.iterator(); queriesIterator.hasNext();) {
-											if(queriesIterator.next().metaData != null) {
-												queriesIterator.remove();
-											}
-										}
-										return !queries.isEmpty();
-									})
-								)
-								.flatMap(e -> this.source.getMetaData(operations, e.getKey())
-									.doOnNext(metaData -> {
-										for(RedisConfigurationQuery query : e.getValue()) {
-											if(query.metaData != null) {
-												throw new IllegalStateException("MetaData " + asMetaDataKey(e.getKey()) + " is conflicting with " + asMetaDataKey(query.metaData.getParameters()) + " when considering parameters [" + query.parameters.stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?
-											}
-											query.metaData = metaData;
-										}
-									})
-								)
-							);
-					});
-				}))
-				.thenMany(this.source.redisClient.batch(operations -> Flux.fromStream(this.queries.stream()
-						.flatMap(query -> query.names.stream().map(name -> new RedisConfigurationKey(name, query.metaData != null ? query.metaData : null, null, query.parameters)))
-					)
-					.map(queryKey -> { 
-						if(queryKey.metaData.isPresent() && !queryKey.metaData.get().getActiveRevision().isPresent()) {
-							// property is managed (ie. we found metadata) but there's no active or selected revision
-							return Mono.just(new RedisConfigurationQueryResult(queryKey, null));
-						}
-						
-						return operations
-							.zrangeWithScores()
-							.reverse()
-							.byScore()
-							.limit(0, 1)
-							.build(asPropertyKey(queryKey), Bound.inclusive(0), queryKey.metaData.flatMap(RedisConfigurationMetaData::getActiveRevision).map(Bound::inclusive).orElse(Bound.unbounded()))
-							.next()
-							.map(result -> Optional.of(result))
-							.defaultIfEmpty(Optional.empty())
-							.map(result -> result.map(value -> {
-									try {
-										Optional<String> actualValue = new ConfigurationOptionParser<RedisConfigurationSource>(new StringProvider(value.getValue())).StartValueRevision();
-										if(actualValue != null) {
-											return new RedisConfigurationQueryResult(queryKey, new GenericConfigurationProperty<ConfigurationKey, RedisConfigurationSource, String>(new RedisConfigurationKey(queryKey.getName(), queryKey.metaData.orElse(null), (int)value.getScore(), queryKey.getParameters()), actualValue.orElse(null), this.source));
-										}
-										else {
-											// unset
-											return new RedisConfigurationQueryResult(queryKey, new GenericConfigurationProperty<ConfigurationKey, RedisConfigurationSource, String>(new RedisConfigurationKey(queryKey.getName(), queryKey.metaData.orElse(null), (int)value.getScore(), queryKey.getParameters()), this.source));
-										}
-									} 
-									catch (ParseException e) {
-										return new RedisConfigurationQueryResult(queryKey, this.source, new IllegalStateException("Invalid value found for key " + queryKey.toString() + " at revision " + (int)value.getScore(), e));
-									}
-								})
-								.orElse(new RedisConfigurationQueryResult(queryKey, null))
-							);
-					})
-				));
-				
-
-			/*return Flux.from(this.source.redisClient.connection(operations -> {
-				return this.source.getMetaDataParameterSets(operations)
-					.flatMapMany(metaDataParameterSets -> {
-						Map<Integer, Map<List<Parameter>, List<RedisConfigurationQuery>>> queriesByMetaDataByCard = new TreeMap<>(Comparator.reverseOrder());
-						for(RedisConfigurationQuery query : this.queries) {
-							if(query.metaData != null) {
-								continue;
-							}
-							Map<String, Parameter> parametersByKey = query.parameters.stream().collect(Collectors.toMap(Parameter::getKey, Function.identity()));
-							metaDataParameterSets.stream()
-								.filter(set -> parametersByKey.keySet().containsAll(set))
-								.map(parametersSet -> parametersSet.stream().map(parametersByKey::get).collect(Collectors.toList()))
-								.forEach(metaKeyParameters -> {
-									if(queriesByMetaDataByCard.get(metaKeyParameters.size()) == null) {
-										queriesByMetaDataByCard.put(metaKeyParameters.size(), new HashMap<>());
-									}
-									Map<List<Parameter>, List<RedisConfigurationQuery>> currentCard = queriesByMetaDataByCard.get(metaKeyParameters.size());
-									if(!currentCard.containsKey(metaKeyParameters)) {
-										currentCard.put(metaKeyParameters, new ArrayList<>());
-									}
-									currentCard.get(metaKeyParameters).add(query);
-								});
-						}
-
-						return Flux.fromIterable(queriesByMetaDataByCard.values())
-							.concatMap(queriesByMetaData -> Flux.fromStream(() -> queriesByMetaData.entrySet().stream().filter(e -> {
-										List<RedisConfigurationQuery> queries = e.getValue();
-										for(Iterator<RedisConfigurationQuery> queriesIterator = queries.iterator(); queriesIterator.hasNext();) {
-											if(queriesIterator.next().metaData != null) {
-												queriesIterator.remove();
-											}
-										}
-										return !queries.isEmpty();
-									})
-								)
-								.flatMap(e -> this.source.getMetaData(operations, e.getKey())
-									.doOnNext(metaData -> {
-										for(RedisConfigurationQuery query : e.getValue()) {
-											if(query.metaData != null) {
-												throw new IllegalStateException("MetaData " + asMetaDataKey(e.getKey()) + " is conflicting with " + asMetaDataKey(query.metaData.getParameters()) + " when considering parameters [" + query.parameters.stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?
-											}
-											query.metaData = metaData;
-										}
-									})
-								)
-							);
-					})
-					// TODO batch
-					.thenMany(Flux.fromIterable(this.queries)
-							.flatMap(query -> Flux.fromStream(query.names.stream().map(name -> new RedisConfigurationKey(name, query.metaData != null ? query.metaData : null, null, query.parameters)))
-							.flatMap(queryKey -> {
-								if(query.metaData != null && !query.metaData.getActiveRevision().isPresent()) {
-									// property is managed (ie. we found metadata) but there's no active or selected revision
-									return Mono.just(new RedisConfigurationQueryResult(queryKey, null));
+			List<GenericConfigurationKey> queryKeys = this.queries.stream()
+				.flatMap(query -> query.names.stream().map(name -> new GenericConfigurationKey(name, query.parameters)))
+				.collect(Collectors.toList());
+			
+			return this.source.redisClient
+				.mget(keys -> queryKeys.stream().map(RedisConfigurationSource::asPropertyKey).forEach(keys::key))
+				.zipWithIterable(queryKeys)
+				.map(result -> {
+					GenericConfigurationKey	queryKey = result.getT2();
+					return result.getT1().getValue()
+						.map(value -> {
+							try {
+								Optional<String> actualValue = new ConfigurationOptionParser<VersionedRedisConfigurationSource>(new StringProvider(value)).StartValue();
+								if(actualValue != null) {
+									return new GenericConfigurationQueryResult(queryKey, new GenericConfigurationProperty<>(queryKey, actualValue.orElse(null), this.source));
 								}
-
-								return operations
-									.zrangeWithScores()
-									.reverse()
-									.byScore()
-									.limit(0, 1)
-									.build(asPropertyKey(queryKey), Bound.inclusive(0), query.metaData != null && query.metaData.activeRevision.isPresent() ? Bound.inclusive(query.metaData.getActiveRevision().get()) : Bound.unbounded())
-									.next()
-									.map(result -> Optional.of(result))
-									.defaultIfEmpty(Optional.empty())
-									.map(result -> result.map(value -> {
-											try {
-												Optional<String> actualValue = new ConfigurationOptionParser<RedisConfigurationSource>(new StringProvider(value.getValue())).StartValueRevision();
-												if(actualValue != null) {
-													return new RedisConfigurationQueryResult(queryKey, new GenericConfigurationProperty<ConfigurationKey, RedisConfigurationSource, String>(new RedisConfigurationKey(queryKey.getName(), query.metaData != null ? query.metaData : null, (int)value.getScore(), queryKey.getParameters()), actualValue.orElse(null), this.source));
-												}
-												else {
-													// unset
-													return new RedisConfigurationQueryResult(queryKey, new GenericConfigurationProperty<ConfigurationKey, RedisConfigurationSource, String>(new RedisConfigurationKey(queryKey.getName(), query.metaData != null ? query.metaData : null, (int)value.getScore(), queryKey.getParameters()), this.source));
-												}
-											} 
-											catch (ParseException e) {
-												return new RedisConfigurationQueryResult(queryKey, this.source, new IllegalStateException("Invalid value found for key " + queryKey.toString() + " at revision " + (int)value.getScore(), e));
-											}
-										})
-										.orElse(new RedisConfigurationQueryResult(queryKey, null))
-									);
-							})
-						)
-					);
-			}));*/
-		}
-	}
-	
-	/**
-	 * <p>
-	 * The configuration query result returned by the Redis configuration source.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 * 
-	 * @see ConfigurationQueryResult
-	 */
-	public static class RedisConfigurationQueryResult extends GenericConfigurationQueryResult {
-		
-		private RedisConfigurationQueryResult(RedisConfigurationKey queryKey, ConfigurationProperty queryResult) {
-			super(queryKey, queryResult);
-		}
-
-		private RedisConfigurationQueryResult(RedisConfigurationKey queryKey, RedisConfigurationSource source, Throwable error) {
-			super(queryKey, source, error);
-		}
-
-		@Override
-		public RedisConfigurationKey getQueryKey() {
-			return (RedisConfigurationKey)super.getQueryKey();
+								else {
+									// unset
+									return new GenericConfigurationQueryResult(queryKey, new GenericConfigurationProperty<>(queryKey, this.source));
+								}
+							}
+							catch (ParseException e) {
+								return new GenericConfigurationQueryResult(queryKey, this.source, new IllegalStateException("Invalid value found for key " + queryKey.toString(), e));
+							}
+						})
+						.orElse(new GenericConfigurationQueryResult(queryKey, new GenericConfigurationProperty<>(queryKey, null, this.source)));
+				});
 		}
 	}
 	
@@ -813,15 +229,13 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * 
 	 * @see ConfigurationUpdate
 	 */
-	public static class RedisConfigurationUpdate implements ConfigurationUpdate<RedisConfigurationUpdate, RedisExecutableConfigurationUpdate> {
+	public static class RedisConfigurationUpdate implements ConfigurationUpdate<RedisConfigurationUpdate, RedisConfigurationSource.RedisExecutableConfigurationUpdate> {
 
 		private RedisExecutableConfigurationUpdate executableQuery;
 		
 		private Map<String, Object> values;
 		
-		private LinkedList<Parameter> parameters;
-		
-		private RedisConfigurationMetaData metaData;
+		private LinkedList<ConfigurationKey.Parameter> parameters;
 		
 		private RedisConfigurationUpdate(RedisExecutableConfigurationUpdate executableQuery) {
 			this.executableQuery = executableQuery;
@@ -849,7 +263,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 * 
 	 * @see ExecutableConfigurationUpdate
 	 */
-	public static class RedisExecutableConfigurationUpdate implements ExecutableConfigurationUpdate<RedisConfigurationUpdate, RedisExecutableConfigurationUpdate> {
+	public static class RedisExecutableConfigurationUpdate implements ExecutableConfigurationUpdate<RedisConfigurationSource.RedisConfigurationUpdate, RedisExecutableConfigurationUpdate> {
 
 		private RedisConfigurationSource source;
 		
@@ -862,18 +276,18 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		
 		@Override
 		public RedisConfigurationUpdate and() {
-			this.updates.add(new RedisConfigurationUpdate(this));
+			this.updates.add(new RedisConfigurationSource.RedisConfigurationUpdate(this));
 			return this.updates.peekLast();
 		}
 		
 		@Override
-		public RedisExecutableConfigurationUpdate withParameters(Parameter... parameters) throws IllegalArgumentException {
-			RedisConfigurationUpdate currentQuery = this.updates.peekLast();
+		public RedisExecutableConfigurationUpdate withParameters(ConfigurationKey.Parameter... parameters) throws IllegalArgumentException {
+			RedisConfigurationSource.RedisConfigurationUpdate currentQuery = this.updates.peekLast();
 			currentQuery.parameters.clear();
 			if(parameters != null && parameters.length > 0) {
 				Set<String> parameterKeys = new HashSet<>();
 				List<String> duplicateParameters = new LinkedList<>();
-				for(Parameter parameter : parameters) {
+				for(ConfigurationKey.Parameter parameter : parameters) {
 					currentQuery.parameters.add(parameter);
 					if(!parameterKeys.add(parameter.getKey())) {
 						duplicateParameters.add(parameter.getKey());
@@ -888,113 +302,47 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 
 		@Override
 		public Flux<ConfigurationUpdateResult> execute() {
-			return Flux.from(this.source.redisClient.connection(operations -> {
-				return this.source.getMetaDataParameterSets(operations)
-					.flatMapMany(metaDataParameterSets -> {
-						Map<Integer, Map<List<Parameter>, List<RedisConfigurationUpdate>>> updatesByMetaDataByCard = new TreeMap<>(Comparator.reverseOrder());
-						for(RedisConfigurationUpdate update : this.updates) {
-							Map<String, Parameter> parametersByKey = update.parameters.stream().collect(Collectors.toMap(Parameter::getKey, Function.identity()));
-							metaDataParameterSets.stream()
-								.filter(set -> parametersByKey.keySet().containsAll(set))
-								.map(parametersSet -> parametersSet.stream().map(parametersByKey::get).collect(Collectors.toList()))
-								.forEach(metaKeyParameters -> {
-									if(updatesByMetaDataByCard.get(metaKeyParameters.size()) == null) {
-										updatesByMetaDataByCard.put(metaKeyParameters.size(), new HashMap<>());
-									}
-									Map<List<Parameter>, List<RedisConfigurationUpdate>> currentCard = updatesByMetaDataByCard.get(metaKeyParameters.size());
-									if(!currentCard.containsKey(metaKeyParameters)) {
-										currentCard.put(metaKeyParameters, new ArrayList<>());
-									}
-									currentCard.get(metaKeyParameters).add(update);
-								});
+			return Flux.from(this.source.redisClient.batch(operations -> Flux.fromStream(this.updates.stream())
+				.flatMap(update -> Flux.fromStream(update.values.entrySet().stream())
+					.map(valueEntry -> {
+						GenericConfigurationKey updateKey = new GenericConfigurationKey(valueEntry.getKey(), update.parameters);
+
+						String redisKey = asPropertyKey(updateKey);
+						if(valueEntry.getValue() == null || valueEntry.getValue().equals(ConfigurationUpdate.SpecialValue.NULL)) {
+							// delete
+							return operations.del(redisKey)
+									.map(reply -> new GenericConfigurationUpdateResult(updateKey))
+									.onErrorResume(error -> Mono.just(new GenericConfigurationUpdateResult(updateKey, this.source, error)));
 						}
-
-						return Flux.fromIterable(updatesByMetaDataByCard.values())
-							.concatMap(updatesByMetaData -> Mono.just(updatesByMetaData)
-								.doOnSubscribe(subscription -> {
-									updatesByMetaData.values().stream().forEach(updates -> {
-										for(Iterator<RedisConfigurationUpdate> updatesIterator = updates.iterator(); updatesIterator.hasNext();) {
-											if(updatesIterator.next().metaData != null) {
-												updatesIterator.remove();
-											}
-										}
-									});
-								})
-								.flatMapIterable(Map::entrySet)
-								.filter(e -> !e.getValue().isEmpty())
-								.flatMap(e -> this.source.getMetaData(operations, e.getKey())
-									.doOnNext(metaData -> {
-										for(RedisConfigurationUpdate update : e.getValue()) {
-											if(update.metaData != null) {
-												throw new IllegalStateException("MetaData " + asMetaDataKey(e.getKey()) + " is conflicting with " + asMetaDataKey(update.metaData.getParameters()) + " when considering parameters [" + update.parameters.stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?, propagate error in the query result?
-											}
-											update.metaData = metaData;
-										}
-									})
-								)
-							);
-					})
-					.thenMany(Flux.fromStream(this.updates.stream()))
-					.flatMap(update -> Flux.fromStream(update.values.entrySet().stream())
-						.flatMap(valueEntry -> {
-							RedisConfigurationKey updateKey = new RedisConfigurationKey(valueEntry.getKey(), update.metaData != null ? update.metaData : new RedisConfigurationMetaData(null, 1), null, update.parameters);
-
-							String redisKey = asPropertyKey(updateKey);
-							int workingRevision = updateKey.getMetaData().get().getWorkingRevision().get();
-							StringBuilder redisEncodedValue = new StringBuilder().append(workingRevision).append("{");
-							if(valueEntry.getValue() == null) {
-								redisEncodedValue.append("null");
-							}
-							if(valueEntry.getValue() instanceof SpecialValue) {
-								redisEncodedValue.append(valueEntry.getValue().toString().toLowerCase());
-							}
-							else {
-								try {
-									redisEncodedValue.append("\"").append(this.source.encoder.encode(valueEntry.getValue())).append("\"");
-								} 
-								catch (ConverterException e) {
-									return Mono.just(new RedisConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey.toString() + " at revision " + updateKey.revision, e)));
-								}
-							}
-							redisEncodedValue.append("}");
-
-							// TODO we should put all updates in a single multi
-							return this.source.redisClient.multi(ops -> {
-									return Flux.just(
-										ops.zremrangebyscore(redisKey, Bound.inclusive(workingRevision), Bound.inclusive(workingRevision)),
-										ops.zadd(redisKey, workingRevision, redisEncodedValue.toString())
-									);
-								})
-								.map(transactionResult -> {
-									if(transactionResult.wasDiscarded()) {
-										return new RedisConfigurationUpdateResult(updateKey, this.source, new RuntimeException("Error setting key " + updateKey.toString() + " at revision " + workingRevision + ": Transaction was discarded"));
+						if(valueEntry.getValue() instanceof ConfigurationUpdate.SpecialValue) {
+							// unset
+							return operations.set(redisKey, valueEntry.getValue().toString().toLowerCase())
+								.map(reply -> {
+									if(!reply.equalsIgnoreCase("OK")) {
+										return new GenericConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey.toString() + ": " + reply));
 									}
-									return new RedisConfigurationUpdateResult(updateKey);
-								});
-						})
-					);
-			}));
-		}
-	}
-	
-	/**
-	 * <p>
-	 * The configuration update result returned by the Redis configuration source.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 * 
-	 * @see ConfigurationUpdateResult
-	 */
-	public static class RedisConfigurationUpdateResult extends GenericConfigurationUpdateResult {
-
-		private RedisConfigurationUpdateResult(RedisConfigurationKey updateKey) {
-			super(updateKey);
-		}
-		
-		private RedisConfigurationUpdateResult(RedisConfigurationKey updateKey, ConfigurationSource<?,?,?> source, Throwable error) {
-			super(updateKey, source, error);
+									return new GenericConfigurationUpdateResult(updateKey);
+								})
+								.onErrorResume(error -> Mono.just(new GenericConfigurationUpdateResult(updateKey, this.source, error)));
+						} 
+						else {
+							try {
+								return operations.set(redisKey, "\"" + this.source.encoder.encode(valueEntry.getValue()) + "\"")
+									.map(reply -> {
+										if(!reply.equalsIgnoreCase("OK")) {
+											return new GenericConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey.toString() + ": " + reply));
+										}
+										return new GenericConfigurationUpdateResult(updateKey);
+									})
+									.onErrorResume(error -> Mono.just(new GenericConfigurationUpdateResult(updateKey, this.source, error)));
+							}
+							catch (ConverterException e) {
+								return Mono.just(new GenericConfigurationUpdateResult(updateKey, this.source, new IllegalStateException("Error setting key " + updateKey.toString(), e)));
+							}
+						}
+					})
+				)
+			));
 		}
 	}
 	
@@ -1012,7 +360,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		
 		private final String name;
 		
-		private final LinkedList<Parameter> parameters;
+		private final LinkedList<ConfigurationKey.Parameter> parameters;
 		
 		/**
 		 * 
@@ -1025,13 +373,14 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 			this.parameters = new LinkedList<>();
 		}
 		
+		
 		@Override
-		public RedisListConfigurationQuery withParameters(Parameter... parameters) throws IllegalArgumentException {
+		public RedisListConfigurationQuery withParameters(ConfigurationKey.Parameter... parameters) throws IllegalArgumentException {
 			this.parameters.clear();
 			if(parameters != null && parameters.length > 0) {
 				Set<String> parameterKeys = new HashSet<>();
 				List<String> duplicateParameters = new LinkedList<>();
-				for(Parameter parameter : parameters) {
+				for(ConfigurationKey.Parameter parameter : parameters) {
 					this.parameters.add(parameter);
 					if(!parameterKeys.add(parameter.getKey())) {
 						duplicateParameters.add(parameter.getKey());
@@ -1048,7 +397,7 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		public Flux<ConfigurationProperty> execute() {
 			return this.execute(true);
 		}
-		
+
 		@Override
 		public Flux<ConfigurationProperty> executeAll() {
 			return this.execute(false);
@@ -1060,143 +409,60 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 		 * @return 
 		 */
 		private Flux<ConfigurationProperty> execute(boolean exact) {
+			String propertiesPattern = PROPERTY_KEY_PREFIX + this.name + "*";
 			ConfigurationKey matchingKey = new GenericConfigurationKey(this.name, this.parameters);
 			
-			return Mono.from(this.source.redisClient.connection(operations -> {
-				// 1. Scan + filter keys
-				String propertiesPattern = "CONF:PROP:" + this.name + "*";
-				return operations.scan()
-					.pattern(propertiesPattern)
-					.count(100)
-					.build("0")
-					.expand(result -> {
-						if(result.isFinished()) {
-							return Mono.empty();
-						}
-						return operations.scan()
-							.pattern(propertiesPattern)
-							.count(100)
-							.build(result.getCursor());
-					})
-					.flatMapIterable(result -> result.getKeys())
-					.mapNotNull(rawKey -> {
-						try {
-							ConfigurationOptionParser<?> parser = new ConfigurationOptionParser<>(new StringProvider(rawKey.substring(10)));
-							ConfigurationKey key = parser.StartKey();
-							return new RedisConfigurationKey(key.getName(), null, null, key.getParameters());
-						}
-						catch (ParseException e) {
-							LOGGER.warn(() -> "Ignoring invalid key " + rawKey, e);
-							return null;
-						}
-					})
-					.filter(key -> key.matches(matchingKey, exact))
-					.collectList()
-					.flatMap(keys -> {
-						// 2. Get Metadata
-						return this.source.getMetaDataParameterSets(operations)
-							.flatMap(metaDataParameterSets -> {
-								Map<Integer, Map<List<Parameter>, List<RedisConfigurationKey>>> keysByMetaDataByCard = new TreeMap<>(Comparator.reverseOrder());
-								for(RedisConfigurationKey key : keys) {
-									Map<String, Parameter> parametersByKey = key.getParameters().stream().collect(Collectors.toMap(Parameter::getKey, Function.identity()));
-									metaDataParameterSets.stream()
-										.filter(set -> parametersByKey.keySet().containsAll(set))
-										.map(parametersSet -> parametersSet.stream().map(parametersByKey::get).collect(Collectors.toList()))
-										.forEach(metaKeyParameters -> {
-											if(keysByMetaDataByCard.get(metaKeyParameters.size()) == null) {
-												keysByMetaDataByCard.put(metaKeyParameters.size(), new HashMap<>());
-											}
-											Map<List<Parameter>, List<RedisConfigurationKey>> currentCard = keysByMetaDataByCard.get(metaKeyParameters.size());
-											if(!currentCard.containsKey(metaKeyParameters)) {
-												currentCard.put(metaKeyParameters, new ArrayList<>());
-											}
-											currentCard.get(metaKeyParameters).add(key);
-										});
-								}
-								
-								return Flux.fromIterable(keysByMetaDataByCard.values())
-									.concatMap(keysByMetaData -> Flux.fromStream(() -> keysByMetaData.entrySet().stream().filter(e -> {
-												List<RedisConfigurationKey> queries = e.getValue();
-												for(Iterator<RedisConfigurationKey> keysIterator = queries.iterator(); keysIterator.hasNext();) {
-													if(keysIterator.next().metaData.isPresent()) {
-														keysIterator.remove();
-													}
-												}
-												return !queries.isEmpty();
-											})
-										)
-										.flatMap(e -> this.source.getMetaData(operations, e.getKey())
-											.doOnNext(metaData -> {
-												for(RedisConfigurationKey key : e.getValue()) {
-													if(key.metaData.isPresent()) {
-														throw new IllegalStateException("MetaData " + asMetaDataKey(e.getKey()) + " is conflicting with " + asMetaDataKey(key.metaData.get().getParameters()) + " when considering parameters [" + key.getParameters().stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?
-													}
-													key.metaData = Optional.of(metaData);
-												}
-											})
-										)
-									)
-									.then(Mono.just(keys));
-							});
-					});
-			}))
-			.flatMapMany(keys -> this.source.redisClient
-				.batch(operations -> Flux.fromIterable(keys) // 3. Query properties in batch
-					.map(key -> operations
-						.zrangeWithScores()
-						.reverse()
-						.byScore()
-						.limit(0, 1)
-						.build(asPropertyKey(key), Bound.inclusive(0), key.metaData.flatMap(RedisConfigurationMetaData::getActiveRevision).map(Bound::inclusive).orElse(Bound.unbounded()))
-						.next()
-						.mapNotNull(result -> {
-							key.revision = Optional.of((int)result.getScore());
+			return Flux.from(this.source.redisClient.connection(operations -> operations.scan()
+				.pattern(propertiesPattern)
+				.count(100)
+				.build("0")
+				.expand(result -> {
+					if(result.isFinished()) {
+						return Mono.empty();
+					}
+					return operations.scan()
+						.pattern(propertiesPattern)
+						.count(100)
+						.build(result.getCursor());
+				})
+				.flatMapIterable(result -> result.getKeys())
+				.mapNotNull(rawKey -> {
+					try {
+						ConfigurationOptionParser<?> parser = new ConfigurationOptionParser<>(new StringProvider(rawKey.substring(10)));
+						ConfigurationKey key = parser.StartKey();
+						return new GenericConfigurationKey(key.getName(), key.getParameters());
+					}
+					catch (ParseException e) {
+						LOGGER.warn(() -> "Ignoring invalid key " + rawKey, e);
+						return null;
+					}
+				})
+				.filter(key -> key.matches(matchingKey, exact))
+				.buffer(100)
+				.flatMap(queryKeys -> operations.mget(keys -> queryKeys.stream().map(RedisConfigurationSource::asPropertyKey).forEach(keys::key)).zipWithIterable(queryKeys))
+				.mapNotNull(result -> {
+					GenericConfigurationKey	queryKey = result.getT2();
+					return result.getT1().getValue()
+						.map(value -> {
 							try {
-								Optional<String> actualValue = new ConfigurationOptionParser<RedisConfigurationSource>(new StringProvider(result.getValue())).StartValueRevision();
+								Optional<String> actualValue = new ConfigurationOptionParser<VersionedRedisConfigurationSource>(new StringProvider(value)).StartValue();
 								if(actualValue != null) {
-									return new GenericConfigurationProperty<ConfigurationKey, RedisConfigurationSource, String>(key, actualValue.orElse(null), this.source);
+									return new GenericConfigurationProperty<>(queryKey, actualValue.orElse(null), this.source);
 								}
 								else {
 									// unset
-									return new GenericConfigurationProperty<ConfigurationKey, RedisConfigurationSource, String>(key, this.source);
+									return new GenericConfigurationProperty<>(queryKey, this.source);
 								}
-							} 
+							}
 							catch (ParseException e) {
-								LOGGER.warn(() -> "Ignoring invalid value found for key " + key.toString() + " at revision " + (int)result.getScore(), e);
+								LOGGER.warn(() -> "Ignoring invalid value found for key " + queryKey.toString(), e);
 							}
 							return null;
 						})
-					)
-				)
-			);
+						.orElse(null);
+				})
+			));
 		}
-	}
-	
-	private static final String META_DATA_CONTROL_KEY = "CONF:META:CTRL";
-	
-	/**
-	 * <p>
-	 * Converts the specified list of parameters to Redis MetaData key.
-	 * </p>
-	 *
-	 * @param parameters a list of parameters
-	 *
-	 * @return a Redis MetaData key
-	 */
-	private static String asMetaDataKey(List<Parameter> parameters) {
-		StringBuilder keyBuilder = new StringBuilder();
-		keyBuilder.append("CONF:META:");
-		if(parameters != null && !parameters.isEmpty()) {
-			keyBuilder
-				.append("[")
-					.append(parameters.stream()
-					.sorted(Comparator.comparing(Parameter::getKey))
-					.map(Parameter::toString)
-					.collect(Collectors.joining(","))
-				)
-				.append("]");
-		}
-		return keyBuilder.toString();
 	}
 	
 	/**
@@ -1210,773 +476,17 @@ public class RedisConfigurationSource extends AbstractConfigurableConfigurationS
 	 */
 	private static String asPropertyKey(ConfigurationKey key) {
 		StringBuilder keyBuilder = new StringBuilder();
-		keyBuilder.append("CONF:PROP:").append(key.getName());
+		keyBuilder.append(PROPERTY_KEY_PREFIX).append(key.getName());
 		if(key.getParameters() != null && !key.getParameters().isEmpty()) {
 			keyBuilder
 				.append("[")
 					.append(key.getParameters().stream()
-					.sorted(Comparator.comparing(Parameter::getKey))
-					.map(Parameter::toString)
+					.sorted(Comparator.comparing(ConfigurationKey.Parameter::getKey))
+					.map(ConfigurationKey.Parameter::toString)
 					.collect(Collectors.joining(","))
 				)
 				.append("]");
 		}
 		return keyBuilder.toString();
-	}
-	
-	/**
-	 * <p>
-	 * Returns the configuration metadata for one parameters.
-	 * </p>
-	 * 
-	 * @param k1 the parameter name
-	 * @param v1 the parameter value
-	 * 
-	 * @return a mono emitting the metadata
-	 */
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1) {
-		return this.getMetaData(Parameter.of(k1, v1));
-	}
-
-	/**
-	 * <p>
-	 * Returns the configuration metadata for two parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 *
-	 * @return a mono emitting the metadata
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2) throws IllegalArgumentException {
-		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2));
-	}
-	
-	/**
-	 * <p>
-	 * Returns the configuration metadata for three parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 * @param k3 the third parameter name
-	 * @param v3 the third parameter value
-	 *
-	 * @return a mono emitting the metadata
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3) throws IllegalArgumentException {
-		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3));
-	}
-	
-	/**
-	 * <p>
-	 * Returns the configuration metadata for four parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 * @param k3 the third parameter name
-	 * @param v3 the third parameter value
-	 * @param k4 the fourth parameter name
-	 * @param v4 the fourth parameter value
-	 *
-	 * @return a mono emitting the metadata
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) throws IllegalArgumentException {
-		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4));
-	}
-	
-	/**
-	 * <p>
-	 * Returns the configuration metadata for five parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 * @param k3 the third parameter name
-	 * @param v3 the third parameter value
-	 * @param k4 the fourth parameter name
-	 * @param v4 the fourth parameter value
-	 * @param k5 the fifth parameter name
-	 * @param v5 the fifth parameter value
-	 *
-	 * @return a mono emitting the metadata
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) throws IllegalArgumentException {
-		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5));
-	}
-	
-	/**
-	 * <p>
-	 * Returns the configuration metadata for six parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 * @param k3 the third parameter name
-	 * @param v3 the third parameter value
-	 * @param k4 the fourth parameter name
-	 * @param v4 the fourth parameter value
-	 * @param k5 the fifth parameter name
-	 * @param v5 the fifth parameter value
-	 * @param k6 the sixth parameter name
-	 * @param v6 the sixth parameter value
-	 *
-	 * @return a mono emitting the metadata
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) throws IllegalArgumentException {
-		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6));
-	}
-	
-	/**
-	 * <p>
-	 * Returns the configuration metadata for seven parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 * @param k3 the third parameter name
-	 * @param v3 the third parameter value
-	 * @param k4 the fourth parameter name
-	 * @param v4 the fourth parameter value
-	 * @param k5 the fifth parameter name
-	 * @param v5 the fifth parameter value
-	 * @param k6 the sixth parameter name
-	 * @param v6 the sixth parameter value
-	 * @param k7 the seventh parameter name
-	 * @param v7 the seventh parameter value
-	 *
-	 * @return a mono emitting the metadata
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) throws IllegalArgumentException {
-		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7));
-	}
-	
-	/**
-	 * <p>
-	 * Returns the configuration metadata for eight parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 * @param k3 the third parameter name
-	 * @param v3 the third parameter value
-	 * @param k4 the fourth parameter name
-	 * @param v4 the fourth parameter value
-	 * @param k5 the fifth parameter name
-	 * @param v5 the fifth parameter value
-	 * @param k6 the sixth parameter name
-	 * @param v6 the sixth parameter value
-	 * @param k7 the seventh parameter name
-	 * @param v7 the seventh parameter value
-	 * @param k8 the eighth parameter name
-	 * @param v8 the eighth parameter value
-	 *
-	 * @return a mono emitting the metadata
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) throws IllegalArgumentException {
-		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8));
-	}
-	
-	/**
-	 * <p>
-	 * Returns the configuration metadata for nine parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 * @param k3 the third parameter name
-	 * @param v3 the third parameter value
-	 * @param k4 the fourth parameter name
-	 * @param v4 the fourth parameter value
-	 * @param k5 the fifth parameter name
-	 * @param v5 the fifth parameter value
-	 * @param k6 the sixth parameter name
-	 * @param v6 the sixth parameter value
-	 * @param k7 the seventh parameter name
-	 * @param v7 the seventh parameter value
-	 * @param k8 the eighth parameter name
-	 * @param v8 the eighth parameter value
-	 * @param k9 the ninth parameter name
-	 * @param v9 the ninth parameter value
-	 *
-	 * @return a mono emitting the metadata
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) throws IllegalArgumentException {
-		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9));
-	}
-	
-	/**
-	 * <p>
-	 * Returns the configuration metadata for ten parameters.
-	 * </p>
-	 *
-	 * @param k1  the first parameter name
-	 * @param v1  the first parameter value
-	 * @param k2  the second parameter name
-	 * @param v2  the second parameter value
-	 * @param k3  the third parameter name
-	 * @param v3  the third parameter value
-	 * @param k4  the fourth parameter name
-	 * @param v4  the fourth parameter value
-	 * @param k5  the fifth parameter name
-	 * @param v5  the fifth parameter value
-	 * @param k6  the sixth parameter name
-	 * @param v6  the sixth parameter value
-	 * @param k7  the seventh parameter name
-	 * @param v7  the seventh parameter value
-	 * @param k8  the eighth parameter name
-	 * @param v8  the eighth parameter value
-	 * @param k9  the ninth parameter name
-	 * @param v9  the ninth parameter value
-	 * @param k10 the tenth parameter name
-	 * @param v10 the tenth parameter value
-	 *
-	 * @return a mono emitting the metadata
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<RedisConfigurationMetaData> getMetaData(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) throws IllegalArgumentException {
-		return this.getMetaData(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9), Parameter.of(k10, v10));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the working revision for the properties defined with the specified parameter.
-	 * </p>
-	 *
-	 * @param k1 the parameter name
-	 * @param v1 the parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 */
-	public Mono<Void> activate(String k1, Object v1) {
-		return this.activate(Parameter.of(k1, v1));
-	}
-
-	/**
-	 * <p>
-	 * Activates the working revision for the properties defined with the two specified parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2) throws IllegalArgumentException {
-		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the working revision for the properties defined with the three specified parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 * @param k3 the third parameter name
-	 * @param v3 the third parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3) throws IllegalArgumentException {
-		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the working revision for the properties defined with the four specified parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 * @param k3 the third parameter name
-	 * @param v3 the third parameter value
-	 * @param k4 the fourth parameter name
-	 * @param v4 the fourth parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) throws IllegalArgumentException {
-		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the working revision for the properties defined with the five specified parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 * @param k3 the third parameter name
-	 * @param v3 the third parameter value
-	 * @param k4 the fourth parameter name
-	 * @param v4 the fourth parameter value
-	 * @param k5 the fifth parameter name
-	 * @param v5 the fifth parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) throws IllegalArgumentException {
-		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the working revision for the properties defined with the six specified parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 * @param k3 the third parameter name
-	 * @param v3 the third parameter value
-	 * @param k4 the fourth parameter name
-	 * @param v4 the fourth parameter value
-	 * @param k5 the fifth parameter name
-	 * @param v5 the fifth parameter value
-	 * @param k6 the sixth parameter name
-	 * @param v6 the sixth parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) throws IllegalArgumentException {
-		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the working revision for the properties defined with the seven specified parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 * @param k3 the third parameter name
-	 * @param v3 the third parameter value
-	 * @param k4 the fourth parameter name
-	 * @param v4 the fourth parameter value
-	 * @param k5 the fifth parameter name
-	 * @param v5 the fifth parameter value
-	 * @param k6 the sixth parameter name
-	 * @param v6 the sixth parameter value
-	 * @param k7 the seventh parameter name
-	 * @param v7 the seventh parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) throws IllegalArgumentException {
-		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the working revision for the properties defined with the eight specified parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 * @param k3 the third parameter name
-	 * @param v3 the third parameter value
-	 * @param k4 the fourth parameter name
-	 * @param v4 the fourth parameter value
-	 * @param k5 the fifth parameter name
-	 * @param v5 the fifth parameter value
-	 * @param k6 the sixth parameter name
-	 * @param v6 the sixth parameter value
-	 * @param k7 the seventh parameter name
-	 * @param v7 the seventh parameter value
-	 * @param k8 the eighth parameter name
-	 * @param v8 the eighth parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) throws IllegalArgumentException {
-		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the working revision for the properties defined with the nine specified parameters.
-	 * </p>
-	 *
-	 * @param k1 the first parameter name
-	 * @param v1 the first parameter value
-	 * @param k2 the second parameter name
-	 * @param v2 the second parameter value
-	 * @param k3 the third parameter name
-	 * @param v3 the third parameter value
-	 * @param k4 the fourth parameter name
-	 * @param v4 the fourth parameter value
-	 * @param k5 the fifth parameter name
-	 * @param v5 the fifth parameter value
-	 * @param k6 the sixth parameter name
-	 * @param v6 the sixth parameter value
-	 * @param k7 the seventh parameter name
-	 * @param v7 the seventh parameter value
-	 * @param k8 the eighth parameter name
-	 * @param v8 the eighth parameter value
-	 * @param k9 the ninth parameter name
-	 * @param v9 the ninth parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) throws IllegalArgumentException {
-		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9));
-	}
-
-	/**
-	 * <p>
-	 * Activates the working revision for the properties defined with the ten specified parameters.
-	 * </p>
-	 *
-	 * @param k1  the first parameter name
-	 * @param v1  the first parameter value
-	 * @param k2  the second parameter name
-	 * @param v2  the second parameter value
-	 * @param k3  the third parameter name
-	 * @param v3  the third parameter value
-	 * @param k4  the fourth parameter name
-	 * @param v4  the fourth parameter value
-	 * @param k5  the fifth parameter name
-	 * @param v5  the fifth parameter value
-	 * @param k6  the sixth parameter name
-	 * @param v6  the sixth parameter value
-	 * @param k7  the seventh parameter name
-	 * @param v7  the seventh parameter value
-	 * @param k8  the eighth parameter name
-	 * @param v8  the eighth parameter value
-	 * @param k9  the ninth parameter name
-	 * @param v9  the ninth parameter value
-	 * @param k10 the tenth parameter name
-	 * @param v10 the tenth parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once
-	 */
-	public Mono<Void> activate(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) throws IllegalArgumentException {
-		return this.activate(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9), Parameter.of(k10, v10));
-	}
-
-	/**
-	 * <p>
-	 * Activates the specified revisions for the properties defined with the specified parameter.
-	 * </p>
-	 *
-	 * @param revision the revision to activate
-	 * @param k1       the parameter name
-	 * @param v1       the parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if the specified revision is greater than the current working revision
-	 */
-	public Mono<Void> activate(int revision, String k1, Object v1) {
-		return this.activate(revision, Parameter.of(k1, v1));
-	}
-
-	/**
-	 * <p>
-	 * Activates the specified revisions for the properties defined with the two specified parameters.
-	 * </p>
-	 *
-	 * @param revision the revision to activate
-	 * @param k1       the first parameter name
-	 * @param v1       the first parameter value
-	 * @param k2       the second parameter name
-	 * @param v2       the second parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
-	 */
-	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2) {
-		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the specified revisions for the properties defined with the three specified parameters.
-	 * </p>
-	 *
-	 * @param revision the revision to activate
-	 * @param k1       the first parameter name
-	 * @param v1       the first parameter value
-	 * @param k2       the second parameter name
-	 * @param v2       the second parameter value
-	 * @param k3       the third parameter name
-	 * @param v3       the third parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
-	 */
-	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3) {
-		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the specified revisions for the properties defined with the four specified parameters.
-	 * </p>
-	 *
-	 * @param revision the revision to activate
-	 * @param k1       the first parameter name
-	 * @param v1       the first parameter value
-	 * @param k2       the second parameter name
-	 * @param v2       the second parameter value
-	 * @param k3       the third parameter name
-	 * @param v3       the third parameter value
-	 * @param k4       the fourth parameter name
-	 * @param v4       the fourth parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
-	 */
-	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) {
-		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the specified revisions for the properties defined with the five specified parameters.
-	 * </p>
-	 *
-	 * @param revision the revision to activate
-	 * @param k1       the first parameter name
-	 * @param v1       the first parameter value
-	 * @param k2       the second parameter name
-	 * @param v2       the second parameter value
-	 * @param k3       the third parameter name
-	 * @param v3       the third parameter value
-	 * @param k4       the fourth parameter name
-	 * @param v4       the fourth parameter value
-	 * @param k5       the fifth parameter name
-	 * @param v5       the fifth parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
-	 */
-	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) {
-		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the specified revisions for the properties defined with the six specified parameters.
-	 * </p>
-	 *
-	 * @param revision the revision to activate
-	 * @param k1       the first parameter name
-	 * @param v1       the first parameter value
-	 * @param k2       the second parameter name
-	 * @param v2       the second parameter value
-	 * @param k3       the third parameter name
-	 * @param v3       the third parameter value
-	 * @param k4       the fourth parameter name
-	 * @param v4       the fourth parameter value
-	 * @param k5       the fifth parameter name
-	 * @param v5       the fifth parameter value
-	 * @param k6       the sixth parameter name
-	 * @param v6       the sixth parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
-	 */
-	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) {
-		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the specified revisions for the properties defined with the seven specified parameters.
-	 * </p>
-	 *
-	 * @param revision the revision to activate
-	 * @param k1       the first parameter name
-	 * @param v1       the first parameter value
-	 * @param k2       the second parameter name
-	 * @param v2       the second parameter value
-	 * @param k3       the third parameter name
-	 * @param v3       the third parameter value
-	 * @param k4       the fourth parameter name
-	 * @param v4       the fourth parameter value
-	 * @param k5       the fifth parameter name
-	 * @param v5       the fifth parameter value
-	 * @param k6       the sixth parameter name
-	 * @param v6       the sixth parameter value
-	 * @param k7       the seventh parameter name
-	 * @param v7       the seventh parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
-	 */
-	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) {
-		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the specified revisions for the properties defined with the eight specified parameters.
-	 * </p>
-	 *
-	 * @param revision the revision to activate
-	 * @param k1       the first parameter name
-	 * @param v1       the first parameter value
-	 * @param k2       the second parameter name
-	 * @param v2       the second parameter value
-	 * @param k3       the third parameter name
-	 * @param v3       the third parameter value
-	 * @param k4       the fourth parameter name
-	 * @param v4       the fourth parameter value
-	 * @param k5       the fifth parameter name
-	 * @param v5       the fifth parameter value
-	 * @param k6       the sixth parameter name
-	 * @param v6       the sixth parameter value
-	 * @param k7       the seventh parameter name
-	 * @param v7       the seventh parameter value
-	 * @param k8       the eighth parameter name
-	 * @param v8       the eighth parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
-	 */
-	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) {
-		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the specified revisions for the properties defined with the nine specified parameters.
-	 * </p>
-	 *
-	 * @param revision the revision to activate
-	 * @param k1       the first parameter name
-	 * @param v1       the first parameter value
-	 * @param k2       the second parameter name
-	 * @param v2       the second parameter value
-	 * @param k3       the third parameter name
-	 * @param v3       the third parameter value
-	 * @param k4       the fourth parameter name
-	 * @param v4       the fourth parameter value
-	 * @param k5       the fifth parameter name
-	 * @param v5       the fifth parameter value
-	 * @param k6       the sixth parameter name
-	 * @param v6       the sixth parameter value
-	 * @param k7       the seventh parameter name
-	 * @param v7       the seventh parameter value
-	 * @param k8       the eighth parameter name
-	 * @param v8       the eighth parameter value
-	 * @param k9       the ninth parameter name
-	 * @param v9       the ninth parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
-	 */
-	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) {
-		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9));
-	}
-	
-	/**
-	 * <p>
-	 * Activates the specified revisions for the properties defined with the ten specified parameters.
-	 * </p>
-	 *
-	 * @param revision the revision to activate
-	 * @param k1       the first parameter name
-	 * @param v1       the first parameter value
-	 * @param k2       the second parameter name
-	 * @param v2       the second parameter value
-	 * @param k3       the third parameter name
-	 * @param v3       the third parameter value
-	 * @param k4       the fourth parameter name
-	 * @param v4       the fourth parameter value
-	 * @param k5       the fifth parameter name
-	 * @param v5       the fifth parameter value
-	 * @param k6       the sixth parameter name
-	 * @param v6       the sixth parameter value
-	 * @param k7       the seventh parameter name
-	 * @param v7       the seventh parameter value
-	 * @param k8       the eighth parameter name
-	 * @param v8       the eighth parameter value
-	 * @param k9       the ninth parameter name
-	 * @param v9       the ninth parameter value
-	 * @param k10      the tenth parameter name
-	 * @param v10      the tenth parameter value
-	 *
-	 * @return a mono that completes when the operation succeeds or fails
-	 *
-	 * @throws IllegalArgumentException if parameters were specified more than once or if the specified revision is greater than the current working revision
-	 */
-	public Mono<Void> activate(int revision, String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) {
-		return this.activate(revision, Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5),  Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9), Parameter.of(k10, v10));
 	}
 }

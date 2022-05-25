@@ -160,7 +160,7 @@ TOKEN:
 }*/
 
 TOKEN : /* IDENTIFIERS */
-{
+{ 
 	< IDENTIFIER: < LETTER > (< PART_LETTER >)* >
 	| 
 	< #LETTER:

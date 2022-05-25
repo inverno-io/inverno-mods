@@ -797,6 +797,18 @@ ConfigurationKey StartKey():
 	}
 }
 
+Optional<String> StartValue():
+{
+	Optional<String> value;
+}
+{
+	value = Value()
+	<EOF>
+	{
+	  return value;
+	}
+}
+
 Optional<String> StartValueRevision():
 {
 	Optional<String> value;

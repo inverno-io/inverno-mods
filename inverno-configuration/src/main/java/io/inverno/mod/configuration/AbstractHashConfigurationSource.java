@@ -180,6 +180,7 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 				.flatMapMany(indexedProperties -> Flux.<ConfigurationQueryResult>fromStream(this.queries.stream()
 					.flatMap(query -> query.names.stream().map(name -> new GenericConfigurationKey(name, query.parameters)))
 					.map(key -> new HashConfigurationQueryResult<A, B>(key, indexedProperties.get(key))))
+					// TODO invoke stragtegy to get deafulting keys from the query key and return the first non empty result
 				)
 				.onErrorResume(ex -> Flux.<ConfigurationQueryResult>fromStream(this.queries.stream()
 						.flatMap(query -> query.names.stream().map(name -> new HashConfigurationQueryResult<A, B>(new GenericConfigurationKey(name, query.parameters), this.source, ex)))
