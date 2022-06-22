@@ -24,7 +24,6 @@ import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
-import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
 
 /**
@@ -55,7 +54,7 @@ public class GenericErrorExchangeHandler implements ErrorExchangeHandler<Exchang
 			}
 			else if(errorExchange.getError() instanceof ServiceUnavailableException) {
 				((ServiceUnavailableException)webError).getRetryAfter().ifPresent(retryAfter -> {
-					errorExchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
+					errorExchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(Headers.FORMATTER_RFC_5322_DATE_TIME)));
 				});
 			}
 			errorExchange.response().headers(h -> h.status(webError.getStatusCode())).body().empty();

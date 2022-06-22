@@ -106,8 +106,8 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 			this.setBoundary(boundary);
 		}
 		
-		private ContentType(String headerName, String headerValue, String parameterizedValue, Map<String, String> parameters, String boundary, Charset charset) {
-			super(headerName, headerValue, parameterizedValue, parameters);
+		private ContentType(String headerValue, String parameterizedValue, Map<String, String> parameters, String boundary, Charset charset) {
+			super(Headers.NAME_CONTENT_TYPE, headerValue, parameterizedValue, parameters);
 			this.setMediaType(parameterizedValue.toLowerCase());
 			this.boundary = boundary;
 			this.charset = charset;
@@ -223,7 +223,7 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 			
 			@Override
 			public ContentType build() {
-				return new ContentType(this.headerName, this.headerValue, this.parameterizedValue, this.parameters, this.boundary, this.charset);
+				return new ContentType(this.headerValue, this.parameterizedValue, this.parameters, this.boundary, this.charset);
 			}
 		}
 	}

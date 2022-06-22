@@ -20,13 +20,12 @@ import java.util.Set;
 
 /**
  * <p>
- * A web exception that indicates a {@link Status#NOT_ACCEPTABLE Not Acceptable
- * (406)} client requested.
+ * A HTTP exception that indicates a {@link Status#NOT_ACCEPTABLE Not Acceptable (406)} client requested.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see HttpException
  */
 public class NotAcceptableException extends HttpException {

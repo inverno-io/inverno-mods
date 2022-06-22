@@ -17,8 +17,7 @@ package io.inverno.mod.http.base;
 
 /**
  * <p>
- * A web exception that indicates that a resource was {@link Status#NOT_FOUND
- * Not Found (404)} on the server.
+ * A HTTP exception that indicates that a resource was {@link Status#NOT_FOUND Not Found (404)} on the server.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

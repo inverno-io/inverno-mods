@@ -58,6 +58,6 @@ public interface ResponseData<A> {
 	 * @throws IllegalStateException if the payload has already been set
 	 */
 	default <T extends A> void value(T value) throws IllegalStateException {
-		this.stream(Mono.just(value));
+		this.stream(Mono.justOrEmpty(value));
 	}
 }

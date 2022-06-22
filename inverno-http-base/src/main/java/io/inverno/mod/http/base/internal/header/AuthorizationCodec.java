@@ -121,12 +121,12 @@ public class AuthorizationCodec implements HeaderCodec<AuthorizationCodec.Author
 	
 	public static final class Authorization extends ParameterizedHeader implements Headers.Authorization {
 
-		private String authScheme;
+		private final String authScheme;
 		
 		private String token;
 		
-		public Authorization(String headerName, String headerValue, String authScheme, Map<String, String> authParameters) {
-			super(headerName, headerValue, authScheme, authParameters);
+		public Authorization(String headerValue, String authScheme, Map<String, String> authParameters) {
+			super(Headers.NAME_AUTHORIZATION, headerValue, authScheme, authParameters);
 			
 			this.authScheme = authScheme;
 		}
@@ -188,7 +188,7 @@ public class AuthorizationCodec implements HeaderCodec<AuthorizationCodec.Author
 			
 			@Override
 			public Authorization build() {
-				return new Authorization(this.headerName, this.headerValue, this.authScheme, this.parameters);
+				return new Authorization(this.headerValue, this.authScheme, this.parameters);
 			}
 		}
 	}

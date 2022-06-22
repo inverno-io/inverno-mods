@@ -20,6 +20,8 @@ import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.mod.http.base.header.HeaderBuilder;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
+import static io.inverno.mod.http.base.header.Headers.SetCookie.HTTPONLY;
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,7 +53,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		
 		result.append(headerField.getName()).append("=").append(headerField.getValue());
 		if(headerField.getExpires() != null) {
-			result.append("; ").append(Headers.SetCookie.EXPIRES).append("=").append(headerField.getExpires());
+			result.append("; ").append(Headers.SetCookie.EXPIRES).append("=").append(headerField.getExpires().format(Headers.FORMATTER_RFC_5322_DATE_TIME));
 		}
 		if(headerField.getMaxAge() != null) {
 			result.append("; ").append(Headers.SetCookie.MAX_AGE).append("=").append(headerField.getMaxAge());
@@ -67,6 +69,9 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		}
 		if(headerField.isHttpOnly() != null && headerField.isHttpOnly()) {
 			result.append("; ").append(Headers.SetCookie.HTTPONLY);
+		}
+		if(headerField.getSameSite() != null) {
+			result.append("; ").append(Headers.SetCookie.SAME_SITE).append("=").append(headerField.getSameSite());
 		}
 		return result.toString();
 	}
@@ -85,12 +90,13 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		
 		private String name;
 		private String value;
-		private String expires;
+		private ZonedDateTime expires;
 		private Integer maxAge;
 		private String domain;
 		private String path;
 		private Boolean secure;
 		private Boolean httpOnly;
+		private SameSitePolicy sameSite;
 		
 		/**
 		 * <p>Creates an empty set-cookie header.</p>
@@ -99,7 +105,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 			super(Headers.NAME_SET_COOKIE, null, null, null);
 		}
 		
-		private SetCookie(String headerName, String headerValue, String name, String value, String expires, Integer maxAge, String domain, String path, Boolean secure, Boolean httpOnly, Map<String, String> parameters) {
+		private SetCookie(String headerValue, String name, String value, ZonedDateTime expires, Integer maxAge, String domain, String path, Boolean secure, Boolean httpOnly, SameSitePolicy sameSite, Map<String, String> parameters) {
 			super(Headers.NAME_SET_COOKIE, headerValue, null, parameters);
 			
 			this.name = name;
@@ -110,6 +116,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 			this.path = path;
 			this.secure = secure;
 			this.httpOnly = httpOnly;
+			this.sameSite = sameSite;
 		}
 		
 		@Override
@@ -123,7 +130,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		}
 		
 		@Override
-		public String getExpires() {
+		public ZonedDateTime getExpires() {
 			return this.expires;
 		}
 
@@ -151,6 +158,11 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		public Boolean isHttpOnly() {
 			return this.httpOnly;
 		}
+
+		@Override
+		public SameSitePolicy getSameSite() {
+			return sameSite;
+		}
 		
 		@Override
 		public Configurator name(String name) {
@@ -161,6 +173,12 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		@Override
 		public Configurator value(String value) {
 			this.value = value;
+			return this;
+		}
+
+		@Override
+		public Configurator expires(ZonedDateTime expires) {
+			this.expires = expires;
 			return this;
 		}
 
@@ -194,6 +212,12 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 			return this;
 		}
 
+		@Override
+		public Configurator sameSite(SameSitePolicy sameSite) {
+			this.sameSite = sameSite;
+			return this;
+		}
+		
 		/**
 		 * <p>
 		 * Set-Cookie {@link HeaderBuilder} implementation.
@@ -208,12 +232,13 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 
 			private String name;
 			private String value;
-			private String expires;
+			private ZonedDateTime expires;
 			private Integer maxAge;
 			private String domain;
 			private String path;
 			private Boolean secure;
 			private Boolean httpOnly;
+			private SameSitePolicy sameSite;
 			
 			private boolean expectCookiePair = true;
 			
@@ -227,7 +252,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 				}
 				else {
 					if(name.equalsIgnoreCase(EXPIRES)) {
-						this.expires = value;
+						this.expires = ZonedDateTime.parse(value, Headers.FORMATTER_RFC_5322_DATE_TIME);
 					}
 					if(name.equalsIgnoreCase(MAX_AGE)) {
 						this.maxAge = Integer.parseInt(value);
@@ -244,13 +269,16 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 					if(name.equalsIgnoreCase(HTTPONLY)) {
 						this.httpOnly = true;
 					}
+					if(name.equalsIgnoreCase(SAME_SITE)) {
+						this.sameSite = SameSitePolicy.fromValue(value);
+					}
 					return super.parameter(name, value);
 				}
 			}
 			
 			@Override
 			public SetCookie build() {
-				return new SetCookie(this.headerName, this.headerValue, this.name, this.value, this.expires, this.maxAge, this.domain, this.path, this.secure, this.httpOnly, this.parameters);
+				return new SetCookie(this.headerValue, this.name, this.value, this.expires, this.maxAge, this.domain, this.path, this.secure, this.httpOnly, this.sameSite, this.parameters);
 			}
 		}
 	}

@@ -17,8 +17,7 @@ package io.inverno.mod.http.base;
 
 /**
  * <p>
- * A web exception that indicates an {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)}
- * accessing a server resource.
+ * A HTTP exception that indicates an {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)} accessing a server resource.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

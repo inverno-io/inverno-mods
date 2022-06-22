@@ -21,8 +21,7 @@ import java.util.Optional;
 
 /**
  * <p>
- * A web exception that indicates that the requested resource is
- * {@link Status#SERVICE_UNAVAILABLE Service Unavailable (503)}.
+ * A HTTP exception that indicates that the requested resource is {@link Status#SERVICE_UNAVAILABLE Service Unavailable (503)}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

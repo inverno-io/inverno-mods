@@ -17,8 +17,7 @@ package io.inverno.mod.http.base;
 
 /**
  * <p>
- * A web exception that indicates that the access to a server resource is
- * {@link Status#UNAUTHORIZED Unauthorized (401)}.
+ * A HTTP exception that indicates that the access to a server resource is {@link Status#UNAUTHORIZED Unauthorized (401)}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

@@ -17,8 +17,7 @@ package io.inverno.mod.http.base;
 
 /**
  * <p>
- * A web exception that indicates a {@link Status#FORBIDDEN Forbidden (403)}
- * access to a server resource.
+ * A HTTP exception that indicates a {@link Status#FORBIDDEN Forbidden (403)} access to a server resource.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

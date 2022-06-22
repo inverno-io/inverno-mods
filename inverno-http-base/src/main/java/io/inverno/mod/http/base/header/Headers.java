@@ -21,6 +21,7 @@ import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
 
 import java.nio.charset.Charset;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.Map.Entry;
@@ -41,7 +42,7 @@ public final class Headers {
 	/**
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc5322#section-3.3">RFC 5322 Section 3.3</a>
 	 */
-	public static final DateTimeFormatter FORMATTER_RFC_1123_DATE_TIME = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
+	public static final DateTimeFormatter FORMATTER_RFC_5322_DATE_TIME = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
 	
 	/* Header Names */
 	/**
@@ -56,6 +57,46 @@ public final class Headers {
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.5">RFC 7231 Section 5.3.5</a>
 	 */
 	public static final String NAME_ACCEPT_LANGUAGE = "accept-language";
+	/**
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 */
+	public static final String NAME_ACCESS_CONTROL_ALLOW_CREDENTIALS = "access-control-allow-credentials";
+	/**
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 */
+	public static final String NAME_ACCESS_CONTROL_ALLOW_HEADERS = "access-control-allow-headers";
+	/**
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 */	
+	public static final String NAME_ACCESS_CONTROL_ALLOW_METHODS = "access-control-allow-methods";
+	/**
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 */	
+	public static final String NAME_ACCESS_CONTROL_ALLOW_ORIGIN = "access-control-allow-origin";
+	/**
+	 * <a href="https://wicg.github.io/private-network-access/">Private Network Access</a>
+	 */
+	public static final String NAME_ACCESS_CONTROL_ALLOW_PRIVATE_NETWORK = "access-control-allow-private-network";
+	/**
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 */	
+	public static final String NAME_ACCESS_CONTROL_EXPOSE_HEADERS = "access-control-expose-headers";
+	/**
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 */	
+	public static final String NAME_ACCESS_CONTROL_MAX_AGE = "access-control-max-age";
+	/**
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 */	
+	public static final String NAME_ACCESS_CONTROL_REQUEST_METHOD = "access-control-request-method";
+	/**
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 */	
+	public static final String NAME_ACCESS_CONTROL_REQUEST_HEADERS = "access-control-request-headers";
+	/**
+	 * <a href="https://wicg.github.io/private-network-access/">Private Network Access</a>
+	 */
+	public static final String NAME_ACCESS_CONTROL_REQUEST_PRIVATE_NETWORK = "access-control-request-private-network";
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-7.4.1">RFC 7231 Section 7.4.1</a>
 	 */
@@ -117,6 +158,12 @@ public final class Headers {
 	 */
 	public static final String NAME_LOCATION = "location";
 	/**
+	 * <a href="https://www.rfc-editor.org/rfc/rfc6454.html">RFC 6454</a>
+	 * <br/>
+	 * <a href="https://fetch.spec.whatwg.org/#origin-header">Fetch living standard 3.1 Origin Header</a>
+	 */
+	public static final String NAME_ORIGIN = "origin";
+	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.5.2">RFC 7231 Section 5.5.2</a>
 	 */
 	public static final String NAME_REFERER = "referer";
@@ -152,6 +199,10 @@ public final class Headers {
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.5.3">RFC 7231 Section 5.5.3</a>
 	 */
 	public static final String NAME_USER_AGENT = "user-agent";
+	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc9110#section-12.5.5">RFC 9110 Section 12.5.5</a>
+	 */
+	public static final String NAME_VARY = "www-vary";
 	/**
 	 * <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.1">RFC 7235 Section 4.1</a>
 	 */
@@ -483,6 +534,10 @@ public final class Headers {
 		 * HttpOnly parameter
 		 */
 		public static final String HTTPONLY = "HttpOnly";
+		/**
+		 * HttpOnly parameter
+		 */
+		public static final String SAME_SITE = "SameSite";
 		
 		/**
 		 * <p>
@@ -509,7 +564,7 @@ public final class Headers {
 		 * 
 		 * @return the cookie expires value or null
 		 */
-		String getExpires();
+		ZonedDateTime getExpires();
 
 		/**
 		 * <p>

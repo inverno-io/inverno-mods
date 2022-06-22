@@ -27,15 +27,15 @@ import io.inverno.mod.http.server.ResponseData;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpConstants;
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
-
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * <p>
@@ -240,7 +240,7 @@ public class GenericResponseBody implements ResponseBody {
 		
 		@Override
 		public <T extends CharSequence> void value(T value) throws IllegalStateException {
-			GenericResponseBody.this.setData(Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value, Charsets.DEFAULT))));
+			GenericResponseBody.this.setData(value != null ? Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value, Charsets.DEFAULT))) : Mono.empty());
 		}
 	}
 
@@ -277,7 +277,7 @@ public class GenericResponseBody implements ResponseBody {
 				
 				if(GenericResponseBody.this.response.headers().getCharSequence(Headers.NAME_LAST_MODIFIED) == null) {
 					resource.lastModified().ifPresent(lastModified -> {
-						h.set(Headers.NAME_LAST_MODIFIED, Headers.FORMATTER_RFC_1123_DATE_TIME.format(lastModified.toInstant()));
+						h.set(Headers.NAME_LAST_MODIFIED, Headers.FORMATTER_RFC_5322_DATE_TIME.format(lastModified.toInstant()));
 					});
 					
 					String mediaType = resource.getMediaType();
@@ -290,6 +290,7 @@ public class GenericResponseBody implements ResponseBody {
 		
 		@Override
 		public void value(io.inverno.mod.base.resource.Resource resource) {
+			Objects.requireNonNull(resource);
 			// In case of file resources we should always be able to determine existence
 			// For other resources with a null exists we can still try, worst case scenario: 
 			// internal server error
@@ -577,7 +578,7 @@ public class GenericResponseBody implements ResponseBody {
 
 			@Override
 			public <T extends CharSequence> void value(T data) {
-				this.data = Mono.just(data);
+				this.data = Mono.justOrEmpty(data);
 			}
 
 			@Override

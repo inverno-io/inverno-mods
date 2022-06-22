@@ -19,8 +19,7 @@ import java.util.Set;
 
 /**
  * <p>
- * A web exception that indicates a client requested
- * {@link Status#METHOD_NOT_ALLOWED Method Not Allowed (405)}.
+ * A HTTP exception that indicates a client requested {@link Status#METHOD_NOT_ALLOWED Method Not Allowed (405)}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

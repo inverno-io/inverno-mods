@@ -15,8 +15,13 @@
  */
 package io.inverno.mod.http.server.internal.netty;
 
+import io.inverno.mod.http.base.header.Headers;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.handler.codec.http.HttpConstants;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.util.AsciiString;
 import java.nio.charset.StandardCharsets;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
@@ -32,12 +37,6 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.handler.codec.http.HttpConstants;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.util.AsciiString;
 
 /**
  * <p>
@@ -69,13 +68,13 @@ public class LinkedHttpHeaders extends HttpHeaders {
 			return (CharSequence)value;
 		}
 		else if(value instanceof TemporalAccessor){
-			return DateTimeFormatter.RFC_1123_DATE_TIME.format((TemporalAccessor)value);
+			return Headers.FORMATTER_RFC_5322_DATE_TIME.format((TemporalAccessor)value);
 		}
 		else if(value instanceof Date) {
-			return DateTimeFormatter.RFC_1123_DATE_TIME.format(((Date)value).toInstant());
+			return Headers.FORMATTER_RFC_5322_DATE_TIME.format(((Date)value).toInstant());
 		}
 		else if(value instanceof Calendar) {
-			return DateTimeFormatter.RFC_1123_DATE_TIME.format(((Calendar)value).toInstant());
+			return Headers.FORMATTER_RFC_5322_DATE_TIME.format(((Calendar)value).toInstant());
 		}
 		else {
 			return value.toString();
@@ -188,13 +187,13 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	@Override
 	public Long getTimeMillis(CharSequence name) {
 		String value = this.get(name);
-		return value != null ? DateTimeFormatter.RFC_1123_DATE_TIME.parse(value).getLong(ChronoField.MILLI_OF_SECOND) : null;
+		return value != null ? Headers.FORMATTER_RFC_5322_DATE_TIME.parse(value).getLong(ChronoField.MILLI_OF_SECOND) : null;
 	}
 
 	@Override
 	public long getTimeMillis(CharSequence name, long defaultValue) {
 		String value = this.get(name);
-		return value != null ? DateTimeFormatter.RFC_1123_DATE_TIME.parse(value).getLong(ChronoField.MILLI_OF_SECOND) : defaultValue;
+		return value != null ? Headers.FORMATTER_RFC_5322_DATE_TIME.parse(value).getLong(ChronoField.MILLI_OF_SECOND) : defaultValue;
 	}
 
 	private void add0(CharSequence name, CharSequence value) {

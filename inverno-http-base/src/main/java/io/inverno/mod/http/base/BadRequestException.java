@@ -17,7 +17,7 @@ package io.inverno.mod.http.base;
 
 /**
  * <p>
- * A web exception that indicates a {@link Status#BAD_REQUEST Bad Request (400)}.
+ * A HTTP exception that indicates a {@link Status#BAD_REQUEST Bad Request (400)}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

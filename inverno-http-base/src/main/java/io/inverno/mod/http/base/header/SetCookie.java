@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.http.base.header;
 
+import java.time.ZonedDateTime;
+
 /**
  * <p>
  * Represents a HTTP set-cookie.
@@ -29,7 +31,49 @@ public interface SetCookie extends Cookie {
 	
 	/**
 	 * <p>
-	 * Returns cookie's max age.
+	 * Defines a same sitz policy as defined by <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite">SameSite cookie</a>.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.5
+	 */
+	enum SameSitePolicy {
+		LAX("Lax"),
+		STRICT("Strict"),
+		NONE("None");
+		
+		private final String value;
+		
+		private SameSitePolicy(String value) {
+			this.value = value;
+		}
+
+		public String getValue() {
+			return value;
+		}
+		
+		public static SameSitePolicy fromValue(String value) throws IllegalArgumentException {
+			switch(value) {
+				case "Lax": return SameSitePolicy.LAX;
+				case "Strict": return SameSitePolicy.STRICT;
+				case "None": return SameSitePolicy.NONE;
+				default: throw new IllegalArgumentException("Unknown same site policy: " + value);
+			}
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Returns cookie's expires attribute.
+	 * </p>
+	 * 
+	 * @return 
+	 */
+	ZonedDateTime getExpires();
+	
+	/**
+	 * <p>
+	 * Returns cookie's max age attribute.
 	 * </p>
 	 * 
 	 * @return the max age or null
@@ -38,7 +82,7 @@ public interface SetCookie extends Cookie {
 	
 	/**
 	 * <p>
-	 * Returns cookie's dpmain.
+	 * Returns cookie's domain attribute.
 	 * </p>
 	 * 
 	 * @return the domain or null
@@ -47,7 +91,7 @@ public interface SetCookie extends Cookie {
 	
 	/**
 	 * <p>
-	 * Returns cookie's path.
+	 * Returns cookie's path attribute.
 	 * </p>
 	 * 
 	 * @return the path or null
@@ -56,7 +100,7 @@ public interface SetCookie extends Cookie {
 	
 	/**
 	 * <p>
-	 * Returns cookie's secure flag.
+	 * Returns cookie's secure flag attribute.
 	 * </p>
 	 * 
 	 * @return the secure flag or null
@@ -65,12 +109,21 @@ public interface SetCookie extends Cookie {
 	
 	/**
 	 * <p>
-	 * Returns cookie's http only flag.
+	 * Returns cookie's http only flag attribute.
 	 * </p>
 	 * 
 	 * @return the http only flag or null
 	 */
 	Boolean isHttpOnly();
+	
+	/**
+	 * <p>
+	 * Returns cookie's same site attribute.
+	 * </p>
+	 * 
+	 * @return the same site attribute or null
+	 */
+	SameSitePolicy getSameSite();
 
 	/**
 	 * <p>
@@ -106,7 +159,22 @@ public interface SetCookie extends Cookie {
 
 		/**
 		 * <p>
-		 * sets the cookie max age in seconds.
+		 * Sets the cookie expires attribute.
+		 * </p>
+		 * 
+		 * <p>
+		 * Note that the resulting date time will be serialized at GMT time zone.
+		 * </p>
+		 * 
+		 * @param expires the expires date time
+		 * 
+		 * @return the configurator
+		 */
+		Configurator expires(ZonedDateTime expires);
+		
+		/**
+		 * <p>
+		 * Sets the cookie max age attribute in seconds.
 		 * </p>
 		 * 
 		 * @param maxAge the cookie max age
@@ -117,7 +185,7 @@ public interface SetCookie extends Cookie {
 
 		/**
 		 * <p>
-		 * Sets the cookie domain.
+		 * Sets the cookie domain attribute.
 		 * </p>
 		 * 
 		 * @param domain the cookie domain
@@ -128,7 +196,7 @@ public interface SetCookie extends Cookie {
 
 		/**
 		 * <p>
-		 * Sets the cookie path.
+		 * Sets the cookie path attribute.
 		 * </p>
 		 * 
 		 * @param path the cookie path
@@ -139,7 +207,7 @@ public interface SetCookie extends Cookie {
 
 		/**
 		 * <p>
-		 * Sets the cookie secure flag.
+		 * Sets the cookie secure flag attribute.
 		 * </p>
 		 * 
 		 * @param secure the cookie secure flag
@@ -150,12 +218,24 @@ public interface SetCookie extends Cookie {
 
 		/**
 		 * <p>
-		 * Sets the cookie http only flag.
+		 * Sets the cookie http only flag attribute.
 		 * </p>
 		 * 
 		 * @param httpOnly the cookie http only flag
+		 * 
 		 * @return the configurator
 		 */
 		Configurator httpOnly(boolean httpOnly);
+		
+		/**
+		 * <p>
+		 * Sets the cookie same site flag attribute.
+		 * </p>
+		 * 
+		 * @param sameSite a same site policy
+		 * 
+		 * @return the configurator
+		 */
+		Configurator sameSite(SameSitePolicy sameSite);
 	}
 }

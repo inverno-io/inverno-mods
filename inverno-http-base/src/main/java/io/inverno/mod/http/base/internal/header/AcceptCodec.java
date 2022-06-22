@@ -110,8 +110,8 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 			this.ranges = ranges != null && !ranges.isEmpty() ? ranges.stream().sorted(Headers.Accept.MediaRange.COMPARATOR).collect(Collectors.toList()) : List.of(new MediaRange("*/*", 1, null));
 		}
 		
-		private Accept(String headerName, String headerValue, List<Headers.Accept.MediaRange> ranges) {
-			super(headerName, headerValue, null, null);
+		private Accept(String headerValue, List<Headers.Accept.MediaRange> ranges) {
+			super(Headers.NAME_ACCEPT, headerValue, null, null);
 			this.ranges = ranges != null && !ranges.isEmpty() ? ranges.stream().sorted(Headers.Accept.MediaRange.COMPARATOR).collect(Collectors.toList()) : List.of(new MediaRange("*/*", 1, null));
 		}
 
@@ -136,11 +136,11 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 			
 			private String subType;
 			
-			private float weight;
+			private final float weight;
 			
-			private Map<String, String> parameters;
+			private final Map<String, String> parameters;
 			
-			private int score;
+			private final int score;
 			
 			/**
 			 * <p>
@@ -330,7 +330,7 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 			@Override
 			public Accept build() {
 				this.addCurrentRange();
-				return new Accept(this.headerName, this.headerValue, this.ranges);
+				return new Accept(this.headerValue, this.ranges);
 			}
 		}
 	}

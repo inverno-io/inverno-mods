@@ -19,6 +19,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.inverno.mod.http.base.internal.header.SetCookieCodec;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 /**
  * 
@@ -29,7 +31,7 @@ public class SetCookieCodecTest {
 
 	@Test
 	public void testDecode() {
-		String setCookieValue = " toto=tata; Path=/; Domain=localhost; Expires=Thu, 05-Nov-2020 13:00:04 GMT; Max-Age=123; Secure; HttpOnly";
+		String setCookieValue = " toto=tata; Path=/; Domain=localhost; Expires=Thu, 05 Nov 2020 13:00:04 GMT; Max-Age=123; Secure; HttpOnly";
 		
 		SetCookieCodec codec = new SetCookieCodec();
 		
@@ -39,7 +41,7 @@ public class SetCookieCodecTest {
 		Assertions.assertEquals("tata", cookie.getValue());
 		Assertions.assertEquals("/", cookie.getPath());
 		Assertions.assertEquals("localhost", cookie.getDomain());
-		Assertions.assertEquals("Thu, 05-Nov-2020 13:00:04 GMT", cookie.getExpires());
+		Assertions.assertEquals(ZonedDateTime.of(2020, 11, 5, 13, 0, 4, 0, ZoneId.of("GMT")), cookie.getExpires());
 		Assertions.assertEquals(123, cookie.getMaxAge());
 		Assertions.assertTrue(cookie.isSecure());
 		Assertions.assertTrue(cookie.isHttpOnly());
@@ -47,13 +49,13 @@ public class SetCookieCodecTest {
 	
 	@Test
 	public void testEncode() {
-		String setCookieValue = " toto=tata; Path=/; Domain=localhost; Expires=Thu, 05-Nov-2020 13:00:04 GMT; Max-Age=123; Secure; HttpOnly";
+		String setCookieValue = " toto=tata; Path=/; Domain=localhost; Expires=Thu, 05 Nov 2020 13:00:04 GMT; Max-Age=123; Secure; HttpOnly";
 		
 		SetCookieCodec codec = new SetCookieCodec();
 		
 		SetCookieCodec.SetCookie cookie = codec.decode(Headers.NAME_SET_COOKIE, setCookieValue);
 		
-		Assertions.assertEquals("set-cookie: toto=tata; Expires=Thu, 05-Nov-2020 13:00:04 GMT; Max-Age=123; Domain=localhost; Path=/; Secure; HttpOnly", codec.encode(cookie));
+		Assertions.assertEquals("set-cookie: toto=tata; Expires=Thu, 05 Nov 2020 13:00:04 GMT; Max-Age=123; Domain=localhost; Path=/; Secure; HttpOnly", codec.encode(cookie));
 	}
 
 }

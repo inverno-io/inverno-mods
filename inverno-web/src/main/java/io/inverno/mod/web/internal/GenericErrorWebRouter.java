@@ -28,15 +28,13 @@ import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.*;
 import io.netty.buffer.Unpooled;
-import org.apache.commons.text.StringEscapeUtils;
-import reactor.core.publisher.Mono;
-
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.apache.commons.text.StringEscapeUtils;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -83,6 +81,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	public void init() {
 		this.route().produces(MediaTypes.APPLICATION_JSON).handler(this.httpExceptionHandler_json())
 			.route().produces(MediaTypes.TEXT_HTML).handler(this.httpExceptionHandler_html())
+			.route().produces(MediaTypes.TEXT_PLAIN).handler(this.httpExceptionHandler_text())
 			.route().handler(this.httpExceptionHandler());
 	}
 	
@@ -169,10 +168,50 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 			}
 			else if(error instanceof ServiceUnavailableException) {
 				((ServiceUnavailableException)error).getRetryAfter().ifPresent(retryAfter -> {
-					exchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
+					exchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(Headers.FORMATTER_RFC_5322_DATE_TIME)));
 				});
 			}
-			exchange.response().headers(h -> h.status(error.getStatusCode())).body().empty();
+			
+			// does the client accept text/plain?
+			
+			Headers.Accept accept = Headers.Accept
+				.merge(exchange.request().headers().<Headers.Accept>getAllHeader(Headers.NAME_ACCEPT))
+				.orElse(Headers.Accept.ALL);
+			
+			exchange.response()
+				.headers(h -> h.status(error.getStatusCode()))
+				.body().empty();
+		};
+	}
+	
+	/**
+	 * <p>
+	 * Returns the {@code text/plain} HttpException error handler.
+	 * </p>
+	 * 
+	 * @return an error web exchange handler
+	 */
+	private ErrorWebExchangeHandler<ExchangeContext> httpExceptionHandler_text() {
+		return exchange -> {
+			final HttpException error = HttpException.wrap(exchange.getError());
+			if(error instanceof MethodNotAllowedException) {
+				exchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)error).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
+			}
+			else if(error instanceof ServiceUnavailableException) {
+				((ServiceUnavailableException)error).getRetryAfter().ifPresent(retryAfter -> {
+					exchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(Headers.FORMATTER_RFC_5322_DATE_TIME)));
+				});
+			}
+			
+			// does the client accept text/plain?
+			
+			Headers.Accept accept = Headers.Accept
+				.merge(exchange.request().headers().<Headers.Accept>getAllHeader(Headers.NAME_ACCEPT))
+				.orElse(Headers.Accept.ALL);
+			
+			exchange.response()
+				.headers(h -> h.status(error.getStatusCode()).contentType(MediaTypes.TEXT_PLAIN))
+				.body().string().value(error.getMessage());
 		};
 	}
 	
@@ -210,8 +249,8 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 			}
 			else if(error instanceof ServiceUnavailableException) {
 				((ServiceUnavailableException)error).getRetryAfter().ifPresent(retryAfter -> {
-					exchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
-					errorStream.append(",\"retryAfter\":\"").append(retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)).append("\"");
+					exchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(Headers.FORMATTER_RFC_5322_DATE_TIME)));
+					errorStream.append(",\"retryAfter\":\"").append(retryAfter.format(Headers.FORMATTER_RFC_5322_DATE_TIME)).append("\"");
 				});
 			}
 
@@ -220,7 +259,9 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 			}
 			errorStream.append("}");
 
-			exchange.response().headers(h -> h.status(error.getStatusCode()).contentType(MediaTypes.APPLICATION_JSON)).body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(errorOut.toByteArray())));
+			exchange.response()
+				.headers(h -> h.status(error.getStatusCode()).contentType(MediaTypes.APPLICATION_JSON))
+				.body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(errorOut.toByteArray())));
 		};
 	}
 	
@@ -277,8 +318,8 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 			else if(error instanceof ServiceUnavailableException) {
 				((ServiceUnavailableException)error).getRetryAfter().ifPresent(retryAfter -> {
 					errorStream.append("<p>");
-					errorStream.append("Retry After: ").append(retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME));
-					exchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(DateTimeFormatter.RFC_1123_DATE_TIME)));
+					errorStream.append("Retry After: ").append(retryAfter.format(Headers.FORMATTER_RFC_5322_DATE_TIME));
+					exchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(Headers.FORMATTER_RFC_5322_DATE_TIME)));
 					errorStream.append("</p>");
 				});
 			}
@@ -297,7 +338,9 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 			errorStream.append("</body>");
 			errorStream.append("</html>");
 			
-			exchange.response().headers(headers -> headers.status(error.getStatusCode()).contentType(MediaTypes.TEXT_HTML)).body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(errorOut.toByteArray())));
+			exchange.response()
+				.headers(headers -> headers.status(error.getStatusCode()).contentType(MediaTypes.TEXT_HTML))
+				.body().raw().value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(errorOut.toByteArray())));
 		};
 	}
 

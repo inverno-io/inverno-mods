@@ -81,16 +81,15 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 		 */
 		public static final String SIZE = "size";
 		
-		private String dispositionType;
-		private String partName;
-		private String filename;
-		private String creationDateTime; // Mon, 12 Oct 2020 15:46:07 GMT
-		private String modificationDatetime;
-		private String readDateTime;
-		private Integer size;
+		private final String dispositionType;
+		private final String partName;
+		private final String filename;
+		private final String creationDateTime; // Mon, 12 Oct 2020 15:46:07 GMT
+		private final String modificationDatetime;
+		private final String readDateTime;
+		private final Integer size;
 		
-		private ContentDisposition(String headerName, 
-				String headerValue, 
+		private ContentDisposition(String headerValue, 
 				String dispositionType, 
 				Map<String, String> parameters,
 				String partName, 
@@ -193,7 +192,7 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 			
 			@Override
 			public ContentDisposition build() {
-				return new ContentDisposition(this.headerName, this.headerValue, this.parameterizedValue, this.parameters, this.partName, this.filename, this.creationDateTime, this.modificationDatetime, this.readDateTime, this.size);
+				return new ContentDisposition(this.headerValue, this.parameterizedValue, this.parameters, this.partName, this.filename, this.creationDateTime, this.modificationDatetime, this.readDateTime, this.size);
 			}
 		}
 	}

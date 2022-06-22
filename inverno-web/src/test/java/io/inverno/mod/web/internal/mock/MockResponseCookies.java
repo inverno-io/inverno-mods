@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 
 import io.inverno.mod.http.base.header.SetCookie;
 import io.inverno.mod.http.server.ResponseCookies;
+import java.time.ZonedDateTime;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -50,11 +51,13 @@ public class MockResponseCookies implements ResponseCookies {
 
 		private String name;
 		private String value;
+		private ZonedDateTime expires;
 		private Integer maxAge;
 		private String domain;
 		private String path;
 		private Boolean secure;
 		private Boolean httpOnly;
+		private SameSitePolicy sameSite;
 		
 		@Override
 		public String getName() {
@@ -75,6 +78,12 @@ public class MockResponseCookies implements ResponseCookies {
 		@Override
 		public Configurator value(String value) {
 			this.value = value;
+			return this;
+		}
+		
+		@Override
+		public Configurator expires(ZonedDateTime expires) {
+			this.expires = expires;
 			return this;
 		}
 
@@ -109,6 +118,17 @@ public class MockResponseCookies implements ResponseCookies {
 		}
 
 		@Override
+		public Configurator sameSite(SameSitePolicy sameSite) {
+			this.sameSite = sameSite;
+			return this;
+		}
+		
+		@Override
+		public ZonedDateTime getExpires() {
+			return this.expires;
+		}
+
+		@Override
 		public Integer getMaxAge() {
 			return this.maxAge;
 		}
@@ -131,6 +151,11 @@ public class MockResponseCookies implements ResponseCookies {
 		@Override
 		public Boolean isHttpOnly() {
 			return this.httpOnly;
+		}
+
+		@Override
+		public SameSitePolicy getSameSite() {
+			return this.sameSite;
 		}
 	}
 }

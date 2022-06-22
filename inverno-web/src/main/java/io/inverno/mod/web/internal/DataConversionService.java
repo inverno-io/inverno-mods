@@ -415,10 +415,16 @@ public class DataConversionService {
 
 		@Override
 		public <T extends A> void value(T value) {
-			if (this.type == null) {
-				this.rawData.stream(Mono.fromSupplier(() -> this.converter.encode(value)));
-			} else {
-				this.rawData.stream(Mono.fromSupplier(() -> this.converter.encode(value, this.type)));
+			if(value != null) {
+				if (this.type == null) {
+					this.rawData.stream(Mono.fromSupplier(() -> this.converter.encode(value)));
+				} 
+				else {
+					this.rawData.stream(Mono.fromSupplier(() -> this.converter.encode(value, this.type)));
+				}
+			}
+			else {
+				this.rawData.stream(Mono.empty());
 			}
 		}
 	}
@@ -571,9 +577,9 @@ public class DataConversionService {
 			public <T extends B> void many(Flux<T> value) {
 				if (GenericSseEncoder.this.type == null) {
 					this.rawEvent.stream(GenericSseEncoder.this.converter.encodeMany(value));
-				} else {
-					this.rawEvent
-							.stream(GenericSseEncoder.this.converter.encodeMany(value, GenericSseEncoder.this.type));
+				}
+				else {
+					this.rawEvent.stream(GenericSseEncoder.this.converter.encodeMany(value, GenericSseEncoder.this.type));
 				}
 			}
 
@@ -581,19 +587,24 @@ public class DataConversionService {
 			public <T extends B> void one(Mono<T> value) {
 				if (GenericSseEncoder.this.type == null) {
 					this.rawEvent.stream(GenericSseEncoder.this.converter.encodeOne(value));
-				} else {
-					this.rawEvent
-							.stream(GenericSseEncoder.this.converter.encodeOne(value, GenericSseEncoder.this.type));
+				} 
+				else {
+					this.rawEvent.stream(GenericSseEncoder.this.converter.encodeOne(value, GenericSseEncoder.this.type));
 				}
 			}
 
 			@Override
 			public <T extends B> void value(T value) {
-				if (GenericSseEncoder.this.type == null) {
-					this.rawEvent.stream(Mono.fromSupplier(() -> GenericSseEncoder.this.converter.encode(value)));
-				} else {
-					this.rawEvent.stream(Mono.fromSupplier(
-							() -> GenericSseEncoder.this.converter.encode(value, GenericSseEncoder.this.type)));
+				if(value != null) {
+					if (GenericSseEncoder.this.type == null) {
+						this.rawEvent.stream(Mono.fromSupplier(() -> GenericSseEncoder.this.converter.encode(value)));
+					} 
+					else {
+						this.rawEvent.stream(Mono.fromSupplier(() -> GenericSseEncoder.this.converter.encode(value, GenericSseEncoder.this.type)));
+					}
+				}
+				else {
+					this.rawEvent.stream(Mono.empty());
 				}
 			}
 		}

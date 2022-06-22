@@ -100,8 +100,8 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 			this.ranges = ranges != null && !ranges.isEmpty() ? ranges.stream().sorted(Headers.AcceptLanguage.LanguageRange.COMPARATOR).collect(Collectors.toList()) : List.of(new AcceptLanguageCodec.AcceptLanguage.LanguageRange("*", 1));
 		}
 		
-		private AcceptLanguage(String headerName, String headerValue, List<Headers.AcceptLanguage.LanguageRange> ranges) {
-			super(headerName, headerValue, null, null);
+		private AcceptLanguage(String headerValue, List<Headers.AcceptLanguage.LanguageRange> ranges) {
+			super(Headers.NAME_ACCEPT_LANGUAGE, headerValue, null, null);
 			this.ranges = ranges != null && !ranges.isEmpty() ? ranges.stream().sorted(Headers.AcceptLanguage.LanguageRange.COMPARATOR).collect(Collectors.toList()) : List.of(new AcceptLanguageCodec.AcceptLanguage.LanguageRange("*", 1));
 		}
 
@@ -120,15 +120,15 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 		 */
 		public static final class LanguageRange implements Headers.AcceptLanguage.LanguageRange {
 
-			private String languageTag;
+			private final String languageTag;
+			
+			private final float weight;
+			
+			private final int score;
 			
 			private String primarySubTag;
 			
 			private String secondarySubTag;
-			
-			private float weight;
-			
-			private int score;
 			
 			/**
 			 * <p>
@@ -294,7 +294,7 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 			@Override
 			public AcceptLanguage build() {
 				this.addCurrentRange();
-				return new AcceptLanguage(this.headerName, this.headerValue, this.ranges);
+				return new AcceptLanguage(this.headerValue, this.ranges);
 			}
 		}
 	}

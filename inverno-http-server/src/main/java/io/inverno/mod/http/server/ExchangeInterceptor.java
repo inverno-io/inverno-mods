@@ -53,8 +53,7 @@ public interface ExchangeInterceptor<A extends ExchangeContext, B extends Exchan
 	 *
 	 * @param exchange the server exchange to handle
 	 *
-	 * @return a Mono emitting the exchange or an instrumented exchange to continue the exchange handling chain or an empty Mono to stop the exchange
-	 *         handling chain
+	 * @return a Mono emitting the exchange or an instrumented exchange to continue the exchange handling chain or an empty Mono to stop the exchange handling chain
 	 */
 	Mono<? extends B> intercept(B exchange);
 }
