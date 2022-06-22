@@ -39,7 +39,7 @@ public class SortedSetScoredMemberImpl<A> implements RedisSortedSetReactiveOpera
 
 	@Override
 	public A getValue() {
-		return this.scoredValue.getValue();
+		return this.scoredValue.getValueOrElse(null);
 	}
 
 	@Override

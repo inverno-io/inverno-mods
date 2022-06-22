@@ -20,11 +20,11 @@ import java.util.stream.Stream;
 /**
  * <p>
  * Redis MULTI/EXEC sequence result.
- * <p>
+ * </p>
  * 
  * <p>
  * It indicates whether a Redis transaction was discarded and exposes commands results.
- * <p>
+ * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.4

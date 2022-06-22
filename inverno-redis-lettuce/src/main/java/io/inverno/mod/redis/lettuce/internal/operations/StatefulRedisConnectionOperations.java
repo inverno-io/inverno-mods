@@ -224,7 +224,7 @@ public class StatefulRedisConnectionOperations<A, B, C extends StatefulConnectio
 
 	@Override
 	public Flux<EntryOptional<A, B>> hgetall(A key) {
-		return this.commands.hgetall(key).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValue()));
+		return this.commands.hgetall(key).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValueOrElse(null)));
 	}
 
 	@Override
@@ -251,7 +251,7 @@ public class StatefulRedisConnectionOperations<A, B, C extends StatefulConnectio
 	public Flux<EntryOptional<A, B>> hmget(A key, Consumer<Keys<A>> fields) {
 		KeysImpl<A> fieldsConfigurator = new KeysImpl<>(this.keyType);
 		fields.accept(fieldsConfigurator);
-		return this.commands.hmget(key, fieldsConfigurator.getKeys()).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValue()));
+		return this.commands.hmget(key, fieldsConfigurator.getKeys()).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValueOrElse(null)));
 	}
 
 	@Override
@@ -273,7 +273,7 @@ public class StatefulRedisConnectionOperations<A, B, C extends StatefulConnectio
 
 	@Override
 	public Flux<EntryOptional<A, B>> hrandfieldWithvalues(A key, long count) {
-		return this.commands.hrandfieldWithvalues(key, count).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValue()));
+		return this.commands.hrandfieldWithvalues(key, count).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValueOrElse(null)));
 	}
 
 	@Override
@@ -632,27 +632,27 @@ public class StatefulRedisConnectionOperations<A, B, C extends StatefulConnectio
 	@Override
 	@SuppressWarnings("unchecked")
 	public Mono<EntryOptional<A, B>> blpop(A key, double timeout) {
-		return this.commands.blpop(timeout, key).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValue()));
+		return this.commands.blpop(timeout, key).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValueOrElse(null)));
 	}
 
 	@Override
 	public Mono<EntryOptional<A, B>> blpop(Consumer<Keys<A>> keys, double timeout) {
 		KeysImpl<A> keysConfigurator = new KeysImpl<>(this.keyType);
 		keys.accept(keysConfigurator);
-		return this.commands.blpop(timeout, keysConfigurator.getKeys()).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValue()));
+		return this.commands.blpop(timeout, keysConfigurator.getKeys()).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValueOrElse(null)));
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public Mono<EntryOptional<A, B>> brpop(A key, double timeout) {
-		return this.commands.brpop(timeout, key).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValue()));
+		return this.commands.brpop(timeout, key).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValueOrElse(null)));
 	}
 
 	@Override
 	public Mono<EntryOptional<A, B>> brpop(Consumer<Keys<A>> keys, double timeout) {
 		KeysImpl<A> keysConfigurator = new KeysImpl<>(this.keyType);
 		keys.accept(keysConfigurator);
-		return this.commands.brpop(timeout, keysConfigurator.getKeys()).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValue()));
+		return this.commands.brpop(timeout, keysConfigurator.getKeys()).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValueOrElse(null)));
 	}
 
 	@Override
@@ -1143,27 +1143,27 @@ public class StatefulRedisConnectionOperations<A, B, C extends StatefulConnectio
 	@Override
 	@SuppressWarnings("unchecked")
 	public Mono<EntryOptional<A, SortedSetScoredMember<B>>> bzpopmax(double timeout, A key) {
-		return this.commands.bzpopmax(timeout, key).map(kv -> EntryOptional.ofNullable(kv.getKey(), (SortedSetScoredMember<B>)new SortedSetScoredMemberImpl<>(kv.getValue()))).single();
+		return this.commands.bzpopmax(timeout, key).map(kv -> EntryOptional.ofNullable(kv.getKey(), (SortedSetScoredMember<B>)new SortedSetScoredMemberImpl<>(kv.getValueOrElse(null)))).single();
 	}
 
 	@Override
 	public Mono<EntryOptional<A, SortedSetScoredMember<B>>> bzpopmax(double timeout, Consumer<Keys<A>> keys) {
 		KeysImpl<A> keysConfigurator = new KeysImpl<>(this.keyType);
 		keys.accept(keysConfigurator);
-		return this.commands.bzpopmax(timeout, keysConfigurator.getKeys()).map(kv -> EntryOptional.ofNullable(kv.getKey(), (SortedSetScoredMember<B>)new SortedSetScoredMemberImpl<>(kv.getValue())));
+		return this.commands.bzpopmax(timeout, keysConfigurator.getKeys()).map(kv -> EntryOptional.ofNullable(kv.getKey(), (SortedSetScoredMember<B>)new SortedSetScoredMemberImpl<>(kv.getValueOrElse(null))));
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
 	public Mono<EntryOptional<A, SortedSetScoredMember<B>>> bzpopmin(double timeout, A key) {
-		return this.commands.bzpopmin(timeout, key).map(kv -> EntryOptional.ofNullable(kv.getKey(), (SortedSetScoredMember<B>)new SortedSetScoredMemberImpl<>(kv.getValue()))).single();
+		return this.commands.bzpopmin(timeout, key).map(kv -> EntryOptional.ofNullable(kv.getKey(), (SortedSetScoredMember<B>)new SortedSetScoredMemberImpl<>(kv.getValueOrElse(null)))).single();
 	}
 
 	@Override
 	public Mono<EntryOptional<A, SortedSetScoredMember<B>>> bzpopmin(double timeout, Consumer<Keys<A>> keys) {
 		KeysImpl<A> keysConfigurator = new KeysImpl<>(this.keyType);
 		keys.accept(keysConfigurator);
-		return this.commands.bzpopmin(timeout, keysConfigurator.getKeys()).map(kv -> EntryOptional.ofNullable(kv.getKey(), (SortedSetScoredMember<B>)new SortedSetScoredMemberImpl<>(kv.getValue())));
+		return this.commands.bzpopmin(timeout, keysConfigurator.getKeys()).map(kv -> EntryOptional.ofNullable(kv.getKey(), (SortedSetScoredMember<B>)new SortedSetScoredMemberImpl<>(kv.getValueOrElse(null))));
 	}
 
 	@Override
@@ -1813,7 +1813,7 @@ public class StatefulRedisConnectionOperations<A, B, C extends StatefulConnectio
 	public Flux<EntryOptional<A, B>> mget(Consumer<Keys<A>> keys) {
 		KeysImpl<A> keysConfigurator = new KeysImpl<>(this.keyType);
 		keys.accept(keysConfigurator);
-		return this.commands.mget(keysConfigurator.getKeys()).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValue()));
+		return this.commands.mget(keysConfigurator.getKeys()).map(kv -> EntryOptional.ofNullable(kv.getKey(), kv.getValueOrElse(null)));
 	}
 
 	@Override
