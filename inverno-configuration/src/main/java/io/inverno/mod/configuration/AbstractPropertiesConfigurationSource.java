@@ -164,13 +164,16 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 		}
 		
 		@Override
-		public PropertyExecutableConfigurationQuery<A, B> withParameters(Parameter... parameters) throws IllegalArgumentException {
+		public PropertyExecutableConfigurationQuery<A, B> withParameters(List<Parameter> parameters) throws IllegalArgumentException {
 			PropertyConfigurationQuery<A, B> currentQuery = this.queries.peekLast();
 			currentQuery.parameters.clear();
-			if(parameters != null && parameters.length > 0) {
+			if(parameters != null && !parameters.isEmpty()) {
 				Set<String> parameterKeys = new HashSet<>();
 				List<String> duplicateParameters = new LinkedList<>();
 				for(Parameter parameter : parameters) {
+					if(parameter.isWildcard() || parameter.isUndefined()) {
+						throw new IllegalArgumentException("Query parameter can not be undefined or a wildcard: " + parameter);
+					}
 					currentQuery.parameters.add(parameter);
 					if(!parameterKeys.add(parameter.getKey())) {
 						duplicateParameters.add(parameter.getKey());
@@ -248,7 +251,7 @@ public abstract class AbstractPropertiesConfigurationSource<A, B extends Abstrac
 		}
 		
 		@Override
-		public PropertyListConfigurationQuery<A, B> withParameters(Parameter... parameters) throws IllegalArgumentException {
+		public PropertyListConfigurationQuery<A, B> withParameters(List<Parameter> parameters) throws IllegalArgumentException {
 			// parameters are ignored
 			return this;
 		}

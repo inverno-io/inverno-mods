@@ -106,5 +106,4 @@ public interface ConfigurationSource<A extends ConfigurationQuery<A, B>, B exten
 	 * @throws IllegalArgumentException  if the name is null or empty
 	 */
 	C list(String name) throws IllegalArgumentException;
-	
 }

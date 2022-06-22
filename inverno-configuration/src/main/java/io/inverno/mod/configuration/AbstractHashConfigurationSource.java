@@ -15,6 +15,10 @@
  */
 package io.inverno.mod.configuration;
 
+import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
+import io.inverno.mod.configuration.ConfigurationKey.Parameter;
+import io.inverno.mod.configuration.internal.GenericConfigurationKey;
+import io.inverno.mod.configuration.internal.GenericConfigurationQueryResult;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -22,11 +26,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
-import io.inverno.mod.configuration.ConfigurationKey.Parameter;
-import io.inverno.mod.configuration.internal.GenericConfigurationKey;
-import io.inverno.mod.configuration.internal.GenericConfigurationQueryResult;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -51,11 +50,21 @@ import reactor.core.publisher.Mono;
  * @param <A> raw configuration value type
  * @param <B> the hash configuration source type
  */
-public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashConfigurationSource<A, B>> extends AbstractConfigurationSource<AbstractHashConfigurationSource.HashConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashExecutableConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashListConfigurationQuery<A, B>, A> {
+public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashConfigurationSource<A, B>> extends AbstractConfigurationSource<AbstractHashConfigurationSource.HashConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashExecutableConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashListConfigurationQuery<A, B>, A> implements DefaultableConfigurationSource<AbstractHashConfigurationSource.HashConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashExecutableConfigurationQuery<A, B>, AbstractHashConfigurationSource.HashListConfigurationQuery<A, B>, B> {
+	
+	/**
+	 * The defaulting strategy.
+	 */
+	protected final DefaultingStrategy defaultingStrategy;
+	
+	/**
+	 * The initial configuration source (i.e. before setting defaulting strategy).
+	 */
+	protected B initial;
 	
 	/**
 	 * <p>
-	 * Creates a hash configuration source with the specified decoder.
+	 * Creates a hash configuration source with the specified decoder and noop defaulting strategy.
 	 * </p>
 	 * 
 	 * @param decoder a splittable primitive decoder
@@ -63,9 +72,42 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 	 * @throws NullPointerException if the specified decoder is null
 	 */
 	public AbstractHashConfigurationSource(SplittablePrimitiveDecoder<A> decoder) {
-		super(decoder);
+		this(decoder, DefaultingStrategy.noOp());
 	}
 
+	/**
+	 * <p>
+	 * Creates a hash configuration source with the specified decoder and defaulting strategy.
+	 * </p>
+	 * 
+	 * @param decoder a splittable primitive decoder
+	 * @param defaultingStrategy a defaulting strategy
+	 */
+	protected AbstractHashConfigurationSource(SplittablePrimitiveDecoder<A> decoder, DefaultingStrategy defaultingStrategy) {
+		super(decoder);
+		this.defaultingStrategy = defaultingStrategy;
+	}
+	
+	/**
+	 * <p>
+	 * Creates a hash configuration source from the specified initial source and using the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param initial            the initial configuration source.
+	 * @param defaultingStrategy a defaulting strategy
+	 */
+	protected AbstractHashConfigurationSource(B initial, DefaultingStrategy defaultingStrategy) {
+		super(initial.decoder);
+		this.initial = initial;
+		this.defaultingStrategy = defaultingStrategy;
+	}
+
+	@Override
+	@SuppressWarnings("unchecked")
+	public B unwrap() {
+		return this.initial != null ? this.initial : (B)this;
+	}
+	
 	/**
 	 * <p>
 	 * Loads the configuration properties.
@@ -154,13 +196,16 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		}
 		
 		@Override
-		public HashExecutableConfigurationQuery<A, B> withParameters(Parameter... parameters) throws IllegalArgumentException {
+		public HashExecutableConfigurationQuery<A, B> withParameters(List<Parameter> parameters) throws IllegalArgumentException {
 			HashConfigurationQuery<A, B> currentQuery = this.queries.peekLast();
 			currentQuery.parameters.clear();
-			if(parameters != null && parameters.length > 0) {
+			if(parameters != null && !parameters.isEmpty()) {
 				Set<String> parameterKeys = new HashSet<>();
 				List<String> duplicateParameters = new LinkedList<>();
 				for(Parameter parameter : parameters) {
+					if(parameter.isWildcard() || parameter.isUndefined()) {
+						throw new IllegalArgumentException("Query parameter can not be undefined or a wildcard: " + parameter);
+					}
 					currentQuery.parameters.add(parameter);
 					if(!parameterKeys.add(parameter.getKey())) {
 						duplicateParameters.add(parameter.getKey());
@@ -179,9 +224,24 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 				.map(properties -> properties.stream().collect(Collectors.toMap(property -> new GenericConfigurationKey(property.getKey().getName(), property.getKey().getParameters()), Function.identity())))
 				.flatMapMany(indexedProperties -> Flux.<ConfigurationQueryResult>fromStream(this.queries.stream()
 					.flatMap(query -> query.names.stream().map(name -> new GenericConfigurationKey(name, query.parameters)))
-					.map(key -> new HashConfigurationQueryResult<A, B>(key, indexedProperties.get(key))))
-					// TODO invoke stragtegy to get deafulting keys from the query key and return the first non empty result
-				)
+					.map(key -> {
+						for(ConfigurationKey currentKey : this.source.defaultingStrategy.getDefaultingKeys(key)) {
+							GenericConfigurationKey genericCurrentKey;
+							if(currentKey instanceof GenericConfigurationKey) {
+								genericCurrentKey = (GenericConfigurationKey)currentKey;
+							}
+							else {
+								genericCurrentKey = new GenericConfigurationKey(currentKey.getName(), currentKey.getParameters());
+							}
+							
+							ConfigurationProperty currentProperty = indexedProperties.get(genericCurrentKey);
+							if(currentProperty != null) {
+								return new HashConfigurationQueryResult<A, B>(key, currentProperty);
+							}
+						}
+						return new HashConfigurationQueryResult<A, B>(key, null);
+					})
+				))
 				.onErrorResume(ex -> Flux.<ConfigurationQueryResult>fromStream(this.queries.stream()
 						.flatMap(query -> query.names.stream().map(name -> new HashConfigurationQueryResult<A, B>(new GenericConfigurationKey(name, query.parameters), this.source, ex)))
 					)
@@ -242,9 +302,9 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 		}
 		
 		@Override
-		public HashListConfigurationQuery<A, B> withParameters(Parameter... parameters) throws IllegalArgumentException {
+		public HashListConfigurationQuery<A, B> withParameters(List<Parameter> parameters) throws IllegalArgumentException {
 			this.parameters.clear();
-			if(parameters != null && parameters.length > 0) {
+			if(parameters != null && !parameters.isEmpty()) {
 				Set<String> parameterKeys = new HashSet<>();
 				List<String> duplicateParameters = new LinkedList<>();
 				for(Parameter parameter : parameters) {
@@ -262,16 +322,31 @@ public abstract class AbstractHashConfigurationSource<A, B extends AbstractHashC
 
 		@Override
 		public Flux<ConfigurationProperty> execute() {
-			ConfigurationKey matchingKey = new GenericConfigurationKey(this.name, this.parameters);
-			return this.source.load()
-				.flatMapMany(properties -> Flux.fromStream(properties.stream().filter(property -> property.getKey().matches(matchingKey, true))));
+			return this.execute(true);
 		}
 
 		@Override
 		public Flux<ConfigurationProperty> executeAll() {
-			ConfigurationKey matchingKey = new GenericConfigurationKey(this.name, this.parameters);
-			return this.source.load()
-				.flatMapMany(properties -> Flux.fromStream(properties.stream().filter(property -> property.getKey().matches(matchingKey, false))));
+			return this.execute(false);
+		}
+		
+		private Flux<ConfigurationProperty> execute(boolean exact) {
+			return Flux.defer(() -> {
+				List<ConfigurationKey> defaultingMatchingKeys = this.source.defaultingStrategy.getListDefaultingKeys(new GenericConfigurationKey(this.name, this.parameters));
+
+				return this.source.load()
+					.flatMapMany(properties -> Flux.fromStream(properties.stream().filter(property -> { 
+						boolean currentExact = exact;
+						for(ConfigurationKey machingKey : defaultingMatchingKeys) {
+							if(property.getKey().matches(machingKey, currentExact)) {
+								return true;
+							}
+							// we only want to include extra parameters for the query key
+							currentExact = true;
+						}
+						return false;
+					})));
+			});
 		}
 	}
 }

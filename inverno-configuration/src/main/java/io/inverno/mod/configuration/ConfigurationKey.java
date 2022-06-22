@@ -52,11 +52,17 @@ public interface ConfigurationKey {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static class Parameter {
+	class Parameter {
 		
-		private final String key;
+		/**
+		 * The parameter key.
+		 */
+		protected final String key;
 		
-		private final Object value;
+		/**
+		 * The paramteter value.
+		 */
+		protected final Object value;
 		
 		/**
 		 * <p>
@@ -223,8 +229,11 @@ public interface ConfigurationKey {
 		@Override
 		public String toString() {
 			StringBuilder str = new StringBuilder();
-			str.append(this.key)
-				.append("=");
+			str.append(this.key);
+			if(this.value == null) {
+				return str.toString();
+			}
+			str.append("=");
 			if(this.value instanceof Number || this.value instanceof Boolean) {
 				str.append(this.value);
 			}
@@ -262,6 +271,13 @@ public interface ConfigurationKey {
 		public boolean isWildcard() {
 			return true;
 		}
+
+		@Override
+		public String toString() {
+			StringBuilder str = new StringBuilder();
+			str.append(this.key).append("=*");
+			return str.toString();
+		}
 	}
 	
 	/**
@@ -290,6 +306,13 @@ public interface ConfigurationKey {
 		@Override
 		public boolean isUndefined() {
 			return true;
+		}
+		
+		@Override
+		public String toString() {
+			StringBuilder str = new StringBuilder();
+			str.append(this.key).append("=undefined");
+			return str.toString();
 		}
 	}
 	
@@ -325,7 +348,7 @@ public interface ConfigurationKey {
 	
 	/**
 	 * <p>
-	 * Determines whether this configuration key macthes the other key.
+	 * Determines whether this configuration key matches the other key.
 	 * </p>
 	 * 
 	 * <p>
@@ -333,7 +356,11 @@ public interface ConfigurationKey {
 	 * </p>
 	 * 
 	 * <p>
-	 * When the match is not exact, it returns true when the other key defines the same parameters as the other key with matching values, it can define other parameters.
+	 * When the match is not exact, it returns true when the key defines the same parameters as the other key with matching values, it can define other parameters.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method is not necessarily symmetric: {@code k1.matches(k2)} does not imply that {@code k2.matches(k1)}.
 	 * </p>
 	 * 
 	 * @param other the other key to match

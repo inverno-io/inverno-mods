@@ -59,7 +59,7 @@ public class ConfigurationLoaderTest {
 		Assertions.assertEquals("nested2_test", nested2Conf.nested2_string());
 		Assertions.assertEquals(0, nested2Conf.nested2_float());
 		
-		conf = ConfigurationLoader.withConfiguration(DummyConfiguration.class).withSource(comp_src).withParameters("node", "node1", "environment", "test").load().block();
+		conf = ConfigurationLoader.withConfiguration(DummyConfiguration.class).withSource(comp_src).withParameters("environment", "test", "node", "node1").load().block();
 		Assertions.assertEquals("node1_test", conf.string_with_default());
 		Assertions.assertEquals(new URL("https://localhost:8443/test/node1"), conf.some_url());
 		Assertions.assertEquals(3, conf.some_int());
@@ -116,7 +116,7 @@ public class ConfigurationLoaderTest {
 		Assertions.assertEquals("nested2_test", nested2Conf.nested2_string());
 		Assertions.assertEquals(0, nested2Conf.nested2_float());
 		
-		conf = ConfigurationLoader.withConfigurator(DummyConfigurationBuilder.class, DummyConfigurationBuilder::build).withSource(comp_src).withParameters("node", "node1", "environment", "test").load().block();
+		conf = ConfigurationLoader.withConfigurator(DummyConfigurationBuilder.class, DummyConfigurationBuilder::build).withSource(comp_src).withParameters("environment", "test", "node", "node1").load().block();
 		Assertions.assertEquals("node1_test", conf.string_with_default());
 		Assertions.assertEquals(new URL("https://localhost:8443/test/node1"), conf.some_url());
 		Assertions.assertEquals(3, conf.some_int());

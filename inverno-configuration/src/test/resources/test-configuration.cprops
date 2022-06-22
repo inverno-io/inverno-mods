@@ -33,3 +33,12 @@ plip.plap {
 
 testNull = null
 testUnset = unset
+
+log.level = "INFO"
+
+[ environment = "prod" ] {
+	log.level = "WARN"
+	[ name = "test1" ] { 
+		log.level = "ERROR"
+	}
+}

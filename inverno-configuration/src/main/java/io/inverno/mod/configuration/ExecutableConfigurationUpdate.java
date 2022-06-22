@@ -16,6 +16,8 @@
 package io.inverno.mod.configuration;
 
 import io.inverno.mod.configuration.ConfigurationKey.Parameter;
+import java.util.Arrays;
+import java.util.List;
 import reactor.core.publisher.Flux;
 
 /**
@@ -50,7 +52,7 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @return the executable configuration update
 	 */
 	default B withParameters(String k1, Object v1) {
-		return this.withParameters(Parameter.of(k1, v1));
+		return this.withParameters(List.of(Parameter.of(k1, v1)));
 	}
 	
 	/**
@@ -68,7 +70,7 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2) throws IllegalArgumentException {
-		return this.withParameters(Parameter.of(k1, v1), Parameter.of(k2, v2));
+		return this.withParameters(List.of(Parameter.of(k1, v1), Parameter.of(k2, v2)));
 	}
 	
 	/**
@@ -88,7 +90,7 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3) throws IllegalArgumentException {
-		return this.withParameters(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3));
+		return this.withParameters(List.of(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3)));
 	}
 	
 	/**
@@ -110,7 +112,7 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4) throws IllegalArgumentException {
-		return this.withParameters(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4));
+		return this.withParameters(List.of(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4)));
 	}
 	
 	/**
@@ -134,7 +136,7 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5) throws IllegalArgumentException {
-		return this.withParameters(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5));
+		return this.withParameters(List.of(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5)));
 	}
 	
 	/**
@@ -160,7 +162,7 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6) throws IllegalArgumentException {
-		return this.withParameters(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6));
+		return this.withParameters(List.of(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6)));
 	}
 	
 	/**
@@ -188,7 +190,7 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7) throws IllegalArgumentException {
-		return this.withParameters(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7));
+		return this.withParameters(List.of(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7)));
 	}
 	
 	/**
@@ -218,7 +220,7 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8) throws IllegalArgumentException {
-		return this.withParameters(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8));
+		return this.withParameters(List.of(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8)));
 	}
 	
 	/**
@@ -250,7 +252,7 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9) throws IllegalArgumentException {
-		return this.withParameters(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9));
+		return this.withParameters(List.of(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9)));
 	}
 	
 	/**
@@ -284,7 +286,7 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
 	default B withParameters(String k1, Object v1, String k2, Object v2, String k3, Object v3, String k4, Object v4, String k5, Object v5, String k6, Object v6, String k7, Object v7, String k8, Object v8, String k9, Object v9, String k10, Object v10) throws IllegalArgumentException {
-		return this.withParameters(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9), Parameter.of(k10, v10));
+		return this.withParameters(List.of(Parameter.of(k1, v1), Parameter.of(k2, v2), Parameter.of(k3, v3), Parameter.of(k4, v4), Parameter.of(k5, v5), Parameter.of(k6, v6), Parameter.of(k7, v7), Parameter.of(k8, v8), Parameter.of(k9, v9), Parameter.of(k10, v10)));
 	}
 	
 	/**
@@ -298,7 +300,22 @@ public interface ExecutableConfigurationUpdate<A extends ConfigurationUpdate<A, 
 	 *
 	 * @throws IllegalArgumentException if parameters were specified more than once
 	 */
-	B withParameters(Parameter... parameters) throws IllegalArgumentException;
+	default B withParameters(Parameter... parameters) throws IllegalArgumentException {
+		return this.withParameters(parameters != null ? Arrays.asList(parameters) : List.of());
+	}
+	
+	/**
+	 * <p>
+	 * Defines parameters that specify the context in which configuration properties are to be retrieved.
+	 * </p>
+	 *
+	 * @param parameters a list of parameters
+	 *
+	 * @return the executable configuration update
+	 *
+	 * @throws IllegalArgumentException if parameters were specified more than once
+	 */
+	B withParameters(List<Parameter> parameters) throws IllegalArgumentException;
 	
 	/**
 	 * <p>

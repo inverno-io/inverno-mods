@@ -1,0 +1,40 @@
+[ domain = "printer" ] {
+	# jsmith has permission to query to any printer in the printer domain
+	jsmith="query"
+}
+
+[ domain = "printer", printer = "lp1200" ] {
+	# jsmith has permission to query and print to printer lp1200
+	jsmith="query,print"
+}
+
+[ printer="epsoncolor" ] {
+	# jsmith has permission to manage printer epsoncolor across all domains
+	# when querying with (domain=printer,printer=epsoncolor) the permission is actually 'query' because domain parameter has the highest priority
+	jsmith="manage"
+}
+
+[ domain = "printer", printer = "XP-4100" ] {
+	# jsmith has all permission on printer XP-4100
+	jsmith="*"
+}
+
+[ domain = "flight", company = "AF", location = "FR"] {
+	# jsmith has permission to book AF flight when located in France
+	jsmith="book"
+}
+
+[ domain = "flight", location = "FR"] {
+	# jsmith has permission to view flights for all airlines when located is France
+	jsmith="view"
+}
+
+[ domain = "flight", company = "LH", location = "DE"] {
+	# jsmith has permission to book LH flight when located in Germany
+	jsmith="book"
+}
+
+[ domain = "flight", company = "LH"] {
+	# jsmith has permission to view LH flight regardless of the location
+	jsmith="view,comment"
+}

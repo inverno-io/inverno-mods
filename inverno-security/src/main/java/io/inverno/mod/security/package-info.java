@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.security.internal.identity;
-
-import io.inverno.mod.security.identity.Identity;
-
 /**
- *
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.5
+ * <p>
+ * Inverno HTTP header API.
+ * </p>
  */
-public class Anonymous implements Identity {
-
-	public static final Anonymous INSTANCE = new Anonymous();
-
-	@Override
-	public String getUid() {
-		return null;
-	}
-}
+package io.inverno.mod.http.base.header;

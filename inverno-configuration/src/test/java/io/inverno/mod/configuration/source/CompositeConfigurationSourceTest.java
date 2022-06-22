@@ -1,20 +1,17 @@
 package io.inverno.mod.configuration.source;
 
 import io.inverno.mod.configuration.ConfigurationKey;
-import java.net.URISyntaxException;
-import java.nio.file.Paths;
-import java.util.Iterator;
-import java.util.List;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import io.inverno.mod.configuration.ConfigurationKey.Parameter;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.ConfigurationQueryResult;
-import io.inverno.mod.configuration.source.CompositeConfigurationSource.CompositeConfigurationQueryResult;
-import java.util.ArrayList;
+import io.inverno.mod.configuration.DefaultableConfigurationSource;
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class CompositeConfigurationSourceTest {
 
@@ -33,22 +30,22 @@ public class CompositeConfigurationSourceTest {
 		CompositeConfigurationSource src = new CompositeConfigurationSource(List.of(src0, src2, src1));
 		
 		List<ConfigurationQueryResult> results = src
-			.get("datasource.url", "datasource.user", "datasource.password").withParameters("node", "node1", "zone", "US", "environment", "production").and()
-			.get("datasource.url").withParameters("node", "node2", "zone", "EU", "environment", "production").and()
-			.get("datasource.url", "datasource.user", "datasource.password").withParameters("zone", "EU", "environment", "production").and()
-			.get("datasource.url").withParameters("zone", "US", "environment", "production").and()
-			.get("datasource.url").withParameters("zone", "EU", "environment", "test").and()
-			.get("datasource.url").withParameters("zone", "EU", "environment", "local").and()
-			.get("datasource.url").withParameters("zone", "ASIA", "environment", "undefined").and()
+			.get("datasource.url", "datasource.user", "datasource.password").withParameters("environment", "production", "zone", "US", "node", "node1").and()
+			.get("datasource.url").withParameters("environment", "production", "zone", "EU", "node", "node2").and()
+			.get("datasource.url", "datasource.user", "datasource.password").withParameters("environment", "production", "zone", "EU").and()
+			.get("datasource.url").withParameters("environment", "production", "zone", "US").and()
+			.get("datasource.url").withParameters("environment", "test", "zone", "EU").and()
+			.get("datasource.url").withParameters("environment", "local", "zone", "EU").and()
+			.get("datasource.url").withParameters("environment", "undefined", "zone", "ASIA").and()
 			.get("undefined").and()
 			.get("name").withParameters("environment", "test")
 			.execute()
 			.collectList()
 			.block();
 		
-		results.stream().forEach(queryResult -> {
-			System.out.println(queryResult.getQueryKey() + " -> " + queryResult.getResult().orElse(null));
-		});
+//		results.stream().forEach(queryResult -> {
+//			System.out.println(queryResult.getQueryKey() + " -> " + queryResult.getResult().orElse(null));
+//		});
 		
 		Assertions.assertEquals(13, results.size());
 		
@@ -183,9 +180,9 @@ public class CompositeConfigurationSourceTest {
 			.collectList()
 			.block();
 		
-		/*results.stream().forEach(queryResult -> {
-			System.out.println(queryResult.getQuery() + " -> " + queryResult.getResult().orElse(null));
-		});*/
+//		results.stream().forEach(queryResult -> {
+//			System.out.println(queryResult.getQuery() + " -> " + queryResult.getResult().orElse(null));
+//		});
 		
 		Assertions.assertEquals(2, results.size());
 		
@@ -204,7 +201,7 @@ public class CompositeConfigurationSourceTest {
 		current = resultIterator.next();
 		
 		Assertions.assertEquals("datasource.password", current.getQueryKey().getName());
-		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("environment","testUnset"))));
+		Assertions.assertTrue(current.getQueryKey().getParameters().containsAll(List.of(Parameter.of("environment", "testUnset"))));
 		Assertions.assertFalse(current.getResult().isPresent());
 	}
 	
@@ -216,199 +213,199 @@ public class CompositeConfigurationSourceTest {
 		
 		CompositeConfigurationSource src = new CompositeConfigurationSource(List.of(src0, src1, src2));
 		
-		List<ConfigurationProperty> result = src.list("logging.level").withParameters(Parameter.of("environment", "prod"), Parameter.wildcard("name")).execute().collectList().block();
-		Assertions.assertEquals(5, result.size());
+		List<ConfigurationProperty> results = src.list("logging.level").withParameters(Parameter.of("environment", "prod"), Parameter.wildcard("name")).execute().collectList().block();
+		Assertions.assertEquals(5, results.size());
 		
-		Iterator<ConfigurationProperty> resultIterator = result.stream().sorted(Comparator.comparing(p -> p.getKey().toString())).iterator();
+		Iterator<ConfigurationProperty> resultIterator = results.stream().sorted(Comparator.comparing(p -> p.getKey().toString())).iterator();
 
 		ConfigurationProperty current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test1")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("warn", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test2")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("info", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test3")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("error", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test4")), current.getKey());
-		Assertions.assertEquals(src2, current.getSource());
+		Assertions.assertEquals(src2, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("error", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test5")), current.getKey());
-		Assertions.assertEquals(src2, current.getSource());
+		Assertions.assertEquals(src2, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("info", current.asString().get());
 		
-		result = src.list("logging.level").withParameters(Parameter.of("environment", "prod"), Parameter.wildcard("name")).executeAll().collectList().block();
-		Assertions.assertEquals(6, result.size());
+		results = src.list("logging.level").withParameters(Parameter.of("environment", "prod"), Parameter.wildcard("name")).executeAll().collectList().block();
+		Assertions.assertEquals(6, results.size());
 		
-		resultIterator = result.stream().sorted(Comparator.comparing(p -> p.getKey().toString())).iterator();
+		resultIterator = results.stream().sorted(Comparator.comparing(p -> p.getKey().toString())).iterator();
 
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test1")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("warn", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test2"), Parameter.of("node", "node-1")), current.getKey());
-		Assertions.assertEquals(src2, current.getSource());
+		Assertions.assertEquals(src2, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("trace", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test2")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("info", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test3")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("error", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test4")), current.getKey());
-		Assertions.assertEquals(src2, current.getSource());
+		Assertions.assertEquals(src2, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("error", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test5")), current.getKey());
-		Assertions.assertEquals(src2, current.getSource());
+		Assertions.assertEquals(src2, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("info", current.asString().get());
-
-		result = src.list("logging.level").withParameters(Parameter.of("environment", "dev"), Parameter.wildcard("name")).execute().collectList().block();
-		Assertions.assertEquals(3, result.size());
 		
-		resultIterator = result.stream().sorted(Comparator.comparing(p -> p.getKey().toString())).iterator();
+		results = src.list("logging.level").withParameters(Parameter.of("environment", "dev"), Parameter.wildcard("name")).execute().collectList().block();
+		Assertions.assertEquals(3, results.size());
+		
+		resultIterator = results.stream().sorted(Comparator.comparing(p -> p.getKey().toString())).iterator();
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "dev"), Parameter.of("name", "test1")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("debug", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "dev"), Parameter.of("name", "test2")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("debug", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "dev")), current.getKey());
-		Assertions.assertEquals(src2, current.getSource());
+		Assertions.assertEquals(src2, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("info", current.asString().get());
 		
-		result = src.list("logging.level").withParameters(Parameter.of("environment", "dev"), Parameter.wildcard("name")).executeAll().collectList().block();
-		Assertions.assertEquals(4, result.size());
+		results = src.list("logging.level").withParameters(Parameter.of("environment", "dev"), Parameter.wildcard("name")).executeAll().collectList().block();
+		Assertions.assertEquals(4, results.size());
 		
-		resultIterator = result.stream().sorted(Comparator.comparing(p -> p.getKey().toString())).iterator();
+		resultIterator = results.stream().sorted(Comparator.comparing(p -> p.getKey().toString())).iterator();
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "dev"), Parameter.of("name", "test1")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("debug", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "dev"), Parameter.of("name", "test2"), Parameter.of("node", "node-1")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("debug", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "dev"), Parameter.of("name", "test2")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("debug", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "dev")), current.getKey());
-		Assertions.assertEquals(src2, current.getSource());
+		Assertions.assertEquals(src2, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("info", current.asString().get());
 		
-		result = src.list("logging.level").withParameters(Parameter.of("environment", "prod")).executeAll().collectList().block();
-		Assertions.assertEquals(6, result.size());
+		results = src.list("logging.level").withParameters(Parameter.of("environment", "prod")).executeAll().collectList().block();
+		Assertions.assertEquals(6, results.size());
 		
-		resultIterator = result.stream().sorted(Comparator.comparing(p -> p.getKey().toString())).iterator();
+		resultIterator = results.stream().sorted(Comparator.comparing(p -> p.getKey().toString())).iterator();
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test1")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("warn", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test2"), Parameter.of("node", "node-1")), current.getKey());
-		Assertions.assertEquals(src2, current.getSource());
+		Assertions.assertEquals(src2, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("trace", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test2")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("info", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test3")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("error", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test4")), current.getKey());
-		Assertions.assertEquals(src2, current.getSource());
+		Assertions.assertEquals(src2, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("error", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test5")), current.getKey());
-		Assertions.assertEquals(src2, current.getSource());
+		Assertions.assertEquals(src2, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("info", current.asString().get());
 		
-		result = src.list("logging.level").withParameters(Parameter.wildcard("name")).executeAll().collectList().block();
-		Assertions.assertEquals(9, result.size());
+		results = src.list("logging.level").withParameters(Parameter.wildcard("name")).executeAll().collectList().block();
+		Assertions.assertEquals(9, results.size());
 		
-		resultIterator = result.stream().sorted(Comparator.comparing(p -> p.getKey().toString())).iterator();
+		resultIterator = results.stream().sorted(Comparator.comparing(p -> p.getKey().toString())).iterator();
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "dev"), Parameter.of("name", "test1")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("debug", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "dev"), Parameter.of("name", "test2"), Parameter.of("node", "node-1")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("debug", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "dev"), Parameter.of("name", "test2")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("debug", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test1")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("warn", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test2"), Parameter.of("node", "node-1")), current.getKey());
-		Assertions.assertEquals(src2, current.getSource());
+		Assertions.assertEquals(src2, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("trace", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test2")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("info", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test3")), current.getKey());
-		Assertions.assertEquals(src1, current.getSource());
+		Assertions.assertEquals(src1, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("error", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test4")), current.getKey());
-		Assertions.assertEquals(src2, current.getSource());
+		Assertions.assertEquals(src2, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("error", current.asString().get());
 		
 		current = resultIterator.next();
 		Assertions.assertEquals(ConfigurationKey.of("logging.level", Parameter.of("environment", "prod"), Parameter.of("name", "test5")), current.getKey());
-		Assertions.assertEquals(src2, current.getSource());
+		Assertions.assertEquals(src2, ((DefaultableConfigurationSource)current.getSource()).unwrap());
 		Assertions.assertEquals("info", current.asString().get());
 	}
 }

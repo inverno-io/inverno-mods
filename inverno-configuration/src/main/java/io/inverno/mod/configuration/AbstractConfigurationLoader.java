@@ -43,22 +43,28 @@ public abstract class AbstractConfigurationLoader<A, B extends AbstractConfigura
 	/**
 	 * The parameters to use to retrieve configuration values.
 	 */
-	protected Parameter[] parameters;
+	protected List<Parameter> parameters;
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public B withParameters(Parameter... parameters) throws IllegalArgumentException {
-		Set<String> parameterKeys = new HashSet<>();
-		List<String> duplicateParameters = new LinkedList<>();
-		for(Parameter parameter : parameters) {
-			if(!parameterKeys.add(parameter.getKey())) {
-				duplicateParameters.add(parameter.getKey());
+	public B withParameters(List<Parameter> parameters) throws IllegalArgumentException {
+		if(parameters != null && !parameters.isEmpty()) {
+			Set<String> parameterKeys = new HashSet<>();
+			List<String> duplicateParameters = new LinkedList<>();
+
+			for(Parameter parameter : parameters) {
+				if(!parameterKeys.add(parameter.getKey())) {
+					duplicateParameters.add(parameter.getKey());
+				}
 			}
+			if(!duplicateParameters.isEmpty()) {
+				throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
+			}
+			this.parameters = parameters;
 		}
-		if(duplicateParameters.size() > 0) {
-			throw new IllegalArgumentException("The following parameters were specified more than once: " + duplicateParameters.stream().collect(Collectors.joining(", ")));
+		else {
+			this.parameters = List.of();
 		}
-		this.parameters = parameters;
 		return (B)this;
 	}
 

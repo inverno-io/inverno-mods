@@ -13,16 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.security.internal.accesscontrol;
-
-import io.inverno.mod.security.accesscontrol.AccessController;
+package io.inverno.mod.security.authentication;
 
 /**
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class BlankAccessController implements AccessController {
+public class AuthenticationException extends io.inverno.mod.security.SecurityException {
 
-	public static final BlankAccessController INSTANCE = new BlankAccessController();
+	private static final long serialVersionUID = 1L;
+
+	public AuthenticationException() {
+	}
+
+	public AuthenticationException(String message) {
+		super(message);
+	}
+
+	public AuthenticationException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	public AuthenticationException(Throwable cause) {
+		super(cause);
+	}
+
+	public AuthenticationException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+		super(message, cause, enableSuppression, writableStackTrace);
+	}
 }

@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
 import io.inverno.mod.configuration.AbstractHashConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationProperty;
+import io.inverno.mod.configuration.DefaultingStrategy;
 import io.inverno.mod.configuration.internal.JavaStringConverter;
 import io.inverno.mod.configuration.internal.parser.option.ConfigurationOptionParser;
 import io.inverno.mod.configuration.internal.parser.option.ParseException;
@@ -116,6 +117,24 @@ public class CommandLineConfigurationSource extends AbstractHashConfigurationSou
 			.filter(arg -> arg.startsWith("--"))
 			.map(arg -> arg.substring(2))
 			.collect(Collectors.toList());
+	}
+
+	/**
+	 * <p>
+	 * Creates a command line configuration source from the specified initial source and using the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param initial            the initial configuration source.
+	 * @param defaultingStrategy a defaulting strategy
+	 */
+	private CommandLineConfigurationSource(CommandLineConfigurationSource initial, DefaultingStrategy defaultingStrategy) {
+		super(initial, defaultingStrategy);
+		this.args = initial.args;
+	}
+	
+	@Override
+	public CommandLineConfigurationSource withDefaultingStrategy(DefaultingStrategy defaultingStrategy) {
+		return new CommandLineConfigurationSource(this.initial != null ? this.initial : this, defaultingStrategy);
 	}
 	
 	@Override

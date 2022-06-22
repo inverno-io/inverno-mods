@@ -31,6 +31,7 @@ import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceException;
 import io.inverno.mod.configuration.AbstractHashConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationProperty;
+import io.inverno.mod.configuration.DefaultingStrategy;
 import io.inverno.mod.configuration.internal.JavaStringConverter;
 import io.inverno.mod.configuration.internal.parser.properties.ConfigurationPropertiesParser;
 import io.inverno.mod.configuration.internal.parser.properties.ParseException;
@@ -168,6 +169,27 @@ public class CPropsFileConfigurationSource extends AbstractHashConfigurationSour
 		this.propertyResource = propertyResource;
 	}
 	
+	/**
+	 * <p>
+	 * Creates a {@code .cprops} file configuration source from the specified initial source and using the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param initial            the initial configuration source.
+	 * @param defaultingStrategy a defaulting strategy
+	 */
+	private CPropsFileConfigurationSource(CPropsFileConfigurationSource initial, DefaultingStrategy defaultingStrategy) {
+		super(initial, defaultingStrategy);
+		this.propertyFile = initial.propertyFile;
+		this.propertyResource = initial.propertyResource;
+		this.propertyInput = initial.propertyInput;
+		this.properties = initial.properties;
+	}
+
+	@Override
+	public CPropsFileConfigurationSource withDefaultingStrategy(DefaultingStrategy defaultingStrategy) {
+		return new CPropsFileConfigurationSource(this.initial != null ? this.initial : this, defaultingStrategy);
+	}
+
 	/**
 	 * <p>
 	 * Sets the time-to-live duration of the properties loaded with {@link #load()}.

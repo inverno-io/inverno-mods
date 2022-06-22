@@ -22,6 +22,7 @@ import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.internal.GenericConfigurationProperty;
 import io.inverno.mod.base.converter.ObjectDecoder;
+import io.inverno.mod.configuration.DefaultingStrategy;
 import io.inverno.mod.configuration.internal.parser.option.ConfigurationOptionParser;
 import io.inverno.mod.configuration.internal.parser.option.ParseException;
 import io.inverno.mod.configuration.internal.parser.option.StringProvider;
@@ -87,6 +88,24 @@ public class MapConfigurationSource extends AbstractHashConfigurationSource<Obje
 	public MapConfigurationSource(Map<String, Object> map, SplittablePrimitiveDecoder<Object> decoder) {
 		super(decoder);
 		this.map = map;
+	}
+	
+	/**
+	 * <p>
+	 * Creates a map configuration source from the specified initial source and using the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param initial            the initial configuration source.
+	 * @param defaultingStrategy a defaulting strategy
+	 */
+	private MapConfigurationSource(MapConfigurationSource initial, DefaultingStrategy defaultingStrategy) {
+		super(initial, defaultingStrategy);
+		this.map = initial.map;
+	}
+
+	@Override
+	public MapConfigurationSource withDefaultingStrategy(DefaultingStrategy defaultingStrategy) {
+		return new MapConfigurationSource(this.initial != null ? this.initial : this, defaultingStrategy);
 	}
 
 	@Override

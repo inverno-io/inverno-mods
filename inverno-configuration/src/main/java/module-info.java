@@ -5,6 +5,7 @@ import io.inverno.mod.configuration.source.CommandLineConfigurationSource;
 import io.inverno.mod.configuration.source.CompositeConfigurationSource;
 import io.inverno.mod.configuration.source.MapConfigurationSource;
 import io.inverno.mod.configuration.source.PropertyFileConfigurationSource;
+import io.inverno.mod.configuration.source.RedisConfigurationSource;
 import io.inverno.mod.configuration.source.VersionedRedisConfigurationSource;
 import io.inverno.mod.configuration.source.SystemEnvironmentConfigurationSource;
 import io.inverno.mod.configuration.source.SystemPropertiesConfigurationSource;

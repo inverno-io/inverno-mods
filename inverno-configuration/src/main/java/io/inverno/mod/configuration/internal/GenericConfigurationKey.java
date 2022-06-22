@@ -21,7 +21,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import io.inverno.mod.configuration.ConfigurationKey;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -94,21 +96,42 @@ public class GenericConfigurationKey implements ConfigurationKey {
 
 	@Override
 	public boolean matches(ConfigurationKey other, boolean exact) {
+		Objects.requireNonNull(other);
 		if(!this.name.equals(other.getName())) {
-			return false;
-		}
-		if(exact && this.parameters.size() != other.getParameters().size()) {
 			return false;
 		}
 		
 		Map<String, Parameter> thisParameters = this.parameters.stream().collect(Collectors.toMap(Parameter::getKey, p -> p));
-		Map<String, Parameter> otherParameters = other.getParameters().stream().collect(Collectors.toMap(Parameter::getKey, p -> p));
+		Map<String, Parameter> otherParameters = new HashMap<>();
+		for(Parameter p : other.getParameters()) {
+			if(p.isUndefined()) {
+				Parameter thisParameter = thisParameters.get(p.getKey());
+				if(thisParameter != null && !thisParameter.isUndefined()) {
+					return false;
+				}
+				thisParameters.put(p.getKey(), p);
+			}
+			otherParameters.put(p.getKey(), p);
+		}
+		
+		if(exact && thisParameters.size() != otherParameters.size()) {
+			return false;
+		}
 		
 		for(String key : otherParameters.keySet()) {
 			Parameter otherParameter = otherParameters.get(key);
 			Parameter thisParameter = thisParameters.get(key);
 			
 			if(thisParameter == null) {
+				return false;
+			}
+			
+			if(otherParameter.isUndefined()) {
+				return thisParameter.isUndefined();
+			}
+			
+			// Keep this for clarity as it is already handled above
+			if(thisParameter.isUndefined()) {
 				return false;
 			}
 			

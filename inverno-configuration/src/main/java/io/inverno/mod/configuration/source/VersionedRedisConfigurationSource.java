@@ -15,6 +15,37 @@
  */
 package io.inverno.mod.configuration.source;
 
+import io.inverno.mod.base.converter.ConverterException;
+import io.inverno.mod.base.converter.JoinablePrimitiveEncoder;
+import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
+import io.inverno.mod.configuration.AbstractConfigurableConfigurationSource;
+import io.inverno.mod.configuration.ConfigurableConfigurationSource;
+import io.inverno.mod.configuration.ConfigurationKey;
+import io.inverno.mod.configuration.ConfigurationKey.Parameter;
+import io.inverno.mod.configuration.ConfigurationProperty;
+import io.inverno.mod.configuration.ConfigurationQuery;
+import io.inverno.mod.configuration.ConfigurationQueryResult;
+import io.inverno.mod.configuration.ConfigurationSource;
+import io.inverno.mod.configuration.ConfigurationUpdate;
+import io.inverno.mod.configuration.ConfigurationUpdate.SpecialValue;
+import io.inverno.mod.configuration.ConfigurationUpdateResult;
+import io.inverno.mod.configuration.DefaultableConfigurationSource;
+import io.inverno.mod.configuration.DefaultingStrategy;
+import io.inverno.mod.configuration.ExecutableConfigurationQuery;
+import io.inverno.mod.configuration.ExecutableConfigurationUpdate;
+import io.inverno.mod.configuration.ListConfigurationQuery;
+import io.inverno.mod.configuration.internal.GenericConfigurationKey;
+import io.inverno.mod.configuration.internal.GenericConfigurationProperty;
+import io.inverno.mod.configuration.internal.GenericConfigurationQueryResult;
+import io.inverno.mod.configuration.internal.GenericConfigurationUpdateResult;
+import io.inverno.mod.configuration.internal.JavaStringConverter;
+import io.inverno.mod.configuration.internal.parser.option.ConfigurationOptionParser;
+import io.inverno.mod.configuration.internal.parser.option.ParseException;
+import io.inverno.mod.configuration.internal.parser.option.StringProvider;
+import static io.inverno.mod.configuration.source.RedisConfigurationSource.DEFAULT_KEY_PREFIX;
+import io.inverno.mod.redis.RedisOperations;
+import io.inverno.mod.redis.RedisTransactionalClient;
+import io.inverno.mod.redis.operations.Bound;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,38 +62,9 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import io.inverno.mod.base.converter.ConverterException;
-import io.inverno.mod.base.converter.JoinablePrimitiveEncoder;
-import io.inverno.mod.base.converter.SplittablePrimitiveDecoder;
-import io.inverno.mod.configuration.AbstractConfigurableConfigurationSource;
-import io.inverno.mod.configuration.ConfigurableConfigurationSource;
-import io.inverno.mod.configuration.ConfigurationKey;
-import io.inverno.mod.configuration.ConfigurationKey.Parameter;
-import io.inverno.mod.configuration.ConfigurationProperty;
-import io.inverno.mod.configuration.ConfigurationQuery;
-import io.inverno.mod.configuration.ConfigurationQueryResult;
-import io.inverno.mod.configuration.ConfigurationSource;
-import io.inverno.mod.configuration.ConfigurationUpdate;
-import io.inverno.mod.configuration.ConfigurationUpdate.SpecialValue;
-import io.inverno.mod.configuration.ConfigurationUpdateResult;
-import io.inverno.mod.configuration.ExecutableConfigurationQuery;
-import io.inverno.mod.configuration.ExecutableConfigurationUpdate;
-import io.inverno.mod.configuration.ListConfigurationQuery;
-import io.inverno.mod.configuration.internal.GenericConfigurationKey;
-import io.inverno.mod.configuration.internal.GenericConfigurationProperty;
-import io.inverno.mod.configuration.internal.GenericConfigurationQueryResult;
-import io.inverno.mod.configuration.internal.GenericConfigurationUpdateResult;
-import io.inverno.mod.configuration.internal.JavaStringConverter;
-import io.inverno.mod.configuration.internal.parser.option.ConfigurationOptionParser;
-import io.inverno.mod.configuration.internal.parser.option.ParseException;
-import io.inverno.mod.configuration.internal.parser.option.StringProvider;
-import io.inverno.mod.redis.RedisOperations;
-import io.inverno.mod.redis.RedisTransactionalClient;
-import io.inverno.mod.redis.operations.Bound;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -117,42 +119,61 @@ import reactor.core.publisher.Mono;
  * <blockquote>
  *
  * <pre>
- VersionedRedisConfigurationSource source = ...;
- source
-     .set("db.url", "jdbc:oracle:thin:@dev.db.server:1521:sid").withParameters("env", "dev").and()
-     .set("db.url", "jdbc:oracle:thin:@prod_eu.db.server:1521:sid").withParameters("env", "prod", "zone", "eu").and()
-     .set("db.url", "jdbc:oracle:thin:@prod_us.db.server:1521:sid").withParameters("env", "prod", "zone", "us")
-     .execute()
-     .blockLast();
-
- // Activate working revision globally
- source.activate().block();
-
- // Activate working revision for dev environment and prod environment independently
- source.activate("env", "dev").block();
- source.activate("env", "prod").block();
- </pre>
+ * VersionedRedisConfigurationSource source = ...;
+ * source
+ *     .set("db.url", "jdbc:oracle:thin:@dev.db.server:1521:sid").withParameters("env", "dev").and()
+ *     .set("db.url", "jdbc:oracle:thin:@prod_eu.db.server:1521:sid").withParameters("env", "prod", "zone", "eu").and()
+ *     .set("db.url", "jdbc:oracle:thin:@prod_us.db.server:1521:sid").withParameters("env", "prod", "zone", "us")
+ *     .execute()
+ *     .blockLast();
+ * 
+ * // Activate working revision globally
+ * source.activate().block();
+ * 
+ * // Activate working revision for dev environment and prod environment independently
+ * source.activate("env", "dev").block();
+ * source.activate("env", "prod").block();
+ * </pre>
  *
  * </blockquote>
+ * 
+ * <p>
+ * This configuration source stored three types of entries:
+ * </p>
+ * 
+ * <ul>
+ * <li>Configuration properties as a sorted set with key of the form: {@code keyPrefix ":V:PROP:" propertyName "[" [ key "=" value [ "," key "=" value ]* "]"}.</li>
+ * <li>Configuration metadata as hashes with key of the form: {@code keyPrefix ":V:META:" propertyName "[" [ key "=" value [ "," key "=" value ]* "]"}.</li>
+ * <li>A configuration metadata control entry as a set with key of the form: {@code keyPrefix ":V:META:CTRL"}.</li>
+ * </ul>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
  * @see ConfigurableConfigurationSource
  */
-public class VersionedRedisConfigurationSource extends AbstractConfigurableConfigurationSource<VersionedRedisConfigurationSource.VersionedRedisConfigurationQuery, VersionedRedisConfigurationSource.VersionedRedisExecutableConfigurationQuery, VersionedRedisConfigurationSource.VersionedRedisListConfigurationQuery, VersionedRedisConfigurationSource.VersionedRedisConfigurationUpdate, VersionedRedisConfigurationSource.VersionedRedisExecutableConfigurationUpdate, String> {
+public class VersionedRedisConfigurationSource extends AbstractConfigurableConfigurationSource<VersionedRedisConfigurationSource.VersionedRedisConfigurationQuery, VersionedRedisConfigurationSource.VersionedRedisExecutableConfigurationQuery, VersionedRedisConfigurationSource.VersionedRedisListConfigurationQuery, VersionedRedisConfigurationSource.VersionedRedisConfigurationUpdate, VersionedRedisConfigurationSource.VersionedRedisExecutableConfigurationUpdate, String> implements DefaultableConfigurationSource<VersionedRedisConfigurationSource.VersionedRedisConfigurationQuery, VersionedRedisConfigurationSource.VersionedRedisExecutableConfigurationQuery, VersionedRedisConfigurationSource.VersionedRedisListConfigurationQuery, VersionedRedisConfigurationSource> {
 
-	private static final Logger LOGGER = LogManager.getLogger(VersionedRedisConfigurationSource.class);
+	/**
+	 * The default key prefix.
+	 */
+	public static final String DEFAUL_KEY_PREFIX = "CONF";
 	
-	private static final String KEY_PREFIX = "VCONF:";
-	private static final String META_DATA_KEY_PREFIX = KEY_PREFIX + "META:";
-	private static final String META_DATA_CONTROL_KEY = META_DATA_KEY_PREFIX + "CTRL";
-	private static final String PROPERTY_KEY_PREFIX = KEY_PREFIX + "PROP:";
+	private static final Logger LOGGER = LogManager.getLogger(VersionedRedisConfigurationSource.class);
 	
 	private static final String METADATA_FIELD_ACTIVE_REVISION = "active_revision";
 	private static final String METADATA_FIELD_WORKING_REVISION = "working_revision";
 	
-	private RedisTransactionalClient<String, String> redisClient;
+	private final RedisTransactionalClient<String, String> redisClient;
+	private final DefaultingStrategy defaultingStrategy;
+
+	private String keyPrefix;
+	private String metadataKeyPrefix;
+	private String propertyKeyPrefix;
+	
+	private String metadataControlKey;
+	
+	private VersionedRedisConfigurationSource initial;
 	
 	/**
 	 * <p>
@@ -177,6 +198,71 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 	public VersionedRedisConfigurationSource(RedisTransactionalClient<String, String> redisClient, JoinablePrimitiveEncoder<String> encoder, SplittablePrimitiveDecoder<String> decoder) {
 		super(encoder, decoder);
 		this.redisClient = redisClient;
+		this.defaultingStrategy = DefaultingStrategy.noOp();
+		this.setKeyPrefix(DEFAULT_KEY_PREFIX);
+	}
+	
+	/**
+	 * <p>
+	 * Creates a versioned redis configuration source from the specified initial source and using the specified defaulting strategy.
+	 * </p>
+	 *
+	 * @param initial            the initial configuration source.
+	 * @param defaultingStrategy a defaulting strategy
+	 */
+	private VersionedRedisConfigurationSource(VersionedRedisConfigurationSource initial, DefaultingStrategy defaultingStrategy) {
+		super(initial.encoder, initial.decoder);
+		this.initial = initial;
+		this.redisClient = initial.redisClient;
+		this.defaultingStrategy = defaultingStrategy;
+		this.setKeyPrefix(initial.keyPrefix);
+	}
+	
+	/**
+	 * <p>
+	 * Returns the prefix that is prepended to configuration source keys.
+	 * </p>
+	 * 
+	 * <ul>
+	 * <li>A configuration property key is of the form: {@code keyPrefix ":V:PROP:" propertyName "[" [ key "=" value [ "," key "=" value ]* "]"}.</li>
+	 * <li>A configuration metadata key is of the form: {@code keyPrefix ":V:META:" propertyName "[" [ key "=" value [ "," key "=" value ]* "]"}.</li>
+	 * <li>The configuration metadata control key is of the form: {@code keyPrefix ":V:META:CTRL"}.</li>
+	 * </ul>
+	 * 
+	 * @return the key prefix
+	 */
+	public final String getKeyPrefix() {
+		return keyPrefix;
+	}
+
+	/**
+	 * <p>
+	 * Sets the prefix that is prepended to configuration source keys.
+	 * </p>
+	 * 
+	 * <ul>
+	 * <li>A configuration property key is of the form: {@code keyPrefix ":V:PROP:" propertyName "[" [ key "=" value [ "," key "=" value ]* "]"}.</li>
+	 * <li>A configuration metadata key is of the form: {@code keyPrefix ":V:META:" propertyName "[" [ key "=" value [ "," key "=" value ]* "]"}.</li>
+	 * <li>The configuration metadata control key is of the form: {@code keyPrefix ":V:META:CTRL"}.</li>
+	 * </ul>
+	 * 
+	 * @param keyPrefix the key prefix to set
+	 */
+	public final void setKeyPrefix(String keyPrefix) {
+		this.keyPrefix = StringUtils.isNotBlank(keyPrefix) ? keyPrefix : DEFAULT_KEY_PREFIX;
+		this.propertyKeyPrefix = keyPrefix + ":V:PROP:";
+		this.metadataKeyPrefix = keyPrefix + ":V:META:";
+		this.metadataControlKey = this.metadataKeyPrefix + "CTRL";
+	}
+
+	@Override
+	public VersionedRedisConfigurationSource withDefaultingStrategy(DefaultingStrategy defaultingStrategy) {
+		return new VersionedRedisConfigurationSource(this.initial != null ? this.initial : this, defaultingStrategy);
+	}
+
+	@Override
+	public VersionedRedisConfigurationSource unwrap() {
+		return this.initial != null ? this.initial : this;
 	}
 	
 	@Override
@@ -204,7 +290,7 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 	 * @return a mono emitting the list of metadata parameters
 	 */
 	protected Mono<List<List<String>>> getMetaDataParameterSets(RedisOperations<String, String> operations) {
-		return operations.smembers(META_DATA_CONTROL_KEY)
+		return operations.smembers(this.metadataControlKey)
 			.map(value -> Arrays.stream(value.split(",")).filter(s -> !s.isEmpty()).collect(Collectors.toList()))
 			.collectList();
 	}
@@ -318,7 +404,7 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 				return this.redisClient.multi(ops -> {
 						return Flux.just(
 							// TODO Parameter key should be a valid Java identifier, idem for property name actually
-							ops.sadd(META_DATA_CONTROL_KEY, parametersList.stream().map(Parameter::getKey).sorted().collect(Collectors.joining(","))),
+							ops.sadd(this.metadataControlKey, parametersList.stream().map(Parameter::getKey).sorted().collect(Collectors.joining(","))),
 							// We always set the working revision since metadata might not exist for the specified parameters
 							ops.hset(metaDataKey, entries -> entries.entry(METADATA_FIELD_ACTIVE_REVISION, Integer.toString(workingRevision)).entry(METADATA_FIELD_WORKING_REVISION, Integer.toString(workingRevision + 1)))
 						);
@@ -378,7 +464,7 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 					return this.redisClient.multi(ops -> {
 							return Flux.just(
 								// TODO Parameter key should be a valid Java identifier, idem for property name actually
-								ops.sadd(META_DATA_CONTROL_KEY, parametersList.stream().map(Parameter::getKey).sorted().collect(Collectors.joining(","))),
+								ops.sadd(this.metadataControlKey, parametersList.stream().map(Parameter::getKey).sorted().collect(Collectors.joining(","))),
 								// We always set the working revision since metadata might not exist for the specified parameters
 								ops.hset(metaDataKey, entries -> entries.entry(METADATA_FIELD_ACTIVE_REVISION, Integer.toString(revision)).entry(METADATA_FIELD_WORKING_REVISION, Integer.toString(revision == workingRevision ? workingRevision + 1 : workingRevision)))
 							);
@@ -472,10 +558,16 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 		private Optional<VersionedRedisConfigurationMetaData> metaData;
 		private Optional<Integer> revision;
 		
-		private VersionedRedisConfigurationKey(String name, VersionedRedisConfigurationMetaData metaData, Integer actualRevision, Collection<Parameter> parameters) {
+		private VersionedRedisConfigurationKey(String name, Collection<Parameter> parameters) {
+			super(name, parameters);
+			this.metaData = Optional.empty();
+			this.revision = Optional.empty();
+		}
+		
+		private VersionedRedisConfigurationKey(String name, VersionedRedisConfigurationMetaData metaData, Integer revision, Collection<Parameter> parameters) {
 			super(name, parameters);
 			this.metaData = Optional.ofNullable(metaData);
-			this.revision = Optional.ofNullable(actualRevision);
+			this.revision = Optional.ofNullable(revision);
 		}
 		
 		/**
@@ -487,6 +579,10 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 		 */
 		public Optional<VersionedRedisConfigurationMetaData> getMetaData() {
 			return metaData;
+		}
+		
+		private void setMedataData(VersionedRedisConfigurationMetaData metaData) {
+			this.metaData = Optional.ofNullable(metaData);
 		}
 		
 		/**
@@ -565,13 +661,16 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 		}
 
 		@Override
-		public VersionedRedisExecutableConfigurationQuery withParameters(Parameter... parameters) throws IllegalArgumentException {
+		public VersionedRedisExecutableConfigurationQuery withParameters(List<Parameter> parameters) throws IllegalArgumentException {
 			VersionedRedisConfigurationQuery currentQuery = this.queries.peekLast();
 			currentQuery.parameters.clear();
-			if(parameters != null && parameters.length > 0) {
+			if(parameters != null && !parameters.isEmpty()) {
 				Set<String> parameterKeys = new HashSet<>();
 				List<String> duplicateParameters = new LinkedList<>();
 				for(Parameter parameter : parameters) {
+					if(parameter.isWildcard() || parameter.isUndefined()) {
+						throw new IllegalArgumentException("Query parameter can not be undefined or a wildcard: " + parameter);
+					}
 					currentQuery.parameters.add(parameter);
 					if(!parameterKeys.add(parameter.getKey())) {
 						duplicateParameters.add(parameter.getKey());
@@ -605,92 +704,116 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 		
 		@Override
 		public Flux<ConfigurationQueryResult> execute() {
+			List<VersionedRedisConfigurationQueryResult> results = this.queries.stream()
+				.flatMap(query -> query.names.stream().map(name -> new VersionedRedisConfigurationKey(name, query.metaData != null ? query.metaData : null, null, query.parameters)))
+				.map(queryKey -> {
+					List<ConfigurationKey> defaultingKeys;
+					if(this.source.defaultingStrategy != null) {
+						defaultingKeys = this.source.defaultingStrategy.getDefaultingKeys(queryKey);
+					}
+					else {
+						defaultingKeys = List.of(queryKey);
+					}
+					return new VersionedRedisConfigurationQueryResult(queryKey, defaultingKeys.stream().map(defaultingKey -> new VersionedRedisConfigurationKey(defaultingKey.getName(), defaultingKey.getParameters())).collect(Collectors.toList()));
+				})
+				.collect(Collectors.toList());
+			
 			return Mono.when(this.source.redisClient.connection(operations -> {
 				return this.source.getMetaDataParameterSets(operations)
 					.flatMapMany(metaDataParameterSets -> {
-						Map<Integer, Map<List<Parameter>, List<VersionedRedisConfigurationQuery>>> queriesByMetaDataByCard = new TreeMap<>(Comparator.reverseOrder());
-						for(VersionedRedisConfigurationQuery query : this.queries) {
-							if(query.metaData != null) {
-								continue;
+						Map<Integer, Map<List<Parameter>, List<VersionedRedisConfigurationKey>>> queriesByMetaDataByCard = new TreeMap<>(Comparator.reverseOrder());
+						for(VersionedRedisConfigurationQueryResult result : results) {
+							VersionedRedisConfigurationMetaData providedMetaData = result.getQueryKey().metaData.orElse(null);
+							for(VersionedRedisConfigurationKey defaultingKey : result.defaultingKeys) {
+								if(providedMetaData != null) {
+									defaultingKey.setMedataData(providedMetaData);
+									continue;
+								}
+								Map<String, Parameter> parametersByKey = defaultingKey.getParameters().stream().collect(Collectors.toMap(Parameter::getKey, Function.identity()));
+								metaDataParameterSets.stream()
+									.filter(set -> parametersByKey.keySet().containsAll(set))
+									.map(parametersSet -> parametersSet.stream().map(parametersByKey::get).collect(Collectors.toList()))
+									.forEach(metaKeyParameters -> {
+										if(queriesByMetaDataByCard.get(metaKeyParameters.size()) == null) {
+											queriesByMetaDataByCard.put(metaKeyParameters.size(), new HashMap<>());
+										}
+										Map<List<Parameter>, List<VersionedRedisConfigurationKey>> currentCard = queriesByMetaDataByCard.get(metaKeyParameters.size());
+										if(!currentCard.containsKey(metaKeyParameters)) {
+											currentCard.put(metaKeyParameters, new ArrayList<>());
+										}
+										currentCard.get(metaKeyParameters).add(defaultingKey);
+									});
 							}
-							Map<String, Parameter> parametersByKey = query.parameters.stream().collect(Collectors.toMap(Parameter::getKey, Function.identity()));
-							metaDataParameterSets.stream()
-								.filter(set -> parametersByKey.keySet().containsAll(set))
-								.map(parametersSet -> parametersSet.stream().map(parametersByKey::get).collect(Collectors.toList()))
-								.forEach(metaKeyParameters -> {
-									if(queriesByMetaDataByCard.get(metaKeyParameters.size()) == null) {
-										queriesByMetaDataByCard.put(metaKeyParameters.size(), new HashMap<>());
-									}
-									Map<List<Parameter>, List<VersionedRedisConfigurationQuery>> currentCard = queriesByMetaDataByCard.get(metaKeyParameters.size());
-									if(!currentCard.containsKey(metaKeyParameters)) {
-										currentCard.put(metaKeyParameters, new ArrayList<>());
-									}
-									currentCard.get(metaKeyParameters).add(query);
-								});
 						}
-
+						
 						return Flux.fromIterable(queriesByMetaDataByCard.values())
 							.concatMap(queriesByMetaData -> Flux.fromStream(() -> queriesByMetaData.entrySet().stream().filter(e -> {
-										List<VersionedRedisConfigurationQuery> queries = e.getValue();
-										for(Iterator<VersionedRedisConfigurationQuery> queriesIterator = queries.iterator(); queriesIterator.hasNext();) {
-											if(queriesIterator.next().metaData != null) {
-												queriesIterator.remove();
+										List<VersionedRedisConfigurationKey> queryKeys = e.getValue();
+										for(Iterator<VersionedRedisConfigurationKey> queriyKeysIterator = queryKeys.iterator(); queriyKeysIterator.hasNext();) {
+											if(queriyKeysIterator.next().metaData.isPresent()) {
+												queriyKeysIterator.remove();
 											}
 										}
-										return !queries.isEmpty();
+										return !queryKeys.isEmpty();
 									})
 								)
 								.flatMap(e -> this.source.getMetaData(operations, e.getKey())
 									.doOnNext(metaData -> {
-										for(VersionedRedisConfigurationQuery query : e.getValue()) {
-											if(query.metaData != null) {
-												throw new IllegalStateException("MetaData " + asMetaDataKey(e.getKey()) + " is conflicting with " + asMetaDataKey(query.metaData.getParameters()) + " when considering parameters [" + query.parameters.stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?
-											}
-											query.metaData = metaData;
+										for(VersionedRedisConfigurationKey queryKey : e.getValue()) {
+											queryKey.metaData.ifPresentOrElse(
+												queryKeyMetaData -> {
+													throw new IllegalStateException("MetaData " + this.source.asMetaDataKey(e.getKey()) + " is conflicting with " + this.source.asMetaDataKey(queryKeyMetaData.getParameters()) + " when considering parameters [" + queryKey.getParameters().stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?
+												},
+												() -> {
+													queryKey.setMedataData(metaData);
+												}
+											);
 										}
 									})
 								)
 							);
 					});
-				}))
-				.thenMany(this.source.redisClient.batch(operations -> Flux.fromStream(this.queries.stream()
-						.flatMap(query -> query.names.stream().map(name -> new VersionedRedisConfigurationKey(name, query.metaData != null ? query.metaData : null, null, query.parameters)))
-					)
-					.map(queryKey -> { 
+			}))
+			.thenMany(this.source.redisClient.batch(operations -> Flux.fromStream(results.stream()
+				.map(result -> Flux.fromIterable(result.defaultingKeys)
+					.flatMap(queryKey -> {
 						if(queryKey.metaData.isPresent() && !queryKey.metaData.get().getActiveRevision().isPresent()) {
 							// property is managed (ie. we found metadata) but there's no active or selected revision
-							return Mono.just(new VersionedRedisConfigurationQueryResult(queryKey, null));
+							return Mono.empty();
 						}
-				
+
 						return operations
 							.zrangeWithScores()
 							.reverse()
 							.byScore()
 							.limit(0, 1)
-							.build(asPropertyKey(queryKey), Bound.inclusive(0), queryKey.metaData.flatMap(VersionedRedisConfigurationMetaData::getActiveRevision).map(Bound::inclusive).orElse(Bound.unbounded()))
+							.build(this.source.asPropertyKey(queryKey), Bound.inclusive(0), queryKey.metaData.flatMap(VersionedRedisConfigurationMetaData::getActiveRevision).map(Bound::inclusive).orElse(Bound.unbounded()))
 							.next()
-							.map(result -> Optional.of(result))
-							.defaultIfEmpty(Optional.empty())
-							.map(result -> (ConfigurationQueryResult)result.map(value -> {
-									try {
-										Optional<String> actualValue = new ConfigurationOptionParser<VersionedRedisConfigurationSource>(new StringProvider(value.getValue())).StartValueRevision();
-										if(actualValue != null) {
-											return new VersionedRedisConfigurationQueryResult(queryKey, new GenericConfigurationProperty<ConfigurationKey, VersionedRedisConfigurationSource, String>(new VersionedRedisConfigurationKey(queryKey.getName(), queryKey.metaData.orElse(null), (int)value.getScore(), queryKey.getParameters()), actualValue.orElse(null), this.source));
-										}
-										else {
-											// unset
-											return new VersionedRedisConfigurationQueryResult(queryKey, new GenericConfigurationProperty<ConfigurationKey, VersionedRedisConfigurationSource, String>(new VersionedRedisConfigurationKey(queryKey.getName(), queryKey.metaData.orElse(null), (int)value.getScore(), queryKey.getParameters()), this.source));
-										}
-									} 
-									catch (ParseException e) {
-										return new VersionedRedisConfigurationQueryResult(queryKey, this.source, new IllegalStateException("Invalid value found for key " + queryKey.toString() + " at revision " + (int)value.getScore(), e));
+							.mapNotNull(scoredMember -> {
+								if(result.resolved) {
+									return null;
+								}
+								try {
+									Optional<String> actualValue = new ConfigurationOptionParser<VersionedRedisConfigurationSource>(new StringProvider(scoredMember.getValue())).StartValueRevision();
+									if(actualValue != null) {
+										result.setResult(new GenericConfigurationProperty<ConfigurationKey, VersionedRedisConfigurationSource, String>(new VersionedRedisConfigurationKey(queryKey.getName(), queryKey.metaData.orElse(null), (int)scoredMember.getScore(), queryKey.getParameters()), actualValue.orElse(null), this.source));
 									}
-								})
-								.orElse(new VersionedRedisConfigurationQueryResult(queryKey, null))
-							)
-							.onErrorResume(error -> Mono.just((ConfigurationQueryResult)new VersionedRedisConfigurationQueryResult(queryKey, this.source, error)));
+									else {
+										// unset
+										result.setResult(new GenericConfigurationProperty<ConfigurationKey, VersionedRedisConfigurationSource, String>(new VersionedRedisConfigurationKey(queryKey.getName(), queryKey.metaData.orElse(null), (int)scoredMember.getScore(), queryKey.getParameters()), this.source));
+									}
+								}
+								catch (ParseException e) {
+									result.setError(this.source, new IllegalStateException("Invalid value found for key " + queryKey.toString() + " at revision " + (int)scoredMember.getScore(), e));
+								}
+								return (ConfigurationQueryResult)result;
+							})
+							.doOnError(error -> result.setError(this.source, error))
+							.onErrorResume(error -> Mono.just(result));
 					})
-				));
+					.defaultIfEmpty((ConfigurationQueryResult)result)
+				)
+			)));
 		}
 	}
 	
@@ -705,18 +828,42 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 	 * @see ConfigurationQueryResult
 	 */
 	public static class VersionedRedisConfigurationQueryResult extends GenericConfigurationQueryResult {
+	
+		private final List<VersionedRedisConfigurationKey> defaultingKeys;
 		
-		private VersionedRedisConfigurationQueryResult(VersionedRedisConfigurationKey queryKey, ConfigurationProperty queryResult) {
-			super(queryKey, queryResult);
+		private boolean resolved;
+		
+		private VersionedRedisConfigurationQueryResult(VersionedRedisConfigurationKey queryKey, List<VersionedRedisConfigurationKey> defaultingKeys) {
+			super(queryKey, null);
+			this.defaultingKeys = defaultingKeys;
 		}
-
-		private VersionedRedisConfigurationQueryResult(VersionedRedisConfigurationKey queryKey, VersionedRedisConfigurationSource source, Throwable error) {
-			super(queryKey, source, error);
-		}
-
+		
+		/**
+		 * <p>
+		 * Returns the versioned configuration key corresponding to the query that was executed.
+		 * </p>
+		 * 
+		 * <p>
+		 * The meta data in the key reflects the revision that was set when building the query (see {@link VersionedRedisExecutableConfigurationQuery#atRevision(int)}), if no revision has been
+		 * specified query key's meta data are are unset. The actual revision of a result property is provided by the meta data in the result the property key.
+		 * </p>
+		 * 
+		 * @return a versioned configuration key
+		 */
 		@Override
 		public VersionedRedisConfigurationKey getQueryKey() {
 			return (VersionedRedisConfigurationKey)super.getQueryKey();
+		}
+		
+		private void setResult(ConfigurationProperty queryResult) {
+			this.queryResult = Optional.ofNullable(queryResult);
+			this.resolved = true;
+		}
+		
+		private void setError(VersionedRedisConfigurationSource errorSource, Throwable error) {
+			this.errorSource = errorSource;
+			this.error = error;
+			this.resolved = true;
 		}
 	}
 	
@@ -784,10 +931,10 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 		}
 		
 		@Override
-		public VersionedRedisExecutableConfigurationUpdate withParameters(Parameter... parameters) throws IllegalArgumentException {
+		public VersionedRedisExecutableConfigurationUpdate withParameters(List<Parameter> parameters) throws IllegalArgumentException {
 			VersionedRedisConfigurationUpdate currentQuery = this.updates.peekLast();
 			currentQuery.parameters.clear();
-			if(parameters != null && parameters.length > 0) {
+			if(parameters != null && !parameters.isEmpty()) {
 				Set<String> parameterKeys = new HashSet<>();
 				List<String> duplicateParameters = new LinkedList<>();
 				for(Parameter parameter : parameters) {
@@ -843,7 +990,7 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 									.doOnNext(metaData -> {
 										for(VersionedRedisConfigurationUpdate update : e.getValue()) {
 											if(update.metaData != null) {
-												throw new IllegalStateException("MetaData " + asMetaDataKey(e.getKey()) + " is conflicting with " + asMetaDataKey(update.metaData.getParameters()) + " when considering parameters [" + update.parameters.stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?, propagate error in the query result?
+												throw new IllegalStateException("MetaData " + this.source.asMetaDataKey(e.getKey()) + " is conflicting with " + this.source.asMetaDataKey(update.metaData.getParameters()) + " when considering parameters [" + update.parameters.stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?, propagate error in the query result?
 											}
 											update.metaData = metaData;
 										}
@@ -856,7 +1003,7 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 						.flatMap(valueEntry -> {
 							VersionedRedisConfigurationKey updateKey = new VersionedRedisConfigurationKey(valueEntry.getKey(), update.metaData != null ? update.metaData : new VersionedRedisConfigurationMetaData(null, 1), null, update.parameters);
 
-							String redisKey = asPropertyKey(updateKey);
+							String redisKey = this.source.asPropertyKey(updateKey);
 							int workingRevision = updateKey.getMetaData().get().getWorkingRevision().get();
 							StringBuilder redisEncodedValue = new StringBuilder().append(workingRevision).append("{");
 							if(valueEntry.getValue() == null) {
@@ -943,9 +1090,9 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 		}
 		
 		@Override
-		public VersionedRedisListConfigurationQuery withParameters(Parameter... parameters) throws IllegalArgumentException {
+		public VersionedRedisListConfigurationQuery withParameters(List<Parameter> parameters) throws IllegalArgumentException {
 			this.parameters.clear();
-			if(parameters != null && parameters.length > 0) {
+			if(parameters != null && !parameters.isEmpty()) {
 				Set<String> parameterKeys = new HashSet<>();
 				List<String> duplicateParameters = new LinkedList<>();
 				for(Parameter parameter : parameters) {
@@ -977,8 +1124,8 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 		 * @return 
 		 */
 		private Flux<ConfigurationProperty> execute(boolean exact) {
-			String propertiesPattern = PROPERTY_KEY_PREFIX + this.name + "*";
-			ConfigurationKey matchingKey = new GenericConfigurationKey(this.name, this.parameters);
+			String propertiesPattern = this.source.propertyKeyPrefix + this.name + "*";
+			List<ConfigurationKey> defaultingMatchingKeys = this.source.defaultingStrategy.getListDefaultingKeys(new GenericConfigurationKey(this.name, this.parameters));
 			
 			return Mono.from(this.source.redisClient.connection(operations -> {
 				// 1. Scan + filter keys
@@ -998,7 +1145,7 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 					.flatMapIterable(result -> result.getKeys())
 					.mapNotNull(rawKey -> {
 						try {
-							ConfigurationOptionParser<?> parser = new ConfigurationOptionParser<>(new StringProvider(rawKey.substring(PROPERTY_KEY_PREFIX.length())));
+							ConfigurationOptionParser<?> parser = new ConfigurationOptionParser<>(new StringProvider(rawKey.substring(this.source.propertyKeyPrefix.length())));
 							ConfigurationKey key = parser.StartKey();
 							return new VersionedRedisConfigurationKey(key.getName(), null, null, key.getParameters());
 						}
@@ -1007,7 +1154,17 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 							return null;
 						}
 					})
-					.filter(key -> key.matches(matchingKey, exact))
+					.filter(key -> {
+						boolean currentExact = exact;
+						for(ConfigurationKey machingKey : defaultingMatchingKeys) {
+							if(key.matches(machingKey, currentExact)) {
+								return true;
+							}
+							// we only want to include extra parameters for the query key
+							currentExact = true;
+						}
+						return false;
+					})
 					.collectList()
 					.flatMap(keys -> {
 						// 2. Get Metadata
@@ -1046,7 +1203,7 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 											.doOnNext(metaData -> {
 												for(VersionedRedisConfigurationKey key : e.getValue()) {
 													if(key.metaData.isPresent()) {
-														throw new IllegalStateException("MetaData " + asMetaDataKey(e.getKey()) + " is conflicting with " + asMetaDataKey(key.metaData.get().getParameters()) + " when considering parameters [" + key.getParameters().stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?
+														throw new IllegalStateException("MetaData " + this.source.asMetaDataKey(e.getKey()) + " is conflicting with " + this.source.asMetaDataKey(key.metaData.get().getParameters()) + " when considering parameters [" + key.getParameters().stream().map(Parameter::toString).collect(Collectors.joining(", ")) + "]"); // TODO create an adhoc exception?
 													}
 													key.metaData = Optional.of(metaData);
 												}
@@ -1064,7 +1221,7 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 						.reverse()
 						.byScore()
 						.limit(0, 1)
-						.build(asPropertyKey(key), Bound.inclusive(0), key.metaData.flatMap(VersionedRedisConfigurationMetaData::getActiveRevision).map(Bound::inclusive).orElse(Bound.unbounded()))
+						.build(this.source.asPropertyKey(key), Bound.inclusive(0), key.metaData.flatMap(VersionedRedisConfigurationMetaData::getActiveRevision).map(Bound::inclusive).orElse(Bound.unbounded()))
 						.next()
 						.mapNotNull(result -> {
 							key.revision = Optional.of((int)result.getScore());
@@ -1098,9 +1255,9 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 	 *
 	 * @return a Redis MetaData key
 	 */
-	private static String asMetaDataKey(List<Parameter> parameters) {
+	private String asMetaDataKey(List<Parameter> parameters) {
 		StringBuilder keyBuilder = new StringBuilder();
-		keyBuilder.append(META_DATA_KEY_PREFIX);
+		keyBuilder.append(this.metadataKeyPrefix);
 		if(parameters != null && !parameters.isEmpty()) {
 			keyBuilder
 				.append("[")
@@ -1123,9 +1280,9 @@ public class VersionedRedisConfigurationSource extends AbstractConfigurableConfi
 	 *
 	 * @return a Redis property key
 	 */
-	private static String asPropertyKey(ConfigurationKey key) {
+	private String asPropertyKey(ConfigurationKey key) {
 		StringBuilder keyBuilder = new StringBuilder();
-		keyBuilder.append(PROPERTY_KEY_PREFIX).append(key.getName());
+		keyBuilder.append(this.propertyKeyPrefix).append(key.getName());
 		if(key.getParameters() != null && !key.getParameters().isEmpty()) {
 			keyBuilder
 				.append("[")
