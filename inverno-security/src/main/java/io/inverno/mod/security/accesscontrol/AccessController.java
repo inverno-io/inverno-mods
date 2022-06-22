@@ -15,18 +15,32 @@
  */
 package io.inverno.mod.security.accesscontrol;
 
-import io.inverno.mod.security.internal.accesscontrol.BlankAccessController;
+import io.inverno.mod.security.authentication.Authentication;
+import io.inverno.mod.security.context.SecurityContext;
+import io.inverno.mod.security.identity.Identity;
 
 /**
+ * <p>
+ * An access controller is used to control the access to services and resources of an authenticated entity.
+ * </p>
+ *
+ * <p>
+ * This represents the base access controller interface which should be extended and/or implemented to support actual access control processing such as Role Based Access Control, Permission Based
+ * Access Control, Access Control List...
+ * </p>
+ *
+ * <p>
+ * The access controller is one of the components that make up the {@link SecurityContext} along with {@link Authentication} and {@link Identity}. An access controller is usually resolved from an
+ * {@link Authentication} using an {@link AccessControllerResolver}.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @see SecurityContext
+ * @see Authentication
+ * @see Identity
  */
 public interface AccessController {
 
-    static AccessController blank() {
-        return BlankAccessController.INSTANCE;
-    }
-	
-	// ???????????
 }

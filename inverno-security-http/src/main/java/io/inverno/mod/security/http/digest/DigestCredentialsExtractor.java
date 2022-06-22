@@ -27,32 +27,68 @@ import org.apache.commons.text.StringEscapeUtils;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * A credentials extractor that extracts {@code digest} credentials as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
 public class DigestCredentialsExtractor implements CredentialsExtractor<DigestCredentials> {
 
+	/**
+	 * The {@code algorithm} parameter name as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
+	 */
 	private static final String PARAMETER_ALGORITHM = "algorithm";
 	
+	/**
+	 * The {@code response} parameter name as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
+	 */
 	private static final String PARAMETER_RESPONSE = "response";
 	
+	/**
+	 * The {@code username} parameter name as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
+	 */
 	private static final String PARAMETER_USERNAME = "username";
 	
+	/**
+	 * The {@code username*} (extended username) parameter name as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
+	 */
 	private static final String PARAMETER_USERNAME_EXT = "username*";
 	
+	/**
+	 * The {@code userhash} parameter name as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
+	 */
 	private static final String PARAMETER_USERHASH = "userhash";
 	
+	/**
+	 * The {@code realm} parameter name as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
+	 */
 	private static final String PARAMETER_REALM = "realm";
 	
+	/**
+	 * The {@code uri} parameter name as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
+	 */
 	private static final String PARAMETER_URI = "uri";
 	
+	/**
+	 * The {@code qop} parameter name as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
+	 */
 	private static final String PARAMETER_QOP = "qop";
 	
+	/**
+	 * The {@code cnonce} parameter name as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
+	 */
 	private static final String PARAMETER_CNONCE = "cnonce";
 	
+	/**
+	 * The {@code nc} parameter name as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
+	 */
 	private static final String PARAMETER_NC = "nc";
 	
+	/**
+	 * The {@code nonce} parameter name as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
+	 */
 	private static final String PARAMETER_NONCE = "nonce";
 	
 	@Override
@@ -65,6 +101,18 @@ public class DigestCredentialsExtractor implements CredentialsExtractor<DigestCr
 		);
 	}
 	
+	/**
+	 * <p>
+	 * Creates digest credentials from the specified authorization header and HTTP method.
+	 * </p>
+	 * 
+	 * @param authorizationHeader the authorization header
+	 * @param method the HTTP method
+	 * 
+	 * @return digest credentials
+	 * 
+	 * @throws MalformedCredentialsException if digest credentials parameters are incorrect
+	 */
 	private static DigestCredentials from(Headers.Authorization authorizationHeader, Method method) throws MalformedCredentialsException {
 		String algorithm = null;
 		String response = null;

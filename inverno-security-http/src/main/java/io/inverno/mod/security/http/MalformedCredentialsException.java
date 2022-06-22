@@ -18,27 +18,69 @@ package io.inverno.mod.security.http;
 import io.inverno.mod.security.SecurityException;
 
 /**
+ * <p>
+ * Thrown by a {@link CredentialsExtractor} to indicate that malformed credentials have been sent.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
 public class MalformedCredentialsException extends SecurityException {
 
+	private static final long serialVersionUID = 1L;
+
+	/**
+	 * <p>
+	 * Creates a malformed credentials exception.
+	 * </p>
+	 */
 	public MalformedCredentialsException() {
 	}
 
+	/**
+	 * <p>
+	 * Creates a malformed credentials exception with the specified message.
+	 * </p>
+	 * 
+	 * @param message the message
+	 */
 	public MalformedCredentialsException(String message) {
 		super(message);
 	}
-
-	public MalformedCredentialsException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
+	
+	/**
+	 * <p>
+	 * Creates a malformed credentials exception with the specified cause.
+	 * </p>
+	 *
+	 * @param cause the cause
+	 */
 	public MalformedCredentialsException(Throwable cause) {
 		super(cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates a malformed credentials exception with the specified message and cause.
+	 * </p>
+	 *
+	 * @param message the message
+	 * @param cause   the cause
+	 */
+	public MalformedCredentialsException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	/**
+	 * <p>
+	 * Creates a malformed credentials exception with the specified message, cause, suppression enabled or disabled and writable stack trace enabled or disabled.
+	 * </p>
+	 *
+	 * @param message            the message
+	 * @param cause              the cause
+	 * @param enableSuppression  true to enable suppression, false otherwise
+	 * @param writableStackTrace true to make the stack trace writable, false otherwise
+	 */
 	public MalformedCredentialsException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}

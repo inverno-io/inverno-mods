@@ -16,20 +16,47 @@
 package io.inverno.mod.security.identity;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import io.inverno.mod.security.internal.identity.Anonymous;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.inverno.mod.security.accesscontrol.AccessController;
+import io.inverno.mod.security.authentication.Authentication;
+import io.inverno.mod.security.context.SecurityContext;
 
 /**
- *
+ * <p>
+ * An identity exposes the information that specifies the identity of an authenticated entity.
+ * </p>
+ * 
+ * <p>
+ * An entity can be authenticated using credentials that might include an identifier such as a username, a hostname, an IP or MAC address, a personal token... This identifier is usually used during
+ * the authentication process to obtain an {@link Authentication}. However this authentication and especially any identifier involved is sometimes not enough to be able to fully identify the entity.
+ * Indeed, an entity can be authenticated in multiple ways using multiple identifiers whereas only one single identifier uniquely identifies it.
+ * </p>
+ * 
+ * <p>
+ * An identity must have one unique immutable identifier and provides specific information about the user. For a person it can be a first name, a last name, an email address and any kind of personal
+ * information. For a a system or a device it can be a serial number, an IP address, a screen resolution, an X.509 certificate...
+ * </p>
+ * 
+ * <p>
+ * The identity is one of the components that make up the {@link SecurityContext} along with {@link Authentication} and {@link AccessController}. An identity is usually resolved from an
+ * {@link Authentication} using an {@link IdentityResolver}.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
 @JsonInclude( JsonInclude.Include.NON_NULL )
+@JsonTypeInfo( use = JsonTypeInfo.Id.MINIMAL_CLASS, include = JsonTypeInfo.As.PROPERTY )
 public interface Identity {
 	
-	static Identity anonymous() {
-		return Anonymous.INSTANCE;
-	}
-	
+	/**
+	 * <p>
+	 * Returns the unique identifier that identifies the authenticated entity.
+	 * </p>
+	 * 
+	 * @return a unique identifier
+	 */
+	@JsonProperty("uid")
 	String getUid();
 }

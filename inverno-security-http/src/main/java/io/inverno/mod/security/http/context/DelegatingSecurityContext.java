@@ -21,38 +21,50 @@ import io.inverno.mod.security.identity.Identity;
 import java.util.Optional;
 
 /**
+ * <p>
+ * A security exchange context that delegates to a regular security context to return authentication, identity and access controller.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-interface DelegatingSecurityContext extends SecurityContext {
+interface DelegatingSecurityContext<A extends Identity, B extends AccessController> extends SecurityContext<A, B> {
 
 	@Override
 	public default Authentication getAuthentication() {
 		var ctx = this.getSecurityContext();
-        if(ctx != null) {
+		if(ctx != null) {
             return ctx.getAuthentication();
         }
 		return SecurityContext.super.getAuthentication();
 	}
 
     @Override
-    default Optional<Identity> getIdentity() {
+	@SuppressWarnings("unchecked")
+    default Optional<A> getIdentity() {
         var ctx = this.getSecurityContext();
         if(ctx != null) {
-            return ctx.getIdentity();
+            return (Optional<A>) ctx.getIdentity();
         }
         return SecurityContext.super.getIdentity();
     }
 
     @Override
-    default Optional<AccessController> getAccessController() {
+	@SuppressWarnings("unchecked")
+    default Optional<B> getAccessController() {
         var ctx = this.getSecurityContext();
         if(ctx != null) {
-            return ctx.getAccessController();
+            return (Optional<B>) ctx.getAccessController();
         }
         return SecurityContext.super.getAccessController();
     }
 
-    io.inverno.mod.security.context.SecurityContext getSecurityContext();
+	/**
+	 * <p>
+	 * Returns the underlying security context.
+	 * </p>
+	 * 
+	 * @return a regular security context
+	 */
+    io.inverno.mod.security.context.SecurityContext<? extends A, ? extends B> getSecurityContext();
 }

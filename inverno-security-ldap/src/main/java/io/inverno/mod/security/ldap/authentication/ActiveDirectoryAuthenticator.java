@@ -21,7 +21,8 @@ import io.inverno.mod.ldap.LDAPException;
 import io.inverno.mod.security.authentication.AuthenticationException;
 import io.inverno.mod.security.authentication.Authenticator;
 import io.inverno.mod.security.authentication.InvalidCredentialsException;
-import io.inverno.mod.security.authentication.UserCredentials;
+import io.inverno.mod.security.authentication.LoginCredentials;
+import io.inverno.mod.security.authentication.password.RawPassword;
 import io.inverno.mod.security.ldap.internal.authentication.GenericLDAPAuthentication;
 import java.util.Arrays;
 import java.util.function.Function;
@@ -42,7 +43,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class ActiveDirectoryAuthenticator implements Authenticator<UserCredentials, LDAPAuthentication> {
+public class ActiveDirectoryAuthenticator implements Authenticator<LoginCredentials, LDAPAuthentication> {
 
 	/**
 	 * The pattern used to extract error code from Active Directory error messages.
@@ -208,23 +209,26 @@ public class ActiveDirectoryAuthenticator implements Authenticator<UserCredentia
 	}
 	
 	@Override
-	public Mono<LDAPAuthentication> authenticate(UserCredentials credentials) throws AuthenticationException {
-		String boundDN = this.getBindDN(credentials.getUsername(), this.domain);
-		String baseDN = this.base != null ? this.base : this.boundDNToBaseDN(boundDN);
-		Mono.from(this.ldapClient.bind(
-			boundDN,
-			credentials.getPassword(), 
-			ops -> ops.search(baseDN, this.searchUserFilter, boundDN, credentials.getUsername())
-				.single()
-				.mapNotNull(userEntry -> userEntry.getAllAttribute("memberOf"))
-				.flatMapIterable(Function.identity())
-				.map(LDAPAttribute::asString)
-				.collect(Collectors.toSet())
-				.map(groups -> (LDAPAuthentication)new GenericLDAPAuthentication(credentials.getUsername(), ops.getBoundDN().orElse(null), groups, true))
-			))
-			.onErrorMap(this::mapError);
-		
-		return null;
+	public Mono<LDAPAuthentication> authenticate(LoginCredentials credentials) throws AuthenticationException {
+		if(credentials.getPassword() instanceof RawPassword) {
+			String boundDN = this.getBindDN(credentials.getUsername(), this.domain);
+			String baseDN = this.base != null ? this.base : this.boundDNToBaseDN(boundDN);
+			return Mono.from(this.ldapClient.bind(
+				boundDN,
+				credentials.getPassword().getValue(), 
+				ops -> ops.search(baseDN, this.searchUserFilter, boundDN, credentials.getUsername())
+					.single()
+					.mapNotNull(userEntry -> userEntry.getAllAttribute("memberOf"))
+					.flatMapIterable(Function.identity())
+					.map(LDAPAttribute::asString)
+					.collect(Collectors.toSet())
+					.map(groups -> (LDAPAuthentication)new GenericLDAPAuthentication(credentials.getUsername(), ops.getBoundDN().orElse(null), groups, true))
+				))
+				.onErrorMap(this::mapError);
+		}
+		else {
+			throw new AuthenticationException("Unsupported password type: " + credentials.getPassword().getClass().getCanonicalName());
+		}
 	}
 
 	/**

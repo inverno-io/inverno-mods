@@ -54,28 +54,28 @@ import io.inverno.mod.security.jose.jwt.JWTService;
  * </p>
  * 
  * <dl>
- * <dt>configuration</dt>
+ * <dt><b>configuration</b></dt>
  * <dd>the JOSE module configuration</dd>
- * <dt>jwkKeyResolver</dt>
+ * <dt><b>jwkKeyResolver</b></dt>
  * <dd>A {@link JWKKeyResolver} used to resolve private and public (X.509 certificate) keys from a key store based on Key ids or X.509 thumbprints.</dd>
- * <dt>jwkURLResolver</dt>
+ * <dt><b>jwkURLResolver</b></dt>
  * <dd>A {@link JWKURLResolver} used to resolve JWK Set URLs.</dd>
- * <dt>jwkStore</dt>
+ * <dt><b>jwkStore</b></dt>
  * <dd>A {@link JWKStore} used to store and cache JWKs.</dd>
- * <dt>jwkPKIXParameters</dt>
+ * <dt><b>jwkPKIXParameters</b></dt>
  * <dd>{@link PKIXParameters} providing the parameters used to validate X.509 certificate paths.</dd>
- * <dt>jwkX509CertPathValidator</dt>
+ * <dt><b>jwkX509CertPathValidator</b></dt>
  * <dd>An {@code X509JWKCertPathValidator} used to validate X.509 certificate paths.</dd>
- * <dt>jweZips</dt>
+ * <dt><b>jweZips</b></dt>
  * <dd>A set of {@link JWEZip} used to compress/decompress JWE payloads.</dd>
- * <dt>mediaTypeConverters (required)</dt>
+ * <dt><b>mediaTypeConverters (required)</b></dt>
  * <dd>A list of {@link MediaTypeConverter} used to encode/decode JOSE objects payloads.</dd>
- * <dt>resourceService</dt>
+ * <dt><b>resourceService</b></dt>
  * <dd>The {@link ResourceService} used to resolve external resources such as key store, JWK Set URL, X.509 URL...</dd>
- * <dt>objectMapper</dt>
+ * <dt><b>objectMapper</b></dt>
  * <dd>The {@link ObjectMapper} used to serialize/deserialize JSON.</dd>
- * <dt>workerPool</dt>
- * <dd>The {@linl ExecutorService} used to execute blocking operations.</dd>
+ * <dt><b>workerPool</b></dt>
+ * <dd>The {@link ExecutorService} used to execute blocking operations.</dd>
  * </dl>
  * 
  * <p>
@@ -83,13 +83,13 @@ import io.inverno.mod.security.jose.jwt.JWTService;
  * </p>
  * 
  * <dl>
- * <dt>jwkService</dt>
+ * <dt><b>jwkService</b></dt>
  * <dd>A {@link JWKService} used to build, resolve, generate, store or load JSON Web Keys.</dd>
- * <dt>jwsService</dt>
+ * <dt><b>jwsService</b></dt>
  * <dd>A {@link JWSService} used to build and read JSON Web Signatures.</dd>
- * <dt>jweService</dt>
+ * <dt><b>jweService</b></dt>
  * <dd>A {@link JWEService} used to build and read JSON Web Encryptions.</dd>
- * <dt>jwtService</dt>
+ * <dt><b>jwtService</b></dt>
  * <dd>A {@link JWTService} used to build and read JSON Web Tokens.</dd>
  * </dl>
  * 

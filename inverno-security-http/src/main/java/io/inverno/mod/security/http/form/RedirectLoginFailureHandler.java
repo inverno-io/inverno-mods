@@ -22,37 +22,71 @@ import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.security.http.LoginActionHandler;
 import io.inverno.mod.security.http.LoginFailureHandler;
 import reactor.core.publisher.Mono;
 
 /**
- *
+ * <p>
+ * A login failure handler implementation that redirects the client (302) after a failed login authentication.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @see LoginActionHandler
+ * 
+ * @param <A> the context type
+ * @param <B> the exchange type
  */
 public class RedirectLoginFailureHandler<A extends ExchangeContext, B extends Exchange<A>> implements LoginFailureHandler<A, B> {
 
-	public static final String DEFAULT_FAILURE_URI = "/login";
+	/**
+	 * The default login failure URI: {@code /login}.
+	 */
+	public static final String DEFAULT_LOGIN_FAILURE_URI = "/login";
 
-	private final String failureUri;
+	/**
+	 * The URI where the client is redirected after a failed login authentication.
+	 */
+	private final String loginFailureUri;
 	
+	/**
+	 * <p>
+	 * Creates a redirect login failure handler which redirects the client to the default login failure URI.
+	 * </p>
+	 */
 	public RedirectLoginFailureHandler() {
-		this(DEFAULT_FAILURE_URI);
+		this(DEFAULT_LOGIN_FAILURE_URI);
 	}
 	
-	public RedirectLoginFailureHandler(String failureUri) {
-		this.failureUri = failureUri;
+	/**
+	 * <p>
+	 * Creates a redirect login failure handler which redirects the client to the specified login failure URI.
+	 * </p>
+	 * 
+	 * @param loginFailureUri the URI where to redirect the client after a failed login authentication
+	 */
+	public RedirectLoginFailureHandler(String loginFailureUri) {
+		this.loginFailureUri = loginFailureUri;
 	}
 
-	public String getFailureUri() {
-		return failureUri;
+	/**
+	 * <p>
+	 * Returns the URI where the client is redirected after a failed login authentication.
+	 * </p>
+	 * 
+	 * @return the login failure URI
+	 */
+	public String getLoginFailureUri() {
+		return loginFailureUri;
 	}
 	
 	@Override
 	public Mono<Void> handleLoginFailure(B exchange, io.inverno.mod.security.SecurityException error) {
 		return exchange.request().body().get().urlEncoded().collectMap()
 			.flatMap(parameterMap -> {
-				URIBuilder failureUriBuilder = URIs.uri(this.failureUri);
+				URIBuilder failureUriBuilder = URIs.uri(this.loginFailureUri);
 				
 				failureUriBuilder.queryParameter(FormLoginPageHandler.PARAMETER_ERROR, error.getClass().getSimpleName() + ": " + error.getMessage());
 				

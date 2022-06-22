@@ -20,20 +20,56 @@ import io.inverno.mod.http.server.ExchangeContext;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * Handles failed authentication in a {@link LoginActionHandler}.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @see LoginActionHandler
+ * 
+ * @param <A> the context type
+ * @param <B> the exchange type
  */
 public interface LoginFailureHandler<A extends ExchangeContext, B extends Exchange<A>> {
 
+	/**
+	 * <p>
+	 * Handles failed authentication.
+	 * </p>
+	 *
+	 * @param exchange the exchange
+	 * @param error    the security error
+	 *
+	 * @return a mono which completes when the failure has been handled
+	 */
 	Mono<Void> handleLoginFailure(B exchange, io.inverno.mod.security.SecurityException error);
 	
+	/**
+	 * <p>
+	 * Invokes this login failure handler and then invokes the specified login failure handler.
+	 * </p>
+	 * 
+	 * @param after the handler to invoke after this handler
+	 * 
+	 * @return a composed login failure handler that invokes in sequence this handler followed by the specified handler
+	 */
 	default LoginFailureHandler<A, B> andThen(LoginFailureHandler<? super A, ? super B> after) {
 		return (exchange, authentication) -> {
 			return this.handleLoginFailure(exchange, authentication).then(after.handleLoginFailure(exchange, authentication));
 		};
 	}
 	
+	/**
+	 * <p>
+	 * Invokes the specified login failure handler and then invokes this login failure handler.
+	 * </p>
+	 * 
+	 * @param before the handler to invoke before this handler
+	 * 
+	 * @return a composed login failure handler that invokes in sequence the specified handler followed by this handler
+	 */
 	default LoginFailureHandler<A, B> compose(LoginFailureHandler<? super A, ? super B> before) {
 		return (exchange, authentication) -> {
 			return before.handleLoginFailure(exchange, authentication).then(this.handleLoginFailure(exchange, authentication));

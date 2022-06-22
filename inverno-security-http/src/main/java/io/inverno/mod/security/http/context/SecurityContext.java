@@ -16,11 +16,20 @@
 package io.inverno.mod.security.http.context;
 
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.security.accesscontrol.AccessController;
+import io.inverno.mod.security.authentication.Authentication;
+import io.inverno.mod.security.identity.Identity;
 
 /**
+ * <p>
+ * The security exchange context which exposes {@link Authentication}, {@link Identity} and {@link AccessController} in the exchange context.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @param <A> the identity type
+ * @param <B> the access controller type
  */
-public interface SecurityContext extends io.inverno.mod.security.context.SecurityContext, ExchangeContext {
+public interface SecurityContext<A extends Identity, B extends AccessController> extends io.inverno.mod.security.context.SecurityContext<A, B>, ExchangeContext {
 }

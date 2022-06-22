@@ -17,32 +17,48 @@ package io.inverno.mod.security.internal.accesscontrol;
 
 import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
+import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * Generic {@link RoleBasedAccessController} implementation.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.5
  */
 public class GenericRoleBasedAccessController implements RoleBasedAccessController {
 
+	/**
+	 * The set of roles.
+	 */
 	private final Set<String> roles;
 
+	/**
+	 * <p>
+	 * Creates a role-based access controller with the specified set of roles.
+	 * </p>
+	 * 
+	 * @param roles a set of roles
+	 */
 	public GenericRoleBasedAccessController(Set<String> roles) {
 		this.roles = roles;
 	}
-	
+
 	@Override
-	public boolean hasRole(String role) {
-		return roles.contains(role);
+	public Mono<Boolean> hasRole(String role) {
+		return Mono.just(this.roles.contains(role));
 	}
 
 	@Override
-	public boolean hasAnyRole(String... roles) {
-		return Arrays.stream(roles).anyMatch(this.roles::contains);
+	public Mono<Boolean> hasAnyRole(Collection<String> roles) {
+		return Mono.just(roles.stream().anyMatch(this.roles::contains));
 	}
 
 	@Override
-	public boolean hasAllRole(String... roles) {
-		return this.roles.containsAll(Arrays.asList(roles));
+	public Mono<Boolean> hasAllRoles(Collection<String> roles) {
+		return Mono.just(this.roles.containsAll(Arrays.asList(roles)));
 	}
 }

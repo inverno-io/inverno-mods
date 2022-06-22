@@ -23,11 +23,15 @@ import io.inverno.mod.security.http.MalformedCredentialsException;
 import reactor.core.publisher.Mono;
 
 /**
- * TODO this has to be moved to OAuth2 specific security module
+ * <p>
+ * A credentials extractor that extracts a token credentials from a bearer in the {@code authorization} HTTP header as defined by <a href="https://www.rfc-editor.org/rfc/rfc6750.html#section-2.1">RFC
+ * 6750 Section 2.1</a>.
+ * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
+// TODO this has to be moved to OAuth2 specific security module
 public class BearerTokenCredentialsExtractor implements CredentialsExtractor<TokenCredentials> {
 
 	@Override

@@ -27,44 +27,141 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * An authenticator implementation that authenticates JWS token credentials and expose the original authentication.
+ * </p>
+ * 
+ * <p>
+ * The expected token must be a valid JWS compact string.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.5
+ * 
+ * @param <A> the original authentication type
  */
 public class JWSAuthenticator<A extends Authentication> implements Authenticator<TokenCredentials, JWSAuthentication<A>> {
 
+	/**
+	 * The JWS service.
+	 */
 	private final JWSService jwsService;
+	
+	/**
+	 * The original authentication type.
+	 */
 	private final Type authenticationType;
+	
+	/**
+	 * The keys to consider to verify the JWS.
+	 */
 	private final Publisher<? extends JWK> keys;
+	
+	/**
+	 * The parameters processed by the application.
+	 */
 	private final String[] processedParameters;
 	
+	/**
+	 * <p>
+	 * Creates a JWS authenticator with the specified JWS service and original authentication type.
+	 * </p>
+	 *
+	 * @param jwsService         the JWS service
+	 * @param authenticationType the original authentication type
+	 */
 	public JWSAuthenticator(JWSService jwsService, Class<A> authenticationType) {
 		this(jwsService, (Type)authenticationType, (Publisher<? extends JWK>)null, (String[]) null);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a JWS authenticator with the specified JWS service and original authentication type.
+	 * </p>
+	 *
+	 * @param jwsService         the JWS service
+	 * @param authenticationType the original authentication type
+	 */
 	public JWSAuthenticator(JWSService jwsService, Type authenticationType) {
 		this(jwsService, authenticationType, (Publisher<? extends JWK>)null, (String[]) null);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a JWS authenticator with the specified JWS service, original authentication type and keys.
+	 * </p>
+	 *
+	 * @param jwsService         the JWS service
+	 * @param authenticationType the original authentication type
+	 * @param keys               the keys to consider to verify the JWS
+	 */
 	public JWSAuthenticator(JWSService jwsService, Class<A> authenticationType, Publisher<? extends JWK> keys) {
 		this(jwsService, (Type)authenticationType, keys, (String[]) null);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a JWS authenticator with the specified JWS service, original authentication type and keys.
+	 * </p>
+	 *
+	 * @param jwsService         the JWS service
+	 * @param authenticationType the original authentication type
+	 * @param keys               the keys to consider to verify the JWS
+	 */
 	public JWSAuthenticator(JWSService jwsService, Type authenticationType, Publisher<? extends JWK> keys) {
 		this(jwsService, (Type)authenticationType, keys, (String[]) null);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a JWS authenticator with the specified JWS service, original authentication type and processed parameters.
+	 * </p>
+	 *
+	 * @param jwsService          the JWS service
+	 * @param authenticationType  the original authentication type
+	 * @param processedParameters the parameters processed by the application
+	 */
 	public JWSAuthenticator(JWSService jwsService, Class<A> authenticationType, String... processedParameters) {
 		this(jwsService, (Type)authenticationType, (Publisher<? extends JWK>)null, processedParameters);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a JWS authenticator with the specified JWS service, original authentication type and processed parameters.
+	 * </p>
+	 *
+	 * @param jwsService          the JWS service
+	 * @param authenticationType  the original authentication type
+	 * @param processedParameters the parameters processed by the application
+	 */
 	public JWSAuthenticator(JWSService jwsService, Type authenticationType, String... processedParameters) {
 		this(jwsService, authenticationType, (Publisher<? extends JWK>)null, processedParameters);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a JWS authenticator with the specified JWS service, original authentication type, keys and processed parameters.
+	 * </p>
+	 *
+	 * @param jwsService          the JWS service
+	 * @param authenticationType  the original authentication type
+	 * @param keys                the keys to consider to verify the JWS
+	 * @param processedParameters the parameters processed by the application
+	 */
 	public JWSAuthenticator(JWSService jwsService, Class<A> authenticationType, Publisher<? extends JWK> keys, String... processedParameters) {
 		this(jwsService, (Type)authenticationType, keys, processedParameters);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a JWS authenticator with the specified JWS service, original authentication type, keys and processed parameters.
+	 * </p>
+	 *
+	 * @param jwsService          the JWS service
+	 * @param authenticationType  the original authentication type
+	 * @param keys                the keys to consider to verify the JWS
+	 * @param processedParameters the parameters processed by the application
+	 */
 	public JWSAuthenticator(JWSService jwsService, Type authenticationType, Publisher<? extends JWK> keys, String... processedParameters) {
 		this.jwsService = jwsService;
 		this.keys = keys;

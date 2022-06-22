@@ -22,25 +22,62 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
+ * <p>
+ * A token authentication that uses the compact representation of a JWTE as token value.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.5
+ * 
+ * @param <A> the JWT claims set type
  */
 public class JWTEAuthentication <A extends JWTClaimsSet> implements TokenAuthentication {
 
+	/**
+	 * The JWTE.
+	 */
 	private final JWE<A> jwt;
 	
+	/**
+	 * <p>
+	 * Creates a JWTE authentication with the specified JWT.
+	 * </p>
+	 * 
+	 * @param jwt a JWTE
+	 */
 	public JWTEAuthentication(JWE<A> jwt) {
 		this.jwt = Objects.requireNonNull(jwt);
 	}
 
+	/**
+	 * <p>
+	 * Returns the JWTE.
+	 * </p>
+	 * 
+	 * @return a JWTE
+	 */
 	public JWE<A> getJwt() {
 		return this.jwt;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the JWT claims set.
+	 * </p>
+	 * 
+	 * @return the JWT claims set
+	 */
 	public A getJWTClaimsSet() {
 		return this.jwt.getPayload();
 	}
 	
+	/**
+	 * <p>
+	 * Returns the JWTE compact representation.
+	 * </p>
+	 * 
+	 * @return the JWTE compact representation
+	 */
 	@Override
 	public String getToken() {
 		return this.jwt.toCompact();

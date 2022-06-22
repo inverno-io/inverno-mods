@@ -33,6 +33,19 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-configuration</artifactId>
+			<version>${project.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-redis</artifactId>
+			<version>${project.version}</version>
+			<optional>true</optional>
+		</dependency>
+		
+		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-core</artifactId>
 		</dependency>
@@ -43,6 +56,19 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk18on</artifactId>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
+			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-redis-lettuce</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
 		</dependency>
 		
 		<dependency>
@@ -71,4 +97,15 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<argLine>--add-modules io.inverno.mod.base,io.inverno.mod.configuration,io.inverno.mod.redis</argLine> <!-- required for RedisUserRepositoryTest -->
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

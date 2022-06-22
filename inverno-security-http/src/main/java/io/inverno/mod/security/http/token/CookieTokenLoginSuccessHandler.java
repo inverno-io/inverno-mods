@@ -18,42 +18,103 @@ package io.inverno.mod.security.http.token;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.security.authentication.TokenAuthentication;
+import io.inverno.mod.security.http.LoginActionHandler;
 import io.inverno.mod.security.http.LoginSuccessHandler;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * The secure flag is set when the server is configured with TLS (HTTPS). An application deployed behind an SSL offloader is likely to be configured without TLS and as a result it is up to the SSL
- * offloader to set the secure flag on the authentication token cookie.
+ * A login success handler that sets a token cookie in the response using the token value specified in the token authentication resulting from the login authentication.
+ * </p>
+ * 
+ * <p>
+ * The secure flag is set on the token cookie when the server is configured with TLS (HTTPS). An application deployed behind an SSL offloader is likely to be configured without TLS and as a result it
+ * is up to the SSL offloader to set the secure flag on the authentication token cookie.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @see LoginActionHandler
+ * 
+ * @param <A> the authentication type
+ * @param <B> the context type
+ * @param <C> the exchange type
  */
 public class CookieTokenLoginSuccessHandler<A extends TokenAuthentication, B extends ExchangeContext, C extends Exchange<B>> implements LoginSuccessHandler<A, B, C> {
 
-	public static final String DEFAULT_COOKIE_NAME = "auth-token";
-	
+	/**
+	 * The default token cookie path: {@code /}.
+	 * 
+	 * <p>
+	 * This constant is also used in {@link CookieTokenLogoutSuccessHandler}.
+	 * </p>
+	 */
 	public static final String DEFAULT_PATH = "/";
 	
+	/**
+	 * The token cookie path.
+	 */
 	private final String path;
-	private final String cookieName;
 	
+	/**
+	 * The token cookie name.
+	 */
+	private final String tokenCookie;
+	
+	/**
+	 * <p>
+	 * Creates a cookie token login success handler with default path and token cookie name.
+	 * </p>
+	 */
 	public CookieTokenLoginSuccessHandler() {
-		this(DEFAULT_PATH, DEFAULT_COOKIE_NAME);
+		this(DEFAULT_PATH, CookieTokenCredentialsExtractor.DEFAULT_COOKIE_NAME);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a cookie token login success handler with the specified path and the default token cookie name.
+	 * </p>
+	 * 
+	 * @param path the token cookie path
+	 */
 	public CookieTokenLoginSuccessHandler(String path) {
-		this(path, DEFAULT_COOKIE_NAME);
+		this(path, CookieTokenCredentialsExtractor.DEFAULT_COOKIE_NAME);
 	}
 	
-	public CookieTokenLoginSuccessHandler(String path, String cookieName) {
+	/**
+	 * <p>
+	 * Creates a cookie token login success handler with specified path and token cookie name.
+	 * </p>
+	 *
+	 * @param path        the token cookie path
+	 * @param tokenCookie the token cookie name
+	 */
+	public CookieTokenLoginSuccessHandler(String path, String tokenCookie) {
 		this.path = path;
-		this.cookieName = cookieName;
+		this.tokenCookie = tokenCookie;
 	}
 
-	public String getCookieName() {
-		return cookieName;
+	/**
+	 * <p>
+	 * Returns the token cookie path.
+	 * </p>
+	 * 
+	 * @return the token cookie path
+	 */
+	public String getPath() {
+		return path;
+	}
+	
+	/**
+	 * <p>
+	 * Returns the token cookie name.
+	 * </p>
+	 * 
+	 * @return the token cookie name
+	 */
+	public String getTokenCookie() {
+		return tokenCookie;
 	}
 	
 	@Override
@@ -66,7 +127,7 @@ public class CookieTokenLoginSuccessHandler<A extends TokenAuthentication, B ext
 				.path(this.path)
 				.secure("https".equals(exchange.request().getScheme()))
 				.httpOnly(true)
-				.name(DEFAULT_COOKIE_NAME)
+				.name(this.tokenCookie)
 				.value(authentication.getToken())
 			)));
 	}

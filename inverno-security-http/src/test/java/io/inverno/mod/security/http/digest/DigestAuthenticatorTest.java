@@ -15,10 +15,7 @@
  */
 package io.inverno.mod.security.http.digest;
 
-import io.inverno.mod.security.authentication.UserCredentials;
 import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple3;
 
 /**
  * 
@@ -32,7 +29,7 @@ public class DigestAuthenticatorTest {
 		String username = "Mufasa";
 		String password = "Circle of Life";
 		
-		DigestUserAuthenticator authenticator = new DigestUserAuthenticator(ign -> Mono.just(new UserCredentials("user", "password")), "secret");
+//		DigestUserAuthenticator authenticator = new DigestUserAuthenticator(ign -> Mono.just(new UserCredentials("user", "password")), "secret");
 		
 		/*
 		 * username="user", 

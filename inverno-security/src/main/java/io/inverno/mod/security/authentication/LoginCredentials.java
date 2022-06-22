@@ -15,52 +15,48 @@
  */
 package io.inverno.mod.security.authentication;
 
-import java.util.Set;
-import org.apache.commons.lang3.StringUtils;
+import io.inverno.mod.security.authentication.password.Password;
+import io.inverno.mod.security.internal.authentication.GenericLoginCredentials;
 
 /**
  * <p>
- * Username/password credentials.
+ * Login credentials composed of a username and a password.
  * </p>
- * 
- * TODO We could include the realm here as well in order to be able to use multiple Credentialsresolver per realm.
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class UserCredentials implements Credentials {
+public interface LoginCredentials extends PrincipalCredentials {
 
-	private final String username;
-
-	private final String password;
-	
-	private final Set<String> groups;
-
-	public UserCredentials(String username, String password) throws InvalidCredentialsException {
-		this(username, password, Set.of());
+	/**
+	 * <p>
+	 * Creates a login credentials with the specified username and password.
+	 * </p>
+	 * 
+	 * @param username a username
+	 * @param password a password
+	 * 
+	 * @return a new login credentials
+	 * 
+	 * @throws InvalidCredentialsException if the combination of user and password is invalid
+	 */
+	static LoginCredentials of(String username, Password<?, ?> password) throws InvalidCredentialsException {
+		return new GenericLoginCredentials(username, password);
 	}
 	
-	public UserCredentials(String username, String password, Set<String> groups) throws InvalidCredentialsException {
-		if(StringUtils.isBlank(username)) {
-			throw new InvalidCredentialsException("Username is blank");
-		}
-		if(StringUtils.isBlank(password)) {
-			throw new InvalidCredentialsException("Password is blank");
-		}
-		this.username = username;
-		this.password = password;
-		this.groups = groups;
-	}
-
-	public String getUsername() {
-		return username;
-	}
-
-	public String getPassword() {
-		return password;
-	}
+	/**
+	 * <p>
+	 * Returns the password.
+	 * </p>
+	 * 
+	 * @return a password
+	 */
+	Password<?, ?> getPassword();
 	
-	public Set<String> getGroups() {
-		return groups;
-	}
+	/*
+	 * TODO We might also include the realm here as well in order to be able to use multiple CredentialsResolver per realm.
+	 * This might be interesting however, considering HTTP Basic authentication scheme the realm is sent as a challenge to the client which do not send it back with the authorization header
+	 * the information is basically lost
+	 * this is not the case for the digest scheme
+	 */
 }

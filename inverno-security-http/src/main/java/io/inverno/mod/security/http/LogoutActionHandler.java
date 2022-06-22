@@ -18,49 +18,100 @@ package io.inverno.mod.security.http;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.authentication.Authentication;
 import io.inverno.mod.security.authentication.AuthenticationReleaser;
 import io.inverno.mod.security.http.context.SecurityContext;
+import io.inverno.mod.security.identity.Identity;
 import reactor.core.publisher.Mono;
 
 /**
- *
+ * <p>
+ * An exchange handler that logs out a logged in entity and delegates further processing to a success handler.
+ * </p>
+ * 
+ * <p>
+ * A logout action handler is used whenever there is a need to explicitly invalidate an authentication (e.g. invalidate a token credentials) or free resources locked by that authentication (e.g.
+ * remove a session). It uses an {@link AuthenticationReleaser} to release the authentication and a {@link LogoutSuccessHandler} to handle successful logouts.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @param <A> the authentication type
+ * @param <B> the identity type
+ * @param <C> the access controller type
+ * @param <D> the security context type
+ * @param <E> the exchange type
  */
-public class LogoutActionHandler<A extends Authentication, B extends SecurityContext, C extends Exchange<B>> implements ExchangeHandler<B, C> {
+public class LogoutActionHandler<A extends Authentication, B extends Identity, C extends AccessController, D extends SecurityContext<B, C>, E extends Exchange<D>> implements ExchangeHandler<D, E> {
 
-	private final AuthenticationReleaser<A> authenticationReleasor;
+	/**
+	 * The authentication releaser used to release an authentication.
+	 */
+	private final AuthenticationReleaser<A> authenticationReleaser;
 	
-	private final LogoutSuccessHandler<A, B, C> logoutSuccessHandler;
+	/**
+	 * The logout success handler invoked after a successful logout.
+	 */
+	private final LogoutSuccessHandler<A, B, C, D, E> logoutSuccessHandler;
 	
-	public LogoutActionHandler(AuthenticationReleaser<A> authenticationReleasor) {
-		this(authenticationReleasor, null);
+	/**
+	 * <p>
+	 * Creates a logout action handler with the specified authentication releaser.
+	 * </p>
+	 * 
+	 * @param authenticationReleaser an authentication releaser
+	 */
+	public LogoutActionHandler(AuthenticationReleaser<A> authenticationReleaser) {
+		this(authenticationReleaser, null);
 	}
 	
-	public LogoutActionHandler(AuthenticationReleaser<A> authenticationReleasor, LogoutSuccessHandler<A, B, C> logoutSuccessHandler) {
-		this.authenticationReleasor = authenticationReleasor;
+	/**
+	 * <p>
+	 * Creates a logout action handler with the specified authentication releaser and logout success handler.
+	 * </p>
+	 *
+	 * @param authenticationReleaser an authentication releaser
+	 * @param logoutSuccessHandler   a logout success handler
+	 */
+	public LogoutActionHandler(AuthenticationReleaser<A> authenticationReleaser, LogoutSuccessHandler<A, B, C, D, E> logoutSuccessHandler) {
+		this.authenticationReleaser = authenticationReleaser;
 		this.logoutSuccessHandler = logoutSuccessHandler;
 	}
 
-	public AuthenticationReleaser<A> getAuthenticationReleasor() {
-		return authenticationReleasor;
+	/**
+	 * <p>
+	 * Returns the authentication releaser.
+	 * </p>
+	 * 
+	 * @return the authentication releaser
+	 */
+	public AuthenticationReleaser<A> getAuthenticationReleaser() {
+		return authenticationReleaser;
 	}
 
-	public LogoutSuccessHandler<A, B, C> getLogoutSuccessHandler() {
+	/**
+	 * <p>
+	 * Returns the logout success handler.
+	 * </p>
+	 * 
+	 * @return the logout success handler
+	 */
+	public LogoutSuccessHandler<A, B, C, D, E> getLogoutSuccessHandler() {
 		return logoutSuccessHandler;
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	public Mono<Void> defer(C exchange) {
+	public Mono<Void> defer(E exchange) {
 		Authentication authentication = exchange.context().getAuthentication();
 		/* 
 		 * We can have ClassCastException here but at some point we can't make everything generic, this risk should be limited assuming everything is 
 		 * properly configured. Since everything related to configuration is generic, it should be ok and if not, the error will be raised at runtime 
 		 * instead of compile time.
 		 */
-		Mono<Void> result = this.authenticationReleasor.release((A)authentication);
+		Mono<Void> result = this.authenticationReleaser.release((A)authentication);
 		if(this.logoutSuccessHandler != null) {
 			result = result.then(this.logoutSuccessHandler.handleLogoutSuccess(exchange, (A)authentication));
 		}
@@ -68,7 +119,7 @@ public class LogoutActionHandler<A extends Authentication, B extends SecurityCon
 	}
 	
 	@Override
-	public void handle(C exchange) throws HttpException {
+	public void handle(E exchange) throws HttpException {
 		throw new UnsupportedOperationException();
 	}
 }

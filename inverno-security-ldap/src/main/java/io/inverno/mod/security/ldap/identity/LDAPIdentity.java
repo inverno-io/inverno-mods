@@ -26,7 +26,7 @@ import java.util.List;
  * 
  * <p>
  * An LDAP user is typically represented as a {@code person}, an {@code organizationalPerson} or a {@code inetOrgPerson} as defined by 
- * <a href="<a href="https://datatracker.ietf.org/doc/html/rfc2798">RFC 2256</a> and <a href="https://datatracker.ietf.org/doc/html/rfc2798">RFC2798</a>.
+ * <a href="https://datatracker.ietf.org/doc/html/rfc2798">RFC 2256</a> and <a href="https://datatracker.ietf.org/doc/html/rfc2798">RFC2798</a>.
  * </p>
  * 
  * <p>

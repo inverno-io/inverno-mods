@@ -120,12 +120,11 @@ public class PBES2KeyManager extends AbstractEncryptingJWAKeyManager<PBES2JWK, P
 	@Override
 	protected EncryptedCEK doEncryptCEK(OCTJWK cek, Map<String, Object> parameters, SecureRandom secureRandom) throws JWAKeyManagerException {
 		return cek.toSecretKey().map(cekSecretKey -> {
-			byte[] p2s = getP2s(parameters, false, secureRandom);
-			Integer p2c = getP2c(parameters, false);
-			
 			try {
 				// Derive key
 				SecretKeyFactory skf = SecretKeyFactory.getInstance(this.algorithm.getJcaAlgorithm());
+				byte[] p2s = getP2s(parameters, false, secureRandom);
+				Integer p2c = getP2c(parameters, false);
 				PBEKeySpec derivedKeySpec = new PBEKeySpec(new String(Base64.getUrlDecoder().decode(this.jwk.getPassword())).toCharArray(), computeSaltValue(this.algorithm, p2s), p2c, this.algorithm.getEncryptionKeyLength() * 8);
 				SecretKey derivedKey = new SecretKeySpec(skf.generateSecret(derivedKeySpec).getEncoded(), "AES") ;
 
@@ -150,12 +149,11 @@ public class PBES2KeyManager extends AbstractEncryptingJWAKeyManager<PBES2JWK, P
 
 	@Override
 	protected OCTJWK doDecryptCEK(byte[] encrypted_key, OCTAlgorithm octEnc, Map<String, Object> parameters) throws JWAKeyManagerException {
-		byte[] p2s = getP2s(parameters, true, null);
-		Integer p2c = getP2c(parameters, true);
-		
 		try {
 			// Derive key
 			SecretKeyFactory skf = SecretKeyFactory.getInstance(this.algorithm.getJcaAlgorithm());
+			byte[] p2s = getP2s(parameters, true, null);
+			Integer p2c = getP2c(parameters, true);
 			PBEKeySpec derivedKeySpec = new PBEKeySpec(new String(Base64.getUrlDecoder().decode(this.jwk.getPassword())).toCharArray(), computeSaltValue(this.algorithm, p2s), p2c, this.algorithm.getEncryptionKeyLength() * 8);
 			SecretKey derivedKey = new SecretKeySpec(skf.generateSecret(derivedKeySpec).getEncoded(), "AES");
 			

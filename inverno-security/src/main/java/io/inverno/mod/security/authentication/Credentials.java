@@ -15,10 +15,35 @@
  */
 package io.inverno.mod.security.authentication;
 
+import io.inverno.mod.security.authentication.user.UserRepository;
+
 /**
- *
+ * <p>
+ * Credentials represents the data required by an entity to get access to protected services or resources.
+ * </p>
+ * 
+ * <p>
+ * Credentials must be provided to an {@link Authenticator} by an entity that wants to access protected services or resources. Authenticators can then authenticate these credentials either by matching
+ * them with credentials stored in a secured repository (see {@link UserRepository}), by using cryptographic methods or by using other authentication services (e.g. LDAP, Active Directory...).
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
 public interface Credentials {
+	
+	/**
+	 * <p>
+	 * Determines whether a credentials is locked.
+	 * </p>
+	 * 
+	 * <p>
+	 * Locked credentials should be considered invalid by authenticators when matching provided credentials with stored entity credentials.
+	 * </p>
+	 * 
+	 * @return true if credentials are locked, false otherwise
+	 */
+	default boolean isLocked() {
+		return false;
+	}
 }

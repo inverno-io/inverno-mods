@@ -18,36 +18,72 @@ package io.inverno.mod.security.http.form;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.authentication.Authentication;
 import io.inverno.mod.security.http.LogoutSuccessHandler;
+import io.inverno.mod.security.http.context.SecurityContext;
+import io.inverno.mod.security.identity.Identity;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * A logout success handler implementation that redirects the client (302) after a successful logout.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @param <A> the authentication type
+ * @param <B> the identity type
+ * @param <C> the access controller type
+ * @param <D> the security context type
+ * @param <E> the exchange type
  */
-public class RedirectLogoutSuccessHandler<A extends Authentication, B extends ExchangeContext, C extends Exchange<B>> implements LogoutSuccessHandler<A, B, C>{
+public class RedirectLogoutSuccessHandler<A extends Authentication, B extends Identity, C extends AccessController, D extends SecurityContext<B, C>, E extends Exchange<D>> implements LogoutSuccessHandler<A, B, C, D, E>{
 
+	/**
+	 * The default logout success URI: {@code /}.
+	 */
 	public static final String DEFAULT_LOGOUT_SUCCESS_URI = "/";
 	
+	/**
+	 * The URI where the client is redirected after a successful logout.
+	 */
 	private final String logoutSuccessUri;
 
+	/**
+	 * <p>
+	 * Creates a redirect logout success handler which redirects the client to the default logout success URI.
+	 * </p>
+	 */
 	public RedirectLogoutSuccessHandler() {
 		this(DEFAULT_LOGOUT_SUCCESS_URI);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a redirect logout success handler which redirects the client to the specified logout success URI.
+	 * </p>
+	 * 
+	 * @param loginSuccessUri the URI where to redirect the client after a successful logout
+	 */
 	public RedirectLogoutSuccessHandler(String loginSuccessUri) {
 		this.logoutSuccessUri = loginSuccessUri;
 	}
 
+	/**
+	 * <p>
+	 * Returns the URI where the client is redirected after a successful logout.
+	 * </p>
+	 * 
+	 * @return the logout success URI
+	 */
 	public String getLogoutSuccessUri() {
 		return logoutSuccessUri;
 	}
 	
 	@Override
-	public Mono<Void> handleLogoutSuccess(C exchange, A authentication) {
+	public Mono<Void> handleLogoutSuccess(E exchange, A authentication) {
 		return Mono.fromRunnable(() -> {
 			exchange.response()
 				.headers(headers -> headers

@@ -16,7 +16,8 @@
 package io.inverno.mod.security.ldap.authentication;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import io.inverno.mod.security.authentication.UserAuthentication;
+import io.inverno.mod.security.authentication.GroupAwareAuthentication;
+import io.inverno.mod.security.authentication.PrincipalAuthentication;
 import io.inverno.mod.security.ldap.internal.authentication.GenericLDAPAuthentication;
 
 /**
@@ -28,7 +29,7 @@ import io.inverno.mod.security.ldap.internal.authentication.GenericLDAPAuthentic
  * @since 1.5
  */
 @JsonDeserialize( as = GenericLDAPAuthentication.class )
-public interface LDAPAuthentication extends UserAuthentication {
+public interface LDAPAuthentication extends PrincipalAuthentication, GroupAwareAuthentication {
 
 	/**
 	 * <p>

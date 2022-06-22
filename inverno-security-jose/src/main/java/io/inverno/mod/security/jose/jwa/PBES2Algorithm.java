@@ -68,7 +68,7 @@ public enum PBES2Algorithm implements JWAAlgorithm<PBES2JWK> {
 	/**
 	 * The default iteration count.
 	 */
-	public static final int DEFAULT_ITERATION_COUNT = 2048;
+	public static final int DEFAULT_ITERATION_COUNT = MINIMUM_ITERATION_COUNT;
 	
 	/**
 	 * The JWA registered algorithm name.

@@ -1,0 +1,30 @@
+[ domain = "printer" ] {
+	# jsmith has permission to query to any printer in the printer domain
+	ROLE_user="query"
+	ROLE_admin="*"
+}
+
+[ domain = "printer", printer = "lp1200" ] {
+	# jsmith has permission to query and print to printer lp1200
+	jsmith="query,print"
+}
+
+[ printer="epsoncolor" ] {
+	# jsmith has permission to manage printer epsoncolor across all domains
+	# when querying with (domain=printer,printer=epsoncolor) the permission is actually 'query' because domain parameter has the highest priority
+	jsmith="manage"
+	ROLE_user="query,print"
+}
+
+[ domain = "printer", printer = "XP-4100" ] {
+	# jsmith has all permission on printer XP-4100
+	jsmith="*"
+}
+
+[ domain = "printer", printer = "HL-L6400DW" ] {
+	ROLE_user="query,print"
+}
+
+[ domain = "printer", printer = "C400V_DN" ] {
+	jsmith="*,!manage"
+}

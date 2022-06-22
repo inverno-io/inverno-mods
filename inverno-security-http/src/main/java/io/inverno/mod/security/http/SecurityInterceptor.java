@@ -17,10 +17,12 @@ package io.inverno.mod.security.http;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeInterceptor;
+import io.inverno.mod.security.SecurityManager;
 import io.inverno.mod.security.context.SecurityContext;
 import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.accesscontrol.AccessControllerResolver;
 import io.inverno.mod.security.authentication.Authentication;
+import io.inverno.mod.security.authentication.AuthenticationException;
 import io.inverno.mod.security.authentication.Authenticator;
 import io.inverno.mod.security.authentication.Credentials;
 import io.inverno.mod.security.http.context.InterceptingSecurityContext;
@@ -33,55 +35,123 @@ import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * The security interceptor extracts the credentials send by a requester, authenticates them and creates the security context in the exchange.
+ * </p>
+ * 
+ * <p>
+ * This is the main security interceptor that must be used on protectected resources. It authenticates the request and creates the {@link SecurityContext} in the exchange which can later be used in a
+ * {@link AccessControlInterceptor} or directly in the exchange handler to control the access to the resource.
+ * </p>
+ * 
+ * <p>
+ * Just like a {@link SecurityManager}, it relies on an {@link Authenticator} to authenticate credentials extracted from the request by a {@link CredentialsExtractor}, an {@link IdentityResolver} to
+ * resolve the identity of the authenticated entity and an {@link AccessControllerResolver} to get the access controller for the authenticated entity in order to create the {@link SecurityContext}
+ * which is set into the context of the exchange.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @see SecurityManager
+ * @see AccessControllerResolver
+ * 
+ * @param <A> the credentials type
+ * @param <B> the authentication type
+ * @param <C> the identity type
+ * @param <D> the access controller type
+ * @param <E> the exchange type
  */
-public class AuthenticationInterceptor<A extends Exchange<InterceptingSecurityContext>, B extends Credentials, C extends Authentication, D extends Identity, E extends AccessController> implements ExchangeInterceptor<InterceptingSecurityContext, A> {
+public class SecurityInterceptor<A extends Credentials, B extends Authentication, C extends Identity, D extends AccessController, E extends Exchange<InterceptingSecurityContext<C, D>>> implements ExchangeInterceptor<InterceptingSecurityContext<C, D>, E> {
 
-	private static final Logger LOGGER = LogManager.getLogger(AuthenticationInterceptor.class);
+	private static final Logger LOGGER = LogManager.getLogger(SecurityInterceptor.class);
+
+	/**
+	 * The credentials extractor.
+	 */
+	private final CredentialsExtractor<? extends A> credentialsExtractor;
 	
-	private final CredentialsExtractor<B> credentialsExtractor;
-	private final Authenticator<B, C> authenticator;
+	/**
+	 * The authenticator.
+	 */
+	private final Authenticator<? super A, ? extends B> authenticator;
 
-	private Optional<IdentityResolver<C, D>> identityResolver;
-	private Optional<AccessControllerResolver<C, E>> accessControllerResolver;
+	/**
+	 * The identity resolver.
+	 */
+	private final Optional<IdentityResolver<? super B, ? extends C>> identityResolver;
+	
+	/**
+	 * The access controller resolver.
+	 */
+	private final Optional<AccessControllerResolver<? super B, ? extends D>> accessControllerResolver;
 
-	public AuthenticationInterceptor(CredentialsExtractor<B> credentialsExtractor, Authenticator<B, C> authenticator) {
+	/**
+	 * <p>
+	 * Creates a security interceptor with the specified credentials extractor and authenticator.
+	 * </p>
+	 *
+	 * @param credentialsExtractor a credentials extractor
+	 * @param authenticator        an authenticator
+	 */
+	public SecurityInterceptor(CredentialsExtractor<? extends A> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator) {
 		this(credentialsExtractor, authenticator, null, null);
 	}
 	
-	public AuthenticationInterceptor(CredentialsExtractor<B> credentialsExtractor, Authenticator<B, C> authenticator, IdentityResolver<C, D> identityResolver) {
+	/**
+	 * <p>
+	 * Creates a security interceptor with the specified credentials extractor, authenticator and identity resolver.
+	 * </p>
+	 *
+	 * @param credentialsExtractor a credentials extractor
+	 * @param authenticator        an authenticator
+	 * @param identityResolver     an identity resolver
+	 */
+	public SecurityInterceptor(CredentialsExtractor<? extends A> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, IdentityResolver<? super B, ? extends C> identityResolver) {
 		this(credentialsExtractor, authenticator, identityResolver, null);
 	}
 	
-	public AuthenticationInterceptor(CredentialsExtractor<B> credentialsExtractor, Authenticator<B, C> authenticator, AccessControllerResolver<C, E> accessControllerResolver) {
+	/**
+	 * <p>
+	 * Creates a security interceptor with the specified credentials extractor, authenticator and access controller resolver.
+	 * </p>
+	 *
+	 * @param credentialsExtractor a credentials extractor
+	 * @param authenticator        an authenticator
+	 * @param accessControllerResolver     an access controller resolver
+	 */
+	public SecurityInterceptor(CredentialsExtractor<? extends A> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, AccessControllerResolver<? super B, ? extends D> accessControllerResolver) {
 		this(credentialsExtractor, authenticator, null, accessControllerResolver);
 	}
 
-	public AuthenticationInterceptor(CredentialsExtractor<B> credentialsExtractor, Authenticator<B, C> authenticator, IdentityResolver<C, D> identityResolver, AccessControllerResolver<C, E> accessControllerResolver) {
+	/**
+	 * <p>
+	 * Creates a security interceptor with the specified credentials extractor, authenticator, identity resolver and access controller resolver.
+	 * </p>
+	 *
+	 * @param credentialsExtractor a credentials extractor
+	 * @param authenticator        an authenticator
+	 * @param identityResolver     an identity resolver
+	 * @param accessControllerResolver     an access controller resolver
+	 */
+	public SecurityInterceptor(CredentialsExtractor<? extends A> credentialsExtractor, Authenticator<? super A, ? extends B> authenticator, IdentityResolver<? super B, ? extends C> identityResolver, AccessControllerResolver<? super B, ? extends D> accessControllerResolver) {
 		this.credentialsExtractor = Objects.requireNonNull(credentialsExtractor);
 		this.authenticator = Objects.requireNonNull(authenticator);
 		this.identityResolver = Optional.ofNullable(identityResolver);
 		this.accessControllerResolver = Optional.ofNullable(accessControllerResolver);
 	}
 
-	public void setIdentityResolver(IdentityResolver<C, D> identityResolver) {
-		this.identityResolver = Optional.ofNullable(identityResolver);
-	}
-
-	public void setAccessControllerResolver(AccessControllerResolver<C, E> accessControllerResolver) {
-		this.accessControllerResolver = Optional.ofNullable(accessControllerResolver);
-	}
-
 	@Override
 	@SuppressWarnings("unchecked")
-	public Mono<? extends A> intercept(A exchange) {
+	public Mono<? extends E> intercept(E exchange) {
 		// 1. Extract credentials
 		return this.credentialsExtractor.extract(exchange)
+			// No credentials => anonymous access
+			.switchIfEmpty(Mono.fromRunnable(() -> exchange.context().setSecurityContext((SecurityContext<C, D>)SecurityContext.of(Authentication.anonymous()))))
 			// 2. Authenticate
 			.flatMap(credentials -> this.authenticator
 				.authenticate(credentials)
+				.switchIfEmpty(Mono.error(() -> new AuthenticationException("Unable to authenticate")))
 				.doOnError(io.inverno.mod.security.SecurityException.class, error -> LOGGER.debug("Failed to authenticate", error))
 			)
 			// 3. Resolve identity and access control
@@ -106,48 +176,16 @@ public class AuthenticationInterceptor<A extends Exchange<InterceptingSecurityCo
 			// 4. Create and set SecurityContext
 			.doOnNext(tuple3 -> exchange.context().setSecurityContext( 
 				SecurityContext.of(
-					(Authentication) tuple3.getT1(),
-					(Optional<Identity>) tuple3.getT2(),
-					(Optional<AccessController>) tuple3.getT3()
+					(B) tuple3.getT1(),
+					(Optional<C>) tuple3.getT2(),
+					(Optional<D>) tuple3.getT3()
 				)
 			))
 			// Return a denied authentication in case of security error, let any other error propagate
 			.onErrorResume(io.inverno.mod.security.SecurityException.class, error -> {
-				exchange.context().setSecurityContext(SecurityContext.of(Authentication.denied(error)));
+				exchange.context().setSecurityContext((SecurityContext<C, D>)SecurityContext.of(Authentication.denied(error)));
 				return Mono.empty();
 			})
 			.thenReturn(exchange);
-		/*
-		// 1. Extract credentials
-		return this.credentialsExtractor.extract(exchange)
-			// 2. Authenticate
-			.flatMap(this.authenticator::authenticate)
-			// 3. Resolve identity and authorizations
-			.onErrorContinue(io.inverno.mod.security.SecurityException.class, (error, ign) -> {
-				exchange.context().setSecurityContext(SecurityContext.of(Authentication.denied((io.inverno.mod.security.SecurityException)error)));
-			})
-			.flatMap(authentication -> Mono.zip(
-				Mono.just(authentication),
-				this.identityResolver
-					.filter(ign -> authentication.isAuthenticated())
-					.map(resolver -> resolver.resolveIdentity(authentication).map(Optional::of))
-					.orElse(Mono.just(Optional.empty())),
-				this.authorizationsResolver
-					.filter(ign -> authentication.isAuthenticated())
-					.map(resolver -> resolver.resolveAuthorizations(authentication).map(Optional::of))
-					.orElse(Mono.just(Optional.empty()))
-			))
-			// 4. Create and set SecurityContext
-			.doOnNext(tuple3 -> exchange.context().setSecurityContext( 
-				SecurityContext.of(
-					(Authentication) tuple3.getT1(),
-					(Optional<Identity>) tuple3.getT2(),
-					(Optional<Authorizations>) tuple3.getT3()
-				)
-			))
-			// 4'. Create and set failed SecurityContext
-			.doOnError(io.inverno.mod.security.SecurityException.class, error -> exchange.context().setSecurityContext(SecurityContext.of(Authentication.denied(error))))
-			.onErrorResume(io.inverno.mod.security.SecurityException.class, error -> Mono.empty())
-			.thenReturn(exchange);*/
 	}
 }

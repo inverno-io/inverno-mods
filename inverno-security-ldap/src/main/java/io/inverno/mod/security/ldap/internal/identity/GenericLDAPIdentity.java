@@ -18,6 +18,7 @@ package io.inverno.mod.security.ldap.internal.identity;
 import io.inverno.mod.security.ldap.identity.LDAPIdentity;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -79,7 +80,7 @@ public class GenericLDAPIdentity implements LDAPIdentity {
 	 * @param cn  the list of common names
 	 */
 	public GenericLDAPIdentity(String uid, List<String> sn, List<String> cn) {
-		this.uid = uid;
+		this.uid = Objects.requireNonNull(uid);
 		this.sn = Collections.unmodifiableList(sn);
 		this.cn = Collections.unmodifiableList(cn);
 	}
@@ -504,7 +505,7 @@ public class GenericLDAPIdentity implements LDAPIdentity {
 	 * Sets the list of labeled URIs.
 	 * </p>
 	 * 
-	 * @param description a list
+	 * @param labeledURI a list
 	 */
 	public void setLabeledURI(List<String> labeledURI) {
 		this.labeledURI = Collections.unmodifiableList(labeledURI);

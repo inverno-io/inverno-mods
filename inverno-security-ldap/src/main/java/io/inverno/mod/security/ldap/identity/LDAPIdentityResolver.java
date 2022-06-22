@@ -150,7 +150,7 @@ public class LDAPIdentityResolver implements IdentityResolver<LDAPAuthentication
 	
 	@Override
 	public Mono<LDAPIdentity> resolveIdentity(LDAPAuthentication authentication) throws IdentityException {
-		return this.ldapClient.search(authentication.getDN(), this.attributes, "(&(objectClass=inetOrgPerson)(uid={0}))", authentication.getUsername())
+		return this.ldapClient.search(authentication.getDN(), this.attributes, DEFAULT_SEARCH_USER_FILTER, authentication.getUsername())
 			.single()
 			.map(userEntry -> {
 				String uid = userEntry.getAttribute(LDAPIdentity.ATTRIBUTE_UID)

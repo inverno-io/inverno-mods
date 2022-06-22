@@ -15,14 +15,14 @@
  */
 package io.inverno.mod.security.authentication;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.inverno.mod.security.internal.authentication.GenericUserAuthentication;
-import java.util.Set;
+import io.inverno.mod.security.authentication.password.PBKDF2Password;
+import io.inverno.mod.security.authentication.user.User;
+import io.inverno.mod.security.authentication.user.UserAuthentication;
+import io.inverno.mod.security.identity.PersonIdentity;
+import org.junit.jupiter.api.Test;
 
 /**
  *
@@ -32,16 +32,17 @@ public class UserAuthenticationTest {
 
 	@Test
 	public void testMapper() throws JsonProcessingException {
-		UserAuthentication auth = new GenericUserAuthentication("user01", Set.of("readers"), false);
-		
 		ObjectMapper mapper = new ObjectMapper();
 		
-		String authJson = mapper.writeValueAsString(auth);
+		PersonIdentity identity = new PersonIdentity("jsmith", "John", "Smith", "john.smith@inverno.io");
+		User<PersonIdentity> user = User.of("jsmith").identity(identity).groups("reader").password(new PBKDF2Password.Encoder().encode("password")).build();
+
+		String wuser = mapper.writeValueAsString(user);
+		User<PersonIdentity> ruser = mapper.readValue(wuser, new TypeReference<User<PersonIdentity>>() {});
 		
-		Assertions.assertEquals("{\"username\":\"user01\",\"groups\":[\"readers\"],\"authenticated\":false}", authJson);
+		UserAuthentication<PersonIdentity> authentication = UserAuthentication.of(user);
 		
-		UserAuthentication authParsed = mapper.readValue(authJson, UserAuthentication.class);
-		
-		Assertions.assertEquals(auth, authParsed);
+		String wauthentication = mapper.writeValueAsString(authentication);
+		UserAuthentication<PersonIdentity> rauthentication = mapper.readValue(wauthentication, new TypeReference<UserAuthentication<PersonIdentity>>() {});
 	}
 }

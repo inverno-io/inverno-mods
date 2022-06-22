@@ -15,18 +15,28 @@
  */
 package io.inverno.mod.security.accesscontrol;
 
-import io.inverno.mod.security.authentication.UserAuthentication;
+import io.inverno.mod.security.authentication.GroupAwareAuthentication;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * Resolves a role based access controller from a {@link GroupAwareAuthentication}.
+ * </p>
  *
+ * <p>
+ * It basically considers the groups to which the authenticated entity is in as roles in order to create the resulting role based access controller.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.5
+ * 
+ * @see RoleBasedAccessController
  */
-public class UserRoleBasedAccessControllerResolver implements AccessControllerResolver<UserAuthentication, RoleBasedAccessController> {
+public class GroupsRoleBasedAccessControllerResolver implements AccessControllerResolver<GroupAwareAuthentication, RoleBasedAccessController> {
 
 	@Override
-	public Mono<RoleBasedAccessController> resolveAccessController(UserAuthentication authentication) {
+	public Mono<RoleBasedAccessController> resolveAccessController(GroupAwareAuthentication authentication) {
 		return Mono.justOrEmpty(authentication)
-			.map(userAuth -> RoleBasedAccessController.of(userAuth.getGroups()));
+			.map(auth -> RoleBasedAccessController.of(auth.getGroups()));
 	}
 }

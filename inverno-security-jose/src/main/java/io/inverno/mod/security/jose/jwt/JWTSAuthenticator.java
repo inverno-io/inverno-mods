@@ -24,44 +24,141 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * An authenticator implementation that authenticates JWTS token credentials.
+ * </p>
+ * 
+ * <p>
+ * The expected token must be a valid JWTS compact string.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.5
+ * 
+ * @param <A> the JWT claims set type
  */
 public class JWTSAuthenticator<A extends JWTClaimsSet> implements Authenticator<TokenCredentials, JWTSAuthentication<A>> {
 
+	/**
+	 * the JWT service.
+	 */
 	private final JWTService jwtService;
+	
+	/**
+	 * The JWT claims set type.
+	 */
 	private final Type type;
+	
+	/**
+	 * The keys to consider to verify the JWTS.
+	 */
 	private final Publisher<? extends JWK> keys;
+	
+	/**
+	 * The parameters processed by the application.
+	 */
 	private final String[] processedParameters;
 	
+	/**
+	 * <p>
+	 * Creates a JWTS authenticator with the specified JWT service and JWT claims set type.
+	 * </p>
+	 *
+	 * @param jwtService the JWT service
+	 * @param type       the JWT claims set type
+	 */
 	public JWTSAuthenticator(JWTService jwtService, Class<A> type) {
 		this(jwtService, (Type)type, (Publisher<? extends JWK>)null, (String[]) null);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a JWTS authenticator with the specified JWT service and JWT claims set type.
+	 * </p>
+	 *
+	 * @param jwtService the JWT service
+	 * @param type       the JWT claims set type
+	 */
 	public JWTSAuthenticator(JWTService jwtService, Type type) {
 		this(jwtService, type, (Publisher<? extends JWK>)null, (String[]) null);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a JWTS authenticator with the specified JWT service, JWT claims set type and keys.
+	 * </p>
+	 *
+	 * @param jwtService the JWT service
+	 * @param type       the JWT claims set type
+	 * @param keys       the keys to consider to verify the JWTS
+	 */
 	public JWTSAuthenticator(JWTService jwtService, Class<A> type, Publisher<? extends JWK> keys) {
 		this(jwtService, (Type)type, keys, (String[]) null);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a JWTS authenticator with the specified JWT service, JWT claims set type and keys.
+	 * </p>
+	 *
+	 * @param jwtService the JWT service
+	 * @param type       the JWT claims set type
+	 * @param keys       the keys to consider to verify the JWTS
+	 */
 	public JWTSAuthenticator(JWTService jwtService, Type type, Publisher<? extends JWK> keys) {
 		this(jwtService, (Type)type, keys, (String[]) null);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a JWTS authenticator with the specified JWT service, JWT claims set type and processed parameters.
+	 * </p>
+	 *
+	 * @param jwtService          the JWT service
+	 * @param type                the JWT claims set type
+	 * @param processedParameters the parameters processed by the application
+	 */
 	public JWTSAuthenticator(JWTService jwtService, Class<A> type, String... processedParameters) {
 		this(jwtService, (Type)type, (Publisher<? extends JWK>)null, processedParameters);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a JWTS authenticator with the specified JWT service, JWT claims set type and processed parameters.
+	 * </p>
+	 *
+	 * @param jwtService          the JWT service
+	 * @param type                the JWT claims set type
+	 * @param processedParameters the parameters processed by the application
+	 */
 	public JWTSAuthenticator(JWTService jwtService, Type type, String... processedParameters) {
 		this(jwtService, type, (Publisher<? extends JWK>)null, processedParameters);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a JWTS authenticator with the specified JWT service, JWT claims set type, keys and processed parameters.
+	 * </p>
+	 *
+	 * @param jwtService          the JWT service
+	 * @param type                the JWT claims set type
+	 * @param keys                the keys to consider to verify the JWTS
+	 * @param processedParameters the parameters processed by the application
+	 */
 	public JWTSAuthenticator(JWTService jwtService, Class<A> type, Publisher<? extends JWK> keys, String... processedParameters) {
 		this(jwtService, (Type)type, keys, processedParameters);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a JWTS authenticator with the specified JWT service, JWT claims set type, keys and processed parameters.
+	 * </p>
+	 *
+	 * @param jwtService          the JWT service
+	 * @param type                the JWT claims set type
+	 * @param keys                the keys to consider to verify the JWTS
+	 * @param processedParameters the parameters processed by the application
+	 */
 	public JWTSAuthenticator(JWTService jwtService, Type type, Publisher<? extends JWK> keys, String... processedParameters) {
 		this.jwtService = jwtService;
 		this.keys = keys;

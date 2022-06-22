@@ -16,6 +16,9 @@
 package io.inverno.mod.security.identity;
 
 /**
+ * <p>
+ * Thrown to indicate errors during identity resolution.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
@@ -25,38 +28,56 @@ public class IdentityException extends io.inverno.mod.security.SecurityException
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 
+	 * <p>
+	 * Creates an identity exception.
+	 * </p>
 	 */
 	public IdentityException() {
 	}
 
 	/**
-	 * @param message
+	 * <p>
+	 * Creates an identity exception with the specified message.
+	 * </p>
+	 * 
+	 * @param message the message
 	 */
 	public IdentityException(String message) {
 		super(message);
 	}
-
+	
 	/**
-	 * @param message
-	 * @param cause
-	 */
-	public IdentityException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
-	/**
-	 * @param cause
+	 * <p>
+	 * Creates an identity exception with the specified cause.
+	 * </p>
+	 *
+	 * @param cause the cause
 	 */
 	public IdentityException(Throwable cause) {
 		super(cause);
 	}
 
 	/**
-	 * @param message
-	 * @param cause
-	 * @param enableSuppression
-	 * @param writableStackTrace
+	 * <p>
+	 * Creates an identity exception with the specified message and cause.
+	 * </p>
+	 *
+	 * @param message the message
+	 * @param cause   the cause
+	 */
+	public IdentityException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	/**
+	 * <p>
+	 * Creates an identity exception with the specified message, cause, suppression enabled or disabled and writable stack trace enabled or disabled.
+	 * </p>
+	 *
+	 * @param message            the message
+	 * @param cause              the cause
+	 * @param enableSuppression  true to enable suppression, false otherwise
+	 * @param writableStackTrace true to make the stack trace writable, false otherwise
 	 */
 	public IdentityException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);

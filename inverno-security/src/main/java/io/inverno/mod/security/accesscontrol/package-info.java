@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 /**
  * <p>
- * Inverno HTTP header API.
+ * Inverno security access control API.
  * </p>
  */
-package io.inverno.mod.http.base.header;
+package io.inverno.mod.security.accesscontrol;

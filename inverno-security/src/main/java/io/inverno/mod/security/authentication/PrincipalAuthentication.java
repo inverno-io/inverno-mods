@@ -17,33 +17,65 @@ package io.inverno.mod.security.authentication;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import io.inverno.mod.security.internal.authentication.GenericUserAuthentication;
-import java.util.Set;
+import io.inverno.mod.security.internal.authentication.GenericPrincipalAuthentication;
 
 /**
- *
+ * <p>
+ * An authentication resulting from the authentication of a principal entity uniquely identified by a username.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-@JsonDeserialize( as = GenericUserAuthentication.class )
-public interface UserAuthentication extends Authentication {
+@JsonDeserialize( as = GenericPrincipalAuthentication.class )
+public interface PrincipalAuthentication extends Authentication {
 	
 	/**
 	 * <p>
-	 * Returns the user name.
+	 * Returns the unique username of the authenticated entity.
 	 * </p>
 	 * 
-	 * @return a user name.
+	 * @return a username
 	 */
 	@JsonProperty( "username" )
 	String getUsername();
 	
 	/**
 	 * <p>
-	 * Returns the groups the user belongs to.
+	 * Returns a new authenticated principal authentication for the specified username.
 	 * </p>
 	 * 
-	 * @return a list of groups
+	 * <p>
+	 * This is a conveninence method that should be used with care and only used after a successful authentication to generate the resulting authentication.
+	 * </p>
+	 * 
+	 * @param username a username
+	 * 
+	 * @return a new principal authentication
 	 */
-	Set<String> getGroups();
+	static PrincipalAuthentication of(String username) {
+		return new GenericPrincipalAuthentication(username, true);
+	}
+	
+	/**
+	 * <p>
+	 * Returns a new principal authentication from the specified credentials.
+	 * </p>
+	 *
+	 * <p>
+	 * This is a conveninence method that should be used with care. In order to respect the {@link Authentication} contract it is important to make sure that the specified credentials have been
+	 * previously authenticated by an {@link Authenticator}.
+	 * </p>
+	 *
+	 * <p>
+	 * The resulting authentication is authenticated if the specified credentials are not locked.
+	 * </p>
+	 *
+	 * @param credentials authenticated credentials
+	 *
+	 * @return a new principal authentication
+	 */
+	static PrincipalAuthentication of(PrincipalCredentials credentials) {
+		return new GenericPrincipalAuthentication(credentials.getUsername(), !credentials.isLocked());
+	}
 }

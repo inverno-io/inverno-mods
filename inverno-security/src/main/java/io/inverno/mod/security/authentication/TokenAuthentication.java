@@ -16,11 +16,32 @@
 package io.inverno.mod.security.authentication;
 
 /**
+ * <p>
+ * An authentication which comprises a token that uniquely and securely identifies the authentication.
+ * </p>
+ * 
+ * <p>
+ * An {@link Authenticator} might respond with a token authentication to communicate temporary credentials resulting from the authentication to the authenticated entity. These {@link TokenCredentials}
+ * can then later be used by the entity to authenticate using a different channel in a simpler or more perfomant way than the original authentication.
+ * </p>
+ * 
+ * <p>
+ * A properly secured token should be collision-free and hardly forgeable.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @see TokenCredentials
  */
 public interface TokenAuthentication extends Authentication {
 	
+	/**
+	 * <p>
+	 * Returns the token resulting from the authentication process.
+	 * </p>
+	 * 
+	 * @return a token that securely identifies the authentication
+	 */
 	String getToken();
 }

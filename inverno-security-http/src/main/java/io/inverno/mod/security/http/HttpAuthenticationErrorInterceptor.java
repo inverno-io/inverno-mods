@@ -22,9 +22,19 @@ import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.ExchangeContext;
 
 /**
+ * <p>
+ * An authentication error interceptor that implements <a href="https://datatracker.ietf.org/doc/html/rfc7235">RFC 7235 HTTP authentication</a>.
+ * </p>
+ * 
+ * <p>
+ * As per RFC 7235, this interceptor sends a challenge to the requester in the {@code www-authenticate} HTTP header on an {@code UNAUTHORIZED(401)} error.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @param <A> the context type
+ * @param <B> the error exchange type
  */
 public abstract class HttpAuthenticationErrorInterceptor<A extends ExchangeContext, B extends ErrorExchange<A>> extends AuthenticationErrorInterceptor<A, B> {
 
@@ -46,6 +56,15 @@ public abstract class HttpAuthenticationErrorInterceptor<A extends ExchangeConte
 			.body().empty();
 	}
 	
+	/**
+	 * <p>
+	 * Creates the challenge to send to the requester.
+	 * </p>
+	 * 
+	 * @param cause the cause of the error (can be null)
+	 * 
+	 * @return a challenge
+	 */
 	protected abstract String createChallenge(io.inverno.mod.security.SecurityException cause);
 	
 }

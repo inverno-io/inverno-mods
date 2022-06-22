@@ -15,28 +15,37 @@
  */
 package io.inverno.mod.security.authentication;
 
-import io.inverno.mod.security.internal.authentication.GenericUserAuthentication;
-import reactor.core.publisher.Mono;
+import io.inverno.mod.security.authentication.user.UserAuthenticator;
 
 /**
- *
+ * <p>
+ * An authenticator used to authenticate principal credentials.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @see UserAuthenticator
+ * 
+ * @param <A> the type of principal credentials to authenticate
+ * @param <B> the type of principal credentials resolved by the credentials resolver
  */
-public class UserAuthenticator implements Authenticator<UserCredentials, UserAuthentication> {
-
-	private final CredentialsResolver<UserCredentials> credentialsResolver;
+public class PrincipalAuthenticator<A extends PrincipalCredentials, B extends PrincipalCredentials> extends AbstractPrincipalAuthenticator<A, B, PrincipalAuthentication> {
 	
-	public UserAuthenticator(CredentialsResolver<UserCredentials> credentialsResolver) {
-		this.credentialsResolver = credentialsResolver;
+	/**
+	 * <p>
+	 * Creates a principal authenticator with the specified credentials resolver and credentials matcher.
+	 * </p>
+	 * 
+	 * @param credentialsResolver a credentials resolver
+	 * @param credentialsMatcher  a credentials matcher
+	 */
+	public PrincipalAuthenticator(CredentialsResolver<? extends B> credentialsResolver, CredentialsMatcher<A, B> credentialsMatcher) {
+		super(credentialsResolver, credentialsMatcher);
 	}
 
 	@Override
-	public Mono<UserAuthentication> authenticate(UserCredentials credentials) throws AuthenticationException {
-		return this.credentialsResolver
-			.resolveCredentials(credentials.getUsername())
-			.filter(resolvedCredentials -> resolvedCredentials.getPassword().equals(credentials.getPassword()))
-			.map(resolvedCredentials -> (UserAuthentication)new GenericUserAuthentication(resolvedCredentials.getUsername(), resolvedCredentials.getGroups(), true))
-			.switchIfEmpty(Mono.error(() -> new InvalidCredentialsException("Invalid password")));
+	protected PrincipalAuthentication createAuthentication(B resolvedCredentials) throws AuthenticationException {
+		return PrincipalAuthentication.of(resolvedCredentials);
 	}
 }

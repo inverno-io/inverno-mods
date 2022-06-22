@@ -20,15 +20,44 @@ import io.inverno.mod.security.authentication.Credentials;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * A credentials extractor is used to extract credentials from an exchange, typically the request.
+ * </p>
+ * 
+ * <p>
+ * The {@link SecurityInterceptor} uses it to extract credentials in order to authenticate the exchange and create the security context.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @param <A> the credentials type
  */
 @FunctionalInterface
 public interface CredentialsExtractor<A extends Credentials> {
 
+	/**
+	 * <p>
+	 * Extracts credentials from the specified exchange.
+	 * </p>
+	 * 
+	 * @param exchange the exchange
+	 * 
+	 * @return a mono emitting the credentials or an empty mono if the exchange didn't provide any credentials
+	 * 
+	 * @throws MalformedCredentialsException if credentials in the exchange are malformed
+	 */
 	Mono<A> extract(Exchange<?> exchange) throws MalformedCredentialsException;
 	
+	/**
+	 * <p>
+	 * Returns a composed credentials extractor which first invokes this extractor and, if no credentials could have been extracted, invokes the specified extractor.
+	 * </p>
+	 *
+	 * @param other the credentials extractor to invoke in case this extractor was not able to extract credentials
+	 *
+	 * @return a composed credentials extractor
+	 */
 	default CredentialsExtractor<A> or(CredentialsExtractor<? extends A> other) {
 		return exchange -> {
 			return this.extract(exchange).switchIfEmpty(other.extract(exchange));

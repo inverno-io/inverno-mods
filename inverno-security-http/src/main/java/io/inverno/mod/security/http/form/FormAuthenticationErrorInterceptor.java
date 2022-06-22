@@ -23,28 +23,77 @@ import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.security.http.AuthenticationErrorInterceptor;
+import io.inverno.mod.security.http.LoginActionHandler;
+import io.inverno.mod.security.http.LogoutActionHandler;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * An authentication error interceptor that redirects (302) the client to a login page.
+ * </p>
+ * 
+ * <p>
+ * This interceptor is usually used in conjunction with a {@link LoginActionHandler} and a {@link LogoutActionHandler}. The login action is targeted by the login page in order to authenticate the
+ * login credentials provided by the user and the logout action allows to free resources and invalidate any temporary credentials resulting from the login process and communicated to the authenticated
+ * user.
+ * </p>
  *
+ * <p>
+ * It is important to understand the difference between login and authentication: whereas authentication is involved in the login process to authenticate login credentials with the aim of signing in a
+ * user in an application, login is usually not involved during authentication which consists in validating credentials with the aim of granting access to a protected resource.
+ * </p>
+ * 
+ * <p>
+ * More specifically, a successful login usually results in temporary credentials (e.g. a token) being created and communicated to the authenticated user which can reuse them to access protected
+ * services or resources in further requests. The login process is then performed once whereas the authentication process is performed on all requests.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @param <A> the context type
+ * @param <B> the error echange type
  */
 public class FormAuthenticationErrorInterceptor<A extends ExchangeContext, B extends ErrorExchange<A>> extends AuthenticationErrorInterceptor<A, B> {
 
+	/**
+	 * The default login page URI: {@code /login}.
+	 */
 	public static final String DEFAULT_LOGIN_PAGE_URI = "/login";
 	
+	/**
+	 * The login page URI where to redirect the client.
+	 */
 	private final String loginUri;
 	
+	/**
+	 * <p>
+	 * Creates a form authentication error interceptor that redirects the client to the default login page URI.
+	 * </p>
+	 */
 	public FormAuthenticationErrorInterceptor() {
 		this(DEFAULT_LOGIN_PAGE_URI);
 	}
 
+	/**
+	 * <p>
+	 * Creates a form authentication error interceptor that redirects the client to the specified login page URI.
+	 * </p>
+	 * 
+	 * @param loginUri the login page URI
+	 */
 	public FormAuthenticationErrorInterceptor(String loginUri) {
 		super(true);
 		this.loginUri = loginUri;
 	}
 
+	/**
+	 * <p>
+	 * Returns the login page URI.
+	 * </p>
+	 * 
+	 * @return the login page URI
+	 */
 	public String getLoginUri() {
 		return loginUri;
 	}

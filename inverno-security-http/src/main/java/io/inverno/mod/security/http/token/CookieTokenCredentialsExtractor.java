@@ -22,32 +22,64 @@ import io.inverno.mod.security.http.MalformedCredentialsException;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * A credentials extractor that extracts a token credentials stored in an HTTP cookie.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
 public class CookieTokenCredentialsExtractor implements CredentialsExtractor<TokenCredentials> {
 
-	public static final String DEFAULT_COOKIE_NAME = "auth-token";
+	/**
+	 * The default token cookie name: {@code AUTH-TOKEN}.
+	 * 
+	 * <p>
+	 * This constant is also used in {@link CookieTokenLoginSuccessHandler} and {@link CookieTokenLogoutSuccessHandler}.
+	 * </p>
+	 */
+	public static final String DEFAULT_COOKIE_NAME = "AUTH-TOKEN";
 	
-	private final String cookieName;
+	/**
+	 * The token cookie name.
+	 */
+	private final String tokenCookie;
 	
+	/**
+	 * <p>
+	 * Creates a cookie token credentials extractor with the default token cookie name.
+	 * </p>
+	 */
 	public CookieTokenCredentialsExtractor() {
 		this(DEFAULT_COOKIE_NAME);
 	}
 	
-	public CookieTokenCredentialsExtractor(String cookieName) {
-		this.cookieName = cookieName;
+	/**
+	 * <p>
+	 * Creates a cookie token credentials extractor with the specified token cookie name.
+	 * </p>
+	 * 
+	 * @param tokenCookie the token cookie name
+	 */
+	public CookieTokenCredentialsExtractor(String tokenCookie) {
+		this.tokenCookie = tokenCookie;
 	}
 
-	public String getAuthTokenCookie() {
-		return cookieName;
+	/**
+	 * <p>
+	 * Returns the token credentials cookie name.
+	 * </p>
+	 * 
+	 * @return the token cookie name
+	 */
+	public String getTokenCookie() {
+		return tokenCookie;
 	}
 	
 	@Override
 	public Mono<TokenCredentials> extract(Exchange<?> exchange) throws MalformedCredentialsException {
 		return Mono.fromSupplier(() -> exchange.request().cookies()
-			.get(this.cookieName)
+			.get(this.tokenCookie)
 			.map(cookie -> new TokenCredentials(cookie.asString()))
 			.orElse(null)
 		);

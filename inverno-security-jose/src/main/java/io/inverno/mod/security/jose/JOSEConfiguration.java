@@ -71,7 +71,7 @@ public interface JOSEConfiguration {
 	 * Defaults to false.
 	 * </p>
 	 * 
-	 * @return 
+	 * @return true to resolve JWK URL, false otherwise
 	 */
 	default boolean resolve_jku() {
 		return false;
@@ -79,14 +79,14 @@ public interface JOSEConfiguration {
 	
 	/**
 	 * <p>
-	 * Enable/disable X509 certificate URL (i.e. {@code x5u}) resolution.
+	 * Enable/disable X.509 certificate URL (i.e. {@code x5u}) resolution.
 	 * </p>
 	 * 
 	 * <p>
 	 * Defaults to false.
 	 * </p>
 	 * 
-	 * @return 
+	 * @return true to resolve X.509 certificate URL, false otherwise
 	 */
 	default boolean resolve_x5u() {
 		return false;
@@ -94,14 +94,14 @@ public interface JOSEConfiguration {
 	
 	/**
 	 * <p>
-	 * Enable/disable certificates chain validation (x5c or x5u).
+	 * Enable/disable X.509 certificates chain validation (x5c or x5u).
 	 * </p>
 	 * 
 	 * <p>
 	 * Defaults to false.
 	 * </p>
 	 * 
-	 * @return 
+	 * @return true to validate X.509 certificates chain, false otherwise
 	 */
 	default boolean validate_certificate() {
 		return false;

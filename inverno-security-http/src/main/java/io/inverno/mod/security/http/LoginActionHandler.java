@@ -22,28 +22,75 @@ import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.security.authentication.Authentication;
 import io.inverno.mod.security.authentication.AuthenticationException;
 import io.inverno.mod.security.authentication.Authenticator;
-import io.inverno.mod.security.authentication.UserCredentials;
+import io.inverno.mod.security.authentication.LoginCredentials;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * An exchange handler that authenticates login credentials and delegates further processing to success and failure handlers.
+ * </p>
+ * 
+ * <p>
+ * A login action handler is typically used in a form login authentication to authenticate the credentials sent by a user in a POST request.
+ * </p>
+ * 
+ * <p>
+ * It relies on a {@link CredentialsExtractor} to extract login credentials from the request, an {@link Authenticator} to authenticate them, a {@link LoginSuccessHandler} and a
+ * {@link LoginFailureHandler} to respectively handle successful authentications and failed authentications.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @param <A> the login credentials type
+ * @param <B> the authentication type
+ * @param <C> the context type
+ * @param <D> the exchange type
  */
-public class LoginActionHandler<A extends UserCredentials, B extends Authentication, C extends ExchangeContext, D extends Exchange<C>> implements ExchangeHandler<C, D> {
+public class LoginActionHandler<A extends LoginCredentials, B extends Authentication, C extends ExchangeContext, D extends Exchange<C>> implements ExchangeHandler<C, D> {
 	
+	/**
+	 * The credentials extractor.
+	 */
 	private final CredentialsExtractor<A> credentialsExtractor;
 	
+	/**
+	 * The authenticator.
+	 */
 	private final Authenticator<A, B> authenticator;
 	
+	/**
+	 * The login success handler.
+	 */
 	private final LoginSuccessHandler<B, C, D> loginSuccessHandler;
 	
+	/**
+	 * The login failure handler.
+	 */
 	private final LoginFailureHandler<C, D> loginFailureHandler;
 	
+	/**
+	 * <p>
+	 * Creates a login action handler with the specified credentials extractor and authenticator.
+	 * </p>
+	 *
+	 * @param credentialsExtractor a credentials extractor
+	 * @param authenticator        an authenticator
+	 */
 	public LoginActionHandler(CredentialsExtractor<A> credentialsExtractor, Authenticator<A, B> authenticator) {
 		this(credentialsExtractor, authenticator, null, null);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a login action handler with the specified credentials extractor, authenticator, login success handler and login failure handler.
+	 * </p>
+	 *
+	 * @param credentialsExtractor a credentials extractor
+	 * @param authenticator        an authenticator
+	 * @param loginSuccessHandler  a login success handler
+	 * @param loginFailureHandler  a login failure handler
+	 */
 	public LoginActionHandler(CredentialsExtractor<A> credentialsExtractor, Authenticator<A, B> authenticator, LoginSuccessHandler<B, C, D> loginSuccessHandler, LoginFailureHandler<C, D> loginFailureHandler) {
 		this.credentialsExtractor = credentialsExtractor;
 		this.authenticator = authenticator;
@@ -51,18 +98,46 @@ public class LoginActionHandler<A extends UserCredentials, B extends Authenticat
 		this.loginFailureHandler = loginFailureHandler;
 	}
 
+	/**
+	 * <p>
+	 * Returns the credentials extractor.
+	 * </p>
+	 * 
+	 * @return the credentials extractor
+	 */
 	public CredentialsExtractor<A> getCredentialsExtractor() {
 		return credentialsExtractor;
 	}
 
+	/**
+	 * <p>
+	 * Returns the authenticator.
+	 * </p>
+	 * 
+	 * @return the authenticator
+	 */
 	public Authenticator<A, B> getAuthenticator() {
 		return authenticator;
 	}
 
+	/**
+	 * <p>
+	 * Returns the login success handler.
+	 * </p>
+	 * 
+	 * @return the login success handler
+	 */
 	public LoginSuccessHandler<B, C, D> getLoginSuccessHandler() {
 		return loginSuccessHandler;
 	}
 
+	/**
+	 * <p>
+	 * Returns the login failure handler.
+	 * </p>
+	 * 
+	 * @return the login failure handler
+	 */
 	public LoginFailureHandler<C, D> getLoginFailureHandler() {
 		return loginFailureHandler;
 	}
@@ -78,6 +153,10 @@ public class LoginActionHandler<A extends UserCredentials, B extends Authenticat
 				if(authentication.isAuthenticated()) {
 					if(this.loginSuccessHandler != null) {
 						return this.loginSuccessHandler.handleLoginSuccess(exchange, authentication);
+					}
+					else {
+						// Return an empty response
+						return Mono.fromRunnable(() -> exchange.response().body().empty());
 					}
 				}
 				// not authenticated let's propagate the error if any, otherwise, throw an AuthenticationException

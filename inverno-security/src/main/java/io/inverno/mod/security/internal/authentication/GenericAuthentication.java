@@ -24,29 +24,61 @@ import io.inverno.mod.security.authentication.Authentication;
 import io.inverno.mod.security.authentication.AuthenticationException;
 
 /**
+ * <p>
+ * Generic {@link Authentication} implementation.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
 public class GenericAuthentication implements Authentication {
 
+	/**
+	 * The anonymous authentication (unauthenticated with no cause of authentication failure).
+	 */
 	public static final GenericAuthentication ANONYMOUS = new GenericAuthentication(false);
 	
+	/**
+	 * The granted authentication.
+	 */
 	public static final GenericAuthentication GRANTED = new GenericAuthentication(true);
 
-	public static final GenericAuthentication DENIED = new GenericAuthentication(new AuthenticationException());
+	/**
+	 * The denied authentication.
+	 */
+	public static final GenericAuthentication DENIED = new GenericAuthentication(new AuthenticationException("Access denied"));
 
+	/**
+	 * Flag indicating whether the entity has been authenticated.
+	 */
 	@JsonIgnore
 	private final boolean authenticated;
 	
+	/**
+	 * The cause of the failed authentication that resulted in this authentication.
+	 */
 	@JsonIgnore
 	private final Optional<io.inverno.mod.security.SecurityException> cause;
 
+	/**
+	 * <p>
+	 * Creates a generic authentication.
+	 * </p>
+	 * 
+	 * @param authenticated true to create an authenticated authentication, false otherwise
+	 */
 	public GenericAuthentication(boolean authenticated) {
 		this.authenticated = authenticated;
 		this.cause = Optional.empty();
 	}
 
+	/**
+	 * <p>
+	 * Creates an unauthenticated authentication with the specified cause of authentication failure.
+	 * </p>
+	 * 
+	 * @param cause the cause of the failed authentication
+	 */
 	public GenericAuthentication(io.inverno.mod.security.SecurityException cause) {
 		this.authenticated = false;
 		this.cause = Optional.ofNullable(cause);

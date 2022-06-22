@@ -17,27 +17,30 @@ package io.inverno.mod.security.http.basic;
 
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.security.authentication.UserCredentials;
+import io.inverno.mod.security.authentication.LoginCredentials;
+import io.inverno.mod.security.authentication.password.RawPassword;
 import io.inverno.mod.security.http.CredentialsExtractor;
 import java.util.Base64;
 import reactor.core.publisher.Mono;
 
 /**
- * https://datatracker.ietf.org/doc/html/rfc7617
+ * <p>
+ * A credentials extractor that extracts {@code basic} login credentials as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7617">RFC 7617 Section 2</a>.
+ * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class BasicCredentialsExtractor implements CredentialsExtractor<UserCredentials> {
+public class BasicCredentialsExtractor implements CredentialsExtractor<LoginCredentials> {
 	
 	@Override
-	public Mono<UserCredentials> extract(Exchange<?> exchange) {
+	public Mono<LoginCredentials> extract(Exchange<?> exchange) {
 		return Mono.fromSupplier(() -> exchange.request().headers()
 			.<Headers.Authorization>getHeader(Headers.NAME_AUTHORIZATION)
 			.filter(authorizationHeader -> authorizationHeader.getAuthScheme().equals(Headers.Authorization.AUTH_SCHEME_BASIC))
 			.map(authorizationHeader -> {
 				String[] splitCredentials = new String(Base64.getDecoder().decode(authorizationHeader.getToken())).split(":");
-				return new UserCredentials(splitCredentials[0], splitCredentials[1]);
+				return LoginCredentials.of(splitCredentials[0], new RawPassword(splitCredentials[1]));
 			})
 			.orElse(null)
 		);

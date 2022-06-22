@@ -22,21 +22,51 @@ import io.inverno.mod.security.authentication.TokenAuthentication;
 import java.util.Optional;
 
 /**
- *
+ * <p>
+ * A token authentication that wraps the original authentication in a JWE and uses its compact representation as token value.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.5
+ * 
+ * @param <A> the original authentication type
  */
 public class JWEAuthentication<A extends Authentication> implements TokenAuthentication {
 
+	/**
+	 * The JWE.
+	 */
 	private final JWE<A> jwe;
 
+	/**
+	 * <p>
+	 * Creates a JWE authentication with the specified JWE.
+	 * </p>
+	 * 
+	 * @param jwe a JWE wrapping the original authentication
+	 */
 	public JWEAuthentication(JWE<A> jwe) {
 		this.jwe = jwe;
 	}
 
-	public JWE<A> getJws() {
+	/**
+	 * <p>
+	 * Returns the JWE.
+	 * </p>
+	 * 
+	 * @return the JWE
+	 */
+	public JWE<A> getJwe() {
 		return this.jwe;
 	}
 
+	/**
+	 * <p>
+	 * Returns the JWE compact representation.
+	 * </p>
+	 * 
+	 * @return the JWE compact representation
+	 */
 	@JsonProperty( value = "token", access = JsonProperty.Access.READ_ONLY )
 	@Override
 	public String getToken() {

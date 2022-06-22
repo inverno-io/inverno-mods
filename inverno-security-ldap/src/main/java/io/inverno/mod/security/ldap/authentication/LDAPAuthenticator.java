@@ -21,31 +21,43 @@ import io.inverno.mod.ldap.LDAPException;
 import io.inverno.mod.security.authentication.AuthenticationException;
 import io.inverno.mod.security.authentication.Authenticator;
 import io.inverno.mod.security.authentication.InvalidCredentialsException;
-import io.inverno.mod.security.authentication.UserCredentials;
+import io.inverno.mod.security.authentication.LoginCredentials;
+import io.inverno.mod.security.authentication.password.RawPassword;
 import io.inverno.mod.security.ldap.internal.authentication.GenericLDAPAuthentication;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * General LDAP authenticator.
+ * Generic LDAP authenticator.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class LDAPAuthenticator implements Authenticator<UserCredentials, LDAPAuthentication> {
+public class LDAPAuthenticator implements Authenticator<LoginCredentials, LDAPAuthentication> {
 
 	/**
 	 * Default bind DN format.
 	 */
-	public static final String DEFAULT_BIND_NAME_FORMAT = "cn={0},ou=users";
+	public static final String DEFAULT_USER_NAME_FORMAT = "cn={0},ou=users";
 	
 	/**
 	 * Default search group filter.
 	 */
 	public static final String DEFAULT_SEARCH_GROUP_FILTER = "(&(objectClass=groupOfNames)(member={0}))";
+	
+	/**
+	 * The default search user filter. 
+	 */
+	public static final String DEFAULT_SEARCH_USER_FILTER = "(&(objectClass=inetOrgPerson)(uid={0}))";
+	
+	/**
+	 * The user password attribute as defined by <a href="https://datatracker.ietf.org/doc/html/rfc2256#section-5.36">RFC2256 Section 5.36</a>.
+	 */
+	public static final String ATTRIBUTE_PASSWORD = "userPassword";
 	
 	/**
 	 * The underlying LDAP client.
@@ -63,9 +75,24 @@ public class LDAPAuthenticator implements Authenticator<UserCredentials, LDAPAut
 	private final String searchGroupFilter;
 	
 	/**
-	 * The bind DN format.
+	 * The search user filter.
 	 */
-	private final String bindNameFormat;
+	private final String searchUserFilter;
+	
+	/**
+	 * The user DN format.
+	 */
+	private final String userNameFormat;
+	
+	/**
+	 * The password attribute name for password comparison.
+	 */
+	private final String passwordAttribute;
+	
+	/**
+	 * The password comparison filter.
+	 */
+	private final String passwordComparisonFilter;
 	
 	/**
 	 * <p>
@@ -76,7 +103,7 @@ public class LDAPAuthenticator implements Authenticator<UserCredentials, LDAPAut
 	 * @param base       the base DN where to search for groups
 	 */
 	public LDAPAuthenticator(LDAPClient ldapClient, String base) {
-		this(ldapClient, base, DEFAULT_SEARCH_GROUP_FILTER, StringUtils.isBlank(base) ? DEFAULT_BIND_NAME_FORMAT : DEFAULT_BIND_NAME_FORMAT + "," + base);
+		this(ldapClient, base, DEFAULT_SEARCH_GROUP_FILTER, StringUtils.isBlank(base) ? DEFAULT_USER_NAME_FORMAT : DEFAULT_USER_NAME_FORMAT + "," + base, DEFAULT_SEARCH_USER_FILTER, ATTRIBUTE_PASSWORD);
 	}
 	
 	/**
@@ -93,7 +120,44 @@ public class LDAPAuthenticator implements Authenticator<UserCredentials, LDAPAut
 	 * @param searchGroupFilter the search group filter
 	 */
 	public LDAPAuthenticator(LDAPClient ldapClient, String base, String searchGroupFilter) {
-		this(ldapClient, base, searchGroupFilter, StringUtils.isBlank(base) ? DEFAULT_BIND_NAME_FORMAT : DEFAULT_BIND_NAME_FORMAT + "," + base);
+		this(ldapClient, base, searchGroupFilter, StringUtils.isBlank(base) ? DEFAULT_USER_NAME_FORMAT : DEFAULT_USER_NAME_FORMAT + "," + base, DEFAULT_SEARCH_USER_FILTER, ATTRIBUTE_PASSWORD);
+	}
+		
+	/**
+	 * <p>
+	 * Creates an LDAP authenticator with the specified LDAP client, base DN and search group filter.
+	 * </p>
+	 * 
+	 * <p>
+	 * The search group filter is parameterized and is formatted using the user's DN and the uid.
+	 * </p>
+	 * 
+	 * @param ldapClient        the LDAP client
+	 * @param base              the base DN where to search for groups
+	 * @param searchGroupFilter the search group filter
+	 * @param userNameFormat    the user DN format
+	 */
+	public LDAPAuthenticator(LDAPClient ldapClient, String base, String searchGroupFilter, String userNameFormat) {
+		this(ldapClient, base, searchGroupFilter, userNameFormat, DEFAULT_SEARCH_USER_FILTER, ATTRIBUTE_PASSWORD);
+	}
+	
+	/**
+	 * <p>
+	 * Creates an LDAP authenticator with the specified LDAP client, base DN and search group filter.
+	 * </p>
+	 * 
+	 * <p>
+	 * The search group filter is parameterized and is formatted using the user's DN and the uid.
+	 * </p>
+	 * 
+	 * @param ldapClient        the LDAP client
+	 * @param base              the base DN where to search for groups
+	 * @param searchGroupFilter the search group filter
+	 * @param userNameFormat    the user DN format
+	 * @param searchUserFilter  the search user filter
+	 */
+	public LDAPAuthenticator(LDAPClient ldapClient, String base, String searchGroupFilter, String userNameFormat, String searchUserFilter) {
+		this(ldapClient, base, searchGroupFilter, userNameFormat, searchUserFilter, ATTRIBUTE_PASSWORD);
 	}
 	
 	/**
@@ -112,13 +176,18 @@ public class LDAPAuthenticator implements Authenticator<UserCredentials, LDAPAut
 	 * @param ldapClient        the LDAP client
 	 * @param base              the base DN where to search for groups
 	 * @param searchGroupFilter the search group filter
-	 * @param bindNameFormat    the bind DN format
+	 * @param searchUserFilter  the search user filter
+	 * @param userNameFormat    the user DN format
+	 * @param passwordAttribute the id of the password attribute
 	 */
-	public LDAPAuthenticator(LDAPClient ldapClient, String base, String searchGroupFilter, String bindNameFormat) {
+	public LDAPAuthenticator(LDAPClient ldapClient, String base, String searchGroupFilter, String userNameFormat, String searchUserFilter, String passwordAttribute) {
 		this.ldapClient = ldapClient;
 		this.base = base;
 		this.searchGroupFilter = searchGroupFilter;
-		this.bindNameFormat = bindNameFormat;
+		this.userNameFormat = userNameFormat;
+		this.searchUserFilter = searchUserFilter;
+		this.passwordAttribute = passwordAttribute;
+		this.passwordComparisonFilter = "(" + this.passwordAttribute + "={0})";
 	}
 	
 	/**
@@ -134,13 +203,13 @@ public class LDAPAuthenticator implements Authenticator<UserCredentials, LDAPAut
 	
 	/**
 	 * <p>
-	 * Returns the bind DN format used when binding a user.
+	 * Returns the user DN format used when binding a user or fetching a user entry.
 	 * </p>
 	 * 
-	 * @return the bind DN format
+	 * @return a user DN format
 	 */
-	public String getBindNameFormat() {
-		return bindNameFormat;
+	public String getUserNameFormat() {
+		return userNameFormat;
 	}
 	
 	/**
@@ -154,18 +223,71 @@ public class LDAPAuthenticator implements Authenticator<UserCredentials, LDAPAut
 		return searchGroupFilter;
 	}
 
+	/**
+	 * <p>
+	 * Returns the search user filter.
+	 * </p>
+	 * 
+	 * @return a filter
+	 */
+	public String getSearchUserFilter() {
+		return searchUserFilter;
+	}
+
+	/**
+	 * <p>
+	 * Returns the name of the password attribute.
+	 * </p>
+	 * 
+	 * @return an attribute name
+	 */
+	public String getPasswordAttribute() {
+		return passwordAttribute;
+	}
+	
+	
+
 	@Override
-	public Mono<LDAPAuthentication> authenticate(UserCredentials credentials) throws AuthenticationException {
-		return Mono.from(this.ldapClient.bind(
-			this.bindNameFormat,
-			new Object[] { credentials.getUsername() },
-			credentials.getPassword(), 
-			ops -> ops.search(this.base, new String[]{ "cn" }, this.searchGroupFilter, ops.getBoundDN(), credentials.getUsername())
-				.map(groupEntry -> groupEntry.getAttribute("cn").map(LDAPAttribute::asString).get())
-				.collect(Collectors.toSet())
-				.map(groups -> (LDAPAuthentication)new GenericLDAPAuthentication(credentials.getUsername(), ops.getBoundDN().orElse(null), groups, true))
-			))
-			.onErrorMap(this::mapError);
+	public Mono<LDAPAuthentication> authenticate(LoginCredentials credentials) throws AuthenticationException {
+		if(credentials.getPassword() instanceof RawPassword) {
+			// If password is raw we can do a bind operation to authenticate
+			// This is normally the case for credentials extracted in a basic or form authentication
+			return Mono.from(this.ldapClient.bind(
+				this.userNameFormat,
+				new Object[] { credentials.getUsername() },
+				credentials.getPassword().getValue(), 
+				ops -> ops.search(this.base, new String[]{ "cn" }, this.searchGroupFilter, ops.getBoundDN().orElseThrow(() -> new IllegalStateException("Bound user has no DN")), credentials.getUsername())
+					.map(groupEntry -> groupEntry.getAttribute("cn").map(LDAPAttribute::asString).get())
+					.collect(Collectors.toSet())
+					.map(groups -> (LDAPAuthentication)new GenericLDAPAuthentication(credentials.getUsername(), ops.getBoundDN().orElse(null), groups, true))
+				))
+				.onErrorMap(this::mapError);
+		}
+		else {
+			// This can happen when we actually do not have access to the raw password (digest authentication...)
+			// we then need to compare the password from the credentials to the password in the user LDAP entry which is expected to be encoded using the same password encoder
+			return this.ldapClient.get(this.userNameFormat, new String[] {this.passwordAttribute}, credentials.getUsername())
+				.flatMap(userEntry -> {
+					Optional<String> passwordAttributeOpt = userEntry.getAttribute(this.passwordAttribute).map(LDAPAttribute::asString);
+					if(passwordAttributeOpt.isPresent()) {
+						// The encoded password attribute has been retrieved
+						if(credentials.getPassword().getValue().equals(passwordAttributeOpt.get())) {
+							// it matches the encoded password from user credentials
+							return Mono.just(userEntry);
+						}
+						return Mono.empty();
+					}
+					else {
+						// We were not able to resolve the password attribute, we must compare encoded passwords in LDAP server
+						return this.ldapClient.search(this.base, this.passwordComparisonFilter, credentials.getPassword().getValue()).single();
+					}
+				})
+				.flatMap(userEntry -> this.ldapClient.search(this.base, new String[]{ "cn" }, this.searchGroupFilter, userEntry.getDN(), credentials.getUsername())
+					.map(groupEntry -> groupEntry.getAttribute("cn").map(LDAPAttribute::asString).get())
+					.collect(Collectors.toSet())
+					.map(groups -> (LDAPAuthentication)new GenericLDAPAuthentication(credentials.getUsername(), userEntry.getDN(), groups, true))
+				);
+		}
 	}
 	
 	/**

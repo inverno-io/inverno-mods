@@ -24,30 +24,86 @@ import java.util.concurrent.CompletableFuture;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * An exhange handler that serves a whitelabel login HTML page.
+ * </p>
  *
+ * <p>
+ * The resulting HTML page contains a login form with {@code username} and {@code password} parameters that can be used by a user to submit login credentials and enter an application.
+ * </p>
+ * 
+ * <p>
+ * Providing a custom login page is recommended.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @param <A> the type of the exchange context
+ * @param <B> the type of exchange handled by the handler
  */
 public class FormLoginPageHandler<A extends ExchangeContext, B extends Exchange<A>> implements ExchangeHandler<A, B> {
 
-	private static final LoginView.Renderer<CompletableFuture<String>> LOGIN_PAGE_RENDERER = LoginView.string();
-	
+	/**
+	 * The default login action URI: {@code /login}.
+	 */
 	public static final String DEFAULT_LOGIN_ACTION_URI = "/login";
 	
+	/**
+	 * The redirect URI query parameter name.
+	 * 
+	 * <p>
+	 * This constant is also used in {@link FormAuthenticationErrorInterceptor}, {@link RedirectLoginSuccessHandler} and {@link RedirectLoginFailureHandler}.
+	 * </p>
+	 */
 	public static final String PARAMETER_REDIRECT_URI = "redirect_uri";
 	
+	/**
+	 * The error query parameter name.
+	 * 
+	 * <p>
+	 * This constant is also used in {@link FormAuthenticationErrorInterceptor}, {@link RedirectLoginSuccessHandler} and {@link RedirectLoginFailureHandler}.
+	 * </p>
+	 */
 	public static final String PARAMETER_ERROR = "error";
+	
+	/**
+	 * The login view template.
+	 */
+	private static final LoginView.Renderer<CompletableFuture<String>> LOGIN_PAGE_RENDERER = LoginView.string();
 
+	/**
+	 * The login action URI.
+	 */
 	private final String loginActionUri;
 	
+	/**
+	 * <p>
+	 * Creates a form login page handler targeting the default login action URI.
+	 * </p>
+	 */
 	public FormLoginPageHandler() {
 		this(DEFAULT_LOGIN_ACTION_URI);
 	}
 	
+	/**
+	 * <p>
+	 * Creates a form login page handler targeting the specified login action URI.
+	 * </p>
+	 * 
+	 * @param loginActionUri the login action URI targeted by the login form
+	 */
 	public FormLoginPageHandler(String loginActionUri) {
 		this.loginActionUri = loginActionUri;
 	}
 
+	/**
+	 * <p>
+	 * Returns the login action URI targeted by the login form.
+	 * </p>
+	 * 
+	 * @return a login action URI
+	 */
 	public String getLoginActionUri() {
 		return loginActionUri;
 	}

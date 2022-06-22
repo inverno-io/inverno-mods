@@ -57,7 +57,7 @@ public class GenericLDAPAuthentication implements LDAPAuthentication {
 	 * Indicates whether the user is authenticated (i.e. authentication succeeds)
 	 */
 	@JsonIgnore
-	private final boolean authenticated;
+	private boolean authenticated;
 	
 	/**
 	 * The authentication error.
@@ -89,9 +89,16 @@ public class GenericLDAPAuthentication implements LDAPAuthentication {
 	 * Sets the authentication error.
 	 * </p>
 	 * 
+	 * <p>
+	 * Set the authenticated flag to false, if the specified cause is not null.
+	 * </p>
+	 * 
 	 * @param cause an authentication error
 	 */
 	public void setCause(io.inverno.mod.security.SecurityException cause) {
+		if(cause != null) {
+			this.authenticated = false;
+		}
 		this.cause = Optional.ofNullable(cause);
 	}
 	

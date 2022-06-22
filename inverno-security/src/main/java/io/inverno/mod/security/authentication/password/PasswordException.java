@@ -13,33 +13,73 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.security.authentication;
+package io.inverno.mod.security.authentication.password;
 
 /**
+ * <p>
+ * Thrown to indicate that a password related operation failed.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class AuthenticationException extends io.inverno.mod.security.SecurityException {
+public class PasswordException extends io.inverno.mod.security.SecurityException {
 
 	private static final long serialVersionUID = 1L;
 
-	public AuthenticationException() {
+	/**
+	 * <p>
+	 * Creates a password exception.
+	 * </p>
+	 */
+	public PasswordException() {
 	}
 
-	public AuthenticationException(String message) {
+	/**
+	 * <p>
+	 * Creates a password exception with the specified message.
+	 * </p>
+	 * 
+	 * @param message the message
+	 */
+	public PasswordException(String message) {
 		super(message);
 	}
-
-	public AuthenticationException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
-	public AuthenticationException(Throwable cause) {
+	
+	/**
+	 * <p>
+	 * Creates a password exception with the specified cause.
+	 * </p>
+	 *
+	 * @param cause the cause
+	 */
+	public PasswordException(Throwable cause) {
 		super(cause);
 	}
 
-	public AuthenticationException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	/**
+	 * <p>
+	 * Creates a password exception with the specified message and cause.
+	 * </p>
+	 *
+	 * @param message the message
+	 * @param cause   the cause
+	 */
+	public PasswordException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	/**
+	 * <p>
+	 * Creates a password exception with the specified message, cause, suppression enabled or disabled and writable stack trace enabled or disabled.
+	 * </p>
+	 *
+	 * @param message            the message
+	 * @param cause              the cause
+	 * @param enableSuppression  true to enable suppression, false otherwise
+	 * @param writableStackTrace true to make the stack trace writable, false otherwise
+	 */
+	public PasswordException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 }

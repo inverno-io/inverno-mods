@@ -22,25 +22,62 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
+ * <p>
+ * A token authentication that uses the compact representation of a JWTS as token value.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.5
+ * 
+ * @param <A> the JWT claims set type
  */
-public class JWTSAuthentication <A extends JWTClaimsSet> implements TokenAuthentication {
+public class JWTSAuthentication<A extends JWTClaimsSet> implements TokenAuthentication {
 
+	/**
+	 * The JWTS.
+	 */
 	private final JWS<A> jwt;
 	
+	/**
+	 * <p>
+	 * Creates a JWTS authentication with the specified JWT.
+	 * </p>
+	 * 
+	 * @param jwt a JWTS
+	 */
 	public JWTSAuthentication(JWS<A> jwt) {
 		this.jwt = Objects.requireNonNull(jwt);
 	}
 
+	/**
+	 * <p>
+	 * Returns the JWTS.
+	 * </p>
+	 * 
+	 * @return a JWTS
+	 */
 	public JWS<A> getJwt() {
 		return this.jwt;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the JWT claims set.
+	 * </p>
+	 * 
+	 * @return the JWT claims set
+	 */
 	public A getJWTClaimsSet() {
 		return this.jwt.getPayload();
 	}
 	
+	/**
+	 * <p>
+	 * Returns the JWTS compact representation.
+	 * </p>
+	 * 
+	 * @return the JWTS compact representation
+	 */
 	@Override
 	public String getToken() {
 		return this.jwt.toCompact();

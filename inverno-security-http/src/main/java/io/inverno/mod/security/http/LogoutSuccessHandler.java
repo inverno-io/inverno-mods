@@ -16,26 +16,67 @@
 package io.inverno.mod.security.http;
 
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.authentication.Authentication;
+import io.inverno.mod.security.http.context.SecurityContext;
+import io.inverno.mod.security.identity.Identity;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * Handles successful logout in a {@link LogoutActionHandler}.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @see LogoutActionHandler
+ * 
+ * @param <A> the authentication type
+ * @param <B> the identity type
+ * @param <C> the access controller type
+ * @param <D> the security context type
+ * @param <E> the exchange type
  */
-public interface LogoutSuccessHandler<A extends Authentication, B extends ExchangeContext, C extends Exchange<B>> {
+public interface LogoutSuccessHandler<A extends Authentication, B extends Identity, C extends AccessController, D extends SecurityContext<B, C>, E extends Exchange<D>> {
 
-	Mono<Void> handleLogoutSuccess(C exchange, A authentication);
+	/**
+	 * <p>
+	 * Handles successful logout.
+	 * </p>
+	 *
+	 * @param exchange       the exchange
+	 * @param authentication the authentication
+	 *
+	 * @return a mono which completes when the logout has been handled
+	 */
+	Mono<Void> handleLogoutSuccess(E exchange, A authentication);
 	
-	default LogoutSuccessHandler<A, B, C> andThen(LogoutSuccessHandler<? super A, ? super B, ? super C> after) {
+	/**
+	 * <p>
+	 * Invokes this logout success handler and then invokes the specified logout success handler.
+	 * </p>
+	 * 
+	 * @param after the handler to invoke after this handler
+	 * 
+	 * @return a composed logout success handler that invokes in sequence this handler followed by the specified handler
+	 */
+	default LogoutSuccessHandler<A, B, C, D, E> andThen(LogoutSuccessHandler<? super A, ? super B, ? super C,  ? super D, ? super E> after) {
 		return (exchange, authentication) -> {
 			return this.handleLogoutSuccess(exchange, authentication).then(after.handleLogoutSuccess(exchange, authentication));
 		};
 	}
 	
-	default LogoutSuccessHandler<A, B, C> compose(LogoutSuccessHandler<? super A, ? super B, ? super C> before) {
+	/**
+	 * <p>
+	 * Invokes the specified logout success handler and then invokes this logout success handler.
+	 * </p>
+	 * 
+	 * @param before the handler to invoke before this handler
+	 * 
+	 * @return a composed logout success handler that invokes in sequence the specified handler followed by this handler
+	 */
+	default LogoutSuccessHandler<A, B, C, D, E> compose(LogoutSuccessHandler<? super A, ? super B, ? super C,  ? super D, ? super E> before) {
 		return (exchange, authentication) -> {
 			return before.handleLogoutSuccess(exchange, authentication).then(this.handleLogoutSuccess(exchange, authentication));
 		};

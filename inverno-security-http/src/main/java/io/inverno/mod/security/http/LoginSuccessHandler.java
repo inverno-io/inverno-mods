@@ -21,21 +21,58 @@ import io.inverno.mod.security.authentication.Authentication;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * Handles successful authentication in a {@link LoginActionHandler}.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @see LoginActionHandler
+ * 
+ * @param <A> the authentication type
+ * @param <B> the context type
+ * @param <C> the exchange type
  */
 @FunctionalInterface
 public interface LoginSuccessHandler<A extends Authentication, B extends ExchangeContext, C extends Exchange<B>> {
 
+	/**
+	 * <p>
+	 * Handles successful authentication.
+	 * </p>
+	 *
+	 * @param exchange       the exchange
+	 * @param authentication the authentication resulting from the authentication process
+	 *
+	 * @return a mono which completes when the authentication has been handled
+	 */
 	Mono<Void> handleLoginSuccess(C exchange, A authentication);
 
+	/**
+	 * <p>
+	 * Invokes this login success handler and then invokes the specified login success handler.
+	 * </p>
+	 * 
+	 * @param after the handler to invoke after this handler
+	 * 
+	 * @return a composed login success handler that invokes in sequence this handler followed by the specified handler
+	 */
 	default LoginSuccessHandler<A, B, C> andThen(LoginSuccessHandler<? super A, ? super B, ?super C> after) {
 		return (exchange, authentication) -> {
 			return this.handleLoginSuccess(exchange, authentication).then(after.handleLoginSuccess(exchange, authentication));
 		};
 	}
 	
+	/**
+	 * <p>
+	 * Invokes the specified login success handler and then invokes this login success handler.
+	 * </p>
+	 * 
+	 * @param before the handler to invoke before this handler
+	 * 
+	 * @return a composed login success handler that invokes in sequence the specified handler followed by this handler
+	 */
 	default LoginSuccessHandler<A, B, C> compose(LoginSuccessHandler<? super A, ? super B, ?super C> before) {
 		return (exchange, authentication) -> {
 			return before.handleLoginSuccess(exchange, authentication).then(this.handleLoginSuccess(exchange, authentication));

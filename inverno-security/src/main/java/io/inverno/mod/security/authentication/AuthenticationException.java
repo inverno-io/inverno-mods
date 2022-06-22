@@ -16,6 +16,9 @@
 package io.inverno.mod.security.authentication;
 
 /**
+ * <p>
+ * Thrown to indicate that an authentication has failed.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
@@ -24,21 +27,58 @@ public class AuthenticationException extends io.inverno.mod.security.SecurityExc
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * <p>
+	 * Creates an authentication exception.
+	 * </p>
+	 */
 	public AuthenticationException() {
 	}
 
+	/**
+	 * <p>
+	 * Creates an authentication exception with the specified message.
+	 * </p>
+	 * 
+	 * @param message the message
+	 */
 	public AuthenticationException(String message) {
 		super(message);
 	}
-
-	public AuthenticationException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
+	
+	/**
+	 * <p>
+	 * Creates an authentication exception with the specified cause.
+	 * </p>
+	 *
+	 * @param cause the cause
+	 */
 	public AuthenticationException(Throwable cause) {
 		super(cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates an authentication exception with the specified message and cause.
+	 * </p>
+	 *
+	 * @param message the message
+	 * @param cause   the cause
+	 */
+	public AuthenticationException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	/**
+	 * <p>
+	 * Creates an authentication exception with the specified message, cause, suppression enabled or disabled and writable stack trace enabled or disabled.
+	 * </p>
+	 *
+	 * @param message            the message
+	 * @param cause              the cause
+	 * @param enableSuppression  true to enable suppression, false otherwise
+	 * @param writableStackTrace true to make the stack trace writable, false otherwise
+	 */
 	public AuthenticationException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
