@@ -19,8 +19,10 @@ import io.inverno.mod.ldap.LDAPEntry;
 import io.inverno.mod.ldap.LDAPException;
 import io.inverno.mod.ldap.LDAPOperations;
 import java.util.Optional;
+import javax.naming.NamingException;
 import javax.naming.directory.DirContext;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 
 /**
@@ -80,6 +82,34 @@ public class GenericLDAPOperations implements LDAPOperations {
 		return boundDN;
 	}
 
+	@Override
+	public Mono<LDAPEntry> get(String dn) throws LDAPException {
+		return this.get(dn, (String[])null);
+	}
+
+	@Override
+	public Mono<LDAPEntry> get(String dn, Object... dnArgs) throws LDAPException {
+		return this.get(LDAPUtils.format(dn, dnArgs), (String[])null);
+	}
+
+	@Override
+	public Mono<LDAPEntry> get(String dn, String[] attributes) throws LDAPException {
+		return Mono.fromSupplier(() -> {
+				try {
+					return (LDAPEntry)new GenericLDAPEntry(dn, this.context.getAttributes(dn, attributes));
+				} 
+				catch (NamingException e) {
+					throw new JdkLDAPException(e);
+				}
+			})
+			.subscribeOn(this.scheduler);
+	}
+
+	@Override
+	public Mono<LDAPEntry> get(String dn, String[] attributes, Object... dnArgs) throws LDAPException {
+		return this.get(LDAPUtils.format(dn, dnArgs), attributes);
+	}
+	
 	@Override
 	public Flux<LDAPEntry> search(String base, String filter) {
 		return this.search().scope(SearchScope.WHOLE_SUBTREE).build(base, null, filter, (Object[])null);

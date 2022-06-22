@@ -386,7 +386,7 @@ public interface LDAPClient extends LDAPOperations {
 	 * </p>
 	 * 
 	 * @param <T>         The type of results
-	 * @param dn          A expression to use to get the DN of the suer to authenticate
+	 * @param dn          an expression to use to get the DN of the suer to authenticate
 	 * @param dnArgs      the arguments to use the format the DN expression
 	 * @param credentials the user credentials
 	 * @param function    the function to be run using the authenticated connection

@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * <p>I
+ * <p>
  * Represents an LDAP entry resulting from an LDAP search operation.
  * </p>
  *

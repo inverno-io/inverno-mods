@@ -159,20 +159,40 @@ public class GenericLDAPClient implements @Provide LDAPClient {
 			}
 		});
 	}
+
+	@Override
+	public Mono<LDAPEntry> get(String dn) throws LDAPException {
+		return this.context.flatMap(localContext -> new GenericLDAPOperations(localContext, this.scheduler).get(dn));
+	}
+
+	@Override
+	public Mono<LDAPEntry> get(String dn, Object... dnArgs) throws LDAPException {
+		return this.context.flatMap(localContext -> new GenericLDAPOperations(localContext, this.scheduler).get(dn, dnArgs));
+	}
+
+	@Override
+	public Mono<LDAPEntry> get(String dn, String[] attributes) throws LDAPException {
+		return this.context.flatMap(localContext -> new GenericLDAPOperations(localContext, this.scheduler).get(dn, attributes));
+	}
+
+	@Override
+	public Mono<LDAPEntry> get(String dn, String[] attributes, Object... dnArgs) throws LDAPException {
+		return this.context.flatMap(localContext -> new GenericLDAPOperations(localContext, this.scheduler).get(dn, attributes, dnArgs));
+	}
 	
 	@Override
 	public Flux<LDAPEntry> search(String base, String filter) throws LDAPException {
-		return this.search(base, null, filter, (Object[])null);
+		return this.context.flatMapMany(localContext -> new GenericLDAPOperations(localContext, this.scheduler).search(base, filter));
 	}
 	
 	@Override
 	public Flux<LDAPEntry> search(String base, String filter, Object... filterArgs) throws LDAPException {
-		return this.search(base, null, filter, filterArgs);
+		return this.context.flatMapMany(localContext -> new GenericLDAPOperations(localContext, this.scheduler).search(base, filter, filterArgs));
 	}
 
 	@Override
 	public Flux<LDAPEntry> search(String base, String[] attributes, String filter) throws LDAPException {
-		return this.search(base, attributes, filter, (Object[])null);
+		return this.context.flatMapMany(localContext -> new GenericLDAPOperations(localContext, this.scheduler).search(base, attributes, filter));
 	}
 
 	@Override

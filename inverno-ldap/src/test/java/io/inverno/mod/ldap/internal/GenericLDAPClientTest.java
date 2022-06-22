@@ -52,12 +52,12 @@ public class GenericLDAPClientTest {
 				
 				@Override
 				public String admin_dn() {
-					return null;
+					return "cn=admin,dc=inverno,dc=io";
 				}
 				
 				@Override
 				public String admin_credentials() {
-					return null;
+					return "adminpassword";
 				}
 			}, 
 			Executors.newCachedThreadPool()
@@ -78,6 +78,23 @@ public class GenericLDAPClientTest {
 	}
 	
 	@Test
+	public void test_get() {
+		LDAPClient client = createClient();
+		try {
+			LDAPEntry result = client.get("cn={0},ou=users,dc=inverno,dc=io", new String[] {"cn", "uid", "mail", "userPassword"}, "jsmith").block();
+			
+			Assertions.assertEquals("cn=jsmith,ou=users,dc=inverno,dc=io", result.getDN());
+			Assertions.assertEquals(4, result.getAll().size());
+			Assertions.assertEquals("jsmith", result.get("cn").get());
+			Assertions.assertEquals("jsmith", result.get("uid").get());
+			Assertions.assertEquals("jsmith@inverno.io", result.get("mail").get());
+		}
+		finally {
+			client.close().block();
+		}
+	}
+	
+	@Test
 	public void test_search() {
 		LDAPClient client = createClient();
 		try {
@@ -90,7 +107,7 @@ public class GenericLDAPClientTest {
 			LDAPEntry entry = result.get(0);
 			
 			Assertions.assertEquals("cn=jsmith,ou=users,dc=inverno,dc=io", entry.getDN());
-			Assertions.assertEquals(2, entry.getAll().size()); // 2 cn + 1 uid
+			Assertions.assertEquals(2, entry.getAll().size());
 			Assertions.assertEquals(Set.of("jsmith"), new HashSet<>(entry.getAll("cn")));
 			Assertions.assertEquals("jsmith", entry.get("uid").get());
 		}

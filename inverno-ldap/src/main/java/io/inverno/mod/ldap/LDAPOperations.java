@@ -17,6 +17,7 @@ package io.inverno.mod.ldap;
 
 import java.util.Optional;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -64,6 +65,62 @@ public interface LDAPOperations {
 	 */
 	Optional<String> getBoundDN();
 
+	/**
+	 * <p>
+	 * Resolves and returns the entry identified by the specified DN.
+	 * </p>
+	 * 
+	 * @param dn the DN of the entry to fetch
+	 * 
+	 * @return a publisher of one entry or an empty publisher if no entry exists with the specified DN.
+	 * 
+	 * @throws LDAPException if there was an error during the get operation
+	 */
+	Mono<LDAPEntry> get(String dn) throws LDAPException;
+	
+	/**
+	 * <p>
+	 * Resolves and returns the entry identified by the specified DN.
+	 * </p>
+	 *
+	 * @param dn     an expression to use to get the DN of the suer to authenticate
+	 * @param dnArgs the arguments to use the format the DN expression
+	 *
+	 * @return a publisher of one entry or an empty publisher if no entry exists with the specified DN.
+	 *
+	 * @throws LDAPException if there was an error during the get operation
+	 */
+	Mono<LDAPEntry> get(String dn, Object... dnArgs) throws LDAPException;
+	
+	/**
+	 * <p>
+	 * Resolves and returns the entry identified by the specified DN with the specified list of attributes.
+	 * </p>
+	 * 
+	 * @param dn the DN of the entry to fetch
+	 * @param attributes the list of attributes to query
+	 * 
+	 * @return a publisher of one entry or an empty publisher if no entry exists with the specified DN.
+	 * 
+	 * @throws LDAPException if there was an error during the get operation
+	 */
+	Mono<LDAPEntry> get(String dn, String[] attributes) throws LDAPException;
+	
+	/**
+	 * <p>
+	 * Resolves and returns the entry identified by the specified DN with the specified list of attributes.
+	 * </p>
+	 * 
+	 * @param dn the DN of the entry to fetch
+	 * @param attributes the list of attributes to query
+	 * @param dnArgs the arguments to use the format the DN expression
+	 * 
+	 * @return a publisher of one entry or an empty publisher if no entry exists with the specified DN.
+	 * 
+	 * @throws LDAPException if there was an error during the get operation
+	 */
+	Mono<LDAPEntry> get(String dn, String[] attributes, Object... dnArgs) throws LDAPException;
+	
 	/**
 	 * <p>
 	 * Executes a search operation in the specified base context using the specified filter.
