@@ -41,6 +41,8 @@ import io.netty.handler.codec.http.HttpVersion;
  */
 class Http1xResponse extends AbstractResponse {
 
+	private final HttpVersion version;
+	
 	private final ObjectConverter<String> parameterConverter;
 
 	/**
@@ -52,8 +54,9 @@ class Http1xResponse extends AbstractResponse {
 	 * @param headerService      the header service
 	 * @param parameterConverter a string object converter
 	 */
-	public Http1xResponse(ChannelHandlerContext context, HeaderService headerService, ObjectConverter<String> parameterConverter) {
+	public Http1xResponse(HttpVersion version, ChannelHandlerContext context, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		super(context, headerService, new Http1xResponseHeaders(headerService, parameterConverter));
+		this.version = version;
 		this.parameterConverter = parameterConverter;
 		this.responseBody = new Http1xResponseBody(this);
 	}
@@ -90,7 +93,7 @@ class Http1xResponse extends AbstractResponse {
 
 	@Override
 	public Response sendContinue() {
-		this.context.writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.CONTINUE));
+		this.context.writeAndFlush(new DefaultFullHttpResponse(this.version, HttpResponseStatus.CONTINUE));
 		return this;
 	}
 	

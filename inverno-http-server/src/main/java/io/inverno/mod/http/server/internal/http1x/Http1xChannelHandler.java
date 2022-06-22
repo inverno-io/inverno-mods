@@ -100,10 +100,10 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 		if(msg instanceof HttpRequest) {
 			HttpRequest httpRequest = (HttpRequest)msg;
 			if(httpRequest.decoderResult().isFailure()) {
-				this.onDecoderError(ctx, httpRequest);
+				this.onDecoderError(ctx, httpRequest.protocolVersion(), httpRequest);
 				return;
 			}
-			this.requestingExchange = new Http1xExchange(ctx, httpRequest, this, this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.controller);
+			this.requestingExchange = new Http1xExchange(ctx, httpRequest.protocolVersion(), httpRequest, this, this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.controller);
 			if(this.exchangeQueue == null) {
 				this.exchangeQueue = this.requestingExchange;
 				this.requestingExchange.start(this);
@@ -114,13 +114,14 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 			}
 		}
 		else if(this.requestingExchange != null) {
+			HttpVersion version = this.requestingExchange.version;
 			if(msg == LastHttpContent.EMPTY_LAST_CONTENT) {
 				this.requestingExchange.request().data().ifPresent(sink -> sink.tryEmitComplete());
 			}
 			else {
 				HttpContent httpContent = (HttpContent)msg;
 				if(httpContent.decoderResult().isFailure()) {
-					this.onDecoderError(ctx, httpContent);
+					this.onDecoderError(ctx, version, httpContent);
 					return;
 				}
 				this.requestingExchange.request().data().ifPresentOrElse(emitter -> emitter.tryEmitNext(httpContent.content()), () -> httpContent.release());
@@ -149,7 +150,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 		}
 	}
 
-	private void onDecoderError(ChannelHandlerContext ctx, HttpObject httpObject) {
+	private void onDecoderError(ChannelHandlerContext ctx, HttpVersion version, HttpObject httpObject) {
 		Throwable cause = httpObject.decoderResult().cause();
 		if (cause instanceof TooLongFrameException) {
 			String causeMsg = cause.getMessage();
@@ -164,7 +165,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 				status = HttpResponseStatus.BAD_REQUEST;
 			}
 			ChannelPromise writePromise = ctx.newPromise();
-			ctx.write(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status), writePromise);
+			ctx.write(new DefaultFullHttpResponse(version, status), writePromise);
 			writePromise.addListener(res -> {
 				ctx.fireExceptionCaught(cause);
 			});

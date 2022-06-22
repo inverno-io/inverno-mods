@@ -79,7 +79,8 @@ class Http1xExchange extends AbstractExchange {
 	
 	private boolean manageChunked;
 	private Charset charset;
-	
+
+	final HttpVersion version;	
 	Http1xExchange next;
 	boolean keepAlive;
 	boolean trailers;
@@ -90,6 +91,7 @@ class Http1xExchange extends AbstractExchange {
 	 * </p>
 	 * 
 	 * @param context               the channel handler context
+	 * @param version               the HTTP version
 	 * @param httpRequest           the underlying HTTP request
 	 * @param encoder               the HTTP1.x connection encoder
 	 * @param headerService         the header service
@@ -101,6 +103,7 @@ class Http1xExchange extends AbstractExchange {
 	 */
 	public Http1xExchange(
 			ChannelHandlerContext context, 
+			HttpVersion version,
 			HttpRequest httpRequest,
 			Http1xConnectionEncoder encoder,
 			HeaderService headerService,
@@ -109,12 +112,17 @@ class Http1xExchange extends AbstractExchange {
 			MultipartDecoder<Part> multipartBodyDecoder,
 			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller
 		) {
-		super(context, controller, new Http1xRequest(context, httpRequest, new Http1xRequestHeaders(httpRequest, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http1xResponse(context, headerService, parameterConverter));
+		super(context, controller, new Http1xRequest(context, httpRequest, new Http1xRequestHeaders(httpRequest, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http1xResponse(version, context, headerService, parameterConverter));
 		this.encoder = encoder;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		
-		this.keepAlive = !httpRequest.headers().contains(Headers.NAME_CONNECTION, Headers.VALUE_CLOSE, true);
+		this.version = version;
+
+		HttpHeaders headers = httpRequest.headers();
+		this.keepAlive = !headers.containsValue(Headers.NAME_CONNECTION, Headers.VALUE_CLOSE, true) && 
+			(this.version.isKeepAliveDefault() || headers.containsValue(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE, true));
+
 		String te = httpRequest.headers().get(Headers.NAME_TE);
 		this.trailers = te != null && te.contains(Headers.VALUE_TRAILERS);
 	}
@@ -129,7 +137,7 @@ class Http1xExchange extends AbstractExchange {
 	
 	@Override
 	protected ErrorExchange<ExchangeContext> createErrorExchange(Throwable error) {
-		return new GenericErrorExchange(this.request, new Http1xResponse(this.context, this.headerService, this.parameterConverter), this.finalizer, error, this.exchangeContext);
+		return new GenericErrorExchange(this.request, new Http1xResponse(this.version, this.context, this.headerService, this.parameterConverter), this.finalizer, error, this.exchangeContext);
 	}
 	
 	private Charset getCharset() {
@@ -160,14 +168,14 @@ class Http1xExchange extends AbstractExchange {
 		HttpHeaders httpHeaders = headers.getUnderlyingHeaders();
 		HttpHeaders httpTrailers = trailers != null ? trailers.getUnderlyingTrailers() : null;
 		this.preProcessResponseInternals(status, httpHeaders, httpTrailers);
-		return new FlatHttpResponse(HttpVersion.HTTP_1_1, status, httpHeaders, false);
+		return new FlatHttpResponse(this.version, status, httpHeaders, false);
 	}
 	
 	private HttpResponse createFullHttpResponse(Http1xResponseHeaders headers, ByteBuf content) {
 		HttpResponseStatus status = HttpResponseStatus.valueOf(headers.getStatusCode());
 		HttpHeaders httpHeaders = headers.getUnderlyingHeaders();
 		this.preProcessResponseInternals(status, httpHeaders, null); // trailers are only authorized in chunked transfer encoding
-		return new FlatFullHttpResponse(HttpVersion.HTTP_1_1, status, httpHeaders, content, EmptyHttpHeaders.INSTANCE);
+		return new FlatFullHttpResponse(this.version, status, httpHeaders, content, EmptyHttpHeaders.INSTANCE);
 	}
 	
 	@Override

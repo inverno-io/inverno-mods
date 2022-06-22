@@ -162,20 +162,20 @@ public class H2cUpgradeHandler extends HttpObjectAggregator {
 			
 			if(headersFound != 2) {
 				// We must have: Connection: upgrade, http2-settings
-				this.sendBadRequest(ctx);
+				this.sendBadRequest(request.protocolVersion(), ctx);
 			}
 			
 			// Connection: upgrade, http2-settings
 			List<String> http2SettingsHeader = requestHeaders.getAll(Headers.NAME_HTTP2_SETTINGS);
 			if(http2SettingsHeader.isEmpty() || http2SettingsHeader.size() > 1) {
 				// request MUST include exactly one HTTP2-Settings (Section 3.2.1) header field.
-				this.sendBadRequest(ctx);
+				this.sendBadRequest(request.protocolVersion(), ctx);
 			}
 			// parse the settings
 			try {
 				Http2Settings requestHttp2Settings = this.decodeSettingsHeader(http2SettingsHeader.get(0));
 				
-				ChannelFuture sendAcceptUpgradeComplete = this.sendAcceptUpgrade(ctx);
+				ChannelFuture sendAcceptUpgradeComplete = this.sendAcceptUpgrade(request.protocolVersion(), ctx);
 				
 				Http2ChannelHandler http2ChannelHandler = this.configurer.upgradeToHttp2(pipeline);
 				http2ChannelHandler.onHttpServerUpgrade(requestHttp2Settings);
@@ -205,23 +205,23 @@ public class H2cUpgradeHandler extends HttpObjectAggregator {
 				sendAcceptUpgradeComplete.addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
 			} 
 			catch (IOException e) {
-				this.sendBadRequest(ctx);
+				this.sendBadRequest(request.protocolVersion(), ctx);
 			}
 		}
 	}
 	
-	private ChannelFuture sendBadRequest(ChannelHandlerContext ctx) {
+	private ChannelFuture sendBadRequest(HttpVersion version, ChannelHandlerContext ctx) {
 		HttpHeaders responseHeaders = new LinkedHttpHeaders();
 		responseHeaders.add(Headers.NAME_CONNECTION, Headers.VALUE_CLOSE);
-		FullHttpResponse response = new FlatFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST, responseHeaders, Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE);
+		FullHttpResponse response = new FlatFullHttpResponse(version, HttpResponseStatus.BAD_REQUEST, responseHeaders, Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE);
 		return ctx.writeAndFlush(response);
 	}
 	
-	private ChannelFuture sendAcceptUpgrade(ChannelHandlerContext ctx) {
+	private ChannelFuture sendAcceptUpgrade(HttpVersion version, ChannelHandlerContext ctx) {
 		HttpHeaders responseHeaders = new LinkedHttpHeaders();
 		responseHeaders.add(Headers.NAME_CONNECTION, Headers.NAME_UPGRADE);
 		responseHeaders.add(Headers.NAME_UPGRADE, Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME);
-		FullHttpResponse response = new FlatFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.SWITCHING_PROTOCOLS, responseHeaders, Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE);
+		FullHttpResponse response = new FlatFullHttpResponse(version, HttpResponseStatus.SWITCHING_PROTOCOLS, responseHeaders, Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE);
 		return ctx.writeAndFlush(response);
 	}
 	

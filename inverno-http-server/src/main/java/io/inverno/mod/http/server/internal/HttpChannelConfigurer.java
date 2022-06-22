@@ -68,8 +68,6 @@ public class HttpChannelConfigurer {
 	 * @param configuration                      the HTTP server configuration
 	 * @param netService                         the Net service
 	 * @param sslContextSupplier                 a SSL context supplier
-	 * @param protocolNegociationHandlerSupplier a HTTP protocol negotiation handler
-	 *                                           supplier
 	 * @param http1xChannelHandlerFactory        a HTTP1.x channel handler factory
 	 * @param http2ChannelHandlerFactory         a HTTP/2 channel handler factory
 	 */
