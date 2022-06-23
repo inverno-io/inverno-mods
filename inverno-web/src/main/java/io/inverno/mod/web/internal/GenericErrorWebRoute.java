@@ -16,13 +16,12 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.base.net.URIPattern;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebRoute;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -53,7 +52,7 @@ class GenericErrorWebRoute implements ErrorWebRoute<ExchangeContext> {
 	private List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>> interceptors;
 	private Consumer<List<? extends ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>>> interceptorsUpdater;
 
-	private ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> handler;
+	private ExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> handler;
 	
 	/**
 	 * <p>
@@ -220,7 +219,7 @@ class GenericErrorWebRoute implements ErrorWebRoute<ExchangeContext> {
 	 *
 	 * @param handler an exchange handler
 	 */
-	public void setHandler(ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> handler) {
+	public void setHandler(ExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> handler) {
 		this.handler = handler;
 	}
 

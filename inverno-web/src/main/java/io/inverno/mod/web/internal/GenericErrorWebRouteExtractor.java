@@ -16,13 +16,12 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.base.net.URIPattern;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebRoute;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -243,7 +242,7 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor<ExchangeCo
 				route.setLanguage(routeLanguage);
 			}
 			route.setInterceptors(this.interceptors, this.interceptorsUpdater);
-			route.setHandler((ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>>)handler);
+			route.setHandler((ExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>>)handler);
 			this.addRoute(route);
 		}
 	}	

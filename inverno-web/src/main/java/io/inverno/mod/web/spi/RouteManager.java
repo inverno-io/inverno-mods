@@ -17,6 +17,7 @@ package io.inverno.mod.web.spi;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeHandler;
 
 import java.util.Set;
 
@@ -55,6 +56,21 @@ public interface RouteManager<
 		D extends RouteManager<A, B, C, D, E>,
 		E extends Route<A, B>
 	> {
+	
+	/**
+	 * <p>
+	 * Specifies the route exchange handler.
+	 * </p>
+	 *
+	 * <p>
+	 * This method basically appends the route specified in the route manager to the router it comes from.
+	 * </p>
+	 *
+	 * @param handler the route exchange handler
+	 *
+	 * @return the router
+	 */
+	C handler(ExchangeHandler<? super A, B> handler);
 
 	/**
 	 * <p>

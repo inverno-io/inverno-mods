@@ -16,7 +16,6 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.base.net.URIBuilder;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ErrorRouteManager;
@@ -41,22 +40,6 @@ import io.inverno.mod.web.spi.PathAware;
  */
 public interface ErrorWebRouteManager<A extends ExchangeContext, B extends ErrorWebRoutable<A, B>> extends ErrorRouteManager<A, ErrorWebExchange<A>, B, ErrorWebRouteManager<A, B>, ErrorWebRoute<A>> {
 
-	/**
-	 * <p>
-	 * Specifies the route error web exchange handler.
-	 * </p>
-	 *
-	 * <p>
-	 * This method basically appends the route specified in the error web route
-	 * manager to the error web router it comes from.
-	 * </p>
-	 * 
-	 * @param handler the route error web exchange handler
-	 * 
-	 * @return the error router
-	 */
-	B handler(ErrorExchangeHandler<? super A, ErrorWebExchange<A>> handler);
-	
 	/**
 	 * <p>
 	 * Specifies the path to the resource served by the error web route without matching trailing slash.

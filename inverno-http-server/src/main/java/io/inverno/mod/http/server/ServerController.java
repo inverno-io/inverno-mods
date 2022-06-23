@@ -18,9 +18,8 @@ package io.inverno.mod.http.server;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.internal.GenericErrorExchangeHandler;
 import java.util.Objects;
-import reactor.core.publisher.Mono;
-
 import java.util.function.Supplier;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -177,7 +176,7 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 	 *
 	 * @return a server controller
 	 */
-	static <U extends ExchangeContext, V extends Exchange<U>, W extends ErrorExchange<U>> ServerController<U, V, W> from(ExchangeHandler<U, V> handler, ErrorExchangeHandler<U, W> errorHandler) {
+	static <U extends ExchangeContext, V extends Exchange<U>, W extends ErrorExchange<U>> ServerController<U, V, W> from(ExchangeHandler<U, V> handler, ExchangeHandler<U, W> errorHandler) {
 		Objects.requireNonNull(handler);
 		Objects.requireNonNull(errorHandler);
 		return new ServerController<U, V, W>() {
@@ -219,7 +218,7 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 	 *
 	 * @return a server controller
 	 */
-	static <U extends ExchangeContext, V extends Exchange<U>, W extends ErrorExchange<U>> ServerController<U, V, W> from(ExchangeHandler<U, V> handler, ErrorExchangeHandler<U, W> errorHandler, Supplier<U> contextSupplier) {
+	static <U extends ExchangeContext, V extends Exchange<U>, W extends ErrorExchange<U>> ServerController<U, V, W> from(ExchangeHandler<U, V> handler, ExchangeHandler<U, W> errorHandler, Supplier<U> contextSupplier) {
 		Objects.requireNonNull(handler);
 		Objects.requireNonNull(errorHandler);
 		Objects.requireNonNull(contextSupplier);

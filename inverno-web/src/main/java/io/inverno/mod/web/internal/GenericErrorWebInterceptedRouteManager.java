@@ -16,8 +16,8 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.base.net.URIPattern;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebInterceptedRouter;
 import io.inverno.mod.web.ErrorWebRoute;
@@ -39,7 +39,7 @@ class GenericErrorWebInterceptedRouteManager extends AbstractErrorWebManager<Gen
 
 	private final GenericErrorWebInterceptedRouter router;
 
-	private ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> handler;
+	private ExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> handler;
 
 	/**
 	 * <p>
@@ -125,7 +125,7 @@ class GenericErrorWebInterceptedRouteManager extends AbstractErrorWebManager<Gen
 	}
 
 	@Override
-	public ErrorWebInterceptedRouter<ExchangeContext> handler(ErrorExchangeHandler<? super ExchangeContext, ErrorWebExchange<ExchangeContext>> handler) {
+	public ErrorWebInterceptedRouter<ExchangeContext> handler(ExchangeHandler<? super ExchangeContext, ErrorWebExchange<ExchangeContext>> handler) {
 		Objects.requireNonNull(handler);
 		this.handler = handler;
 		this.commit();

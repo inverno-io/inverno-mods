@@ -16,8 +16,8 @@
 package io.inverno.mod.web.spi;
 
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeHandler;
 
 
 /**
@@ -69,6 +69,6 @@ public interface ErrorRouter<
 		F extends ErrorRouteManager<A, B, D, F, H>,
 		G extends ErrorInterceptorManager<A, B, D, G>,
 		H extends InterceptableRoute<A, B>
-	> extends Routable<A, B, C, E, H>, Interceptable<A, B, D, G>, ErrorExchangeHandler<A, ErrorExchange<A>> {
+	> extends Routable<A, B, C, E, H>, Interceptable<A, B, D, G>, ExchangeHandler<A, ErrorExchange<A>> {
 	
 }

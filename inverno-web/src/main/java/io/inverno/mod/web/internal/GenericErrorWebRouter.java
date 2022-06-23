@@ -25,8 +25,8 @@ import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.*;
 import io.netty.buffer.Unpooled;
 import java.io.ByteArrayOutputStream;
@@ -161,7 +161,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> httpExceptionHandler() {
+	private ExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> httpExceptionHandler() {
 		return exchange -> {
 			final HttpException error = HttpException.wrap(exchange.getError());
 			if(error instanceof MethodNotAllowedException) {
@@ -192,7 +192,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> httpExceptionHandler_text() {
+	private ExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> httpExceptionHandler_text() {
 		return exchange -> {
 			final HttpException error = HttpException.wrap(exchange.getError());
 			if(error instanceof MethodNotAllowedException) {
@@ -223,7 +223,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> httpExceptionHandler_json() {
+	private ExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> httpExceptionHandler_json() {
 		return exchange -> {
 			final HttpException error = HttpException.wrap(exchange.getError());
 			
@@ -273,7 +273,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> httpExceptionHandler_html() {
+	private ExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> httpExceptionHandler_html() {
 		return exchange -> {
 			final HttpException error = HttpException.wrap(exchange.getError());
 			String status = Integer.toString(error.getStatusCode());

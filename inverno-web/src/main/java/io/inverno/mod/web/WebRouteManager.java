@@ -47,21 +47,6 @@ public interface WebRouteManager<A extends ExchangeContext, B extends WebRoutabl
 	
 	/**
 	 * <p>
-	 * Specifies the route web exchange handler.
-	 * </p>
-	 *
-	 * <p>
-	 * This method basically appends the route specified in the web route manager to the web router it comes from.
-	 * </p>
-	 *
-	 * @param handler the route web exchange handler
-	 *
-	 * @return the router
-	 */
-	B handler(ExchangeHandler<? super A, WebExchange<A>> handler);
-	
-	/**
-	 * <p>
 	 * Specifies the path to the resource served by the web route without matching trailing slash.
 	 * </p>
 	 *

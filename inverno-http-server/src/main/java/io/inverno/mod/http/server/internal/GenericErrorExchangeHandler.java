@@ -22,8 +22,8 @@ import io.inverno.mod.http.base.ServiceUnavailableException;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeHandler;
 import java.util.stream.Collectors;
 
 /**
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class GenericErrorExchangeHandler implements ErrorExchangeHandler<ExchangeContext, ErrorExchange<ExchangeContext>> {
+public class GenericErrorExchangeHandler implements ExchangeHandler<ExchangeContext, ErrorExchange<ExchangeContext>> {
 	
 	public static final GenericErrorExchangeHandler INSTANCE = new GenericErrorExchangeHandler();
 	
