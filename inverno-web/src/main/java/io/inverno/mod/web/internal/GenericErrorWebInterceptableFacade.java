@@ -16,6 +16,7 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.web.*;
 
 import java.util.List;
@@ -75,13 +76,13 @@ class GenericErrorWebInterceptableFacade implements ErrorWebInterceptable<Exchan
 		}
 
 		@Override
-		public GenericErrorWebInterceptableFacade interceptor(ErrorWebExchangeInterceptor<? super ExchangeContext> interceptor) {
+		public GenericErrorWebInterceptableFacade interceptor(ExchangeInterceptor<? super ExchangeContext, ErrorWebExchange<ExchangeContext>> interceptor) {
 			GenericErrorWebInterceptableFacade.this.interceptedRouter = this.interceptorManager.interceptor(interceptor);
 			return GenericErrorWebInterceptableFacade.this;
 		}
 
 		@Override
-		public GenericErrorWebInterceptableFacade interceptors(List<ErrorWebExchangeInterceptor<? super ExchangeContext>> interceptors) {
+		public GenericErrorWebInterceptableFacade interceptors(List<ExchangeInterceptor<? super ExchangeContext, ErrorWebExchange<ExchangeContext>>> interceptors) {
 			interceptors.forEach(this::interceptor);
 			return GenericErrorWebInterceptableFacade.this;
 		}

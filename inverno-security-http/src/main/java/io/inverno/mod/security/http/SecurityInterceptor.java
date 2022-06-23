@@ -60,9 +60,10 @@ import reactor.core.publisher.Mono;
  * @param <B> the authentication type
  * @param <C> the identity type
  * @param <D> the access controller type
- * @param <E> the exchange type
+ * @param <E> the intercepting security context type
+ * @param <F> the exchange type
  */
-public class SecurityInterceptor<A extends Credentials, B extends Authentication, C extends Identity, D extends AccessController, E extends Exchange<InterceptingSecurityContext<C, D>>> implements ExchangeInterceptor<InterceptingSecurityContext<C, D>, E> {
+public class SecurityInterceptor<A extends Credentials, B extends Authentication, C extends Identity, D extends AccessController, E extends InterceptingSecurityContext<C, D>, F extends Exchange<E>> implements ExchangeInterceptor<E, F> {
 
 	private static final Logger LOGGER = LogManager.getLogger(SecurityInterceptor.class);
 
@@ -143,7 +144,7 @@ public class SecurityInterceptor<A extends Credentials, B extends Authentication
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public Mono<? extends E> intercept(E exchange) {
+	public Mono<? extends F> intercept(F exchange) {
 		// 1. Extract credentials
 		return this.credentialsExtractor.extract(exchange)
 			// No credentials => anonymous access

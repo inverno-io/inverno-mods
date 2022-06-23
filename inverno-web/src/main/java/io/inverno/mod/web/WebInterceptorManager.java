@@ -18,11 +18,11 @@ package io.inverno.mod.web;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ContentAware;
 import io.inverno.mod.web.spi.InterceptorManager;
 import io.inverno.mod.web.spi.PathAware;
-
 import java.util.List;
 
 /**
@@ -55,7 +55,7 @@ public interface WebInterceptorManager<A extends ExchangeContext, B extends WebI
 	 *
 	 * @return the router
 	 */
-	B interceptor(WebExchangeInterceptor<? super A> interceptor);
+	B interceptor(ExchangeInterceptor<? super A, WebExchange<A>> interceptor);
 
 	/**
 	 * <p>
@@ -72,7 +72,7 @@ public interface WebInterceptorManager<A extends ExchangeContext, B extends WebI
 	 *
 	 * @return the router
 	 */
-	B interceptors(List<WebExchangeInterceptor<? super A>> interceptors);
+	B interceptors(List<ExchangeInterceptor<? super A, WebExchange<A>>> interceptors);
 
 	/**
 	 * <p>

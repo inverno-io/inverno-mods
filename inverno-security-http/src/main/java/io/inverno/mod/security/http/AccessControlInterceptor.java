@@ -40,9 +40,10 @@ import reactor.core.publisher.Mono;
  * 
  * @param <A> the identity type
  * @param <B> the access controller type
- * @param <C> the exchange type
+ * @param <C> the security context type
+ * @param <D> the exchange type
  */
-public class AccessControlInterceptor<A extends Identity, B extends AccessController, C extends Exchange<SecurityContext<A, B>>> implements ExchangeInterceptor<SecurityContext<A, B>, C> {
+public class AccessControlInterceptor<A extends Identity, B extends AccessController, C extends SecurityContext<A, B>, D extends Exchange<C>> implements ExchangeInterceptor<C, D> {
 
 	/**
 	 * The access verifier.
@@ -67,11 +68,12 @@ public class AccessControlInterceptor<A extends Identity, B extends AccessContro
 	 * 
 	 * @param <A> the identity type
 	 * @param <B> the access controller type
-	 * @param <C> the exchange type
+	 * @param <C> the security context type
+	 * @param <D> the exchange type
 	 * 
 	 * @return an access control interceptor
 	 */
-	public static <A extends Identity, B extends AccessController, C extends Exchange<SecurityContext<A, B>>> AccessControlInterceptor<A, B, C> anonymous() {
+	public static <A extends Identity, B extends AccessController, C extends SecurityContext<A, B>, D extends Exchange<C>> AccessControlInterceptor<A, B, C, D> anonymous() {
 		return new AccessControlInterceptor<>(context -> {
 			Authentication authentication = context.getAuthentication();
 			return authentication.isAuthenticated();
@@ -85,11 +87,12 @@ public class AccessControlInterceptor<A extends Identity, B extends AccessContro
 	 * 
 	 * @param <A> the identity type
 	 * @param <B> the access controller type
-	 * @param <C> the exchange type
+	 * @param <C> the security context type
+	 * @param <D> the exchange type
 	 * 
 	 * @return an access control interceptor
 	 */
-	public static <A extends Identity, B extends AccessController, C extends Exchange<SecurityContext<A, B>>> AccessControlInterceptor<A, B, C> authenticated() {
+	public static <A extends Identity, B extends AccessController, C extends SecurityContext<A, B>, D extends Exchange<C>> AccessControlInterceptor<A, B, C, D> authenticated() {
 		return new AccessControlInterceptor<>(context -> {
 			Authentication authentication = context.getAuthentication();
 			if(!authentication.isAuthenticated()) {
@@ -116,17 +119,18 @@ public class AccessControlInterceptor<A extends Identity, B extends AccessContro
 	 * 
 	 * @param <A>            the identity type
 	 * @param <B>            the access controller type
-	 * @param <C>            the exchange type
+	 * @param <C> the security context type
+	 * @param <D> the exchange type
 	 * @param accessVerifier an access verifier
 	 * 
 	 * @return an access control interceptor
 	 */
-	public static <A extends Identity, B extends AccessController, C extends Exchange<SecurityContext<A, B>>> AccessControlInterceptor<A, B, C> verify(Predicate<SecurityContext<A, B>> accessVerifier) {
+	public static <A extends Identity, B extends AccessController, C extends SecurityContext<A, B>, D extends Exchange<C>> AccessControlInterceptor<A, B, C, D> verify(Predicate<SecurityContext<A, B>> accessVerifier) {
 		return new AccessControlInterceptor<>(accessVerifier);
 	}
 	
 	@Override
-	public Mono<? extends C> intercept(C exchange) {
+	public Mono<? extends D> intercept(D exchange) {
 		if(!this.accessVerifier.test(exchange.context())) {
 			throw new UnauthorizedException("Access denied");
 		}

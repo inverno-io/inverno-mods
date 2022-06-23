@@ -19,7 +19,8 @@ import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.ErrorWebExchangeInterceptor;
+import io.inverno.mod.http.server.ExchangeInterceptor;
+import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.ErrorWebInterceptedRouter;
 import io.inverno.mod.web.ErrorWebInterceptorManager;
 
@@ -41,7 +42,7 @@ class GenericErrorWebInterceptorManager extends AbstractErrorWebManager<GenericE
 	private final HeaderCodec<? extends Headers.ContentType> contentTypeCodec;
 	private final HeaderCodec<? extends Headers.AcceptLanguage> acceptLanguageCodec;
 
-	private ErrorWebExchangeInterceptor<ExchangeContext> interceptor;
+	private ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>> interceptor;
 
 	/**
 	 * <p>
@@ -59,17 +60,15 @@ class GenericErrorWebInterceptorManager extends AbstractErrorWebManager<GenericE
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public ErrorWebInterceptedRouter<ExchangeContext> interceptor(ErrorWebExchangeInterceptor<? super ExchangeContext> interceptor) {
+	public ErrorWebInterceptedRouter<ExchangeContext> interceptor(ExchangeInterceptor<? super ExchangeContext, ErrorWebExchange<ExchangeContext>> interceptor) {
 		Objects.requireNonNull(interceptor);
 		this.interceptor = interceptor;
 		this.commit();
-
 		return this.router;
 	}
 
 	@Override
-	public ErrorWebInterceptedRouter<ExchangeContext> interceptors(List<ErrorWebExchangeInterceptor<? super ExchangeContext>> interceptors) {
+	public ErrorWebInterceptedRouter<ExchangeContext> interceptors(List<ExchangeInterceptor<? super ExchangeContext, ErrorWebExchange<ExchangeContext>>> interceptors) {
 		interceptors.forEach(this::interceptor);
 		return this.router;
 	}

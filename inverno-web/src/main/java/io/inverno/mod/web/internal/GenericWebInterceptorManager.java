@@ -20,7 +20,8 @@ import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.WebExchangeInterceptor;
+import io.inverno.mod.http.server.ExchangeInterceptor;
+import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebInterceptedRouter;
 import io.inverno.mod.web.WebInterceptorManager;
 
@@ -42,7 +43,7 @@ class GenericWebInterceptorManager extends AbstractWebManager<GenericWebIntercep
 	private final HeaderCodec<? extends Headers.ContentType> contentTypeCodec;
 	private final HeaderCodec<? extends Headers.AcceptLanguage> acceptLanguageCodec;
 	
-	private WebExchangeInterceptor<ExchangeContext> interceptor;
+	private ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>> interceptor;
 
 	/**
 	 * <p>
@@ -58,9 +59,9 @@ class GenericWebInterceptorManager extends AbstractWebManager<GenericWebIntercep
 		this.contentTypeCodec = contentTypeCodec;
 		this.acceptLanguageCodec = acceptLanguageCodec;
 	}
-	
+
 	@Override
-	public WebInterceptedRouter<ExchangeContext> interceptor(WebExchangeInterceptor<? super ExchangeContext> interceptor) {
+	public WebInterceptedRouter<ExchangeContext> interceptor(ExchangeInterceptor<? super ExchangeContext, WebExchange<ExchangeContext>> interceptor) {
 		Objects.requireNonNull(interceptor);
 		this.interceptor = interceptor;
 		this.commit();
@@ -69,11 +70,11 @@ class GenericWebInterceptorManager extends AbstractWebManager<GenericWebIntercep
 	}
 
 	@Override
-	public WebInterceptedRouter<ExchangeContext> interceptors(List<WebExchangeInterceptor<? super ExchangeContext>> interceptors) {
+	public WebInterceptedRouter<ExchangeContext> interceptors(List<ExchangeInterceptor<? super ExchangeContext, WebExchange<ExchangeContext>>> interceptors) {
 		interceptors.forEach(this::interceptor);
 		return this.router;
 	}
-
+	
 	private void commit() {
 		Consumer<GenericWebRouteInterceptor> languagesCommitter = routeInterceptor -> {
 			if(this.languages != null && !this.languages.isEmpty()) {

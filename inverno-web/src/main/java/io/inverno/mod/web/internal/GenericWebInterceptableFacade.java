@@ -17,7 +17,8 @@ package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.WebExchangeInterceptor;
+import io.inverno.mod.http.server.ExchangeInterceptor;
+import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebInterceptable;
 import io.inverno.mod.web.WebInterceptedRouter;
 import io.inverno.mod.web.WebInterceptorManager;
@@ -79,17 +80,17 @@ class GenericWebInterceptableFacade implements WebInterceptable<ExchangeContext,
 		}
 
 		@Override
-		public GenericWebInterceptableFacade interceptor(WebExchangeInterceptor<? super ExchangeContext> interceptor) {
+		public GenericWebInterceptableFacade interceptor(ExchangeInterceptor<? super ExchangeContext, WebExchange<ExchangeContext>> interceptor) {
 			GenericWebInterceptableFacade.this.interceptedRouter = this.interceptorManager.interceptor(interceptor);
 			return GenericWebInterceptableFacade.this;
 		}
 
 		@Override
-		public GenericWebInterceptableFacade interceptors(List<WebExchangeInterceptor<? super ExchangeContext>> interceptors) {
+		public GenericWebInterceptableFacade interceptors(List<ExchangeInterceptor<? super ExchangeContext, WebExchange<ExchangeContext>>> interceptors) {
 			interceptors.forEach(this::interceptor);
 			return GenericWebInterceptableFacade.this;
 		}
-
+		
 		@Override
 		public WebInterceptorManager<ExchangeContext, GenericWebInterceptableFacade> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
 			this.interceptorManager.path(path, matchTrailingSlash);

@@ -17,6 +17,7 @@ package io.inverno.mod.web;
 
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeInterceptor;
 import reactor.core.publisher.Mono;
 
 /**
@@ -27,11 +28,13 @@ import reactor.core.publisher.Mono;
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
+ * 
+ * @param <A> the type of the exchange context
  */
-public class ContinueInterceptor implements WebExchangeInterceptor<ExchangeContext> {
+public class ContinueInterceptor<A extends ExchangeContext> implements ExchangeInterceptor<A, WebExchange<A>> {
 
 	@Override
-	public Mono<? extends WebExchange<ExchangeContext>> intercept(WebExchange<ExchangeContext> exchange) {
+	public Mono<? extends WebExchange<A>> intercept(WebExchange<A> exchange) {
 		if(exchange.request().headers().contains(Headers.NAME_EXPECT, Headers.VALUE_100_CONTINUE)) {
 			exchange.response().sendContinue();
 		}
