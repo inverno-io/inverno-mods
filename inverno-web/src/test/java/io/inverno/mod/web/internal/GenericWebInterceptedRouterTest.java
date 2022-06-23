@@ -22,9 +22,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.web.WebExchange;
-import io.inverno.mod.web.WebExchangeHandler;
 import io.inverno.mod.web.WebExchangeInterceptor;
 import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.internal.mock.MockWebExchange;
@@ -42,8 +42,8 @@ import reactor.core.publisher.Mono;
 public class GenericWebInterceptedRouterTest {
 	
 	@SuppressWarnings("unchecked")
-	private static WebExchangeHandler<ExchangeContext> mockExchangeHandler() {
-		WebExchangeHandler<ExchangeContext> mockExchangeHandler = Mockito.mock(WebExchangeHandler.class);
+	private static ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> mockExchangeHandler() {
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> mockExchangeHandler = Mockito.mock(ExchangeHandler.class);
 		Mockito.when(mockExchangeHandler.defer(Mockito.any())).thenReturn(Mono.empty());
 		return mockExchangeHandler;
 	}
@@ -59,7 +59,7 @@ public class GenericWebInterceptedRouterTest {
 	public void testMultiInterceptor() {
 		WebExchangeInterceptor<ExchangeContext> interceptor = mockExchangeInterceptor();
 		
-		WebExchangeHandler<ExchangeContext> handler_book = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_book = mockExchangeHandler();
 		
 		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
@@ -85,8 +85,8 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeInterceptor<ExchangeContext> interceptor1 = mockExchangeInterceptor();
 		WebExchangeInterceptor<ExchangeContext> interceptor2 = mockExchangeInterceptor();
 		
-		WebExchangeHandler<ExchangeContext> handler_foo = mockExchangeHandler();
-		WebExchangeHandler<ExchangeContext> handler_bar = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_foo = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_bar = mockExchangeHandler();
 		
 		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
@@ -155,9 +155,9 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeInterceptor<ExchangeContext> interceptor1 = mockExchangeInterceptor();
 		WebExchangeInterceptor<ExchangeContext> interceptor2 = mockExchangeInterceptor();
 		
-		WebExchangeHandler<ExchangeContext> handler_1 = mockExchangeHandler();
-		WebExchangeHandler<ExchangeContext> handler_2 = mockExchangeHandler();
-		WebExchangeHandler<ExchangeContext> handler_default = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_1 = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_2 = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_default = mockExchangeHandler();
 		
 		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
@@ -262,9 +262,9 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeInterceptor<ExchangeContext> interceptor1 = mockExchangeInterceptor();
 		WebExchangeInterceptor<ExchangeContext> interceptor2 = mockExchangeInterceptor();
 		
-		WebExchangeHandler<ExchangeContext> handler_get = mockExchangeHandler();
-		WebExchangeHandler<ExchangeContext> handler_post = mockExchangeHandler();
-		WebExchangeHandler<ExchangeContext> handler_default = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_get = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_post = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_default = mockExchangeHandler();
 		
 		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
@@ -364,9 +364,9 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeInterceptor<ExchangeContext> interceptor1 = mockExchangeInterceptor();
 		WebExchangeInterceptor<ExchangeContext> interceptor2 = mockExchangeInterceptor();
 		
-		WebExchangeHandler<ExchangeContext> handler_json = mockExchangeHandler();
-		WebExchangeHandler<ExchangeContext> handler_xml = mockExchangeHandler();
-		WebExchangeHandler<ExchangeContext> handler_default = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_json = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_xml = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_default = mockExchangeHandler();
 		
 		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
@@ -479,9 +479,9 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeInterceptor<ExchangeContext> interceptor1 = mockExchangeInterceptor();
 		WebExchangeInterceptor<ExchangeContext> interceptor2 = mockExchangeInterceptor();
 		
-		WebExchangeHandler<ExchangeContext> handler_json = mockExchangeHandler();
-		WebExchangeHandler<ExchangeContext> handler_xml = mockExchangeHandler();
-		WebExchangeHandler<ExchangeContext> handler_undefined = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_json = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_xml = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_undefined = mockExchangeHandler();
 		
 		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
@@ -572,9 +572,9 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeInterceptor<ExchangeContext> interceptor1 = mockExchangeInterceptor();
 		WebExchangeInterceptor<ExchangeContext> interceptor2 = mockExchangeInterceptor();
 		
-		WebExchangeHandler<ExchangeContext> handler_fr = mockExchangeHandler();
-		WebExchangeHandler<ExchangeContext> handler_en = mockExchangeHandler();
-		WebExchangeHandler<ExchangeContext> handler_undefined = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_fr = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_en = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_undefined = mockExchangeHandler();
 		
 		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
@@ -665,8 +665,8 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeInterceptor<ExchangeContext> interceptor1 = mockExchangeInterceptor();
 		WebExchangeInterceptor<ExchangeContext> interceptor2 = mockExchangeInterceptor();
 		
-		WebExchangeHandler<ExchangeContext> handler_1 = mockExchangeHandler();
-		WebExchangeHandler<ExchangeContext> handler_2 = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_1 = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler_2 = mockExchangeHandler();
 		
 		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
@@ -755,7 +755,7 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeInterceptor<ExchangeContext> interceptor1 = mockExchangeInterceptor();
 		WebExchangeInterceptor<ExchangeContext> interceptor2 = mockExchangeInterceptor();
 		
-		WebExchangeHandler<ExchangeContext> handler = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler = mockExchangeHandler();
 		
 		GenericWebRouter router = new GenericWebRouter(null, null, null);
 		router
@@ -812,9 +812,9 @@ public class GenericWebInterceptedRouterTest {
 		WebExchangeInterceptor<ExchangeContext> interceptor1 = mockExchangeInterceptor();
 		WebExchangeInterceptor<ExchangeContext> interceptor2 = mockExchangeInterceptor();
 		
-		WebExchangeHandler<ExchangeContext> handler1 = mockExchangeHandler();
-		WebExchangeHandler<ExchangeContext> handler2 = mockExchangeHandler();
-		WebExchangeHandler<ExchangeContext> handler3 = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler1 = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler2 = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler3 = mockExchangeHandler();
 		
 		GenericWebRouter genericRouter = new GenericWebRouter(null, null, null);
 		

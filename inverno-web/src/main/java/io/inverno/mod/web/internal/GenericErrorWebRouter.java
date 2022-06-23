@@ -25,6 +25,7 @@ import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
 import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.*;
 import io.netty.buffer.Unpooled;
@@ -160,7 +161,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<ExchangeContext> httpExceptionHandler() {
+	private ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> httpExceptionHandler() {
 		return exchange -> {
 			final HttpException error = HttpException.wrap(exchange.getError());
 			if(error instanceof MethodNotAllowedException) {
@@ -191,7 +192,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<ExchangeContext> httpExceptionHandler_text() {
+	private ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> httpExceptionHandler_text() {
 		return exchange -> {
 			final HttpException error = HttpException.wrap(exchange.getError());
 			if(error instanceof MethodNotAllowedException) {
@@ -222,7 +223,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<ExchangeContext> httpExceptionHandler_json() {
+	private ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> httpExceptionHandler_json() {
 		return exchange -> {
 			final HttpException error = HttpException.wrap(exchange.getError());
 			
@@ -272,7 +273,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 	 * 
 	 * @return an error web exchange handler
 	 */
-	private ErrorWebExchangeHandler<ExchangeContext> httpExceptionHandler_html() {
+	private ErrorExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> httpExceptionHandler_html() {
 		return exchange -> {
 			final HttpException error = HttpException.wrap(exchange.getError());
 			String status = Integer.toString(error.getStatusCode());

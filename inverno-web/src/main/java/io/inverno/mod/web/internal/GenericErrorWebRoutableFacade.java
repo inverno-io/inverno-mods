@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web.internal;
 
+import io.inverno.mod.http.server.ErrorExchangeHandler;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.*;
 import java.util.Set;
@@ -62,7 +63,7 @@ class GenericErrorWebRoutableFacade<A extends ErrorWebRoutable<ExchangeContext, 
 		}
 
 		@Override
-		public GenericErrorWebRoutableFacade<A> handler(ErrorWebExchangeHandler<? super ExchangeContext> handler) {
+		public GenericErrorWebRoutableFacade<A> handler(ErrorExchangeHandler<? super ExchangeContext, ErrorWebExchange<ExchangeContext>> handler) {
 			this.routeManager.handler(handler);
 			return GenericErrorWebRoutableFacade.this;
 		}

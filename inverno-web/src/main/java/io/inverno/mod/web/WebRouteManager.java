@@ -19,6 +19,7 @@ import io.inverno.mod.web.spi.RouteManager;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ContentAware;
 import io.inverno.mod.web.spi.PathAware;
@@ -57,7 +58,7 @@ public interface WebRouteManager<A extends ExchangeContext, B extends WebRoutabl
 	 *
 	 * @return the router
 	 */
-	B handler(WebExchangeHandler<? super A> handler);
+	B handler(ExchangeHandler<? super A, WebExchange<A>> handler);
 	
 	/**
 	 * <p>

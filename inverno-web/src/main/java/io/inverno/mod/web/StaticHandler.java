@@ -25,6 +25,7 @@ import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeHandler;
 
 /**
  * <p>
@@ -53,7 +54,7 @@ import io.inverno.mod.http.server.ExchangeContext;
  * 
  * @see Resource
  */
-public class StaticHandler implements WebExchangeHandler<ExchangeContext> {
+public class StaticHandler<A extends ExchangeContext> implements ExchangeHandler<A, WebExchange<A>> {
 
 	/**
 	 * The default name of the path parameter defining the path to the resource.
@@ -108,7 +109,7 @@ public class StaticHandler implements WebExchangeHandler<ExchangeContext> {
 	}
 	
 	@Override
-	public void handle(WebExchange<ExchangeContext> exchange) throws HttpException {
+	public void handle(WebExchange<A> exchange) throws HttpException {
 		String resourcePath = exchange.request().pathParameters().get(this.pathParameterName).map(Parameter::getValue).orElse("");
 		boolean isDirectory = resourcePath.endsWith("/");
 		

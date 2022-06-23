@@ -17,7 +17,8 @@ package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.WebExchangeHandler;
+import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoutable;
 import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.WebRouteManager;
@@ -67,7 +68,7 @@ class GenericWebRoutableFacade<A extends WebRoutable<ExchangeContext, A>> implem
 		}
 
 		@Override
-		public GenericWebRoutableFacade<A> handler(WebExchangeHandler<? super ExchangeContext> handler) {
+		public GenericWebRoutableFacade<A> handler(ExchangeHandler<? super ExchangeContext, WebExchange<ExchangeContext>> handler) {
 			this.routeManager.handler(handler);
 			return GenericWebRoutableFacade.this;
 		}

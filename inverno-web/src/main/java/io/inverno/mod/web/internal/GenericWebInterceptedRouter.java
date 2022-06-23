@@ -19,9 +19,9 @@ import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.web.WebExchange;
-import io.inverno.mod.web.WebExchangeHandler;
 import io.inverno.mod.web.WebInterceptedRouter;
 import io.inverno.mod.web.WebInterceptorManager;
 import io.inverno.mod.web.WebInterceptorsConfigurer;
@@ -31,13 +31,10 @@ import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;
 import io.inverno.mod.web.WebRoutesConfigurer;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import reactor.core.publisher.Mono;
 
@@ -293,9 +290,9 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 			public WebRouteManagerFacade(WebRouteManager<ExchangeContext, WebInterceptedRouter<ExchangeContext>> routeManager) {
 				this.routeManager = routeManager;
 			}
-			
+
 			@Override
-			public WebRouter<ExchangeContext> handler(WebExchangeHandler<? super ExchangeContext> handler) {
+			public WebRouter<ExchangeContext> handler(ExchangeHandler<? super ExchangeContext, WebExchange<ExchangeContext>> handler) {
 				this.routeManager.handler(handler);
 				return WebRouterFacade.this;
 			}
