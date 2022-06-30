@@ -15,15 +15,22 @@
  */
 package io.inverno.mod.http.server;
 
+import io.inverno.mod.http.server.ws.WebSocket;
+import io.inverno.mod.http.server.ws.WebSocketExchange;
+import java.util.Optional;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * Represents a server exchange between a client and a server.
+ * Represents an HTTP server exchange (request/response) between a client and a server.
  * </p>
  *
  * <p>
- * The HTTP server attaches an exchange context created using {@link ServerController#createContext()} when an exchange is created.
+ * The HTTP server attaches an exchange context provided by {@link ServerController#createContext()} when an exchange is created.
+ * </p>
+ * 
+ * <p>
+ * An HTTP server exchange is processed in the {@link ServerController} of the HTTP server. 
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -54,7 +61,7 @@ public interface Exchange<A extends ExchangeContext> {
 	 * @return the response part
 	 */
 	Response response();
-
+	
 	/**
 	 * <p>
 	 * Returns the context attached to the exchange.
@@ -66,7 +73,23 @@ public interface Exchange<A extends ExchangeContext> {
 	
 	/**
 	 * <p>
-	 * Adds a finalizer to the exchange which completes once the exchange is fully processed.
+	 * Upgrades the exchange to a WebSocket exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * If the exchange cannot upgrade to the WebSocket protocol, an empty optional shall be returned. For instance, if the state of the exchange prevents the upgrade (e.g. error exchange) or if the
+	 * underlying HTTP protocol does not support the upgrade operation, an empty optional shall be returned. Currently only HTTP/1.1 can upgrade to the WebSocket protocol.
+	 * </p>
+	 *
+	 * @param subProtocols a list of supported sub protocols negotiated during the handshake
+	 * 
+	 * @return an optional returning the WebSocket or an empty optional if the upgrade is not possible
+	 */
+	Optional<? extends WebSocket<A, ? extends WebSocketExchange<A>>> webSocket(String... subProtocols);
+	
+	/**
+	 * <p>
+	 * Specifies a finalizer to the exchange which completes once the exchange is fully processed.
 	 * </p>
 	 *
 	 * <p>

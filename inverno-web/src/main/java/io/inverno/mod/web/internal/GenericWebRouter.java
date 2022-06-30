@@ -145,7 +145,7 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 	
 	@Override
 	public Mono<Void> defer(Exchange<ExchangeContext> exchange) {
-		return this.firstLink.defer(new GenericWebExchange(new GenericWebRequest(exchange.request(), this.parameterConverter, this.dataConversionService), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange.context(), exchange::finalizer));
+		return this.firstLink.defer(new GenericWebExchange(exchange, new GenericWebRequest(exchange.request(), this.parameterConverter, this.dataConversionService), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange::finalizer, this.dataConversionService));
 	}
 	
 	/**

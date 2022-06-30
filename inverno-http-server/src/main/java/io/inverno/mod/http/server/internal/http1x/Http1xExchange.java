@@ -15,29 +15,30 @@
  */
 package io.inverno.mod.http.server.internal.http1x;
 
-import java.nio.charset.Charset;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.reactivestreams.Subscription;
-
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.Part;
+import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.inverno.mod.http.server.internal.GenericErrorExchange;
+import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketFrame;
+import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.inverno.mod.http.server.internal.netty.FlatFullHttpResponse;
 import io.inverno.mod.http.server.internal.netty.FlatHttpResponse;
 import io.inverno.mod.http.server.internal.netty.FlatLastHttpContent;
+import io.inverno.mod.http.server.ws.WebSocket;
+import io.inverno.mod.http.server.ws.WebSocketExchange;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -53,8 +54,12 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
-import io.inverno.mod.http.server.ServerController;
 
 /**
  * <p>
@@ -73,9 +78,13 @@ import io.inverno.mod.http.server.ServerController;
  */
 class Http1xExchange extends AbstractExchange {
 
+	private final HttpServerConfiguration configuration;
 	private final Http1xConnectionEncoder encoder;
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
+	
+	private final GenericWebSocketFrame.GenericFactory webSocketFrameFactory;
+	private final GenericWebSocketMessage.GenericFactory webSocketMessageFactory;
 	
 	private boolean manageChunked;
 	private Charset charset;
@@ -85,23 +94,26 @@ class Http1xExchange extends AbstractExchange {
 	boolean keepAlive;
 	boolean trailers;
 	
+	private Http1xWebSocket webSocket;
+	
 	/**
 	 * <p>
 	 * Creates a HTTP1.x server exchange.
 	 * </p>
-	 * 
+	 *
+	 * @param configuration         the server configuration
 	 * @param context               the channel handler context
 	 * @param version               the HTTP version
 	 * @param httpRequest           the underlying HTTP request
 	 * @param encoder               the HTTP1.x connection encoder
 	 * @param headerService         the header service
 	 * @param parameterConverter    a string object converter
-	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body
-	 *                              decoder
+	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 * @param controller            the server controller
 	 */
 	public Http1xExchange(
+			HttpServerConfiguration configuration,
 			ChannelHandlerContext context, 
 			HttpVersion version,
 			HttpRequest httpRequest,
@@ -110,9 +122,11 @@ class Http1xExchange extends AbstractExchange {
 			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder,
-			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller
-		) {
+			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller,
+			GenericWebSocketFrame.GenericFactory webSocketFrameFactory,
+			GenericWebSocketMessage.GenericFactory webSocketMessageFactory) {
 		super(context, controller, new Http1xRequest(context, httpRequest, new Http1xRequestHeaders(httpRequest, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http1xResponse(version, context, headerService, parameterConverter));
+		this.configuration = configuration;
 		this.encoder = encoder;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
@@ -125,6 +139,20 @@ class Http1xExchange extends AbstractExchange {
 
 		String te = httpRequest.headers().get(Headers.NAME_TE);
 		this.trailers = te != null && te.contains(Headers.VALUE_TRAILERS);
+		
+		this.webSocketFrameFactory = webSocketFrameFactory;
+		this.webSocketMessageFactory = webSocketMessageFactory;
+	}
+
+	@Override
+	public Optional<? extends WebSocket<ExchangeContext, ? extends WebSocketExchange<ExchangeContext>>> webSocket(String... subProtocols) {
+		this.webSocket = new Http1xWebSocket(this.configuration, this.context, (Http1xRequest)this.request, this.webSocketFrameFactory, this.webSocketMessageFactory, subProtocols);
+		return Optional.of(this.webSocket);
+	}
+	
+	@Override
+	protected AbstractExchange.ServerControllerSubscriber createServerControllerSubscriber() {
+		return new Http1xServerControllerSubscriber();
 	}
 	
 	@Override
@@ -262,14 +290,22 @@ class Http1xExchange extends AbstractExchange {
 	
 	@Override
 	protected void onCompleteMany() {
-		Http1xResponseTrailers trailers = (Http1xResponseTrailers)this.response.trailers();
-		Object msg = trailers != null ? new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, trailers.getUnderlyingTrailers()) : LastHttpContent.EMPTY_LAST_CONTENT;
+		Http1xResponseTrailers responseTrailers = (Http1xResponseTrailers)this.response.trailers();
+		Object msg = responseTrailers != null ? new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, responseTrailers.getUnderlyingTrailers()) : LastHttpContent.EMPTY_LAST_CONTENT;
 		
 		ChannelPromise finalizePromise = this.context.newPromise();
 		this.encoder.writeFrame(this.context, msg, finalizePromise);
 		this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 	}
 	
+	/**
+	 * <p>
+	 * File region subscriber.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	private class FileRegionDataSubscriber extends BaseSubscriber<FileRegion> {
 
 		@Override
@@ -306,6 +342,62 @@ class Http1xExchange extends AbstractExchange {
 				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, msg, finalizePromise);
 				Http1xExchange.this.finalizeExchange(finalizePromise, () -> Http1xExchange.this.handler.exchangeComplete(Http1xExchange.this.context));
 			});
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Extends the base server controller subscriber to support WebSocket upgrade over HTTP/1.x.
+	 * </p>
+	 *
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.5
+	 */
+	protected class Http1xServerControllerSubscriber extends AbstractExchange.ServerControllerSubscriber {
+
+		@Override
+		protected void hookOnError(Throwable t) {
+			super.hookOnError(t);
+		}
+
+		/**
+		 * <p>
+		 * If {@link #webSocket(java.lang.String...) } has been invoked in the exchange handler, tries a WebSocket upgrade handshake by adding proper channel handlers in the pipeline. In case the
+		 * handshake succeeds, finalizes the upgrade, otherwise restores the pipeline and invokes the fallback handler or report the error if it is missing.
+		 * </p>
+		 */
+		@Override
+		protected void hookOnComplete() {
+			if(Http1xExchange.this.webSocket != null) {
+				// Handshake
+				Http1xExchange.this.webSocket.handshake().subscribe(
+					ign -> {},
+					cause -> {
+						if(Http1xExchange.this.webSocket.getFallback() != null) {
+							// restore the pipeline and invoke the fallback 
+							Http1xExchange.this.webSocket.restorePipeline();
+							
+							AbstractExchange.ServerControllerSubscriber serverControllerSubscriber = Http1xExchange.super.createServerControllerSubscriber();
+							Http1xExchange.this.disposable = serverControllerSubscriber;
+							Http1xExchange.this.webSocket.getFallback().subscribe(serverControllerSubscriber);
+						}
+						else {
+							Http1xExchange.this.hookOnError(cause);
+						}
+					},
+					() -> {
+						// We finished the upgrade, we can log the result
+						Http1xExchange.this.response.headers().status(Status.SWITCHING_PROTOCOLS);
+						Http1xExchange.this.logAccess();
+						
+						// Cancel the exchange nad next requests (if any) once the WebSocket upgrade completes
+						Http1xExchange.this.dispose();
+					}
+				);
+			}
+			else {
+				super.hookOnComplete();
+			}
 		}
 	}
 }

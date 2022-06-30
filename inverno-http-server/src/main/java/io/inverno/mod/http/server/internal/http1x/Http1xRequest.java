@@ -46,7 +46,7 @@ class Http1xRequest extends AbstractRequest {
 
 	private static final String PROTOCOL = "HTTP/1.1";
 	
-	private final HttpRequest httpRequest;
+	protected final HttpRequest underlyingRequest;
 	
 	private URIBuilder pathBuilder;
 	
@@ -69,13 +69,13 @@ class Http1xRequest extends AbstractRequest {
 	 */
 	public Http1xRequest(ChannelHandlerContext context, HttpRequest httpRequest, RequestHeaders requestHeaders, ObjectConverter<String> parameterConverter, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
 		super(context, requestHeaders, parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder);
-		this.httpRequest = httpRequest;
+		this.underlyingRequest = httpRequest;
 	}
 	
 	@Override
 	protected URIBuilder getPrimaryPathBuilder() {
 		if(this.pathBuilder == null) {
-			this.pathBuilder = URIs.uri(this.httpRequest.uri(), false, URIs.Option.NORMALIZED);
+			this.pathBuilder = URIs.uri(this.underlyingRequest.uri(), false, URIs.Option.NORMALIZED);
 		}
 		return this.pathBuilder;
 	}
@@ -100,7 +100,7 @@ class Http1xRequest extends AbstractRequest {
 	public Method getMethod() {
 		if(this.method == null) {
 			try {
-				this.method = Method.valueOf(this.httpRequest.method().name());
+				this.method = Method.valueOf(this.underlyingRequest.method().name());
 			}
 			catch (IllegalArgumentException e) {
 				this.method = Method.UNKNOWN;
@@ -127,6 +127,6 @@ class Http1xRequest extends AbstractRequest {
 	
 	@Override
 	public String getPath() {
-		return this.httpRequest.uri();
+		return this.underlyingRequest.uri();
 	}
 }

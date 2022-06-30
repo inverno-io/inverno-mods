@@ -99,7 +99,9 @@ public class GenericResponseBody implements ResponseBody {
 		if(this.dataEmitter != null) {
 			this.dataEmitter.success(transformedData);
 		}
-		this.data = transformedData;
+		else {
+			this.data = transformedData;
+		}
 		this.dataSet = true;
 	}
 
@@ -116,9 +118,9 @@ public class GenericResponseBody implements ResponseBody {
 			throw new IllegalStateException("Response data already subscribed");
 		}
 		if(this.data == null) {
-			this.setData(Flux.switchOnNext(Mono.<Publisher<ByteBuf>>create(emitter -> this.dataEmitter = emitter)));
+			this.data = Flux.switchOnNext(Mono.<Publisher<ByteBuf>>create(emitter -> this.dataEmitter = emitter));
 		}
-		this.data.subscribe(s);
+		Flux.from(this.data).doOnDiscard(ByteBuf.class, ByteBuf::release).subscribe(s);
 		this.subscribed = true;
 	}
 
@@ -176,7 +178,7 @@ public class GenericResponseBody implements ResponseBody {
 	}
 	
 	@Override
-	public Resource resource() {
+	public ResponseBody.Resource resource() {
 		if(this.resourceData == null) {
 			this.resourceData = new GenericResponseBodyResourceData();
 		}
@@ -192,7 +194,7 @@ public class GenericResponseBody implements ResponseBody {
 	}
 	
 	@Override
-	public Sse<CharSequence, Event<CharSequence>, EventFactory<CharSequence, Event<CharSequence>>> sseString() {
+	public ResponseBody.Sse<CharSequence, Event<CharSequence>, EventFactory<CharSequence, Event<CharSequence>>> sseString() {
 		if(this.sseStringData == null) {
 			this.sseStringData = new GenericResponseBodySseStringData();
 		}

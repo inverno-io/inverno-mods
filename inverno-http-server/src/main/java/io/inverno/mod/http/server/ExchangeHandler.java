@@ -41,7 +41,7 @@ public interface ExchangeHandler<A extends ExchangeContext, B extends Exchange<A
 	 * </p>
 	 */
 	@Override
-	default Mono<Void> defer(B exchange) {
+	default Mono<Void> defer(B exchange) throws HttpException {
 		return Mono.fromRunnable(() -> this.handle(exchange));
 	}
 	

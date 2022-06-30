@@ -17,14 +17,20 @@ package io.inverno.mod.web.internal;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
+import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.converter.ConverterException;
 import io.inverno.mod.base.converter.MediaTypeConverter;
+import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.BadRequestException;
 import io.inverno.mod.http.server.RequestData;
 import io.inverno.mod.http.server.ResponseBody;
 import io.inverno.mod.http.server.ResponseData;
+import io.inverno.mod.http.server.ws.WebSocketExchange;
+import io.inverno.mod.http.server.ws.WebSocketFrame;
+import io.inverno.mod.http.server.ws.WebSocketMessage;
 import io.inverno.mod.web.RequestDataDecoder;
 import io.inverno.mod.web.ResponseDataEncoder;
+import io.inverno.mod.web.Web2SocketExchange;
 import io.inverno.mod.web.WebResponseBody;
 import io.inverno.mod.web.WebResponseBody.SseEncoder;
 import io.netty.buffer.ByteBuf;
@@ -37,38 +43,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
  * <p>
- * The data conversion service is used to create payload decoders/encoders
- * from/to raw data based on a media type.
+ * The data conversion service is used to create payload decoders/encoders from/to raw data based on a media type.
  * </p>
  *
  * <p>
- * It uses the list of {@link MediaTypeConverter} injected in the web module to
- * find the right converter to decode or encode a payload in a particular media
- * type.
+ * It uses the list of {@link MediaTypeConverter} injected in the web module to find the right converter to decode or encode a payload in a particular media type.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see MediaTypeConverter
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class DataConversionService {
-
+	
 	private final Map<String, MediaTypeConverter<ByteBuf>> convertersCache;
 
 	private final List<MediaTypeConverter<ByteBuf>> converters;
 
 	/**
 	 * <p>
-	 * Creates a data conversion service with the specified list of media type
-	 * converters.
+	 * Creates a data conversion service with the specified list of media type converters.
 	 * </p>
-	 * 
+	 *
 	 * @param converters a list of converters
 	 */
 	public DataConversionService(List<MediaTypeConverter<ByteBuf>> converters) {
@@ -78,15 +81,14 @@ public class DataConversionService {
 
 	/**
 	 * <p>
-	 * Returns the first media type converter that can convert the specified media
-	 * type.
+	 * Returns the first media type converter that can convert the specified media type.
 	 * </p>
-	 * 
+	 *
 	 * @param mediaType a media type
+	 *
 	 * @return a media type converter
-	 * 
-	 * @throws NoConverterException if there's no converter that can convert the
-	 *                              specified media type
+	 *
+	 * @throws NoConverterException if there's no converter that can convert the specified media type
 	 */
 	public MediaTypeConverter<ByteBuf> getConverter(String mediaType) throws NoConverterException {
 		mediaType = mediaType.toLowerCase();
@@ -113,56 +115,53 @@ public class DataConversionService {
 	 * <p>
 	 * Creates a payload decoder.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>       the type of the decoded object
 	 * @param rawData   raw payload consumer
 	 * @param mediaType the source media type
 	 * @param type      a class of T
-	 * 
+	 *
 	 * @return a request data decoder
-	 * 
-	 * @throws NoConverterException if there's no converter that can convert the
-	 *                              specified media type
+	 *
+	 * @throws NoConverterException if there's no converter that can convert the specified media type
 	 */
 	public <T> RequestDataDecoder<T> createDecoder(RequestData<ByteBuf> rawData, String mediaType, Class<T> type) throws NoConverterException {
-		return new GenericRequestBodyDecoder<>(rawData, this.getConverter(mediaType), type);
+		return new GenericRequestDataDecoder<>(rawData, this.getConverter(mediaType), type);
 	}
 
 	/**
 	 * <p>
 	 * Creates a payload decoder.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>       the type of the decoded object
 	 * @param rawData   raw payload consumer
 	 * @param mediaType the source media type
 	 * @param type      the type of the decoded object
-	 * 
+	 *
 	 * @return a request data decoder
-	 * 
-	 * @throws NoConverterException if there's no converter that can convert the
-	 *                              specified media type
+	 *
+	 * @throws NoConverterException if there's no converter that can convert the specified media type
 	 */
 	public <T> RequestDataDecoder<T> createDecoder(RequestData<ByteBuf> rawData, String mediaType, Type type) throws NoConverterException {
-		return new GenericRequestBodyDecoder<T>(rawData, this.getConverter(mediaType), type);
+		return new GenericRequestDataDecoder<>(rawData, this.getConverter(mediaType), type);
 	}
 
 	/**
 	 * <p>
 	 * Creates a payload encoder.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>       the type of object to encode
 	 * @param rawData   raw payload producer
 	 * @param mediaType the target media type
-	 * 
+	 *
 	 * @return a response data encoder
-	 * 
-	 * @throws NoConverterException if there's no converter that can convert the
-	 *                              specified media type
+	 *
+	 * @throws NoConverterException if there's no converter that can convert the specified media type
 	 */
 	public <T> ResponseDataEncoder<T> createEncoder(ResponseData<ByteBuf> rawData, String mediaType) throws NoConverterException {
-		return new GenericRequestBodyEncoder<T>(rawData, this.getConverter(mediaType));
+		return new GenericResponseDataEncoder<>(rawData, this.getConverter(mediaType));
 	}
 
 	/**
@@ -181,41 +180,39 @@ public class DataConversionService {
 	 *                              specified media type
 	 */
 	public <T> ResponseDataEncoder<T> createEncoder(ResponseData<ByteBuf> rawData, String mediaType, Class<T> type) throws NoConverterException {
-		return new GenericRequestBodyEncoder<T>(rawData, this.getConverter(mediaType), type);
+		return new GenericResponseDataEncoder<>(rawData, this.getConverter(mediaType), type);
 	}
 
 	/**
 	 * <p>
 	 * Creates a payload encoder.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>       the type of object to encode
 	 * @param rawData   raw payload producer
 	 * @param mediaType the target media type
 	 * @param type      the type of object to encode
-	 * 
+	 *
 	 * @return a response data encoder
-	 * 
-	 * @throws NoConverterException if there's no converter that can convert the
-	 *                              specified media type
+	 *
+	 * @throws NoConverterException if there's no converter that can convert the specified media type
 	 */
 	public <T> ResponseDataEncoder<T> createEncoder(ResponseData<ByteBuf> rawData, String mediaType, Type type) throws NoConverterException {
-		return new GenericRequestBodyEncoder<T>(rawData, this.getConverter(mediaType), type);
+		return new GenericResponseDataEncoder<>(rawData, this.getConverter(mediaType), type);
 	}
 
 	/**
 	 * <p>
 	 * Creates a server-sent event encoder.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>       the type of object to encode
 	 * @param rawSse    the raw server-sent event
 	 * @param mediaType the target media type
-	 * 
+	 *
 	 * @return a server-sent events encoder
-	 * 
-	 * @throws NoConverterException if there's no converter that can convert the
-	 *                              specified media type
+	 *
+	 * @throws NoConverterException if there's no converter that can convert the specified media type
 	 */
 	public <T> WebResponseBody.SseEncoder<T> createSseEncoder(ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> rawSse, String mediaType) throws NoConverterException {
 		return new GenericSseEncoder<>(rawSse, this.getConverter(mediaType));
@@ -225,40 +222,78 @@ public class DataConversionService {
 	 * <p>
 	 * Creates a server-sent event encoder.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>       the type of object to encode
 	 * @param rawSse    the raw server-sent event
 	 * @param mediaType the target media type
 	 * @param type      a class of T
-	 * 
+	 *
 	 * @return a server-sent events encoder
-	 * 
-	 * @throws NoConverterException if there's no converter that can convert the
-	 *                              specified media type
+	 *
+	 * @throws NoConverterException if there's no converter that can convert the specified media type
 	 */
 	public <T> WebResponseBody.SseEncoder<T> createSseEncoder(ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> rawSse, String mediaType, Class<T> type) throws NoConverterException {
-		return new GenericSseEncoder<T>(rawSse, this.getConverter(mediaType), type);
+		return new GenericSseEncoder<>(rawSse, this.getConverter(mediaType), type);
 	}
 
 	/**
 	 * <p>
 	 * Creates a server-sent event encoder.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>       the type of object to encode
 	 * @param rawSse    the raw server-sent event
 	 * @param mediaType the target media type
 	 * @param type      the type of object to encode
-	 * 
+	 *
 	 * @return a server-sent events encoder
-	 * 
-	 * @throws NoConverterException if there's no converter that can convert the
-	 *                              specified media type
+	 *
+	 * @throws NoConverterException if there's no converter that can convert the specified media type
 	 */
 	public <T> WebResponseBody.SseEncoder<T> createSseEncoder(ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> rawSse, String mediaType, Type type) throws NoConverterException {
-		return new GenericSseEncoder<T>(rawSse, this.getConverter(mediaType), type);
+		return new GenericSseEncoder<>(rawSse, this.getConverter(mediaType), type);
 	}
 
+	/**
+	 * <p>
+	 * Creates a WebSocket inbound which can decode WebSocket messages.
+	 * </p>
+	 *
+	 * <p>
+	 * The sub protocol is assumed to be a compact {@code application/} media type (e.g. {@code json} => {@code application/json}}. The normalized form is used to determine which converter to use.
+	 * </p>
+	 *
+	 * @param inbound     the original inbound
+	 * @param subProtocol the negotiated sub protocol
+	 *
+	 * @return a decodable WebSocket inbound
+	 *
+	 * @throws NoConverterException if there's no converter that can convert the specified media type
+	 */
+	public Web2SocketExchange.Inbound createWebSocketDecodedInbound(WebSocketExchange.Inbound inbound, String subProtocol) throws NoConverterException {
+		return new GenericWebSocketInbound(inbound, this.getConverter(MediaTypes.normalizeApplicationMediaType(subProtocol)));
+	}
+	
+	/**
+	 * <p>
+	 * Creates a WebSocket outbound which can encode WebSocket messages.
+	 * </p>
+	 *
+	 * <p>
+	 * The sub protocol is assumed to be a compact {@code application/} media type (e.g. {@code json} => {@code application/json}}. The normalized form is used to determine which converter to use.
+	 * </p>
+	 *
+	 * @param outbound    the original outbound
+	 * @param subProtocol the negotiated sub protocol
+	 *
+	 * @return an encodable WebSocket outbound
+	 *
+	 * @throws NoConverterException if there's no converter that can convert the specified media type
+	 */
+	public Web2SocketExchange.Outbound createWebSocketEncodedOutbound(WebSocketExchange.Outbound outbound, String subProtocol) throws NoConverterException {
+		return new GenericWebSocketOutbound(outbound, this.getConverter(MediaTypes.normalizeApplicationMediaType(subProtocol)));
+	}
+	
 	/**
 	 * <p>
 	 * Generic {@link RequestDataDecoder} implementation.
@@ -269,13 +304,13 @@ public class DataConversionService {
 	 *
 	 * @param <A> the type of the decoded object
 	 */
-	private static class GenericRequestBodyDecoder<A> implements RequestDataDecoder<A> {
+	private static class GenericRequestDataDecoder<A> implements RequestDataDecoder<A> {
 
-		private RequestData<ByteBuf> rawData;
+		private final RequestData<ByteBuf> rawData;
 
-		private MediaTypeConverter<ByteBuf> converter;
+		private final MediaTypeConverter<ByteBuf> converter;
 
-		private Type type;
+		private final Type type;
 
 		/**
 		 * <p>
@@ -286,7 +321,7 @@ public class DataConversionService {
 		 * @param converter the converter
 		 * @param type      a class of A
 		 */
-		public GenericRequestBodyDecoder(RequestData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Class<A> type) {
+		public GenericRequestDataDecoder(RequestData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Class<A> type) {
 			this(rawData, converter, (Type) type);
 		}
 
@@ -299,7 +334,7 @@ public class DataConversionService {
 		 * @param converter the converter
 		 * @param type      the type of the decoded object
 		 */
-		public GenericRequestBodyDecoder(RequestData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Type type) {
+		public GenericRequestDataDecoder(RequestData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Type type) {
 			this.rawData = rawData;
 			this.converter = converter;
 			this.type = type;
@@ -340,13 +375,13 @@ public class DataConversionService {
 	 *
 	 * @param <A> the type of the object to encode
 	 */
-	private static class GenericRequestBodyEncoder<A> implements ResponseDataEncoder<A> {
+	private static class GenericResponseDataEncoder<A> implements ResponseDataEncoder<A> {
 
-		private ResponseData<ByteBuf> rawData;
+		private final ResponseData<ByteBuf> rawData;
 
-		private MediaTypeConverter<ByteBuf> converter;
+		private final MediaTypeConverter<ByteBuf> converter;
 
-		private Type type;
+		private final Type type;
 
 		/**
 		 * <p>
@@ -356,7 +391,7 @@ public class DataConversionService {
 		 * @param rawData   the raw data producer
 		 * @param converter the converter
 		 */
-		public GenericRequestBodyEncoder(ResponseData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter) {
+		public GenericResponseDataEncoder(ResponseData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter) {
 			this(rawData, converter, null);
 		}
 
@@ -369,7 +404,7 @@ public class DataConversionService {
 		 * @param converter the converter
 		 * @param type      a class of A
 		 */
-		public GenericRequestBodyEncoder(ResponseData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Class<A> type) {
+		public GenericResponseDataEncoder(ResponseData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Class<A> type) {
 			this(rawData, converter, (Type) type);
 		}
 
@@ -382,7 +417,7 @@ public class DataConversionService {
 		 * @param converter the converter
 		 * @param type      the type of the object to encode
 		 */
-		public GenericRequestBodyEncoder(ResponseData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Type type) {
+		public GenericResponseDataEncoder(ResponseData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Type type) {
 			this.rawData = rawData;
 			this.converter = converter;
 			this.type = type;
@@ -441,11 +476,11 @@ public class DataConversionService {
 	 */
 	private static class GenericSseEncoder<A> implements WebResponseBody.SseEncoder<A> {
 
-		private ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> rawSse;
+		private final ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> rawSse;
 
-		private MediaTypeConverter<ByteBuf> converter;
+		private final MediaTypeConverter<ByteBuf> converter;
 
-		private Type type;
+		private final Type type;
 
 		/**
 		 * <p>
@@ -610,6 +645,130 @@ public class DataConversionService {
 		}
 	}
 
+	/**
+	 * <p>
+	 * A generic {@link Web2SocketExchange.Inbound} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.5
+	 */
+	private static class GenericWebSocketInbound implements Web2SocketExchange.Inbound {
+
+		private final WebSocketExchange.Inbound inbound;
+		
+		private final MediaTypeConverter<ByteBuf> converter;
+
+		/**
+		 * <p>
+		 * Creates a generic decodable WebSocket inbound.
+		 * </p>
+		 * 
+		 * @param inbound   the original inbound
+		 * @param converter the converter
+		 */
+		public GenericWebSocketInbound(WebSocketExchange.Inbound inbound, MediaTypeConverter<ByteBuf> converter) {
+			this.inbound = inbound;
+			this.converter = converter;
+		}
+		
+		@Override
+		public <A> Publisher<A> decodeTextMessages(Type type) {
+			return Flux.from(this.inbound.textMessages()).flatMap(message -> this.converter.decodeOne(message.binary(), type));
+		}
+
+		@Override
+		public <A> Publisher<A> decodeBinaryMessages(Type type) {
+			return Flux.from(this.inbound.binaryMessages()).flatMap(message -> this.converter.decodeOne(message.binary(), type));
+		}
+
+		@Override
+		public Publisher<WebSocketFrame> frames() {
+			return this.inbound.frames();
+		}
+
+		@Override
+		public Publisher<WebSocketMessage> messages() {
+			return this.inbound.messages();
+		}
+
+		@Override
+		public Publisher<WebSocketMessage> textMessages() {
+			return this.inbound.textMessages();
+		}
+
+		@Override
+		public Publisher<WebSocketMessage> binaryMessages() {
+			return this.inbound.binaryMessages();
+		}
+	}
+	
+	/**
+	 * <p>
+	 * A generic {@link Web2SocketExchange.Outbound} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.5
+	 */
+	private static class GenericWebSocketOutbound implements Web2SocketExchange.Outbound {
+
+		private final WebSocketExchange.Outbound outbound;
+		
+		private final MediaTypeConverter<ByteBuf> converter;
+
+		/**
+		 * <p>
+		 * Creates a generic encodable WebSocket outbound.
+		 * </p>
+		 * 
+		 * @param outbound  the original outbound
+		 * @param converter the converter
+		 */
+		public GenericWebSocketOutbound(WebSocketExchange.Outbound outbound, MediaTypeConverter<ByteBuf> converter) {
+			this.outbound = outbound;
+			this.converter = converter;
+		}
+		
+		@Override
+		public <T> void encodeTextMessages(Publisher<T> messages, Type type) {
+			if(type == null) {
+				this.outbound.messages(factory -> Flux.from(messages).map(message -> factory.text(
+					Flux.from(DataConversionService.GenericWebSocketOutbound.this.converter.encodeOne(Mono.just(message))).map(buf -> buf.toString(Charsets.UTF_8))
+				)));
+			}
+			else {
+				this.outbound.messages(factory -> Flux.from(messages).map(message -> factory.text(
+					Flux.from(DataConversionService.GenericWebSocketOutbound.this.converter.encodeOne(Mono.just(message), type)).map(buf -> buf.toString(Charsets.UTF_8))
+				)));
+			}
+		}
+
+		@Override
+		public <T> void encodeBinaryMessages(Publisher<T> messages, Type type) {
+			if(type == null) {
+				this.outbound.messages(factory -> Flux.from(messages).map(message -> factory.binary(
+					Flux.from(DataConversionService.GenericWebSocketOutbound.this.converter.encodeOne(Mono.just(message)))
+				)));
+			}
+			else {
+				this.outbound.messages(factory -> Flux.from(messages).map(message -> factory.binary(
+					Flux.from(DataConversionService.GenericWebSocketOutbound.this.converter.encodeOne(Mono.just(message), type))
+				)));
+			}
+		}
+
+		@Override
+		public void frames(Function<WebSocketFrame.Factory, Publisher<WebSocketFrame>> frames) {
+			this.outbound.frames(frames);
+		}
+
+		@Override
+		public void messages(Function<WebSocketMessage.Factory, Publisher<WebSocketMessage>> messages) {
+			this.outbound.messages(messages);
+		}
+	}
+	
 	/**
 	 * <p>
 	 * Media type converters socket.

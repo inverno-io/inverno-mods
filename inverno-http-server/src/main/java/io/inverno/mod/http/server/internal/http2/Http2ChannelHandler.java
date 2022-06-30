@@ -44,6 +44,11 @@ import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
 import reactor.core.publisher.Sinks.EmitResult;
 import io.inverno.mod.http.server.ServerController;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelPromise;
+import io.netty.util.concurrent.PromiseCombiner;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -115,7 +120,17 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 //    	System.out.println("error");
 		super.exceptionCaught(ctx, cause);
-		ctx.close();
+		
+		PromiseCombiner finalPromise = new PromiseCombiner(ctx.executor());
+		for(Http2Exchange exchange : this.serverStreams.values()) {
+			exchange.dispose();
+			ChannelPromise errorPromise = ctx.newPromise();
+			exchange.finalizeExchange(errorPromise, null);
+			errorPromise.tryFailure(cause);
+			finalPromise.add((ChannelFuture)errorPromise);
+		}
+		
+		finalPromise.finish(ctx.newPromise().addListener(ChannelFutureListener.CLOSE));
 	}
 
 	@Override

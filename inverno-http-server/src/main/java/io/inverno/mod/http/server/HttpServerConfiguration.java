@@ -15,9 +15,8 @@
  */
 package io.inverno.mod.http.server;
 
-import java.net.URI;
-
 import io.inverno.mod.configuration.Configuration;
+import java.net.URI;
 
 /**
  * <p>
@@ -36,7 +35,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to "0.0.0.0".
+	 * Defaults to {@code 0.0.0.0}.
 	 * </p>
 	 * 
 	 * @return the server host name
@@ -51,7 +50,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 8080.
+	 * Defaults to {@code 8080}.
 	 * </p>
 	 * 
 	 * @return the server port
@@ -80,7 +79,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to false.
+	 * Defaults to {@code false}.
 	 * </p>
 	 * 
 	 * @return true if compression is enabled, false otherwise
@@ -95,7 +94,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to false.
+	 * Defaults to {@code false}.
 	 * </p>
 	 * 
 	 * @return true if decompression is enabled, false otherwise
@@ -110,7 +109,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 0 which means all responses are compressed.
+	 * Defaults to {@code 0} which means all responses are compressed.
 	 * </p>
 	 *
 	 * @return the compression content size threshold
@@ -126,7 +125,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 4.
+	 * Defaults to {@code 4}.
 	 * </p>
 	 * 
 	 * @return the brotli compression quality
@@ -141,7 +140,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to -1.
+	 * Defaults to {@code -1}.
 	 * </p>
 	 * 
 	 * @return the brotli compression window
@@ -156,7 +155,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 1 (TEXT).
+	 * Defaults to {@code 1} (TEXT).
 	 * </p>
 	 * 
 	 * @return the brotli compression mode
@@ -171,7 +170,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 6.
+	 * Defaults to {@code 6}.
 	 * </p>
 	 * 
 	 * @return the deflate compression level
@@ -186,7 +185,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 15.
+	 * Defaults to {@code 15}.
 	 * </p>
 	 * 
 	 * @return the deflate compression window bits
@@ -201,7 +200,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 8.
+	 * Defaults to {@code 8}.
 	 * </p>
 	 * 
 	 * @return the deflate compression memory level bits
@@ -216,7 +215,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 6.
+	 * Defaults to {@code 6}.
 	 * </p>
 	 * 
 	 * @return the gzip compression level
@@ -231,7 +230,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 15.
+	 * Defaults to {@code 15}.
 	 * </p>
 	 * 
 	 * @return the gzip compression window bits
@@ -246,7 +245,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 8.
+	 * Defaults to {@code 8}.
 	 * </p>
 	 * 
 	 * @return the gzip compression memory level
@@ -257,11 +256,11 @@ public interface HttpServerConfiguration {
 	
 	/**
 	 * <p>
-	 * Zstandard compression bock size.
+	 * Zstandard compression block size (in bytes).
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 64 KB.
+	 * Defaults to 64KB.
 	 * </p>
 	 * 
 	 * @return the zstd compression block size
@@ -276,7 +275,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 3.
+	 * Defaults to {@code 3}.
 	 * </p>
 	 * 
 	 * @return the zstd compression level
@@ -287,11 +286,11 @@ public interface HttpServerConfiguration {
 	
 	/**
 	 * <p>
-	 * Zstandard compression max encode size.
+	 * Zstandard compression max encode size (in bytes).
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 32 MB.
+	 * Defaults to 32MB.
 	 * </p>
 	 * 
 	 * @return the zstd compression max encode size
@@ -306,7 +305,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to false.
+	 * Defaults to {@code false}.
 	 * </p>
 	 * 
 	 * @return true if the option is enabled, false otherwise
@@ -326,7 +325,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to false.
+	 * Defaults to {@code false}.
 	 * </p>
 	 * 
 	 * @return true if the option is enabled, false otherwise
@@ -346,7 +345,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to true.
+	 * Defaults to {@code true}.
 	 * </p>
 	 * 
 	 * @return true if the option is enabled, false otherwise
@@ -370,7 +369,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to "JKS".
+	 * Defaults to {@code JKS}.
 	 * </p>
 	 * 
 	 * @return the key store type
@@ -421,7 +420,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 4096.
+	 * Defaults to {@code 4096}.
 	 * </p>
 	 * 
 	 * @return the header table size
@@ -436,7 +435,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 100.
+	 * Defaults to {@code 100}.
 	 * </p>
 	 * 
 	 * @return max concurrent streams
@@ -451,7 +450,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 65535.
+	 * Defaults to {@code 65535}.
 	 * </p>
 	 * 
 	 * @return initial window size
@@ -466,7 +465,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to 16384.
+	 * Defaults to {@code 16384}.
 	 * </p>
 	 * 
 	 * @return max frame size
@@ -488,5 +487,185 @@ public interface HttpServerConfiguration {
 	 */
 	default Integer http2_max_header_list_size() {
 		return Integer.MAX_VALUE;
+	}
+	
+	/**
+	 * <p>
+	 * WebSocket handshake timeout (ms).
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code -1} (i.e. no timeout).
+	 * </p>
+	 * 
+	 * @return the WebSocket handshake timeout
+	 */
+	default long ws_handshake_timeout() {
+		return -1l;
+	}
+	
+	/**
+	 * <p>
+	 * WebSocket close timeout (ms).
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code -1} (i.e. no timeout).
+	 * </p>
+	 * 
+	 * @return the WebSocket close timeout
+	 */
+	default long ws_close_timeout() {
+		return -1l;
+	}
+	
+	/**
+	 * <p>
+	 * WebSocket max frame size in bytes.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 65536}.
+	 * </p>
+	 * 
+	 * @return the WebSocket max frame size
+	 */
+	default Integer ws_max_frame_size() {
+		return 65536;
+	}
+	
+	/**
+	 * <p>
+	 * Accepts/Rejects unproperly masked WebSocket frames.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}.
+	 * </p>
+	 * 
+	 * @return true to allow unproperly masked frames, false otherwise
+	 */
+	default boolean ws_allow_mask_mismatch() {
+		return false;
+	}
+	
+	/**
+	 * <p>
+	 * Enables/Disables WebSocket per frame compression.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}.
+	 * </p>
+	 * 
+	 * @return true if WebSocket per frame is enabled, false otherwise
+	 */
+	default boolean ws_frame_compression_enabled() {
+		return false;
+	}
+	
+	/**
+	 * <p>
+	 * WebSocket per frame compression level.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 6}.
+	 * </p>
+	 * 
+	 * @return the WebSocket frame compression level
+	 */
+	default int ws_frame_compression_level() {
+		return 6;
+	}
+	
+	/**
+	 * <p>
+	 * Enables/Disables WebSocket per message compression.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}.
+	 * </p>
+	 * 
+	 * @return true if WebSocket per message is enabled, false otherwise
+	 */
+	default boolean ws_message_compression_enabled() {
+		return false;
+	}
+	
+	/**
+	 * <p>
+	 * WebSocket per message compression level.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 6}.
+	 * </p>
+	 * 
+	 * @return the WebSocket message compression level
+	 */
+	default int ws_message_compression_level() {
+		return 6;
+	}
+	
+	/**
+	 * <p>
+	 * Allows WebSocket client to customize the server inflater window size.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}.
+	 * </p>
+	 * 
+	 * @return true to allow clients to customize the server inflater window size, false otherwise
+	 */
+	default boolean ws_message_allow_server_window_size() {
+		return false;
+	}
+	
+	/**
+	 * <p>
+	 * The prefered client window size to use if client inflater is customizable.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 15}.
+	 * </p>
+	 * 
+	 * @return the prefered client window size
+	 */
+	default int ws_message_prefered_client_window_size() {
+		return 15;
+	}
+	
+	/**
+	 * <p>
+	 * Allows WebSocket client to activate server_no_context_takeover.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}.
+	 * </p>
+	 * 
+	 * @return true to allow clients to activate server_no_context_takeover, false otherwise
+	 */
+	default boolean ws_message_allow_server_no_context() {
+		return false;
+	}
+	
+	/**
+	 * <p>
+	 * Indicates if server prefers to activate client_no_context_takeover if client supports it.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}.
+	 * </p>
+	 * 
+	 * @return true to activate client_no_context_takeover if client supports it, false otherwise
+	 */
+	default boolean ws_message_preferred_client_no_context() {
+		return false;
 	}
 }

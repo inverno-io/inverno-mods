@@ -47,7 +47,6 @@ import io.inverno.mod.http.server.ExchangeHandler;
  * @since 1.3
  *
  * @see ErrorExchange
- * @see ErrorExchangeHandler
  * @see Route
  * @see ErrorRouteManager
  *

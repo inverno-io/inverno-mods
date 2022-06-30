@@ -21,8 +21,12 @@ import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.Part;
+import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.internal.AbstractExchange;
+import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketFrame;
+import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
@@ -38,7 +42,9 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
-import io.inverno.mod.http.server.ServerController;
+import io.netty.handler.codec.http.websocketx.CorruptedWebSocketFrameException;
+import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
+import reactor.core.publisher.Sinks;
 
 /**
  * <p>
@@ -55,16 +61,20 @@ import io.inverno.mod.http.server.ServerController;
  */
 public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1xConnectionEncoder, AbstractExchange.Handler {
 
-	private Http1xExchange requestingExchange;
-	private Http1xExchange respondingExchange;
-	
-	private Http1xExchange exchangeQueue;
-	
+	private final HttpServerConfiguration configuration;
 	private final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder; 
 	private final MultipartDecoder<Part> multipartBodyDecoder;
+	
+	private final GenericWebSocketFrame.GenericFactory webSocketFrameFactory;
+	private final GenericWebSocketMessage.GenericFactory webSocketMessageFactory;
+	
+	private Http1xExchange requestingExchange;
+	private Http1xExchange respondingExchange;
+	
+	private Http1xExchange exchangeQueue;
 	
 	private boolean read;
 	private boolean flush;
@@ -74,67 +84,101 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	 * Creates a HTTP1.x channel handler.
 	 * </p>
 	 * 
-	 * @param controller           the server controller
+	 * @param configuration         the server configuration
+	 * @param controller            the server controller
 	 * @param headerService         the header service
 	 * @param parameterConverter    a string object converter
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 */
 	public Http1xChannelHandler(
+			HttpServerConfiguration configuration,
 			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller,
 			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
-			MultipartDecoder<Part> multipartBodyDecoder) {
+			MultipartDecoder<Part> multipartBodyDecoder,
+			GenericWebSocketFrame.GenericFactory webSocketFrameFactory,
+			GenericWebSocketMessage.GenericFactory webSocketMessageFactory) {
+		this.configuration = configuration;
 		this.controller = controller;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
+		
+		this.webSocketFrameFactory = webSocketFrameFactory;
+		this.webSocketMessageFactory = webSocketMessageFactory;
 	}
 	
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 //		System.out.println("Channel read");
-		this.read = true;
-		if(msg instanceof HttpRequest) {
-			HttpRequest httpRequest = (HttpRequest)msg;
-			if(httpRequest.decoderResult().isFailure()) {
-				this.onDecoderError(ctx, httpRequest.protocolVersion(), httpRequest);
-				return;
-			}
-			this.requestingExchange = new Http1xExchange(ctx, httpRequest.protocolVersion(), httpRequest, this, this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.controller);
-			if(this.exchangeQueue == null) {
-				this.exchangeQueue = this.requestingExchange;
-				this.requestingExchange.start(this);
-			}
-			else {
-				this.exchangeQueue.next = this.requestingExchange;
-				this.exchangeQueue = this.requestingExchange;
-			}
-		}
-		else if(this.requestingExchange != null) {
-			HttpVersion version = this.requestingExchange.version;
-			if(msg == LastHttpContent.EMPTY_LAST_CONTENT) {
-				this.requestingExchange.request().data().ifPresent(sink -> sink.tryEmitComplete());
-			}
-			else {
-				HttpContent httpContent = (HttpContent)msg;
-				if(httpContent.decoderResult().isFailure()) {
-					this.onDecoderError(ctx, version, httpContent);
+		if(msg instanceof HttpObject) {
+			this.read = true;
+			if(msg instanceof HttpRequest) {
+				HttpRequest httpRequest = (HttpRequest)msg;
+				if(httpRequest.decoderResult().isFailure()) {
+					this.onDecoderError(ctx, httpRequest.protocolVersion(), httpRequest);
 					return;
 				}
-				this.requestingExchange.request().data().ifPresentOrElse(emitter -> emitter.tryEmitNext(httpContent.content()), () -> httpContent.release());
-				if(httpContent instanceof LastHttpContent) {
+				this.requestingExchange = new Http1xExchange(
+					this.configuration,
+					ctx, 
+					httpRequest.protocolVersion(), 
+					httpRequest, 
+					this,
+					this.headerService, 
+					this.parameterConverter, 
+					this.urlEncodedBodyDecoder, 
+					this.multipartBodyDecoder, 
+					this.controller,
+					this.webSocketFrameFactory,
+					this.webSocketMessageFactory
+				);
+				if(this.exchangeQueue == null) {
+					this.exchangeQueue = this.requestingExchange;
+					this.requestingExchange.start(this);
+				}
+				else {
+					this.exchangeQueue.next = this.requestingExchange;
+					this.exchangeQueue = this.requestingExchange;
+				}
+			}
+			else if(this.requestingExchange != null) {
+				HttpVersion version = this.requestingExchange.version;
+				if(msg == LastHttpContent.EMPTY_LAST_CONTENT) {
 					this.requestingExchange.request().data().ifPresent(sink -> sink.tryEmitComplete());
 				}
+				else {
+					HttpContent httpContent = (HttpContent)msg;
+					if(httpContent.decoderResult().isFailure()) {
+						this.onDecoderError(ctx, version, httpContent);
+						return;
+					}
+					this.requestingExchange.request().data().ifPresentOrElse(
+						sink -> {
+							if(sink.tryEmitNext(httpContent.content()) != Sinks.EmitResult.OK) {
+								httpContent.release();
+							}
+						}, 
+						() -> httpContent.release()
+					);
+					if(httpContent instanceof LastHttpContent) {
+						this.requestingExchange.request().data().ifPresent(sink -> sink.tryEmitComplete());
+					}
+				}
+			}
+			else {
+				// This can happen when an exchange has been disposed before we actually
+				// received all the data in that case we have to dismiss the content and wait
+				// for the next request
+				((HttpContent)msg).release();
 			}
 		}
 		else {
-			// This can happen when an exchange has been disposed before we actually
-			// received all the data in that case we have to dismiss the content and wait
-			// for the next request
-			((HttpContent)msg).release();
+			// This is required for WebSocket
+			super.channelRead(ctx, msg);
 		}
 	}
 	
@@ -185,7 +229,21 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 //		System.out.println("Exception caught");
-		ctx.close();
+		if(cause instanceof WebSocketHandshakeException || cause instanceof CorruptedWebSocketFrameException) {
+			// Delegate this to the WebSocket protocol handler
+			super.exceptionCaught(ctx, cause);
+		}
+		else {
+			if(this.respondingExchange != null) {
+				this.respondingExchange.dispose();
+				ChannelPromise errorPromise = ctx.newPromise();
+				this.respondingExchange.finalizeExchange(errorPromise, () -> ctx.close());
+				errorPromise.tryFailure(cause);
+			}
+			else {
+				ctx.close();
+			}
+		}
 	}
 	
 	@Override
@@ -199,7 +257,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 //		System.out.println("channel inactive");
 		
 		// TODO this created DB connections not returned to pool
-		// If the purpose to clean resources, I think we should see why this happens before the responding exchange response publisher did not finish
+		// If the purpose is to clean resources, I think we should see why this happens before the responding exchange response publisher did not finish
 		// one explanation could be that response events are not published on the channel event loop: the connection might be closed/end while the onComplete events hasn't been processed
 		// In any case this is disturbing and not easy to troubleshoot, we'll see in the future if this is a real issue or not
 		/*if(this.respondingExchange != null) {
@@ -239,7 +297,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 		if(this.flush) {
 			ctx.flush();
 		}
-		// We have to to release data...
+		// We have to release data...
 		if(this.respondingExchange.next != null) {
 			this.respondingExchange.next.dispose();
 		}

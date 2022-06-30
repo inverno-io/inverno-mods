@@ -34,11 +34,6 @@ import java.util.Optional;
 public interface DataConversionService {
 	
 	/**
-	 * The {@code application} type.
-	 */
-	public static final String APPLICATION_TYPE = "application";
-	
-	/**
 	 * <p>
 	 * Returns a media type converter for converting the specified media type.
 	 * </p>
@@ -48,32 +43,4 @@ public interface DataConversionService {
 	 * @return an optional containing the matching media type converter or an empty optional
 	 */
 	Optional<MediaTypeConverter<String>> getConverter(String mediaType);
-	
-	/**
-	 * <p>
-	 * Normalizes the specified media type.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method basically restores the missing {@code application/} prefix omitted for compactness in a JOSE header content type parameter.
-	 * </p>
-	 * 
-	 * @param mediaType a media type
-	 * 
-	 * @return a normalized media type
-	 */
-	static String normalizeMediaType(String mediaType) {
-		if(mediaType == null) {
-			return null;
-		}
-		mediaType = mediaType.toLowerCase();
-		String normalizedMediaType;
-		if(mediaType.indexOf('/') < 0) {
-			normalizedMediaType = APPLICATION_TYPE + "/" + mediaType;
-		}
-		else {
-			normalizedMediaType = mediaType;
-		}
-		return normalizedMediaType;
-	}
 }

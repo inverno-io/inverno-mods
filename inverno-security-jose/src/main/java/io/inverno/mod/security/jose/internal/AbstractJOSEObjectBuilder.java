@@ -17,6 +17,7 @@ package io.inverno.mod.security.jose.internal;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.inverno.mod.base.converter.MediaTypeConverter;
+import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.security.jose.JOSEHeader;
 import io.inverno.mod.security.jose.JOSEHeaderConfigurator;
 import io.inverno.mod.security.jose.JOSEObject;
@@ -272,7 +273,7 @@ public abstract class AbstractJOSEObjectBuilder<A, B extends JOSEHeader, C exten
 		
 		String resolvedContentType;
 		if(StringUtils.isNotBlank(overridingContentType)) {
-			if(LOGGER.isDebugEnabled() && StringUtils.isNotBlank(cty) && DataConversionService.normalizeMediaType(cty).equals(DataConversionService.normalizeMediaType(overridingContentType))) {
+			if(LOGGER.isDebugEnabled() && StringUtils.isNotBlank(cty) && MediaTypes.normalizeApplicationMediaType(cty).equals(MediaTypes.normalizeApplicationMediaType(overridingContentType))) {
 				// We just log a debug here since we want to be able to override the JWS header content type (eg. application/json to encode application/jwt)
 				LOGGER.debug("The overriding content type differs from the JOSE header content type");
 			}

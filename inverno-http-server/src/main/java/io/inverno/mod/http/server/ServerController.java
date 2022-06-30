@@ -46,7 +46,6 @@ import reactor.core.publisher.Mono;
  * @since 1.5
  * 
  * @see ExchangeHandler
- * @see ErrorExchangeHandler
  * 
  * @param <A> the type of the exchange context
  * @param <B> the type of exchange handled by the controller
@@ -61,7 +60,7 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 	 * </p>
 	 */
 	@Override
-	default Mono<Void> defer(B exchange) {
+	default Mono<Void> defer(B exchange) throws HttpException {
 		return Mono.fromRunnable(() -> this.handle(exchange));
 	}
 
@@ -86,7 +85,7 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 	 * </p>
 	 */
 	@Override
-	default Mono<Void> defer(C errorExchange) {
+	default Mono<Void> defer(C errorExchange) throws HttpException {
 		return Mono.fromRunnable(() -> this.handle(errorExchange));
 	}
 
@@ -117,7 +116,7 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 	 * This method returns null by default.
 	 * </p>
 	 * 
-	 * @return 
+	 * @return a new exchange context
 	 */
 	default A createContext() {
 		return null;
@@ -140,24 +139,24 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 		return new ServerController<U, V, W>() {
 
 			@Override
-			public Mono<Void> defer(V exchange) {
+			public Mono<Void> defer(V exchange) throws HttpException {
 				return handler.defer(exchange);
 			}
 
 			@Override
-			public void handle(V exchange) {
+			public void handle(V exchange) throws HttpException {
 				handler.handle(exchange);
 			}
 
 			@Override
 			@SuppressWarnings("unchecked")
-			public Mono<Void> defer(W errorExchange) {
+			public Mono<Void> defer(W errorExchange) throws HttpException {
 				return GenericErrorExchangeHandler.INSTANCE.defer((ErrorExchange<ExchangeContext>) errorExchange);
 			}
 
 			@Override
 			@SuppressWarnings("unchecked")
-			public void handle(W errorExchange) {
+			public void handle(W errorExchange) throws HttpException {
 				GenericErrorExchangeHandler.INSTANCE.handle((ErrorExchange<ExchangeContext>) errorExchange);
 			}
 		};
@@ -182,22 +181,22 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 		return new ServerController<U, V, W>() {
 
 			@Override
-			public Mono<Void> defer(V exchange) {
+			public Mono<Void> defer(V exchange) throws HttpException {
 				return handler.defer(exchange);
 			}
 
 			@Override
-			public void handle(V exchange) {
+			public void handle(V exchange) throws HttpException {
 				handler.handle(exchange);
 			}
 
 			@Override
-			public Mono<Void> defer(W errorExchange) {
+			public Mono<Void> defer(W errorExchange) throws HttpException {
 				return errorHandler.defer(errorExchange);
 			}
 
 			@Override
-			public void handle(W errorExchange) {
+			public void handle(W errorExchange) throws HttpException {
 				errorHandler.handle(errorExchange);
 			}
 		};
@@ -225,22 +224,22 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 		return new ServerController<U, V, W>() {
 
 			@Override
-			public Mono<Void> defer(V exchange) {
+			public Mono<Void> defer(V exchange) throws HttpException {
 				return handler.defer(exchange);
 			}
 
 			@Override
-			public void handle(V exchange) {
+			public void handle(V exchange) throws HttpException {
 				handler.handle(exchange);
 			}
 
 			@Override
-			public Mono<Void> defer(W errorExchange) {
+			public Mono<Void> defer(W errorExchange) throws HttpException {
 				return errorHandler.defer(errorExchange);
 			}
 
 			@Override
-			public void handle(W errorExchange) {
+			public void handle(W errorExchange) throws HttpException {
 				errorHandler.handle(errorExchange);
 			}
 

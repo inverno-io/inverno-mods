@@ -127,7 +127,7 @@ public class GenericDataConversionService implements DataConversionService {
 	
 	@Override
 	public Optional<MediaTypeConverter<String>> getConverter(String mediaType) {
-		String normalizedMediaType = DataConversionService.normalizeMediaType(mediaType);
+		String normalizedMediaType = MediaTypes.normalizeApplicationMediaType(mediaType);
 		MediaTypeConverter<String> result = this.convertersCache.get(normalizedMediaType);
 		if (result == null && !this.convertersCache.containsKey(normalizedMediaType)) {
 			for (MediaTypeConverter<String> converter : this.converters) {

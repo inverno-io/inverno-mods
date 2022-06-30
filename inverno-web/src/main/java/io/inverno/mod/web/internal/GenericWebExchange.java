@@ -15,13 +15,15 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.util.function.Function;
-
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ws.WebSocket;
+import io.inverno.mod.web.Web2SocketExchange;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRequest;
 import io.inverno.mod.web.WebResponse;
+import java.util.Optional;
+import java.util.function.Function;
 import reactor.core.publisher.Mono;
 
 /**
@@ -37,29 +39,32 @@ import reactor.core.publisher.Mono;
  */
 class GenericWebExchange implements WebExchange<ExchangeContext> {
 
+	private final Exchange<ExchangeContext> exchange;
+	
 	private final GenericWebRequest request;
 	
 	private final GenericWebResponse response;
 	
 	private final Function<Mono<Void>, Exchange<ExchangeContext>> finalizerConsumer;
 	
-	private final ExchangeContext context;
+	private final DataConversionService dataConversionService;
 	
 	/**
 	 * <p>
 	 * Creates a generic web exchange with the specified request and response.
 	 * </p>
 	 * 
+	 * @param exchange          the original exchange
 	 * @param request           a web request
 	 * @param response          a web response
-	 * @param context           the exchange context
 	 * @param finalizerSupplier the deferred exchange finalizer
 	 */
-	public GenericWebExchange(GenericWebRequest request, GenericWebResponse response, ExchangeContext context, Function<Mono<Void>, Exchange<ExchangeContext>> finalizerConsumer) {
+	public GenericWebExchange(Exchange<ExchangeContext> exchange, GenericWebRequest request, GenericWebResponse response, Function<Mono<Void>, Exchange<ExchangeContext>> finalizerConsumer, DataConversionService dataConversionService) {
+		this.exchange = exchange;
 		this.request = request;
 		this.response = response;
-		this.context = context;
 		this.finalizerConsumer = finalizerConsumer;
+		this.dataConversionService = dataConversionService;
 	}
 
 	@Override
@@ -73,8 +78,13 @@ class GenericWebExchange implements WebExchange<ExchangeContext> {
 	}
 	
 	@Override
+	public Optional<? extends WebSocket<ExchangeContext, ? extends Web2SocketExchange<ExchangeContext>>> webSocket(String... subProtocols) {
+		return this.exchange.webSocket(subProtocols).map(webSocket -> new GenericWeb2Socket(webSocket, this.request, this.dataConversionService));
+	}
+	
+	@Override
 	public ExchangeContext context() {
-		return this.context;
+		return this.exchange.context();
 	}
 	
 	@Override

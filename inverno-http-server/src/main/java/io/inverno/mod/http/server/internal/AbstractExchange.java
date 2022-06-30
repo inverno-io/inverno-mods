@@ -24,6 +24,8 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.EventExecutor;
+import java.net.InetSocketAddress;
+import java.util.function.Supplier;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,9 +38,6 @@ import reactor.core.Disposable;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SignalType;
-
-import java.net.InetSocketAddress;
-import java.util.function.Supplier;
 
 /**
  * <p>
@@ -85,7 +84,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	/**
 	 * the current disposable
 	 */
-	private Disposable disposable;
+	protected Disposable disposable;
 	
 	protected static final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> LAST_RESORT_ERROR_CONTROLLER = exchange -> {};
 	
@@ -157,15 +156,12 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * 
 	 * @return the promise
 	 */
-	protected ChannelFuture finalizeExchange(ChannelPromise finalPromise, Runnable postFinalize) {
+	public ChannelFuture finalizeExchange(ChannelPromise finalPromise, Runnable postFinalize) {
 		if(this.finalizer != null) {
 			finalPromise.addListener(future -> {
 				Mono<Void> actualFinalizer = this.finalizer;
 				if(postFinalize != null) {
 					actualFinalizer.doOnTerminate(postFinalize);
-				}
-				if(!future.isSuccess()) {
-					Mono.error(future.cause()).then(actualFinalizer);
 				}
 				actualFinalizer.subscribe();
 			});
@@ -200,7 +196,12 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	@Override
 	public void dispose() {
-		this.disposable.dispose();
+		if(this.disposable == this) {
+			super.dispose();
+		}
+		else {
+			this.disposable.dispose();
+		}
 		this.request.dispose();
 	}
 	
@@ -247,9 +248,20 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				deferHandle = LAST_RESORT_ERROR_CONTROLLER.defer(errorExchange);
 			}
 		}
-		RootHandlerSubscriber rootHandlerSubscriber = new RootHandlerSubscriber();
-		this.disposable = rootHandlerSubscriber;
-		deferHandle.subscribe(rootHandlerSubscriber);
+		ServerControllerSubscriber serverControllerSubscriber = this.createServerControllerSubscriber();
+		this.disposable = serverControllerSubscriber;
+		deferHandle.subscribe(serverControllerSubscriber);
+	}
+	
+	/**
+	 * <p>
+	 * Creates the server controller subscriber used to consume the exchange deferred handle Mono supplied by {@link ServerController#defer(Exchange)}.
+	 * </p>
+	 * 
+	 * @return the server controller subscriber
+	 */
+	protected ServerControllerSubscriber createServerControllerSubscriber() {
+		return new ServerControllerSubscriber();
 	}
 	
 	/**
@@ -379,7 +391,9 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * Invokes when the response data publisher completes with an error
 	 * </p>
 	 */
+	@Override
 	protected final void hookOnError(Throwable throwable) {
+		this.dispose();
 		// if headers are already written => close the connection nothing we can do
 		// if headers are not already written => we should invoke the error handler
 		// what we need is to continue processing
@@ -430,6 +444,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	@Override
 	protected final void hookOnComplete() {
+		this.dispose();
 		if(this.transferedLength == 0) {
 			if(this.response.headers().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
 				this.response.headers().contentLength(0);
@@ -461,13 +476,13 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			});
 		}
 	}
-	
+
 	/**
 	 * <p>
 	 * Logs an access log message.
 	 * </p>
 	 */
-	private void logAccess() {
+	protected void logAccess() {
 		// HTTP access
 		/*LOGGER.info(MARKER_ACCESS, () -> {
 			InetSocketAddress inetRemoteAddress = (InetSocketAddress)this.request.getRemoteAddress();
@@ -633,6 +648,8 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * <p>
 	 * Invokes when the response data publisher completes with a single data.
 	 * </p>
+	 * 
+	 * @param value the single byte buffer
 	 */
 	protected abstract void onCompleteSingle(ByteBuf value);
 	
@@ -720,15 +737,13 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	/**
 	 * <p>
-	 * An subscriber to consume the exchange deferred handle Mono supplied by
-	 * {@link RootExchangeHandler#defer(Exchange)}. On complete it subscribes
-	 * to the exchange response data publisher.
+	 * A subscriber to consume the exchange deferred handle Mono supplied by {@link ServerController#defer(Exchange)}. On complete it subscribes to the exchange response data publisher.
 	 * </p>
-	 * 
+	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.3
 	 */
-	private final class RootHandlerSubscriber extends BaseSubscriber<Void> {
+	protected class ServerControllerSubscriber extends BaseSubscriber<Void> {
 
 		@Override
 		protected void hookOnError(Throwable t) {

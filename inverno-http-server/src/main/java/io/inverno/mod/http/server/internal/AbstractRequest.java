@@ -55,7 +55,8 @@ public abstract class AbstractRequest implements Request {
 	protected GenericRequestCookies requestCookies;
 	
 	private Optional<RequestBody> requestBody;
-	private Sinks.Many<ByteBuf> data;
+	private Optional<Sinks.Many<ByteBuf>> data;
+	private boolean subscribed;
 	
 	private String pathAbsolute;
 	private String queryString;
@@ -79,6 +80,7 @@ public abstract class AbstractRequest implements Request {
 		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
+		this.data = Optional.empty();
 	}
 
 	/**
@@ -156,10 +158,13 @@ public abstract class AbstractRequest implements Request {
 					if(this.requestBody == null) {
 						// TODO deal with backpressure using a custom queue: if the queue reach a given threshold we should suspend the read on the channel: this.context.channel().config().setAutoRead(false)
 						// and resume when this flux is actually consumed (doOnRequest? this might impact performance)
-						this.data = Sinks.many().unicast().onBackpressureBuffer();
-						Flux<ByteBuf> requestBodyData = this.data.asFlux()
+						Sinks.Many<ByteBuf> dataSink = Sinks.many().unicast().onBackpressureBuffer();
+						Flux<ByteBuf> requestBodyData = dataSink.asFlux()
+							.doOnSubscribe(ign -> this.subscribed = true)
 							.doOnDiscard(ByteBuf.class, ByteBuf::release);
 
+						this.data = Optional.of(dataSink);
+						
 						this.requestBody = Optional.of(new GenericRequestBody(
 							this.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE),
 							this.urlEncodedBodyDecoder, 
@@ -187,7 +192,7 @@ public abstract class AbstractRequest implements Request {
 	 *         the request has no body
 	 */
 	public Optional<Sinks.Many<ByteBuf>> data() {
-		return Optional.ofNullable(this.data);
+		return this.data;
 	}
 	
 	/**
@@ -196,14 +201,19 @@ public abstract class AbstractRequest implements Request {
 	 * </p>
 	 */
 	public void dispose() {
-		if(this.data != null) {
-			// Try to drain and release buffered data 
-			this.data.asFlux().subscribe(
-				chunk -> chunk.release(), 
-				ex -> {
-					// TODO Should be ignored but can be logged as debug or trace log
-				}
-			);
-		}
+		this.data.ifPresent(dataSink -> {
+			dataSink.tryEmitComplete();
+			if(!this.subscribed) {
+				// Try to drain and release buffered data 
+				// when the datasink was already subscribed data are released in doOnDiscard (see #body())
+				dataSink.asFlux().subscribe(
+					chunk -> chunk.release(), 
+					ex -> {
+						// TODO Should be ignored but can be logged as debug or trace log
+					}
+				);
+			}
+		});
+		this.data = Optional.empty();
 	}
 }

@@ -26,9 +26,9 @@ import io.inverno.mod.http.base.header.HeaderService;
  * <p>It defines the following sockets:</p>
  * 
  * <dl>
- * <dt>headerCodecs</dt>
+ * <dt><b>headerCodecs</b></dt>
  * <dd>extend the extends header service capabilities with a list of custom header codecs</dd>
- * <dt>parameterConverter</dt>
+ * <dt><b>parameterConverter</b></dt>
  * <dd>override the default parameter converter used in {@link Parameter} instances to convert their values</dd>
  * </dl>
  * 
@@ -37,7 +37,7 @@ import io.inverno.mod.http.base.header.HeaderService;
  * </p>
  * 
  * <dl>
- * <dt>headerService</dt>
+ * <dt><b>headerService</b></dt>
  * <dd>A {@link HeaderService} used to decode and encode HTTP header fields.</dd>
  * </dl>
  * 
@@ -56,6 +56,7 @@ module io.inverno.mod.http.base {
 
 	exports io.inverno.mod.http.base;
 	exports io.inverno.mod.http.base.header;
+	exports io.inverno.mod.http.base.ws;
 
 	exports io.inverno.mod.http.base.internal to io.inverno.mod.http.server;
 	exports io.inverno.mod.http.base.internal.header to io.inverno.mod.http.server, io.inverno.mod.web;

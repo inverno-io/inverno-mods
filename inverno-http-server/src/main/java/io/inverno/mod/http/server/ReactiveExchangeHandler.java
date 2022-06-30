@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.server;
 
+import io.inverno.mod.http.base.HttpException;
 import reactor.core.publisher.Mono;
 
 /**
@@ -61,6 +62,8 @@ public interface ReactiveExchangeHandler<A extends ExchangeContext, B extends Ex
 	 * @param exchange the exchange to process
 	 *
 	 * @return an empty mono that completes when the exchange has been processed
+	 * 
+	 * @throws HttpException if an error occurs during the processing of the exchange
 	 */
-	Mono<Void> defer(B exchange);
+	Mono<Void> defer(B exchange) throws HttpException;
 }

@@ -23,9 +23,12 @@ import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.Part;
+import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.inverno.mod.http.server.internal.GenericErrorExchange;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
+import io.inverno.mod.http.server.ws.WebSocket;
+import io.inverno.mod.http.server.ws.WebSocketExchange;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -33,7 +36,8 @@ import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
-import io.inverno.mod.http.server.ServerController;
+import java.util.Optional;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -89,6 +93,19 @@ class Http2Exchange extends AbstractExchange {
 		this.encoder = encoder;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
+	}
+
+	/**
+	 * <p>
+	 * Returns an empty optional since HTTP/2 does not support WebSocket upgrade.
+	 * </p>
+	 * 
+	 * @return an empty optional
+	 */
+	@Override
+	public Optional<? extends WebSocket<ExchangeContext, ? extends WebSocketExchange<ExchangeContext>>> webSocket(String... subProtocols) {
+		// WebSocket upgrade over HTTP/2 is not supported
+		return Optional.empty();
 	}
 	
 	/**

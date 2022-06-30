@@ -29,20 +29,20 @@ import io.inverno.mod.http.base.Parameter;
  * </p>
  * 
  * <dl>
- * <dt>httpServerConfiguration</dt>
+ * <dt><b>httpServerConfiguration</b></dt>
  * <dd>the HTTP server module configuration</dd>
- * <dt>netService (required)</dt>
+ * <dt><b>netService (required)</b></dt>
  * <dd>the Net service used to create the HTTP server</dd>
- * <dt>resourceService (required)</dt>
+ * <dt><b>resourceService (required)</b></dt>
  * <dd>the resource service used to load resources required by the HTTP server
  * (eg. key store...)</dd>
- * <dt>rootHandler</dt>
+ * <dt><b>rootHandler</b></dt>
  * <dd>override the default HTTP server root handler used to process server
  * exchanges</dd>
- * <dt>errorHandler</dt>
+ * <dt><b>errorHandler</b></dt>
  * <dd>override the default HTTP server error handler used to process error
  * exchanges</dd>
- * <dt>parameterConverter</dt>
+ * <dt><b>parameterConverter</b></dt>
  * <dd>override the default parameter converter used in {@link Parameter}
  * instances to convert their values</dd>
  * </dl>
@@ -52,11 +52,11 @@ import io.inverno.mod.http.base.Parameter;
  * </p>
  * 
  * <dl>
- * <dt>httpServerConfiguration</dt>
+ * <dt><b>httpServerConfiguration</b></dt>
  * <dd>the HTTP server module configuration</dd>
- * <dt>rootHandler</dt>
+ * <dt><b>rootHandler</b></dt>
  * <dd>the HTTP server root exchange handler</dd>
- * <dt>errorHandler</dt>
+ * <dt><b>errorHandler</b></dt>
  * <dd>the HTTP server error exchange handler</dd>
  * </dl>
  * 
@@ -65,7 +65,7 @@ import io.inverno.mod.http.base.Parameter;
  * follows:
  * </p>
  * 
- * <blockquote><pre>
+ * <pre>{@code
  * NetService netService = ...;
  * ResourceService resourceService = ...;
  *
@@ -79,7 +79,7 @@ import io.inverno.mod.http.base.Parameter;
  *             .value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello, world!", Charsets.DEFAULT)))
  *      )
  * ).run();
- * </pre></blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
@@ -108,4 +108,5 @@ module io.inverno.mod.http.server {
 	requires io.netty.handler;
 	
 	exports io.inverno.mod.http.server;
+	exports io.inverno.mod.http.server.ws;
 }

@@ -17,7 +17,10 @@ package io.inverno.mod.web.internal.mock;
 
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ws.WebSocket;
+import io.inverno.mod.web.Web2SocketExchange;
 import io.inverno.mod.web.WebExchange;
+import java.util.Optional;
 import reactor.core.publisher.Mono;
 
 /**
@@ -52,6 +55,11 @@ public class MockWebExchange implements WebExchange<ExchangeContext> {
 	@Override
 	public MockWebResponse response() {
 		return this.mockResponse;
+	}
+
+	@Override
+	public Optional<? extends WebSocket<ExchangeContext, ? extends Web2SocketExchange<ExchangeContext>>> webSocket(String... subProtocols) {
+		throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
 	}
 	
 	@Override

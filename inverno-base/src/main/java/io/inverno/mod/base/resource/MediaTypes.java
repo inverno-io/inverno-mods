@@ -26,6 +26,11 @@ package io.inverno.mod.base.resource;
 public final class MediaTypes {
 
 	/**
+	 * The {@code application} type used in {@link #normalizeApplicationMediaType(java.lang.String) }
+	 */
+	private static final String TYPE_APPLICATION = "application";
+	
+	/**
 	 * {@code application/jose}
 	 */
 	public static final String APPLICATION_JOSE = "application/jose";
@@ -104,4 +109,33 @@ public final class MediaTypes {
 	 * {@code text/xml}
 	 */
 	public static final String TEXT_XML = "text/xml";
+	
+	/**
+	 * <p>
+	 * Normalizes the specified media type.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method basically restores the missing {@code application/} prefix omitted for compactness. This reduced syntax can be used for instance in a JOSE header content type parameter or in a
+	 * Websocket subprotocol.
+	 * </p>
+	 * 
+	 * @param mediaType a media type
+	 * 
+	 * @return a normalized application media type
+	 */
+	public static String normalizeApplicationMediaType(String mediaType) {
+		if(mediaType == null) {
+			return null;
+		}
+		mediaType = mediaType.toLowerCase();
+		String normalizedMediaType;
+		if(mediaType.indexOf('/') < 0) {
+			normalizedMediaType = TYPE_APPLICATION + "/" + mediaType;
+		}
+		else {
+			normalizedMediaType = mediaType;
+		}
+		return normalizedMediaType;
+	}
 }

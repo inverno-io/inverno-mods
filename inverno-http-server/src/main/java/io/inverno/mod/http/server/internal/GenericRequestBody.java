@@ -40,15 +40,15 @@ import reactor.core.publisher.Mono;
  */
 public class GenericRequestBody implements RequestBody {
 	
+	private final Optional<Headers.ContentType> contentType;
+	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
+	private final MultipartDecoder<Part> multipartBodyDecoder;
+	
 	private Flux<ByteBuf> data;
-	private Optional<Headers.ContentType> contentType;
 	
 	private RequestData<ByteBuf> rawData;
 	private RequestBody.UrlEncoded urlEncodedData;
 	private RequestBody.Multipart<Part> multipartData;
-	
-	private MultipartDecoder<Parameter> urlEncodedBodyDecoder;
-	private MultipartDecoder<Part> multipartBodyDecoder;
 
 	/**
 	 * <p>
@@ -119,7 +119,7 @@ public class GenericRequestBody implements RequestBody {
 	 */
 	private class GenericRequestBodyUrlEncodedData implements RequestBody.UrlEncoded {
 
-		private Publisher<Parameter> parameters;
+		private final Publisher<Parameter> parameters;
 		
 		private Mono<Map<String, Parameter>> parametersMap;
 		

@@ -15,6 +15,9 @@
  */
 package io.inverno.mod.http.server;
 
+import io.inverno.mod.http.server.ws.WebSocket;
+import io.inverno.mod.http.server.ws.WebSocketExchange;
+import java.util.Optional;
 import java.util.function.Function;
 import reactor.core.publisher.Mono;
 
@@ -25,7 +28,7 @@ import reactor.core.publisher.Mono;
  *
  * <p>
  * The HTTP server creates a failing exchange when an exception is thrown during the normal processing of a server {@link Exchange}. They are handled
- * in an {@link ErrorExchangeHandler} that formats the actual response returned to the client.
+ * in an {@link ExchangeHandler} that formats the actual response returned to the client.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -45,6 +48,18 @@ public interface ErrorExchange<A extends ExchangeContext> extends Exchange<A> {
 	 * @return a throwable of type A
 	 */
 	Throwable getError();
+
+	/**
+	 * <p>
+	 * Returns an empty optional since an error exchange does not support WebSocket upgrade.
+	 * </p>
+	 * 
+	 * @return an empty optional
+	 */
+	@Override
+	default Optional<? extends WebSocket<A, ? extends WebSocketExchange<A>>> webSocket(String... subProtocols) {
+		return Optional.empty();
+	}
 	
 	/**
 	 * <p>
