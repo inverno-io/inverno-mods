@@ -18,12 +18,10 @@ package io.inverno.mod.web;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ContentAware;
 import io.inverno.mod.web.spi.InterceptorManager;
 import io.inverno.mod.web.spi.PathAware;
-import java.util.List;
 
 /**
  * <p>
@@ -42,38 +40,6 @@ import java.util.List;
  */
 public interface WebInterceptorManager<A extends ExchangeContext, B extends WebInterceptable<A, B>> extends InterceptorManager<A, WebExchange<A>, B, WebInterceptorManager<A, B>> {
 	
-	/**
-	 * <p>
-	 * Specifies the web exchange interceptor to apply to the resources matching the criteria defined in the web interceptor manager.
-	 * </p>
-	 *
-	 * <p>
-	 * This method basically appends the interceptor and the associated route criteria to the web intercepted router it comes from.
-	 * </p>
-	 * 
-	 * @param interceptor  the web exchange interceptor
-	 *
-	 * @return the router
-	 */
-	B interceptor(ExchangeInterceptor<? super A, WebExchange<A>> interceptor);
-
-	/**
-	 * <p>
-	 * Specifies multiple web exchange interceptors to apply to the resources matching the criteria defined in the web
-	 * interceptor manager.
-	 * </p>
-	 *
-	 * <p>
-	 * This method basically appends the interceptors and the associated route criteria to the web intercepted router it
-	 * comes from.
-	 * </p>
-	 *
-	 * @param interceptors a list of web exchange interceptors
-	 *
-	 * @return the router
-	 */
-	B interceptors(List<ExchangeInterceptor<? super A, WebExchange<A>>> interceptors);
-
 	/**
 	 * <p>
 	 * Specifies the path without matching trailing slash to the route to intercept.

@@ -76,7 +76,7 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 	 * @param request        the HTTP/1.x exchange request
 	 * @param frameFactory   the WebSocket frame factory
 	 * @param messageFactory the WebSocket message factory
-	 * @param subProtocols   the list of supported sub protocols
+	 * @param subProtocols   the list of supported subprotocols
 	 */
 	public Http1xWebSocket(HttpServerConfiguration configuration, ChannelHandlerContext context, Http1xRequest request, GenericWebSocketFrame.GenericFactory frameFactory, GenericWebSocketMessage.GenericFactory messageFactory, String[] subProtocols) {
 		this.configuration = configuration;

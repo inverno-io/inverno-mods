@@ -108,7 +108,7 @@ public class WebJarsRoutesConfigurer implements WebRoutesConfigurer<ExchangeCont
 					routes.route()
 						.path(webjarRootPath)
 						.method(Method.GET)
-						.handler(new StaticHandler(baseResource));
+						.handler(new StaticHandler<>(baseResource));
 				}
 			});
 		}
@@ -129,7 +129,7 @@ public class WebJarsRoutesConfigurer implements WebRoutesConfigurer<ExchangeCont
 					routes.route()
 						.path(webjarRootPath)
 						.method(Method.GET)
-						.handler(new StaticHandler(baseResource));
+						.handler(new StaticHandler<>(baseResource));
 				}
 			});
 	}

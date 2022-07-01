@@ -46,7 +46,7 @@ public class HttpException extends RuntimeException {
 	
 	/**
 	 * <p>
-	 * Creates a HTTP exception with default status
+	 * Creates an HTTP exception with default status
 	 * {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)}.
 	 * </p>
 	 */
@@ -56,7 +56,7 @@ public class HttpException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP exception with default status
+	 * Creates an HTTP exception with default status
 	 * {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)} and
 	 * specified message.
 	 * </p>
@@ -69,7 +69,7 @@ public class HttpException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP exception with default status
+	 * Creates an HTTP exception with default status
 	 * {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)} and
 	 * specified cause.
 	 * </p>
@@ -82,7 +82,7 @@ public class HttpException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP exception with default status
+	 * Creates an HTTP exception with default status
 	 * {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)}, specified
 	 * message and cause
 	 * </p>
@@ -96,10 +96,10 @@ public class HttpException extends RuntimeException {
 	
 	/**
 	 * <p>
-	 * Creates a HTTP exception with specified HTTP status code.
+	 * Creates an HTTP exception with specified HTTP status code.
 	 * </p>
 	 * 
-	 * @param statusCode a HTTP status code
+	 * @param statusCode an HTTP status code
 	 * 
 	 * @throws IllegalArgumentException if the specified status doesn't correspond
 	 *                                  to a known HTTP status
@@ -110,10 +110,10 @@ public class HttpException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP exception with specified HTTP status code and message.
+	 * Creates an HTTP exception with specified HTTP status code and message.
 	 * </p>
 	 * 
-	 * @param statusCode a HTTP status code
+	 * @param statusCode an HTTP status code
 	 * @param message    a message
 	 * 
 	 * @throws IllegalArgumentException if the specified status doesn't correspond
@@ -126,10 +126,10 @@ public class HttpException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP exception with specified HTTP status code and cause.
+	 * Creates an HTTP exception with specified HTTP status code and cause.
 	 * </p>
 	 * 
-	 * @param statusCode a HTTP status code
+	 * @param statusCode an HTTP status code
 	 * @param cause      a cause
 	 * 
 	 * @throws IllegalArgumentException if the specified status doesn't correspond
@@ -142,10 +142,10 @@ public class HttpException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP exception with specified HTTP status code, message and cause.
+	 * Creates an HTTP exception with specified HTTP status code, message and cause.
 	 * </p>
 	 * 
-	 * @param statusCode a HTTP status code
+	 * @param statusCode an HTTP status code
 	 * @param message    a message
 	 * @param cause      a cause
 	 * 
@@ -159,10 +159,10 @@ public class HttpException extends RuntimeException {
 	
 	/**
 	 * <p>
-	 * Creates a HTTP exception with specified HTTP status.
+	 * Creates an HTTP exception with specified HTTP status.
 	 * </p>
 	 * 
-	 * @param status a HTTP status
+	 * @param status an HTTP status
 	 */
 	public HttpException(Status status) {
 		this.setStatus(status);
@@ -170,10 +170,10 @@ public class HttpException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP exception with specified HTTP status and message.
+	 * Creates an HTTP exception with specified HTTP status and message.
 	 * </p>
 	 * 
-	 * @param status  a HTTP status
+	 * @param status  an HTTP status
 	 * @param message a message
 	 */
 	public HttpException(Status status, String message) {
@@ -183,10 +183,10 @@ public class HttpException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP exception with specified HTTP status and cause.
+	 * Creates an HTTP exception with specified HTTP status and cause.
 	 * </p>
 	 * 
-	 * @param status a HTTP status
+	 * @param status an HTTP status
 	 * @param cause  a cause
 	 */
 	public HttpException(Status status, Throwable cause) {
@@ -196,10 +196,10 @@ public class HttpException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP exception with specified HTTP status, message and cause.
+	 * Creates an HTTP exception with specified HTTP status, message and cause.
 	 * </p>
 	 * 
-	 * @param status  a HTTP status
+	 * @param status  an HTTP status
 	 * @param message a message
 	 * @param cause   a cause
 	 */
@@ -231,7 +231,7 @@ public class HttpException extends RuntimeException {
 	 * Returns the HTTP status code.
 	 * </p>
 	 * 
-	 * @return a HTTP status code
+	 * @return an HTTP status code
 	 */
 	public int getStatusCode() {
 		return this.statusCode;
@@ -253,7 +253,7 @@ public class HttpException extends RuntimeException {
 	 * Returns the HTTP status category.
 	 * </p>
 	 * 
-	 * @return a HTTP status category
+	 * @return an HTTP status category
 	 */
 	public Category getStatusCategory() {
 		return this.statusCategory;

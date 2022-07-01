@@ -91,6 +91,9 @@ public class DataConversionService {
 	 * @throws NoConverterException if there's no converter that can convert the specified media type
 	 */
 	public MediaTypeConverter<ByteBuf> getConverter(String mediaType) throws NoConverterException {
+		if(mediaType == null) {
+			throw new NoConverterException();
+		}
 		mediaType = mediaType.toLowerCase();
 		MediaTypeConverter<ByteBuf> result = this.convertersCache.get(mediaType);
 		if (result == null && !this.convertersCache.containsKey(mediaType)) {
@@ -269,6 +272,8 @@ public class DataConversionService {
 	 * @return a decodable WebSocket inbound
 	 *
 	 * @throws NoConverterException if there's no converter that can convert the specified media type
+	 * 
+	 * @see MediaTypes#normalizeApplicationMediaType(java.lang.String) 
 	 */
 	public Web2SocketExchange.Inbound createWebSocketDecodedInbound(WebSocketExchange.Inbound inbound, String subProtocol) throws NoConverterException {
 		return new GenericWebSocketInbound(inbound, this.getConverter(MediaTypes.normalizeApplicationMediaType(subProtocol)));
@@ -289,6 +294,8 @@ public class DataConversionService {
 	 * @return an encodable WebSocket outbound
 	 *
 	 * @throws NoConverterException if there's no converter that can convert the specified media type
+	 * 
+	 * @see MediaTypes#normalizeApplicationMediaType(java.lang.String) 
 	 */
 	public Web2SocketExchange.Outbound createWebSocketEncodedOutbound(WebSocketExchange.Outbound outbound, String subProtocol) throws NoConverterException {
 		return new GenericWebSocketOutbound(outbound, this.getConverter(MediaTypes.normalizeApplicationMediaType(subProtocol)));

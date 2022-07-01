@@ -15,10 +15,14 @@
  */
 package io.inverno.mod.web.internal;
 
+import io.inverno.mod.http.base.InternalServerErrorException;
+import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.http.server.ReactiveExchangeHandler;
+import io.inverno.mod.web.WebExchange;
+import io.inverno.mod.web.WebSocketRoute;
 import io.inverno.mod.web.spi.InterceptableRoute;
 import io.inverno.mod.web.spi.Route;
 import java.util.LinkedList;
@@ -29,12 +33,11 @@ import reactor.core.publisher.Mono;
  * <p>
  * A routing link responsible for the route handler.
  * </p>
- * 
+ *
  * <p>
- * This link must appear at the end of a routing chain and holds the actual
- * request processing logic.
+ * This link must appear at the end of a routing chain and holds the actual request processing logic.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
@@ -54,6 +57,8 @@ class HandlerRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ext
 	
 	private boolean disabled;
 	
+	private RoutingLink<A, WebExchange<A>, ?, WebSocketRoute<A>> webSocketLink;
+	
 	/**
 	 * <p>
 	 * Creates a handler routing link.
@@ -66,14 +71,23 @@ class HandlerRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ext
 	@SuppressWarnings("unchecked")
 	@Override
 	public HandlerRoutingLink<A, B, C> setRoute(C route) {
-		this.handler = route.getHandler();
-		if(route instanceof InterceptableRoute) {
-			this.setInterceptors(((InterceptableRoute<A, B>)route).getInterceptors());
+		if(route instanceof WebSocketRoute) {
+			if(this.webSocketLink == null) {
+				this.webSocketLink = new WebSocketProtocolRoutingLink<A, WebExchange<A>, WebSocketRoute<A>>();
+				this.webSocketLink.connect(new WebSocketHandlerRoutingLink<>());
+			}
+			this.webSocketLink.setRoute((WebSocketRoute<A>) route);
+		}
+		else {
+			this.handler = route.getHandler();
+			if(route instanceof InterceptableRoute) {
+				this.setInterceptors(((InterceptableRoute<A, B>)route).getInterceptors());
+			}
 		}
 		return this;
 	}
 	
-	public void setInterceptors(List<? extends ExchangeInterceptor<A,B>> interceptors) {
+	private void setInterceptors(List<? extends ExchangeInterceptor<A,B>> interceptors) {
 		this.interceptors = new LinkedList<>();
 		this.interceptedHandlerChain = null;
 		if(interceptors != null) {
@@ -89,59 +103,106 @@ class HandlerRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ext
 		}
 	}
 	
+	@Override
 	@SuppressWarnings("unchecked")
-	@Override
-	public <F extends RouteExtractor<A, B, C>> void extractRoute(F extractor) {
-		super.extractRoute(extractor);
-		if(extractor instanceof InterceptableRouteExtractor) {
-			((InterceptableRouteExtractor<A, B, C, ?>) extractor).interceptors(this.interceptors, this::setInterceptors);
-		}
-		extractor.handler(this.handler, this.disabled);
-	}
-	
-	@Override
 	public void enableRoute(C route) {
-		if(this.handler != null) {
-			this.disabled = false;
+		if(route instanceof WebSocketRoute) {
+			if(this.webSocketLink != null) {
+				this.webSocketLink.enableRoute((WebSocketRoute<A>)route);
+			}
+		}
+		else {
+			if(this.handler != null) {
+				this.disabled = false;
+			}
 		}
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public void disableRoute(C route) {
-		if(this.handler != null) {
-			this.disabled = true;
+		if(route instanceof WebSocketRoute) {
+			if(this.webSocketLink != null) {
+				this.webSocketLink.disableRoute((WebSocketRoute<A>)route);
+			}
+		}
+		else {
+			if(this.handler != null) {
+				this.disabled = true;
+			}
 		}
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public void removeRoute(C route) {
-		this.handler = null;
+		if(route instanceof WebSocketRoute) {
+			if(this.webSocketLink != null) {
+				this.webSocketLink.removeRoute((WebSocketRoute<A>)route);
+				if(!this.webSocketLink.hasRoute()) {
+					this.webSocketLink = null;
+				}
+			}
+		}
+		else {
+			this.handler = null;
+		}
 	}
 	
 	@Override
 	public boolean hasRoute() {
-		return this.handler != null;
+		return this.handler != null || (this.webSocketLink != null && this.webSocketLink.hasRoute());
 	}
 	
 	@Override
 	public boolean isDisabled() {
-		return this.disabled;
+		return this.disabled && (this.webSocketLink == null || this.webSocketLink.isDisabled());
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <F extends RouteExtractor<A, B, C>> void extractRoute(F extractor) {
+		if(this.handler != null) {
+			if(extractor instanceof InterceptableRouteExtractor) {
+				((InterceptableRouteExtractor<A, B, C, ?>) extractor).interceptors(this.interceptors, this::setInterceptors);
+			}
+			extractor.handler(this.handler, this.disabled);
+		}
+		if(this.webSocketLink != null) {
+			this.webSocketLink.extractRoute((RouteExtractor<A, WebExchange<A>, WebSocketRoute<A>>)extractor);
+		}
+		super.extractRoute(extractor);
 	}
 	
 	@Override
 	public Mono<Void> defer(B exchange) {
-		if(this.handler == null) {
-			throw new RouteNotFoundException();
-		}
-		if(this.disabled) {
-			throw new DisabledRouteException();
-		}
 		
-		if(this.interceptedHandlerChain != null) {
-			return this.interceptedHandlerChain.contextWrite(ctx -> ctx.put(CONTEXT_EXCHANGE_KEY, exchange));
+		// If we have a webSocketLink, we have a web socket route (GET method + no consume + no produce)
+		// If this is a websocket upgrade request, we must delegate to the webSocketLink otherwise we let the regular handler (if any) deal with it.
+		
+		// If we get there and we have a webSocketLink, it means we have a GET request with no consume and no produce
+		// If this is an upgrade: we have a websocket request and we must delegate to the websocketLink
+		if(this.webSocketLink != null && exchange.request().headers().get(Headers.NAME_UPGRADE).filter(value -> value.equals(Headers.VALUE_WEBSOCKET)).isPresent()) {
+			if(!(exchange instanceof WebExchange)) {
+				// This is not very nice but at least it is safe
+				throw new InternalServerErrorException("WebSocket upgrade requires a WebExchange");
+			}
+			return this.webSocketLink.defer((WebExchange<A>)exchange);
 		}
 		else {
-			return this.handler.defer(exchange);
+			if(this.handler == null) {
+				throw new RouteNotFoundException();
+			}
+			if(this.disabled) {
+				throw new DisabledRouteException();
+			}
+
+			if(this.interceptedHandlerChain != null) {
+				return this.interceptedHandlerChain.contextWrite(ctx -> ctx.put(CONTEXT_EXCHANGE_KEY, exchange));
+			}
+			else {
+				return this.handler.defer(exchange);
+			}
 		}
 	}
 }

@@ -15,14 +15,13 @@
  */
 package io.inverno.mod.web;
 
-import io.inverno.mod.web.spi.RouteManager;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ContentAware;
 import io.inverno.mod.web.spi.PathAware;
+import io.inverno.mod.web.spi.RouteManager;
 
 /**
  * <p>
@@ -30,7 +29,7 @@ import io.inverno.mod.web.spi.PathAware;
  * </p>
  *
  * <p>
- * It is created by a web router and allows to define, enable, disable, remove and find error routes in a web router.
+ * It is created by a web router and allows to define, enable, disable, remove and find routes in a web router.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

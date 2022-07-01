@@ -17,7 +17,7 @@ package io.inverno.mod.http.base;
 
 /**
  * <p>
- * A HTTP exception that indicates that the request body if of an {@link Status#UNSUPPORTED_MEDIA_TYPE Unsupported Media Type (415)} for the requested resource.
+ * A HTTP exception that indicates that the request body is of an {@link Status#UNSUPPORTED_MEDIA_TYPE Unsupported Media Type (415)} for the requested resource.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

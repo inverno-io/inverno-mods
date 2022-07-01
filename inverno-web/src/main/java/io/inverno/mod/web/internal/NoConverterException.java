@@ -33,7 +33,16 @@ public class NoConverterException extends Exception {
 	/**
 	 * The media type for which there's no converter.
 	 */
-	private String mediaType;
+	private final String mediaType;
+	
+	/**
+	 * <p>
+	 * Creates a no converter exception to report a null media type.
+	 * </p>
+	 */
+	public NoConverterException() {
+		this.mediaType = null;
+	}
 	
 	/**
 	 * <p>
@@ -91,7 +100,7 @@ public class NoConverterException extends Exception {
 	 * Returns the media type.
 	 * </p>
 	 * 
-	 * @return the media type
+	 * @return the media type or null
 	 */
 	public String getMediaType() {
 		return mediaType;

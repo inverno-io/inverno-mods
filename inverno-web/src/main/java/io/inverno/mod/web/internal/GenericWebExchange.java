@@ -78,7 +78,7 @@ class GenericWebExchange implements WebExchange<ExchangeContext> {
 	}
 	
 	@Override
-	public Optional<? extends WebSocket<ExchangeContext, ? extends Web2SocketExchange<ExchangeContext>>> webSocket(String... subProtocols) {
+	public Optional<? extends WebSocket<ExchangeContext, Web2SocketExchange<ExchangeContext>>> webSocket(String... subProtocols) {
 		return this.exchange.webSocket(subProtocols).map(webSocket -> new GenericWeb2Socket(webSocket, this.request, this.dataConversionService));
 	}
 	

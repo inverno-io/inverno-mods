@@ -25,7 +25,6 @@ import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.util.CharsetUtil;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.reactivestreams.Publisher;
@@ -96,6 +95,9 @@ public class GenericWebSocketMessage implements WebSocketMessage {
 	 */
 	public static final class GenericFactory implements WebSocketMessage.Factory {
 
+		/**
+		 * The maximum frame size.
+		 */
 		private final int maxFrameSize;
 		
 		/**
@@ -110,126 +112,127 @@ public class GenericWebSocketMessage implements WebSocketMessage {
 		}
 
 		@Override
-		public WebSocketMessage text(Publisher<String> value) {
+		public WebSocketMessage text(String value) {
+			return new GenericWebSocketMessage(WebSocketMessage.Kind.TEXT, Flux.fromStream(() -> this.toTextFrames(Unpooled.copiedBuffer(value, CharsetUtil.UTF_8), true, true).stream()));
+		}
+		
+		@Override
+		public WebSocketMessage text(Publisher<String> stream) {
 			Flux<WebSocketFrame> frames;
-			if(value instanceof Mono) {
-				frames = ((Mono<String>)value)
-					.flatMapIterable(text -> {
-						ByteBuf[] splitPayload = this.splitData(Unpooled.copiedBuffer(text, CharsetUtil.UTF_8));
-						if(splitPayload.length == 1) {
-							return List.of((WebSocketFrame)new GenericWebSocketFrame(new TextWebSocketFrame(true, 0, splitPayload[0]), WebSocketFrame.Kind.TEXT));
-						}
-						else {
-							List<WebSocketFrame> payloadFrames = new ArrayList<>(splitPayload.length);
-							for(int i = 0;i < splitPayload.length;i++) {
-								WebSocketFrame frame;
-								if(i == 0) {
-									frame = new GenericWebSocketFrame(new TextWebSocketFrame(false, 0, splitPayload[i]), WebSocketFrame.Kind.TEXT);
-								}
-								else if(i == splitPayload.length - 1) {
-									frame = new GenericWebSocketFrame(new ContinuationWebSocketFrame(false, 0, splitPayload[i]), WebSocketFrame.Kind.CONTINUATION);
-								}
-								else {
-									frame = new GenericWebSocketFrame(new ContinuationWebSocketFrame(true, 0, splitPayload[i]), WebSocketFrame.Kind.CONTINUATION);
-								}
-								payloadFrames.add(frame);
-							}
-							return payloadFrames;
-						}
-					});
+			if(stream instanceof Mono) {
+				frames = ((Mono<String>)stream)
+					.flatMapIterable(value -> this.toTextFrames(Unpooled.copiedBuffer(value, CharsetUtil.UTF_8), true, true));
 			}
 			else {
 				frames = Flux.defer(() -> {
 					AtomicBoolean first = new AtomicBoolean(true);
-					return Flux.from(value)
-						.flatMapIterable(text -> Arrays.asList(this.splitData(Unpooled.copiedBuffer(text, CharsetUtil.UTF_8))))
-						.map(chunk -> {
-							if(first.get()) {
-								first.set(false);
-								return (WebSocketFrame)new GenericWebSocketFrame(new TextWebSocketFrame(false, 0, chunk), WebSocketFrame.Kind.TEXT);
-							}
-							else {
-								return (WebSocketFrame)new GenericWebSocketFrame(new ContinuationWebSocketFrame(false, 0, chunk), WebSocketFrame.Kind.CONTINUATION);
-							}
-						})
+					return Flux.from(stream)
+						.flatMapIterable(value -> this.toTextFrames(Unpooled.copiedBuffer(value, CharsetUtil.UTF_8), first.getAndSet(false), false))
+						.concatWithValues(new GenericWebSocketFrame(new ContinuationWebSocketFrame(true, 0, Unpooled.EMPTY_BUFFER), WebSocketFrame.Kind.CONTINUATION));
+				});
+			}
+			return new GenericWebSocketMessage(WebSocketMessage.Kind.TEXT, frames);
+		}
+
+		@Override
+		public WebSocketMessage binary(ByteBuf value) {
+			return new GenericWebSocketMessage(WebSocketMessage.Kind.BINARY, Flux.fromStream(() -> this.toBinaryFrames(value, true, true).stream()));
+		}
+		
+		@Override
+		public WebSocketMessage binary(Publisher<ByteBuf> stream) {
+			Flux<WebSocketFrame> frames;
+			if(stream instanceof Mono) {
+				frames = ((Mono<ByteBuf>)stream)
+					.flatMapIterable(value -> this.toBinaryFrames(value, true, true));
+			}
+			else {
+				frames = Flux.defer(() -> {
+					AtomicBoolean first = new AtomicBoolean(true);
+					return Flux.from(stream)
+						.flatMapIterable(value -> this.toBinaryFrames(value, first.getAndSet(false), false))
 						.concatWithValues(new GenericWebSocketFrame(new ContinuationWebSocketFrame(true, 0, Unpooled.EMPTY_BUFFER), WebSocketFrame.Kind.CONTINUATION));
 				});
 			}
 			return new GenericWebSocketMessage(WebSocketMessage.Kind.TEXT, frames);
 		}
 		
-		@Override
-		public WebSocketMessage binary(Publisher<ByteBuf> value) {
-			Flux<WebSocketFrame> frames;
-			if(value instanceof Mono) {
-				frames = ((Mono<ByteBuf>)value)
-					.flatMapIterable(data -> {
-						ByteBuf[] splitPayload = this.splitData(data);
-						if(splitPayload.length == 1) {
-							return List.of((WebSocketFrame)new GenericWebSocketFrame(new BinaryWebSocketFrame(true, 0, splitPayload[0]), WebSocketFrame.Kind.BINARY));
-						}
-						else {
-							List<WebSocketFrame> payloadFrames = new ArrayList<>(splitPayload.length);
-							for(int i = 0;i < splitPayload.length;i++) {
-								WebSocketFrame frame;
-								if(i == 0) {
-									frame = new GenericWebSocketFrame(new BinaryWebSocketFrame(false, 0, splitPayload[i]), WebSocketFrame.Kind.BINARY);
-								}
-								else if(i == splitPayload.length - 1) {
-									frame = new GenericWebSocketFrame(new ContinuationWebSocketFrame(false, 0, splitPayload[i]), WebSocketFrame.Kind.CONTINUATION);
-								}
-								else {
-									frame = new GenericWebSocketFrame(new ContinuationWebSocketFrame(true, 0, splitPayload[i]), WebSocketFrame.Kind.CONTINUATION);
-								}
-								payloadFrames.add(frame);
-							}
-							return payloadFrames;
-						}
-					});
+		/**
+		 * <p>
+		 * Converts the specified data into a list of WebSocket text frames, splitting the data into multiple frames when they exceeds the maximum frame size.
+		 * </p>
+		 * 
+		 * @param data    the data to convert
+		 * @param isFirst true if the specified data are the first part of the message, false otherwise
+		 * @param isFinal true if the specified data are the last part of the message, false otherwise
+		 * 
+		 * @return a list of WebSocket text frames
+		 */
+		private List<WebSocketFrame> toTextFrames(ByteBuf data, boolean isFirst, boolean isFinal) {
+			int size = data.readableBytes();
+			if(size > this.maxFrameSize) {
+				final int framesCount = (int)Math.ceil((double)size / (double)this.maxFrameSize);
+				List<WebSocketFrame> frames = new ArrayList<>(framesCount);
+				for(int i=0;i<framesCount;i++) {
+					int offset = i * this.maxFrameSize;
+					int length = Math.min(this.maxFrameSize, size - offset);
+					ByteBuf framePayload = data.retainedSlice(offset, length);
+					if(isFirst && i == 0) {
+						frames.add(new GenericWebSocketFrame(new TextWebSocketFrame(false, 0, framePayload), WebSocketFrame.Kind.TEXT));
+					}
+					else {
+						frames.add(new GenericWebSocketFrame(new ContinuationWebSocketFrame(isFinal && i == framesCount - 1, 0, framePayload), WebSocketFrame.Kind.CONTINUATION));
+					}
+				}
+				return frames;
 			}
 			else {
-				frames = Flux.defer(() -> {
-					AtomicBoolean first = new AtomicBoolean(true);
-					return Flux.from(value)
-						.flatMapIterable(data -> Arrays.asList(this.splitData(data)))
-						.map(chunk -> {
-							if(first.get()) {
-								first.set(false);
-								return (WebSocketFrame)new GenericWebSocketFrame(new BinaryWebSocketFrame(false, 0, chunk), WebSocketFrame.Kind.BINARY);
-							}
-							else {
-								return (WebSocketFrame)new GenericWebSocketFrame(new ContinuationWebSocketFrame(false, 0, chunk), WebSocketFrame.Kind.CONTINUATION);
-							}
-						})
-						.concatWithValues(new GenericWebSocketFrame(new ContinuationWebSocketFrame(true, 0, Unpooled.EMPTY_BUFFER), WebSocketFrame.Kind.CONTINUATION));
-				});
+				if(isFirst) {
+					return List.of(new GenericWebSocketFrame(new TextWebSocketFrame(isFinal, 0, data), WebSocketFrame.Kind.TEXT));
+				}
+				else {
+					return List.of(new GenericWebSocketFrame(new ContinuationWebSocketFrame(isFinal, 0, data), WebSocketFrame.Kind.TEXT));
+				}
 			}
-			return new GenericWebSocketMessage(WebSocketMessage.Kind.BINARY, frames);
 		}
 		
 		/**
 		 * <p>
-		 * Splits the specified buffer if it is bigger than the maximum frame size.
+		 * Converts the specified data into a list of WebSocket binary frames, splitting the data into multiple frames when they exceeds the maximum frame size.
 		 * </p>
 		 * 
-		 * @param data the data to consider
+		 * @param data    the data to convert
+		 * @param isFirst true if the specified data are the first part of the message, false otherwise
+		 * @param isFinal true if the specified data are the last part of the message, false otherwise
 		 * 
-		 * @return an array of data
+		 * @return a list of WebSocket binary frames
 		 */
-		private ByteBuf[] splitData(ByteBuf data) {
+		private List<WebSocketFrame> toBinaryFrames(ByteBuf data, boolean isFirst, boolean isFinal) {
 			int size = data.readableBytes();
 			if(size > this.maxFrameSize) {
-				int framesCount = (int)Math.ceil((double)size / (double)this.maxFrameSize);
-				
-				ByteBuf[] splitData = new ByteBuf[framesCount];
+				final int framesCount = (int)Math.ceil((double)size / (double)this.maxFrameSize);
+				List<WebSocketFrame> frames = new ArrayList<>(framesCount);
 				for(int i=0;i<framesCount;i++) {
 					int offset = i * this.maxFrameSize;
 					int length = Math.min(this.maxFrameSize, size - offset);
-					splitData[i] = data.slice(offset, length);
+					ByteBuf framePayload = data.retainedSlice(offset, length);
+					if(isFirst && i == 0) {
+						frames.add(new GenericWebSocketFrame(new BinaryWebSocketFrame(false, 0, framePayload), WebSocketFrame.Kind.TEXT));
+					}
+					else {
+						frames.add(new GenericWebSocketFrame(new ContinuationWebSocketFrame(isFinal && i == framesCount - 1, 0, framePayload), WebSocketFrame.Kind.CONTINUATION));
+					}
 				}
-				return splitData;
+				return frames;
 			}
-			return new ByteBuf[] { data };
+			else {
+				if(isFirst) {
+					return List.of(new GenericWebSocketFrame(new BinaryWebSocketFrame(isFinal, 0, data), WebSocketFrame.Kind.TEXT));
+				}
+				else {
+					return List.of(new GenericWebSocketFrame(new ContinuationWebSocketFrame(isFinal, 0, data), WebSocketFrame.Kind.TEXT));
+				}
+			}
 		}
 	}
 }

@@ -54,6 +54,14 @@ class GenericWebRouteManager extends AbstractWebManager<GenericWebRouteManager> 
 	}
 	
 	@Override
+	public WebRouter<ExchangeContext> handler(ExchangeHandler<? super ExchangeContext, WebExchange<ExchangeContext>> handler) {
+		Objects.requireNonNull(handler);
+		this.handler = handler;
+		this.commit();
+		return this.router;
+	}
+	
+	@Override
 	public GenericWebRouter enable() {
 		this.findRoutes().stream().forEach(route -> route.enable());
 		return this.router;
@@ -130,14 +138,6 @@ class GenericWebRouteManager extends AbstractWebManager<GenericWebRouteManager> 
 		}).collect(Collectors.toSet());
 	}
 
-	@Override
-	public WebRouter<ExchangeContext> handler(ExchangeHandler<? super ExchangeContext, WebExchange<ExchangeContext>> handler) {
-		Objects.requireNonNull(handler);
-		this.handler = handler;
-		this.commit();
-		return this.router;
-	}
-	
 	private void commit() {
 		Consumer<GenericWebRoute> languagesCommitter = route -> {
 			if(this.languages != null && !this.languages.isEmpty()) {

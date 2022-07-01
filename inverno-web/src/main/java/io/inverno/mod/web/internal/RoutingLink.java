@@ -15,13 +15,12 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.util.function.Supplier;
-
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.spi.Route;
 import io.inverno.mod.web.spi.Router;
+import java.util.function.Supplier;
 
 /**
  * <p>
@@ -113,7 +112,7 @@ abstract class RoutingLink<A extends ExchangeContext, B extends Exchange<A>, C e
 	 */
 	protected C createNextLink() {
 		C nextLink = this.linkSupplier.get();
-		if (this.nextLink != null) {
+		if(this.nextLink != null) {
 			nextLink.connectUnbounded(this.nextLink.createNextLink());
 		}
 		return nextLink;
@@ -128,7 +127,7 @@ abstract class RoutingLink<A extends ExchangeContext, B extends Exchange<A>, C e
 	 * @param extractor a route extractor
 	 */
 	public <F extends RouteExtractor<A, B, D>> void extractRoute(F extractor) {
-		if (this.nextLink != null) {
+		if(this.nextLink != null) {
 			this.nextLink.extractRoute(extractor);
 		}
 	}

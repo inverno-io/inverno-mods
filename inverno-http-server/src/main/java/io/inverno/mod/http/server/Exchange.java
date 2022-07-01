@@ -81,7 +81,7 @@ public interface Exchange<A extends ExchangeContext> {
 	 * underlying HTTP protocol does not support the upgrade operation, an empty optional shall be returned. Currently only HTTP/1.1 can upgrade to the WebSocket protocol.
 	 * </p>
 	 *
-	 * @param subProtocols a list of supported sub protocols negotiated during the handshake
+	 * @param subProtocols a list of supported subprotocols negotiated during the handshake
 	 * 
 	 * @return an optional returning the WebSocket or an empty optional if the upgrade is not possible
 	 */

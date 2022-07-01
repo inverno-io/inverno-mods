@@ -64,25 +64,47 @@ public interface WebSocketMessage {
 		
 		/**
 		 * <p>
-		 * Creates a text message with the specified payload data stream.
+		 * Creates a text message with the specified payload data.
 		 * </p>
 		 * 
 		 * @param value payload data
 		 * 
 		 * @return a WebSocket message
 		 */
-		WebSocketMessage text(Publisher<String> value);
+		WebSocketMessage text(String value);
+		
+		/**
+		 * <p>
+		 * Creates a text message with the specified payload data stream.
+		 * </p>
+		 * 
+		 * @param stream payload data stream
+		 * 
+		 * @return a WebSocket message
+		 */
+		WebSocketMessage text(Publisher<String> stream);
+		
+		/**
+		 * <p>
+		 * Creates a binary message with the specified payload data.
+		 * </p>
+		 * 
+		 * @param value payload data
+		 * 
+		 * @return a WebSocket message
+		 */
+		WebSocketMessage binary(ByteBuf value);
 		
 		/**
 		 * <p>
 		 * Creates a binary message with the specified payload data stream.
 		 * </p>
 		 * 
-		 * @param value payload data
+		 * @param stream payload data stream
 		 * 
 		 * @return a WebSocket message
 		 */
-		WebSocketMessage binary(Publisher<ByteBuf> value);
+		WebSocketMessage binary(Publisher<ByteBuf> stream);
 	}
 	
 	/**

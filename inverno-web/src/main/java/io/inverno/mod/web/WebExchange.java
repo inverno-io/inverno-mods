@@ -19,7 +19,6 @@ import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ws.WebSocket;
-import io.inverno.mod.http.server.ws.WebSocketExchange;
 import java.util.Optional;
 
 /**
@@ -58,6 +57,6 @@ public interface WebExchange<A extends ExchangeContext> extends Exchange<A> {
 	WebResponse response();
 	
 	@Override
-	public Optional<? extends WebSocket<A, ? extends Web2SocketExchange<A>>> webSocket(String... subProtocols);
+	public Optional<? extends WebSocket<A, Web2SocketExchange<A>>> webSocket(String... subProtocols);
 	
 }

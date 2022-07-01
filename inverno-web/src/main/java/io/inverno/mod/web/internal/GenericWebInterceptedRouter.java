@@ -21,6 +21,8 @@ import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.http.server.ExchangeInterceptor;
+import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
+import io.inverno.mod.web.Web2SocketExchange;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebInterceptedRouter;
 import io.inverno.mod.web.WebInterceptorManager;
@@ -30,6 +32,8 @@ import io.inverno.mod.web.WebRouteManager;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;
 import io.inverno.mod.web.WebRoutesConfigurer;
+import io.inverno.mod.web.WebSocketRoute;
+import io.inverno.mod.web.WebSocketRouteManager;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -143,6 +147,11 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 	}
 
 	@Override
+	public WebSocketRouteManager<ExchangeContext, WebInterceptedRouter<ExchangeContext>> webSocketRoute() {
+		return new GenericWebSocketInterceptedRouteManager(this);
+	}
+	
+	@Override
 	public Set<WebRoute<ExchangeContext>> getRoutes() {
 		return this.router.getRoutes();
 	}
@@ -238,6 +247,11 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 		}
 
 		@Override
+		public WebSocketRouteManager<ExchangeContext, WebRouter<ExchangeContext>> webSocketRoute() {
+			return new WebSocketRouteManagerFacade(GenericWebInterceptedRouter.this.webSocketRoute());
+		}
+		
+		@Override
 		public Set<WebRoute<ExchangeContext>> getRoutes() {
 			return GenericWebInterceptedRouter.this.getRoutes();
 		}
@@ -292,12 +306,6 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 			}
 
 			@Override
-			public WebRouter<ExchangeContext> handler(ExchangeHandler<? super ExchangeContext, WebExchange<ExchangeContext>> handler) {
-				this.routeManager.handler(handler);
-				return WebRouterFacade.this;
-			}
-
-			@Override
 			public WebRouteManager<ExchangeContext, WebRouter<ExchangeContext>> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
 				this.routeManager.path(path, matchTrailingSlash);
 				return this;
@@ -326,6 +334,12 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 				this.routeManager.language(language);
 				return this;
 			}
+			
+			@Override
+			public WebRouter<ExchangeContext> handler(ExchangeHandler<? super ExchangeContext, WebExchange<ExchangeContext>> handler) {
+				this.routeManager.handler(handler);
+				return WebRouterFacade.this;
+			}
 
 			@Override
 			public WebRouter<ExchangeContext> enable() {
@@ -348,6 +362,62 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 			@Override
 			public Set<WebRoute<ExchangeContext>> findRoutes() {
 				return this.routeManager.findRoutes();
+			}
+		}
+		
+		private class WebSocketRouteManagerFacade implements WebSocketRouteManager<ExchangeContext, WebRouter<ExchangeContext>> {
+			
+			private final WebSocketRouteManager<ExchangeContext, WebInterceptedRouter<ExchangeContext>> webSocketrouteManager;
+
+			public WebSocketRouteManagerFacade(WebSocketRouteManager<ExchangeContext, WebInterceptedRouter<ExchangeContext>> webSocketrouteManager) {
+				this.webSocketrouteManager = webSocketrouteManager;
+			}
+
+			@Override
+			public WebSocketRouteManager<ExchangeContext, WebRouter<ExchangeContext>> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
+				this.webSocketrouteManager.path(path, matchTrailingSlash);
+				return this;
+			}
+
+			@Override
+			public WebSocketRouteManager<ExchangeContext, WebRouter<ExchangeContext>> language(String language) {
+				this.webSocketrouteManager.language(language);
+				return this;
+			}
+
+			@Override
+			public WebSocketRouteManager<ExchangeContext, WebRouter<ExchangeContext>> subprotocol(String subprotocol) {
+				this.webSocketrouteManager.subprotocol(subprotocol);
+				return this;
+			}
+
+			@Override
+			public WebRouter<ExchangeContext> handler(WebSocketExchangeHandler<? super ExchangeContext, Web2SocketExchange<ExchangeContext>> handler) {
+				this.webSocketrouteManager.handler(handler);
+				return WebRouterFacade.this;
+			}
+
+			@Override
+			public WebRouter<ExchangeContext> enable() {
+				this.webSocketrouteManager.enable();
+				return WebRouterFacade.this;
+			}
+
+			@Override
+			public WebRouter<ExchangeContext> disable() {
+				this.webSocketrouteManager.disable();
+				return WebRouterFacade.this;
+			}
+
+			@Override
+			public WebRouter<ExchangeContext> remove() {
+				this.webSocketrouteManager.remove();
+				return WebRouterFacade.this;
+			}
+
+			@Override
+			public Set<WebSocketRoute<ExchangeContext>> findRoutes() {
+				return this.webSocketrouteManager.findRoutes();
 			}
 		}
 	}

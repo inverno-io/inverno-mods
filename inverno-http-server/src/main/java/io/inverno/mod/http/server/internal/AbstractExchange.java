@@ -59,7 +59,7 @@ import reactor.core.publisher.SignalType;
  */
 public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implements Exchange<ExchangeContext> {
 
-	private static final Logger LOGGER = LogManager.getLogger(AbstractExchange.class);
+	private static final Logger LOGGER = LogManager.getLogger(Exchange.class);
 	private static final Marker MARKER_ERROR = MarkerManager.getMarker("HTTP_ERROR");
 	private static final Marker MARKER_ACCESS = MarkerManager.getMarker("HTTP_ACCESS");
 	
@@ -163,7 +163,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				if(postFinalize != null) {
 					actualFinalizer.doOnTerminate(postFinalize);
 				}
-				actualFinalizer.subscribe();
+				actualFinalizer.doOnSuccess(ign -> LOGGER.trace(() -> "Exchange finalized")).subscribe();
 			});
 		}
 		else if(postFinalize != null){
@@ -233,7 +233,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			deferHandle = this.controller.defer(this);
 		}
 		catch(Throwable throwable) {
-			this.logError(() -> "Exchange handler error", throwable);
+			this.logError("Exchange handler error", throwable);
 			// We need to create a new error exchange each time we try to handle the error in order to have a fresh response 
 			ErrorExchange<ExchangeContext> errorExchange = this.createErrorExchange(throwable);
 			this.response = (AbstractResponse) errorExchange.response();
@@ -241,7 +241,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				deferHandle = this.controller.defer(errorExchange);
 			} 
 			catch (Throwable t) {
-				this.logError(() -> "ErrorExchange handler error", t);
+				this.logError("ErrorExchange handler error", t);
 				errorExchange = this.createErrorExchange(throwable);
 				this.response = (AbstractResponse) errorExchange.response();
 				// TODO This may fail as well what do we do in such situations?
@@ -353,6 +353,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 */
 	protected void onStart(Subscription subscription) {
 		subscription.request(Long.MAX_VALUE);
+		LOGGER.debug(() -> "Exchange started");
 	}
 	
 	@Override
@@ -403,7 +404,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		if(this.response.isHeadersWritten()) {
 			this.executeInEventLoop(() -> { 
 				this.onCompleteWithError(throwable);
-				this.logError(() -> "Exchange processing error", throwable);
+				this.logError("Exchange processing error", throwable);
 			});
 		}
 		else {
@@ -419,7 +420,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				});
 			} 
 			catch (Throwable t) {
-				this.logError(() -> "ErrorExchange handler error", t);
+				this.logError("ErrorExchange handler error", t);
 				errorExchange = this.createErrorExchange(throwable);
 				this.response = (AbstractResponse) errorExchange.response();
 				// TODO This may fail as well what do we do in such situations?
@@ -475,6 +476,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				this.logAccess();
 			});
 		}
+		LOGGER.debug(() -> "Exchange completed");
 	}
 
 	/**
@@ -623,17 +625,17 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * Logs an error.
 	 * </p>
 	 * 
-	 * @param messageSupplier the message supplier
+	 * @param message the message
 	 * @param throwable the error
 	 */
-	private void logError(Supplier<?> messageSupplier, Throwable throwable) {
+	private void logError(String message, Throwable throwable) {
 		if(throwable instanceof HttpException) {
 			// HTTP error: typically recoverable HTTP exceptions returning a proper error to the client
-			LOGGER.error(MARKER_ERROR, messageSupplier, throwable);
+			LOGGER.error(MARKER_ERROR, message, throwable);
 		}
 		else {
 			// non HTTP error: typically unrecoverable unchecked exceptions 
-			LOGGER.error(() -> "Exchange handler error", throwable);
+			LOGGER.error(message, throwable);
 		}
 	}
 	
@@ -723,14 +725,14 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		protected void hookOnError(Throwable throwable) {
 			// If we get there it means we can no longer process anything
 			AbstractExchange.this.onCompleteWithError(this.originalError);
-			AbstractExchange.this.logError(() -> "Exchange processing error", this.originalError);
-			AbstractExchange.this.logError(() -> "ErrorExchange processing error", throwable);
+			AbstractExchange.this.logError("Exchange processing error", this.originalError);
+			AbstractExchange.this.logError("ErrorExchange processing error", throwable);
 		}
 		
 		@Override
 		protected void hookOnComplete() {
 			AbstractExchange.this.hookOnComplete();
-			AbstractExchange.this.logError(() -> "Exchange processing error", this.originalError);
+			AbstractExchange.this.logError("Exchange processing error", this.originalError);
 			AbstractExchange.this.logAccess();
 		}
 	}

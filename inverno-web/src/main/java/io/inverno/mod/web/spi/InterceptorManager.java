@@ -17,6 +17,8 @@ package io.inverno.mod.web.spi;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ExchangeInterceptor;
+import java.util.List;
 
 /**
  * <p>
@@ -47,4 +49,34 @@ public interface InterceptorManager<
 		C extends Interceptable<A, B, C, D>,
 		D extends InterceptorManager<A, B, C, D>
 	> {
+	
+	/**
+	 * <p>
+	 * Specifies the exchange interceptor to apply to the resources matching the criteria defined in the interceptor manager.
+	 * </p>
+	 *
+	 * <p>
+	 * This method basically appends the interceptor and the associated route criteria to the intercepted router it comes from.
+	 * </p>
+	 *
+	 * @param interceptor the exchange interceptor
+	 *
+	 * @return the router
+	 */
+	C interceptor(ExchangeInterceptor<? super A, B> interceptor);
+
+	/**
+	 * <p>
+	 * Specifies multiple exchange interceptors to apply to the resources matching the criteria defined in the interceptor manager.
+	 * </p>
+	 *
+	 * <p>
+	 * This method basically appends the interceptors and the associated route criteria to the intercepted router it comes from.
+	 * </p>
+	 *
+	 * @param interceptors a list of exchange interceptors
+	 *
+	 * @return the router
+	 */
+	C interceptors(List<ExchangeInterceptor<? super A, B>> interceptors);
 }

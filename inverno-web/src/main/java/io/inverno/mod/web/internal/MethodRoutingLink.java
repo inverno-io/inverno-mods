@@ -15,17 +15,15 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.MethodNotAllowedException;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.spi.MethodAware;
 import io.inverno.mod.web.spi.Route;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 import reactor.core.publisher.Mono;
 
 /**
@@ -60,7 +58,7 @@ class MethodRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C exte
 	private void updateEnabledHandlers() {
 		this.enabledHandlers = this.handlers.entrySet().stream()
 			.filter(e -> !e.getValue().isDisabled())
-			.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+			.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
 
 	@Override
@@ -157,16 +155,13 @@ class MethodRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C exte
 	
 	@Override
 	public Mono<Void> defer(B exchange) {
-		if (this.handlers.isEmpty()) {
+		if (this.enabledHandlers.isEmpty()) {
 			return this.nextLink.defer(exchange);
 		} 
 		else {
 			RoutingLink<A, B, ?, C> handler = this.enabledHandlers.get(exchange.request().getMethod());
 			if (handler != null) {
 				return handler.defer(exchange);
-			} 
-			else if (this.enabledHandlers.isEmpty()) {
-				return this.nextLink.defer(exchange);
 			} 
 			else {
 				throw new MethodNotAllowedException(this.handlers.keySet());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,47 +15,37 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.util.Set;
-
-import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.ReactiveExchangeHandler;
-import io.inverno.mod.web.spi.Route;
+import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
+import io.inverno.mod.web.Web2SocketExchange;
+import io.inverno.mod.web.WebExchange;
+import io.inverno.mod.web.WebRoute;
+import io.inverno.mod.web.WebSocketRoute;
 
 /**
  * <p>
- * A route extractor is used to extract the routes defined in a routing chain by visiting the chain invoking {@link RoutingLink#extractRoute(RouteExtractor)} method on the first routing link of the
- * chain.
+ * A route extractor used to extract WebSocket routes.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.5
  *
- * @see Route
+ * @see WebSocketRoute
  * @see RoutingLink
  *
  * @param <A> the type of the exchange context
  * @param <B> the type of exchange handled by the route
  * @param <C> the route type
  */
-interface RouteExtractor<A extends ExchangeContext, B extends Exchange<A>, C extends Route<A, B>> {
-
+interface WebSocketRouteExtractor<A extends ExchangeContext, B extends WebRoute<A>, C extends WebSocketRouteExtractor<A, B, C>> extends WebRouteExtractor<A, B, C>, WebSocketProtocolAwareRouteExtractor<A, WebExchange<A>, B, C> {
+	
 	/**
 	 * <p>
-	 * Extracts the route handler and finishes the current route.
+	 * Extracts the WebSocket route handler and finishes the current route.
 	 * </p>
 	 * 
 	 * @param handler
 	 * @param disabled
 	 */
-	void handler(ReactiveExchangeHandler<A, B> handler, boolean disabled);
-	
-	/**
-	 * <p>
-	 * Returns the extracted routes.
-	 * </p>
-	 * 
-	 * @return a set of routes
-	 */
-	Set<C> getRoutes();
+	void webSocketHandler(WebSocketExchangeHandler<A, Web2SocketExchange<A>> handler, boolean disabled);
 }

@@ -36,6 +36,15 @@ public interface WebRoutable<A extends ExchangeContext, B extends WebRoutable<A,
 
 	/**
 	 * <p>
+	 * Returns a WebSocket route manager to define, enable, disable, remove or find WebSocket routes in the router.
+	 * </p>
+	 * 
+	 * @return a WebSocket route manager
+	 */
+	WebSocketRouteManager<A, B> webSocketRoute();
+	
+	/**
+	 * <p>
 	 * Configures web routes using the specified configurer and returns the web routable.
 	 * </p>
 	 * 

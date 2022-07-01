@@ -172,7 +172,7 @@ class ProducesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 
 	@Override
 	public Mono<Void> defer(B exchange) {
-		if (this.handlers.isEmpty()) {
+		if (this.enabledHandlers.isEmpty()) {
 			return this.nextLink.defer(exchange);
 		} 
 		else {
@@ -180,56 +180,45 @@ class ProducesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 				.merge(exchange.request().headers().<Headers.Accept>getAllHeader(Headers.NAME_ACCEPT))
 				.orElse(Headers.Accept.ALL);
 
-			if (!this.enabledHandlers.isEmpty()) {
-				Iterator<Headers.AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, ?, C>>>> acceptMatchesIterator = accept
-					.findAllMatch(this.enabledHandlers.entrySet(), Entry::getKey).iterator();
+			Iterator<Headers.AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, ?, C>>>> acceptMatchesIterator = accept
+				.findAllMatch(this.enabledHandlers.entrySet(), Entry::getKey).iterator();
 
-				boolean nextLinkInvoked = false;
-				while (acceptMatchesIterator.hasNext()) {
-					Headers.AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, ?, C>>> bestMatch = acceptMatchesIterator.next();
-					if (!nextLinkInvoked && bestMatch.getSource().getMediaType().equals("*/*") && bestMatch.getSource().getParameters().isEmpty()) {
-						nextLinkInvoked = true;
-						// First check if the next link can handle the request since this is the default
-						try {
-							return this.nextLink.defer(exchange);
-						} 
-						catch (RouteNotFoundException | DisabledRouteException e1) {
-							// There's no default handler defined, we can take the best match
-							try {
-								exchange.response().headers().set(bestMatch.getTarget().getKey());
-								return bestMatch.getTarget().getValue().defer(exchange);
-							} 
-							catch (RouteNotFoundException | DisabledRouteException e2) {
-								// continue with the next best match
-								exchange.response().headers().remove(Headers.NAME_CONTENT_TYPE);
-								continue;
-							}
-						}
+			boolean nextLinkInvoked = false;
+			while (acceptMatchesIterator.hasNext()) {
+				Headers.AcceptMatch<Headers.Accept.MediaRange, Entry<Headers.ContentType, RoutingLink<A, B, ?, C>>> bestMatch = acceptMatchesIterator.next();
+				if (!nextLinkInvoked && bestMatch.getSource().getMediaType().equals("*/*") && bestMatch.getSource().getParameters().isEmpty()) {
+					nextLinkInvoked = true;
+					// First check if the next link can handle the request since this is the default
+					try {
+						return this.nextLink.defer(exchange);
 					} 
-					else {
+					catch (RouteNotFoundException | DisabledRouteException e1) {
+						// There's no default handler defined, we can take the best match
 						try {
 							exchange.response().headers().set(bestMatch.getTarget().getKey());
 							return bestMatch.getTarget().getValue().defer(exchange);
 						} 
-						catch (RouteNotFoundException | DisabledRouteException e) {
+						catch (RouteNotFoundException | DisabledRouteException e2) {
+							// continue with the next best match
 							exchange.response().headers().remove(Headers.NAME_CONTENT_TYPE);
-							continue;
 						}
 					}
+				} 
+				else {
+					try {
+						exchange.response().headers().set(bestMatch.getTarget().getKey());
+						return bestMatch.getTarget().getValue().defer(exchange);
+					} 
+					catch (RouteNotFoundException | DisabledRouteException e) {
+						exchange.response().headers().remove(Headers.NAME_CONTENT_TYPE);
+					}
 				}
-				// We haven't found any route that can handle the request
-				throw new NotAcceptableException(this.handlers.keySet().stream()
-						.map(Headers.ContentType::getMediaType)
-						.collect(Collectors.toSet())
-					);
-			} 
-			else if (accept.getMediaRanges().stream().anyMatch(mediaRange -> mediaRange.getMediaType().equals("*/*"))) {
-				// We delegate to next link only if */* is accepted
-				return this.nextLink.defer(exchange);
-			} 
-			else {
-				throw new NotAcceptableException();
 			}
+			// We haven't found any route that can handle the request
+			throw new NotAcceptableException(this.handlers.keySet().stream()
+					.map(Headers.ContentType::getMediaType)
+					.collect(Collectors.toSet())
+				);
 		}
 	}
 }

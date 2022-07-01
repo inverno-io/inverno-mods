@@ -17,6 +17,8 @@ package io.inverno.mod.http.server.internal.http1x.ws;
 
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.Request;
+import io.inverno.mod.http.server.ws.WebSocket;
+import io.inverno.mod.http.server.ws.WebSocketException;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
 import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
 import io.netty.buffer.Unpooled;
@@ -32,6 +34,8 @@ import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
@@ -45,6 +49,8 @@ import reactor.core.publisher.Sinks;
  */
 public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 
+	private static final Logger LOGGER = LogManager.getLogger(WebSocket.class);
+	
 	private final WebSocketExchangeHandler<ExchangeContext, WebSocketExchange<ExchangeContext>> handler;
 	private final Request request;
 	private final GenericWebSocketFrame.GenericFactory frameFactory;
@@ -99,6 +105,9 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 			this.handshake.tryEmitEmpty();
 			this.webSocketExchange.start();
 		}
+		else if(evt == WebSocketServerProtocolHandler.ServerHandshakeStateEvent.HANDSHAKE_TIMEOUT) {
+			this.handshake.tryEmitError(new WebSocketException("Handshake timeout"));
+		}
 		else {
 			super.userEventTriggered(ctx, evt);
 		}
@@ -112,10 +121,11 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 		}
 		else if(frame instanceof CloseWebSocketFrame) {
 			// handle close properly
+			CloseWebSocketFrame closeFrame = (CloseWebSocketFrame)frame;
 			ChannelPromise closePromise = ctx.newPromise();
 			ctx.writeAndFlush(Unpooled.EMPTY_BUFFER, closePromise);
 			closePromise.addListener(ChannelFutureListener.CLOSE);
-			this.webSocketExchange.setClosed();
+			this.webSocketExchange.setClosed((short)closeFrame.statusCode(), closeFrame.reasonText());
 			this.webSocketExchange.dispose();
 			this.webSocketExchange.finalizeExchange(closePromise);
 		}
@@ -130,12 +140,15 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 			this.handshake.tryEmitError(cause);
 		}
 		else if(cause instanceof CorruptedWebSocketFrameException) {
+			LOGGER.error("WebSocket procotol error", cause);
 			CorruptedWebSocketFrameException corruptedWSFrameException = (CorruptedWebSocketFrameException)cause;
 			this.webSocketExchange.close((short)corruptedWSFrameException.closeStatus().code(), corruptedWSFrameException.closeStatus().reasonText());
 			this.webSocketExchange.dispose();
 		}
 		else {
-			ctx.fireExceptionCaught(cause);
+			// This is the last channel handler so we don't want to propagate the error
+//			ctx.fireExceptionCaught(cause);
+			LOGGER.error("WebSocket procotol error", cause);
 			ctx.close();
 		}
 	}

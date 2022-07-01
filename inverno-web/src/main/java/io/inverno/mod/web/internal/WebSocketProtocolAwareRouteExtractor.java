@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,47 +15,33 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.util.Set;
-
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.web.spi.Route;
 
 /**
  * <p>
- * A route extractor is used to extract the routes defined in a routing chain by visiting the chain invoking {@link RoutingLink#extractRoute(RouteExtractor)} method on the first routing link of the
- * chain.
+ * A route extractor to extract {@link WebSocketProtocolAwareRouteExtractor} routes.
  * </p>
- *
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
- *
- * @see Route
- * @see RoutingLink
+ * @since 1.5
  *
  * @param <A> the type of the exchange context
  * @param <B> the type of exchange handled by the route
  * @param <C> the route type
+ * @param <D> the route extractor type
  */
-interface RouteExtractor<A extends ExchangeContext, B extends Exchange<A>, C extends Route<A, B>> {
-
-	/**
-	 * <p>
-	 * Extracts the route handler and finishes the current route.
-	 * </p>
-	 * 
-	 * @param handler
-	 * @param disabled
-	 */
-	void handler(ReactiveExchangeHandler<A, B> handler, boolean disabled);
+interface WebSocketProtocolAwareRouteExtractor<A extends ExchangeContext, B extends Exchange<A>, C extends Route<A, B>, D extends WebSocketProtocolAwareRouteExtractor<A, B, C, D>> extends RouteExtractor<A, B, C> {
 	
 	/**
 	 * <p>
-	 * Returns the extracted routes.
+	 * Sets the extractor to extract WebSocket routes defined with the specified WebSocket subprotocol.
 	 * </p>
 	 * 
-	 * @return a set of routes
+	 * @param subprotocol the Websocket subprotocol of the routes to extract
+	 * 
+	 * @return the route extractor
 	 */
-	Set<C> getRoutes();
+	D subprotocol(String subprotocol);
 }

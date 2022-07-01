@@ -18,11 +18,15 @@ package io.inverno.mod.web.internal;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
+import io.inverno.mod.web.Web2SocketExchange;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoutable;
 import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.WebRouteManager;
 import io.inverno.mod.web.WebRoutesConfigurer;
+import io.inverno.mod.web.WebSocketRoute;
+import io.inverno.mod.web.WebSocketRouteManager;
 import java.util.Set;
 
 /**
@@ -47,6 +51,11 @@ class GenericWebRoutableFacade<A extends WebRoutable<ExchangeContext, A>> implem
 	public WebRouteManager<ExchangeContext, GenericWebRoutableFacade<A>> route() {
 		return new WebRouteManagerFacade(this.initialRoutable.route());
 	}
+
+	@Override
+	public WebSocketRouteManager<ExchangeContext, GenericWebRoutableFacade<A>> webSocketRoute() {
+		return new WebSocketRouteManagerFacade(this.initialRoutable.webSocketRoute());
+	}
 	
 	@Override
 	public GenericWebRoutableFacade<A> configureRoutes(WebRoutesConfigurer<? super ExchangeContext> configurer) {
@@ -65,12 +74,6 @@ class GenericWebRoutableFacade<A extends WebRoutable<ExchangeContext, A>> implem
 
 		public WebRouteManagerFacade(WebRouteManager<ExchangeContext, A> routeManager) {
 			this.routeManager = routeManager;
-		}
-
-		@Override
-		public GenericWebRoutableFacade<A> handler(ExchangeHandler<? super ExchangeContext, WebExchange<ExchangeContext>> handler) {
-			this.routeManager.handler(handler);
-			return GenericWebRoutableFacade.this;
 		}
 
 		@Override
@@ -102,6 +105,12 @@ class GenericWebRoutableFacade<A extends WebRoutable<ExchangeContext, A>> implem
 			this.routeManager.language(language);
 			return this;
 		}
+		
+		@Override
+		public GenericWebRoutableFacade<A> handler(ExchangeHandler<? super ExchangeContext, WebExchange<ExchangeContext>> handler) {
+			this.routeManager.handler(handler);
+			return GenericWebRoutableFacade.this;
+		}
 
 		@Override
 		public GenericWebRoutableFacade<A> enable() {
@@ -124,6 +133,62 @@ class GenericWebRoutableFacade<A extends WebRoutable<ExchangeContext, A>> implem
 		@Override
 		public Set<WebRoute<ExchangeContext>> findRoutes() {
 			return this.routeManager.findRoutes();
+		}
+	}
+	
+	private class WebSocketRouteManagerFacade implements WebSocketRouteManager<ExchangeContext, GenericWebRoutableFacade<A>> {
+		
+		private final WebSocketRouteManager<ExchangeContext, A> webSocketRouteManager;
+
+		public WebSocketRouteManagerFacade(WebSocketRouteManager<ExchangeContext, A> webSocketRouteManager) {
+			this.webSocketRouteManager = webSocketRouteManager;
+		}
+
+		@Override
+		public WebSocketRouteManager<ExchangeContext, GenericWebRoutableFacade<A>> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException {
+			this.webSocketRouteManager.path(path, matchTrailingSlash);
+			return this;
+		}
+
+		@Override
+		public WebSocketRouteManager<ExchangeContext, GenericWebRoutableFacade<A>> language(String language) {
+			this.webSocketRouteManager.language(language);
+			return this;
+		}
+
+		@Override
+		public WebSocketRouteManager<ExchangeContext, GenericWebRoutableFacade<A>> subprotocol(String subprotocol) {
+			this.webSocketRouteManager.subprotocol(subprotocol);
+			return this;
+		}
+
+		@Override
+		public GenericWebRoutableFacade<A> handler(WebSocketExchangeHandler<? super ExchangeContext, Web2SocketExchange<ExchangeContext>> handler) {
+			this.webSocketRouteManager.handler(handler);
+			return GenericWebRoutableFacade.this;
+		}
+
+		@Override
+		public GenericWebRoutableFacade<A> enable() {
+			this.webSocketRouteManager.enable();
+			return GenericWebRoutableFacade.this;
+		}
+
+		@Override
+		public GenericWebRoutableFacade<A> disable() {
+			this.webSocketRouteManager.disable();
+			return GenericWebRoutableFacade.this;
+		}
+
+		@Override
+		public GenericWebRoutableFacade<A> remove() {
+			this.webSocketRouteManager.remove();
+			return GenericWebRoutableFacade.this;
+		}
+
+		@Override
+		public Set<WebSocketRoute<ExchangeContext>> findRoutes() {
+			return this.webSocketRouteManager.findRoutes();
 		}
 	}
 }

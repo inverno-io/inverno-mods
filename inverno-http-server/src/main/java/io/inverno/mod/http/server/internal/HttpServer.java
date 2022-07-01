@@ -102,7 +102,7 @@ public class HttpServer {
 		
 		String scheme = this.configuration.tls_enabled() ? "https://" : "http://";
 		if (this.serverChannelFuture.isSuccess()) {
-			this.logger.info(() -> "HTTP Server (" + this.netService.getTransportType().toString().toLowerCase() + ") listening on " + scheme + serverAddress.getHostString() + ":" + serverAddress.getPort());
+			this.logger.info("HTTP Server ({}) listening on {}", this.netService.getTransportType().toString().toLowerCase(), scheme + serverAddress.getHostString() + ":" + serverAddress.getPort());
 		}
 		else {
 			throw new RuntimeException("Can't start Web server on " + scheme + serverAddress.getHostString() + ":" + serverAddress.getPort(), this.serverChannelFuture.cause());

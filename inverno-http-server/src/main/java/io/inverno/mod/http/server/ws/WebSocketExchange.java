@@ -58,14 +58,14 @@ public interface WebSocketExchange<A extends ExchangeContext> {
 	
 	/**
 	 * <p>
-	 * Returns the sub protocol that was negotiated with the client during the opening handshake.
+	 * Returns the subprotocol that was negotiated with the client during the opening handshake.
 	 * </p>
 	 * 
 	 * <p>
-	 * Note that the handshake will fail and the WebSocket connection closed if no sub protocols could have been negotiated.
+	 * Note that the handshake will fail and the WebSocket connection closed if no subprotocols could have been negotiated.
 	 * </p>
 	 * 
-	 * @return a sub protocol or null if no sub protocol was specified by both client and server
+	 * @return a subprotocol or null if no subprotocol was specified by both client and server
 	 */
 	String getSubProtocol();
 	

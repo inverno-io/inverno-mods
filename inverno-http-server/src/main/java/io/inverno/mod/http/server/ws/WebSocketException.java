@@ -15,6 +15,9 @@
  */
 package io.inverno.mod.http.server.ws;
 
+import io.inverno.mod.http.base.HttpException;
+import io.inverno.mod.http.base.Status;
+
 /**
  * <p>
  * Thrown to indicate an error while processing a WebSocket exchange.
@@ -23,13 +26,13 @@ package io.inverno.mod.http.server.ws;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class WebSocketException extends RuntimeException {
+public class WebSocketException extends HttpException {
 
 	private static final long serialVersionUID = 1L;
 
 	/**
 	 * <p>
-	 * Creates a WebSocket exception.
+	 * Creates a WebSocket exception with default status {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)}.
 	 * </p>
 	 */
 	public WebSocketException() {
@@ -37,21 +40,21 @@ public class WebSocketException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a WebSocket exception with the specified message.
+	 * Creates a WebSocket exception with default status {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)} and specified message.
 	 * </p>
-	 * 
-	 * @param message the message
+	 *
+	 * @param message a message
 	 */
 	public WebSocketException(String message) {
 		super(message);
 	}
-	
+
 	/**
 	 * <p>
-	 * Creates a WebSocket exception with the specified cause.
+	 * Creates a WebSocket exception with default status {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)} and specified cause.
 	 * </p>
 	 *
-	 * @param cause the cause
+	 * @param cause a cause
 	 */
 	public WebSocketException(Throwable cause) {
 		super(cause);
@@ -59,11 +62,11 @@ public class WebSocketException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a WebSocket exception with the specified message and cause.
+	 * Creates a WebSocket exception with default status {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)}, specified message and cause
 	 * </p>
 	 *
-	 * @param message the message
-	 * @param cause   the cause
+	 * @param message a message
+	 * @param cause   a cause
 	 */
 	public WebSocketException(String message, Throwable cause) {
 		super(message, cause);
@@ -71,15 +74,105 @@ public class WebSocketException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a WebSocket exception with the specified message, cause, suppression enabled or disabled and writable stack trace enabled or disabled.
+	 * Creates a WebSocket exception with specified HTTP status code.
 	 * </p>
 	 *
-	 * @param message            the message
-	 * @param cause              the cause
-	 * @param enableSuppression  true to enable suppression, false otherwise
-	 * @param writableStackTrace true to make the stack trace writable, false otherwise
+	 * @param statusCode a HTTP status code
+	 *
+	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
 	 */
-	public WebSocketException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
+	public WebSocketException(int statusCode) throws IllegalArgumentException {
+		super(statusCode);
+	}
+
+	/**
+	 * <p>
+	 * Creates a WebSocket exception with specified HTTP status code and message.
+	 * </p>
+	 *
+	 * @param statusCode a HTTP status code
+	 * @param message    a message
+	 *
+	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
+	 */
+	public WebSocketException(int statusCode, String message) throws IllegalArgumentException {
+		super(statusCode, message);
+	}
+
+	/**
+	 * <p>
+	 * Creates a WebSocket exception with specified HTTP status code and cause.
+	 * </p>
+	 *
+	 * @param statusCode a HTTP status code
+	 * @param cause      a cause
+	 *
+	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
+	 */
+	public WebSocketException(int statusCode, Throwable cause) throws IllegalArgumentException {
+		super(statusCode, cause);
+	}
+
+	/**
+	 * <p>
+	 * Creates a WebSocket exception with specified HTTP status code, message and cause.
+	 * </p>
+	 *
+	 * @param statusCode a HTTP status code
+	 * @param message    a message
+	 * @param cause      a cause
+	 *
+	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
+	 */
+	public WebSocketException(int statusCode, String message, Throwable cause) throws IllegalArgumentException {
+		super(statusCode, message, cause);
+	}
+
+	/**
+	 * <p>
+	 * Creates a WebSocket exception with specified HTTP status.
+	 * </p>
+	 *
+	 * @param status a HTTP status
+	 */
+	public WebSocketException(Status status) {
+		super(status);
+	}
+
+	/**
+	 * <p>
+	 * Creates a WebSocket exception with specified HTTP status and message.
+	 * </p>
+	 *
+	 * @param status  a HTTP status
+	 * @param message a message
+	 */
+	public WebSocketException(Status status, String message) {
+		super(status, message);
+	}
+
+	/**
+	 * <p>
+	 * Creates a WebSocket exception with specified HTTP status and cause.
+	 * </p>
+	 * 
+	 * @param status a HTTP status
+	 * @param cause  a cause
+	 */
+	public WebSocketException(Status status, Throwable cause) {
+		super(status, cause);
+	}
+
+	/**
+	 * <p>
+	 * Creates a WebSocket exception with specified HTTP status, message and cause.
+	 * </p>
+	 * 
+	 * @param status  a HTTP status
+	 * @param message a message
+	 * @param cause   a cause
+	 */
+	public WebSocketException(Status status, String message, Throwable cause) {
+		super(status, message, cause);
 	}
 }

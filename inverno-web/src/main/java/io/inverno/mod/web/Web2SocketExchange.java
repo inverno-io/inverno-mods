@@ -63,6 +63,11 @@ public interface Web2SocketExchange<A extends ExchangeContext> extends WebSocket
 		 * <p>
 		 * Decodes inbound text messages to the specified type.
 		 * </p>
+		 * 
+		 * <p>
+		 * The negociated subprotocol shall be used to determine the converter to use to decode the raw message, the subprotocol is then assumed to be a compact application media type 
+		 * (see {@link MediaTypes#normalizeApplicationMediaType(java.lang.String)}).
+		 * </p>
 		 *
 		 * @param <A>  the decoded message type
 		 * @param type the decoded message type
@@ -77,6 +82,11 @@ public interface Web2SocketExchange<A extends ExchangeContext> extends WebSocket
 		 * <p>
 		 * Decodes inbound text messages to the specified type.
 		 * </p>
+		 * 
+		 * <p>
+		 * The negociated subprotocol shall be used to determine the converter to use to decode the raw message, the subprotocol is then assumed to be a compact application media type 
+		 * (see {@link MediaTypes#normalizeApplicationMediaType(java.lang.String)}).
+		 * </p>
 		 *
 		 * @param <A>  the decoded message type
 		 * @param type the decoded message type
@@ -88,6 +98,11 @@ public interface Web2SocketExchange<A extends ExchangeContext> extends WebSocket
 		/**
 		 * <p>
 		 * Decodes inbound binary messages to the specified type.
+		 * </p>
+		 * 
+		 * <p>
+		 * The negociated subprotocol shall be used to determine the converter to use to decode the raw message, the subprotocol is then assumed to be a compact application media type 
+		 * (see {@link MediaTypes#normalizeApplicationMediaType(java.lang.String)}).
 		 * </p>
 		 *
 		 * @param <A>  the decoded message type
@@ -102,6 +117,11 @@ public interface Web2SocketExchange<A extends ExchangeContext> extends WebSocket
 		/**
 		 * <p>
 		 * Decodes inbound binary messages to the specified type.
+		 * </p>
+		 * 
+		 * <p>
+		 * The negociated subprotocol shall be used to determine the converter to use to decode the raw message, the subprotocol is then assumed to be a compact application media type 
+		 * (see {@link MediaTypes#normalizeApplicationMediaType(java.lang.String)}).
 		 * </p>
 		 *
 		 * @param <A>  the decoded message type
@@ -126,6 +146,11 @@ public interface Web2SocketExchange<A extends ExchangeContext> extends WebSocket
 		 * <p>
 		 * Encodes the specified messages to WebSocket text messages sent to the client.
 		 * </p>
+		 * 
+		 * <p>
+		 * The negociated subprotocol shall be used to determine the converter to use to encode the message, the subprotocol is then assumed to be a compact application media type (see
+		 * {@link MediaTypes#normalizeApplicationMediaType(java.lang.String)}).
+		 * </p>
 		 *
 		 * @param <T>      the type of message to encode
 		 * @param messages the messages to send
@@ -137,6 +162,11 @@ public interface Web2SocketExchange<A extends ExchangeContext> extends WebSocket
 		/**
 		 * <p>
 		 * Encodes the specified messages of the specified type to WebSocket text messages sent to the client.
+		 * </p>
+		 * 
+		 * <p>
+		 * The negociated subprotocol shall be used to determine the converter to use to encode the message, the subprotocol is then assumed to be a compact application media type (see
+		 * {@link MediaTypes#normalizeApplicationMediaType(java.lang.String)}).
 		 * </p>
 		 *
 		 * @param <T>      the type of message to encode
@@ -151,6 +181,11 @@ public interface Web2SocketExchange<A extends ExchangeContext> extends WebSocket
 		 * <p>
 		 * Encodes the specified messages of the specified type to WebSocket text messages sent to the client.
 		 * </p>
+		 * 
+		 * <p>
+		 * The negociated subprotocol shall be used to determine the converter to use to encode the message, the subprotocol is then assumed to be a compact application media type (see
+		 * {@link MediaTypes#normalizeApplicationMediaType(java.lang.String)}).
+		 * </p>
 		 *
 		 * @param <T>      the type of message to encode
 		 * @param messages the messages to send
@@ -161,6 +196,11 @@ public interface Web2SocketExchange<A extends ExchangeContext> extends WebSocket
 		/**
 		 * <p>
 		 * Encodes the specified messages to WebSocket binary messages sent to the client.
+		 * </p>
+		 * 
+		 * <p>
+		 * The negociated subprotocol shall be used to determine the converter to use to encode the message, the subprotocol is then assumed to be a compact application media type (see
+		 * {@link MediaTypes#normalizeApplicationMediaType(java.lang.String)}).
 		 * </p>
 		 *
 		 * @param <T>      the type of message to encode
@@ -174,6 +214,11 @@ public interface Web2SocketExchange<A extends ExchangeContext> extends WebSocket
 		 * <p>
 		 * Encodes the specified messages of the specified type to WebSocket binary messages sent to the client.
 		 * </p>
+		 * 
+		 * <p>
+		 * The negociated subprotocol shall be used to determine the converter to use to encode the message, the subprotocol is then assumed to be a compact application media type (see
+		 * {@link MediaTypes#normalizeApplicationMediaType(java.lang.String)}).
+		 * </p>
 		 *
 		 * @param <T>      the type of message to encode
 		 * @param messages the messages to send
@@ -186,6 +231,11 @@ public interface Web2SocketExchange<A extends ExchangeContext> extends WebSocket
 		/**
 		 * <p>
 		 * Encodes the specified messages of the specified type to WebSocket binary messages sent to the client.
+		 * </p>
+		 * 
+		 * <p>
+		 * The negociated subprotocol shall be used to determine the converter to use to encode the message, the subprotocol is then assumed to be a compact application media type (see
+		 * {@link MediaTypes#normalizeApplicationMediaType(java.lang.String)}).
 		 * </p>
 		 *
 		 * @param <T>      the type of message to encode

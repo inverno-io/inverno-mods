@@ -185,7 +185,7 @@ class LanguageRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 				.orElse(Headers.AcceptLanguage.ALL);
 
 			Iterator<AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, B, ?, C>>>> acceptLanguageMatchesIterator = acceptLanguage
-				.findAllMatch(this.handlers.entrySet(), Entry::getKey).iterator();
+				.findAllMatch(this.enabledHandlers.entrySet(), Entry::getKey).iterator();
 
 			while (acceptLanguageMatchesIterator.hasNext()) {
 				AcceptMatch<LanguageRange, Entry<LanguageRange, RoutingLink<A, B, ?, C>>> bestMatch = acceptLanguageMatchesIterator.next();

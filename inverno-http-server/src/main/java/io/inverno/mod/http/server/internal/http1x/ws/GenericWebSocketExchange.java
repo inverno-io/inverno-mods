@@ -31,6 +31,8 @@ import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.util.concurrent.EventExecutor;
 import java.util.Optional;
 import java.util.function.Function;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
@@ -49,6 +51,8 @@ import reactor.core.publisher.Sinks;
  */
 public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> implements WebSocketExchange<ExchangeContext> {
 
+	private static final Logger LOGGER = LogManager.getLogger(WebSocketExchange.class);
+	
 	private final ChannelHandlerContext context;
 	private final Request request;
 	private final String subProtocol;
@@ -80,7 +84,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	 *
 	 * @param context        the channel handler context
 	 * @param request        the HTTP/1.x exchange request
-	 * @param subProtocol    the negotiated sub protocol
+	 * @param subProtocol    the negotiated subprotocol
 	 * @param handler        the WebSocket handler
 	 * @param frameFactory   the WebSocket frame factory
 	 * @param messageFactory the WebSocket message factory
@@ -210,6 +214,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	 */
 	protected void onStart(Subscription subscription) {
 		subscription.request(Long.MAX_VALUE);
+		LOGGER.debug("WebSocket exchange started");
 	}
 	
 	@Override
@@ -219,6 +224,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 			throw new WebSocketException("Invalid outbound frame type " + value.getKind() + ", use close() to close the WebSocket");
 		}
 		this.executeInEventLoop(() -> {
+			LOGGER.trace("Write {} frame (size={}, final={})", value.getKind(), value.getBinaryData().readableBytes(), value.isFinal());
 			this.context.writeAndFlush(this.frameFactory.toUnderlyingWebSocketFrame(value));
 		});
 	}
@@ -237,6 +243,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	@Override
 	protected void hookOnError(Throwable throwable) {
 		// Close the WebSocket with error
+		LOGGER.error("WebSocketExchange processing error", throwable);
 		this.close(WebSocketStatus.INTERNAL_SERVER_ERROR, throwable.getMessage());
 	}
 
@@ -359,21 +366,22 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 		boolean mustClose = !this.closed;
 		// we must do this before dispose since close is also invoked in hookOnCancel()
 		// the exchange can be disposed without a close leading to close() but when the exchange is closed we must not send a close frame twice
-		this.setClosed();
+		this.closed = true; // we must do this since hookOnCancel() will be invoke after dispose() and therefore close() is invoked and we don't want to close the WebSocket twice
 		this.dispose();
-		this.executeInEventLoop(() -> {
-			if(mustClose) {
+		if(mustClose) {
+			this.executeInEventLoop(() -> {
 				ChannelPromise closePromise = this.context.newPromise();
 				this.context.writeAndFlush(new CloseWebSocketFrame(code, reason), closePromise);
 				closePromise.addListener(ChannelFutureListener.CLOSE);
+				closePromise.addListener(ign -> LOGGER.debug("WebSocket closed ({}): {}", code, reason));
 				this.finalizeExchange(closePromise);
-			}
-		});
+			});
+		}
 	}
-	
+
 	/**
 	 * <p>
-	 * Sets the exchange as closed.
+	 * Sets the exchange as closed with the following code and reason.
 	 * </p>
 	 * 
 	 * <p>
@@ -381,7 +389,10 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	 * No close message is sent to the client once the exchange is set to closed.
 	 * </p>
 	 */
-	void setClosed() {
+	void setClosed(short code, String reason) {
+		if(!this.closed) {
+			LOGGER.debug("WebSocket closed ({}): {}", code, reason);
+		}
 		this.closed = true;
 	}
 

@@ -49,6 +49,7 @@ class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 	private final HeaderCodec<? extends Headers.Accept> acceptCodec;
 
 	private Map<Headers.Accept.MediaRange, RoutingLink<A, B, ?, C>> handlers;
+	private Map<Headers.Accept.MediaRange, RoutingLink<A, B, ?, C>> enabledHandlers;
 
 	/**
 	 * <p>
@@ -61,6 +62,13 @@ class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 		super(() -> new ConsumesRoutingLink<>(acceptCodec));
 		this.acceptCodec = acceptCodec;
 		this.handlers = new LinkedHashMap<>();
+		this.enabledHandlers = Map.of();
+	}
+	
+	private void updateEnabledHandlers() {
+		this.enabledHandlers = this.handlers.entrySet().stream()
+			.filter(e -> !e.getValue().isDisabled())
+			.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> a, LinkedHashMap::new));
 	}
 
 	@Override
@@ -71,15 +79,16 @@ class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 		String consume = route.getConsume();
 		if (consume != null) {
 			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.NAME_ACCEPT, consume).getMediaRanges().get(0);
-			if (this.handlers.containsKey(mediaRange)) {
+			if(this.handlers.containsKey(mediaRange)) {
 				this.handlers.get(mediaRange).setRoute(route);
 			}
 			else {
 				this.handlers.put(mediaRange, this.nextLink.createNextLink().setRoute(route));
 			}
 			this.handlers = this.handlers.entrySet().stream()
-					.sorted(Comparator.comparing(Entry::getKey, Headers.Accept.MediaRange.COMPARATOR))
-					.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> a, LinkedHashMap::new));
+				.sorted(Comparator.comparing(Entry::getKey, Headers.Accept.MediaRange.COMPARATOR))
+				.collect(Collectors.toMap(Entry::getKey, Entry::getValue, (a, b) -> a, LinkedHashMap::new));
+			this.updateEnabledHandlers();
 		} 
 		else {
 			this.nextLink.setRoute(route);
@@ -90,11 +99,12 @@ class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 	@Override
 	public void enableRoute(C route) {
 		String consume = route.getConsume();
-		if (consume != null) {
+		if(consume != null) {
 			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.NAME_ACCEPT, consume).getMediaRanges().get(0);
 			RoutingLink<A, B, ?, C> handler = this.handlers.get(mediaRange);
-			if (handler != null) {
+			if(handler != null) {
 				handler.enableRoute(route);
+				this.updateEnabledHandlers();
 			}
 			// route doesn't exist so let's do nothing
 		} 
@@ -106,11 +116,12 @@ class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 	@Override
 	public void disableRoute(C route) {
 		String consume = route.getConsume();
-		if (consume != null) {
+		if(consume != null) {
 			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.NAME_ACCEPT, consume).getMediaRanges().get(0);
 			RoutingLink<A, B, ?, C> handler = this.handlers.get(mediaRange);
-			if (handler != null) {
+			if(handler != null) {
 				handler.disableRoute(route);
+				this.updateEnabledHandlers();
 			}
 			// route doesn't exist so let's do nothing
 		} 
@@ -122,14 +133,15 @@ class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 	@Override
 	public void removeRoute(C route) {
 		String consume = route.getConsume();
-		if (consume != null) {
+		if(consume != null) {
 			Headers.Accept.MediaRange mediaRange = this.acceptCodec.decode(Headers.NAME_ACCEPT, consume).getMediaRanges().get(0);
 			RoutingLink<A, B, ?, C> handler = this.handlers.get(mediaRange);
-			if (handler != null) {
+			if(handler != null) {
 				handler.removeRoute(route);
-				if (!handler.hasRoute()) {
+				if(!handler.hasRoute()) {
 					// The link has no more routes, we can remove it for good
 					this.handlers.remove(mediaRange);
+					this.updateEnabledHandlers();
 				}
 			}
 			// route doesn't exist so let's do nothing
@@ -152,7 +164,7 @@ class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 	@SuppressWarnings("unchecked")
 	@Override
 	public <F extends RouteExtractor<A, B, C>> void extractRoute(F extractor) {
-		if (!(extractor instanceof ContentAwareRouteExtractor)) {
+		if(!(extractor instanceof ContentAwareRouteExtractor)) {
 			throw new IllegalArgumentException("Route extractor is not content aware");
 		}
 		this.handlers.entrySet().stream().forEach(e -> {
@@ -163,7 +175,7 @@ class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 
 	@Override
 	public Mono<Void> defer(B exchange) {
-		if (this.handlers.isEmpty()) {
+		if(this.enabledHandlers.isEmpty()) {
 			return this.nextLink.defer(exchange);
 		} 
 		else {
@@ -171,15 +183,15 @@ class ConsumesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 
 			Optional<RoutingLink<A, B, ?, C>> handler = contentTypeHeader
 				.flatMap(contentType -> Headers.Accept.MediaRange
-					.findFirstMatch(contentType, this.handlers.entrySet(), Entry::getKey)
+					.findFirstMatch(contentType, this.enabledHandlers.entrySet(), Entry::getKey)
 					.map(Headers.AcceptMatch::getSource)
 					.map(Entry::getValue)
 				);
 
-			if (handler.isPresent()) {
+			if(handler.isPresent()) {
 				return handler.get().defer(exchange);
 			} 
-			else if (this.handlers.isEmpty() || !contentTypeHeader.isPresent()) {
+			else if(!contentTypeHeader.isPresent()) {
 				return this.nextLink.defer(exchange);
 			}
 			else {

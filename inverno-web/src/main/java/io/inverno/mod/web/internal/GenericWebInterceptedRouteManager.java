@@ -54,6 +54,14 @@ class GenericWebInterceptedRouteManager extends AbstractWebManager<GenericWebInt
 	}
 	
 	@Override
+	public WebInterceptedRouter<ExchangeContext> handler(ExchangeHandler<? super ExchangeContext, WebExchange<ExchangeContext>> handler) {
+		Objects.requireNonNull(handler);
+		this.handler = handler;
+		this.commit();
+		return this.router;
+	}
+	
+	@Override
 	public GenericWebInterceptedRouter enable() {
 		this.findRoutes().stream().forEach(route -> route.enable());
 		return this.router;
@@ -130,14 +138,6 @@ class GenericWebInterceptedRouteManager extends AbstractWebManager<GenericWebInt
 		}).collect(Collectors.toSet());
 	}
 
-	@Override
-	public WebInterceptedRouter<ExchangeContext> handler(ExchangeHandler<? super ExchangeContext, WebExchange<ExchangeContext>> handler) {
-		Objects.requireNonNull(handler);
-		this.handler = handler;
-		this.commit();
-		return this.router;
-	}
-	
 	private void commit() {
 		Consumer<GenericWebRoute> languagesCommitter = route -> {
 			if(this.languages != null && !this.languages.isEmpty()) {

@@ -40,227 +40,251 @@ import java.util.stream.Collectors;
 public final class Headers {
 
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc5322#section-3.3">RFC 5322 Section 3.3</a>
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc5322#section-3.3">RFC 5322 Section 3.3</a>.
 	 */
 	public static final DateTimeFormatter FORMATTER_RFC_5322_DATE_TIME = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
 	
 	/* Header Names */
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>.
 	 */
 	public static final String NAME_ACCEPT = "accept";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.4">RFC 7231 Section 5.3.4</a>
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.4">RFC 7231 Section 5.3.4</a>.
 	 */
 	public static final String NAME_ACCEPT_ENCODING = "accept-encoding";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.5">RFC 7231 Section 5.3.5</a>
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.5">RFC 7231 Section 5.3.5</a>.
 	 */
 	public static final String NAME_ACCEPT_LANGUAGE = "accept-language";
 	/**
-	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>.
 	 */
 	public static final String NAME_ACCESS_CONTROL_ALLOW_CREDENTIALS = "access-control-allow-credentials";
 	/**
-	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>.
 	 */
 	public static final String NAME_ACCESS_CONTROL_ALLOW_HEADERS = "access-control-allow-headers";
 	/**
-	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>.
 	 */	
 	public static final String NAME_ACCESS_CONTROL_ALLOW_METHODS = "access-control-allow-methods";
 	/**
-	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>.
 	 */	
 	public static final String NAME_ACCESS_CONTROL_ALLOW_ORIGIN = "access-control-allow-origin";
 	/**
-	 * <a href="https://wicg.github.io/private-network-access/">Private Network Access</a>
+	 * <a href="https://wicg.github.io/private-network-access/">Private Network Access</a>.
 	 */
 	public static final String NAME_ACCESS_CONTROL_ALLOW_PRIVATE_NETWORK = "access-control-allow-private-network";
 	/**
-	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>.
 	 */	
 	public static final String NAME_ACCESS_CONTROL_EXPOSE_HEADERS = "access-control-expose-headers";
 	/**
-	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>.
 	 */	
 	public static final String NAME_ACCESS_CONTROL_MAX_AGE = "access-control-max-age";
 	/**
-	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>.
 	 */	
 	public static final String NAME_ACCESS_CONTROL_REQUEST_METHOD = "access-control-request-method";
 	/**
-	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>
+	 * <a href="https://fetch.spec.whatwg.org/#http-cors-protocol">Fetch living standard 3.2 CORS protocol</a>.
 	 */	
 	public static final String NAME_ACCESS_CONTROL_REQUEST_HEADERS = "access-control-request-headers";
 	/**
-	 * <a href="https://wicg.github.io/private-network-access/">Private Network Access</a>
+	 * <a href="https://wicg.github.io/private-network-access/">Private Network Access</a>.
 	 */
 	public static final String NAME_ACCESS_CONTROL_REQUEST_PRIVATE_NETWORK = "access-control-request-private-network";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-7.4.1">RFC 7231 Section 7.4.1</a>
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-7.4.1">RFC 7231 Section 7.4.1</a>.
 	 */
 	public static final String NAME_ALLOW = "allow";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.1">RFC 7235 Section 4.1</a>
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.1">RFC 7235 Section 4.1</a>.
 	 */
 	public static final String NAME_AUTHORIZATION = "authorization";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7234#section-5.2">RFC 7234 Section 5.2</a>
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7234#section-5.2">RFC 7234 Section 5.2</a>.
 	 */
 	public static final String NAME_CACHE_CONTROL = "cache-control";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-6.1">RFC 7230 Section 6.1</a>
+	 * <a href="https://tools.ietf.org/html/rfc7230#section-6.1">RFC 7230 Section 6.1</a>.
 	 */
 	public static final String NAME_CONNECTION = "connection";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc6266">RFC 6266</a>
+	 * <a href="https://tools.ietf.org/html/rfc6266">RFC 6266</a>.
 	 */
 	public static final String NAME_CONTENT_DISPOSITION = "content-disposition";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-3.1.2.2">RFC 7231 Section 3.1.2.2</a>
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-3.1.2.2">RFC 7231 Section 3.1.2.2</a>.
 	 */
 	public static final String NAME_CONTENT_ENCODING = "content-encoding";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.1.1">RFC 7232 Section 5.1.1</a>
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.1.1">RFC 7232 Section 5.1.1</a>.
 	 */
 	public static final String NAME_EXPECT = "expect";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-3.1.1.5">RFC 7231 Section 3.1.1.5</a>
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-3.1.1.5">RFC 7231 Section 3.1.1.5</a>.
 	 */
 	public static final String NAME_CONTENT_TYPE = "content-type";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.3.2">RFC 7230 Section 3.3.2</a>
+	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.3.2">RFC 7230 Section 3.3.2</a>.
 	 */
 	public static final String NAME_CONTENT_LENGTH = "content-length";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc6265#section-4.2">RFC 6265 Section 4.2</a>
+	 * <a href="https://tools.ietf.org/html/rfc6265#section-4.2">RFC 6265 Section 4.2</a>.
 	 */
 	public static final String NAME_COOKIE = "cookie";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-7.1.1.2">RFC 7231 Section 7.1.1.2</a>
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-7.1.1.2">RFC 7231 Section 7.1.1.2</a>.
 	 */
 	public static final String NAME_DATE = "date";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-5.4">RFC 7230 Section 5.4</a>
+	 * <a href="https://tools.ietf.org/html/rfc7230#section-5.4">RFC 7230 Section 5.4</a>.
 	 */
 	public static final String NAME_HOST = "host";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7540#section-3.2.1">RFC 7540 Section 3.2.1</a>
+	 * <a href="https://tools.ietf.org/html/rfc7540#section-3.2.1">RFC 7540 Section 3.2.1</a>.
 	 */
 	public static final String NAME_HTTP2_SETTINGS = "http2-settings";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7232#section-2.2">RFC 7232 Section 2.2</a>
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7232#section-2.2">RFC 7232 Section 2.2</a>.
 	 */
 	public static final String NAME_LAST_MODIFIED = "last-modified";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-7.1.2">RFC 7231 Section 7.1.2</a>
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-7.1.2">RFC 7231 Section 7.1.2</a>.
 	 */
 	public static final String NAME_LOCATION = "location";
 	/**
-	 * <a href="https://www.rfc-editor.org/rfc/rfc6454.html">RFC 6454</a>
+	 * <a href="https://www.rfc-editor.org/rfc/rfc6454.html">RFC 6454</a>.
 	 * <br/>
-	 * <a href="https://fetch.spec.whatwg.org/#origin-header">Fetch living standard 3.1 Origin Header</a>
+	 * <a href="https://fetch.spec.whatwg.org/#origin-header">Fetch living standard 3.1 Origin Header</a>.
 	 */
 	public static final String NAME_ORIGIN = "origin";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.5.2">RFC 7231 Section 5.5.2</a>
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.5.2">RFC 7231 Section 5.5.2</a>.
 	 */
 	public static final String NAME_REFERER = "referer";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-7.1.3">RFC 7231 Section 7.1.3</a>
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-7.1.3">RFC 7231 Section 7.1.3</a>.
 	 */
 	public static final String NAME_RETRY_AFTER = "retry-after";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-7.4.2">RFC 7231 Section 7.4.2</a>
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-7.4.2">RFC 7231 Section 7.4.2</a>.
 	 */
 	public static final String NAME_SERVER = "server";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc6265#section-4.1">RFC 6265 Section 4.1</a>
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc6455#section-11.3.1">RFC 6455 Section 11.3.1</a>.
+	 */
+	public static final String NAME_SEC_WEBSOCKET_KEY = "sec-websocket-key";
+	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc6455#section-11.3.2">RFC 6455 Section 11.3.2</a>.
+	 */
+	public static final String NAME_SEC_WEBSOCKET_EXTENSIONS = "sec-websocket-extensions";
+	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc6455#section-11.3.3">RFC 6455 Section 11.3.3</a>.
+	 */
+	public static final String NAME_SEC_WEBSOCKET_ACCEPT = "sec-websocket-accept";
+	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc6455#section-11.3.4">RFC 6455 Section 11.3.4</a>.
+	 */
+	public static final String NAME_SEC_WEBSOCKET_PROTOCOL = "sec-websocket-protocol";
+	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc6455#section-11.3.5">RFC 6455 Section 11.3.5</a>.
+	 */
+	public static final String NAME_SEC_WEBSOCKET_VERSION = "sec-websocket-version";
+	/**
+	 * <a href="https://tools.ietf.org/html/rfc6265#section-4.1">RFC 6265 Section 4.1</a>.
 	 */
 	public static final String NAME_SET_COOKIE = "set-cookie";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-4.3">RFC 7230 Section 4.3</a>
+	 * <a href="https://tools.ietf.org/html/rfc7230#section-4.3">RFC 7230 Section 4.3</a>.
 	 */
 	public static final String NAME_TE = "te";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-4.4">RFC 7230 Section 4.4</a>
+	 * <a href="https://tools.ietf.org/html/rfc7230#section-4.4">RFC 7230 Section 4.4</a>.
 	 */
 	public static final String NAME_TRAILER = "trailer";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.3.1">RFC 7230 Section 3.3.1</a>
+	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.3.1">RFC 7230 Section 3.3.1</a>.
 	 */
 	public static final String NAME_TRANSFER_ENCODING = "transfer-encoding";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-6.7">RFC 7230 Section 6.7</a>
+	 * <a href="https://tools.ietf.org/html/rfc7230#section-6.7">RFC 7230 Section 6.7</a>.
 	 */
 	public static final String NAME_UPGRADE = "upgrade";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.5.3">RFC 7231 Section 5.5.3</a>
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.5.3">RFC 7231 Section 5.5.3</a>.
 	 */
 	public static final String NAME_USER_AGENT = "user-agent";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc9110#section-12.5.5">RFC 9110 Section 12.5.5</a>
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc9110#section-12.5.5">RFC 9110 Section 12.5.5</a>.
 	 */
 	public static final String NAME_VARY = "www-vary";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.1">RFC 7235 Section 4.1</a>
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.1">RFC 7235 Section 4.1</a>.
 	 */
 	public static final String NAME_WWW_AUTHENTICATE = "www-authenticate";
 
 	/* HTTP/2 pseudo headers */
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7540#section-8.1.2.3">RFC 7540 Section 8.1.2.3</a>
+	 * <a href="https://tools.ietf.org/html/rfc7540#section-8.1.2.3">RFC 7540 Section 8.1.2.3</a>.
 	 */
 	public static final String NAME_PSEUDO_AUTHORITY = ":authority";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7540#section-8.1.2.3">RFC 7540 Section 8.1.2.3</a>
+	 * <a href="https://tools.ietf.org/html/rfc7540#section-8.1.2.3">RFC 7540 Section 8.1.2.3</a>.
 	 */
 	public static final String NAME_PSEUDO_METHOD = ":method";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7540#section-8.1.2.3">RFC 7540 Section 8.1.2.3</a>
+	 * <a href="https://tools.ietf.org/html/rfc7540#section-8.1.2.3">RFC 7540 Section 8.1.2.3</a>.
 	 */
 	public static final String NAME_PSEUDO_PATH = ":path";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7540#section-8.1.2.3">RFC 7540 Section 8.1.2.3</a>
+	 * <a href="https://tools.ietf.org/html/rfc7540#section-8.1.2.3">RFC 7540 Section 8.1.2.3</a>.
 	 */
 	public static final String NAME_PSEUDO_SCHEME = ":scheme";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7540#section-8.1.2.4">RFC 7540 Section 8.1.2.4</a>
+	 * <a href="https://tools.ietf.org/html/rfc7540#section-8.1.2.4">RFC 7540 Section 8.1.2.4</a>.
 	 */
 	public static final String NAME_PSEUDO_STATUS = ":status";
 	
 	/* Header Values */
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.1.1">RFC 7232 Section 5.1.1</a>
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.1.1">RFC 7232 Section 5.1.1</a>.
 	 */
 	public static final String VALUE_100_CONTINUE = "100-continue";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.3.1">RFC 7230 Section 3.3.1</a>
+	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.3.1">RFC 7230 Section 3.3.1</a>.
 	 */
 	public static final String VALUE_CHUNKED = "chunked";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-6.1">RFC 7230 Section 6.1</a>
+	 * <a href="https://tools.ietf.org/html/rfc7230#section-6.1">RFC 7230 Section 6.1</a>.
 	 */
 	public static final String VALUE_CLOSE = "close";
 	/**
-	 * deflate content encoding as defined by <a href="https://www.ietf.org/rfc/rfc1951.txt">RFC 1951</a>
+	 * deflate content encoding as defined by <a href="https://www.ietf.org/rfc/rfc1951.txt">RFC 1951</a>.
 	 */
 	public static final String VALUE_DEFLATE = "deflate";
 	/**
-	 * gzip content encoding as defined by <a href="https://tools.ietf.org/html/rfc1952">RFC 1952</a>
+	 * gzip content encoding as defined by <a href="https://tools.ietf.org/html/rfc1952">RFC 1952</a>.
 	 */
 	public static final String VALUE_GZIP = "gzip";
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-4.3">RFC 7230 Section 4.3</a>
+	 * <a href="https://tools.ietf.org/html/rfc7230#section-4.3">RFC 7230 Section 4.3</a>.
 	 */
 	public static final String VALUE_TRAILERS = "trailers";
 	/**
-	 * x-deflate content encoding as defined by <a href="https://www.ietf.org/rfc/rfc1951.txt">RFC 1951</a>
+	 * websocket upgrade as defined by <a href="https://datatracker.ietf.org/doc/html/rfc6455">RFC 6455</a>.
+	 */
+	public static final String VALUE_WEBSOCKET = "websocket";
+	/**
+	 * x-deflate content encoding as defined by <a href="https://www.ietf.org/rfc/rfc1951.txt">RFC 1951</a>.
 	 */
 	public static final String VALUE_X_DEFLATE = "x-deflate";
 	/**
-	 * x-gzip content encoding as defined by <a href="https://tools.ietf.org/html/rfc1952">RFC 1952</a>
+	 * x-gzip content encoding as defined by <a href="https://tools.ietf.org/html/rfc1952">RFC 1952</a>.
 	 */
 	public static final String VALUE_X_GZIP = "x-gzip";
 	

@@ -68,7 +68,7 @@ public interface RouteManager<
 	 *
 	 * @param handler the route exchange handler
 	 *
-	 * @return the router
+	 * @return the routable
 	 */
 	C handler(ExchangeHandler<? super A, B> handler);
 
@@ -78,7 +78,7 @@ public interface RouteManager<
 	 * comes from.
 	 * </p>
 	 *
-	 * @return the router
+	 * @return the routable
 	 */
 	C enable();
 
@@ -88,7 +88,7 @@ public interface RouteManager<
 	 * comes from.
 	 * </p>
 	 *
-	 * @return the router
+	 * @return the routable
 	 */
 	C disable();
 
@@ -98,7 +98,7 @@ public interface RouteManager<
 	 * comes from.
 	 * </p>
 	 *
-	 * @return the router
+	 * @return the routable
 	 */
 	C remove();
 

@@ -36,6 +36,7 @@ import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.WebRouteManager;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRoutesConfigurer;
+import io.inverno.mod.web.WebSocketRouteManager;
 import java.util.List;
 import reactor.core.publisher.Mono;
 
@@ -121,6 +122,11 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 	@Override
 	public WebRouteManager<ExchangeContext, WebRouter<ExchangeContext>> route() {
 		return new GenericWebRouteManager(this);
+	}
+
+	@Override
+	public WebSocketRouteManager<ExchangeContext, WebRouter<ExchangeContext>> webSocketRoute() {
+		return new GenericWebSocketRouteManager(this);
 	}
 	
 	@Override

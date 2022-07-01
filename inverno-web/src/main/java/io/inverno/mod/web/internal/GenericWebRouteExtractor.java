@@ -21,9 +21,10 @@ import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.http.server.ReactiveExchangeHandler;
+import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
+import io.inverno.mod.web.Web2SocketExchange;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRoute;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -39,7 +40,7 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, WebRoute<ExchangeContext>, GenericWebRouteExtractor> {
+class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, WebRoute<ExchangeContext>, GenericWebRouteExtractor>, WebSocketRouteExtractor<ExchangeContext, WebRoute<ExchangeContext>, GenericWebRouteExtractor> {
 
 	private final GenericWebRouter router;
 	private final boolean unwrapInterceptors;
@@ -58,6 +59,8 @@ class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, Web
 	private String produce;
 	
 	private String language;
+	
+	private String subprotocol;
 	
 	private List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>> interceptors;
 	private Consumer<List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>>> interceptorsUpdater;
@@ -186,6 +189,13 @@ class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, Web
 		childExtractor.pathPattern = pathPattern;
 		return childExtractor;
 	}
+	
+	@Override
+	public GenericWebRouteExtractor method(Method method) {
+		GenericWebRouteExtractor childExtractor = new GenericWebRouteExtractor(this);
+		childExtractor.method = method;
+		return childExtractor;
+	}
 
 	@Override
 	public GenericWebRouteExtractor consumes(String mediaRange) {
@@ -209,9 +219,9 @@ class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, Web
 	}
 
 	@Override
-	public GenericWebRouteExtractor method(Method method) {
+	public GenericWebRouteExtractor subprotocol(String subprotocol) {
 		GenericWebRouteExtractor childExtractor = new GenericWebRouteExtractor(this);
-		childExtractor.method = method;
+		childExtractor.subprotocol = subprotocol;
 		return childExtractor;
 	}
 
@@ -267,6 +277,31 @@ class GenericWebRouteExtractor implements WebRouteExtractor<ExchangeContext, Web
 			route.setInterceptors(this.interceptors, this.interceptorsUpdater);
 			route.setHandler((ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>)handler);
 			this.addRoute(route);
+		}
+	}
+
+	@Override
+	public void webSocketHandler(WebSocketExchangeHandler<ExchangeContext, Web2SocketExchange<ExchangeContext>> handler, boolean disabled) {
+		if(handler != null) {
+			GenericWebSocketRoute webSocketRoute = new GenericWebSocketRoute(this.getRouter());
+			webSocketRoute.setDisabled(disabled);
+			
+			String routePath = this.getPath();
+			URIPattern routePathPattern = this.getPathPattern();
+			String routeLanguage = this.getLanguage();
+			
+			if(routePath != null) {
+				webSocketRoute.setPath(routePath);
+			}
+			if(routePathPattern != null) {
+				webSocketRoute.setPathPattern(routePathPattern);
+			}
+			if(routeLanguage != null) {
+				webSocketRoute.setLanguage(routeLanguage);
+			}
+			webSocketRoute.setInterceptors(this.interceptors, this.interceptorsUpdater);
+			webSocketRoute.setWebSocketHandler(handler);
+			this.addRoute(webSocketRoute);
 		}
 	}
 }
