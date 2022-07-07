@@ -183,17 +183,16 @@ Multipart form data is most commonly used for uploading files over HTTP. Such ha
 ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.response()
         .body().raw().stream(Flux.from(exchange.request().body().get().multipart().stream())                                                                                                                // 1
-            .single()                                                                                                                                                                                       // 2
-            .flatMapMany(part -> part.getFilename()                                                                                                                                                         // 3
-                .map(fileName -> Flux.<ByteBuf, FileResource>using(                                                                                                                                         // 4
-                        () -> new FileResource("uploads/" + part.getFilename().get()),                                                                                                                      // 5
-                        file -> file.write(part.raw().stream()).map(Flux::from).get()                                                                                                                       // 6
+            .flatMap(part -> part.getFilename()                                                                                                                                                             // 2
+                .map(fileName -> Flux.<ByteBuf, FileResource>using(                                                                                                                                         // 3
+                        () -> new FileResource("uploads/" + part.getFilename().get()),                                                                                                                      // 4
+                        file -> file.write(part.raw().stream()).map(Flux::from).get()                                                                                                                       // 5
                             .reduce(0, (acc, cur) -> acc + cur) 
                             .map(size -> Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Uploaded " + fileName + "(" + part.headers().getContentType() + "): " + size + " Bytes\n", Charsets.DEFAULT))), 
-                        FileResource::close                                                                                                                                                                 // 7
+                        FileResource::close                                                                                                                                                                 // 6
                     )
                 )
-                .orElseThrow(() -> new BadRequestException("Not a file part"))                                                                                                                              // 8
+                .orElseThrow(() -> new BadRequestException("Not a file part"))                                                                                                                              // 7
             )
         );
 };
@@ -202,13 +201,12 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
 The above code uses multiple elements and deserves a detailed explanation: 
 
 1. get the stream of parts
-2. make sure we only have one part in the request for the sake of simplicity
-3. map the part to the response stream by starting to determine whether the part is a file part
-4. if the part is a file part indeed, map the part to the response stream by creating a Flux with a file resource
-5. in this case the resource is the target file where the uploaded file will be stored
-6. stream the part's payload to the target file resource and eventually provides the response in the form of a message stating that a file with a given size and media type has been uploaded
-7. close the file resource when the publisher completes
-8. if the part is not a file part respond with a bad request error
+2. map the part to the response stream by starting to determine whether the part is a file part
+3. if the part is a file part indeed, map the part to the response stream by creating a Flux with a file resource
+4. in this case the resource is the target file where the uploaded file will be stored
+5. stream the part's payload to the target file resource and eventually provides the response in the form of a message stating that a file with a given size and media type has been uploaded
+6. close the file resource when the publisher completes
+7. if the part is not a file part respond with a bad request error
 
 The `Flux.using()` construct is the reactive counterpart of a try-with-resource statement. It is interesting to note that the content of the file is streamed up to the file and it is then never entirely loaded in memory. From there, it is quite easy to stop the upload of a file if a given size threshold is exceeded. We can also imagine how we could create a progress bar in a client UI to show the progression of the upload.
 
