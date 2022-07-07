@@ -27,9 +27,9 @@ import io.inverno.core.v1.Application;
 public class Main {
 
 	public static void main(String[] args) {
-		Application.run(new Webroute.Builder().setWebRouteConfiguration(
-			WebRouteConfigurationLoader.load(webRoute -> webRoute.web(web -> web.http_server(http -> http.h2_enabled(true).server_port(getFreePort()))))
-		));
+		Application.run(new Webroute.Builder()
+			.setWebRouteConfiguration(WebRouteConfigurationLoader.load(webRoute -> webRoute.web(web -> web.http_server(http -> http.h2_enabled(true).server_port(getFreePort())))))
+		);
 	}
 
 	public static int getFreePort() {

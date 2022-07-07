@@ -15,11 +15,10 @@
  */
 package io.inverno.mod.test.web.websocket;
 
+import io.inverno.core.v1.Application;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.ServerSocket;
-
-import io.inverno.core.v1.Application;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -27,9 +26,9 @@ import io.inverno.core.v1.Application;
 public class Main {
 
 	public static void main(String[] args) {
-		Application.run(new Websocket.Builder().setWebSocketConfiguration(
-			WebSocketConfigurationLoader.load(webSocket -> webSocket.web(web -> web.http_server(http -> http.h2_enabled(true).server_port(getFreePort()))))
-		));
+		Application.run(new Websocket.Builder()
+			.setWebSocketConfiguration(WebSocketConfigurationLoader.load(webSocket -> webSocket.web(web -> web.http_server(http -> http.h2_enabled(true).server_port(getFreePort())))))
+		);
 	}
 
 	public static int getFreePort() {
