@@ -71,13 +71,15 @@ class GenericPathParameters implements MutablePathParameters {
 	
 	@Override
 	public void put(String name, String value) {
-		this.parameters.put(name,  new GenericPathParameter(name, value));
+		this.parameters.put(name, value != null && !value.isEmpty() ? new GenericPathParameter(name, value) : null);
 	}
 	
 	@Override
 	public void putAll(Map<String, String> parameters) {
 		for(Map.Entry<String, String> e : parameters.entrySet()) {
-			this.parameters.put(e.getKey(),  new GenericPathParameter(e.getKey(), e.getValue()));
+			String name = e.getKey();
+			String value = e.getValue();
+			this.parameters.put(name, value != null && !value.isEmpty() ? new GenericPathParameter(name, value) : null);
 		}
 	}
 	

@@ -15,8 +15,8 @@
  */
 package io.inverno.mod.http.server.internal.http1x.ws;
 
+import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.ws.WebSocket;
 import io.inverno.mod.http.server.ws.WebSocketException;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
@@ -52,7 +52,7 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 	private static final Logger LOGGER = LogManager.getLogger(WebSocket.class);
 	
 	private final WebSocketExchangeHandler<ExchangeContext, WebSocketExchange<ExchangeContext>> handler;
-	private final Request request;
+	private final Exchange<ExchangeContext> exchange;
 	private final GenericWebSocketFrame.GenericFactory frameFactory;
 	private final GenericWebSocketMessage.GenericFactory messageFactory;
 	
@@ -67,19 +67,19 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 	 *
 	 * @param config         the WebServer protocol configuration
 	 * @param handler        the WebSocket exchange handler
-	 * @param request        the HTTP/1.x exchange request
+	 * @param exchange       the original HTTP/1.x exchange
 	 * @param frameFactory   the WebSocket frame factory
 	 * @param messageFactory the WebSocket message factory
 	 */
 	public WebSocketProtocolHandler(
 			WebSocketServerProtocolConfig config, 
 			WebSocketExchangeHandler<ExchangeContext, WebSocketExchange<ExchangeContext>> handler, 
-			Request request, 
+			Exchange<ExchangeContext> exchange, 
 			GenericWebSocketFrame.GenericFactory frameFactory, 
 			GenericWebSocketMessage.GenericFactory messageFactory) {
 		super(config);
 		this.handler = handler;
-		this.request = request;
+		this.exchange = exchange;
 		this.frameFactory = frameFactory;
 		this.messageFactory = messageFactory;
 		
@@ -101,7 +101,7 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 		if(evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
 			WebSocketServerProtocolHandler.HandshakeComplete handshakeComplete = (WebSocketServerProtocolHandler.HandshakeComplete)evt;
-			this.webSocketExchange = new GenericWebSocketExchange(ctx, this.request, handshakeComplete.selectedSubprotocol(), this.handler, this.frameFactory, this.messageFactory);
+			this.webSocketExchange = new GenericWebSocketExchange(ctx, this.exchange, handshakeComplete.selectedSubprotocol(), this.handler, this.frameFactory, this.messageFactory);
 			this.handshake.tryEmitEmpty();
 			this.webSocketExchange.start();
 		}

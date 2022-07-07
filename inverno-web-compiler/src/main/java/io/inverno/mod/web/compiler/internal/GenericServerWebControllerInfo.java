@@ -15,17 +15,15 @@
  */
 package io.inverno.mod.web.compiler.internal;
 
-import java.util.List;
-import java.util.Objects;
-
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
-
 import io.inverno.core.compiler.spi.BeanQualifiedName;
 import io.inverno.core.compiler.spi.ReporterInfo;
 import io.inverno.core.compiler.spi.support.AbstractInfo;
 import io.inverno.mod.web.compiler.spi.WebControllerInfo;
 import io.inverno.mod.web.compiler.spi.WebRouteInfo;
+import java.util.List;
+import java.util.Objects;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 
 /**
  * <p>
@@ -46,6 +44,7 @@ class GenericServerWebControllerInfo extends AbstractInfo<BeanQualifiedName> imp
 	private final String rootPath;
 	
 	private final List<? extends WebRouteInfo> routes;
+	
 	
 	/**
 	 * <p>

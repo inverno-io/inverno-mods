@@ -1,0 +1,50 @@
+25
+id:0
+event:get_sse_encoded_json
+data:
+19
+{"message":"SSE - 0\r\n"}
+4
+
+
+
+25
+id:1
+event:get_sse_encoded_json
+data:
+19
+{"message":"SSE - 1\r\n"}
+4
+
+
+
+25
+id:2
+event:get_sse_encoded_json
+data:
+19
+{"message":"SSE - 2\r\n"}
+4
+
+
+
+25
+id:3
+event:get_sse_encoded_json
+data:
+19
+{"message":"SSE - 3\r\n"}
+4
+
+
+
+25
+id:4
+event:get_sse_encoded_json
+data:
+19
+{"message":"SSE - 4\r\n"}
+4
+
+
+

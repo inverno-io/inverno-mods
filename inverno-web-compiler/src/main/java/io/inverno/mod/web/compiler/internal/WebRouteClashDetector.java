@@ -15,6 +15,13 @@
  */
 package io.inverno.mod.web.compiler.internal;
 
+import io.inverno.mod.base.net.URIs;
+import io.inverno.mod.http.base.Method;
+import io.inverno.mod.web.annotation.WebRoute;
+import io.inverno.mod.web.annotation.WebSocketRoute;
+import io.inverno.mod.web.compiler.spi.WebControllerInfo;
+import io.inverno.mod.web.compiler.spi.WebRouteInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketRouteInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,29 +31,20 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.inverno.mod.base.net.URIs;
-import io.inverno.mod.http.base.Method;
-import io.inverno.mod.web.annotation.WebRoute;
-import io.inverno.mod.web.compiler.spi.WebControllerInfo;
-import io.inverno.mod.web.compiler.spi.WebRouteInfo;
-
 /**
  * <p>
- * A duplicate route detector is used to detect duplicate in the routes defined
- * in a module.
+ * A duplicate route detector is used to detect duplicate in the routes defined in a module.
  * </p>
- * 
+ *
  * <p>
- * Two routes are considered equals when they defined the exact same criteria,
- * namely path, method, consume, produce and language.
+ * Two routes are considered equals when they defined the exact same criteria, namely path, method, consume, produce and language.
  * </p>
- * 
+ *
  * <p>
- * Multiple criteria can be specified in {@link WebRoute @WebRoute} annotation,
- * the detector analyzes all combinations to detect overlapping route
+ * Multiple criteria can be specified in {@link WebRoute @WebRoute} or a {@link WebSocketRoute @WebSocketRoute} annotation, the detector analyzes all combinations to detect overlapping route
  * definition.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
@@ -114,18 +112,22 @@ class WebRouteClashDetector {
 		List<? extends WebRouteInfo> reducedRoutes = routes.stream()
 			.filter(r -> {
 				if(path != null) {
-					boolean pathMatch = Arrays.binarySearch(r.getPaths(), path) >= 0;
-					if(route.isMatchTrailingSlash()) {
-						String otherPath;
-						if(path.endsWith("/")) {
-							otherPath = path.substring(0, path.length() - 1);
+					for(String p : r.getPaths()) {
+						String absolutePath = r.getController().map(WebControllerInfo::getRootPath).map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE).path(p, false).buildRawPath()).orElse(p);
+						boolean pathMatch = absolutePath.equals(path);
+						if(!pathMatch && route.isMatchTrailingSlash()) {
+							String otherPath;
+							if(path.endsWith("/")) {
+								otherPath = path.substring(0, path.length() - 1);
+							}
+							else {
+								otherPath = path + "/";
+							}
+							pathMatch = absolutePath.equals(otherPath);
 						}
-						else {
-							otherPath = path + "/";
-						}
-						pathMatch |= Arrays.binarySearch(r.getPaths(), otherPath) >= 0;
+						return pathMatch;
 					}
-					return pathMatch;
+					return false;
 				}
 				else {
 					return r.getPaths().length == 0;
@@ -227,13 +229,43 @@ class WebRouteClashDetector {
 		if(routes.isEmpty()) {
 			return List.of();
 		}
-		return routes.stream()
+		List<WebRouteInfo> reducedRoutes = routes.stream()
 			.filter(r -> {
 				if(language != null) {
 					return Arrays.binarySearch(r.getLanguages(), language) >= 0;
 				}
 				else {
 					return r.getLanguages().length == 0;
+				}
+			})
+			.collect(Collectors.toList());
+		
+		if(route instanceof WebSocketRouteInfo && ((WebSocketRouteInfo)route).getSubprotocols().length > 0) {
+			List<WebRouteInfo> duplicates = new ArrayList<>();
+			for(String subprotocol : ((WebSocketRouteInfo)route).getSubprotocols()) {
+				duplicates.addAll(this.visitSubprotocol(((WebSocketRouteInfo)route), subprotocol, reducedRoutes));
+			}
+			return duplicates;
+		}
+		else {
+			return reducedRoutes;
+		}
+	}
+	
+	private List<WebRouteInfo> visitSubprotocol(WebSocketRouteInfo route, String subprotocol, List<? extends WebRouteInfo> routes) {
+		if(routes.isEmpty()) {
+			return List.of();
+		}
+		return routes.stream()
+			.filter(r -> {
+				if(!(r instanceof WebSocketRouteInfo)) {
+					return false;
+				}
+				if(subprotocol != null) {
+					return Arrays.binarySearch(((WebSocketRouteInfo)r).getSubprotocols(), subprotocol) >= 0;
+				}
+				else {
+					return ((WebSocketRouteInfo)r).getSubprotocols().length == 0;
 				}
 			})
 			.collect(Collectors.toList());

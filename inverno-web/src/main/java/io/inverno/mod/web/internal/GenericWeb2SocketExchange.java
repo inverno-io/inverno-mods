@@ -59,6 +59,11 @@ public class GenericWeb2SocketExchange implements Web2SocketExchange<ExchangeCon
 	}
 
 	@Override
+	public ExchangeContext context() {
+		return webSocketExchange.context();
+	}
+	
+	@Override
 	public Web2SocketExchange<ExchangeContext> finalizer(Mono<Void> finalizer) {
 		this.webSocketExchange.finalizer(finalizer);
 		return this;
@@ -66,22 +71,12 @@ public class GenericWeb2SocketExchange implements Web2SocketExchange<ExchangeCon
 
 	@Override
 	public Web2SocketExchange.Inbound inbound() {
-		try {
-			return this.dataConversionService.createWebSocketDecodedInbound(this.webSocketExchange.inbound(), this.webSocketExchange.getSubProtocol());
-		}
-		catch(NoConverterException e) {
-			throw new WebSocketException("No converter found for sub protocol: " + this.webSocketExchange.getSubProtocol(), e);
-		}
+		return this.dataConversionService.createWebSocketDecodedInbound(this.webSocketExchange.inbound(), this.webSocketExchange.getSubProtocol());
 	}
 
 	@Override
 	public Web2SocketExchange.Outbound outbound() {
-		try {
-			return this.dataConversionService.createWebSocketEncodedOutbound(this.webSocketExchange.outbound(), this.webSocketExchange.getSubProtocol());
-		}
-		catch(NoConverterException e) {
-			throw new WebSocketException("No converter found for sub protocol: " + this.webSocketExchange.getSubProtocol(), e);
-		}
+		return this.dataConversionService.createWebSocketEncodedOutbound(this.webSocketExchange.outbound(), this.webSocketExchange.getSubProtocol());
 	}
 
 	@Override

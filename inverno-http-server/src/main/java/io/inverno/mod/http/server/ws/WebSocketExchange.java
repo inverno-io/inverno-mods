@@ -58,6 +58,15 @@ public interface WebSocketExchange<A extends ExchangeContext> {
 	
 	/**
 	 * <p>
+	 * Returns the context attached to the exchange.
+	 * </p>
+	 * 
+	 * @return the exchange context or null
+	 */
+	A context();
+	
+	/**
+	 * <p>
 	 * Returns the subprotocol that was negotiated with the client during the opening handshake.
 	 * </p>
 	 * 

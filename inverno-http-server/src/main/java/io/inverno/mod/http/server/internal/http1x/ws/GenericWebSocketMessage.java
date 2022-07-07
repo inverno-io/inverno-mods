@@ -74,6 +74,20 @@ public class GenericWebSocketMessage implements WebSocketMessage {
 	}
 
 	@Override
+	public Mono<ByteBuf> reducedBinary() {
+		return Flux.from(this.binary()).reduceWith(
+			() -> Unpooled.unreleasableBuffer(Unpooled.buffer()), 
+			(acc, chunk) -> {
+				try {
+					return acc.writeBytes(chunk);
+				}
+				finally {
+					chunk.release();
+				}
+			});
+	}
+	
+	@Override
 	public Publisher<String> text() {
 		return Flux.from(this.frames).map(frame -> {
 			try {
@@ -83,6 +97,14 @@ public class GenericWebSocketMessage implements WebSocketMessage {
 				frame.release();
 			}
 		});
+	}
+
+	@Override
+	public Mono<String> reducedText() {
+		return Flux.from(this.text()).reduceWith(
+			() -> new StringBuilder(), 
+			(acc, chunk) -> acc.append(chunk)
+		).map(StringBuilder::toString);
 	}
 	
 	/**
@@ -134,6 +156,29 @@ public class GenericWebSocketMessage implements WebSocketMessage {
 			return new GenericWebSocketMessage(WebSocketMessage.Kind.TEXT, frames);
 		}
 
+		@Override
+		public WebSocketMessage text_raw(ByteBuf value) {
+			return new GenericWebSocketMessage(WebSocketMessage.Kind.TEXT, Flux.fromStream(() -> this.toTextFrames(value, true, true).stream()));
+		}
+
+		@Override
+		public WebSocketMessage text_raw(Publisher<ByteBuf> stream) {
+			Flux<WebSocketFrame> frames;
+			if(stream instanceof Mono) {
+				frames = ((Mono<ByteBuf>)stream)
+					.flatMapIterable(value -> this.toTextFrames(value, true, true));
+			}
+			else {
+				frames = Flux.defer(() -> {
+					AtomicBoolean first = new AtomicBoolean(true);
+					return Flux.from(stream)
+						.flatMapIterable(value -> this.toTextFrames(value, first.getAndSet(false), false))
+						.concatWithValues(new GenericWebSocketFrame(new ContinuationWebSocketFrame(true, 0, Unpooled.EMPTY_BUFFER), WebSocketFrame.Kind.CONTINUATION));
+				});
+			}
+			return new GenericWebSocketMessage(WebSocketMessage.Kind.TEXT, frames);
+		}
+		
 		@Override
 		public WebSocketMessage binary(ByteBuf value) {
 			return new GenericWebSocketMessage(WebSocketMessage.Kind.BINARY, Flux.fromStream(() -> this.toBinaryFrames(value, true, true).stream()));

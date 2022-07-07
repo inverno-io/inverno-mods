@@ -46,7 +46,7 @@ class GenericWebQueryParameterInfo extends AbstractWebParameterInfo implements W
 	 * @param required         true to indicate a required parameter, false
 	 *                         otherwise
 	 */
-	public GenericWebQueryParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement element, TypeMirror type, boolean required) {
-		super(name, reporter, element, type, required);
+	public GenericWebQueryParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, TypeMirror type, boolean required) {
+		super(name, reporter, parameterElement, type, required);
 	}
 }

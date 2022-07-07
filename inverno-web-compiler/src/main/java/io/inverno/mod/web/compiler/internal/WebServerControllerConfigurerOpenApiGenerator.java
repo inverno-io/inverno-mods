@@ -15,17 +15,6 @@
  */
 package io.inverno.mod.web.compiler.internal;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.lang.model.type.TypeMirror;
-
 import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.web.compiler.internal.WebServerControllerConfigurerOpenApiGenerationContext.GenerationMode;
@@ -45,14 +34,31 @@ import io.inverno.mod.web.compiler.spi.WebParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebPathParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebQueryParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebRequestBodyParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebRequestBodyParameterInfo.RequestBodyKind;
 import io.inverno.mod.web.compiler.spi.WebResponseBodyInfo;
 import io.inverno.mod.web.compiler.spi.WebRouteInfo;
-import io.inverno.mod.web.compiler.spi.WebSseEventFactoryParameterInfo;
-import io.inverno.mod.web.compiler.spi.WebRequestBodyParameterInfo.RequestBodyKind;
+import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebRoutesConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebServerControllerConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebServerControllerConfigurerInfoVisitor;
-import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketBoundPublisherInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketExchangeParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketInboundParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketInboundPublisherParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketOutboundParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketOutboundPublisherInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketRouteInfo;
+import io.inverno.mod.web.compiler.spi.WebSseEventFactoryParameterInfo;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.lang.model.type.TypeMirror;
 
 /**
  * <p>
@@ -186,157 +192,162 @@ class WebServerControllerConfigurerOpenApiGenerator implements WebServerControll
 
 	@Override
 	public StringBuilder visit(WebRouteInfo routeInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
-		if(context.getMode() == GenerationMode.ROUTE_PATH) {
-			// tags, operationId, summary, description, responses, parameters, requestBody
-			StringBuilder operation = new StringBuilder();
-			
-			operation.append(context.indent(1)).append("tags: ");
-			routeInfo.getController().ifPresent(controller -> operation.append(System.lineSeparator()).append(context.indentList(2)).append(controller.getQualifiedName().getSimpleValue()));
-			
-			WebServerControllerConfigurerOpenApiGenerationContext dctContext = routeInfo.getElement().map(context::withDocElement).orElse(context);
-			dctContext.getSummary().ifPresent(summary -> operation.append(System.lineSeparator()).append(context.indent(1)).append("summary: ").append(summary));
-			dctContext.getDescription().ifPresent(description -> operation.append(System.lineSeparator()).append(context.indent(1)).append("description: ").append(description));
-			routeInfo.getElement().filter(element -> context.getElementUtils().isDeprecated(element)).ifPresent(element -> operation.append(System.lineSeparator()).append(context.indent(1)).append("deprecated: true"));
-			
-			StringBuilder parametersBuilder = Arrays.stream(routeInfo.getParameters())
-				.map(parameter -> this.visit(parameter, dctContext.withIndentDepthAdd(2).withMode(GenerationMode.ROUTE_PARAMETER).withWebRoute(routeInfo)))
-				.filter(parameterBuilder -> parameterBuilder.length() > 0)
-				.collect(context.joining(System.lineSeparator()));
-			if(parametersBuilder.length() > 0) {
-				operation.append(System.lineSeparator()).append(context.indent(1)).append("parameters:");
-				operation.append(System.lineSeparator()).append(parametersBuilder);
-			}
-			
-			List<WebFormParameterInfo> formParameters = Arrays.stream(routeInfo.getParameters())
-				.filter(parameter -> parameter instanceof WebFormParameterInfo)
-				.map(parameter -> (WebFormParameterInfo)parameter)
-				.collect(Collectors.toList());
-			
-			if(!formParameters.isEmpty()) {
-				operation.append(System.lineSeparator()).append(context.indent(1)).append("requestBody: ").append(System.lineSeparator());
-				operation.append(context.indent(2)).append("content: ").append(System.lineSeparator());
-				operation.append(context.indent(3)).append(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED).append(":").append(System.lineSeparator());
-				operation.append(context.indent(4)).append("schema:").append(System.lineSeparator());
-				operation.append(context.indent(5)).append("type: object").append(System.lineSeparator());
-				operation.append(context.indent(5)).append("properties:").append(System.lineSeparator());
-				operation.append(formParameters.stream()
-					.map(formParameter -> this.visit(formParameter, dctContext.withIndentDepthAdd(6).withMode(GenerationMode.ROUTE_BODY).withWebRoute(routeInfo)))
-					.collect(context.joining(System.lineSeparator()))
-				);
-			}
-			else {
-				Arrays.stream(routeInfo.getParameters())
-					.filter(parameter -> parameter instanceof WebRequestBodyParameterInfo)
-					.findFirst()
-					.map(parameter -> (WebRequestBodyParameterInfo)parameter)
-					.ifPresent(requestBody -> {
-						if(requestBody.getBodyKind() == RequestBodyKind.MULTIPART) {
-							// NO idea regarding expected parts... so we can't list properties
-							// In order to specify these we would have to do it in the javadoc because
-							// we don't want to break reactivity we can't list the properties in the method
-							// signature which must be of type Publisher<Part>
-							
-							operation.append(System.lineSeparator()).append(context.indent(1)).append("requestBody: ").append(System.lineSeparator());
-							operation.append(context.indent(2)).append("content: ").append(System.lineSeparator());
-							operation.append(context.indent(3)).append(MediaTypes.MULTIPART_FORM_DATA).append(":").append(System.lineSeparator());
-							operation.append(context.indent(4)).append("schema:").append(System.lineSeparator());
-							operation.append(context.indent(5)).append("type: object").append(System.lineSeparator());
-						}
-						else {
-							// Regular request body 
-							operation.append(System.lineSeparator()).append(context.indent(1)).append("requestBody:").append(System.lineSeparator());
-							operation.append(this.visit(requestBody, dctContext.withIndentDepthAdd(2).withMode(GenerationMode.ROUTE_BODY).withWebRoute(routeInfo)));
-						}
-					});
-			}
-			
-			operation.append(System.lineSeparator()).append(context.indent(1)).append("responses:");
-			
-			routeInfo.getElement()
-				.map(routeElement -> dctContext.getResponses(routeElement, routeInfo.getResponseBody().getType()))
-				.ifPresentOrElse(
-					responses -> {
-						operation.append(System.lineSeparator()).append(responses.stream()
-							.collect(Collectors.groupingBy(ResponseSpec::getStatus)).entrySet().stream()
-							.sorted(Comparator.comparing(Map.Entry::getKey))
-							.map(statusEntry -> {
-								StringBuilder responseBuilder = new StringBuilder();
-								responseBuilder.append(context.indent(2)).append(statusEntry.getKey()).append(": ").append(System.lineSeparator());
-								
-								responseBuilder.append(context.indent(3)).append("description: '");
-								responseBuilder.append(statusEntry.getValue().stream().map(ResponseSpec::getDescription)
-									.map(description -> description.deleteCharAt(0).deleteCharAt(description.length() - 1))
-									.filter(sb -> sb.length() > 0)
-									.collect(context.joining("<br/>"))
-								);
-								responseBuilder.append("'");
-								
-								Collection<TypeMirror> responseTypes = statusEntry.getValue().stream().collect(Collectors.groupingBy(response -> response.getType().toString(), Collectors.collectingAndThen(Collectors.toList(), l -> l.get(0).getType()))).values();
-								if(responseTypes.size() > 1) {
-									responseBuilder.append(System.lineSeparator()).append(context.indent(3)).append("content:").append(System.lineSeparator());
-									
-									StringBuilder responseSchemaBuilder = new StringBuilder();
-									responseSchemaBuilder.append(context.indent(5)).append("schema:").append(System.lineSeparator());
-									responseSchemaBuilder.append(context.indent(6)).append("oneOf:").append(System.lineSeparator());
-									responseSchemaBuilder.append(responseTypes.stream()
-										.map(responseType -> context.withIndentDepthAdd(7).getSchema(responseType, true))
-										.filter(Optional::isPresent)
-										.map(Optional::get)
-										.collect(context.joining(System.lineSeparator()))
+		if(routeInfo instanceof WebSocketRouteInfo) {
+			return this.visit((WebSocketRouteInfo)routeInfo, context);
+		}
+		else {
+			if(context.getMode() == GenerationMode.ROUTE_PATH) {
+				// tags, operationId, summary, description, responses, parameters, requestBody
+				StringBuilder operation = new StringBuilder();
+
+				operation.append(context.indent(1)).append("tags: ");
+				routeInfo.getController().ifPresent(controller -> operation.append(System.lineSeparator()).append(context.indentList(2)).append(controller.getQualifiedName().getSimpleValue()));
+
+				WebServerControllerConfigurerOpenApiGenerationContext dctContext = routeInfo.getElement().map(context::withDocElement).orElse(context);
+				dctContext.getSummary().ifPresent(summary -> operation.append(System.lineSeparator()).append(context.indent(1)).append("summary: ").append(summary));
+				dctContext.getDescription().ifPresent(description -> operation.append(System.lineSeparator()).append(context.indent(1)).append("description: ").append(description));
+				routeInfo.getElement().filter(element -> context.getElementUtils().isDeprecated(element)).ifPresent(element -> operation.append(System.lineSeparator()).append(context.indent(1)).append("deprecated: true"));
+
+				StringBuilder parametersBuilder = Arrays.stream(routeInfo.getParameters())
+					.map(parameter -> this.visit(parameter, dctContext.withIndentDepthAdd(2).withMode(GenerationMode.ROUTE_PARAMETER).withWebRoute(routeInfo)))
+					.filter(parameterBuilder -> parameterBuilder.length() > 0)
+					.collect(context.joining(System.lineSeparator()));
+				if(parametersBuilder.length() > 0) {
+					operation.append(System.lineSeparator()).append(context.indent(1)).append("parameters:");
+					operation.append(System.lineSeparator()).append(parametersBuilder);
+				}
+
+				List<WebFormParameterInfo> formParameters = Arrays.stream(routeInfo.getParameters())
+					.filter(parameter -> parameter instanceof WebFormParameterInfo)
+					.map(parameter -> (WebFormParameterInfo)parameter)
+					.collect(Collectors.toList());
+
+				if(!formParameters.isEmpty()) {
+					operation.append(System.lineSeparator()).append(context.indent(1)).append("requestBody: ").append(System.lineSeparator());
+					operation.append(context.indent(2)).append("content: ").append(System.lineSeparator());
+					operation.append(context.indent(3)).append(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED).append(":").append(System.lineSeparator());
+					operation.append(context.indent(4)).append("schema:").append(System.lineSeparator());
+					operation.append(context.indent(5)).append("type: object").append(System.lineSeparator());
+					operation.append(context.indent(5)).append("properties:").append(System.lineSeparator());
+					operation.append(formParameters.stream()
+						.map(formParameter -> this.visit(formParameter, dctContext.withIndentDepthAdd(6).withMode(GenerationMode.ROUTE_BODY).withWebRoute(routeInfo)))
+						.collect(context.joining(System.lineSeparator()))
+					);
+				}
+				else {
+					Arrays.stream(routeInfo.getParameters())
+						.filter(parameter -> parameter instanceof WebRequestBodyParameterInfo)
+						.findFirst()
+						.map(parameter -> (WebRequestBodyParameterInfo)parameter)
+						.ifPresent(requestBody -> {
+							if(requestBody.getBodyKind() == RequestBodyKind.MULTIPART) {
+								// NO idea regarding expected parts... so we can't list properties
+								// In order to specify these we would have to do it in the javadoc because
+								// we don't want to break reactivity we can't list the properties in the method
+								// signature which must be of type Publisher<Part>
+
+								operation.append(System.lineSeparator()).append(context.indent(1)).append("requestBody: ").append(System.lineSeparator());
+								operation.append(context.indent(2)).append("content: ").append(System.lineSeparator());
+								operation.append(context.indent(3)).append(MediaTypes.MULTIPART_FORM_DATA).append(":").append(System.lineSeparator());
+								operation.append(context.indent(4)).append("schema:").append(System.lineSeparator());
+								operation.append(context.indent(5)).append("type: object").append(System.lineSeparator());
+							}
+							else {
+								// Regular request body 
+								operation.append(System.lineSeparator()).append(context.indent(1)).append("requestBody:").append(System.lineSeparator());
+								operation.append(this.visit(requestBody, dctContext.withIndentDepthAdd(2).withMode(GenerationMode.ROUTE_BODY).withWebRoute(routeInfo)));
+							}
+						});
+				}
+
+				operation.append(System.lineSeparator()).append(context.indent(1)).append("responses:");
+
+				routeInfo.getElement()
+					.map(routeElement -> dctContext.getResponses(routeElement, routeInfo.getResponseBody().getType()))
+					.ifPresentOrElse(
+						responses -> {
+							operation.append(System.lineSeparator()).append(responses.stream()
+								.collect(Collectors.groupingBy(ResponseSpec::getStatus)).entrySet().stream()
+								.sorted(Comparator.comparing(Map.Entry::getKey))
+								.map(statusEntry -> {
+									StringBuilder responseBuilder = new StringBuilder();
+									responseBuilder.append(context.indent(2)).append(statusEntry.getKey()).append(": ").append(System.lineSeparator());
+
+									responseBuilder.append(context.indent(3)).append("description: '");
+									responseBuilder.append(statusEntry.getValue().stream().map(ResponseSpec::getDescription)
+										.map(description -> description.deleteCharAt(0).deleteCharAt(description.length() - 1))
+										.filter(sb -> sb.length() > 0)
+										.collect(context.joining("<br/>"))
 									);
-									
-									if(routeInfo.getProduces().length > 0) {
-										for(String produce : routeInfo.getProduces()) {
-											responseBuilder.append(context.indent(4)).append(produce).append(":").append(System.lineSeparator());
-											responseBuilder.append(responseSchemaBuilder);
-										}
-									}
-									else {
-										responseBuilder.append(context.indent(4)).append("'*/*'").append(":").append(System.lineSeparator());
-										responseBuilder.append(responseSchemaBuilder);
-									}
-								}
-								else if(responseTypes.size() > 0) {
-									// We know there is only one element here						
-									TypeMirror responseType = responseTypes.iterator().next();
-									Optional<StringBuilder> responseSchema = context.withIndentDepthAdd(6).getSchema(responseType, false).map(schema -> schema.insert(0, new StringBuilder(context.indent(5)).append("schema:").append(System.lineSeparator())));
-									if(responseSchema.isPresent()) {
+									responseBuilder.append("'");
+
+									Collection<TypeMirror> responseTypes = statusEntry.getValue().stream().collect(Collectors.groupingBy(response -> response.getType().toString(), Collectors.collectingAndThen(Collectors.toList(), l -> l.get(0).getType()))).values();
+									if(responseTypes.size() > 1) {
 										responseBuilder.append(System.lineSeparator()).append(context.indent(3)).append("content:").append(System.lineSeparator());
+
+										StringBuilder responseSchemaBuilder = new StringBuilder();
+										responseSchemaBuilder.append(context.indent(5)).append("schema:").append(System.lineSeparator());
+										responseSchemaBuilder.append(context.indent(6)).append("oneOf:").append(System.lineSeparator());
+										responseSchemaBuilder.append(responseTypes.stream()
+											.map(responseType -> context.withIndentDepthAdd(7).getSchema(responseType, true))
+											.filter(Optional::isPresent)
+											.map(Optional::get)
+											.collect(context.joining(System.lineSeparator()))
+										);
+
 										if(routeInfo.getProduces().length > 0) {
 											for(String produce : routeInfo.getProduces()) {
 												responseBuilder.append(context.indent(4)).append(produce).append(":").append(System.lineSeparator());
-												responseBuilder.append(responseSchema.get());
+												responseBuilder.append(responseSchemaBuilder);
 											}
 										}
 										else {
 											responseBuilder.append(context.indent(4)).append("'*/*'").append(":").append(System.lineSeparator());
-											responseBuilder.append(responseSchema.get());
+											responseBuilder.append(responseSchemaBuilder);
 										}
 									}
-								}
-								return responseBuilder;
-							})
-							.collect(context.joining(System.lineSeparator()))
-						);
-					},
-					() -> {
-						// the route element is empty when we process a provided route coming from a
-						// provided web router.
-						// since we don't process these when generating a spec this should never happen.
-						operation.append(System.lineSeparator()).append(context.indent(3)).append("default: ");
-						operation.append(System.lineSeparator()).append(context.indent(4)).append("description: ''");
-					}
-				);
-			
-			return Arrays.stream(routeInfo.getMethods())
-				.map(method -> {
-					StringBuilder methodOperation = new StringBuilder();
-					methodOperation.append(context.indent(0)).append(method.toString().toLowerCase()).append(":").append(System.lineSeparator());
-					methodOperation.append(context.indent(1)).append("operationId: '").append(method.toString().toLowerCase()).append("_").append(routeInfo.getQualifiedName().getControllerQName().getSimpleValue()).append("_").append(routeInfo.getQualifiedName().getSimpleValue()).append("'").append(System.lineSeparator());
-					methodOperation.append(operation);
-					return methodOperation;
-				})
-				.collect(context.joining(System.lineSeparator()));
+									else if(responseTypes.size() > 0) {
+										// We know there is only one element here						
+										TypeMirror responseType = responseTypes.iterator().next();
+										Optional<StringBuilder> responseSchema = context.withIndentDepthAdd(6).getSchema(responseType, false).map(schema -> schema.insert(0, new StringBuilder(context.indent(5)).append("schema:").append(System.lineSeparator())));
+										if(responseSchema.isPresent()) {
+											responseBuilder.append(System.lineSeparator()).append(context.indent(3)).append("content:").append(System.lineSeparator());
+											if(routeInfo.getProduces().length > 0) {
+												for(String produce : routeInfo.getProduces()) {
+													responseBuilder.append(context.indent(4)).append(produce).append(":").append(System.lineSeparator());
+													responseBuilder.append(responseSchema.get());
+												}
+											}
+											else {
+												responseBuilder.append(context.indent(4)).append("'*/*'").append(":").append(System.lineSeparator());
+												responseBuilder.append(responseSchema.get());
+											}
+										}
+									}
+									return responseBuilder;
+								})
+								.collect(context.joining(System.lineSeparator()))
+							);
+						},
+						() -> {
+							// the route element is empty when we process a provided route coming from a
+							// provided web router.
+							// since we don't process these when generating a spec this should never happen.
+							operation.append(System.lineSeparator()).append(context.indent(3)).append("default: ");
+							operation.append(System.lineSeparator()).append(context.indent(4)).append("description: ''");
+						}
+					);
+
+				return Arrays.stream(routeInfo.getMethods())
+					.map(method -> {
+						StringBuilder methodOperation = new StringBuilder();
+						methodOperation.append(context.indent(0)).append(method.toString().toLowerCase()).append(":").append(System.lineSeparator());
+						methodOperation.append(context.indent(1)).append("operationId: '").append(method.toString().toLowerCase()).append("_").append(routeInfo.getQualifiedName().getControllerQName().getSimpleValue()).append("_").append(routeInfo.getQualifiedName().getSimpleValue()).append("'").append(System.lineSeparator());
+						methodOperation.append(operation);
+						return methodOperation;
+					})
+					.collect(context.joining(System.lineSeparator()));
+			}
 		}
 		return new StringBuilder();
 	}
@@ -489,6 +500,46 @@ class WebServerControllerConfigurerOpenApiGenerator implements WebServerControll
 	
 	@Override
 	public StringBuilder visit(WebSseEventFactoryParameterInfo sseEventFactoryParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext context) {
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketRouteInfo webSocketRouteInfo, WebServerControllerConfigurerOpenApiGenerationContext p) {
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketBoundPublisherInfo boundPublisherInfo, WebServerControllerConfigurerOpenApiGenerationContext p) {
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketOutboundPublisherInfo outboundPublisherInfo, WebServerControllerConfigurerOpenApiGenerationContext p) {
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketParameterInfo parameterInfo, WebServerControllerConfigurerOpenApiGenerationContext p) {
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketOutboundParameterInfo outboundParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext p) {
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketInboundPublisherParameterInfo inboundPublisherParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext p) {
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketInboundParameterInfo inboundParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext p) {
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketExchangeParameterInfo exchangeParameterInfo, WebServerControllerConfigurerOpenApiGenerationContext p) {
 		return new StringBuilder();
 	}
 }

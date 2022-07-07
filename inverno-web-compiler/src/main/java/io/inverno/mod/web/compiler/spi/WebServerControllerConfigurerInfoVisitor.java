@@ -280,4 +280,102 @@ public interface WebServerControllerConfigurerInfoVisitor<R, P> {
 	 * @return a visitor result
 	 */
 	R visit(WebSseEventFactoryParameterInfo sseEventFactoryParameterInfo, P p);
+	
+	
+	
+	/**
+	 * <p>
+	 * Visits WebSocket route info.
+	 * </p>
+	 *
+	 * @param webSocketRouteInfo the info to visit
+	 * @param p                  a visitor parameter
+	 *
+	 * @return a visitor result
+	 */
+	R visit(WebSocketRouteInfo webSocketRouteInfo, P p);
+	
+	/**
+	 * <p>
+	 * Visits WebSocket bound publisher info.
+	 * </p>
+	 *
+	 * @param boundPublisherInfo the info to visit
+	 * @param p                     a visitor parameter
+	 *
+	 * @return a visitor result
+	 */
+	R visit(WebSocketBoundPublisherInfo boundPublisherInfo, P p);
+	
+	/**
+	 * <p>
+	 * Visits WebSocket outbound publisher info.
+	 * </p>
+	 *
+	 * @param outboundPublisherInfo the info to visit
+	 * @param p                     a visitor parameter
+	 *
+	 * @return a visitor result
+	 */
+	R visit(WebSocketOutboundPublisherInfo outboundPublisherInfo, P p);
+	
+	/**
+	 * <p>
+	 * Visits WebSocket parameter info.
+	 * </p>
+	 *
+	 * @param parameterInfo the info to visit
+	 * @param p             a visitor parameter
+	 *
+	 * @return a visitor result
+	 */
+	R visit(WebSocketParameterInfo parameterInfo, P p);
+	
+	/**
+	 * <p>
+	 * Visits WebSocket outbound parameter info.
+	 * </p>
+	 *
+	 * @param outboundParameterInfo the info to visit
+	 * @param p                     a visitor parameter
+	 *
+	 * @return a visitor result
+	 */
+	R visit(WebSocketOutboundParameterInfo outboundParameterInfo, P p);
+	
+	/**
+	 * <p>
+	 * Visits WebSocket inbound publisher parameter info.
+	 * </p>
+	 *
+	 * @param inboundPublisherParameterInfo the info to visit
+	 * @param p                             a visitor parameter
+	 *
+	 * @return a visitor result
+	 */
+	R visit(WebSocketInboundPublisherParameterInfo inboundPublisherParameterInfo, P p);
+	
+	/**
+	 * <p>
+	 * Visits WebSocket inbound parameter info.
+	 * </p>
+	 *
+	 * @param inboundParameterInfo the info to visit
+	 * @param p                    a visitor parameter
+	 *
+	 * @return a visitor result
+	 */
+	R visit(WebSocketInboundParameterInfo inboundParameterInfo, P p);
+	
+	/**
+	 * <p>
+	 * Visits WebSocket exchange parameter info.
+	 * </p>
+	 *
+	 * @param exchangeParameterInfo the info to visit
+	 * @param p                     a visitor parameter
+	 *
+	 * @return a visitor result
+	 */
+	R visit(WebSocketExchangeParameterInfo exchangeParameterInfo, P p);
 }

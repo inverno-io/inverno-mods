@@ -27,8 +27,12 @@ module io.inverno.mod.test {
 	
 	requires io.inverno.mod.configuration;
 	requires io.inverno.mod.redis.lettuce;
+	requires io.inverno.mod.boot;
+	requires io.inverno.mod.web;
 	
 	requires io.inverno.test;
+	
+	requires java.net.http;
 	
 	requires org.junit.jupiter.api;
 	requires org.junit.platform.launcher;
@@ -37,4 +41,5 @@ module io.inverno.mod.test {
 	requires org.mockito;
 	
 	exports io.inverno.mod.test.configuration;
+	exports io.inverno.mod.test.web;
 }

@@ -146,7 +146,7 @@ class Http1xExchange extends AbstractExchange {
 
 	@Override
 	public Optional<? extends WebSocket<ExchangeContext, ? extends WebSocketExchange<ExchangeContext>>> webSocket(String... subProtocols) {
-		this.webSocket = new Http1xWebSocket(this.configuration, this.context, (Http1xRequest)this.request, this.webSocketFrameFactory, this.webSocketMessageFactory, subProtocols);
+		this.webSocket = new Http1xWebSocket(this.configuration, this.context, this, this.webSocketFrameFactory, this.webSocketMessageFactory, subProtocols);
 		return Optional.of(this.webSocket);
 	}
 	
@@ -387,10 +387,11 @@ class Http1xExchange extends AbstractExchange {
 					},
 					() -> {
 						// We finished the upgrade, we can log the result
+						Http1xExchange.this.keepAlive = false;
 						Http1xExchange.this.response.headers().status(Status.SWITCHING_PROTOCOLS);
 						Http1xExchange.this.logAccess();
 						
-						// Cancel the exchange nad next requests (if any) once the WebSocket upgrade completes
+						// Cancel the exchange and next requests (if any) once the WebSocket upgrade completes
 						Http1xExchange.this.dispose();
 					}
 				);

@@ -23,6 +23,7 @@ import javax.lang.model.element.ExecutableElement;
 import io.inverno.core.compiler.spi.ReporterInfo;
 import io.inverno.core.compiler.spi.support.AbstractInfo;
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.web.annotation.WebRoutes;
 import io.inverno.mod.web.compiler.spi.WebControllerInfo;
 import io.inverno.mod.web.compiler.spi.WebParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebResponseBodyInfo;
@@ -31,8 +32,7 @@ import io.inverno.mod.web.compiler.spi.WebRouteQualifiedName;
 
 /**
  * <p>
- * Provided {@link WebRouteInfo} implementation used to describes routes in a
- * {@link WebProvidedRouterConfigurerInfo}.
+ * Provided {@link WebRouteInfo} implementation used to describes routes specified in a {@link WebRoutes} annotation on a web routes configurer or a web router.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -55,11 +55,13 @@ class ProvidedWebRouteInfo extends AbstractInfo<WebRouteQualifiedName> implement
 	private final String[] languages;
 	
 	/**
-	 * <p>Creates a provided web route info.</p>
+	 * <p>
+	 * Creates a provided web route info.
+	 * </p>
 	 * 
-	 * @param name the route qualified name
-	 * @param reporter the route reporter
-	 * @param paths the route paths
+	 * @param name               the route qualified name
+	 * @param reporter           the route reporter
+	 * @param paths              the route paths
 	 * @param matchTrailingSlash true to match trailing slash, false otherwise
 	 * @param methods            the route methods
 	 * @param consumes           the route consumed media ranges

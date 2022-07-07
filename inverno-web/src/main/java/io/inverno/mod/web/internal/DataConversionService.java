@@ -25,6 +25,7 @@ import io.inverno.mod.http.base.BadRequestException;
 import io.inverno.mod.http.server.RequestData;
 import io.inverno.mod.http.server.ResponseBody;
 import io.inverno.mod.http.server.ResponseData;
+import io.inverno.mod.http.server.ws.WebSocketException;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
 import io.inverno.mod.http.server.ws.WebSocketFrame;
 import io.inverno.mod.http.server.ws.WebSocketMessage;
@@ -34,10 +35,6 @@ import io.inverno.mod.web.Web2SocketExchange;
 import io.inverno.mod.web.WebResponseBody;
 import io.inverno.mod.web.WebResponseBody.SseEncoder;
 import io.netty.buffer.ByteBuf;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +42,9 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -271,12 +271,17 @@ public class DataConversionService {
 	 *
 	 * @return a decodable WebSocket inbound
 	 *
-	 * @throws NoConverterException if there's no converter that can convert the specified media type
-	 * 
 	 * @see MediaTypes#normalizeApplicationMediaType(java.lang.String) 
 	 */
-	public Web2SocketExchange.Inbound createWebSocketDecodedInbound(WebSocketExchange.Inbound inbound, String subProtocol) throws NoConverterException {
-		return new GenericWebSocketInbound(inbound, this.getConverter(MediaTypes.normalizeApplicationMediaType(subProtocol)));
+	public Web2SocketExchange.Inbound createWebSocketDecodedInbound(WebSocketExchange.Inbound inbound, String subProtocol) {
+		return new GenericWebSocketInbound(inbound, () -> {
+			try {
+				return this.getConverter(MediaTypes.normalizeApplicationMediaType(subProtocol));
+			}
+			catch(NoConverterException e) {
+				throw new WebSocketException("No converter found for sub protocol: " + subProtocol, e);
+			}
+		});
 	}
 	
 	/**
@@ -293,12 +298,17 @@ public class DataConversionService {
 	 *
 	 * @return an encodable WebSocket outbound
 	 *
-	 * @throws NoConverterException if there's no converter that can convert the specified media type
-	 * 
 	 * @see MediaTypes#normalizeApplicationMediaType(java.lang.String) 
 	 */
-	public Web2SocketExchange.Outbound createWebSocketEncodedOutbound(WebSocketExchange.Outbound outbound, String subProtocol) throws NoConverterException {
-		return new GenericWebSocketOutbound(outbound, this.getConverter(MediaTypes.normalizeApplicationMediaType(subProtocol)));
+	public Web2SocketExchange.Outbound createWebSocketEncodedOutbound(WebSocketExchange.Outbound outbound, String subProtocol) {
+		return new GenericWebSocketOutbound(outbound, () -> {
+			try {
+				return this.getConverter(MediaTypes.normalizeApplicationMediaType(subProtocol));
+			}
+			catch(NoConverterException e) {
+				throw new WebSocketException("No converter found for sub protocol: " + subProtocol, e);
+			}
+		});
 	}
 	
 	/**
@@ -664,7 +674,9 @@ public class DataConversionService {
 
 		private final WebSocketExchange.Inbound inbound;
 		
-		private final MediaTypeConverter<ByteBuf> converter;
+		private final Supplier<MediaTypeConverter<ByteBuf>> converterSupplier;
+		
+		private MediaTypeConverter<ByteBuf> converter;
 
 		/**
 		 * <p>
@@ -674,18 +686,24 @@ public class DataConversionService {
 		 * @param inbound   the original inbound
 		 * @param converter the converter
 		 */
-		public GenericWebSocketInbound(WebSocketExchange.Inbound inbound, MediaTypeConverter<ByteBuf> converter) {
+		public GenericWebSocketInbound(WebSocketExchange.Inbound inbound, Supplier<MediaTypeConverter<ByteBuf>> converterSupplier) {
 			this.inbound = inbound;
-			this.converter = converter;
+			this.converterSupplier = converterSupplier;
 		}
 		
 		@Override
 		public <A> Publisher<A> decodeTextMessages(Type type) {
+			if(this.converter == null) {
+				this.converter = converterSupplier.get();
+			}
 			return Flux.from(this.inbound.textMessages()).flatMap(message -> this.converter.decodeOne(message.binary(), type));
 		}
 
 		@Override
 		public <A> Publisher<A> decodeBinaryMessages(Type type) {
+			if(this.converter == null) {
+				this.converter = converterSupplier.get();
+			}
 			return Flux.from(this.inbound.binaryMessages()).flatMap(message -> this.converter.decodeOne(message.binary(), type));
 		}
 
@@ -722,7 +740,9 @@ public class DataConversionService {
 
 		private final WebSocketExchange.Outbound outbound;
 		
-		private final MediaTypeConverter<ByteBuf> converter;
+		private final Supplier<MediaTypeConverter<ByteBuf>> converterSupplier;
+		
+		private MediaTypeConverter<ByteBuf> converter;
 
 		/**
 		 * <p>
@@ -732,13 +752,16 @@ public class DataConversionService {
 		 * @param outbound  the original outbound
 		 * @param converter the converter
 		 */
-		public GenericWebSocketOutbound(WebSocketExchange.Outbound outbound, MediaTypeConverter<ByteBuf> converter) {
+		public GenericWebSocketOutbound(WebSocketExchange.Outbound outbound, Supplier<MediaTypeConverter<ByteBuf>> converterSupplier) {
 			this.outbound = outbound;
-			this.converter = converter;
+			this.converterSupplier = converterSupplier;
 		}
 		
 		@Override
 		public <T> void encodeTextMessages(Publisher<T> messages, Type type) {
+			if(this.converter == null) {
+				this.converter = converterSupplier.get();
+			}
 			if(type == null) {
 				this.outbound.messages(factory -> Flux.from(messages).map(message -> factory.text(
 					Flux.from(DataConversionService.GenericWebSocketOutbound.this.converter.encodeOne(Mono.just(message))).map(buf -> buf.toString(Charsets.UTF_8))
@@ -753,6 +776,9 @@ public class DataConversionService {
 
 		@Override
 		public <T> void encodeBinaryMessages(Publisher<T> messages, Type type) {
+			if(this.converter == null) {
+				this.converter = converterSupplier.get();
+			}
 			if(type == null) {
 				this.outbound.messages(factory -> Flux.from(messages).map(message -> factory.binary(
 					Flux.from(DataConversionService.GenericWebSocketOutbound.this.converter.encodeOne(Mono.just(message)))

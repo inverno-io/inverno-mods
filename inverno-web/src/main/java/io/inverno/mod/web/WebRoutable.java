@@ -18,6 +18,7 @@ package io.inverno.mod.web;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.spi.Routable;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * <p>
@@ -43,6 +44,21 @@ public interface WebRoutable<A extends ExchangeContext, B extends WebRoutable<A,
 	 */
 	WebSocketRouteManager<A, B> webSocketRoute();
 	
+	/**
+	 * <p>
+	 * Invokes the specified WebSocket route configurer on a WebSocket route manager.
+	 * </p>
+	 * 
+	 * @param webSocketRouteConfigurer a WebSocket route configurer
+	 * 
+	 * @return the router
+	 */
+	@SuppressWarnings("unchecked")
+	default B webSocketRoute(Consumer<WebSocketRouteManager<A, B>> webSocketRouteConfigurer) {
+		webSocketRouteConfigurer.accept(this.webSocketRoute());
+		return (B) this;
+	}
+
 	/**
 	 * <p>
 	 * Configures web routes using the specified configurer and returns the web routable.

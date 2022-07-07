@@ -34,6 +34,10 @@ public interface MutablePathParameters extends PathParameters {
 	 * Sets the specified parameter.
 	 * </p>
 	 * 
+	 * <p>
+	 * When the specified value is empty, it is considered null (i.e. missing).
+	 * </p>
+	 * 
 	 * @param name  the parameter name
 	 * @param value the parameter value
 	 */
@@ -42,6 +46,10 @@ public interface MutablePathParameters extends PathParameters {
 	/**
 	 * <p>
 	 * Sets all specified parameters.
+	 * </p>
+	 * 
+	 * <p>
+	 * When a specified value is empty, it is considered null (i.e. missing).
 	 * </p>
 	 * 
 	 * @param parameters a map of parameters

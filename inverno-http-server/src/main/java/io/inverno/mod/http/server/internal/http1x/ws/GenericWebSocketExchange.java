@@ -16,6 +16,7 @@
 package io.inverno.mod.http.server.internal.http1x.ws;
 
 import io.inverno.mod.http.base.ws.WebSocketStatus;
+import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.ws.WebSocketException;
@@ -54,7 +55,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	private static final Logger LOGGER = LogManager.getLogger(WebSocketExchange.class);
 	
 	private final ChannelHandlerContext context;
-	private final Request request;
+	private final Exchange<ExchangeContext> exchange;
 	private final String subProtocol;
 	private final WebSocketExchangeHandler<ExchangeContext, WebSocketExchange<ExchangeContext>> handler;
 	private final GenericWebSocketFrame.GenericFactory frameFactory;
@@ -83,7 +84,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	 * </p>
 	 *
 	 * @param context        the channel handler context
-	 * @param request        the HTTP/1.x exchange request
+	 * @param exchange       the original exchange
 	 * @param subProtocol    the negotiated subprotocol
 	 * @param handler        the WebSocket handler
 	 * @param frameFactory   the WebSocket frame factory
@@ -91,13 +92,13 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	 */
 	public GenericWebSocketExchange(
 			ChannelHandlerContext context, 
-			Request request, 
+			Exchange<ExchangeContext> exchange, 
 			String subProtocol, 
 			WebSocketExchangeHandler<ExchangeContext, WebSocketExchange<ExchangeContext>> handler, 
 			GenericWebSocketFrame.GenericFactory frameFactory, 
 			GenericWebSocketMessage.GenericFactory messageFactory) {
 		this.context = context;
-		this.request = request;
+		this.exchange = exchange;
 		this.subProtocol = subProtocol;
 		this.handler = handler;
 		this.frameFactory = frameFactory;
@@ -262,7 +263,6 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 				this.inboundSubscribed = true;
 				frameSink.asFlux().subscribe(
 					frame -> {
-						System.out.println("Release inbound");
 						((GenericWebSocketFrame)frame).release();
 					},
 					ex -> {
@@ -332,9 +332,14 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 
 	@Override
 	public Request request() {
-		return this.request;
+		return this.exchange.request();
 	}
 
+	@Override
+	public ExchangeContext context() {
+		return this.exchange.context();
+	}
+	
 	@Override
 	public String getSubProtocol() {
 		return this.subProtocol;

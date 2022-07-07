@@ -27,7 +27,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * Describes the request body parameter in a route.
+ * Describes the response body of a route.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

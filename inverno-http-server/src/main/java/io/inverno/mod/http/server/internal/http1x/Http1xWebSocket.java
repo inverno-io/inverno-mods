@@ -55,7 +55,7 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 	
 	private final HttpServerConfiguration configuration;
 	private final ChannelHandlerContext context;
-	private final Http1xRequest request;
+	private final Http1xExchange exchange;
 	private final GenericWebSocketFrame.GenericFactory frameFactory;
 	private final GenericWebSocketMessage.GenericFactory messageFactory;
 	
@@ -73,20 +73,20 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 	 *
 	 * @param configuration  the server configuration
 	 * @param context        the channel handler context
-	 * @param request        the HTTP/1.x exchange request
+	 * @param request        the original HTTP/1.x exchange
 	 * @param frameFactory   the WebSocket frame factory
 	 * @param messageFactory the WebSocket message factory
 	 * @param subProtocols   the list of supported subprotocols
 	 */
-	public Http1xWebSocket(HttpServerConfiguration configuration, ChannelHandlerContext context, Http1xRequest request, GenericWebSocketFrame.GenericFactory frameFactory, GenericWebSocketMessage.GenericFactory messageFactory, String[] subProtocols) {
+	public Http1xWebSocket(HttpServerConfiguration configuration, ChannelHandlerContext context, Http1xExchange exchange, GenericWebSocketFrame.GenericFactory frameFactory, GenericWebSocketMessage.GenericFactory messageFactory, String[] subProtocols) {
 		this.configuration = configuration;
 		this.context = context;
-		this.request = request;
+		this.exchange = exchange;
 		this.frameFactory = frameFactory;
 		this.messageFactory = messageFactory;
 		
 		WebSocketServerProtocolConfig.Builder webSocketConfigBuilder = WebSocketServerProtocolConfig.newBuilder()
-			.websocketPath(request.getPath())
+			.websocketPath(exchange.request().getPath())
 			.subprotocols(subProtocols != null && subProtocols.length > 0 ? Arrays.stream(subProtocols).collect(Collectors.joining(",")) : null)
 			.checkStartsWith(false)
 			.handleCloseFrames(false)
@@ -119,7 +119,7 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 	 */
 	Mono<Void> handshake() {
 		return Mono.defer(() -> {
-			WebSocketProtocolHandler webSocketProtocolHandler = new WebSocketProtocolHandler(this.config, this.handler, this.request, this.frameFactory, this.messageFactory);
+			WebSocketProtocolHandler webSocketProtocolHandler = new WebSocketProtocolHandler(this.config, this.handler, this.exchange, this.frameFactory, this.messageFactory);
 		
 			ChannelPipeline pipeline = this.context.pipeline();
 			this.initialChannelHandlers = pipeline.toMap();
@@ -142,7 +142,7 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 			}
 			pipeline.addLast(webSocketProtocolHandler);
 
-			this.context.fireChannelRead(request.underlyingRequest);
+			this.context.fireChannelRead(((Http1xRequest)exchange.request()).underlyingRequest);
 			
 			return webSocketProtocolHandler.getHandshake();
 		});

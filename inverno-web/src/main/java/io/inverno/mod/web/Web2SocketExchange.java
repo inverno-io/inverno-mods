@@ -28,7 +28,7 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * It supports inbound and outbound message decoding and encoding based on the negotiated sub protocol which is interpreted as a compact application media types (see 
+ * It supports inbound and outbound message decoding and encoding based on the negotiated subprotocol which is interpreted as a compact application media types (see 
  * {@link MediaTypes#normalizeApplicationMediaType(java.lang.String)}).
  * </p>
  *

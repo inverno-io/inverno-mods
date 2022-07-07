@@ -17,6 +17,7 @@ package io.inverno.mod.http.server.ws;
 
 import io.netty.buffer.ByteBuf;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -86,6 +87,28 @@ public interface WebSocketMessage {
 		
 		/**
 		 * <p>
+		 * Creates a text message with the specified raw payload data.
+		 * </p>
+		 * 
+		 * @param value raw payload data
+		 * 
+		 * @return a WebSocket message
+		 */
+		WebSocketMessage text_raw(ByteBuf value);
+		
+		/**
+		 * <p>
+		 * Creates a text message with the specified raw payload data stream.
+		 * </p>
+		 * 
+		 * @param stream raw payload data stream
+		 * 
+		 * @return a WebSocket message
+		 */
+		WebSocketMessage text_raw(Publisher<ByteBuf> stream);
+		
+		/**
+		 * <p>
 		 * Creates a binary message with the specified payload data.
 		 * </p>
 		 * 
@@ -122,7 +145,7 @@ public interface WebSocketMessage {
 	 * </p>
 	 * 
 	 * <p>
-	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #binary() } or {@link #text() }.
+	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #binary() }, {@link #reducedBinary() }, {@link #text() } or {@link #reducedText() }.
 	 * </p>
 	 * 
 	 * @return a WebSocker frames publisher
@@ -131,11 +154,11 @@ public interface WebSocketMessage {
 	
 	/**
 	 * <p>
-	 * Returns the message payload binary data.
+	 * Returns the message payload binary data stream.
 	 * </p>
 	 * 
 	 * <p>
-	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #binary() } or {@link #text() }.
+	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #binary() }, {@link #reducedBinary() }, {@link #text() } or {@link #reducedText() }.
 	 * </p>
 	 * 
 	 * @return a data publisher
@@ -144,14 +167,48 @@ public interface WebSocketMessage {
 	
 	/**
 	 * <p>
-	 * Returns the message payload text data.
+	 * Returns the message payload binary data.
 	 * </p>
 	 * 
 	 * <p>
-	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #binary() } or {@link #text() }.
+	 * This method basically reduces the result of {@link #binary() }.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #binary() }, {@link #reducedBinary() }, {@link #text() } or {@link #reducedText() }.
+	 * </p>
+	 * 
+	 * @return a mono emitting the binary payload
+	 */
+	Mono<ByteBuf> reducedBinary();
+	
+	/**
+	 * <p>
+	 * Returns the message payload text data stream.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #binary() }, {@link #reducedBinary() }, {@link #text() } or {@link #reducedText() }.
 	 * </p>
 	 * 
 	 * @return a text publisher
 	 */
 	Publisher<String> text();
+	
+	/**
+	 * <p>
+	 * Returns the message payload text data stream.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method basically reduces the result of {@link #text() }.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that the returned publisher is exclusive: it is only possible to subscribe to one of the publisher returned by {@link #frames() }, {@link #binary() }, {@link #reducedBinary() }, {@link #text() } or {@link #reducedText() }.
+	 * </p>
+	 * 
+	 * @return a mono emitting the text payload
+	 */
+	Mono<String> reducedText();
 }

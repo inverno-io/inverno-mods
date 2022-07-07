@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.test.configuration;
 
+import io.inverno.mod.test.AbstractInvernoModTest;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.Array;
@@ -45,7 +46,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  *
  */
-public class TestConfiguration extends AbstractConfigurationInvernoTest {
+public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	private static final String CLASS_ConfigurationSource = "io.inverno.mod.configuration.ConfigurationSource";
 	private static final String CLASS_ConfigurationKey_Parameter = "io.inverno.mod.configuration.ConfigurationKey$Parameter";
@@ -60,58 +61,6 @@ public class TestConfiguration extends AbstractConfigurationInvernoTest {
 	private static final String MODULEF = "io.inverno.mod.test.config.moduleF";
 	private static final String MODULEG = "io.inverno.mod.test.config.moduleG";
 	private static final String MODULEH = "io.inverno.mod.test.config.moduleH";
-	
-	private static class ConfigurationInvocationHandler implements InvocationHandler {
-		
-		private Class<?> configurationClass;
-		
-		private Map<String, Object> properties;
-		
-		public ConfigurationInvocationHandler(Class<?> configurationClass, Map<String, Object> properties) {
-			this.configurationClass = configurationClass;
-			this.properties = new HashMap<>(properties);
-		}
-		
-		@Override
-		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-			if(method.getName().equals("equals")) {
-				if (args[0] == null) {
-	                return false;
-	            }
-	            InvocationHandler handler = Proxy.getInvocationHandler(args[0]);
-	            if (!(handler instanceof ConfigurationInvocationHandler)) {
-	                return false;
-	            }
-	            ConfigurationInvocationHandler configurationHandler = (ConfigurationInvocationHandler)handler;
-	            if(!configurationHandler.configurationClass.equals(this.configurationClass)) {
-	            	return false;
-	            }
-	            return configurationHandler.properties.equals(this.properties);
-			}
-			if(this.properties.containsKey(method.getName())) {
-				return this.properties.get(method.getName());
-			}
-			else if(method.isDefault()) {
-				Constructor<Lookup> constructor = Lookup.class.getDeclaredConstructor(Class.class);
-				constructor.setAccessible(true);
-				this.properties.put(method.getName(), constructor.newInstance(configurationClass)
-					.in(configurationClass)
-					.unreflectSpecial(method, configurationClass)
-					.bindTo(proxy)
-					.invokeWithArguments());
-				
-				/*return MethodHandles.lookup()
-                .in(this.configurationClass)
-                .unreflectSpecial(method, this.configurationClass)
-                .bindTo(proxy)
-                .invokeWithArguments();*/
-				
-//			    MethodHandle handle = MethodHandles.lookup().findSpecial(this.configurationClass, method.getName(), MethodType.methodType(method.getReturnType(), method.getParameterTypes()), this.configurationClass).bindTo(proxy);
-//			    return handle.invokeWithArguments();
-			}
-			return this.properties.get(method.getName());
-		}
-	}
 	
 	private Object getProperty(Object config, String propertyName) {
 		try {

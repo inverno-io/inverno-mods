@@ -15,26 +15,10 @@
  */
 package io.inverno.mod.web.compiler.internal;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.PrimitiveType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.ElementFilter;
-
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ws.WebSocketMessage;
 import io.inverno.mod.web.ErrorWebInterceptorsConfigurer;
 import io.inverno.mod.web.ErrorWebRouter;
 import io.inverno.mod.web.ErrorWebRouterConfigurer;
@@ -67,18 +51,40 @@ import io.inverno.mod.web.compiler.spi.WebResponseBodyInfo;
 import io.inverno.mod.web.compiler.spi.WebResponseBodyInfo.ResponseBodyKind;
 import io.inverno.mod.web.compiler.spi.WebResponseBodyInfo.ResponseBodyReactiveKind;
 import io.inverno.mod.web.compiler.spi.WebRouteInfo;
+import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebRoutesConfigurerInfo;
-import io.inverno.mod.web.compiler.spi.WebSseEventFactoryParameterInfo;
-import java.time.ZonedDateTime;
-import org.apache.commons.text.StringEscapeUtils;
 import io.inverno.mod.web.compiler.spi.WebServerControllerConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebServerControllerConfigurerInfoVisitor;
-import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketBoundPublisherInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketExchangeParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketInboundParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketInboundPublisherParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketOutboundParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketOutboundPublisherInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketRouteInfo;
+import io.inverno.mod.web.compiler.spi.WebSseEventFactoryParameterInfo;
+import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ExecutableType;
+import javax.lang.model.type.PrimitiveType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.ElementFilter;
+import org.apache.commons.text.StringEscapeUtils;
 
 /**
  * <p>
@@ -248,18 +254,54 @@ class WebServerControllerConfigurerClassGenerator implements WebServerController
 		else if(context.getMode() == GenerationMode.CONFIGURER_ANNOTATION) {
 			TypeMirror webRoutesAnnotationType = context.getElementUtils().getTypeElement(WebRoutes.class.getCanonicalName()).asType();
 			StringBuilder result = new StringBuilder();
-			result.append("@").append(context.getTypeName(webRoutesAnnotationType)).append("({").append(System.lineSeparator());
-			result.append(Stream.of(
-					Arrays.stream(controllerConfigurerInfo.getRoutesConfigurers()).map(routesInfo -> this.visit(routesInfo, context)),
-					Arrays.stream(controllerConfigurerInfo.getRouterConfigurers()).map(routerInfo -> this.visit(routerInfo, context)),
+			result.append("@").append(context.getTypeName(webRoutesAnnotationType));
+			
+			WebServerControllerConfigurerClassGenerationContext webSocketRouteAnnotationContext = context.withMode(GenerationMode.WEBSOCKET_ROUTE_ANNOTATION).withIndentDepthAdd(1);
+			StringBuilder webSocketRoutes = Stream.of(
+					Arrays.stream(controllerConfigurerInfo.getRoutesConfigurers()).map(routesConfigurerInfo -> this.visit(routesConfigurerInfo, webSocketRouteAnnotationContext)),
+					Arrays.stream(controllerConfigurerInfo.getRouterConfigurers()).map(routerConfigurerInfo -> this.visit(routerConfigurerInfo, webSocketRouteAnnotationContext)),
 					Arrays.stream(controllerConfigurerInfo.getControllers())
-						.flatMap(controllerInfo -> Arrays.stream(controllerInfo.getRoutes()).map(routeInfo -> this.visit(routeInfo, context.withWebController(controllerInfo).withMode(GenerationMode.ROUTE_ANNOTATION))))
+						.flatMap(controllerInfo -> Arrays.stream(controllerInfo.getRoutes()).map(routeInfo -> this.visit(routeInfo, webSocketRouteAnnotationContext.withWebController(controllerInfo))))
 				)
 				.flatMap(Function.identity())
-				.filter(s -> s.length() > 0)
-				.collect(context.joining("," + System.lineSeparator()))
-			);
-			result.append(System.lineSeparator()).append("})");
+				.filter(s -> !s.isEmpty())
+				.collect(context.joining("," + System.lineSeparator()));
+			
+			WebServerControllerConfigurerClassGenerationContext routeAnnotationContext;
+			if(webSocketRoutes.isEmpty()) {
+				routeAnnotationContext= context.withMode(GenerationMode.ROUTE_ANNOTATION);
+			}
+			else {
+				routeAnnotationContext = context.withMode(GenerationMode.ROUTE_ANNOTATION).withIndentDepthAdd(1);
+			}
+			StringBuilder webRoutes = Stream.of(
+					Arrays.stream(controllerConfigurerInfo.getRoutesConfigurers()).map(routesConfigurerInfo -> this.visit(routesConfigurerInfo, routeAnnotationContext)),
+					Arrays.stream(controllerConfigurerInfo.getRouterConfigurers()).map(routerConfigurerInfo -> this.visit(routerConfigurerInfo, routeAnnotationContext)),
+					Arrays.stream(controllerConfigurerInfo.getControllers())
+						.flatMap(controllerInfo -> Arrays.stream(controllerInfo.getRoutes()).map(routeInfo -> this.visit(routeInfo, routeAnnotationContext.withWebController(controllerInfo))))
+				)
+				.flatMap(Function.identity())
+				.filter(s -> !s.isEmpty())
+				.collect(context.joining("," + System.lineSeparator()));
+			
+			if(webSocketRoutes.isEmpty()) {
+				result.append("({").append(System.lineSeparator());
+				result.append(webRoutes);
+				result.append(System.lineSeparator()).append("})");
+			}
+			else {
+				result.append("(").append(System.lineSeparator());
+				
+				result.append(context.indent(0)).append("value = {").append(System.lineSeparator());
+				result.append(webRoutes).append(System.lineSeparator());
+				result.append(context.indent(0)).append("},").append(System.lineSeparator());
+				
+				result.append(context.indent(0)).append("webSockets = {").append(System.lineSeparator());
+				result.append(webSocketRoutes).append(System.lineSeparator());
+				result.append(context.indent(0)).append("}").append(System.lineSeparator());
+				
+				result.append(")");
+			}
 			return result;
 		}
 		else if(context.getMode() == GenerationMode.CONFIGURER_CONTEXT) {
@@ -375,9 +417,10 @@ class WebServerControllerConfigurerClassGenerator implements WebServerController
 
 	@Override
 	public StringBuilder visit(WebRoutesConfigurerInfo routesConfigurerInfo, WebServerControllerConfigurerClassGenerationContext context) {
-		if(context.getMode() == GenerationMode.CONFIGURER_ANNOTATION) {
+		if(context.getMode() == GenerationMode.ROUTE_ANNOTATION || context.getMode() == GenerationMode.WEBSOCKET_ROUTE_ANNOTATION) {
 			return Arrays.stream(routesConfigurerInfo.getRoutes())
-				.map(routeInfo -> this.visit(routeInfo, context.withMode(GenerationMode.ROUTE_ANNOTATION)))
+				.map(routeInfo -> this.visit(routeInfo, context))
+				.filter(s -> !s.isEmpty())
 				.collect(context.joining("," + System.lineSeparator()));
 		}
 		return new StringBuilder();
@@ -385,9 +428,10 @@ class WebServerControllerConfigurerClassGenerator implements WebServerController
 	
 	@Override
 	public StringBuilder visit(WebRouterConfigurerInfo routerConfigurerInfo, WebServerControllerConfigurerClassGenerationContext context) {
-		if(context.getMode() == GenerationMode.CONFIGURER_ANNOTATION) {
+		if(context.getMode() == GenerationMode.CONFIGURER_ANNOTATION || context.getMode() == GenerationMode.WEBSOCKET_ROUTE_ANNOTATION) {
 			return Arrays.stream(routerConfigurerInfo.getRoutes())
-				.map(routeInfo -> this.visit(routeInfo, context.withMode(GenerationMode.ROUTE_ANNOTATION)))
+				.map(routeInfo -> this.visit(routeInfo, context))
+				.filter(s -> !s.isEmpty())
 				.collect(context.joining("," + System.lineSeparator()));
 		}
 		return new StringBuilder();
@@ -427,117 +471,121 @@ class WebServerControllerConfigurerClassGenerator implements WebServerController
 
 	@Override
 	public StringBuilder visit(WebRouteInfo routeInfo, WebServerControllerConfigurerClassGenerationContext context) {
-		if(context.getMode() == GenerationMode.ROUTE_ANNOTATION) {
-			StringBuilder result = new StringBuilder();
-			result.append(context.indent(0)).append("@").append(context.getWebRouteAnnotationTypeName()).append("(");
-			
-			result.append("path = { ");
-			if(routeInfo.getPaths().length > 0) {
-				result.append(Arrays.stream(routeInfo.getPaths())
-					.map(path -> "\"" + StringEscapeUtils.escapeJava(routeInfo.getController()
-						.map(WebControllerInfo::getRootPath)
-						.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).path(path, false).buildRawPath())
-						.orElse(path)) + "\""
-					)
-					.collect(Collectors.joining(", "))
-				);	
-			}
-			else {
-				routeInfo.getController()
-					.map(WebControllerInfo::getRootPath)
-					.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).buildRawPath())
-					.ifPresent(rootPath -> result.append("\"").append(rootPath).append("\""));
-			}
-			result.append(" }");
-			
-			if(routeInfo.isMatchTrailingSlash()) {
-				result.append(", matchTrailingSlash = true");
-			}
-			if(routeInfo.getMethods() != null && routeInfo.getMethods().length > 0) {
-				result.append(", method = { ").append(Arrays.stream(routeInfo.getMethods()).map(method -> context.getMethodTypeName() + "." + method.toString()).collect(Collectors.joining(", "))).append(" }");
-			}
-			if(routeInfo.getConsumes() != null && routeInfo.getConsumes().length > 0) {
-				result.append(", consumes = { ").append(Arrays.stream(routeInfo.getConsumes()).map(consumes -> "\"" + consumes + "\"").collect(Collectors.joining(", "))).append(" }");
-			}
-			if(routeInfo.getProduces() != null && routeInfo.getProduces().length > 0) {
-				result.append(", produces = { ").append(Arrays.stream(routeInfo.getProduces()).map(produces -> "\"" + produces + "\"").collect(Collectors.joining(", "))).append(" }");
-			}
-			if(routeInfo.getLanguages() != null && routeInfo.getLanguages().length > 0) {
-				result.append(", language = { ").append(Arrays.stream(routeInfo.getLanguages()).map(language -> "\"" + language + "\"").collect(Collectors.joining(", "))).append(" }");
-			}
-			result.append(")");
-			return result;
+		if(routeInfo instanceof WebSocketRouteInfo) {
+			return this.visit((WebSocketRouteInfo)routeInfo, context);
 		}
-		else if(context.getMode() == GenerationMode.ROUTE_DECLARATION) {
-			boolean typesMode = context.isTypeMode(routeInfo);
-			GenerationMode handlerBodyMode = typesMode ? GenerationMode.ROUTE_HANDLER_BODY_TYPE : GenerationMode.ROUTE_HANDLER_BODY_CLASS;
-			
-			StringBuilder routeHandler = new StringBuilder("exchange -> {").append(System.lineSeparator());
-			routeHandler.append(this.visit(routeInfo.getResponseBody(), context.withIndentDepth(context.getIndentDepth() + (typesMode ? 2 : 1) ).withWebRoute(routeInfo).withMode(handlerBodyMode)));
-			routeHandler.append(context.indent(typesMode ? 1 : 0)).append("}");
-			
-			StringBuilder routeManager = new StringBuilder();
-			
-			if(routeInfo.getPaths().length > 0) {
-				routeManager.append(Arrays.stream(routeInfo.getPaths())
-					.map(path -> ".path(\"" + StringEscapeUtils.escapeJava(routeInfo.getController()
+		else {
+			if(context.getMode() == GenerationMode.ROUTE_ANNOTATION) {
+				StringBuilder result = new StringBuilder();
+				result.append(context.indent(0)).append("@").append(context.getWebRouteAnnotationTypeName()).append("(");
+
+				result.append("path = { ");
+				if(routeInfo.getPaths().length > 0) {
+					result.append(Arrays.stream(routeInfo.getPaths())
+						.map(path -> "\"" + StringEscapeUtils.escapeJava(routeInfo.getController()
+							.map(WebControllerInfo::getRootPath)
+							.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).path(path, false).buildRawPath())
+							.orElse(path)) + "\""
+						)
+						.collect(Collectors.joining(", "))
+					);	
+				}
+				else {
+					routeInfo.getController()
 						.map(WebControllerInfo::getRootPath)
-						.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).path(path, false).buildRawPath())
-						.orElse(path)) + "\", " + routeInfo.isMatchTrailingSlash() + ")"
-					)
-					.collect(Collectors.joining())
-				);
-			}
-			else {
-				routeInfo.getController()
-					.map(WebControllerInfo::getRootPath)
-					.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).buildRawPath())
-					.ifPresent(rootPath -> routeManager.append(".path(\"").append(StringEscapeUtils.escapeJava(rootPath)).append("\", ").append(routeInfo.isMatchTrailingSlash()).append(")"));
-			}
-			if(routeInfo.getMethods() != null && routeInfo.getMethods().length > 0) {
-				routeManager.append(Arrays.stream(routeInfo.getMethods()).map(method -> ".method(" + context.getMethodTypeName() + "." + method.toString() + ")").collect(Collectors.joining()));
-			}
-			if(routeInfo.getConsumes() != null && routeInfo.getConsumes().length > 0) {
-				routeManager.append(Arrays.stream(routeInfo.getConsumes()).map(consumes -> ".consumes(\"" + consumes + "\")").collect(Collectors.joining()));
-			}
-			if(routeInfo.getProduces() != null && routeInfo.getProduces().length > 0) {
-				routeManager.append(Arrays.stream(routeInfo.getProduces()).map(produces -> ".produces(\"" + produces + "\")").collect(Collectors.joining()));
-			}
-			if(routeInfo.getLanguages() != null && routeInfo.getLanguages().length > 0) {
-				routeManager.append(Arrays.stream(routeInfo.getLanguages()).map(language -> ".language(\"" + language + "\")").collect(Collectors.joining()));
-			}
-			
-			routeManager.append(".handler(").append(routeHandler).append(")");
-			
-			if(typesMode) {
-				StringBuilder routeTypes = new StringBuilder(context.getTypeTypeName()).append("[] routeTypes = new ").append(context.getTypeTypeName()).append("[] {").append(System.lineSeparator());
-				routeTypes.append(Stream.concat(
-						Arrays.stream(routeInfo.getParameters())
-							.map(parameterInfo -> {
-								if(parameterInfo instanceof WebRequestBodyParameterInfo) {
-									return parameterInfo.getType();
-								}
-								else {
-									return context.getParameterConverterType(parameterInfo.getType());
-								}
-							}),
-						routeInfo.getResponseBody().getBodyKind() != ResponseBodyKind.EMPTY ? Stream.of(routeInfo.getResponseBody().getType()) : Stream.of()
-					)
-					.map(converterType -> new StringBuilder(context.indent(2)).append(context.getTypeGenerator(converterType)))
-					.collect(context.joining("," + System.lineSeparator()))
-				);
-				
-				routeTypes.append(System.lineSeparator()).append(context.indent(1)).append("}");
-				
-				StringBuilder result = new StringBuilder(context.indent(0)).append(".route(route -> {").append(System.lineSeparator());
-				result.append(context.indent(1)).append(routeTypes).append(";").append(System.lineSeparator());
-				result.append(context.indent(1)).append("route").append(routeManager).append(";").append(System.lineSeparator());
-				result.append(context.indent(0)).append("})");
-				
+						.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).buildRawPath())
+						.ifPresent(rootPath -> result.append("\"").append(rootPath).append("\""));
+				}
+				result.append(" }");
+
+				if(routeInfo.isMatchTrailingSlash()) {
+					result.append(", matchTrailingSlash = true");
+				}
+				if(routeInfo.getMethods() != null && routeInfo.getMethods().length > 0) {
+					result.append(", method = { ").append(Arrays.stream(routeInfo.getMethods()).map(method -> context.getMethodTypeName() + "." + method.toString()).collect(Collectors.joining(", "))).append(" }");
+				}
+				if(routeInfo.getConsumes() != null && routeInfo.getConsumes().length > 0) {
+					result.append(", consumes = { ").append(Arrays.stream(routeInfo.getConsumes()).map(consumes -> "\"" + consumes + "\"").collect(Collectors.joining(", "))).append(" }");
+				}
+				if(routeInfo.getProduces() != null && routeInfo.getProduces().length > 0) {
+					result.append(", produces = { ").append(Arrays.stream(routeInfo.getProduces()).map(produces -> "\"" + produces + "\"").collect(Collectors.joining(", "))).append(" }");
+				}
+				if(routeInfo.getLanguages() != null && routeInfo.getLanguages().length > 0) {
+					result.append(", language = { ").append(Arrays.stream(routeInfo.getLanguages()).map(language -> "\"" + language + "\"").collect(Collectors.joining(", "))).append(" }");
+				}
+				result.append(")");
 				return result;
 			}
-			else {
-				return new StringBuilder(context.indent(0)).append(".route()").append(routeManager);
+			else if(context.getMode() == GenerationMode.ROUTE_DECLARATION) {
+				boolean typesMode = context.isTypeMode(routeInfo);
+
+				StringBuilder routeHandler = new StringBuilder("exchange -> {").append(System.lineSeparator());
+				routeHandler.append(this.visit(routeInfo.getResponseBody(), context.withIndentDepth(context.getIndentDepth() + (typesMode ? 2 : 1) ).withWebRoute(routeInfo).withMode(typesMode ? GenerationMode.ROUTE_HANDLER_TYPE : GenerationMode.ROUTE_HANDLER_CLASS)));
+				routeHandler.append(context.indent(typesMode ? 1 : 0)).append("}");
+
+				StringBuilder routeManager = new StringBuilder();
+
+				if(routeInfo.getPaths().length > 0) {
+					routeManager.append(Arrays.stream(routeInfo.getPaths())
+						.map(path -> ".path(\"" + StringEscapeUtils.escapeJava(routeInfo.getController()
+							.map(WebControllerInfo::getRootPath)
+							.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).path(path, false).buildRawPath())
+							.orElse(path)) + "\", " + routeInfo.isMatchTrailingSlash() + ")"
+						)
+						.collect(Collectors.joining())
+					);
+				}
+				else {
+					routeInfo.getController()
+						.map(WebControllerInfo::getRootPath)
+						.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).buildRawPath())
+						.ifPresent(rootPath -> routeManager.append(".path(\"").append(StringEscapeUtils.escapeJava(rootPath)).append("\", ").append(routeInfo.isMatchTrailingSlash()).append(")"));
+				}
+				if(routeInfo.getMethods() != null && routeInfo.getMethods().length > 0) {
+					routeManager.append(Arrays.stream(routeInfo.getMethods()).map(method -> ".method(" + context.getMethodTypeName() + "." + method.toString() + ")").collect(Collectors.joining()));
+				}
+				if(routeInfo.getConsumes() != null && routeInfo.getConsumes().length > 0) {
+					routeManager.append(Arrays.stream(routeInfo.getConsumes()).map(consumes -> ".consumes(\"" + consumes + "\")").collect(Collectors.joining()));
+				}
+				if(routeInfo.getProduces() != null && routeInfo.getProduces().length > 0) {
+					routeManager.append(Arrays.stream(routeInfo.getProduces()).map(produces -> ".produces(\"" + produces + "\")").collect(Collectors.joining()));
+				}
+				if(routeInfo.getLanguages() != null && routeInfo.getLanguages().length > 0) {
+					routeManager.append(Arrays.stream(routeInfo.getLanguages()).map(language -> ".language(\"" + language + "\")").collect(Collectors.joining()));
+				}
+
+				routeManager.append(".handler(").append(routeHandler).append(")");
+
+				if(typesMode) {
+					StringBuilder routeTypes = new StringBuilder(context.getTypeTypeName()).append("[] routeTypes = new ").append(context.getTypeTypeName()).append("[] {").append(System.lineSeparator());
+					routeTypes.append(Stream.concat(
+							Arrays.stream(routeInfo.getParameters())
+								.map(parameterInfo -> {
+									if(parameterInfo instanceof WebRequestBodyParameterInfo) {
+										return parameterInfo.getType();
+									}
+									else {
+										return context.getParameterConverterType(parameterInfo.getType());
+									}
+								}),
+							routeInfo.getResponseBody().getBodyKind() != ResponseBodyKind.EMPTY ? Stream.of(routeInfo.getResponseBody().getType()) : Stream.of()
+						)
+						.map(converterType -> new StringBuilder(context.indent(2)).append(context.getTypeGenerator(converterType)))
+						.collect(context.joining("," + System.lineSeparator()))
+					);
+
+					routeTypes.append(System.lineSeparator()).append(context.indent(1)).append("}");
+
+					StringBuilder result = new StringBuilder(context.indent(0)).append(".route(route -> {").append(System.lineSeparator());
+					result.append(context.indent(1)).append(routeTypes).append(";").append(System.lineSeparator());
+					result.append(context.indent(1)).append("route").append(routeManager).append(";").append(System.lineSeparator());
+					result.append(context.indent(0)).append("})");
+
+					return result;
+				}
+				else {
+					return new StringBuilder(context.indent(0)).append(".route()").append(routeManager);
+				}
 			}
 		}
 		return new StringBuilder();
@@ -545,8 +593,8 @@ class WebServerControllerConfigurerClassGenerator implements WebServerController
 	
 	@Override
 	public StringBuilder visit(WebResponseBodyInfo responseBodyInfo, WebServerControllerConfigurerClassGenerationContext context) {
-		if(context.getMode() == GenerationMode.ROUTE_HANDLER_BODY_CLASS || context.getMode() == GenerationMode.ROUTE_HANDLER_BODY_TYPE) {
-			boolean typesMode = context.getMode() == GenerationMode.ROUTE_HANDLER_BODY_TYPE;
+		if(context.getMode() == GenerationMode.ROUTE_HANDLER_CLASS || context.getMode() == GenerationMode.ROUTE_HANDLER_TYPE) {
+			boolean typesMode = context.getMode() == GenerationMode.ROUTE_HANDLER_TYPE;
 			
 			StringBuilder result = new StringBuilder();
 			WebRouteInfo routeInfo = context.getWebRoute();
@@ -780,6 +828,9 @@ class WebServerControllerConfigurerClassGenerator implements WebServerController
 		}
 		else if(parameterInfo instanceof WebSseEventFactoryParameterInfo) {
 			return this.visit((WebSseEventFactoryParameterInfo)parameterInfo, context);
+		}
+		else if(parameterInfo instanceof WebSocketParameterInfo) {
+			return this.visit((WebSocketParameterInfo)parameterInfo, context);
 		}
 		return new StringBuilder();
 	}
@@ -1063,6 +1114,445 @@ class WebServerControllerConfigurerClassGenerator implements WebServerController
 	public StringBuilder visit(WebSseEventFactoryParameterInfo sseEventFactoryParameterInfo, WebServerControllerConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS || context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE) {
 			return new StringBuilder("events");
+		}
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketRouteInfo webSocketRouteInfo, WebServerControllerConfigurerClassGenerationContext context) {
+		if(context.getMode() == GenerationMode.WEBSOCKET_ROUTE_ANNOTATION) {
+			StringBuilder result = new StringBuilder();
+			result.append(context.indent(0)).append("@").append(context.getWebSocketRouteAnnotationTypeName()).append("(");
+
+			result.append("path = { ");
+			if(webSocketRouteInfo.getPaths().length > 0) {
+				result.append(Arrays.stream(webSocketRouteInfo.getPaths())
+					.map(path -> "\"" + StringEscapeUtils.escapeJava(webSocketRouteInfo.getController()
+						.map(WebControllerInfo::getRootPath)
+						.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).path(path, false).buildRawPath())
+						.orElse(path)) + "\""
+					)
+					.collect(Collectors.joining(", "))
+				);	
+			}
+			else {
+				webSocketRouteInfo.getController()
+					.map(WebControllerInfo::getRootPath)
+					.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).buildRawPath())
+					.ifPresent(rootPath -> result.append("\"").append(rootPath).append("\""));
+			}
+			result.append(" }");
+
+			if(webSocketRouteInfo.isMatchTrailingSlash()) {
+				result.append(", matchTrailingSlash = true");
+			}
+			if(webSocketRouteInfo.getLanguages() != null && webSocketRouteInfo.getLanguages().length > 0) {
+				result.append(", language = { ").append(Arrays.stream(webSocketRouteInfo.getLanguages()).map(language -> "\"" + language + "\"").collect(Collectors.joining(", "))).append(" }");
+			}
+			if(webSocketRouteInfo.getSubprotocols()!= null && webSocketRouteInfo.getSubprotocols().length > 0) {
+				result.append(", subprotocol = { ").append(Arrays.stream(webSocketRouteInfo.getSubprotocols()).map(subprotocol -> "\"" + subprotocol + "\"").collect(Collectors.joining(", "))).append(" }");
+			}
+			if(webSocketRouteInfo.getMessageType() != null) {
+				result.append(", messageType = ").append(context.getWebSocketMessageKindTypeName()).append(".").append(webSocketRouteInfo.getMessageType().toString());
+			}
+			result.append(")");
+			return result;
+		}
+		else if(context.getMode() == GenerationMode.ROUTE_DECLARATION) {
+			boolean typesMode = context.isTypeMode(webSocketRouteInfo);
+			StringBuilder routeHandler = new StringBuilder("webSocketExchange -> {").append(System.lineSeparator());
+			webSocketRouteInfo.getOutboundPublisher().ifPresentOrElse(
+				outboundPublisherInfo -> routeHandler.append(context.indent(typesMode ? 2 : 1)).append(this.visit(outboundPublisherInfo, context.withIndentDepth(context.getIndentDepth() + (typesMode ? 2 : 1) ).withWebRoute(webSocketRouteInfo).withMode(typesMode ? GenerationMode.WEBSOCKET_ROUTE_HANDLER_TYPE : GenerationMode.WEBSOCKET_ROUTE_HANDLER_CLASS))).append(";").append(System.lineSeparator()),
+				() -> routeHandler.append(context.indent(typesMode ? 2 : 1)).append(this.visit(webSocketRouteInfo, context.withIndentDepth(context.getIndentDepth() + (typesMode ? 2 : 1) ).withWebRoute(webSocketRouteInfo).withMode(typesMode ? GenerationMode.WEBSOCKET_ROUTE_HANDLER_TYPE : GenerationMode.WEBSOCKET_ROUTE_HANDLER_CLASS))).append(";").append(System.lineSeparator())
+			);
+			routeHandler.append(context.indent(typesMode ? 1 : 0)).append("}");
+			
+			StringBuilder routeManager = new StringBuilder();
+
+			if(webSocketRouteInfo.getPaths().length > 0) {
+				routeManager.append(Arrays.stream(webSocketRouteInfo.getPaths())
+					.map(path -> ".path(\"" + StringEscapeUtils.escapeJava(webSocketRouteInfo.getController()
+						.map(WebControllerInfo::getRootPath)
+						.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).path(path, false).buildRawPath())
+						.orElse(path)) + "\", " + webSocketRouteInfo.isMatchTrailingSlash() + ")"
+					)
+					.collect(Collectors.joining())
+				);
+			}
+			else {
+				webSocketRouteInfo.getController()
+					.map(WebControllerInfo::getRootPath)
+					.map(rootPath -> URIs.uri(rootPath, URIs.RequestTargetForm.ABSOLUTE, URIs.Option.PARAMETERIZED, URIs.Option.NORMALIZED, URIs.Option.PATH_PATTERN).buildRawPath())
+					.ifPresent(rootPath -> routeManager.append(".path(\"").append(StringEscapeUtils.escapeJava(rootPath)).append("\", ").append(webSocketRouteInfo.isMatchTrailingSlash()).append(")"));
+			}
+			if(webSocketRouteInfo.getLanguages() != null && webSocketRouteInfo.getLanguages().length > 0) {
+				routeManager.append(Arrays.stream(webSocketRouteInfo.getLanguages()).map(language -> ".language(\"" + language + "\")").collect(Collectors.joining()));
+			}
+			if(webSocketRouteInfo.getSubprotocols() != null && webSocketRouteInfo.getSubprotocols().length > 0) {
+				routeManager.append(Arrays.stream(webSocketRouteInfo.getSubprotocols()).map(subprotocol -> ".subprotocol(\"" + subprotocol + "\")").collect(Collectors.joining()));
+			}
+
+			routeManager.append(".handler(").append(routeHandler).append(")");
+			
+			if(typesMode) {
+				StringBuilder routeTypes = new StringBuilder(context.getTypeTypeName()).append("[] routeTypes = new ").append(context.getTypeTypeName()).append("[] {").append(System.lineSeparator());
+				routeTypes.append(Stream.concat(
+						Arrays.stream(webSocketRouteInfo.getParameters())
+							.filter(parameterInfo -> parameterInfo instanceof GenericWebSocketInboundPublisherParameterInfo)
+							.map(parameterInfo -> parameterInfo.getType()),
+						webSocketRouteInfo.getOutboundPublisher().map(outboundPublisherInfo -> Stream.of(outboundPublisherInfo.getType())).orElse(Stream.of())
+					)
+					.map(converterType -> new StringBuilder(context.indent(2)).append(context.getTypeGenerator(converterType)))
+					.collect(context.joining("," + System.lineSeparator()))
+				);
+
+				routeTypes.append(System.lineSeparator()).append(context.indent(1)).append("}");
+
+				StringBuilder result = new StringBuilder(context.indent(0)).append(".webSocketRoute(webSocketRoute -> {").append(System.lineSeparator());
+				result.append(context.indent(1)).append(routeTypes).append(";").append(System.lineSeparator());
+				result.append(context.indent(1)).append("webSocketRoute").append(routeManager).append(";").append(System.lineSeparator());
+				result.append(context.indent(0)).append("})");
+
+				return result;
+			}
+			else {
+				return new StringBuilder(context.indent(0)).append(".webSocketRoute()").append(routeManager);
+			}
+		}
+		else if(context.getMode() == GenerationMode.WEBSOCKET_ROUTE_HANDLER_CLASS || context.getMode() == GenerationMode.WEBSOCKET_ROUTE_HANDLER_TYPE) {
+			boolean typesMode = context.getMode() == GenerationMode.WEBSOCKET_ROUTE_HANDLER_TYPE;
+			StringBuilder requestParameters = new StringBuilder();
+			GenerationMode parameterReferenceMode = typesMode ? GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE : GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS;
+			
+			int parameterIndex = 0;
+			for(Iterator<WebParameterInfo> parameterInfoIterator = Arrays.stream(webSocketRouteInfo.getParameters()).iterator();parameterInfoIterator.hasNext();) {
+				// WebExchangeContextParameterInfo, WebSocketExchangeParameterInfo, WebSocketInboundParameterInfo, WebSocketInboundPubliserInfo, WebSocketOutboundParameterInfo
+				requestParameters.append(this.visit(parameterInfoIterator.next(), context.withIndentDepth(0).withMode(parameterReferenceMode).withWebRoute(webSocketRouteInfo).withParameterIndex(parameterIndex)));
+				if(parameterInfoIterator.hasNext()) {
+					requestParameters.append(", ");
+				}
+				parameterIndex++;
+			}
+			return new StringBuilder("this.").append(context.getFieldName(context.getWebController().getQualifiedName())).append(".").append(webSocketRouteInfo.getElement().get().getSimpleName().toString()).append("(").append(requestParameters).append(")");
+		}
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketBoundPublisherInfo boundPublisherInfo, WebServerControllerConfigurerClassGenerationContext context) {
+		if(boundPublisherInfo instanceof WebSocketOutboundPublisherInfo) {
+			return this.visit((WebSocketOutboundPublisherInfo)boundPublisherInfo, context);
+		}
+		else if(boundPublisherInfo instanceof WebSocketInboundPublisherParameterInfo) {
+			return this.visit((WebSocketInboundPublisherParameterInfo)boundPublisherInfo, context);
+		}
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketOutboundPublisherInfo outboundPublisherInfo, WebServerControllerConfigurerClassGenerationContext context) {
+		if(context.getMode() == GenerationMode.WEBSOCKET_ROUTE_HANDLER_CLASS || context.getMode() == GenerationMode.WEBSOCKET_ROUTE_HANDLER_TYPE) {
+			boolean typesMode = context.getMode() == GenerationMode.WEBSOCKET_ROUTE_HANDLER_TYPE;
+			
+			WebSocketMessage.Kind WebSocketMessageKind = ((WebSocketRouteInfo)context.getWebRoute()).getMessageType();
+
+			StringBuilder result = new StringBuilder();
+			result.append("webSocketExchange.outbound()");
+
+			String webSocketInbound = "webSocketExchange.outbound()";
+			
+			WebSocketRouteInfo webSocketRouteInfo = (WebSocketRouteInfo)context.getWebRoute();
+			
+			StringBuilder handlerInvoke = this.visit(webSocketRouteInfo, context);
+
+			boolean isPublisher = outboundPublisherInfo.getBoundReactiveKind() == WebSocketBoundPublisherInfo.BoundReactiveKind.PUBLISHER;
+
+			boolean isCharsequence = false;
+			switch(outboundPublisherInfo.getBoundKind()) {
+				case CHARSEQUENCE_REDUCED: 
+				case CHARSEQUENCE_REDUCED_ONE: 
+				case CHARSEQUENCE_PUBLISHER: 
+				case CHARSEQUENCE_MANY: isCharsequence = true;
+				case RAW_REDUCED:
+				case RAW_REDUCED_ONE:
+				case RAW_PUBLISHER: 
+				case RAW_MANY: {
+					// (Publisher|Flux|Mono)<ByteBuf>
+					// webSocketExchange.outbound().messages(factory -> Flux.from(...).map(factory::text_raw))
+					// webSocketExchange.outbound().messages(factory -> ....map(factory::text_raw))
+
+					result.append(".messages(factory -> ");
+					if(isPublisher) {
+						result.append(context.getFluxTypeName()).append(".from(").append(handlerInvoke).append(")");
+					}
+					else {
+						result.append(handlerInvoke);
+					}
+					result.append(".map(");
+					switch(WebSocketMessageKind) {
+						case TEXT: {
+								if(isCharsequence) {
+									result.append("factory::text");
+								}
+								else {
+									result.append("factory::text_raw");
+								}
+							}
+							break;
+						case BINARY: result.append("factory::binary");
+							break;
+						default :
+							throw new IllegalStateException("Unknown WebSocket message kind");
+					}
+					result.append(")");
+					result.append(")");
+					return result;
+				}
+				case EMPTY: {
+					// (Publisher|Flux|Mono)<Void>
+					// webSocketExchange.outbound().messages(factory -> Flux.from(...).then(Mono.empty()));
+					// webSocketExchange.outbound().messages(factory -> ....then(Mono.empty()));
+
+					result.append(".messages(factory -> ");
+					if(isPublisher) {
+						result.append(context.getFluxTypeName()).append(".from(").append(handlerInvoke).append(")");
+					}
+					else {
+						result.append(handlerInvoke);
+					}
+					
+					result.append(".then(").append(context.getMonoTypeName()).append(".empty())");
+					result.append(")");
+					return result;
+				}
+				case ENCODED: {
+					// (Publisher|Flux|Mono)<T>
+					// => GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS
+					// webSocketExchange.outbound().encodeTextMessages(this.wsx13(), Message.class);
+					// => GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE
+					// webSocketExchange.outbound().encodeTextMessages(this.wsx13(), routeTypes[0]);
+					
+					switch(WebSocketMessageKind) {
+						case TEXT: result.append(".encodeTextMessages(");
+							break;
+						case BINARY: result.append(".encodeBinaryMessages(");
+							break;
+						default :
+							throw new IllegalStateException("Unknown WebSocket message kind");
+					}
+					
+					result.append(handlerInvoke).append(", ");
+					if(typesMode) {
+						result.append("routeTypes[").append(webSocketRouteInfo.getParameters().length).append("]");
+					}
+					else {
+						result.append(context.getTypeName(outboundPublisherInfo.getType())).append(".class");
+					}
+					result.append(")");
+					return result;
+				}
+				default :
+					throw new IllegalStateException("Unknown WebSocket bound reactive kind");
+			}
+			
+		}
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketParameterInfo parameterInfo, WebServerControllerConfigurerClassGenerationContext context) {
+		if(parameterInfo instanceof WebSocketOutboundParameterInfo) {
+			return this.visit((WebSocketOutboundParameterInfo)parameterInfo, context);
+		}
+		else if(parameterInfo instanceof WebSocketInboundPublisherParameterInfo) {
+			return this.visit((WebSocketInboundPublisherParameterInfo)parameterInfo, context);
+		}
+		else if(parameterInfo instanceof WebSocketInboundParameterInfo) {
+			return this.visit((WebSocketInboundParameterInfo)parameterInfo, context);
+		}
+		else if(parameterInfo instanceof WebSocketExchangeParameterInfo) {
+			return this.visit((WebSocketExchangeParameterInfo)parameterInfo, context);
+		}
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketOutboundParameterInfo outboundParameterInfo, WebServerControllerConfigurerClassGenerationContext context) {
+		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE || context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS) {
+			return new StringBuilder("webSocketExchange.outbound()");
+		}
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketInboundPublisherParameterInfo inboundPublisherParameterInfo, WebServerControllerConfigurerClassGenerationContext context) {
+		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE || context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS) {
+			boolean typesMode = context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE;
+			
+			WebSocketMessage.Kind WebSocketMessageKind = ((WebSocketRouteInfo)context.getWebRoute()).getMessageType();
+
+			StringBuilder result = new StringBuilder();
+
+			String webSocketInbound = "webSocketExchange.inbound()";
+
+			TypeMirror boundReactiveType;
+			switch(inboundPublisherParameterInfo.getBoundReactiveKind()) {
+				case PUBLISHER: boundReactiveType = context.getFluxType();
+					break;
+				case MANY: boundReactiveType = context.getFluxType();
+					break;
+				case ONE: boundReactiveType = context.getMonoType();
+					break;
+				default:
+					throw new IllegalStateException("Unknown WebSocket bound reactive kind");
+			}
+
+			boolean isCharsequence = false;
+			switch(inboundPublisherParameterInfo.getBoundKind()) {
+				case CHARSEQUENCE_REDUCED: isCharsequence = true;
+				case RAW_REDUCED: {
+					// (Publisher|Flux|Mono)<ByteBuf|String>
+					// Flux.from(webSocketExchange.inbound().textMessages()).flatMap(WebSocketMessage::reducedBinary)
+					// Flux.from(webSocketExchange.inbound().binaryMessages()).flatMap(WebSocketMessage::reducedBinary)
+
+					result.append(context.getTypeName(boundReactiveType)).append(".from(").append(webSocketInbound);
+					switch(WebSocketMessageKind) {
+						case TEXT: result.append(".textMessages()");
+							break;
+						case BINARY: result.append(".binaryMessages()");
+							break;
+						default :
+							throw new IllegalStateException("Unknown WebSocket message kind");
+					}
+					result.append(").flatMap(").append(context.getWebSocketMessageTypeName()).append("::").append(isCharsequence ? "reducedText" : "reducedBinary").append(")");
+					return result;
+				}
+				case CHARSEQUENCE_REDUCED_ONE: isCharsequence = true;
+				case RAW_REDUCED_ONE: {
+					// (Publisher|Flux|Mono)<Mono<ByteBuf|String>>
+					// (Flux|Mono).from(webSocketExchange.inbound().textMessages()).map(WebSocketMessage::reducedBinary)
+					// (Flux|Mono).from(webSocketExchange.inbound().binaryMessages()).map(WebSocketMessage::reducedBinary)
+
+					result.append(context.getTypeName(boundReactiveType)).append(".from(").append(webSocketInbound);
+					switch(WebSocketMessageKind) {
+						case TEXT: result.append(".textMessages()");
+							break;
+						case BINARY: result.append(".binaryMessages()");
+							break;
+						default :
+							throw new IllegalStateException("Unknown WebSocket message kind");
+					}
+					result.append(").map(").append(context.getWebSocketMessageTypeName()).append("::").append(isCharsequence ? "reducedText" : "reduceBinary").append(")");
+					return result;
+				}
+				case CHARSEQUENCE_PUBLISHER: isCharsequence = true;
+				case RAW_PUBLISHER: {
+					// (Publisher|Flux|Mono)<Publisher<ByteBuf|String>>
+					// (Flux|Mono).from(webSocketExchange.inbound().textMessages()).map(WebSocketMessage::binary)
+					// (Flux|Mono).from(webSocketExchange.inbound().binaryMessages()).map(WebSocketMessage::binary)
+					result.append(context.getTypeName(boundReactiveType)).append(".from(").append(webSocketInbound);
+					switch(WebSocketMessageKind) {
+						case TEXT: result.append(".textMessages()");
+							break;
+						case BINARY: result.append(".binaryMessages()");
+							break;
+						default :
+							throw new IllegalStateException("Unknown WebSocket message kind");
+					}
+					result.append(").map(").append(context.getWebSocketMessageTypeName()).append("::").append(isCharsequence ? "binary" : "text").append(")");
+					return result;
+				}
+				case CHARSEQUENCE_MANY: isCharsequence = true;
+				case RAW_MANY: {
+					// (Publisher|Flux|Mono)<Flux<ByteBuf|String>>
+					// (Flux|Mono).from(webSocketExchange.inbound().textMessages()).map(message -> Flux.from(message.binary()))
+					// (Flux|Mono).from(webSocketExchange.inbound().binaryMessages()).map(message -> Flux.from(message.binary()))
+					result.append(context.getTypeName(boundReactiveType)).append(".from(").append(webSocketInbound);
+					switch(WebSocketMessageKind) {
+						case TEXT: result.append(".textMessages()");
+							break;
+						case BINARY: result.append(".binaryMessages()");
+							break;
+						default :
+							throw new IllegalStateException("Unknown WebSocket message kind");
+					}
+					result.append(").map(message -> ").append(context.getFluxTypeName()).append(".from(message.").append(isCharsequence ? "binary" : "text").append("()))");
+					return result;
+				}
+				case EMPTY: {
+					// (Publisher|Flux|Mono)<Void>
+					// Flux.from(webSocketExchange.inbound().frames()).doOnNext(WebSocketFrame::release).then()
+					// Flux.from(webSocketExchange.inbound().frames()).doOnNext(WebSocketFrame::release).thenMany(Flux.empty())
+
+					result.append(context.getTypeName(boundReactiveType)).append(".from(").append(webSocketInbound).append(".frames())");
+					result.append(".doOnNext(").append(context.getWebSocketFrameTypeName()).append("::release)");
+
+					if(inboundPublisherParameterInfo.getBoundReactiveKind() == WebSocketBoundPublisherInfo.BoundReactiveKind.MANY) {
+						result.append(".thenMany(").append(context.getFluxTypeName()).append(".empty())");
+					}
+					else {
+						result.append(".then()");
+					}
+					return result;
+				}
+				case ENCODED: {
+					// (Publisher|Flux|Mono)<T>
+					// => GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS
+					// webSocketExchange.inbound().decodeTextMessages(Message.class);
+					// Flux.from(webSocketExchange.inbound().decodeTextMessages(Message.class));
+					// Mono.from(webSocketExchange.inbound().decodeTextMessages(Message.class));
+					// => GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE
+					// webSocketExchange.inbound().decodeTextMessages(routeTypes[0]);
+					// Flux.from(webSocketExchange.inbound().decodeTextMessages(routeTypes[0]));
+					// Mono.from(webSocketExchange.inbound().decodeTextMessages(routeTypes[0]));
+					StringBuilder decodedMessagesPublisher = new StringBuilder();
+					decodedMessagesPublisher.append(webSocketInbound);
+					
+					switch(WebSocketMessageKind) {
+						case TEXT: decodedMessagesPublisher.append(".decodeTextMessages(");
+							break;
+						case BINARY: decodedMessagesPublisher.append(".decodeBinaryMessages(");
+							break;
+						default :
+							throw new IllegalStateException("Unknown WebSocket message kind");
+					}
+					
+					if(typesMode) {
+						decodedMessagesPublisher.append("routeTypes[").append(context.getParameterIndex()).append("]");
+					}
+					else {
+						decodedMessagesPublisher.append(context.getTypeName(inboundPublisherParameterInfo.getType())).append(".class");
+					}
+					decodedMessagesPublisher.append(")");
+					
+					
+					if(inboundPublisherParameterInfo.getBoundReactiveKind() == WebSocketBoundPublisherInfo.BoundReactiveKind.PUBLISHER) {
+						result.append(decodedMessagesPublisher);
+					}
+					else {
+						result.append(context.getTypeName(boundReactiveType)).append(".from(").append(decodedMessagesPublisher).append(")");
+					}
+					return result;
+				}
+				default :
+					throw new IllegalStateException("Unknown WebSocket bound reactive kind");
+			}
+		}
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketInboundParameterInfo inboundParameterInfo, WebServerControllerConfigurerClassGenerationContext context) {
+		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE || context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS) {
+			return new StringBuilder("webSocketExchange.inbound()");
+		}
+		return new StringBuilder();
+	}
+
+	@Override
+	public StringBuilder visit(WebSocketExchangeParameterInfo exchangeParameterInfo, WebServerControllerConfigurerClassGenerationContext context) {
+		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS || context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE) {
+			return new StringBuilder("webSocketExchange");
 		}
 		return new StringBuilder();
 	}

@@ -33,6 +33,16 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>io.inverno</groupId>
+			<artifactId>inverno-core</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-boot</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>io.inverno.mod</groupId>
 			<artifactId>inverno-configuration</artifactId>
 			<version>${project.version}</version>
@@ -43,22 +53,27 @@
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>io.inverno</groupId>
-			<artifactId>inverno-core</artifactId>
+			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-redis-lettuce</artifactId>
+			<version>${project.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-web</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-web-compiler</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		
 		<dependency>
 			<groupId>io.inverno</groupId>
 			<artifactId>inverno-test</artifactId>
 			<version>${version.inverno}</version>
 			<scope>test</scope>
 		</dependency>
-
-		<dependency>
-			<groupId>io.inverno.mod</groupId>
-			<artifactId>inverno-redis-lettuce</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-
 
 		<dependency>
 			<groupId>org.junit.platform</groupId>
@@ -114,9 +129,9 @@
 				<configuration>
 					<!-- This seems to be required for Java 16 -->
 					<argLine>--add-opens java.base/java.lang.invoke=ALL-UNNAMED,io.inverno.mod.test</argLine>
-					<includes>
-<!-- 						<include>**/*.java</include> -->
-					</includes>
+<!--					<includes>
+						<include>**/*.java</include>
+					</includes>-->
 				</configuration>
 			</plugin>
 		</plugins>

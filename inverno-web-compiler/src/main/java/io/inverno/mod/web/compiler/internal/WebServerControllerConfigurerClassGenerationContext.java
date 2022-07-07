@@ -15,6 +15,25 @@
  */
 package io.inverno.mod.web.compiler.internal;
 
+import io.inverno.core.compiler.spi.ModuleQualifiedName;
+import io.inverno.core.compiler.spi.support.AbstractSourceGenerationContext;
+import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.server.ws.WebSocketExchange;
+import io.inverno.mod.http.server.ws.WebSocketFrame;
+import io.inverno.mod.http.server.ws.WebSocketMessage;
+import io.inverno.mod.web.MissingRequiredParameterException;
+import io.inverno.mod.web.WebExchange;
+import io.inverno.mod.web.annotation.WebRoute;
+import io.inverno.mod.web.annotation.WebSocketRoute;
+import io.inverno.mod.web.compiler.spi.WebControllerInfo;
+import io.inverno.mod.web.compiler.spi.WebExchangeParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebRequestBodyParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebRouteInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketInboundPublisherParameterInfo;
+import io.inverno.mod.web.compiler.spi.WebSocketRouteInfo;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,7 +42,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import javax.lang.model.type.ArrayType;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.ErrorType;
@@ -40,22 +58,7 @@ import javax.lang.model.type.UnionType;
 import javax.lang.model.type.WildcardType;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-
 import org.reactivestreams.Publisher;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.inverno.core.compiler.spi.ModuleQualifiedName;
-import io.inverno.core.compiler.spi.support.AbstractSourceGenerationContext;
-import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.web.MissingRequiredParameterException;
-import io.inverno.mod.web.WebExchange;
-import io.inverno.mod.web.annotation.WebRoute;
-import io.inverno.mod.web.compiler.spi.WebControllerInfo;
-import io.inverno.mod.web.compiler.spi.WebExchangeParameterInfo;
-import io.inverno.mod.web.compiler.spi.WebRequestBodyParameterInfo;
-import io.inverno.mod.web.compiler.spi.WebRouteInfo;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -85,15 +88,18 @@ class WebServerControllerConfigurerClassGenerationContext extends AbstractSource
 		CONTROLLER_ASSIGNMENT,
 		ROUTE_ANNOTATION,
 		ROUTE_DECLARATION,
-		ROUTE_HANDLER_BODY_CLASS,
-		ROUTE_HANDLER_BODY_TYPE,
+		ROUTE_HANDLER_CLASS,
+		ROUTE_HANDLER_TYPE,
 		ROUTE_PARAMETER_REFERENCE_CLASS,
 		ROUTE_PARAMETER_REFERENCE_TYPE,
 		ROUTE_PARAMETER_REFERENCE_ONE,
-		ROUTE_PARAMETER_REFERENCE_MANY
+		ROUTE_PARAMETER_REFERENCE_MANY,
+		WEBSOCKET_ROUTE_ANNOTATION,
+		WEBSOCKET_ROUTE_HANDLER_CLASS,
+		WEBSOCKET_ROUTE_HANDLER_TYPE;
 	}
 	
-	private TypeGenerator typeGenerator;
+	private final TypeGenerator typeGenerator;
 	private WebControllerInfo webController;
 	private WebRouteInfo webRoute;
 	private Integer parameterIndex;
@@ -116,6 +122,12 @@ class WebServerControllerConfigurerClassGenerationContext extends AbstractSource
 	private TypeMirror typesType;
 	private TypeMirror voidType;
 	private TypeMirror byteBufType;
+	private TypeMirror webSocketRouteAnnotationType;
+	private TypeMirror webSocketMessageKindType;
+	private TypeMirror webSocketExchangeInboundType;
+	private TypeMirror webSocketExchangeOutboundType;
+	private TypeMirror webSocketMessageType;
+	private TypeMirror webSocketFrameType;
 	
 	public WebServerControllerConfigurerClassGenerationContext(Types typeUtils, Elements elementUtils, GenerationMode mode) {
 		super(typeUtils, elementUtils, mode);
@@ -140,6 +152,12 @@ class WebServerControllerConfigurerClassGenerationContext extends AbstractSource
 		this.typesType = elementUtils.getTypeElement(io.inverno.mod.base.reflect.Types.class.getCanonicalName()).asType();
 		this.voidType = elementUtils.getTypeElement(Void.class.getCanonicalName()).asType();
 		this.byteBufType = elementUtils.getTypeElement(ByteBuf.class.getCanonicalName()).asType();
+		this.webSocketRouteAnnotationType = elementUtils.getTypeElement(WebSocketRoute.class.getCanonicalName()).asType();
+		this.webSocketMessageKindType = elementUtils.getTypeElement(WebSocketMessage.Kind.class.getCanonicalName()).asType();
+		this.webSocketExchangeInboundType = elementUtils.getTypeElement(WebSocketExchange.Inbound.class.getCanonicalName()).asType();
+		this.webSocketExchangeOutboundType = elementUtils.getTypeElement(WebSocketExchange.Outbound.class.getCanonicalName()).asType();
+		this.webSocketMessageType = elementUtils.getTypeElement(WebSocketMessage.class.getCanonicalName()).asType();
+		this.webSocketFrameType = elementUtils.getTypeElement(WebSocketFrame.class.getCanonicalName()).asType();
 	}
 	
 	private WebServerControllerConfigurerClassGenerationContext(WebServerControllerConfigurerClassGenerationContext parentGeneration) {
@@ -238,19 +256,24 @@ class WebServerControllerConfigurerClassGenerationContext extends AbstractSource
 	}
 	
 	public boolean isTypeMode(WebRouteInfo routeInfo) {
-		if(routeInfo.getResponseBody().getType().getKind() != TypeKind.VOID && !this.isClassType(routeInfo.getResponseBody().getType())) {
-			return true;
-		}
-		return Arrays.stream(routeInfo.getParameters())
-			.filter(parameter -> !(parameter instanceof WebExchangeParameterInfo))
-			.anyMatch(parameter -> {
-				if(parameter instanceof WebRequestBodyParameterInfo) {
-					return !this.isClassType(parameter.getType());
-				}
-				else {
-					return !this.isClassType(this.getParameterConverterType(parameter.getType()));					
-				}
-			});
+		return (routeInfo.getResponseBody().getType().getKind() != TypeKind.VOID && !this.isClassType(routeInfo.getResponseBody().getType()))
+			|| Arrays.stream(routeInfo.getParameters())
+				.filter(parameter -> !(parameter instanceof WebExchangeParameterInfo))
+				.anyMatch(parameter -> {
+					if(parameter instanceof WebRequestBodyParameterInfo) {
+						return !this.isClassType(parameter.getType());
+					}
+					else {
+						return !this.isClassType(this.getParameterConverterType(parameter.getType()));					
+					}
+				});
+	}
+	
+	public boolean isTypeMode(WebSocketRouteInfo routeInfo) {
+		return routeInfo.getOutboundPublisher()
+				.map(outboundPublisherInfo -> outboundPublisherInfo.getType().getKind() != TypeKind.VOID && !this.isClassType(outboundPublisherInfo.getType()))
+				.orElse(false) 
+			|| Arrays.stream(routeInfo.getParameters()).anyMatch(parameter -> (parameter instanceof WebSocketInboundPublisherParameterInfo) && !this.isClassType(parameter.getType()));
 	}
 	
 	public boolean isClassType(TypeMirror type) {
@@ -258,7 +281,7 @@ class WebServerControllerConfigurerClassGenerationContext extends AbstractSource
 			return false;
 		}
 		else if(type.getKind() == TypeKind.DECLARED) {
-			return ((DeclaredType)type).getTypeArguments().size() == 0;
+			return ((DeclaredType)type).getTypeArguments().isEmpty();
 		}
 		return true;
 	}
@@ -405,6 +428,54 @@ class WebServerControllerConfigurerClassGenerationContext extends AbstractSource
 	
 	public String getByteBufTypeName() {
 		return this.getTypeName(this.getByteBufType());
+	}
+	
+	public TypeMirror getWebSocketRouteAnnotationType() {
+		return webSocketRouteAnnotationType != null ? webSocketRouteAnnotationType : this.parentGeneration.getWebSocketRouteAnnotationType();
+	}
+	
+	public String getWebSocketRouteAnnotationTypeName() {
+		return this.getTypeName(this.getWebSocketRouteAnnotationType());
+	}
+	
+	public TypeMirror getWebSocketMessageKindType() {
+		return webSocketMessageKindType != null ? webSocketMessageKindType : this.parentGeneration.getWebSocketMessageKindType();
+	}
+	
+	public String getWebSocketMessageKindTypeName() {
+		return this.getTypeName(this.getWebSocketMessageKindType());
+	}
+	
+	public TypeMirror getWebSocketExchangeInboundType() {
+		return webSocketExchangeInboundType != null ? webSocketExchangeInboundType : this.parentGeneration.getWebSocketExchangeInboundType();
+	}
+	
+	public String getWebSocketExchangeInboundTypeName() {
+		return this.getTypeName(this.getWebSocketExchangeInboundType());
+	}
+	
+	public TypeMirror getWebSocketExchangeOutboundType() {
+		return webSocketExchangeOutboundType != null ? webSocketExchangeOutboundType : this.parentGeneration.getWebSocketExchangeOutboundType();
+	}
+	
+	public String getWebSocketExchangeOutboundTypeName() {
+		return this.getTypeName(this.getWebSocketExchangeOutboundType());
+	}
+	
+	public TypeMirror getWebSocketMessageType() {
+		return webSocketMessageType != null ? webSocketMessageType : this.parentGeneration.getWebSocketMessageType();
+	}
+	
+	public String getWebSocketMessageTypeName() {
+		return this.getTypeName(this.getWebSocketMessageType());
+	}
+	
+	public TypeMirror getWebSocketFrameType() {
+		return webSocketFrameType != null ? webSocketFrameType : this.parentGeneration.getWebSocketFrameType();
+	}
+	
+	public String getWebSocketFrameTypeName() {
+		return this.getTypeName(this.getWebSocketFrameType());
 	}
 	
 	public StringBuilder getTypeGenerator(TypeMirror type) {
