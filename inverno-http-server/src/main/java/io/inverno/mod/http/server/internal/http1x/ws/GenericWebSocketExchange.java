@@ -376,7 +376,14 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 		if(mustClose) {
 			this.executeInEventLoop(() -> {
 				ChannelPromise closePromise = this.context.newPromise();
-				this.context.writeAndFlush(new CloseWebSocketFrame(code, reason), closePromise);
+				
+				String cleanReason = reason;
+				// 125 bytes is the limit: code is encoded on 2 bytes, reason must be 123 bytes
+				if(cleanReason != null && cleanReason.length() >= 123) {
+					cleanReason = new StringBuilder(cleanReason.substring(0, 120)).append("...").toString();
+				}
+				
+				this.context.writeAndFlush(new CloseWebSocketFrame(code, cleanReason), closePromise);
 				closePromise.addListener(ChannelFutureListener.CLOSE);
 				closePromise.addListener(ign -> LOGGER.debug("WebSocket closed ({}): {}", code, reason));
 				this.finalizeExchange(closePromise);

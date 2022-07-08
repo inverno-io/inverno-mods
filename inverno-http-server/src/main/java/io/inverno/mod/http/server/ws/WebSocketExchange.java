@@ -108,6 +108,10 @@ public interface WebSocketExchange<A extends ExchangeContext> {
 	 * <p>
 	 * Closes the WebSocket with the normal status ({@code 1000}).
 	 * </p>
+	 * 
+	 * <p>
+	 * If the WebSocket was already closed, this method does nothing.
+	 * </p>
 	 */
 	default void close() {
 		this.close(WebSocketStatus.NORMAL_CLOSURE, WebSocketStatus.NORMAL_CLOSURE.getReason());
@@ -116,6 +120,10 @@ public interface WebSocketExchange<A extends ExchangeContext> {
 	/**
 	 * <p>
 	 * Closes the WebSocket with the specified status.
+	 * </p>
+	 * 
+	 * <p>
+	 * If the WebSocket was already closed, this method does nothing.
 	 * </p>
 	 * 
 	 * @param status a WebSocket close status
@@ -129,6 +137,10 @@ public interface WebSocketExchange<A extends ExchangeContext> {
 	 * Closes the WebSocket with the specified status code.
 	 * </p>
 	 * 
+	 * <p>
+	 * If the WebSocket was already closed, this method does nothing.
+	 * </p>
+	 * 
 	 * @param code a WebSocket close status code
 	 */
 	default void close(short code) {
@@ -138,6 +150,14 @@ public interface WebSocketExchange<A extends ExchangeContext> {
 	/**
 	 * <p>
 	 * Closes the WebSocket with the normal status ({@code 1000}) and the specified reason.
+	 * </p>
+	 * 
+	 * <p>
+	 * A WebSocket close frame must have a payload length of 125 bytes or less, when {@code code + reason} exceeds this limit, the reason shall be truncated.
+	 * </p>
+	 * 
+	 * <p>
+	 * If the WebSocket was already closed, this method does nothing.
 	 * </p>
 	 * 
 	 * @param reason a close reason
@@ -151,6 +171,14 @@ public interface WebSocketExchange<A extends ExchangeContext> {
 	 * Closes the WebSocket with specified status and reason.
 	 * </p>
 	 * 
+	 * <p>
+	 * A WebSocket close frame must have a payload length of 125 bytes or less, when {@code code + reason} exceeds this limit, the reason shall be truncated.
+	 * </p>
+	 * 
+	 * <p>
+	 * If the WebSocket was already closed, this method does nothing.
+	 * </p>
+	 * 
 	 * @param status a WebSocket close status
 	 * @param reason a WebSocket close status code
 	 */
@@ -161,6 +189,18 @@ public interface WebSocketExchange<A extends ExchangeContext> {
 	/**
 	 * <p>
 	 * Closes the WebSocket with specified status code and reason.
+	 * </p>
+	 * 
+	 * <p>
+	 * A WebSocket close frame must have a payload length of 125 bytes or less, when {@code code + reason} exceeds this limit, the reason shall be truncated.
+	 * </p>
+	 * 
+	 * <p>
+	 * A WebSocket close frame must have a payload length of 125 bytes or less, when {@code code + reason} exceeds this limit, the reason shall be truncated.
+	 * </p>
+	 * 
+	 * <p>
+	 * If the WebSocket was already closed, this method does nothing.
 	 * </p>
 	 * 
 	 * @param code   a WebSocket close status code

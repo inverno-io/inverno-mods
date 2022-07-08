@@ -39,7 +39,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -62,7 +61,7 @@ public class WebSocketTest extends AbstractInvernoModTest {
 	}
 	
 	@Test
-	@Disabled
+//	@Disabled
 	public void testWebSocketController() throws IOException, InvernoCompilationException, ClassNotFoundException, InterruptedException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException, ExecutionException, TimeoutException {
 		this.clearModuleTarget();
 		
