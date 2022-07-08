@@ -1,15 +1,13 @@
 package io.inverno.mod.configuration.source;
 
+import io.inverno.mod.configuration.ConfigurationKey.Parameter;
+import io.inverno.mod.configuration.ConfigurationQueryResult;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.List;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import io.inverno.mod.configuration.ConfigurationKey.Parameter;
-import io.inverno.mod.configuration.ConfigurationQueryResult;
 
 public class SystemPropertiesConfigurationSourceTest {
 
@@ -30,9 +28,9 @@ public class SystemPropertiesConfigurationSourceTest {
 			.collectList()
 			.block();
 		
-		results.stream().forEach(queryResult -> {
-			System.out.println(queryResult.getQueryKey() + " -> " + queryResult.getResult().orElse(null));
-		});
+//		results.stream().forEach(queryResult -> {
+//			System.out.println(queryResult.getQueryKey() + " -> " + queryResult.getResult().orElse(null));
+//		});
 		
 		Assertions.assertEquals(4, results.size());
 		

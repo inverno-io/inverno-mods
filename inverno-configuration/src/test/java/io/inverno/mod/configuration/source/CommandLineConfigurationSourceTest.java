@@ -40,9 +40,9 @@ public class CommandLineConfigurationSourceTest {
 			.collectList()
 			.block();
 
-		/*results.stream().forEach(queryResult -> {
-			System.out.println(queryResult.getQueryKey() + " -> " + queryResult.getResult().orElse(null));
-		});*/
+//		results.stream().forEach(queryResult -> {
+//			System.out.println(queryResult.getQueryKey() + " -> " + queryResult.getResult().orElse(null));
+//		});
 		
 		// cast test
 		/*ConfigurationSource<?,?,?> src2 = src;

@@ -1,20 +1,17 @@
 package io.inverno.mod.configuration.source;
 
+import io.inverno.mod.base.resource.ClasspathResource;
+import io.inverno.mod.configuration.ConfigurationKey.Parameter;
+import io.inverno.mod.configuration.ConfigurationProperty;
+import io.inverno.mod.configuration.ConfigurationQueryResult;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.List;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
-import io.inverno.mod.base.resource.ClasspathResource;
-import io.inverno.mod.configuration.ConfigurationKey;
-import io.inverno.mod.configuration.ConfigurationKey.Parameter;
-import io.inverno.mod.configuration.ConfigurationProperty;
-import io.inverno.mod.configuration.ConfigurationQueryResult;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class PropertyFileConfigurationSourceTest {
 
@@ -36,9 +33,9 @@ public class PropertyFileConfigurationSourceTest {
 			.collectList()
 			.block();
 		
-		results.stream().forEach(queryResult -> {
-			System.out.println(queryResult.getQueryKey() + " -> " + queryResult.getResult().orElse(null));
-		});
+//		results.stream().forEach(queryResult -> {
+//			System.out.println(queryResult.getQueryKey() + " -> " + queryResult.getResult().orElse(null));
+//		});
 		
 		Assertions.assertEquals(5, results.size());
 		
