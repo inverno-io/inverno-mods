@@ -20,6 +20,7 @@ import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.security.authentication.LoginCredentials;
 import io.inverno.mod.security.authentication.password.RawPassword;
 import io.inverno.mod.security.http.CredentialsExtractor;
+import io.inverno.mod.security.http.MalformedCredentialsException;
 import java.util.Base64;
 import reactor.core.publisher.Mono;
 
@@ -34,13 +35,29 @@ import reactor.core.publisher.Mono;
 public class BasicCredentialsExtractor implements CredentialsExtractor<LoginCredentials> {
 	
 	@Override
-	public Mono<LoginCredentials> extract(Exchange<?> exchange) {
+	public Mono<LoginCredentials> extract(Exchange<?> exchange) throws MalformedCredentialsException {
 		return Mono.fromSupplier(() -> exchange.request().headers()
 			.<Headers.Authorization>getHeader(Headers.NAME_AUTHORIZATION)
 			.filter(authorizationHeader -> authorizationHeader.getAuthScheme().equals(Headers.Authorization.AUTH_SCHEME_BASIC))
 			.map(authorizationHeader -> {
 				String[] splitCredentials = new String(Base64.getDecoder().decode(authorizationHeader.getToken())).split(":");
-				return LoginCredentials.of(splitCredentials[0], new RawPassword(splitCredentials[1]));
+				switch(splitCredentials.length) {
+					case 1: {
+						if(splitCredentials[0].isBlank()) {
+							// ":" <=> no basic credentials
+							return null;
+						}
+						return LoginCredentials.of(splitCredentials[0], new RawPassword(""));
+					}
+					case 2: {
+						return LoginCredentials.of(splitCredentials[0], new RawPassword(splitCredentials[1]));
+					}
+					default : {
+						// this is invalid
+						throw new MalformedCredentialsException("Invalid basic credentials");
+					}
+				}
+				
 			})
 			.orElse(null)
 		);

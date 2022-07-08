@@ -61,7 +61,7 @@ public class WebSocketTest extends AbstractInvernoModTest {
 	}
 	
 	@Test
-//	@Disabled
+	@Disabled
 	public void testWebSocketController() throws IOException, InvernoCompilationException, ClassNotFoundException, InterruptedException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException, ExecutionException, TimeoutException {
 		this.clearModuleTarget();
 		
