@@ -67,6 +67,17 @@ public interface RequestBody {
 	
 	/**
 	 * <p>
+	 * Returns a string payload consumer.
+	 * </p>
+	 *
+	 * @return the string data
+	 *
+	 * @throws IllegalStateException if the payload has already been consumed using another decoder
+	 */
+	RequestData<CharSequence> string() throws IllegalStateException;
+	
+	/**
+	 * <p>
 	 * Returns a multipart/form-data payload consumer.
 	 * </p>
 	 *

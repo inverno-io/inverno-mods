@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.server.internal;
 
+import io.inverno.mod.base.Charsets;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Part;
@@ -47,6 +48,7 @@ public class GenericRequestBody implements RequestBody {
 	private Flux<ByteBuf> data;
 	
 	private RequestData<ByteBuf> rawData;
+	private RequestData<CharSequence> stringData;
 	private RequestBody.UrlEncoded urlEncodedData;
 	private RequestBody.Multipart<Part> multipartData;
 
@@ -82,7 +84,16 @@ public class GenericRequestBody implements RequestBody {
 		}
 		return this.rawData;
 	}
-
+	
+	@Override
+	public RequestData<CharSequence> string() throws IllegalStateException {
+		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
+		if(this.stringData == null) {
+			this.stringData = new GenericRequestBodyStringData();
+		}
+		return this.stringData;
+	}
+	
 	@Override
 	public RequestBody.Multipart<Part> multipart() {
 		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
@@ -101,11 +112,42 @@ public class GenericRequestBody implements RequestBody {
 		return this.urlEncodedData;
 	}
 	
+	/**
+	 * <p>
+	 * Generic raw {@link RequestData} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	private class GenericRequestBodyRawData implements RequestData<ByteBuf> {
 
 		@Override
 		public Publisher<ByteBuf> stream() {
 			return GenericRequestBody.this.data;
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Generic string {@link RequestData} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
+	private class GenericRequestBodyStringData implements RequestData<CharSequence> {
+
+		@Override
+		public Publisher<CharSequence> stream() {
+			return GenericRequestBody.this.data.map(buf -> {
+				try {
+					return buf.toString(Charsets.DEFAULT);
+				}
+				finally {
+					buf.release();
+				}
+			});
 		}
 	}
 
