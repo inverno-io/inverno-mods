@@ -75,6 +75,11 @@ class GenericWebRequestBody implements WebRequestBody {
 	}
 
 	@Override
+	public RequestData<CharSequence> string() throws IllegalStateException {
+		return this.requestBody.string();
+	}
+	
+	@Override
 	public Multipart<WebPart> multipart() throws IllegalStateException {
 		return new WebMultipart();
 	}
