@@ -67,4 +67,13 @@ public interface Part {
 	 * @return the raw data
 	 */
 	RequestData<ByteBuf> raw();
+	
+	/**
+	 * <p>
+	 * Returns the part's data as string.
+	 * </p>
+	 * 
+	 * @return the string data
+	 */
+	RequestData<CharSequence> string();
 }

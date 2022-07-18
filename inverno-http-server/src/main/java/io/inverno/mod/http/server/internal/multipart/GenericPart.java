@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.server.internal.multipart;
 
+import io.inverno.mod.base.Charsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,6 +51,7 @@ class GenericPart implements Part {
 	private FluxSink<ByteBuf> dataEmitter;
 	
 	private RequestData<ByteBuf> rawData;
+	private RequestData<CharSequence> stringData;
 	
 	/**
 	 * <p>
@@ -123,12 +125,51 @@ class GenericPart implements Part {
 		}
 		return this.rawData;
 	}
+
+	@Override
+	public RequestData<CharSequence> string() {
+		if(this.stringData == null) {
+			this.stringData = new GenericPartStringData();
+		}
+		return this.stringData;
+	}
 	
+	/**
+	 * <p>
+	 * Generic Part raw data.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	private class GenericPartRawData implements RequestData<ByteBuf> {
 
 		@Override
 		public Publisher<ByteBuf> stream() {
 			return GenericPart.this.data;
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Generic Part String data.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.5
+	 */
+	private class GenericPartStringData implements RequestData<CharSequence> {
+
+		@Override
+		public Publisher<CharSequence> stream() {
+			return GenericPart.this.data.map(buf -> {
+				try {
+					return buf.toString(Charsets.DEFAULT);
+				}
+				finally {
+					buf.release();
+				}
+			});
 		}
 	}
 }

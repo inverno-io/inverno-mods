@@ -77,6 +77,11 @@ class GenericWebPart implements WebPart {
 	}
 
 	@Override
+	public RequestData<CharSequence> string() {
+		return this.part.string();
+	}
+	
+	@Override
 	public <A> RequestDataDecoder<A> decoder(Class<A> type) {
 		return this.decoder((Type)type);
 	}
