@@ -19,6 +19,7 @@ import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.resource.FileResource;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.BadRequestException;
+import io.inverno.mod.http.base.InternalServerErrorException;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Headers;
 import io.netty.buffer.ByteBuf;
@@ -210,6 +211,18 @@ public class Readme {
 					)
 				)
 				.body().empty();
+		};
+		
+		handler = exchange -> {
+			exchange.webSocket()
+				.orElseThrow(() -> new InternalServerErrorException("WebSocket not supported"))
+				.handler(webSocketExchange -> {
+					webSocketExchange.outbound().frames(factory -> webSocketExchange.inbound().frames());
+					webSocketExchange.close((short)1000, "Goodbye!");
+				})
+				.or(() -> {
+					throw new BadRequestException("Web socket handshake failed");
+				});
 		};
 	}
 }

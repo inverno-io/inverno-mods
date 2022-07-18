@@ -12,6 +12,7 @@
 
 [rfc-7540-8.1.2.4]: https://tools.ietf.org/html/rfc7540#section-8.1.2.4
 [rfc-6455]: https://datatracker.ietf.org/doc/html/rfc6455
+[rfc-6455-5.4]: https://datatracker.ietf.org/doc/html/rfc6455#section-5.4
 
 # HTTP Server
 
@@ -1175,6 +1176,239 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
         .body().raw()...;
 };
 ```
+
+## WebSocket
+
+An HTTP exchange can be upgraded to a WebSocket exchange as defined by [RFC 6455][rfc-6455].
+
+The `webSocket()` method exposed on the `Exchange` allows to upgrade to the WebSocket protocol, it returns an optional `WebSocket` which might be empty if the original exchange does not support the upgrade. This is especially the case when using HTTP/2 for which Websocket upgrade is not supported or if the state of the exchange prevents the upgrade (e.g. error exchange). 
+
+The resulting `WebSocket` allows specifying a `WebSocketExchangeHandler` and a default action in case the WebSocket opening handshake fails (e.g. the client did not provide the correct headers for the upgrade...). A WebSocket exchange handler is used to handle the resulting `WebSocketExchange` which exposes WebSocket inbound and outbound data.
+
+In the following example, the original HTTP `Exchange` is upgraded to a `WebSocketExchange` and all inbound frames are sent back to the client. An internal server error (500) is returned if WebSocket upgrade is not supported and a bad request error (400) is returned if the opening handshake failed:
+
+```java
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
+    exchange.webSocket()
+        .orElseThrow(() -> new InternalServerErrorException("WebSocket not supported"))
+        .handler(webSocketExchange -> {
+            webSocketExchange.outbound().frames(factory -> webSocketExchange.inbound().frames());
+        })
+        .or(() -> {
+            throw new BadRequestException("Web socket handshake failed");
+        });
+};
+```
+
+It is possible to specify the supported subprotocols when creating the `WebSocket`, an `UnsupportedProtocolException` shall be raised if the subprotocol negotiation fails (i.e. the client requested a protocol that is not supported by the server)
+
+```java
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
+    // Indicates that the server supports the 'chat' subprotocol
+    exchange.webSocket("chat")
+        ...
+};
+```
+
+The `WebSocketExchange` also exposes:
+
+- the original HTTP request, 
+
+```java
+webSocketExchange.request();
+```
+
+- the exchange context:
+
+```java
+webSocketExchange.context();
+```
+
+- the negotiated subprotocol:
+
+```java
+webSocketExchange.getSubProtocol();
+```
+
+- multiple methods for closing the WebSocket:
+
+```java
+webSocketExchange.close(WebSocketStatus.NORMAL_CLOSURE);
+webSocketExchange.close((short)1000, "Goodbye!");
+```
+
+A WebSocket exchange finalizer can be specified to free resources once the WebSocket is closed:
+
+```java
+webSocketExchange.finalizer(Mono.fromRunnable(() -> {
+    // Release some resources
+    ...
+}));
+```
+
+The WebSocket protocol is bidirectional and allows sending and receiving data on both ends exposed by `inbound()` and `outbound()` methods in the WebSocket exchange.
+
+### Inbound
+
+In a WebSocket exchange, the `Inbound` exposes the stream of frames sent by the client to the server. It allows to consume WebSocket frames (text or binary) or messages (text or binary).
+
+The following handler simply logs incoming frames:
+
+```java
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
+    exchange.webSocket()
+        .orElseThrow(() -> new InternalServerErrorException())
+        .handler(webSocketExchange -> {
+            Flux.from(webSocketExchange.inbound().frames()).subscribe(frame -> {
+                try {
+                    LOGGER.info("Received WebSocket frame: kind = " + frame.getKind() + ", final = " + frame.isFinal() + ", size = " + frame.getBinaryData().readableBytes());
+                }
+                finally {
+                    frame.release();
+                }
+            });
+        });
+};
+```
+
+As for request body `ByteBuf` data, WebSocket frames are reference counted and they must be released where they are consumed. In previous example, inbound frames are consumed in the handler which must release them.
+
+The WebSocket protocol supports fragmentation as defined by [RFC 6455 Section 5.4][rfc-6455-5.4], a WebSocket message can be fragmented into multiple frames, the final frame being flagged as final to indicate the end of the message. The `Inbound` can handle fragmented WebSocket messages and allows to consume corresponding fragmented data in multiple ways.
+
+```java
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
+    exchange.webSocket()
+        .orElseThrow(() -> new InternalServerErrorException())
+        .handler(webSocketExchange -> {
+            Flux.from(webSocketExchange.inbound().messages()).subscribe(message -> {
+                // The stream of frames composing the message
+                Publisher<WebSocketFrame> frames = message.frames();
+            
+                // The message data as stream of ByteBuf
+                Publisher<ByteBuf> binary = message.binary();
+                
+                // The message data as stream of String
+                Publisher<String> text = message.text();
+                
+                // Aggregate all fragments into a single ByteBuf
+                Mono<ByteBuf> reducedBinary = message.reducedBinary();
+                
+                // Aggregate all fragments into a single String
+                Mono<String> reducedText = message.reducedText();
+                
+                ...
+            });
+        });
+};
+```
+
+> Note that the different publishers in previous example are all variants of the frames publisher, as a result they are exclusive and it is only possible to subscribe once to only one of them.
+
+Unlike WebSocket frames, WebSocket messages are not reference counted, however message fragments, which are basically frames, must be released when consumed as WebSocket frames or `ByteBuf`.
+
+Messages can be filtered by type (text or binary) by invoking `WebSocketExchange.Inbound#textMessages()` and `WebSocketExchange.Inbound#binaryMessages()`.
+
+### Outbound
+
+In a WebSocket exchange, the `Outbound` exposes the stream of frames sent by the server to the client. It allows to specify the stream of WebSocket frames (text or binary) or messages (text or binary) to send to the client. WebSocket frames and messages are created using provided factories.
+
+The following handler simply sends three text frames to the client. The WebSocket is closed automatically when the outbound publisher terminates.
+
+```java
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
+    exchange.webSocket()
+        .orElseThrow(() -> new InternalServerErrorException())
+        .handler(webSocketExchange -> {
+            webSocketExchange.outbound().frames(factory -> Flux.just("ONE", "TWO", "THREE").map(factory::text));
+        });
+}
+```
+
+Likewise we can send messages to the client, in the following example three Websocket frames are sent to the client per message: the constant `message:`, the actual message content and an empty final frame which marks the end of the message. Frames and messages publisher are exclusive, only one of them can be specified.
+
+```java
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
+    exchange.webSocket()
+        .orElseThrow(() -> new InternalServerErrorException())
+        .handler(webSocketExchange -> {
+            webSocketExchange.outbound().messages(factory -> Flux.just("ONE", "TWO", "THREE").map(content -> factory.text(Flux.just("message: ", content))));
+        });
+}
+```
+
+### A simple chat server
+
+Using the reactive API, a simple chat server can be implemented quite easily. The following exchange handler uses a sink to broadcast the frames received to every connected clients:
+
+```java
+package io.inverno.example.app_http_websocket;
+
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.annotation.Destroy;
+import io.inverno.core.annotation.Init;
+import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.base.resource.PathResource;
+import io.inverno.mod.base.resource.Resource;
+import io.inverno.mod.http.base.HttpException;
+import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ServerController;
+import io.inverno.mod.http.server.ws.WebSocketFrame;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
+
+@Bean
+public class ChatServerController implements ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> {
+
+    private Sinks.Many<WebSocketFrame> chatSink;
+
+    @Init
+    public void init() {
+        this.chatSink = Sinks.many().multicast().onBackpressureBuffer(16, false);                                                  // 0 
+    }
+
+    @Destroy
+    public void destroy() {
+        this.chatSink.tryEmitComplete();
+    }
+
+    @Override
+    public void handle(Exchange<ExchangeContext> exchange) throws HttpException {
+        exchange.webSocket().ifPresentOrElse(
+            websocket -> websocket
+                .handler(webSocketExchange -> {
+                    Flux.from(webSocketExchange.inbound().frames())                                                                // 1 
+                        .subscribe(frame -> {                                                                                      // 2 
+                            try {
+                                this.chatSink.tryEmitNext(frame);                                                                  // 3 
+                            }
+                            finally {
+                                frame.release();                                                                                   // 4 
+                            }
+                        });
+                    webSocketExchange.outbound().frames(factory -> this.chatSink.asFlux().map(WebSocketFrame::retainedDuplicate)); // 5 
+                })
+                .or(() -> exchange.response()
+                    .body().string().value("Web socket handshake failed")
+                ),
+            () -> exchange.response()
+                .body().string().value("WebSocket not supported")
+        );
+    }
+}
+```
+
+0. Create a multicast chat sink with autocancel set to false to broadcast inbound frames to all connected clients.
+1. When receiving a new connection, get the inbound frames stream.
+2. Subscribe to the inbound frames stream.
+3. For each frame received, broadcast the frame using the chat sink.
+4. Release the inbound frame.
+5. Set the WebSocket outbound using the chat sink: on each frame, retain and duplicate.
+
+As stated before, WebSocket frames are reference counted and inbound WebSocket frames must be released since the handler is the one consuming them. Furthermore for each connected client, the frame must be duplicated, since it is written multiple times, and retained to increment the reference counter, since it must stay in memory until it has been sent to all connected clients.
+
+> This chat server could have been implemented more simply without bothering with reference counting by emitting string data instead of frames in the chat sink. But this would actually be far less optimal as it would involve memory copy. In above solution, the incoming data is never copied into memory, there is only one `ByteBuf` written to all connected client. As always, it is important to find the right balance between performance, simplicity and readability.
 
 ## Extending HTTP services
 

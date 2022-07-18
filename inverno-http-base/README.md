@@ -1,5 +1,6 @@
 [rfc-7231-5.3.2]: https://tools.ietf.org/html/rfc7231#section-5.3.2
 [rfc-7231-5.3.5]: https://tools.ietf.org/html/rfc7231#section-5.3.5
+[rfc-7235-4.2]: https://datatracker.ietf.org/doc/html/rfc7235#section-4.2
 [rfc-6266]: https://tools.ietf.org/html/rfc6266
 [rfc-7231-5.1.1.5]: https://tools.ietf.org/html/rfc7231#section-5.1.1.5
 [rfc-6265-4.2]: https://tools.ietf.org/html/rfc6265#section-4.2
@@ -76,7 +77,7 @@ Charset charset = contentType.getCharset();
 
 ```
 
-The *http-base* module provides a default implementation exposed as a bean which relies on a set of `HeaderCodec` to support specific headers. Custom header codecs can then be injected in the module to extend its capabilities.
+The *http-base* module provides a default implementation exposed as a bean which relies on a set of `HeaderCodec` objects to support specific headers. Custom header codecs can then be injected in the module to extend its capabilities.
 
 For instance, we can create an `ApplicationContextHeaderCodec` codec in order for the header service to decode custom `application-context` headers to  `ApplicationContextHeader` instances. The codec must be injected in the *http-base* module either explicitly when creating the module or through dependency injection.
 
@@ -99,6 +100,7 @@ By default, the *http-base* module provides codecs for the following headers:
 
 - `accept` as defined by [RFC 7231 Section 5.3.2][rfc-7231-5.3.2]
 - `accept-language` as defined by [RFC 7231 Section 5.3.5][rfc-7231-5.3.5]
+- `authorization` as defined by [RFC 7235 Section 4.2][rfc-7235-4.2]
 - `content-disposition` as defined by [RFC 6266][rfc-6266]
 - `content-type` as defined by [RFC 7231 Section 3.1.1.5][rfc-7231-5.1.1.5]
 - `cookie` as defined by [RFC 6265 Section 4.2][rfc-6265-4.2]
