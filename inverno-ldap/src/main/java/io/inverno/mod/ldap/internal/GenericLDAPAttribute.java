@@ -69,7 +69,7 @@ public class GenericLDAPAttribute implements LDAPAttribute {
 	 * </p>
 	 *
 	 * @param name the attribute name
-	 * @param name the attribute value
+	 * @param value the attribute value
 	 */
 	public GenericLDAPAttribute(String name, Object value) {
 		this.name = name;

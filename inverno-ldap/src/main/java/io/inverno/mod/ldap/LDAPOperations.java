@@ -83,7 +83,7 @@ public interface LDAPOperations {
 	 * Resolves and returns the entry identified by the specified DN.
 	 * </p>
 	 *
-	 * @param dn     an expression to use to get the DN of the suer to authenticate
+	 * @param dn     an expression to use to get the DN of the user to authenticate
 	 * @param dnArgs the arguments to use the format the DN expression
 	 *
 	 * @return a publisher of one entry or an empty publisher if no entry exists with the specified DN.
