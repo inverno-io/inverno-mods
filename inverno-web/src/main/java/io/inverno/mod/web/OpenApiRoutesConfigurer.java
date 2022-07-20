@@ -59,8 +59,10 @@ import java.util.stream.Collectors;
  * @since 1.3
  *
  * @see WebJarsRoutesConfigurer
+ * 
+ * @param <A> the exchange context type
  */
-public class OpenApiRoutesConfigurer implements WebRoutesConfigurer<ExchangeContext> {
+public class OpenApiRoutesConfigurer<A extends ExchangeContext> implements WebRoutesConfigurer<A> {
 	
 	private static final Logger LOGGER = LogManager.getLogger(OpenApiRoutesConfigurer.class);
 	
@@ -115,7 +117,7 @@ public class OpenApiRoutesConfigurer implements WebRoutesConfigurer<ExchangeCont
 	}
 
 	@Override
-	public void configure(WebRoutable<ExchangeContext, ?> routes) {
+	public void configure(WebRoutable<A, ?> routes) {
 		routes
 			.route().path("/open-api", true).method(Method.GET).produces(MediaTypes.APPLICATION_JSON).handler(exchange -> {
 				exchange.response().body().raw().value(this.listSpec());

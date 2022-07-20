@@ -6,6 +6,7 @@
 [form-urlencoded]: https://url.spec.whatwg.org/#application/x-www-form-urlencoded
 [ndjson]: http://ndjson.org/
 [yaml]: https://en.wikipedia.org/wiki/YAML
+[server-sent-events]: https://en.wikipedia.org/wiki/Server-sent_events
 
 [rfc-7231-5.1.1]: https://tools.ietf.org/html/rfc7231#section-5.1.1
 [rfc-7231-5.3]: https://tools.ietf.org/html/rfc7231#section-5.3
@@ -13,6 +14,8 @@
 [rfc-7231-5.3.2]: https://tools.ietf.org/html/rfc7231#section-5.3.2
 [rfc-7231-5.3.5]: https://tools.ietf.org/html/rfc7231#section-5.3.5
 [rfc-7231-7.1.2]: https://tools.ietf.org/html/rfc7231#section-7.1.2
+[rfc-6455]: https://datatracker.ietf.org/doc/html/rfc6455
+[rfc-6455-1.9]: https://datatracker.ietf.org/doc/html/rfc6455#section-1.9
 
 # Web
 
@@ -29,9 +32,9 @@ It especially provides:
 - smooth Web/REST controller development
 - [OpenAPI][open-api] specifications generation using Web/REST controllers JavaDoc comments
 - SwaggerUI integration
-- an Inverno compiler plugin providing static validation of the routes and generation of Web router configurers
+- an Inverno compiler plugin providing static validation of the routes and generation of Web server controller configurers
 
-The *web* module composes the *http-server* module and therefore starts a HTTP server. Just like the *http-server* module, it requires a net service and a resource service as well as a list of [media type converters](#media-type-converter) for message payload conversion. Basic implementations of these services are provided by the *boot* module which provides `application/json`, `application/x-ndjson` and `text/plain` media type converters. Additional media type converters can surely be provided by implementing the `MediaTypeConverter` interface.
+The *web* module composes the *http-server* module and therefore starts a HTTP server. Just like the *http-server* module, it requires a net service and a resource service as well as a list of [media type converters](#media-type-converter) for message payload conversion. Basic implementations of these services are provided by the *boot* module which provides `application/json`, `application/x-ndjson` and `text/plain` media type converters. Additional media type converters can also be provided by implementing the `MediaTypeConverter` interface.
 
 In order to use the Inverno *web* module, we should declare the following dependencies in the module descriptor:
 
@@ -71,25 +74,27 @@ compile 'io.inverno.mod:inverno-web:${VERSION_INVERNO_MODS}'
 ...
 ```
 
-## Routing
+## Web Routing API
 
 The *web* module defines an API for routing HTTP requests to the right handlers. 
 
-A **router** is a server exchange handler as defined by the *http-server* module API which can be used as root handler or error handler in the HTTP server, its role is to route an exchange to a handler based on a set of rules applied to the exchange.
+A **router** is a server exchange handler as defined by the *http-server* module API which can be used to handle exchanges or error exchanges in the server controller of the HTTP server, its role is to route an exchange to an handler based on a set of rules applied to the exchange.
 
 A **route** specifies the rules that an exchange must matched to be routed to a particular handler. A **route interceptor** specifies the rules that a route must match to be intercepted by a particular exchange interceptor.
 
 A **route manager** is used to manage the routes in a router or, more explicitly, to list, create, enable or disable routes in a router. An **interceptor manager** is used to configure the route interceptors in an intercepted router.
 
-> The module defines a high level SPI in `io.inverno.mod.spi` package that can be used as a base to implement custom routing implementations in addition to the provided Web routing implementations. Nevertheless, it is more of a guideline, one can choose a totally different approach to implement routing, in the end the HTTP server expects a `RootExchangeHandler<ExchangeContext, Exchange<ExchangeContext>>` what is done inside is completely opaque, the SPI only shows one way to do it.
+> The module defines a high level SPI in `io.inverno.mod.spi` package that can be used as a base to implement custom routing implementations in addition to the provided Web routing implementations. Nevertheless, it is more of a guideline, one can choose a totally different approach to implement routing, in the end the HTTP server expects a `ServerController` with an `ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>>` to handle exchange and an `ExchangeHandler<ExchangeContext, ErrorExchange<ExchangeContext>>` to handle errors, what is done inside these handlers is completely opaque, the SPI only shows one way to do it.
 
-A `WebRouter` is used to route a `WebExchange` to the right `WebExchangeHandler`, it implements `RootExchangeHandler` and it is typically used as root handler in the HTTP server.
+A `WebRouter` is used to route a `WebExchange` to the right `ExchangeHandler`, it extends `ExchangeHandler` and it is typically used as the exchange handler in a the server controller of the HTTP server.
 
-An `ErrorRouter` is used to route an `ErrorWebExchange` to the right `ErrorWebExchangeHandler` when an exception is thrown during the normal processing of an exchange, it implements `ErrorExchangeHandler` and it is typically used as error handler in the HTTP server.
+An `ErrorRouter` is used to route an `ErrorWebExchange` to the right `ExchangeHandler` when an exception is thrown during the normal processing of an exchange, it extends `ExchangeHandler` and it is typically used as the error exchange handler in a the server controller of the HTTP server.
 
 ### Web exchange
 
-The *web* module API extends the [server exchange API](#http-server-exchange-api) defined in the *http-server* module. It defines the server `WebExchangeHandler` to handle a server `WebExchange` composed of a `WebRequest`/`WebResponse` pair in a HTTP communication between a client and a server. These interfaces respectively extends the `ExchangeHandler`, `Exchange`, `Request` and `Response` interfaces defined in the *http-server* module. A Web exchange handler is typically attached to one or more Web routes defined in a `WebRouter`.
+The *web* module API extends the [server exchange API](#http-server-api) defined in the *http-server* module. It defines the server `WebExchange` composed of a `WebRequest`/`WebResponse` pair in a HTTP communication between a client and a server. These interfaces respectively extends the `Exchange`, `Request` and `Response` interfaces defined in the *http-server* module. A web exchange handler (i.e. `ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>`) is typically attached to one or more Web routes defined in a `WebRouter`.
+
+The Web exchange provides additional functionnalities on top of the exchange including support for path parameters, request/response body decoder/encoder based on the content type, WebSocket inbound/outbound data decoder/encoder based on the subprotocol.
 
 #### Path parameters
 
@@ -98,7 +103,7 @@ Path parameters are exposed in the `WebRequest`, they are extracted from the req
 For instance, if the handler is attached to a route matching `/book/{id}`, the `id` path parameter can be retrieved as follows:
 
 ```java
-WebExchangeHandler<ExchangeContext> handler = exchange -> {
+ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler = exchange -> {
     exchange.request().pathParameters().get("id")
         .ifPresentOrElse(
             id -> {
@@ -114,44 +119,44 @@ WebExchangeHandler<ExchangeContext> handler = exchange -> {
 The request body can be decoded based on the content type defined in the request headers.
 
 ```java
-WebExchangeHandler<ExchangeContext> handler = exchange -> {
+ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler = exchange -> {
     Mono<Result> storeBook = exchange.request().body().get()
         .decoder(Book.class)
         .one()
         .map(book -> storeBook(book));
     exchange.response().body()
-        .raw().stream(storeBook.map(result -> Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(result.getMessage(), Charsets.DEFAULT))));
+        .string().stream(storeBook.map(result -> result.getMessage()));
 };
 ```
 
-When invoking the `decoder()` method, a [media type converter](#media-type-converter) corresponding to the request content type is selected to decode the payload. The `content-type` header MUST be specified in the request, otherwise (400) bad request error is returned indicating an empty media type. If there is no converter corresponding to the media type, an (415) unsupported media type error is returned indicating that no decoder was found matching the content type.
+When invoking the `decoder()` method, a [media type converter](#media-type-converter) corresponding to the request content type is selected to decode the payload. The `content-type` header MUST be specified in the request, otherwise (400) bad request error is returned indicating an empty media type. If there is no converter corresponding to the media type, a (415) unsupported media type error is returned indicating that no decoder was found matching the content type.
 
 A decoder is obtained by specifying the type of the object to decode in the `decoder()` method, the type can be a `Class<T>` or a `java.lang.reflect.Type` which allows to decode parameterized types at runtime bypassing type erasure. Parameterized Types can be built at runtime using the [reflection API](#reflection-api).
 
 As you can see in the above example the decoder is fully reactive, a request payload can be decoded in a single object by invoking method `one()` on the decoder which returns a `Mono<T>` publisher or in a stream of objects by invoking method `many()` on the decoder which returns a `Flux<T>` publisher. 
 
-Decoding multiple payload objects is indicated when a client streams content to the server. For instance, it can send a request with `application/x-ndjson` content type in order to send multiple messages in a single request. Since everything is reactive the server doesn't have to wait for the full request and it can process a message as soon as it is received. What is remarkable is that the code is largely unchanged.
+Decoding multiple payload objects is indicated when a client streams content to the server. For instance, it can send a request with `application/x-ndjson` content type in order to send multiple messages in a single request. Since everything is reactive the server doesn't have to wait for the full request and it can process a message as soon as it is received. What is remarkable is that the code is widely unchanged.
 
 ```java
-WebExchangeHandler<ExchangeContext> handler = exchange -> {
+ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler = exchange -> {
     Flux<Result> storeBook = exchange.request().body().get()
         .decoder(Book.class)
         .many()
         .map(book -> storeBook(book));
     exchange.response().body()
-        .raw().stream(storeBook.map(result -> Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(result.getMessage(), Charsets.DEFAULT))));
+        .string().stream(storeBook.map(result -> result.getMessage()));
 };
 ```
 
 Conversion of a multipart form data request body is also supported, the payload of each part being decoded independently based on the content type of the part. For instance we can upload multiple books in multiple files in a `multipart/form-data` request and decode them on the fly as follows:
 
 ```java
-WebExchangeHandler<ExchangeContext> handler = exchange -> {
+ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler = exchange -> {
     exchange.response()
-        .body().raw().stream(Flux.from(exchange.request().body().get().multipart().stream())                          // 1
-            .flatMap(part -> part.decoder(Book.class).one())                                                          // 2
-            .map(book -> storeBook(book))                                                                             // 3
-            .map(result -> Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(result.getMessage(), Charsets.DEFAULT))) // 4
+        .body().string().stream(Flux.from(exchange.request().body().get().multipart().stream()) // 1 
+            .flatMap(part -> part.decoder(Book.class).one())                                    // 2 
+            .map(book -> storeBook(book))                                                       // 3 
+            .map(result -> result.getMessage())                                                 // 4
         );
 };
 ```
@@ -170,7 +175,7 @@ All this process is done in a reactive way, the first chunk of response can be s
 As for the request body, the response body can be encoded based on the content type defined in the response headers. Considering previous example we can do the following:
 
 ```java
-WebExchangeHandler<ExchangeContext> handler = exchange -> {
+ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler = exchange -> {
     Mono<Result> storeBook = exchange.request().body().get()
         .decoder(Book.class)
         .one()
@@ -188,13 +193,39 @@ When invoking the `encoder()` method, a [media type converter](#media-type-conve
 A single object is encoded by invoking method `one()` on the encoder or multiple objects can be encoded by invoking method `many()` on the encoder. Returning multiple objects in a stream is particularly suitable to implement progressive display in a Web application, for example to display search results as soon as some are available.
 
 ```java
-WebExchangeHandler<ExchangeContext> handler = exchange -> {
+ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler = exchange -> {
     Flux<SearchResult> searchResults = ...;
     exchange.response()
         .headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_NDJSON))
         .body()
             .encoder(SearchResult.class)
             .many(searchResults);
+};
+```
+
+#### WebSocket message decoder/encoder
+
+A Web exchange can be upgraded to a Web WebSocket exchange. The `Web2SocketExchange` thus created extends `WebSocketExchange` and allows to respectively decode/encode WebSocket inbound and outbound messages based on the subprotocol negotiated during the opening handshake. 
+
+As for request and response payloads, a [media type converter](#media-type-converter) corresponding to the subprotocol is selected to decode/encode inbound and outbound messages. If there is no converter corresponding to the subprotocol, a `WebSocketException` is thrown resulting in a (500) internal server error returned to the client indicating that no converter was found matching the subprotocol.
+
+The subprotocol must then correspond to a valid media type. Unlike request and response payloads which expect strict media type representation, compact `application/` media type representation can be specified as subprotocol. In practice, it is possible to open a WebSocket connection with subprotocol `json` to select the `application/json` media type converter.
+
+> As defined by [RFC 6455][rfc-6455], a WebSocket subprotocol is not a media type and is registered separately, however using media type is very handy in this case as it allows to reuse the data conversion facility. Supporting compact `application/` media type representation allows to mitigate this specification violation as it is then possible to specify a valid subprotocol while still being able to select a media type converter. Let's consider the registered subprotocol `v2.bookings.example.net` (taken from [RFC 6455 Section 1.9][rfc-6455-1.9]), we can then create a media type converter for `application/v2.bookings.example.net` that will be selected when receiving connection for that particular subprotocol.
+
+The following example is a variant of the [simple chat server](#a-simple-chat-server) which shows how JSON messages can be automatically decoded and encoded:
+
+```java
+ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> handler = exchange -> {
+    exchange.webSocket("json")
+        .orElseThrow(() -> new InternalServerErrorException("WebSocket not supported"))
+        .handler(webSocketExchange -> {
+            Flux.from(webSocketExchange.inbound().decodeTextMessages(Message.class)).subscribe(message -> this.chatSink.tryEmitNext(message));
+            webSocketExchange.outbound().encodeTextMessages(this.chatSink.asFlux());
+        })
+        .or(() -> exchange.response()
+            .body().string().value("Web socket handshake failed")
+        );
 };
 ```
 
@@ -270,7 +301,7 @@ routable
         .remove();
 ```
 
-Individual routes can also be enabled, disabled or removed as follows:
+Individual routes can be enabled, disabled or removed as follows:
 
 ```java
 // Disables all GET routes producing 'application/json'
@@ -433,7 +464,7 @@ Routes are sorted by consumed media ranges as follows:
 
 - quality value is compared first as defined by [RFC7231 Section 5.3.1][rfc-7231-5.3.1], the default quality value is 1.
 - type and subtype wildcards are considered after: `a/b` > `a/*` > `*/b` > `*/*`
-- parameters are considered last, the most precise media range which is the one with the most parameters with values gets the highest priority (eg. `application/json;p1=a;p2=2` > `application/json;p1=b` > `application/json;p1`)
+- parameters are considered last, the most precise media range which is the one with the most parameters with matching values gets the highest priority (eg. `application/json;p1=a;p2=2` > `application/json;p1=b` > `application/json;p1`)
 
 The first route whose media range matches the request's `content-type` header field is selected.
 
@@ -449,18 +480,14 @@ routable
         .consumes("application/json;version=1")
         .handler(exchange -> {
             ...
-        });
-    
-routable
+        })
     .route()
         .path("/document")
         .method(Method.POST)
         .consumes("application/json;version=2")
         .handler(exchange -> {
             ...
-        });
-
-routable
+        })
     .route()
         .path("/document")
         .method(Method.POST)
@@ -474,13 +501,13 @@ In the above example, an exchange with a `application/json;version=1` request pa
 
 If there is no route matching the content type of a request of an exchange matched by previous routing rules, a (415) unsupported media type error is returned.
 
-> As described before, if no route is defined with a consume routing rule, exchanges are matched regardless of the request content type, content negotiation is then eventually delegated to the handler which must be able to process the payload whatever the format.
+> As described before, if no route is defined with a consume routing rule, exchanges are matched regardless of the request content type, content negotiation is then eventually delegated to the handler which must be able to process the payload whatever the content type.
 
 #### Produce routing rule
 
 The produce routing rule matches exchanges based on the acceptable media ranges supplied by the client in the `accept` header field of the request as defined by [RFC 7231 Section 5.3.2][rfc-7231-5.3.2].
 
-A HTTP client (eg. Web browser) typically sends a `accept` header to indicate the server which response media types are acceptable in the response. The best matching route is determined based on the media types produced by the routes matching previous routing rules.
+A HTTP client (eg. Web browser) typically sends an `accept` header to indicate the server which response media types are acceptable in the response. The best matching route is determined based on the media types produced by the routes matching previous routing rules.
 
 We can for instance define the following routes:
 
@@ -491,9 +518,7 @@ routable
         .produces(MediaTypes.APPLICATION_JSON)
         .handler(exchange -> {
             ...
-        });
-    
-routable
+        }) 
     .route()
         .path("/doc")
         .produces(MediaTypes.TEXT_XML)
@@ -532,14 +557,14 @@ If there is no route producing a media type that matches any of the acceptable m
 
 #### Language routing rule
 
-Finally, the language routing rule matches exchanges based on the acceptable languages supplied by client in the `accept-language` header field of the request as defined by [RFC 7231 Section 5.3.5][rfc-7231-5.3.5].
+The language routing rule matches exchanges based on the acceptable languages supplied by client in the `accept-language` header field of the request as defined by [RFC 7231 Section 5.3.5][rfc-7231-5.3.5].
 
 A HTTP client (eg. Web browser) typically sends a `accept-language` header to indicate the server which languages are acceptable for the response. The best matching route is determined based on the language tags produced by the routes matching previous routing rules.
 
 We can defines the following routes to return a particular resource in English or in French:
 
 ```java
-router
+routable
     .route()
         .path("/doc")
         .language("en-US")
@@ -547,7 +572,7 @@ router
             ...
         });
 
-router
+routable
     .route()
         .path("/doc")
         .language("fr-FR")
@@ -568,7 +593,7 @@ As for the produce routing rule, if there is no route defined with a language ta
 For instance, we can add the following default route to the router:
 
 ```java
-router
+routable
     .route()
         .path("/doc")
         .handler(exchange -> {
@@ -582,26 +607,101 @@ A request with the following `accept-language` header field is then matched by t
 accept-language: it-IT
 ```
 
+### WebSocket route
+
+The `WebRoutable` interface also exposes `webSocketRoute()` which returns a `WebSocketRouteManager` which allows defining WebSocket routes. A WebSocket route specifies the routing rules and the WebSocket exchange handler that shall be invoked after upgrading a matching exchange to a WebSocket exchange. it can combine the following routing rules which are matched in that order: the path of the request, the language ranges accepted by the client and the supported subprotocol. Unlike a regular Web route, a WebSocket exchange does not support method, consume and produce routing rules, this difference can be explain by the fact that a WebSocket upgrade request is always a `GET` request and that consumed and produced media types have just no meaning in the context of a WebSocket.
+
+When an exchange matches a WebSocket route, the Web router automatically handle the upgrade and setup the WebSocket exchange handler specified in the route. If the WebSocket upgrade is not supported, a `WebSocketException` is thrown resulting in a (500) internal server error returned to the client.
+
+A WebSocket endpoint can then be easily defined as follows:
+
+```java
+routable
+    .webSocketRoute()
+        .path("/ws")
+        .subprotocol("json")
+        .handler(webSocketExchange -> {
+            webSocketExchange.outbound().messages(factory -> webSocketExchange.inbound().messages());
+        });
+```
+
+`WebSocketRoute` extends `WebRoute`, as a result, just like Web routes, WebSocket routes matching particular rules can be selected, enabled, disabled or removed:
+
+```java
+// Disables all WebSocket routes supporting subprotocol 'json'
+routable
+    .webSocketRoute()
+        .subprotocol("json")
+        .findRoutes()
+        .stream()
+        .forEach(WebSocketRoute::disable);
+
+// Enables all routes (including WebSocket routes) with path matching '/ws'
+routable
+    .route()
+        .path("/ws")
+        .enable();
+```
+
+#### Subprotocol routing rule
+
+The produce routing rule matches exchanges based on the supported subprotocols supplied by the client in the `sec-websocket-version` header field of the request as defined by [RFC 6455][rfc-6455].
+
+A HTTP client (eg. Web browser) wishing to open a WebSocket connection typically sends a `sec-websocket-version` header to indicate the server which subprotocols it supports by order of preference. The best matching route is determined based on the subprotocol supported by the routes matching previous routing rules.
+
+We can then define the following WebSocket routes that handle different subprotocols:
+
+```java
+routable
+    .webSocketRoute()
+        .path("/ws")
+        .subprotocol("json")
+        .handler(webSocketExchange -> {
+            ...
+        })
+    .webSocketRoute()
+        .path("/ws")
+        .subprotocol("xml")
+        .handler(webSocketExchange -> {
+            ...
+        })
+    .webSocketRoute()
+        .path("/ws")
+        .handler(webSocketExchange -> {
+            ...
+        });
+```
+
+Let's consider a request with the following `sec-websocket-version` header field:
+
+```plaintext
+sec-websocket-version: xml, json
+```
+
+This field basically tells the server that the client wants to open a WebSocket connection using the `xml` subprotocol and if not supported the `json` subprotocol. As a result the request is matched by the second route in above example.
+
+If there is no route supporting any of the subprotocols provided by the client, an `UnsupportedProtocolException` is thrown resulting in a (500) internal server error returned to the client. The last route in above example is therefore not a default route, it is only matched when the client open a WebSocket connection with no subprotocol.
+
 ### Web route interceptor
 
 A Web route interceptor specifies the rules and the exchange interceptor that shall be applied to a matching route. It can combine the same rules as for the definition of a route: the path and method of the route, media range matching the content consumed by the route, media range and language range matching the media type and language produced by the route.
 
-The `WebExchangeInterceptor` interface extends the `ExchangeInterceptor` interface defined in the *http-server* module. It can be applied to one or more routes.
+Multiple web exchange interceptors (i.e. `ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>>`) can be applied to one or more web routes.
 
-The `WebInterceptable` interface defines a fluent API similar to the `WebRoutable` for the definition of Web interceptors. The following is an example of the definition of a Web route interceptor that is applied to routes matching `GET` methods and consuming `applicatio/json` payloads:
+The `WebInterceptable` interface defines a fluent API similar to the `WebRoutable` for the definition of Web interceptors. The following is an example of the definition of a Web route interceptor that is applied to routes matching `GET` methods and consuming `application/json` payloads:
 
 ```java
 interceptable.
     .intercept()
         .method(Method.GET)
         .consumes(MediaTypes.APPLICATION_JSON)
-        .intercept(exchange -> {
+        .interceptor(exchange -> {
             LOGGER.info("Intercepted!");
             return Mono.just(exchange);
         });
 ```
 
-As for an exchange handler, an exchange interceptor can be applied to multiple routes at once by providing multiple rules to the route interceptor manager, the following example is used to apply a route interceptor to `/doc` and `/document` routes which consumes `application/json` or `application/xml` payloads:
+As for an exchange handler, an exchange interceptor can be applied to multiple routes at once by providing multiple rules to the route interceptor manager, the following example is used to apply a route interceptor to `/doc` and `/document` routes consuming `application/json` or `application/xml` payloads:
 
 ```java
 interceptable
@@ -610,9 +710,21 @@ interceptable
         .path("/document")
         .consumes(MediaTypes.APPLICATION_JSON)
         .consumes(MediaTypes.APPLICATION_XML)
-        .intercept(exchange -> {
+        .interceptor(exchange -> {
             ...
         });
+```
+
+Multiple interceptors can be applied to a route at once using the `interceptors()` methods. The following example is equivalent as applying `interceptor1` then `interceptor2` on all routes matching `/some_path` (i.e. `interceptor2` is then invoked before `interceptor1`):
+
+```java
+ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>> interceptor1 = ...;
+ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>> interceptor2 = ...;
+
+interceptable
+    .intercept()
+        .path("/some_path")
+        .interceptors(List.of(interceptor1, interceptor2));
 ```
 
 The list of exchange interceptors applied to a route can be obtained from a `WebRoute` instance:
@@ -624,19 +736,19 @@ WebRoute<ExchangeContext> route = ...
 List<? extends ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>> routeInterceptors = route.getInterceptors();
 ```
 
-In a similar way, it is possible to explicitly set exchange interceptors on a `WebRoute` instance:
+In a similar way, it is possible to explicitly set exchange interceptors on a specific `WebRoute` instance:
 
 ```java
 Set<WebRoute<ExchangeContext>> routes = router.getRoutes();
 
-WebExchangeInterceptor<ExchangeContext> serverHeaderInterceptor = exchange -> {
+ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>> serverHeaderInterceptor = exchange -> {
     exchange.response()
         .headers(headers -> headers.set(Headers.NAME_SERVER, "Inverno Web Server");
 
     return Mono.just(exchange);
 };
 
-WebExchangeInterceptor<ExchangeContext> securityInterceptor = exchange -> {...};
+ExchangeInterceptor<ExchangeContext, WebExchange<ExchangeContext>> securityInterceptor = exchange -> {...};
 
 routes.stream().forEach(route -> route.setInterceptors(List.of(serverHeaderInterceptor, securityInterceptor));
 ```
@@ -644,22 +756,22 @@ routes.stream().forEach(route -> route.setInterceptors(List.of(serverHeaderInter
 Route interceptors can also be configured as blocks in reusable `WebInterceptorsConfigurer` by invoking `configureInterceptors()` methods:
 
 ```java
-WebInterceptorsConfigurer<ExchangeContext> security_interceptors_configurer = interceptable -> {
+WebInterceptorsConfigurer<ExchangeContext> public_interceptors_configurer = interceptable -> {
     interceptable
         .intercept()
         ...
 };
 
-WebInterceptorsConfigurer<ExchangeContext> tracing_interceptors_configurer = interceptable -> {
+WebInterceptorsConfigurer<ExchangeContext> private_interceptors_configurer = interceptable -> {
     interceptable
         .intercept()
         ...
 };
 
 interceptable
-    .configureInterceptors(public_routes_configurer)
-    .configureInterceptors(private_routes_configurer)
-    .route()
+    .configureInterceptors(public_interceptors_configurer)
+    .configureInterceptors(private_interceptors_configurer)
+    .intercept()
     ...
 ```
 
@@ -673,15 +785,17 @@ In these situations, the actual exchange interceptor is wrapped in order to eval
 
 > Particular care must be taken when listing the exchange interceptor attached to a route as these are the actual interceptors and not the wrappers. If you set interceptors explicitly on a `WebRoute` instance, they will be invoked whenever the route is invoked.
 
-When a route interceptor is defined with specific produce and language rules, it can only be applied on routes that actually specify matching produce and language rules. Since there is no way to determine which content type and language will be produced by an exchange handler, it is not possible to determine whether an exchange interceptor should be invoked prior to the exchange handler unless specified explicitly on the route. In such case, a warning will be logged to indicate that the interceptor is ignored for the route due to missing produce or language rules on the route.
+When a route interceptor is defined with specific produce and language rules, it can only be applied on routes that actually specify matching produce and language rules. Since there is no way to determine which content type and language will be produced by an exchange handler, it is not possible to determine whether an exchange interceptor should be invoked prior to the exchange handler unless specified explicitly on the route. In such case, a warning is logged to indicate that the interceptor is ignored for the route due to missing produce or language rules on the route.
 
 ### Web router
 
-The `WebRouter` extends both `WebRoutable` and `WebInterceptable` interfaces. As such routes and route interceptors are defined on the `WebRouter` implementation exposed in the *web* module and wired to the *http-server* module to override the HTTP server's root handler. 
+The `WebRouter` extends both `WebRoutable` and `WebInterceptable` interfaces. As such routes and route interceptors are defined in the `WebRouter` bean exposed in the *web* module and used in the web server controller to handle web exchange. This internal web server controller is wired to the *http-server* module to override the default HTTP server controller. 
 
-In addition to `configureRoutes()` and `configureInterceptors()` methods defined by `WebRoutable` and `WebInterceptable`, the `WebRouter` interface provides `configure()` methods that accept `WebRouterConfigurer` to fluently apply blocks of configuration.
+In addition to `configureRoutes()` and `configureInterceptors()` methods defined by `WebRoutable` and `WebInterceptable`, the `WebRouter` interface provides `configure()` methods that accepts `WebRouterConfigurer` to fluently apply blocks of configuration.
 
 ```java
+WebRouter<ExchangeContext> router = ...
+
 WebRouterConfigurer<ExchangeContext> configurer = ...
 List<WebRouterConfigurer<ExchangeContext>> configurers = ...
 
@@ -692,7 +806,7 @@ router
         .handler(exchange -> ...)
 ```
 
-> Please refer to the [Web Server documentation](#web-server) to see in details how to configure Web server routes.
+> Please refer to the [Web Server documentation](#web-server) to see in details how to properly configure Web server routes and interceptors.
 
 Route interceptors are only applied to routes defined on a `WebInterceptedRouter` which is obtained by defining one or more route interceptor on the web router. The following example shows how it works:
 
@@ -700,21 +814,27 @@ Route interceptors are only applied to routes defined on a `WebInterceptedRouter
 router
     .route()
         .path("/public")
-        .handler(exchange -> {...})
+        .handler(exchange -> {
+            ...
+        })
     .intercept()
-        .interceptor(exchange -> {...})
+        .interceptor(exchange -> {
+            ...
+        })
     .route()
         .path("/private")
-        .handler(exchange -> {...})
+        .handler(exchange -> {
+            ...
+        })
     .getRouter()
     .route()
         .path("/static/**")
-        .handler(new StaticHandler(resourceService.getResource("file:/path/to/web-root/")))
+        .handler(new StaticHandler<>(resourceService.getResource(URI.create("file:/path/to/web-root/"))));
 ```
 
-In the preceding snippet, only `/private` route is intercepted, both `/public` and `/static/**` are not intercepted since they are defined on the Web router which is not intercepted. Note the call to  `getRouter()` method which returns the originating web router instance and basically *rollbacks* the interceptors configuration.
+In the preceding example, only `/private` route is intercepted, both `/public` and `/static/**` routes are not intercepted since they are defined on the original Web router which is not intercepted. Note the call to `getRouter()` method which returns the original Web router instance and basically *rollbacks* the interceptors configuration.
 
-A Web intercepted router can also be used to apply interceptors to all routes previsously defined in a Web router.
+A Web intercepted router can also be used to apply interceptors to all routes previously defined in a Web router.
 
 ```java
 router
@@ -726,14 +846,36 @@ router
 
 In the previous example, all `GET` routes previsously defined in the Web router will be intercepted.
 
+> The Web router bean specifies default Web routes and error Web routes created when the router is initialized and therefore not intercepted. You must keep in mind that they exist and if you wish to intercept them, you'll have to explicitly invoke `applyInterceptors()`.
+
 ### Error web exchange
 
-The *web* module API extends the [server exchange API](#http-server-exchange-api) defined in the *http-server* module and defines the server `ErrorWebExchangeHandler` to handle a server `ErrorWebExchange`. These interfaces respectively extends the `ExchangeHandler` and `Exchange` interfaces which are defined in the *http-server* module. An error Web exchange handler is typically attached to one or more error Web routes defined in an `ErrorWebRouter`.
+The *web* module API extends the [server exchange API](#http-server-api) defined in the *http-server* module. It defines the server `WebExchange` composed of a `WebRequest`/`WebResponse` pair in a HTTP communication between a client and a server. These interfaces respectively extends the `Exchange`, `Request` and `Response` interfaces defined in the *http-server* module. A web exchange handler (i.e. `ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>>`) is typically attached to one or more Web routes defined in a `WebRouter`.
 
-The `ErrorWebExchange` provides a response body encoder which can be used to encode error response body based on the content type specified in the response headers. The usage is exactly the same as for the Web server exchange [response body encoder](#response-body-encoder).
+The Error Web exchange provides additional functionnalities on top of the exchange such as path parameters and response body encoding based on the content type.
+
+As the `WebExchange`, the `ErrorWebExchange` exposes a `WebResponse` which supports automatic response payload encoding based on the content type specified in the response headers. The usage is exactly the same as for the Web server exchange [response body encoder](#response-body-encoder).
+
+The following error Web route matches `IllegalArgumentException` errors for client accepting `application/json` media type in the response:
 
 ```java
-errorRouter
+ExchangeHandler<ExchangeContext, ErrorWebExchange<ExchangeContext>> errorHandler = errorExchange -> {
+    errorExchange.response()
+        .headers(headers -> headers.status(Status.INTERNAL_SERVER_ERROR))
+        .body()
+        .encoder(Message.class)
+        .value(new Message(errorExchange.getError().getMessage()));
+};
+```
+
+### Error Web route
+
+An Error Web route specifies the routing rules and the error exchange handler that shall be invoked to handle a matching error exchange. Similar to a [Web route](#web-route), it can combine the following routing rules which are matched in that order: the type of error, the path of the request, the media ranges and language ranges accepted by the client.
+
+The `ErrorWebRoutable` interface defines a fluent API for the definition of Error Web routes. The following is an example of the definition of an Error Web route which matches `IllegalArgumentException` errors for client accepting `application/json` media type:
+
+```java
+errorRoutable
     .route()
         .error(IllegalArgumentException.class)
         .produces(MediaTypes.APPLICATION_JSON)
@@ -745,110 +887,15 @@ errorRouter
         );
 ```
 
-### Error router
+As with a Web routable, the Error Web routable allows to select routes matching specific rules defined in an `ErrorWebRouteManager` and enable, disable or remove specific routes.
 
-An `ErrorWebRouter` routes an error exchange to an error exchange handler attached to an `ErrorWebRoute` by matching it against a combination of routing rules specified in the route. An error route can combine the following routing rules which are matched in that order: the type of the error, the media ranges and language ranges accepted by the client. For instance, the error router matches an error exchange against the error type routing rule first, then the produce routing rule... Multiples routes can then match a given exchange but only one will be retained to actually process the exchange which is the one matching the highest routing rules.
-
-Unlike the `WebRouter`, the `ErrorWebRouter` only extends `WebRoutable` and doesn't extends `WebInterceptable`, as a result error web routes can't be intercepted.
-
-> The choice to prevent error web route to be intercepted has been motivated by the fact that error web routes are usually invoked on errors thrown during the normal processing of an exchange ie. after the exchange handler and then route interceptors have been invoked.
-
-If a route doesn't define a particular routing rule, the routing rule is simply ignored and matches all exchanges. For instance, if a route doesn't define any error type routing rule, it matches error exchanges regardless of the error.
-
-The following is an example of an error route which matches all error exchanges and as a result handles all types of error:
+The following example disable all routes matching `SomeCustomException` error type:
 
 ```java
-errorRouter
-    .route()
-        .handler(errorExchange -> 
-            errorExchange.response()
-                .headers(headers -> 
-                    headers
-                        .status(Status.INTERNAL_SERVER_ERROR)
-                        .contentType(MediaTypes.TEXT_PLAIN)
-                )
-                .body()
-                .empty()
-        );
-```
-
-> An `ErrorWebRouter` is exposed in the *web* module and wired to the *http-server* module to override the HTTP server's error handler. It defines error routes to *whitelabel* error handlers for standard `HTTPexception` as defined by [HTTP base API](#http-base-api) and producing `application/json` or `text/html` payloads. It can be configured to override these routes or defines others using an `ErrorWebRouterConfigurer` as defined in the [Web Server documentation](#web-server).
-
-The creation, activation, deactivation or removal of routes in an error router is done in the exact same way as for the [Web router](#web-router).
-
-In the following example, we define an error route to handle `SomeCustomException` producing `text/html` response in English for the clients that accept it:
-
-```java
-errorRouter
-    .route()
-        .error(SomeCustomException.class)
-        .produces(MediaTypes.TEXT_HTML)
-        .language("en-US")
-        .handler(errorExchange -> 
-            ...
-        );
-```
-
-Error routes can be queried as follows:
-
-```java
-Set<ErrorWebRoute> errorRoutes = errorRouter
-    .route()
-        .error(SomeCustomException.class)
-        .findRoutes();
-```
-
-They can be enabled, disabled or removed as follows:
-
-```java
-// Disables all SomeCustomException routes
-errorRouter
+errorRoutable
     .route()
         .error(SomeCustomException.class)
         .disable();
-
-// Enables all SomeCustomException routes
-errorRouter
-    .route()
-        .error(SomeCustomException.class)
-        .enable();
-
-// remove all SomeCustomException routes
-errorRouter
-    .route()
-        .error(SomeCustomException.class)
-        .remove();
-```
-
-Individual error routes are enabled, disabled or removed as follows:
-
-```java
-// Disables all SomeCustomException routes producing 'application/json'
-router
-    .route()
-        .error(SomeCustomException.class)
-        .findRoutes()
-        .stream()
-        .filter(route -> route.getProduce().equals(MediaTypes.APPLICATION_JSON))
-        .forEach(WebRoute::disable);
-
-// Enables all SomeCustomException routes producing 'application/json'
-router
-    .route()
-        .error(SomeCustomException.class)
-        .findRoutes()
-        .stream()
-        .filter(route -> route.getProduce().equals(MediaTypes.APPLICATION_JSON))
-        .forEach(WebRoute::enable);
-
-// Removes all SomeCustomException routes producing 'application/json'
-router
-    .route()
-        .error(SomeCustomException.class)
-        .findRoutes()
-        .stream()
-        .filter(route -> route.getProduce().equals(MediaTypes.APPLICATION_JSON))
-        .forEach(WebRoute::remove);
 ```
 
 #### Error type routing rule
@@ -858,9 +905,9 @@ The error type routing rule matches error exchanges whose error is of a particul
 For instance, in order to handle all error exchanges whose error is an instance of `SomeCustomException`, we can do:
 
 ```java
-errorRouter
+errorRoutable
     .route()
-        .method(SomeCustomException.class)
+        .error(SomeCustomException.class)
         .handler(exchange -> {
             ...
         });
@@ -875,6 +922,95 @@ This is particularly useful to returned specific error responses to a particular
 #### Language routing rule
 
 The language routing rule, when applied to an error route behaves exactly the same as for a [Web route](#language-routing-rule). It allows to define error handlers that produce responses with different languages based on the set of language range accepted by the client fallbacking to the default route when content negotiation did not give any match.
+
+### Error Web route interceptor
+
+Error Web routes can be intercepted in a similar way as for [Web route](#web-route-interceptor) by combining the same rules as for the definition of an Error Web route.
+
+Multiple Error Web exchange interceptors (i.e. `ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>`) can be applied to one or more Error Web routes.
+
+The `ErrorWebInterceptable` interface defines a fluent API similar to the `ErrorWebRoutable` for the definition of Error Web interceptors. The following is an example of the definition of an Error Web route interceptor for intercepting Error Web exchange with `SomeCustomException` errors and `/some_path` path:
+
+̀```java
+errorInterceptable
+    .intercept()
+        .path("/some_path")
+        .error(SomeCustomException.class)
+        .interceptor(errorExchange -> {
+            ...
+        });
+̀```
+
+As for `WebRoute`, the `ErrorWebRoute` allows to list the Error interceptors applied to an Error route and explicitly set interceptors:
+
+```java
+// Use an ErrorWebRoutable to find an ErrorWebRoute
+ErrorWebRoute<ExchangeContext> errorRoute = ...
+
+List<ExchangeInterceptor<ExchangeContext, ErrorWebExchange<ExchangeContext>>> errorRouteInterceptors = new ArrayList<>(errorRoute.getInterceptors());
+errorRouteInterceptors.add(errorExchange -> {
+    ...
+});
+
+errorRoute.setInterceptors(errorRouteInterceptors);
+```
+
+The `ErrorWebInterceptable` offers the same features as the `WebInterceptable` and allows configuring error interceptors as blocks in reusable `ErrorWebInterceptorsConfigurer` by invoking `configureInterceptors()` methods:
+
+```java
+ErrorWebInterceptorsConfigurer<ExchangeContext> public_error_interceptors_configurer = errInterceptable -> {
+    errInterceptable
+        .intercept()
+        ...
+};
+
+ErrorWebInterceptorsConfigurer<ExchangeContext> private_error_interceptors_configurer = errInterceptable -> {
+    errInterceptable
+        .intercept()
+        ...
+};
+
+errorInterceptable
+    .configureInterceptors(public_error_interceptors_configurer)
+    .configureInterceptors(private_error_interceptors_configurer)
+    .intercept()
+    ...
+```
+
+### Error Web router
+
+The `ErrorWebRouter` extends both `ErrorWebRoutable` and `ErrorWebInterceptable` interfaces. As such Error routes and Error route interceptors are defined in the `ErrorWebRouter` bean exposed in the *web* module and used in the web server controller to handle Error Web exchange. This internal web server controller is wired to the *http-server* module to override the default HTTP server controller. 
+
+Just like the `WebRouter` interface, the `ErrorWebRouter` exposes the `configure()` method which accepts `ErrorWebRouterConfigurer` to fluently apply blocks of configuration. The same configuration rules as for the [Web router](#web-router) applies:
+
+```java
+ErrorWebRouter<ExchangeContext> errorRouter = ...
+
+ErrorWebRouterConfigurer<ExchangeContext> configurer = ...
+List<ErrorWebRouterConfigurer<ExchangeContext>> configurers = ...
+
+router
+    .configure(configurers)
+    .configure(configurer)
+    .intercept()
+        .interceptor(errorExchange -> {
+            ...
+        })
+    .applyInterceptors() // Apply interceptor to previously defined Error routes
+    .route()
+        .path("/intercepted")
+        .handler(exchange -> {
+            ...
+        })
+    .getRouter()
+    .route()
+        .path("/not_intercepted")
+        .handler(exchange -> {
+            ...
+        });
+```
+
+> Please refer to the [Web Server documentation](#web-server) to see in details how to properly configure Web server error routes and interceptors.
 
 ## Web Server
 
@@ -945,10 +1081,9 @@ The above example starts a Web server using default configuration which is a HTT
 2021-04-14 11:00:18,570 INFO  [main] i.w.m.h.s.Server - Module io.inverno.mod.http.server started in 75ms
 2021-04-14 11:00:18,571 INFO  [main] i.w.m.w.Web - Module io.inverno.mod.web started in 76ms
 2021-04-14 11:00:18,571 INFO  [main] i.w.e.a.App_web - Module io.inverno.example.app_web started in 259ms
-
 ```
 
-The Web router doesn't define any routes by default so if we hit the server, a (404) not found error is returned showing the error router in action:
+The Web router doesn't define any routes by default so if we hit the server, a (404) not found error is returned showing the default error Web router in action:
 
 ```plaintext
 $ curl -i -H 'accept: application/json' http://locahost:8080
@@ -959,15 +1094,13 @@ content-length: 47
 {"status":"404","path":"/","error":"Not Found"}
 ```
 
-If you open `http://locahost:8080` in a Web browser, you should see the following (404) whitelabel error page:
+Now if you open `http://locahost:8080` in a Web browser, you should see the following (404) whitelabel error page:
 
 <img class="shadow mb-4" src="doc/img/404_whitelabel.png" alt="HTTP 404 whitelabel error page"/>
 
 ### Configuration
 
 The Web server configuration is done in the the *web* module configuration `WebConfiguration` which includes the *http-server* module configuration `HttpServerConfiguration`. As for the *http-server* module, the net service configuration can also be considered to set low level network configuration in the *boot* module. 
-
-The following configuration can then be created in the *app_http* module:
 
 Let's create the following configuration in the *app_web* module:
 
@@ -1017,13 +1150,17 @@ public class Main {
 }
 ```
 
-### Configuring the Web router
+### Configuring the Web server controller
 
-As explained before, a [Web router](#web-router) is used to route a request to the right handler based on a set of rules defined in a route. The *web* module provides a `WebRouter` bean which is wired to the *http-server* module to override the default root handler and handle all incoming requests to the server. Unlike the root handler in the *http-server* module, this bean is not overridable but it can be configured in order to define Web routes for the *app_web* module.
+As explained before, the module specifies a `ServerController` bean as defined by the [*http-server* module](#http-server-1) and wired to the HTTP server overriding the default server controller. It is composed of the Web router and the Error Web router beans which respectively route exchanges and error exchanges to the right handlers.
 
-This can be done by defining a `WebRouterConfigurer` bean in the *app_web* module. A Web router configurer is invoked after the initialization of the Web router and more precisely after the default configuration has been applied.
+The Web server controller bean is private, its Web router and Error Web router are configured by defining a single `WebServerControllerConfigurer` bean. The `WebServerControllerConfigurer` interface extends both `WebRouterConfigurer` and `ErrorWebRouterConfigurer` and specifies a `createContext()` method used to initialize the exchange context as specified in [http-server module documentation](#exchange_context). The Web server controller configurer is responsible for configuring routes in the Web server. It is invoked after default routes have been initiliazed but it doesn't replace them, they can however be overridden by defining routes matching the same rules.
 
-Using what we've learned from the [Web routing documentation](#web-routing), routes can then be defined as follows:
+#### Web configurers
+
+In a complex application with many route definitions sometimes dispatched into multiple modules and using complex interceptor setup, having a single configuration might not always be ideal and we should prefer defining multiple consistent configurers later aggregated into one Web server controller configurer bean. Following [Web routing API documentation](#web-routing-api), we know routes and interceptors can be configured using a combination of `WebRoutesConfigurer`, `WebInterceptorsConfigurer`, `WebRouterConfigurer`, `ErrorWebRoutesConfigurer`, `ErrorWebInterceptorsConfigurer` or `ErrorWebRouterConfigurer` beans. At compile time, the Inverno Web compiler plugin will then automatically generates a `WebServerControllerConfigurer` bean that aggregates all these beans into one single configuration. This way we don't have to create a Web server controller configurer bean and we can compose with above configurers which offer more flexibility, particularly in relation to the exchange context.
+
+For instance, the Web router and the error Web router can be configured into separate configurer beans in the *app_web* module as follows:
 
 ```java
 package io.inverno.example.app_web;
@@ -1034,11 +1171,11 @@ import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;
 
-@Bean
+@Bean( visibility = Bean.Visibility.PRIVATE )
 public class App_webWebRouterConfigurer implements WebRouterConfigurer<ExchangeContext> {
 
     @Override
-    public void accept(WebRouter<ExchangeContext> router) {
+    public void configure(WebRouter<ExchangeContext> router) {
         router
             .route()
                 .path("/hello")
@@ -1059,99 +1196,9 @@ public class App_webWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
                         .body()
                         .encoder(String.class)
                         .value("Bonjour!")
-                );
-    }
-}
-```
-
-Now we can test the application:
-
-```plaintext
-$ curl -i http://locahost:8080/
-HTTP/1.1 404 Not Found
-content-length: 0
-```
-```plaintext
-$ curl -i http://locahost:8080/hello
-HTTP/1.1 200 OK
-content-type: text/plain
-content-length: 6
-
-Hello!
-```
-```plaintext
-$ curl -i -H 'accept-language: fr' http://locahost:8080/hello
-HTTP/1.1 200 OK
-content-type: text/plain
-content-length: 8
-
-Bonjour!
-```
-```plaintext
-$ curl -i -H 'accept: application/json' http://locahost:8080/hello
-HTTP/1.1 406 Not Acceptable
-content-type: application/json
-content-length: 81
-
-{"status":"406","path":"/hello","error":"Not Acceptable","accept":["text/plain"]}
-```
-
-The exchange context created by the HTTP server when processing an exchange is also provided by the web router configurer by implementing the `createContext()` method:
-
-```java
-public class App_webWebRouterConfigurer implements WebRouterConfigurer<SecurityContext> {
-
-    @Override
-    public void accept(WebRouter<SecurityContext> router) {
-        router
-            .intercept()
-                .path("/private")
-                .interceptor(new SecurityInterceptor()) // Populate the security context
+                )
             .route()
-                .path("/private")
-                .handler(exchange -> {
-                    if(exchange.context().isAuthenticated()) {
-                        exchange
-                            .response()
-                                .body()
-                                .encoder(String.class)
-                                .value("Private resource!");
-                    }
-                    else {
-                        throw new UnauthorizedException();
-                    }
-                })
-    }
-
-    @Override
-    public SecurityContext createContext() {
-        return new SecurityContext();
-    }
-}
-``` 
-
-> The `WebRouter` interface extends `RootExchangeHandler` which defines the `createContext()` method used by the HTTP server to instantiate contexts, the Web router bean delegates to its single Web router configurer to provide context instances to the HTTP server. Although it is possible to use multiple Web router configurers to configure the Web router using the `configure()` methods, the Web router bean only accepts one configurer which is used to create the context.
-
-### Configuring the error router
-
-The *web* module also provides an error router bean wired to the *http-server* module to override the default error handler and handle all errors thrown when processing an exchange. As a reminder, an [error router](#error-router) is used to route an error exchange to the right error handler based on a set of rules defined in an error route.
-
-As for the Web router, the error router can't be overridden, it is rather configured by defining an `ErrorWebRouterConfigurer` bean invoked after the initialization of the error router and more precisely after the default configuration has been applied which means default error routes remain although they can be overridden in the configurer.
-
-The error router implemented in the *web* module provides default error routes for handling base `HttpException`, whitelabel error pages are returned in particular when a client request `text/html` responses. More generally, `Throwable` errors are also handled by default, returning a generic (500) internal server error.
-
-Now let's assume, we have created a route which might throw a particular custom exception for which we want to return a particular response. For instance, we might have defined the following route in the `App_webWebRouterConfigurer`:
-
-```java
-@Bean
-public class App_webWebRouterConfigurer implements WebRouterConfigurer<ExchangeContext> {
-
-    @Override
-    public void accept(WebRouter<ExchangeContext> router) {
-        router
-            ...
-            .route()
-                .path("custom_exception")
+                .path("/custom_exception")
                 .handler(exchange -> {
                     throw new SomeCustomException();
                 });
@@ -1159,24 +1206,24 @@ public class App_webWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
 }
 ```
 
-> Note that an exchange handler is defined to throw checked `HttpException` only which actually makes sense since a Http error is eventually what will be returned to the client. In our example, the `SomeCustomException` is then either unchecked or extends `HttpException`.
-
-Now using what we've learned from the [error routing documentation](#error-routing), we can define an error route to handle that particular exception as follows:
-
 ```java
 package io.inverno.example.app_web;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.Status;
+import io.inverno.mod.http.base.UnauthorizedException;
+import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.ErrorWebRouter;
 import io.inverno.mod.web.ErrorWebRouterConfigurer;
+import reactor.core.publisher.Mono;
 
-@Bean
-public class App_webErrorWebRouterConfigurer implements ErrorWebRouterConfigurer {
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class App_webErrorWebRouterConfigurer implements ErrorWebRouterConfigurer<ExchangeContext> {
 
     @Override
-    public void accept(ErrorWebRouter errorRouter) {
+    public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
         errorRouter
             .route()
                 .error(SomeCustomException.class)
@@ -1189,12 +1236,55 @@ public class App_webErrorWebRouterConfigurer implements ErrorWebRouterConfigurer
                     .body()
                     .encoder()
                     .value("A custom exception was raised")
-                );
+                )
+            .intercept()
+                .error(UnauthorizedException.class)
+                .interceptor(errorExchange -> {
+                    errorExchange.response().headers(headers -> headers.add(Headers.NAME_WWW_AUTHENTICATE, "basic realm=inverno"));
+                    return Mono.just(errorExchange);
+                })
+            // We must apply interceptors to intercept error routes defined by default in the web server module
+            .applyInterceptors();
     }
 }
 ```
 
-Now if we hit `http://locahost:8080/custom_exception` we should receive a custom error:
+After compilation, class `App_web_WebServerContollerConfigurer` aggregating the two configurer beans should have been generated and the corresponding bean wired into the Web server module.
+
+Now we can test the application:
+
+```plaintext
+$ curl -i http://locahost:8080/
+HTTP/1.1 404 Not Found
+content-length: 0
+```
+
+```plaintext
+$ curl -i http://locahost:8080/hello
+HTTP/1.1 200 OK
+content-type: text/plain
+content-length: 6
+
+Hello!
+```
+
+```plaintext
+$ curl -i -H 'accept-language: fr' http://locahost:8080/hello
+HTTP/1.1 200 OK
+content-type: text/plain
+content-length: 8
+
+Bonjour!
+```
+
+```plaintext
+$ curl -i -H 'accept: application/json' http://locahost:8080/hello
+HTTP/1.1 406 Not Acceptable
+content-type: application/json
+content-length: 81
+
+{"status":"406","path":"/hello","error":"Not Acceptable","accept":["text/plain"]}
+```
 
 ```plaintext
 $ curl -i http://locahost:8080/custom_exception
@@ -1205,17 +1295,262 @@ content-length: 29
 A custom exception was raised
 ```
 
+> Since Web configurers are all defined as interfaces, you can easily centralize configuration by implementing one or more configurers. For instance, previous configurers could have been defined in one single bean implementing `WebRouterConfigurer<ExchangeContext>` and `ErrorWebRouterConfigurer<ExchangeContext>`.
+
+> Note that it is still possible to use a custom `WebServerControllerConfigurer` bean instead of the one generated by the Inverno Web compiler plugin. This basically requires to explicitly wire the custom bean into the *web* module using a `@Wire` annotation (otherwise compilation will fail indicating a dependency injection conflict as two beans can then be wired to the Web server controller configurer socket). This can be justified when there are specific needs regarding the exchange context. It is however recommended to use the generated configurer which greatly simplifies configuration.
+
+When defining Web configurer beans, it is important to make them private inside the module in order to avoid side effects when composing the module as they may interfere with the generated server controller configurer, which already aggregates module's Web configurer beans, resulting in routes being configured twice. Compilation warnings shall be raised when a Web configurer is defined as a public bean.
+
+Web configurers are applied by the generated Web server controller configurer in the following order starting by `WebInterceptorsConfigurer` beans, then `WebRouterConfigurer` beans and finally `WebRoutesConfigurer` beans. This basically means that the interceptors defined in `WebInterceptorsConfigurer` beans in the module will be applied to all routes defined in the module including throse provided in component modules. Although it is possible to define multiple `WebInterceptorsConfigurer` beans, it is recommended to have only one because the order in which they are injected in the Web server controller configurer is not guaranteed which might be problematic under certain circumstances.
+
+#### Exchange context
+
+The exchange context is global to all routes and interceptors, and basically specific to any application as it directly depends on what is expected by the routes and interceptors. Considering a complex application, this can quickly become very tricky. A safe approach would be to define a single global context type for the whole application and use it in all routes and interceptors definitions. Unfortunately we might have to include routes provided by third party modules that can't possibly use that context type. Besides, we might not want to expose the whole context to every routes and interceptors. The exchange context is unique and therefore necessarily global but ideally it should be possible to define different context types corresponding to the routes being defined. For instance, a secured route might require some kind of security context unlike a public route.
+
+The exchange context is provided by the Web server controller which basically delegates to the `createContext()` method of the Web server controller configurer. Since it is generated by the Inverno Web compiler plugin, the plugin must also generate the global context based on the routes and interceptors definitions aggregated in the generated `WebServerControllerConfigurer` bean.
+
+> The fact that the *web* module only accepts one Web server controller configurer guarantees that there will be only one context provider.
+
+Let's consider the case of an application which defines routes and interceptors that can use different exchange context depending on their functional area. For instance, we can imagine an application exposing front office and back office services using `FrontOfficeContext` and `BackOfficeContext` respectively.
+
+Front office routes are then defined to handle exchanges exposing the `FrontOfficeContext` and back office routes, that may be specified in a completely different module, are defined to handle exchanges exposing the `BackOfficeContext`.
+
+Let's start by defining these contexts and see how the global context is generated by the Inverno Web compiler plugin. 
+
+Exchange contexts must be defined as interfaces extending `ExchangeContext`:
+
+```java
+package io.inverno.example.app_web.test;
+
+import io.inverno.mod.http.server.ExchangeContext;
+
+public interface FrontOfficeContext extends ExchangeContext {
+    
+    void setMarket(String market);
+    
+    String getMarket();
+}
+```
+
+```java
+package io.inverno.example.app_web.test;
+
+import io.inverno.mod.http.server.ExchangeContext;
+
+public interface BackOfficeContext extends ExchangeContext {
+
+    void setVar(double var);
+    
+    double getVar();
+}
+```
+
+Then we can define different beans to configure front office and back office routers:
+
+```java
+package io.inverno.example.app_web;
+
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.Method;
+import io.inverno.mod.web.WebInterceptable;
+import io.inverno.mod.web.WebInterceptorsConfigurer;
+import io.inverno.mod.web.WebRoutable;
+import io.inverno.mod.web.WebRoutesConfigurer;
+import reactor.core.publisher.Mono;
+
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class FrontOfficeRouterConfigurer implements WebRoutesConfigurer<FrontOfficeContext>, WebInterceptorsConfigurer<FrontOfficeContext>  {
+
+    @Override
+    public void configure(WebRoutable<FrontOfficeContext, ?> routes) {
+        routes
+            .route()
+                .path("/frontOffice")
+                .method(Method.GET)
+                .handler(exchange -> {
+                    exchange.response()
+                        .headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))	
+                        .body().string().value("I've done some stuff on market: " + exchange.context().getMarket());
+                });
+    }
+
+    @Override
+    public void configure(WebInterceptable<FrontOfficeContext, ?> interceptors) {
+        interceptors
+            .intercept()
+                .path("/frontOffice/**")
+                .interceptor(exchange -> {
+                    // Resolve the market from the request, session or else
+                    exchange.context().setMarket("market");
+                    return Mono.just(exchange);
+                });
+    }
+}
+```
+
+```java
+package io.inverno.example.app_web;
+
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.Method;
+import io.inverno.mod.web.WebInterceptable;
+import io.inverno.mod.web.WebInterceptorsConfigurer;
+import io.inverno.mod.web.WebRoutable;
+import io.inverno.mod.web.WebRoutesConfigurer;
+import reactor.core.publisher.Mono;
+
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class BackOfficeRouterConfigurer implements WebRoutesConfigurer<BackOfficeContext>, WebInterceptorsConfigurer<BackOfficeContext> {
+    
+    @Override
+    public void configure(WebRoutable<BackOfficeContext, ?> routes) {
+        routes
+            .route()
+                .path("/backOffice")
+                .method(Method.GET)
+                .handler(exchange -> {
+                    exchange.response()
+                        .headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))	
+                        .body().string().value("VaR is: " + exchange.context().getVar());
+                });
+    }
+
+    @Override
+    public void configure(WebInterceptable<BackOfficeContext, ?> interceptors) {
+        interceptors
+            .intercept()
+                .path("/backOffice/**")
+                .interceptor(exchange -> {
+                    // Resolve the VaR from the request, session or else
+                    exchange.context().setVar(1234.5678);				
+                    return Mono.just(exchange);
+                });
+    }
+}
+```
+
+Now if we compile the module, the Inverno Web compiler plugin generates interface `App_web_WebServerContollerConfigurer.Context` inside the generated `App_web_WebServerContollerConfigurer` which extends all context types encountered while aggregating the configurer beans. It will also implement method `createContext()` in order to return a concrete implementation of the context: 
+
+- Getter and setter methods (i.e. `T get*()` and `void set*(T value)` methods) are implemented in order be able to set and get data on the context as shown in above examples.
+- Other methods with no default implementation gets a blank implementation (i.e. no-op).
+
+If we open the generated `App_web_WebServerContollerConfigurer` we should see:
+
+```java
+...
+@Override
+public Context createContext() {
+    return new Context() {
+        private String market;
+        private double var;
+
+        @Override
+        public String getMarket() {
+            return this.market;
+        }
+
+        @Override
+        public void setMarket(String market) {
+            this.market = market;
+        }
+
+        @Override
+        public double getVar() {
+            return this.var;
+        }
+
+        @Override
+        public void setVar(double var) {
+            this.var = var;
+        }
+    };
+}
+
+public static interface Context extends BackOfficeContext, FrontOfficeContext, ExchangeContext {}
+...
+```
+
+Using such generated context guarantees that the context created by the Web server controller complies with what is expected by route handlers and interceptors. This allows to safely compose mutliple Web modules in an application, developped by separate teams and using different context types.
+
+This doesn't come without limitations. For instance, exchange context must be defined as interfaces since multiple inheritance is not supported in Java. If you try to use a class, a compilation error will be raised.
+
+Another limitation comes from the fact that it might difficult to define a route that uses many context types, using configurers the only way to achieve this is to create an intermediary interface that extends the required context types. Although this is acceptable, it is not ideal semantically speaking. Hopefully this issue can be mitigated, at least for route definition, when routes are defined in a declarative way in a [Web controller](#web-controller) which allows to specify context type using intersection types on the route method (e.g. `<T extends FrontOfficeContext & BackOfficeContext>`).
+
+Finally, the Inverno Web compiler plugin only generates concrete implementations for getter and setter methods which might seem simplistic but actual logic can still be provided using default implementations in the context interface. For example, role based access control can be implemented in a security context as follows:
+
+```java
+package io.inverno.example.app_web;
+
+import io.inverno.mod.http.server.ExchangeContext;
+import java.util.Set;
+
+public interface SecurityContext extends ExchangeContext {
+
+    void setRoles(Set<String> roles);
+    
+    Set<String> getRoles();
+    
+    default boolean hasRole(String role) {
+        return this.getRoles().contains(role);
+    }
+}
+```
+
+Exposing `setRoles()` methods to actual services which should only be concerned by controlling access might not be ideal. There are two concerns to consider here: resolving the roles of the authenticated user and set them into the context which is the responsability of a security interceptor and controlling the access to a secured service or resource which is the responsability of a service or another security interceptor. Since we can compose multiple configurers using multiple context types automatically aggregated into one server controller configurer we can easily solve that issue by splitting previous security context:
+
+```java
+package io.inverno.example.app_web;
+
+import io.inverno.mod.http.server.ExchangeContext;
+import java.util.Set;
+
+public interface SecurityContext extends ExchangeContext {
+
+    Set<String> getRoles();
+    
+    default boolean hasRole(String role) {
+        return this.getRoles().contains(role);
+    }
+}
+```
+
+```java
+package io.inverno.example.app_web;
+
+import java.util.Set;
+
+public interface ConfigurableSecurityContext extends SecurityContext {
+
+    void setRoles(Set<String> roles);
+}
+```
+
+> In order to avoid any misuse and realize the benefits of the context generation, it is important to understand the purpose of the exchange context and why we choose to have it strongly typed. 
+>
+> The exchange context is mainly used to propagate contextual information across the routing chain composed by interceptors and the exchange handler, it is not necessarily meant to expose any logic. 
+>
+> Unlike many other frameworks which use untyped map, the exchange context is strongly typed which has many advantages: 
+> 
+> - static checking can be performed by the compiler,
+> - an handler or an interceptor have guarantees over the information exposed in the context (`ClassCastException` are basically impossible),
+> - as we just saw it is also possible to expose some logic using default interface methods,
+> - actual services can be exposed right away in the context without having to use error prone string keys or explicit cast.
+>
+> The generation of the context by the Inverno Web compiler plugin is here to reduce the complexity induced by strong typing as long as above rules are respected.
+
 ### Static handler
 
-The `StaticHandler` is a specific `WebExchangeHandler<WebExchange>` implementation that can be used to define routes for serving static resources resolved with the [Resource API](#resource-api).
+The `StaticHandler` is a built-in exchange handler that can be used to define routes for serving static resources resolved with the [Resource API](#resource-api).
 
 For instance, we can create a route to serve files stored in a `web-root` directory as follows:
 
 ```java
 router
     .route()
-        .path("/static/{path:.*}")                                 // 1
-        .handler(new StaticHandler(new FileResource("web-root/"))) // 2
+        .path("/static/{path:.*}")                                   // 1
+        .handler(new StaticHandler<>(new FileResource("web-root/"))) // 2
 ```
 
 1. The path must be parameterized with a `path` parameter which can include `/`, for the static handler to be able to determine the relative path of the resource in the `web-root` directory
@@ -1235,7 +1570,7 @@ A request to `http://127.0.0.1/static/` would return the `index.html` file.
 
 ### 100-continue interceptor
 
-The API provides the `ContinueInterceptor` class which can be used to automatically handles `100-continue` as defined by [RFC 7231 Section 5.1.1][rfc-7231-5.1.1].
+The `ContinueInterceptor` class which can be used to automatically handles `100-continue` as defined by [RFC 7231 Section 5.1.1][rfc-7231-5.1.1].
 
 ```java
 router
@@ -1245,11 +1580,21 @@ router
     ...
 ```
 
+> Note that in order to comply with RFC 7231, an HTTP server must respond with a (100) status to a request with a 100-continue expectation. The `ContinueInterceptor` allows to automatize this, otherwise it must be done explicitly:
+>
+> ```java
+> ...
+> if(exchange.request().headers().contains(Headers.NAME_EXPECT, Headers.VALUE_100_CONTINUE)) {
+>     exchange.response().sendContinue();
+> }
+> ...
+> ```
+
 ### WebJars
 
 The `WebJarsRoutesConfigurer` is a `WebRoutesConfigurer` implementation used to configure routes to WebJars static resources available on the module path or class path. Paths to the resources are version agnostic: `/webjars/{webjar_module}/{path:.*}` where `{webjar_module}` corresponds to the *modularized* name of the WebJar minus `org.webjars`. For example the location of the Swagger UI WebJar would be `/webjars/swagger.ui/`.
 
-WebJars routes can be configured on the Web router as follows:
+The `WebJarsRoutesConfigurer` requires a `ResourceService` to resolve WebJars resources. WebJars routes can be configured as follows:
 
 ```java
 package io.inverno.example.app_web;
@@ -1273,7 +1618,7 @@ public class App_webWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
     @Override
     public void accept(WebRouter<ExchangeContext> router) {
         router
-            .configureRoutes(new WebJarsRoutesConfigurer(this.resourceService))
+            .configureRoutes(new WebJarsRoutesConfigurer<>(this.resourceService))
             ...
     }
 }
@@ -1294,7 +1639,7 @@ Then we can declare WebJars dependencies such as the Swagger UI in the build des
 
 The Swagger UI should be accessible at `http://locahost:8080/webjars/swagger.ui/`.
 
-Sadly WebJars are rarely modular JARs, they are not even named modules which causes several issues when dependencies are specified on the module path. That's why when an application is run or packaged using [Inverno tools][inverno-tools-root], such dependencies and WebJars in particular are *modularized*. A WebJar such as `swagger-ui` is modularized into `org.webjars.swagger.ui` module which explains why it is referred by its module name: `swagger.ui` in the WebJars resource path (the `org.webjars` part is omitted since the context is known).
+Sadly WebJars are rarely modular JARs, they are not even named modules which causes several issues when dependencies are specified on the module path. That's why when an application is run or packaged using [Inverno tools][inverno-tools-root], such dependencies and WebJars in particular are *modularized*. A WebJar such as `swagger-ui` is modularized into `org.webjars.swagger.ui` module which explains why it is referred to by its module name: `swagger.ui` in the WebJars resource path (the `org.webjars` part is omitted since the context is known).
 
 When running a fully modular Inverno application, *modularized* WebJars modules must be added explicitly to the JVM using the `--add-modules` option, otherwise they are not resolved when the JVM starts. For instance:
 
@@ -1314,7 +1659,7 @@ This can be disabled in order to manually control which modules should be added:
 $ mvn inverno:run -Dinverno.exec.addUnnamedModules=false -Dinverno.exec.vmOptions="--add-modules org.webjars.swagger.ui"
 ```
 
-> It might also be possible to define the dependency in the module descriptor, unfortunately since WebJars modules are unnamed, they are named against the name of the JAR file which is greatly unstable and can't be trusted, so previous approach is by far the safest. If you need to create a WebJar you should make it a named module with the `Automatic-Module-Name` attribute sets to `org.webjars.{webjar_module}` in the manifest file and with resources located under `META-INF/resources/webjars/{webjar_module}/{webjar_version}/`.
+> It might also be possible to define the dependency in the module descriptor, unfortunately since WebJars modules are unnamed, they are named after the name of the JAR file which is greatly unstable and can't be trusted, so previous approach is by far the safest. If you need to create a WebJar you should make it a named module with the `Automatic-Module-Name` attribute sets to `org.webjars.{webjar_module}` in the manifest file and with resources located under `META-INF/resources/webjars/{webjar_module}/{webjar_version}/`.
 
 Note that when the application is run with non-modular WebJars specified on the class path, they can be accessed without any particular configuration as part of the UNNAMED module using the same path notation.
 
@@ -1346,7 +1691,7 @@ public class App_webWebRouterConfigurer implements WebRouterConfigurer<ExchangeC
     @Override
     public void accept(WebRouter<ExchangeContext> router) {
         router
-            .configureRoutes(new OpenApiRoutesConfigurer(this.resourceService))
+            .configureRoutes(new OpenApiRoutesConfigurer<>(this.resourceService))
             ...
     }
 }
@@ -1374,7 +1719,7 @@ Swagger UI support can be disabled from the `OpenApiRoutesConfigurer` constructo
 
 ```java
 router
-    .configureRoutes(new OpenApiRoutesConfigurer(this.resourceService, false))
+    .configureRoutes(new OpenApiRoutesConfigurer<>(this.resourceService, false))
     ...
 ```
 
@@ -1382,11 +1727,11 @@ router
 
 ## Web Controller
 
-The [Web router](#web-router) and [Web server](#web-server) documentations describe a *programmatic* way of defining the Web routes of a Web server but the *web* module API also provides a set of annotations for defining Web routes in a more declarative way. 
+The [Web routing API](#web-routing-api) provides a *programmatic* way of defining the Web routes of a Web server but it also provides a set of annotations for defining Web routes in a more declarative way. 
 
-A **Web controller** is a regular module bean annotated with `@WebController` which defines methods annotated with `@WebRoute` describing Web routes. These beans are scanned at compile time by the Web Inverno compiler plugin in order to generate a single `WebRouterConfigurer` bean inside the module in order to configure the routes in the Web router.
+A **Web controller** is a regular module bean annotated with `@WebController` which defines methods annotated with `@WebRoute` describing Web routes. These beans are scanned at compile time by the Inverno Web compiler plugin in order to include corresponding *programmatic* configuration in the generated Web server controller configurer.
 
-For instance, we can create a book resource with basic CRUD operations, to do so we must define a `Book` model in a dedicated `*.dto` package, we'll see later why this matters:
+For instance, in order to create a book resource with basic CRUD operations, we can start by defining a `Book` model in a dedicated `*.dto` package (we'll see later why this matters):
 
 ```java
 package io.inverno.example.app_web.dto;
@@ -1418,7 +1763,7 @@ import io.inverno.mod.web.annotation.PathParam;
 import io.inverno.mod.web.annotation.WebController;
 import io.inverno.mod.web.annotation.WebRoute;
 
-@Bean                                                                                          // 1
+@Bean( visibility = Bean.Visibility.PRIVATE )                                                  // 1
 @WebController( path = "/book" )                                                               // 2
 public class BookResource {
 
@@ -1451,14 +1796,14 @@ public class BookResource {
 
 Implementations details have been omitted for clarity, here is what's important:
 
-1. A Web controller must be a module bean because it will be wired into the generated Web router configurer and used to invoke the right handler method attached to a Web route. Besides it is anyway convenient for implementation, a repository could be wired into the `BookResource` bean for instance.
-2. The `@WebController` annotation tells the Web compiler plugin to process the bean as a Web controller. The controller root path can also be specified in the annotation, if not specified it defaults to `/` which is the root path of the Web server.
-3. The `@WebRoute` annotation on a method tells the Web compiler plugin to define a route whose handler invokes that method. The set of routing rules (ie. path, method, consume, produce, language) describing the route are specified in the annotation.
-4. Parameters and request body are specified as method parameters annotated with `@CookieParam`, `@FormParam`, `@HeaderParam`, `@PathParam`, `@QueryParam` and `@Body` annotations.
+1. A Web controller must be a module bean because it will be wired into the generated Web router configurer and used to invoke the right handler method attached to a Web route. Besides this is convenient for implementation as it allows a repository to be wired into the `BookResource` bean for instance.
+2. The `@WebController` annotation tells the Web compiler plugin to process the bean as a Web controller. The controller root path can also be specified in this annotation, if not specified it defaults to `/` which is the root path of the Web server.
+3. The `@WebRoute` annotation on a method tells the Web compiler plugin to define a route whose handler should invoke that method. The set of routing rules (ie. path, method, consume, produce, language) describing the route can all be specified in the annotation.
+4. Request Parameters and body are specified as method parameters annotated with `@CookieParam`, `@FormParam`, `@HeaderParam`, `@PathParam`, `@QueryParam` and `@Body` annotations.
 
-Some other contextual objects like the underlying `WebExchange` can also be injected in the Web controller method.
+Some other contextual objects like the underlying `WebExchange` or the exchange context can also be injected in the Web controller method.
 
-Assuming we have provided proper implementations to create, update, list, get and delete a book in a data store, we can compile the module. A new module bean `io.inverno.example.app_web.WebRouterConfigurer` implementing `WebRouterConfigurer` should have been generated in `target/generated-sources/annotations`. It basically configures the routes corresponding to the Web controller's annotated methods in the Web router. This class uses the APIs described before and it is perfectly readable and debuggable and above all it eliminates the overhead of resolving Web controllers or Web routes at runtime.
+Assuming we have provided proper implementations to create, update, list, get and delete a book in a data store, we can compile the module. The generated Web server controller configurer bean should configure the routes corresponding to the Web controller's annotated methods in the Web router. The generated class uses the same APIs described before, it is perfectly readable and debuggable and above all it eliminates the overhead of resolving Web controllers or Web routes at runtime.
 
 Now let's go back to the `Book` DTO, we said earlier that it must be created in a dedicated package, the reason is actually quite simple. Since above routes consume and produce `application/json` payloads, the `application/json` media type converter will be invoked to convert `Book` objects from/to JSON data. This converter uses an `ObjectMapper` object from module `com.fasterxml.jackson.databind` which uses reflection to instantiate the objects and populate them from a parsed JSON tree. Unfortunately or hopefully the Java modular system prevents unauthorized reflective access and as a result the `ObjectMapper` can't access the `Book` class unless we explicitly export the package containing DTOs to module `com.fasterxml.jackson.databind` in the module descriptor as follows:
 
@@ -1476,7 +1821,7 @@ Using a dedicated package for DTOs allows then to limit and control the access t
 We can now run the application and test the book resource:
 
 ```plaintext
-$ curl -i http://locahost:8080/book
+$ curl -i http://localhost:8080/book
 HTTP/1.1 200 OK
 content-type: application/json
 content-length: 2
@@ -1484,13 +1829,13 @@ content-length: 2
 []
 ```
 ```plaintext
-$ curl -i -X POST -H 'content-type: application/json' -d '{"isbn":"978-0132143011","title":"Distributed Systems: Concepts and Design","author":"George Coulouris, Jean Dollimore, Tim Kindberg, Gordon Blair","pages":1080}' http://locahost:8080/book
+$ curl -i -X POST -H 'content-type: application/json' -d '{"isbn":"978-0132143011","title":"Distributed Systems: Concepts and Design","author":"George Coulouris, Jean Dollimore, Tim Kindberg, Gordon Blair","pages":1080}' http://localhost:8080/book
 HTTP/1.1 200 OK
 content-length: 0
 
 ```
 ```plaintext
-$ curl -i http://locahost:8080/book
+$ curl -i http://localhost:8080/book
 HTTP/1.1 200 OK
 content-type: application/json
 content-length: 163
@@ -1498,7 +1843,7 @@ content-length: 163
 [{"isbn":"978-0132143011","title":"Distributed Systems: Concepts and Design","author":"George Coulouris, Jean Dollimore, Tim Kindberg, Gordon Blair","pages":1080}]
 ```
 ```plaintext
-$ curl -i http://locahost:8080/book/978-0132143011
+$ curl -i http://localhost:8080/book/978-0132143011
 HTTP/1.1 200 OK
 content-type: application/json
 content-length: 161
@@ -1506,36 +1851,10 @@ content-length: 161
 {"isbn":"978-0132143011","title":"Distributed Systems: Concepts and Design","author":"George Coulouris, Jean Dollimore, Tim Kindberg, Gordon Blair","pages":1080}
 ```
 
-> If you carefully followed the *web* module documentation, you should have noticed that we have previously created a Web router configurer bean in the *app_web* module which is conflicting with the generated Web router configurer resulting in the following self-explanatory compilation error:
-> 
-> ```plaintext
-> [ERROR] /home/jkuhn/Devel/git/frmk/io.inverno.example.app_web/src/main/java/module-info.java:[4,1] Multiple beans matching socket io.inverno.mod.web:webRouterConfigurer were found
->  - io.inverno.example.app_web:app_webWebRouterConfigurer of type io.inverno.example.app_web.App_webWebRouterConfigurer
->  - io.inverno.example.app_web:webRouterConfigurer of type io.inverno.example.app_web.WebRouterConfigurer
->  
->  Consider specifying an explicit wiring in module io.inverno.example.app_web (eg. @io.inverno.core.annotation.Wire(beans="io.inverno.example.app_web:app_webWebRouterConfigurer", into="io.inverno.mod.web:webRouterConfigurer") )
-> ```
-> 
-> One way to resolve that conflict is to define an explicit wire in the module definition:
-> 
-> ```java
-> @io.inverno.core.annotation.Module
-> @io.inverno.core.annotation.Wire(beans="io.inverno.example.app_web:webRouterConfigurer", into="io.inverno.mod.web:webRouterConfigurer")
-> module io.inverno.example.app_web {
->   ...
-> }
-> ```
->
-> Such situation can also occur when you are composing multiple modules defining Web controller beans and thus exposing multiple Web router configurers in the module. Hopefully it is safe to resolve these conflicts by wiring the Web router configurer of the module composing the *web* module as it aggregates all Web router configurers annotated with `@WebRoutes`. Please look at [Composite Web module documentation](#composite-web-module) for further details.
-> 
-> In order to avoid such issues, it is also recommended for *programmatic* router configuration to rely as much as possible on `WebRoutesConfigurer` and `WebInterceptorsConfigurer` which are injected in the generated `WebRouterConfigurer`.
-
-It is possible to separate the API from the implementation by defining the Web controller and the Web routes in an interface implemented in a module bean. For instance,
+It is possible to separate the API from the implementation by defining the Web controller and the Web routes in an interface implemented in a module bean. For instance:
 
 ```java
 package io.inverno.example.app_web;
-
-import java.util.Set;
 
 import io.inverno.example.app_web.dto.Book;
 import io.inverno.mod.base.resource.MediaTypes;
@@ -1544,41 +1863,85 @@ import io.inverno.mod.web.annotation.Body;
 import io.inverno.mod.web.annotation.PathParam;
 import io.inverno.mod.web.annotation.WebController;
 import io.inverno.mod.web.annotation.WebRoute;
+import java.util.Set;
 
-@WebController(path = "/book")
+@WebController( path = "/book" )
 public interface BookResource {
 
-    @WebRoute(method = Method.POST, consumes = MediaTypes.APPLICATION_JSON)
+    @WebRoute( method = Method.POST, consumes = MediaTypes.APPLICATION_JSON )
     void create(@Body Book book);
     
-    @WebRoute(path = "/{isbn}", method = Method.PUT, consumes = MediaTypes.APPLICATION_JSON)
+    @WebRoute( path = "/{isbn}", method = Method.PUT, consumes = MediaTypes.APPLICATION_JSON )
     void update(@PathParam String isbn, @Body Book book);
     
-    @WebRoute(method = Method.GET, produces = MediaTypes.APPLICATION_JSON)
+    @WebRoute( method = Method.GET, produces = MediaTypes.APPLICATION_JSON )
     Set<Book> list();
     
-    @WebRoute(path = "/{isbn}", method = Method.GET, produces = MediaTypes.APPLICATION_JSON)
+    @WebRoute( path = "/{isbn}", method = Method.GET, produces = MediaTypes.APPLICATION_JSON )
     Book get(@PathParam String isbn);
     
-    @WebRoute(path = "/{isbn}", method = Method.DELETE)
+    @WebRoute( path = "/{isbn}", method = Method.DELETE )
     void delete(@PathParam String isbn);
 }
 ```
 
-This provides better modularity allowing to define the API in a dedicated module which can later be used to implement various server and/or client implementations in different modules. Another advantage is that it allows to split a Web controller interface into multiple interfaces.
-
-Generics are also supported, we can for instance create a generic `CRUD<T>` interface as follows:
-
 ```java
 package io.inverno.example.app_web;
 
+import io.inverno.core.annotation.Bean;
+import io.inverno.example.app_web.dto.Book;
+import io.inverno.mod.http.base.BadRequestException;
+import io.inverno.mod.http.base.NotFoundException;
+import io.inverno.mod.web.annotation.Body;
+import io.inverno.mod.web.annotation.PathParam;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Bean( visibility = Bean.Visibility.PRIVATE )
+public class BookResourceImpl implements BookResource {
+
+    @Override
+    public void create(@Body Book book) {
+        ...
+    }
+    
+    @Override
+    public void update(@PathParam String isbn, @Body Book book) {
+        ...
+    }
+    
+    @Override
+    public Set<Book> list() {
+        ...
+    }
+    
+    @Override
+    public Book get(@PathParam String isbn) {
+        ...
+    }
+    
+    @Override
+    public void delete(@PathParam String isbn) {
+        ...
+    }
+}
+```
+
+This provides better modularity and allows defining the API in a dedicated module which can later be used to implement various server and/or client implementations in different modules. Another advantage is that it allows to split a Web controller interface into multiple interfaces.
+
+Generics are also supported, we can for instance create the following generic `CRUD<T>` interface:
+
+```java
+package io.inverno.example.app_web;
 
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.web.annotation.Body;
 import io.inverno.mod.web.annotation.PathParam;
 import io.inverno.mod.web.annotation.WebRoute;
+import java.util.Set;
 
 public interface CRUD<T> {
 
@@ -1599,12 +1962,10 @@ public interface CRUD<T> {
 }
 ```
 
-And then create specific resources sharing the same interface:
+And then create multiple specific resources using that interface:
 
 ```java
 package io.inverno.example.app_web;
-
-import java.util.Set;
 
 import io.inverno.example.app_web.dto.Book;
 import io.inverno.mod.web.annotation.WebController;
@@ -1612,21 +1973,12 @@ import io.inverno.mod.web.annotation.WebController;
 @WebController(path = "/book")
 public interface BookResource extends CRUD<Book> {
 
-    void create(Book book);
-    
-    void update(String id, Book book);
-    
-    Set<Book> list();
-    
-    Book get(String id);
-    
-    void delete(String id);
 }
 ```
 
-The book resource as we defined it doesn't seem very reactive, this statement is both true and untrue: the API and the Web server are fully reactive, as a result Web routes declared in the book resource Web controller are configured using a reactive API in the Web router configurer, nonetheless the methods in the Web controller are not reactive.
+The book resource as we defined it doesn't seem very reactive, this statement is both true and untrue: the API and the Web server are fully reactive, as a result Web routes declared in the book resource Web controller are configured using a reactive API in the generated Web server controller configurer, nonetheless the methods in the Web controller are not reactive.
 
-Luckily, we can transform previous interfaces to make them fully reactive:
+Luckily, we can easily transform previous interface and make it fully reactive:
 
 ```java
 package io.inverno.example.app_web;
@@ -1658,7 +2010,7 @@ public interface CRUD<T> {
 }
 ```
 
-There is one remaining thing to do to make the book resource a proper REST resource. When creating a book we must return a 201 Created HTTP code with a `location` header as defined by [RFC7231 Section 7.1.2][rfc-7231-7.1.2]. This can be done by injecting the `WebExchange` in the `create()` method:
+There is one remaining thing to do to make the book resource a proper REST resource. When creating a book we must return a 201 Created HTTP code with a `location` header as defined by [RFC7231 Section 7.1.2][rfc-7231-7.1.2]. This can be done by injecting the `WebExchange` directly in the `create()` method:
 
 ```java
 public interface CRUD<T> {
@@ -1669,7 +2021,7 @@ public interface CRUD<T> {
 }
 ```
 
-We can then do the following in the book resource implementation class:
+We can then do the following in the book resource implementation to set the status and `location` header:
 
 ```java
 package io.inverno.example.app_web;
@@ -1707,23 +2059,25 @@ location: /book/978-0132143012
 content-length: 0
 ```
 
-### Web route
+Declarative routes are configured last in the generated Web server controller configurer which means they override any route prevously defined in a Web configurer but above all they are intercepted by the interceptors defined in `WebInterceptorsConfigurer` beans in the module.
 
-So far, we have described a concrete Web controller use case which should already give a good idea of what can be done with the *web* module. Now, let's examine in details how a Web route is declared in a Web controller.
+### Declarative Web route
+
+So far, we have described a concrete Web controller use case which should already give a good idea on how to configure route in a declarative way. Now, let's examine in details how a Web route is declared in a Web controller.
 
 A Web route or HTTP endpoint or REST endpoint... in short an HTTP request/response exchange is essentially defined by:
 
-- an input, basically an HTTP request characterized by the following components: path, method, query parameters, headers, cookies, path parameters, request body
-- a normal output, basically a successful HTTP response and more especially: status (2xx or 3xx), headers, response body
-- a set of error outputs, basically unsuccessful HTTP responses and more especially: status (4xx or 5xx), headers, response body
+- An input, basically an HTTP request characterized by the following components: path, method, query parameters, headers, cookies, path parameters, request body.
+- A normal output, basically a successful HTTP response and more precisely: a status (2xx or 3xx), headers and a response body.
+- A set of error outputs, basically unsuccessful HTTP responses and more precisely: a status (4xx or 5xx), headers and a response body.
 
-Web routes are defined as methods in a Web controller which match this definition: the Web route input is defined in the parameters of the method, the Web route normal output is defined by the return type of the method and finally the exceptions thrown by the method define the Web route error outputs.
+Web routes are defined as methods in a Web controller which match this definition: the Web route input is defined as method parameters, the Web route normal output is defined by the return type of the method and finally the exceptions thrown by the method define the Web route error outputs.
 
 It then remains to bind the Web route semantic to the method, this is done using various annotations on the method and its parameters.
 
 #### Routing rules
 
-Routing rules, as defined in the [Web router documentation](#web-router), are specified in a single `@WebRoute` annotation on a Web controller method. It allows to define the paths, the methods, the consumed media ranges, the produced media types and the produced languages of the Web routes that route a matching request to the handler implemented by the method.
+Routing rules, as defined in the [Web routing API](#web-route), are specified in a single `@WebRoute` annotation on a Web controller method. It allows to define paths, methods, consumed media ranges, produced media types and produced languages of the Web routes that route a matching request to the handler implemented by the method.
 
 For instance, we can define multiple paths and/or multiple produced media types in order to expose a resource at different locations in various formats:
 
@@ -1732,15 +2086,15 @@ For instance, we can define multiple paths and/or multiple produced media types 
 Flux<T> list();
 ```
 
-> Note that this exactly corresponds to the *web* module API
-
 The `matchTrailingSlash` parameter can be used to indicate that the defined paths should be matched taking the trailing slash into account or not.
+
+> Note that this exactly corresponds to the [Web routing API](#web-routing-api).
 
 #### Parameter bindings
 
-As stated above, a `@WebRoute` annotated method must be bound to the Web exchange. In particular, method parameters are bound to the various elements of the request using `@*Param` annotations defined in the *web* module API.
+As stated above, a `@WebRoute` annotated method must be bound to a Web exchange. In particular, method parameters are bound to the various elements of the request using `@*Param` annotations defined in the Web routing API.
 
-Such parameters can be of any type, as long as the parameter converter plugged into the *web* module can convert it, otherwise a `ConverterException` is thrown. The default parameter converter provided in the *boot* module is able to convert primitive and common types including arrays and collections. Please refer to the [HTTP server documentation](#extend-http-services) to learn how to extend the parameter converter to convert custom types.
+Such parameters can be of any type, as long as the parameter converter plugged into the *web* module can convert it, otherwise a `ConverterException` is thrown. The default parameter converter provided in the *boot* module is able to convert primitive and common types including arrays and collections. Please refer to the [HTTP server documentation](#extending-http-services) to learn how to extend the parameter converter to convert custom types.
 
 In the following example, the value or values of query parameter `isbns` is converted to an array of strings:
 
@@ -1769,9 +2123,9 @@ Query parameters are declared using the `@QueryParam` annotation as follows:
 Flux<T> getBooksByIsbn(@QueryParam String[] isbns);
 ```
 
-Note that the name of the method parameter actually specifies the name of the query parameter.
+Note that the name of the method parameter actually defines the name of the query parameter.
 
-> This contrasts with other RESTful API, such as JAX-RS, which requires to specify the parameter name, again, in the annotation. Since the Web Inverno compiler plugin works at compile time, it has access to actual method parameter names defined in the source.
+> This contrasts with other RESTful API, such as JAX-RS, which requires to specify the parameter name, again, in the annotation. Since the Inverno Web compiler plugin works at compile time, it has access to actual method parameter names defined in the source.
 
 ##### Path parameter
 
@@ -1793,7 +2147,7 @@ It is possible to bind cookie values as well using the `@cookieParam` annotation
 Mono<Void> create(@CookieParam String book_store, @Body Mono<T> book, WebExchange exchange);
 ```
 
-In previous example, the route must be queried with a `book_store` cookie:
+In previous example, the route must be queried with a `book_store` cookie which is not declared as optional:
 
 ```plaintext
 $ curl -i -X POST -H 'cookie: book_store=store1' -H 'content-type: application/json' -d '...' http://locahost:8080/book
@@ -1831,7 +2185,7 @@ Mono<Void> createAuthor(
     @FormParam String nationality);
 ```
 
-Form parameters are sent in a request body using `application/x-www-form-urlencoded` format as defined by [living standard][form-urlencoded]. They can be sent using a HTML form submitted to the server resulting in the following request body:
+Form parameters are sent in a request body following `application/x-www-form-urlencoded` format as defined by [living standard][form-urlencoded]. They can be sent using a HTML form submitted to the server resulting in the following request body:
 
 ```plaintext
 forename=Leslie,middlename=B.,surname=Lamport,birthdate=19410207,nationality=US
@@ -1851,14 +2205,14 @@ A contextual parameter is directly related to the context into which an exchange
 
 ##### WebExchange
 
-The current Web exchange can be injected by specifying a method parameter of a type assignable from `WebExchange`.
+The underlying Web exchange can be injected by specifying a method parameter of a type assignable from `WebExchange`.
 
 ```java
 @WebRoute(method = Method.POST, consumes = MediaTypes.APPLICATION_JSON)
 Mono<Void> create(@Body Mono<T> resource, WebExchange<?> exchange) throws BadRequestException;
 ```
 
-> The exchange gives a full access to the underlying request and response. Although it allows to manipulate the request and response bodies, this might conflict with the generated Web route and as a result the exchange should only be used to access request parameters, headers, cookies... or specify a specific response status, response cookies or headers...
+> The exchange gives full access to the underlying request and response. Although it allows to manipulate the request and response bodies, this might conflict with the generated Web route and as a result the exchange should only be used to access request parameters, headers, cookies... or specify a specific response status, response cookies or headers...
 
 The Web exchange also gives access to the exchange context, if a route handler requires a particular context type, it can be specified as a type parameter as follows:
 
@@ -1867,14 +2221,16 @@ The Web exchange also gives access to the exchange context, if a route handler r
 Mono<Void> create(@Body Mono<T> resource, WebExchange<SecurityContext> exchange) throws BadRequestException;
 ```
 
-It is also possible to specify intersection types if multiple context types are expected:
+It is also possible to specify intersection types if multiple context types are expected using a type variable:
 
 ```java
 @WebRoute(method = Method.POST, consumes = MediaTypes.APPLICATION_JSON)
-Mono<Void> create(@Body Mono<T> resource, WebExchange<TracingContext & SecurityContext> exchange) throws BadRequestException;
+<E extends TracingContext & SecurityContext> Mono<Void> create(@Body Mono<T> resource, WebExchange<E> exchange) throws BadRequestException;
 ```
 
-#### Exchange Context
+Context types declared in a declarative Web route are aggregated in the Web server controller configurer by the Inverno Web compiler plugin in the same way as for Web server [configurers](#configuring-the-web-server-controller). However declarative Web routes make it possible to use interaction types which brings more flexibility.
+
+##### Exchange context
 
 The exchange context can also be injected directly by specifying a method parameter of a type assignable from `ExchangeContext`.
 
@@ -1883,33 +2239,14 @@ The exchange context can also be injected directly by specifying a method parame
 Mono<T> get(@PathParam String id, WebContext webContext);
 ```
 
-As for the exchange, it is possible to specify intersection types using a type variable:
+As for the Web exchange, it is possible to specify intersection types using a type variable:
 
 ```java
 @WebRoute(path = "/{id}", method = Method.GET, produces = MediaTypes.APPLICATION_JSON)
 <E extends WebContext & InterceptorContext> Mono<T> get(@PathParam String id, E context);
 ```
 
-The exchange context is basically provided by a single Web router configurer injected in the Web router bean. It is usually the configurer generated by the Web compiler. 
-
-In order to generate the Web router configurer, the Web compiler scans Web controller beans, Web routes configurer beans, Web interceptor configurer beans and Web router configurer beans in order to collect all the required context types and generate a concrete implementation used to provide exchange context instances that comply with all the routes. As a result, whether a context type is specified in a formal parameter of `WebExchange`, `WebRoutesConfigurer`, `WebInterceptorsConfigurer` or `WebRouterConfigurer` or in a method parameter, it must be an interface otherwise the Web compiler will raise an error.
-
-The Web compiler generates basic getter/setter implementations for the context. For instance, if a context type is defined as follows, the generated implementation will contain an instance variable that is returned and set using corresponding getter and setter methods:
-
-```java
-package io.inverno.example.app_web;
-
-import io.inverno.mod.http.server.ExchangeContext;
-
-public interface InterceptorContext extends ExchangeContext {
-
-    String getInterceptorValue();
-
-    void setInterceptorValue(String interceptorValue);
-}
-```
-
-> In addition, the compiler generates an interface extending all the required context types. An advanced user can then also provide a specific global context implementation by extending the generated Web router configurer and overrides the `createContext()` method.
+As before, context types declared in a declarative Web route are aggregated in the Web server controller configurer by the Inverno Web compiler plugin.
 
 #### Request body
 
@@ -1922,7 +2259,7 @@ In the following example, the request body is bound to parameter `book` of type 
 void create(@Body Book book);
 ```
 
-Unlike parameters, the request body can be provided in a non-blocking/reactive way, the previous example can then be rewritten using a `Mono<T>`, a `Flux<T>` or more broadly a `Publisher<T>` as body parameter type as follows:
+Unlike parameters, the request body can be specified in a reactive way, the previous example can then be rewritten using a `Mono<T>`, a `Flux<T>` or more broadly a `Publisher<T>` as body parameter type as follows:
 
 ```java
 @WebRoute(method = Method.POST, consumes = MediaTypes.APPLICATION_JSON)
@@ -1938,7 +2275,7 @@ Mono<Void> create(@Body Flux<Book> book);
 
 > The `application/json` also supports such streaming capability by emitting converted objects while parsing a JSON array.
 
-The `@Body` annotation can't be used together with the `@FormParam` annotation on route method parameters because the request body can only be consumed once.
+The `@Body` annotation can not be used together with the `@FormParam` annotation on route method parameters because the request body can only be consumed once.
 
 ##### Multipart form data
 
@@ -1955,7 +2292,7 @@ Flux<Result> createBulk(@Body Flux<WebPart> parts) {
 }
 ```
 
-> It is not possible to bind particular parts to a route method parameter. This design choice has been motivated by performance and resource consumption considerations. Indeed, this would require to consume and store the entire request body in memory before invoking the method. As a result, multipart data must still be handled *manually* using the *web* module API.
+> It is not possible to bind particular parts to a route method parameter. This design choice has been motivated by performance and resource consumption considerations. Indeed, this would require to consume and store the entire request body in memory before invoking the method. As a result, multipart data must still be handled *manually* using and processed in sequence (i.e. a part must be fully consumed before we can consume the next one).
 
 #### Response body
 
@@ -1977,14 +2314,14 @@ Depending on the media type converter, partial responses can be sent to the clie
 
 ```java
 @WebRoute(path = "/", method = Method.GET, produces = MediaTypes.APPLICATION_X_NDJSON)
-Stream<Book> list();
+Publisher<Book> list();
 ```
 
 In the preceding example, as soon as a book is retrieved from a data store it can be sent to the client which can then process responses as soon as possible reducing the latency and resource consumption on both client and server. The response content type is `application/x-ndjson`, so each book is encoded in JSON before a newline delimiter to let the client detects partial responses as defined by [the ndjon format][ndjson].
 
 ##### Server-sent events
 
-Server-sent events can be streamed in the response body when declared together with a server-sent event factory route method parameter. A server-sent event factory can be bound to a route method parameter using the `@SseEventFactory` annotation.
+[Server-sent events][server-sent-events] can be streamed in the response body when declared together with a server-sent event factory route method parameter. A server-sent event factory can be bound to a route method parameter using the `@SseEventFactory` annotation.
 
 In the following example, we declare a basic server-sent events Web route producing events with a `String` message:
 
@@ -1993,11 +2330,11 @@ In the following example, we declare a basic server-sent events Web route produc
 Publisher<WebResponseBody.SseEncoder.Event<String>> getBookEvents(@SseEventFactory WebResponseBody.SseEncoder.EventFactory<String> events);
 ```
 
-Server-sent event return type can be any of `Mono<WebResponseBody.SseEncoder.Event<T>>` if only one event is expected, `Flux<WebResponseBody.SseEncoder.Event<T>>` if multiple events are expected and more broadly `Publisher<WebResponseBody.SseEncoder.Event<T>>`.
+Server-sent event return type can be any of `Mono<WebResponseBody.SseEncoder.Event<T>>` if only one event is expected, `Flux<WebResponseBody.SseEncoder.Event<T>>` if multiple events are expected or more broadly `Publisher<WebResponseBody.SseEncoder.Event<T>>`.
 
 By default, the media type of a server-sent event message is `text/plain` but it can be encoded using a specific media type converter as well by specifying a media type in the `@SseEventFactory` annotation. 
 
-We can rewrite previous [SSE example](#server-sent-events) with a message of a custom type as follows:
+We can rewrite previous example with messages of a custom type serialized in JSON as follows:
 
 ```java
 @WebRoute(path = "/event", method = Method.GET)
@@ -2013,36 +2350,240 @@ public Publisher<WebResponseBody.SseEncoder.Event<BookEvent>> getBookEvents(@Sse
 }
 ```
 
+### Declarative WebSocket route
+
+Just like Web route, a WebSocket route can be declared using the `@WebSocketRoute` annotation with slightly different semantic and bindings. A WebSocket exchange is essentially defined by an inbound stream of messages and an outbound stream of messages.
+
+WebSocket routes are defined as methods in a Web controller with the following rules: 
+
+- The WebSocket `Web2SocketExchange.Inbound` may be injected as method parameter.
+- The WebSocket inbound may be injected as method parameter as a `Mono<T>`, a `Flux<T>` or more broadly as a `Publisher<T>`. When defined that way, the `Web2SocketExchange.Inbound` can not be injected as method parameter.
+- The WebSocket `Web2SocketExchange.Outbound` may be injected as method parameter and if so the method must be `void`.
+- The WebSocket WebSocket outbound may be specified as method's return type as a `Mono<T>`, a `Flux<T>` or more broadly as a `Publisher<T>` which closes the WebSocket when it terminates. When defined that way, the `Web2SocketExchange.Outbound` can not be injected as method parameter.
+- The `Web2SocketExchange` may always be injected as method parameter.
+- The exchange context may always be injected as method parameter just like for regular Web routes.
+
+#### Routing rules
+
+WebSocket routing rules, as defined in the [Web routing API](#websocket-route), are specified in a single `@WebSocketRoute` annotation on a Web controller method. It allows to define paths, produced languages, supported subprotocols and the message type consumed and produced by the WebSocket routes that route a matching request to the handler implemented by the method.
+
+A basic WebSocket route consuming and producing JSON text messages can be declared as follows:
+
+```java
+@WebSocketRoute( path = "/chat", subprotocol = { "json" } )
+Flux<Message> chat(Flux<Message> inbound);
+```
+
+> Note that this exactly corresponds to the [Web routing API](#web-routing-api).
+
+#### Contextual parameters
+
+The `Web2SocketExchange` and the exchange context can be injected in the WebSocket route handler method just as for a regular [Web route](#contextual-parameters).
+
+```java
+@WebSocketRoute( path = "/chat", subprotocol = { "json" } )
+Flux<Message> chat(Flux<Message> inbound, Web2SocketExchange<? extends ExchangeContext> webSocketExchange);
+```
+
+```java
+@WebSocketRoute( path = "/chat", subprotocol = { "json" } )
+<E extends SecurityContext & ChatContext> Flux<Message> chat(Flux<Message> inbound, E context);
+```
+
+#### WebSocket inbound
+
+The WebSocket inbound can be specified as method parameter in two ways, either by injecting the `Web2SocketExchange.Inbound` or by injecting a `Mono<T>`, a `Flux<T>` or more broadly as a `Publisher<T>`.
+
+When specified as `Web2SocketExchange.Inbound` parameter, inbound frames or messages can be consumed as defined in the [Web Routing API documentation](#websocket-route):
+
+```java
+@WebSocketRoute( path = "/ws" )
+public void webSocket(Web2SocketExchange.Inbound inbound) {
+    Flux.from(inbound.messages()).flatMap(WebSocketMessage::reducedText).subscribe(LOGGER::info);
+}
+```
+
+When specified as a `Publisher<T>` parameter, `<T>` can be basically a `ByteBuf`, a `String` or any types that can be converted using a converter matching the negotiated subprotocol.
+
+For instance, raw inbound messages can be consumed as follows:
+
+```java
+@WebSocketRoute( path = "/ws" )
+public void webSocket(Flux<ByteBuf> inbound) {
+    inbound.subscribe(message -> {
+        try {
+            LOGGER.info(message.toString(Charsets.DEFAULT));
+        }
+        finally {
+            // ByteBuf must be released where they are consumed
+            message.release();
+        }
+    });
+}
+```
+
+It is also possible to consume raw frame data composing inbound messages as follows:
+
+```java
+@WebSocketRoute( path = "/ws" )
+public void webSocket(Flux<Flux<ByteBuf>> inbound) {
+
+    inbound
+        .doOnNext(message -> LOGGER.info("Message start"))
+        .flatMap(message -> message.doOnComplete(() -> LOGGER.info("Message end")))
+        .subscribe(message -> {
+            try {
+                LOGGER.info(message.toString(Charsets.DEFAULT));
+            }
+            finally {
+                // ByteBuf must be released where they are consumed
+                message.release();
+            }
+        });
+}
+```
+
+Finally, inbound messages can also be automatically decoded using a converter matching the subprotocol negotiated during the opening handshake:
+
+```java
+@WebSocketRoute( path = "/ws", subprotocol = { "json" } )
+public void webSocket(Flux<Message> inbound) {
+    inbound.subscribe(message -> {
+        LOGGER.info(message.getNickname() + ": " + message.getMessage());
+    });
+}
+```
+
+#### WebSocket outbound
+
+The WebSocket outbound can be specified in two ways, either as method parameter by injecting the `Web2SocketExchange.Outbound` or as method's return type as a `Mono<T>`, a `Flux<T>` or more broadly as a `Publisher<T>`.
+
+When specified as `Web2SocketExchange.Outbound`, outbound frames or messages can be provided as defined in the [Web Routing API documentation](#websocket-route):
+
+```java
+@WebSocketRoute( path = "/ws" )
+public void webSocket(Web2SocketExchange.Outbound outbound) {
+    outbound.messages(factory -> Flux.interval(Duration.ofSeconds(1)).map(ign -> factory.text(ZonedDateTime.now().toString())));
+}
+```
+
+When specified as method's return type as a `Publisher<T>`, `<T>` can be basically a `ByteBuf`, a `String` or any types that can be converted using a converter matching the negotiated subprotocol.
+
+For instance, `String` outbound messages can be provided as follows:
+
+```java
+@WebSocketRoute( path = "/ws" )
+public Flux<String> webSocket() {
+    return Flux.just("messge 1", "message 2", "message 3");
+}
+```
+
+It is also possible to produce fragmented raw messages as follows:
+
+```java
+@WebSocketRoute( path = "/ws" )
+public Flux<Flux<ByteBuf>> webSocket() {
+    return Flux.just(
+        Flux.just(
+            Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("message", Charsets.DEFAULT)), 
+            Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(" 1", Charsets.DEFAULT))
+        ), 
+        Flux.just(
+            Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("message ", Charsets.DEFAULT)), 
+            Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(" 2", Charsets.DEFAULT))
+        ), 
+        Flux.just(
+            Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("message ", Charsets.DEFAULT)), 
+            Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(" 3", Charsets.DEFAULT))
+        )
+    );
+}
+```
+
+Finally, outbound messages can be automatically encoded using a converter matching the subprotocol negotiated during the opening handshake:
+
+```java
+@WebSocketRoute( path = "/ws", subprotocol = { "json" } )
+public Flux<Message> webSocket() {
+    return Flux.just(
+        new Message("john", "message 1"),
+        new Message("bob", "message 2"),
+        new Message("alice", "message 3")
+    );
+}
+```
+
+<br/>
+
+> Putting it all together, the [simple chat server](#a-simple-chat-server) can be simply implemented as follows:
+> 
+> ```java
+> package io.inverno.example.app_web_websocket;
+> 
+> import io.inverno.core.annotation.Bean;
+> import io.inverno.core.annotation.Destroy;
+> import io.inverno.core.annotation.Init;
+> import io.inverno.example.app_web_websocket.dto.Message;
+> import io.inverno.mod.web.annotation.WebController;
+> import io.inverno.mod.web.annotation.WebSocketRoute;
+> import reactor.core.publisher.Flux;
+> import reactor.core.publisher.Sinks;
+> 
+> @Bean
+> @WebController
+> public class App_web_websocketWebController {
+> 
+>     private Sinks.Many<Message> chatSink;
+> 
+>     @Init
+>     public void init() {
+>         this.chatSink = Sinks.many().multicast().onBackpressureBuffer(16, false);
+>     }
+> 
+>     @Destroy
+>     public void destroy() {
+>         this.chatSink.tryEmitComplete();
+>     }
+> 
+>     @WebSocketRoute(path = "/ws", subprotocol = "json")
+>     public Flux<Message> ws2(Flux<Message> inbound) {
+>         inbound.subscribe(message -> this.chatSink.tryEmitNext(message));
+>         return this.chatSink.asFlux();
+>     }
+> }
+> ```
+
 ### Composite Web module
 
-The Web Inverno compiler plugin generates a single Web router configurer bean aggregating all route definitions specified in Web controllers beans in the module. When the module composes the *web* module, this bean is then plugged in the *web* module to configure the Web server router. 
+The Web Inverno compiler plugin generates a single Web server controller configurer bean aggregating all route definitions and context types specified in Web configurers or Web controllers beans in the module. When a module composes the *web* module, this bean is then wired to the *web* module to configure the Web server controller. 
 
-Now if the module doesn't compose the *web* module, the Web router configurer bean is simply exposed by the module waiting for the module to be composed within other modules until a top module eventually composes the *web* module. 
+Now when a module doesn't compose the *web* module, the Web router configurer bean is simply exposed by the module waiting for the module to be composed within other modules until a top module eventually composes the *web* module. 
 
 This raises two issues: 
 
-- First if multiple modules exposing web router configurers are composed together with the *web* module, we'll end up with dependency injection conflicts since multiple web router configurer beans can be wired to the *web* module. Selecting one of them with a `@Wire` annotation doesn't really solve the problem since we expect all routes to be configured in the Web server router.
+- First if multiple Web modules are composed together with the *web* module, dependency injection conflicts will be reported since multiple Web server controller configurer beans can be wired to the *web* module.
 - Then if such module is composed in another module defining other Web controllers, we still need to expose one Web router configurer providing all route definitions to a top module composing the *web* module.
 
-In order to solve these issues, the Web Inverno compiler plugin aggregates all Web router configurer beans annotated with `@WebRoutes` into the generated Web router configurer of the module so that it can be used to configure all defined routes. This includes Web router configurer exposed in component modules as well as user defined Web router configurer beans within the module.
+Hopefully, the `WebServerControllerConfigurer` interface extends `WebRouterConfigurer` and `ErrorWebRouterConfigurer` which are automatically aggregated in a generated Web server controller configurer bean by the Inverno Web compiler plugin. Then all we have to do to compose Web modules is to explicitly wire the top `WebServerControllerConfigurer` bean to the *web* module.
 
-A generated Web router configurer is always annotated with a `@WebRoutes` annotation specifying the Web routes it configures. For instance, the Web router configurer generated for the module defining the book Web controller looks like:
+A generated Web server controller configurer is always annotated with a `@WebRoutes` annotation specifying the Web routes it configures. For instance, the configurer generated for the module defining the book Web controller looks like:
 
 ```java
 @WebRoutes({
-    @WebRoute(path = { "/book/{id}" }, method = { Method.GET }, produces = { "application/json" }),
-    @WebRoute(path = { "/book" }, method = { Method.POST }, consumes = { "application/json" }),
-    @WebRoute(path = { "/book/{id}" }, method = { Method.PUT }, consumes = { "application/json" }),
-    @WebRoute(path = { "/book" }, method = { Method.GET }, produces = { "application/json" }),
-    @WebRoute(path = { "/book/{id}" }, method = { Method.DELETE })
+	@WebRoute(path = { "/book/{id}" }, method = { Method.GET }, produces = { "application/json" }),
+	@WebRoute(path = { "/book" }, method = { Method.POST }, consumes = { "application/json" }),
+	@WebRoute(path = { "/book/{id}" }, method = { Method.PUT }, consumes = { "application/json" }),
+	@WebRoute(path = { "/book" }, method = { Method.GET }, produces = { "application/json" }),
+	@WebRoute(path = { "/book/{id}" }, method = { Method.DELETE })
 })
-@Bean
-public final class WebRouterConfigurer implements io.inverno.mod.web.WebRouterConfigurer<WebExchange> {
+@Bean( name = "webServerContollerConfigurer" )
+@Generated(value="io.inverno.mod.web.compiler.internal.WebServerControllerConfigurerCompilerPlugin", date = "2022-07-20T14:10:14.100988902+02:00[Europe/Paris]")
+public final class App_web_WebServerContollerConfigurer implements WebServerControllerConfigurer<App_web_WebServerContollerConfigurer.Context> {
     ...
 }
 ```
 
-This information is used by the compiler plugin to statically check that there is no conflicting routes when generating the Web router configurer.
+These information are used by the compiler plugin to statically check that there is no conflicting routes when generating the Web server controller configurer. It is a good practice to explicitly define the `@WebRoutes` annotation when defining routes programmatically in a Web configurer, otherwise the compiler can not determine conflict as it does not know the actual routes configured.
 
 Now let's imagine we have created a modular Web application with a *book* module defining the book Web controller, an *admin* module defining some admin Web controllers and a top *app* module composing these modules together with the *web* module.
 
@@ -2078,13 +2619,13 @@ module io.inverno.example.web_modular.app {
 }
 ```
 
-The first thing to notice is that the *web* module is excluded from *admin* and *book* modules since we don't want to start a Web server in these modules, we only need the Web API to define Web controllers and generate Web router configurer beans. As a consequence, the *boot* module which provides converters and net service required to create and start the *web* module is also not required but the `io.inverno.core` module is still required. Finally we must export packages containing the generated module classes to the *app* module so it can compose them.
+The first thing to notice is that the *web* module is excluded from *admin* and *book* modules since we don't want to start a Web server in these modules, we only need the Web routing API to define Web controllers and generate Web server controller configurer beans. As a consequence, the *boot* module which provides converters and net service required to create and start the *web* module is also not required but the `io.inverno.core` module is still required. Finally we must export packages containing the generated module classes to the *app* module so it can compose them.
 
-The *admin* and *book* modules should compile just fine resulting in two Web router configurer beans being generated and exposed in each module. But the compilation of *app* module should raise some dependency injection errors since multiple Web router configurer beans exist whereas only one can be wired to the *web* module. There are actually three Web configurer beans, how so? There are those exposed by the *admin* and *book* modules and one Web router configurer bean generated in the *app* module and aggregating the previous two. In order to solve the conflict, we should then define the following explicit wire in the *app* module:
+The *admin* and *book* modules should compile just fine resulting in two Web server controller configurer beans being generated and exposed in each module. But the compilation of *app* module should raise some dependency injection errors since multiple Web server controller configurer beans exist whereas only one can be wired to the *web* module. There are actually three Web server controller configurer beans, how so? There are those exposed by the *admin* and *book* modules and one generated in the *app* module and aggregating the previous two. In order to solve the conflict, we should then define the following explicit wire in the *app* module:
 
 ```java
 @io.inverno.core.annotation.Module
-@io.inverno.core.annotation.Wire(beans="io.inverno.example.web_modular.app:webRouterConfigurer", into="io.inverno.mod.web:webRouterConfigurer")
+@io.inverno.core.annotation.Wire(beans="io.inverno.example.web_modular.app:webServerContollerConfigurer", into="io.inverno.mod.web:controllerConfigurer")
 module io.inverno.example.web_modular.app {
     ...
 }
@@ -2092,7 +2633,7 @@ module io.inverno.example.web_modular.app {
 
 > One could rightfully argue that this explicit wiring is useless and cumbersome, but it is consistent with the IoC/DI core framework principles. Keeping things simple and explicit limits possible side effects induced by the fact that what's happening with *automatic* conflict resolution is often specific and might not be obvious. This is all the more true when such behavior is manually overridden.
 
-The same principles applies if multiple modules like *admin* or *book* are cascaded into one another: the Web router configurer beans at a given level are aggregated in the Web router configurer bean in the next level.
+The same principles applies if multiple modules like *admin* or *book* are cascaded into one another: Web server controller configurer beans at a given level are aggregated in the Web server controller configurer bean in the next level.
 
 ### Automatic OpenAPI specifications
 
@@ -2217,7 +2758,7 @@ public class BookResource {
 
 This tag can also be used to specify error status code in `@throws` statements, but this is usually not necessary since the Web compiler plugin automatically detects status code for regular `HTTPException` such as `BadRequestException` (400) or `NotFoundException` (404).
 
-The Web compiler plugin generates, per module, one Open API specification and one Web router configurer bean aggregating all routes from all Web controllers. As a result the general API documentation corresponds to the general documentation of the module and defined in the module descriptor JavaDoc comment.
+The Web compiler plugin generates, per module, one Open API specification and one Web server controller configurer bean aggregating all routes from all Web controllers and Web configurers. As a result the general API documentation corresponds to the general documentation of the module which is defined in the module descriptor JavaDoc comment.
 
 For instance, we can describe the API exposed by the *book* module in the module descriptor including the API version which should normally match the module version:
 
@@ -2239,7 +2780,7 @@ module io.inverno.example.web_modular.book {
 }
 ```
 
-These specifications can also be exposed in the Web server as described in the [Web server documentation](#web-server).
+These specifications can also be exposed in the Web server using the `OpenApiRoutesConfigurer` as described in the [Web server documentation](#openapi-specification).
 
 If we build and run the [modular book application](#composite-web-module) and access `http://locahost:8080/open-api` in a Web browser we should see a Swagger UI loaded with the Open API specifications of the *admin* and *book* modules:
 
@@ -2260,82 +2801,3 @@ info:
     version: ''
 ...
 ```
-
-### Web interceptors and routes configurer
-
-Although the Web router can be configured programmatically by defining a `WebRouterConfigurer` bean, it is recommended to rather define `WebInterceptorsConfigurer` and `WebRoutesConfigurer` beans to configure respectively the interceptors and routes of a module. This will prevent conflicts with the `WebRouterConfigurer` bean generated by the Web compiler.
-
-Web interceptors configurer beans, Web routes configurer beans and Web router configurer beans are all injected in the generated Web router configurer which configures the Web router first with the Web interceptors configurers, then the Web router configurers, then the Web routes configurers and finally the Web routes decalred in `@WebController` annotated beans.
-
-Inside a module, Web routes interceptors are then typically defined in one or more `WebInterceptorsConfigurer` beans and apply to all the routes defined in the module whether they are defined in a Web routes configurer, a Web router configurer or a Web controller. 
-
-This basically means that if a component module exposes a Web router configurer, its routes will be potentially intercepted by the interceptors defined in the composite module.
-
-```java
-package io.inverno.example.app_web;
-
-import io.inverno.core.annotation.Bean;
-import io.inverno.mod.web.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import reactor.core.publisher.Mono;
-
-@Bean(visibility = Bean.Visibility.PRIVATE)
-public class App_webWebInterceptorsConfigurer implements WebInterceptorsConfigurer<InterceptorContext> {
-
-    private Logger logger = LogManager.getLogger(this.getClass());
-
-    @Override
-    public void accept(WebInterceptable<InterceptorContext, ?> interceptable) {
-        interceptable
-            .intercept()
-                .path("/hello")
-                .interceptor(exchange -> {
-                    logger.info("Smile, you've been intercepted");
-                    return Mono.just(exchange);
-                })
-            ...
-    }
-}
-```
-
-> Although it is possible to define multiple `WebInterceptorsConfigurer` beans, it is recommended to have only one because the order in which they are injected in the Web router configurer is not guaranteed which might be problematic under certain circumstances.
-
-Inside a module, Web routes should typically be defined in a declarative way in Web controllers or programmatically in one or more `WebRoutesConfigurer`.
-
-```java
-package io.inverno.example.app_web;
-
-import io.inverno.core.annotation.Bean;
-import io.inverno.mod.web.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import reactor.core.publisher.Mono;
-
-@Bean(visibility = Bean.Visibility.PRIVATE)
-public class App_webWebRoutesConfigurer implements WebRoutesConfigurer<InterceptorContext> {
-
-    private Logger logger = LogManager.getLogger(this.getClass());
-
-    @Override
-    public void accept(WebRoutable<InterceptorContext, ?> routable) {
-        routable
-            .configureRoutes(new WebJarsRoutesConfigurer(this.resourceService))
-            .configureRoutes(new OpenApiRoutesConfigurer(this.resourceService, true))
-            .route()
-                .path("/hello")
-                .method(Method.GET)
-                .produces(MediaTypes.TEXT_PLAIN)
-                .language("en-US")
-                .handler(exchange -> exchange
-                    .response()
-                        .body()
-                        .encoder(String.class)
-                        .value("Hello!")
-                )
-            ...
-    }
-}
-```
-
-> Particular care must still be taken when defining Web routes configurer beans, Web interceptor configurer beans and Web router configurer beans in a module. Since the generated Web router configurer aggregates all these types of beans, they should always be defined as private beans so that the generated Web router configurer is the only bean exposed by the module. This is necessary to avoid duplicate definitions of routes and interceptors in composite modules.

@@ -227,7 +227,6 @@ List<ConfigurationProperty> result = source.list("logging.level")
 	.block();
 ```
 
-
 ### Configurable configuration source
 
 A configurable configuration source is a particular configuration source which supports configuration properties updates. The [Redis configuration source](#redis-configuration-source) is an example of configurable configuration source.
@@ -915,4 +914,3 @@ public interface CompositeModuleConfiguration {
 ```
 
 In the preceding example, we basically indicate to the Inverno framework that the `ComponentModuleConfiguration` defined in the `CompositeModuleConfiguration` must be injected into the component module instance.
-

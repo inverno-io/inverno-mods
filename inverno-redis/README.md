@@ -77,8 +77,8 @@ RedisClient<String, String> client = ...
 
 Mono<String> getSomeKey = client.get("someKey");
 
-getSomeKey.subscribe(...); // The command is sent on subscribe following reactive principles
-
+// The command is sent on subscribe following reactive principles
+getSomeKey.subscribe(...);
 ```
 
 Complex commands are created using builders, for instance command `ZRANGE mySortedSet 0 +inf BYSCORE REV LIMIT 0 1 WITHSCORES` can be created and executed as follows:
@@ -92,8 +92,8 @@ Flux<SortedSetScoredMember<String>> zrangeWithScores = client.zrangeWithScores()
     .limit(0, 1)
     .build("mySortedSet", Bound.inclusive(0), Bound.unbounded());
 
-zrangeWithScores.subscribe(...); // The command is sent on subscribe following reactive principles
-
+// The command is sent on subscribe following reactive principles
+zrangeWithScores.subscribe(...);
 ```
 
 ### Keys and Values codecs
@@ -119,8 +119,8 @@ Flux<String> results = Flux.from(client.connection(operations ->
     )
 ));
 
-results.subscribe(...); // Commands are sent sent on subscribe following reactive principles
-
+// Commands are sent sent on subscribe following reactive principles
+results.subscribe(...);
 ```
 
 ### Batch
@@ -140,8 +140,8 @@ Flux<String> results = Flux.from(client.batch(operations ->
     )
 ));
 
-results.subscribe(...); // Commands are sent on subscribe following reactive principles
-
+// Commands are sent on subscribe following reactive principles
+results.subscribe(...);
 ```
 
 ### Transactions
@@ -163,7 +163,8 @@ Mono<RedisTransactionResult> transaction = client
         )
     );
 
-RedisTransactionResult result = transaction.block(); // Commands are sent on subscribe following reactive principles
+// Commands are sent on subscribe following reactive principles
+RedisTransactionResult result = transaction.block();
 
 if(!result.wasDiscarded()) {
     Assertions.assertEquals("OK", result.get(0));
@@ -172,7 +173,6 @@ if(!result.wasDiscarded()) {
 else {
     // Report error
 }
-
 ```
 
 If any error is raised during the processing, typically when the client subscribes to the returned command publishers, the transaction is discarded.
@@ -191,8 +191,8 @@ Mono<RedisTransactionResult> transaction = client
         return operations.exec();
     });
 
-RedisTransactionResult result = transaction.block(); // Commands are sent on subscribe following reactive principles
-
+// Commands are sent on subscribe following reactive principles
+RedisTransactionResult result = transaction.block();
 ```
 
 In above example, it is important to subscribe to command publishers explicitly otherwise they won't be part of the transaction.

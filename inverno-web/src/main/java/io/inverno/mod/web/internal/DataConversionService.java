@@ -279,7 +279,7 @@ public class DataConversionService {
 				return this.getConverter(MediaTypes.normalizeApplicationMediaType(subProtocol));
 			}
 			catch(NoConverterException e) {
-				throw new WebSocketException("No converter found for sub protocol: " + subProtocol, e);
+				throw new WebSocketException("No converter found for subprotocol: " + subProtocol, e);
 			}
 		});
 	}
@@ -306,7 +306,7 @@ public class DataConversionService {
 				return this.getConverter(MediaTypes.normalizeApplicationMediaType(subProtocol));
 			}
 			catch(NoConverterException e) {
-				throw new WebSocketException("No converter found for sub protocol: " + subProtocol, e);
+				throw new WebSocketException("No converter found for subprotocol: " + subProtocol, e);
 			}
 		});
 	}

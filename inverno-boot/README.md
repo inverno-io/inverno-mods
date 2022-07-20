@@ -1,9 +1,11 @@
 [inverno-javadoc]: https://inverno.io/docs/release/api/index.html
-
 [jdk-files-probeContentType]: https://docs.oracle.com/javase/9/docs/api/java/nio/file/Files.html#probeContentType-java.nio.file.Path-
 [jdk-executors-newCachedThreadPool]: https://docs.oracle.com/javase/9/docs/api/java/util/concurrent/Executors.html#newCachedThreadPool--
-
+[netty]: https://netty.io/
+[vertx]: https://vertx.io/
 [ndjson]: http://ndjson.org/
+[jsr310]: https://jcp.org/en/jsr/detail?id=310
+[iso8601]: https://en.wikipedia.org/wiki/ISO_8601
 
 # Boot
 
@@ -52,13 +54,13 @@ Please refer to the [API documentation][inverno-javadoc] to have an exhaustive d
 
 ## Reactor
 
-The module provides two `Reactor` implementations: one generic implementation which creates a regular Netty event loop group and a Vert.x core implementation which uses the event loops of a `Vertx` instance. The Vert.x implementation is particularly suited when an Inverno application must integrate Vert.x services such as the PostgreSQL client.
+The module provides two `Reactor` implementations: one generic implementation which creates a regular Netty event loop group and a [Vert.x][vertx] core implementation which uses the event loops of a `Vertx` instance. The Vert.x implementation is particularly suited when an Inverno application must integrate Vert.x services such as the PostgreSQL client.
 
 The module exposes one or the other as bean depending on the *boot* module configuration, parameter `reactor_prefer_vertx` must be set to true, and whether or not the Vert.x core module is present on the module path.
 
 ## Net service
 
-The module provides a base `NetService` implementation exposed as a bean for building network applications based on Netty.
+The module provides a base `NetService` implementation exposed as a bean for building network applications based on [Netty][netty].
 
 ## Media type service
 
@@ -131,4 +133,4 @@ The default worker pool bean is a simple [cached Thread pool][jdk-executors-newC
 
 A standard JSON reader/writer based on Jackson `ObjectMapper` is also provided. This instance is used across the application to perform JSON conversion operations, a global configuration can then be applied to that particular instance or it can be overridden when creating the *boot* module.
 
-The global object mapper is configured to use JSR310 for dates which are serialized as timestamps following ISO 8601 representation.
+The global object mapper is configured to use [JSR310][jsr310] for dates which are serialized as timestamps following [ISO 8601][iso8601] representation.

@@ -44,8 +44,10 @@ import java.util.regex.Pattern;
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
+ * 
+ * @param <A> the exchange context type
  */
-public class WebJarsRoutesConfigurer implements WebRoutesConfigurer<ExchangeContext> {
+public class WebJarsRoutesConfigurer<A extends ExchangeContext> implements WebRoutesConfigurer<A> {
 	
 	private static final Logger LOGGER = LogManager.getLogger(WebJarsRoutesConfigurer.class);
 	
@@ -74,7 +76,7 @@ public class WebJarsRoutesConfigurer implements WebRoutesConfigurer<ExchangeCont
 	}
 
 	@Override
-	public void configure(WebRoutable<ExchangeContext, ?> routes) {
+	public void configure(WebRoutable<A, ?> routes) {
 		/* 2 possibilities:
 		 * - modular webjar
 		 *   - /[module_name]/webjars/* -> module://[module_name]/META-INF/resources/webjars/[module_name]/[module_version]/*

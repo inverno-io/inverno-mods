@@ -127,7 +127,8 @@ SqlClient client = ...
 
 Publisher<SqlResult> results = client.statement("SELECT * FROM person").execute();
 
-results.subscribe(...); // The statement is executed on subscribe following reactive principles
+// The statement is executed on subscribe following reactive principles
+results.subscribe(...);
 ```
 
 The execution of a statement returns `SqlResult` for each SQL operations in the statement in a publisher.
@@ -166,7 +167,8 @@ Publisher<SqlResult> results = client.preparedStatement("SELECT * FROM person WH
     .bind("Smith") // bind the query argument
     .execute();
 
-results.subscribe(...); // The statement is executed on subscribe following reactive principles
+// The statement is executed on subscribe following reactive principles
+results.subscribe(...);
 ```
 
 As for a static statement, a prepared statement returns `SqlResult` for each SQL operations in the statement, however it is not possible to specify multiple operation in a prepared statement. But it is possible to transform it into a batch which will result in multiple operations and therefore multiple `SqlResult`.
@@ -180,7 +182,8 @@ Publisher<SqlResult> results = client.preparedStatement("SELECT * FROM person WH
     .and().bind("Johnson") // third query
     .execute();
 
-long resultCount = Flux.from(results).count().block(); // returns 3 since we have created a batch statement with three queries
+// Returns 3 since we have created a batch statement with three queries
+long resultCount = Flux.from(results).count().block();
 ```
 
 ### Transactions
@@ -230,7 +233,8 @@ Mono<Integer> affectedRows = Mono.usingWhen(
     }
 );
 
-affectedRows.subscribe(...); // on subscribe, a transaction is created, the closure method is invoked and the transaction is explicitly committed or rolled back when the publisher terminates.
+// On subscribe, a transaction is created, the closure method is invoked and the transaction is explicitly committed or rolled back when the publisher terminates.
+affectedRows.subscribe(...);
 ```
 
 The following example does the same but with implicit transaction management:
@@ -253,7 +257,8 @@ Publisher<Integer> affectedRows = client.transaction(ops -> ops
     )
 );
 
-affectedRows.subscribe(...); // same as before but the transaction is implicitly committed or rolled back
+// Same as before but the transaction is implicitly committed or rolled back
+affectedRows.subscribe(...);
 ```
 
 > Note that transactions might not be supported by all implementations, for instance the Vert.x pooled client implementation does not support transactions and an `UnsupportedOperationException` will be thrown if you try to create a transaction.

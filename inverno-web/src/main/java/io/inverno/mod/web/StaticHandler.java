@@ -29,30 +29,29 @@ import io.inverno.mod.http.server.ExchangeHandler;
 
 /**
  * <p>
- * A static handler used to serve static resources resolved from a base
- * resource.
+ * A static handler used to serve static resources resolved from a base resource.
  * </p>
- * 
+ *
  * <p>
- * This handler is typically used as a handler in a web route to serve static
- * content. It uses a configurable path parameter to determine the path of the
- * resource to serve relative to the base path.
+ * This handler is typically used as a handler in a web route to serve static content. It uses a configurable path parameter to determine the path of the resource to serve relative to the base path.
  * </p>
  * 
- * <blockquote><pre>
+ * <pre>{@code
  * WebRouter router = ...
  * 
  * router
  *     .route()
  *     .path("/static/{path:.*}")
- *     .handler(new StaticHandler(new FileResource("/path/to/resources/"));
+ *     .handler(new StaticHandler<>(new FileResource("/path/to/resources/"));
  * 
- * </pre></blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
  * @see Resource
+ * 
+ * @param <A> the exchange context type
  */
 public class StaticHandler<A extends ExchangeContext> implements ExchangeHandler<A, WebExchange<A>> {
 
@@ -61,51 +60,67 @@ public class StaticHandler<A extends ExchangeContext> implements ExchangeHandler
 	 */
 	public static final String DEFAULT_PATH_PARAMETER_NAME = "path";
 	
+	/**
+	 * The default welcome page file name: {@code index.html}.
+	 */
+	public static final String DEFAULT_WELCOME_PAGE = "index.html";
+	
 	private final Resource baseResource;
 	
 	private String pathParameterName;
 	
+	private String welcomePage;
+	
 	/**
 	 * <p>
-	 * Creates a static handler resolving resources from the specified base
-	 * resource using the default path parameter name.
+	 * Creates a static handler resolving resources from the specified base resource using the default path parameter name and welcome page.
 	 * </p>
 	 * 
 	 * @param baseResource the base resource
 	 * 
 	 * @see StaticHandler#DEFAULT_PATH_PARAMETER_NAME
+	 * @see StaticHandler#DEFAULT_WELCOME_PAGE
 	 */
 	public StaticHandler(Resource baseResource) {
 		this(baseResource, DEFAULT_PATH_PARAMETER_NAME);
 	}
 	
-	
 	/**
 	 * <p>
-	 * Creates a static handler resolving resources from the specified base resource
-	 * using the specified path parameter name.
+	 * Creates a static handler resolving resources from the specified base resource using the specified path parameter name.
 	 * </p>
-	 * 
+	 *
 	 * @param baseResource      the base resource
 	 * @param pathParameterName the path parameter name
-	 * 
+	 *
 	 * @see StaticHandler#DEFAULT_PATH_PARAMETER_NAME
 	 */
 	public StaticHandler(Resource baseResource, String pathParameterName) {
 		this.baseResource = baseResource;
 		this.pathParameterName = pathParameterName;
+		this.welcomePage = DEFAULT_WELCOME_PAGE;
 	}
 	
 	/**
 	 * <p>
-	 * Sets the name of the path parameter that specifies the path of a resource
-	 * relative to the base path.
+	 * Sets the name of the path parameter that specifies the path of a resource relative to the base path.
 	 * </p>
-	 * 
+	 *
 	 * @param pathParameterName a path parameter name
 	 */
 	public void setPathParameterName(String pathParameterName) {
 		this.pathParameterName = pathParameterName;
+	}
+
+	/**
+	 * <p>
+	 * Sets the name of the welcome page file to look for when a directory resource is requested.
+	 * </p>
+	 *
+	 * @param welcomePage a file name
+	 */
+	public void setWelcomePage(String welcomePage) {
+		this.welcomePage = welcomePage;
 	}
 	
 	@Override
@@ -115,7 +130,7 @@ public class StaticHandler<A extends ExchangeContext> implements ExchangeHandler
 		
 		URIBuilder resourceUriBuilder = URIs.uri(resourcePath, URIs.RequestTargetForm.ABSOLUTE ,URIs.Option.NORMALIZED);
 		if(isDirectory) {
-			resourceUriBuilder.segment("index.html");
+			resourceUriBuilder.segment(this.welcomePage);
 		}
 		
 		resourcePath = resourceUriBuilder.buildPath();
@@ -145,7 +160,7 @@ public class StaticHandler<A extends ExchangeContext> implements ExchangeHandler
 					}
 					else {
 						// directory
-						try(Resource requestedResourceIndex = requestedResource.resolve("index.html")) {
+						try(Resource requestedResourceIndex = requestedResource.resolve(this.welcomePage)) {
 							exchange.response().body().resource().value(requestedResourceIndex);
 						}
 					}
@@ -159,7 +174,7 @@ public class StaticHandler<A extends ExchangeContext> implements ExchangeHandler
 				// Resource doesn't exist
 				if(!isFile.isPresent()) {
 					// This might indicate stream based resources like module or URL in which case we might have a directory
-					try(Resource requestedResourceIndex = requestedResource.resolve("index.html")) {
+					try(Resource requestedResourceIndex = requestedResource.resolve(this.welcomePage)) {
 						exchange.response().body().resource().value(requestedResourceIndex);
 					}
 				}
