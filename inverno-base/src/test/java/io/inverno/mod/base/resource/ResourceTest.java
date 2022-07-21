@@ -327,4 +327,60 @@ public class ResourceTest {
 			fakeFtpServer.stop();
 		}
 	}
+	
+	@Test
+	public void testResolve() {
+		
+		Path absPath = new File("src/test/resources/dir").getAbsoluteFile().toPath();
+		
+		Path absPath2 = new File("src/").getAbsoluteFile().toPath();
+		
+		Path resolvedPath = absPath.resolve(absPath2);
+		
+		System.out.println(resolvedPath);
+		
+		/*try(FileResource resource = new FileResource(new File("src/test/resources/dir"))) {
+			System.out.println(resource.getURI());
+			try(Resource resolve = resource.resolve(Path.of("test.txt"))) {
+				System.out.println(resolve.getURI());
+				resolve.openReadableByteChannel().ifPresent(ch -> {
+					try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+						ch;) {
+						int bufferSize = 1024;
+						ByteBuffer buff = ByteBuffer.allocate(bufferSize);
+
+						while (ch.read(buff) > 0) {
+							out.write(buff.array(), 0, buff.position());
+							buff.clear();
+						}
+						String fileContent = new String(out.toByteArray(), StandardCharsets.UTF_8);
+						Assertions.assertEquals("This is another test", fileContent);
+					}
+					catch(IOException e) {
+						throw new RuntimeException(e);
+					}
+				});
+			}
+			
+			try(Resource resolve = resource.resolve("..\\test.txt")) {
+				resolve.openReadableByteChannel().ifPresent(ch -> {
+					try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+						ch;) {
+						int bufferSize = 1024;
+						ByteBuffer buff = ByteBuffer.allocate(bufferSize);
+
+						while (ch.read(buff) > 0) {
+							out.write(buff.array(), 0, buff.position());
+							buff.clear();
+						}
+						String fileContent = new String(out.toByteArray(), StandardCharsets.UTF_8);
+						Assertions.assertEquals("This is a test", fileContent);
+					}
+					catch(IOException e) {
+						throw new RuntimeException(e);
+					}
+				});
+			}
+		}*/
+	}
 }

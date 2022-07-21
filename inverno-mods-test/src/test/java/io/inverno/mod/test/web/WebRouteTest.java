@@ -3507,6 +3507,139 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		Assertions.assertEquals("text/plain", response.headers().firstValue("content-type").orElse(null));
 		Assertions.assertEquals(24, response.headers().firstValue("content-length").map(Integer::parseInt).orElse(-1));
 		Assertions.assertEquals("This is a test resource.", response.body());
+		
+		// curl -i http://127.0.0.1:8080/static/get_resource.txt
+		response = client.send(
+			HttpRequest.newBuilder()
+					.uri(baseURI.resolve("/static/get_resource.txt"))
+					.version(version)
+					.GET()
+					.build(),
+			HttpResponse.BodyHandlers.ofString()
+		);
+		Assertions.assertEquals(200, response.statusCode());
+		Assertions.assertEquals("text/plain", response.headers().firstValue("content-type").orElse(null));
+		Assertions.assertEquals(24, response.headers().firstValue("content-length").map(Integer::parseInt).orElse(-1));
+		Assertions.assertEquals("This is a test resource.", response.body());
+		
+		// curl -i http://127.0.0.1:8080/static/some%20space.txt
+		response = client.send(
+			HttpRequest.newBuilder()
+					.uri(baseURI.resolve("/static/some%20space.txt"))
+					.version(version)
+					.GET()
+					.build(),
+			HttpResponse.BodyHandlers.ofString()
+		);
+		Assertions.assertEquals(200, response.statusCode());
+		Assertions.assertEquals("text/plain", response.headers().firstValue("content-type").orElse(null));
+		Assertions.assertEquals(18, response.headers().firstValue("content-length").map(Integer::parseInt).orElse(-1));
+		Assertions.assertEquals("Space in file name", response.body());
+		
+		// curl -i http://127.0.0.1:8080/static/some%2520space.txt
+		response = client.send(
+			HttpRequest.newBuilder()
+					.uri(baseURI.resolve("/static/some%2520space.txt"))
+					.version(version)
+					.GET()
+					.build(),
+			HttpResponse.BodyHandlers.ofString()
+		);
+		Assertions.assertEquals(404, response.statusCode());
+		
+		// curl -i http://127.0.0.1:8080/static/dir/get_resource.txt
+		response = client.send(
+			HttpRequest.newBuilder()
+					.uri(baseURI.resolve("/static/dir/get_resource.txt"))
+					.version(version)
+					.GET()
+					.build(),
+			HttpResponse.BodyHandlers.ofString()
+		);
+		Assertions.assertEquals(200, response.statusCode());
+		Assertions.assertEquals("text/plain", response.headers().firstValue("content-type").orElse(null));
+		Assertions.assertEquals(24, response.headers().firstValue("content-length").map(Integer::parseInt).orElse(-1));
+		Assertions.assertEquals("This is a test resource.", response.body());
+		
+		// curl -i http://127.0.0.1:8080/static/dir%2Fget_resource.txt
+		response = client.send(
+			HttpRequest.newBuilder()
+					.uri(baseURI.resolve("/static/dir%2Fget_resource.txt"))
+					.version(version)
+					.GET()
+					.build(),
+			HttpResponse.BodyHandlers.ofString()
+		);
+		Assertions.assertEquals(200, response.statusCode());
+		Assertions.assertEquals("text/plain", response.headers().firstValue("content-type").orElse(null));
+		Assertions.assertEquals(24, response.headers().firstValue("content-length").map(Integer::parseInt).orElse(-1));
+		Assertions.assertEquals("This is a test resource.", response.body());
+		
+		// curl -i http://127.0.0.1:8080/static/dir%252Fget_resource.txt
+		response = client.send(
+			HttpRequest.newBuilder()
+					.uri(baseURI.resolve("/static/dir%252Fget_resource.txt"))
+					.version(version)
+					.GET()
+					.build(),
+			HttpResponse.BodyHandlers.ofString()
+		);
+		Assertions.assertEquals(404, response.statusCode());
+		
+		// curl -i http://127.0.0.1:8080/static/../pom.xml
+		response = client.send(
+			HttpRequest.newBuilder()
+					.uri(baseURI.resolve("/static/../pom.xml"))
+					.version(version)
+					.GET()
+					.build(),
+			HttpResponse.BodyHandlers.ofString()
+		);
+		Assertions.assertEquals(404, response.statusCode());
+		
+		// curl -i http://127.0.0.1:8080/static/%2E%2E%2Fpom.xml
+		response = client.send(
+			HttpRequest.newBuilder()
+					.uri(baseURI.resolve("/static/%2E%2E%2Fpom.xml"))
+					.version(version)
+					.GET()
+					.build(),
+			HttpResponse.BodyHandlers.ofString()
+		);
+		Assertions.assertEquals(404, response.statusCode());
+		
+		// curl -i http://127.0.0.1:8080/static/%252E%252E%252Fpom.xml
+		response = client.send(
+			HttpRequest.newBuilder()
+					.uri(baseURI.resolve("/static/%252E%252E%252Fpom.xml"))
+					.version(version)
+					.GET()
+					.build(),
+			HttpResponse.BodyHandlers.ofString()
+		);
+		Assertions.assertEquals(404, response.statusCode());
+		
+		// curl -i http://127.0.0.1:8080/static//pom.xml
+		response = client.send(
+			HttpRequest.newBuilder()
+					.uri(baseURI.resolve("/static//pom.xml"))
+					.version(version)
+					.GET()
+					.build(),
+			HttpResponse.BodyHandlers.ofString()
+		);
+		Assertions.assertEquals(400, response.statusCode());
+		
+		// curl -i http://127.0.0.1:8080/static/%2Fpom.xml
+		response = client.send(
+			HttpRequest.newBuilder()
+					.uri(baseURI.resolve("/static/%2Fpom.xml"))
+					.version(version)
+					.GET()
+					.build(),
+			HttpResponse.BodyHandlers.ofString()
+		);
+		Assertions.assertEquals(400, response.statusCode());
 	}
 	
 	public void test_misc(URI baseURI, HttpClient.Version version) throws IOException, InterruptedException {

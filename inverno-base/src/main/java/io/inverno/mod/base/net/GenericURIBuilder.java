@@ -96,20 +96,20 @@ class GenericURIBuilder implements URIBuilder {
 			}
 			
 			if(queryIndex > 0 && fragmentIndex > 0) {
-				this.path(requestTarget.substring(0, queryIndex), ignoreTrailingSlash);
+				this.path(URIs.decodeURIComponent(requestTarget.substring(0, queryIndex), charset), ignoreTrailingSlash);
 				this.parseRawQuery(requestTarget.substring(queryIndex + 1, fragmentIndex));
-				this.fragment(requestTarget.substring(fragmentIndex + 1));
+				this.fragment(URIs.decodeURIComponent(requestTarget.substring(fragmentIndex + 1), charset));
 			}
 			else if(queryIndex > 0 && fragmentIndex < 0) {
-				this.path(requestTarget.substring(0, queryIndex), ignoreTrailingSlash);
+				this.path(URIs.decodeURIComponent(requestTarget.substring(0, queryIndex), charset), ignoreTrailingSlash);
 				this.parseRawQuery(requestTarget.substring(queryIndex + 1));
 			}
 			else if(fragmentIndex > 0) {
-				this.path(requestTarget.substring(0, fragmentIndex), ignoreTrailingSlash);
-				this.fragment(requestTarget.substring(fragmentIndex + 1));
+				this.path(URIs.decodeURIComponent(requestTarget.substring(0, fragmentIndex), charset), ignoreTrailingSlash);
+				this.fragment(URIs.decodeURIComponent(requestTarget.substring(fragmentIndex + 1), charset));
 			}
 			else {
-				this.path(requestTarget, ignoreTrailingSlash);
+				this.path(URIs.decodeURIComponent(requestTarget, charset), ignoreTrailingSlash);
 			}
 		}
 	}

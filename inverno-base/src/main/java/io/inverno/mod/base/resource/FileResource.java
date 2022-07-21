@@ -15,9 +15,9 @@
  */
 package io.inverno.mod.base.resource;
 
+import io.netty.buffer.ByteBuf;
 import java.io.File;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Path;
@@ -26,10 +26,7 @@ import java.nio.file.attribute.FileTime;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-
 import org.reactivestreams.Publisher;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * <p>
@@ -88,13 +85,24 @@ public class FileResource extends AbstractAsyncResource {
 	
 	/**
 	 * <p>
-	 * Creates a file resource from the specified path.
+	 * Creates a file resource from the specified path name.
 	 * </p>
 	 * 
 	 * @param pathname a path to a file
 	 */
 	public FileResource(String pathname) {
 		this(pathname, null);
+	}
+	
+	/**
+	 * <p>
+	 * Creates a file resource from the specified path.
+	 * </p>
+	 * 
+	 * @param path a path to a file
+	 */
+	public FileResource(Path path) {
+		this(path, null);
 	}
 	
 	/**
@@ -129,7 +137,7 @@ public class FileResource extends AbstractAsyncResource {
 	
 	/**
 	 * <p>
-	 * Creates a file resource from the specified path with the specified media type
+	 * Creates a file resource from the specified path name with the specified media type
 	 * service.
 	 * </p>
 	 * 
@@ -138,6 +146,33 @@ public class FileResource extends AbstractAsyncResource {
 	 */
 	public FileResource(String pathname, MediaTypeService mediaTypeService) {
 		this(new File(pathname), mediaTypeService);
+	}
+	
+	/**
+	 * <p>
+	 * Creates a file resource from the specified path with the specified media type
+	 * service.
+	 * </p>
+	 * 
+	 * @param path             a path to a file
+	 * @param mediaTypeService a media type service
+	 */
+	public FileResource(Path path, MediaTypeService mediaTypeService) {
+		super(mediaTypeService);
+		this.pathResource = new PathResource(path, mediaTypeService);
+	}
+	
+	/**
+	 * <p>
+	 * Creates a file resource from the specified path resource with the specified media type service.
+	 * </p>
+	 * 
+	 * @param pathResource     a path resource
+	 * @param mediaTypeService a media type service
+	 */
+	private FileResource(PathResource pathResource, MediaTypeService mediaTypeService) {
+		super(mediaTypeService);
+		this.pathResource = pathResource;
 	}
 	
 	/**
@@ -230,15 +265,8 @@ public class FileResource extends AbstractAsyncResource {
 	
 	@Override
 	public Resource resolve(Path path) throws IllegalArgumentException {
-		try {
-			URI uri = this.getURI();
-			URI resolvedUri = new URI(FileResource.SCHEME_FILE, uri.getAuthority(), Paths.get(uri.getPath()).resolve(path).toString(), null, null);
-			FileResource resolvedResource = new FileResource(resolvedUri, this.getMediaTypeService());
-			resolvedResource.setExecutor(this.getExecutor());
-			return resolvedResource;
-		} 
-		catch (URISyntaxException e) {
-			throw new IllegalArgumentException("Invalid path", e);
-		}
+		FileResource resolvedResource = new FileResource((PathResource)this.pathResource.resolve(path), this.getMediaTypeService());
+		resolvedResource.setExecutor(this.getExecutor());
+		return resolvedResource;
 	}
 }

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<script type="text/javascript">
+
+function post() {
+	
+	var request = new XMLHttpRequest();
+	request.open("POST", "http://127.0.0.1:8080/", true);
+	request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+	request.onreadystatechange = function() {//Call a function when the state changes.
+	    if(http.readyState == 4 && http.status == 200) {
+	        document.getElementById("resul").innerHTML = "Sent!";
+	    }
+	}
+	http.send('{"toto":1,"tata":2,"titi":3}');
+}
+</script>
+</head>
+<body>
+
+<form method="post" action="http://127.0.0.1:8080/" enctype="multipart/form-data">
+	<input type="text" name="toto"/>
+	<input type="text" name="tata"/>
+	<input type="text" name="titi"/>
+	<input type="text" name="tutu"/>
+	<input type="file" name="somefile"/>
+	<input type="submit" />
+</form>
+
+<hr/>
+
+<form method="post" action="http://127.0.0.1:8080/">
+	<input type="text" name="toto"/>
+	<input type="text" name="tata"/>
+	<input type="text" name="titi"/>
+	<input type="text" name="titi"/>
+	<input type="text" name="bof bif"/>
+	<textarea name="foo"></textarea>
+	<input type="submit" />
+</form>
+
+<hr/>
+
+<button onclick="post()">Post</button> <span id="result"></span>
+
+</body>
+</html>

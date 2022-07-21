@@ -195,6 +195,10 @@ public final class URIs {
 	 * <p>
 	 * The origin-form request is incompatible with {@link URIs.Option#PATH_PATTERN} option since query component delimiter {@code ?} is conflicting with path pattern character {@code ?}.
 	 * </p>
+	 * 
+	 * <p>
+	 * Note that the different URI components composing the specified request-target are decoded individually after parsing the initial parsing of the request-target.
+	 * </p>
 	 *
 	 * @param requestTarget an extended origin-form request-target
 	 * @param options       a list of options
@@ -218,6 +222,10 @@ public final class URIs {
 	 * 
 	 * <p>
 	 * The origin-form request is incompatible with {@link URIs.Option#PATH_PATTERN} option since query component delimiter {@code ?} is conflicting with path pattern character {@code ?}.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that the different URI components composing the specified request-target are decoded individually after parsing the initial parsing of the request-target.
 	 * </p>
 	 *
 	 * @param requestTarget     a request-target
@@ -246,6 +254,10 @@ public final class URIs {
 	 * <p>
 	 * The origin-form request is incompatible with {@link URIs.Option#PATH_PATTERN} option since query component delimiter {@code ?} is conflicting with path pattern character {@code ?}.
 	 * </p>
+	 * 
+	 * <p>
+	 * Note that the different URI components composing the specified request-target are decoded individually after parsing the initial parsing of the request-target.
+	 * </p>
 	 *
 	 * @param requestTarget       an extended origin-form request-target
 	 * @param ignoreTrailingSlash true to ignore trailing slash in the path
@@ -270,6 +282,10 @@ public final class URIs {
 	 * 
 	 * <p>
 	 * The origin-form request is incompatible with {@link URIs.Option#PATH_PATTERN} option since query component delimiter {@code ?} is conflicting with path pattern character {@code ?}.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that the different URI components composing the specified request-target are decoded individually after parsing the initial parsing of the request-target.
 	 * </p>
 	 * 
 	 * @param requestTarget     a request-target
@@ -299,6 +315,10 @@ public final class URIs {
 	 * <p>
 	 * The origin-form request is incompatible with {@link URIs.Option#PATH_PATTERN} option since query component delimiter {@code ?} is conflicting with path pattern character {@code ?}.
 	 * </p>
+	 * 
+	 * <p>
+	 * Note that the different URI components composing the specified request-target are decoded individually after parsing the initial parsing of the request-target.
+	 * </p>
 	 *
 	 * @param requestTarget       an extended origin-form request-target
 	 * @param ignoreTrailingSlash true to ignore trailing slash in the path
@@ -324,6 +344,10 @@ public final class URIs {
 	 *
 	 * <p>
 	 * The origin-form request is incompatible with {@link URIs.Option#PATH_PATTERN} option since query component delimiter {@code ?} is conflicting with path pattern character {@code ?}.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that the different URI components composing the specified request-target are decoded individually after parsing the initial parsing of the request-target.
 	 * </p>
 	 *
 	 * @param requestTarget       a request-target

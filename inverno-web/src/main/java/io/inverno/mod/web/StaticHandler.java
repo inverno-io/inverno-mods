@@ -15,10 +15,6 @@
  */
 package io.inverno.mod.web;
 
-import java.util.Optional;
-
-import io.inverno.mod.base.net.URIBuilder;
-import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.http.base.BadRequestException;
 import io.inverno.mod.http.base.HttpException;
@@ -26,6 +22,8 @@ import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
+import java.nio.file.Path;
+import java.util.Optional;
 
 /**
  * <p>
@@ -125,20 +123,18 @@ public class StaticHandler<A extends ExchangeContext> implements ExchangeHandler
 	
 	@Override
 	public void handle(WebExchange<A> exchange) throws HttpException {
-		String resourcePath = exchange.request().pathParameters().get(this.pathParameterName).map(Parameter::getValue).orElse("");
-		boolean isDirectory = resourcePath.endsWith("/");
+		String pathParameter = exchange.request().pathParameters().get(this.pathParameterName).map(Parameter::getValue).orElse("");
+		boolean isDirectory = pathParameter.endsWith("/");
 		
-		URIBuilder resourceUriBuilder = URIs.uri(resourcePath, URIs.RequestTargetForm.ABSOLUTE ,URIs.Option.NORMALIZED);
+		Path resourcePath = Path.of(pathParameter).normalize();
 		if(isDirectory) {
-			resourceUriBuilder.segment(this.welcomePage);
+			resourcePath.resolve(this.welcomePage);
 		}
 		
-		resourcePath = resourceUriBuilder.buildPath();
-		
-		if(resourcePath.startsWith("/")) {
+		if(resourcePath.isAbsolute()) {
 			throw new BadRequestException("Static resource path can't be absolute");
 		}
-		if(resourcePath.startsWith(".")) {
+		if(resourcePath.startsWith("..")) {
 			throw new NotFoundException();
 		}
 
@@ -185,7 +181,7 @@ public class StaticHandler<A extends ExchangeContext> implements ExchangeHandler
 			}
 		}
 		catch (NotFoundException e) {
-			throw new NotFoundException(resourcePath);
+			throw new NotFoundException(pathParameter);
 		}
 	}
 }
