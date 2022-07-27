@@ -17,6 +17,7 @@ package io.inverno.mod.security.authentication.user;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.inverno.mod.security.SecurityException;
 import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.accesscontrol.GroupsRoleBasedAccessControllerResolver;
 import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
@@ -31,6 +32,7 @@ import io.inverno.mod.security.internal.authentication.user.GenericUserAuthentic
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -83,6 +85,22 @@ public interface UserAuthentication<A extends Identity> extends PrincipalAuthent
 	 */
 	static <A extends Identity> UserAuthentication<A> of(String username, String... groups) {
 		return new GenericUserAuthentication<>(username, null, Arrays.stream(groups).filter(Objects::nonNull).collect(Collectors.toSet()), true);
+	}
+	
+	/**
+	 * <p>
+	 * Returns a new denied user authentication for the specified username and cause.
+	 * </p>
+	 * 
+	 * @param username a username
+	 * @param cause    the cause of the failed authentication
+	 * 
+	 * @return a denied user authentication
+	 */
+	static <A extends Identity> UserAuthentication<A> of(String username, SecurityException cause) {
+		GenericUserAuthentication<A> authentication = new GenericUserAuthentication<>(username, null, Set.of(), false);
+		authentication.setCause(cause);
+		return authentication;
 	}
 	
 	/**

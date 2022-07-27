@@ -44,7 +44,7 @@ public interface PasswordPolicy<A extends LoginCredentials, B extends PasswordPo
 	 * Verifies that the specified raw password complies with the policy.
 	 * </p>
 	 *
-	 * @param credentials the user credentials for which the password is defined
+	 * @param credentials the current user credentials for which the password should be defined
 	 * @param rawPassword the raw password to check
 	 *
 	 * @return a password strength

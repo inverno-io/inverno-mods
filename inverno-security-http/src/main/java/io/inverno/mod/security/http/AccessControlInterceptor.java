@@ -131,9 +131,11 @@ public class AccessControlInterceptor<A extends Identity, B extends AccessContro
 	
 	@Override
 	public Mono<? extends D> intercept(D exchange) {
-		if(!this.accessVerifier.test(exchange.context())) {
-			throw new UnauthorizedException("Access denied");
-		}
-		return Mono.just(exchange);
+		return Mono.fromSupplier(() -> {
+			if(!this.accessVerifier.test(exchange.context())) {
+				throw new UnauthorizedException("Access denied");
+			}
+			return exchange;
+		});
 	}
 }

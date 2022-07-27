@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.security.authentication.user;
 
+import io.inverno.mod.security.SecurityException;
+
 /**
  * <p>
  * Thrown to indicate an error while accessing a user repository.
@@ -23,7 +25,7 @@ package io.inverno.mod.security.authentication.user;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class UserRepositoryException extends RuntimeException {
+public class UserRepositoryException extends SecurityException {
 
 	private static final long serialVersionUID = 1L;
 

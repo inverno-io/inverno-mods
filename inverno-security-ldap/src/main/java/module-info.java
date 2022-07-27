@@ -45,6 +45,7 @@ module io.inverno.mod.security.ldap {
 	requires com.fasterxml.jackson.databind;
 	requires java.naming;
 	requires org.apache.commons.lang3;
+	requires org.apache.logging.log4j;
 	
 	exports io.inverno.mod.security.ldap.internal.authentication to com.fasterxml.jackson.databind;
 	exports io.inverno.mod.security.ldap.internal.identity to com.fasterxml.jackson.databind;

@@ -16,6 +16,7 @@
 package io.inverno.mod.security.authentication;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -62,6 +63,7 @@ import java.util.Optional;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonDeserialize( as = GenericAuthentication.class )
+@JsonIgnoreProperties( value = { "anonymous" }, allowGetters = true )
 public interface Authentication {
 
 	/**
@@ -82,11 +84,11 @@ public interface Authentication {
 	
 	/**
 	 * <p>
-	 * Returns a generic authenticated authentication.
+	 * Returns a generic granted authentication.
 	 * </p>
 	 * 
 	 * <p>
-	 * An authenticated authentication simply indicates that an authentication took place and was successful.
+	 * An granted authentication simply indicates that an authentication took place and was successful.
 	 * </p>
 	 * 
 	 * <p>
@@ -94,9 +96,9 @@ public interface Authentication {
 	 * checking whether an entity has been authenticated should be avoided.
 	 * </p>
 	 * 
-	 * @return an authenticated authentication
+	 * @return an granted authentication
 	 */
-	static Authentication authenticated() {
+	static Authentication granted() {
 		return GenericAuthentication.GRANTED;
 	}
 
@@ -139,6 +141,22 @@ public interface Authentication {
 	 */
 	@JsonProperty( "authenticated" )
 	boolean isAuthenticated();
+	
+	/**
+	 * <p>
+	 * Determine whether the authentication is anonymous.
+	 * </p>
+	 * 
+	 * <p>
+	 * An anonymous authentication indicates an anonymous access with no authentication. This is basically equivalent to {@code !this.isAuthenticated() && !this.getCause().isPresent()}.
+	 * </p>
+	 * 
+	 * @return true if the authentication is anonymous, false otherwise
+	 */
+	@JsonProperty( "anonymous" )
+	default boolean isAnonymous() {
+		return !this.isAuthenticated() && !this.getCause().isPresent();
+	}
 
 	/**
 	 * <p>

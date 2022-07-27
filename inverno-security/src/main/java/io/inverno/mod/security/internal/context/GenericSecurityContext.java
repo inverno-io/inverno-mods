@@ -60,6 +60,8 @@ public class GenericSecurityContext<A extends Identity, B extends AccessControll
 	public GenericSecurityContext(Authentication authentication) {
 		Objects.requireNonNull(authentication);
 		this.authentication = authentication;
+		this.identity = Optional.empty();
+		this.accessController = Optional.empty();
 	}
 
 	/**

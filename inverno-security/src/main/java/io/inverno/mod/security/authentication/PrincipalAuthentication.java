@@ -17,6 +17,7 @@ package io.inverno.mod.security.authentication;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.inverno.mod.security.SecurityException;
 import io.inverno.mod.security.internal.authentication.GenericPrincipalAuthentication;
 
 /**
@@ -55,6 +56,22 @@ public interface PrincipalAuthentication extends Authentication {
 	 */
 	static PrincipalAuthentication of(String username) {
 		return new GenericPrincipalAuthentication(username, true);
+	}
+	
+	/**
+	 * <p>
+	 * Returns a new denied principal authentication for the specified username and cause.
+	 * </p>
+	 * 
+	 * @param username a username
+	 * @param cause    the cause of the failed authentication
+	 * 
+	 * @return a denied principal authentication
+	 */
+	static PrincipalAuthentication of(String username, SecurityException cause) {
+		GenericPrincipalAuthentication authentication = new GenericPrincipalAuthentication(username, false);
+		authentication.setCause(cause);
+		return authentication;
 	}
 	
 	/**

@@ -18,7 +18,10 @@ package io.inverno.mod.security.jose.jwe;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.inverno.mod.security.SecurityException;
 import io.inverno.mod.security.authentication.Authentication;
+import io.inverno.mod.security.authentication.InvalidCredentialsException;
 import io.inverno.mod.security.authentication.TokenAuthentication;
+import io.inverno.mod.security.jose.JOSEProcessingException;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -37,6 +40,11 @@ public class JWEAuthentication<A extends Authentication> implements TokenAuthent
 	 * The JWE.
 	 */
 	private final JWE<A> jwe;
+	
+	/**
+	 * The security error resulting from a JOSE processing error.
+	 */
+	private final Optional<SecurityException> cause;
 
 	/**
 	 * <p>
@@ -47,6 +55,31 @@ public class JWEAuthentication<A extends Authentication> implements TokenAuthent
 	 */
 	public JWEAuthentication(JWE<A> jwe) {
 		this.jwe = jwe;
+		this.cause = Optional.empty();
+	}
+	
+	/**
+	 * <p>
+	 * Creates a denied JWE authentication with the specified security error.
+	 * </p>
+	 * 
+	 * @param cause a security error or null
+	 */
+	public JWEAuthentication(SecurityException cause) {
+		this.jwe = null;
+		this.cause = Optional.ofNullable(cause);
+	}
+	
+	/**
+	 * <p>
+	 * Creates a denied JWE authentication after a JOSE processing error.
+	 * </p>
+	 * 
+	 * @param cause a JOSE processing error or null
+	 */
+	JWEAuthentication(JOSEProcessingException cause) {
+		this.jwe = null;
+		this.cause = Optional.ofNullable(cause).map(e -> new InvalidCredentialsException("Invalid token", e));
 	}
 
 	/**
@@ -54,7 +87,7 @@ public class JWEAuthentication<A extends Authentication> implements TokenAuthent
 	 * Returns the JWE.
 	 * </p>
 	 * 
-	 * @return the JWE
+	 * @return the JWE or null if unauthenticated
 	 */
 	public JWE<A> getJwe() {
 		return this.jwe;
@@ -65,21 +98,24 @@ public class JWEAuthentication<A extends Authentication> implements TokenAuthent
 	 * Returns the JWE compact representation.
 	 * </p>
 	 * 
-	 * @return the JWE compact representation
+	 * @return the JWE compact representation or null if unauthenticated
 	 */
 	@JsonProperty( value = "token", access = JsonProperty.Access.READ_ONLY )
 	@Override
 	public String getToken() {
-		return this.jwe.toCompact();
+		return this.jwe != null ? this.jwe.toCompact() : null;
 	}
 	
 	@Override
 	public boolean isAuthenticated() {
-		return this.jwe.getPayload().isAuthenticated();
+		return this.jwe != null && this.jwe.getPayload().isAuthenticated();
 	}
 
 	@Override
 	public Optional<SecurityException> getCause() {
-		return this.jwe.getPayload().getCause();
+		if(this.jwe != null) {
+			return this.jwe.getPayload().getCause();
+		}
+		return this.cause;
 	}
 }

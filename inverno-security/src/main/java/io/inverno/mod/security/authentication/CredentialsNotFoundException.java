@@ -17,61 +17,61 @@ package io.inverno.mod.security.authentication;
 
 /**
  * <p>
- * Thrown to indicate that an authentication has failed due to invalid credentials.
+ * Thrown to indicate that credentials could be resolved by a {@link CredentialsResolver}.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class InvalidCredentialsException extends AuthenticationException {
+public class CredentialsNotFoundException extends AuthenticationException {
 
 	private static final long serialVersionUID = 1L;
 
 	/**
 	 * <p>
-	 * Creates an invalid credentials exception.
+	 * Creates a credentials not found exception.
 	 * </p>
 	 */
-	public InvalidCredentialsException() {
+	public CredentialsNotFoundException() {
 	}
 
 	/**
 	 * <p>
-	 * Creates an invalid credentials exception with the specified message.
+	 * Creates a credentials not found exception with the specified message.
 	 * </p>
 	 * 
 	 * @param message the message
 	 */
-	public InvalidCredentialsException(String message) {
+	public CredentialsNotFoundException(String message) {
 		super(message);
 	}
 	
 	/**
 	 * <p>
-	 * Creates an invalid credentials exception with the specified cause.
+	 * Creates a credentials not found exception with the specified cause.
 	 * </p>
 	 *
 	 * @param cause the cause
 	 */
-	public InvalidCredentialsException(Throwable cause) {
+	public CredentialsNotFoundException(Throwable cause) {
 		super(cause);
 	}
 
 	/**
 	 * <p>
-	 * Creates an invalid credentials exception with the specified message and cause.
+	 * Creates a credentials not found exception with the specified message and cause.
 	 * </p>
 	 *
 	 * @param message the message
 	 * @param cause   the cause
 	 */
-	public InvalidCredentialsException(String message, Throwable cause) {
+	public CredentialsNotFoundException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
 	/**
 	 * <p>
-	 * Creates an invalid credentials exception with the specified message, cause, suppression enabled or disabled and writable stack trace enabled or disabled.
+	 * Creates a credentials not found exception with the specified message, cause, suppression enabled or disabled and writable stack trace enabled or disabled.
 	 * </p>
 	 *
 	 * @param message            the message
@@ -79,7 +79,7 @@ public class InvalidCredentialsException extends AuthenticationException {
 	 * @param enableSuppression  true to enable suppression, false otherwise
 	 * @param writableStackTrace true to make the stack trace writable, false otherwise
 	 */
-	public InvalidCredentialsException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+	public CredentialsNotFoundException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 }

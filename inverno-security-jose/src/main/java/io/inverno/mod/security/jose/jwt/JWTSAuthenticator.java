@@ -15,9 +15,9 @@
  */
 package io.inverno.mod.security.jose.jwt;
 
-import io.inverno.mod.security.authentication.AuthenticationException;
 import io.inverno.mod.security.authentication.Authenticator;
 import io.inverno.mod.security.authentication.TokenCredentials;
+import io.inverno.mod.security.jose.JOSEProcessingException;
 import io.inverno.mod.security.jose.jwk.JWK;
 import java.lang.reflect.Type;
 import org.reactivestreams.Publisher;
@@ -58,6 +58,54 @@ public class JWTSAuthenticator<A extends JWTClaimsSet> implements Authenticator<
 	 * The parameters processed by the application.
 	 */
 	private final String[] processedParameters;
+	
+	/**
+	 * <p>
+	 * Creates a JWTS authenticator with the specified JWT service.
+	 * </p>
+	 *
+	 * @param jwtService the JWT service
+	 */
+	public JWTSAuthenticator(JWTService jwtService) {
+		this(jwtService, (Type)JWTClaimsSet.class, (Publisher<? extends JWK>)null, (String[]) null);
+	}
+	
+	/**
+	 * <p>
+	 * Creates a JWTS authenticator with the specified JWT service and keys.
+	 * </p>
+	 *
+	 * @param jwtService the JWT service
+	 * @param keys       the keys to consider to verify the JWTS
+	 */
+	public JWTSAuthenticator(JWTService jwtService, Publisher<? extends JWK> keys) {
+		this(jwtService, (Type)JWTClaimsSet.class, keys, (String[]) null);
+	}
+	
+	/**
+	 * <p>
+	 * Creates a JWTS authenticator with the specified JWT service and processed parameters.
+	 * </p>
+	 *
+	 * @param jwtService          the JWT service
+	 * @param processedParameters the parameters processed by the application
+	 */
+	public JWTSAuthenticator(JWTService jwtService, String... processedParameters) {
+		this(jwtService, (Type)JWTClaimsSet.class, (Publisher<? extends JWK>)null, processedParameters);
+	}
+	
+	/**
+	 * <p>
+	 * Creates a JWTS authenticator with the specified JWT service, keys and processed parameters.
+	 * </p>
+	 *
+	 * @param jwtService          the JWT service
+	 * @param keys                the keys to consider to verify the JWTS
+	 * @param processedParameters the parameters processed by the application
+	 */
+	public JWTSAuthenticator(JWTService jwtService, Publisher<? extends JWK> keys, String... processedParameters) {
+		this(jwtService, (Type)JWTClaimsSet.class, keys, processedParameters);
+	}
 	
 	/**
 	 * <p>
@@ -167,10 +215,11 @@ public class JWTSAuthenticator<A extends JWTClaimsSet> implements Authenticator<
 	}
 
 	@Override
-	public Mono<JWTSAuthentication<A>> authenticate(TokenCredentials credentials) throws AuthenticationException {
+	public Mono<JWTSAuthentication<A>> authenticate(TokenCredentials credentials) {
 		return this.jwtService.<A>jwsReader(this.type, this.keys)
 			.processedParameters(this.processedParameters)
 			.read(credentials.getToken())
-			.map(JWTSAuthentication::new);
+			.map(JWTSAuthentication::new)
+			.onErrorResume(JOSEProcessingException.class, e -> Mono.just(new JWTSAuthentication<>(e)));
 	}
 }

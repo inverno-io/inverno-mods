@@ -34,18 +34,28 @@ public class PrincipalAuthenticator<A extends PrincipalCredentials, B extends Pr
 	
 	/**
 	 * <p>
-	 * Creates a principal authenticator with the specified credentials resolver and credentials matcher.
+	 * Creates a terminal principal authenticator with the specified credentials resolver and credentials matcher.
+	 * </p>
+	 * 
+	 * <p>
+	 * The resulting authenticator is terminal and returns denied authentication when the credentials resolver returns no matching credentials corresponding to the credentials to authenticate or when
+	 * they do not match.
 	 * </p>
 	 * 
 	 * @param credentialsResolver a credentials resolver
 	 * @param credentialsMatcher  a credentials matcher
 	 */
-	public PrincipalAuthenticator(CredentialsResolver<? extends B> credentialsResolver, CredentialsMatcher<A, B> credentialsMatcher) {
+	public PrincipalAuthenticator(CredentialsResolver<? extends B> credentialsResolver, CredentialsMatcher<? super A, ? super B> credentialsMatcher) {
 		super(credentialsResolver, credentialsMatcher);
 	}
 
 	@Override
-	protected PrincipalAuthentication createAuthentication(B resolvedCredentials) throws AuthenticationException {
+	protected PrincipalAuthentication createAuthenticated(B resolvedCredentials) throws AuthenticationException {
 		return PrincipalAuthentication.of(resolvedCredentials);
+	}
+
+	@Override
+	protected PrincipalAuthentication createDenied(A credentials, AuthenticationException cause) throws AuthenticationException {
+		return PrincipalAuthentication.of(credentials.getUsername(), cause);
 	}
 }

@@ -17,10 +17,9 @@ package io.inverno.mod.security.jose.jws;
 
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.security.authentication.Authentication;
-import io.inverno.mod.security.authentication.AuthenticationException;
 import io.inverno.mod.security.authentication.Authenticator;
-import io.inverno.mod.security.authentication.InvalidCredentialsException;
 import io.inverno.mod.security.authentication.TokenCredentials;
+import io.inverno.mod.security.jose.JOSEProcessingException;
 import io.inverno.mod.security.jose.jwk.JWK;
 import java.lang.reflect.Type;
 import org.reactivestreams.Publisher;
@@ -170,11 +169,11 @@ public class JWSAuthenticator<A extends Authentication> implements Authenticator
 	}
 	
 	@Override
-	public Mono<JWSAuthentication<A>> authenticate(TokenCredentials credentials) throws AuthenticationException {
+	public Mono<JWSAuthentication<A>> authenticate(TokenCredentials credentials) {
 		return this.jwsService.<A>reader(this.authenticationType, this.keys)
 			.processedParameters(this.processedParameters)
 			.read(credentials.getToken(), MediaTypes.APPLICATION_JSON)
 			.map(JWSAuthentication::new)
-			.onErrorMap(e -> new InvalidCredentialsException("Invalid token", e));
+			.onErrorResume(JOSEProcessingException.class, e -> Mono.just(new JWSAuthentication<>(e)));
 	}
 }

@@ -25,10 +25,13 @@ import io.inverno.mod.security.authentication.LoginCredentials;
 import io.inverno.mod.security.authentication.password.RawPassword;
 import io.inverno.mod.security.ldap.internal.authentication.GenericLDAPAuthentication;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 
 /**
@@ -45,6 +48,8 @@ import reactor.core.publisher.Mono;
  */
 public class ActiveDirectoryAuthenticator implements Authenticator<LoginCredentials, LDAPAuthentication> {
 
+	private static final Logger LOGGER = LogManager.getLogger(ActiveDirectoryAuthenticator.class);
+	
 	/**
 	 * The pattern used to extract error code from Active Directory error messages.
 	 */
@@ -54,26 +59,6 @@ public class ActiveDirectoryAuthenticator implements Authenticator<LoginCredenti
 	 * The default search user filter.
 	 */
 	public static final String DEFAULT_SEARCH_USER_FILTER = "(&(objectClass=user)(userPrincipalName={0}))";
-	
-	/**
-	 * The underlying LDAP client.
-	 */
-	private final LDAPClient ldapClient;
-	
-	/**
-	 * The Active Directory domain.
-	 */
-	private final String domain;
-	
-	/**
-	 * The base DN where to search for users.
-	 */
-	private final String base;
-	
-	/**
-	 * The search user filter.
-	 */
-	private final String searchUserFilter;
 	
 	/*
 	 * https://ldapwiki.com/wiki/Common%20Active%20Directory%20Bind%20Errors
@@ -134,8 +119,37 @@ public class ActiveDirectoryAuthenticator implements Authenticator<LoginCredenti
 	private static final int CODE_ACCOUNT_LOCKED_OUT = 0x775;
 	
 	/**
+	 * The underlying LDAP client.
+	 */
+	private final LDAPClient ldapClient;
+	
+	/**
+	 * The Active Directory domain.
+	 */
+	private final String domain;
+	
+	/**
+	 * The base DN where to search for users.
+	 */
+	private final String base;
+	
+	/**
+	 * The search user filter.
+	 */
+	private final String searchUserFilter;
+	
+	/**
+	 * Indicates whether an empty Mono should be returned on {@link AuthenticationException}.
+	 */
+	private boolean terminal;
+	
+	/**
 	 * <p>
 	 * Creates an Active Directory authenticator with the specified LDAP client and domain.
+	 * </p>
+	 * 
+	 * <p>
+	 * The resulting authenticator is terminal and returns denied authentication on failed authentication.
 	 * </p>
 	 * 
 	 * @param ldapClient the LDAP client
@@ -148,6 +162,10 @@ public class ActiveDirectoryAuthenticator implements Authenticator<LoginCredenti
 	/**
 	 * <p>
 	 * Creates an Active Directory authenticator with the specified LDAP client, domain and base DN.
+	 * </p>
+	 * 
+	 * <p>
+	 * The resulting authenticator is terminal and returns denied authentication on failed authentication.
 	 * </p>
 	 * 
 	 * @param ldapClient the LDAP client
@@ -163,6 +181,10 @@ public class ActiveDirectoryAuthenticator implements Authenticator<LoginCredenti
 	 * Creates an Active Directory authenticator with the specified LDAP client, domain, base DN and search user filter.
 	 * </p>
 	 * 
+	 * <p>
+	 * The resulting authenticator is terminal and returns denied authentication on failed authentication.
+	 * </p>
+	 * 
 	 * @param ldapClient       the LDAP client
 	 * @param domain           the domain
 	 * @param base             the base DN
@@ -175,6 +197,17 @@ public class ActiveDirectoryAuthenticator implements Authenticator<LoginCredenti
 		this.searchUserFilter = searchUserFilter;
 	}
 
+	/**
+	 * <p>
+	 * Sets whether the authenticator is terminal and should return denied authentication on failed authentication or no authentication to indicate it was not able to authenticate credentials.
+	 * </p>
+	 * 
+	 * @param terminal true to terminate authentication, false otherwise
+	 */
+	public void setTerminal(boolean terminal) {
+		this.terminal = terminal;
+	}
+	
 	/**
 	 * <p>
 	 * Returns the domain.
@@ -209,7 +242,7 @@ public class ActiveDirectoryAuthenticator implements Authenticator<LoginCredenti
 	}
 	
 	@Override
-	public Mono<LDAPAuthentication> authenticate(LoginCredentials credentials) throws AuthenticationException {
+	public Mono<LDAPAuthentication> authenticate(LoginCredentials credentials) {
 		if(credentials.getPassword() instanceof RawPassword) {
 			String boundDN = this.getBindDN(credentials.getUsername(), this.domain);
 			String baseDN = this.base != null ? this.base : this.boundDNToBaseDN(boundDN);
@@ -224,10 +257,41 @@ public class ActiveDirectoryAuthenticator implements Authenticator<LoginCredenti
 					.collect(Collectors.toSet())
 					.map(groups -> (LDAPAuthentication)new GenericLDAPAuthentication(credentials.getUsername(), ops.getBoundDN().orElse(null), groups, true))
 				))
-				.onErrorMap(this::mapError);
+				.onErrorMap(LDAPException.class, e -> {
+					if(e.getErrorCode() != null) {
+						String message = "LDAP " + (((LDAPException)e).getErrorCode() != null ? " (" + ((LDAPException)e).getErrorCode() + "): " : ": ") + this.mapErrorDescription(e.getErrorDescription());
+						switch(e.getErrorCode()) {
+							case LDAPClient.CODE_INVALID_CREDENTIALS: 
+								return new InvalidCredentialsException(message, e);
+							default: 
+								return new AuthenticationException(e.getErrorDescription(), e);
+						}
+					}
+					else if(e.getErrorDescription() != null) {
+						return new AuthenticationException(this.mapErrorDescription(e.getErrorDescription()), e);
+					}
+					else {
+						return new AuthenticationException(e.getMessage(), e);
+					}
+				})
+				.onErrorResume(AuthenticationException.class, e -> {
+					if(!terminal) {
+						LOGGER.error("Failed to authenticate", e);
+						return Mono.empty();
+					}
+					return Mono.fromSupplier(() -> {
+						GenericLDAPAuthentication ldapAuthentication = new GenericLDAPAuthentication(credentials.getUsername(), null, Set.of(), false);
+						ldapAuthentication.setCause(e);
+						return ldapAuthentication;
+					});
+				});
 		}
 		else {
-			throw new AuthenticationException("Unsupported password type: " + credentials.getPassword().getClass().getCanonicalName());
+			return Mono.fromSupplier(() -> {
+				GenericLDAPAuthentication ldapAuthentication = new GenericLDAPAuthentication(credentials.getUsername(), null, Set.of(), false);
+				ldapAuthentication.setCause(new AuthenticationException("Unsupported password type: " + credentials.getPassword().getClass().getCanonicalName()));
+				return ldapAuthentication;
+			});
 		}
 	}
 

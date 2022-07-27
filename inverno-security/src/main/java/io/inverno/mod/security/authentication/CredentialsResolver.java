@@ -48,8 +48,8 @@ public interface CredentialsResolver<A extends Credentials> {
 	 * 
 	 * @return a mono emitting the credentials or an empty mono if no credentials exist with the specified identifier
 	 * 
-	 * @throws AuthenticationException if there was an error during the resolution of credentials
+	 * @throws SecurityException if there was an error during the resolution of credentials
 	 */
-	Mono<A> resolveCredentials(String id) throws AuthenticationException;
+	Mono<A> resolveCredentials(String id) throws SecurityException;
 	
 }

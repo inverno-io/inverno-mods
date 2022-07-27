@@ -49,18 +49,28 @@ public class UserAuthenticator<A extends PrincipalCredentials, B extends Identit
 
 	/**
 	 * <p>
-	 * Creates a user authenticator with the specified user credentials resolver and user credentials matcher.
+	 * Creates a terminal user authenticator with the specified user credentials resolver and user credentials matcher.
+	 * </p>
+	 * 
+	 *  <p>
+	 * The resulting authenticator is terminal and returns denied authentication when the credentials resolver returns no matching credentials corresponding to the credentials to authenticate or when
+	 * they do not match.
 	 * </p>
 	 * 
 	 * @param credentialsResolver a user credentials resolver
 	 * @param credentialsMatcher  a user credentials matcher
 	 */
-	public UserAuthenticator(CredentialsResolver<? extends C> credentialsResolver, CredentialsMatcher<A, C> credentialsMatcher) {
+	public UserAuthenticator(CredentialsResolver<? extends C> credentialsResolver, CredentialsMatcher<? super A, ? super C> credentialsMatcher) {
 		super(credentialsResolver, credentialsMatcher);
 	}
 
 	@Override
-	protected UserAuthentication<B> createAuthentication(C resolvedCredentials) throws AuthenticationException {
+	protected UserAuthentication<B> createAuthenticated(C resolvedCredentials) throws AuthenticationException {
 		return UserAuthentication.of(resolvedCredentials);
+	}
+
+	@Override
+	protected UserAuthentication<B> createDenied(A credentials, AuthenticationException cause) throws AuthenticationException {
+		return UserAuthentication.of(credentials.getUsername(), cause);
 	}
 }

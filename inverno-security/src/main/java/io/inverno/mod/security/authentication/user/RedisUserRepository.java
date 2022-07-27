@@ -479,7 +479,7 @@ public class RedisUserRepository<A extends Identity, B extends User<A>> implemen
 	}
 
 	@Override
-	public Mono<B> resolveCredentials(String id) throws AuthenticationException {
+	public Mono<B> resolveCredentials(String id) throws SecurityException {
 		return this.getUser(id);
 	}
 }

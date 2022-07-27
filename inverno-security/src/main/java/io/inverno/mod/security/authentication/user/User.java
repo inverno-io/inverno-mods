@@ -92,8 +92,22 @@ public class User<A extends Identity> implements LoginCredentials {
 	 * @param password a password
 	 * @param groups   a set of groups
 	 */
-	public User(String username, Password<?, ?> password, Set<String> groups) {
-		this(username, null, password, groups, false);
+	public User(String username, Password<?, ?> password, String... groups) {
+		this(username, null, password, Set.of(groups), false);
+	}
+	
+	/**
+	 * <p>
+	 * Creates a new user with the specified username, identity, password and groups.
+	 * </p>
+	 * 
+	 * @param username a username which uniquely identifies the user
+	 * @param identity an identity
+	 * @param password a password
+	 * @param groups   a set of groups
+	 */
+	public User(String username, A identity, Password<?, ?> password, String... groups) {
+		this(username, identity, password, Set.of(groups), false);
 	}
 	
 	/**

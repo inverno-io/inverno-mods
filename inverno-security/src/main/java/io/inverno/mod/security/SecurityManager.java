@@ -139,14 +139,18 @@ public interface SecurityManager<A extends Credentials, B extends Identity, C ex
 	 * </p>
 	 * 
 	 * <p>
-	 * This method authenticates the credentials, then resolve the identiy and the access controller and finally create the security context.
+	 * This method authenticates the credentials, then resolve the identiy and the access controller and finally create the resulting security context which can be:
 	 * </p>
 	 * 
-	 * @param credentials the credentials to authenticate
+	 * <ul>
+	 * <li><b>anonymous</b> (i.e. not authenticated with no cause) when specifying null credentials.</li>
+	 * <li><b>denied</b> when an error was raised during the authentication process or identity and access controller resolutions.</li>
+	 * <li><b>granted</b> when the security manager was able to authenticated credentials, resolve identity and access controller.</li>
+	 * </ul>
 	 * 
-	 * @return a mono emitting the security context or an empty mono if the manager was unable to authenticate the credentials
+	 * @param credentials the credentials to authenticate or null to get an anonymous security context
 	 * 
-	 * @throws SecurityException if there was an error during authentication, identity resolution or access controller resolution
+	 * @return a mono emitting the resulting security context
 	 */
-	Mono<SecurityContext<B, C>> authenticate(A credentials) throws SecurityException;
+	Mono<SecurityContext<B, C>> authenticate(A credentials);
 }

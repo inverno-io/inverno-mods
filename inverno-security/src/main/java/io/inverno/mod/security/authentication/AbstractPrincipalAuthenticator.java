@@ -15,7 +15,8 @@
  */
 package io.inverno.mod.security.authentication;
 
-import java.util.Objects;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 
 /**
@@ -33,6 +34,8 @@ import reactor.core.publisher.Mono;
  * successful.
  * </p>
  * 
+ * 
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  * 
@@ -42,6 +45,8 @@ import reactor.core.publisher.Mono;
  */
 public abstract class AbstractPrincipalAuthenticator<A extends PrincipalCredentials, B extends Credentials, C extends PrincipalAuthentication> implements Authenticator<A, C> {
 
+	private static final Logger LOGGER = LogManager.getLogger(AbstractPrincipalAuthenticator.class);
+	
 	/**
 	 * The credentials resolver.
 	 */
@@ -50,39 +55,85 @@ public abstract class AbstractPrincipalAuthenticator<A extends PrincipalCredenti
 	/**
 	 * The credentials matcher.
 	 */
-	protected final CredentialsMatcher<A, B> credentialsMatcher;
+	protected final CredentialsMatcher<? super A, ? super B> credentialsMatcher;
+	
+	/**
+	 * Indicates whether an empty Mono should be returned on {@link AuthenticationException}.
+	 */
+	private boolean terminal;
 	
 	/**
 	 * <p>
-	 * Creates a principal authenticator with the specified credentials resolver and credentials matcher.
+	 * Creates a terminal principal authenticator with the specified credentials resolver and credentials matcher.
+	 * </p>
+	 * 
+	 * <p>
+	 * The resulting authenticator is terminal and returns denied authentication when the credentials resolver returns no matching credentials corresponding to the credentials to authenticate or when
+	 * they do not match.
 	 * </p>
 	 * 
 	 * @param credentialsResolver a credentials resolver
 	 * @param credentialsMatcher  a credentials matcher
 	 */
-	protected AbstractPrincipalAuthenticator(CredentialsResolver<? extends B> credentialsResolver, CredentialsMatcher<A, B> credentialsMatcher) {
-		this.credentialsResolver = Objects.requireNonNull(credentialsResolver);
-		this.credentialsMatcher = Objects.requireNonNull(credentialsMatcher);
+	protected AbstractPrincipalAuthenticator(CredentialsResolver<? extends B> credentialsResolver, CredentialsMatcher<? super A, ? super B> credentialsMatcher) {
+		this.credentialsResolver = credentialsResolver;
+		this.credentialsMatcher = credentialsMatcher;
+		this.terminal = true;
 	}
 
+	/**
+	 * <p>
+	 * Sets whether the authenticator is terminal and should return denied authentication on failed authentication or no authentication to indicate it was not able to authenticate credentials.
+	 * </p>
+	 * 
+	 * @param terminal true to terminate authentication, false otherwise
+	 */
+	public void setTerminal(boolean terminal) {
+		this.terminal = terminal;
+	}
+	
 	@Override
-	public Mono<C> authenticate(A credentials) throws AuthenticationException {
+	public Mono<C> authenticate(A credentials) {
 		return this.credentialsResolver
 			.resolveCredentials(credentials.getUsername())
-			.filter(resolvedCredentials -> this.credentialsMatcher.matches(credentials, resolvedCredentials))
-			.map(this::createAuthentication)
-			.switchIfEmpty(Mono.error(() -> new InvalidCredentialsException("Invalid credentials")));
+			.switchIfEmpty(Mono.error(() -> new CredentialsNotFoundException("Credentials not found")))
+			.map(resolvedCredentials -> {
+				if(!this.credentialsMatcher.matches(credentials, resolvedCredentials)) {
+					throw new InvalidCredentialsException("Invalid credentials");
+				}
+				return this.createAuthenticated(resolvedCredentials);
+			})
+			.onErrorResume(AuthenticationException.class, e -> {
+				if(!this.terminal) {
+					LOGGER.error("Failed to authenticate", e);
+					return Mono.empty();
+				}
+				return Mono.just(this.createDenied(credentials, e));
+			});
 	}
 	
 	/**
 	 * <p>
-	 * Creates the authentication resulting from a successful authentication using the resolved trusted credentials.
+	 * Creates an authenticated authentication resulting from a successful authentication using the resolved trusted credentials.
 	 * </p>
 	 * 
 	 * @param resolvedCredentials the resolved trusted credentials
 	 * 
-	 * @return an authentication
+	 * @return an authenticated authentication
 	 * @throws AuthenticationException if there was an error generating the authentication
 	 */
-	protected abstract C createAuthentication(B resolvedCredentials) throws AuthenticationException;
+	protected abstract C createAuthenticated(B resolvedCredentials) throws AuthenticationException;
+	
+	/**
+	 * <p>
+	 * Creates a denied authentication resulting from a failed authentication.
+	 * </p>
+	 * 
+	 * @param credentials the invalid credentials
+	 * @param cause       the authentication error
+	 * 
+	 * @return a denied authentication
+	 * @throws AuthenticationException if there was an error generating the authentication
+	 */
+	protected abstract C createDenied(A credentials, AuthenticationException cause) throws AuthenticationException;
 }

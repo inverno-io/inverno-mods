@@ -25,8 +25,11 @@ import io.inverno.mod.security.authentication.LoginCredentials;
 import io.inverno.mod.security.authentication.password.RawPassword;
 import io.inverno.mod.security.ldap.internal.authentication.GenericLDAPAuthentication;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 
 /**
@@ -39,6 +42,8 @@ import reactor.core.publisher.Mono;
  */
 public class LDAPAuthenticator implements Authenticator<LoginCredentials, LDAPAuthentication> {
 
+	private static final Logger LOGGER = LogManager.getLogger(LDAPAuthenticator.class);
+	
 	/**
 	 * Default bind DN format.
 	 */
@@ -95,8 +100,17 @@ public class LDAPAuthenticator implements Authenticator<LoginCredentials, LDAPAu
 	private final String passwordComparisonFilter;
 	
 	/**
+	 * Indicates whether an empty Mono should be returned on {@link AuthenticationException}.
+	 */
+	private boolean terminal;
+	
+	/**
 	 * <p>
 	 * Creates an LDAP authenticator with the specified LDAP client and base DN.
+	 * </p>
+	 * 
+	 * <p>
+	 * The resulting authenticator is terminal and returns denied authentication on failed authentication.
 	 * </p>
 	 * 
 	 * @param ldapClient the LDAP client
@@ -113,6 +127,10 @@ public class LDAPAuthenticator implements Authenticator<LoginCredentials, LDAPAu
 	 * 
 	 * <p>
 	 * The search group filter is parameterized and is formatted using the user's DN and the uid.
+	 * </p>
+	 * 
+	 * <p>
+	 * The resulting authenticator is terminal and returns denied authentication on failed authentication.
 	 * </p>
 	 * 
 	 * @param ldapClient        the LDAP client
@@ -132,6 +150,10 @@ public class LDAPAuthenticator implements Authenticator<LoginCredentials, LDAPAu
 	 * The search group filter is parameterized and is formatted using the user's DN and the uid.
 	 * </p>
 	 * 
+	 * <p>
+	 * The resulting authenticator is terminal and returns denied authentication on failed authentication.
+	 * </p>
+	 * 
 	 * @param ldapClient        the LDAP client
 	 * @param base              the base DN where to search for groups
 	 * @param searchGroupFilter the search group filter
@@ -148,6 +170,10 @@ public class LDAPAuthenticator implements Authenticator<LoginCredentials, LDAPAu
 	 * 
 	 * <p>
 	 * The search group filter is parameterized and is formatted using the user's DN and the uid.
+	 * </p>
+	 * 
+	 * <p>
+	 * The resulting authenticator is terminal and returns denied authentication on failed authentication.
 	 * </p>
 	 * 
 	 * @param ldapClient        the LDAP client
@@ -173,6 +199,10 @@ public class LDAPAuthenticator implements Authenticator<LoginCredentials, LDAPAu
 	 * The bind name formatted using the uid.
 	 * </p>
 	 * 
+	 * <p>
+	 * The resulting authenticator is terminal and returns denied authentication on failed authentication.
+	 * </p>
+	 * 
 	 * @param ldapClient        the LDAP client
 	 * @param base              the base DN where to search for groups
 	 * @param searchGroupFilter the search group filter
@@ -188,6 +218,18 @@ public class LDAPAuthenticator implements Authenticator<LoginCredentials, LDAPAu
 		this.searchUserFilter = searchUserFilter;
 		this.passwordAttribute = passwordAttribute;
 		this.passwordComparisonFilter = "(" + this.passwordAttribute + "={0})";
+		this.terminal = true;
+	}
+	
+	/**
+	 * <p>
+	 * Sets whether the authenticator is terminal and should return denied authentication on failed authentication or no authentication to indicate it was not able to authenticate credentials.
+	 * </p>
+	 * 
+	 * @param terminal true to terminate authentication, false otherwise
+	 */
+	public void setTerminal(boolean terminal) {
+		this.terminal = terminal;
 	}
 	
 	/**
@@ -244,15 +286,14 @@ public class LDAPAuthenticator implements Authenticator<LoginCredentials, LDAPAu
 	public String getPasswordAttribute() {
 		return passwordAttribute;
 	}
-	
-	
 
 	@Override
-	public Mono<LDAPAuthentication> authenticate(LoginCredentials credentials) throws AuthenticationException {
+	public Mono<LDAPAuthentication> authenticate(LoginCredentials credentials) {
+		Mono<LDAPAuthentication> authentication;
 		if(credentials.getPassword() instanceof RawPassword) {
 			// If password is raw we can do a bind operation to authenticate
 			// This is normally the case for credentials extracted in a basic or form authentication
-			return Mono.from(this.ldapClient.bind(
+			authentication = Mono.from(this.ldapClient.bind(
 				this.userNameFormat,
 				new Object[] { credentials.getUsername() },
 				credentials.getPassword().getValue(), 
@@ -260,13 +301,12 @@ public class LDAPAuthenticator implements Authenticator<LoginCredentials, LDAPAu
 					.map(groupEntry -> groupEntry.getAttribute("cn").map(LDAPAttribute::asString).get())
 					.collect(Collectors.toSet())
 					.map(groups -> (LDAPAuthentication)new GenericLDAPAuthentication(credentials.getUsername(), ops.getBoundDN().orElse(null), groups, true))
-				))
-				.onErrorMap(this::mapError);
+				));
 		}
 		else {
 			// This can happen when we actually do not have access to the raw password (digest authentication...)
 			// we then need to compare the password from the credentials to the password in the user LDAP entry which is expected to be encoded using the same password encoder
-			return this.ldapClient.get(this.userNameFormat, new String[] {this.passwordAttribute}, credentials.getUsername())
+			authentication = this.ldapClient.get(this.userNameFormat, new String[] {this.passwordAttribute}, credentials.getUsername())
 				.flatMap(userEntry -> {
 					Optional<String> passwordAttributeOpt = userEntry.getAttribute(this.passwordAttribute).map(LDAPAttribute::asString);
 					if(passwordAttributeOpt.isPresent()) {
@@ -288,20 +328,8 @@ public class LDAPAuthenticator implements Authenticator<LoginCredentials, LDAPAu
 					.map(groups -> (LDAPAuthentication)new GenericLDAPAuthentication(credentials.getUsername(), userEntry.getDN(), groups, true))
 				);
 		}
-	}
-	
-	/**
-	 * <p>
-	 * Maps the error to an authentication exception.
-	 * </p>
-	 * 
-	 * @param t an error
-	 * 
-	 * @return an authentication exception
-	 */
-	private AuthenticationException mapError(Throwable t) {
-		if(t instanceof LDAPException) {
-			LDAPException e = (LDAPException)t;
+		
+		return authentication.onErrorMap(LDAPException.class, e -> {
 			if(e.getErrorCode() != null) {
 				String message = "LDAP " + (e.getErrorCode() != null ? " (" + ((LDAPException)e).getErrorCode() + "): " : ": ") + (e.getErrorDescription() != null ? ((LDAPException)e).getErrorDescription() : "");
 				switch(e.getErrorCode()) {
@@ -317,7 +345,17 @@ public class LDAPAuthenticator implements Authenticator<LoginCredentials, LDAPAu
 			else {
 				return new AuthenticationException(e.getMessage(), e);
 			}
-		}
-		return new AuthenticationException(t.getMessage(), t);
+		})
+		.onErrorResume(AuthenticationException.class, e -> {
+			if(!terminal) {
+				LOGGER.error("Failed to authenticate", e);
+				return Mono.empty();
+			}
+			return Mono.fromSupplier(() -> {
+				GenericLDAPAuthentication ldapAuthentication = new GenericLDAPAuthentication(credentials.getUsername(), null, Set.of(), false);
+				ldapAuthentication.setCause(e);
+				return ldapAuthentication;
+			});
+		});
 	}
 }

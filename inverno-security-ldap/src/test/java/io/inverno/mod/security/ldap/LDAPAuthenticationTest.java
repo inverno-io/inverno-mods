@@ -37,7 +37,7 @@ public class LDAPAuthenticationTest {
 		
 		String authJson = mapper.writeValueAsString(auth);
 		
-		Assertions.assertEquals("{\"username\":\"user01\",\"dn\":\"cn=user01,ou=users,dc=example,dc=org\",\"groups\":[],\"authenticated\":true}", authJson);
+		Assertions.assertEquals("{\"username\":\"user01\",\"dn\":\"cn=user01,ou=users,dc=example,dc=org\",\"groups\":[],\"authenticated\":true,\"anonymous\":false}", authJson);
 		
 		LDAPAuthentication authParsed = mapper.readValue(authJson, LDAPAuthentication.class);
 		

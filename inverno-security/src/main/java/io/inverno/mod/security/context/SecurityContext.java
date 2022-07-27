@@ -176,6 +176,21 @@ public interface SecurityContext<A extends Identity, B extends AccessController>
 	default boolean isAuthenticated() {
 		return this.getAuthentication().isAuthenticated();
 	}
+	
+	/**
+	 * <p>
+	 * Determines whether this context is anonymous.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method basically delegates to {@link Authentication#isAnonymous()}.
+	 * </p>
+	 * 
+	 * @return true if the context represents an anonymous access, false otherwise
+	 */
+	default boolean isAnonymous() {
+		return this.getAuthentication().isAnonymous();
+	}
 
 	/**
 	 * <p>

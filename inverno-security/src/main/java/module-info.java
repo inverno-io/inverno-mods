@@ -42,7 +42,7 @@ import io.inverno.mod.security.identity.IdentityResolver;
  * 
  * <p>
  * The entity represents the originator of an access to the application, it can be external or internal. An application can secure the access to protected services or resources by authenticating the 
- * entity which must provides valid credentials. An {@link AccessController} can then be obtained from the resulting {@link Authentication} to fine-grained control the access to services and 
+ * entity which must provide valid credentials. An {@link AccessController} can then be obtained from the resulting {@link Authentication} to fine-grained control the access to services and 
  * resources. The {@link Identity} of the authenticated entity might also be resolved from the authentication and used whenever strong identification is required.
  * </p>
  *
@@ -116,6 +116,7 @@ module io.inverno.mod.security {
 	
 	requires com.fasterxml.jackson.databind;
 	requires org.apache.commons.lang3;
+	requires org.apache.logging.log4j;
 	requires static org.bouncycastle.provider;
 	requires transitive org.reactivestreams;
 	requires transitive reactor.core;

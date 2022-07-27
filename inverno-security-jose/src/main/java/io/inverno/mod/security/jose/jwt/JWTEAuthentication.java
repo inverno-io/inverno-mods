@@ -15,8 +15,10 @@
  */
 package io.inverno.mod.security.jose.jwt;
 
+import io.inverno.mod.security.SecurityException;
 import io.inverno.mod.security.authentication.InvalidCredentialsException;
 import io.inverno.mod.security.authentication.TokenAuthentication;
+import io.inverno.mod.security.jose.JOSEProcessingException;
 import io.inverno.mod.security.jose.jwe.JWE;
 import java.util.Objects;
 import java.util.Optional;
@@ -39,6 +41,11 @@ public class JWTEAuthentication <A extends JWTClaimsSet> implements TokenAuthent
 	private final JWE<A> jwt;
 	
 	/**
+	 * The security error resulting from a JOSE processing error.
+	 */
+	private final Optional<SecurityException> cause;
+	
+	/**
 	 * <p>
 	 * Creates a JWTE authentication with the specified JWT.
 	 * </p>
@@ -47,6 +54,31 @@ public class JWTEAuthentication <A extends JWTClaimsSet> implements TokenAuthent
 	 */
 	public JWTEAuthentication(JWE<A> jwt) {
 		this.jwt = Objects.requireNonNull(jwt);
+		this.cause = Optional.empty();
+	}
+	
+	/**
+	 * <p>
+	 * Creates a denied JWTE authentication with the specified security error.
+	 * </p>
+	 * 
+	 * @param cause a security error or null
+	 */
+	public JWTEAuthentication(SecurityException cause) {
+		this.jwt = null;
+		this.cause = Optional.ofNullable(cause);
+	}
+	
+	/**
+	 * <p>
+	 * Creates a denied JWTE authentication after a JOSE processing error.
+	 * </p>
+	 * 
+	 * @param cause a JOSE processing error or null
+	 */
+	JWTEAuthentication(JOSEProcessingException cause) {
+		this.jwt = null;
+		this.cause = Optional.ofNullable(cause).map(e -> new InvalidCredentialsException("Invalid token", e));
 	}
 
 	/**
@@ -54,7 +86,7 @@ public class JWTEAuthentication <A extends JWTClaimsSet> implements TokenAuthent
 	 * Returns the JWTE.
 	 * </p>
 	 * 
-	 * @return a JWTE
+	 * @return a JWTE or null if unauthenticated
 	 */
 	public JWE<A> getJwt() {
 		return this.jwt;
@@ -65,10 +97,10 @@ public class JWTEAuthentication <A extends JWTClaimsSet> implements TokenAuthent
 	 * Returns the JWT claims set.
 	 * </p>
 	 * 
-	 * @return the JWT claims set
+	 * @return the JWT claims set or null if unauthenticated
 	 */
 	public A getJWTClaimsSet() {
-		return this.jwt.getPayload();
+		return this.jwt != null ? this.jwt.getPayload() : null;
 	}
 	
 	/**
@@ -76,26 +108,29 @@ public class JWTEAuthentication <A extends JWTClaimsSet> implements TokenAuthent
 	 * Returns the JWTE compact representation.
 	 * </p>
 	 * 
-	 * @return the JWTE compact representation
+	 * @return the JWTE compact representation or null if unauthenticated
 	 */
 	@Override
 	public String getToken() {
-		return this.jwt.toCompact();
+		return this.jwt != null ? this.jwt.toCompact() : null;
 	}
 	
 	@Override
 	public boolean isAuthenticated() {
-		return this.jwt.getPayload().isValid();
+		return this.jwt != null && this.jwt.getPayload().isValid();
 	}
 
 	@Override
 	public Optional<io.inverno.mod.security.SecurityException> getCause() {
-		try {
-			this.jwt.getPayload().ifInvalidThrow();
-			return Optional.empty();
+		if(this.jwt != null) {
+			try {
+				this.jwt.getPayload().ifInvalidThrow();
+				return Optional.empty();
+			}
+			catch(InvalidJWTException e) {
+				return Optional.of(new InvalidCredentialsException(e));
+			}
 		}
-		catch(InvalidJWTException e) {
-			return Optional.of(new InvalidCredentialsException(e));
-		}
+		return this.cause;
 	}
 }

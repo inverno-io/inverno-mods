@@ -109,9 +109,16 @@ public class GenericSecurityManager<A extends Credentials, B extends Authenticat
 	}
 
 	@Override
-	public Mono<SecurityContext<C, D>> authenticate(A credentials) throws SecurityException {
+	@SuppressWarnings("unchecked")
+	public Mono<SecurityContext<C, D>> authenticate(A credentials) {
+		if(credentials == null) {
+			// Returns an anonymous authentication when no credentials are specified
+			return Mono.just((SecurityContext<C, D>)SecurityContext.of(Authentication.anonymous()));
+		}
+		// 1. Authenticate
 		return this.authenticator.authenticate(credentials)
 			.switchIfEmpty(Mono.error(() -> new AuthenticationException("Unable to authenticate")))
+			// 2. Resolve identity and access control
 			.flatMap(authentication -> Mono.zip(
 					Mono.just(authentication),
 					this.identityResolver
@@ -128,6 +135,10 @@ public class GenericSecurityManager<A extends Credentials, B extends Authenticat
 						.orElse(Mono.just(Optional.empty()))
 				)
 				.map(tuple -> SecurityContext.of(authentication, tuple.getT2(), tuple.getT3()))
-			);
+			)
+			// Return a denied authentication in case of security error, let any other error propagate
+			.onErrorResume(io.inverno.mod.security.SecurityException.class, error -> {
+				return Mono.just((SecurityContext<C, D>)SecurityContext.of(Authentication.denied(error)));
+			});
 	}
 }

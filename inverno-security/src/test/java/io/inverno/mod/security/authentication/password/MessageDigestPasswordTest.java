@@ -30,6 +30,18 @@ public class MessageDigestPasswordTest {
 	
 	@Test
 	public void test() throws JsonProcessingException {
+		ObjectMapper mapper = new ObjectMapper();
+
+		MessageDigestPassword password = new MessageDigestPassword.Encoder("SHA-512", "secret".getBytes(), 16).encode("password");
+
+		// 
+		String storedPassword = mapper.writeValueAsString(password);
+		
+		System.out.println(storedPassword);
+
+		// Returns a MessageDigestPassword instance
+		Password<?, ?> recoveredPassword = mapper.readValue(storedPassword, Password.class);
+		
 		byte[] salt = Base64.getUrlDecoder().decode("zXlZd6iTs_ypwN1TFB5P8g");
 		
 		SecureRandom secureRandom = new SecureRandom() {
@@ -48,7 +60,7 @@ public class MessageDigestPasswordTest {
 
 		Assertions.assertTrue(mdPassword.matches("password"));
 		
-		ObjectMapper mapper = new ObjectMapper();
+//		ObjectMapper mapper = new ObjectMapper();
 		String jsonPassword = mapper.writeValueAsString(mdPassword);
 		Password<?, ?> readPassword = mapper.readValue(jsonPassword, Password.class);
 		Assertions.assertEquals(mdPassword, readPassword);

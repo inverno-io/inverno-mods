@@ -16,20 +16,18 @@
 package io.inverno.mod.security;
 
 import io.inverno.mod.security.accesscontrol.AccessControlException;
-import io.inverno.mod.security.accesscontrol.AccessControllerResolver;
 import io.inverno.mod.security.accesscontrol.GroupsRoleBasedAccessControllerResolver;
 import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
-import io.inverno.mod.security.authentication.GroupAwareAuthentication;
+import io.inverno.mod.security.authentication.Authentication;
+import io.inverno.mod.security.authentication.CredentialsNotFoundException;
+import io.inverno.mod.security.authentication.InvalidCredentialsException;
 import io.inverno.mod.security.authentication.LoginCredentials;
 import io.inverno.mod.security.authentication.LoginCredentialsMatcher;
 import io.inverno.mod.security.authentication.password.RawPassword;
 import io.inverno.mod.security.authentication.user.InMemoryUserRepository;
 import io.inverno.mod.security.authentication.user.User;
-import io.inverno.mod.security.authentication.user.UserAuthentication;
 import io.inverno.mod.security.authentication.user.UserAuthenticator;
-import io.inverno.mod.security.authentication.user.UserRepository;
 import io.inverno.mod.security.context.SecurityContext;
-import io.inverno.mod.security.identity.IdentityResolver;
 import io.inverno.mod.security.identity.PersonIdentity;
 import io.inverno.mod.security.identity.UserIdentityResolver;
 import java.util.List;
@@ -46,16 +44,16 @@ public class SecurityManagerTest {
 	public void test() {
 		SecurityManager<LoginCredentials, PersonIdentity, RoleBasedAccessController> securityManager = SecurityManager.of(
 			new UserAuthenticator<>(
-					InMemoryUserRepository
-							.of(List.of(
-									User.of("jsmith")
-											.identity(new PersonIdentity("jsmith", "John", "Smith", "jsmith@inverno.io"))
-											.password(new RawPassword("password"))
-											.groups("readers")
-											.build()
-							))
-							.build(),
-					new LoginCredentialsMatcher<>()
+				InMemoryUserRepository
+					.of(List.of(
+						User.of("jsmith")
+							.identity(new PersonIdentity("jsmith", "John", "Smith", "jsmith@inverno.io"))
+							.password(new RawPassword("password"))
+							.groups("readers")
+							.build()
+					))
+					.build(),
+				new LoginCredentialsMatcher<>()
 			),
 			new UserIdentityResolver<>(),
 			new GroupsRoleBasedAccessControllerResolver()
@@ -86,5 +84,29 @@ public class SecurityManagerTest {
 				throw new AccessControlException("Unauthorized access");
 			}
 		}
+		
+		securityContext = securityManager.authenticate(LoginCredentials.of("invalid", new RawPassword("credentials"))).block();
+		
+		Assertions.assertFalse(securityContext.isAuthenticated());
+		Assertions.assertFalse(securityContext.getIdentity().isPresent());
+		Assertions.assertFalse(securityContext.getAccessController().isPresent());
+		
+		securityContext = securityManager.authenticate(LoginCredentials.of("jsmith", new RawPassword("invalid"))).block();
+		
+		Assertions.assertFalse(securityContext.isAuthenticated());
+		Assertions.assertFalse(securityContext.getIdentity().isPresent());
+		Assertions.assertFalse(securityContext.getAccessController().isPresent());
+		
+		Assertions.assertTrue(securityContext.getAuthentication().getCause().isPresent());
+		Assertions.assertInstanceOf(InvalidCredentialsException.class, securityContext.getAuthentication().getCause().get());
+		Assertions.assertEquals("Invalid credentials", securityContext.getAuthentication().getCause().get().getMessage());
+		
+		securityContext = securityManager.authenticate(null).block();
+		Assertions.assertFalse(securityContext.isAuthenticated());
+		Assertions.assertFalse(securityContext.getIdentity().isPresent());
+		Assertions.assertFalse(securityContext.getAccessController().isPresent());
+		
+		Assertions.assertFalse(securityContext.getAuthentication().getCause().isPresent());
+		Assertions.assertEquals(Authentication.anonymous(), securityContext.getAuthentication());
 	}
 }

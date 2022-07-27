@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.security.authentication;
 
+import io.inverno.mod.security.SecurityException;
+
 /**
  * <p>
  * A login credentials matcher is used to verify that two login credentials are matching.
@@ -33,7 +35,7 @@ package io.inverno.mod.security.authentication;
 public class LoginCredentialsMatcher<A extends LoginCredentials, B extends LoginCredentials> implements CredentialsMatcher<A, B> {
 
 	@Override
-	public boolean matches(A credentials, B otherCredentials) throws AuthenticationException {
+	public boolean matches(A credentials, B otherCredentials) throws SecurityException {
 		return credentials.getUsername().equals(otherCredentials.getUsername()) && credentials.getPassword().matches(otherCredentials.getPassword());
 	}
 }

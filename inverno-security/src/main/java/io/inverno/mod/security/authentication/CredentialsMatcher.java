@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.security.authentication;
 
+import io.inverno.mod.security.SecurityException;
 import io.inverno.mod.security.authentication.user.UserAuthenticator;
 
 /**
@@ -65,7 +66,7 @@ public interface CredentialsMatcher<A extends Credentials, B extends Credentials
 	 *
 	 * @return true if the credentials matches the other credentials, false otherwise
 	 *
-	 * @throws AuthenticationException if there was authentication related errors
+	 * @throws SecurityException if there was an error matching credentials
 	 */
-	boolean matches(A credentials, B otherCredentials) throws AuthenticationException;
+	boolean matches(A credentials, B otherCredentials) throws SecurityException;
 }

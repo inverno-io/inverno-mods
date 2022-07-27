@@ -39,25 +39,29 @@ public interface Authenticator<A extends Credentials, B extends Authentication> 
 
 	/**
 	 * <p>
-	 * Authenticates the specified credentials and returns an authentication when valid.
+	 * Authenticates the specified credentials and returns an authentication.
 	 * </p>
 	 *
 	 * <p>
-	 * Implementations must return an empty mono to indicate that they were unable to authenticate the credentials. This does not mean credentials are invalid, this simply mean that a particular
+	 * Implementations can return an empty mono to indicate that they were unable to authenticate the credentials. This does not mean credentials are invalid, this simply mean that a particular
 	 * authenticator does not manage them and therefore can's possibly determine whether they are valid. For example, when considering login credentials composed of a user and a password, an
-	 * authenticator which does not manage that particular user must return an empty mono.
+	 * authenticator which does not manage that particular user can return an empty mono.
 	 * </p>
 	 * 
 	 * <p>
-	 * Implementations must throw an {@link AuthenticationException} when they were able to authenticate the credentials which turned out to be invalid. For example, an authenticator must throw such
-	 * exception when it does manage a particular and that the password was invalid.
+	 * Implementations must return denied authentications with {@link AuthenticationException} when they were able to authenticate credentials which turned out to be invalid. For example, a login
+	 * credentials authenticator must return a denied authentication exception when it does manage a particular username but the provided password was invalid.
+	 * </p>
+	 * 
+	 * <p>
+	 * A denied authentication can also bre reported by throwing an {@link AuthenticationException} when returning an actual authentication instance is not practical.
 	 * </p>
 	 * 
 	 * @param credentials the credentials to authenticate
 	 *
-	 * @return a mono emitting an authentication or an empty mono if the authenticator could not authenticate the credentials
-	 *
-	 * @throws AuthenticationException if credentials are invalid
+	 * @return a mono emitting an authentication, an error mono or an empty mono if the authenticator could not authenticate the credentials
+	 * 
+	 * @throws AuthenticationException if credentials were invalid
 	 */
 	Mono<B> authenticate(A credentials) throws AuthenticationException;
 
@@ -106,5 +110,55 @@ public interface Authenticator<A extends Credentials, B extends Authentication> 
 		return credentials -> {
 			return this.authenticate(credentials).map(mapper);
 		};
+	}
+	
+	/**
+	 * <p>
+	 * Transforms the authenticator so it fails on denied authentications.
+	 * </p>
+	 * 
+	 * <p>
+	 * An authenticator is supposed to return a denied authentication in case of failed authentication, however this might not always be possible or convenient, especially when transforming
+	 * authentication output using {@link #map(java.util.function.Function) } or {@link #flatMap(java.util.function.Function) } operators. As consequence, it might be desirable to actually propagate
+	 * the original authentication error when a denied authentication is returned by the authenticator.
+	 * </p>
+	 * 
+	 * @return an authenticator that returns an error mono on denied authentications
+	 */
+	default Authenticator<A, B> failOnDenied() {
+		return credentials -> this.authenticate(credentials)
+			.doOnNext(authentication -> {
+				authentication.getCause().ifPresent(e -> {
+					throw e;
+				});
+			});
+	}
+	
+	/**
+	 * <p>
+	 * Transforms the authenticator so it fails on denied and anonymous authentications.
+	 * </p>
+	 * 
+	 * <p>
+	 * As for {@link #failOnDenied() }, an authenticator can return a denied or an anonymous authentication, this operator allows to throw a corresponding {@link AuthenticationException} to stop a
+	 * subsequent authentication transformation chain instead of dealing with denied and anonymous authentication when mapping the authentication output.
+	 * </p>
+	 * 
+	 * @return an authenticator that returns an error mono on denied and anonymous authentications
+	 */
+	default Authenticator<A, B> failOnDeniedAndAnonymous() {
+		return credentials -> this.authenticate(credentials)
+			.doOnNext(authentication -> {
+				authentication.getCause().ifPresentOrElse(
+					e -> {
+						throw e;
+					},
+					() -> {
+						if(!authentication.isAuthenticated()) {
+							throw new AuthenticationException("Anonymous authentication not allowed");
+						}
+					}
+				);
+			});
 	}
 }
