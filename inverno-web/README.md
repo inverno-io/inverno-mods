@@ -1498,7 +1498,7 @@ public interface SecurityContext extends ExchangeContext {
 }
 ```
 
-Exposing `setRoles()` methods to actual services which should only be concerned by controlling access might not be ideal. There are two concerns to consider here: resolving the roles of the authenticated user and set them into the context which is the responsability of a security interceptor and controlling the access to a secured service or resource which is the responsability of a service or another security interceptor. Since we can compose multiple configurers using multiple context types automatically aggregated into one server controller configurer we can easily solve that issue by splitting previous security context:
+Exposing `setRoles()` methods to actual services which should only be concerned by controlling access might not be ideal. There are two concerns to consider here: first resolving the roles of the authenticated user and set them into the context which is the responsability of a security interceptor and then controlling the access to a secured service or resource which is the responsability of a service or another security interceptor. Since we can compose multiple configurers using multiple context types automatically aggregated into one server controller configurer we can easily solve that issue by splitting previous security context:
 
 ```java
 package io.inverno.example.app_web;
@@ -1526,6 +1526,8 @@ public interface ConfigurableSecurityContext extends SecurityContext {
     void setRoles(Set<String> roles);
 }
 ```
+
+Particular care must be taken when declaring context types with generics (e.g. `Context<A>`), we must always make sure that for a given erased type (e.g. `Context`) there is one type that is assignable to all others which will then be retained during the context type generation. This basically follows Java language specification which prevents from implementing the same interface twice with different arguments as a result the generated context can only implement one which must obviously be assignable to all others. A compilation error shall be reported if inconsistent exchange context types have been defined.
 
 > In order to avoid any misuse and realize the benefits of the context generation, it is important to understand the purpose of the exchange context and why we choose to have it strongly typed. 
 >
@@ -2221,14 +2223,21 @@ The Web exchange also gives access to the exchange context, if a route handler r
 Mono<Void> create(@Body Mono<T> resource, WebExchange<SecurityContext> exchange) throws BadRequestException;
 ```
 
-It is also possible to specify intersection types if multiple context types are expected using a type variable:
+Context types declared in a declarative Web route are aggregated in the Web server controller configurer by the Inverno Web compiler plugin in the same way as for Web server [configurers](#configuring-the-web-server-controller). However declarative Web routes make it possible to use interaction types when multiple context types are expected using a type variable which brings more flexibility.
 
 ```java
 @WebRoute(method = Method.POST, consumes = MediaTypes.APPLICATION_JSON)
 <E extends TracingContext & SecurityContext> Mono<Void> create(@Body Mono<T> resource, WebExchange<E> exchange) throws BadRequestException;
 ```
 
-Context types declared in a declarative Web route are aggregated in the Web server controller configurer by the Inverno Web compiler plugin in the same way as for Web server [configurers](#configuring-the-web-server-controller). However declarative Web routes make it possible to use interaction types which brings more flexibility.
+When declaring generic context types, we must make sure they are all consistent (i.e. there is one type that is assignable to all others). When declaring a route using generic context type, it is then good practice to use upper bound wildcards as follows:
+
+```java
+@WebRoute(method = Method.POST, consumes = MediaTypes.APPLICATION_JSON)
+Mono<Void> create(@Body Mono<T> resource, WebExchange<SecurityContext<? extends PersonIdentity, ? extends AccessController>> exchange) throws BadRequestException;
+```
+
+Previous code basically means that the route requires a `SecurityContext` with any `PersonIdentity` types and any `AccessContoller` types. This is quite different than if we defined it as `SecurityContext<PersonIdentity, AccessController>`, in the first case we can assign `SecurityContext<PersonIdentity, RoleBasedAccessController>` whereas in the second case we can only assign `SecurityContext<PersonIdentity, RoleBasedAccessController>`. Using upper bound wildcards then provides greater flexibility and more integration options: routes basically don't have to be defined using the same context type definition.
 
 ##### Exchange context
 

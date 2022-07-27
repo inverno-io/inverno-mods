@@ -49,6 +49,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -234,66 +235,93 @@ public class WebServerControllerConfigurerCompilerPlugin implements CompilerPlug
 			return t1.toString().compareTo(t2.toString());
 		};
 		
-		Set<TypeMirror> contextTypes = new TreeSet<>(contexTypeComparator);
-		Stream.of(
-			webControllers.stream()
-				.flatMap(controller -> Arrays.stream(controller.getRoutes()))
-				.flatMap(route -> Arrays.stream(route.getParameters())),
-			webInterceptorsConfigurers.stream(),
-			webRoutesConfigurers.stream(),
-			webRouterConfigurers.stream(),
-			errorWebInterceptorsConfigurers.stream(), 
-			errorWebRoutesConfigurers.stream(),
-			errorWebRouterConfigurers.stream()
-		)
-		.flatMap(Function.identity())
-		.flatMap(info -> {
-			TypeMirror contextType;
-			if(info instanceof WebExchangeParameterInfo) {
-				contextType = ((WebExchangeParameterInfo)info).getContextType();
-			}
-			else if(info instanceof WebExchangeContextParameterInfo) {
-				contextType = ((WebExchangeContextParameterInfo)info).getType();
-			}
-			else if(info instanceof WebInterceptorsConfigurerInfo) {
-				contextType = ((WebInterceptorsConfigurerInfo)info).getContextType();
-			}
-			else if(info instanceof WebRoutesConfigurerInfo) {
-				contextType = ((WebRoutesConfigurerInfo)info).getContextType();
-			}
-			else if(info instanceof WebRouterConfigurerInfo) {
-				contextType = ((WebRouterConfigurerInfo)info).getContextType();
-			}
-			else if(info instanceof ErrorWebInterceptorsConfigurerInfo) {
-				contextType = ((ErrorWebInterceptorsConfigurerInfo)info).getContextType();
-			}
-			else if(info instanceof ErrorWebRoutesConfigurerInfo) {
-				contextType = ((ErrorWebRoutesConfigurerInfo)info).getContextType();
-			}
-			else if(info instanceof ErrorWebRouterConfigurerInfo) {
-				contextType = ((ErrorWebRouterConfigurerInfo)info).getContextType();
-			}
-			else {
-				return Stream.of();
-			}
-			
-			List<? extends TypeMirror> actualTypes;
-			if(contextType.getKind() == TypeKind.INTERSECTION) {
-				actualTypes = ((IntersectionType)contextType).getBounds();
-			}
-			else {
-				actualTypes = List.of(contextType);
-			}
-			return Stream.concat(
-				actualTypes.stream(), 
-				actualTypes.stream()
-					// we only keep public super types, hidden super types should be included
-					// this means we could have compile errors if the user specified a non-public context type explicitly
-					.flatMap(type -> this.getAllSuperTypes(contextType).stream().filter(superContextType -> ((DeclaredType)superContextType).asElement().getModifiers().contains(Modifier.PUBLIC)))
+		Set<TypeMirror> contextTypes = Stream.of(
+				webControllers.stream()
+					.flatMap(controller -> Arrays.stream(controller.getRoutes()))
+					.flatMap(route -> Arrays.stream(route.getParameters())),
+				webInterceptorsConfigurers.stream(),
+				webRoutesConfigurers.stream(),
+				webRouterConfigurers.stream(),
+				errorWebInterceptorsConfigurers.stream(),
+				errorWebRoutesConfigurers.stream(),
+				errorWebRouterConfigurers.stream()
 			)
-			.map(type -> this.unwildContextType((ReporterInfo)info, (DeclaredType)type));
-		})
-		.forEach(contextTypes::add);
+			.flatMap(Function.identity())
+			.flatMap(info -> {
+				TypeMirror contextType;
+				if(info instanceof WebExchangeParameterInfo) {
+					contextType = ((WebExchangeParameterInfo)info).getContextType();
+				}
+				else if(info instanceof WebExchangeContextParameterInfo) {
+					contextType = ((WebExchangeContextParameterInfo)info).getType();
+				}
+				else if(info instanceof WebInterceptorsConfigurerInfo) {
+					contextType = ((WebInterceptorsConfigurerInfo)info).getContextType();
+				}
+				else if(info instanceof WebRoutesConfigurerInfo) {
+					contextType = ((WebRoutesConfigurerInfo)info).getContextType();
+				}
+				else if(info instanceof WebRouterConfigurerInfo) {
+					contextType = ((WebRouterConfigurerInfo)info).getContextType();
+				}
+				else if(info instanceof ErrorWebInterceptorsConfigurerInfo) {
+					contextType = ((ErrorWebInterceptorsConfigurerInfo)info).getContextType();
+				}
+				else if(info instanceof ErrorWebRoutesConfigurerInfo) {
+					contextType = ((ErrorWebRoutesConfigurerInfo)info).getContextType();
+				}
+				else if(info instanceof ErrorWebRouterConfigurerInfo) {
+					contextType = ((ErrorWebRouterConfigurerInfo)info).getContextType();
+				}
+				else {
+					return Stream.of();
+				}
+
+				List<? extends TypeMirror> actualTypes;
+				if(contextType.getKind() == TypeKind.INTERSECTION) {
+					actualTypes = ((IntersectionType)contextType).getBounds();
+				}
+				else {
+					actualTypes = List.of(contextType);
+				}
+				
+				return Stream.concat(
+					actualTypes.stream(),
+					actualTypes.stream()
+						// we only keep public super types, hidden super types should be included
+						// this means we could have compile errors if the user specified a non-public context type explicitly
+						.flatMap(type -> this.getAllSuperTypes(contextType).stream().filter(superContextType -> ((DeclaredType)superContextType).asElement().getModifiers().contains(Modifier.PUBLIC)))
+				)
+				.map(type -> new Object[] {type, info});
+			})
+			.collect(Collectors.groupingBy(typeAndInfo -> this.pluginContext.getTypeUtils().erasure((TypeMirror)typeAndInfo[0])))
+			// We must retain one type per map entry
+			.entrySet().stream().map(typesEntry -> {
+				// We must retain the type that can be assigned to all others, if it doesn't exist we shall report an error: we have defined incompatible context types
+				// n^2 complexity... Can we do better?
+				Set<ReporterInfo> infos = new HashSet<>();
+				main:
+				for(Object[] typeAndInfo1 : typesEntry.getValue()) {
+					TypeMirror t1 = (TypeMirror)typeAndInfo1[0];
+					ReporterInfo info = (ReporterInfo)typeAndInfo1[1];
+					infos.add(info);
+					for(Object[] typeAndInfo2 : typesEntry.getValue()) {
+						TypeMirror t2 = (TypeMirror)typeAndInfo2[0];
+						if(!this.pluginContext.getTypeUtils().isAssignable(t1, t2)) {
+							continue main;
+						}
+					}
+					// t1 is assignable to all other types
+					return this.unwildContextType((ReporterInfo)info, (DeclaredType)t1);
+				}
+
+				// report the error and ignore context type: compilation will fail
+				infos.forEach(reporter -> {
+					reporter.error("Inconsistent context types");
+				});
+				return null;
+			})
+			.collect(Collectors.toSet());
 		
 		// Filter types to remove duplicates: same type but with different parameters
 		// SecurityContext<Identity, RoleBasedAccessController> can be casted to SecurityContext<? extends Identity, ? extends RoleBasedAccessController>
