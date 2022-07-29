@@ -18,8 +18,8 @@ package io.inverno.mod.security.http.token;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.security.authentication.TokenAuthentication;
-import io.inverno.mod.security.http.LoginActionHandler;
-import io.inverno.mod.security.http.LoginSuccessHandler;
+import io.inverno.mod.security.http.login.LoginActionHandler;
+import io.inverno.mod.security.http.login.LoginSuccessHandler;
 import reactor.core.publisher.Mono;
 
 /**

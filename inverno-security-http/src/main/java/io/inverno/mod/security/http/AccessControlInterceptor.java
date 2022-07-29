@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.security.http;
 
+import io.inverno.mod.http.base.ForbiddenException;
 import io.inverno.mod.http.base.UnauthorizedException;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeInterceptor;
@@ -22,7 +23,7 @@ import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.authentication.Authentication;
 import io.inverno.mod.security.http.context.SecurityContext;
 import io.inverno.mod.security.identity.Identity;
-import java.util.function.Predicate;
+import java.util.function.Function;
 import reactor.core.publisher.Mono;
 
 /**
@@ -48,7 +49,7 @@ public class AccessControlInterceptor<A extends Identity, B extends AccessContro
 	/**
 	 * The access verifier.
 	 */
-	private final Predicate<SecurityContext<A, B>> accessVerifier;
+	private final Function<SecurityContext<A, B>, Mono<Boolean>> accessVerifier;
 	
 	/**
 	 * <p>
@@ -57,7 +58,7 @@ public class AccessControlInterceptor<A extends Identity, B extends AccessContro
 	 * 
 	 * @param accessVerifier an access verifier
 	 */
-	private AccessControlInterceptor(Predicate<SecurityContext<A, B>> accessVerifier) {
+	private AccessControlInterceptor(Function<SecurityContext<A, B>, Mono<Boolean>> accessVerifier) {
 		this.accessVerifier = accessVerifier;
 	}
 	
@@ -74,10 +75,10 @@ public class AccessControlInterceptor<A extends Identity, B extends AccessContro
 	 * @return an access control interceptor
 	 */
 	public static <A extends Identity, B extends AccessController, C extends SecurityContext<A, B>, D extends Exchange<C>> AccessControlInterceptor<A, B, C, D> anonymous() {
-		return new AccessControlInterceptor<>(context -> {
+		return new AccessControlInterceptor<>(context -> Mono.fromSupplier(() -> {
 			Authentication authentication = context.getAuthentication();
 			return authentication.isAuthenticated();
-		});
+		}));
 	}
 	
 	/**
@@ -93,18 +94,15 @@ public class AccessControlInterceptor<A extends Identity, B extends AccessContro
 	 * @return an access control interceptor
 	 */
 	public static <A extends Identity, B extends AccessController, C extends SecurityContext<A, B>, D extends Exchange<C>> AccessControlInterceptor<A, B, C, D> authenticated() {
-		return new AccessControlInterceptor<>(context -> {
+		return new AccessControlInterceptor<>(context -> Mono.fromSupplier(() -> {
 			Authentication authentication = context.getAuthentication();
 			if(!authentication.isAuthenticated()) {
-				authentication.getCause()
+				throw authentication.getCause()
 					.map(UnauthorizedException::new)
-					.ifPresent(e -> {
-						throw e;
-					});
-				return false;
+					.orElseGet(() -> new UnauthorizedException());
 			}
 			return true;
-		});
+		}));
 	}
 	
 	/**
@@ -113,27 +111,27 @@ public class AccessControlInterceptor<A extends Identity, B extends AccessContro
 	 * </p>
 	 * 
 	 * <p>
-	 * The access verifier shall return false to deny the access to the resource resulting in a {@link UnauthorizedException} being thrown by the interceptor but it can also throw a
-	 * {@link UnauthorizedException} directly to provide more details about the error (e.g. a message).
+	 * The access verifier shall return false to deny the access to the resource resulting in a {@link ForbiddenException} being thrown by the interceptor but it can also throw an
+	 * {@link UnauthorizedException} or a {@link ForbiddenException} directly to get a different behaviour or provide more details about the error (e.g. a message).
 	 * </p>
 	 * 
 	 * @param <A>            the identity type
 	 * @param <B>            the access controller type
-	 * @param <C> the security context type
-	 * @param <D> the exchange type
+	 * @param <C>            the security context type
+	 * @param <D>            the exchange type
 	 * @param accessVerifier an access verifier
 	 * 
 	 * @return an access control interceptor
 	 */
-	public static <A extends Identity, B extends AccessController, C extends SecurityContext<A, B>, D extends Exchange<C>> AccessControlInterceptor<A, B, C, D> verify(Predicate<SecurityContext<A, B>> accessVerifier) {
+	public static <A extends Identity, B extends AccessController, C extends SecurityContext<A, B>, D extends Exchange<C>> AccessControlInterceptor<A, B, C, D> verify(Function<SecurityContext<A, B>, Mono<Boolean>> accessVerifier) {
 		return new AccessControlInterceptor<>(accessVerifier);
 	}
 	
 	@Override
 	public Mono<? extends D> intercept(D exchange) {
-		return Mono.fromSupplier(() -> {
-			if(!this.accessVerifier.test(exchange.context())) {
-				throw new UnauthorizedException("Access denied");
+		return this.accessVerifier.apply(exchange.context()).map(granted -> {
+			if(!granted) {
+				throw new ForbiddenException("Access denied");
 			}
 			return exchange;
 		});

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.security.http;
+package io.inverno.mod.security.http.login;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
@@ -76,6 +76,35 @@ public interface LoginSuccessHandler<A extends Authentication, B extends Exchang
 	default LoginSuccessHandler<A, B, C> compose(LoginSuccessHandler<? super A, ? super B, ?super C> before) {
 		return (exchange, authentication) -> {
 			return before.handleLoginSuccess(exchange, authentication).then(this.handleLoginSuccess(exchange, authentication));
+		};
+	}
+	
+	/**
+	 * <p>
+	 * Returns a composed login success handler that invokes the specified handlers in sequence.
+	 * </p>
+	 *
+	 * @param <A> the authentication type
+	 * @param <B> the context type
+	 * @param <C> the exchange type
+	 * @param handlers the list of handlers to invoke in sequence
+	 *
+	 * @return a composed login success handler that invokes the specified handlers in sequence
+	 */
+	@SafeVarargs
+    @SuppressWarnings("varargs")
+	static <A extends Authentication, B extends ExchangeContext, C extends Exchange<B>> LoginSuccessHandler<A, B, C> of(LoginSuccessHandler<? super A, ? super B, ?super C>... handlers) {
+		return (exchange, authentication) -> {
+			Mono<Void> handlerChain = null;
+			for(LoginSuccessHandler<? super A, ? super B, ?super C> handler : handlers) {
+				if(handlerChain == null) {
+					handlerChain = handler.handleLoginSuccess(exchange, authentication);
+				}
+				else {
+					handlerChain = handlerChain.thenEmpty(handler.handleLoginSuccess(exchange, authentication));
+				}
+			}
+			return handlerChain;
 		};
 	}
 }

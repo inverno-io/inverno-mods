@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.security.http;
+package io.inverno.mod.security.http.login;
 
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.security.authentication.Authentication;
 import reactor.core.publisher.Mono;
 
 /**
@@ -73,6 +74,34 @@ public interface LoginFailureHandler<A extends ExchangeContext, B extends Exchan
 	default LoginFailureHandler<A, B> compose(LoginFailureHandler<? super A, ? super B> before) {
 		return (exchange, authentication) -> {
 			return before.handleLoginFailure(exchange, authentication).then(this.handleLoginFailure(exchange, authentication));
+		};
+	}
+	
+	/**
+	 * <p>
+	 * Returns a composed login failure handler that invokes the specified handlers in sequence.
+	 * </p>
+	 *
+	 * @param <A> the context type
+	 * @param <B> the exchange type
+	 * @param handlers the list of handlers to invoke in sequence
+	 *
+	 * @return a composed login failure handler that invokes the specified handlers in sequence
+	 */
+	@SafeVarargs
+    @SuppressWarnings("varargs")
+	static <A extends ExchangeContext, B extends Exchange<A>> LoginFailureHandler<A, B> of(LoginFailureHandler<? super A, ? super B>... handlers) {
+		return (exchange, authentication) -> {
+			Mono<Void> handlerChain = null;
+			for(LoginFailureHandler<? super A, ? super B> handler : handlers) {
+				if(handlerChain == null) {
+					handlerChain = handler.handleLoginFailure(exchange, authentication);
+				}
+				else {
+					handlerChain = handlerChain.thenEmpty(handler.handleLoginFailure(exchange, authentication));
+				}
+			}
+			return handlerChain;
 		};
 	}
 }

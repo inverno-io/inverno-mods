@@ -20,7 +20,7 @@ import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.authentication.Authentication;
-import io.inverno.mod.security.http.LogoutSuccessHandler;
+import io.inverno.mod.security.http.login.LogoutSuccessHandler;
 import io.inverno.mod.security.http.context.SecurityContext;
 import io.inverno.mod.security.identity.Identity;
 import reactor.core.publisher.Mono;

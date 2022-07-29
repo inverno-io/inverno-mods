@@ -62,7 +62,12 @@ public class DigestCredentialsMatcher<A extends LoginCredentials> implements Cre
 	
 	@Override
 	public boolean matches(DigestCredentials credentials, A otherCredentials) throws AuthenticationException {
-		if(credentials.getNonceExpire() < System.nanoTime()){
+		// Following System.nanotime() recommendation: 
+		// To compare elapsed time against a timeout, use 
+		// {@code if (System.nanoTime() - startTime >= timeoutNanos) ...} instead of 
+		// {@code if (System.nanoTime() >= startTime + timeoutNanos) ...} 
+		// because of the possibility of numerical overflow.
+		if(System.nanoTime() - credentials.getNonceExpire() > 0){
 			throw new ExpiredNonceException("Nonce has expired");
 		}
 		

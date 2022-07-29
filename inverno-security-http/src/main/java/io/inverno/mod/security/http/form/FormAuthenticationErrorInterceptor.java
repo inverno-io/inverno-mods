@@ -23,8 +23,8 @@ import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.security.http.AuthenticationErrorInterceptor;
-import io.inverno.mod.security.http.LoginActionHandler;
-import io.inverno.mod.security.http.LogoutActionHandler;
+import io.inverno.mod.security.http.login.LoginActionHandler;
+import io.inverno.mod.security.http.login.LogoutActionHandler;
 import reactor.core.publisher.Mono;
 
 /**

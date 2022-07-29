@@ -40,7 +40,7 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * For any {@code POST}, {@code PUT}, {@code PATCH} and {@code DELETE}, it successively tries to compare the value of a peviously generated token specified in an cookie to the value supplied as a
+ * For any {@code POST}, {@code PUT}, {@code PATCH} and {@code DELETE}, it successively tries to compare the value of a previously generated token specified in an cookie to the value supplied as a
  * header, as a query parameter or as a form parameter (assuming the request is a {@code application/x-www-form-urlencoded} request). If the two token values are equals, the request is authorized
  * otherwise a {@code FORBIDDEN(403)} error is returned.
  * </p>
@@ -171,13 +171,10 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 	 * Creates a CSRF double submit cookie interceptor builder.
 	 * </p>
 	 * 
-	 * @param <A> the context type
-	 * @param <B> the exchange type
-	 * 
 	 * @return a CSRF double submit cookie interceptor builder
 	 */
-	public static <A extends ExchangeContext, B extends Exchange<A>> CSRFDoubleSubmitCookieInterceptor.Builder<A, B> builder() {
-		return new CSRFDoubleSubmitCookieInterceptor.Builder<>();
+	public static CSRFDoubleSubmitCookieInterceptor.Builder builder() {
+		return new CSRFDoubleSubmitCookieInterceptor.Builder();
 	}
 	
 	@Override
@@ -296,11 +293,8 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.5
-	 * 
-	 * @param <A> the context type
-	 * @param <B> the exchange type
 	 */
-	public static class Builder<A extends ExchangeContext, B extends Exchange<A>> {
+	public static class Builder {
 		
 		/**
 		 * The cookie name.
@@ -358,7 +352,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 		 * 
 		 * @return this builder
 		 */
-		public Builder<A, B> cookieName(String cookieName) {
+		public Builder cookieName(String cookieName) {
 			this.cookieName = cookieName;
 			return this;
 		}
@@ -372,7 +366,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 		 * 
 		 * @return this builder
 		 */
-		public Builder<A, B> headerName(String headerName) {
+		public Builder headerName(String headerName) {
 			this.headerName = headerName;
 			return this;
 		}
@@ -386,7 +380,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 		 * 
 		 * @return this builder
 		 */
-		public Builder<A, B> parameterName(String parameterName) {
+		public Builder parameterName(String parameterName) {
 			this.parameterName = parameterName;
 			return this;
 		}
@@ -400,7 +394,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 		 * 
 		 * @return this builder
 		 */
-		public Builder<A, B> maxAge(int maxAge) {
+		public Builder maxAge(int maxAge) {
 			this.maxAge = maxAge >= 0 ? maxAge : null;
 			return this;
 		}
@@ -414,7 +408,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 		 * 
 		 * @return this builder
 		 */
-		public Builder<A, B> domain(String domain) {
+		public Builder domain(String domain) {
 			this.domain = domain;
 			return this;
 		}
@@ -428,7 +422,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 		 * 
 		 * @return this builder
 		 */
-		public Builder<A, B> path(String path) {
+		public Builder path(String path) {
 			this.path = path;
 			return this;
 		}
@@ -446,7 +440,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 		 * 
 		 * @return this builder
 		 */
-		public Builder<A, B> secure(boolean secure) {
+		public Builder secure(boolean secure) {
 			this.secure = secure;
 			return this;
 		}
@@ -469,7 +463,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 		 * 
 		 * @return this builder
 		 */
-		public Builder<A, B> httpOnly(boolean httpOnly) {
+		public Builder httpOnly(boolean httpOnly) {
 			this.httpOnly = httpOnly;
 			return this;
 		}
@@ -478,10 +472,13 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 		 * <p>
 		 * Builds a CSRF double submit cookie interceptor.
 		 * </p>
-		 * 
+		 *
+		 * @param <A> the context type
+		 * @param <B> the exchange type
+		 *
 		 * @return a CSRF double submit cookie interceptor
 		 */
-		public CSRFDoubleSubmitCookieInterceptor<A, B> build() {
+		public <A extends ExchangeContext, B extends Exchange<A>> CSRFDoubleSubmitCookieInterceptor<A, B> build() {
 			return new CSRFDoubleSubmitCookieInterceptor<>(this.cookieName, this.headerName, this.parameterName, this.maxAge, this.domain, this.path, this.secure, this.httpOnly);
 		}
 	}

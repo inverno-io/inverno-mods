@@ -72,5 +72,6 @@ module io.inverno.mod.security.http {
 	exports io.inverno.mod.security.http.csrf;
 	exports io.inverno.mod.security.http.digest;
 	exports io.inverno.mod.security.http.form;
+	exports io.inverno.mod.security.http.login;
 	exports io.inverno.mod.security.http.token;
 }

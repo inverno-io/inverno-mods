@@ -146,14 +146,12 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 	 * Returns a CORS interceptor builder for the specified allowed origins.
 	 * </p>
 	 * 
-	 * @param <A> the context type
-	 * @param <B> the exchange type
 	 * @param allowedOrigins a list of static allowed origins
 	 * 
 	 * @return a new CORS interceptor builder
 	 */
-	public static <A extends ExchangeContext, B extends Exchange<A>> CORSInterceptor.Builder<A, B> of(String... allowedOrigins) {
-		CORSInterceptor.Builder<A, B> builder = new CORSInterceptor.Builder<>();
+	public static CORSInterceptor.Builder builder(String... allowedOrigins) {
+		CORSInterceptor.Builder builder = new CORSInterceptor.Builder();
 		if(allowedOrigins != null) {
 			for(String allowedOrigin : allowedOrigins) {
 				builder.allowOrigin(allowedOrigin);
@@ -356,11 +354,8 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.5
-	 * 
-	 * @param <A> the type of the exchange context
-	 * @param <B> the type of exchange handled by the handler
 	 */
-	public static class Builder<A extends ExchangeContext, B extends Exchange<A>> {
+	public static class Builder {
 		
 		/**
 		 * The set of allowed origins.
@@ -424,7 +419,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 		 * 
 		 * @throws IllegalArgumentException if the specified origin is invalid
 		 */
-		public CORSInterceptor.Builder<A, B> allowOrigin(String allowedOrigin) throws IllegalArgumentException {
+		public CORSInterceptor.Builder allowOrigin(String allowedOrigin) throws IllegalArgumentException {
 			if(StringUtils.isNotBlank(allowedOrigin)) {
 				if(allowedOrigin.equals("*")) {
 					// Set wildcard by emptying allowed origin sets
@@ -460,7 +455,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 		 * 
 		 * @throws IllegalArgumentException if the specified origin regex is invalid
 		 */
-		public CORSInterceptor.Builder<A, B> allowOriginPattern(String allowedOriginRegex) {
+		public CORSInterceptor.Builder allowOriginPattern(String allowedOriginRegex) {
 			if(StringUtils.isNotBlank(allowedOriginRegex)) {
 				if(allowedOriginRegex.equals(".*")) {
 					// Set wildcard by emptying allowed origin sets
@@ -490,7 +485,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 		 * 
 		 * @return this builder
 		 */
-		public CORSInterceptor.Builder<A, B> allowCredentials(boolean allowCredentials) {
+		public CORSInterceptor.Builder allowCredentials(boolean allowCredentials) {
 			this.allowCredentials = allowCredentials;
 			return this;
 		}
@@ -504,7 +499,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 		 * 
 		 * @return this builder
 		 */
-		public CORSInterceptor.Builder<A, B> allowHeader(String allowedHeader) {
+		public CORSInterceptor.Builder allowHeader(String allowedHeader) {
 			if(StringUtils.isNotBlank(allowedHeader)) {
 				if(this.allowedHeaders == null) {
 					this.allowedHeaders = new HashSet<>();
@@ -523,7 +518,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 		 * 
 		 * @return this builder
 		 */
-		public CORSInterceptor.Builder<A, B> allowMethod(Method allowedMethod) {
+		public CORSInterceptor.Builder allowMethod(Method allowedMethod) {
 			if(allowedMethod != null) {
 				if(this.allowedMethods == null) {
 					this.allowedMethods = new HashSet<>();
@@ -542,7 +537,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 		 * 
 		 * @return this builder
 		 */
-		public CORSInterceptor.Builder<A, B> exposeHeader(String exposedHeader) {
+		public CORSInterceptor.Builder exposeHeader(String exposedHeader) {
 			if(StringUtils.isNotBlank(exposedHeader)) {
 				if(this.exposedHeaders == null) {
 					this.exposedHeaders = new HashSet<>();
@@ -561,7 +556,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 		 * 
 		 * @return this builder
 		 */
-		public CORSInterceptor.Builder<A, B> maxAge(int maxAge) {
+		public CORSInterceptor.Builder maxAge(int maxAge) {
 			this.maxAge = maxAge;
 			return this;
 		}
@@ -575,7 +570,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 		 * 
 		 * @return this builder
 		 */
-		public CORSInterceptor.Builder<A, B> allowPrivateNetwork(boolean allowPrivateNetwork) {
+		public CORSInterceptor.Builder allowPrivateNetwork(boolean allowPrivateNetwork) {
 			this.allowPrivateNetwork = allowPrivateNetwork;
 			return this;
 		}
@@ -584,10 +579,13 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 		 * <p>
 		 * Builds and returns a CORS interceptor.
 		 * </p>
-		 * 
+		 *
+		 * @param <A> the type of the exchange context
+		 * @param <B> the type of exchange handled by the handler
+		 *
 		 * @return a new CORS interceptor
 		 */
-		public CORSInterceptor<A, B> build() {
+		public <A extends ExchangeContext, B extends Exchange<A>> CORSInterceptor<A, B> build() {
 			return new CORSInterceptor<>(this.allowedOrigins, this.allowedOriginsPattern, this.allowCredentials, this.allowedHeaders, this.allowedMethods, this.exposedHeaders, this.maxAge, this.allowPrivateNetwork);
 		}
 	}

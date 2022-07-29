@@ -21,8 +21,8 @@ import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.security.authentication.Authentication;
-import io.inverno.mod.security.http.LoginActionHandler;
-import io.inverno.mod.security.http.LoginSuccessHandler;
+import io.inverno.mod.security.http.login.LoginActionHandler;
+import io.inverno.mod.security.http.login.LoginSuccessHandler;
 import java.util.Optional;
 import reactor.core.publisher.Mono;
 

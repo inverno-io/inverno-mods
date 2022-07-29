@@ -15,7 +15,6 @@
  */
 package io.inverno.mod.security.internal;
 
-import io.inverno.mod.security.SecurityException;
 import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.accesscontrol.AccessControllerResolver;
 import io.inverno.mod.security.authentication.Authentication;
