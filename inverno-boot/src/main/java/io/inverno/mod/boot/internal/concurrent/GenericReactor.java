@@ -45,7 +45,7 @@ import io.netty.util.concurrent.GenericFutureListener;
  */
 public class GenericReactor implements Reactor, ReactorLifecycle {
 
-	private Logger logger = LogManager.getLogger(this.getClass());
+	private final Logger logger = LogManager.getLogger(this.getClass());
 	
 	private final BootConfiguration configuration;
 	private final TransportType transportType;

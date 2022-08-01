@@ -13,8 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.boot.internal.converter;
+package io.inverno.mod.boot.converter;
 
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.annotation.Provide;
+import io.inverno.mod.base.converter.ConverterException;
+import io.inverno.mod.base.converter.MediaTypeConverter;
+import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.base.resource.MediaTypes;
 import java.io.File;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -31,21 +37,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
-
 import org.reactivestreams.Publisher;
-
-import io.inverno.core.annotation.Bean;
-import io.inverno.core.annotation.Provide;
-import io.inverno.mod.base.converter.ConverterException;
-import io.inverno.mod.base.converter.MediaTypeConverter;
-import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.base.resource.MediaTypes;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * String text/plain media type converter.
+ * String {@code text/plain} media type converter.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -60,10 +58,10 @@ public class TextStringMediaTypeConverter implements @Provide MediaTypeConverter
 
 	/**
 	 * <p>
-	 * Creates a String converter backed by the specified string converter.
+	 * Creates a {@code text/plain} media type converter.
 	 * </p>
 	 * 
-	 * @param stringConverter a string converter
+	 * @param stringConverter the underlying string converter
 	 */
 	public TextStringMediaTypeConverter(ObjectConverter<String> stringConverter) {
 		this.stringConverter = stringConverter;

@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.boot.internal.converter;
+package io.inverno.mod.boot.converter;
 
-import java.lang.reflect.Type;
-
-import org.reactivestreams.Publisher;
-
-import io.netty.buffer.ByteBuf;
 import io.inverno.mod.base.converter.ConverterException;
 import io.inverno.mod.base.converter.MediaTypeConverter;
 import io.inverno.mod.base.converter.ReactiveConverter;
+import io.netty.buffer.ByteBuf;
+import java.lang.reflect.Type;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -40,6 +38,13 @@ abstract class AbstractJsonByteBufMediaTypeConverter implements MediaTypeConvert
 
 	private final ReactiveConverter<ByteBuf, Object> jsonByteBufConverter;
 	
+	/**
+	 * <p>
+	 * Creates a base JSON ByteBuf media type converter.
+	 * </p>
+	 * 
+	 * @param jsonByteBufConverter the underlyong JSON ByteBuf converter
+	 */
 	public AbstractJsonByteBufMediaTypeConverter(ReactiveConverter<ByteBuf, Object> jsonByteBufConverter) {
 		this.jsonByteBufConverter = jsonByteBufConverter;
 	}
@@ -118,5 +123,4 @@ abstract class AbstractJsonByteBufMediaTypeConverter implements MediaTypeConvert
 	public <T> ByteBuf encode(T value, Type type) throws ConverterException {
 		return this.jsonByteBufConverter.encode(value, type);
 	}
-
 }

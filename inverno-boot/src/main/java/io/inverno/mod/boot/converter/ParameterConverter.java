@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.boot.internal.converter;
+package io.inverno.mod.boot.converter;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -28,19 +28,17 @@ import io.inverno.mod.base.converter.StringCompositeConverter;
 
 /**
  * <p>
- * String to object converter used basically to convert string parameter values
- * into primitive and common types.
- * <p>
- * 
- * <p>
- * This converter implements the {@link CompositeConverter} interface and as
- * such it is possible to extend its capabilities by injecting specific
- * {@link CompoundDecoder} and {@link CompoundEncoder} instances.
+ * String to object converter used basically to convert string parameter values into primitive and common types.
  * </p>
- * 
+ *
+ * <p>
+ * This converter implements the {@link CompositeConverter} interface and as such it is possible to extend its capabilities by injecting specific {@link CompoundDecoder} and {@link CompoundEncoder}
+ * instances.
+ * </p>
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ObjectConverter
  * @see CompositeConverter
  */

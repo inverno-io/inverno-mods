@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.boot.internal.converter;
+package io.inverno.mod.boot.converter;
 
-import java.lang.reflect.Type;
-
-import org.reactivestreams.Publisher;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Provide;
 import io.inverno.mod.base.converter.ConverterException;
 import io.inverno.mod.base.converter.MediaTypeConverter;
 import io.inverno.mod.base.converter.ReactiveConverter;
 import io.inverno.mod.base.resource.MediaTypes;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import java.lang.reflect.Type;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * ByteBuf application/x-ndjson media type converter as defined by <a href="http://ndjson.org/">Newline Delimited JSON</a>.
+ * ByteBuf {@code application/x-ndjson} media type converter as defined by <a href="http://ndjson.org/">Newline Delimited JSON</a>.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -40,11 +38,18 @@ import reactor.core.publisher.Mono;
  * 
  * @see MediaTypeConverter
  */
-@Bean( name = "ndjsonByteBufMediaTypeConverter")
+@Bean( name = "ndJsonByteBufMediaTypeConverter")
 public class NdJsonByteBufMediaTypeConverter extends AbstractJsonByteBufMediaTypeConverter implements @Provide MediaTypeConverter<ByteBuf> {
 
 	private static final ByteBuf NEW_LINE = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(new byte[] {'\n'}));
 	
+	/**
+	 * <p>
+	 * Creates an {@code application/x-ndjson} media type converter.
+	 * </p>
+	 * 
+	 * @param jsonByteBufConverter the underlying JSON ByteBuf converter
+	 */
 	public NdJsonByteBufMediaTypeConverter(ReactiveConverter<ByteBuf, Object> jsonByteBufConverter) {
 		super(jsonByteBufConverter);
 	}

@@ -13,18 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.boot.internal.converter;
-
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
-import org.reactivestreams.Publisher;
+package io.inverno.mod.boot.converter;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -37,23 +26,31 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.deser.DefaultDeserializationContext;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
-import io.netty.buffer.Unpooled;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Provide;
 import io.inverno.mod.base.converter.ConverterException;
 import io.inverno.mod.base.converter.JoinableEncoder;
 import io.inverno.mod.base.converter.ReactiveConverter;
 import io.inverno.mod.base.converter.SplittableDecoder;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.Unpooled;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+import org.reactivestreams.Publisher;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * JSON to Object converter backed by an {@link ObjectMapper}.
+ * JSON Bytebuf to Object converter backed by an {@link ObjectMapper}.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -72,6 +69,13 @@ public class JacksonByteBufConverter implements @Provide ReactiveConverter<ByteB
 	
 	private final ObjectMapper mapper;
 
+	/**
+	 * <p>
+	 * Creates a JSON ByteBuf converter.
+	 * </p>
+	 * 
+	 * @param mapper a Jackson object mapper
+	 */
 	public JacksonByteBufConverter(ObjectMapper mapper) {
 		this.mapper = mapper;
 	}

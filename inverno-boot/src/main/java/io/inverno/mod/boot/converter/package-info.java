@@ -18,4 +18,4 @@
  * Base object converter implementation and beans.
  * </p>
  */
-package io.inverno.mod.boot.internal.converter;
+package io.inverno.mod.boot.converter;

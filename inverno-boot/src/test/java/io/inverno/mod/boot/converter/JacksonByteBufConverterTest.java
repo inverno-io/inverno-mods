@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.boot.internal.converter;
+package io.inverno.mod.boot.converter;
 
+import io.inverno.mod.boot.converter.JacksonByteBufConverter;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;

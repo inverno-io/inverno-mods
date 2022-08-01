@@ -91,8 +91,9 @@ import io.inverno.mod.base.resource.ResourceService;
 @io.inverno.core.annotation.Module
 
 @io.inverno.core.annotation.Wire(beans="io.inverno.mod.boot:jsonByteBufConverter", into="io.inverno.mod.boot:jsonByteBufMediaTypeConverter:jsonByteBufConverter")
-@io.inverno.core.annotation.Wire(beans="io.inverno.mod.boot:jsonByteBufConverter", into="io.inverno.mod.boot:ndjsonByteBufMediaTypeConverter:jsonByteBufConverter")
+@io.inverno.core.annotation.Wire(beans="io.inverno.mod.boot:jsonByteBufConverter", into="io.inverno.mod.boot:ndJsonByteBufMediaTypeConverter:jsonByteBufConverter")
 @io.inverno.core.annotation.Wire(beans="io.inverno.mod.boot:jsonStringConverter", into="io.inverno.mod.boot:jsonStringMediaTypeConverter:jsonStringConverter")
+@io.inverno.core.annotation.Wire(beans="io.inverno.mod.boot:jsonStringConverter", into="io.inverno.mod.boot:ndJsonStringMediaTypeConverter:jsonStringConverter")
 module io.inverno.mod.boot {
 	requires transitive io.inverno.core;
 	requires static io.inverno.core.annotation; // for javadoc...
@@ -114,4 +115,5 @@ module io.inverno.mod.boot {
 	requires transitive reactor.core;
 	
 	exports io.inverno.mod.boot;
+	exports io.inverno.mod.boot.converter;
 }

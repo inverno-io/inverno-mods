@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.boot.internal.converter;
+package io.inverno.mod.boot.converter;
 
+import io.inverno.mod.boot.converter.NdJsonByteBufMediaTypeConverter;
+import io.inverno.mod.boot.converter.JacksonByteBufConverter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.boot.Person;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import java.nio.charset.Charset;
 import java.util.List;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.netty.buffer.ByteBuf;
-import io.inverno.mod.base.resource.MediaTypes;
-import io.inverno.mod.boot.Person;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -69,6 +69,20 @@ public class NdJsonMediaTypeConverterTest {
 		ByteBuf out = CONVERTER.encode(in);
 		
 		Assertions.assertEquals("{\"firstname\":\"John\",\"name\":\"Smith\",\"age\":42}\n", out.toString(Charset.defaultCharset()));
+	}
+	
+	@Test
+	public void testDecode() {
+		Publisher<ByteBuf> in = Flux.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("{\"firstname\":\"John\",\"name\":\"Smith\",\"age\":42}\n" + "{\"firstname\":\"Jane\",\"name\":\"Smith\",\"age\":40}\n" + "{\"firstname\":\"Junior\",\"name\":\"Smith\",\"age\":10}\n", Charset.defaultCharset())));
+		
+		Publisher<Person> out = CONVERTER.decodeMany(in, Person.class);
+		
+		List<Person> outList = Flux.from(out).collectList().block();
+		
+		Assertions.assertEquals(3, outList.size());
+		Assertions.assertEquals(new Person("John", "Smith", 42), outList.get(0));
+		Assertions.assertEquals(new Person("Jane", "Smith", 40), outList.get(1));
+		Assertions.assertEquals(new Person("Junior", "Smith", 10), outList.get(2));
 	}
 
 	/*@Test

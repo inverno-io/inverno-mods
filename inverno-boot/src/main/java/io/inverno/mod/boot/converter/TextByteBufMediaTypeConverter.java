@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.boot.internal.converter;
+package io.inverno.mod.boot.converter;
 
 import io.netty.buffer.ByteBuf;
 import io.inverno.core.annotation.Bean;
@@ -25,7 +25,7 @@ import io.inverno.mod.base.resource.MediaTypes;
 
 /**
  * <p>
- * ByteBuf text/plain media type converter.
+ * ByteBuf {@code text/plain} media type converter.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -36,6 +36,13 @@ import io.inverno.mod.base.resource.MediaTypes;
 @Bean( name = "textByteBufMediaTypeConverter" )
 public class TextByteBufMediaTypeConverter extends ByteBufConverter implements @Provide MediaTypeConverter<ByteBuf> {
 
+	/**
+	 * <p>
+	 * Creates a {@code text/plain} media type converter.
+	 * </p>
+	 * 
+	 * @param stringConverter the underlying String converter
+	 */
 	public TextByteBufMediaTypeConverter(ObjectConverter<String> stringConverter) {
 		super(stringConverter);
 	}

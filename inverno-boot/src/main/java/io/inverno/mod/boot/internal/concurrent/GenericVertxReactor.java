@@ -45,7 +45,7 @@ import io.vertx.core.impl.VertxImpl;
  */
 public class GenericVertxReactor implements VertxReactor, ReactorLifecycle {
 
-	private Logger logger = LogManager.getLogger(this.getClass());
+	private final Logger logger = LogManager.getLogger(this.getClass());
 	
 	private final BootConfiguration configuration;
 	private final TransportType transportType;
