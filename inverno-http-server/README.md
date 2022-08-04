@@ -299,11 +299,15 @@ We can also create a more *production-like* logging configuration for a standard
 
 ### Transport
 
-By default, the HTTP server uses the Java NIO transport, but it is possible to use native [epoll][epoll] transport on Linux or [kqueue][kqueue] transport on BSD-like systems for optimized performances. This can be done by adding the corresponding Netty dependency with the right classifier in the project descriptor:
+By default, the HTTP server uses the Java NIO transport, but it is possible to use native [epoll][epoll] transport on Linux or [kqueue][kqueue] transport on BSD-like systems for optimized performances. This can be done by adding the corresponding Netty dependencies with the right classifier in the project descriptor:
 
 ```xml
 <project>
     <dependencies>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-classes-epoll</artifactId>
+        </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-epoll</artifactId>
@@ -318,6 +322,10 @@ or
 ```xml
 <project>
     <dependencies>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport-classes-kqueue</artifactId>
+        </dependency>
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-kqueue</artifactId>
@@ -336,14 +344,15 @@ or
 > module io.inverno.example.app {
 >     ...
 >     requires io.netty.transport.unix.common;
->     requires io.netty.transport.epoll;
+>     requires io.netty.transport.classes.epoll,
+>     requires io.netty.transport.epoll.linux.x86_64;
 > }
 > ```
 >
 > This approach is fine as long as we are sure the application will run on Linux, but in order to create a properly portable application, we should prefer adding the modules explicitly when running the application:
 >
 > ```plaintext
-> $ java --add-modules io.netty.transport.unix.common,io.netty.transport.epoll ...
+> $ java --add-modules io.netty.transport.unix.common,io.netty.transport.classes.epoll,io.netty.transport.epoll.linux.x86_64 ...
 > ```
 > 
 > When building an application image, this can be specified in the Inverno Maven plugin configuration:
@@ -358,7 +367,7 @@ or
 >                 <executions>
 >                     <execution>
 >                         <configuration>
->                             <vmOptions>--add-modules io.netty.transport.unix.common,io.netty.transport.epoll</vmOptions>
+>                             <vmOptions>--add-modules io.netty.transport.unix.common,io.netty.transport.classes.epoll,io.netty.transport.epoll.linux.x86_64</vmOptions>
 >                         </configuration>
 >                     </execution>
 >                 </executions>
