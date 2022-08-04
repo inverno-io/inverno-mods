@@ -455,6 +455,7 @@ The `.cprops` file format has been introduced to facilitate the definition and r
 For instance:
 
 ```properties
+# This is a comment
 server.port=8080
 db.url=jdbc:oracle:thin:@localhost:1521:sid
 db.user=user

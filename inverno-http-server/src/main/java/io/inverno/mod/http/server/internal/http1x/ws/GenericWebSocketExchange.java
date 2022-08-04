@@ -250,7 +250,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 
 	@Override
 	protected void hookFinally(SignalType type) {
-		super.hookFinally(type); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/OverriddenMethodBody
+		super.hookFinally(type);
 	}
 
 	@Override

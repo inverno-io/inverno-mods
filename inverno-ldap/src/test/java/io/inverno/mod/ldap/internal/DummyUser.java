@@ -19,8 +19,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * @author jkuhn
- *
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public class DummyUser {
 

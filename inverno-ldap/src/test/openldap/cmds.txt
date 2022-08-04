@@ -11,3 +11,4 @@ ldapsearch -H ldap://127.0.0.1:1389 -b "dc=inverno,dc=io" "(&(objectClass=groupO
 ldapmodify -H ldap://127.0.0.1:1389 -D "cn=admin,dc=example,dc=org" -w adminpassword -f user01.ldap
 
 
+ldapsearch -H ldap://127.0.0.1:1389 -b "dc=inverno,dc=io" "(&(&(objectClass=inetOrgPerson)(uid=jsmith))(userPassword=password))" -x

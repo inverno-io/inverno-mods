@@ -9,6 +9,17 @@
 [lettuce]: https://lettuce.io
 [vertx-sql-client]: https://github.com/eclipse-vertx/vertx-sql-client
 [apache-license]: https://www.apache.org/licenses/LICENSE-2.0
+[ldap]: https://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol
+
+[rfc7515]: https://datatracker.ietf.org/doc/html/rfc7515
+[rfc7516]: https://datatracker.ietf.org/doc/html/rfc7516
+[rfc7517]: https://datatracker.ietf.org/doc/html/rfc7517
+[rfc7518]: https://datatracker.ietf.org/doc/html/rfc7518
+[rfc7519]: https://datatracker.ietf.org/doc/html/rfc7519
+[rfc7638]: https://datatracker.ietf.org/doc/html/rfc7638
+[rfc7797]: https://datatracker.ietf.org/doc/html/rfc7797
+[rfc8037]: https://datatracker.ietf.org/doc/html/rfc8037
+[rfc8812]: https://datatracker.ietf.org/doc/html/rfc8812
 
 # Inverno Modules
 
@@ -136,9 +147,13 @@ The Inverno Reactive Template module provides a reactive template engine includi
 - pipes for data transformation
 - functional syntax inspired from XSLT and Erlang on top of the Java language that perfectly embraces reactive principles
 
+### inverno-ldap
+
+The Inverno LDAP module specifies a reactive API for querying [LDAP][ldap] servers. It also includes a basic LDAP client implementation based on the JDK. It supports bind and search operations.
+
 ### inverno-redis
 
-The Inverno Redis client module specified a reactive API for executing Redis commands on a [Redis][redis] data store. It supports:
+The Inverno Redis client module specifies a reactive API for executing Redis commands on a [Redis][redis] data store. It supports:
 
 - batch queries
 - transaction
@@ -148,6 +163,45 @@ The Inverno Redis client module specified a reactive API for executing Redis com
 The Inverno Redis client Lettuce implementation module provides Redis implementation on top of [Lettuce][lettuce] async pool.
 
 It also exposes a Redis Client bean backed by a Lettuce client and created using the module's configuration. It can be used as is to send commands to a Redis data store.
+
+### inverno-security
+
+The Inverno Security module specifies an API for authenticating request to an application and controlling the access to protected services or resources. It provides:
+
+- User/password authentication against a user repository (in-memory, Redis...).
+- Token based authentication.
+- Strong user identification against a user repository (in-memory, Redis...).
+- Secured password encoding using message digest, Argon2, Password-Based Key Derivation Function (PBKDF2), BCrypt, SCrypt... 
+- Role-based access control.
+- Permission-based access control.
+
+### inverno-security-http
+
+The Inverno Security HTTP module is an extension to the Inverno Security module that provides a specific API and base implementations for securing applications accessed via HTTP. It provides supports for:
+
+- HTTP basic authentication scheme.
+- HTTP digest authentication scheme.
+- Form based authentication.
+- Cross-origin resource sharing support CORS.
+- Protection against Cross-site request forgery attack CSRF.
+
+### inverno-security-ldap
+
+The Inverno Security LDAP module is an extension to the Inverno Security module that provides support for authentication and identification against LDAP and Active Directory servers.
+
+### inverno-security-jose
+
+The Inverno Security JOSE module is a complete implementation of JSON Object Signing and Encryption RFCs. It provides:
+
+- a JWK service used to manipulate JSON Web Key as specified by [RFC 7517][rfc7517] and [RFC 7518][rfc7518].
+- a JWS service used to create and validate JWS tokens as specified by [RFC 7515][rfc7515].
+- a JWE service used to create and decrypt JWE tokens as specified by [RFC 7516][rfc7516].
+- a JWT service used to create, validate or decrypt JSON Web Tokens as JWS or JWE as specified by [RFC 7519][rfc7519].
+- JWS and JWE compact and JSON representations support.
+- JSON Web Key Thumbprint support as specified by [RFC 7638][rfc7638].
+- support for JWS Unencoded Payload Option as specified by [RFC 7797][rfc7797].
+- CFRG Elliptic Curve Diffie-Hellman (ECDH) and Signatures support as specified by [RFC 8037][rfc8037].
+- CBOR Object Signing and Encryption (COSE) as specified by [RFC 8812][rfc8812].
 
 ### inverno-sql
 

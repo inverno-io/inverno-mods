@@ -30,11 +30,10 @@ import reactor.core.publisher.Mono;
  * </p>
  *
  * <p>
- * Implementators must implement the {@link #createAuthentication(io.inverno.mod.security.authentication.Credentials) } method which creates the resulting authentication in case authentication was
- * successful.
+ * Implementators must implement the {@link #createAuthenticated(io.inverno.mod.security.authentication.Credentials) } and 
+ * {@link #createDenied(io.inverno.mod.security.authentication.PrincipalCredentials, io.inverno.mod.security.authentication.AuthenticationException) } methods which creates the resulting
+ * authentication in case of successful or failed authentication.
  * </p>
- * 
- * 
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5

@@ -36,8 +36,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- *
- * @author jkuhn
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 @EnabledIf( value = "isEnabled", disabledReason = "Failed to connect to test Redis database" )
 public class PoolRedisClientTest {

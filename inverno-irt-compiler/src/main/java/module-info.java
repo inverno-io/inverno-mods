@@ -15,8 +15,12 @@
  */
 
 /**
- * @author jkuhn
- *
+ * <p>
+ * The Inverno framework web compiler module provides an Inverno compiler plugin to compile Inverno reactive templates ({@code *.irt}).
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.2
  */
 module io.inverno.mod.irt.compiler {
 	requires transitive io.inverno.core.compiler;

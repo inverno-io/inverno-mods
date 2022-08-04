@@ -16,12 +16,13 @@
 package io.inverno.mod.http.server.ws;
 
 import io.inverno.mod.http.base.BadRequestException;
+import io.inverno.mod.http.base.HttpException;
 import java.util.Optional;
 import java.util.Set;
 
 /**
  * <p>
- * A HTTP exception that indicates that the WebSocket subprotocols provided in the upgrade request are not supported.
+ * An HTTP exception that indicates that the WebSocket subprotocols provided in the upgrade request are not supported.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

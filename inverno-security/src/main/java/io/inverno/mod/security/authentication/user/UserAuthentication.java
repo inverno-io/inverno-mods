@@ -92,6 +92,7 @@ public interface UserAuthentication<A extends Identity> extends PrincipalAuthent
 	 * Returns a new denied user authentication for the specified username and cause.
 	 * </p>
 	 * 
+	 * @param <A> the identity type
 	 * @param username a username
 	 * @param cause    the cause of the failed authentication
 	 * 

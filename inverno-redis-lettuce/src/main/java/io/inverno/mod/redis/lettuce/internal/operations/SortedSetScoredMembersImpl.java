@@ -49,6 +49,7 @@ public class SortedSetScoredMembersImpl<A> implements RedisSortedSetReactiveOper
 	
 	@Override
 	public RedisSortedSetReactiveOperations.SortedSetScoredMembers<A> entry(double score, A value) {
-		throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+		this.scoredValues.add(ScoredValue.just(score, value));
+		return this;
 	}
 }

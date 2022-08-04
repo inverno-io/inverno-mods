@@ -154,7 +154,7 @@ class WebSocketProtocolRoutingLink<A extends ExchangeContext, B extends WebExcha
 		this.handlers.entrySet().stream().forEach(e -> {
 			e.getValue().extractRoute(((WebSocketProtocolAwareRouteExtractor<A, B, C, ?>) extractor).subprotocol(e.getKey()));
 		});
-		super.extractRoute(extractor); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/OverriddenMethodBody
+		super.extractRoute(extractor);
 	}
 
 	@Override
