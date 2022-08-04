@@ -47,6 +47,11 @@ import org.junit.jupiter.api.Test;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public class WebSocketTest extends AbstractInvernoModTest {
+
+	static {
+		System.setProperty("org.apache.logging.log4j.simplelog.level", "INFO");
+		System.setProperty("org.apache.logging.log4j.simplelog.logFile", "system.out");
+	}
 	
 	private static final int TIMEOUT_SECONDS = 2;
 	
@@ -62,7 +67,7 @@ public class WebSocketTest extends AbstractInvernoModTest {
 	}
 	
 	@Test
-	@Disabled
+	//@Disabled
 	public void testWebSocketController() throws IOException, InvernoCompilationException, ClassNotFoundException, InterruptedException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException, ExecutionException, TimeoutException {
 		this.clearModuleTarget();
 		

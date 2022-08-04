@@ -48,6 +48,11 @@ import reactor.core.publisher.Mono;
  */
 public class ConfigurationTest extends AbstractInvernoModTest {
 	
+	static {
+		System.setProperty("org.apache.logging.log4j.simplelog.level", "INFO");
+		System.setProperty("org.apache.logging.log4j.simplelog.logFile", "system.out");
+	}
+	
 	private static final String CLASS_ConfigurationSource = "io.inverno.mod.configuration.ConfigurationSource";
 	private static final String CLASS_ConfigurationKey_Parameter = "io.inverno.mod.configuration.ConfigurationKey$Parameter";
 	private static final String CLASS_CommandLineConfigurationSource = "io.inverno.mod.configuration.source.CommandLineConfigurationSource";

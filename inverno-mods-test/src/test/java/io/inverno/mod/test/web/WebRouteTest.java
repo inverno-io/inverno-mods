@@ -49,6 +49,11 @@ import org.junit.jupiter.api.Test;
  */
 public class WebRouteTest extends AbstractInvernoModTest {
 	
+	static {
+		System.setProperty("org.apache.logging.log4j.simplelog.level", "INFO");
+		System.setProperty("org.apache.logging.log4j.simplelog.logFile", "system.out");
+	}
+	
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 	
 	private static final String MODULE_WEBROUTE = "io.inverno.mod.test.web.webroute";
