@@ -25,7 +25,7 @@ import java.util.Optional;
 
 /**
  * <p>
- * An asymetric JSON Web key that supports X.509 JOSE header parameters: x5u, x5c, x5t and x5t#S256.
+ * An asymmetric JSON Web key that supports X.509 JOSE header parameters: x5u, x5c, x5t and x5t#S256.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -34,7 +34,7 @@ import java.util.Optional;
  * @param <A> the public key type
  * @param <B> the private key type
  */
-public interface X509JWK<A extends PublicKey, B extends PrivateKey> extends AsymetricJWK<A, B> {
+public interface X509JWK<A extends PublicKey, B extends PrivateKey> extends AsymmetricJWK<A, B> {
 
 	/**
 	 * <p>

@@ -158,7 +158,7 @@ public interface JWK {
 	 * </p>
 	 * 
 	 * <p>
-	 * This should be used with care when the authenticity of an untrusted has been established through external means.
+	 * This should be used with care when the authenticity of an untrusted key has been established through external means.
 	 * </p>
 	 * 
 	 * @return this JWK

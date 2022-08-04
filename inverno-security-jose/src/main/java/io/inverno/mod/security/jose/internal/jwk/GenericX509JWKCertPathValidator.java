@@ -15,6 +15,12 @@
  */
 package io.inverno.mod.security.jose.internal.jwk;
 
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.annotation.Overridable;
+import io.inverno.core.annotation.Provide;
+import io.inverno.mod.security.jose.JOSEConfiguration;
+import io.inverno.mod.security.jose.jwk.JWKResolveException;
+import io.inverno.mod.security.jose.jwk.X509JWKCertPathValidator;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertPath;
@@ -26,13 +32,6 @@ import java.security.cert.PKIXParameters;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-
-import io.inverno.core.annotation.Bean;
-import io.inverno.core.annotation.Overridable;
-import io.inverno.core.annotation.Provide;
-import io.inverno.mod.security.jose.JOSEConfiguration;
-import io.inverno.mod.security.jose.jwk.JWKResolveException;
-import io.inverno.mod.security.jose.jwk.X509JWKCertPathValidator;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -50,10 +49,6 @@ import reactor.core.scheduler.Schedulers;
  * It requires an executor service to be able to execute certificate path validation, which might be blocking, asynchronously.
  * </p>
  * 
- * <p>
- * Certificates path validation can be disabled by configuration (see {@link JOSEConfiguration#validate_certificate()}.
- * </p>
- *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
@@ -61,7 +56,6 @@ import reactor.core.scheduler.Schedulers;
 @Bean( name = "jwkX509CertPathValidator", visibility = Bean.Visibility.PRIVATE )
 public class GenericX509JWKCertPathValidator implements @Provide X509JWKCertPathValidator {
 
-	private final JOSEConfiguration configuration;
 	private final PKIXParameters pkixParameters;
 	private final Scheduler scheduler;
 
@@ -70,22 +64,16 @@ public class GenericX509JWKCertPathValidator implements @Provide X509JWKCertPath
 	 * Creates an X.509 certificates path validator.
 	 * </p>
 	 * 
-	 * @param configuration the JOSE module configuration
 	 * @param pkixParameters PKIX parameters
 	 * @param executor an executor service
 	 */
-	public GenericX509JWKCertPathValidator(JOSEConfiguration configuration, PKIXParameters pkixParameters, ExecutorService executor) {
-		this.configuration = configuration;
+	public GenericX509JWKCertPathValidator(PKIXParameters pkixParameters, ExecutorService executor) {
 		this.pkixParameters = pkixParameters;
 		this.scheduler = Schedulers.fromExecutor(executor);
-		
 	}
 	
 	@Override
 	public Mono<X509Certificate> validate(List<X509Certificate> certificates) throws JWKResolveException {
-		if(!this.configuration.validate_certificate()) {
-			return Mono.just(certificates.get(0));
-		}
 		return Mono.fromSupplier(() -> {
 			try {
 				CertificateFactory cf =  CertificateFactory.getInstance("X.509");

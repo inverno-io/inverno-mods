@@ -34,6 +34,7 @@ import io.inverno.mod.security.jose.jwa.OKPCurve;
 import io.inverno.mod.security.jose.jwa.RSAAlgorithm;
 import io.inverno.mod.security.jose.jwk.InMemoryJWKStore;
 import io.inverno.mod.security.jose.jwk.JWK;
+import io.inverno.mod.security.jose.jwk.JWKPKIXParameters;
 import io.inverno.mod.security.jose.jwk.JWKProcessingException;
 import io.inverno.mod.security.jose.jwk.JWKReadException;
 import io.inverno.mod.security.jose.jwk.JWKResolveException;
@@ -263,35 +264,35 @@ public class GenericJWKServiceTest {
 		Assertions.assertEquals(2, jwks.size());
 		
 		Assertions.assertInstanceOf(OCTJWK.class, jwks.get(0));
-		OCTJWK symetricJWK1 = (OCTJWK)jwks.get(0);
-		Assertions.assertEquals(OCTJWK.KEY_TYPE, symetricJWK1.getKeyType());
-		Assertions.assertEquals(OCTAlgorithm.A128KW.getAlgorithm(), symetricJWK1.getAlgorithm());
-		Assertions.assertEquals("GawgguFyGrWKav7AX4VKUg", symetricJWK1.getKeyValue());
-		Assertions.assertNull(symetricJWK1.getKeyId());
-		Assertions.assertNull(symetricJWK1.getKeyOperations());
-		Assertions.assertNull(symetricJWK1.getPublicKeyUse());
+		OCTJWK symmetricJWK1 = (OCTJWK)jwks.get(0);
+		Assertions.assertEquals(OCTJWK.KEY_TYPE, symmetricJWK1.getKeyType());
+		Assertions.assertEquals(OCTAlgorithm.A128KW.getAlgorithm(), symmetricJWK1.getAlgorithm());
+		Assertions.assertEquals("GawgguFyGrWKav7AX4VKUg", symmetricJWK1.getKeyValue());
+		Assertions.assertNull(symmetricJWK1.getKeyId());
+		Assertions.assertNull(symmetricJWK1.getKeyOperations());
+		Assertions.assertNull(symmetricJWK1.getPublicKeyUse());
 		
-		Assertions.assertThrows(JWAProcessingException.class, () -> symetricJWK1.signer(OCTAlgorithm.A128KW.getAlgorithm()), "Not a signature algorithm A128KW");
-		Assertions.assertThrows(JWAProcessingException.class, () -> symetricJWK1.signer(OCTAlgorithm.A128KW.getAlgorithm()), "Not a signature algorithm A128KW");
+		Assertions.assertThrows(JWAProcessingException.class, () -> symmetricJWK1.signer(OCTAlgorithm.A128KW.getAlgorithm()), "Not a signature algorithm A128KW");
+		Assertions.assertThrows(JWAProcessingException.class, () -> symmetricJWK1.signer(OCTAlgorithm.A128KW.getAlgorithm()), "Not a signature algorithm A128KW");
 		
-		Assertions.assertThrows(IllegalArgumentException.class, () -> symetricJWK1.signer(RSAAlgorithm.RS512.getAlgorithm()), "Unknown OCT algorithm RS512");
-		Assertions.assertThrows(IllegalArgumentException.class, () -> symetricJWK1.signer(RSAAlgorithm.RS512.getAlgorithm()), "Unknown OCT algorithm RS512");
+		Assertions.assertThrows(IllegalArgumentException.class, () -> symmetricJWK1.signer(RSAAlgorithm.RS512.getAlgorithm()), "Unknown OCT algorithm RS512");
+		Assertions.assertThrows(IllegalArgumentException.class, () -> symmetricJWK1.signer(RSAAlgorithm.RS512.getAlgorithm()), "Unknown OCT algorithm RS512");
 		// TODO encrypter/decrypter...
 		
 		Assertions.assertInstanceOf(OCTJWK.class, jwks.get(0));
-		OCTJWK symetricJWK2 = (OCTJWK)jwks.get(1);
-		Assertions.assertEquals(OCTJWK.KEY_TYPE, symetricJWK2.getKeyType());
-		Assertions.assertEquals("HMAC key used in JWS spec Appendix A.1 example", symetricJWK2.getKeyId());
-		Assertions.assertEquals("AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow", symetricJWK2.getKeyValue());
-		Assertions.assertNull(symetricJWK2.getAlgorithm());
-		Assertions.assertNull(symetricJWK2.getKeyOperations());
-		Assertions.assertNull(symetricJWK2.getPublicKeyUse());
+		OCTJWK symmetricJWK2 = (OCTJWK)jwks.get(1);
+		Assertions.assertEquals(OCTJWK.KEY_TYPE, symmetricJWK2.getKeyType());
+		Assertions.assertEquals("HMAC key used in JWS spec Appendix A.1 example", symmetricJWK2.getKeyId());
+		Assertions.assertEquals("AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow", symmetricJWK2.getKeyValue());
+		Assertions.assertNull(symmetricJWK2.getAlgorithm());
+		Assertions.assertNull(symmetricJWK2.getKeyOperations());
+		Assertions.assertNull(symmetricJWK2.getPublicKeyUse());
 		
-		Assertions.assertNotNull(symetricJWK2.signer(OCTAlgorithm.HS256.getAlgorithm()));
-		Assertions.assertNotNull(symetricJWK2.signer(OCTAlgorithm.HS256.getAlgorithm()));
+		Assertions.assertNotNull(symmetricJWK2.signer(OCTAlgorithm.HS256.getAlgorithm()));
+		Assertions.assertNotNull(symmetricJWK2.signer(OCTAlgorithm.HS256.getAlgorithm()));
 		
-		Assertions.assertNotNull(symetricJWK2.signer(OCTAlgorithm.HS512.getAlgorithm()));
-		Assertions.assertNotNull(symetricJWK2.signer(OCTAlgorithm.HS512.getAlgorithm()));
+		Assertions.assertNotNull(symmetricJWK2.signer(OCTAlgorithm.HS512.getAlgorithm()));
+		Assertions.assertNotNull(symmetricJWK2.signer(OCTAlgorithm.HS512.getAlgorithm()));
 	}
 	
 	@Test
@@ -606,18 +607,19 @@ public class GenericJWKServiceTest {
 		if(pkixParameters == null) {
 			pkixParameters = new JWKPKIXParameters().get();
 		}
-		GenericX509JWKCertPathValidator certPathValidator = new GenericX509JWKCertPathValidator(configuration, pkixParameters, WORKER_POOL);
+		GenericX509JWKCertPathValidator certPathValidator = new GenericX509JWKCertPathValidator(pkixParameters, WORKER_POOL);
 		GenericJWKKeyResolver keyResolver = new GenericJWKKeyResolver(configuration);
-		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(configuration, certPathValidator, mapper);
+		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(mapper);
+		SwitchableJWKURLResolver switchableUrlResolver = new SwitchableJWKURLResolver(configuration, urlResolver);
 		
-		GenericECJWKFactory ecJWKFactory = new GenericECJWKFactory(configuration, jwkStore, keyResolver, mapper, urlResolver, certPathValidator);
-		GenericRSAJWKFactory rsaJWKFactory = new GenericRSAJWKFactory(configuration, jwkStore, keyResolver, mapper, urlResolver, certPathValidator);
-		GenericOCTJWKFactory symetricJWKFactory = new GenericOCTJWKFactory(configuration, jwkStore, keyResolver, mapper);
-		GenericEdECJWKFactory edecJWKFactory = new GenericEdECJWKFactory(configuration, jwkStore, keyResolver, mapper, urlResolver, certPathValidator);
-		GenericXECJWKFactory xecJWKFactory = new GenericXECJWKFactory(configuration, jwkStore, keyResolver, mapper, urlResolver, certPathValidator);
+		GenericECJWKFactory ecJWKFactory = new GenericECJWKFactory(configuration, jwkStore, keyResolver, mapper, switchableUrlResolver, certPathValidator);
+		GenericRSAJWKFactory rsaJWKFactory = new GenericRSAJWKFactory(configuration, jwkStore, keyResolver, mapper, switchableUrlResolver, certPathValidator);
+		GenericOCTJWKFactory symmetricJWKFactory = new GenericOCTJWKFactory(configuration, jwkStore, keyResolver, mapper);
+		GenericEdECJWKFactory edecJWKFactory = new GenericEdECJWKFactory(configuration, jwkStore, keyResolver, mapper, switchableUrlResolver, certPathValidator);
+		GenericXECJWKFactory xecJWKFactory = new GenericXECJWKFactory(configuration, jwkStore, keyResolver, mapper, switchableUrlResolver, certPathValidator);
 		GenericPBES2JWKFactory pbes2JWKFactory = new GenericPBES2JWKFactory(configuration, jwkStore, keyResolver, mapper);
 		
-		return new GenericJWKService(ecJWKFactory , rsaJWKFactory, symetricJWKFactory, edecJWKFactory, xecJWKFactory, pbes2JWKFactory, jwkStore, urlResolver, mapper);
+		return new GenericJWKService(configuration, ecJWKFactory, rsaJWKFactory, symmetricJWKFactory, edecJWKFactory, xecJWKFactory, pbes2JWKFactory, jwkStore, urlResolver, switchableUrlResolver, mapper);
 	}
 	
 	private static PKIXParameters pkixParameters(String cert, Date date) throws CertificateException, InvalidAlgorithmParameterException {

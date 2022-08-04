@@ -28,7 +28,7 @@ import java.util.List;
  * </p>
  * 
  * <p>
- * An RSA JWK is asymetric. The public key is composed of the modulus and the public exponent. The private key is defined by the private exponent. Other parameters can be present when the key is a
+ * An RSA JWK is asymmetric. The public key is composed of the modulus and the public exponent. The private key is defined by the private exponent. Other parameters can be present when the key is a
  * multi prime key.
  * </p>
  *

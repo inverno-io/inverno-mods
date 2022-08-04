@@ -24,7 +24,7 @@ import java.security.interfaces.XECPublicKey;
  * </p>
  * 
  * <p>
- * An Extended Elliptic curve JWK is asymetric.
+ * An Extended Elliptic curve JWK is asymmetric.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

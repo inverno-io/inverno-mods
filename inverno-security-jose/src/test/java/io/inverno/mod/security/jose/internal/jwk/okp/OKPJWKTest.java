@@ -294,7 +294,7 @@ public class OKPJWKTest {
 		
 		JWKStore jwkStore = new NoOpJWKStore();
 		GenericJWKKeyResolver keyResolver = new GenericJWKKeyResolver(configuration);
-		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(configuration, null, MAPPER);
+		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(MAPPER);
 		urlResolver.setResourceService(resourceService);
 		
 		return new GenericEdECJWKBuilder(configuration, jwkStore, keyResolver, urlResolver, null);
@@ -304,13 +304,13 @@ public class OKPJWKTest {
 		JOSEConfiguration configuration = Mockito.mock(JOSEConfiguration.class);
 		Mockito.when(configuration.resolve_x5u()).thenReturn(true);
 		PKIXParameters pkixParameters = pkixParameters(Path.of(x5u));
-		GenericX509JWKCertPathValidator certPathValidator = new GenericX509JWKCertPathValidator(configuration, pkixParameters, WORKER_POOL);
+		GenericX509JWKCertPathValidator certPathValidator = new GenericX509JWKCertPathValidator(pkixParameters, WORKER_POOL);
 		ResourceService resourceService = Mockito.mock(ResourceService.class);
 		Mockito.when(resourceService.getResource(x5u)).thenReturn(new FileResource(x5u));
 		
 		JWKStore jwkStore = new NoOpJWKStore();
 		GenericJWKKeyResolver keyResolver = new GenericJWKKeyResolver(configuration);
-		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(configuration, certPathValidator, MAPPER);
+		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(MAPPER);
 		urlResolver.setResourceService(resourceService);
 		
 		return new GenericEdECJWKBuilder(configuration, jwkStore, keyResolver, urlResolver, certPathValidator);
@@ -322,7 +322,7 @@ public class OKPJWKTest {
 		
 		JWKStore jwkStore = new NoOpJWKStore();
 		GenericJWKKeyResolver keyResolver = new GenericJWKKeyResolver(configuration);
-		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(configuration, null, MAPPER);
+		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(MAPPER);
 		urlResolver.setResourceService(resourceService);
 		
 		return new GenericXECJWKBuilder(configuration, jwkStore, keyResolver, urlResolver, null);
@@ -332,13 +332,13 @@ public class OKPJWKTest {
 		JOSEConfiguration configuration = Mockito.mock(JOSEConfiguration.class);
 		Mockito.when(configuration.resolve_x5u()).thenReturn(true);
 		PKIXParameters pkixParameters = pkixParameters(Path.of(x5u));
-		GenericX509JWKCertPathValidator certPathValidator = new GenericX509JWKCertPathValidator(configuration, pkixParameters, WORKER_POOL);
+		GenericX509JWKCertPathValidator certPathValidator = new GenericX509JWKCertPathValidator(pkixParameters, WORKER_POOL);
 		ResourceService resourceService = Mockito.mock(ResourceService.class);
 		Mockito.when(resourceService.getResource(x5u)).thenReturn(new FileResource(x5u));
 		
 		JWKStore jwkStore = new NoOpJWKStore();
 		GenericJWKKeyResolver keyResolver = new GenericJWKKeyResolver(configuration);
-		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(configuration, certPathValidator, MAPPER);
+		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(MAPPER);
 		urlResolver.setResourceService(resourceService);
 		
 		return new GenericXECJWKBuilder(configuration, jwkStore, keyResolver, urlResolver, certPathValidator);

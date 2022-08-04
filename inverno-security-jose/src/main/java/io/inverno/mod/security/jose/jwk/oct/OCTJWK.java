@@ -16,7 +16,7 @@
 package io.inverno.mod.security.jose.jwk.oct;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.inverno.mod.security.jose.jwk.SymetricJWK;
+import io.inverno.mod.security.jose.jwk.SymmetricJWK;
 
 /**
  * <p>
@@ -24,13 +24,13 @@ import io.inverno.mod.security.jose.jwk.SymetricJWK;
  * </p>
  * 
  * <p>
- * An octet JWK is symetric, the secret key id defined by the key value.
+ * An octet JWK is symmetric, the secret key id defined by the key value.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public interface OCTJWK extends SymetricJWK {
+public interface OCTJWK extends SymmetricJWK {
 	
 	/**
 	 * Octet sequence key type (used to represent symmetric keys) as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7518#section-6.1">RFC7518 Section 6.1</a>.

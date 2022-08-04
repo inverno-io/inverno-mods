@@ -18,6 +18,7 @@ package io.inverno.mod.security.jose.internal.jwk.ec;
 import io.inverno.mod.security.jose.JOSEConfiguration;
 import io.inverno.mod.security.jose.internal.JOSEUtils;
 import io.inverno.mod.security.jose.internal.jwk.AbstractX509JWKBuilder;
+import io.inverno.mod.security.jose.internal.jwk.SwitchableJWKURLResolver;
 import io.inverno.mod.security.jose.jwa.ECAlgorithm;
 import io.inverno.mod.security.jose.jwa.ECCurve;
 import io.inverno.mod.security.jose.jwk.JWK;
@@ -251,7 +252,7 @@ public class GenericECJWKBuilder extends AbstractX509JWKBuilder<ECPublicKey, ECP
 				throw new JWKBuildException("Curve is null");
 			}
 			
-			if(this.ecAlg != null && !this.ecAlg.getCurve().equals(this.curve)) {
+			if(this.ecAlg != null && this.ecAlg.getCurve() != null && !this.ecAlg.getCurve().equals(this.curve)) {
 				throw new JWKBuildException("Algorithm does not match curve");
 			}
 

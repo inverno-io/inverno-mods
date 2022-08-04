@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.security.jose.JOSEConfiguration;
 import io.inverno.mod.security.jose.internal.jwk.AbstractX509JWKFactory;
+import io.inverno.mod.security.jose.internal.jwk.SwitchableJWKURLResolver;
 import io.inverno.mod.security.jose.jwa.ECAlgorithm;
 import io.inverno.mod.security.jose.jwk.JWKGenerateException;
 import io.inverno.mod.security.jose.jwk.JWKKeyResolver;
@@ -75,7 +76,7 @@ public class GenericECJWKFactory extends AbstractX509JWKFactory<ECPublicKey, ECP
 	 * @param urlResolver       a JWK URL resolver
 	 * @param certPathValidator an X.509 certificate path validator
 	 */
-	public GenericECJWKFactory(JOSEConfiguration configuration, JWKStore jwkStore, JWKKeyResolver keyResolver, ObjectMapper mapper, JWKURLResolver urlResolver, X509JWKCertPathValidator certPathValidator) {
+	public GenericECJWKFactory(JOSEConfiguration configuration, JWKStore jwkStore, JWKKeyResolver keyResolver, ObjectMapper mapper, SwitchableJWKURLResolver urlResolver, X509JWKCertPathValidator certPathValidator) {
 		super(configuration, jwkStore, keyResolver, mapper, urlResolver, certPathValidator);
 	}
 

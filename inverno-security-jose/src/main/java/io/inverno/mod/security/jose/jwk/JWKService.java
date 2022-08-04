@@ -216,7 +216,7 @@ public interface JWKService {
 	 *
 	 * <p>
 	 * This is a convenience method that can be used to generate a key using a custom JWK factory, you should prefer using a {@link JWKGenerator} obtained from a specific {@link JWKFactory} to avoid
-	 * unncessary processing.
+	 * unnecessary processing.
 	 * </p>
 	 *
 	 * @param alg        a JWA algorithm

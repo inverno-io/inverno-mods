@@ -24,7 +24,7 @@ import java.security.interfaces.EdECPublicKey;
  * </p>
  *
  * <p>
- * An Edward-curve JWK is asymetric.
+ * An Edward-curve JWK is asymmetric.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

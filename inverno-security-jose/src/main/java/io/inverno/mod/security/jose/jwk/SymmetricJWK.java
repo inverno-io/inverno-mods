@@ -20,13 +20,13 @@ import javax.crypto.SecretKey;
 
 /**
  * <p>
- * A symmetric JSON Web Key based on a symetric key.
+ * A symmetric JSON Web Key based on a symmetric key.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public interface SymetricJWK extends JWK {
+public interface SymmetricJWK extends JWK {
 	
 	/**
 	 * <p>
@@ -40,8 +40,8 @@ public interface SymetricJWK extends JWK {
 	Optional<SecretKey> toSecretKey() throws JWKProcessingException;
 	
 	@Override
-	SymetricJWK toPublicJWK();
+	SymmetricJWK toPublicJWK();
 	
 	@Override
-	SymetricJWK trust();
+	SymmetricJWK trust();
 }

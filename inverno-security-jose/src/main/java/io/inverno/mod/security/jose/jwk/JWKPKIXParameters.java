@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.security.jose.internal.jwk;
+package io.inverno.mod.security.jose.jwk;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.BeanSocket;
@@ -50,7 +50,7 @@ import javax.net.ssl.X509TrustManager;
  * </p>
  * 
  * <p>
- * Parameters are built from a trust store containing the trusted root certificates. By default, the Java trust store is used unless a custom trust store is specified.
+ * Parameters are built from a trust store containing the trusted root certificates. The default Java trust store is used by default.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -67,7 +67,7 @@ public class JWKPKIXParameters implements Supplier<PKIXParameters> {
 
 	/**
 	 * <p>
-	 * Creates JWK PKIX parameters wrapper with the Java truststore.
+	 * Creates JWK PKIX parameters wrapper using the default Java trust store.
 	 * </p>
 	 */
 	@BeanSocket

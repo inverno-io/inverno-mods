@@ -21,7 +21,7 @@ import java.util.Optional;
 
 /**
  * <p>
- * An asymetric JSON Web Key based on asymetric public and private keys.
+ * An asymmetric JSON Web Key based on asymmetric public and private keys.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -30,7 +30,7 @@ import java.util.Optional;
  * @param <A> the public key type
  * @param <B> the private key type
  */
-public interface AsymetricJWK<A extends PublicKey, B extends PrivateKey> extends JWK {
+public interface AsymmetricJWK<A extends PublicKey, B extends PrivateKey> extends JWK {
 	
 	/**
 	 * <p>
@@ -55,8 +55,8 @@ public interface AsymetricJWK<A extends PublicKey, B extends PrivateKey> extends
 	Optional<B> toPrivateKey() throws JWKProcessingException;
 	
 	@Override
-	AsymetricJWK<A, B> toPublicJWK();
+	AsymmetricJWK<A, B> toPublicJWK();
 	
 	@Override
-	AsymetricJWK<A, B> trust();
+	AsymmetricJWK<A, B> trust();
 }

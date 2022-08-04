@@ -26,7 +26,7 @@ import java.security.PublicKey;
  * </p>
  *
  * <p>
- * An Octet Key Pair JWK is asymetric.
+ * An Octet Key Pair JWK is asymmetric.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

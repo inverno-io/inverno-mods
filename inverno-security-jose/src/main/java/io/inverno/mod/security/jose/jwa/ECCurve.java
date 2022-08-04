@@ -34,7 +34,7 @@ import java.security.spec.InvalidParameterSpecException;
  * <ul>
  * <li>P-256</li>
  * <li>P-384</li>
- * <li>P-512</li>
+ * <li>P-521</li>
  * <li>secp256k1 (deprecated)</li>
  * </ul>
  * 

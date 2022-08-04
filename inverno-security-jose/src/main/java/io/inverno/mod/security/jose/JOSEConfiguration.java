@@ -17,6 +17,7 @@ package io.inverno.mod.security.jose;
 
 import io.inverno.mod.configuration.Configuration;
 import java.net.URI;
+import java.util.Set;
 
 /**
  * <p>
@@ -75,6 +76,21 @@ public interface JOSEConfiguration {
 	 */
 	default boolean resolve_jku() {
 		return false;
+	}
+	
+	/**
+	 * <p>
+	 * The list of trusted JWK URLs for which keys should be trusted.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to the empty list.
+	 * </p>
+	 * 
+	 * @return the list of trusted JWK URLs
+	 */
+	default Set<URI> trusted_jku() {
+		return Set.of();
 	}
 	
 	/**

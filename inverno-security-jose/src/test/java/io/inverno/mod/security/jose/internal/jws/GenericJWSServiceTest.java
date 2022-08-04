@@ -35,8 +35,9 @@ import io.inverno.mod.security.jose.internal.jwk.GenericJWKKeyResolver;
 import io.inverno.mod.security.jose.internal.jwk.GenericJWKService;
 import io.inverno.mod.security.jose.internal.jwk.GenericJWKURLResolver;
 import io.inverno.mod.security.jose.internal.jwk.GenericX509JWKCertPathValidator;
-import io.inverno.mod.security.jose.internal.jwk.JWKPKIXParameters;
+import io.inverno.mod.security.jose.jwk.JWKPKIXParameters;
 import io.inverno.mod.security.jose.internal.jwk.NoOpJWKStore;
+import io.inverno.mod.security.jose.internal.jwk.SwitchableJWKURLResolver;
 import io.inverno.mod.security.jose.internal.jwk.ec.GenericECJWK;
 import io.inverno.mod.security.jose.internal.jwk.ec.GenericECJWKBuilder;
 import io.inverno.mod.security.jose.internal.jwk.ec.GenericECJWKFactory;
@@ -782,7 +783,7 @@ public class GenericJWSServiceTest {
 		
 		JWKStore jwkStore = new NoOpJWKStore();
 		GenericJWKKeyResolver keyResolver = new GenericJWKKeyResolver(configuration);
-		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(configuration, null, mapper);
+		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(mapper);
 		urlResolver.setResourceService(resourceService);
 		
 		return new GenericECJWKBuilder(configuration, jwkStore, keyResolver, urlResolver, null);
@@ -794,7 +795,7 @@ public class GenericJWSServiceTest {
 		
 		JWKStore jwkStore = new NoOpJWKStore();
 		GenericJWKKeyResolver keyResolver = new GenericJWKKeyResolver(configuration);
-		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(configuration, null, mapper);
+		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(mapper);
 		urlResolver.setResourceService(resourceService);
 		
 		return new GenericEdECJWKBuilder(configuration, jwkStore, keyResolver, urlResolver, null);
@@ -815,7 +816,7 @@ public class GenericJWSServiceTest {
 		
 		JWKStore jwkStore = new NoOpJWKStore();
 		GenericJWKKeyResolver keyResolver = new GenericJWKKeyResolver(configuration);
-		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(configuration, null, mapper);
+		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(mapper);
 		urlResolver.setResourceService(resourceService);
 		
 		return new GenericRSAJWKBuilder(configuration, jwkStore, keyResolver, urlResolver, null);
@@ -873,18 +874,19 @@ public class GenericJWSServiceTest {
 		if(pkixParameters == null) {
 			pkixParameters = new JWKPKIXParameters().get();
 		}
-		GenericX509JWKCertPathValidator certPathValidator = new GenericX509JWKCertPathValidator(configuration, pkixParameters, WORKER_POOL);
+		GenericX509JWKCertPathValidator certPathValidator = new GenericX509JWKCertPathValidator(pkixParameters, WORKER_POOL);
 		GenericJWKKeyResolver keyResolver = new GenericJWKKeyResolver(configuration);
-		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(configuration, certPathValidator, mapper);
+		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(mapper);
+		SwitchableJWKURLResolver switchableUrlResolver = new SwitchableJWKURLResolver(configuration, urlResolver);
 		
-		GenericECJWKFactory ecJWKFactory = new GenericECJWKFactory(configuration, jwkStore, keyResolver, mapper, urlResolver, certPathValidator);
-		GenericRSAJWKFactory rsaJWKFactory = new GenericRSAJWKFactory(configuration, jwkStore, keyResolver, mapper, urlResolver, certPathValidator);
-		GenericOCTJWKFactory symetricJWKFactory = new GenericOCTJWKFactory(configuration, jwkStore, keyResolver, mapper);
-		GenericEdECJWKFactory edecJWKFactory = new GenericEdECJWKFactory(configuration, jwkStore, keyResolver, mapper, urlResolver, certPathValidator);
-		GenericXECJWKFactory xecJWKFactory = new GenericXECJWKFactory(configuration, jwkStore, keyResolver, mapper, urlResolver, certPathValidator);
+		GenericECJWKFactory ecJWKFactory = new GenericECJWKFactory(configuration, jwkStore, keyResolver, mapper, switchableUrlResolver, certPathValidator);
+		GenericRSAJWKFactory rsaJWKFactory = new GenericRSAJWKFactory(configuration, jwkStore, keyResolver, mapper, switchableUrlResolver, certPathValidator);
+		GenericOCTJWKFactory symmetricJWKFactory = new GenericOCTJWKFactory(configuration, jwkStore, keyResolver, mapper);
+		GenericEdECJWKFactory edecJWKFactory = new GenericEdECJWKFactory(configuration, jwkStore, keyResolver, mapper, switchableUrlResolver, certPathValidator);
+		GenericXECJWKFactory xecJWKFactory = new GenericXECJWKFactory(configuration, jwkStore, keyResolver, mapper, switchableUrlResolver, certPathValidator);
 		GenericPBES2JWKFactory pbes2JWKFactory = new GenericPBES2JWKFactory(configuration, jwkStore, keyResolver, mapper);
 		
-		return new GenericJWKService(ecJWKFactory , rsaJWKFactory, symetricJWKFactory, edecJWKFactory, xecJWKFactory, pbes2JWKFactory, jwkStore, urlResolver, mapper);
+		return new GenericJWKService(configuration, ecJWKFactory , rsaJWKFactory, symmetricJWKFactory, edecJWKFactory, xecJWKFactory, pbes2JWKFactory, jwkStore, urlResolver, switchableUrlResolver, mapper);
 	}
 	
 	private static PKIXParameters pkixParameters(String cert, Date date) throws CertificateException, InvalidAlgorithmParameterException {

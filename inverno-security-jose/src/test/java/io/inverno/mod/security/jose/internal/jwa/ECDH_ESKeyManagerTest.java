@@ -125,7 +125,7 @@ public class ECDH_ESKeyManagerTest {
 		
 		JWKStore jwkStore = new NoOpJWKStore();
 		GenericJWKKeyResolver keyResolver = new GenericJWKKeyResolver(configuration);
-		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(configuration, null, MAPPER);
+		GenericJWKURLResolver urlResolver = new GenericJWKURLResolver(MAPPER);
 		urlResolver.setResourceService(resourceService);
 		
 		return new GenericECJWKBuilder(configuration, jwkStore, keyResolver, urlResolver, null);

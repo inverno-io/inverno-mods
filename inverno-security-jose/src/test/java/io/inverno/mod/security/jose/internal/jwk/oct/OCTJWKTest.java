@@ -63,7 +63,7 @@ public class OCTJWKTest {
 	}
 	
 	@Test
-	public void testSymetricGenerator() throws IOException {
+	public void testSymmetricGenerator() throws IOException {
 		OCTJWK jwk = new GenericOCTJWKGenerator().keyId("myNewKey").generate().block();
 //		System.out.println(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(jwk));
 		

@@ -21,7 +21,7 @@ import io.inverno.mod.security.jose.jwa.JWAKeyManagerException;
 import io.inverno.mod.security.jose.jwa.JWAProcessingException;
 import io.inverno.mod.security.jose.jwa.OCTAlgorithm;
 import io.inverno.mod.security.jose.jwa.WrappingJWAKeyManager;
-import io.inverno.mod.security.jose.jwk.AsymetricJWK;
+import io.inverno.mod.security.jose.jwk.AsymmetricJWK;
 import io.inverno.mod.security.jose.jwk.oct.OCTJWK;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -50,10 +50,10 @@ import java.util.Set;
  * 
  * @param <A> the public key type
  * @param <B> the private key type
- * @param <C> the asymetric JWK type
+ * @param <C> the asymmetric JWK type
  * @param <D> the JWA algorithm type
  */
-public abstract class AbstractECDH_ES_AESKWKeyManager<A extends PublicKey, B extends PrivateKey, C extends AsymetricJWK<A, B>, D extends JWAAlgorithm<C>> extends AbstractWrappingJWAKeyManager<C, D> {
+public abstract class AbstractECDH_ES_AESKWKeyManager<A extends PublicKey, B extends PrivateKey, C extends AsymmetricJWK<A, B>, D extends JWAAlgorithm<C>> extends AbstractWrappingJWAKeyManager<C, D> {
 
 	/**
 	 * The set of parameters processed by the key manager.

@@ -16,7 +16,7 @@
 package io.inverno.mod.security.jose.jwk.pbes2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.inverno.mod.security.jose.jwk.SymetricJWK;
+import io.inverno.mod.security.jose.jwk.SymmetricJWK;
 
 /**
  * <p>
@@ -24,13 +24,13 @@ import io.inverno.mod.security.jose.jwk.SymetricJWK;
  * </p>
  * 
  * <p>
- * A Password-based JWK is symetric, the secret key id defined by the password value.
+ * A Password-based JWK is symmetric, the secret key id defined by the password value.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public interface PBES2JWK extends SymetricJWK {
+public interface PBES2JWK extends SymmetricJWK {
 
 	/**
 	 * Password-based key type is the same as Octet sequence key type as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7518#section-6.1">RFC7518 Section 6.1</a>.

@@ -161,6 +161,7 @@ import io.inverno.mod.security.jose.jwt.JWTService;
  * @since 1.5
  */
 @io.inverno.core.annotation.Module
+@io.inverno.core.annotation.Wire(beans="io.inverno.mod.security.jose:jwkURLResolver", into="io.inverno.mod.security.jose:jwkService:urlResolver")
 module io.inverno.mod.security.jose {
 	requires io.inverno.core;
 	requires static io.inverno.core.annotation; // for javadoc...

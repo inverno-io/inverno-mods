@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Provide;
+import io.inverno.mod.security.jose.JOSEConfiguration;
 import io.inverno.mod.security.jose.JOSEHeader;
 import io.inverno.mod.security.jose.internal.jwk.ec.GenericECJWKFactory;
 import io.inverno.mod.security.jose.internal.jwk.oct.GenericOCTJWKFactory;
@@ -48,7 +49,6 @@ import io.inverno.mod.security.jose.jwk.pbes2.PBES2JWK;
 import io.inverno.mod.security.jose.jwk.pbes2.PBES2JWKFactory;
 import io.inverno.mod.security.jose.jwk.rsa.RSAJWK;
 import io.inverno.mod.security.jose.jwk.rsa.RSAJWKFactory;
-import io.inverno.mod.security.jose.jws.JWSReadException;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -59,6 +59,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -83,6 +84,7 @@ public final class GenericJWKService implements @Provide JWKService {
 	
 	private static final Logger LOGGER = LogManager.getLogger(GenericJWKService.class);
 	
+	private final JOSEConfiguration configuration;
 	private final GenericECJWKFactory ecJWKFactory;
 	private final GenericRSAJWKFactory rsaJWKFactory;
 	private final GenericOCTJWKFactory octJWKFactory;
@@ -91,6 +93,7 @@ public final class GenericJWKService implements @Provide JWKService {
 	private final GenericPBES2JWKFactory pbes2JWKFactory;
 	private final JWKStore jwkStore;
 	private final JWKURLResolver urlResolver;
+	private final SwitchableJWKURLResolver switchableUrlResolver;
 	private final ObjectMapper mapper;
 	
 	private final List<JWKFactory<?, ?, ?>> jwkFactories;
@@ -99,18 +102,21 @@ public final class GenericJWKService implements @Provide JWKService {
 	 * <p>
 	 * Creates a generic JWK service.
 	 * </p>
-	 *
-	 * @param ecJWKFactory    the Elliptic Curve JWK factory
-	 * @param rsaJWKFactory   the RSA JWK factory
-	 * @param octJWKFactory   the Octet JWK factory
-	 * @param edecJWKFactory  the Edwards-curve JWK factory
-	 * @param xecJWKFactory   the extended Elliptic Curve JWK factory
-	 * @param pbes2JWKFactory the password-based JWK factory
-	 * @param jwkStore        a JWK store
-	 * @param urlResolver     a JWK URL resolver
-	 * @param mapper          an object mapper
+	 * 
+	 * @param configuration the JOSE module configuration
+	 * @param ecJWKFactory          the Elliptic Curve JWK factory
+	 * @param rsaJWKFactory         the RSA JWK factory
+	 * @param octJWKFactory         the Octet JWK factory
+	 * @param edecJWKFactory        the Edwards-curve JWK factory
+	 * @param xecJWKFactory         the extended Elliptic Curve JWK factory
+	 * @param pbes2JWKFactory       the password-based JWK factory
+	 * @param jwkStore              a JWK store
+	 * @param urlResolver           a JWK URL resolver
+	 * @param switchableUrlResolver a switchable JWK URL resolver
+	 * @param mapper                an object mapper
 	 */
 	public GenericJWKService(
+			JOSEConfiguration configuration,
 			GenericECJWKFactory ecJWKFactory, 
 			GenericRSAJWKFactory rsaJWKFactory, 
 			GenericOCTJWKFactory octJWKFactory, 
@@ -119,8 +125,10 @@ public final class GenericJWKService implements @Provide JWKService {
 			GenericPBES2JWKFactory pbes2JWKFactory, 
 			JWKStore jwkStore,
 			JWKURLResolver urlResolver, 
+			SwitchableJWKURLResolver switchableUrlResolver,
 			ObjectMapper mapper
 		) {
+		this.configuration = configuration;
 		this.ecJWKFactory = ecJWKFactory;
 		this.rsaJWKFactory = rsaJWKFactory;
 		this.octJWKFactory = octJWKFactory;
@@ -129,6 +137,7 @@ public final class GenericJWKService implements @Provide JWKService {
 		this.pbes2JWKFactory = pbes2JWKFactory;
 		this.jwkStore = jwkStore;
 		this.urlResolver = urlResolver;
+		this.switchableUrlResolver = switchableUrlResolver;
 		this.mapper = mapper;
 		this.jwkFactories = new LinkedList<>();
 		this.setJWKFactories(null);
@@ -243,7 +252,14 @@ public final class GenericJWKService implements @Provide JWKService {
 	
 	@Override
 	public Publisher<? extends JWK> read(URI uri) throws JWKReadException, JWKResolveException, JWKBuildException, JWKProcessingException {
-		return Flux.from(this.urlResolver.resolveJWKSetURL(uri)).flatMap(jwk -> this.read(jwk, true));
+		if(uri == null) {
+			return Mono.empty();
+		}
+		Flux<? extends JWK> keys = Flux.from(this.urlResolver.resolveJWKSetURL(uri)).flatMap(jwk -> this.read(jwk, true));
+		if(this.configuration.trusted_jku().contains(uri)) {
+			return keys.doOnNext(JWK::trust);
+		}
+		return keys;
 	}
 
 	@Override
@@ -478,7 +494,11 @@ public final class GenericJWKService implements @Provide JWKService {
 	 * @throws JWKProcessingException if there was a processing error
 	 */
 	private Flux<? extends JWK> resolveJku(JOSEHeader header) throws JWKReadException, JWKResolveException, JWKBuildException, JWKProcessingException {
-		return Flux.from(this.urlResolver.resolveJWKSetURL(header.getJWKSetURL()))
+		URI jku = header.getJWKSetURL();
+		if(jku == null) {
+			return Flux.empty();
+		}
+		Flux<? extends JWK> keys = Flux.from(this.switchableUrlResolver.resolveJWKSetURL(jku))
 			.mapNotNull(jwk -> {
 				try {
 					return this.mergeWithHeader(jwk, header);
@@ -496,5 +516,21 @@ public final class GenericJWKService implements @Provide JWKService {
 				}
 			})
 			.flatMap(jwk -> Flux.from(this.read(jwk, true)).onErrorResume(e -> Mono.empty()));
+		
+		if(this.configuration.trusted_jku().contains(jku)) {
+			return keys.doOnNext(JWK::trust);
+		}
+		return keys;
 	}
+	
+	/**
+	 * <p>
+	 * JWK Service extra JWK factories.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.5
+	 */
+	@Bean( name = "jwkFactories")
+	public static interface JWKFactoriesSocket extends Supplier<List<JWKFactory<?, ?, ?>>> {}
 }

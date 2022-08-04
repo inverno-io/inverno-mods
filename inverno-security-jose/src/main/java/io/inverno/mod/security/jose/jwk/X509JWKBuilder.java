@@ -21,7 +21,7 @@ import java.security.PublicKey;
 
 /**
  * <p>
- * An X.509 JWK builder is used to build X.509 asymetric JSON Web Keys that support X.509 JOSE header parameters: x5u, x5c, x5t and x5t#S256.
+ * An X.509 JWK builder is used to build X.509 asymmetric JSON Web Keys that support X.509 JOSE header parameters: x5u, x5c, x5t and x5t#S256.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

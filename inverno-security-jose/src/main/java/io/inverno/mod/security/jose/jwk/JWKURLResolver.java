@@ -17,6 +17,7 @@ package io.inverno.mod.security.jose.jwk;
 
 import java.net.URI;
 import java.security.cert.X509Certificate;
+import java.util.List;
 import java.util.Map;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
@@ -46,14 +47,14 @@ public interface JWKURLResolver {
 	
 	/**
 	 * <p>
-	 * Resolves the X.509 certificate chain at the specified location as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.5">RFC7515 Section 4.1.5</a>
+	 * Resolves the X.509 certificates chain at the specified location as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7515#section-4.1.5">RFC7515 Section 4.1.5</a>
 	 * </p>
 	 * 
 	 * @param x5u the URI of the X.509 certificate chain
 	 * 
-	 * @return a single X.509 certificate publisher
+	 * @return a single X.509 certificates chain publisher
 	 * 
-	 * @throws JWKResolveException if there was an error resolving the certificate
+	 * @throws JWKResolveException if there was an error resolving the certificates chain
 	 */
-	Mono<X509Certificate> resolveX509CertificateURL(URI x5u) throws JWKResolveException;
+	Mono<List<X509Certificate>> resolveX509CertificateURL(URI x5u) throws JWKResolveException;
 }

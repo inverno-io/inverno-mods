@@ -21,10 +21,8 @@ import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Overridable;
 import io.inverno.core.annotation.Provide;
 import io.inverno.mod.base.resource.ResourceService;
-import io.inverno.mod.security.jose.JOSEConfiguration;
 import io.inverno.mod.security.jose.jwk.JWKResolveException;
 import io.inverno.mod.security.jose.jwk.JWKURLResolver;
-import io.inverno.mod.security.jose.jwk.X509JWKCertPathValidator;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -52,12 +50,7 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * This implementation uses an X.509 certificate path validator to be able to validate the resolved X.509 certificates and a resource service to load resources.
- * </p>
- * 
- * <p>
- * The URL resolution will be disabled if the optional resource service is missing or it can be disabled by configuration (see {@link JOSEConfiguration#resolve_jku()} and
- * {@link JOSEConfiguration#resolve_x5u()}).
+ * The URL resolution will be disabled if the optional resource service is missing.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -69,8 +62,6 @@ public class GenericJWKURLResolver implements @Provide JWKURLResolver {
 
 	private static final Logger LOGGER = LogManager.getLogger(GenericJWKURLResolver.class);
 	
-	private final JOSEConfiguration configuration;
-	private final X509JWKCertPathValidator certPathValidator;
 	private final ObjectMapper mapper;
 	
 	private ResourceService resourceService;
@@ -80,13 +71,9 @@ public class GenericJWKURLResolver implements @Provide JWKURLResolver {
 	 * Creates a generic JWK URL resolver.
 	 * </p>
 	 * 
-	 * @param configuration     the JOSE module configuration
-	 * @param certPathValidator an X.509 Certificate path validator
 	 * @param mapper            an object mapper
 	 */
-	public GenericJWKURLResolver(JOSEConfiguration configuration, X509JWKCertPathValidator certPathValidator, ObjectMapper mapper) {
-		this.configuration = configuration;
-		this.certPathValidator = certPathValidator;
+	public GenericJWKURLResolver(ObjectMapper mapper) {
 		this.mapper = mapper;
 	}
 
@@ -106,11 +93,7 @@ public class GenericJWKURLResolver implements @Provide JWKURLResolver {
 	public Publisher<Map<String, Object>> resolveJWKSetURL(URI jku) throws JWKResolveException {
 		return Mono.justOrEmpty(jku)
 			.filter(ign -> {
-				if(!this.configuration.resolve_jku()) {
-					LOGGER.warn("JWK set URL resolver is disabled");
-					return false;
-				}
-				else if(this.resourceService == null) {
+				if(this.resourceService == null) {
 					LOGGER.warn("JWK set URL resolver is disabled: missing resource service");
 					return false;
 				}
@@ -168,14 +151,10 @@ public class GenericJWKURLResolver implements @Provide JWKURLResolver {
 	}
 	
 	@Override
-	public Mono<X509Certificate> resolveX509CertificateURL(URI x5u) throws JWKResolveException {
+	public Mono<List<X509Certificate>> resolveX509CertificateURL(URI x5u) throws JWKResolveException {
 		return Mono.justOrEmpty(x5u)
 			.filter(ign -> {
-				if(!this.configuration.resolve_x5u()) {
-					LOGGER.warn("X509 certificate URL resolver is disabled");
-					return false;
-				}
-				else if(this.resourceService == null) {
+				if(this.resourceService == null) {
 					LOGGER.warn("X509 certificate URL resolver is disabled: missing resource service");
 					return false;
 				}
@@ -204,13 +183,12 @@ public class GenericJWKURLResolver implements @Provide JWKURLResolver {
 						return pipe;
 					}
 				)
-				.flatMap(pipe -> {
+				.map(pipe -> {
 					try {
 						pipe.sink().close();
 						try(InputStream x5uStream = Channels.newInputStream(pipe.source())) {
 							CertificateFactory cf =  CertificateFactory.getInstance("X.509");
-							List<X509Certificate> certificates = cf.generateCertificates(x5uStream).stream().map(c -> (X509Certificate)c).collect(Collectors.toList());
-							return this.certPathValidator.validate(certificates);
+							return cf.generateCertificates(x5uStream).stream().map(c -> (X509Certificate)c).collect(Collectors.toList());
 						}
 					} 
 					catch(IOException | CertificateException e) {

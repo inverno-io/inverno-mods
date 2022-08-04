@@ -26,7 +26,7 @@ import java.security.interfaces.ECPublicKey;
  * </p>
  * 
  * <p>
- * An Elliptic curve JWK is asymetric. The public key is composed of the elliptic curve and the X and Y coordinates. The private key is defined by the ECC private key.
+ * An Elliptic curve JWK is asymmetric. The public key is composed of the elliptic curve and the X and Y coordinates. The private key is defined by the ECC private key.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
