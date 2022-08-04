@@ -28,6 +28,7 @@ import io.inverno.mod.base.reflect.Types;
 import io.inverno.mod.base.resource.ResourceService;
 import io.inverno.mod.security.jose.JOSEConfiguration;
 import io.inverno.mod.security.jose.internal.converter.GenericDataConversionService;
+import io.inverno.mod.security.jose.internal.converter.JWTStringMediaTypeConverter;
 import io.inverno.mod.security.jose.internal.jwe.GenericJWEService;
 import io.inverno.mod.security.jose.internal.jwk.GenericJWKKeyResolver;
 import io.inverno.mod.security.jose.internal.jwk.GenericJWKService;
@@ -908,7 +909,7 @@ public class GenericJWTServiceTest {
 	
 	// jwk, jws, jwe, jwt
 	@SuppressWarnings("unchecked")
-	private static GenericDataConversionService dataConversionService(JWKService jwkService) {
+	private static GenericDataConversionService dataConversionService() {
 		MediaTypeConverter<String> textStringConverter = Mockito.mock(MediaTypeConverter.class);
 		Mockito.when(textStringConverter.canConvert("text/plain")).thenReturn(true);
 		
@@ -953,7 +954,9 @@ public class GenericJWTServiceTest {
 				})
 		);
 		
-		return new GenericDataConversionService(List.of(textStringConverter, jsonStringConverter), jwkService, MAPPER);
+		JWTStringMediaTypeConverter jwtConverter = new JWTStringMediaTypeConverter();
+		
+		return new GenericDataConversionService(List.of(textStringConverter, jsonStringConverter, jwtConverter));
 	}
 	
 	private static GenericJWKService jwkService() {
@@ -995,7 +998,7 @@ public class GenericJWTServiceTest {
 	
 	private static JoseServices joseServices() {
 		GenericJWKService jwkService = jwkService();
-		GenericDataConversionService dataConversionService = dataConversionService(jwkService);
+		GenericDataConversionService dataConversionService = dataConversionService();
 		
 		GenericJWSService jwsService = new GenericJWSService(MAPPER, dataConversionService, jwkService);
 		GenericJWEService jweService = new GenericJWEService(MAPPER, dataConversionService, jwkService);

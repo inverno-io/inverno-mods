@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.deser.DefaultDeserializationContext;
 import com.fasterxml.jackson.databind.util.TokenBuffer;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Provide;
+import io.inverno.mod.base.converter.Converter;
 import io.inverno.mod.base.converter.ConverterException;
 import io.inverno.mod.base.converter.JoinableEncoder;
 import io.inverno.mod.base.converter.ReactiveConverter;

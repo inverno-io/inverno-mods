@@ -20,7 +20,6 @@ import io.inverno.mod.security.jose.jwe.JWE;
 import io.inverno.mod.security.jose.jwe.JWEHeader;
 import io.inverno.mod.security.jose.jwk.JWK;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * <p>
@@ -38,7 +37,6 @@ public class GenericJWE<A> extends AbstractJOSEObject<A, JWEHeader, GenericJWEPa
 	private final String authenticationTag;
 	private final String encryptedKey;
 	private final JWK cek;
-	private final Set<String> processedParameters;
 	
 	private final String compact;
 	
@@ -53,22 +51,7 @@ public class GenericJWE<A> extends AbstractJOSEObject<A, JWEHeader, GenericJWEPa
 	 * @param authenticationTag    the Base64URL encoded authentication tag without padding
 	 */
 	public GenericJWE(GenericJWEHeader header, GenericJWEPayload<A> payload, String initializationVector, String authenticationTag) {
-		this(header, payload, initializationVector, authenticationTag, null, null, null);
-	}
-	
-	/**
-	 * <p>
-	 * Creates a generic JWE with custom processed parameters.
-	 * </p>
-	 * 
-	 * @param header               the JWE header
-	 * @param payload              the JWE payload
-	 * @param initializationVector the Base64URL encoded initialization vector without padding
-	 * @param authenticationTag    the Base64URL encoded authentication tag without padding
-	 * @param processedParameters  custom processed parameters
-	 */
-	public GenericJWE(GenericJWEHeader header, GenericJWEPayload<A> payload, String initializationVector, String authenticationTag, Set<String> processedParameters) {
-		this(header, payload, initializationVector, authenticationTag, processedParameters, null, null);
+		this(header, payload, initializationVector, authenticationTag, null, null);
 	}
 	
 	/**
@@ -84,34 +67,16 @@ public class GenericJWE<A> extends AbstractJOSEObject<A, JWEHeader, GenericJWEPa
 	 * @param cek                  the corresponding CEK
 	 */
 	public GenericJWE(GenericJWEHeader header, GenericJWEPayload<A> payload, String initializationVector, String authenticationTag, String encryptedKey, JWK cek) {
-		this(header, payload, initializationVector, authenticationTag, null, encryptedKey, cek);
-	}
-	
-	/**
-	 * <p>
-	 * Creates a generic JWE with custom processed parameters, encrypted key and corresponding content encryption key.
-	 * </p>
-	 * 
-	 * @param header               the JWE header
-	 * @param payload              the JWE payload
-	 * @param initializationVector the Base64URL encoded initialization vector without padding
-	 * @param authenticationTag    the Base64URL encoded authentication tag without padding
-	 * @param processedParameters  custom processed parameters
-	 * @param encryptedKey         the encrypted key
-	 * @param cek                  the corresponding CEK
-	 */
-	private GenericJWE(GenericJWEHeader header, GenericJWEPayload<A> payload, String initializationVector, String authenticationTag, Set<String> processedParameters, String encryptedKey, JWK cek) {
 		super(header, payload);
 		this.initializationVector = initializationVector;
 		this.authenticationTag = authenticationTag;
-		this.processedParameters = processedParameters;
 		this.encryptedKey = encryptedKey;
 		this.cek = cek;
 		
 		// if alg=dir, the encrypted key is null
 		this.compact = header.getEncoded() + "." + (this.encryptedKey != null ? this.encryptedKey : "") + "." + this.initializationVector + "." + this.payload.getEncoded() + "." + this.authenticationTag;
 	}
-
+	
 	/**
 	 * <p>
 	 * Returns the attached CEK when available.
@@ -123,17 +88,6 @@ public class GenericJWE<A> extends AbstractJOSEObject<A, JWEHeader, GenericJWEPa
 		return this.cek;
 	}
 
-	/**
-	 * <p>
-	 * Returns the custom processed parameters.
-	 * </p>
-	 * 
-	 * @return a set of processed parameters or null
-	 */
-	public Set<String> getProcessedParameters() {
-		return processedParameters;
-	}
-	
 	@Override
 	public String getEncryptedKey() {
 		return this.encryptedKey;

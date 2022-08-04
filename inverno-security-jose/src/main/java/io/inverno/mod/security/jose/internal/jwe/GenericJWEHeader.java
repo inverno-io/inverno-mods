@@ -22,6 +22,7 @@ import io.inverno.mod.security.jose.internal.JOSEUtils;
 import io.inverno.mod.security.jose.jwe.JWEHeader;
 import io.inverno.mod.security.jose.jwe.JWEHeaderConfigurator;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -56,7 +57,15 @@ public class GenericJWEHeader extends AbstractJOSEHeader<GenericJWEHeader> imple
 	 */
 	protected String zip;
 	
+	/**
+	 * The raw serialized JOSE header.
+	 */
 	private byte[] raw;
+	
+	/**
+	 * The set of processed parameters (defaults to {@link #PROCESSED_PARAMETERS}.
+	 */
+	private Set<String> processedParameters;
 
 	/**
 	 * <p>
@@ -64,6 +73,7 @@ public class GenericJWEHeader extends AbstractJOSEHeader<GenericJWEHeader> imple
 	 * </p>
 	 */
 	public GenericJWEHeader() {
+		this.processedParameters = PROCESSED_PARAMETERS;
 	}
 
 	/**
@@ -77,6 +87,24 @@ public class GenericJWEHeader extends AbstractJOSEHeader<GenericJWEHeader> imple
 	public GenericJWEHeader(String alg, String enc) {
 		super(alg);
 		this.enc = enc;
+		this.processedParameters = PROCESSED_PARAMETERS;
+	}
+	
+	/**
+	 * <p>
+	 * Adds extra processed parameters which usually coming from key management and encryption algorithms.
+	 * </p>
+	 * 
+	 * @param extraParameters a set of extra processed parameters
+	 */
+	public void setExtraProcessedParameters(Set<String> extraParameters) {
+		if(extraParameters == null || extraParameters.isEmpty()) {
+			this.processedParameters = PROCESSED_PARAMETERS;
+		}
+		else {
+			this.processedParameters = new HashSet<>(PROCESSED_PARAMETERS);
+			this.processedParameters.addAll(extraParameters);
+		}
 	}
 	
 	@Override
@@ -111,7 +139,7 @@ public class GenericJWEHeader extends AbstractJOSEHeader<GenericJWEHeader> imple
 
 	@Override
 	public Set<String> getProcessedParameters() {
-		return GenericJWEHeader.PROCESSED_PARAMETERS;
+		return this.processedParameters;
 	}
 	
 	@Override

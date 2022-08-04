@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.security.jose.internal.converter;
 
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.annotation.Provide;
 import io.inverno.mod.base.converter.ConverterException;
 import io.inverno.mod.base.converter.MediaTypeConverter;
 import io.inverno.mod.base.resource.MediaTypes;
@@ -24,6 +26,7 @@ import io.inverno.mod.security.jose.jwe.JWEService;
 import io.inverno.mod.security.jose.jwe.JsonJWE;
 import io.inverno.mod.security.jose.jws.JWSService;
 import io.inverno.mod.security.jose.jws.JsonJWS;
+import io.inverno.mod.security.jose.jwt.JWTService;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import org.reactivestreams.Publisher;
@@ -42,24 +45,35 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-class JOSEJsonStringMediaTypeConverter implements MediaTypeConverter<String> {
+@Bean( name = "joseJsonStringMediaTypeConverter" )
+public class JOSEJsonStringMediaTypeConverter implements JOSEMediaTypeConverter, @Provide MediaTypeConverter<String> {
 
-	private final JWSService jwsService;
-	private final JWEService jweService;
+	private JWSService jwsService;
+	private JWEService jweService;
 	
 	/**
 	 * <p>
 	 * Creates a JSON JOSE object String converter.
 	 * </p>
-	 * 
-	 * @param jwsService the JWS service
-	 * @param jweService the JWE service
 	 */
-	public JOSEJsonStringMediaTypeConverter(JWSService jwsService, JWEService jweService) {
+	public JOSEJsonStringMediaTypeConverter() {
+	}
+
+	@Override
+	public void injectJWSService(JWSService jwsService) {
 		this.jwsService = jwsService;
+	}
+
+	@Override
+	public void injectJWEService(JWEService jweService) {
 		this.jweService = jweService;
 	}
 
+	@Override
+	public void injectJWTService(JWTService jwtService) {
+		
+	}
+	
 	@Override
 	public boolean canConvert(String mediaType) {
 		return mediaType.equalsIgnoreCase(MediaTypes.APPLICATION_JOSE_JSON);

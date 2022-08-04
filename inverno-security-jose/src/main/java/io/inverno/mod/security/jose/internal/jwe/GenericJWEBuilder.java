@@ -162,7 +162,7 @@ public class GenericJWEBuilder<A> extends AbstractJOSEObjectBuilder<A, JWEHeader
 		final JWEZip payloadZip = this.getPayloadZip(jweHeader);
 		if(jweHeader.getAlgorithm().equals(NoAlgorithm.DIR.getAlgorithm())) {
 			// Direct encryption
-			this.amendJWEHeader(jweHeader, null);
+			this.amendJWEHeader(jweHeader, null, null);
 			
 			return Mono.defer(() -> {
 				JWEBuildException error = new JWEBuildException("Failed to build JWE");
@@ -188,25 +188,6 @@ public class GenericJWEBuilder<A> extends AbstractJOSEObjectBuilder<A, JWEHeader
 					.next()
 					.switchIfEmpty(Mono.error(error));
 			});
-			
-			/*return keys
-				.onErrorStop()
-				.map(key -> {
-					// 1. Encrypt payload
-					// directly encrypt payload with the key
-					JWACipher.EncryptedData encryptedData = this.zipAndEncryptPayload(jweHeader, jwePayload, payloadZip, key);
-					
-					// 2. Assemble JWE
-					return (JWE<A>)new GenericJWE<>(
-						jweHeader, 
-						jwePayload, 
-						JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(encryptedData.getInitializationVector()), 
-						JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(encryptedData.getAuthenticationTag())
-					);
-				})
-				.onErrorContinue((e, key) -> LOGGER.warn(() -> "Failed to build JWE with key: " + key, e))
-				.next()
-				.switchIfEmpty(Mono.error(() -> new JWEBuildException("Failed to build JWE")));*/
 		}
 		else {
 			Flux<? extends JWK> ceks = this.generateCEK(jweHeader).cache();
@@ -226,7 +207,7 @@ public class GenericJWEBuilder<A> extends AbstractJOSEObjectBuilder<A, JWEHeader
 							OCTJWK cek = directCEK.getEncryptionKey();
 
 							// 2. Populate header with CEK encryption custom parameters
-							this.amendJWEHeader(jweHeader, directCEK.getMoreHeaderParameters());
+							this.amendJWEHeader(jweHeader, directCEK.getMoreHeaderParameters(), keyManager.getProcessedParameters());
 
 							// 3. zip and encrypt payload
 							JWACipher.EncryptedData encryptedData = this.zipAndEncryptPayload(jweHeader, jwePayload, payloadZip, cek);
@@ -236,8 +217,7 @@ public class GenericJWEBuilder<A> extends AbstractJOSEObjectBuilder<A, JWEHeader
 								jweHeader,
 								jwePayload,
 								JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(encryptedData.getInitializationVector()),
-								JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(encryptedData.getAuthenticationTag()),
-								keyManager.getProcessedParameters()
+								JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(encryptedData.getAuthenticationTag())
 							));
 						}
 						else if(keyManager instanceof EncryptingJWAKeyManager) {
@@ -246,7 +226,7 @@ public class GenericJWEBuilder<A> extends AbstractJOSEObjectBuilder<A, JWEHeader
 								EncryptingJWAKeyManager.EncryptedCEK encryptedCEK = ((EncryptingJWAKeyManager)keyManager).encryptCEK(cek, jweHeader.getCustomParameters(), this.secureRandom);
 
 								// 2. Populate header with CEK encryption custom parameters
-								this.amendJWEHeader(jweHeader, encryptedCEK.getMoreHeaderParameters());
+								this.amendJWEHeader(jweHeader, encryptedCEK.getMoreHeaderParameters(), keyManager.getProcessedParameters());
 
 								// 3. Zip and encrypt payload
 								JWACipher.EncryptedData encryptedData = this.zipAndEncryptPayload(jweHeader, jwePayload, payloadZip, cek);
@@ -268,7 +248,7 @@ public class GenericJWEBuilder<A> extends AbstractJOSEObjectBuilder<A, JWEHeader
 								WrappingJWAKeyManager.WrappedCEK wrappedCEK = ((WrappingJWAKeyManager)keyManager).wrapCEK(cek, jweHeader.getCustomParameters(), this.secureRandom);
 
 								// 2. Populate header with CEK encryption custom parameters
-								this.amendJWEHeader(jweHeader, wrappedCEK.getMoreHeaderParameters());
+								this.amendJWEHeader(jweHeader, wrappedCEK.getMoreHeaderParameters(), keyManager.getProcessedParameters());
 
 								// 3. Zip and encrypt payload
 								JWACipher.EncryptedData encryptedData = this.zipAndEncryptPayload(jweHeader, jwePayload, payloadZip, cek);
@@ -295,86 +275,6 @@ public class GenericJWEBuilder<A> extends AbstractJOSEObjectBuilder<A, JWEHeader
 					.next()
 					.switchIfEmpty(Mono.error(error));
 			});
-			
-			
-			/*return keys
-				.onErrorStop()
-				.flatMap(key -> {
-					final JWAKeyManager keyManager = key.keyManager(jweHeader.getAlgorithm());
-					// We have two cases:
-					// - the key manager is a DirectJWAKeyManager
-					// - the key manager is a WrappingJWAKeyManager
-					if(keyManager instanceof DirectJWAKeyManager) {
-						// 1. Derive CEK
-						DirectJWAKeyManager.DirectCEK directCEK = ((DirectJWAKeyManager)keyManager).deriveCEK(jweHeader.getEncryptionAlgorithm(), jweHeader.getCustomParameters());
-						OCTJWK cek = directCEK.getEncryptionKey();
-
-						// 2. Populate header with CEK encryption custom parameters
-						this.amendJWEHeader(jweHeader, directCEK.getMoreHeaderParameters());
-
-						// 3. zip and encrypt payload
-						JWACipher.EncryptedData encryptedData = this.zipAndEncryptPayload(jweHeader, jwePayload, payloadZip, cek);
-
-						// 4. Assemble JWE
-						return Mono.just((JWE<A>)new GenericJWE<>(
-							jweHeader,
-							jwePayload,
-							JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(encryptedData.getInitializationVector()),
-							JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(encryptedData.getAuthenticationTag()),
-							keyManager.getProcessedParameters()
-						));
-					}
-					else if(keyManager instanceof EncryptingJWAKeyManager) {
-						return ceks.mapNotNull(cek -> {
-							// 1. Encrypt CEK
-							EncryptingJWAKeyManager.EncryptedCEK encryptedCEK = ((EncryptingJWAKeyManager)keyManager).encryptCEK(cek, jweHeader.getCustomParameters(), this.secureRandom);
-
-							// 2. Populate header with CEK encryption custom parameters
-							this.amendJWEHeader(jweHeader, encryptedCEK.getMoreHeaderParameters());
-
-							// 3. Zip and encrypt payload
-							JWACipher.EncryptedData encryptedData = this.zipAndEncryptPayload(jweHeader, jwePayload, payloadZip, cek);
-
-							// 4. Assemble JWE
-							return (JWE<A>)new GenericJWE<>(
-								jweHeader,
-								jwePayload,
-								JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(encryptedData.getInitializationVector()),
-								JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(encryptedData.getAuthenticationTag()),
-								JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(encryptedCEK.getEncryptedKey()),
-								cek
-							);
-						});
-					}
-					else if(keyManager instanceof WrappingJWAKeyManager) {
-						return ceks.mapNotNull(cek -> {
-							// 1. Encrypt CEK
-							WrappingJWAKeyManager.WrappedCEK wrappedCEK = ((WrappingJWAKeyManager)keyManager).wrapCEK(cek, jweHeader.getCustomParameters(), this.secureRandom);
-
-							// 2. Populate header with CEK encryption custom parameters
-							this.amendJWEHeader(jweHeader, wrappedCEK.getMoreHeaderParameters());
-
-							// 3. Zip and encrypt payload
-							JWACipher.EncryptedData encryptedData = this.zipAndEncryptPayload(jweHeader, jwePayload, payloadZip, cek);
-
-							// 4. Assemble JWE
-							return (JWE<A>)new GenericJWE<>(
-								jweHeader,
-								jwePayload,
-								JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(encryptedData.getInitializationVector()),
-								JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(encryptedData.getAuthenticationTag()),
-								JOSEUtils.BASE64_NOPAD_URL_ENCODER.encodeToString(wrappedCEK.getWrappedKey()),
-								cek
-							);
-						});
-					}
-					else {
-						throw new JWAProcessingException("Key manager must implement " + DirectJWAKeyManager.class + ", " + EncryptingJWAKeyManager.class + " or " + WrappingJWAKeyManager.class);
-					}
-				})
-				.onErrorContinue((e, key) -> LOGGER.warn(() -> "Failed to build JWE with key: " + key, e))
-				.next()
-				.switchIfEmpty(Mono.error(() -> new JWEBuildException("Failed to build JWE")));*/
 		}
 	}
 	
@@ -485,21 +385,23 @@ public class GenericJWEBuilder<A> extends AbstractJOSEObjectBuilder<A, JWEHeader
 	
 	/**
 	 * <p>
-	 * Amends the JWE header with custom parameters output byt key management and encryption algorithms.
+	 * Amends the JWE header with custom parameters and processed parameters output by key management and encryption algorithms.
 	 * </p>
 	 * 
 	 * @param header the JWE header
 	 * @param moreHeaderParameters custom parameters 
+	 * @param processedParameters processed parameters
 	 * 
 	 * @throws JWEBuildException if there was an error amending the JWE header
 	 * @throws JOSEObjectBuildException if there was an error amending the JWE header
 	 * @throws JOSEProcessingException if there was a JOSE processing error
 	 */
-	protected void amendJWEHeader(GenericJWEHeader header, Map<String, Object> moreHeaderParameters) throws JWEBuildException, JOSEObjectBuildException, JOSEProcessingException {
+	protected void amendJWEHeader(GenericJWEHeader header, Map<String, Object> moreHeaderParameters, Set<String> processedParameters) throws JWEBuildException, JOSEObjectBuildException, JOSEProcessingException {
 		try {
 			if(moreHeaderParameters != null) {
 				moreHeaderParameters.forEach((k, v) -> header.addCustomParameter(k, v));
 			}
+			header.setExtraProcessedParameters(processedParameters);
 			header.setRaw(this.mapper.writeValueAsBytes(header));
 		}
 		catch(JsonProcessingException e) {

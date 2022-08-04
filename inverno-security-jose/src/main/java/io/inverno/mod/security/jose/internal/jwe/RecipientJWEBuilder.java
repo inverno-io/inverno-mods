@@ -31,6 +31,7 @@ import io.inverno.mod.security.jose.jwk.JWKService;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
@@ -142,12 +143,14 @@ public class RecipientJWEBuilder<A> extends GenericJWEBuilder<A> {
 		return super.generateCEK(jweHeader);
 	}
 
+	
+	
 	@Override
-	protected void amendJWEHeader(GenericJWEHeader header, Map<String, Object> moreHeaderParameters) throws JWEBuildException, JOSEObjectBuildException, JOSEProcessingException {
+	protected void amendJWEHeader(GenericJWEHeader header, Map<String, Object> moreHeaderParameters, Set<String> processedParameters) throws JWEBuildException, JOSEObjectBuildException, JOSEProcessingException {
 		if(moreHeaderParameters != null && this.recipientJWEHeader != null) {
 			moreHeaderParameters.forEach((k, v) -> this.recipientJWEHeader.addCustomParameter(k, v));
 		}
-		super.amendJWEHeader(header, moreHeaderParameters);
+		super.amendJWEHeader(header, moreHeaderParameters, processedParameters);
 	}
 	
 	@Override

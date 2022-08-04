@@ -222,7 +222,8 @@ public class GenericJsonJWEBuilder<A> extends AbstractJsonJOSEObjectBuilder<A, J
 						// We are in the direct use case: algorithm must be consistent and parameters as well
 						final String alg = firstRecipient.jweHeader.getAlgorithm();
 						final Map<String, Object> processedParameters;
-						final Set<String> keyAlgProcessedParameters = ((GenericJWE<A>)firstJWE).getProcessedParameters();
+						
+						final Set<String> keyAlgProcessedParameters = ((GenericJWEHeader)firstJWE.getHeader()).getProcessedParameters();
 						if(keyAlgProcessedParameters != null) {
 							if(protectedJWEHeader != null) {
 								keyAlgProcessedParameters.removeAll(protectedJWEHeader.getCustomParameters().keySet());

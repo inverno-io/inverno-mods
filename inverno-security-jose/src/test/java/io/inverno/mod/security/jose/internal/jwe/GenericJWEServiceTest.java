@@ -27,6 +27,8 @@ import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.base.resource.ResourceService;
 import io.inverno.mod.security.jose.JOSEConfiguration;
 import io.inverno.mod.security.jose.internal.converter.GenericDataConversionService;
+import io.inverno.mod.security.jose.internal.converter.JOSEJsonStringMediaTypeConverter;
+import io.inverno.mod.security.jose.internal.converter.JWKJsonMediaTypeConverter;
 import io.inverno.mod.security.jose.internal.jwk.GenericJWKKeyResolver;
 import io.inverno.mod.security.jose.internal.jwk.GenericJWKService;
 import io.inverno.mod.security.jose.internal.jwk.GenericJWKURLResolver;
@@ -2550,7 +2552,10 @@ public class GenericJWEServiceTest {
 				})
 		);
 		
-		return new GenericDataConversionService(List.of(textStringConverter, jsonStringConverter), jwkService, mapper);
+		JOSEJsonStringMediaTypeConverter joseJsonConverter = new JOSEJsonStringMediaTypeConverter();
+		JWKJsonMediaTypeConverter jwkJsonConverter = new JWKJsonMediaTypeConverter(jwkService, mapper);
+		
+		return new GenericDataConversionService(List.of(textStringConverter, jsonStringConverter, joseJsonConverter, jwkJsonConverter));
 	}
 	
 	private static GenericJWKService jwkService() {

@@ -17,11 +17,16 @@ package io.inverno.mod.security.jose.internal.converter;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.annotation.Provide;
 import io.inverno.mod.base.converter.ConverterException;
 import io.inverno.mod.base.converter.MediaTypeConverter;
 import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.security.jose.jwe.JWEService;
 import io.inverno.mod.security.jose.jwk.JWK;
 import io.inverno.mod.security.jose.jwk.JWKService;
+import io.inverno.mod.security.jose.jws.JWSService;
+import io.inverno.mod.security.jose.jwt.JWTService;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Objects;
@@ -41,7 +46,8 @@ import reactor.core.publisher.Mono;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-class JWKJsonMediaTypeConverter implements MediaTypeConverter<String> {
+@Bean( name = "jwkJsonMediaTypeConverter" )
+public class JWKJsonMediaTypeConverter implements JOSEMediaTypeConverter, @Provide MediaTypeConverter<String> {
 
 	private final JWKService jwkService;
 	private final ObjectMapper mapper;
@@ -57,6 +63,21 @@ class JWKJsonMediaTypeConverter implements MediaTypeConverter<String> {
 	public JWKJsonMediaTypeConverter(JWKService jwkService, ObjectMapper mapper) {
 		this.jwkService = jwkService;
 		this.mapper = mapper;
+	}
+	
+	@Override
+	public void injectJWSService(JWSService jwsService) {
+		
+	}
+
+	@Override
+	public void injectJWEService(JWEService jweService) {
+		
+	}
+
+	@Override
+	public void injectJWTService(JWTService jwtService) {
+		
 	}
 	
 	@Override

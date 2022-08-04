@@ -18,8 +18,7 @@ package io.inverno.mod.boot.internal.concurrent;
 import io.inverno.mod.base.concurrent.Reactor;
 
 /**
- * @author jkuhn
- *
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public interface ReactorLifecycle extends Reactor {
 

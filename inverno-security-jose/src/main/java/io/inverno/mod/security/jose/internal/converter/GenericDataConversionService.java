@@ -15,15 +15,14 @@
  */
 package io.inverno.mod.security.jose.internal.converter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.converter.MediaTypeConverter;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.security.jose.jwe.JWEService;
-import io.inverno.mod.security.jose.jwk.JWKService;
 import io.inverno.mod.security.jose.jws.JWSService;
 import io.inverno.mod.security.jose.jwt.JWTService;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -52,14 +51,8 @@ import java.util.function.Supplier;
 public class GenericDataConversionService implements DataConversionService {
 	
 	private final List<MediaTypeConverter<String>> converters;
-	private final JWKService jwkService;
-	private final ObjectMapper mapper;
 	
 	private final Map<String, MediaTypeConverter<String>> convertersCache;
-	
-	private JWEService jweService;
-	private JWSService jwsService;
-	private JWTService jwtService;
 	
 	/**
 	 * <p>
@@ -67,30 +60,23 @@ public class GenericDataConversionService implements DataConversionService {
 	 * </p>
 	 *
 	 * @param converters the set of media type converters
-	 * @param jwkService the JWK service
-	 * @param mapper     an object mapper
 	 */
-	public GenericDataConversionService(List<MediaTypeConverter<String>> converters, JWKService jwkService, ObjectMapper mapper) {
-		this.converters = converters;
-		this.jwkService = jwkService;
-		this.mapper = mapper;
+	public GenericDataConversionService(List<MediaTypeConverter<String>> converters) {
 		this.convertersCache = new HashMap<>();
-	}
-	
-	/**
-	 * <p>
-	 * Injects the JWE service into the data conversion service.
-	 * </p>
-	 * 
-	 * <p>
-	 * The JWE service also depends on the data conversion service, so we can't rely on IoC/DI to inject it since it would introduce a dependency cycle. As a result, it has to be done explicitly when
-	 * the JWE service instance is initialized.
-	 * </p>
-	 * 
-	 * @param jweService the JWE service
-	 */
-	public void injectJWEService(JWEService jweService) {
-		this.jweService = jweService;
+		
+		// JOSEMediaTypeConverter should be last in the list so they can be overridden
+		LinkedList<MediaTypeConverter<String>> tmpConverters = new LinkedList<>(converters);
+		int end = tmpConverters.size();
+		for(int i=0;i<end;i++) {
+			MediaTypeConverter<String> current = tmpConverters.get(i);
+			if(current instanceof JOSEMediaTypeConverter) {
+				tmpConverters.remove(i);
+				tmpConverters.add(current);
+				i--;
+				end--;
+			}
+		}
+		this.converters = tmpConverters;
 	}
 	
 	/**
@@ -106,7 +92,31 @@ public class GenericDataConversionService implements DataConversionService {
 	 * @param jwsService the JWS service
 	 */
 	public void injectJWSService(JWSService jwsService) {
-		this.jwsService = jwsService;
+		for(MediaTypeConverter<String> converter : this.converters) {
+			if(converter instanceof JOSEMediaTypeConverter) {
+				((JOSEMediaTypeConverter)converter).injectJWSService(jwsService);
+			}
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Injects the JWE service into the data conversion service.
+	 * </p>
+	 * 
+	 * <p>
+	 * The JWE service also depends on the data conversion service, so we can't rely on IoC/DI to inject it since it would introduce a dependency cycle. As a result, it has to be done explicitly when
+	 * the JWE service instance is initialized.
+	 * </p>
+	 * 
+	 * @param jweService the JWE service
+	 */
+	public void injectJWEService(JWEService jweService) {
+		for(MediaTypeConverter<String> converter : this.converters) {
+			if(converter instanceof JOSEMediaTypeConverter) {
+				((JOSEMediaTypeConverter)converter).injectJWEService(jweService);
+			}
+		}
 	}
 	
 	/**
@@ -122,7 +132,11 @@ public class GenericDataConversionService implements DataConversionService {
 	 * @param jwtService the JWT service
 	 */
 	public void injectJWTService(JWTService jwtService) {
-		this.jwtService = jwtService;
+		for(MediaTypeConverter<String> converter : this.converters) {
+			if(converter instanceof JOSEMediaTypeConverter) {
+				((JOSEMediaTypeConverter)converter).injectJWTService(jwtService);
+			}
+		}
 	}
 	
 	@Override
@@ -138,23 +152,23 @@ public class GenericDataConversionService implements DataConversionService {
 				}
 			}
 			
-			if(result == null) {
-				if(MediaTypes.APPLICATION_JOSE.equals(mediaType)) {
-					result = new JOSEStringMediaTypeConverter(this.jwsService, this.jweService);
-				}
-				else if(MediaTypes.APPLICATION_JOSE_JSON.endsWith(mediaType)) {
-					result = new JOSEJsonStringMediaTypeConverter(this.jwsService, this.jweService);
-				}
-				else if(MediaTypes.APPLICATION_JWT.equals(normalizedMediaType)) {
-					result = this.jwtService != null ? new JWTStringMediaTypeConverter(this.jwtService) : null;
-				}
-				else if(MediaTypes.APPLICATION_JWK_JSON.equals(normalizedMediaType)) {
-					result = this.jwkService != null ? new JWKJsonMediaTypeConverter(this.jwkService, this.mapper) : null;
-				}
-				else if(MediaTypes.APPLICATION_JWK_SET_JSON.equals(normalizedMediaType)) {
-					result = this.jwkService != null ? new JWKSetJsonMediaTypeConverter(this.jwkService, this.mapper) : null;
-				}
-			}
+//			if(result == null) {
+//				if(MediaTypes.APPLICATION_JOSE.equals(mediaType)) {
+//					result = new JOSEStringMediaTypeConverter(this.jwsService, this.jweService);
+//				}
+//				else if(MediaTypes.APPLICATION_JOSE_JSON.endsWith(mediaType)) {
+//					result = new JOSEJsonStringMediaTypeConverter(this.jwsService, this.jweService);
+//				}
+//				else if(MediaTypes.APPLICATION_JWT.equals(normalizedMediaType)) {
+//					result = this.jwtService != null ? new JWTStringMediaTypeConverter(this.jwtService) : null;
+//				}
+//				else if(MediaTypes.APPLICATION_JWK_JSON.equals(normalizedMediaType)) {
+//					result = this.jwkService != null ? new JWKJsonMediaTypeConverter(this.jwkService, this.mapper) : null;
+//				}
+//				else if(MediaTypes.APPLICATION_JWK_SET_JSON.equals(normalizedMediaType)) {
+//					result = this.jwkService != null ? new JWKSetJsonMediaTypeConverter(this.jwkService, this.mapper) : null;
+//				}
+//			}
 			
 			if (result == null) {
 				this.convertersCache.put(normalizedMediaType, null);
