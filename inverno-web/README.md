@@ -1123,7 +1123,7 @@ public interface App_webConfiguration {
 }
 ```
 
-The Web server can then be configured. For instance, we can enable HTTP/2 over cleartext, TLS, HTTP compression... as described in the [http-server module documentation](#http-server-1).
+The Web server can then be configured. For instance, we can enable HTTP/2 over cleartext, TLS, HTTP compression... as described in the [http-server module documentation](#http-server).
 
 ```java
 package io.inverno.example.app_web;
@@ -1152,9 +1152,9 @@ public class Main {
 
 ### Configuring the Web server controller
 
-As explained before, the module specifies a `ServerController` bean as defined by the [*http-server* module](#http-server-1) and wired to the HTTP server overriding the default server controller. It is composed of the Web router and the Error Web router beans which respectively route exchanges and error exchanges to the right handlers.
+As explained before, the module specifies a `ServerController` bean as defined by the [*http-server* module](#http-server) and wired to the HTTP server overriding the default server controller. It is composed of the Web router and the Error Web router beans which respectively route exchanges and error exchanges to the right handlers.
 
-The Web server controller bean is private, its Web router and Error Web router are configured by defining a single `WebServerControllerConfigurer` bean. The `WebServerControllerConfigurer` interface extends both `WebRouterConfigurer` and `ErrorWebRouterConfigurer` and specifies a `createContext()` method used to initialize the exchange context as specified in [http-server module documentation](#exchange_context). The Web server controller configurer is responsible for configuring routes in the Web server. It is invoked after default routes have been initiliazed but it doesn't replace them, they can however be overridden by defining routes matching the same rules.
+The Web server controller bean is private, its Web router and Error Web router are configured by defining a single `WebServerControllerConfigurer` bean. The `WebServerControllerConfigurer` interface extends both `WebRouterConfigurer` and `ErrorWebRouterConfigurer` and specifies a `createContext()` method used to initialize the exchange context as specified in [http-server module documentation](#exchange-context). The Web server controller configurer is responsible for configuring routes in the Web server. It is invoked after default routes have been initiliazed but it doesn't replace them, they can however be overridden by defining routes matching the same rules.
 
 #### Web configurers
 

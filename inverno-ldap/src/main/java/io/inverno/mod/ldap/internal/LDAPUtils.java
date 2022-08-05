@@ -123,13 +123,13 @@ public final class LDAPUtils {
 	 * String, use its string representation (toString()). Special characters in obj (or its string representation) are then encoded appropriately according to RFC 2254.
 	 * </p>
 	 * 
-	 * <code><pre>
-	 *         *       \2a
-	 *         (       \28
-	 *         )       \29
-	 *         \       \5c
-	 *         NUL     \00
-	 * </pre></code>
+	 * <pre>{@code
+	 *     *       \2a
+	 *     (       \28
+	 *     )       \29
+	 *     \       \5c
+	 *     NUL     \00
+	 * }</pre>
 	 * 
 	 * @param obj
 	 * 

@@ -33,9 +33,9 @@ import java.util.Map;
  * <p>
  * The following is a complete example of parameterized URI:</p>
  *
- * <blockquote><pre>
+ * <pre>{@code
  * {scheme}://{userinfo}@{host}:{port}/a/{segment}?parameter={parameter}#{fragment}
- * </pre></blockquote>
+ * }</pre>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

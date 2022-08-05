@@ -45,12 +45,12 @@ import io.inverno.mod.base.resource.ZipResource;
  * resources matching a given URI pattern.
  * </p>
  * 
- * <blockquote><pre>
+ * <pre>{@code
  * ZipResourceProvider provider = new ZipResourceProvider();
  * 
  * // Returns: /path/test1/a, /path/test1/a/b, /path/test2/c...
  * Stream{@literal<ZipResource>} resources = provider.getResources(URI.create("zip:/path/to/zip!/path/test?/{@literal **}/*");
- * </pre></blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

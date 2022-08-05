@@ -66,9 +66,9 @@ public interface ResponseBody {
 	 * A typical usage is:
 	 * </p>
 	 *
-	 * <blockquote><pre>
+	 * <pre>{@code
 	 * exchange.response().body().empty();
-	 * </pre></blockquote>
+	 * }</pre>
 	 */
 	void empty();
 
@@ -81,14 +81,14 @@ public interface ResponseBody {
 	 * A typical usage is:
 	 * </p>
 	 * 
-	 * <blockquote><pre>
+	 * <pre>{@code
 	 * exchange.response().body().raw().stream(
 	 *     Flux.just(
 	 *         Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello ", Charsets.DEFAULT)), 
 	 *         Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("World!", Charsets.DEFAULT))
 	 *     )
 	 * );
-	 * </pre></blockquote>
+	 * }</pre>
 	 * 
 	 * @return a raw payload producer
 	 */
@@ -103,14 +103,14 @@ public interface ResponseBody {
 	 * A typical usage is:
 	 * </p>
 	 * 
-	 * <blockquote><pre>
+	 * <pre>{@code
 	 * exchange.response().body().string().stream(
 	 *     Flux.just(
 	 *         Unpooled.unreleasableBuffer("Hello "), 
 	 *         Unpooled.unreleasableBuffer("World!")
 	 *     )
 	 * );
-	 * </pre></blockquote>
+	 * }</pre>
 	 * 
 	 * @param <T> the type of char sequence
 	 * 
@@ -127,10 +127,10 @@ public interface ResponseBody {
 	 * A typical usage is:
 	 * </p>
 	 * 
-	 * <blockquote><pre>
+	 * <pre>{@code
 	 * ResourceService resourceService = ... 
 	 * exchange.response().body().resource().value(resourceService.get("file:/path/to/resource");
-	 * </pre></blockquote>
+	 * }</pre>
 	 * 
 	 * @return a resource payload producer
 	 */
@@ -145,7 +145,7 @@ public interface ResponseBody {
 	 * A typical usage is:
 	 * </p>
 	 * 
-	 * <blockquote><pre>
+	 * <pre>{@code
 	 * exchange.response().body().sse().from(
 	 *     (events, data) -> Flux.interval(Duration.ofSeconds(1))
 	 *         .map(seq -> events.create(event -> event
@@ -155,7 +155,7 @@ public interface ResponseBody {
 	 *             )
 	 *         )
 	 * );
-	 * </pre></blockquote>
+	 * }</pre>
 	 * 
 	 * @return a server-sent events payload producer
 	 */
@@ -170,7 +170,7 @@ public interface ResponseBody {
 	 * A typical usage is:
 	 * </p>
 	 * 
-	 * <blockquote><pre>
+	 * <pre>{@code
 	 * exchange.response().body().sseString().from(
 	 *     (events, data) -> Flux.interval(Duration.ofSeconds(1))
 	 *         .map(seq -> events.create(event -> event
@@ -180,7 +180,7 @@ public interface ResponseBody {
 	 *             )
 	 *         )
 	 * );
-	 * </pre></blockquote>
+	 * }</pre>
 	 * 
 	 * @param <T> The type of char sequence
 	 * 

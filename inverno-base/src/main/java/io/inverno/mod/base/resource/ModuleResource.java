@@ -49,14 +49,10 @@ import java.util.Optional;
  * A typical usage is:
  * </p>
  * 
- * <blockquote>
- * 
- * <pre>
+ * <pre>{@code
  * ModuleResource resource = new ModuleResource(URI.create("module://module/path/to/resource"));
  * ...
- * </pre>
- * 
- * </blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

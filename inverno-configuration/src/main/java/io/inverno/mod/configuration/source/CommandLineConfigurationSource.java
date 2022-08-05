@@ -42,9 +42,7 @@ import reactor.core.publisher.Mono;
  * Configuration properties are specified as application arguments using the following syntax (ABNF):
  * </p>
  *
- * <blockquote>
- *
- * <pre>
+ * <pre>{@code
  * argument        = "--" {@literal property_name} [ "[" *(parameter ",") "]" ] "=" property_value
  *
  * property_name   = java_name
@@ -65,9 +63,7 @@ import reactor.core.publisher.Mono;
  *                 / java_string_literal
  *                 / java_boolean_literal
  *
- * </pre>
- *
- * </blockquote>
+ * }</pre>
  *
  * <p>
  * The following are valid configuration properties passed as command line arguments:

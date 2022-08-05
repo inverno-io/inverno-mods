@@ -33,9 +33,7 @@ import reactor.core.publisher.Mono;
  * A typical usage is:
  * </p>
  *
- * <blockquote>
- *
- * <pre>
+ * <pre>{@code
  * ConfigurationSource{@literal <?,?>} source = ...
  *
  * SomeConfiguration configuration = ConfigurationLoader
@@ -44,9 +42,7 @@ import reactor.core.publisher.Mono;
  *     .withSource(source)
  *     .load()
  *     .block();
- * </pre>
- *
- * </blockquote>
+ * }</pre>
  *
  * <p>
  * Please refer to {@link Configuration @Configuration} documentation to learn how to define a proper configuration type.

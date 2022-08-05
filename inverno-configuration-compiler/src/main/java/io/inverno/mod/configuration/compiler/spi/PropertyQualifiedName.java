@@ -79,8 +79,8 @@ public class PropertyQualifiedName extends BeanQualifiedName {
 	/**
 	 * <p>
 	 * Creates a property qualified name from the specified raw value of the form
-	 * <code>BeanQualifiedName():&lt;propertyName&gt;</code> where
-	 * <code>&lt;propertyName&gt;</code> is a valid Java name.
+	 * {@code BeanQualifiedName():<propertyName>} where
+	 * {@code <propertyName>} is a valid Java name.
 	 * </p>
 	 * 
 	 * @param qname a raw qualified name
@@ -101,9 +101,9 @@ public class PropertyQualifiedName extends BeanQualifiedName {
 	 * <p>
 	 * Creates a property qualified name from the specified module qualified name
 	 * and the specified raw value of the form
-	 * <code>&lt;beanName&gt;:&lt;propertyName&gt;</code> where
-	 * <code>&lt;beanName&gt;</code> and <code>&lt;propertyName&gt;</code> are valid
-	 * Java name.
+	 * {@code <beanName>:<propertyName>} where
+	 * {@code <beanName>} and {@code <propertyName>} are valid
+	 * Java names.
 	 * </p>
 	 * 
 	 * @param moduleQName a module qualified name

@@ -60,21 +60,17 @@ import reactor.core.publisher.Mono;
  * the content type of the request.
  * </p>
  * 
- * <blockquote>
- * 
- * <pre>
- * &#64;WebRoute( method = Method.POST, consumes = MediaTypes.APPLICATION_JSON )
+ * <pre>{@code
+ * @WebRoute( method = Method.POST, consumes = MediaTypes.APPLICATION_JSON )
  * public void create(Book book) {
  *     ...
  * }
  * 
- * &#64;WebRoute( method = Method.POST, consumes = MediaTypes.APPLICATION_X_NDJSON )
+ * @WebRoute( method = Method.POST, consumes = MediaTypes.APPLICATION_X_NDJSON )
  * public void createReactive(Flux{@literal <Book>} book) {
  *     ...
  * }
- * </pre>
- * 
- * </blockquote>
+ * }</pre>
  * 
  * <p>
  * This annotation can't be used in conjunction with

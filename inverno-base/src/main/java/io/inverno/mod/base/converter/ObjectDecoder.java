@@ -54,6 +54,11 @@ public class ObjectDecoder implements SplittablePrimitiveDecoder<Object> {
 	
 	private final StringConverter stringConverter;
 
+	/**
+	 * <p>
+	 * Creates a new Object decoder.
+	 * </p>
+	 */
 	public ObjectDecoder() {
 		this.stringConverter = new StringConverter();
 	}

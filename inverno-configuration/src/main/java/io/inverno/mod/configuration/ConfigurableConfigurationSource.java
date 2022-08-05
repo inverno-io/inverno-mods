@@ -26,14 +26,14 @@ import java.util.Map;
  * Configuration properties can be set in the configuration source as follows:
  * </p>
  *
- * <blockquote><pre>
+ * <pre>{@code
  * ConfigurableConfigurationSource{@literal <?,?,?,?,?>} source = ...;
  *
  * source.set("prop1", "value1")
  *     .and().set("prop2", "value2")
  *     .execute()
  *     .subscribe();
- * </pre></blockquote>
+ * }</pre>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

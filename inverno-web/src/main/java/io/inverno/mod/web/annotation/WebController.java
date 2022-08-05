@@ -52,26 +52,22 @@ import io.inverno.mod.web.WebRouterConfigurer;
  * {@code get()} method.
  * </p>
  * 
- * <blockquote>
- * 
- * <pre>
- * &#64;WebController( path = "/book" )
- * &#64;Bean
+ * <pre>{@code
+ * @WebController( path = "/book" )
+ * @Bean
  * public class BookResource {
  * 
- *     &#64;WebRoute
+ *     @WebRoute
  *     public List{@literal <Book>} getList() {
  *         ...
  *     }
  *     
- *     &#64;WebRoute( path = "{id}" )
+ *     @WebRoute( path = "{id}" )
  *     public Book get() {
  *         ...
  *     }
  * }
- * </pre>
- * 
- * </blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

@@ -39,7 +39,7 @@ import io.netty.buffer.ByteBuf;
  * resource is readable:
  * </p>
  * 
- * <blockquote><pre>
+ * <pre>{@code
  * try (Resource resource = new FileResource("/path/to/file")) {
  *     String content = resource.openReadableByteChannel()
  *         .map(channel -> {
@@ -57,13 +57,13 @@ import io.netty.buffer.ByteBuf;
  *         })
  *         .orElseThrow(() -> new IllegalStateException("Resource is not readable"));
  * }
- * </pre></blockquote>
+ * }</pre>
  * 
  * <p>
  * Resource data can also be read in a reactive way:
  * </p>
  * 
- * <blockquote><pre>
+ * <pre>{@code
  * try(Resource resource = new FileResource("/path/to/resource")) {
  *     String content = resource.read()
  *         .map(data -> {
@@ -81,14 +81,14 @@ import io.netty.buffer.ByteBuf;
  *             })
  *             .orElseThrow(() -> new IllegalStateException("Resource is not readable"));
  * }
- * </pre></blockquote>
+ * }</pre>
  * 
  * <p>
  * Data can be written to a resource using a {@link WritableByteChannel}
  * assuming the resource is writable:
  * </p>
  * 
- * <blockquote><pre>
+ * <pre>{@code
  * try (Resource resource = new FileResource("/path/to/file")) {
  *     resource.openReadableByteChannel()
  *         .ifPresentOrElse(
@@ -106,13 +106,13 @@ import io.netty.buffer.ByteBuf;
  *             }
  *         );
  * }
- * </pre></blockquote>
+ * }</pre>
  * 
  * <p>
  * Data can also be written to a resource in a reactive way:
  * </p>
  * 
- * <blockquote><pre>
+ * <pre>{@code
  * try (Resource resource = new FileResource("/path/to/resource")) {
  *     resource.write(Flux.just(Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer("Hello world".getBytes(Charsets.UTF_8)))))
  *         .ifPresentOrElse(result -> {
@@ -122,7 +122,7 @@ import io.netty.buffer.ByteBuf;
  *             throw new IllegalStateException("Resource is not writable");
  *         });
  * }
- * </pre></blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

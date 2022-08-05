@@ -37,10 +37,10 @@ import java.util.Optional;
  * A typical usage is:
  * </p>
  * 
- * <blockquote><pre>
+ * <pre>{@code
  * PathResource resource = new PathResource(Paths.get("/path/to/resource"));
  * ...
- * </pre></blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

@@ -81,8 +81,8 @@ public class WebParameterQualifiedName extends QualifiedName {
 	/**
 	 * <p>
 	 * Creates a web parameter qualified name from the specified raw value of the form
-	 * <code>WebRouteQualifiedName():&lt;parameterName&gt;</code> where
-	 * <code>&lt;parameterName&gt;</code> is a valid Java name.
+	 * {@code WebRouteQualifiedName():<parameterName>} where
+	 * {@code <parameterName>} is a valid Java name.
 	 * </p>
 	 * 
 	 * @param qname a raw qualified name
@@ -103,8 +103,8 @@ public class WebParameterQualifiedName extends QualifiedName {
 	 * <p>
 	 * Creates a web parameter qualified name from the specified bean qualified name
 	 * of the web controller and the specified raw value of the form
-	 * <code>&lt;routeName&gt;:&lt;parameterName&gt;</code> where
-	 * <code>&lt;routeName&gt;</code> and <code>&lt;parameterName&gt;</code> are
+	 * {@code <routeName>:<parameterName>} where
+	 * {@code <routeName>} and {@code <parameterName>} are
 	 * valid Java names.
 	 * </p>
 	 * 

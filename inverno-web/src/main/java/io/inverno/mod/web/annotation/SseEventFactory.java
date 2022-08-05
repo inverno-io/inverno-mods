@@ -61,10 +61,8 @@ import io.inverno.mod.http.server.ResponseBody.Sse.EventFactory;
  * the annotation.
  * </p>
  * 
- * <blockquote>
- * 
- * <pre>
- * &#64;WebRoute(path = "/events/raw", method = Method.GET)
+ * <pre>{@code
+ * @WebRoute(path = "/events/raw", method = Method.GET)
  * public Publisher{@literal<ResponseBody.Sse.Event<ByteBuf>>} get_raw_events(@SseEventFactory ResponseBody.Sse.EventFactory{@literal <ByteBuf, ResponseBody.Sse.Event<ByteBuf>>} events) {
  *     return Flux.interval(Duration.ofSeconds(1))
  *         .map(seq -> events.create(
@@ -76,7 +74,7 @@ import io.inverno.mod.http.server.ResponseBody.Sse.EventFactory;
  *         );
  * }
  * 
- * &#64;WebRoute(path = "/events/encoded", method = Method.GET)
+ * @WebRoute(path = "/events/encoded", method = Method.GET)
  * public Publisher{@literal <ResponseBody.Sse.Event<ByteBuf>>} get_encoded_events(@SseEventFactory(MediaTypes.APPLICATION_JSON) ResponseBody.Sse.EventFactory{@literal <Book, ResponseBody.Sse.Event<Book>>} events) {
  *     return Flux.interval(Duration.ofSeconds(1))
  *         .map(seq -> events.create(
@@ -87,12 +85,10 @@ import io.inverno.mod.http.server.ResponseBody.Sse.EventFactory;
  *             )
  *         );
  * }
- * </pre>
- * 
- * </blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- *
+ * @since 1.0
  */
 @Documented
 @Retention(SOURCE)

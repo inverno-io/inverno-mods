@@ -32,7 +32,7 @@ import java.util.function.Consumer;
  * values can be specified in default methods.
  * </p>
  *
- * <blockquote><pre>
+ * <pre>{@code
  * {@literal @Configuration}
  * public interface SomeConfig {
  *
@@ -42,7 +42,7 @@ import java.util.function.Consumer;
  *         return 0;
  *     }
  * }
- * </pre></blockquote>
+ * }</pre>
  *
  * <p>
  * For a given configuration, a module bean named after the configuration interface [ConfigurationInterface]Bean will be generated to provide a concrete configuration inside the enclosing module. This
@@ -54,10 +54,10 @@ import java.util.function.Consumer;
  * The generated bean also provides a configurator to programmatically create a concrete configuration in an efficient way. A {@link Consumer} of such configurator is called a configurer:
  * </p>
  *
- * <blockquote><pre>
+ * <pre>{@code
  * Config config = SomeConfigBean.ConfigConfigurator
  *     .create(configConfigurator -> configConfigurator.property1("someValue").property2(42));
- * </pre></blockquote>
+ * }</pre>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

@@ -55,26 +55,22 @@ import io.inverno.mod.web.MissingRequiredParameterException;
  * separator (eg. value {@code 1,2,3,4} can be bound to a list of integers).
  * </p>
  * 
- * <blockquote>
- * 
- * <pre>
- * &#64;WebRoute( ... )
+ * <pre>{@code
+ * @WebRoute( ... )
  * public void handler(@FormParam int requiredParameter) {
  *     ...
  * }
  * 
- * &#64;WebRoute( ... )
+ * @WebRoute( ... )
  * public void handler(@FormParam Optional{@literal <Integer>} optionalParameter) {
  *     ...
  * }
  * 
- * &#64;WebRoute( ... )
+ * @WebRoute( ... )
  * public void handler(@FormParam List{@literal <Integer>} multiValueParameter) {
  *     ...
  * }
- * </pre>
- * 
- * </blockquote>
+ * }</pre>
  * 
  * <p>
  * This annotation can't be used in conjunction with {@link Body @Body}.

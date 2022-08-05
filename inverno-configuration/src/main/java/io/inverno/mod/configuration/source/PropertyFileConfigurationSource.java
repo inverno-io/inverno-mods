@@ -52,13 +52,13 @@ import reactor.core.publisher.Mono;
  * This source supports parameterized configuration properties defined in a configuration file as follows:
  * </p>
  *
- * <blockquote><pre>
+ * <pre>{@code
  * web.server_port=8080
  * web.server_port[profile="ssl"]=8443
  * db.url[env="dev"]=jdbc:oracle:thin:@dev.db.server:1521:sid
  * db.url[env="prod",zone="eu"]=jdbc:oracle:thin:@prod_eu.db.server:1521:sid
  * db.url[env="prod",zone="us"]=jdbc:oracle:thin:@prod_us.db.server:1521:sid
- * </pre></blockquote>
+ * }</pre>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

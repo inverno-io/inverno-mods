@@ -47,9 +47,7 @@ import reactor.core.publisher.Mono;
  * This source supports parameterized configuration properties defined in a configuration file as follows:
  * </p>
  *
- * <blockquote>
- *
- * <pre>
+ * <pre>{@code
  * web {
  *     server_port=8080
  *     [ profile = "ssl" ] {
@@ -70,9 +68,7 @@ import reactor.core.publisher.Mono;
  *         db.url="jdbc:oracle:thin:@prod_us.db.server:1521:sid"
  *     }
  * }
- * </pre>
- *
- * </blockquote>
+ * }</pre>
  *
  * <p>
  * Please refer to the {@code .cprops} format definition for more information on how to create parameterized configuration in the {@code .cprops} format.

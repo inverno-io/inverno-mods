@@ -37,33 +37,33 @@ import io.inverno.mod.base.Charsets;
  * A URI can be created fluently:
  * </p>
  *
- * <blockquote><pre>
+ * <pre>{@code
  * // http://localhost/foo/bar/123
  * URI uri = URIs.uri()
  *     .scheme("http")
  *     .host("localhost")
  *     .path("/foo/bar/123")
  *     .build();
- * </pre></blockquote>
+ * }</pre>
  *
  * <p>
  * A URI can be automatically normalized by enabling the {@link Option#NORMALIZED} option:
  * </p>
  *
- * <blockquote><pre>
+ * <pre>{@code
  * // http://localhost/123
  * URI uri = URIs.uri(URIs.Option.NORMALIZED)
  *     .scheme("http")
  *     .host("localhost")
  *     .path("/foo/../123")
  *     .build();
- * </pre></blockquote>
+ * }</pre>
  *
  * <p>
  * URI templates can be created by enabling the {@link Option#PARAMETERIZED} option and specifying parameters of the form <code>{{@literal <name>[:<pattern>]}}</code> in the URI components:
  * </p>
  *
- * <blockquote><pre>
+ * <pre>{@code
  * URIBuilder uriTemplate = URIs.uri(URIs.Option.PARAMETERIZED)
  *     .scheme("{scheme}")
  *     .host("localhost")
@@ -74,14 +74,14 @@ import io.inverno.mod.base.Charsets;
  *
  * // http://localhost/static/resource2
  * URI uri2 = uriTemplate.build("http", "resource2");
- * </pre></blockquote>
+ * }</pre>
  * 
  * <p>
  * URI matchers can be created by enabling the {@link Option#PARAMETERIZED} and/or {@link Option#PATH_PATTERN} options and specifying unnamed parameters of the form
  * <code>{{@literal [:<pattern>]}}</code> and/or path patterns using {@code ?}, {@code *} and {@code **} in the URI components:
  * </p>
  * 
- * <blockquote><pre>
+ * <pre>{@code
  * URIBuilder uriBuilder = URIs.uri("/static/{@literal **}/*.png", URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN);
  * URIPattern uriPattern = uriBuilder.buildPathPattern(false);
  * 
@@ -90,7 +90,7 @@ import io.inverno.mod.base.Charsets;
  * 
  * // false
  * uriPattern.matcher("/static/image.jpg").matches();
- * </pre></blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

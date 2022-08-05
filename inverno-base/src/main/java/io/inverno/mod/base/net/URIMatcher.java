@@ -38,18 +38,14 @@ import java.util.regex.Matcher;
  * <code>/book/{id}</code> pattern and extract the {@code id} path parameter:
  * </p>
  * 
- * <blockquote>
- * 
- * <pre>
+ * <pre>{@code
  * URIPattern pathPattern = URIs.uri("/book/{id}", URIs.Option.PARAMETERIZED).buildPathPattern();
  * 
  * URIMatcher matcher = pathPattern.matcher("/book/123");
  * if (matcher.matches()) {
  *     String id = matcher.getParameterValue("id").get();
  * }
- * </pre>
- * 
- * </blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

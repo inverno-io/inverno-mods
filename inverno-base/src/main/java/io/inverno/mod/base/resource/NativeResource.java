@@ -37,21 +37,17 @@ import java.util.Optional;
  * A typical usage is:
  * </p>
  * 
- * <blockquote>
- * <pre>
+ * <pre>{@code
  * NativeResource resource = new NativeResource(URI.create("resource:path/to/resource"));
  * ...
- * </pre>
- * </blockquote>
+ * }</pre>
  * 
  * When running a native image, this is actually equivalent to:
  * 
- * <blockquote>
- * <pre>
+ * <pre>{@code
  * ClasspathResource resource = new ClasspathResource(URI.create("resource:/path/to/resource"));
  * ...
- * </pre>
- * </blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

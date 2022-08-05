@@ -116,9 +116,7 @@ import reactor.core.publisher.Mono;
  * A typical workflow to set properties is:
  * </p>
  *
- * <blockquote>
- *
- * <pre>
+ * <pre>{@code
  * VersionedRedisConfigurationSource source = ...;
  * source
  *     .set("db.url", "jdbc:oracle:thin:@dev.db.server:1521:sid").withParameters("env", "dev").and()
@@ -133,9 +131,7 @@ import reactor.core.publisher.Mono;
  * // Activate working revision for dev environment and prod environment independently
  * source.activate("env", "dev").block();
  * source.activate("env", "prod").block();
- * </pre>
- *
- * </blockquote>
+ * }</pre>
  * 
  * <p>
  * This configuration source stored three types of entries:

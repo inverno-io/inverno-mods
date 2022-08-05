@@ -18,6 +18,7 @@ package io.inverno.mod.security.jose.internal.jwk;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.security.jose.JOSEConfiguration;
+import io.inverno.mod.security.jose.JOSEObjectBuilder;
 import io.inverno.mod.security.jose.jwk.JWKResolveException;
 import io.inverno.mod.security.jose.jwk.JWKURLResolver;
 import java.net.URI;

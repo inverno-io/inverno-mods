@@ -49,9 +49,9 @@ import org.apache.commons.lang3.reflect.TypeUtils;
  * 
  * <p>A {@link TypeBuilder} makes it easy to create types, for instance:</p>
  * 
- * <blockquote><pre>
+ * <pre>{@code
  * Type listOfStringType = Types.type(List.class).type(String.class).and().build();
- * </pre></blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

@@ -50,26 +50,22 @@ import io.inverno.mod.web.MissingRequiredParameterException;
  * {@code 1,2,3,4} can be bound to a list of integers).
  * </p>
  * 
- * <blockquote>
- * 
- * <pre>
- * &#64;WebRoute( path = "/{requiredParameter}" )
+ * <pre>{@code
+ * @WebRoute( path = "/{requiredParameter}" )
  * public void handler(@PathParam int requiredParameter) {
  *     ...
  * }
  * 
- * &#64;WebRoute( path = "/{optionalParameter}" )
+ * @WebRoute( path = "/{optionalParameter}" )
  * public void handler(@QueryParam Optional{@literal <Integer>} optionalParameter) {
  *     ...
  * }
  * 
- * &#64;WebRoute( path = "/{multiValueParameter}" )
+ * @WebRoute( path = "/{multiValueParameter}" )
  * public void handler(@QueryParam List{@literal <Integer>} multiValueParameter) {
  *     ...
  * }
- * </pre>
- * 
- * </blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

@@ -55,26 +55,22 @@ import io.inverno.mod.web.MissingRequiredParameterException;
  * value {@code 1,2,3,4} can be bound to a list of integers).
  * </p>
  * 
- * <blockquote>
- * 
- * <pre>
- * &#64;WebRoute( ... )
+ * <pre>{@code
+ * @WebRoute( ... )
  * public void handler(@CookieParam int requiredCookie) {
  *     ...
  * }
  * 
- * &#64;WebRoute( ... )
+ * @WebRoute( ... )
  * public void handler(@CookieParam Optional{@literal <Integer>} optionalCookie) {
  *     ...
  * }
  * 
- * &#64;WebRoute( ... )
+ * @WebRoute( ... )
  * public void handler(@CookieParam List{@literal <Integer>} multiValueCookie) {
  *     ...
  * }
- * </pre>
- * 
- * </blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

@@ -101,8 +101,8 @@ public class WebRouteQualifiedName extends QualifiedName {
 	/**
 	 * <p>
 	 * Creates a web route qualified name from the specified raw value of the form
-	 * <code>WebControllerQualifiedName():&lt;routeName&gt;</code> where
-	 * <code>&lt;routeName&gt;</code> is a valid Java name.
+	 * {@code WebControllerQualifiedName():<routeName>} where
+	 * {@code <routeName>} is a valid Java name.
 	 * </p>
 	 * 
 	 * @param qname a raw qualified name
@@ -125,8 +125,8 @@ public class WebRouteQualifiedName extends QualifiedName {
 	 * <p>
 	 * Creates a bean socket qualified name from the specified module qualified name
 	 * and the specified raw value of the form
-	 * <code>&lt;controllerName&gt;:&lt;routeName&gt;</code> where
-	 * <code>&lt;controllerName&gt;</code> and <code>&lt;routeName&gt;</code> are
+	 * {@code <controllerName>:<routeName>} where
+	 * {@code <controllerName>} and {@code <routeName>} are
 	 * valid Java names.
 	 * </p>
 	 * 

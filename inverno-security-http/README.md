@@ -987,7 +987,7 @@ The `LoginActionHandler` is a route handler that must be targeted by the login f
 
 In the following example, we decided to generate a [JWS][rfc7515] on successful authentication which requires to inject a `JWKService` to generate a JSON Web Key and a `JWSService` to create JWS tokens.
 
-> Please refer to the [*security-jose* module documentation](#security-jose) to learn how to create and validate [JWS][rfc7515], [JWE][rfc7516] or [JWT][rfc7519].
+> Please refer to the [*security-jose* module documentation](#json-object-signing-and-encryption) to learn how to create and validate [JWS][rfc7515], [JWE][rfc7516] or [JWT][rfc7519].
 
 ```java
 package io.inverno.example.app_web_security;

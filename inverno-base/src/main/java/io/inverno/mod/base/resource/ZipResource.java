@@ -45,14 +45,10 @@ import io.netty.buffer.ByteBuf;
  * A typical usage is:
  * </p>
  * 
- * <blockquote>
- * 
- * <pre>
+ * <pre>{@code
  * ZipResource resource = new ZipResource(URI.create("zip:file:/path/to/zip!/path/to/resource"));
  * ...
- * </pre>
- * 
- * </blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

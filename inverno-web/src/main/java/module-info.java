@@ -74,9 +74,7 @@ import io.inverno.mod.http.base.Parameter;
  * A Web server can then be started as follows:
  * </p>
  * 
- * <blockquote>
- * 
- * <pre>
+ * <pre>{@code
  * NetService netService = ...;
  * ResourceService resourceService = ...;
  * List{@literal <MediaTypeConverter<ByteBuf>>} mediaTypeConverters = ...;
@@ -108,9 +106,7 @@ import io.inverno.mod.http.base.Parameter;
  *             )
  *     )
  * ).run();
- * </pre>
- * 
- * </blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

@@ -39,10 +39,10 @@ import org.reactivestreams.Publisher;
  * A typical usage is:
  * </p>
  * 
- * <blockquote><pre>
+ * <pre>{@code
  * FileResource resource = new FileResource(URI.create("file:/path/to/resource"));
  * ...
- * </pre></blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

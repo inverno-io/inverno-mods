@@ -31,14 +31,10 @@ import java.util.Objects;
  * A typical usage is:
  * </p>
  * 
- * <blockquote>
- * 
- * <pre>
+ * <pre>{@code
  * JarResource resource = new JarResource(URI.create("jar:file:/path/to/jar!/path/to/resource"));
  * ...
- * </pre>
- * 
- * </blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

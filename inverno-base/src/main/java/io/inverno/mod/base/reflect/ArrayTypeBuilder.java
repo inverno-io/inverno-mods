@@ -24,9 +24,9 @@ import java.lang.reflect.Type;
  * 
  * <p>A typical usage is:</p>
  * 
- * <blockquote><pre>
+ * <pre>{@code
  * Type arrayOfStringType = Types.arrayType().componentType(String.class).and().build();
- * </pre></blockquote>
+ * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

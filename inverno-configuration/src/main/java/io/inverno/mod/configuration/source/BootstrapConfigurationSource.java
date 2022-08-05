@@ -48,9 +48,7 @@ import io.inverno.mod.base.resource.ModuleResource;
  * This source is typically created in a {@code main} method to load the application configuration at startup.
  * </p>
  *
- * <blockquote>
- *
- * <pre>
+ * <pre>{@code
  * public class Application {
  *
  *     public static void main(String[] args) {
@@ -67,9 +65,7 @@ import io.inverno.mod.base.resource.ModuleResource;
  *         ...
  *     }
  * }
- * </pre>
- *
- * </blockquote>
+ * }</pre>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
