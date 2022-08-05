@@ -233,7 +233,7 @@ REST controllers can be easily defined using annotations which are processed by 
 
 ## Building Inverno framework modules
 
-The Inverno framework modules can be built using Maven and Java 11+ with the following command:
+The Inverno framework modules can be built using Maven and JDK 15+ with the following command:
 
 ```plaintext
 $ mvn install

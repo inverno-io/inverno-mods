@@ -118,9 +118,6 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-//    	System.out.println("error");
-		super.exceptionCaught(ctx, cause);
-		
 		PromiseCombiner finalPromise = new PromiseCombiner(ctx.executor());
 		for(Http2Exchange exchange : this.serverStreams.values()) {
 			exchange.dispose();
@@ -136,7 +133,6 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 		super.channelInactive(ctx);
-//    	System.out.println("Channel inactive");
 	}
 
 	@Override
@@ -150,8 +146,6 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	 */
 	@Override
 	public int onDataRead(ChannelHandlerContext ctx, int streamId, ByteBuf data, int padding, boolean endOfStream) throws Http2Exception {
-//        System.out.println("onDataRead() " + streamId + " - "+ endOfStream);
-
 		// TODO flow control?
 		int processed = data.readableBytes() + padding;
 
@@ -177,7 +171,6 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 
 	@Override
 	public void onHeadersRead(ChannelHandlerContext ctx, int streamId, Http2Headers headers, int padding, boolean endOfStream) throws Http2Exception {
-//        System.out.println("onHeaderReads(2) " + streamId + " - " + endOfStream + " - " + this.hashCode());
 		Http2Exchange exchange = this.serverStreams.get(streamId);
 		if (exchange == null) {
 			Http2Exchange streamExchange = new Http2Exchange(ctx, this.connection().stream(streamId), headers, this.encoder(), this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.controller);
@@ -206,18 +199,15 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	
 	@Override
 	public void onHeadersRead(ChannelHandlerContext ctx, int streamId, Http2Headers headers, int streamDependency, short weight, boolean exclusive, int padding, boolean endOfStream) throws Http2Exception {
-//        System.out.println("onHeaderReads(1)");
 		onHeadersRead(ctx, streamId, headers, padding, endOfStream);
 	}
 
 	@Override
 	public void onPriorityRead(ChannelHandlerContext ctx, int streamId, int streamDependency, short weight, boolean exclusive) throws Http2Exception {
-		// System.out.println("onPriorityRead()");
 	}
 
 	@Override
 	public void onRstStreamRead(ChannelHandlerContext ctx, int streamId, long errorCode) throws Http2Exception {
-//        System.out.println("onRstStreamRead()");
 		Http2Exchange serverStream = this.serverStreams.remove(streamId);
 		if (serverStream != null) {
 			serverStream.dispose();
@@ -231,12 +221,10 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 
 	@Override
 	public void onSettingsAckRead(ChannelHandlerContext ctx) throws Http2Exception {
-//        System.out.println("onSettingsAckRead()");
 	}
 
 	@Override
 	public void onSettingsRead(ChannelHandlerContext ctx, Http2Settings settings) throws Http2Exception {
-//        System.out.println("onSettingsRead()");
 		if (this.configuration.decompression_enabled()) {
 			this.decoder().frameListener(new DelegatingDecompressorFrameListener(decoder().connection(), this));
 		} 
@@ -247,55 +235,44 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 
 	@Override
 	public void onPingRead(ChannelHandlerContext ctx, long data) throws Http2Exception {
-//        System.out.println("onPingRead()");
 	}
 
 	@Override
 	public void onPingAckRead(ChannelHandlerContext ctx, long data) throws Http2Exception {
-//        System.out.println("onPingAckRead()");
 	}
 
 	@Override
 	public void onPushPromiseRead(ChannelHandlerContext ctx, int streamId, int promisedStreamId, Http2Headers headers, int padding) throws Http2Exception {
-//        System.out.println("onPushPromiseRead()");
 	}
 
 	@Override
 	public void onGoAwayRead(ChannelHandlerContext ctx, int lastStreamId, long errorCode, ByteBuf debugData)
 			throws Http2Exception {
-//        System.out.println("onGoAwayRead()");
 	}
 
 	@Override
 	public void onWindowUpdateRead(ChannelHandlerContext ctx, int streamId, int windowSizeIncrement)
 			throws Http2Exception {
-//        System.out.println("onWindowUpdateRead()");
 	}
 
 	@Override
 	public void onUnknownFrame(ChannelHandlerContext ctx, byte frameType, int streamId, Http2Flags flags, ByteBuf payload) throws Http2Exception {
-//        System.out.println("onUnknownFrame()");
 	}
 
 	@Override
 	public void onStreamAdded(Http2Stream stream) {
-//		System.out.println("Stream added: " + stream.id());
 	}
 
 	@Override
 	public void onStreamActive(Http2Stream stream) {
-//		System.out.println("Stream active: " + stream.id());		
 	}
 
 	@Override
 	public void onStreamHalfClosed(Http2Stream stream) {
-//		System.out.println("Stream half closed");		
 	}
 
 	@Override
 	public void onStreamClosed(Http2Stream stream) {
-//		System.out.println("Stream closed " + stream.id());
-		
 		// TODO same issue as for Http1xChannelHandler#channelInactive
 		// Canceling subscriptions here might raise other issues so we prefer to let things crash when one will try to read or write to a closed stream
 		/*Http2Exchange serverStream = this.serverStreams.remove(stream.id());
@@ -311,16 +288,13 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 
 	@Override
 	public void onStreamRemoved(Http2Stream stream) {
-//		System.out.println("Stream removed");
 	}
 
 	@Override
 	public void onGoAwaySent(int lastStreamId, long errorCode, ByteBuf debugData) {
-//		System.out.println("Stream go away sent");		
 	}
 
 	@Override
 	public void onGoAwayReceived(int lastStreamId, long errorCode, ByteBuf debugData) {
-//		System.out.println("Stream go away received");		
 	}
 }

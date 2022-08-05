@@ -113,7 +113,6 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-//		System.out.println("Channel read");
 		if(msg instanceof HttpObject) {
 			this.read = true;
 			if(msg instanceof HttpRequest) {
@@ -184,7 +183,6 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	
 	@Override
 	public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-//		System.out.println("Channel read complete");
 		if(this.read) {
 			this.read = false;
 			if(this.flush) {
@@ -221,14 +219,12 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	
 	@Override
 	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-//		System.out.println("User Event triggered");
 		// TODO idle
 		ctx.fireUserEventTriggered(evt);
 	}
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-//		System.out.println("Exception caught");
 		if(cause instanceof WebSocketHandshakeException || cause instanceof CorruptedWebSocketFrameException) {
 			// Delegate this to the WebSocket protocol handler
 			super.exceptionCaught(ctx, cause);
@@ -248,14 +244,11 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	
 	@Override
 	public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-//		System.out.println("close");
 		ctx.close();
 	}
 	
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-//		System.out.println("channel inactive");
-		
 		// TODO this created DB connections not returned to pool
 		// If the purpose is to clean resources, I think we should see why this happens before the responding exchange response publisher did not finish
 		// one explanation could be that response events are not published on the channel event loop: the connection might be closed/end while the onComplete events hasn't been processed
@@ -272,7 +265,6 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	@Override
 	public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
 //		super.channelWritabilityChanged(ctx);
-//		System.out.println("Channel writability changed");
 	}
 	
 	@Override
