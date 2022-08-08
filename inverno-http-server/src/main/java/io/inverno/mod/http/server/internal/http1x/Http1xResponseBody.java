@@ -130,7 +130,7 @@ class Http1xResponseBody extends GenericResponseBody {
 								fileChannel.close();
 							} 
 							catch (IOException e) {
-								Exceptions.propagate(e);
+								throw Exceptions.propagate(e);
 							}
 						});
 					Http1xResponseBody.this.setData(Flux.empty());

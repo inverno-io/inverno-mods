@@ -54,7 +54,7 @@ public class Http1xResponseEncoder extends HttpResponseEncoder {
 
 	private ChannelHandlerContext context;
 	
-	private ByteBufAllocator byteBufAllocator;
+	private final ByteBufAllocator byteBufAllocator;
 	
 	/**
 	 * <p>
@@ -308,11 +308,13 @@ public class Http1xResponseEncoder extends HttpResponseEncoder {
 		}
 
 		@Override
+		@Deprecated
 		public <T> Attribute<T> attr(AttributeKey<T> key) {
 			return this.context.channel().attr(key);
 		}
 
 		@Override
+		@Deprecated
 		public <T> boolean hasAttr(AttributeKey<T> key) {
 			return this.context.channel().hasAttr(key);
 		}

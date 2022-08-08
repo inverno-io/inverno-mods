@@ -61,6 +61,7 @@ public class FlatHttpResponse implements HttpResponse, HttpContent {
 	}
 	
 	@Override
+	@Deprecated
 	public HttpVersion getProtocolVersion() {
 		return this.version;
 	}
@@ -76,6 +77,7 @@ public class FlatHttpResponse implements HttpResponse, HttpContent {
 	}
 
 	@Override
+	@Deprecated
 	public DecoderResult getDecoderResult() {
 		return this.result;
 	}
@@ -155,6 +157,7 @@ public class FlatHttpResponse implements HttpResponse, HttpContent {
 	}
 
 	@Override
+	@Deprecated
 	public HttpResponseStatus getStatus() {
 		return this.status;
 	}

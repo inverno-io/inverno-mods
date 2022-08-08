@@ -87,6 +87,7 @@ public class FlatLastHttpContent extends DefaultByteBufHolder implements LastHtt
 	}
 
 	@Override
+	@Deprecated
 	public DecoderResult getDecoderResult() {
 		return this.result;
 	}

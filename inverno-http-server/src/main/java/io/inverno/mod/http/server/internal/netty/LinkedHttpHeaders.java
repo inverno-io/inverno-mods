@@ -208,10 +208,10 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		buckets[bucketIndex] = newNode = new HeaderNode(hashCode, name, value);
 		newNode.bucketNext = bucketHead;
 		
-		HeaderNode head = this.head;
+		HeaderNode headKeep = this.head;
 		this.head = newNode;
-		head.previous = newNode;
-		newNode.next = head;
+		headKeep.previous = newNode;
+		newNode.next = headKeep;
 	}
 
 	@Override
@@ -483,6 +483,7 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	}
 
 	@Override
+	@Deprecated
 	public Iterator<Entry<String, String>> iterator() {
 		return new Iterator<Map.Entry<String, String>>() {
 			HeaderNode current = tail;

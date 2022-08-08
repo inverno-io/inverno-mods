@@ -168,13 +168,14 @@ public class GenericResponseBody implements ResponseBody {
 		}
 		return this.rawData;
 	}
-	
+
 	@Override
-	public ResponseData<CharSequence> string() {
+	@SuppressWarnings("unchecked")
+	public <T extends CharSequence> ResponseData<T> string() {
 		if(this.stringData == null) {
 			this.stringData = new GenericResponseBodyStringData();
 		}
-		return this.stringData;
+		return (ResponseData<T>) this.stringData;
 	}
 	
 	@Override
@@ -192,7 +193,10 @@ public class GenericResponseBody implements ResponseBody {
 		}
 		return this.sseData;
 	}
-	
+
+	// This result in a compilation warning for unchecked conversion
+	// This is not ideal but it actually does the job: we want to be able to set any type that extends CharSequence 
+	// This seems to be ok all the way since GenericEvent eventually accepts CharSequence stream and value.
 	@Override
 	public ResponseBody.Sse<CharSequence, Event<CharSequence>, EventFactory<CharSequence, Event<CharSequence>>> sseString() {
 		if(this.sseStringData == null) {
