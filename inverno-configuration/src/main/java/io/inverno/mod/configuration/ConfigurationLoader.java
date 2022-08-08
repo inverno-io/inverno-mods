@@ -34,7 +34,7 @@ import reactor.core.publisher.Mono;
  * </p>
  *
  * <pre>{@code
- * ConfigurationSource{@literal <?,?>} source = ...
+ * ConfigurationSource<?,?> source = ...
  *
  * SomeConfiguration configuration = ConfigurationLoader
  *     .withConfiguration(SomeConfiguration.class)

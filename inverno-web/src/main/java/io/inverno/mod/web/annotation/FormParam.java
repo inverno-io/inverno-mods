@@ -62,12 +62,12 @@ import io.inverno.mod.web.MissingRequiredParameterException;
  * }
  * 
  * @WebRoute( ... )
- * public void handler(@FormParam Optional{@literal <Integer>} optionalParameter) {
+ * public void handler(@FormParam Optional<Integer> optionalParameter) {
  *     ...
  * }
  * 
  * @WebRoute( ... )
- * public void handler(@FormParam List{@literal <Integer>} multiValueParameter) {
+ * public void handler(@FormParam List<Integer> multiValueParameter) {
  *     ...
  * }
  * }</pre>

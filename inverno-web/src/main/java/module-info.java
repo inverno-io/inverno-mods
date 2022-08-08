@@ -77,7 +77,7 @@ import io.inverno.mod.http.base.Parameter;
  * <pre>{@code
  * NetService netService = ...;
  * ResourceService resourceService = ...;
- * List{@literal <MediaTypeConverter<ByteBuf>>} mediaTypeConverters = ...;
+ * List<MediaTypeConverter<ByteBuf>> mediaTypeConverters = ...;
  *
  * Application.with(new Web.Builder(netService, resourceService, mediaTypeConverters)
  *     .setWebConfiguration(WebConfigurationLoader.load(conf -> conf.web(http_conf -> http_conf.server_port(8080))))

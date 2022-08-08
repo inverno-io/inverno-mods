@@ -63,7 +63,7 @@ import io.inverno.mod.http.server.ResponseBody.Sse.EventFactory;
  * 
  * <pre>{@code
  * @WebRoute(path = "/events/raw", method = Method.GET)
- * public Publisher{@literal<ResponseBody.Sse.Event<ByteBuf>>} get_raw_events(@SseEventFactory ResponseBody.Sse.EventFactory{@literal <ByteBuf, ResponseBody.Sse.Event<ByteBuf>>} events) {
+ * public Publisher<ResponseBody.Sse.Event<ByteBuf>> get_raw_events(@SseEventFactory ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>> events) {
  *     return Flux.interval(Duration.ofSeconds(1))
  *         .map(seq -> events.create(
  *             event -> event
@@ -75,7 +75,7 @@ import io.inverno.mod.http.server.ResponseBody.Sse.EventFactory;
  * }
  * 
  * @WebRoute(path = "/events/encoded", method = Method.GET)
- * public Publisher{@literal <ResponseBody.Sse.Event<ByteBuf>>} get_encoded_events(@SseEventFactory(MediaTypes.APPLICATION_JSON) ResponseBody.Sse.EventFactory{@literal <Book, ResponseBody.Sse.Event<Book>>} events) {
+ * public Publisher<ResponseBody.Sse.Event<ByteBuf>> get_encoded_events(@SseEventFactory(MediaTypes.APPLICATION_JSON) ResponseBody.Sse.EventFactory<Book, ResponseBody.Sse.Event<Book>> events) {
  *     return Flux.interval(Duration.ofSeconds(1))
  *         .map(seq -> events.create(
  *             event -> event

@@ -67,7 +67,7 @@ import reactor.core.publisher.Mono;
  * }
  * 
  * @WebRoute( method = Method.POST, consumes = MediaTypes.APPLICATION_X_NDJSON )
- * public void createReactive(Flux{@literal <Book>} book) {
+ * public void createReactive(Flux<Book> book) {
  *     ...
  * }
  * }</pre>

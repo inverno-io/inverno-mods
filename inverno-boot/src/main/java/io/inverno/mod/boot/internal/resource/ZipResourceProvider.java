@@ -49,7 +49,7 @@ import io.inverno.mod.base.resource.ZipResource;
  * ZipResourceProvider provider = new ZipResourceProvider();
  * 
  * // Returns: /path/test1/a, /path/test1/a/b, /path/test2/c...
- * Stream{@literal<ZipResource>} resources = provider.getResources(URI.create("zip:/path/to/zip!/path/test?/{@literal **}/*");
+ * Stream<ZipResource> resources = provider.getResources(URI.create("zip:/path/to/zip!/path/test?/{@literal **}/*");
  * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

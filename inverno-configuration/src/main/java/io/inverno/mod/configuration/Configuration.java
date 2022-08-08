@@ -33,7 +33,7 @@ import java.util.function.Consumer;
  * </p>
  *
  * <pre>{@code
- * {@literal @Configuration}
+ * @Configuration
  * public interface SomeConfig {
  *
  *     String property1();

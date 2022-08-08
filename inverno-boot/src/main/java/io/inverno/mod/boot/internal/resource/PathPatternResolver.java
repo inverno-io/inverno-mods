@@ -43,7 +43,7 @@ import io.inverno.mod.base.resource.ResourceException;
  * 
  * <pre>{@code
  * // Returns: /base/test1/a, /base/test1/a/b, /base/test2/c...
- * Stream{@literal <Path>} paths = PathPatternResolver.resolve(Paths.get("/test?/{@literal **}/*"), Paths.get("/base"));
+ * Stream<Path> paths = PathPatternResolver.resolve(Paths.get("/test?/{@literal **}/*"), Paths.get("/base"));
  * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

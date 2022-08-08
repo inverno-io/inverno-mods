@@ -48,7 +48,7 @@ import io.inverno.mod.base.resource.ResourceService;
  * JarResourceProvider provider = new JarResourceProvider();
  * 
  * // Returns: /path/test1/a, /path/test1/a/b, /path/test2/c...
- * Stream{@literal<JarResource>} resources = provider.getResources(URI.create("jar:/path/to/jar!/path/test?/{@literal **}/*");
+ * Stream<JarResource> resources = provider.getResources(URI.create("jar:/path/to/jar!/path/test?/{@literal **}/*");
  * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

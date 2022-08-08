@@ -24,9 +24,9 @@ package io.inverno.mod.configuration;
  * Configuration properties can be queries as follows:</p>
  *
  * <pre>{@code
- * ConfigurationSource{@literal <?,?,?>} source = ...
+ * ConfigurationSource<?,?,?> source = ...
  *
- * Map{@literal <String, String>} propertiesAsString = source
+ * Map<String, String> propertiesAsString = source
  *     .get("prop1", "prop2")
  *     .execute()
  *     .collect(Collectors.toMap(
@@ -42,7 +42,7 @@ package io.inverno.mod.configuration;
  * Parameters can be specified on a query to specify the context for which values must be retrieved:</p>
  *
  * <pre>{@code
- * Map{@literal <String, String>} propertiesAsString = source
+ * Map<String, String> propertiesAsString = source
  *     .get("prop1", "prop2")
  *         .withParameters("environment", "test")
  *     .execute()
@@ -59,7 +59,7 @@ package io.inverno.mod.configuration;
  * Queries can be executed in a batch:</p>
  *
  * <pre>{@code
- * Map{@literal <String, String>} propertiesAsString = source
+ * Map<String, String> propertiesAsString = source
  *     .get("prop1", "prop2").and()
  *     .get("prop3", "prop4")
  *         .withParameters("customer", "abc")

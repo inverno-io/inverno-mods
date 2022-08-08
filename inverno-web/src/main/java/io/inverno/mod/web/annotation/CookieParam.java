@@ -62,12 +62,12 @@ import io.inverno.mod.web.MissingRequiredParameterException;
  * }
  * 
  * @WebRoute( ... )
- * public void handler(@CookieParam Optional{@literal <Integer>} optionalCookie) {
+ * public void handler(@CookieParam Optional<Integer> optionalCookie) {
  *     ...
  * }
  * 
  * @WebRoute( ... )
- * public void handler(@CookieParam List{@literal <Integer>} multiValueCookie) {
+ * public void handler(@CookieParam List<Integer> multiValueCookie) {
  *     ...
  * }
  * }</pre>

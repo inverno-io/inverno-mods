@@ -58,7 +58,7 @@ import io.inverno.mod.web.WebRouterConfigurer;
  * public class BookResource {
  * 
  *     @WebRoute
- *     public List{@literal <Book>} getList() {
+ *     public List<Book> getList() {
  *         ...
  *     }
  *     

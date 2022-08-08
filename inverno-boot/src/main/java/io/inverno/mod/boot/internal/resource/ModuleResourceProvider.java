@@ -41,7 +41,7 @@ import io.inverno.mod.base.resource.ResourceService;
  * ModuleResourceProvider provider = new ModuleResourceProvider();
  * 
  * // Returns all resources with name /path/to/module defined in the application modules
- * Stream{@literal<ModuleResource>} resources = provider.getResources(URI.create("module://{@literal *}/path/to/resource");
+ * Stream<ModuleResource> resources = provider.getResources(URI.create("module://{@literal *}/path/to/resource");
  * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

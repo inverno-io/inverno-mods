@@ -27,7 +27,7 @@ import java.util.Map;
  * </p>
  *
  * <pre>{@code
- * ConfigurableConfigurationSource{@literal <?,?,?,?,?>} source = ...;
+ * ConfigurableConfigurationSource<?,?,?,?,?> source = ...;
  *
  * source.set("prop1", "value1")
  *     .and().set("prop2", "value2")
