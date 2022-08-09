@@ -20,6 +20,9 @@ import io.inverno.mod.security.authentication.TokenCredentials;
 import io.inverno.mod.security.jose.JOSEProcessingException;
 import io.inverno.mod.security.jose.jwk.JWK;
 import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -58,6 +61,11 @@ public class JWTEAuthenticator<A extends JWTClaimsSet> implements Authenticator<
 	 * The parameters processed by the application.
 	 */
 	private final String[] processedParameters;
+	
+	/**
+	 * The list of validators to use to validate the JWT.
+	 */
+	private final List<JWTClaimsSetValidator> validators;
 	
 	/**
 	 * <p>
@@ -212,6 +220,48 @@ public class JWTEAuthenticator<A extends JWTClaimsSet> implements Authenticator<
 		this.keys = keys;
 		this.type = type;
 		this.processedParameters = processedParameters;
+		this.validators = new LinkedList<>();
+	}
+	
+	/**
+	 * <p>
+	 * Adds the specified validator to the JWT claims set.
+	 * </p>
+	 * 
+	 * @param validator the validator to add
+	 * 
+	 * @return the JWTE authenticator
+	 */
+	public JWTEAuthenticator validate(JWTClaimsSetValidator validator) {
+		this.validators.add(validator);
+		return this;
+	}
+	
+	/**
+	 * <p>
+	 * Sets the JWT claims set validators.
+	 * </p>
+	 * 
+	 * @param validators a list of validators or null to clear the validators
+	 */
+	public void setValidators(List<JWTClaimsSetValidator> validators) {
+		this.validators.clear();
+		if(validators != null) {
+			for(JWTClaimsSetValidator validator : validators) {
+				this.validators.add(validator);
+			}
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Returns the list of JWT claims set validators.
+	 * </p>
+	 * 
+	 * @return the JWT claims set validators
+	 */
+	public final List<JWTClaimsSetValidator> getValidators() {
+		return Collections.unmodifiableList(validators);
 	}
 
 	@Override
@@ -219,7 +269,10 @@ public class JWTEAuthenticator<A extends JWTClaimsSet> implements Authenticator<
 		return this.jwtService.<A>jweReader(this.type, this.keys)
 			.processedParameters(this.processedParameters)
 			.read(credentials.getToken())
-			.map(JWTEAuthentication::new)
+			.map(jwe -> {
+				this.validators.forEach(jwe.getPayload()::validate);
+				return new JWTEAuthentication<>(jwe);
+			})
 			.onErrorResume(JOSEProcessingException.class, e -> Mono.just(new JWTEAuthentication<>(e)));
 	}
 }

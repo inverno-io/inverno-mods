@@ -1654,7 +1654,18 @@ jwtClaimsSet.ifInvalidThrow();
 jwtClaimsSet.ifInvalidThrow(() -> new CustomException("Invalid credentials"));
 ```
 
-> The `JWTClaimsSet` interface can also be extended to better reflect application specificities by exposing application specific claims or specific validation logic.
+A `JWTClaimsSet` validates expiration time and not before claims by default, additional `JWTClaimsSetValidator` can be added as well by invoking `validate()` or `setValidators()` methods.
+
+In the following example, a validator is added to check that the issuer is `iss`, an `InvalidJWTException` is thrown if the issuer claim doe snot match:
+
+```java
+jwtClaimsSet.validate(JWTClaimsSetValidator.issuer("iss"));
+
+// Throws an InvalidJWTException since issuer 'joe' does not match the expected 'iss'
+jwtClaimsSet.ifInvalidThrow();
+```
+
+> It is then possible to provide custom validation logic using multiple `JWTClaimsSetValidator`, but the `JWTClaimsSet` interface can also be itself extended to better reflect application specificities by exposing application specific claims or specific validation logic.
 
 ### Building JWT
 

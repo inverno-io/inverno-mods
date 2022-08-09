@@ -56,7 +56,6 @@ import io.inverno.mod.security.jose.internal.jws.GenericJWSService;
 import io.inverno.mod.security.jose.jwa.ECCurve;
 import io.inverno.mod.security.jose.jwe.JWE;
 import io.inverno.mod.security.jose.jwe.JWEService;
-import io.inverno.mod.security.jose.jwk.JWKService;
 import io.inverno.mod.security.jose.jwk.JWKStore;
 import io.inverno.mod.security.jose.jwk.oct.OCTJWK;
 import io.inverno.mod.security.jose.jws.JWS;
