@@ -95,7 +95,6 @@ module io.inverno.mod.http.server {
 	
 	requires org.apache.commons.text;
 	requires org.apache.logging.log4j;
-	requires com.fasterxml.jackson.databind;
 	
 	requires jdk.unsupported; // required by netty for low level API for accessing direct buffers
 	requires transitive reactor.core;
