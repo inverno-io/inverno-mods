@@ -37,6 +37,7 @@ import io.netty.handler.codec.compression.Zstd;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslHandler;
 
 /**
  * <p>
@@ -113,7 +114,9 @@ public class HttpChannelConfigurer {
 	 */
 	public void configure(ChannelPipeline pipeline) {
 		if(this.configuration.tls_enabled()) {
-			pipeline.addLast("sslHandler", this.sslContext.newHandler(this.allocator));
+			SslHandler sslHandler = this.sslContext.newHandler(this.allocator);
+			sslHandler.setHandshakeTimeoutMillis(this.configuration.tls_handshake_timeout());
+			pipeline.addLast("sslHandler", sslHandler);
 			if(this.configuration.h2_enabled()) {
 				pipeline.addLast("protocolNegotiationHandler", new HttpProtocolNegotiationHandler(this));
 			}

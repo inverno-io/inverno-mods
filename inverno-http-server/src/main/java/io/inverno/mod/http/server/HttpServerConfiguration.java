@@ -313,7 +313,22 @@ public interface HttpServerConfiguration {
 	default boolean tls_enabled() {
 		return false;
 	}
-
+	
+	/**
+	 * <p>
+	 * TLS handshake timeout (ms).
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 10000}.
+	 * </p>
+	 * 
+	 * @return the TLS handshake timeout
+	 */
+	default long tls_handshake_timeout() {
+		return 10000;
+	}
+	
 	/**
 	 * <p>
 	 * Enables/Disables H2C.
