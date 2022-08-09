@@ -79,7 +79,7 @@
 		<maven.compiler.target>15</maven.compiler.target>
 		<maven.compiler.release>15</maven.compiler.release>
 
-		<version.inverno>1.5.1</version.inverno>
+		<version.inverno>1.6.0-SNAPSHOT</version.inverno>
 	</properties>
 
 	<dependencyManagement>
