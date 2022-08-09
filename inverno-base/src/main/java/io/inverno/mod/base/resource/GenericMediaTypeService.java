@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.spi.FileTypeDetector;
 
 /**
@@ -41,12 +40,12 @@ public class GenericMediaTypeService implements MediaTypeService {
 
 	@Override
 	public String getForExtension(String extension) {
-		return this.getForPath(Paths.get("." + extension));
+		return this.getForPath(Path.of("." + extension));
 	}
 
 	@Override
 	public String getForFilename(String filename) {
-		return this.getForPath(Paths.get(filename));
+		return this.getForPath(Path.of(filename));
 	}
 
 	@Override
@@ -61,6 +60,6 @@ public class GenericMediaTypeService implements MediaTypeService {
 
 	@Override
 	public String getForUri(URI uri) {
-		return this.getForPath(Paths.get(uri.getSchemeSpecificPart()));
+		return this.getForPath(Path.of(uri.getSchemeSpecificPart()));
 	}
 }

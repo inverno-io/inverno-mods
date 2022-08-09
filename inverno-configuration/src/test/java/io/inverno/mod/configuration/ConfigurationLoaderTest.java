@@ -1,17 +1,15 @@
 package io.inverno.mod.configuration;
 
+import io.inverno.mod.configuration.source.CPropsFileConfigurationSource;
+import io.inverno.mod.configuration.source.CompositeConfigurationSource;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import io.inverno.mod.configuration.source.CompositeConfigurationSource;
-import io.inverno.mod.configuration.source.CPropsFileConfigurationSource;
 
 public class ConfigurationLoaderTest {
 
@@ -22,7 +20,7 @@ public class ConfigurationLoaderTest {
 	
 	@Test
 	public void testLoad() throws URISyntaxException, MalformedURLException {
-		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-loader.cprops").toURI()));
+		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Path.of(ClassLoader.getSystemResource("test-loader.cprops").toURI()));
 		CompositeConfigurationSource comp_src = new CompositeConfigurationSource(List.of(src));
 		
 		DummyConfiguration conf = ConfigurationLoader.withConfiguration(DummyConfiguration.class).withSource(comp_src).load().block();
@@ -79,7 +77,7 @@ public class ConfigurationLoaderTest {
 	
 	@Test
 	public void testLoadConfigurator() throws URISyntaxException, MalformedURLException {
-		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-loader.cprops").toURI()));
+		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Path.of(ClassLoader.getSystemResource("test-loader.cprops").toURI()));
 		CompositeConfigurationSource comp_src = new CompositeConfigurationSource(List.of(src));
 		
 		DummyConfiguration conf = ConfigurationLoader.withConfigurator(DummyConfigurationBuilder.class, DummyConfigurationBuilder::build).withSource(comp_src).load().block();

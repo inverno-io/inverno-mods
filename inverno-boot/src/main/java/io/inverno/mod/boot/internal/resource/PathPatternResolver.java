@@ -15,15 +15,13 @@
  */
 package io.inverno.mod.boot.internal.resource;
 
+import io.inverno.mod.base.resource.ResourceException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Stream;
-
-import io.inverno.mod.base.resource.ResourceException;
 
 /**
  * <p>
@@ -43,7 +41,7 @@ import io.inverno.mod.base.resource.ResourceException;
  * 
  * <pre>{@code
  * // Returns: /base/test1/a, /base/test1/a/b, /base/test2/c...
- * Stream<Path> paths = PathPatternResolver.resolve(Paths.get("/test?/{@literal **}/*"), Paths.get("/base"));
+ * Stream<Path> paths = PathPatternResolver.resolve(Path.of("/test?/{@literal **}/*"), Path.of("/base"));
  * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -124,7 +122,7 @@ final class PathPatternResolver {
 	public static <T> Stream<T> resolve(Path pathPattern, Path basePath, Function<? super Path, ? extends T> mapper) {
 		Objects.requireNonNull(pathPattern, "path");
 		if(basePath == null) {
-			basePath = pathPattern.isAbsolute() ? Paths.get("/") : Paths.get("./");
+			basePath = pathPattern.isAbsolute() ? Path.of("/") : Path.of("./");
 		}
 		if(!Files.isDirectory(basePath) || !Files.exists(basePath)) {
 			return Stream.of();

@@ -38,7 +38,7 @@ import java.util.Optional;
  * </p>
  * 
  * <pre>{@code
- * PathResource resource = new PathResource(Paths.get("/path/to/resource"));
+ * PathResource resource = new PathResource(Path.of("/path/to/resource"));
  * ...
  * }</pre>
  * 

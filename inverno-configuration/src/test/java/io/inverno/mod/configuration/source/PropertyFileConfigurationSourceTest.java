@@ -22,7 +22,7 @@ public class PropertyFileConfigurationSourceTest {
 	
 	@Test
 	public void testPropertyFileConfigurationSource() throws URISyntaxException {
-//		PropertyFileConfigurationSource src = new PropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.properties").toURI()));
+//		PropertyFileConfigurationSource src = new PropertyFileConfigurationSource(Path.of(ClassLoader.getSystemResource("test-configuration.properties").toURI()));
 		PropertyFileConfigurationSource src = new PropertyFileConfigurationSource(new ClasspathResource(URI.create("classpath:/test-configuration.properties")));
 		List<ConfigurationQueryResult> results = src
 			.get("tata.toto").withParameters("tutu", "plop", "test", 5).and()

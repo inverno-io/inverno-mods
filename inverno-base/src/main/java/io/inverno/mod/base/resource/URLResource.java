@@ -25,7 +25,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Objects;
 import java.util.Optional;
@@ -233,7 +232,7 @@ public class URLResource extends AbstractAsyncResource {
 	@Override
 	public URLResource resolve(Path path) {
 		try {
-			URI resolvedUri = new URI(this.uri.getScheme(), this.uri.getAuthority(), Paths.get(this.uri.getPath()).resolve(path).toString(), this.uri.getQuery(), this.uri.getFragment());
+			URI resolvedUri = new URI(this.uri.getScheme(), this.uri.getAuthority(), Path.of(this.uri.getPath()).resolve(path).toString(), this.uri.getQuery(), this.uri.getFragment());
 			URLResource resolvedResource = new URLResource(resolvedUri, this.getMediaTypeService());
 			resolvedResource.setExecutor(this.getExecutor());
 			return resolvedResource;

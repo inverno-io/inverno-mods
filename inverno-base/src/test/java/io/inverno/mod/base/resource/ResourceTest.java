@@ -1,5 +1,7 @@
 package io.inverno.mod.base.resource;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -14,11 +16,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockftpserver.fake.FakeFtpServer;
@@ -27,9 +27,6 @@ import org.mockftpserver.fake.filesystem.DirectoryEntry;
 import org.mockftpserver.fake.filesystem.FileEntry;
 import org.mockftpserver.fake.filesystem.FileSystem;
 import org.mockftpserver.fake.filesystem.UnixFakeFileSystem;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import reactor.core.publisher.Flux;
 
 public class ResourceTest {
@@ -228,8 +225,8 @@ public class ResourceTest {
 	
 	@Test
 	public void testReactiveRead() throws IllegalArgumentException, IOException {
-		Path srcFile = Paths.get("src/test/resources/soufriere.png");
-		Path tgtFile = Paths.get("target/tmp/soufriere.png");
+		Path srcFile = Path.of("src/test/resources/soufriere.png");
+		Path tgtFile = Path.of("target/tmp/soufriere.png");
 		FileChannel out = FileChannel.open(tgtFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 		try(PathResource resource = new PathResource(srcFile)) {
 			resource.setExecutor(Executors.newFixedThreadPool(5));
@@ -270,8 +267,8 @@ public class ResourceTest {
 	
 	@Test
 	public void testReactiveWrite() throws IllegalArgumentException, IOException {
-		Path srcFile = Paths.get("src/test/resources/soufriere.png");
-		Path tgtFile = Paths.get("target/tmp/soufriere.png");
+		Path srcFile = Path.of("src/test/resources/soufriere.png");
+		Path tgtFile = Path.of("target/tmp/soufriere.png");
 		try(PathResource srcResource = new PathResource(srcFile);
 			PathResource tgtResource = new PathResource(tgtFile)) {
 			

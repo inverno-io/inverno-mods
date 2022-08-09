@@ -22,7 +22,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Objects;
 import java.util.Optional;
@@ -301,7 +300,7 @@ public class NativeResource extends AbstractAsyncResource {
 	@Override
 	public NativeResource resolve(Path path) throws ResourceException {
 		try {
-			URI resolvedUri = new URI(NativeResource.SCHEME_RESOURCE, Paths.get(this.uri.getRawSchemeSpecificPart()).resolve(path).toString(), null);
+			URI resolvedUri = new URI(NativeResource.SCHEME_RESOURCE, Path.of(this.uri.getRawSchemeSpecificPart()).resolve(path).toString(), null);
 			NativeResource resolvedResource = new NativeResource(resolvedUri, this.getMediaTypeService());
 			resolvedResource.setExecutor(this.getExecutor());
 			return resolvedResource;

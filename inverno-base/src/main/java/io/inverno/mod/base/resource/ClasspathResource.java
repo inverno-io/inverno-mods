@@ -15,21 +15,18 @@
  */
 package io.inverno.mod.base.resource;
 
+import io.netty.buffer.ByteBuf;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-
 import org.reactivestreams.Publisher;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * <p>
@@ -388,7 +385,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	@Override
 	public Resource resolve(Path path) throws IllegalArgumentException {
 		try {
-			URI resolvedUri = new URI(ClasspathResource.SCHEME_CLASSPATH, Paths.get(this.uri.getRawPath()).resolve(path).toString(), null);
+			URI resolvedUri = new URI(ClasspathResource.SCHEME_CLASSPATH, Path.of(this.uri.getRawPath()).resolve(path).toString(), null);
 			ClasspathResource resolvedResource;
 			if(this.clazz != null) {
 				resolvedResource = new ClasspathResource(resolvedUri, this.clazz, this.getMediaTypeService());

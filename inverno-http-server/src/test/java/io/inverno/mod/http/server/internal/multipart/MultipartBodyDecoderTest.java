@@ -1,15 +1,5 @@
 package io.inverno.mod.http.server.internal.multipart;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.List;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
-import io.netty.buffer.ByteBuf;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.converter.StringConverter;
 import io.inverno.mod.base.resource.FileResource;
@@ -17,6 +7,14 @@ import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.header.ContentDispositionCodec;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
 import io.inverno.mod.http.base.internal.header.GenericHeaderService;
+import io.netty.buffer.ByteBuf;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
 public class MultipartBodyDecoderTest {
@@ -47,7 +45,7 @@ public class MultipartBodyDecoderTest {
 			for(ByteBuf d : data) {
 				bout.write(d.array(), d.arrayOffset(), d.readableBytes());
 			}
-			Assertions.assertArrayEquals(Files.readAllBytes(Paths.get("src/test/resources/file.txt")), bout.toByteArray());
+			Assertions.assertArrayEquals(Files.readAllBytes(Path.of("src/test/resources/file.txt")), bout.toByteArray());
 		}
 	}
 }

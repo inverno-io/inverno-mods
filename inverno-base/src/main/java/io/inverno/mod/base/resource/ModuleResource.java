@@ -23,7 +23,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Objects;
 import java.util.Optional;
@@ -309,7 +308,7 @@ public class ModuleResource extends AbstractAsyncResource {
 	@Override
 	public ModuleResource resolve(Path path) throws ResourceException {
 		try {
-			URI resolvedUri = new URI(ModuleResource.SCHEME_MODULE, this.uri.getAuthority(), Paths.get(this.uri.getPath()).resolve(path).toString(), null, null);
+			URI resolvedUri = new URI(ModuleResource.SCHEME_MODULE, this.uri.getAuthority(), Path.of(this.uri.getPath()).resolve(path).toString(), null, null);
 			ModuleResource resolvedResource = new ModuleResource(resolvedUri, this.getMediaTypeService());
 			resolvedResource.setExecutor(this.getExecutor());
 			return resolvedResource;

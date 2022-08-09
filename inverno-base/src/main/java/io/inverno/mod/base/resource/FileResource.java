@@ -21,7 +21,6 @@ import java.net.URI;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Objects;
 import java.util.Optional;
@@ -118,7 +117,7 @@ public class FileResource extends AbstractAsyncResource {
 	 */
 	public FileResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
-		this.pathResource = new PathResource(Paths.get(FileResource.checkUri(uri)), mediaTypeService);
+		this.pathResource = new PathResource(Path.of(FileResource.checkUri(uri)), mediaTypeService);
 	}
 	
 	/**

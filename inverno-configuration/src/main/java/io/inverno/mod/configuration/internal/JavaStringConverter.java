@@ -32,7 +32,6 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -755,7 +754,7 @@ public class JavaStringConverter implements ObjectConverter<String> {
 	@Override
 	public Path decodePath(String value) throws ConverterException {
 		try {
-			return value != null ? Paths.get(StringEscapeUtils.unescapeJava(value)) : null;
+			return value != null ? Path.of(StringEscapeUtils.unescapeJava(value)) : null;
 		} catch (InvalidPathException e) {
 			throw new ConverterException(value + " can't be decoded to the requested type", e);
 		}

@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.base.resource;
 
+import io.netty.buffer.ByteBuf;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,16 +24,12 @@ import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
-
 import org.reactivestreams.Publisher;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * <p>
@@ -162,7 +159,7 @@ public class ZipResource extends AbstractAsyncResource {
         try {
 			this.zipUri = new URI(zipSpec);
 			this.zipFsUri = new URI(SCHEME_JAR, zipSpec, null);
-			this.resourcePath = Paths.get(spec.substring(resourcePathIndex + 1)).normalize();
+			this.resourcePath = Path.of(spec.substring(resourcePathIndex + 1)).normalize();
 		} 
         catch (URISyntaxException e) {
 			throw new IllegalArgumentException("Invalid " + scheme + " resource URI", e);
@@ -287,7 +284,7 @@ public class ZipResource extends AbstractAsyncResource {
 	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) {
 		try {
 			if(createParents) {
-				Files.createDirectories(Paths.get(this.zipUri).getParent());
+				Files.createDirectories(Path.of(this.zipUri).getParent());
 			}
 			Optional<PathResource> r = this.resolve();
 			if(r.isPresent()) {

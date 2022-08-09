@@ -23,7 +23,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.nio.file.Paths;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
@@ -83,7 +82,7 @@ final class ReferenceCountedFileSystems {
             if (sep != -1) {
                 spec = spec.substring(0, sep);
             }
-			Path fsPath = Paths.get(spec).toAbsolutePath();
+			Path fsPath = Path.of(spec).toAbsolutePath();
 			ReferenceCountedFileSystem fs = fileSystems.get(fsPath);
 			if(fs == null) {
 				fs = new ReferenceCountedFileSystem(fsPath, FileSystems.newFileSystem(uri, env));

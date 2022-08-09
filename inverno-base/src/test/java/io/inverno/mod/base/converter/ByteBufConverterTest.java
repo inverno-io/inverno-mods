@@ -15,6 +15,9 @@
  */
 package io.inverno.mod.base.converter;
 
+import io.inverno.mod.base.Charsets;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -25,7 +28,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -36,14 +38,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.inverno.mod.base.Charsets;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -126,7 +123,7 @@ public class ByteBufConverterTest {
 		buffer = CONVERTER.encode(new File("/abc.txt"));
 		Assertions.assertEquals("/abc.txt", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = CONVERTER.encode(Paths.get("/abc.txt"));
+		buffer = CONVERTER.encode(Path.of("/abc.txt"));
 		Assertions.assertEquals("/abc.txt", buffer.toString(Charsets.DEFAULT));
 		
 		buffer = CONVERTER.encode(new URI("http://127.0.0.1:8080/abc"));
@@ -198,7 +195,7 @@ public class ByteBufConverterTest {
 		File file_value = new File(".");
 		Assertions.assertEquals(file_value, CONVERTER.decode(CONVERTER.encode(file_value), File.class));
 		
-		Path path_value = Paths.get(".");
+		Path path_value = Path.of(".");
 		Assertions.assertEquals(path_value, CONVERTER.decode(CONVERTER.encode(path_value), Path.class));
 		
 		URI uri_value = new URI("file:/tmp");

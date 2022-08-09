@@ -15,13 +15,7 @@
  */
 package io.inverno.mod.http.server.internal.multipart;
 
-import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-
-import org.junit.jupiter.api.Disabled;
-
+import io.inverno.mod.base.resource.FileResource;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.DefaultHttpRequest;
@@ -35,7 +29,11 @@ import io.netty.handler.codec.http.multipart.FileUpload;
 import io.netty.handler.codec.http.multipart.HttpDataFactory;
 import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
 import io.netty.handler.codec.http.multipart.InterfaceHttpData;
-import io.inverno.mod.base.resource.FileResource;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import org.junit.jupiter.api.Disabled;
 import reactor.core.publisher.Flux;
 
 /**
@@ -106,7 +104,7 @@ public class NettyTest {
 		        	switch(ihdata.getHttpDataType()) {
 			        	case FileUpload:
 			        		FileUpload fileUpload = (FileUpload) ihdata;
-			        		try(FileChannel output = FileChannel.open(Paths.get(fileUpload.getFilename()), StandardOpenOption.CREATE, StandardOpenOption.WRITE);FileChannel input = FileChannel.open(fileUpload.getFile().toPath(), StandardOpenOption.READ)) {
+			        		try(FileChannel output = FileChannel.open(Path.of(fileUpload.getFilename()), StandardOpenOption.CREATE, StandardOpenOption.WRITE);FileChannel input = FileChannel.open(fileUpload.getFile().toPath(), StandardOpenOption.READ)) {
 			        			System.out.println("Received file: " + fileUpload.getFilename() + " - " + fileUpload.getFile().getAbsolutePath());
 			        			output.transferFrom(input, 0, input.size());
 			        			System.out.println("Created file: " + fileUpload.getFilename());

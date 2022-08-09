@@ -7,10 +7,9 @@ import io.inverno.mod.configuration.ConfigurationQueryResult;
 import io.inverno.mod.configuration.DefaultingStrategy;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +22,7 @@ public class CPropsFileConfigurationSourceTest {
 	
 	@Test
 	public void testCPropsFileConfigurationSource() throws URISyntaxException {
-//		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
+//		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Path.of(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
 		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(new ClasspathResource(URI.create("classpath:/test-configuration.cprops")));
 		List<ConfigurationQueryResult> results = src
 			.get("tata.toto").withParameters("tutu", "plop","test", 5).and()
@@ -104,7 +103,7 @@ public class CPropsFileConfigurationSourceTest {
 	
 	@Test
 	public void testNull() throws URISyntaxException {
-		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
+		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Path.of(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
 		List<ConfigurationQueryResult> results = src
 			.get("testNull")
 			.execute()
@@ -118,7 +117,7 @@ public class CPropsFileConfigurationSourceTest {
 	
 	@Test
 	public void testUnset() throws URISyntaxException {
-		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
+		CPropsFileConfigurationSource src = new CPropsFileConfigurationSource(Path.of(ClassLoader.getSystemResource("test-configuration.cprops").toURI()));
 		List<ConfigurationQueryResult> results = src
 			.get("testUnset")
 			.execute()

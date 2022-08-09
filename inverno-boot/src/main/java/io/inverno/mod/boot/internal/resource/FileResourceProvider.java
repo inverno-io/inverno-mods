@@ -15,12 +15,6 @@
  */
 package io.inverno.mod.boot.internal.resource;
 
-import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Set;
-import java.util.stream.Stream;
-
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.mod.base.resource.AbstractResourceProvider;
@@ -30,6 +24,10 @@ import io.inverno.mod.base.resource.MediaTypeService;
 import io.inverno.mod.base.resource.ResourceException;
 import io.inverno.mod.base.resource.ResourceProvider;
 import io.inverno.mod.base.resource.ResourceService;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -72,7 +70,7 @@ public class FileResourceProvider extends AbstractResourceProvider<FileResource>
 	
 	@Override
 	public Stream<FileResource> getResources(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
-		Path pathPattern = Paths.get(FileResource.checkUri(uri));
+		Path pathPattern = Path.of(FileResource.checkUri(uri));
 		return PathPatternResolver.resolve(pathPattern, path -> new FileResource(path.toUri(), this.mediaTypeService));
 	}
 	

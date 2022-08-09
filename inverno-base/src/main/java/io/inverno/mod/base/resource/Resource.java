@@ -15,18 +15,15 @@
  */
 package io.inverno.mod.base.resource;
 
+import io.netty.buffer.ByteBuf;
 import java.net.URI;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.Optional;
-
 import org.reactivestreams.Publisher;
-
-import io.netty.buffer.ByteBuf;
 
 /**
  * <p>
@@ -366,7 +363,7 @@ public interface Resource extends AutoCloseable {
 	 * @throws ResourceException if there was an error resolving the resource
 	 */
 	default Resource resolve(String path) throws ResourceException {
-		return this.resolve(Paths.get(path));
+		return this.resolve(Path.of(path));
 	}
 	
 	@Override

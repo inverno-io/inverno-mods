@@ -6,7 +6,7 @@ import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.ConfigurationQueryResult;
 import io.inverno.mod.configuration.DefaultableConfigurationSource;
 import java.net.URISyntaxException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -24,8 +24,8 @@ public class CompositeConfigurationSourceTest {
 	@Test
 	public void testCompositeConfigurationSource() throws URISyntaxException {
 		SystemPropertiesConfigurationSource src0 = new SystemPropertiesConfigurationSource();
-		CPropsFileConfigurationSource src1 = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-service-src1.cprops").toURI()));
-		CPropsFileConfigurationSource src2 = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-service-src2.cprops").toURI()));
+		CPropsFileConfigurationSource src1 = new CPropsFileConfigurationSource(Path.of(ClassLoader.getSystemResource("test-service-src1.cprops").toURI()));
+		CPropsFileConfigurationSource src2 = new CPropsFileConfigurationSource(Path.of(ClassLoader.getSystemResource("test-service-src2.cprops").toURI()));
 		
 		CompositeConfigurationSource src = new CompositeConfigurationSource(List.of(src0, src2, src1));
 		
@@ -168,8 +168,8 @@ public class CompositeConfigurationSourceTest {
 	@Test
 	public void testCompositeConfigurationSourceUnset() throws URISyntaxException {
 		SystemPropertiesConfigurationSource src0 = new SystemPropertiesConfigurationSource();
-		CPropsFileConfigurationSource src1 = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-service-src1.cprops").toURI()));
-		CPropsFileConfigurationSource src2 = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-service-src2.cprops").toURI()));
+		CPropsFileConfigurationSource src1 = new CPropsFileConfigurationSource(Path.of(ClassLoader.getSystemResource("test-service-src1.cprops").toURI()));
+		CPropsFileConfigurationSource src2 = new CPropsFileConfigurationSource(Path.of(ClassLoader.getSystemResource("test-service-src2.cprops").toURI()));
 		
 		CompositeConfigurationSource src = new CompositeConfigurationSource(List.of(src0, src2, src1));
 		
@@ -208,8 +208,8 @@ public class CompositeConfigurationSourceTest {
 	@Test
 	public void testList() throws URISyntaxException {
 		SystemPropertiesConfigurationSource src0 = new SystemPropertiesConfigurationSource();
-		CPropsFileConfigurationSource src1 = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-service-src1.cprops").toURI()));
-		CPropsFileConfigurationSource src2 = new CPropsFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("test-service-src2.cprops").toURI()));
+		CPropsFileConfigurationSource src1 = new CPropsFileConfigurationSource(Path.of(ClassLoader.getSystemResource("test-service-src1.cprops").toURI()));
+		CPropsFileConfigurationSource src2 = new CPropsFileConfigurationSource(Path.of(ClassLoader.getSystemResource("test-service-src2.cprops").toURI()));
 		
 		CompositeConfigurationSource src = new CompositeConfigurationSource(List.of(src0, src1, src2));
 		

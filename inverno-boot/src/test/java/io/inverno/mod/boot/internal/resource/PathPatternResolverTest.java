@@ -19,11 +19,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -35,7 +33,7 @@ public class PathPatternResolverTest {
 
 	@Test
 	public void test() throws IOException {
-		Path rootTestPath = Paths.get("target/pathPatternResolver");
+		Path rootTestPath = Path.of("target/pathPatternResolver");
 		
 		if(Files.exists(rootTestPath)) {
 			Files.walk(rootTestPath).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
@@ -53,25 +51,25 @@ public class PathPatternResolverTest {
 		Files.createDirectory(rootTestPath.resolve("foo/bar"));
 		Files.createFile(rootTestPath.resolve("foo/bar/titi"));
 		
-		Set<String> paths = PathPatternResolver.resolve(Paths.get("*"), rootTestPath).map(Object::toString).collect(Collectors.toSet());
+		Set<String> paths = PathPatternResolver.resolve(Path.of("*"), rootTestPath).map(Object::toString).collect(Collectors.toSet());
 		Assertions.assertEquals(Set.of("target/pathPatternResolver/tati", "target/pathPatternResolver/tata", "target/pathPatternResolver/foo", "target/pathPatternResolver/empty"), paths);
 		
-		paths = PathPatternResolver.resolve(Paths.get("**/*"), rootTestPath).map(Object::toString).collect(Collectors.toSet());
+		paths = PathPatternResolver.resolve(Path.of("**/*"), rootTestPath).map(Object::toString).collect(Collectors.toSet());
 		Assertions.assertEquals(Set.of("target/pathPatternResolver/tati", "target/pathPatternResolver/foo/tutu", "target/pathPatternResolver/tata", "target/pathPatternResolver/foo/teta", "target/pathPatternResolver/foo/bar/titi"), paths);
 		
-		paths = PathPatternResolver.resolve(Paths.get("foo/**/*"), rootTestPath).map(Object::toString).collect(Collectors.toSet());
+		paths = PathPatternResolver.resolve(Path.of("foo/**/*"), rootTestPath).map(Object::toString).collect(Collectors.toSet());
 		Assertions.assertEquals(Set.of("target/pathPatternResolver/foo/tutu","target/pathPatternResolver/foo/teta", "target/pathPatternResolver/foo/bar/titi"), paths);
 		
-		paths = PathPatternResolver.resolve(Paths.get("**/bar/*"), rootTestPath).map(Object::toString).collect(Collectors.toSet());
+		paths = PathPatternResolver.resolve(Path.of("**/bar/*"), rootTestPath).map(Object::toString).collect(Collectors.toSet());
 		Assertions.assertEquals(Set.of("target/pathPatternResolver/foo/bar/titi"), paths);
 		
-		paths = PathPatternResolver.resolve(Paths.get("**/*ti"), rootTestPath).map(Object::toString).collect(Collectors.toSet());
+		paths = PathPatternResolver.resolve(Path.of("**/*ti"), rootTestPath).map(Object::toString).collect(Collectors.toSet());
 		Assertions.assertEquals(Set.of("target/pathPatternResolver/tati", "target/pathPatternResolver/foo/bar/titi"), paths);
 		
-		paths = PathPatternResolver.resolve(Paths.get("*/*"), rootTestPath).map(Object::toString).collect(Collectors.toSet());
+		paths = PathPatternResolver.resolve(Path.of("*/*"), rootTestPath).map(Object::toString).collect(Collectors.toSet());
 		Assertions.assertEquals(Set.of("target/pathPatternResolver/foo/bar", "target/pathPatternResolver/foo/tutu", "target/pathPatternResolver/foo/teta"), paths);
 		
-		paths = PathPatternResolver.resolve(Paths.get("**/t?ta"), rootTestPath).map(Object::toString).collect(Collectors.toSet());
+		paths = PathPatternResolver.resolve(Path.of("**/t?ta"), rootTestPath).map(Object::toString).collect(Collectors.toSet());
 		Assertions.assertEquals(Set.of("target/pathPatternResolver/tata", "target/pathPatternResolver/foo/teta"), paths);
 	}
 

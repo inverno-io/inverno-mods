@@ -18,7 +18,7 @@ package io.inverno.mod.configuration;
 import io.inverno.mod.configuration.source.CompositeConfigurationSource;
 import io.inverno.mod.configuration.source.PropertyFileConfigurationSource;
 import java.net.URISyntaxException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -30,8 +30,8 @@ public class Readme {
 	
 	@Test
 	public void compositeConfigurationSource() throws URISyntaxException {
-		PropertyFileConfigurationSource src1 = new PropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("readme_comp2.properties").toURI()));
-		PropertyFileConfigurationSource src2 = new PropertyFileConfigurationSource(Paths.get(ClassLoader.getSystemResource("readme_comp2.properties").toURI()));
+		PropertyFileConfigurationSource src1 = new PropertyFileConfigurationSource(Path.of(ClassLoader.getSystemResource("readme_comp2.properties").toURI()));
+		PropertyFileConfigurationSource src2 = new PropertyFileConfigurationSource(Path.of(ClassLoader.getSystemResource("readme_comp2.properties").toURI()));
 		
 		CompositeConfigurationSource source = new CompositeConfigurationSource(List.of(src1, src2));
 		

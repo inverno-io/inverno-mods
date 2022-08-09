@@ -25,7 +25,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
@@ -33,7 +32,6 @@ import java.util.Currency;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -98,7 +96,7 @@ public class StringConverterTest {
 		File file_value = new File(".");
 		Assertions.assertEquals(file_value, converter.decodeFile(converter.encode(file_value)));
 		
-		Path path_value = Paths.get(".");
+		Path path_value = Path.of(".");
 		Assertions.assertEquals(path_value, converter.decodePath(converter.encode(path_value)));
 		
 		URI uri_value = new URI("file:/tmp");
