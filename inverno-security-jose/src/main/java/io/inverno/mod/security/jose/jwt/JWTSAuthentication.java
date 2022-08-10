@@ -30,7 +30,7 @@ import io.inverno.mod.security.jose.jwa.NoAlgorithm;
  * </p>
  * 
  * <p>
- * The authentication is considered authenticated when the underlying JWS is valid and is not using the {@link NoAlgorithm#NONE} algorithm.
+ * The authentication is considered authenticated when the underlying JWT is valid and is not using the {@link NoAlgorithm#NONE} algorithm.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

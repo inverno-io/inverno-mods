@@ -20,6 +20,7 @@ import io.inverno.mod.security.authentication.Authentication;
 import io.inverno.mod.security.authentication.Authenticator;
 import io.inverno.mod.security.authentication.TokenCredentials;
 import io.inverno.mod.security.jose.JOSEProcessingException;
+import io.inverno.mod.security.jose.jwa.NoAlgorithm;
 import io.inverno.mod.security.jose.jwk.JWK;
 import java.lang.reflect.Type;
 import org.reactivestreams.Publisher;
@@ -31,7 +32,7 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * The expected token must be a valid JWS compact string.
+ * The expected token must be a valid JWS compact string which is not using {@link NoAlgorithm#NONE} algorithm.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

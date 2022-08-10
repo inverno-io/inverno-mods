@@ -21,12 +21,16 @@ import io.inverno.mod.security.authentication.Authentication;
 import io.inverno.mod.security.authentication.InvalidCredentialsException;
 import io.inverno.mod.security.authentication.TokenAuthentication;
 import io.inverno.mod.security.jose.JOSEProcessingException;
-import java.util.Objects;
+import io.inverno.mod.security.jose.jwa.NoAlgorithm;
 import java.util.Optional;
 
 /**
  * <p>
  * A token authentication that wraps the original authentication in a JWS and uses its compact representation as token value.
+ * </p>
+ * 
+ * <p>
+ * The authentication is considered authenticated when the underlying JWS is valid and is not using the {@link NoAlgorithm#NONE} algorithm.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -108,7 +112,7 @@ public class JWSAuthentication<A extends Authentication> implements TokenAuthent
 	
 	@Override
 	public boolean isAuthenticated() {
-		return this.jws != null && this.jws.getPayload().isAuthenticated();
+		return this.jws != null && !this.jws.getHeader().getAlgorithm().equals(NoAlgorithm.NONE.getAlgorithm()) && this.jws.getPayload().isAuthenticated();
 	}
 
 	@Override
