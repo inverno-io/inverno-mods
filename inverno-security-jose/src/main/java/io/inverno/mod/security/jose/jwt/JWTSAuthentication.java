@@ -22,10 +22,15 @@ import java.util.Objects;
 import java.util.Optional;
 import io.inverno.mod.security.SecurityException;
 import io.inverno.mod.security.jose.JOSEProcessingException;
+import io.inverno.mod.security.jose.jwa.NoAlgorithm;
 
 /**
  * <p>
  * A token authentication that uses the compact representation of a JWTS as token value.
+ * </p>
+ * 
+ * <p>
+ * The authentication is considered authenticated when the underlying JWS is valid and is not using the {@link NoAlgorithm#NONE} algorithm.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -117,7 +122,7 @@ public class JWTSAuthentication<A extends JWTClaimsSet> implements TokenAuthenti
 	
 	@Override
 	public boolean isAuthenticated() {
-		return this.jwt != null && this.jwt.getPayload().isValid();
+		return this.jwt != null && !this.jwt.getHeader().getAlgorithm().equals(NoAlgorithm.NONE.getAlgorithm()) && this.jwt.getPayload().isValid();
 	}
 
 	@Override

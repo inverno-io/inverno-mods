@@ -32,7 +32,7 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * The expected token must be a valid JWTS compact string.
+ * The expected token must be a valid JWTS compact string which is not using {@link NoAlgorithm#NONE} algorithm.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
