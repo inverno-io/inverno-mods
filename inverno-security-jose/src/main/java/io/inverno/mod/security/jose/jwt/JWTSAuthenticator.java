@@ -18,6 +18,7 @@ package io.inverno.mod.security.jose.jwt;
 import io.inverno.mod.security.authentication.Authenticator;
 import io.inverno.mod.security.authentication.TokenCredentials;
 import io.inverno.mod.security.jose.JOSEProcessingException;
+import io.inverno.mod.security.jose.jwa.NoAlgorithm;
 import io.inverno.mod.security.jose.jwk.JWK;
 import java.lang.reflect.Type;
 import java.util.Collections;
