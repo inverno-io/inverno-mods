@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.security.http.form;
 
+import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.server.Exchange;
@@ -112,6 +113,8 @@ public class FormLoginPageHandler<A extends ExchangeContext, B extends Exchange<
 	public void handle(B exchange) throws HttpException {
 		String redirect_uri = exchange.request().queryParameters().get(PARAMETER_REDIRECT_URI).map(Parameter::asString).orElse(null);
 		String error = exchange.request().queryParameters().get(PARAMETER_ERROR).map(Parameter::asString).orElse(null);
-		exchange.response().body().string().stream(Mono.fromFuture(LOGIN_PAGE_RENDERER.render(this.loginActionUri, redirect_uri, error)));
+		exchange.response()
+			.headers(headers -> headers.contentType(MediaTypes.TEXT_HTML))
+			.body().string().stream(Mono.fromFuture(LOGIN_PAGE_RENDERER.render(this.loginActionUri, redirect_uri, error)));
 	}
 }
