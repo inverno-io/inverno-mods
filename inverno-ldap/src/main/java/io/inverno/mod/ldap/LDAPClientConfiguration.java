@@ -57,9 +57,15 @@ public interface LDAPClientConfiguration {
 	 * The LDAP server URI (e.g. {@code ldap://<host>:<port>/...}
 	 * </p>
 	 * 
+	 * <p>
+	 * Defaults to {@code ldap://localhost:1389}.
+	 * </p>
+	 * 
 	 * @return a URI
 	 */
-	URI uri();
+	default URI uri() {
+		return URI.create("ldap://localhost:1389");
+	}
 	
 	/**
 	 * <p>
