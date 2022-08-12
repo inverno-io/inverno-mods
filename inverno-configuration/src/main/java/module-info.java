@@ -83,6 +83,7 @@ module io.inverno.mod.configuration {
 	requires transitive reactor.core;
 	requires transitive org.reactivestreams;
 	requires org.apache.logging.log4j;
+	requires org.apache.commons.lang3;
 	requires org.apache.commons.text;
 	
 	exports io.inverno.mod.configuration;
