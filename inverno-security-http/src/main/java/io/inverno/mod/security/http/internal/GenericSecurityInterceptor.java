@@ -149,6 +149,7 @@ public class GenericSecurityInterceptor<A extends Credentials, B extends Authent
 						.map(resolver -> resolver.resolveIdentity(authentication)
 							.doOnError(io.inverno.mod.security.SecurityException.class, error -> LOGGER.debug("Failed to resolve identity", error))
 							.map(Optional::of)
+							.switchIfEmpty(Mono.just(Optional.empty()))
 						)
 						.orElse(Mono.just(Optional.empty())),
 					this.accessControllerResolver
@@ -156,6 +157,7 @@ public class GenericSecurityInterceptor<A extends Credentials, B extends Authent
 						.map(resolver -> resolver.resolveAccessController(authentication)
 							.doOnError(io.inverno.mod.security.SecurityException.class, error -> LOGGER.debug("Failed to resolve authorizations", error))
 							.map(Optional::of)
+							.switchIfEmpty(Mono.just(Optional.empty()))
 						)
 						.orElse(Mono.just(Optional.empty()))
 				)

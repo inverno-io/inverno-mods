@@ -124,12 +124,14 @@ public class GenericSecurityManager<A extends Credentials, B extends Authenticat
 						.filter(ign -> authentication.isAuthenticated())
 						.map(resolver -> resolver.resolveIdentity(authentication)
 							.map(Optional::of)
+							.switchIfEmpty(Mono.just(Optional.empty()))
 						)
 						.orElse(Mono.just(Optional.empty())),
 					this.accessControllerResolver
 						.filter(ign -> authentication.isAuthenticated())
 						.map(resolver -> resolver.resolveAccessController(authentication)
 							.map(Optional::of)
+							.switchIfEmpty(Mono.just(Optional.empty()))
 						)
 						.orElse(Mono.just(Optional.empty()))
 				)
