@@ -44,8 +44,6 @@ import reactor.core.publisher.Sinks.Many;
  */
 class Http1xRequest extends AbstractRequest {
 
-	private static final String PROTOCOL = "HTTP/1.1";
-	
 	protected final HttpRequest underlyingRequest;
 	
 	private URIBuilder pathBuilder;
@@ -93,7 +91,7 @@ class Http1xRequest extends AbstractRequest {
 	
 	@Override
 	public String getProtocol() {
-		return PROTOCOL;
+		return this.underlyingRequest.protocolVersion().text();
 	}
 	
 	@Override
