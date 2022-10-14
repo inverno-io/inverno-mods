@@ -64,10 +64,9 @@ public class GenericParameter implements Parameter {
 	
 	/**
 	 * <p>
-	 * Creates a generic parameter with the specified parameter name, parameter
-	 * value and parameter value converter.
+	 * Creates a generic parameter with the specified parameter name, parameter value and parameter value converter.
 	 * </p>
-	 * 
+	 *
 	 * @param name               a parameter name
 	 * @param value              a parameter value
 	 * @param parameterConverter a string object converter
@@ -76,6 +75,21 @@ public class GenericParameter implements Parameter {
 		this.parameterConverter = parameterConverter;
 		this.name = name;
 		this.value = value;
+	}
+	
+	/**
+	 * <p>
+	 * Creates a generic parameter with the specified parameter name, parameter value and parameter value converter.
+	 * </p>
+	 *
+	 * @param name               a parameter name
+	 * @param value              a parameter value
+	 * @param parameterConverter a string object converter
+	 */
+	public GenericParameter(String name, Object value, ObjectConverter<String> parameterConverter) {
+		this.parameterConverter = parameterConverter;
+		this.name = name;
+		this.value = parameterConverter.encode(value);
 	}
 
 	@Override

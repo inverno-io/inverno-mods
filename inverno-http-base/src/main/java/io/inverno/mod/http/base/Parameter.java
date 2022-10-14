@@ -35,5 +35,11 @@ public interface Parameter extends Convertible<String> {
 	 * 
 	 * @return a name
 	 */
+	@Override
 	String getName();
+	
+	interface Factory {
+		
+		<T> Parameter create(String name, T value);
+	}
 }
