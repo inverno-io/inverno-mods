@@ -474,14 +474,14 @@ public final class URIs {
 	/**
 	 * <p>
 	 * Percent encodes a URI component as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a> escaping the character matching the specified escaped characters predicate.
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a> escaping the characters matching the specified escaped characters predicate.
 	 * </p>
 	 *
 	 * @param component         the URI component to decode
 	 * @param escapedCharacters an escaped characters pedicate
 	 * @param charset           a charset
 	 *
-	 * @return a decoded component
+	 * @return an encoded URI component
 	 */
 	static String encodeURIComponent(String component, Predicate<Integer> escapedCharacters, Charset charset) {
 		if (escapedCharacters == null) {
@@ -524,6 +524,55 @@ public final class URIs {
 			}
 		}
 		return component;
+	}
+	
+	/**
+	 * <p>
+	 * Percent encodes a query parameter as defined by
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a> escaping non-query characters as defined by
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.4">RFC 3986 Section 3.4</a>.
+	 * </p>
+	 *
+	 * @param name    the parameter name to encode
+	 * @param value   the parameter value to encode
+	 * @param charset a charset
+	 *
+	 * @return an encoded query parameter
+	 */
+	public static String encodeQueryParameter(String name, String value, Charset charset) {
+		return encodeURIComponent(name, QueryParameterComponent.ESCAPED_CHARACTERS, charset) + "=" + encodeURIComponent(value, QueryParameterComponent.ESCAPED_CHARACTERS, charset);
+	}
+	
+	/**
+	 * <p>
+	 * Percent encodes a query string as defined by
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a> escaping non-query characters as defined by
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.4">RFC 3986 Section 3.4</a>.
+	 * </p>
+	 *
+	 * @param query    the query to encode
+	 * @param charset a charset
+	 *
+	 * @return an encoded query
+	 */
+	public static String encodeQuery(String query, Charset charset) {
+		return encodeURIComponent(query, QueryComponent.ESCAPED_CHARACTERS, charset);
+	}
+	
+	/**
+	 * <p>
+	 * Percent encodes a path segment as defined by
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a> escaping non-segment characters (including slash) as defined by
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc3986#section-3.3">RFC 3986 Section 3.3</a>.
+	 * </p>
+	 *
+	 * @param component the path segment to encode
+	 * @param charset   a charset
+	 *
+	 * @return an encoded path segment
+	 */
+	public static String encodeSegment(String component, Charset charset) {
+		return encodeURIComponent(component, SegmentComponent.ESCAPED_CHARACTERS_NO_SLASH, charset);
 	}
 
 	/**

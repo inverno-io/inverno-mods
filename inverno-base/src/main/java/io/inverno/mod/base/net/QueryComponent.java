@@ -32,7 +32,7 @@ import java.util.function.Predicate;
  */
 class QueryComponent extends AbstractParameterizedURIComponent {
 	
-	private static final Predicate<Integer> ESCAPED_CHARACTERS =  b -> {
+	public static final Predicate<Integer> ESCAPED_CHARACTERS =  b -> {
 		return !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':' || b == '@' || b == '/' || b == '?');
 	};
 	
