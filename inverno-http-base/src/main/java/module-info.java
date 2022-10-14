@@ -53,11 +53,15 @@ module io.inverno.mod.http.base {
 	
 	requires transitive io.netty.buffer;
 	requires io.netty.common;
+	requires io.netty.codec;
+	requires io.netty.codec.http;
+	requires io.netty.codec.http2;
 
 	exports io.inverno.mod.http.base;
 	exports io.inverno.mod.http.base.header;
 	exports io.inverno.mod.http.base.ws;
 
-	exports io.inverno.mod.http.base.internal to io.inverno.mod.http.server;
-	exports io.inverno.mod.http.base.internal.header to io.inverno.mod.http.server, io.inverno.mod.web;
+	exports io.inverno.mod.http.base.internal to io.inverno.mod.http.client, io.inverno.mod.http.server;
+	exports io.inverno.mod.http.base.internal.header to io.inverno.mod.http.client, io.inverno.mod.http.server, io.inverno.mod.web;
+	exports io.inverno.mod.http.base.internal.netty to io.inverno.mod.http.client, io.inverno.mod.http.server;
 }
