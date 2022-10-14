@@ -20,7 +20,7 @@ import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.ForbiddenException;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.CookieParameter;
-import io.inverno.mod.http.base.header.SetCookie;
+import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeInterceptor;
@@ -251,7 +251,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 		exchange.response().cookies(cookies -> cookies.addCookie(cookie -> {
 			cookie.name(this.cookieName)
 				.value(this.generateToken())
-				.sameSite(SetCookie.SameSitePolicy.STRICT);
+				.sameSite(Headers.SetCookie.SameSitePolicy.STRICT);
 
 			if(this.maxAge != null) {
 				cookie.maxAge(this.maxAge);

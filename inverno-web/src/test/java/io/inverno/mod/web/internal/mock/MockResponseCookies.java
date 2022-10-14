@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web.internal.mock;
 
+import io.inverno.mod.http.base.header.Headers;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -57,7 +58,7 @@ public class MockResponseCookies implements ResponseCookies {
 		private String path;
 		private Boolean secure;
 		private Boolean httpOnly;
-		private SameSitePolicy sameSite;
+		private Headers.SetCookie.SameSitePolicy sameSite;
 		
 		@Override
 		public String getName() {
@@ -118,7 +119,7 @@ public class MockResponseCookies implements ResponseCookies {
 		}
 
 		@Override
-		public Configurator sameSite(SameSitePolicy sameSite) {
+		public Configurator sameSite(Headers.SetCookie.SameSitePolicy sameSite) {
 			this.sameSite = sameSite;
 			return this;
 		}
@@ -154,7 +155,7 @@ public class MockResponseCookies implements ResponseCookies {
 		}
 
 		@Override
-		public SameSitePolicy getSameSite() {
+		public Headers.SetCookie.SameSitePolicy getSameSite() {
 			return this.sameSite;
 		}
 	}

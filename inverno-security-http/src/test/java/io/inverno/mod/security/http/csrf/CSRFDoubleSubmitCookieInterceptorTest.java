@@ -20,6 +20,7 @@ import io.inverno.mod.http.base.ForbiddenException;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.CookieParameter;
+import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.header.SetCookie;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
@@ -62,7 +63,7 @@ public class CSRFDoubleSubmitCookieInterceptorTest {
 		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).value(Mockito.anyString());
 		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).httpOnly(true);
 		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).secure(true);
-		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).sameSite(SetCookie.SameSitePolicy.STRICT);
+		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).sameSite(Headers.SetCookie.SameSitePolicy.STRICT);
 		
 		Mockito.clearInvocations(mockExchange.response(), mockCookieConfigurator);
 		
@@ -94,7 +95,7 @@ public class CSRFDoubleSubmitCookieInterceptorTest {
 		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).value(Mockito.anyString());
 		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).httpOnly(true);
 		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).secure(true);
-		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).sameSite(SetCookie.SameSitePolicy.STRICT);
+		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).sameSite(Headers.SetCookie.SameSitePolicy.STRICT);
 		
 		Mockito.clearInvocations(mockExchange.response(), mockCookieConfigurator);
 		
@@ -115,7 +116,7 @@ public class CSRFDoubleSubmitCookieInterceptorTest {
 		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).value(Mockito.anyString());
 		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).httpOnly(true);
 		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).secure(true);
-		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).sameSite(SetCookie.SameSitePolicy.STRICT);
+		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).sameSite(Headers.SetCookie.SameSitePolicy.STRICT);
 		
 		Mockito.clearInvocations(mockExchange.response(), mockCookieConfigurator);
 
@@ -145,7 +146,7 @@ public class CSRFDoubleSubmitCookieInterceptorTest {
 		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).value(Mockito.anyString());
 		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).httpOnly(true);
 		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).secure(true);
-		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).sameSite(SetCookie.SameSitePolicy.STRICT);
+		Mockito.verify(mockCookieConfigurator, Mockito.times(1)).sameSite(Headers.SetCookie.SameSitePolicy.STRICT);
 		
 		Mockito.clearInvocations(mockExchange.response(), mockCookieConfigurator);
 	}
