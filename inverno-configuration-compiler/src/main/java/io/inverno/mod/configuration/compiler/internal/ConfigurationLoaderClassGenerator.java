@@ -87,6 +87,9 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			configurationLoader_constructor.append(context.indent(1)).append("}");
 			
 			StringBuilder configurationLoader_load_method = new StringBuilder(context.indent(1)).append("public static ").append(context.getTypeName(configurationInfo.getType())).append(" load(").append(context.getTypeName(context.getConsumerType())).append("<").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("> configurer) {").append(System.lineSeparator());
+			configurationLoader_load_method.append(context.indent(2)).append("if(configurer == null) {").append(System.lineSeparator());
+			configurationLoader_load_method.append(context.indent(3)).append("return new ").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATION_INNER_CLASS).append("();").append(System.lineSeparator());
+			configurationLoader_load_method.append(context.indent(2)).append("}").append(System.lineSeparator());
 			configurationLoader_load_method.append(context.indent(2)).append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(" configurator = new ").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("();").append(System.lineSeparator());
 			configurationLoader_load_method.append(context.indent(2)).append("configurer.accept(configurator);").append(System.lineSeparator());
 			configurationLoader_load_method.append(context.indent(2)).append("return new ").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATION_INNER_CLASS).append("(");
@@ -95,7 +98,24 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 				.collect(context.joining(", ")));
 			configurationLoader_load_method.append(");").append(System.lineSeparator());
 			configurationLoader_load_method.append(context.indent(1)).append("}");
-					
+			
+			StringBuilder configurationLoader_load_override_method = new StringBuilder(context.indent(1)).append("public static ").append(context.getTypeName(configurationInfo.getType())).append(" load(").append(context.getTypeName(configurationInfo.getType())).append(" configuration, ").append(context.getTypeName(context.getConsumerType())).append("<").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("> configurer) {").append(System.lineSeparator());
+			configurationLoader_load_override_method.append(context.indent(2)).append("if(configurer == null) {").append(System.lineSeparator());
+			configurationLoader_load_override_method.append(context.indent(3)).append("return configuration;").append(System.lineSeparator());
+			configurationLoader_load_override_method.append(context.indent(2)).append("}").append(System.lineSeparator());
+			configurationLoader_load_override_method.append(context.indent(2)).append(context.getTypeName(context.getConsumerType())).append("<").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("> rootConfigurer = configurator -> configurator");
+			configurationLoader_load_override_method.append(Arrays.stream(configurationInfo.getProperties())
+				.map(propertyInfo -> new StringBuilder().append(System.lineSeparator()).append(context.indent(3)).append(".").append(propertyInfo.getQualifiedName().getPropertyName()).append("(configuration.").append(propertyInfo.getQualifiedName().getPropertyName()).append("())"))
+				.collect(context.joining())).append(";").append(System.lineSeparator()).append(System.lineSeparator());
+			configurationLoader_load_override_method.append(context.indent(2)).append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append(" configurator = new ").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATOR_INNER_CLASS).append("();").append(System.lineSeparator());
+			configurationLoader_load_override_method.append(context.indent(2)).append("rootConfigurer.andThen(configurer).accept(configurator);").append(System.lineSeparator());
+			configurationLoader_load_override_method.append(context.indent(2)).append("return new ").append(configurationLoaderClassName).append(".").append(ConfigurationLoaderClassGenerationContext.CONFIGURATION_INNER_CLASS).append("(");
+			configurationLoader_load_override_method.append(Arrays.stream(configurationInfo.getProperties())
+				.map(propertyInfo -> new StringBuilder().append("configurator.").append(propertyInfo.getQualifiedName().getPropertyName()).toString())
+				.collect(context.joining(", ")));
+			configurationLoader_load_override_method.append(");").append(System.lineSeparator());
+			configurationLoader_load_override_method.append(context.indent(1)).append("}");
+			
 			StringBuilder configurationLoader_configuration_class = this.visit(configurationInfo, context.withIndentDepth(1).withMode(GenerationMode.CONFIGURATION_IMPL_CLASS));
 			StringBuilder configurationLoader_configurator_class = this.visit(configurationInfo, context.withIndentDepth(1).withMode(GenerationMode.CONFIGURATION_CONFIGURATOR_CLASS));
 			
@@ -105,6 +125,7 @@ class ConfigurationLoaderClassGenerator implements ConfigurationInfoVisitor<Stri
 			
 			configurationLoader_class.append(configurationLoader_constructor).append(System.lineSeparator()).append(System.lineSeparator());
 			configurationLoader_class.append(configurationLoader_load_method).append(System.lineSeparator()).append(System.lineSeparator());
+			configurationLoader_class.append(configurationLoader_load_override_method).append(System.lineSeparator()).append(System.lineSeparator());
 			configurationLoader_class.append(configurationLoader_configuration_class).append(System.lineSeparator()).append(System.lineSeparator());
 			configurationLoader_class.append(configurationLoader_configurator_class).append(System.lineSeparator());
 			
