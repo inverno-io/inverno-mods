@@ -34,8 +34,14 @@ import reactor.core.scheduler.NonBlocking;
  */
 class ReactorVertxThreadFactory implements VertxThreadFactory {
 
+	private final InternalReactor reactor;
+
+	public ReactorVertxThreadFactory(InternalReactor reactor) {
+		this.reactor = reactor;
+	}
+	
 	@Override
 	public VertxThread newVertxThread(Runnable target, String name, boolean worker, long maxExecTime, TimeUnit maxExecTimeUnit) {
-		return new ReactorVertxThread(target, name, worker, maxExecTime, maxExecTimeUnit);
+		return new ReactorVertxThread(this.reactor, target, name, worker, maxExecTime, maxExecTimeUnit);
 	}
 }

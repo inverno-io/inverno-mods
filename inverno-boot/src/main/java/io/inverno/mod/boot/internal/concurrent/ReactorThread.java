@@ -16,6 +16,7 @@
 package io.inverno.mod.boot.internal.concurrent;
 
 import io.inverno.mod.base.concurrent.Reactor;
+import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.FastThreadLocalThread;
 import reactor.core.scheduler.NonBlocking;
 
@@ -33,34 +34,54 @@ import reactor.core.scheduler.NonBlocking;
  */
 class ReactorThread extends FastThreadLocalThread implements Reactor.Thread {
 
-	public ReactorThread() {
+	private final InternalReactor reactor;
+	
+	private EventLoop eventLoop;
+	
+	public ReactorThread(InternalReactor reactor) {
+		this.reactor = reactor;
 	}
 
-	public ReactorThread(Runnable target) {
+	public ReactorThread(InternalReactor reactor, Runnable target) {
 		super(target);
+		this.reactor = reactor;
 	}
 
-	public ReactorThread(String name) {
+	public ReactorThread(InternalReactor reactor, String name) {
 		super(name);
+		this.reactor = reactor;
 	}
 
-	public ReactorThread(ThreadGroup group, Runnable target) {
+	public ReactorThread(InternalReactor reactor, ThreadGroup group, Runnable target) {
 		super(group, target);
+		this.reactor = reactor;
 	}
 
-	public ReactorThread(ThreadGroup group, String name) {
+	public ReactorThread(InternalReactor reactor, ThreadGroup group, String name) {
 		super(group, name);
+		this.reactor = reactor;
 	}
 
-	public ReactorThread(Runnable target, String name) {
+	public ReactorThread(InternalReactor reactor, Runnable target, String name) {
 		super(target, name);
+		this.reactor = reactor;
 	}
 
-	public ReactorThread(ThreadGroup group, Runnable target, String name) {
+	public ReactorThread(InternalReactor reactor, ThreadGroup group, Runnable target, String name) {
 		super(group, target, name);
+		this.reactor = reactor;
 	}
 
-	public ReactorThread(ThreadGroup group, Runnable target, String name, long stackSize) {
+	public ReactorThread(InternalReactor reactor, ThreadGroup group, Runnable target, String name, long stackSize) {
 		super(group, target, name, stackSize);
+		this.reactor = reactor;
+	}
+
+	@Override
+	public EventLoop getEventLoop() {
+		if(this.eventLoop == null) {
+			this.eventLoop = this.reactor.eventLoop(this);
+		}
+		return this.eventLoop;
 	}
 }

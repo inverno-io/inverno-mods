@@ -15,9 +15,8 @@
  */
 package io.inverno.mod.boot.internal.concurrent;
 
-import java.util.concurrent.ThreadFactory;
-
 import io.netty.util.concurrent.DefaultThreadFactory;
+import java.util.concurrent.ThreadFactory;
 import reactor.core.scheduler.NonBlocking;
 
 /**
@@ -33,44 +32,55 @@ import reactor.core.scheduler.NonBlocking;
  */
 class ReactorThreadFactory extends DefaultThreadFactory {
 
-	public ReactorThreadFactory(Class<?> poolType) {
+	private final InternalReactor reactor;
+	
+	public ReactorThreadFactory(InternalReactor reactor, Class<?> poolType) {
 		super(poolType);
+		this.reactor = reactor;
 	}
 
-	public ReactorThreadFactory(String poolName) {
+	public ReactorThreadFactory(InternalReactor reactor, String poolName) {
 		super(poolName);
+		this.reactor = reactor;
 	}
 
-	public ReactorThreadFactory(Class<?> poolType, boolean daemon) {
+	public ReactorThreadFactory(InternalReactor reactor, Class<?> poolType, boolean daemon) {
 		super(poolType, daemon);
+		this.reactor = reactor;
 	}
 
-	public ReactorThreadFactory(String poolName, boolean daemon) {
+	public ReactorThreadFactory(InternalReactor reactor, String poolName, boolean daemon) {
 		super(poolName, daemon);
+		this.reactor = reactor;
 	}
 
-	public ReactorThreadFactory(Class<?> poolType, int priority) {
+	public ReactorThreadFactory(InternalReactor reactor, Class<?> poolType, int priority) {
 		super(poolType, priority);
+		this.reactor = reactor;
 	}
 
-	public ReactorThreadFactory(String poolName, int priority) {
+	public ReactorThreadFactory(InternalReactor reactor, String poolName, int priority) {
 		super(poolName, priority);
+		this.reactor = reactor;
 	}
 
-	public ReactorThreadFactory(Class<?> poolType, boolean daemon, int priority) {
+	public ReactorThreadFactory(InternalReactor reactor, Class<?> poolType, boolean daemon, int priority) {
 		super(poolType, daemon, priority);
+		this.reactor = reactor;
 	}
 
-	public ReactorThreadFactory(String poolName, boolean daemon, int priority) {
+	public ReactorThreadFactory(InternalReactor reactor, String poolName, boolean daemon, int priority) {
 		super(poolName, daemon, priority);
+		this.reactor = reactor;
 	}
 
-	public ReactorThreadFactory(String poolName, boolean daemon, int priority, ThreadGroup threadGroup) {
+	public ReactorThreadFactory(InternalReactor reactor, String poolName, boolean daemon, int priority, ThreadGroup threadGroup) {
 		super(poolName, daemon, priority, threadGroup);
+		this.reactor = reactor;
 	}
 
 	@Override
 	protected Thread newThread(Runnable r, String name) {
-		return new ReactorThread(r, name);
+		return new ReactorThread(this.reactor, r, name);
 	}
 }

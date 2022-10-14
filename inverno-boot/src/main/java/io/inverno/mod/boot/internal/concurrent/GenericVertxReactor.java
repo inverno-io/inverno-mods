@@ -22,11 +22,14 @@ import io.inverno.mod.base.concurrent.Reactor;
 import io.inverno.mod.base.concurrent.VertxReactor;
 import io.inverno.mod.base.net.NetService.TransportType;
 import io.inverno.mod.boot.BootConfiguration;
+import io.netty.channel.EventLoop;
 import io.netty.channel.EventLoopGroup;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.impl.VertxBuilder;
 import io.vertx.core.impl.VertxImpl;
+import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 /**
  * <p>
@@ -43,29 +46,35 @@ import io.vertx.core.impl.VertxImpl;
  * @since 1.2
  *
  */
-public class GenericVertxReactor implements VertxReactor, ReactorLifecycle {
+public class GenericVertxReactor implements VertxReactor, InternalReactor {
 
 	private final Logger logger = LogManager.getLogger(this.getClass());
 	
 	private final BootConfiguration configuration;
 	private final TransportType transportType;
+	private final ExecutorService workerPool;
 	
 	private final int coreEventLoopGroupSize;
 	
 	private Vertx vertx;
 	
-	private EventLoopGroup acceptorEventLoopGroup;
+	private EventLoopGroupWrapper acceptorEventLoopGroup;
+	private EventLoop[] coreEventLoops;
+	
 	private EventLoopGroup coreEventLoopGroup;
+	private EventLoop acceptorEventLoop;
 	
 	/**
 	 * <p>Creates a Vert.x reactor.</p>
 	 * 
 	 * @param configuration the boot module configuration
 	 * @param transportType the transport type
+	 * @param workerPool    the worker pool
 	 */
-	public GenericVertxReactor(BootConfiguration configuration, TransportType transportType) {
+	public GenericVertxReactor(BootConfiguration configuration, TransportType transportType, ExecutorService workerPool) {
 		this.configuration = configuration;
 		this.transportType = transportType;
+		this.workerPool = workerPool;
 		
 		this.coreEventLoopGroupSize = this.configuration.reactor_event_loop_group_size();
 	}
@@ -82,11 +91,16 @@ public class GenericVertxReactor implements VertxReactor, ReactorLifecycle {
 			.setPreferNativeTransport(this.configuration.prefer_native_transport())
 			.setEventLoopPoolSize(this.configuration.reactor_event_loop_group_size());
 
-		this.vertx = new VertxBuilder(options).threadFactory(new ReactorVertxThreadFactory()).init().vertx();
+		this.vertx = new VertxBuilder(options).threadFactory(new ReactorVertxThreadFactory(this)).init().vertx();
 
 		// This is kind of dangerous if Vert.x decide to make VertxImpl private we might be in trouble... 
-		this.acceptorEventLoopGroup = ((VertxImpl)this.vertx).getAcceptorEventLoopGroup();
 		this.coreEventLoopGroup = this.vertx.nettyEventLoopGroup();
+		this.acceptorEventLoopGroup = new EventLoopGroupWrapper(((VertxImpl)this.vertx).getAcceptorEventLoopGroup());
+		
+		for(int i=0;i<this.coreEventLoopGroupSize;i++) {
+			this.coreEventLoops[i] = this.coreEventLoopGroup.next();
+		}
+		this.acceptorEventLoop = this.acceptorEventLoopGroup.unwrap().next();
 	}
 	
 	@Override
@@ -98,6 +112,34 @@ public class GenericVertxReactor implements VertxReactor, ReactorLifecycle {
 				GenericVertxReactor.this.logger.warn("Error while stopping Vertx", result.cause());
 			}
 		});
+	}
+
+	@Override
+	public Optional<EventLoop> eventLoop() {
+		java.lang.Thread currentThread = java.lang.Thread.currentThread();
+		if(currentThread instanceof Reactor.Thread) {
+			return Optional.of(((Reactor.Thread)currentThread).getEventLoop());
+		}
+		return Optional.empty();
+	}
+	
+	@Override
+	public EventLoop eventLoop(java.lang.Thread thread) {
+		for(EventLoop eventLoop : this.coreEventLoops) {
+			if(eventLoop.inEventLoop(thread)) {
+				return eventLoop;
+			}
+		}
+		
+		if(this.acceptorEventLoop.inEventLoop(thread)) {
+			return this.acceptorEventLoop;
+		}
+		return null;
+	}
+
+	@Override
+	public ExecutorService getWorkerPool() {
+		return this.workerPool;
 	}
 	
 	@Override
@@ -116,6 +158,11 @@ public class GenericVertxReactor implements VertxReactor, ReactorLifecycle {
 			throw new IllegalArgumentException("Number of threads: " + nThreads + " exceeds core event loop group size: " + this.coreEventLoopGroupSize);
 		}
 		return new EventLoopGroupProxy(nThreads, this.coreEventLoopGroup);
+	}
+	
+	@Override
+	public EventLoop getEventLoop() {
+		return new EventLoopWrapper(this.coreEventLoopGroup.next());
 	}
 	
 	@Override

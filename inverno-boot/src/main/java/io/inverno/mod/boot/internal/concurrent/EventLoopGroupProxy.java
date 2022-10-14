@@ -15,17 +15,15 @@
  */
 package io.inverno.mod.boot.internal.concurrent;
 
-import java.util.concurrent.Executor;
-
+import io.inverno.mod.base.net.NetService;
 import io.netty.channel.EventLoop;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.MultithreadEventLoopGroup;
-import io.inverno.mod.base.net.NetService;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GlobalEventExecutor;
-import io.netty.util.concurrent.Promise;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -92,11 +90,4 @@ class EventLoopGroupProxy extends MultithreadEventLoopGroup {
 	public Future<?> shutdownGracefully(long quietPeriod, long timeout, TimeUnit unit) {
 		return new DefaultPromise<>(GlobalEventExecutor.INSTANCE).setSuccess(null);
 	}
-	
-	
-
-	
-	
-	
-	
 }

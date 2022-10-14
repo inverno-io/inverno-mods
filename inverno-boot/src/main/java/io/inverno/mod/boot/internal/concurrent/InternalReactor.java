@@ -16,13 +16,40 @@
 package io.inverno.mod.boot.internal.concurrent;
 
 import io.inverno.mod.base.concurrent.Reactor;
+import io.netty.channel.EventLoop;
 
 /**
+ * <p>
+ * The internal reactor.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.2
  */
-public interface ReactorLifecycle extends Reactor {
+public interface InternalReactor extends Reactor {
 
+	/**
+	 * <p>
+	 * Intitializes the reactor.
+	 * </p>
+	 */
 	void init();
 	
+	/**
+	 * <p>
+	 * Destroys the reactor.
+	 * </p>
+	 */
 	void destroy();
+	
+	/**
+	 * <p>
+	 * Returns the event loop associated to the specified thread.
+	 * </p>
+	 * 
+	 * @param thread a thread
+	 * 
+	 * @return an event loop or null if no event loop is associated to the specified thread
+	 */
+	EventLoop eventLoop(java.lang.Thread thread);
 }

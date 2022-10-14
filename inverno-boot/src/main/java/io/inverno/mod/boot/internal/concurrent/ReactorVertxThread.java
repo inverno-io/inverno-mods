@@ -15,10 +15,10 @@
  */
 package io.inverno.mod.boot.internal.concurrent;
 
-import java.util.concurrent.TimeUnit;
-
 import io.inverno.mod.base.concurrent.Reactor;
+import io.netty.channel.EventLoop;
 import io.vertx.core.impl.VertxThread;
+import java.util.concurrent.TimeUnit;
 import reactor.core.scheduler.NonBlocking;
 
 /**
@@ -35,7 +35,20 @@ import reactor.core.scheduler.NonBlocking;
  */
 class ReactorVertxThread extends VertxThread implements Reactor.Thread {
 
-	public ReactorVertxThread(Runnable target, String name, boolean worker, long maxExecTime, TimeUnit maxExecTimeUnit) {
+	private final InternalReactor reactor;
+	
+	private EventLoop eventLoop;
+	
+	public ReactorVertxThread(InternalReactor reactor, Runnable target, String name, boolean worker, long maxExecTime, TimeUnit maxExecTimeUnit) {
 		super(target, name, worker, maxExecTime, maxExecTimeUnit);
+		this.reactor = reactor;
+	}
+
+	@Override
+	public EventLoop getEventLoop() {
+		if(this.eventLoop == null) {
+			this.eventLoop = this.reactor.eventLoop(this);
+		}
+		return this.eventLoop;
 	}
 }

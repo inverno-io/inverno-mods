@@ -25,6 +25,7 @@ import io.inverno.mod.base.concurrent.Reactor;
 import io.inverno.mod.base.concurrent.VertxReactor;
 import io.inverno.mod.base.net.NetService.TransportType;
 import io.inverno.mod.boot.BootConfiguration;
+import java.util.concurrent.ExecutorService;
 
 /**
  * <p>
@@ -49,15 +50,15 @@ public class ReactorWrapper implements Supplier<Reactor> {
 
 	private final BootConfiguration configuration;
 	
-	private final ReactorLifecycle reactor;
+	private final InternalReactor reactor;
 	
-	public ReactorWrapper(BootConfiguration configuration, TransportType transportType) {
+	public ReactorWrapper(BootConfiguration configuration, TransportType transportType, ExecutorService workerPool) {
 		this.configuration = configuration;
 		if(this.isVertxAvailable()) {
-			this.reactor = new GenericVertxReactor(this.configuration, transportType);
+			this.reactor = new GenericVertxReactor(this.configuration, transportType, workerPool);
 		}
 		else {
-			this.reactor = new GenericReactor(this.configuration, transportType);
+			this.reactor = new GenericReactor(this.configuration, transportType, workerPool);
 		}
 	}
 
