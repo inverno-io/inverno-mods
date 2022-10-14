@@ -96,7 +96,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		private String path;
 		private Boolean secure;
 		private Boolean httpOnly;
-		private SameSitePolicy sameSite;
+		private Headers.SetCookie.SameSitePolicy sameSite;
 		
 		/**
 		 * <p>Creates an empty set-cookie header.</p>
@@ -105,7 +105,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 			super(Headers.NAME_SET_COOKIE, null, null, null);
 		}
 		
-		private SetCookie(String headerValue, String name, String value, ZonedDateTime expires, Integer maxAge, String domain, String path, Boolean secure, Boolean httpOnly, SameSitePolicy sameSite, Map<String, String> parameters) {
+		private SetCookie(String headerValue, String name, String value, ZonedDateTime expires, Integer maxAge, String domain, String path, Boolean secure, Boolean httpOnly, Headers.SetCookie.SameSitePolicy sameSite, Map<String, String> parameters) {
 			super(Headers.NAME_SET_COOKIE, headerValue, null, parameters);
 			
 			this.name = name;
@@ -160,7 +160,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		}
 
 		@Override
-		public SameSitePolicy getSameSite() {
+		public Headers.SetCookie.SameSitePolicy getSameSite() {
 			return sameSite;
 		}
 		
@@ -213,7 +213,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		}
 
 		@Override
-		public Configurator sameSite(SameSitePolicy sameSite) {
+		public Configurator sameSite(Headers.SetCookie.SameSitePolicy sameSite) {
 			this.sameSite = sameSite;
 			return this;
 		}
@@ -238,7 +238,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 			private String path;
 			private Boolean secure;
 			private Boolean httpOnly;
-			private SameSitePolicy sameSite;
+			private Headers.SetCookie.SameSitePolicy sameSite;
 			
 			private boolean expectCookiePair = true;
 			
@@ -270,7 +270,7 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 						this.httpOnly = true;
 					}
 					if(name.equalsIgnoreCase(SAME_SITE)) {
-						this.sameSite = SameSitePolicy.fromValue(value);
+						this.sameSite = Headers.SetCookie.SameSitePolicy.fromValue(value);
 					}
 					return super.parameter(name, value);
 				}

@@ -31,39 +31,6 @@ public interface SetCookie extends Cookie {
 	
 	/**
 	 * <p>
-	 * Defines a same sitz policy as defined by <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite">SameSite cookie</a>.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.5
-	 */
-	enum SameSitePolicy {
-		LAX("Lax"),
-		STRICT("Strict"),
-		NONE("None");
-		
-		private final String value;
-		
-		private SameSitePolicy(String value) {
-			this.value = value;
-		}
-
-		public String getValue() {
-			return value;
-		}
-		
-		public static SameSitePolicy fromValue(String value) throws IllegalArgumentException {
-			switch(value) {
-				case "Lax": return SameSitePolicy.LAX;
-				case "Strict": return SameSitePolicy.STRICT;
-				case "None": return SameSitePolicy.NONE;
-				default: throw new IllegalArgumentException("Unknown same site policy: " + value);
-			}
-		}
-	}
-	
-	/**
-	 * <p>
 	 * Returns cookie's expires attribute.
 	 * </p>
 	 * 
@@ -123,7 +90,7 @@ public interface SetCookie extends Cookie {
 	 * 
 	 * @return the same site attribute or null
 	 */
-	SameSitePolicy getSameSite();
+	Headers.SetCookie.SameSitePolicy getSameSite();
 
 	/**
 	 * <p>
@@ -236,6 +203,6 @@ public interface SetCookie extends Cookie {
 		 * 
 		 * @return the configurator
 		 */
-		Configurator sameSite(SameSitePolicy sameSite);
+		Configurator sameSite(Headers.SetCookie.SameSitePolicy sameSite);
 	}
 }

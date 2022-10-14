@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 public final class Headers {
 
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc5322#section-3.3">RFC 5322 Section 3.3</a>.
+	 * <a href="https://tools.ietf.org/html/rfc5322#section-3.3">RFC 5322 Section 3.3</a>.
 	 */
 	public static final DateTimeFormatter FORMATTER_RFC_5322_DATE_TIME = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH).withZone(ZoneId.of("GMT"));
 	
@@ -102,11 +102,11 @@ public final class Headers {
 	 */
 	public static final String NAME_ALLOW = "allow";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.1">RFC 7235 Section 4.1</a>.
+	 * <a href="https://tools.ietf.org/html/rfc7235#section-4.1">RFC 7235 Section 4.1</a>.
 	 */
 	public static final String NAME_AUTHORIZATION = "authorization";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7234#section-5.2">RFC 7234 Section 5.2</a>.
+	 * <a href="https://tools.ietf.org/html/rfc7234#section-5.2">RFC 7234 Section 5.2</a>.
 	 */
 	public static final String NAME_CACHE_CONTROL = "cache-control";
 	/**
@@ -122,7 +122,7 @@ public final class Headers {
 	 */
 	public static final String NAME_CONTENT_ENCODING = "content-encoding";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.1.1">RFC 7232 Section 5.1.1</a>.
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.1.1">RFC 7232 Section 5.1.1</a>.
 	 */
 	public static final String NAME_EXPECT = "expect";
 	/**
@@ -138,7 +138,7 @@ public final class Headers {
 	 */
 	public static final String NAME_COOKIE = "cookie";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-7.1.1.2">RFC 7231 Section 7.1.1.2</a>.
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-7.1.1.2">RFC 7231 Section 7.1.1.2</a>.
 	 */
 	public static final String NAME_DATE = "date";
 	/**
@@ -150,7 +150,7 @@ public final class Headers {
 	 */
 	public static final String NAME_HTTP2_SETTINGS = "http2-settings";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7232#section-2.2">RFC 7232 Section 2.2</a>.
+	 * <a href="https://tools.ietf.org/html/rfc7232#section-2.2">RFC 7232 Section 2.2</a>.
 	 */
 	public static final String NAME_LAST_MODIFIED = "last-modified";
 	/**
@@ -158,7 +158,7 @@ public final class Headers {
 	 */
 	public static final String NAME_LOCATION = "location";
 	/**
-	 * <a href="https://www.rfc-editor.org/rfc/rfc6454.html">RFC 6454</a>.
+	 * <a href="https://tools.ietf.org/html/rfc6454.html">RFC 6454</a>.
 	 * <br/>
 	 * <a href="https://fetch.spec.whatwg.org/#origin-header">Fetch living standard 3.1 Origin Header</a>.
 	 */
@@ -176,23 +176,23 @@ public final class Headers {
 	 */
 	public static final String NAME_SERVER = "server";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc6455#section-11.3.1">RFC 6455 Section 11.3.1</a>.
+	 * <a href="https://tools.ietf.org/html/rfc6455#section-11.3.1">RFC 6455 Section 11.3.1</a>.
 	 */
 	public static final String NAME_SEC_WEBSOCKET_KEY = "sec-websocket-key";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc6455#section-11.3.2">RFC 6455 Section 11.3.2</a>.
+	 * <a href="https://tools.ietf.org/html/rfc6455#section-11.3.2">RFC 6455 Section 11.3.2</a>.
 	 */
 	public static final String NAME_SEC_WEBSOCKET_EXTENSIONS = "sec-websocket-extensions";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc6455#section-11.3.3">RFC 6455 Section 11.3.3</a>.
+	 * <a href="https://tools.ietf.org/html/rfc6455#section-11.3.3">RFC 6455 Section 11.3.3</a>.
 	 */
 	public static final String NAME_SEC_WEBSOCKET_ACCEPT = "sec-websocket-accept";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc6455#section-11.3.4">RFC 6455 Section 11.3.4</a>.
+	 * <a href="https://tools.ietf.org/html/rfc6455#section-11.3.4">RFC 6455 Section 11.3.4</a>.
 	 */
 	public static final String NAME_SEC_WEBSOCKET_PROTOCOL = "sec-websocket-protocol";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc6455#section-11.3.5">RFC 6455 Section 11.3.5</a>.
+	 * <a href="https://tools.ietf.org/html/rfc6455#section-11.3.5">RFC 6455 Section 11.3.5</a>.
 	 */
 	public static final String NAME_SEC_WEBSOCKET_VERSION = "sec-websocket-version";
 	/**
@@ -216,15 +216,15 @@ public final class Headers {
 	 */
 	public static final String NAME_UPGRADE = "upgrade";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.5.3">RFC 7231 Section 5.5.3</a>.
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.5.3">RFC 7231 Section 5.5.3</a>.
 	 */
 	public static final String NAME_USER_AGENT = "user-agent";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc9110#section-12.5.5">RFC 9110 Section 12.5.5</a>.
+	 * <a href="https://tools.ietf.org/html/rfc9110#section-12.5.5">RFC 9110 Section 12.5.5</a>.
 	 */
 	public static final String NAME_VARY = "www-vary";
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.1">RFC 7235 Section 4.1</a>.
+	 * <a href="https://tools.ietf.org/html/rfc7235#section-4.1">RFC 7235 Section 4.1</a>.
 	 */
 	public static final String NAME_WWW_AUTHENTICATE = "www-authenticate";
 
@@ -252,7 +252,7 @@ public final class Headers {
 	
 	/* Header Values */
 	/**
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7231#section-5.1.1">RFC 7232 Section 5.1.1</a>.
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.1.1">RFC 7232 Section 5.1.1</a>.
 	 */
 	public static final String VALUE_100_CONTINUE = "100-continue";
 	/**
@@ -276,7 +276,11 @@ public final class Headers {
 	 */
 	public static final String VALUE_TRAILERS = "trailers";
 	/**
-	 * websocket upgrade as defined by <a href="https://datatracker.ietf.org/doc/html/rfc6455">RFC 6455</a>.
+	 * <a href="https://tools.ietf.org/html/rfc7540#section-3.2">RFC 7240 Section 3.2</a>.
+	 */
+	public static final String VALUE_UPGRADE_H2C = "h2c";
+	/**
+	 * websocket upgrade as defined by <a href="https://tools.ietf.org/html/rfc6455">RFC 6455</a>.
 	 */
 	public static final String VALUE_WEBSOCKET = "websocket";
 	/**
@@ -378,7 +382,7 @@ public final class Headers {
 	
 	/**
 	 * <p>
-	 * Authorization HTTP header as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.2">RFC 7235 Section 4.2</a>.
+	 * Authorization HTTP header as defined by <a href="https://tools.ietf.org/html/rfc7235#section-4.2">RFC 7235 Section 4.2</a>.
 	 * </p>
 	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -459,6 +463,11 @@ public final class Headers {
 		public static final String SIZE = "size";
 		
 		/**
+		 * form-data content disposition type as defined by <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
+		 */
+		public static final String TYPE_FORM_DATA = "form-data";
+		
+		/**
 		 * <p>
 		 * Returns the disposition type.
 		 * </p>
@@ -534,6 +543,43 @@ public final class Headers {
 	 */
 	public static interface SetCookie extends Header {
 		
+		/**
+		 * <p>
+		 * Defines a same site policy as defined by <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite">SameSite cookie</a>.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+		 * @since 1.5
+		 */
+		enum SameSitePolicy {
+			LAX("Lax"),
+			STRICT("Strict"),
+			NONE("None");
+
+			private final String value;
+
+			private SameSitePolicy(String value) {
+				this.value = value;
+			}
+
+			public String getValue() {
+				return value;
+			}
+
+			public static SameSitePolicy fromValue(String value) throws IllegalArgumentException {
+				switch (value) {
+					case "Lax":
+						return SameSitePolicy.LAX;
+					case "Strict":
+						return SameSitePolicy.STRICT;
+					case "None":
+						return SameSitePolicy.NONE;
+					default:
+						throw new IllegalArgumentException("Unknown same site policy: " + value);
+				}
+			}
+		}
+
 		/**
 		 * Expires parameter
 		 */
@@ -634,6 +680,15 @@ public final class Headers {
 		 * @return the cookie HTTP only flag or null
 		 */
 		Boolean isHttpOnly();
+
+		/**
+		 * <p>
+		 * Returns cookie's same site attribute.
+		 * </p>
+		 * 
+		 * @return the same site attribute or null
+		 */
+		SameSitePolicy getSameSite();
 	}
 	
 	/**
