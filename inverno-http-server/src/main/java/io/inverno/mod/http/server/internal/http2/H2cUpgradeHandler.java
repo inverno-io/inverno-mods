@@ -15,26 +15,22 @@
  */
 package io.inverno.mod.http.server.internal.http2;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.util.Base64;
-import java.util.List;
-
+import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.server.internal.HttpChannelConfigurer;
+import io.inverno.mod.http.server.internal.netty.FlatFullHttpResponse;
+import io.inverno.mod.http.server.internal.netty.LinkedHttpHeaders;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
-import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpObject;
-import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http2.DefaultHttp2DataFrame;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.DefaultHttp2HeadersFrame;
@@ -42,11 +38,11 @@ import io.netty.handler.codec.http2.Http2CodecUtil;
 import io.netty.handler.codec.http2.Http2DataFrame;
 import io.netty.handler.codec.http2.Http2HeadersFrame;
 import io.netty.handler.codec.http2.Http2Settings;
-import io.netty.util.ReferenceCountUtil;
-import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.server.internal.HttpChannelConfigurer;
-import io.inverno.mod.http.server.internal.netty.FlatFullHttpResponse;
-import io.inverno.mod.http.server.internal.netty.LinkedHttpHeaders;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.util.Base64;
+import java.util.List;
 
 /**
  * <p>
@@ -55,157 +51,128 @@ import io.inverno.mod.http.server.internal.netty.LinkedHttpHeaders;
  * 
  * <p>
  * Implements HTTP/2 over cleartext upgrade protocol as defined by
- * <a href="https://tools.ietf.org/html/rfc7540#section-3.2">RFC 7540 Section
- * 3.2</a>.
+ * <a href="https://tools.ietf.org/html/rfc7540#section-3.2">RFC 7540 Section 3.2</a>.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class H2cUpgradeHandler extends HttpObjectAggregator {
+public class H2cUpgradeHandler extends ChannelInboundHandlerAdapter {
 
 	private final HttpChannelConfigurer configurer;
 	
-	private boolean upgrading; 
+	private Http2ChannelHandler http2Connection;
+	
+	private boolean upgrading;
 	
 	/**
 	 * <p>
-	 * Creates a H2C upgrade handler handling upgrade in empty requests.
+	 * Creates a H2C upgrade handler.
 	 * </p>
 	 * 
 	 * @param configurer the HTTP channel configurer
 	 */
 	public H2cUpgradeHandler(HttpChannelConfigurer configurer) {
-		this(configurer, 0);
-	}
-	
-	/**
-	 * <p>
-	 * Creates a H2C upgrade handler handling upgrades in any requests.
-	 * </p>
-	 * 
-	 * @param configurer the HTTP channel configurer
-	 */
-	public H2cUpgradeHandler(HttpChannelConfigurer configurer, int maxContentLength) {
-		super(maxContentLength);
 		this.configurer = configurer;
 	}
 	
 	@Override
-	protected void decode(ChannelHandlerContext ctx, HttpObject msg, List<Object> out) throws Exception {
-		// Determine if we're already handling an upgrade request or just starting a new
-		// one.
-		this.upgrading |= msg instanceof HttpRequest && ((HttpRequest) msg).headers().contains(Headers.NAME_UPGRADE, Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, true);
+	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+		this.upgrading |= msg instanceof HttpRequest && ((HttpRequest) msg).headers().contains(Headers.NAME_UPGRADE, Headers.VALUE_UPGRADE_H2C, true);
 		if(!this.upgrading) {
-			// Not handling an upgrade request, just pass it to the next handler.
-			ReferenceCountUtil.retain(msg);
-			out.add(msg);
+			ctx.fireChannelRead(msg);
 			return;
 		}
+		
+		if(msg instanceof HttpRequest) {
+			HttpRequest request = (HttpRequest) msg;
+			HttpHeaders requestHeaders = request.headers();
 
-		FullHttpRequest request;
-		if (msg instanceof FullHttpRequest) {
-			request = (FullHttpRequest) msg;
-			ReferenceCountUtil.retain(msg);
-			out.add(msg);
-		} 
-		else {
-			// Call the base class to handle the aggregation of the full request.
-			super.decode(ctx, msg, out);
-			if (out.isEmpty()) {
-				// The full request hasn't been created yet, still awaiting more data.
-				return;
-			}
-			// Finished aggregating the full request, get it from the output list.
-			this.upgrading = false;
-			request = (FullHttpRequest) out.get(0);
-		}
-	
-		ChannelPipeline pipeline = ctx.pipeline();
-		HttpHeaders requestHeaders = request.headers();
-		String connection = requestHeaders.get(Headers.NAME_CONNECTION);
-		if(connection != null && connection.length() > 0) {
-			int connectionIndex = 0;
-			int length = connection.length();
-			String currentHeader = null;
-			int currentHeaderIndex = 0;
-			boolean skip = false;
-			int headersFound = 0;
-			while(connectionIndex < length) {
-				char nextChar = Character.toLowerCase(connection.charAt(connectionIndex++));
-				if(nextChar == ',' || connectionIndex == length) {
-					if(!skip) {
-						headersFound++;
-					}
-					currentHeader = null;
-					currentHeaderIndex = 0;
-					skip = false;
-				}
-				else if(!skip && nextChar != ' ') {
-					if(currentHeader == null) {
-						if(nextChar == Headers.NAME_UPGRADE.charAt(currentHeaderIndex)) {
-							currentHeader = Headers.NAME_UPGRADE;
+			// look for connection, settings...
+			String connection = requestHeaders.get(Headers.NAME_CONNECTION);
+			if(connection != null && connection.length() > 0) {
+				int connectionIndex = 0;
+				int length = connection.length();
+				String currentHeader = null;
+				int currentHeaderIndex = 0;
+				boolean skip = false;
+				int headersFound = 0;
+				while(connectionIndex < length) {
+					char nextChar = Character.toLowerCase(connection.charAt(connectionIndex++));
+					if(nextChar == ',' || connectionIndex == length) {
+						if(!skip) {
+							headersFound++;
 						}
-						else if(nextChar == Headers.NAME_HTTP2_SETTINGS.charAt(currentHeaderIndex)) {
-							currentHeader = Headers.NAME_HTTP2_SETTINGS;
+						currentHeader = null;
+						currentHeaderIndex = 0;
+						skip = false;
+					}
+					else if(!skip && nextChar != ' ') {
+						if(currentHeader == null) {
+							if(nextChar == Headers.NAME_UPGRADE.charAt(currentHeaderIndex)) {
+								currentHeader = Headers.NAME_UPGRADE;
+							}
+							else if(nextChar == Headers.NAME_HTTP2_SETTINGS.charAt(currentHeaderIndex)) {
+								currentHeader = Headers.NAME_HTTP2_SETTINGS;
+							}
+							else {
+								skip = true;
+							}
+							currentHeaderIndex++;
 						}
 						else {
-							skip = true;
+							skip = nextChar != currentHeader.charAt(currentHeaderIndex++);
 						}
-						currentHeaderIndex++;
-					}
-					else {
-						skip = nextChar != currentHeader.charAt(currentHeaderIndex++);
 					}
 				}
-			}
-			
-			if(headersFound != 2) {
-				// We must have: Connection: upgrade, http2-settings
-				this.sendBadRequest(request.protocolVersion(), ctx);
-			}
-			
-			// Connection: upgrade, http2-settings
-			List<String> http2SettingsHeader = requestHeaders.getAll(Headers.NAME_HTTP2_SETTINGS);
-			if(http2SettingsHeader.isEmpty() || http2SettingsHeader.size() > 1) {
-				// request MUST include exactly one HTTP2-Settings (Section 3.2.1) header field.
-				this.sendBadRequest(request.protocolVersion(), ctx);
-			}
-			// parse the settings
-			try {
-				Http2Settings requestHttp2Settings = this.decodeSettingsHeader(http2SettingsHeader.get(0));
-				
-				ChannelFuture sendAcceptUpgradeComplete = this.sendAcceptUpgrade(request.protocolVersion(), ctx);
-				
-				Http2ChannelHandler http2ChannelHandler = this.configurer.upgradeToHttp2(pipeline);
-				http2ChannelHandler.onHttpServerUpgrade(requestHttp2Settings);
-				http2ChannelHandler.onSettingsRead(ctx, requestHttp2Settings);
-				
-				out.clear();
-				
-				// Convert to Http2 Headers and propagate
-				DefaultHttp2Headers headers = new DefaultHttp2Headers();
-				headers.method(request.method().name());
-				headers.path(request.uri());
-				headers.authority(request.headers().get("host"));
-				headers.scheme("http");
-				request.headers().remove("http2-settings");
-				request.headers().remove("host");
-				request.headers().forEach(header -> headers.set(header.getKey().toLowerCase(), header.getValue()));
-				
-				boolean emptyRequest = request.content().readableBytes() == 0;
-				
-				Http2HeadersFrame headersFrame = new DefaultHttp2HeadersFrame(headers, emptyRequest);
-				http2ChannelHandler.onHeadersRead(ctx, 1, headersFrame.headers(), headersFrame.padding(), headersFrame.isEndStream());
-				if(!emptyRequest) {
-					Http2DataFrame dataFrame = new DefaultHttp2DataFrame(request.content(), true, 0);
-					http2ChannelHandler.onDataRead(ctx, 1, dataFrame.content(), dataFrame.padding(), dataFrame.isEndStream());
-					ctx.fireChannelRead(new DefaultHttp2DataFrame(request.content(), true, 0));
+
+				if(headersFound != 2) {
+					// We must have: Connection: upgrade, http2-settings
+					this.sendBadRequest(request.protocolVersion(), ctx);
 				}
-				sendAcceptUpgradeComplete.addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
-			} 
-			catch (IOException e) {
-				this.sendBadRequest(request.protocolVersion(), ctx);
+
+				// Connection: upgrade, http2-settings
+				List<String> http2SettingsHeader = requestHeaders.getAll(Headers.NAME_HTTP2_SETTINGS);
+				if(http2SettingsHeader.isEmpty() || http2SettingsHeader.size() > 1) {
+					// request MUST include exactly one HTTP2-Settings (Section 3.2.1) header field.
+					this.sendBadRequest(request.protocolVersion(), ctx);
+				}
+				// parse the settings
+				try {
+					Http2Settings requestHttp2Settings = this.decodeSettingsHeader(http2SettingsHeader.get(0));
+
+					this.sendAcceptUpgrade(request.protocolVersion(), ctx);
+					this.http2Connection = this.configurer.startHttp2Upgrade(ctx.pipeline());
+					this.http2Connection.onHttpServerUpgrade(requestHttp2Settings);
+					this.http2Connection.onSettingsRead(ctx, requestHttp2Settings);
+
+					// Convert to Http2 Headers and propagate
+					DefaultHttp2Headers headers = new DefaultHttp2Headers();
+					headers.method(request.method().name());
+					headers.path(request.uri());
+					headers.authority(request.headers().get("host"));
+					headers.scheme("http");
+					request.headers().remove("http2-settings");
+					request.headers().remove("host");
+					request.headers().forEach(header -> headers.set(header.getKey().toLowerCase(), header.getValue()));
+
+					Http2HeadersFrame headersFrame = new DefaultHttp2HeadersFrame(headers, false);
+					this.http2Connection.onHeadersRead(ctx, 1, headersFrame.headers(), headersFrame.padding(), headersFrame.isEndStream());
+				} 
+				catch (IOException e) {
+					this.sendBadRequest(request.protocolVersion(), ctx);
+				}
+			}
+		}
+		else if(this.http2Connection != null && msg instanceof HttpContent) {
+			// transform content in http2 frame
+			// just ignore content if connection is null since error should have been reported
+			HttpContent content = (HttpContent)msg;
+			boolean endStream = content instanceof LastHttpContent;
+			Http2DataFrame dataFrame = new DefaultHttp2DataFrame(content.content(), endStream, 0);
+			this.http2Connection.onDataRead(ctx, 1, dataFrame.content(), dataFrame.padding(), dataFrame.isEndStream());
+			if(endStream) {
+				this.configurer.completeHttp2Upgrade(ctx.pipeline());
 			}
 		}
 	}

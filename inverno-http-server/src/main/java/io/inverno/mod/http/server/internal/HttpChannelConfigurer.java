@@ -15,10 +15,6 @@
  */
 package io.inverno.mod.http.server.internal;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Supplier;
-
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.core.annotation.Lazy;
@@ -38,6 +34,9 @@ import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * <p>
@@ -136,6 +135,20 @@ public class HttpChannelConfigurer {
 	
 	/**
 	 * <p>
+	 * Configures the specified pipeline to handle HTTP/1.x requests.
+	 * </p>
+	 * 
+	 * @param pipeline the pipeline to configure
+	 * 
+	 * @return the HTTP/1.x handler
+	 */
+	public Http1xChannelHandler configureHttp1x(ChannelPipeline pipeline) {
+		this.initHttp1x(pipeline);
+		return this.handleHttp1x(pipeline);
+	}
+	
+	/**
+	 * <p>
 	 * Initializes the specified pipeline with basic handlers required to handle
 	 * HTTP/1.x requests.
 	 * </p>
@@ -170,6 +183,19 @@ public class HttpChannelConfigurer {
 	
 	/**
 	 * <p>
+	 * Configures the specified pipeline to handle HTTP/2 requests.
+	 * </p>
+	 * 
+	 * @param pipeline the pipeline to configure
+	 * 
+	 * @return the HTTP/2 handler
+	 */
+	public Http2ChannelHandler configureHttp2(ChannelPipeline pipeline) {
+		return this.handleHttp2(pipeline);
+	}
+	
+	/**
+	 * <p>
 	 * Finalizes HTTP/2 pipeline configuration by adding the HTTP/2 handler.
 	 * </p>
 	 * 
@@ -185,24 +211,9 @@ public class HttpChannelConfigurer {
 	
 	/**
 	 * <p>
-	 * Configures the specified pipeline to handle HTTP/1.x requests.
+	 * Configures the specified pipeline to handle HTTP/1.x request and HTTP/2 over cleartext upgrade.
 	 * </p>
-	 * 
-	 * @param pipeline the pipeline to configure
-	 * 
-	 * @return the HTTP/1.x handler
-	 */
-	public Http1xChannelHandler configureHttp1x(ChannelPipeline pipeline) {
-		this.initHttp1x(pipeline);
-		return this.handleHttp1x(pipeline);
-	}
-	
-	/**
-	 * <p>
-	 * Configures the specified pipeline to handle HTTP/1.x request and HTTP/2 over
-	 * cleartext upgrade.
-	 * </p>
-	 * 
+	 *
 	 * @param pipeline the pipeline to configure
 	 */
 	public void configureH2C(ChannelPipeline pipeline) {
@@ -213,15 +224,18 @@ public class HttpChannelConfigurer {
 	
 	/**
 	 * <p>
-	 * Upgrades the specified pipeline to handle HTTP/2 request over cleartext.
+	 * Starts the HTTP/2 upgrade to handle HTTP/2 request over cleartext.
+	 * </p>
+	 * 
+	 * <p>
+	 * This basically removes all HTTP/1.x related handlers except the HTTP/1.x decoder which might still be required to decode upgrading request HTTP content.
 	 * </p>
 	 * 
 	 * @param pipeline the pipeline to configure
 	 * 
 	 * @return the HTTP/2 handler
 	 */
-	public Http2ChannelHandler upgradeToHttp2(ChannelPipeline pipeline) {
-		pipeline.remove("http1xDecoder");
+	public Http2ChannelHandler startHttp2Upgrade(ChannelPipeline pipeline) {
 		pipeline.remove("http1xEncoder");
 		if (this.configuration.decompression_enabled()) {
 			pipeline.remove("http1xDecompressor");
@@ -229,22 +243,23 @@ public class HttpChannelConfigurer {
 		if (this.configuration.compression_enabled()) {
 			pipeline.remove("http1xCompressor");
 		}
-		pipeline.remove("h2cUpgradeHandler");
 		pipeline.remove("http1xHandler");
-		
 		return this.handleHttp2(pipeline);
 	}
 	
 	/**
 	 * <p>
-	 * Configures the specified pipeline to handle HTTP/2 requests.
+	 * Completes the HTTP/2 upgrade.
+	 * </p>
+	 * 
+	 * <p>
+	 * This basically removes HTTP/1.x decoder and H2C upgrade handler.
 	 * </p>
 	 * 
 	 * @param pipeline the pipeline to configure
-	 * 
-	 * @return the HTTP/2 handler
 	 */
-	public Http2ChannelHandler configureHttp2(ChannelPipeline pipeline) {
-		return this.handleHttp2(pipeline);
+	public void completeHttp2Upgrade(ChannelPipeline pipeline) {
+		pipeline.remove("http1xDecoder");
+		pipeline.remove("h2cUpgradeHandler");
 	}
 }

@@ -44,7 +44,7 @@ import reactor.core.publisher.Sinks.Many;
  */
 class Http1xRequest extends AbstractRequest {
 
-	protected final HttpRequest underlyingRequest;
+	private final HttpRequest underlyingRequest;
 	
 	private URIBuilder pathBuilder;
 	
@@ -68,6 +68,10 @@ class Http1xRequest extends AbstractRequest {
 	public Http1xRequest(ChannelHandlerContext context, HttpRequest httpRequest, RequestHeaders requestHeaders, ObjectConverter<String> parameterConverter, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
 		super(context, requestHeaders, parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder);
 		this.underlyingRequest = httpRequest;
+	}
+
+	HttpRequest getUnderlyingRequest() {
+		return underlyingRequest;
 	}
 	
 	@Override
