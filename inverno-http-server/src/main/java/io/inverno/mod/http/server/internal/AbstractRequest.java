@@ -74,7 +74,12 @@ public abstract class AbstractRequest implements Request {
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 */
-	public AbstractRequest(ChannelHandlerContext context, RequestHeaders requestHeaders, ObjectConverter<String> parameterConverter, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
+	public AbstractRequest(
+			ChannelHandlerContext context, 
+			RequestHeaders requestHeaders, 
+			ObjectConverter<String> parameterConverter, 
+			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
+			MultipartDecoder<Part> multipartBodyDecoder) {
 		this.context = context;
 		this.requestHeaders = requestHeaders;
 		this.parameterConverter = parameterConverter;

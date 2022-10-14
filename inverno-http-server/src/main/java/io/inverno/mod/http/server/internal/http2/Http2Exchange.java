@@ -37,7 +37,6 @@ import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Stream;
 import java.util.Optional;
-import reactor.core.publisher.Mono;
 
 /**
  * <p>

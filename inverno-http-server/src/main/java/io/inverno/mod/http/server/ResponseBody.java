@@ -196,7 +196,7 @@ public interface ResponseBody {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static interface Resource {
+	interface Resource {
 		
 		/**
 		 * <p>
@@ -228,7 +228,7 @@ public interface ResponseBody {
 	 * @param <B> the server-sent event type
 	 * @param <C> the server-sent event factory
 	 */
-	public interface Sse<A, B extends ResponseBody.Sse.Event<A>, C extends ResponseBody.Sse.EventFactory<A, B>> {
+	interface Sse<A, B extends ResponseBody.Sse.Event<A>, C extends ResponseBody.Sse.EventFactory<A, B>> {
 		
 		/**
 		 * <p>
@@ -250,7 +250,7 @@ public interface ResponseBody {
 		 *
 		 * @param <A> the type of data sent in the event
 		 */
-		public static interface Event<A> extends ResponseData<A> {
+		interface Event<A> extends ResponseData<A> {
 			
 			/**
 			 * <p>
@@ -298,7 +298,7 @@ public interface ResponseBody {
 		 * @param <B> the server-sent event type
 		 */
 		@FunctionalInterface
-		public static interface EventFactory<A, B extends ResponseBody.Sse.Event<A>> {
+		interface EventFactory<A, B extends ResponseBody.Sse.Event<A>> {
 			
 			/**
 			 * <p>

@@ -95,7 +95,7 @@ public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, Co
 		 */
 		public static final class Builder extends ParameterizedHeader.AbstractBuilder<Cookie, Builder> {
 
-			private ObjectConverter<String> parameterConverter;
+			private final ObjectConverter<String> parameterConverter;
 			
 			private Map<String, List<CookieParameter>> pairs;
 

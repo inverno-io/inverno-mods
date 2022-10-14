@@ -76,11 +76,11 @@ public interface ResponseHeaders {
 	 * Sets the response content length.
 	 * </p>
 	 * 
-	 * @param length the content length
+	 * @param contentLength the content length
 	 * 
 	 * @return the response headers
 	 */
-	ResponseHeaders contentLength(long length);
+	ResponseHeaders contentLength(long contentLength);
 
 	/**
 	 * <p>

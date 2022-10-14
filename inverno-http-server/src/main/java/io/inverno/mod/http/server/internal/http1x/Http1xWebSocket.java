@@ -142,7 +142,7 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 			}
 			pipeline.addLast(webSocketProtocolHandler);
 
-			this.context.fireChannelRead(((Http1xRequest)exchange.request()).underlyingRequest);
+			this.context.fireChannelRead(((Http1xRequest)exchange.request()).getUnderlyingRequest());
 			
 			return webSocketProtocolHandler.getHandshake();
 		});

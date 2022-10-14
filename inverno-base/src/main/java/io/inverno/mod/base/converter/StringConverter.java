@@ -229,7 +229,7 @@ public class StringConverter implements ObjectConverter<String> {
 	}
 	
 	private <T> String encodeCollection(Collection<T> value) {
-		return value != null ?value.stream().map(this::encode).collect(Collectors.joining(String.valueOf(this.arrayListSeparator))) : null;
+		return value != null ? value.stream().map(this::encode).collect(Collectors.joining(String.valueOf(this.arrayListSeparator))) : null;
 	}
 	
 	private <T> String encodeCollection(Collection<T> value, Type type) {

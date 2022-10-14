@@ -111,7 +111,7 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 		return new Http2ChannelHandlerBuilder().build();
 	}
 
-	private class Http2ChannelHandlerBuilder extends AbstractHttp2ConnectionHandlerBuilder<Http2ChannelHandler, Http2ChannelHandlerBuilder> implements Supplier<Http2ChannelHandler> {
+	private class Http2ChannelHandlerBuilder extends AbstractHttp2ConnectionHandlerBuilder<Http2ChannelHandler, Http2ChannelHandlerBuilder> {
 		
 		public Http2ChannelHandlerBuilder() {
 			//this.frameLogger(new Http2FrameLogger(LogLevel.INFO, Http2ConnectionAndFrameHandler.class));
@@ -125,10 +125,6 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 			Optional.ofNullable(Http2ChannelHandlerFactory.this.configuration.http2_max_header_list_size()).ifPresent(initialSettings::maxHeaderListSize);
 		}
 		
-		@Override
-		public Http2ChannelHandler get() {
-			return this.build();
-		}
 
 		@Override
 		protected Http2ChannelHandler build(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings) throws Exception {

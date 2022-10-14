@@ -83,13 +83,15 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	 * <p>
 	 * Creates a HTTP1.x channel handler.
 	 * </p>
-	 * 
-	 * @param configuration         the server configuration
-	 * @param controller            the server controller
-	 * @param headerService         the header service
-	 * @param parameterConverter    a string object converter
-	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
-	 * @param multipartBodyDecoder  the multipart/form-data body decoder
+	 *
+	 * @param configuration           the server configuration
+	 * @param controller              the server controller
+	 * @param headerService           the header service
+	 * @param parameterConverter      a string object converter
+	 * @param urlEncodedBodyDecoder   the application/x-www-form-urlencoded body decoder
+	 * @param multipartBodyDecoder    the multipart/form-data body decoder
+	 * @param webSocketFrameFactory   the WebSocket frame factory
+	 * @param webSocketMessageFactory the WebSocket message factory
 	 */
 	public Http1xChannelHandler(
 			HttpServerConfiguration configuration,

@@ -39,7 +39,7 @@ import io.inverno.mod.http.server.RequestHeaders;
  */
 public class GenericRequestCookies implements RequestCookies {
 
-	private Map<String, List<CookieParameter>> pairs; 
+	private final Map<String, List<CookieParameter>> pairs; 
 	
 	/**
 	 * <p>
@@ -61,7 +61,7 @@ public class GenericRequestCookies implements RequestCookies {
 				else {
 					return new GenericCookieParameter(parameterConverter, cookie.getName(), cookie.getValue());
 				}
-				
+
 			})
 			.collect(Collectors.groupingBy(Cookie::getName));
 	}

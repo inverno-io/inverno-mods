@@ -23,10 +23,14 @@ import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.Part;
+import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http2.DelegatingDecompressorFrameListener;
 import io.netty.handler.codec.http2.Http2Connection;
@@ -42,13 +46,8 @@ import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
-import reactor.core.publisher.Sinks.EmitResult;
-import io.inverno.mod.http.server.ServerController;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.PromiseCombiner;
-import java.util.stream.Collectors;
+import reactor.core.publisher.Sinks.EmitResult;
 
 /**
  * <p>
@@ -134,16 +133,13 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 		super.channelInactive(ctx);
 	}
-
+	
 	@Override
 	public void onError(ChannelHandlerContext ctx, boolean outbound, Throwable cause) {
 		super.onError(ctx, outbound, cause);
 		ctx.close();
 	}
 
-	/**
-	 * If receive a frame with end-of-stream set, send a pre-canned response.
-	 */
 	@Override
 	public int onDataRead(ChannelHandlerContext ctx, int streamId, ByteBuf data, int padding, boolean endOfStream) throws Http2Exception {
 		// TODO flow control?
