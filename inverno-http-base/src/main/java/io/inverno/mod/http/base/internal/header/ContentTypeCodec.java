@@ -22,6 +22,7 @@ import io.inverno.mod.http.base.header.HeaderBuilder;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
+import io.netty.util.internal.PlatformDependent;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,6 +40,8 @@ import java.util.Set;
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.ContentType, ContentTypeCodec.ContentType.Builder> {
+	
+	private static final String BOUNDARY_PADDING = "------------------------";
 	
 	/**
 	 * <p>
@@ -68,6 +71,17 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 			});
 		}
 		return result.toString();
+	}
+	
+	/**
+	 * <p>
+	 * Generates a random multipart boundary.
+	 * </p>
+	 * 
+	 * @return a multipart boundary
+	 */
+	public static String generateMultipartBoundary() {
+		return BOUNDARY_PADDING + Long.toHexString(PlatformDependent.threadLocalRandom().nextLong());
 	}
 
 	/**
