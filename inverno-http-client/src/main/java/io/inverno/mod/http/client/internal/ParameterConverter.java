@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Jeremy KUHN
+ * Copyright 2020 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,32 @@ package io.inverno.mod.http.client.internal;
 import java.util.function.Supplier;
 
 import io.inverno.core.annotation.Bean;
-import io.inverno.mod.base.net.NetService;
+import io.inverno.core.annotation.Overridable;
+import io.inverno.core.annotation.Wrapper;
+import io.inverno.core.annotation.Bean.Visibility;
+import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.base.converter.StringConverter;
 
 /**
  * <p>
- * The {@link NetService} socket.
+ * The parameter value converter using {@link StringConverter} by default.
  * </p>
  * 
  * <p>
- * The net service is used when creating the http server.
+ * The parameter value converter is used everywhere there's a need to convert
+ * parameters (ie. query parameters, cookies, headers...).
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.6
+ * @since 1.0
  */
-@Bean(name = "netService")
-public interface NetServiceSocket extends Supplier<NetService> {
+@Bean( name = "parameterConverter", visibility = Visibility.PRIVATE )
+@Wrapper
+@Overridable
+public class ParameterConverter implements Supplier<ObjectConverter<String>> {
 
+	@Override
+	public ObjectConverter<String> get() {
+		return new StringConverter();
+	}
 }

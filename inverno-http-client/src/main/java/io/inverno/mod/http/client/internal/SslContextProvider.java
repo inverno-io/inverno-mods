@@ -13,23 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.server.internal;
+package io.inverno.mod.http.client.internal;
 
-import java.io.IOException;
-import java.nio.channels.Channels;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
-import java.util.Arrays;
-import java.util.function.Supplier;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.annotation.Bean.Visibility;
+import io.inverno.mod.http.base.HttpVersion;
+import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolConfig.Protocol;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectedListenerFailureBehavior;
@@ -41,14 +30,20 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
-import io.inverno.core.annotation.Bean;
-import io.inverno.core.annotation.Bean.Strategy;
-import io.inverno.core.annotation.Bean.Visibility;
-import io.inverno.core.annotation.Init;
-import io.inverno.core.annotation.Wrapper;
-import io.inverno.mod.base.resource.Resource;
-import io.inverno.mod.base.resource.ResourceService;
-import io.inverno.mod.http.server.HttpServerConfiguration;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.X509TrustManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -58,84 +53,87 @@ import io.inverno.mod.http.server.HttpServerConfiguration;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-@Bean(visibility = Visibility.PRIVATE, strategy = Strategy.PROTOTYPE)
-@Wrapper
-public class SslContextWrapper implements Supplier<SslContext> {
+@Bean(visibility = Visibility.PRIVATE)
+public class SslContextProvider {
 	
-	private final HttpServerConfiguration configuration;
-	private final ResourceService resourceService;
+	private static final Logger LOGGER = LogManager.getLogger(SslContextProvider.class);
 	
 	private CipherSuiteFilter cipherSuiteFilter = SupportedCipherSuiteFilter.INSTANCE;
-	
-	private SslContext sslContext;
-
-	public SslContextWrapper(HttpServerConfiguration configuration, ResourceService resourceService) {
-		this.configuration = configuration;
-		this.resourceService = resourceService;
-	}
 	
 	public void setCipherSuiteFilter(CipherSuiteFilter cipherSuiteFilter) {
 		this.cipherSuiteFilter = cipherSuiteFilter;
 	}
 	
-	@Init
-	public void init() {
-		try (Resource keystoreResource = this.resourceService.getResource(this.configuration.key_store())) {
-			keystoreResource.openReadableByteChannel().ifPresentOrElse(
-				fileChannel -> {
-					try {
-						KeyStore ks = KeyStore.getInstance(this.configuration.key_store_type());
-						ks.load(Channels.newInputStream(fileChannel), this.configuration.key_store_password().toCharArray());
-						
-						final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-						kmf.init(ks, this.configuration.key_store_password().toCharArray());
-	
-						SslContextBuilder sslContextBuilder = SslContextBuilder.forServer(kmf);
-						SslProvider sslProvider = SslProvider.isAlpnSupported(SslProvider.OPENSSL) ? SslProvider.OPENSSL : SslProvider.JDK;
-						sslContextBuilder.sslProvider(sslProvider);
-	
-						if (sslProvider == SslProvider.OPENSSL) {
-							sslContextBuilder.ciphers(OpenSsl.availableOpenSslCipherSuites(), this.cipherSuiteFilter);
-						}
-						else {
-							sslContextBuilder.ciphers(OpenSsl.availableOpenSslCipherSuites(), this.cipherSuiteFilter);
-							try {
-								SSLContext context = SSLContext.getInstance("TLS");
-								context.init(null, null, null);
-								SSLEngine engine = context.createSSLEngine();
-								sslContextBuilder.ciphers(Arrays.asList(engine.getEnabledCipherSuites()));
-							} 
-							catch (KeyManagementException e) {
-								throw new RuntimeException("Error initializing SSL context", e);
-							}
-						}
-						
-						if(this.configuration.h2_enabled()) {
-							ApplicationProtocolConfig apn = new ApplicationProtocolConfig(
-								Protocol.ALPN,
-								SelectorFailureBehavior.NO_ADVERTISE,
-								SelectedListenerFailureBehavior.ACCEPT,
-								ApplicationProtocolNames.HTTP_2, 
-								ApplicationProtocolNames.HTTP_1_1
-							);
-							sslContextBuilder.applicationProtocolConfig(apn);
-						}
-						
-						this.sslContext = sslContextBuilder.build();
-					}
-					catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
-						throw new RuntimeException("Error initializing SSL context", e);
-					}
-				},
-				() -> {
-					throw new RuntimeException("Keystore does not exist or is not readable: " + this.configuration.key_store());
-				}
-			);
-		} 
-	}
+	public SslContext get(HttpClientConfiguration configuration) {
+		// TODO make this non-blocking as this can block
+		try {
+			SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
+			SslProvider sslProvider = SslProvider.isAlpnSupported(SslProvider.OPENSSL) ? SslProvider.OPENSSL : SslProvider.JDK;
+			sslContextBuilder.sslProvider(sslProvider);
+			
+			if(configuration.tls_trust_all()) {
+				sslContextBuilder.trustManager(new X509TrustManager() {
 
-	@Override
-	public SslContext get() {
-		return this.sslContext;
+					@Override
+					public X509Certificate[] getAcceptedIssuers() {
+						return new X509Certificate[0];
+					}
+
+					@Override
+					public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+
+					}
+
+					@Override
+					public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+
+					}
+				});
+			}
+			else if(configuration.tls_trust_manager_factory() != null) {
+				sslContextBuilder.trustManager(configuration.tls_trust_manager_factory());
+			}
+
+			if (sslProvider == SslProvider.OPENSSL) {
+				sslContextBuilder.ciphers(OpenSsl.availableOpenSslCipherSuites(), this.cipherSuiteFilter);
+			}
+			else {
+				sslContextBuilder.ciphers(OpenSsl.availableOpenSslCipherSuites(), this.cipherSuiteFilter);
+				SSLContext context = SSLContext.getInstance("TLS");
+				context.init(null, null, null);
+				SSLEngine engine = context.createSSLEngine();
+				sslContextBuilder.ciphers(Arrays.asList(engine.getEnabledCipherSuites()));
+			}
+			
+			Set<HttpVersion> httpVersions = configuration.http_protocol_versions();
+			if(httpVersions == null) {
+				httpVersions = HttpClientConfiguration.DEFAULT_HTTP_PROTOCOL_VERSIONS;
+			}
+			boolean http2 = false;
+			List<String> supportedProtocols = new ArrayList<>(2);
+			for(HttpVersion version : httpVersions) {
+				if(version.isAlpn()) {
+					supportedProtocols.add(version.getCode());
+					http2 |= version.equals(HttpVersion.HTTP_2_0);
+				}
+				else {
+					LOGGER.warn("ALPN does not support protocol: {}", version.getCode());
+				}
+			}
+			if(http2 || supportedProtocols.size() > 1) {
+				ApplicationProtocolConfig apn = new ApplicationProtocolConfig(
+					Protocol.ALPN,
+					SelectorFailureBehavior.NO_ADVERTISE,
+					SelectedListenerFailureBehavior.ACCEPT,
+					supportedProtocols
+				);
+				sslContextBuilder.applicationProtocolConfig(apn);
+			}
+			
+			return sslContextBuilder.build();
+		}
+		catch(NoSuchAlgorithmException | KeyManagementException| SSLException e) {
+			throw new RuntimeException("Error initializing SSL context", e);
+		}
 	}
 }

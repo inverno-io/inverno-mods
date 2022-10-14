@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,32 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.client.internal.http1x;
+package io.inverno.mod.http.client.internal;
 
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
+import java.util.List;
+import java.util.function.Supplier;
+
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.http.base.header.HeaderCodec;
+import io.inverno.mod.http.base.internal.header.GenericHeaderService;
 
 /**
  * <p>
- * A HTTP1.x connection encoder used to write data frame to the client.
+ * Header codecs socket.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
+ * 
+ * @see GenericHeaderService
  */
-interface Http1xConnectionEncoder {
-
-	/**
-	 * <p>
-	 * Writes the specified message to the specified channel handler context.
-	 * </p>
-	 * 
-	 * @param ctx     the channel handler context
-	 * @param msg     the message to write
-	 * @param promise the write promise
-	 * 
-	 * @return a channel future
-	 */
-	ChannelFuture writeFrame(ChannelHandlerContext ctx, Object msg, ChannelPromise promise);
-}
+@Bean( name = "headerCodecs" )
+public interface HeaderCodecsSocket extends Supplier<List<HeaderCodec<?>>> {}

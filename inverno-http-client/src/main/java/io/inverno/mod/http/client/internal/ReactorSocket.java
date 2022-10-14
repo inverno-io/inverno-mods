@@ -13,28 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.server.internal;
+package io.inverno.mod.http.client.internal;
 
 import java.util.function.Supplier;
 
 import io.inverno.core.annotation.Bean;
+import io.inverno.mod.base.concurrent.Reactor;
 import io.inverno.mod.base.net.NetService;
 
 /**
  * <p>
- * The {@link NetService} socket.
+ * The {@link Reactor} socket.
  * </p>
  * 
  * <p>
- * The net service is used when creating the http server.
+ * The reactor is used for connection pooling.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
- * @see HttpServer
  */
-@Bean(name = "netService")
-public interface NetServiceSocket extends Supplier<NetService> {
+@Bean(name = "reactor")
+public interface ReactorSocket extends Supplier<Reactor> {
 
 }

@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.server.internal;
+package io.inverno.mod.http.client.internal;
 
+import io.inverno.mod.http.base.HttpVersion;
+import io.inverno.mod.http.client.EndpointConnectException;
+import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
+import java.util.Set;
 
 /**
  * <p>
@@ -30,31 +34,37 @@ import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
  */
 public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiationHandler {
 
-	private final HttpChannelConfigurer channelConfigurer;
+	private final EndpointChannelConfigurer channelConfigurer;
+	private final HttpClientConfiguration configuration;
 	
-	/**
-	 * <p>
-	 * Creates a HTTP protocol negotiation handler.
-	 * </p>
-	 * 
-	 * @param channelConfigurer the channel configurer
-	 */
-	public HttpProtocolNegotiationHandler(HttpChannelConfigurer channelConfigurer) {
+	private final Set<HttpVersion> supportedProtocols;
+	
+	public HttpProtocolNegotiationHandler(EndpointChannelConfigurer channelConfigurer, HttpClientConfiguration configuration) {
 		super(ApplicationProtocolNames.HTTP_1_1);
 		this.channelConfigurer = channelConfigurer;
+		this.configuration = configuration;
+		
+		Set<HttpVersion> protocols = this.configuration.http_protocol_versions();
+		this.supportedProtocols = protocols != null ? protocols : HttpClientConfiguration.DEFAULT_HTTP_PROTOCOL_VERSIONS;
 	}
 
 	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+		// wait for after the pipeline is configured
+	}
+	
+	@Override
 	protected void configurePipeline(ChannelHandlerContext ctx, String protocol) throws Exception {
 		ChannelPipeline pipeline = ctx.pipeline();
-		if (ApplicationProtocolNames.HTTP_2.equals(protocol)) {
-			this.channelConfigurer.configureHttp2(pipeline);
+		if(ApplicationProtocolNames.HTTP_2.equals(protocol) && this.supportedProtocols.contains(HttpVersion.HTTP_2_0)) {
+			this.channelConfigurer.configureHttp2(pipeline, this.configuration);
         }
-		else if (ApplicationProtocolNames.HTTP_1_1.equals(protocol)) {
-			this.channelConfigurer.configureHttp1x(pipeline);
+		else if(ApplicationProtocolNames.HTTP_1_1.equals(protocol) && this.supportedProtocols.contains(HttpVersion.HTTP_1_1)) {
+			this.channelConfigurer.configureHttp1x(pipeline, HttpVersion.HTTP_1_1, this.configuration);
         }
 		else {
-			throw new IllegalStateException("Unsupported protocol: " + protocol);
+			throw new EndpointConnectException("Unsupported protocol: " + protocol);
 		}
+		ctx.fireChannelActive();
 	}
 }

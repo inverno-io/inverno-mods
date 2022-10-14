@@ -112,6 +112,7 @@
 		<module>inverno-boot</module>
 		<module>inverno-configuration</module>
 		<module>inverno-http-base</module>
+		<module>inverno-http-client</module>
 		<module>inverno-http-server</module>
 		<module>inverno-irt</module>
 		<module>inverno-ldap</module>

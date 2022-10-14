@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.server.internal;
+package io.inverno.mod.http.client.internal;
 
+import io.inverno.core.annotation.Bean;
+import io.inverno.core.annotation.Bean.Visibility;
+import io.inverno.mod.http.client.HttpClientConfiguration;
+import io.netty.handler.ssl.CipherSuiteFilter;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import io.netty.handler.ssl.CipherSuiteFilter;
-import io.inverno.core.annotation.Bean;
-import io.inverno.core.annotation.Bean.Visibility;
-import io.inverno.mod.http.server.HttpServerConfiguration;
 
 /**
  * <p>
@@ -36,9 +35,9 @@ import io.inverno.mod.http.server.HttpServerConfiguration;
 @Bean(visibility = Visibility.PRIVATE)
 public class SslCipherSuiteFilter implements CipherSuiteFilter {
 
-	private HttpServerConfiguration configuration;
+	private HttpClientConfiguration configuration;
 	
-	public SslCipherSuiteFilter(HttpServerConfiguration configuration) {
+	public SslCipherSuiteFilter(HttpClientConfiguration configuration) {
 		this.configuration = configuration;
 	}
 
@@ -49,10 +48,10 @@ public class SslCipherSuiteFilter implements CipherSuiteFilter {
 			filteredCiphers.add(cipher);
 		}
 		
-		if(configuration.tls_ciphers_includes() != null) {
+		if(this.configuration.tls_ciphers_includes() != null) {
 			filteredCiphers.retainAll(Arrays.asList(configuration.tls_ciphers_includes()));
 		}
-		if(configuration.tls_ciphers_excludes() != null) {
+		if(this.configuration.tls_ciphers_excludes() != null) {
 			filteredCiphers.removeAll(Arrays.asList(configuration.tls_ciphers_excludes()));
 		}
 		
