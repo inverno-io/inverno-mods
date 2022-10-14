@@ -196,7 +196,7 @@ public class WebRouteController {
 	@WebRoute(path = "/get_encoded/pub", method = Method.GET, produces = MediaTypes.TEXT_PLAIN)
 	public Publisher<String> get_encoded_pub() {
 		this.get_encoded_pub = true;
-		return Mono.just("get_encoded_pub");
+		return Flux.just("get", "_encoded", "_pub");
 	}
 	
 	public boolean get_encoded_mono;

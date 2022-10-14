@@ -25,7 +25,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.EventExecutor;
 import java.net.InetSocketAddress;
-import java.util.function.Supplier;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -79,6 +78,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	protected int transferedLength;
 
 	protected boolean single;
+	protected boolean many;
 	private ByteBuf singleChunk;
 	
 	/**
@@ -199,7 +199,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		if(this.disposable == this) {
 			super.dispose();
 		}
-		else {
+		else if(this.disposable != null) {
 			this.disposable.dispose();
 		}
 		this.request.dispose();
@@ -248,9 +248,9 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				deferHandle = LAST_RESORT_ERROR_CONTROLLER.defer(errorExchange);
 			}
 		}
-		ServerControllerSubscriber serverControllerSubscriber = this.createServerControllerSubscriber();
-		this.disposable = serverControllerSubscriber;
-		deferHandle.subscribe(serverControllerSubscriber);
+		ServerControllerSubscriber subscriber = this.createServerControllerSubscriber();
+		this.disposable = subscriber;
+		deferHandle.subscribe(subscriber);
 	}
 	
 	/**
@@ -359,20 +359,26 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	@Override
 	protected final void hookOnNext(ByteBuf value) {
 		this.transferedLength += value.readableBytes();
-		if(this.single && this.singleChunk == null) {
-			if(this.single && this.response.headers().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
-				this.response.headers().contentLength(this.transferedLength);
-			}
+		if( (this.single || !this.many) && this.singleChunk == null) {
+			// either we know we have a mono or we don't know yet if we have many
 			this.singleChunk = value;
 		}
 		else {
+			// We don't have a mono and we know we have multiple chunks
+			this.many = true;
 			if(this.request.getMethod().equals(Method.HEAD)) {
 				value.release();
 				this.executeInEventLoop(this::onCompleteEmpty);
 				this.dispose();
 			}
 			else {
-				this.executeInEventLoop(() -> this.onNextMany(value));
+				this.executeInEventLoop(() -> {
+					if(this.singleChunk != null) {
+						this.onNextMany(this.singleChunk);
+						this.singleChunk = null;
+					}
+					this.onNextMany(value);
+				});
 			}
 		}
 	}
@@ -414,9 +420,9 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			try {
 				Mono<Void> deferHandle = this.controller.defer(errorExchange);
 				this.executeInEventLoop(() -> {
-					ErrorHandlerSubscriber errorHandlerSubscriber = new ErrorHandlerSubscriber(throwable);
-					this.disposable = errorHandlerSubscriber;
-					deferHandle.subscribe(errorHandlerSubscriber);
+					ErrorHandlerSubscriber subscriber = new ErrorHandlerSubscriber(throwable);
+					this.disposable = subscriber;
+					deferHandle.subscribe(subscriber);
 				});
 			} 
 			catch (Throwable t) {
@@ -426,9 +432,9 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				// TODO This may fail as well what do we do in such situations?
 				Mono<Void> deferHandle = LAST_RESORT_ERROR_CONTROLLER.defer(errorExchange);
 				this.executeInEventLoop(() -> {
-					ErrorHandlerSubscriber errorHandlerSubscriber = new ErrorHandlerSubscriber(throwable);
-					this.disposable = errorHandlerSubscriber;
-					deferHandle.subscribe(errorHandlerSubscriber);
+					ErrorHandlerSubscriber subscriber = new ErrorHandlerSubscriber(throwable);
+					this.disposable = subscriber;
+					deferHandle.subscribe(subscriber);
 				});
 			}
 		}
@@ -457,6 +463,9 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 		else if(this.singleChunk != null) {
 			// single chunk response
+			if(this.response.headers().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
+				this.response.headers().contentLength(this.transferedLength);
+			}
 			if(this.request.getMethod().equals(Method.HEAD)) {
 				this.executeInEventLoop(() -> {
 					this.onCompleteEmpty();
@@ -787,9 +796,9 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		@Override
 		protected void hookOnComplete() {
 			AbstractExchange.this.single = AbstractExchange.this.response.isSingle();
-			ErrorSubscriber errorSubscriber = new ErrorSubscriber(this.originalError);
-			AbstractExchange.this.disposable = errorSubscriber;
-			AbstractExchange.this.response.dataSubscribe(errorSubscriber);
+			ErrorSubscriber subscriber = new ErrorSubscriber(this.originalError);
+			AbstractExchange.this.disposable = subscriber;
+			AbstractExchange.this.response.dataSubscribe(subscriber);
 		}
 	}
 }
