@@ -15,11 +15,11 @@
  */
 package io.inverno.mod.boot.internal.net;
 
-import java.net.SocketAddress;
-
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Provide;
 import io.inverno.mod.base.concurrent.Reactor;
+import io.inverno.mod.base.net.NetClientConfiguration;
+import io.inverno.mod.base.net.NetServerConfiguration;
 import io.inverno.mod.base.net.NetService;
 import io.inverno.mod.boot.BootConfiguration;
 import io.netty.bootstrap.Bootstrap;
@@ -30,6 +30,7 @@ import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.epoll.EpollDomainSocketChannel;
 import io.netty.channel.epoll.EpollServerDomainSocketChannel;
@@ -45,6 +46,7 @@ import io.netty.channel.unix.DomainSocketAddress;
 import io.netty.incubator.channel.uring.IOUringChannelOption;
 import io.netty.incubator.channel.uring.IOUringServerSocketChannel;
 import io.netty.incubator.channel.uring.IOUringSocketChannel;
+import java.net.SocketAddress;
 
 /**
  * <p>
@@ -94,16 +96,30 @@ public class GenericNetService implements @Provide NetService {
 
 	@Override
 	public Bootstrap createClient(SocketAddress socketAddress) {
-		return this.createClient(socketAddress, this.reactor.getCoreIoEventLoopGroupSize());
+		return this.createClient(socketAddress, this.configuration.net_client(), this.reactor.getCoreIoEventLoopGroupSize());
 	}
 
 	@Override
+	public Bootstrap createClient(SocketAddress socketAddress, NetClientConfiguration clientConfiguration) {
+		return this.createClient(socketAddress, clientConfiguration, this.reactor.getCoreIoEventLoopGroupSize());
+	}
+	
+	@Override
 	public Bootstrap createClient(SocketAddress socketAddress, int nThreads) {
+		return this.createClient(socketAddress, this.configuration.net_client(), nThreads);
+	}
+
+	@Override
+	public Bootstrap createClient(SocketAddress socketAddress, NetClientConfiguration clientConfiguration, int nThreads) throws IllegalArgumentException {
+		if(clientConfiguration == null) {
+			clientConfiguration = this.configuration.net_client();
+		}
 		Bootstrap bootstrap = new Bootstrap();
 		bootstrap.group(this.reactor.createIoEventLoopGroup(nThreads));
+		boolean isDomain = socketAddress instanceof DomainSocketAddress;
 		switch(this.transportType) {
 			case KQUEUE: {
-				if(socketAddress instanceof DomainSocketAddress) {
+				if(isDomain) {
 					bootstrap.channelFactory(KQueueDomainSocketChannel::new);
 				}
 				else {
@@ -112,16 +128,21 @@ public class GenericNetService implements @Provide NetService {
 				break;
 			}
 			case EPOLL: {
-				if(socketAddress instanceof DomainSocketAddress) {
+				if(isDomain) {
 					bootstrap.channelFactory(EpollDomainSocketChannel::new);
 				}
 				else {
 					bootstrap.channelFactory(EpollSocketChannel::new);
 				}
+				bootstrap.option(EpollChannelOption.TCP_QUICKACK, clientConfiguration.tcp_quickack())
+					.option(EpollChannelOption.TCP_CORK, clientConfiguration.tcp_cork());
+				
 				break;
 			}
 			case IO_URING: {
 				bootstrap.channelFactory(IOUringSocketChannel::new);
+				bootstrap.option(EpollChannelOption.TCP_QUICKACK, clientConfiguration.tcp_quickack())
+					.option(EpollChannelOption.TCP_CORK, clientConfiguration.tcp_cork());
 				break;
 			}
 			default: {
@@ -129,23 +150,59 @@ public class GenericNetService implements @Provide NetService {
 			}
 		}
 		
-		// TODO client bootstrap configuration 
+		bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, clientConfiguration.connect_timeout())
+			.option(ChannelOption.ALLOCATOR, this.allocator);
+		
+		if(!isDomain) {
+			bootstrap.option(ChannelOption.SO_REUSEADDR, clientConfiguration.reuse_address())
+				.option(ChannelOption.SO_KEEPALIVE, clientConfiguration.keep_alive())
+				.option(ChannelOption.TCP_NODELAY, clientConfiguration.tcp_no_delay());
+		}
+		if(clientConfiguration.snd_buffer() != null) {
+			bootstrap.option(ChannelOption.SO_SNDBUF, clientConfiguration.snd_buffer());
+		}
+		if(clientConfiguration.rcv_buffer() != null) {
+			bootstrap.option(ChannelOption.SO_RCVBUF, clientConfiguration.rcv_buffer());
+			bootstrap.option(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(clientConfiguration.rcv_buffer()));
+		}
+		if(clientConfiguration.linger() != null) {
+			bootstrap.option(ChannelOption.SO_LINGER, clientConfiguration.linger());
+		}
+		if(clientConfiguration.ip_tos() != null) {
+			bootstrap.option(ChannelOption.IP_TOS, clientConfiguration.ip_tos());
+		}
+		if(clientConfiguration.tcp_fast_open_connect()) {
+			bootstrap.option(ChannelOption.TCP_FASTOPEN_CONNECT, clientConfiguration.tcp_fast_open_connect());
+		}
 		return bootstrap;
+	}
+	
+	@Override
+	public ServerBootstrap createServer(SocketAddress socketAddress) {
+		return this.createServer(socketAddress, this.configuration.net_server(), this.reactor.getCoreIoEventLoopGroupSize());
 	}
 
 	@Override
-	public ServerBootstrap createServer(SocketAddress socketAddress) {
-		return this.createServer(socketAddress, this.reactor.getCoreIoEventLoopGroupSize());
+	public ServerBootstrap createServer(SocketAddress socketAddress, NetServerConfiguration serverConfiguration) {
+		return this.createServer(socketAddress, serverConfiguration, this.reactor.getCoreIoEventLoopGroupSize());
 	}
 
 	@Override
 	public ServerBootstrap createServer(SocketAddress socketAddress, int nThreads) {
+		return this.createServer(socketAddress, this.configuration.net_server(), nThreads);
+	}
+
+	@Override
+	public ServerBootstrap createServer(SocketAddress socketAddress, NetServerConfiguration serverConfiguration, int nThreads) throws IllegalArgumentException {
+		if(serverConfiguration == null) {
+			serverConfiguration = this.configuration.net_server();
+		}
 		ServerBootstrap bootstrap = new ServerBootstrap();
 		bootstrap.group(this.reactor.getAcceptorEventLoopGroup(), this.reactor.createIoEventLoopGroup(nThreads));
-		
+		boolean isDomain = socketAddress instanceof DomainSocketAddress;
 		switch(this.transportType) {
 			case KQUEUE: {
-				if(socketAddress instanceof DomainSocketAddress) {
+				if(isDomain) {
 					bootstrap.channelFactory(KQueueServerDomainSocketChannel::new);
 				}
 				else {
@@ -154,37 +211,55 @@ public class GenericNetService implements @Provide NetService {
 				break;
 			}
 			case EPOLL: {
-				if(socketAddress instanceof DomainSocketAddress) {
+				if(isDomain) {
 					bootstrap.channelFactory(EpollServerDomainSocketChannel::new);
 				}
 				else {
 					bootstrap.channelFactory(EpollServerSocketChannel::new);
 				}
-				bootstrap.option(EpollChannelOption.SO_REUSEPORT, this.configuration.reuse_port())
-					.childOption(EpollChannelOption.TCP_QUICKACK, this.configuration.tcp_quickack())
-					.childOption(EpollChannelOption.TCP_CORK, this.configuration.tcp_cork());
+				bootstrap.option(EpollChannelOption.SO_REUSEPORT, serverConfiguration.reuse_port())
+					.childOption(EpollChannelOption.TCP_QUICKACK, serverConfiguration.tcp_quickack())
+					.childOption(EpollChannelOption.TCP_CORK, serverConfiguration.tcp_cork());
 				break;
 			}
 			case IO_URING: {
 				bootstrap.channelFactory(IOUringServerSocketChannel::new);
-				bootstrap.option(IOUringChannelOption.SO_REUSEPORT, this.configuration.reuse_port())
-					.childOption(IOUringChannelOption.TCP_QUICKACK, this.configuration.tcp_quickack())
-					.childOption(IOUringChannelOption.TCP_CORK, this.configuration.tcp_cork());
+				bootstrap.option(IOUringChannelOption.SO_REUSEPORT, serverConfiguration.reuse_port())
+					.childOption(IOUringChannelOption.TCP_QUICKACK, serverConfiguration.tcp_quickack())
+					.childOption(IOUringChannelOption.TCP_CORK, serverConfiguration.tcp_cork());
 				break;
 			}
 			default: {
 				bootstrap.channelFactory(NioServerSocketChannel::new);
 			}
-		
 		}
 		
-		bootstrap.option(ChannelOption.SO_REUSEADDR, this.configuration.reuse_address())
-			.childOption(ChannelOption.SO_KEEPALIVE, this.configuration.keep_alive())
-			.childOption(ChannelOption.TCP_NODELAY, this.configuration.tcp_no_delay())
-			.childOption(ChannelOption.ALLOCATOR, this.allocator);
+		bootstrap.option(ChannelOption.SO_REUSEADDR, serverConfiguration.reuse_address());
+		if(serverConfiguration.accept_backlog() != null) {
+			bootstrap.option(ChannelOption.SO_BACKLOG, serverConfiguration.accept_backlog());
+		}
 		
-		if(this.configuration.accept_backlog() != null) {
-			bootstrap.option(ChannelOption.SO_BACKLOG, this.configuration.accept_backlog());
+		bootstrap.childOption(ChannelOption.ALLOCATOR, this.allocator);
+		if(!isDomain) {
+			bootstrap
+				.childOption(ChannelOption.SO_KEEPALIVE, serverConfiguration.keep_alive())
+				.childOption(ChannelOption.TCP_NODELAY, serverConfiguration.tcp_no_delay());
+		}
+		if(serverConfiguration.snd_buffer() != null) {
+			bootstrap.childOption(ChannelOption.SO_SNDBUF, serverConfiguration.snd_buffer());
+		}
+		if(serverConfiguration.rcv_buffer() != null) {
+			bootstrap.childOption(ChannelOption.SO_RCVBUF, serverConfiguration.rcv_buffer());
+			bootstrap.childOption(ChannelOption.RCVBUF_ALLOCATOR, new FixedRecvByteBufAllocator(serverConfiguration.rcv_buffer()));
+		}
+		if(serverConfiguration.linger() != null) {
+			bootstrap.childOption(ChannelOption.SO_LINGER, serverConfiguration.linger());
+		}
+		if(serverConfiguration.ip_tos() != null) {
+			bootstrap.childOption(ChannelOption.IP_TOS, serverConfiguration.ip_tos());
+		}
+		if(serverConfiguration.tcp_fast_open() != null) {
+			bootstrap.option(ChannelOption.TCP_FASTOPEN, serverConfiguration.tcp_fast_open());
 		}
 		return bootstrap;
 	}

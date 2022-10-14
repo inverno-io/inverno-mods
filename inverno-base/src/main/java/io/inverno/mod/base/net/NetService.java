@@ -95,18 +95,42 @@ public interface NetService {
 	
 	/**
 	 * <p>
-	 * Creates a client bootstrap that will connect to the specified address with
-	 * the specified amount of threads.
+	 * Creates a client bootstrap that will connect to the specified address with the specified configuration and all available threads.
 	 * </p>
-	 * 
+	 *
+	 * @param socketAddress       the socket address to connect to
+	 * @param clientConfiguration the client configuration
+	 *
+	 * @return a client bootstrap
+	 */
+	Bootstrap createClient(SocketAddress socketAddress, NetClientConfiguration clientConfiguration);
+	
+	/**
+	 * <p>
+	 * Creates a client bootstrap that will connect to the specified address with amount of threads.
+	 * </p>
+	 *
 	 * @param socketAddress the socket address to connect to
 	 * @param nThreads      the number of threads to allocate
-	 * 
+	 *
 	 * @return a client bootstrap
-	 * @throws IllegalArgumentException if the specified number of thread exceeds
-	 *                                  the number of threads available
+	 * @throws IllegalArgumentException if the specified number of thread exceeds the number of threads available
 	 */
 	Bootstrap createClient(SocketAddress socketAddress, int nThreads) throws IllegalArgumentException;
+	
+	/**
+	 * <p>
+	 * Creates a client bootstrap that will connect to the specified address with the specified configuration and amount of threads.
+	 * </p>
+	 *
+	 * @param socketAddress       the socket address to connect to
+	 * @param clientConfiguration the client configuration
+	 * @param nThreads            the number of threads to allocate
+	 *
+	 * @return a client bootstrap
+	 * @throws IllegalArgumentException if the specified number of thread exceeds the number of threads available
+	 */
+	Bootstrap createClient(SocketAddress socketAddress, NetClientConfiguration clientConfiguration, int nThreads) throws IllegalArgumentException;
 	
 	/**
 	 * <p>
@@ -122,6 +146,18 @@ public interface NetService {
 	
 	/**
 	 * <p>
+	 * Creates a server bootstrap that will bind to the specified address with the specified configuration and all available threads.
+	 * </p>
+	 *
+	 * @param socketAddress       the socket address to bind to
+	 * @param serverConfiguration the server configuration
+	 *
+	 * @return a server bootstrap
+	 */
+	ServerBootstrap createServer(SocketAddress socketAddress, NetServerConfiguration serverConfiguration);
+	
+	/**
+	 * <p>
 	 * Creates a server bootstrap that will bind to the specified address with the
 	 * specified amount of threads.
 	 * </p>
@@ -134,6 +170,20 @@ public interface NetService {
 	 *                                  the number of threads available
 	 */
 	ServerBootstrap createServer(SocketAddress socketAddress, int nThreads) throws IllegalArgumentException;
+	
+	/**
+	 * <p>
+	 * Creates a server bootstrap that will bind to the specified address with the specified server configuration and amount of threads.
+	 * </p>
+	 *
+	 * @param socketAddress       the socket address to bind to
+	 * @param serverConfiguration the server configuration
+	 * @param nThreads            the number of threads to allocate
+	 *
+	 * @return a server bootstrap
+	 * @throws IllegalArgumentException if the specified number of thread exceeds the number of threads available
+	 */
+	ServerBootstrap createServer(SocketAddress socketAddress, NetServerConfiguration serverConfiguration, int nThreads) throws IllegalArgumentException;
 	
 	/**
 	 * <p>

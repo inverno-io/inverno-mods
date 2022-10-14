@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,109 +33,22 @@ public interface BootConfiguration {
 
 	/**
 	 * <p>
-	 * Enables/Disables socket address re-use .
+	 * Net client global configuration.
 	 * </p>
 	 * 
-	 * <p>
-	 * Defaults to true.
-	 * </p>
-	 * 
-	 * @return true if the option is enabled, false otherwise
+	 * @return the Net client global configuration
 	 */
-	default boolean reuse_address() {
-		return true;
-	};
-
-	/**
-	 * <p>
-	 * Enables/Disables socket port re-use.
-	 * </p>
-	 * 
-	 * <p>
-	 * Defaults to true.
-	 * </p>
-	 * 
-	 * @return true if the option is enabled, false otherwise
-	 */
-	default boolean reuse_port() {
-		return true;
-	}
-
-	/**
-	 * <p>
-	 * Enables/Disables socket keep alive.
-	 * </p>
-	 * 
-	 * <p>
-	 * Defaults to false.
-	 * </p>
-	 * 
-	 * @return true if the option is enabled, false otherwise
-	 */
-	default boolean keep_alive() {
-		return false;
-	}
-
-	/**
-	 * <p>
-	 * The accept backlog.
-	 * </p>
-	 * 
-	 * <p>
-	 * Defaults to 1024.
-	 * </p>
-	 * 
-	 * @return the accept backlog
-	 */
-	default Integer accept_backlog() {
-		return 1024;
-	}
+	BootNetClientConfiguration net_client();
 	
 	/**
 	 * <p>
-	 * Enables/Disables TCP no delay.
+	 * Net server global configuration.
 	 * </p>
 	 * 
-	 * <p>
-	 * Defaults to true.
-	 * </p>
-	 * 
-	 * @return true if the option is enabled, false otherwise
+	 * @return the Net server global configuration
 	 */
-	default boolean tcp_no_delay() {
-		return true;
-	}
-
-	/**
-	 * <p>
-	 * Enables/Disables TCP quick ack.
-	 * </p>
-	 * 
-	 * <p>
-	 * Defaults to false.
-	 * </p>
-	 * 
-	 * @return true if the option is enabled, false otherwise
-	 */
-	default boolean tcp_quickack() {
-		return false;
-	}
-
-	/**
-	 * <p>
-	 * Enables/Disables TCP cork.
-	 * </p>
-	 * 
-	 * <p>
-	 * Defaults to false.
-	 * </p>
-	 * 
-	 * @return true if the option is enabled, false otherwise
-	 */
-	default boolean tcp_cork() {
-		return false;
-	}
-
+	BootNetServerConfiguration net_server();
+	
 	/**
 	 * <p>
 	 * Enables/Disables native transport when available.
