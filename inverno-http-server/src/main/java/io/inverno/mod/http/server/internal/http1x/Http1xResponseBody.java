@@ -67,22 +67,20 @@ class Http1xResponseBody extends GenericResponseBody {
 	 * @return an optional returning a file region publisher or an empty optional if
 	 *         no file region has been set in the response
 	 */
-	public Optional<Publisher<FileRegion>> getFileRegionData() {
-		return Optional.ofNullable(this.fileRegionData);
+	public Publisher<FileRegion> getFileRegionData() {
+		return this.fileRegionData;
 	}
 	
 	@Override
 	public Resource resource() {
 		// fileregion is supported when we are not using ssl and we do not compress content
-		if(!((Http1xResponse)this.response).supportsFileRegion()) {
-			return super.resource();
-		}
-		else {
+		if(((Http1xResponse)this.response).supportsFileRegion()) {
 			if(this.resourceData == null) {
 				this.resourceData = new Http1xResponseBodyResourceData();
 			}
 			return this.resourceData;
 		}
+		return super.resource();
 	}
 
 	/**
@@ -111,7 +109,7 @@ class Http1xResponseBody extends GenericResponseBody {
 				if(resource.isFile().orElse(false) && !(resource instanceof ZipResource)) {
 					// We need to create the file region and then send an empty response
 					// The Http1xServerExchange should then complete and check whether there is a file region or not
-					FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable"));
+					FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource is not readable: " + resource.getURI()));
 					
 					long size = resource.size().get();
 					int count = (int)Math.ceil((float)size / (float)MAX_FILE_REGION_SIZE);
@@ -136,7 +134,7 @@ class Http1xResponseBody extends GenericResponseBody {
 					Http1xResponseBody.this.setData(Flux.empty());
 				}
 				else {
-					Http1xResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable")));
+					Http1xResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource is not readable: " + resource.getURI())));
 				}
 			}
 			else {

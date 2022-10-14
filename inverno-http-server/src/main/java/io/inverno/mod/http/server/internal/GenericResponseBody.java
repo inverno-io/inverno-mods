@@ -285,11 +285,6 @@ public class GenericResponseBody implements ResponseBody {
 					resource.lastModified().ifPresent(lastModified -> {
 						h.set(Headers.NAME_LAST_MODIFIED, Headers.FORMATTER_RFC_5322_DATE_TIME.format(lastModified.toInstant()));
 					});
-					
-					String mediaType = resource.getMediaType();
-					if(mediaType != null) {
-						h.contentType(mediaType);
-					}
 				}
 			});
 		}
@@ -302,7 +297,7 @@ public class GenericResponseBody implements ResponseBody {
 			// internal server error
 			if(resource.exists().orElse(true)) {
 				this.populateHeaders(resource);
-				GenericResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource " + resource + " is not readable")));
+				GenericResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource is not readable: " + resource.getURI())));
 			}
 			else {
 				throw new NotFoundException();

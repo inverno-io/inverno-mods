@@ -58,6 +58,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
 
@@ -92,7 +93,7 @@ class Http1xExchange extends AbstractExchange {
 	final HttpVersion version;	
 	Http1xExchange next;
 	boolean keepAlive;
-	boolean trailers;
+	boolean acceptTrailers;
 	
 	private Http1xWebSocket webSocket;
 	
@@ -138,7 +139,7 @@ class Http1xExchange extends AbstractExchange {
 			(this.version.isKeepAliveDefault() || headers.containsValue(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE, true));
 
 		String te = httpRequest.headers().get(Headers.NAME_TE);
-		this.trailers = te != null && te.contains(Headers.VALUE_TRAILERS);
+		this.acceptTrailers = te != null && te.contains(Headers.VALUE_TRAILERS);
 		
 		this.webSocketFrameFactory = webSocketFrameFactory;
 		this.webSocketMessageFactory = webSocketMessageFactory;
@@ -186,7 +187,7 @@ class Http1xExchange extends AbstractExchange {
 			internalHeaders.remove(HttpHeaderNames.TRANSFER_ENCODING);
 			internalHeaders.remove(HttpHeaderNames.CONTENT_LENGTH);
 		}
-		if(this.trailers && internalTrailers != null) {
+		if(this.acceptTrailers && internalTrailers != null) {
 			internalHeaders.set(Headers.NAME_TRAILER, internalTrailers.names().stream().collect(Collectors.joining(", ")));
 		}
 	}
@@ -246,6 +247,7 @@ class Http1xExchange extends AbstractExchange {
 		Http1xResponse http1xResponse = (Http1xResponse)this.response;
 		Http1xResponseHeaders headers = http1xResponse.headers();
 		
+		// TODO at least for resources we could provide the actual content length
 		if(this.request.getMethod().equals(Method.HEAD)) {
 			if(headers.getContentLength() == null && !headers.contains(Headers.NAME_TRANSFER_ENCODING)) {
 				headers.set(Headers.NAME_TRANSFER_ENCODING, Headers.VALUE_CHUNKED);
@@ -257,22 +259,23 @@ class Http1xExchange extends AbstractExchange {
 		}
 		else {
 			// empty response or file region
-			http1xResponse.body().getFileRegionData().ifPresentOrElse(
-				fileRegionData -> {
-					// Headers are not written here since we have an empty response
-					this.encoder.writeFrame(this.context, this.createHttpResponse(headers, http1xResponse.trailers()), this.context.voidPromise());
-					headers.setWritten(true);
-					fileRegionData.subscribe(new FileRegionDataSubscriber());
-				},
-				() -> {
-					// just write headers in a fullHttpResponse
-					// Headers are not written here since we have an empty response
-					ChannelPromise finalizePromise = this.context.newPromise();
-					this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), finalizePromise);
-					headers.setWritten(true);
-					this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
-				}
-			);
+			Publisher<FileRegion> fileRegionData = http1xResponse.body().getFileRegionData();
+			if(fileRegionData == null) {
+				// just write headers in a fullHttpResponse
+				// Headers are not written here since we have an empty response
+				ChannelPromise finalizePromise = this.context.newPromise();
+				this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0)), finalizePromise);
+				headers.setWritten(true);
+				this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
+			}
+			else {
+				// Headers are not written here since we have an empty response
+				this.encoder.writeFrame(this.context, this.createHttpResponse(headers, http1xResponse.trailers()), this.context.voidPromise());
+				headers.setWritten(true);
+				FileRegionDataSubscriber subscriber = new FileRegionDataSubscriber();
+				this.disposable = subscriber;
+				fileRegionData.subscribe(subscriber);
+			}
 		}
 	}
 	
@@ -291,7 +294,7 @@ class Http1xExchange extends AbstractExchange {
 	@Override
 	protected void onCompleteMany() {
 		Http1xResponseTrailers responseTrailers = (Http1xResponseTrailers)this.response.trailers();
-		Object msg = responseTrailers != null ? new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, responseTrailers.getUnderlyingTrailers()) : LastHttpContent.EMPTY_LAST_CONTENT;
+		Object msg = this.acceptTrailers && responseTrailers != null ? new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, responseTrailers.getUnderlyingTrailers()) : LastHttpContent.EMPTY_LAST_CONTENT;
 		
 		ChannelPromise finalizePromise = this.context.newPromise();
 		this.encoder.writeFrame(this.context, msg, finalizePromise);
