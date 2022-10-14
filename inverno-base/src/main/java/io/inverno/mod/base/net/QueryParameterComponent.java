@@ -39,7 +39,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 class QueryParameterComponent implements ParameterizedURIComponent {
 	
-	private static final Predicate<Integer> ESCAPED_CHARACTERS =  b -> {
+	public static final Predicate<Integer> ESCAPED_CHARACTERS =  b -> {
 		return !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':' || b == '@' || b == '/' || b == '?');
 	};
 	
@@ -113,25 +113,25 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 	 * Return the parameter value after replacing the parameters with the string representation of the specified values.
 	 * </p>
 	 *
-	 * @param values an array of values to replace the component's parameters
+	 * @param values a list of values to replace the component's parameters
 	 *
 	 * @return the parameter value
 	 *
 	 * @throws IllegalArgumentException if there's not enough values to replace all parameters
 	 */
-	public String getParameterValue(Object... values) throws IllegalArgumentException {
+	public String getParameterValue(List<Object> values) throws IllegalArgumentException {
 		StringBuilder result = new StringBuilder();
 		if(this.parameters.isEmpty()) {
 			return result.append(this.rawValue).toString();
 		}
-		if(values.length != this.parameters.size()) {
-			throw new IllegalArgumentException("Missing values to generate query parameter " + this.rawName + ": " + this.parameters.stream().map(URIParameter::getName).skip(values.length).collect(Collectors.joining(", ")));
+		if(values.size() != this.parameters.size()) {
+			throw new IllegalArgumentException("Missing values to generate query parameter " + this.rawName + ": " + this.parameters.stream().map(URIParameter::getName).skip(values.size()).collect(Collectors.joining(", ")));
 		}
 		
 		int valueIndex = 0;
 		for(int i = 0;i<this.parameters.size();i++) {
 			URIParameter parameter = this.parameters.get(i);
-			String parameterValue = parameter.checkValue(values[i].toString());
+			String parameterValue = parameter.checkValue(values.get(i).toString());
 			if(parameter.getOffset() > valueIndex) {
 				result.append(this.rawValue.substring(valueIndex, parameter.getOffset()));
 			}
@@ -192,7 +192,7 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 	
 	@Override
 	public String getValue() {
-		return this.getValue(new Object[0]);
+		return this.getValue(List.of());
 	}
 	
 	@Override
@@ -250,7 +250,7 @@ class QueryParameterComponent implements ParameterizedURIComponent {
 	}
 	
 	@Override
-	public String getValue(Object... values) {
+	public String getValue(List<Object> values) {
 		return new StringBuilder().append(URIs.encodeURIComponent(this.getParameterName(), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset)).append("=").append(URIs.encodeURIComponent(this.getParameterValue(values), QueryParameterComponent.ESCAPED_CHARACTERS, this.charset)).toString();
 	}
 	

@@ -234,8 +234,23 @@ public interface URIBuilder extends Cloneable {
 	 *
 	 * @throws URIBuilderException if there was an error building the query parameters
 	 */
-	Map<String, List<String>> getQueryParameters(Object... values) throws URIBuilderException;
+	default Map<String, List<String>> getQueryParameters(Object... values) throws URIBuilderException {
+		return this.getQueryParameters(List.of(values));
+	}
 
+	/**
+	 * <p>
+	 * Returns a map containing the query parameters after replacing the parameters with the string representation of the specified values.
+	 * </p>
+	 *
+	 * @param values a list of values to replace the components parameters
+	 *
+	 * @return a map of query parameters grouped by name
+	 *
+	 * @throws URIBuilderException if there was an error building the query parameters
+	 */
+	Map<String, List<String>> getQueryParameters(List<Object> values) throws URIBuilderException;
+	
 	/**
 	 * <p>
 	 * Returns a map containing the query parameters after replacing the parameters with the string representation of the specified values.
@@ -273,6 +288,22 @@ public interface URIBuilder extends Cloneable {
 	 * @throws URIBuilderException if there was an error building the URI
 	 */
 	default URI build(Object... values) throws URIBuilderException {
+		return this.build(List.of(values), true);
+	}
+	
+	/**
+	 * <p>
+	 * Builds the URI from the builder's URI components after replacing the parameters with the string representation of the specified values escaping
+	 * slash in the path segment components.
+	 * </p>
+	 *
+	 * @param values a list of values to replace the components parameters
+	 *
+	 * @return a URI
+	 *
+	 * @throws URIBuilderException if there was an error building the URI
+	 */
+	default URI build(List<Object> values) throws URIBuilderException {
 		return this.build(values, true);
 	}
 
@@ -282,14 +313,14 @@ public interface URIBuilder extends Cloneable {
 	 * or not slash in the path segment components.
 	 * </p>
 	 *
-	 * @param values      an array of values to replace the components parameters
+	 * @param values      a list of values to replace the components parameters
 	 * @param escapeSlash true to escape slash in the path segment components
 	 *
 	 * @return a URI
 	 *
 	 * @throws URIBuilderException if there was an error building the URI
 	 */
-	URI build(Object[] values, boolean escapeSlash) throws URIBuilderException;
+	URI build(List<Object> values, boolean escapeSlash) throws URIBuilderException;
 
 	/**
 	 * <p>
@@ -339,6 +370,27 @@ public interface URIBuilder extends Cloneable {
 	 * @throws URIBuilderException if there was an error building the URI
 	 */
 	default String buildString(Object... values) throws URIBuilderException {
+		return this.buildString(List.of(values), true);
+	}
+	
+	/**
+	 * <p>
+	 * Builds the string representation of the URI from the builder's URI components after replacing the parameters with the string representation of
+	 * the specified values escaping slash in path segment components.
+	 * </p>
+	 *
+	 * <p>
+	 * Note that the resulting value is percent encoded as defined by
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * </p>
+	 *
+	 * @param values a list of values to replace the components parameters
+	 *
+	 * @return a string representation of a URI
+	 *
+	 * @throws URIBuilderException if there was an error building the URI
+	 */
+	default String buildString(List<Object> values) throws URIBuilderException {
 		return this.buildString(values, true);
 	}
 
@@ -353,14 +405,14 @@ public interface URIBuilder extends Cloneable {
 	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
-	 * @param values      an array of values to replace the components parameters
+	 * @param values      a list of values to replace the components parameters
 	 * @param escapeSlash true to escape slash in the path segment components
 	 *
 	 * @return a string representation of a URI
 	 *
 	 * @throws URIBuilderException if there was an error building the URI
 	 */
-	String buildString(Object[] values, boolean escapeSlash) throws URIBuilderException;
+	String buildString(List<Object> values, boolean escapeSlash) throws URIBuilderException;
 
 	/**
 	 * <p>
@@ -432,9 +484,30 @@ public interface URIBuilder extends Cloneable {
 	 * @throws URIBuilderException if there was an error building the URI
 	 */
 	default String buildPath(Object... values) {
-		return this.buildPath(values, true);
+		return this.buildPath(List.of(values), true);
 	}
 
+	/**
+	 * <p>
+	 * Builds the path component string from the builder's URI path segment components after replacing the parameters with the string representation
+	 * of the specified values escaping slash in path segment components.
+	 * </p>
+	 *
+	 * <p>
+	 * Note that the resulting value is percent encoded as defined by
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * </p>
+	 *
+	 * @param values a list of values to replace the path components parameters
+	 *
+	 * @return a path string
+	 *
+	 * @throws URIBuilderException if there was an error building the URI
+	 */
+	default String buildPath(List<Object> values) {
+		return this.buildPath(values, true);
+	}
+	
 	/**
 	 * <p>
 	 * Builds the path component string from the builder's URI path segment components after replacing the parameters with the string representation
@@ -453,7 +526,7 @@ public interface URIBuilder extends Cloneable {
 	 *
 	 * @throws URIBuilderException if there was an error building the URI
 	 */
-	String buildPath(Object[] values, boolean escapeSlash);
+	String buildPath(List<Object> values, boolean escapeSlash);
 
 	/**
 	 * <p>
@@ -522,7 +595,28 @@ public interface URIBuilder extends Cloneable {
 	 *
 	 * @throws URIBuilderException if there was an error building the URI
 	 */
-	String buildQuery(Object... values) throws URIBuilderException;
+	default String buildQuery(Object... values) throws URIBuilderException {
+		return this.buildQuery(List.of(values));
+	}
+	
+	/**
+	 * <p>
+	 * Builds the query component string from the builder's URI query parameter components after replacing the parameters with the string
+	 * representation of the specified values.
+	 * </p>
+	 *
+	 * <p>
+	 * Note that the resulting value is percent encoded as defined by
+	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
+	 * </p>
+	 *
+	 * @param values a list of values to replace the path components parameters
+	 *
+	 * @return a query string
+	 *
+	 * @throws URIBuilderException if there was an error building the URI
+	 */
+	String buildQuery(List<Object> values) throws URIBuilderException;
 
 	/**
 	 * <p>

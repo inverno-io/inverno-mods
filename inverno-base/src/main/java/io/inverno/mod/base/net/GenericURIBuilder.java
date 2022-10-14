@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -400,10 +401,11 @@ class GenericURIBuilder implements URIBuilder {
 	}
 	
 	@Override
-	public Map<String, List<String>> getQueryParameters(Object... values) throws URIBuilderException {
+	public Map<String, List<String>> getQueryParameters(List<Object> values) throws URIBuilderException {
+		Objects.requireNonNull(values);
 		if(this.queryParameters != null) {
 			AtomicInteger valuesIndex = new AtomicInteger();
-			return this.queryParameters.stream().collect(Collectors.groupingBy(QueryParameterComponent::getParameterName, Collectors.mapping(queryParameter -> queryParameter.getParameterValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(queryParameter.getParameters().size()), values.length))), Collectors.toList())));
+			return this.queryParameters.stream().collect(Collectors.groupingBy(QueryParameterComponent::getParameterName, Collectors.mapping(queryParameter -> queryParameter.getParameterValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(queryParameter.getParameters().size()), values.size()))), Collectors.toList())));
 		}
 		return Map.of();
 	}
@@ -425,7 +427,7 @@ class GenericURIBuilder implements URIBuilder {
 	}
 	
 	@Override
-	public URI build(Object[] values, boolean escapeSlash) throws URIBuilderException {
+	public URI build(List<Object> values, boolean escapeSlash) throws URIBuilderException {
 		return URI.create(this.buildString(values, escapeSlash));
 	}
 	
@@ -435,23 +437,24 @@ class GenericURIBuilder implements URIBuilder {
 	}
 	
 	@Override
-	public String buildString(Object[] values, boolean escapeSlash) throws URIBuilderException {
+	public String buildString(List<Object> values, boolean escapeSlash) throws URIBuilderException {
+		Objects.requireNonNull(values);
 		AtomicInteger valuesIndex = new AtomicInteger();
 		StringBuilder uriBuilder = new StringBuilder();
 		
 		boolean abempty = false;
 		if(this.scheme != null && this.scheme.isPresent()) {
-			uriBuilder.append(this.scheme.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.scheme.getParameters().size()), values.length)))).append(":");
+			uriBuilder.append(this.scheme.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.scheme.getParameters().size()), values.size())))).append(":");
 		}
 		if(this.host != null && this.host.isPresent()) {
 			abempty = true;
 			uriBuilder.append("//");
 			if(this.userInfo != null && this.userInfo.isPresent()) {
-				uriBuilder.append(this.userInfo.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.userInfo.getParameters().size()), values.length)))).append("@");
+				uriBuilder.append(this.userInfo.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.userInfo.getParameters().size()), values.size())))).append("@");
 			}
-			uriBuilder.append(this.host.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.host.getParameters().size()), values.length))));
+			uriBuilder.append(this.host.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.host.getParameters().size()), values.size()))));
 			if(this.port != null && this.port.isPresent()) {
-				uriBuilder.append(":").append(this.port.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.port.getParameters().size()), values.length))));	
+				uriBuilder.append(":").append(this.port.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.port.getParameters().size()), values.size()))));	
 			}
 		}
 		
@@ -470,7 +473,7 @@ class GenericURIBuilder implements URIBuilder {
 					// Here we must implement https://tools.ietf.org/html/rfc3986#section-5.2.4
 					LinkedList<String> segmentValues = new LinkedList<>();
 					for(SegmentComponent segment : this.segments) {
-						String nextSegmentValue = segment.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(segment.getParameters().size()), values.length)), escapeSlash);
+						String nextSegmentValue = segment.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(segment.getParameters().size()), values.size())), escapeSlash);
 						if(nextSegmentValue.equals(".")) {
 							// Segment is ignored
 						}
@@ -497,7 +500,7 @@ class GenericURIBuilder implements URIBuilder {
 				}
 				else {
 					uriBuilder.append(this.segments.stream()
-						.map(segment -> segment.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(segment.getParameters().size()), values.length)), escapeSlash))
+						.map(segment -> segment.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(segment.getParameters().size()), values.size())), escapeSlash))
 						.collect(Collectors.joining("/"))
 					);
 				}
@@ -505,18 +508,18 @@ class GenericURIBuilder implements URIBuilder {
 		}
 		
 		if(this.query != null) {
-			uriBuilder.append("?").append(this.query.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.query.getParameters().size()), values.length))));
+			uriBuilder.append("?").append(this.query.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.query.getParameters().size()), values.size()))));
 		}
 		else if(this.queryParameters != null && !this.queryParameters.isEmpty()) {
 			uriBuilder.append("?");
 			uriBuilder.append(this.queryParameters.stream()
-				.map(queryParameter -> queryParameter.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(queryParameter.getParameters().size()), values.length))))
+				.map(queryParameter -> queryParameter.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(queryParameter.getParameters().size()), values.size()))))
 				.collect(Collectors.joining("&"))
 			);
 		}
 		
 		if(this.fragment != null && this.fragment.isPresent()) {
-			uriBuilder.append("#").append(this.fragment.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.fragment.getParameters().size()), values.length))));
+			uriBuilder.append("#").append(this.fragment.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(this.fragment.getParameters().size()), values.size()))));
 		}
 		return uriBuilder.toString();
 	}
@@ -655,7 +658,8 @@ class GenericURIBuilder implements URIBuilder {
 	}
 	
 	@Override
-	public String buildPath(Object[] values, boolean escapeSlash) {
+	public String buildPath(List<Object> values, boolean escapeSlash) {
+		Objects.requireNonNull(values);
 		StringBuilder pathBuilder = new StringBuilder();
 		boolean abempty = (this.host != null && this.host.isPresent());
 		
@@ -675,7 +679,7 @@ class GenericURIBuilder implements URIBuilder {
 					// Here we must implement https://tools.ietf.org/html/rfc3986#section-5.2.4
 					LinkedList<String> segmentValues = new LinkedList<>();
 					for(SegmentComponent segment : this.segments) {
-						String nextSegmentValue = segment.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(segment.getParameters().size()), values.length)), escapeSlash);
+						String nextSegmentValue = segment.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(segment.getParameters().size()), values.size())), escapeSlash);
 						if(nextSegmentValue.equals(".")) {
 							// Segment is ignored
 						}
@@ -702,7 +706,7 @@ class GenericURIBuilder implements URIBuilder {
 				}
 				else {
 					pathBuilder.append(this.segments.stream()
-						.map(segment -> segment.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(segment.getParameters().size()), values.length)), escapeSlash))
+						.map(segment -> segment.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(segment.getParameters().size()), values.size())), escapeSlash))
 						.collect(Collectors.joining("/"))
 					);
 				}
@@ -777,7 +781,8 @@ class GenericURIBuilder implements URIBuilder {
 	}
 
 	@Override
-	public String buildQuery(Object... values) {
+	public String buildQuery(List<Object> values) {
+		Objects.requireNonNull(values);
 		StringBuilder queryBuilder = new StringBuilder();
 		AtomicInteger valuesIndex = new AtomicInteger();
 		if(this.query != null) {
@@ -785,7 +790,7 @@ class GenericURIBuilder implements URIBuilder {
 		}
 		else if(this.queryParameters != null && !this.queryParameters.isEmpty()) {
 			queryBuilder.append(this.queryParameters.stream()
-				.map(queryParameter -> queryParameter.getValue(Arrays.copyOfRange(values, valuesIndex.get(), Math.min(valuesIndex.addAndGet(queryParameter.getParameters().size()), values.length))))
+				.map(queryParameter -> queryParameter.getValue(values.subList(valuesIndex.get(), Math.min(valuesIndex.addAndGet(queryParameter.getParameters().size()), values.size()))))
 				.collect(Collectors.joining("&"))
 			);
 		}

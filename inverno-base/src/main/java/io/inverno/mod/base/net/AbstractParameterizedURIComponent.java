@@ -144,7 +144,7 @@ abstract class AbstractParameterizedURIComponent implements ParameterizedURIComp
 	
 	@Override
 	public String getValue() {
-		return this.getValue(new Object[0]);
+		return this.getValue(List.of());
 	}
 	
 	@Override
@@ -196,22 +196,22 @@ abstract class AbstractParameterizedURIComponent implements ParameterizedURIComp
 	}
 	
 	@Override
-	public String getValue(Object... values) {
+	public String getValue(List<Object> values) {
 		if(this.rawValue == null) {
 			return "";
 		}
 		if(this.parameters.isEmpty()) {
 			return URIs.encodeURIComponent(this.rawValue, this.escapedCharacters, this.charset);
 		}
-		if(values.length != this.parameters.size()) {
-			throw new IllegalArgumentException("Missing values to generate component: " + this.parameters.stream().map(URIParameter::getName).skip(values.length).collect(Collectors.joining(", ")));
+		if(values.size() != this.parameters.size()) {
+			throw new IllegalArgumentException("Missing values to generate component: " + this.parameters.stream().map(URIParameter::getName).skip(values.size()).collect(Collectors.joining(", ")));
 		}
 		
 		StringBuilder result = new StringBuilder();
 		int valueIndex = 0;
 		for(int i = 0;i<this.parameters.size();i++) {
 			URIParameter parameter = this.parameters.get(i);
-			String parameterValue = parameter.checkValue(values[i].toString());
+			String parameterValue = parameter.checkValue(values.get(i).toString());
 			if(parameter.getOffset() > valueIndex) {
 				result.append(URIs.encodeURIComponent(this.rawValue.substring(valueIndex, parameter.getOffset()), this.escapedCharacters, this.charset));
 			}

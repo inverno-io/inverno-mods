@@ -222,11 +222,11 @@ public class URIsTest {
 		Assertions.assertEquals(new URI("a/1/b/_2%2Fb_3_"), pathUriBuilder.build("1", "2/b", "3"));
 		Assertions.assertEquals(new URI("a/1/b/_2%2Fb_3_"), pathUriBuilder.build(Map.of("param2", "2/b", "param1", 1, "param3", 3)));
 		
-		Assertions.assertEquals("a/1/b/_2/b_3_", pathUriBuilder.buildString(new Object[]{"1", "2/b", "3"}, false));
+		Assertions.assertEquals("a/1/b/_2/b_3_", pathUriBuilder.buildString(List.of("1", "2/b", "3"), false));
 		Assertions.assertEquals("a/1/b/_2/b_3_", pathUriBuilder.buildString(Map.of("param2", "2/b", "param1", 1, "param3", 3), false));
-		Assertions.assertEquals("a/1/b/_2/b_3_", pathUriBuilder.buildPath(new Object[]{"1", "2/b", "3"}, false));
+		Assertions.assertEquals("a/1/b/_2/b_3_", pathUriBuilder.buildPath(List.of("1", "2/b", "3"), false));
 		Assertions.assertEquals("a/1/b/_2/b_3_", pathUriBuilder.buildPath(Map.of("param2", "2/b", "param1", 1, "param3", 3), false));
-		Assertions.assertEquals(new URI("a/1/b/_2/b_3_"), pathUriBuilder.build(new Object[]{"1", "2/b", "3"}, false));
+		Assertions.assertEquals(new URI("a/1/b/_2/b_3_"), pathUriBuilder.build(List.of("1", "2/b", "3"), false));
 		Assertions.assertEquals(new URI("a/1/b/_2/b_3_"), pathUriBuilder.build(Map.of("param2", "2/b", "param1", 1, "param3", 3), false));
 		
 		URIBuilder queryUriBuilder = URIs.uri("a/{param1}/b/_{param2:.*}_{param3}_", URIs.Option.PARAMETERIZED).queryParameter("query_param1", "abc").queryParameter("queryParam2", "_{param4}_{param5}_");
@@ -254,11 +254,11 @@ public class URIsTest {
 		Assertions.assertEquals(new URI("a/1/b/_2%2Fb_3_?query_param1=abc&queryParam2=_4_5%7Ce_"), queryUriBuilder.build("1", "2/b", "3", "4", "5|e"));
 		Assertions.assertEquals(new URI("a/1/b/_2%2Fb_3_?query_param1=abc&queryParam2=_4_5%7Ce_"), queryUriBuilder.build(Map.of("param2", "2/b", "param1", 1, "param3", 3, "param4", 4, "param5", "5|e")));
 		
-		Assertions.assertEquals("a/1/b/_2/b_3_?query_param1=abc&queryParam2=_4_5%7Ce_", queryUriBuilder.buildString(new Object[]{"1", "2/b", "3", "4", "5|e"}, false));
+		Assertions.assertEquals("a/1/b/_2/b_3_?query_param1=abc&queryParam2=_4_5%7Ce_", queryUriBuilder.buildString(List.of("1", "2/b", "3", "4", "5|e"), false));
 		Assertions.assertEquals("a/1/b/_2/b_3_?query_param1=abc&queryParam2=_4_5%7Ce_", queryUriBuilder.buildString(Map.of("param2", "2/b", "param1", 1, "param3", 3, "param4", 4, "param5", "5|e"), false));
-		Assertions.assertEquals("a/1/b/_2/b_3_", queryUriBuilder.buildPath(new Object[]{"1", "2/b", "3", "4", "5|e"}, false));
+		Assertions.assertEquals("a/1/b/_2/b_3_", queryUriBuilder.buildPath(List.of("1", "2/b", "3", "4", "5|e"), false));
 		Assertions.assertEquals("a/1/b/_2/b_3_", queryUriBuilder.buildPath(Map.of("param2", "2/b", "param1", 1, "param3", 3, "param4", 4, "param5", "5|e"), false));
-		Assertions.assertEquals(new URI("a/1/b/_2/b_3_?query_param1=abc&queryParam2=_4_5%7Ce_"), queryUriBuilder.build(new Object[]{"1", "2/b", "3", "4", "5|e"}, false));
+		Assertions.assertEquals(new URI("a/1/b/_2/b_3_?query_param1=abc&queryParam2=_4_5%7Ce_"), queryUriBuilder.build(List.of("1", "2/b", "3", "4", "5|e"), false));
 		Assertions.assertEquals(new URI("a/1/b/_2/b_3_?query_param1=abc&queryParam2=_4_5%7Ce_"), queryUriBuilder.build(Map.of("param2", "2/b", "param1", 1, "param3", 3, "param4", 4, "param5", "5|e"), false));
 		
 		URIBuilder fragmentUriBuilder = URIs.uri("a/{param1}/b/_{param2:.*}_{param3}_", URIs.Option.PARAMETERIZED).fragment("_{param4}_");
@@ -286,11 +286,11 @@ public class URIsTest {
 		Assertions.assertEquals(new URI("a/1/b/_2%2Fb_3_#_4%7Cd_"), fragmentUriBuilder.build("1", "2/b", "3", "4|d"));
 		Assertions.assertEquals(new URI("a/1/b/_2%2Fb_3_#_4%7Cd_"), fragmentUriBuilder.build(Map.of("param2", "2/b", "param1", 1, "param3", 3, "param4", "4|d")));
 		
-		Assertions.assertEquals("a/1/b/_2/b_3_#_4%7Cd_", fragmentUriBuilder.buildString(new Object[]{"1", "2/b", "3", "4|d"}, false));
+		Assertions.assertEquals("a/1/b/_2/b_3_#_4%7Cd_", fragmentUriBuilder.buildString(List.of("1", "2/b", "3", "4|d"), false));
 		Assertions.assertEquals("a/1/b/_2/b_3_#_4%7Cd_", fragmentUriBuilder.buildString(Map.of("param2", "2/b", "param1", 1, "param3", 3, "param4", "4|d"), false));
-		Assertions.assertEquals("a/1/b/_2/b_3_", fragmentUriBuilder.buildPath(new Object[]{"1", "2/b", "3", "4|d"}, false));
+		Assertions.assertEquals("a/1/b/_2/b_3_", fragmentUriBuilder.buildPath(List.of("1", "2/b", "3", "4|d"), false));
 		Assertions.assertEquals("a/1/b/_2/b_3_", fragmentUriBuilder.buildPath(Map.of("param2", "2/b", "param1", 1, "param3", 3, "param4", "4|d"), false));
-		Assertions.assertEquals(new URI("a/1/b/_2/b_3_#_4%7Cd_"), fragmentUriBuilder.build(new Object[]{"1", "2/b", "3", "4|d"}, false));
+		Assertions.assertEquals(new URI("a/1/b/_2/b_3_#_4%7Cd_"), fragmentUriBuilder.build(List.of("1", "2/b", "3", "4|d"), false));
 		Assertions.assertEquals(new URI("a/1/b/_2/b_3_#_4%7Cd_"), fragmentUriBuilder.build(Map.of("param2", "2/b", "param1", 1, "param3", 3, "param4", "4|d"), false));
 		
 		URIBuilder uriBuilder = URIs.uri("a/{param1}/b/_{param2:.*}_{param3}_", URIs.Option.PARAMETERIZED).scheme("https").host("127.0.0.1").segment("{param4}").queryParameter("foo", "bar").fragment("!fragment");
@@ -318,11 +318,11 @@ public class URIsTest {
 		Assertions.assertEquals(new URI("https://127.0.0.1/a/1/b/_2%2Fb_3_/4?foo=bar#!fragment"), uriBuilder.build("1", "2/b", "3", "4"));
 		Assertions.assertEquals(new URI("https://127.0.0.1/a/1/b/_2%2Fb_3_/4?foo=bar#!fragment"), uriBuilder.build(Map.of("param2", "2/b", "param1", 1, "param3", 3, "param4", 4)));
 		
-		Assertions.assertEquals("https://127.0.0.1/a/1/b/_2/b_3_/4?foo=bar#!fragment", uriBuilder.buildString(new Object[]{"1", "2/b", "3", "4"}, false));
+		Assertions.assertEquals("https://127.0.0.1/a/1/b/_2/b_3_/4?foo=bar#!fragment", uriBuilder.buildString(List.of("1", "2/b", "3", "4"), false));
 		Assertions.assertEquals("https://127.0.0.1/a/1/b/_2/b_3_/4?foo=bar#!fragment", uriBuilder.buildString(Map.of("param2", "2/b", "param1", 1, "param3", 3, "param4", 4), false));
-		Assertions.assertEquals("/a/1/b/_2/b_3_/4", uriBuilder.buildPath(new Object[]{"1", "2/b", "3", "4"}, false));
+		Assertions.assertEquals("/a/1/b/_2/b_3_/4", uriBuilder.buildPath(List.of("1", "2/b", "3", "4"), false));
 		Assertions.assertEquals("/a/1/b/_2/b_3_/4", uriBuilder.buildPath(Map.of("param2", "2/b", "param1", 1, "param3", 3, "param4", 4), false));
-		Assertions.assertEquals(new URI("https://127.0.0.1/a/1/b/_2/b_3_/4?foo=bar#!fragment"), uriBuilder.build(new Object[]{"1", "2/b", "3", "4"}, false));
+		Assertions.assertEquals(new URI("https://127.0.0.1/a/1/b/_2/b_3_/4?foo=bar#!fragment"), uriBuilder.build(List.of("1", "2/b", "3", "4"), false));
 		Assertions.assertEquals(new URI("https://127.0.0.1/a/1/b/_2/b_3_/4?foo=bar#!fragment"), uriBuilder.build(Map.of("param2", "2/b", "param1", 1, "param3", 3, "param4", 4), false));
 	}
 	
@@ -589,18 +589,18 @@ public class URIsTest {
 		
 		Assertions.assertEquals("abc*def?ghi*klm", sc.getRawValue());
 		Assertions.assertEquals("(\\Qabc\\E)([^/]*)(\\Qdef\\E)([^/])(\\Qghi\\E)([^/]*)(\\Qklm\\E)", sc.getPattern());
-		Assertions.assertEquals("abcXXXdefYghiZZZklm", sc.getValue("XXX", "Y", "ZZZ"));
+		Assertions.assertEquals("abcXXXdefYghiZZZklm", sc.getValue(List.of("XXX", "Y", "ZZZ")));
 		
 		sc = new SegmentComponent(new URIFlags(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN), Charsets.UTF_8, "abc*def{test}ghi?klm");
 		
 		Assertions.assertEquals("abc*def{test}ghi?klm", sc.getRawValue());
 		Assertions.assertEquals("(\\Qabc\\E)([^/]*)(\\Qdef\\E)(?<test>[^/]*)(\\Qghi\\E)([^/])(\\Qklm\\E)", sc.getPattern());
-		Assertions.assertEquals("abcXXXdefYYYghiZklm", sc.getValue("XXX", "YYY", "Z"));
+		Assertions.assertEquals("abcXXXdefYYYghiZklm", sc.getValue(List.of("XXX", "YYY", "Z")));
 		
 		sc = new SegmentComponent(new URIFlags(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN), Charsets.UTF_8, "**");
 		
 		Assertions.assertEquals("((?:/[^/]*)*)", sc.getPattern());
-		Assertions.assertEquals("a/b/c", sc.getValue(new Object[]{"a/b/c"}, false));
+		Assertions.assertEquals("a/b/c", sc.getValue(List.of("a/b/c"), false));
 		
 		try {
 			new SegmentComponent(new URIFlags(URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED, URIs.Option.PATH_PATTERN), Charsets.UTF_8, "a**");

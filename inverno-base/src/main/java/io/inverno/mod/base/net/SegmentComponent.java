@@ -42,11 +42,11 @@ import org.apache.commons.lang3.StringUtils;
  */
 class SegmentComponent implements ParameterizedURIComponent {
 
-	private static final Predicate<Integer> ESCAPED_CHARACTERS_SLASH =  b -> {
+	public static final Predicate<Integer> ESCAPED_CHARACTERS_SLASH =  b -> {
 		return !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':' || b == '@');
 	};
 	
-	private static final Predicate<Integer> ESCAPED_CHARACTERS_NO_SLASH =  b -> {
+	public static final Predicate<Integer> ESCAPED_CHARACTERS_NO_SLASH =  b -> {
 		return !(Character.isLetterOrDigit(b) || b == '-' || b == '.' || b == '_' || b == '~' || b == '!' || b == '$' || b == '&' || b == '\'' || b == '(' || b == ')' || b == '*' || b == '+' || b == ',' || b == ';' || b == '=' || b == ':' || b == '@' || b == '/');
 	};
 	
@@ -296,7 +296,7 @@ class SegmentComponent implements ParameterizedURIComponent {
 	
 	@Override
 	public String getValue() {
-		return this.getValue(new Object[0]);
+		return this.getValue(List.of());
 	}
 	
 	@Override
@@ -384,7 +384,7 @@ class SegmentComponent implements ParameterizedURIComponent {
 	}
 	
 	@Override
-	public String getValue(Object... values) {
+	public String getValue(List<Object> values) {
 		return this.getValue(values, true);
 	}
 	
@@ -403,19 +403,19 @@ class SegmentComponent implements ParameterizedURIComponent {
 	 * <a href="https://tools.ietf.org/html/rfc3986#section-2.1">RFC 3986 Section 2.1</a>.
 	 * </p>
 	 *
-	 * @param values      an array of values to replace the component's parameters
+	 * @param values      a list of values to replace the component's parameters
 	 * @param escapeSlash true to escape the slash contained in the segment
 	 *
 	 * @return the segment value
 	 *
 	 * @throws IllegalArgumentException if there's not enough values to replace all parameters
 	 */
-	public String getValue(Object[] values, boolean escapeSlash) throws IllegalArgumentException {
+	public String getValue(List<Object> values, boolean escapeSlash) throws IllegalArgumentException {
 		if(this.parameters.isEmpty()) {
 			return URIs.encodeURIComponent(this.rawValue, SegmentComponent.ESCAPED_CHARACTERS_SLASH, this.charset);
 		}
-		if(values.length != this.parameters.size()) {
-			throw new IllegalArgumentException("Missing values to generate segment: " + this.parameters.stream().map(URIParameter::getName).skip(values.length).collect(Collectors.joining(", ")));
+		if(values.size() != this.parameters.size()) {
+			throw new IllegalArgumentException("Missing values to generate segment: " + this.parameters.stream().map(URIParameter::getName).skip(values.size()).collect(Collectors.joining(", ")));
 		}
 		
 		Predicate<Integer> allowedCharacters = escapeSlash ? SegmentComponent.ESCAPED_CHARACTERS_SLASH : SegmentComponent.ESCAPED_CHARACTERS_NO_SLASH;
@@ -424,7 +424,7 @@ class SegmentComponent implements ParameterizedURIComponent {
 		int valueIndex = 0;
 		for(int i = 0;i<this.parameters.size();i++) {
 			URIParameter parameter = this.parameters.get(i);
-			String parameterValue = parameter.checkValue(values[i].toString());
+			String parameterValue = parameter.checkValue(values.get(i).toString());
 			if(parameter.getOffset() > valueIndex) {
 				result.append(URIs.encodeURIComponent(this.rawValue.substring(valueIndex, parameter.getOffset()), SegmentComponent.ESCAPED_CHARACTERS_SLASH, this.charset));
 			}

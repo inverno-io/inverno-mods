@@ -59,13 +59,13 @@ interface ParameterizedURIComponent extends URIComponent {
 	 * 2.1</a>.
 	 * </p>
 	 * 
-	 * @param values an array of values to replace the component's parameters
+	 * @param values a list of values to replace the component's parameters
 	 * 
 	 * @return the component value
 	 * @throws IllegalArgumentException if there's not enough values to replace all
 	 *                                  parameters
 	 */
-	String getValue(Object... values) throws IllegalArgumentException;
+	String getValue(List<Object> values) throws IllegalArgumentException;
 	
 	/**
 	 * <p>
