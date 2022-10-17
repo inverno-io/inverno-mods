@@ -19,11 +19,11 @@ import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.InternalServerErrorException;
 import io.inverno.mod.http.base.NotFoundException;
+import io.inverno.mod.http.base.OutboundData;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ResponseBody;
 import io.inverno.mod.http.server.ResponseBody.Sse.Event;
 import io.inverno.mod.http.server.ResponseBody.Sse.EventFactory;
-import io.inverno.mod.http.server.ResponseData;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpConstants;
@@ -51,8 +51,8 @@ public class GenericResponseBody implements ResponseBody {
 	
 	protected final AbstractResponse response;
 	
-	protected ResponseData<ByteBuf> rawData;
-	protected ResponseData<CharSequence> stringData;
+	protected OutboundData<ByteBuf> rawData;
+	protected OutboundData<CharSequence> stringData;
 	protected ResponseBody.Resource resourceData;
 	protected ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> sseData;
 	protected ResponseBody.Sse<CharSequence, ResponseBody.Sse.Event<CharSequence>, ResponseBody.Sse.EventFactory<CharSequence, ResponseBody.Sse.Event<CharSequence>>> sseStringData;
@@ -156,26 +156,24 @@ public class GenericResponseBody implements ResponseBody {
 
 	@Override
 	public void empty() {
-		if(!this.dataSet) {
-			this.setData(Mono.empty());
-		}
+		this.setData(Mono.empty());
 	}
 
 	@Override
-	public ResponseData<ByteBuf> raw() {
+	public OutboundData<ByteBuf> raw() {
 		if(this.rawData == null) {
-			this.rawData = new GenericResponseBodyRawData();
+			this.rawData = new RawOutboundData();
 		}
 		return this.rawData;
 	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T extends CharSequence> ResponseData<T> string() {
+	public <T extends CharSequence> OutboundData<T> string() {
 		if(this.stringData == null) {
-			this.stringData = new GenericResponseBodyStringData();
+			this.stringData = new StringOutboundData();
 		}
-		return (ResponseData<T>) this.stringData;
+		return (OutboundData<T>) this.stringData;
 	}
 	
 	@Override
@@ -189,7 +187,7 @@ public class GenericResponseBody implements ResponseBody {
 	@Override
 	public ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> sse() {
 		if(this.sseData == null) {
-			this.sseData = new GenericResponseBodySseData();
+			this.sseData = new SseRawOutboundData();
 		}
 		return this.sseData;
 	}
@@ -200,20 +198,20 @@ public class GenericResponseBody implements ResponseBody {
 	@Override
 	public ResponseBody.Sse<CharSequence, Event<CharSequence>, EventFactory<CharSequence, Event<CharSequence>>> sseString() {
 		if(this.sseStringData == null) {
-			this.sseStringData = new GenericResponseBodySseStringData();
+			this.sseStringData = new SseStringOutboundData();
 		}
 		return this.sseStringData;
 	}
 	
 	/**
 	 * <p>
-	 * Generic raw {@link ResponseData} implementation.
+	 * Generic raw {@link OutboundData} implementation.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	protected class GenericResponseBodyRawData implements ResponseData<ByteBuf> {
+	protected class RawOutboundData implements OutboundData<ByteBuf> {
 
 		@SuppressWarnings("unchecked")
 		@Override
@@ -224,13 +222,13 @@ public class GenericResponseBody implements ResponseBody {
 	
 	/**
 	 * <p>
-	 * Generic string {@link ResponseData} implementation.
+	 * Generic string {@link OutboundData} implementation.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	protected class GenericResponseBodyStringData implements ResponseData<CharSequence> {
+	protected class StringOutboundData implements OutboundData<CharSequence> {
 
 		@Override
 		public <T extends CharSequence> void stream(Publisher<T> value) throws IllegalStateException {
@@ -313,10 +311,10 @@ public class GenericResponseBody implements ResponseBody {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	protected class GenericResponseBodySseData implements ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> {
+	protected class SseRawOutboundData implements ResponseBody.Sse<ByteBuf, ResponseBody.Sse.Event<ByteBuf>, ResponseBody.Sse.EventFactory<ByteBuf, ResponseBody.Sse.Event<ByteBuf>>> {
 		
 		@Override
-		public void from(BiConsumer<ResponseBody.Sse.EventFactory<ByteBuf, Event<ByteBuf>>, ResponseData<ResponseBody.Sse.Event<ByteBuf>>> data) {
+		public void from(BiConsumer<ResponseBody.Sse.EventFactory<ByteBuf, Event<ByteBuf>>, OutboundData<ResponseBody.Sse.Event<ByteBuf>>> data) {
 			data.accept(this::create, this::stream);
 		}
 		
@@ -470,10 +468,10 @@ public class GenericResponseBody implements ResponseBody {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	protected class GenericResponseBodySseStringData implements ResponseBody.Sse<CharSequence, ResponseBody.Sse.Event<CharSequence>, ResponseBody.Sse.EventFactory<CharSequence, ResponseBody.Sse.Event<CharSequence>>> {
+	protected class SseStringOutboundData implements ResponseBody.Sse<CharSequence, ResponseBody.Sse.Event<CharSequence>, ResponseBody.Sse.EventFactory<CharSequence, ResponseBody.Sse.Event<CharSequence>>> {
 
 		@Override
-		public void from(BiConsumer<ResponseBody.Sse.EventFactory<CharSequence, Event<CharSequence>>, ResponseData<ResponseBody.Sse.Event<CharSequence>>> data) {
+		public void from(BiConsumer<ResponseBody.Sse.EventFactory<CharSequence, Event<CharSequence>>, OutboundData<ResponseBody.Sse.Event<CharSequence>>> data) {
 			data.accept(this::create, this::stream);
 		}
 		

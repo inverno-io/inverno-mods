@@ -15,9 +15,9 @@
  */
 package io.inverno.mod.web;
 
-import io.netty.buffer.ByteBuf;
 import io.inverno.mod.base.converter.MediaTypeConverter;
-import io.inverno.mod.http.server.RequestData;
+import io.inverno.mod.http.base.InboundData;
+import io.netty.buffer.ByteBuf;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -39,7 +39,7 @@ import reactor.core.publisher.Mono;
  * 
  * @param <A> the type of the decoded object
  */
-public interface RequestDataDecoder<A> extends RequestData<A> {
+public interface InboundDataDecoder<A> extends InboundData<A> {
 	
 	/**
 	 * <p>

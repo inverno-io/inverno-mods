@@ -48,7 +48,7 @@ public interface WebPart extends Part {
 	 * 
 	 * @return a decoder
 	 */
-	<A> RequestDataDecoder<A> decoder(Class<A> type);
+	<A> InboundDataDecoder<A> decoder(Class<A> type);
 	
 	/**
 	 * <p>
@@ -61,5 +61,5 @@ public interface WebPart extends Part {
 	 * 
 	 * @return a decoder
 	 */
-	<A> RequestDataDecoder<A> decoder(Type type);
+	<A> InboundDataDecoder<A> decoder(Type type);
 }

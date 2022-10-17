@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.server;
 
+import io.inverno.mod.http.base.InboundData;
 import java.util.Optional;
 
 import io.netty.buffer.ByteBuf;
@@ -66,7 +67,7 @@ public interface Part {
 	 * 
 	 * @return the raw data
 	 */
-	RequestData<ByteBuf> raw();
+	InboundData<ByteBuf> raw();
 	
 	/**
 	 * <p>
@@ -75,5 +76,5 @@ public interface Part {
 	 * 
 	 * @return the string data
 	 */
-	RequestData<CharSequence> string();
+	InboundData<CharSequence> string();
 }

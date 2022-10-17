@@ -22,15 +22,15 @@ import io.inverno.mod.base.converter.ConverterException;
 import io.inverno.mod.base.converter.MediaTypeConverter;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.BadRequestException;
-import io.inverno.mod.http.server.RequestData;
+import io.inverno.mod.http.base.InboundData;
+import io.inverno.mod.http.base.OutboundData;
 import io.inverno.mod.http.server.ResponseBody;
-import io.inverno.mod.http.server.ResponseData;
 import io.inverno.mod.http.server.ws.WebSocketException;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
 import io.inverno.mod.http.server.ws.WebSocketFrame;
 import io.inverno.mod.http.server.ws.WebSocketMessage;
-import io.inverno.mod.web.RequestDataDecoder;
-import io.inverno.mod.web.ResponseDataEncoder;
+import io.inverno.mod.web.InboundDataDecoder;
+import io.inverno.mod.web.OutboundDataEncoder;
 import io.inverno.mod.web.Web2SocketExchange;
 import io.inverno.mod.web.WebResponseBody;
 import io.inverno.mod.web.WebResponseBody.SseEncoder;
@@ -124,12 +124,12 @@ public class DataConversionService {
 	 * @param mediaType the source media type
 	 * @param type      a class of T
 	 *
-	 * @return a request data decoder
+	 * @return an inbound data decoder
 	 *
 	 * @throws NoConverterException if there's no converter that can convert the specified media type
 	 */
-	public <T> RequestDataDecoder<T> createDecoder(RequestData<ByteBuf> rawData, String mediaType, Class<T> type) throws NoConverterException {
-		return new GenericRequestDataDecoder<>(rawData, this.getConverter(mediaType), type);
+	public <T> InboundDataDecoder<T> createDecoder(InboundData<ByteBuf> rawData, String mediaType, Class<T> type) throws NoConverterException {
+		return new GenericInboundDataDecoder<>(rawData, this.getConverter(mediaType), type);
 	}
 
 	/**
@@ -142,12 +142,12 @@ public class DataConversionService {
 	 * @param mediaType the source media type
 	 * @param type      the type of the decoded object
 	 *
-	 * @return a request data decoder
+	 * @return an inbound data decoder
 	 *
 	 * @throws NoConverterException if there's no converter that can convert the specified media type
 	 */
-	public <T> RequestDataDecoder<T> createDecoder(RequestData<ByteBuf> rawData, String mediaType, Type type) throws NoConverterException {
-		return new GenericRequestDataDecoder<>(rawData, this.getConverter(mediaType), type);
+	public <T> InboundDataDecoder<T> createDecoder(InboundData<ByteBuf> rawData, String mediaType, Type type) throws NoConverterException {
+		return new GenericInboundDataDecoder<>(rawData, this.getConverter(mediaType), type);
 	}
 
 	/**
@@ -159,12 +159,12 @@ public class DataConversionService {
 	 * @param rawData   raw payload producer
 	 * @param mediaType the target media type
 	 *
-	 * @return a response data encoder
+	 * @return an outbound data encoder
 	 *
 	 * @throws NoConverterException if there's no converter that can convert the specified media type
 	 */
-	public <T> ResponseDataEncoder<T> createEncoder(ResponseData<ByteBuf> rawData, String mediaType) throws NoConverterException {
-		return new GenericResponseDataEncoder<>(rawData, this.getConverter(mediaType));
+	public <T> OutboundDataEncoder<T> createEncoder(OutboundData<ByteBuf> rawData, String mediaType) throws NoConverterException {
+		return new GenericOutboundDataEncoder<>(rawData, this.getConverter(mediaType));
 	}
 
 	/**
@@ -177,13 +177,13 @@ public class DataConversionService {
 	 * @param mediaType the target media type
 	 * @param type      a class of T
 	 * 
-	 * @return a response data encoder
+	 * @return an outbound data encoder
 	 * 
 	 * @throws NoConverterException if there's no converter that can convert the
 	 *                              specified media type
 	 */
-	public <T> ResponseDataEncoder<T> createEncoder(ResponseData<ByteBuf> rawData, String mediaType, Class<T> type) throws NoConverterException {
-		return new GenericResponseDataEncoder<>(rawData, this.getConverter(mediaType), type);
+	public <T> OutboundDataEncoder<T> createEncoder(OutboundData<ByteBuf> rawData, String mediaType, Class<T> type) throws NoConverterException {
+		return new GenericOutboundDataEncoder<>(rawData, this.getConverter(mediaType), type);
 	}
 
 	/**
@@ -200,8 +200,8 @@ public class DataConversionService {
 	 *
 	 * @throws NoConverterException if there's no converter that can convert the specified media type
 	 */
-	public <T> ResponseDataEncoder<T> createEncoder(ResponseData<ByteBuf> rawData, String mediaType, Type type) throws NoConverterException {
-		return new GenericResponseDataEncoder<>(rawData, this.getConverter(mediaType), type);
+	public <T> OutboundDataEncoder<T> createEncoder(OutboundData<ByteBuf> rawData, String mediaType, Type type) throws NoConverterException {
+		return new GenericOutboundDataEncoder<>(rawData, this.getConverter(mediaType), type);
 	}
 
 	/**
@@ -313,7 +313,7 @@ public class DataConversionService {
 	
 	/**
 	 * <p>
-	 * Generic {@link RequestDataDecoder} implementation.
+	 * Generic {@link InboundDataDecoder} implementation.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -321,9 +321,9 @@ public class DataConversionService {
 	 *
 	 * @param <A> the type of the decoded object
 	 */
-	private static class GenericRequestDataDecoder<A> implements RequestDataDecoder<A> {
+	private static class GenericInboundDataDecoder<A> implements InboundDataDecoder<A> {
 
-		private final RequestData<ByteBuf> rawData;
+		private final InboundData<ByteBuf> rawData;
 
 		private final MediaTypeConverter<ByteBuf> converter;
 
@@ -331,27 +331,27 @@ public class DataConversionService {
 
 		/**
 		 * <p>
-		 * Creates a generic request body decoder.
+		 * Creates a generic inbound data decoder.
 		 * </p>
 		 * 
 		 * @param rawData   the raw data consumer
 		 * @param converter the converter
 		 * @param type      a class of A
 		 */
-		public GenericRequestDataDecoder(RequestData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Class<A> type) {
+		public GenericInboundDataDecoder(InboundData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Class<A> type) {
 			this(rawData, converter, (Type) type);
 		}
 
 		/**
 		 * <p>
-		 * Creates a generic request body decoder.
+		 * Creates a generic inbound data decoder.
 		 * </p>
 		 * 
 		 * @param rawData   the raw data consumer
 		 * @param converter the converter
 		 * @param type      the type of the decoded object
 		 */
-		public GenericRequestDataDecoder(RequestData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Type type) {
+		public GenericInboundDataDecoder(InboundData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Type type) {
 			this.rawData = rawData;
 			this.converter = converter;
 			this.type = type;
@@ -384,7 +384,7 @@ public class DataConversionService {
 
 	/**
 	 * <p>
-	 * Generic {@link ResponseDataEncoder} implementation.
+	 * Generic {@link OutboundDataEncoder} implementation.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -392,9 +392,9 @@ public class DataConversionService {
 	 *
 	 * @param <A> the type of the object to encode
 	 */
-	private static class GenericResponseDataEncoder<A> implements ResponseDataEncoder<A> {
+	private static class GenericOutboundDataEncoder<A> implements OutboundDataEncoder<A> {
 
-		private final ResponseData<ByteBuf> rawData;
+		private final OutboundData<ByteBuf> rawData;
 
 		private final MediaTypeConverter<ByteBuf> converter;
 
@@ -402,39 +402,39 @@ public class DataConversionService {
 
 		/**
 		 * <p>
-		 * Creates a generic request body encoder.
+		 * Creates a generic outbound data encoder.
 		 * </p>
 		 * 
 		 * @param rawData   the raw data producer
 		 * @param converter the converter
 		 */
-		public GenericResponseDataEncoder(ResponseData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter) {
+		public GenericOutboundDataEncoder(OutboundData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter) {
 			this(rawData, converter, null);
 		}
 
 		/**
 		 * <p>
-		 * Creates a generic request body encoder.
+		 * Creates a generic outbound data encoder.
 		 * </p>
 		 * 
 		 * @param rawData   the raw data producer
 		 * @param converter the converter
 		 * @param type      a class of A
 		 */
-		public GenericResponseDataEncoder(ResponseData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Class<A> type) {
+		public GenericOutboundDataEncoder(OutboundData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Class<A> type) {
 			this(rawData, converter, (Type) type);
 		}
 
 		/**
 		 * <p>
-		 * Creates a generic request body encoder.
+		 * Creates a generic outbound data encoder.
 		 * </p>
 		 * 
 		 * @param rawData   the raw data producer
 		 * @param converter the converter
 		 * @param type      the type of the object to encode
 		 */
-		public GenericResponseDataEncoder(ResponseData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Type type) {
+		public GenericOutboundDataEncoder(OutboundData<ByteBuf> rawData, MediaTypeConverter<ByteBuf> converter, Type type) {
 			this.rawData = rawData;
 			this.converter = converter;
 			this.type = type;
@@ -540,7 +540,7 @@ public class DataConversionService {
 		}
 
 		@Override
-		public void from(BiConsumer<EventFactory<A>, ResponseData<Event<A>>> data) {
+		public void from(BiConsumer<EventFactory<A>, OutboundData<Event<A>>> data) {
 			this.rawSse.from((rawEvents, rawData) -> {
 				data.accept(
 					eventConfigurer -> {
@@ -551,7 +551,7 @@ public class DataConversionService {
 						});
 						return event;
 					}, 
-					new ResponseData<WebResponseBody.SseEncoder.Event<A>>() {
+					new OutboundData<WebResponseBody.SseEncoder.Event<A>>() {
 	
 						@Override
 						@SuppressWarnings("unchecked")

@@ -16,19 +16,18 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.base.InternalServerErrorException;
+import io.inverno.mod.http.base.OutboundData;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ResponseBody;
 import io.inverno.mod.http.server.ResponseBody.Sse.Event;
 import io.inverno.mod.http.server.ResponseBody.Sse.EventFactory;
-import io.inverno.mod.http.server.ResponseData;
-import io.inverno.mod.web.ResponseDataEncoder;
+import io.inverno.mod.web.OutboundDataEncoder;
 import io.inverno.mod.web.WebResponse;
 import io.inverno.mod.web.WebResponseBody;
 import io.netty.buffer.ByteBuf;
-import org.reactivestreams.Publisher;
-
 import java.lang.reflect.Type;
 import java.util.function.Function;
+import org.reactivestreams.Publisher;
 
 /**
  * <p>
@@ -74,12 +73,12 @@ class GenericWebResponseBody implements WebResponseBody {
 	}
 
 	@Override
-	public ResponseData<ByteBuf> raw() {
+	public OutboundData<ByteBuf> raw() {
 		return this.responseBody.raw();
 	}
 	
 	@Override
-	public <T extends CharSequence> ResponseData<T> string() {
+	public <T extends CharSequence> OutboundData<T> string() {
 		return this.responseBody.string();
 	}
 	
@@ -129,7 +128,7 @@ class GenericWebResponseBody implements WebResponseBody {
 	}
 	
 	@Override
-	public <T> ResponseDataEncoder<T> encoder() {
+	public <T> OutboundDataEncoder<T> encoder() {
 		// if we don't have a content type specified in the response, it means that the route was created without any produces clause so we can fallback to a default representation assuming it is accepted in the request otherwise we should fail
 		// - define a default converter in the conversion service
 		// - check that the produced media type matches the Accept header
@@ -147,12 +146,12 @@ class GenericWebResponseBody implements WebResponseBody {
 	}
 
 	@Override
-	public <T> ResponseDataEncoder<T> encoder(Class<T> type) {
+	public <T> OutboundDataEncoder<T> encoder(Class<T> type) {
 		return this.encoder((Type)type);
 	}
 
 	@Override
-	public <T> ResponseDataEncoder<T> encoder(Type type) {
+	public <T> OutboundDataEncoder<T> encoder(Type type) {
 		// if we don't have a content type specified in the response, it means that the route was created without any produces clause so we can fallback to a default representation assuming it is accepted in the request otherwise we should fail
 		// - define a default converter in the conversion service
 		// - check that the produced media type matches the Accept header

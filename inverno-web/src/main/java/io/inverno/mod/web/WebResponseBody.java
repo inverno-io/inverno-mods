@@ -61,7 +61,7 @@ public interface WebResponseBody extends ResponseBody {
 	 * 
 	 * @return an encoder
 	 */
-	<T> ResponseDataEncoder<T> encoder();
+	<T> OutboundDataEncoder<T> encoder();
 	
 	/**
 	 * <p>
@@ -74,7 +74,7 @@ public interface WebResponseBody extends ResponseBody {
 	 * 
 	 * @return an encoder
 	 */
-	<T> ResponseDataEncoder<T> encoder(Class<T> type);
+	<T> OutboundDataEncoder<T> encoder(Class<T> type);
 	
 	/**
 	 * <p>
@@ -87,7 +87,7 @@ public interface WebResponseBody extends ResponseBody {
 	 * 
 	 * @return an encoder
 	 */
-	<T> ResponseDataEncoder<T> encoder(Type type);
+	<T> OutboundDataEncoder<T> encoder(Type type);
 
 	/**
 	 * <p>
@@ -160,7 +160,7 @@ public interface WebResponseBody extends ResponseBody {
 		 *
 		 * @param <A> the type of data to encode
 		 */
-		public static interface Event<A> extends ResponseBody.Sse.Event<A>, ResponseDataEncoder<A> {
+		public static interface Event<A> extends ResponseBody.Sse.Event<A>, OutboundDataEncoder<A> {
 
 			@Override
 			WebResponseBody.SseEncoder.Event<A> id(String id);

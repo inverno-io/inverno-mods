@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.server;
 
+import io.inverno.mod.http.base.InboundData;
 import io.inverno.mod.http.base.Parameter;
 import io.netty.buffer.ByteBuf;
 import java.util.Map;
@@ -63,7 +64,7 @@ public interface RequestBody {
 	 *
 	 * @throws IllegalStateException if the payload has already been consumed using another decoder
 	 */
-	RequestData<ByteBuf> raw() throws IllegalStateException;
+	InboundData<ByteBuf> raw() throws IllegalStateException;
 	
 	/**
 	 * <p>
@@ -74,7 +75,7 @@ public interface RequestBody {
 	 *
 	 * @throws IllegalStateException if the payload has already been consumed using another decoder
 	 */
-	RequestData<CharSequence> string() throws IllegalStateException;
+	InboundData<CharSequence> string() throws IllegalStateException;
 	
 	/**
 	 * <p>
@@ -109,7 +110,7 @@ public interface RequestBody {
 	 *
 	 * @param <A> the part type
 	 */
-	public static interface Multipart<A extends Part> extends RequestData<A> {
+	public static interface Multipart<A extends Part> extends InboundData<A> {
 	}
 	
 	/**
@@ -125,7 +126,7 @@ public interface RequestBody {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	public static interface UrlEncoded extends RequestData<Parameter> {
+	public static interface UrlEncoded extends InboundData<Parameter> {
 		
 		/**
 		 * <p>

@@ -16,18 +16,16 @@
 package io.inverno.mod.http.server.internal.multipart;
 
 import io.inverno.mod.base.Charsets;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.reactivestreams.Publisher;
-
-import io.netty.buffer.ByteBuf;
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.InboundData;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.PartHeaders;
-import io.inverno.mod.http.server.RequestData;
+import io.netty.buffer.ByteBuf;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
@@ -50,8 +48,8 @@ class GenericPart implements Part {
 	private Flux<ByteBuf> data;
 	private FluxSink<ByteBuf> dataEmitter;
 	
-	private RequestData<ByteBuf> rawData;
-	private RequestData<CharSequence> stringData;
+	private InboundData<ByteBuf> rawData;
+	private InboundData<CharSequence> stringData;
 	
 	/**
 	 * <p>
@@ -119,17 +117,17 @@ class GenericPart implements Part {
 	// Emitted ByteBuf must be released 
 	// But if nobody subscribe they are released
 	@Override
-	public RequestData<ByteBuf> raw() {
+	public InboundData<ByteBuf> raw() {
 		if(this.rawData == null) {
-			this.rawData = new GenericPartRawData();
+			this.rawData = new RawInboundData();
 		}
 		return this.rawData;
 	}
 
 	@Override
-	public RequestData<CharSequence> string() {
+	public InboundData<CharSequence> string() {
 		if(this.stringData == null) {
-			this.stringData = new GenericPartStringData();
+			this.stringData = new StringInboundData();
 		}
 		return this.stringData;
 	}
@@ -142,7 +140,7 @@ class GenericPart implements Part {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	private class GenericPartRawData implements RequestData<ByteBuf> {
+	private class RawInboundData implements InboundData<ByteBuf> {
 
 		@Override
 		public Publisher<ByteBuf> stream() {
@@ -158,7 +156,7 @@ class GenericPart implements Part {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.5
 	 */
-	private class GenericPartStringData implements RequestData<CharSequence> {
+	private class StringInboundData implements InboundData<CharSequence> {
 
 		@Override
 		public Publisher<CharSequence> stream() {

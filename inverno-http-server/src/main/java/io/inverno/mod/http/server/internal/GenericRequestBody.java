@@ -16,19 +16,18 @@
 package io.inverno.mod.http.server.internal;
 
 import io.inverno.mod.base.Charsets;
+import io.inverno.mod.http.base.InboundData;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.RequestBody;
-import io.inverno.mod.http.server.RequestData;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.ByteBuf;
 import java.util.Map;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
-
 import java.util.Optional;
 import java.util.function.Function;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -47,8 +46,8 @@ public class GenericRequestBody implements RequestBody {
 	
 	private Flux<ByteBuf> data;
 	
-	private RequestData<ByteBuf> rawData;
-	private RequestData<CharSequence> stringData;
+	private InboundData<ByteBuf> rawData;
+	private InboundData<CharSequence> stringData;
 	private RequestBody.UrlEncoded urlEncodedData;
 	private RequestBody.Multipart<Part> multipartData;
 
@@ -77,50 +76,50 @@ public class GenericRequestBody implements RequestBody {
 	}
 
 	@Override
-	public RequestData<ByteBuf> raw() {
+	public InboundData<ByteBuf> raw() {
 		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
 		if(this.rawData == null) {
-			this.rawData = new GenericRequestBodyRawData();
+			this.rawData = new RawInboundData();
 		}
 		return this.rawData;
 	}
 	
 	@Override
-	public RequestData<CharSequence> string() throws IllegalStateException {
+	public InboundData<CharSequence> string() throws IllegalStateException {
 		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
 		if(this.stringData == null) {
-			this.stringData = new GenericRequestBodyStringData();
+			this.stringData = new StringInboundData();
 		}
 		return this.stringData;
+	}
+	
+	@Override
+	public RequestBody.UrlEncoded urlEncoded() {
+		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
+		if(this.urlEncodedData == null) {
+			this.urlEncodedData = new UrlEncodedInboundData(this.urlEncodedBodyDecoder.decode(this.data, this.contentType.orElse(null)));
+		}
+		return this.urlEncodedData;
 	}
 	
 	@Override
 	public RequestBody.Multipart<Part> multipart() {
 		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
 		if(this.multipartData == null) {
-			this.multipartData = new GenericRequestBodyMultipartData(this.multipartBodyDecoder.decode(this.data, this.contentType.orElse(null)));
+			this.multipartData = new MultipartInboundData(this.multipartBodyDecoder.decode(this.data, this.contentType.orElse(null)));
 		}
 		return this.multipartData;
-	}
-
-	@Override
-	public RequestBody.UrlEncoded urlEncoded() {
-		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
-		if(this.urlEncodedData == null) {
-			this.urlEncodedData = new GenericRequestBodyUrlEncodedData(this.urlEncodedBodyDecoder.decode(this.data, this.contentType.orElse(null)));
-		}
-		return this.urlEncodedData;
 	}
 	
 	/**
 	 * <p>
-	 * Generic raw {@link RequestData} implementation.
+	 * Generic raw {@link InboundData} implementation.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	private class GenericRequestBodyRawData implements RequestData<ByteBuf> {
+	private class RawInboundData implements InboundData<ByteBuf> {
 
 		@Override
 		public Publisher<ByteBuf> stream() {
@@ -130,13 +129,13 @@ public class GenericRequestBody implements RequestBody {
 	
 	/**
 	 * <p>
-	 * Generic string {@link RequestData} implementation.
+	 * Generic string {@link InboundData} implementation.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	private class GenericRequestBodyStringData implements RequestData<CharSequence> {
+	private class StringInboundData implements InboundData<CharSequence> {
 
 		@Override
 		public Publisher<CharSequence> stream() {
@@ -159,7 +158,7 @@ public class GenericRequestBody implements RequestBody {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	private class GenericRequestBodyUrlEncodedData implements RequestBody.UrlEncoded {
+	private class UrlEncodedInboundData implements RequestBody.UrlEncoded {
 
 		private final Publisher<Parameter> parameters;
 		
@@ -173,7 +172,7 @@ public class GenericRequestBody implements RequestBody {
 		 * 
 		 * @param parameters the parameter publisher
 		 */
-		public GenericRequestBodyUrlEncodedData(Publisher<Parameter> parameters) {
+		public UrlEncodedInboundData(Publisher<Parameter> parameters) {
 			this.parameters = Flux.from(parameters).cache();
 		}
 
@@ -199,7 +198,7 @@ public class GenericRequestBody implements RequestBody {
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
-	private class GenericRequestBodyMultipartData implements RequestBody.Multipart<Part> {
+	private class MultipartInboundData implements RequestBody.Multipart<Part> {
 
 		private Publisher<Part> parts;
 		
@@ -210,7 +209,7 @@ public class GenericRequestBody implements RequestBody {
 		 * 
 		 * @param parameters the parameter publisher
 		 */
-		public GenericRequestBodyMultipartData(Publisher<Part> parts) {
+		public MultipartInboundData(Publisher<Part> parts) {
 			this.parts = parts;
 		}
 

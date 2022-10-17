@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.server;
 
+import io.inverno.mod.http.base.OutboundData;
 import io.netty.buffer.ByteBuf;
 import org.reactivestreams.Publisher;
 
@@ -92,7 +93,7 @@ public interface ResponseBody {
 	 * 
 	 * @return a raw payload producer
 	 */
-	ResponseData<ByteBuf> raw();
+	OutboundData<ByteBuf> raw();
 	
 	/**
 	 * <p>
@@ -116,7 +117,7 @@ public interface ResponseBody {
 	 * 
 	 * @return a string payload producer
 	 */
-	<T extends CharSequence> ResponseData<T> string();
+	<T extends CharSequence> OutboundData<T> string();
 	
 	/**
 	 * <p>
@@ -238,7 +239,7 @@ public interface ResponseBody {
 		 *
 		 * @param data a function in which server-sent events stream must be set
 		 */
-		void from(BiConsumer<C, ResponseData<B>> data);
+		void from(BiConsumer<C, OutboundData<B>> data);
 		
 		/**
 		 * <p>
@@ -250,7 +251,7 @@ public interface ResponseBody {
 		 *
 		 * @param <A> the type of data sent in the event
 		 */
-		interface Event<A> extends ResponseData<A> {
+		interface Event<A> extends OutboundData<A> {
 			
 			/**
 			 * <p>

@@ -16,20 +16,19 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.base.BadRequestException;
+import io.inverno.mod.http.base.InboundData;
 import io.inverno.mod.http.base.UnsupportedMediaTypeException;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.RequestBody;
-import io.inverno.mod.http.server.RequestData;
-import io.inverno.mod.web.RequestDataDecoder;
+import io.inverno.mod.web.InboundDataDecoder;
 import io.inverno.mod.web.WebPart;
 import io.inverno.mod.web.WebRequest;
 import io.inverno.mod.web.WebRequestBody;
 import io.netty.buffer.ByteBuf;
-import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
-
 import java.lang.reflect.Type;
 import java.util.function.Function;
+import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 
 /**
  * <p>
@@ -70,12 +69,12 @@ class GenericWebRequestBody implements WebRequestBody {
 	}
 
 	@Override
-	public RequestData<ByteBuf> raw() throws IllegalStateException {
+	public InboundData<ByteBuf> raw() throws IllegalStateException {
 		return this.requestBody.raw();
 	}
 
 	@Override
-	public RequestData<CharSequence> string() throws IllegalStateException {
+	public InboundData<CharSequence> string() throws IllegalStateException {
 		return this.requestBody.string();
 	}
 	
@@ -90,12 +89,12 @@ class GenericWebRequestBody implements WebRequestBody {
 	}
 
 	@Override
-	public <A> RequestDataDecoder<A> decoder(Class<A> type) {
+	public <A> InboundDataDecoder<A> decoder(Class<A> type) {
 		return this.decoder((Type)type);
 	}
 	
 	@Override
-	public <A> RequestDataDecoder<A> decoder(Type type) {
+	public <A> InboundDataDecoder<A> decoder(Type type) {
 		return this.request.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE)
 			.map(contentType -> {
 				try {

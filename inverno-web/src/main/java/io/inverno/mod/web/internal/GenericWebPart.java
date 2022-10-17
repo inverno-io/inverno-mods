@@ -15,18 +15,17 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.lang.reflect.Type;
-import java.util.Optional;
-
-import io.netty.buffer.ByteBuf;
 import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.InboundData;
 import io.inverno.mod.http.base.InternalServerErrorException;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.PartHeaders;
-import io.inverno.mod.http.server.RequestData;
-import io.inverno.mod.web.RequestDataDecoder;
+import io.inverno.mod.web.InboundDataDecoder;
 import io.inverno.mod.web.WebPart;
+import io.netty.buffer.ByteBuf;
+import java.lang.reflect.Type;
+import java.util.Optional;
 
 /**
  * <p>
@@ -72,22 +71,22 @@ class GenericWebPart implements WebPart {
 	}
 
 	@Override
-	public RequestData<ByteBuf> raw() {
+	public InboundData<ByteBuf> raw() {
 		return this.part.raw();
 	}
 
 	@Override
-	public RequestData<CharSequence> string() {
+	public InboundData<CharSequence> string() {
 		return this.part.string();
 	}
 	
 	@Override
-	public <A> RequestDataDecoder<A> decoder(Class<A> type) {
+	public <A> InboundDataDecoder<A> decoder(Class<A> type) {
 		return this.decoder((Type)type);
 	}
 
 	@Override
-	public <A> RequestDataDecoder<A> decoder(Type type) {
+	public <A> InboundDataDecoder<A> decoder(Type type) {
 		// Fallback to text/plain media type if no content type is specified in the part because it is not straightforward to specify content-type on an input other than file in a multipart form...
 		String mediaType = this.part.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE)
 			.map(contentType -> contentType.getMediaType())
