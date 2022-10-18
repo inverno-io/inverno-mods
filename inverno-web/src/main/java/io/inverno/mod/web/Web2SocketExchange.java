@@ -16,7 +16,7 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.base.resource.MediaTypes;
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
 import java.lang.reflect.Type;
 import org.reactivestreams.Publisher;

@@ -15,10 +15,10 @@
  */
 package io.inverno.mod.security.http;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeInterceptor;
 import reactor.core.publisher.Mono;
 

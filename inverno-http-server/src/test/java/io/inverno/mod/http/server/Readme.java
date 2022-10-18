@@ -19,6 +19,7 @@ import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.resource.FileResource;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.BadRequestException;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.InternalServerErrorException;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Headers;

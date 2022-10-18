@@ -16,10 +16,10 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ws.UnsupportedProtocolException;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebSocketProtocolAware;

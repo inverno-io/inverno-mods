@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.server;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.internal.GenericErrorExchangeHandler;
 import java.util.Objects;

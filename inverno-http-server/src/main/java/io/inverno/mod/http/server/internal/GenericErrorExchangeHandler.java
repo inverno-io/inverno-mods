@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.server.internal;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.MethodNotAllowedException;
@@ -22,7 +23,6 @@ import io.inverno.mod.http.base.ServiceUnavailableException;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import java.util.stream.Collectors;
 

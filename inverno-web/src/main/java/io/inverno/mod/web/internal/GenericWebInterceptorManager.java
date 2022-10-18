@@ -16,15 +16,14 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.base.net.URIPattern;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebInterceptedRouter;
 import io.inverno.mod.web.WebInterceptorManager;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;

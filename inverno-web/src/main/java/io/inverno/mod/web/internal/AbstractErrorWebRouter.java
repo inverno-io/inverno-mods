@@ -15,9 +15,9 @@
  */
 package io.inverno.mod.web.internal;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.ErrorWebRoute;
 
 /**

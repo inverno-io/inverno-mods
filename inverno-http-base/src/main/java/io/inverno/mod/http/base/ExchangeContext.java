@@ -23,7 +23,7 @@ package io.inverno.mod.http.base;
  *
  * <p>
  * An exchange context is attached to an exchange to carry and expose contextual data and operation during the lifetime of an HTTP exchange. It is created either by an HTTP server with a server
- * exchange at the earliest possible moment basically when a request is received or injected into a client exchange when send an HTTP client request.
+ * exchange at the earliest possible moment basically when a request is received or injected into a client exchange when sending an HTTP client request.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -31,4 +31,16 @@ package io.inverno.mod.http.base;
  */
 public interface ExchangeContext {
 
+	/**
+	 * <p>
+	 * Initializes the exchange context.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method is invoked by the HTTP server right after creation.
+	 * </p>
+	 */
+	default void init() {
+		
+	}
 }

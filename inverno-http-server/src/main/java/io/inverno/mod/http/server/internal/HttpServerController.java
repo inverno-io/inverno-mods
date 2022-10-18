@@ -19,13 +19,13 @@ import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Overridable;
 import io.inverno.core.annotation.Wrapper;
 import io.inverno.mod.base.Charsets;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ServerController;
 import io.netty.buffer.Unpooled;
 import java.util.function.Supplier;
-import io.inverno.mod.http.server.ServerController;
 
 /**
  * <p>

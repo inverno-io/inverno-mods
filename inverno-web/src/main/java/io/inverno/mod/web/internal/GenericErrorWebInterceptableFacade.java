@@ -15,10 +15,13 @@
  */
 package io.inverno.mod.web.internal;
 
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeInterceptor;
-import io.inverno.mod.web.*;
-
+import io.inverno.mod.web.ErrorWebExchange;
+import io.inverno.mod.web.ErrorWebInterceptable;
+import io.inverno.mod.web.ErrorWebInterceptedRouter;
+import io.inverno.mod.web.ErrorWebInterceptorManager;
+import io.inverno.mod.web.ErrorWebInterceptorsConfigurer;
 import java.util.List;
 
 /**

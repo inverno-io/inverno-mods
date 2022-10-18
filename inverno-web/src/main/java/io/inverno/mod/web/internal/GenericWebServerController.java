@@ -18,17 +18,17 @@ package io.inverno.mod.web.internal;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Init;
 import io.inverno.core.annotation.Provide;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.web.ErrorWebRouter;
 import io.inverno.mod.web.ErrorWebRouterConfigurer;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;
+import io.inverno.mod.web.WebServerControllerConfigurer;
 import java.util.function.Supplier;
 import reactor.core.publisher.Mono;
-import io.inverno.mod.http.server.ServerController;
-import io.inverno.mod.web.WebServerControllerConfigurer;
 
 /**
  * <p>

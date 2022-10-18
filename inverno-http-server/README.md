@@ -489,9 +489,9 @@ package io.inverno.example.app_http;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.v1.Application;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ServerController;
 import java.util.function.Supplier;
 
@@ -517,9 +517,9 @@ package io.inverno.example.app_http;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.v1.Application;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ServerController;
 import java.util.function.Supplier;
 
@@ -555,9 +555,9 @@ package io.inverno.example.app_http;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.http.base.HttpException;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ServerController;
 
 @Bean
@@ -1358,10 +1358,10 @@ import io.inverno.core.annotation.Init;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.base.resource.PathResource;
 import io.inverno.mod.base.resource.Resource;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.ws.WebSocketFrame;
 import reactor.core.publisher.Flux;
@@ -1437,9 +1437,9 @@ package io.inverno.example.app_http;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.v1.Application;
 import io.inverno.mod.base.Charsets;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ServerController;
 import io.netty.buffer.Unpooled;
 import java.net.URI;

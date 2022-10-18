@@ -15,19 +15,16 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.net.URI;
-import java.util.Set;
-
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Init;
 import io.inverno.core.annotation.Provide;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceService;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebInterceptedRouter;
 import io.inverno.mod.web.WebInterceptorManager;
@@ -37,7 +34,9 @@ import io.inverno.mod.web.WebRouteManager;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRoutesConfigurer;
 import io.inverno.mod.web.WebSocketRouteManager;
+import java.net.URI;
 import java.util.List;
+import java.util.Set;
 import reactor.core.publisher.Mono;
 
 /**

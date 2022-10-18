@@ -22,7 +22,7 @@ import io.inverno.core.compiler.spi.plugin.CompilerPlugin;
 import io.inverno.core.compiler.spi.plugin.PluginContext;
 import io.inverno.core.compiler.spi.plugin.PluginExecution;
 import io.inverno.core.compiler.spi.plugin.PluginExecutionException;
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.web.ErrorWebInterceptorsConfigurer;
 import io.inverno.mod.web.ErrorWebRouterConfigurer;
 import io.inverno.mod.web.ErrorWebRoutesConfigurer;

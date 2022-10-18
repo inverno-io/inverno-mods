@@ -15,8 +15,8 @@
  */
 package io.inverno.mod.http.server.ws;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import reactor.core.publisher.Mono;
 
 /**

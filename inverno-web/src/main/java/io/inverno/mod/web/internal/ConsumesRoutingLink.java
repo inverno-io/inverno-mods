@@ -15,21 +15,20 @@
  */
 package io.inverno.mod.web.internal;
 
+import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.UnsupportedMediaTypeException;
+import io.inverno.mod.http.base.header.HeaderCodec;
+import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.web.spi.ContentAware;
+import io.inverno.mod.web.spi.Route;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import io.inverno.mod.http.base.UnsupportedMediaTypeException;
-import io.inverno.mod.http.base.header.HeaderCodec;
-import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import reactor.core.publisher.Mono;
-import io.inverno.mod.web.spi.Route;
-import io.inverno.mod.web.spi.ContentAware;
 
 /**
  * <p>

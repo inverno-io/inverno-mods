@@ -17,10 +17,10 @@ package io.inverno.mod.web;
 
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.http.base.BadRequestException;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import java.nio.file.Path;
 import java.util.Optional;

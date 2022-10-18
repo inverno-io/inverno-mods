@@ -15,8 +15,8 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ReactiveExchangeHandler;
 import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
 
@@ -32,6 +32,8 @@ import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @param <A> the type of the exchange context
  */
 public interface WebSocketRoute<A extends ExchangeContext> extends WebRoute<A>, WebSocketProtocolAware {
 	

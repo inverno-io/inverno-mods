@@ -15,10 +15,9 @@
  */
 package io.inverno.mod.web.spi;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
-
 import java.util.Set;
 
 /**

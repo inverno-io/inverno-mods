@@ -16,7 +16,7 @@
 package io.inverno.mod.web;
 
 import io.inverno.mod.base.net.URIPattern;
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ErrorAware;
 import io.inverno.mod.web.spi.InterceptableRoute;

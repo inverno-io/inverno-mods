@@ -20,7 +20,7 @@ import org.reactivestreams.Publisher;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.mod.base.Charsets;
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ws.WebSocketFrame;
 import io.inverno.mod.http.server.ws.WebSocketMessage;
 import io.inverno.mod.test.web.websocket.dto.GenericMessage;

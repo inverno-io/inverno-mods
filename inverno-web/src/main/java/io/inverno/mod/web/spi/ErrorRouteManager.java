@@ -15,8 +15,8 @@
  */
 package io.inverno.mod.web.spi;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ExchangeContext;
 
 /**
  * <p>

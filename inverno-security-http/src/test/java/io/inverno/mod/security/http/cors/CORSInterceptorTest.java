@@ -16,11 +16,11 @@
 package io.inverno.mod.security.http.cors;
 
 import io.inverno.mod.http.base.BadRequestException;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.ForbiddenException;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.RequestHeaders;
 import io.inverno.mod.http.server.Response;

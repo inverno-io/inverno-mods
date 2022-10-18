@@ -16,10 +16,11 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.base.net.URIPattern;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
 import io.inverno.mod.web.Web2SocketExchange;
+import io.inverno.mod.web.WebRouteManager;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebSocketRoute;
 import io.inverno.mod.web.WebSocketRouteManager;

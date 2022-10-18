@@ -21,7 +21,7 @@ import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.resource.FileResource;
 import io.inverno.mod.http.base.BadRequestException;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.web.StaticHandler;
 import io.inverno.mod.web.WebRoutable;
 import io.netty.buffer.ByteBuf;

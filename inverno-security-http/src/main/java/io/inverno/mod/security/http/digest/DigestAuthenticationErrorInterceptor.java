@@ -15,9 +15,9 @@
  */
 package io.inverno.mod.security.http.digest;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.security.http.HttpAuthenticationErrorInterceptor;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

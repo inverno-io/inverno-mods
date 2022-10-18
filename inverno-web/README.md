@@ -1167,7 +1167,7 @@ package io.inverno.example.app_web;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.resource.MediaTypes;
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;
 
@@ -1211,10 +1211,10 @@ package io.inverno.example.app_web;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.UnauthorizedException;
 import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.ErrorWebRouter;
 import io.inverno.mod.web.ErrorWebRouterConfigurer;
 import reactor.core.publisher.Mono;
@@ -1322,7 +1322,7 @@ Exchange contexts must be defined as interfaces extending `ExchangeContext`:
 ```java
 package io.inverno.example.app_web.test;
 
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 
 public interface FrontOfficeContext extends ExchangeContext {
     
@@ -1335,7 +1335,7 @@ public interface FrontOfficeContext extends ExchangeContext {
 ```java
 package io.inverno.example.app_web.test;
 
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 
 public interface BackOfficeContext extends ExchangeContext {
 
@@ -1483,7 +1483,7 @@ Finally, the Inverno Web compiler plugin only generates concrete implementations
 ```java
 package io.inverno.example.app_web;
 
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import java.util.Set;
 
 public interface SecurityContext extends ExchangeContext {
@@ -1503,7 +1503,7 @@ Exposing `setRoles()` methods to actual services which should only be concerned 
 ```java
 package io.inverno.example.app_web;
 
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import java.util.Set;
 
 public interface SecurityContext extends ExchangeContext {
@@ -1603,7 +1603,7 @@ package io.inverno.example.app_web;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.resource.ResourceService;
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.web.WebJarsRoutesConfigurer;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;
@@ -1676,7 +1676,7 @@ package io.inverno.example.app_web;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.resource.ResourceService;
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.web.OpenApiRoutesConfigurer;
 import io.inverno.mod.web.WebRouter;
 import io.inverno.mod.web.WebRouterConfigurer;

@@ -15,13 +15,14 @@
  */
 package io.inverno.mod.web.internal;
 
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.base.net.URIBuilder;
+import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.web.WebExchange;
+import io.inverno.mod.web.WebRoute;
 import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ContentAware;
 import io.inverno.mod.web.spi.MethodAware;
 import io.inverno.mod.web.spi.PathAware;
-import io.inverno.mod.web.WebExchange;
-import io.inverno.mod.web.WebRoute;
 
 /**
  * <p>

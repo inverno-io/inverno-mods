@@ -17,21 +17,20 @@ package io.inverno.mod.web.internal;
 
 import io.inverno.mod.base.net.URIMatcher;
 import io.inverno.mod.base.net.URIPattern;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.spi.AcceptAware;
 import io.inverno.mod.web.spi.ContentAware;
 import io.inverno.mod.web.spi.MethodAware;
 import io.inverno.mod.web.spi.PathAware;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 /**
  * <p>

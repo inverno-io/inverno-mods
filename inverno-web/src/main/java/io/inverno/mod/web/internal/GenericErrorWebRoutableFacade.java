@@ -15,9 +15,13 @@
  */
 package io.inverno.mod.web.internal;
 
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
-import io.inverno.mod.web.*;
+import io.inverno.mod.web.ErrorWebExchange;
+import io.inverno.mod.web.ErrorWebRoutable;
+import io.inverno.mod.web.ErrorWebRoute;
+import io.inverno.mod.web.ErrorWebRouteManager;
+import io.inverno.mod.web.ErrorWebRoutesConfigurer;
 import java.util.Set;
 
 /**

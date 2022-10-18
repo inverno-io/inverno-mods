@@ -15,13 +15,12 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.spi.PathAware;
 import io.inverno.mod.web.spi.Route;
+import java.util.HashMap;
+import java.util.Map;
 import reactor.core.publisher.Mono;
 
 /**

@@ -15,8 +15,8 @@
  */
 package io.inverno.mod.web;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.web.spi.InterceptedRouter;
-import io.inverno.mod.http.server.ExchangeContext;
 import java.util.List;
 
 /**

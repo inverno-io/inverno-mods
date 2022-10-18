@@ -15,7 +15,7 @@
  */
 package io.inverno.mod.security.http.context;
 
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.authentication.Authentication;
 import io.inverno.mod.security.identity.Identity;

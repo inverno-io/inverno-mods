@@ -15,10 +15,10 @@
  */
 package io.inverno.mod.web.internal;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.MethodNotAllowedException;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.web.spi.MethodAware;
 import io.inverno.mod.web.spi.Route;
 import java.util.HashMap;

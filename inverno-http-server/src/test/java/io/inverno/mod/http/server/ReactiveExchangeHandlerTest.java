@@ -15,12 +15,11 @@
  */
 package io.inverno.mod.http.server;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
 import reactor.core.publisher.Mono;
 
 /**

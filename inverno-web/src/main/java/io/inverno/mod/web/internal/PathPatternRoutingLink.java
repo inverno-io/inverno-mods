@@ -15,18 +15,17 @@
  */
 package io.inverno.mod.web.internal;
 
+import io.inverno.mod.base.net.URIMatcher;
+import io.inverno.mod.base.net.URIPattern;
+import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.web.PathParameters;
+import io.inverno.mod.web.WebExchange;
+import io.inverno.mod.web.spi.PathAware;
+import io.inverno.mod.web.spi.Route;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import io.inverno.mod.base.net.URIMatcher;
-import io.inverno.mod.base.net.URIPattern;
-import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.spi.PathAware;
-import io.inverno.mod.web.PathParameters;
-import io.inverno.mod.web.spi.Route;
-import io.inverno.mod.web.WebExchange;
 import reactor.core.publisher.Mono;
 
 /**

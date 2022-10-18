@@ -152,8 +152,8 @@ A Web configurer must be created to define a **security interceptor** that will 
 package io.inverno.example.app_web_security;
 
 import io.inverno.core.annotation.Bean;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.UnauthorizedException;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.authentication.LoginCredentialsMatcher;
 import io.inverno.mod.security.authentication.password.RawPassword;
@@ -249,8 +249,8 @@ We use a user repository which can provide user's identity, a `UserIdentityResol
 package io.inverno.example.app_web_security;
 
 import io.inverno.core.annotation.Bean;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.UnauthorizedException;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.authentication.LoginCredentialsMatcher;
 import io.inverno.mod.security.authentication.password.RawPassword;
@@ -395,8 +395,8 @@ We can now change the Web configurer to resolve the role-based access controller
 package io.inverno.example.app_web_security;
 
 import io.inverno.core.annotation.Bean;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.UnauthorizedException;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.security.accesscontrol.GroupsRoleBasedAccessControllerResolver;
 import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
 import io.inverno.mod.security.authentication.LoginCredentialsMatcher;
@@ -487,9 +487,9 @@ Here we have decided to control access inside the `/vip/hello` route handler but
 package io.inverno.example.app_web_security;
 
 import io.inverno.core.annotation.Bean;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.ForbiddenException;
 import io.inverno.mod.http.base.UnauthorizedException;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.security.accesscontrol.GroupsRoleBasedAccessControllerResolver;
 import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
 import io.inverno.mod.security.authentication.LoginCredentialsMatcher;
@@ -1143,9 +1143,9 @@ package io.inverno.example.app_web_security;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.UnauthorizedException;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.authentication.InMemoryLoginCredentialsResolver;
 import io.inverno.mod.security.authentication.LoginCredentials;
@@ -1300,7 +1300,7 @@ Assuming the HTTP server runs locally on port `8080`, the following example show
 ```java
 package io.inverno.example.app_web_security;
 
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.security.http.cors.CORSInterceptor;
 import io.inverno.mod.web.WebInterceptable;
 import io.inverno.mod.web.WebInterceptorsConfigurer;
@@ -1329,7 +1329,7 @@ The following example shows how to configure the Web server in order to prevent 
 ```java
 package io.inverno.example.app_web_security;
 
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.security.http.csrf.CSRFDoubleSubmitCookieInterceptor;
 import io.inverno.mod.web.WebInterceptable;
 import io.inverno.mod.web.WebInterceptorsConfigurer;

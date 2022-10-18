@@ -15,20 +15,19 @@
  */
 package io.inverno.mod.web.internal;
 
+import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.NotAcceptableException;
+import io.inverno.mod.http.base.header.HeaderCodec;
+import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.web.spi.AcceptAware;
+import io.inverno.mod.web.spi.Route;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-
-import io.inverno.mod.http.base.NotAcceptableException;
-import io.inverno.mod.http.base.header.HeaderCodec;
-import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.spi.AcceptAware;
-import io.inverno.mod.web.spi.Route;
 import reactor.core.publisher.Mono;
 
 /**

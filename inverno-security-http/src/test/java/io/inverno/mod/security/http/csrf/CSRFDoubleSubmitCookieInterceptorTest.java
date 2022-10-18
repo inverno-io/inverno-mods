@@ -16,6 +16,7 @@
 package io.inverno.mod.security.http.csrf;
 
 import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.ForbiddenException;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
@@ -23,7 +24,6 @@ import io.inverno.mod.http.base.header.CookieParameter;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.header.SetCookie;
 import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.QueryParameters;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.RequestBody;

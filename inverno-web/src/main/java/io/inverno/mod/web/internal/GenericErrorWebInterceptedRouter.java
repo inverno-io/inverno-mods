@@ -15,13 +15,25 @@
  */
 package io.inverno.mod.web.internal;
 
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.http.server.ExchangeInterceptor;
-import io.inverno.mod.web.*;
-import java.util.*;
+import io.inverno.mod.web.ErrorWebExchange;
+import io.inverno.mod.web.ErrorWebInterceptedRouter;
+import io.inverno.mod.web.ErrorWebInterceptorManager;
+import io.inverno.mod.web.ErrorWebInterceptorsConfigurer;
+import io.inverno.mod.web.ErrorWebRoute;
+import io.inverno.mod.web.ErrorWebRouteManager;
+import io.inverno.mod.web.ErrorWebRouter;
+import io.inverno.mod.web.ErrorWebRouterConfigurer;
+import io.inverno.mod.web.ErrorWebRoutesConfigurer;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import reactor.core.publisher.Mono;
 

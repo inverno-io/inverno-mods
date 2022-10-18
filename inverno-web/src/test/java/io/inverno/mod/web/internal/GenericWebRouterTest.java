@@ -15,18 +15,16 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.util.Optional;
-import java.util.Set;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
 import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.server.ExchangeContext;
-import io.inverno.mod.web.spi.Route;
 import io.inverno.mod.web.WebRoute;
+import io.inverno.mod.web.spi.Route;
+import java.util.Optional;
+import java.util.Set;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

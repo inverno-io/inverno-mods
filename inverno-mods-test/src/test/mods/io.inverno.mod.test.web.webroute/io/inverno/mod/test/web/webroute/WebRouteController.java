@@ -37,7 +37,7 @@ import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceService;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.http.server.ExchangeContext;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.ResponseBody;
 import io.inverno.mod.test.web.webroute.dto.GenericMessage;

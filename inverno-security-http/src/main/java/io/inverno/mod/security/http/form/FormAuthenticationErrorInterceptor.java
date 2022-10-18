@@ -16,12 +16,12 @@
 package io.inverno.mod.security.http.form;
 
 import io.inverno.mod.base.net.URIs;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
-import io.inverno.mod.http.server.ExchangeContext;
 import io.inverno.mod.security.http.AuthenticationErrorInterceptor;
 import io.inverno.mod.security.http.login.LoginActionHandler;
 import io.inverno.mod.security.http.login.LogoutActionHandler;
