@@ -18,7 +18,6 @@ package io.inverno.mod.http.client.internal.multipart;
 
 import io.inverno.mod.http.base.header.Headers;
 import io.netty.buffer.ByteBuf;
-import java.nio.charset.Charset;
 import reactor.core.publisher.Flux;
 
 /**

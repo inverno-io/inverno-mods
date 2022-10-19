@@ -15,13 +15,6 @@
  */
 package io.inverno.mod.http.server.internal.http1x;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.Status;
@@ -29,9 +22,15 @@ import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
+import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.inverno.mod.http.server.ResponseHeaders;
 import io.inverno.mod.http.server.internal.AbstractResponseHeaders;
-import io.inverno.mod.http.server.internal.netty.LinkedHttpHeaders;
+import io.netty.handler.codec.http.DefaultHttpHeaders;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>

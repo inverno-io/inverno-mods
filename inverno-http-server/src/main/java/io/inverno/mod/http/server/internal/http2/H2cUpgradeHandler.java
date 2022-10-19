@@ -16,9 +16,9 @@
 package io.inverno.mod.http.server.internal.http2;
 
 import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.base.internal.netty.FlatFullHttpResponse;
+import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.inverno.mod.http.server.internal.HttpChannelConfigurer;
-import io.inverno.mod.http.server.internal.netty.FlatFullHttpResponse;
-import io.inverno.mod.http.server.internal.netty.LinkedHttpHeaders;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;

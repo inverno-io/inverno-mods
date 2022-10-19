@@ -15,9 +15,8 @@
  */
 package io.inverno.mod.http.server.internal.http1x;
 
-import java.net.SocketAddress;
-import java.util.List;
-
+import io.inverno.mod.http.base.internal.netty.FlatHttpResponse;
+import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
@@ -34,8 +33,8 @@ import io.netty.handler.codec.http.HttpResponseEncoder;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.EventExecutor;
-import io.inverno.mod.http.server.internal.netty.FlatHttpResponse;
-import io.inverno.mod.http.server.internal.netty.LinkedHttpHeaders;
+import java.net.SocketAddress;
+import java.util.List;
 
 /**
  * <p>

@@ -15,13 +15,13 @@
  */
 package io.inverno.mod.http.server.internal.http1x;
 
+import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpMessage;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpVersion;
-import io.inverno.mod.http.server.internal.netty.LinkedHttpHeaders;
 
 /**
  * <p>
