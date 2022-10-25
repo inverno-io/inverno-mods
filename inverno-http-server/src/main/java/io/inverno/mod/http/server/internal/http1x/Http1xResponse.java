@@ -15,19 +15,17 @@
  */
 package io.inverno.mod.http.server.internal.http1x;
 
-import java.util.function.Consumer;
-
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.HttpContentCompressor;
-import io.netty.handler.ssl.SslHandler;
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.OutboundHeaders;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.Response;
-import io.inverno.mod.http.server.ResponseTrailers;
 import io.inverno.mod.http.server.internal.AbstractResponse;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.ssl.SslHandler;
 
 /**
  * <p>
@@ -73,17 +71,13 @@ class Http1xResponse extends AbstractResponse {
 	}
 	
 	@Override
-	public Response trailers(Consumer<ResponseTrailers> trailersConfigurer) {
-		if(this.responseTrailers == null) {
-			this.responseTrailers = new Http1xResponseTrailers(this.headerService, this.parameterConverter);
-		}
-		trailersConfigurer.accept(this.responseTrailers);
-		return this;
-	}
-	
-	@Override
 	public Http1xResponseHeaders headers() {
 		return (Http1xResponseHeaders)this.responseHeaders;
+	}
+
+	@Override
+	protected OutboundHeaders<?> createTrailers() {
+		return new Http1xResponseTrailers(this.headerService, this.parameterConverter);
 	}
 	
 	@Override

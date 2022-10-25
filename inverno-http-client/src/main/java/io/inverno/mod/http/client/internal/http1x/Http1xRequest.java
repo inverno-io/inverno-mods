@@ -19,7 +19,6 @@ package io.inverno.mod.http.client.internal.http1x;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.internal.AbstractRequest;
 import io.netty.channel.ChannelHandlerContext;
 import java.util.Optional;
@@ -33,7 +32,6 @@ class Http1xRequest extends AbstractRequest {
 	public Http1xRequest(
 			ChannelHandlerContext context, 
 			boolean tls,
-			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter, 
 			HttpVersion protocol, 
 			Method method, 
@@ -41,7 +39,7 @@ class Http1xRequest extends AbstractRequest {
 			String path, 
 			Http1xRequestHeaders requestHeaders, 
 			Http1xRequestBody requestBody) {
-		super(context, tls, headerService, parameterConverter, protocol, method, authority, path, requestHeaders, requestBody);
+		super(context, tls, parameterConverter, protocol, method, authority, path, requestHeaders, requestBody);
 	}
 
 	@Override

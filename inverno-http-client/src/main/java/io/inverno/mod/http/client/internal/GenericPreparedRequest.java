@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.base.converter.ObjectConverter;
@@ -21,13 +20,14 @@ import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
+import io.inverno.mod.http.base.QueryParameters;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.internal.GenericQueryParameters;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.ExchangeInterceptor;
 import io.inverno.mod.http.client.PreparedRequest;
 import io.inverno.mod.http.client.RequestBodyConfigurator;
-import io.inverno.mod.http.client.RequestCookies;
-import io.inverno.mod.http.client.RequestHeaders;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -50,6 +50,7 @@ public class GenericPreparedRequest<A extends ExchangeContext> implements Prepar
 	private String authority;
 	private String pathAbsolute;
 	private String queryString;
+	private GenericQueryParameters queryParameters;
 	
 	private GenericRequestCookies requestCookies;
 	
@@ -75,12 +76,12 @@ public class GenericPreparedRequest<A extends ExchangeContext> implements Prepar
 	}
 
 	@Override
-	public GenericPreparedRequest headers(Consumer<RequestHeaders> headersConfigurer) throws IllegalStateException {
+	public GenericPreparedRequest headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException {
 		headersConfigurer.accept(this.requestHeaders);
 		return this;
 	}
 
-	@Override
+	/*@Override
 	public GenericPreparedRequest cookies(Consumer<RequestCookies> cookiesConfigurer) throws IllegalStateException {
 		if(this.requestCookies == null) {
 			this.requestCookies = new GenericRequestCookies(this.headerService, this.requestHeaders, parameterConverter);
@@ -88,7 +89,7 @@ public class GenericPreparedRequest<A extends ExchangeContext> implements Prepar
 		cookiesConfigurer.accept(this.requestCookies);
 		this.requestCookies.commit();
 		return this;
-	}
+	}*/
 	
 	@Override
 	public GenericPreparedRequest authority(String authority) {
@@ -130,6 +131,14 @@ public class GenericPreparedRequest<A extends ExchangeContext> implements Prepar
 			this.queryString = this.primaryPathBuilder.buildRawQuery();
 		}
 		return this.queryString;
+	}
+
+	@Override
+	public QueryParameters queryParameters() {
+		if(this.queryParameters == null) {
+			this.queryParameters = new GenericQueryParameters(this.primaryPathBuilder.getQueryParameters(), this.parameterConverter);
+		}
+		return this.queryParameters;
 	}
 
 	@Override

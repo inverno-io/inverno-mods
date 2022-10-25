@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.mod.base.converter.ObjectConverter;
@@ -28,7 +27,7 @@ import io.netty.handler.codec.http2.Http2Headers;
 class Http2Response extends AbstractResponse {
 
 	public Http2Response(Http2Headers headers, HeaderService headerService, ObjectConverter<String> parameterConverter) {
-		super(new Http2ResponseHeaders(headers, headerService, parameterConverter), parameterConverter);
+		super(new Http2ResponseHeaders(headers, headerService, parameterConverter));
 	}
 	
 	public void setResponseTrailers(Http2ResponseTrailers responseTrailers) {

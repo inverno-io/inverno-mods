@@ -15,23 +15,23 @@
  */
 package io.inverno.mod.http.server.internal;
 
-import java.net.SocketAddress;
-import java.util.Optional;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.URIBuilder;
+import io.inverno.mod.http.base.InboundCookies;
+import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.base.QueryParameters;
 import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.base.internal.GenericQueryParameters;
 import io.inverno.mod.http.server.Part;
-import io.inverno.mod.http.server.QueryParameters;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.RequestBody;
-import io.inverno.mod.http.server.RequestCookies;
-import io.inverno.mod.http.server.RequestHeaders;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import java.net.SocketAddress;
+import java.util.Optional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
@@ -46,13 +46,12 @@ import reactor.core.publisher.Sinks;
 public abstract class AbstractRequest implements Request {
 
 	protected final ChannelHandlerContext context;
-	protected final RequestHeaders requestHeaders;
+	protected final InboundRequestHeaders requestHeaders;
 	protected final ObjectConverter<String> parameterConverter;
 	protected final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
 	protected final MultipartDecoder<Part> multipartBodyDecoder;
 	
 	protected GenericQueryParameters queryParameters;
-	protected GenericRequestCookies requestCookies;
 	
 	private Optional<RequestBody> requestBody;
 	private Optional<Sinks.Many<ByteBuf>> data;
@@ -76,7 +75,7 @@ public abstract class AbstractRequest implements Request {
 	 */
 	public AbstractRequest(
 			ChannelHandlerContext context, 
-			RequestHeaders requestHeaders, 
+			InboundRequestHeaders requestHeaders, 
 			ObjectConverter<String> parameterConverter, 
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder) {
@@ -100,24 +99,13 @@ public abstract class AbstractRequest implements Request {
 	protected abstract URIBuilder getPrimaryPathBuilder();
 	
 	@Override
-	public RequestHeaders headers() {
-		return this.requestHeaders;
+	public SocketAddress getLocalAddress() {
+		return this.context.channel().localAddress();
 	}
-
+	
 	@Override
-	public QueryParameters queryParameters() {
-		if(this.queryParameters == null) {
-			this.queryParameters = new GenericQueryParameters(this.getPrimaryPathBuilder().getQueryParameters(), this.parameterConverter);
-		}
-		return this.queryParameters;
-	}
-
-	@Override
-	public RequestCookies cookies() {
-		if(this.requestCookies == null) {
-			this.requestCookies = new GenericRequestCookies(this.requestHeaders, this.parameterConverter);
-		}
-		return this.requestCookies;
+	public SocketAddress getRemoteAddress() {
+		return this.context.channel().remoteAddress();
 	}
 	
 	@Override
@@ -140,17 +128,26 @@ public abstract class AbstractRequest implements Request {
 		}
 		return this.queryString;
 	}
+	
+	@Override
+	public QueryParameters queryParameters() {
+		if(this.queryParameters == null) {
+			this.queryParameters = new GenericQueryParameters(this.getPrimaryPathBuilder().getQueryParameters(), this.parameterConverter);
+		}
+		return this.queryParameters;
+	}
+	
+	@Override
+	public InboundRequestHeaders headers() {
+		return this.requestHeaders;
+	}
+	
+	@Override
+	@Deprecated
+	public InboundCookies cookies() {
+		return this.requestHeaders.cookies();
+	}
 
-	@Override
-	public SocketAddress getLocalAddress() {
-		return this.context.channel().localAddress();
-	}
-	
-	@Override
-	public SocketAddress getRemoteAddress() {
-		return this.context.channel().remoteAddress();
-	}
-	
 	@Override
 	public Optional<RequestBody> body() {
 		if(this.requestBody == null) {

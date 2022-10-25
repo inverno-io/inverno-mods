@@ -16,9 +16,9 @@
 package io.inverno.mod.http.server;
 
 import io.inverno.mod.http.base.InboundData;
-import java.util.Optional;
-
+import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.netty.buffer.ByteBuf;
+import java.util.Optional;
 
 /**
  * <p>
@@ -58,7 +58,7 @@ public interface Part {
 	 * 
 	 * @return the headers
 	 */
-	PartHeaders headers();
+	InboundRequestHeaders headers();
 	
 	/**
 	 * <p>

@@ -15,6 +15,16 @@
  */
 package io.inverno.mod.http.server.internal.http2;
 
+import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.InboundCookies;
+import io.inverno.mod.http.base.InboundRequestHeaders;
+import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.base.header.Header;
+import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.base.internal.GenericParameter;
+import io.inverno.mod.http.server.internal.GenericRequestCookies;
+import io.netty.handler.codec.http2.Http2Headers;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -23,30 +33,21 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.netty.handler.codec.http2.Http2Headers;
-import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.http.base.header.Header;
-import io.inverno.mod.http.base.header.HeaderService;
-import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.base.internal.GenericParameter;
-import io.inverno.mod.http.server.RequestHeaders;
-
 /**
  * <p>
- * HTTP/2 {@link RequestHeaders} implementation.
+ * HTTP/2 {@link InboundRequestHeaders} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class Http2RequestHeaders implements RequestHeaders {
+class Http2RequestHeaders implements InboundRequestHeaders {
+
+	private final HeaderService headerService;
+	private final ObjectConverter<String> parameterConverter;
 
 	private final Http2Headers underlyingHeaders;
-	
-	private final HeaderService headerService;
-	
-	private final ObjectConverter<String> parameterConverter;
+	private InboundCookies requestCookies;
 	
 	/**
 	 * <p>
@@ -85,8 +86,21 @@ class Http2RequestHeaders implements RequestHeaders {
 	}
 
 	@Override
+	public Headers.ContentType getContentTypeHeader() {
+		return this.<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
+	}
+	
+	@Override
 	public Long getContentLength() {
 		return this.underlyingHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
+	}
+
+	@Override
+	public InboundCookies cookies() {
+		if(this.requestCookies == null) {
+			this.requestCookies = new GenericRequestCookies(this, this.parameterConverter);
+		}
+		return this.requestCookies;
 	}
 	
 	@Override

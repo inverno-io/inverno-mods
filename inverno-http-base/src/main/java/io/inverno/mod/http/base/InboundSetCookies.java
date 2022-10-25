@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package io.inverno.mod.http.client;
+package io.inverno.mod.http.base;
 
 import io.inverno.mod.http.base.header.SetCookieParameter;
 import java.util.List;
@@ -26,8 +25,8 @@ import java.util.Set;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface ResponseCookies {
-
+public interface InboundSetCookies {
+	
 	/**
 	 * <p>
 	 * Determines whether a set cookie with the specified name is present.

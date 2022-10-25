@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.InboundResponseHeaders;
+import io.inverno.mod.http.base.InboundSetCookies;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
-import io.inverno.mod.http.client.ResponseHeaders;
+import io.inverno.mod.http.client.internal.GenericResponseCookies;
 import io.netty.handler.codec.http.HttpHeaders;
 import java.util.List;
 import java.util.Map;
@@ -35,12 +36,14 @@ import java.util.stream.Collectors;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-class Http1xResponseHeaders implements ResponseHeaders {
+class Http1xResponseHeaders implements InboundResponseHeaders {
 	
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	
 	private final HttpHeaders underlyingHeaders;
+	private InboundSetCookies responseCookies;
+	
 	private final int statusCode;
 	private Status status;
 
@@ -56,17 +59,6 @@ class Http1xResponseHeaders implements ResponseHeaders {
 	}
 	
 	@Override
-	public String getContentType() {
-		return this.underlyingHeaders.get((CharSequence)Headers.NAME_CONTENT_TYPE);
-	}
-
-	@Override
-	public Long getContentLength() {
-		String contentLength = this.underlyingHeaders.get((CharSequence)Headers.NAME_CONTENT_LENGTH);
-		return contentLength != null ? Long.parseLong(contentLength) : null;
-	}
-	
-	@Override
 	public Status getStatus() {
 		if(this.status == null) {
 			this.status = Status.valueOf(this.statusCode);
@@ -78,7 +70,31 @@ class Http1xResponseHeaders implements ResponseHeaders {
 	public int getStatusCode() {
 		return this.statusCode;
 	}
+	
+	@Override
+	public String getContentType() {
+		return this.underlyingHeaders.get((CharSequence)Headers.NAME_CONTENT_TYPE);
+	}
 
+	@Override
+	public Headers.ContentType getContentTypeHeader() {
+		return this.<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
+	}
+
+	@Override
+	public Long getContentLength() {
+		String contentLength = this.underlyingHeaders.get((CharSequence)Headers.NAME_CONTENT_LENGTH);
+		return contentLength != null ? Long.parseLong(contentLength) : null;
+	}
+
+	@Override
+	public InboundSetCookies cookies() {
+		if(this.responseCookies == null) {
+			this.responseCookies = new GenericResponseCookies(this, this.parameterConverter);
+		}
+		return this.responseCookies;
+	}
+	
 	@Override
 	public boolean contains(CharSequence name) {
 		return this.underlyingHeaders.contains(name);

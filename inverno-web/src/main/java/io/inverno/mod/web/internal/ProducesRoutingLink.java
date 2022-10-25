@@ -17,6 +17,7 @@ package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.NotAcceptableException;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
 import io.inverno.mod.http.base.header.HeaderCodec;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
@@ -194,22 +195,22 @@ class ProducesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 					catch (RouteNotFoundException | DisabledRouteException e1) {
 						// There's no default handler defined, we can take the best match
 						try {
-							exchange.response().headers().set(bestMatch.getTarget().getKey());
+							((OutboundResponseHeaders)exchange.response().headers()).set(bestMatch.getTarget().getKey());
 							return bestMatch.getTarget().getValue().defer(exchange);
 						} 
 						catch (RouteNotFoundException | DisabledRouteException e2) {
 							// continue with the next best match
-							exchange.response().headers().remove(Headers.NAME_CONTENT_TYPE);
+							((OutboundResponseHeaders)exchange.response().headers()).remove(Headers.NAME_CONTENT_TYPE);
 						}
 					}
 				} 
 				else {
 					try {
-						exchange.response().headers().set(bestMatch.getTarget().getKey());
+						((OutboundResponseHeaders)exchange.response().headers()).set(bestMatch.getTarget().getKey());
 						return bestMatch.getTarget().getValue().defer(exchange);
 					} 
 					catch (RouteNotFoundException | DisabledRouteException e) {
-						exchange.response().headers().remove(Headers.NAME_CONTENT_TYPE);
+						((OutboundResponseHeaders)exchange.response().headers()).remove(Headers.NAME_CONTENT_TYPE);
 					}
 				}
 			}

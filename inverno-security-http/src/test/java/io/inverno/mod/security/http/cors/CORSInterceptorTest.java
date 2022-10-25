@@ -18,14 +18,14 @@ package io.inverno.mod.security.http.cors;
 import io.inverno.mod.http.base.BadRequestException;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.ForbiddenException;
+import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.Request;
-import io.inverno.mod.http.server.RequestHeaders;
 import io.inverno.mod.http.server.Response;
 import io.inverno.mod.http.server.ResponseBody;
-import io.inverno.mod.http.server.ResponseHeaders;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Assertions;
@@ -50,9 +50,9 @@ public class CORSInterceptorTest {
 		Exchange<ExchangeContext> interceptedExchange = interceptor.intercept(mockExchange).block();
 		Assertions.assertEquals(mockExchange, interceptedExchange);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).get(Headers.NAME_ORIGIN);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(0)).set(Headers.NAME_VARY, Headers.NAME_ORIGIN);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(0)).set(Headers.NAME_VARY, Headers.NAME_ORIGIN);
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Mockito.anyString(), Mockito.anyString());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 		
@@ -61,9 +61,9 @@ public class CORSInterceptorTest {
 		interceptedExchange = interceptor.intercept(mockExchange).block();
 		Assertions.assertEquals(mockExchange, interceptedExchange);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).get(Headers.NAME_ORIGIN);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(0)).set(Headers.NAME_VARY, Headers.NAME_ORIGIN);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(0)).set(Headers.NAME_VARY, Headers.NAME_ORIGIN);
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Mockito.anyString(), Mockito.anyString());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 		
@@ -72,8 +72,8 @@ public class CORSInterceptorTest {
 		interceptedExchange = interceptor.intercept(mockExchange).block();
 		Assertions.assertEquals(mockExchange, interceptedExchange);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).get(Headers.NAME_ORIGIN);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_VARY, Headers.NAME_ORIGIN);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_VARY, Headers.NAME_ORIGIN);
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Mockito.anyString(), Mockito.anyString());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 		
@@ -95,9 +95,9 @@ public class CORSInterceptorTest {
 		interceptedExchange = interceptor.intercept(mockExchange).block();
 		Assertions.assertEquals(mockExchange, interceptedExchange);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).get(Headers.NAME_ORIGIN);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_VARY, Headers.NAME_ORIGIN);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(2)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_VARY, Headers.NAME_ORIGIN);
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(2)).set(Mockito.anyString(), Mockito.anyString());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 		
@@ -106,10 +106,10 @@ public class CORSInterceptorTest {
 		interceptedExchange = interceptor.intercept(mockExchange).block();
 		Assertions.assertEquals(mockExchange, interceptedExchange);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).get(Headers.NAME_ORIGIN);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_VARY, Headers.NAME_ORIGIN);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_EXPOSE_HEADERS, "content-type,accept");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(3)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_VARY, Headers.NAME_ORIGIN);
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_EXPOSE_HEADERS, "content-type,accept");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(3)).set(Mockito.anyString(), Mockito.anyString());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 		
@@ -118,10 +118,10 @@ public class CORSInterceptorTest {
 		interceptedExchange = interceptor.intercept(mockExchange).block();
 		Assertions.assertEquals(mockExchange, interceptedExchange);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).get(Headers.NAME_ORIGIN);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_VARY, Headers.NAME_ORIGIN);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(3)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_VARY, Headers.NAME_ORIGIN);
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_CREDENTIALS, "true");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(3)).set(Mockito.anyString(), Mockito.anyString());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 		
@@ -130,9 +130,9 @@ public class CORSInterceptorTest {
 		interceptedExchange = interceptor.intercept(mockExchange).block();
 		Assertions.assertEquals(mockExchange, interceptedExchange);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).get(Headers.NAME_ORIGIN);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_VARY, Headers.NAME_ORIGIN);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(2)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_VARY, Headers.NAME_ORIGIN);
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(2)).set(Mockito.anyString(), Mockito.anyString());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 		
@@ -145,8 +145,8 @@ public class CORSInterceptorTest {
 		Assertions.assertNull(interceptedExchange);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).get(Headers.NAME_ORIGIN);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).contains(Headers.NAME_ACCESS_CONTROL_REQUEST_METHOD);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:8080");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:8080");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Mockito.anyString(), Mockito.anyString());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 		
@@ -156,10 +156,10 @@ public class CORSInterceptorTest {
 		Assertions.assertNull(interceptedExchange);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).get(Headers.NAME_ORIGIN);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).contains(Headers.NAME_ACCESS_CONTROL_REQUEST_METHOD);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:8080");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_METHODS, "POST");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_MAX_AGE, "600");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(3)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:8080");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_METHODS, "POST");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_MAX_AGE, "600");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(3)).set(Mockito.anyString(), Mockito.anyString());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 		
@@ -170,12 +170,12 @@ public class CORSInterceptorTest {
 		Assertions.assertNull(interceptedExchange);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).get(Headers.NAME_ORIGIN);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).contains(Headers.NAME_ACCESS_CONTROL_REQUEST_METHOD);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:8080");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_METHODS, "POST");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_HEADERS, "some-request-header");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_VARY, Headers.NAME_ACCESS_CONTROL_REQUEST_HEADERS);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_MAX_AGE, "600");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(5)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:8080");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_METHODS, "POST");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_HEADERS, "some-request-header");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_VARY, Headers.NAME_ACCESS_CONTROL_REQUEST_HEADERS);
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_MAX_AGE, "600");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(5)).set(Mockito.anyString(), Mockito.anyString());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 		
@@ -185,11 +185,11 @@ public class CORSInterceptorTest {
 		Assertions.assertNull(interceptedExchange);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).get(Headers.NAME_ORIGIN);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).contains(Headers.NAME_ACCESS_CONTROL_REQUEST_METHOD);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:8080");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_METHODS, "POST");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_HEADERS, "some-header");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_MAX_AGE, "600");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(4)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:8080");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_METHODS, "POST");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_HEADERS, "some-header");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_MAX_AGE, "600");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(4)).set(Mockito.anyString(), Mockito.anyString());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 		
@@ -200,8 +200,8 @@ public class CORSInterceptorTest {
 		Assertions.assertNull(interceptedExchange);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).get(Headers.NAME_ORIGIN);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).contains(Headers.NAME_ACCESS_CONTROL_REQUEST_METHOD);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:8080");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:8080");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Mockito.anyString(), Mockito.anyString());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 		
@@ -212,9 +212,9 @@ public class CORSInterceptorTest {
 		Assertions.assertNull(interceptedExchange);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).get(Headers.NAME_ORIGIN);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).contains(Headers.NAME_ACCESS_CONTROL_REQUEST_METHOD);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:8080");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_PRIVATE_NETWORK, "true");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(2)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:8080");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_PRIVATE_NETWORK, "true");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(2)).set(Mockito.anyString(), Mockito.anyString());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 		
@@ -225,8 +225,8 @@ public class CORSInterceptorTest {
 		Assertions.assertNull(interceptedExchange);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).get(Headers.NAME_ORIGIN);
 		Mockito.verify(mockExchange.request().headers(), Mockito.times(1)).contains(Headers.NAME_ACCESS_CONTROL_REQUEST_METHOD);
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:8080");
-		Mockito.verify(mockExchange.response().headers(), Mockito.times(1)).set(Mockito.anyString(), Mockito.anyString());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Headers.NAME_ACCESS_CONTROL_ALLOW_ORIGIN, "http://127.0.0.1:8080");
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(1)).set(Mockito.anyString(), Mockito.anyString());
 		
 		Mockito.clearInvocations(mockExchange.request().headers(), mockExchange.response().headers());
 	}
@@ -237,16 +237,16 @@ public class CORSInterceptorTest {
 		Exchange<ExchangeContext> mockExchange = (Exchange<ExchangeContext>)Mockito.mock(Exchange.class);
 		
 		Request mockRequest = Mockito.mock(Request.class);
-		RequestHeaders mockRequestHeaders = Mockito.mock(RequestHeaders.class);
+		InboundRequestHeaders mockRequestHeaders = Mockito.mock(InboundRequestHeaders.class);
 		Mockito.when(mockRequest.headers()).thenReturn(mockRequestHeaders);
 		Mockito.when(mockExchange.request()).thenReturn(mockRequest);
 		
 		Response mockResponse = Mockito.mock(Response.class);
-		ResponseHeaders mockResponseHeaders = Mockito.mock(ResponseHeaders.class);
+		OutboundResponseHeaders mockResponseHeaders = Mockito.mock(OutboundResponseHeaders.class);
 		Mockito.when(mockResponseHeaders.status(Mockito.any())).thenReturn(mockResponseHeaders);
 		Mockito.when(mockResponse.headers()).thenReturn(mockResponseHeaders);
 		Mockito.when(mockResponse.headers(Mockito.any(Consumer.class))).then(invocation -> {
-			Consumer<ResponseHeaders> headersConfigurer = invocation.getArgument(0);
+			Consumer<OutboundResponseHeaders> headersConfigurer = invocation.getArgument(0);
 			headersConfigurer.accept(mockResponseHeaders);
 			return mockResponse;
 		});

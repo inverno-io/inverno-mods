@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
-import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.InboundHeaders;
+import io.inverno.mod.http.base.InboundResponseHeaders;
 import io.inverno.mod.http.client.Response;
 import io.inverno.mod.http.client.ResponseBody;
-import io.inverno.mod.http.client.ResponseCookies;
-import io.inverno.mod.http.client.ResponseHeaders;
-import io.inverno.mod.http.client.ResponseTrailers;
 import io.netty.buffer.ByteBuf;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -33,11 +30,9 @@ import reactor.core.publisher.Sinks;
  */
 public abstract class AbstractResponse implements Response {
 
-	private final ResponseHeaders responseHeaders;
-	private final ObjectConverter<String> parameterConverter;
+	private final InboundResponseHeaders responseHeaders;
 	
-	protected ResponseCookies responseCookies;
-	protected ResponseTrailers responseTrailers;
+	protected InboundHeaders responseTrailers;
 	
 	private boolean subscribed;
 	private boolean disposed;
@@ -45,24 +40,15 @@ public abstract class AbstractResponse implements Response {
 	private GenericResponseBody body;
 	private Sinks.Many<ByteBuf> data;
 
-	protected AbstractResponse(ResponseHeaders responseHeaders, ObjectConverter<String> parameterConverter) {
+	protected AbstractResponse(InboundResponseHeaders responseHeaders) {
 		this.responseHeaders = responseHeaders;
-		this.parameterConverter = parameterConverter;
 	}
 	
 	@Override
-	public ResponseHeaders headers() {
+	public InboundResponseHeaders headers() {
 		return this.responseHeaders;
 	}
-
-	@Override
-	public ResponseCookies cookies() {
-		if(this.responseCookies == null) {
-			this.responseCookies = new GenericResponseCookies(this.responseHeaders, this.parameterConverter);
-		}
-		return this.responseCookies;
-	}
-
+	
 	@Override
 	public ResponseBody body() {
 		if(this.body == null) {
@@ -82,7 +68,7 @@ public abstract class AbstractResponse implements Response {
 	}
 
 	@Override
-	public ResponseTrailers trailers() {
+	public InboundHeaders trailers() {
 		return this.responseTrailers;
 	}
 	

@@ -15,28 +15,37 @@
  */
 package io.inverno.mod.http.server.internal;
 
-import java.util.List;
-import java.util.function.Consumer;
-
+import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.header.SetCookie;
+import io.inverno.mod.http.base.header.SetCookieParameter;
+import io.inverno.mod.http.base.internal.header.GenericSetCookieParameter;
 import io.inverno.mod.http.base.internal.header.SetCookieCodec;
-import io.inverno.mod.http.server.ResponseCookies;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * <p>
- * Generic {@link ResponseCookies} implementation.
+ * Generic {@link OutboundSetCookies} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class GenericResponseCookies implements ResponseCookies {
+public class GenericResponseCookies implements OutboundSetCookies {
 
 	private final HeaderService headerService;
+	private final InternalResponseHeaders responseHeaders;
+	private final ObjectConverter<String> parameterConverter;
 	
-	private final AbstractResponseHeaders responseHeaders;
+	private Map<String, List<SetCookieParameter>> pairs;
 	
 	/**
 	 * <p>
@@ -47,28 +56,59 @@ public class GenericResponseCookies implements ResponseCookies {
 	 * @param headerService   the header service
 	 * @param responseHeaders the response headers
 	 */
-	public GenericResponseCookies(HeaderService headerService, AbstractResponseHeaders responseHeaders) {
+	public GenericResponseCookies(HeaderService headerService, InternalResponseHeaders responseHeaders, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.responseHeaders = responseHeaders;
+		this.parameterConverter = parameterConverter;
 	}
-	
-	/**
-	 * <p>
-	 * Returns all response cookies.
-	 * </p>
-	 * 
-	 * @return a list of set-cookie headers
-	 */
-	public List<Headers.SetCookie> getAll() {
-		return this.responseHeaders.getAllHeader(Headers.NAME_SET_COOKIE);
-	}
-	
+
 	@Override
-	public ResponseCookies addCookie(Consumer<SetCookie.Configurator> configurer) {
+	public OutboundSetCookies addCookie(Consumer<SetCookie.Configurator> configurer) {
 		SetCookieCodec.SetCookie setCookie = new SetCookieCodec.SetCookie();
 		configurer.accept(setCookie);
 		setCookie.setHeaderValue(this.headerService.encodeValue(setCookie));
 		this.responseHeaders.add(setCookie);
+		if(this.pairs != null) {
+			this.pairs.computeIfAbsent(setCookie.getName(), ign -> new ArrayList<>()).add(new GenericSetCookieParameter(setCookie, this.parameterConverter));
+		}
 		return this;
+	}
+
+	@Override
+	public boolean contains(String name) {
+		return this.getAll().containsKey(name);
+	}
+
+	@Override
+	public Set<String> getNames() {
+		return this.getAll().keySet();
+	}
+
+	@Override
+	public Optional<SetCookieParameter> get(String name) {
+		return Optional.ofNullable(this.getAll().get(name))
+			.map(setCookies -> {
+				if(!setCookies.isEmpty()) {
+					return setCookies.get(0);
+				}
+				return null;
+			});
+	}
+
+	@Override
+	public List<SetCookieParameter> getAll(String name) {
+		List<SetCookieParameter> setCookiePairs = this.pairs.get(name);
+		return setCookiePairs != null ? setCookiePairs : List.of();
+	}
+
+	@Override
+	public Map<String, List<SetCookieParameter>> getAll() {
+		if(this.pairs == null) {
+			this.pairs = new HashMap<>();
+			for(Headers.SetCookie setCookie : this.responseHeaders.<Headers.SetCookie>getAllHeader(Headers.NAME_SET_COOKIE)) {
+				this.pairs.computeIfAbsent(setCookie.getName(), ign -> new ArrayList<>()).add(new GenericSetCookieParameter(setCookie, this.parameterConverter));
+			}
+		}
+		return this.pairs;
 	}
 }

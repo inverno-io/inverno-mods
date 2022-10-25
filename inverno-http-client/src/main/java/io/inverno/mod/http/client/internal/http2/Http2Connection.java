@@ -220,7 +220,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 				bodyConfigurer.accept(bodyConfigurator);
 			}
 
-			Http2Request http2Request = new Http2Request(this.context, this.tls, this.headerService, this.parameterConverter, HttpVersion.HTTP_2_0, method, authority, path, requestHeaders, requestBody);
+			Http2Request http2Request = new Http2Request(this.context, this.tls, this.parameterConverter, HttpVersion.HTTP_2_0, method, authority, path, requestHeaders, requestBody);
 
 			// We must sart the exchange on a new client stream
 			// We must then create a stream

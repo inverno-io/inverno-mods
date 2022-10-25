@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client;
+
+import io.inverno.mod.http.base.BaseRequest;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
+import java.util.function.Consumer;
 
 /**
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface RequestCookies {
+interface AbstractRequest<A extends AbstractRequest<A>> extends BaseRequest {
 
-	// Object to String converter?
-	<T> RequestCookies addCookie(String name, T value);
+	A headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException;
+	
+	A authority(String authority);
 }

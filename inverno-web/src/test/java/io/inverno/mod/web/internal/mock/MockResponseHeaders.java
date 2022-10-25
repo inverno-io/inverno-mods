@@ -15,6 +15,14 @@
  */
 package io.inverno.mod.web.internal.mock;
 
+import io.inverno.mod.http.base.InboundSetCookies;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
+import io.inverno.mod.http.base.OutboundSetCookies;
+import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.base.Status;
+import io.inverno.mod.http.base.header.Header;
+import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.header.Headers;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,20 +30,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.http.base.Status;
-import io.inverno.mod.http.base.header.Header;
-import io.inverno.mod.http.base.header.HeaderService;
-import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.server.ResponseHeaders;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  *
  */
-public class MockResponseHeaders implements ResponseHeaders {
+public class MockResponseHeaders implements OutboundResponseHeaders {
 
 	private final HeaderService headerService;
 	
@@ -43,37 +45,67 @@ public class MockResponseHeaders implements ResponseHeaders {
 	
 	private final Map<String, List<String>> headers;
 	
+	private final MockResponseCookies cookies;
+	
+	private boolean written;
+	
 	public MockResponseHeaders(HeaderService headerService) {
 		this.headerService = headerService;
 		this.headers = new HashMap<>();
+		this.cookies = new MockResponseCookies();
+	}
+
+	@Override
+	public boolean isWritten() {
+		return this.written;
+	}
+
+	public void setWritten(boolean written) {
+		this.written = written;
 	}
 	
 	@Override
-	public ResponseHeaders status(Status status) {
+	public MockResponseHeaders status(Status status) {
 		this.statusCode = status.getCode();
 		return this;
 	}
 
 	@Override
-	public ResponseHeaders status(int status) {
+	public MockResponseHeaders status(int status) {
 		this.statusCode = status;
 		return this;
 	}
 
 	@Override
-	public ResponseHeaders contentType(String contentType) {
+	public MockResponseHeaders contentType(String contentType) {
 		this.set(Headers.NAME_CONTENT_TYPE, contentType);
 		return this;
 	}
 
 	@Override
-	public ResponseHeaders contentLength(long length) {
+	public MockResponseHeaders contentLength(long length) {
 		this.set(Headers.NAME_CONTENT_LENGTH, Long.toString(length));
 		return this;
 	}
 
 	@Override
-	public ResponseHeaders add(CharSequence name, CharSequence value) {
+	public Long getContentLength() {
+		return Optional.ofNullable(this.headers.get(Headers.NAME_CONTENT_LENGTH)).map(l -> Long.parseLong(l.get(0))).orElse(null);
+	}
+	
+	@Override
+	public InboundSetCookies cookies() {
+		return this.cookies;
+	}
+	
+	@Override
+	public OutboundResponseHeaders cookies(Consumer<OutboundSetCookies> cookiesConfigurer) {
+		cookiesConfigurer.accept(this.cookies);
+		return this;
+	}
+
+	@Override
+	public MockResponseHeaders add(CharSequence name, CharSequence value) {
 		if(!this.headers.containsKey(name.toString())) {
 			this.headers.put(name.toString(), new ArrayList<>());
 		}
@@ -82,7 +114,7 @@ public class MockResponseHeaders implements ResponseHeaders {
 	}
 
 	@Override
-	public ResponseHeaders add(Header... headers) {
+	public MockResponseHeaders add(Header... headers) {
 		for(Header header : headers) {
 			this.add(header.getHeaderName(), header.getHeaderValue());
 		}
@@ -90,14 +122,14 @@ public class MockResponseHeaders implements ResponseHeaders {
 	}
 
 	@Override
-	public ResponseHeaders set(CharSequence name, CharSequence value) {
+	public MockResponseHeaders set(CharSequence name, CharSequence value) {
 		this.remove(name);
 		this.add(name, value);
 		return this;
 	}
 
 	@Override
-	public ResponseHeaders set(Header... headers) {
+	public MockResponseHeaders set(Header... headers) {
 		for(Header header : headers) {
 			this.set(header.getHeaderName(), header.getHeaderValue());
 		}
@@ -105,7 +137,7 @@ public class MockResponseHeaders implements ResponseHeaders {
 	}
 
 	@Override
-	public ResponseHeaders remove(CharSequence... names) {
+	public MockResponseHeaders remove(CharSequence... names) {
 		for(CharSequence name : names) {
 			this.headers.remove(name.toString());
 		}
@@ -123,13 +155,13 @@ public class MockResponseHeaders implements ResponseHeaders {
 	}
 
 	@Override
-	public Optional<String> getContentType() {
-		return Optional.ofNullable(this.headers.get(Headers.NAME_CONTENT_TYPE)).map(l -> l.get(0));
+	public String getContentType() {
+		return Optional.ofNullable(this.headers.get(Headers.NAME_CONTENT_TYPE)).map(l -> l.get(0)).orElse(null);
 	}
 
 	@Override
-	public Optional<Headers.ContentType> getContentTypeHeader() {
-		throw new UnsupportedOperationException();
+	public Headers.ContentType getContentTypeHeader() {
+		return this.<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
 	}
 
 	@Override

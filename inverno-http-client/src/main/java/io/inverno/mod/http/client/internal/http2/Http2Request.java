@@ -19,7 +19,6 @@ package io.inverno.mod.http.client.internal.http2;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.internal.AbstractRequest;
 import io.inverno.mod.http.client.internal.GenericRequestBody;
 import io.netty.channel.ChannelHandlerContext;
@@ -33,7 +32,6 @@ class Http2Request extends AbstractRequest {
 	public Http2Request(
 			ChannelHandlerContext context,
 			boolean tls,
-			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter, 
 			HttpVersion protocol, 
 			Method method, 
@@ -41,7 +39,7 @@ class Http2Request extends AbstractRequest {
 			String path, 
 			Http2RequestHeaders requestHeaders, 
 			GenericRequestBody requestBody) {
-		super(context, tls, headerService, parameterConverter, protocol, method, authority, path, requestHeaders, requestBody);
+		super(context, tls, parameterConverter, protocol, method, authority, path, requestHeaders, requestBody);
 	}
 
 	@Override

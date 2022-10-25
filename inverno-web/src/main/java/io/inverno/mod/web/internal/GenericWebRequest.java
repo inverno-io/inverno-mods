@@ -15,18 +15,17 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.net.SocketAddress;
-import java.util.Optional;
-
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.URIBuilder;
+import io.inverno.mod.http.base.InboundCookies;
+import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.server.QueryParameters;
+import io.inverno.mod.http.base.QueryParameters;
 import io.inverno.mod.http.server.Request;
-import io.inverno.mod.http.server.RequestCookies;
-import io.inverno.mod.http.server.RequestHeaders;
 import io.inverno.mod.web.WebRequest;
 import io.inverno.mod.web.WebRequestBody;
+import java.net.SocketAddress;
+import java.util.Optional;
 
 /**
  * <p>
@@ -80,9 +79,9 @@ class GenericWebRequest implements WebRequest {
 		this.dataConversionService = dataConversionService;
 		this.parameterConverter = parameterConverter;
 	}
-	
+
 	@Override
-	public RequestHeaders headers() {
+	public InboundRequestHeaders headers() {
 		return this.request.headers();
 	}
 
@@ -90,7 +89,7 @@ class GenericWebRequest implements WebRequest {
 	public QueryParameters queryParameters() {
 		return this.request.queryParameters();
 	}
-
+	
 	@Override
 	public GenericPathParameters pathParameters() {
 		if(this.pathParameters == null) {
@@ -98,9 +97,10 @@ class GenericWebRequest implements WebRequest {
 		}
 		return this.pathParameters;
 	}
-	
+
 	@Override
-	public RequestCookies cookies() {
+	@Deprecated
+	public InboundCookies cookies() {
 		return this.request.cookies();
 	}
 	

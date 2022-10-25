@@ -15,10 +15,9 @@
  */
 package io.inverno.mod.http.server.internal;
 
+import io.inverno.mod.http.base.OutboundResponseHeaders;
 import java.util.List;
 import java.util.Map;
-
-import io.inverno.mod.http.server.ResponseHeaders;
 
 /**
  * <p>
@@ -28,17 +27,8 @@ import io.inverno.mod.http.server.ResponseHeaders;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public interface AbstractResponseHeaders extends ResponseHeaders {
+public interface InternalResponseHeaders extends OutboundResponseHeaders {
 	
-	/**
-	 * <p>
-	 * Determines whether the response headers have been sent to the client.
-	 * </p>
-	 * 
-	 * @return true if the headers have been sent, false otherwise
-	 */
-	boolean isWritten();
-
 	/**
 	 * <p>
 	 * Defines whether headers have been sent to the client.
@@ -92,13 +82,4 @@ public interface AbstractResponseHeaders extends ResponseHeaders {
 	 * @return a list of header entries or an empty list if there's no header
 	 */
 	List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence();
-	
-	/**
-	 * <p>
-	 * Returns the response content length.
-	 * </p>
-	 * 
-	 * @return the content length or null
-	 */
-	Long getContentLength();
 }

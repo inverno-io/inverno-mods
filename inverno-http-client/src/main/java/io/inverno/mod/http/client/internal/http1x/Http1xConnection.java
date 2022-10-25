@@ -342,7 +342,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				bodyConfigurer.accept(bodyConfigurator);
 			}
 			
-			Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, this.headerService, this.parameterConverter, this.httpVersion, method, authority, path, requestHeaders, requestBody);
+			Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, this.parameterConverter, this.httpVersion, method, authority, path, requestHeaders, requestBody);
 			try {
 				// This must be thread safe as multiple threads can change the exchange queue
 				EventLoop eventLoop = this.context.channel().eventLoop();

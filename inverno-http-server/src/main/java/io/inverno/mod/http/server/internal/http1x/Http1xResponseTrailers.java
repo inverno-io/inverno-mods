@@ -16,12 +16,12 @@
 package io.inverno.mod.http.server.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.OutboundHeaders;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.internal.GenericParameter;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
-import io.inverno.mod.http.server.ResponseTrailers;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import java.util.List;
 import java.util.Map.Entry;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * HTTP1.x {@link ResponseTrailers} implementation.
+ * HTTP1.x response trailers implementation.
  * </p>
  * 
  * <p>
@@ -43,12 +43,14 @@ import java.util.stream.Collectors;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class Http1xResponseTrailers implements ResponseTrailers {
+class Http1xResponseTrailers implements OutboundHeaders<Http1xResponseTrailers> {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	
 	private final LinkedHttpHeaders underlyingTrailers;
+	
+	private boolean written;
 	
 	/**
 	 * <p>
@@ -65,6 +67,15 @@ class Http1xResponseTrailers implements ResponseTrailers {
 		
 		this.underlyingTrailers = new LinkedHttpHeaders();
 	}
+
+	@Override
+	public boolean isWritten() {
+		return this.written;
+	}
+
+	public void setWritten(boolean written) {
+		this.written = written;
+	}
 	
 	/**
 	 * <p>
@@ -78,13 +89,13 @@ class Http1xResponseTrailers implements ResponseTrailers {
 	}
 	
 	@Override
-	public ResponseTrailers add(CharSequence name, CharSequence value) {
+	public Http1xResponseTrailers add(CharSequence name, CharSequence value) {
 		this.underlyingTrailers.addCharSequence(name, value);
 		return this;
 	}
 
 	@Override
-	public ResponseTrailers add(Header... trailers) {
+	public Http1xResponseTrailers add(Header... trailers) {
 		for(Header trailer : trailers) {
 			this.underlyingTrailers.addCharSequence(trailer.getHeaderName(), trailer.getHeaderValue());
 		}
@@ -92,13 +103,13 @@ class Http1xResponseTrailers implements ResponseTrailers {
 	}
 
 	@Override
-	public ResponseTrailers set(CharSequence name, CharSequence value) {
+	public Http1xResponseTrailers set(CharSequence name, CharSequence value) {
 		this.underlyingTrailers.setCharSequence(name, value);
 		return this;
 	}
 
 	@Override
-	public ResponseTrailers set(Header... trailers) {
+	public Http1xResponseTrailers set(Header... trailers) {
 		for(Header trailer : trailers) {
 			this.underlyingTrailers.setCharSequence(trailer.getHeaderName(), trailer.getHeaderValue());
 		}
@@ -106,7 +117,7 @@ class Http1xResponseTrailers implements ResponseTrailers {
 	}
 
 	@Override
-	public ResponseTrailers remove(CharSequence... names) {
+	public Http1xResponseTrailers remove(CharSequence... names) {
 		for(CharSequence name : names) {
 			this.underlyingTrailers.remove(name);
 		}

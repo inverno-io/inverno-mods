@@ -294,10 +294,14 @@ class Http1xExchange extends AbstractExchange {
 	@Override
 	protected void onCompleteMany() {
 		Http1xResponseTrailers responseTrailers = (Http1xResponseTrailers)this.response.trailers();
-		Object msg = this.acceptTrailers && responseTrailers != null ? new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, responseTrailers.getUnderlyingTrailers()) : LastHttpContent.EMPTY_LAST_CONTENT;
-		
 		ChannelPromise finalizePromise = this.context.newPromise();
-		this.encoder.writeFrame(this.context, msg, finalizePromise);
+		if(this.acceptTrailers && responseTrailers != null) {
+			this.encoder.writeFrame(this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, responseTrailers.getUnderlyingTrailers()), finalizePromise);
+			responseTrailers.setWritten(true);
+		}
+		else {
+			this.encoder.writeFrame(this.context, LastHttpContent.EMPTY_LAST_CONTENT, finalizePromise);
+		}
 		this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 	}
 	
@@ -338,11 +342,14 @@ class Http1xExchange extends AbstractExchange {
 		@Override
 		protected void hookOnComplete() {
 			Http1xExchange.this.executeInEventLoop(() -> {
-				Http1xResponseTrailers trailers = (Http1xResponseTrailers)Http1xExchange.this.response.trailers();
-				Object msg = trailers != null ? new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, trailers.getUnderlyingTrailers()) : LastHttpContent.EMPTY_LAST_CONTENT;
-				
+				Http1xResponseTrailers responseTrailers = (Http1xResponseTrailers)Http1xExchange.this.response.trailers();
 				ChannelPromise finalizePromise = Http1xExchange.this.context.newPromise();
-				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, msg, finalizePromise);
+				if(Http1xExchange.this.acceptTrailers && responseTrailers != null) {
+					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, responseTrailers.getUnderlyingTrailers()), finalizePromise);
+				}
+				else {
+					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, finalizePromise);
+				}
 				Http1xExchange.this.finalizeExchange(finalizePromise, () -> Http1xExchange.this.handler.exchangeComplete(Http1xExchange.this.context));
 			});
 		}

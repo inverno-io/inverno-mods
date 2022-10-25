@@ -15,15 +15,13 @@
  */
 package io.inverno.mod.http.server.internal.http2;
 
-import java.util.function.Consumer;
-
-import io.netty.channel.ChannelHandlerContext;
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.OutboundHeaders;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.Response;
-import io.inverno.mod.http.server.ResponseTrailers;
 import io.inverno.mod.http.server.internal.AbstractResponse;
 import io.inverno.mod.http.server.internal.GenericResponseBody;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Stream;
@@ -69,14 +67,10 @@ class Http2Response extends AbstractResponse {
 	public Http2ResponseHeaders headers() {
 		return (Http2ResponseHeaders)this.responseHeaders;
 	}
-	
+
 	@Override
-	public Response trailers(Consumer<ResponseTrailers> trailersConfigurer) {
-		if(this.responseTrailers == null) {
-			this.responseTrailers = new Http2ResponseTrailers(this.headerService, this.parameterConverter);
-		}
-		trailersConfigurer.accept(this.responseTrailers);
-		return this;
+	protected OutboundHeaders<?> createTrailers() {
+		return new Http2ResponseTrailers(this.headerService, this.parameterConverter);
 	}
 	
 	@Override

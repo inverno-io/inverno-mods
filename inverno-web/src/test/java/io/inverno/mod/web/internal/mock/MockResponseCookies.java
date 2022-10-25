@@ -15,20 +15,37 @@
  */
 package io.inverno.mod.web.internal.mock;
 
+import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.base.header.Headers;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Consumer;
-
 import io.inverno.mod.http.base.header.SetCookie;
-import io.inverno.mod.http.server.ResponseCookies;
+import io.inverno.mod.http.base.header.SetCookieParameter;
+import java.io.File;
+import java.lang.reflect.Type;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
+import java.util.Currency;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  *
  */
-public class MockResponseCookies implements ResponseCookies {
+public class MockResponseCookies implements OutboundSetCookies {
 
 	private final Map<String, MockSetCookie> responseCookies;
 	
@@ -39,16 +56,41 @@ public class MockResponseCookies implements ResponseCookies {
 	public Map<String, MockSetCookie> getCookies() {
 		return responseCookies;
 	}
-	
+
 	@Override
-	public ResponseCookies addCookie(Consumer<SetCookie.Configurator> configurer) {
+	public OutboundSetCookies addCookie(Consumer<SetCookie.Configurator> configurer) {
 		MockSetCookie setCookie = new MockSetCookie();
 		configurer.accept(setCookie);
 		this.responseCookies.put(setCookie.getName(), setCookie);
 		return this;
 	}
 
-	public static class MockSetCookie implements SetCookie, SetCookie.Configurator {
+	@Override
+	public boolean contains(String name) {
+		return this.responseCookies.containsKey(name);
+	}
+
+	@Override
+	public Set<String> getNames() {
+		return this.responseCookies.keySet();
+	}
+
+	@Override
+	public Optional<SetCookieParameter> get(String name) {
+		return Optional.ofNullable(this.responseCookies.get(name));
+	}
+
+	@Override
+	public List<SetCookieParameter> getAll(String name) {
+		return this.responseCookies.containsKey(name) ? List.of(this.responseCookies.get(name)) : List.of();
+	}
+
+	@Override
+	public Map<String, List<SetCookieParameter>> getAll() {
+		return this.responseCookies.values().stream().map(mockSetCookie -> (SetCookieParameter)mockSetCookie).collect(Collectors.groupingBy(SetCookieParameter::getName));
+	}
+
+	public static class MockSetCookie implements SetCookieParameter, SetCookie.Configurator {
 
 		private String name;
 		private String value;
@@ -157,6 +199,161 @@ public class MockResponseCookies implements ResponseCookies {
 		@Override
 		public Headers.SetCookie.SameSitePolicy getSameSite() {
 			return this.sameSite;
+		}
+
+		@Override
+		public <T> T as(Class<T> type) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <T> T as(Type type) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <T> T[] asArrayOf(Class<T> type) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <T> T[] asArrayOf(Type type) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <T> List<T> asListOf(Class<T> type) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <T> List<T> asListOf(Type type) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <T> Set<T> asSetOf(Class<T> type) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public <T> Set<T> asSetOf(Type type) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Byte asByte() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Short asShort() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Integer asInteger() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Long asLong() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Float asFloat() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Double asDouble() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Character asCharacter() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String asString() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Boolean asBoolean() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public BigInteger asBigInteger() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public BigDecimal asBigDecimal() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public LocalDate asLocalDate() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public LocalDateTime asLocalDateTime() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public ZonedDateTime asZonedDateTime() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Currency asCurrency() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Locale asLocale() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public File asFile() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Path asPath() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public URI asURI() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public URL asURL() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Pattern asPattern() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public InetAddress asInetAddress() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Class<?> asClass() {
+			throw new UnsupportedOperationException();
 		}
 	}
 }

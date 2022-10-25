@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
-import io.inverno.mod.http.client.RequestHeaders;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
 import java.util.List;
 import java.util.Map;
 
@@ -24,9 +23,7 @@ import java.util.Map;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface InternalRequestHeaders extends RequestHeaders {
-
-	boolean isWritten();
+public interface InternalRequestHeaders extends OutboundRequestHeaders {
 
 	void setWritten(boolean written);
 

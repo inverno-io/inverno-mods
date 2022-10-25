@@ -21,10 +21,10 @@ import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
+import io.inverno.mod.http.base.QueryParameters;
+import io.inverno.mod.http.base.internal.GenericQueryParameters;
 import io.inverno.mod.http.client.Request;
-import io.inverno.mod.http.client.RequestCookies;
-import io.inverno.mod.http.client.RequestHeaders;
 import io.netty.channel.ChannelHandlerContext;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -39,7 +39,6 @@ public abstract class AbstractRequest implements Request {
 
 	private final ChannelHandlerContext context;
 	private final boolean tls;
-	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	private final HttpVersion protocol;
 	private final Method method;
@@ -52,13 +51,13 @@ public abstract class AbstractRequest implements Request {
 	private String authority;
 	private String pathAbsolute;
 	private String queryString;
+	private GenericQueryParameters queryParameters;
 	
 	private GenericRequestCookies requestCookies;
 	
 	protected AbstractRequest(
 			ChannelHandlerContext context, 
 			boolean tls,
-			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter, 
 			HttpVersion protocol, 
 			Method method, 
@@ -68,7 +67,6 @@ public abstract class AbstractRequest implements Request {
 			GenericRequestBody requestBody) {
 		this.context = context;
 		this.tls = tls;
-		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		this.protocol = protocol;
 		this.method = method;
@@ -85,24 +83,11 @@ public abstract class AbstractRequest implements Request {
 	}
 
 	@Override
-	public Request headers(Consumer<RequestHeaders> headersConfigurer) throws IllegalStateException {
+	public Request headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException {
 		if(this.isHeadersWritten()) {
 			throw new IllegalStateException("Headers already written");
 		}
 		headersConfigurer.accept(this.requestHeaders);
-		return this;
-	}
-
-	@Override
-	public Request cookies(Consumer<RequestCookies> cookiesConfigurer) throws IllegalStateException {
-		if(this.isHeadersWritten()) {
-			throw new IllegalStateException("Headers already written");
-		}
-		if(this.requestCookies == null) {
-			this.requestCookies = new GenericRequestCookies(this.headerService, this.requestHeaders, parameterConverter);
-		}
-		cookiesConfigurer.accept(this.requestCookies);
-		this.requestCookies.commit();
 		return this;
 	}
 
@@ -152,7 +137,10 @@ public abstract class AbstractRequest implements Request {
 	public String getAuthority() {
 		if(this.authority == null) {
 			SocketAddress remoteAddress = this.getRemoteAddress();
-			if(remoteAddress instanceof InetSocketAddress) {
+			if(remoteAddress == null) {
+				return null;
+			}
+			else if(remoteAddress instanceof InetSocketAddress) {
 				this.authority = ((InetSocketAddress)remoteAddress).getHostString();
 				int port = ((InetSocketAddress)remoteAddress).getPort();
 				if((this.tls && port != 443) || (this.tls && port != 80)) {
@@ -190,6 +178,14 @@ public abstract class AbstractRequest implements Request {
 			this.queryString = this.primaryPathBuilder.buildRawQuery();
 		}
 		return this.queryString;
+	}
+
+	@Override
+	public QueryParameters queryParameters() {
+		if(this.queryParameters == null) {
+			this.queryParameters = new GenericQueryParameters(this.primaryPathBuilder.getQueryParameters(), this.parameterConverter);
+		}
+		return this.queryParameters;
 	}
 	
 	@Override

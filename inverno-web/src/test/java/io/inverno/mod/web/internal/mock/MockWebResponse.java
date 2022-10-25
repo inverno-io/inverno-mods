@@ -15,15 +15,14 @@
  */
 package io.inverno.mod.web.internal.mock;
 
-import java.util.function.Consumer;
-
+import io.inverno.mod.http.base.OutboundHeaders;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
+import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.Response;
-import io.inverno.mod.http.server.ResponseCookies;
-import io.inverno.mod.http.server.ResponseHeaders;
-import io.inverno.mod.http.server.ResponseTrailers;
 import io.inverno.mod.web.WebResponse;
 import io.inverno.mod.web.WebResponseBody;
+import java.util.function.Consumer;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -75,19 +74,20 @@ public class MockWebResponse implements WebResponse {
 	}
 
 	@Override
-	public MockWebResponse headers(Consumer<ResponseHeaders> headersConfigurer) throws IllegalStateException {
+	public WebResponse headers(Consumer<OutboundResponseHeaders> headersConfigurer) throws IllegalStateException {
 		headersConfigurer.accept(this.headers);
 		return this;
 	}
 
 	@Override
-	public MockWebResponse trailers(Consumer<ResponseTrailers> trailersConfigurer) {
+	public WebResponse trailers(Consumer<OutboundHeaders<?>> trailersConfigurer) {
 		trailersConfigurer.accept(this.trailers);
 		return this;
 	}
 
 	@Override
-	public MockWebResponse cookies(Consumer<ResponseCookies> cookiesConfigurer) throws IllegalStateException {
+	@Deprecated
+	public WebResponse cookies(Consumer<OutboundSetCookies> cookiesConfigurer) throws IllegalStateException {
 		cookiesConfigurer.accept(this.cookies);
 		return this;
 	}

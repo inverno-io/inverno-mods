@@ -190,7 +190,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 			case PATCH:
 			case DELETE: {
 				// "Double Submit Cookie" check
-				byte[] csrfCookie = exchange.request().cookies().get(this.cookieName)
+				byte[] csrfCookie = exchange.request().headers().cookies().get(this.cookieName)
 					.map(CookieParameter::asString)
 					.orElseThrow(() -> new ForbiddenException("Missing CSRF token cookie"))
 					.getBytes(Charsets.UTF_8);
@@ -248,7 +248,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 	 * @param exchange the exchange
 	 */
 	private void addCSRFTokenCookie(B exchange) {
-		exchange.response().cookies(cookies -> cookies.addCookie(cookie -> {
+		exchange.response().headers(headers -> headers.cookies(cookies -> cookies.addCookie(cookie -> {
 			cookie.name(this.cookieName)
 				.value(this.generateToken())
 				.sameSite(Headers.SetCookie.SameSitePolicy.STRICT);
@@ -268,7 +268,7 @@ public class CSRFDoubleSubmitCookieInterceptor<A extends ExchangeContext, B exte
 			if(this.httpOnly) {
 				cookie.httpOnly(this.httpOnly);
 			}
-		}));
+		})));
 	}
 	
 	/**

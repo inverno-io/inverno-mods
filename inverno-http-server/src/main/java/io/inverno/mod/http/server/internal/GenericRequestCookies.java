@@ -15,29 +15,28 @@
  */
 package io.inverno.mod.http.server.internal;
 
+import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.InboundCookies;
+import io.inverno.mod.http.base.InboundRequestHeaders;
+import io.inverno.mod.http.base.header.Cookie;
+import io.inverno.mod.http.base.header.CookieParameter;
+import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.base.internal.header.GenericCookieParameter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.http.base.header.Cookie;
-import io.inverno.mod.http.base.header.CookieParameter;
-import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.base.internal.header.GenericCookieParameter;
-import io.inverno.mod.http.server.RequestCookies;
-import io.inverno.mod.http.server.RequestHeaders;
-
 /**
  * <p>
- * Generic {@link RequestCookies} implementation.
+ * Generic {@link InboundCookies} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class GenericRequestCookies implements RequestCookies {
+public class GenericRequestCookies implements InboundCookies {
 
 	private final Map<String, List<CookieParameter>> pairs; 
 	
@@ -50,7 +49,7 @@ public class GenericRequestCookies implements RequestCookies {
 	 * @param requestHeaders     the request headers
 	 * @param parameterConverter an string object converter
 	 */
-	public GenericRequestCookies(RequestHeaders requestHeaders, ObjectConverter<String> parameterConverter) {
+	public GenericRequestCookies(InboundRequestHeaders requestHeaders, ObjectConverter<String> parameterConverter) {
 		this.pairs = requestHeaders.<Headers.Cookie>getAllHeader(Headers.NAME_COOKIE)
 			.stream()
 			.flatMap(cookieHeader -> cookieHeader.getPairs().values().stream().flatMap(List::stream))

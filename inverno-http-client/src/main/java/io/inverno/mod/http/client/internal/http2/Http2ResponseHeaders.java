@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.InboundResponseHeaders;
+import io.inverno.mod.http.base.InboundSetCookies;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
-import io.inverno.mod.http.client.ResponseHeaders;
+import io.inverno.mod.http.client.internal.GenericResponseCookies;
 import io.netty.handler.codec.http2.Http2Headers;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,13 +37,13 @@ import java.util.stream.Collectors;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-class Http2ResponseHeaders implements ResponseHeaders {
+class Http2ResponseHeaders implements InboundResponseHeaders {
 
-	private final Http2Headers underlyingHeaders;
-	
 	private final HeaderService headerService;
-	
 	private final ObjectConverter<String> parameterConverter;
+	
+	private final Http2Headers underlyingHeaders;
+	private InboundSetCookies responseCookies;
 	
 	public Http2ResponseHeaders(Http2Headers headers, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.underlyingHeaders = headers;
@@ -56,16 +57,6 @@ class Http2ResponseHeaders implements ResponseHeaders {
 	}
 	
 	@Override
-	public String getContentType() {
-		return this.getHeaderValue(Headers.NAME_CONTENT_TYPE);
-	}
-
-	@Override
-	public Long getContentLength() {
-		return this.underlyingHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
-	}
-
-	@Override
 	public Status getStatus() {
 		return Status.valueOf(this.getStatusCode());
 	}
@@ -73,6 +64,29 @@ class Http2ResponseHeaders implements ResponseHeaders {
 	@Override
 	public int getStatusCode() {
 		return this.underlyingHeaders.getInt(Http2Headers.PseudoHeaderName.STATUS.value());
+	}
+	
+	@Override
+	public String getContentType() {
+		return this.getHeaderValue(Headers.NAME_CONTENT_TYPE);
+	}
+
+	@Override
+	public Headers.ContentType getContentTypeHeader() {
+		return this.<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
+	}
+	
+	@Override
+	public Long getContentLength() {
+		return this.underlyingHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
+	}
+
+	@Override
+	public InboundSetCookies cookies() {
+		if(this.responseCookies == null) {
+			this.responseCookies = new GenericResponseCookies(this, this.parameterConverter);
+		}
+		return this.responseCookies;
 	}
 
 	@Override

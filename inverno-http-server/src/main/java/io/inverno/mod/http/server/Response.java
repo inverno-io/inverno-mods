@@ -15,6 +15,10 @@
  */
 package io.inverno.mod.http.server;
 
+import io.inverno.mod.http.base.BaseResponse;
+import io.inverno.mod.http.base.OutboundHeaders;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
+import io.inverno.mod.http.base.OutboundSetCookies;
 import java.util.function.Consumer;
 
 /**
@@ -27,7 +31,7 @@ import java.util.function.Consumer;
  * 
  * @see Exchange
  */
-public interface Response {
+public interface Response extends BaseResponse {
 
 	/**
 	 * <p>
@@ -42,15 +46,6 @@ public interface Response {
 	 * @return true if headers have been sent, false otherwise
 	 */
 	boolean isHeadersWritten();
-
-	/**
-	 * <p>
-	 * Returns the HTTP headers to send in the response.
-	 * </p>
-	 * 
-	 * @return the headers
-	 */
-	ResponseHeaders headers();
 	
 	/**
 	 * <p>
@@ -63,16 +58,7 @@ public interface Response {
 	 *
 	 * @throws IllegalStateException if response headers have already been sent to the client
 	 */
-	Response headers(Consumer<ResponseHeaders> headersConfigurer) throws IllegalStateException;
-	
-	/**
-	 * <p>
-	 * Returns the HTTP trailers to send in the response.
-	 * </p>
-	 * 
-	 * @return the trailers
-	 */
-	ResponseTrailers trailers();
+	Response headers(Consumer<OutboundResponseHeaders> headersConfigurer) throws IllegalStateException;
 	
 	/**
 	 * <p>
@@ -83,11 +69,11 @@ public interface Response {
 	 * 
 	 * @return the response
 	 */
-	Response trailers(Consumer<ResponseTrailers> trailersConfigurer);
+	Response trailers(Consumer<OutboundHeaders<?>> trailersConfigurer);
 	
 	/**
 	 * <p>
-	 * Configures the cookies to set in the response.
+	 * Configures the cookies to set in the response headers.
 	 * </p>
 	 *
 	 * @param cookiesConfigurer a response cookies configurer
@@ -95,8 +81,11 @@ public interface Response {
 	 * @return the response
 	 *
 	 * @throws IllegalStateException if response headers have already been sent to the client
+	 * 
+	 * @deprecated use {@link #headers(java.util.function.Consumer) } and {@link OutboundResponseHeaders#cookies(java.util.function.Consumer) }
 	 */
-	Response cookies(Consumer<ResponseCookies> cookiesConfigurer) throws IllegalStateException;
+	@Deprecated
+	Response cookies(Consumer<OutboundSetCookies> cookiesConfigurer) throws IllegalStateException;
 	
 	/**
 	 * <p>

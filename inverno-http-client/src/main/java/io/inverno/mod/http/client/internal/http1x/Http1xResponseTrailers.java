@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.InboundHeaders;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.internal.GenericParameter;
-import io.inverno.mod.http.client.ResponseTrailers;
 import io.netty.handler.codec.http.HttpHeaders;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +32,7 @@ import java.util.stream.Collectors;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-class Http1xResponseTrailers implements ResponseTrailers {
+class Http1xResponseTrailers implements InboundHeaders {
 	
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;

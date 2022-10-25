@@ -17,12 +17,12 @@
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.InboundResponseHeaders;
+import io.inverno.mod.http.base.InboundSetCookies;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.header.SetCookie;
 import io.inverno.mod.http.base.header.SetCookieParameter;
 import io.inverno.mod.http.base.internal.header.GenericSetCookieParameter;
-import io.inverno.mod.http.client.ResponseCookies;
-import io.inverno.mod.http.client.ResponseHeaders;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,11 +33,11 @@ import java.util.stream.Collectors;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public class GenericResponseCookies implements ResponseCookies {
+public class GenericResponseCookies implements InboundSetCookies {
 
-	private final Map<String, List<SetCookieParameter>> pairs; 
+	private final Map<String, List<SetCookieParameter>> pairs;
 	
-	public GenericResponseCookies(ResponseHeaders responseHeaders, ObjectConverter<String> parameterConverter) {
+	public GenericResponseCookies(InboundResponseHeaders responseHeaders, ObjectConverter<String> parameterConverter) {
 		this.pairs = responseHeaders.<Headers.SetCookie>getAllHeader(Headers.NAME_SET_COOKIE)
 			.stream()
 			.map(setCookie -> new GenericSetCookieParameter(setCookie, parameterConverter))

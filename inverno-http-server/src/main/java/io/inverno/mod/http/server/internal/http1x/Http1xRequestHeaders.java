@@ -16,13 +16,15 @@
 package io.inverno.mod.http.server.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.InboundCookies;
+import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
-import io.inverno.mod.http.server.RequestHeaders;
+import io.inverno.mod.http.server.internal.GenericRequestCookies;
 import io.netty.handler.codec.http.HttpRequest;
 import java.util.List;
 import java.util.Map.Entry;
@@ -32,18 +34,19 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * HTTP1.x {@link RequestHeaders} implementation.
+ * HTTP1.x {@link InboundRequestHeaders} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class Http1xRequestHeaders implements RequestHeaders {
+class Http1xRequestHeaders implements InboundRequestHeaders {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	
 	private final LinkedHttpHeaders underlyingHeaders;
+	private InboundCookies requestCookies;
 	
 	/**
 	 * <p>
@@ -78,10 +81,23 @@ class Http1xRequestHeaders implements RequestHeaders {
 	}
 
 	@Override
+	public Headers.ContentType getContentTypeHeader() {
+		return this.<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
+	}
+	
+	@Override
 	public Long getContentLength() {
 		return this.underlyingHeaders.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
 	}
 
+	@Override
+	public InboundCookies cookies() {
+		if(this.requestCookies == null) {
+			this.requestCookies = new GenericRequestCookies(this, this.parameterConverter);
+		}
+		return this.requestCookies;
+	}
+	
 	@Override
 	public boolean contains(CharSequence name) {
 		return this.underlyingHeaders.contains(name);

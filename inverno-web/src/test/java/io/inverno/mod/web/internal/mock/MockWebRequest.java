@@ -15,14 +15,15 @@
  */
 package io.inverno.mod.web.internal.mock;
 
-import java.net.SocketAddress;
-import java.util.Optional;
-
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.base.net.URIs;
+import io.inverno.mod.http.base.InboundCookies;
+import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.web.WebRequest;
 import io.inverno.mod.web.WebRequestBody;
+import java.net.SocketAddress;
+import java.util.Optional;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -38,13 +39,12 @@ public class MockWebRequest implements WebRequest {
 	private final Method method;
 	private final MockRequestHeaders headers;
 	private final MockQueryParameters queryParameters;
-	private final MockRequestCookies cookies;
 	private final SocketAddress localAddress;
 	private final SocketAddress remoteAddress;
 	private final MockPathParameters pathParameters;
 	private final WebRequestBody mockBody;
 	
-	public MockWebRequest(String authority, String scheme, String path, String protocol, Method method, MockRequestHeaders headers, MockQueryParameters queryParameters, MockRequestCookies cookies, SocketAddress localAddress, SocketAddress remoteAddress, WebRequestBody mockBody) {
+	public MockWebRequest(String authority, String scheme, String path, String protocol, Method method, MockRequestHeaders headers, MockQueryParameters queryParameters, SocketAddress localAddress, SocketAddress remoteAddress, WebRequestBody mockBody) {
 		this.authority = authority;
 		this.scheme = scheme;
 		this.path = path;
@@ -53,26 +53,26 @@ public class MockWebRequest implements WebRequest {
 		this.method = method;
 		this.headers = headers;
 		this.queryParameters = queryParameters;
-		this.cookies = cookies;
 		this.localAddress = localAddress;
 		this.remoteAddress = remoteAddress;
 		this.pathParameters = new MockPathParameters();
 		this.mockBody = mockBody;
 	}
-	
+
 	@Override
-	public MockRequestHeaders headers() {
+	public InboundRequestHeaders headers() {
 		return this.headers;
 	}
-
+	
 	@Override
 	public MockQueryParameters queryParameters() {
 		return this.queryParameters;
 	}
 
 	@Override
-	public MockRequestCookies cookies() {
-		return this.cookies;
+	@Deprecated
+	public InboundCookies cookies() {
+		return this.headers.cookies();
 	}
 
 	@Override

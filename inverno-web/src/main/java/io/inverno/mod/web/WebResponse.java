@@ -15,12 +15,11 @@
  */
 package io.inverno.mod.web;
 
-import java.util.function.Consumer;
-
+import io.inverno.mod.http.base.OutboundHeaders;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
+import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.server.Response;
-import io.inverno.mod.http.server.ResponseCookies;
-import io.inverno.mod.http.server.ResponseHeaders;
-import io.inverno.mod.http.server.ResponseTrailers;
+import java.util.function.Consumer;
 
 /**
  * <p>
@@ -38,11 +37,12 @@ public interface WebResponse extends Response {
 	WebResponseBody body();
 	
 	@Override
-	WebResponse headers(Consumer<ResponseHeaders> headersConfigurer) throws IllegalStateException;
-	
+	public WebResponse headers(Consumer<OutboundResponseHeaders> headersConfigurer) throws IllegalStateException;
+
 	@Override
-	WebResponse trailers(Consumer<ResponseTrailers> trailersConfigurer);
-	
+	public WebResponse trailers(Consumer<OutboundHeaders<?>> trailersConfigurer);
+
 	@Override
-	WebResponse cookies(Consumer<ResponseCookies> cookiesConfigurer) throws IllegalStateException;
+	@Deprecated
+	public WebResponse cookies(Consumer<OutboundSetCookies> cookiesConfigurer) throws IllegalStateException;
 }

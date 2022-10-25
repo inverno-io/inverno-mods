@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.multipart;
 
 import io.inverno.mod.base.converter.ObjectConverter;
@@ -55,12 +54,12 @@ public class ResourcePart extends AbstractPart<Resource> {
 		}
 
 		return Flux.from(this.resources)
-			.map(resource -> new ResourcePart.FilePart(this.name, this.filename, resource, new GenericPartHeaders(this.headerService, this.parameterConverter, this.headers.getAll())));
+			.map(resource -> new ResourcePart.FilePart(this.name, this.filename, resource, new PartHeaders(this.headerService, this.parameterConverter, this.headers.getAll())));
 	}
 	
 	public class FilePart extends AbstractDataPart<ByteBuf> {
 
-		public FilePart(String name, String filename, Resource resource, GenericPartHeaders headers) {
+		public FilePart(String name, String filename, Resource resource, PartHeaders headers) {
 			super(ResourcePart.this.headerService, ResourcePart.this.parameterConverter, headers);
 			
 			this.name = name;

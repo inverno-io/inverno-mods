@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client;
 
 import io.inverno.mod.base.resource.Resource;
+import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.OutboundData;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
 import io.netty.buffer.ByteBuf;
 import java.util.function.Consumer;
 
@@ -31,9 +32,9 @@ public interface Part<A> extends OutboundData<A> {
 	
 	Part<A> filename(String filename);
 	
-	PartHeaders headers();
+	InboundRequestHeaders headers();
 	
-	Part<A> headers(Consumer<PartHeaders> headersConfigurer);
+	Part<A> headers(Consumer<OutboundRequestHeaders> headersConfigurer);
 	
 	interface Factory {
 				

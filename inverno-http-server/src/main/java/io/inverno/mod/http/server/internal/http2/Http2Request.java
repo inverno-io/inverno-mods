@@ -15,18 +15,18 @@
  */
 package io.inverno.mod.http.server.internal.http2;
 
-import io.netty.channel.ChannelHandlerContext;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.base.net.URIs;
+import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.Request;
-import io.inverno.mod.http.server.RequestHeaders;
 import io.inverno.mod.http.server.internal.AbstractRequest;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  * <p>
@@ -58,7 +58,7 @@ class Http2Request extends AbstractRequest {
 	 * @param urlEncodedBodyDecoder
 	 * @param multipartBodyDecoder
 	 */
-	public Http2Request(ChannelHandlerContext context, RequestHeaders requestHeaders, ObjectConverter<String> parameterConverter, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
+	public Http2Request(ChannelHandlerContext context, InboundRequestHeaders requestHeaders, ObjectConverter<String> parameterConverter, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
 		super(context, requestHeaders, parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder);
 	}
 	

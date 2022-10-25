@@ -13,27 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package io.inverno.mod.http.client.internal;
-
-import java.util.List;
-import java.util.Map;
+package io.inverno.mod.http.base;
 
 /**
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface OutboundHeaders<A extends OutboundHeaders<A>> {
+public interface BaseResponse {
 
-	boolean isWritten();
-
-	void setWritten(boolean written);
-
-	CharSequence getCharSequence(CharSequence name);
+	InboundResponseHeaders headers();
 	
-	List<CharSequence> getAllCharSequence(CharSequence name);
-
-	List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence();
-	
-	Long getContentLength();
+	InboundHeaders trailers();
 }

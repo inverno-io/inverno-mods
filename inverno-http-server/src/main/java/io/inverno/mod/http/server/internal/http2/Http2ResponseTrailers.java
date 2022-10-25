@@ -15,6 +15,14 @@
  */
 package io.inverno.mod.http.server.internal.http2;
 
+import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.OutboundHeaders;
+import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.base.header.Header;
+import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.internal.GenericParameter;
+import io.netty.handler.codec.http2.DefaultHttp2Headers;
+import io.netty.handler.codec.http2.Http2Headers;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -23,29 +31,22 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.netty.handler.codec.http2.DefaultHttp2Headers;
-import io.netty.handler.codec.http2.Http2Headers;
-import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.http.base.header.Header;
-import io.inverno.mod.http.base.header.HeaderService;
-import io.inverno.mod.http.base.internal.GenericParameter;
-import io.inverno.mod.http.server.ResponseTrailers;
-
 /**
  * <p>
- * HTTP/2 {@link ResponseTrailers} implementation.
+ * HTTP/2 response trailers implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class Http2ResponseTrailers implements ResponseTrailers {
+class Http2ResponseTrailers implements OutboundHeaders<Http2ResponseTrailers> {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	
 	private final Http2Headers underlyingTrailers;
+	
+	private boolean written;
 	
 	/**
 	 * <p>
@@ -73,14 +74,23 @@ class Http2ResponseTrailers implements ResponseTrailers {
 		return this.underlyingTrailers;
 	}
 
+	public void setWritten(boolean written) {
+		this.written = written;
+	}
+	
 	@Override
-	public ResponseTrailers add(CharSequence name, CharSequence value) {
+	public boolean isWritten() {
+		return this.written;
+	}
+
+	@Override
+	public Http2ResponseTrailers add(CharSequence name, CharSequence value) {
 		this.underlyingTrailers.add(name, value);
 		return this;
 	}
 
 	@Override
-	public ResponseTrailers add(Header... trailers) {
+	public Http2ResponseTrailers add(Header... trailers) {
 		for(Header trailer : trailers) {
 			this.underlyingTrailers.add(trailer.getHeaderName(), trailer.getHeaderValue());
 		}
@@ -88,13 +98,13 @@ class Http2ResponseTrailers implements ResponseTrailers {
 	}
 
 	@Override
-	public ResponseTrailers set(CharSequence name, CharSequence value) {
+	public Http2ResponseTrailers set(CharSequence name, CharSequence value) {
 		this.underlyingTrailers.set(name, value);
 		return this;
 	}
 
 	@Override
-	public ResponseTrailers set(Header... trailers) {
+	public Http2ResponseTrailers set(Header... trailers) {
 		for(Header trailer : trailers) {
 			this.underlyingTrailers.set(trailer.getHeaderName(), trailer.getHeaderValue());
 		}
@@ -102,7 +112,7 @@ class Http2ResponseTrailers implements ResponseTrailers {
 	}
 
 	@Override
-	public ResponseTrailers remove(CharSequence... names) {
+	public Http2ResponseTrailers remove(CharSequence... names) {
 		for(CharSequence name : names) {
 			this.underlyingTrailers.remove(name);
 		}

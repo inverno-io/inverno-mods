@@ -15,6 +15,10 @@
  */
 package io.inverno.mod.web.internal.mock;
 
+import io.inverno.mod.http.base.OutboundHeaders;
+import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.base.header.Header;
+import io.inverno.mod.http.base.header.HeaderService;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,20 +28,17 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.http.base.header.Header;
-import io.inverno.mod.http.base.header.HeaderService;
-import io.inverno.mod.http.server.ResponseTrailers;
-
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  *
  */
-public class MockResponseTrailers implements ResponseTrailers {
+public class MockResponseTrailers implements OutboundHeaders<MockResponseTrailers> {
 
 	private final HeaderService headerService;
 	
 	private final Map<String, List<String>> trailers;
+	
+	private boolean written;
 	
 	/**
 	 * 
@@ -48,7 +49,16 @@ public class MockResponseTrailers implements ResponseTrailers {
 	}
 
 	@Override
-	public ResponseTrailers add(CharSequence name, CharSequence value) {
+	public boolean isWritten() {
+		return this.written;
+	}
+
+	public void setWritten(boolean written) {
+		this.written = written;
+	}
+
+	@Override
+	public MockResponseTrailers add(CharSequence name, CharSequence value) {
 		if(!this.trailers.containsKey(name.toString())) {
 			this.trailers.put(name.toString(), new ArrayList<>());
 		}
@@ -57,7 +67,7 @@ public class MockResponseTrailers implements ResponseTrailers {
 	}
 
 	@Override
-	public ResponseTrailers add(Header... trailers) {
+	public MockResponseTrailers add(Header... trailers) {
 		for(Header trailer : trailers) {
 			this.add(trailer.getHeaderName(), trailer.getHeaderValue());
 		}
@@ -65,14 +75,14 @@ public class MockResponseTrailers implements ResponseTrailers {
 	}
 
 	@Override
-	public ResponseTrailers set(CharSequence name, CharSequence value) {
+	public MockResponseTrailers set(CharSequence name, CharSequence value) {
 		this.remove(name);
 		this.add(name, value);
 		return this;
 	}
 
 	@Override
-	public ResponseTrailers set(Header... trailers) {
+	public MockResponseTrailers set(Header... trailers) {
 		for(Header trailer : trailers) {
 			this.set(trailer.getHeaderName(), trailer.getHeaderValue());
 		}
@@ -80,7 +90,7 @@ public class MockResponseTrailers implements ResponseTrailers {
 	}
 
 	@Override
-	public ResponseTrailers remove(CharSequence... names) {
+	public MockResponseTrailers remove(CharSequence... names) {
 		for(CharSequence name : names) {
 			this.trailers.remove(name.toString());
 		}

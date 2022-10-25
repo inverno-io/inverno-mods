@@ -15,43 +15,47 @@
  */
 package io.inverno.mod.http.server.internal.http2;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import io.netty.handler.codec.http2.DefaultHttp2Headers;
-import io.netty.handler.codec.http2.Http2Headers;
-import io.netty.handler.codec.http2.Http2Headers.PseudoHeaderName;
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.InboundSetCookies;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
+import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
-import io.inverno.mod.http.server.ResponseHeaders;
-import io.inverno.mod.http.server.internal.AbstractResponseHeaders;
+import io.inverno.mod.http.server.internal.GenericResponseCookies;
+import io.inverno.mod.http.server.internal.InternalResponseHeaders;
+import io.netty.handler.codec.http2.DefaultHttp2Headers;
+import io.netty.handler.codec.http2.Http2Headers;
+import io.netty.handler.codec.http2.Http2Headers.PseudoHeaderName;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * <p>
- * HTTP/2 {@link ResponseHeaders} implementation.
+ * HTTP/2 {@link InternalResponseHeaders} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see AbstractResponseHeaders
+ * @see InternalResponseHeaders
  */
-class Http2ResponseHeaders implements AbstractResponseHeaders {
+class Http2ResponseHeaders implements InternalResponseHeaders {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	
 	private final Http2Headers underlyingHeaders;
+	private GenericResponseCookies responseCookies;
 	
 	private boolean written;
 	
@@ -81,6 +85,16 @@ class Http2ResponseHeaders implements AbstractResponseHeaders {
 	Http2Headers getUnderlyingHeaders() {
 		return this.underlyingHeaders;
 	}
+	
+	@Override
+	public void setWritten(boolean written) {
+		this.written = written;
+	}
+	
+	@Override
+	public boolean isWritten() {
+		return this.written;
+	}
 
 	@Override
 	public Http2ResponseHeaders status(Status status) {
@@ -92,11 +106,36 @@ class Http2ResponseHeaders implements AbstractResponseHeaders {
 		this.underlyingHeaders.setInt(PseudoHeaderName.STATUS.value(), status);
 		return this;
 	}
+	
+	@Override
+	public Status getStatus() {
+		return Status.valueOf(this.getStatusCode());
+	}
+	
+	@Override
+	public int getStatusCode() {
+		return this.underlyingHeaders.getInt(PseudoHeaderName.STATUS.value());
+	}
 
 	@Override
 	public Http2ResponseHeaders contentType(String contentType) {
 		this.underlyingHeaders.set(Headers.NAME_CONTENT_TYPE, contentType);
 		return this;
+	}
+	
+	@Override
+	public String getContentType() {
+		return this.underlyingHeaders.get(Headers.NAME_CONTENT_TYPE).toString();
+	}
+
+	@Override
+	public Headers.ContentType getContentTypeHeader() {
+		return this.<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
+	}
+
+	@Override
+	public CharSequence getContentTypeCharSequence() {
+		return this.underlyingHeaders.get(Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
@@ -104,7 +143,29 @@ class Http2ResponseHeaders implements AbstractResponseHeaders {
 		this.underlyingHeaders.setLong(Headers.NAME_CONTENT_LENGTH, contentLength);
 		return this;
 	}
+	
+	@Override
+	public Long getContentLength() {
+		return this.underlyingHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
+	}
 
+	@Override
+	public OutboundResponseHeaders cookies(Consumer<OutboundSetCookies> cookiesConfigurer) {
+		if(this.responseCookies == null) {
+			this.responseCookies = new GenericResponseCookies(this.headerService, this, this.parameterConverter);
+		}
+		cookiesConfigurer.accept(this.responseCookies);
+		return this;
+	}
+
+	@Override
+	public InboundSetCookies cookies() {
+		if(this.responseCookies == null) {
+			this.responseCookies = new GenericResponseCookies(this.headerService, this, this.parameterConverter);
+		}
+		return this.responseCookies;
+	}
+	
 	@Override
 	public Http2ResponseHeaders add(CharSequence name, CharSequence value) {
 		this.underlyingHeaders.add(name, value);
@@ -120,13 +181,13 @@ class Http2ResponseHeaders implements AbstractResponseHeaders {
 	}
 
 	@Override
-	public ResponseHeaders set(CharSequence name, CharSequence value) {
+	public Http2ResponseHeaders set(CharSequence name, CharSequence value) {
 		this.underlyingHeaders.set(name, value);
 		return this;
 	}
 	
 	@Override
-	public ResponseHeaders set(Header... headers) {
+	public Http2ResponseHeaders set(Header... headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.set(header.getHeaderName(), header.getHeaderValue());
 		}
@@ -134,7 +195,7 @@ class Http2ResponseHeaders implements AbstractResponseHeaders {
 	}
 	
 	@Override
-	public ResponseHeaders remove(CharSequence... names) {
+	public Http2ResponseHeaders remove(CharSequence... names) {
 		for(CharSequence name : names) {
 			this.underlyingHeaders.remove(name);
 		}
@@ -142,28 +203,18 @@ class Http2ResponseHeaders implements AbstractResponseHeaders {
 	}
 	
 	@Override
-	public boolean isWritten() {
-		return this.written;
-	}
-
-	@Override
-	public void setWritten(boolean written) {
-		this.written = written;
+	public boolean contains(CharSequence name) {
+		return this.underlyingHeaders.contains(name);
 	}
 	
 	@Override
-	public Optional<String> getContentType() {
-		return Optional.ofNullable(this.underlyingHeaders.get(Headers.NAME_CONTENT_TYPE).toString());
+	public boolean contains(CharSequence name, CharSequence value) {
+		return this.underlyingHeaders.contains(name, value, true);
 	}
-
+	
 	@Override
-	public Optional<Headers.ContentType> getContentTypeHeader() {
-		return this.getHeader(Headers.NAME_CONTENT_TYPE);
-	}
-
-	@Override
-	public CharSequence getContentTypeCharSequence() {
-		return this.underlyingHeaders.get(Headers.NAME_CONTENT_TYPE);
+	public Set<String> getNames() {
+		return this.underlyingHeaders.names().stream().map(CharSequence::toString).collect(Collectors.toSet());
 	}
 
 	@Override
@@ -172,18 +223,8 @@ class Http2ResponseHeaders implements AbstractResponseHeaders {
 	}
 	
 	@Override
-	public CharSequence getCharSequence(CharSequence name) {
-		return this.underlyingHeaders.get(name);
-	}
-	
-	@Override
 	public List<String> getAll(CharSequence name) {
 		return this.underlyingHeaders.getAll(name).stream().map(CharSequence::toString).collect(Collectors.toList());
-	}
-	
-	@Override
-	public List<CharSequence> getAllCharSequence(CharSequence name) {
-		return this.underlyingHeaders.getAll(name);
 	}
 	
 	@Override
@@ -191,15 +232,6 @@ class Http2ResponseHeaders implements AbstractResponseHeaders {
 		List<Entry<String, String>> result = new LinkedList<>();
 		this.underlyingHeaders.forEach(e -> {
 			result.add(Map.entry(e.getKey().toString(), e.getValue().toString()));
-		});
-		return result;
-	}
-	
-	@Override
-	public List<Entry<CharSequence, CharSequence>> getAllCharSequence() {
-		List<Entry<CharSequence, CharSequence>> result = new LinkedList<>();
-		this.underlyingHeaders.forEach(e -> {
-			result.add(Map.entry(e.getKey(), e.getValue()));
 		});
 		return result;
 	}
@@ -241,34 +273,23 @@ class Http2ResponseHeaders implements AbstractResponseHeaders {
 		});
 		return result;
 	}
-
+	
 	@Override
-	public Set<String> getNames() {
-		return this.underlyingHeaders.names().stream().map(CharSequence::toString).collect(Collectors.toSet());
-	}
-
-	@Override
-	public Long getContentLength() {
-		return this.underlyingHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
-	}
-
-	@Override
-	public Status getStatus() {
-		return Status.valueOf(this.getStatusCode());
+	public CharSequence getCharSequence(CharSequence name) {
+		return this.underlyingHeaders.get(name);
 	}
 	
 	@Override
-	public int getStatusCode() {
-		return this.underlyingHeaders.getInt(PseudoHeaderName.STATUS.value());
-	}
-
-	@Override
-	public boolean contains(CharSequence name) {
-		return this.underlyingHeaders.contains(name);
+	public List<CharSequence> getAllCharSequence(CharSequence name) {
+		return this.underlyingHeaders.getAll(name);
 	}
 	
 	@Override
-	public boolean contains(CharSequence name, CharSequence value) {
-		return this.underlyingHeaders.contains(name, value, true);
+	public List<Entry<CharSequence, CharSequence>> getAllCharSequence() {
+		List<Entry<CharSequence, CharSequence>> result = new LinkedList<>();
+		this.underlyingHeaders.forEach(e -> {
+			result.add(Map.entry(e.getKey(), e.getValue()));
+		});
+		return result;
 	}
 }

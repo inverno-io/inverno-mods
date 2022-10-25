@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.web.internal.mock;
 
+import io.inverno.mod.http.base.InboundCookies;
+import io.inverno.mod.http.base.header.CookieParameter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,14 +24,11 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.inverno.mod.http.base.header.CookieParameter;
-import io.inverno.mod.http.server.RequestCookies;
-
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  *
  */
-public class MockRequestCookies implements RequestCookies {
+public class MockRequestCookies implements InboundCookies {
 
 	private Map<String, List<CookieParameter>> cookieParameters;
 	

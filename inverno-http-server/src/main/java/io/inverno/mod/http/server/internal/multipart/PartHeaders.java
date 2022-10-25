@@ -15,6 +15,13 @@
  */
 package io.inverno.mod.http.server.internal.multipart;
 
+import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.InboundCookies;
+import io.inverno.mod.http.base.InboundRequestHeaders;
+import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.base.header.Header;
+import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.base.internal.GenericParameter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -23,23 +30,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.http.base.header.Header;
-import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.base.internal.GenericParameter;
-import io.inverno.mod.http.server.PartHeaders;
-
 /**
  * <p>
- * Generic {@link PartHeaders} implementation.
+ * Generic {@link InboundRequestHeaders} implementation.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 // TODO Relying on Header by default is not performant so this needs to be refactored as well as the MultiparBodyDecoder
-class GenericPartHeaders implements PartHeaders {
+class PartHeaders implements InboundRequestHeaders {
 
 	private final ObjectConverter<String> parameterConverter;
 	
@@ -53,7 +53,7 @@ class GenericPartHeaders implements PartHeaders {
 	 * @param headers            the map of headers
 	 * @param parameterConverter a string object converter
 	 */
-	public GenericPartHeaders(Map<String, List<Header>> headers, ObjectConverter<String> parameterConverter) {
+	public PartHeaders(Map<String, List<Header>> headers, ObjectConverter<String> parameterConverter) {
 		this.parameterConverter = parameterConverter;
 		this.headers = headers != null ? Collections.unmodifiableMap(headers) : Map.of();
 	}
@@ -62,6 +62,11 @@ class GenericPartHeaders implements PartHeaders {
 	public String getContentType() {
 		return Optional.ofNullable(this.headers.get(Headers.NAME_CONTENT_TYPE)).filter(l -> !l.isEmpty()).map(l -> l.get(0).getHeaderValue()).orElse(null);
 	}
+	
+	@Override
+	public Headers.ContentType getContentTypeHeader() {
+		return (Headers.ContentType)Optional.ofNullable(this.headers.get(Headers.NAME_CONTENT_TYPE)).filter(l -> !l.isEmpty()).map(l -> l.get(0)).orElse(null);
+	}
 
 	@Override
 	public Long getContentLength() {
@@ -69,16 +74,21 @@ class GenericPartHeaders implements PartHeaders {
 	}
 
 	@Override
+	public InboundCookies cookies() {
+		throw new UnsupportedOperationException();
+	}
+	
+	@Override
 	public boolean contains(CharSequence name) {
 		// TODO case insensitive
-		return this.headers.containsKey(name);
+		return this.headers.containsKey(name.toString());
 	}
 
 	@Override
 	public boolean contains(CharSequence name, CharSequence value) {
-		List<? extends Header> headers = this.headers.get(name);
-		if(headers != null) {
-			for(Header h : headers) {
+		List<? extends Header> allHeaders = this.headers.get(name.toString());
+		if(allHeaders != null) {
+			for(Header h : allHeaders) {
 				if(h.getHeaderValue().equalsIgnoreCase(value.toString())) {
 					return true;
 				}
@@ -94,9 +104,9 @@ class GenericPartHeaders implements PartHeaders {
 
 	@Override
 	public Optional<String> get(CharSequence name) {
-		return Optional.ofNullable(this.headers.get(name)).map(headers -> {
-			if(!headers.isEmpty()) {
-				return headers.get(0).getHeaderValue();
+		return Optional.ofNullable(this.headers.get(name.toString())).map(allHeaders -> {
+			if(!allHeaders.isEmpty()) {
+				return allHeaders.get(0).getHeaderValue();
 			}
 			return null;
 		});
@@ -104,9 +114,9 @@ class GenericPartHeaders implements PartHeaders {
 
 	@Override
 	public List<String> getAll(CharSequence name) {
-		List<? extends Header> headers = this.headers.get(name);
-		if(headers != null) {
-			return headers.stream().map(h -> h.getHeaderValue()).collect(Collectors.toList());
+		List<? extends Header> allHeaders = this.headers.get(name.toString());
+		if(allHeaders != null) {
+			return allHeaders.stream().map(h -> h.getHeaderValue()).collect(Collectors.toList());
 		}
 		return Collections.emptyList();
 	}
@@ -119,9 +129,9 @@ class GenericPartHeaders implements PartHeaders {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Header> Optional<T> getHeader(CharSequence name) {
-		return Optional.ofNullable(this.headers.get(name)).map(headers -> {
-			if(!headers.isEmpty()) {
-				return (T)headers.get(0);
+		return Optional.ofNullable(this.headers.get(name.toString())).map(allHeaders -> {
+			if(!allHeaders.isEmpty()) {
+				return (T)allHeaders.get(0);
 			}
 			return null;
 		});
@@ -130,9 +140,9 @@ class GenericPartHeaders implements PartHeaders {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T extends Header> List<T> getAllHeader(CharSequence name) {
-		List<? extends Header> headers = this.headers.get(name);
-		if(headers != null) {
-			return headers.stream().map(header -> (T)header).collect(Collectors.toList());
+		List<? extends Header> allHeaders = this.headers.get(name.toString());
+		if(allHeaders != null) {
+			return allHeaders.stream().map(header -> (T)header).collect(Collectors.toList());
 		}
 		return Collections.emptyList();
 	}
@@ -144,9 +154,9 @@ class GenericPartHeaders implements PartHeaders {
 
 	@Override
 	public Optional<Parameter> getParameter(CharSequence name) {
-		return Optional.ofNullable(this.headers.get(name)).map(headers -> {
-			if(!headers.isEmpty()) {
-				return new GenericParameter(headers.get(0).getHeaderName(), headers.get(0).getHeaderValue(), this.parameterConverter);
+		return Optional.ofNullable(this.headers.get(name.toString())).map(allHeaders -> {
+			if(!allHeaders.isEmpty()) {
+				return new GenericParameter(allHeaders.get(0).getHeaderName(), allHeaders.get(0).getHeaderValue(), this.parameterConverter);
 			}
 			return null;
 		});
@@ -154,9 +164,9 @@ class GenericPartHeaders implements PartHeaders {
 
 	@Override
 	public List<Parameter> getAllParameter(CharSequence name) {
-		List<? extends Header> headers = this.headers.get(name);
-		if(headers != null) {
-			return headers.stream().map(h -> new GenericParameter(h.getHeaderName(), h.getHeaderValue(), this.parameterConverter)).collect(Collectors.toList());
+		List<? extends Header> allHeaders = this.headers.get(name.toString());
+		if(allHeaders != null) {
+			return allHeaders.stream().map(h -> new GenericParameter(h.getHeaderName(), h.getHeaderValue(), this.parameterConverter)).collect(Collectors.toList());
 		}
 		return Collections.emptyList();
 	}

@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.header.HeaderService;
-import io.inverno.mod.http.client.internal.InternalRequestHeaders;
-import io.inverno.mod.http.client.internal.GenericOutboundHeaders;
+import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
+import io.inverno.mod.http.client.internal.GenericRequestHeaders;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +26,7 @@ import java.util.Map;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-class Http1xRequestHeaders extends GenericOutboundHeaders<Http1xRequestHeaders> implements InternalRequestHeaders {
+class Http1xRequestHeaders extends GenericRequestHeaders {
 
 	public Http1xRequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		super(headerService, parameterConverter);
@@ -35,5 +34,9 @@ class Http1xRequestHeaders extends GenericOutboundHeaders<Http1xRequestHeaders> 
 
 	public Http1xRequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, List<Map.Entry<String, String>> entries) {
 		super(headerService, parameterConverter, entries);
+	}
+	
+	public LinkedHttpHeaders toHttp1xHeaders() {
+		return this.underlyingHeaders;
 	}
 }

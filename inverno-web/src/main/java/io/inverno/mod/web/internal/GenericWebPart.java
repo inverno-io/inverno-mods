@@ -17,10 +17,10 @@ package io.inverno.mod.web.internal;
 
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.InboundData;
+import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.InternalServerErrorException;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Part;
-import io.inverno.mod.http.server.PartHeaders;
 import io.inverno.mod.web.InboundDataDecoder;
 import io.inverno.mod.web.WebPart;
 import io.netty.buffer.ByteBuf;
@@ -66,7 +66,7 @@ class GenericWebPart implements WebPart {
 	}
 
 	@Override
-	public PartHeaders headers() {
+	public InboundRequestHeaders headers() {
 		return this.part.headers();
 	}
 

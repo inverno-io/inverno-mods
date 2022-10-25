@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package io.inverno.mod.http.client;
-
-import io.inverno.mod.http.base.BaseResponse;
+package io.inverno.mod.http.base;
 
 /**
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface Response extends BaseResponse {
+public interface OutboundCookies extends InboundCookies {
 
-	ResponseBody body();
+	<T> OutboundCookies addCookie(String name, T value);
 }

@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.multipart;
 
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.URIs;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.client.Part;
-import io.inverno.mod.http.client.PartHeaders;
-import io.netty.buffer.ByteBuf;
 import java.nio.charset.Charset;
 import java.util.function.Consumer;
-import org.reactivestreams.Publisher;
 
 /**
  *
@@ -33,16 +30,16 @@ import org.reactivestreams.Publisher;
  */
 public abstract class AbstractPart<A> implements Part<A> {
 
-	protected final GenericPartHeaders headers;
+	protected final PartHeaders headers;
 	
 	protected String name;
 	protected String filename;
 
 	protected AbstractPart(HeaderService headerService, ObjectConverter<String> parameterConverter) {
-		this.headers = new GenericPartHeaders(headerService, parameterConverter);
+		this.headers = new PartHeaders(headerService, parameterConverter);
 	}
 
-	protected AbstractPart(HeaderService headerService, ObjectConverter<String> parameterConverter, GenericPartHeaders headers) {
+	protected AbstractPart(HeaderService headerService, ObjectConverter<String> parameterConverter, PartHeaders headers) {
 		this.headers = headers;
 	}
 	
@@ -59,12 +56,12 @@ public abstract class AbstractPart<A> implements Part<A> {
 	}
 
 	@Override
-	public GenericPartHeaders headers() {
+	public PartHeaders headers() {
 		return this.headers;
 	}
 
 	@Override
-	public AbstractPart<A> headers(Consumer<PartHeaders> headersConfigurer) {
+	public AbstractPart<A> headers(Consumer<OutboundRequestHeaders> headersConfigurer) {
 		headersConfigurer.accept(this.headers);
 		return this;
 	}

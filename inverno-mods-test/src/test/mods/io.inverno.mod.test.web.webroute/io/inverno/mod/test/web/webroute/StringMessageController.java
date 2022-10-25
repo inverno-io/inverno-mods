@@ -60,7 +60,10 @@ public class StringMessageController implements GenericMessageController<String>
 	public void createMessage(GenericMessage<String> message, WebExchange<? extends ExchangeContext> exchange) {
 		message.setId(this.index.getAndIncrement());
 		this.data.put(message.getId(), message);
-		exchange.response().headers().status(Status.CREATED).add(Headers.NAME_LOCATION, URIs.uri(exchange.request().getPathAbsolute()).segment(Integer.toString(message.getId())).buildPath());
+		exchange.response().headers(headers -> headers
+			.status(Status.CREATED)
+			.add(Headers.NAME_LOCATION, URIs.uri(exchange.request().getPathAbsolute()).segment(Integer.toString(message.getId())).buildPath())
+		);
 	}
 
 	// curl -iv http://127.0.0.1:8080/message/string/0
@@ -112,6 +115,9 @@ public class StringMessageController implements GenericMessageController<String>
 	public void createMessage(@FormParam String param1, @FormParam String param2, WebExchange<? extends ExchangeContext> exchange) {
 		GenericMessage<String> message = new GenericMessage<String>(this.index.getAndIncrement(), param1 + param2);
 		this.data.put(message.getId(), message);
-		exchange.response().headers().status(Status.CREATED).add(Headers.NAME_LOCATION, URIs.uri(exchange.request().getPathAbsolute()).segment(Integer.toString(message.getId())).buildPath());
+		exchange.response().headers(headers -> headers
+			.status(Status.CREATED)
+			.add(Headers.NAME_LOCATION, URIs.uri(exchange.request().getPathAbsolute()).segment(Integer.toString(message.getId())).buildPath())
+		);
 	}
 }

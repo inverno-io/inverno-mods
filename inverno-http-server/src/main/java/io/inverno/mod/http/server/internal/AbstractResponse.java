@@ -15,16 +15,16 @@
  */
 package io.inverno.mod.http.server.internal;
 
+import io.inverno.mod.http.base.InboundHeaders;
+import io.inverno.mod.http.base.OutboundHeaders;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
+import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.Response;
-import io.inverno.mod.http.server.ResponseCookies;
-import io.inverno.mod.http.server.ResponseHeaders;
-import io.inverno.mod.http.server.ResponseTrailers;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import org.reactivestreams.Subscriber;
-
 import java.util.function.Consumer;
+import org.reactivestreams.Subscriber;
 
 /**
  * <p>
@@ -40,13 +40,10 @@ public abstract class AbstractResponse implements Response {
 	
 	protected final HeaderService headerService;
 	
-	protected final AbstractResponseHeaders responseHeaders; 
+	protected final InternalResponseHeaders responseHeaders; 
 	protected GenericResponseBody responseBody;	
-	
-	protected ResponseTrailers responseTrailers;
+	protected OutboundHeaders<?> responseTrailers;
 
-	protected GenericResponseCookies responseCookies;
-	
 	/**
 	 * <p>
 	 * Creates a response with the specified channel handler context, header service
@@ -57,7 +54,7 @@ public abstract class AbstractResponse implements Response {
 	 * @param headerService   the header service
 	 * @param responseHeaders the response headers
 	 */
-	public AbstractResponse(ChannelHandlerContext context, HeaderService headerService, AbstractResponseHeaders responseHeaders) {
+	public AbstractResponse(ChannelHandlerContext context, HeaderService headerService, InternalResponseHeaders responseHeaders) {
 		this.context = context;
 		this.headerService = headerService;
 		this.responseHeaders = responseHeaders;
@@ -84,56 +81,53 @@ public abstract class AbstractResponse implements Response {
 	public void dataSubscribe(Subscriber<ByteBuf> s) {
 		this.responseBody.dataSubscribe(s);
 	}
-
-	/**
-	 * <p>
-	 * Returns the response cookies.
-	 * </p>
-	 * 
-	 * @return the cookies
-	 */
-	public GenericResponseCookies getCookies() {
-		return this.responseCookies;
-	}
 	
 	@Override
 	public boolean isHeadersWritten() {
 		return this.responseHeaders.isWritten();
 	}
-	
+
 	@Override
-	public AbstractResponseHeaders headers() {
+	public InternalResponseHeaders headers() {
 		return this.responseHeaders;
 	}
 	
 	@Override
-	public AbstractResponse headers(Consumer<ResponseHeaders> headersConfigurer) {
-		if(this.isHeadersWritten()) {
+	public AbstractResponse headers(Consumer<OutboundResponseHeaders> headersConfigurer) {
+		if(this.responseHeaders.isWritten()) {
 			throw new IllegalStateException("Headers already written");
 		}
 		headersConfigurer.accept(this.responseHeaders);
 		return this;
 	}
-
-	@Override
-	public ResponseTrailers trailers() {
-		return this.responseTrailers;
-	}
 	
 	@Override
-	public AbstractResponse cookies(Consumer<ResponseCookies> cookiesConfigurer) {
-		if(this.isHeadersWritten()) {
-			throw new IllegalStateException("Headers already written");
-		}
-		if(this.responseCookies == null) {
-			this.responseCookies = new GenericResponseCookies(this.headerService, this.responseHeaders);
-		}
-		cookiesConfigurer.accept(this.responseCookies);
+	@Deprecated
+	public AbstractResponse cookies(Consumer<OutboundSetCookies> cookiesConfigurer) {
+		this.responseHeaders.cookies(cookiesConfigurer);
 		return this;
 	}
-
+	
 	@Override
 	public GenericResponseBody body() {
 		return this.responseBody;
 	}
+
+	@Override
+	public InboundHeaders trailers() {
+		return this.responseTrailers;
+	}
+
+	@Override
+	public Response trailers(Consumer<OutboundHeaders<?>> trailersConfigurer) {
+		if(trailersConfigurer != null) {
+			if(this.responseTrailers == null) {
+				this.responseTrailers = this.createTrailers();
+			}
+			trailersConfigurer.accept(this.responseTrailers);
+		}
+		return this;
+	}
+	
+	protected abstract OutboundHeaders<?> createTrailers();
 }

@@ -13,41 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.client;
+package io.inverno.mod.http.base;
 
-import io.inverno.mod.http.base.HttpVersion;
-import java.net.SocketAddress;
-import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface Request extends AbstractRequest<Request> {
-	
-	boolean isHeadersWritten();
-	
-	HttpVersion getProtocol();
-	
-	String getScheme();
-	
+public interface OutboundRequestHeaders extends InboundRequestHeaders, OutboundHeaders<OutboundRequestHeaders> {
+
 	/**
 	 * <p>
-	 * Returns the socket address of the interface on which the request was received.
+	 * Sets the response content type header field value.
 	 * </p>
 	 * 
-	 * @return a socket address
+	 * @param contentType the content type
+	 * 
+	 * @return the response headers
 	 */
-	SocketAddress getLocalAddress();
-	
+	OutboundRequestHeaders contentType(String contentType);
+
 	/**
 	 * <p>
-	 * Returns the socket address of the client or last proxy that sent the request.
+	 * Sets the response content length.
 	 * </p>
 	 * 
-	 * @return a socket address
+	 * @param contentLength the content length
+	 * 
+	 * @return the response headers
 	 */
-	SocketAddress getRemoteAddress();
+	OutboundRequestHeaders contentLength(long contentLength);
 	
-	Optional<? extends RequestBody> body();
+	OutboundRequestHeaders cookies(Consumer<OutboundCookies> cookiesConfigurer);
 }

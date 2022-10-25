@@ -15,12 +15,11 @@
  */
 package io.inverno.mod.http.server;
 
+import io.inverno.mod.http.base.BaseRequest;
+import io.inverno.mod.http.base.InboundCookies;
+import io.inverno.mod.http.base.InboundRequestHeaders;
 import java.net.SocketAddress;
 import java.util.Optional;
-
-import io.inverno.mod.base.net.URIBuilder;
-import io.inverno.mod.base.net.URIs;
-import io.inverno.mod.http.base.Method;
 
 /**
  * <p>
@@ -32,34 +31,19 @@ import io.inverno.mod.http.base.Method;
  * 
  * @see Exchange
  */
-public interface Request {
+public interface Request extends BaseRequest {
 
-	/**
-	 * <p>
-	 * Returns the HTTP headers sent in the request.
-	 * </p>
-	 * 
-	 * @return the headers
-	 */
-	RequestHeaders headers();
-	
-	/**
-	 * <p>
-	 * Returns the query parameters sent in the request.
-	 * </p>
-	 * 
-	 * @return the query parameters
-	 */
-	QueryParameters queryParameters();
-	
 	/**
 	 * <p>
 	 * Returns the cookies sent in the request.
 	 * </p>
 	 * 
 	 * @return the cookies
+	 * 
+	 * @deprecated use {@link InboundRequestHeaders#cookies()}
 	 */
-	RequestCookies cookies();
+	@Deprecated
+	InboundCookies cookies();
 	
 	/**
 	 * <p>
@@ -72,86 +56,12 @@ public interface Request {
 	
 	/**
 	 * <p>
-	 * Returns the HTTP method of the request.
-	 * </p>
-	 * 
-	 * @return the HTTP method
-	 */
-	Method getMethod();
-	
-	/**
-	 * <p>
 	 * Returns the name of the scheme used to send the request (eg. http, https...).
 	 * </p>
 	 * 
 	 * @return the name of the scheme
 	 */
 	String getScheme();
-	
-	/**
-	 * <p>
-	 * Returns the request authority.
-	 * </p>
-	 * 
-	 * @return the authority
-	 */
-	String getAuthority();
-	
-	/**
-	 * <p>
-	 * Returns the path to the resource targeted in the request.
-	 * </p>
-	 *
-	 * <p>
-	 * This path corresponds to the origin form as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-5.3.1">RFC 7230 Section 5.3.1</a>, as such it may contain a query URI component.
-	 * </p>
-	 *
-	 * @return the path to the targeted resource
-	 */
-	String getPath();
-	
-	/**
-	 * <p>
-	 * Returns the absolute path to the resource targeted in the request.
-	 * </p>
-	 *
-	 * <p>
-	 * This path corresponds to the absolute path of the origin form as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-5.3.1">RFC 7230 Section 5.3.1</a>, as such it only contains the path URI component.
-	 * </p>
-	 *
-	 * <p>
-	 * The resulting path is also normalized as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-6">RFC 3986 Section 6</a>.
-	 * </p>
-	 *
-	 * @return the normalized absolute path to the targeted resource
-	 */
-	String getPathAbsolute();
-	
-	/**
-	 * <p>
-	 * Returns a path builder initialized with the path of the request.
-	 * </p>
-	 *
-	 * <p>
-	 * This method always returns a new {@link URIBuilder} instance with {@link URIs.Option#NORMALIZED} option. It is then safe to use it to build
-	 * relative paths.
-	 * </p>
-	 *
-	 * @return a new URI builder
-	 */
-	URIBuilder getPathBuilder();
-	
-	/**
-	 * <p>
-	 * Returns the query URI component.
-	 * </p>
-	 * 
-	 * @return a URI query component
-	 */
-	String getQuery();
 	
 	/**
 	 * <p>

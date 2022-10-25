@@ -19,11 +19,11 @@ import io.inverno.mod.http.base.BadRequestException;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.ForbiddenException;
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ExchangeInterceptor;
-import io.inverno.mod.http.server.ResponseHeaders;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashSet;
@@ -265,7 +265,7 @@ public class CORSInterceptor<A extends ExchangeContext, B extends Exchange<A>> i
 	 * @param responseHeaders the response headers
 	 * @param headerName the name of the varying header
 	 */
-	private static void addVaryHeader(ResponseHeaders responseHeaders, String headerName) {
+	private static void addVaryHeader(OutboundResponseHeaders responseHeaders, String headerName) {
 		responseHeaders.get(Headers.NAME_VARY).ifPresentOrElse(
 			vary -> {
 				responseHeaders.set(Headers.NAME_VARY, vary + "," + headerName);

@@ -34,7 +34,7 @@ public abstract class AbstractDataPart<A> extends AbstractPart<A> {
 		super(headerService, parameterConverter);
 	}
 	
-	protected AbstractDataPart(HeaderService headerService, ObjectConverter<String> parameterConverter, GenericPartHeaders headers) {
+	protected AbstractDataPart(HeaderService headerService, ObjectConverter<String> parameterConverter, PartHeaders headers) {
 		super(headerService, parameterConverter, headers);
 	}
 	

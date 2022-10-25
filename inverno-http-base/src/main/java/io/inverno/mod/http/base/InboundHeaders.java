@@ -1,59 +1,32 @@
 /*
- * Copyright 2020 Jeremy KUHN
- *
+ * Copyright 2022 Jeremy KUHN
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.server;
+package io.inverno.mod.http.base;
 
+import io.inverno.mod.http.base.header.Header;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.http.base.header.Header;
-
 /**
- * <p>
- * Represents the HTTP headers of a client request in a server exchange as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC
- * 7230 Section 3.2</a>.
- * </p>
  *
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
- *
- * @see Request
+ * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface RequestHeaders {
-
-	/**
-	 * <p>
-	 * Returns the content type header field value of the request.
-	 * </p>
-	 * 
-	 * @return the content type
-	 */
-	String getContentType();
+public interface InboundHeaders {
 	
-	/**
-	 * <p>
-	 * Returns the content length of the request.
-	 * </p>
-	 * 
-	 * @return the content length
-	 */
-	Long getContentLength();
-
 	/**
 	 * <p>
 	 * Determines whether a header with the specified name is present.

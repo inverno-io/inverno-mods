@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.InboundCookies;
+import io.inverno.mod.http.base.OutboundCookies;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
+import io.inverno.mod.http.client.internal.GenericRequestCookies;
 import io.inverno.mod.http.client.internal.InternalRequestHeaders;
-import io.inverno.mod.http.client.internal.OutboundHeaders;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Headers;
 import java.util.LinkedList;
@@ -31,18 +33,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-class Http2RequestHeaders implements OutboundHeaders, InternalRequestHeaders {
+class Http2RequestHeaders implements InternalRequestHeaders {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	
 	private final Http2Headers underlyingHeaders;
+	protected GenericRequestCookies requestCookies;
 	
 	private boolean written;
 
@@ -61,32 +65,35 @@ class Http2RequestHeaders implements OutboundHeaders, InternalRequestHeaders {
 	}
 	
 	@Override
+	public void setWritten(boolean written) {
+		this.written = written;
+	}
+	
+	@Override
 	public boolean isWritten() {
 		return this.written;
 	}
 
 	@Override
-	public void setWritten(boolean written) {
-		this.written = written;
+	public Http2RequestHeaders contentType(String contentType) {
+		this.underlyingHeaders.set(Headers.NAME_CONTENT_TYPE, contentType);
+		return this;
+	}
+	
+	@Override
+	public String getContentType() {
+		return this.underlyingHeaders.get(Headers.NAME_CONTENT_TYPE).toString();
 	}
 
 	@Override
-	public CharSequence getCharSequence(CharSequence name) {
-		return this.underlyingHeaders.get(name);
+	public Headers.ContentType getContentTypeHeader() {
+		return this.<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
 	}
 
 	@Override
-	public List<CharSequence> getAllCharSequence(CharSequence name) {
-		return this.underlyingHeaders.getAll(name);
-	}
-
-	@Override
-	public List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence() {
-		List<Map.Entry<CharSequence, CharSequence>> result = new LinkedList<>();
-		this.underlyingHeaders.forEach(e -> {
-			result.add(Map.entry(e.getKey(), e.getValue()));
-		});
-		return result;
+	public Http2RequestHeaders contentLength(long contentLength) {
+		this.underlyingHeaders.setLong(Headers.NAME_CONTENT_LENGTH, contentLength);
+		return this;
 	}
 	
 	@Override
@@ -95,17 +102,25 @@ class Http2RequestHeaders implements OutboundHeaders, InternalRequestHeaders {
 	}
 
 	@Override
-	public Http2RequestHeaders contentType(String contentType) {
-		this.underlyingHeaders.set(Headers.NAME_CONTENT_TYPE, contentType);
+	public OutboundRequestHeaders cookies(Consumer<OutboundCookies> cookiesConfigurer) {
+		if(this.requestCookies == null) {
+			this.requestCookies = new GenericRequestCookies(this.headerService, this, this.parameterConverter);
+		}
+		this.requestCookies.load();
+		cookiesConfigurer.accept(this.requestCookies);
+		this.requestCookies.commit();
 		return this;
 	}
 
 	@Override
-	public Http2RequestHeaders contentLength(long contentLength) {
-		this.underlyingHeaders.setLong(Headers.NAME_CONTENT_LENGTH, contentLength);
-		return this;
+	public InboundCookies cookies() {
+		if(this.requestCookies == null) {
+			this.requestCookies = new GenericRequestCookies(this.headerService, this, this.parameterConverter);
+		}
+		this.requestCookies.load();
+		return this.requestCookies;
 	}
-
+	
 	@Override
 	public Http2RequestHeaders add(CharSequence name, CharSequence value) {
 		this.underlyingHeaders.add(name, value);
@@ -140,16 +155,6 @@ class Http2RequestHeaders implements OutboundHeaders, InternalRequestHeaders {
 			this.underlyingHeaders.remove(name);
 		}
 		return this;
-	}
-
-	@Override
-	public Optional<String> getContentType() {
-		return Optional.ofNullable(this.underlyingHeaders.get(Headers.NAME_CONTENT_TYPE).toString());
-	}
-
-	@Override
-	public Optional<Headers.ContentType> getContentTypeHeader() {
-		return this.getHeader(Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
@@ -220,6 +225,25 @@ class Http2RequestHeaders implements OutboundHeaders, InternalRequestHeaders {
 		List<Parameter> result = new LinkedList<>();
 		this.underlyingHeaders.forEach(e -> {
 			result.add(new GenericParameter(e.getKey().toString(), e.getValue().toString(), this.parameterConverter));
+		});
+		return result;
+	}
+	
+	@Override
+	public CharSequence getCharSequence(CharSequence name) {
+		return this.underlyingHeaders.get(name);
+	}
+
+	@Override
+	public List<CharSequence> getAllCharSequence(CharSequence name) {
+		return this.underlyingHeaders.getAll(name);
+	}
+
+	@Override
+	public List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence() {
+		List<Map.Entry<CharSequence, CharSequence>> result = new LinkedList<>();
+		this.underlyingHeaders.forEach(e -> {
+			result.add(Map.entry(e.getKey(), e.getValue()));
 		});
 		return result;
 	}

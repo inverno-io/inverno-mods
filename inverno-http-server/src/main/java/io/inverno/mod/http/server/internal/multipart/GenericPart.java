@@ -18,9 +18,9 @@ package io.inverno.mod.http.server.internal.multipart;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.InboundData;
+import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.server.Part;
-import io.inverno.mod.http.server.PartHeaders;
 import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.Map;
@@ -80,7 +80,7 @@ class GenericPart implements Part {
 	public GenericPart(ObjectConverter<String> parameterConverter, String name, String filename, Map<String, List<Header>> headers) {
 		this.name = name;
 		this.filename = filename;
-		this.partHeaders = new GenericPartHeaders(headers, parameterConverter);
+		this.partHeaders = new PartHeaders(headers, parameterConverter);
 		
 		this.data = Flux.<ByteBuf>create(emitter -> {
 			this.dataEmitter = emitter;

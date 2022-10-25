@@ -15,15 +15,14 @@
  */
 package io.inverno.mod.web.internal.mock;
 
+import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.base.QueryParameters;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.http.server.QueryParameters;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

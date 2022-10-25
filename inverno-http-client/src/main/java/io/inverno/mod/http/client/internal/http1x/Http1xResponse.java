@@ -28,7 +28,7 @@ import io.netty.handler.codec.http.HttpResponse;
 class Http1xResponse extends AbstractResponse {
 
 	public Http1xResponse(HttpResponse httpResponse, HeaderService headerService, ObjectConverter<String> parameterConverter) {
-		super(new Http1xResponseHeaders(httpResponse.headers(), httpResponse.status().code(), headerService, parameterConverter), parameterConverter);
+		super(new Http1xResponseHeaders(httpResponse.headers(), httpResponse.status().code(), headerService, parameterConverter));
 	}
 	
 	public void setResponseTrailers(Http1xResponseTrailers responseTrailers) {

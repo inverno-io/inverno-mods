@@ -176,16 +176,12 @@ public class GenericRequestBodyConfigurator<A extends GenericRequestBody> implem
 		}
 
 		protected <T extends Parameter> void stream(Publisher<T> value) throws IllegalStateException {
-			GenericRequestBodyConfigurator.this.requestHeaders.getContentTypeHeader().ifPresentOrElse(
-				contentType -> {
-					GenericRequestBodyConfigurator.this.requestBody.setData(GenericRequestBodyConfigurator.this.urlEncodedBodyEncoder.encode(Flux.from(value), contentType));
-				},
-				() -> {
-					Headers.ContentType contentType = new ContentTypeCodec.ContentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED, Charsets.DEFAULT, null, null);
-					GenericRequestBodyConfigurator.this.requestHeaders.set(contentType);
-					GenericRequestBodyConfigurator.this.requestBody.setData(GenericRequestBodyConfigurator.this.urlEncodedBodyEncoder.encode(Flux.from(value), contentType));
-				}
-			);
+			Headers.ContentType contentTypeHeader = GenericRequestBodyConfigurator.this.requestHeaders.getContentTypeHeader();
+			if(contentTypeHeader == null) {
+				contentTypeHeader = new ContentTypeCodec.ContentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED, Charsets.DEFAULT, null, null);
+				GenericRequestBodyConfigurator.this.requestHeaders.set(contentTypeHeader);
+			}
+			GenericRequestBodyConfigurator.this.requestBody.setData(GenericRequestBodyConfigurator.this.urlEncodedBodyEncoder.encode(Flux.from(value), contentTypeHeader));
 		}
 		
 		protected <T> Parameter create(String name, T value) {
@@ -201,16 +197,12 @@ public class GenericRequestBodyConfigurator<A extends GenericRequestBody> implem
 		}
 	
 		protected <T extends Part<?>> void stream(Publisher<T> value) throws IllegalStateException {
-			GenericRequestBodyConfigurator.this.requestHeaders.getContentTypeHeader().ifPresentOrElse(
-				contentType -> {
-					GenericRequestBodyConfigurator.this.requestBody.setData(GenericRequestBodyConfigurator.this.multipartBodyEncoder.encode(Flux.from(value), contentType));
-				},
-				() -> {
-					Headers.ContentType contentType = new ContentTypeCodec.ContentType(MediaTypes.MULTIPART_FORM_DATA, Charsets.DEFAULT, ContentTypeCodec.generateMultipartBoundary(), null);
-					GenericRequestBodyConfigurator.this.requestHeaders.set(contentType);
-					GenericRequestBodyConfigurator.this.requestBody.setData(GenericRequestBodyConfigurator.this.multipartBodyEncoder.encode(Flux.from(value), contentType));
-				}
-			);
+			Headers.ContentType contentTypeHeader = GenericRequestBodyConfigurator.this.requestHeaders.getContentTypeHeader();
+			if(contentTypeHeader == null) {
+				contentTypeHeader = new ContentTypeCodec.ContentType(MediaTypes.MULTIPART_FORM_DATA, Charsets.DEFAULT, ContentTypeCodec.generateMultipartBoundary(), null);
+				GenericRequestBodyConfigurator.this.requestHeaders.set(contentTypeHeader);
+			}
+			GenericRequestBodyConfigurator.this.requestBody.setData(GenericRequestBodyConfigurator.this.multipartBodyEncoder.encode(Flux.from(value), contentTypeHeader));
 		}
 	}
 }

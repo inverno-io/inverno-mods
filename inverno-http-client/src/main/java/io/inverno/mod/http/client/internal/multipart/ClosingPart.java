@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.multipart;
 
+import io.inverno.mod.http.base.InboundRequestHeaders;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
 import io.inverno.mod.http.client.Part;
-import io.inverno.mod.http.client.PartHeaders;
 import java.util.function.Consumer;
 import org.reactivestreams.Publisher;
 
@@ -40,12 +40,12 @@ public class ClosingPart implements Part<Object> {
 	}
 
 	@Override
-	public PartHeaders headers() {
+	public InboundRequestHeaders headers() {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Part<Object> headers(Consumer<PartHeaders> headersConfigurer) {
+	public Part<Object> headers(Consumer<OutboundRequestHeaders> headersConfigurer) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -53,5 +53,4 @@ public class ClosingPart implements Part<Object> {
 	public <T> void stream(Publisher<T> value) throws IllegalStateException {
 		throw new UnsupportedOperationException();
 	}
-
 }

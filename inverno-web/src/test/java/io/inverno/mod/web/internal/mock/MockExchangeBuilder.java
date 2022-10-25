@@ -121,7 +121,7 @@ public class MockExchangeBuilder {
 	}
 	
 	public MockWebExchange build() {
-		MockWebRequest mockRequest = new MockWebRequest(this.authority, this.scheme, this.path, this.protocol, this.method, new MockRequestHeaders(HEADER_SERVICE, this.headers), new MockQueryParameters(this.requestQueryParameters), new MockRequestCookies(this.requestCookies), this.localAddress, this.remoteAddress, this.mockRequestBody);
+		MockWebRequest mockRequest = new MockWebRequest(this.authority, this.scheme, this.path, this.protocol, this.method, new MockRequestHeaders(HEADER_SERVICE, this.headers, new MockRequestCookies(this.requestCookies)), new MockQueryParameters(this.requestQueryParameters), this.localAddress, this.remoteAddress, this.mockRequestBody);
 		MockWebResponse mockResponse = new MockWebResponse(HEADER_SERVICE, this.mockResponseBody);
 		
 		return new MockWebExchange(mockRequest, mockResponse, this.context);

@@ -110,11 +110,11 @@ public class MultipartFormDataBodyEncoder implements MultipartEncoder<Part<?>> {
 					buffer.writeBytes(this.delimiter.duplicate());
 					ByteBufUtil.writeShortBE(buffer, CRLF_SHORT);
 
-					GenericPartHeaders headers = dataPart.headers();
+					PartHeaders headers = dataPart.headers();
 					if(!headers.contains(Headers.NAME_CONTENT_DISPOSITION)) {
 						headers.set(Headers.NAME_CONTENT_DISPOSITION, dataPart.getContentDisposition(this.charset));
 					}
-					dataPart.headers().toHttp1xHeaders().encode(buffer);
+					dataPart.headers().encode(buffer);
 					headers.remove(Headers.NAME_CONTENT_DISPOSITION);
 					ByteBufUtil.writeShortBE(buffer, CRLF_SHORT);
 					return buffer;

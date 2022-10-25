@@ -15,14 +15,15 @@
  */
 package io.inverno.mod.web.internal;
 
-import java.util.function.Consumer;
-
+import io.inverno.mod.http.base.InboundHeaders;
+import io.inverno.mod.http.base.InboundResponseHeaders;
+import io.inverno.mod.http.base.OutboundHeaders;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
+import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.server.Response;
-import io.inverno.mod.http.server.ResponseCookies;
-import io.inverno.mod.http.server.ResponseHeaders;
-import io.inverno.mod.http.server.ResponseTrailers;
 import io.inverno.mod.web.WebResponse;
 import io.inverno.mod.web.WebResponseBody;
+import java.util.function.Consumer;
 
 /**
  * <p>
@@ -60,29 +61,30 @@ class GenericWebResponse implements WebResponse {
 	}
 
 	@Override
-	public ResponseHeaders headers() {
+	public InboundResponseHeaders headers() {
 		return this.response.headers();
 	}
-	
+
 	@Override
-	public WebResponse headers(Consumer<ResponseHeaders> headersConfigurer) throws IllegalStateException {
+	public WebResponse headers(Consumer<OutboundResponseHeaders> headersConfigurer) throws IllegalStateException {
 		this.response.headers(headersConfigurer);
 		return this;
 	}
-	
+
 	@Override
-	public ResponseTrailers trailers() {
+	public InboundHeaders trailers() {
 		return this.response.trailers();
 	}
 
 	@Override
-	public WebResponse trailers(Consumer<ResponseTrailers> trailersConfigurer) {
+	public WebResponse trailers(Consumer<OutboundHeaders<?>> trailersConfigurer) {
 		this.response.trailers(trailersConfigurer);
 		return this;
 	}
 
 	@Override
-	public WebResponse cookies(Consumer<ResponseCookies> cookiesConfigurer) throws IllegalStateException {
+	@Deprecated
+	public WebResponse cookies(Consumer<OutboundSetCookies> cookiesConfigurer) throws IllegalStateException {
 		this.response.cookies(cookiesConfigurer);
 		return this;
 	}

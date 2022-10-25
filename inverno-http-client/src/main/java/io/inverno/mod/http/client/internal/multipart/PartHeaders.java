@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.multipart;
 
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.header.HeaderService;
-import io.inverno.mod.http.client.PartHeaders;
-import io.inverno.mod.http.client.internal.GenericOutboundHeaders;
+import io.inverno.mod.http.client.internal.GenericRequestHeaders;
+import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.Map;
 
@@ -27,13 +26,17 @@ import java.util.Map;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public class GenericPartHeaders extends GenericOutboundHeaders<GenericPartHeaders> implements PartHeaders {
+public class PartHeaders extends GenericRequestHeaders {
 
-	public GenericPartHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter) {
+	public PartHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		super(headerService, parameterConverter);
 	}
 
-	public GenericPartHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, List<Map.Entry<String, String>> entries) {
+	public PartHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, List<Map.Entry<String, String>> entries) {
 		super(headerService, parameterConverter, entries);
+	}
+	
+	public void encode(ByteBuf buf) {
+		this.underlyingHeaders.encode(buf);
 	}
 }

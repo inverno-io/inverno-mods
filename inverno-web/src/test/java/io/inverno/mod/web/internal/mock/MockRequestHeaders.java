@@ -15,6 +15,12 @@
  */
 package io.inverno.mod.web.internal.mock;
 
+import io.inverno.mod.http.base.InboundCookies;
+import io.inverno.mod.http.base.InboundRequestHeaders;
+import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.base.header.Header;
+import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.header.Headers;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -22,25 +28,22 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.http.base.header.Header;
-import io.inverno.mod.http.base.header.HeaderService;
-import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.server.RequestHeaders;
-
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  *
  */
-public class MockRequestHeaders implements RequestHeaders {
+public class MockRequestHeaders implements InboundRequestHeaders {
 
 	private final HeaderService headerService;
 	
 	private final Map<String, List<String>> headers;
 	
-	public MockRequestHeaders(HeaderService headerService, Map<String, List<String>> headers) {
+	private final MockRequestCookies cookies;
+	
+	public MockRequestHeaders(HeaderService headerService, Map<String, List<String>> headers, MockRequestCookies cookies) {
 		this.headers = headers;
 		this.headerService = headerService;
+		this.cookies = cookies;
 	}
 
 	@Override
@@ -49,10 +52,20 @@ public class MockRequestHeaders implements RequestHeaders {
 	}
 
 	@Override
+	public Headers.ContentType getContentTypeHeader() {
+		return this.<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
+	}
+
+	@Override
 	public Long getContentLength() {
 		return Optional.ofNullable(this.headers.get(Headers.NAME_CONTENT_LENGTH)).map(l -> Long.parseLong(l.get(0))).orElse(null);
 	}
 
+	@Override
+	public InboundCookies cookies() {
+		return this.cookies;
+	}
+	
 	@Override
 	public boolean contains(CharSequence name) {
 		return this.headers.containsKey(name.toString());

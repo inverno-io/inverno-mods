@@ -27,17 +27,8 @@ import reactor.core.publisher.Mono;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface PreparedRequest<A extends ExchangeContext, B extends Exchange<A>> extends BaseRequest {
+public interface PreparedRequest<A extends ExchangeContext, B extends Exchange<A>> extends AbstractRequest<PreparedRequest<A, B>> {
 
-	@Override
-	PreparedRequest<A, B> headers(Consumer<RequestHeaders> headersConfigurer) throws IllegalStateException;
-
-	@Override
-	PreparedRequest<A, B> cookies(Consumer<RequestCookies> cookiesConfigurer) throws IllegalStateException;
-
-	@Override
-	PreparedRequest<A, B> authority(String authority);
-	
 	PreparedRequest<A, B> intercept(ExchangeInterceptor<? super A, ? extends B> interceptor);
 
 	default Mono<B> send(Object... parameters) {

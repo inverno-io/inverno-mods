@@ -174,6 +174,7 @@ class Http2Exchange extends AbstractExchange {
 			
 			ChannelPromise finalizePromise = this.context.newPromise();
 			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, finalizePromise);
+			trailers.setWritten(true);
 			this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 		}
 		this.context.channel().flush();
@@ -197,6 +198,7 @@ class Http2Exchange extends AbstractExchange {
 			
 			ChannelPromise finalizePromise = this.context.newPromise();
 			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, finalizePromise);
+			trailers.setWritten(true);
 			this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 		}
 		this.context.channel().flush();
@@ -220,12 +222,14 @@ class Http2Exchange extends AbstractExchange {
 				
 				ChannelPromise finalizePromise = this.context.newPromise();
 				this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, finalizePromise);
+				trailers.setWritten(true);
 				this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 			}
 		}
 		else if(trailers != null) {
 			ChannelPromise finalizePromise = this.context.newPromise();
 			this.encoder.writeHeaders(this.context, this.stream.id(), trailers.getUnderlyingTrailers(), 0, true, finalizePromise);
+			trailers.setWritten(true);
 			this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 		}
 		else {

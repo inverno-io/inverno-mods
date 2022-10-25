@@ -15,23 +15,22 @@
  */
 package io.inverno.mod.http.server.internal.http1x;
 
-import java.util.Optional;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.ssl.SslHandler;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.base.net.URIs;
+import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.Request;
-import io.inverno.mod.http.server.RequestHeaders;
 import io.inverno.mod.http.server.internal.AbstractRequest;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.ssl.SslHandler;
+import java.util.Optional;
 import reactor.core.publisher.Sinks.Many;
 
 /**
@@ -65,7 +64,7 @@ class Http1xRequest extends AbstractRequest {
 	 *                              decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 */
-	public Http1xRequest(ChannelHandlerContext context, HttpRequest httpRequest, RequestHeaders requestHeaders, ObjectConverter<String> parameterConverter, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
+	public Http1xRequest(ChannelHandlerContext context, HttpRequest httpRequest, InboundRequestHeaders requestHeaders, ObjectConverter<String> parameterConverter, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
 		super(context, requestHeaders, parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder);
 		this.underlyingRequest = httpRequest;
 	}

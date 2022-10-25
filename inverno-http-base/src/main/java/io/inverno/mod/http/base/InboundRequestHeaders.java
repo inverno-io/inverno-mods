@@ -13,36 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.inverno.mod.http.base;
 
-package io.inverno.mod.http.client;
-
-import io.inverno.mod.base.net.URIBuilder;
-import io.inverno.mod.http.base.Method;
-import java.util.function.Consumer;
+import io.inverno.mod.http.base.header.Headers;
 
 /**
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface BaseRequest {
-
-	RequestHeaders headers();
+public interface InboundRequestHeaders extends InboundHeaders {
 	
-	BaseRequest headers(Consumer<RequestHeaders> headersConfigurer) throws IllegalStateException;
+	/**
+	 * <p>
+	 * Returns the content type header field value of the request.
+	 * </p>
+	 * 
+	 * @return the content type or null
+	 */
+	String getContentType();
 	
-	BaseRequest cookies(Consumer<RequestCookies> cookiesConfigurer) throws IllegalStateException;
-
-	BaseRequest authority(String authority);
+	/**
+	 * <p>
+	 * Decodes and returns the content type header of the request.
+	 * </p>
+	 * 
+	 * @return the decoded content type header
+	 */
+	Headers.ContentType getContentTypeHeader();
 	
-	Method getMethod();
+	/**
+	 * <p>
+	 * Returns the content length of the request.
+	 * </p>
+	 * 
+	 * @return the content length or null
+	 */
+	Long getContentLength();
 	
-	String getAuthority();
-	
-	String getPath();
-	
-	String getPathAbsolute();
-	
-	URIBuilder getPathBuilder();
-	
-	String getQuery();
+	InboundCookies cookies();
 }
