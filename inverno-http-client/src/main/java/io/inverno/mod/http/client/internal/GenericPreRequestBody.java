@@ -13,24 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.client;
 
-import io.inverno.mod.http.base.InboundData;
+package io.inverno.mod.http.client.internal;
+
 import io.netty.buffer.ByteBuf;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
+import io.inverno.mod.http.client.PreRequestBody;
 
 /**
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface ResponseBody {
+public class GenericPreRequestBody implements PreRequestBody {
+
+	private Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer;
 	
-	ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer);
-	
-	InboundData<ByteBuf> raw() throws IllegalStateException;
-	
-	InboundData<CharSequence> string() throws IllegalStateException;
-	
-	// TODO SSE
+	@Override
+	public PreRequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
+		if(this.transformer == null) {
+			this.transformer = transformer;
+		}
+		else {
+			this.transformer = this.transformer.andThen(transformer);
+		}
+		return this;
+	}
+
+	public Function<Publisher<ByteBuf>, Publisher<ByteBuf>> getTransformer() {
+		return transformer;
+	}
 }

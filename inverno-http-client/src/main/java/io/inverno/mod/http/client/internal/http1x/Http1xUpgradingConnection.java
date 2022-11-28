@@ -41,6 +41,8 @@ import io.netty.util.AsciiString;
 import io.netty.util.ReferenceCountUtil;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.function.Function;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.MonoSink;
 
 /**
@@ -211,15 +213,15 @@ class Http1xUpgradingConnection extends Http1xConnection {
 		}
 		this.upgradingExchange = null;
 	}
-	
+
 	@Override
-	protected Http1xExchange createExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Http1xConnectionEncoder encoder) throws HttpClientException {
+	protected Http1xExchange createExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) throws HttpClientException {
 		if(this.state == UpgradeState.COMPLETED) {
-			return super.createExchange(context, exchangeSink, exchangeContext, request, encoder);
+			return super.createExchange(context, exchangeSink, exchangeContext, request, responseBodyTransformer, encoder);
 		}
 		else if(this.upgradingExchange == null) {
 			this.state = UpgradeState.STARTED;
-			this.upgradingExchange = new Http1xUpgradingExchange(context, exchangeSink, exchangeContext, request, this);
+			this.upgradingExchange = new Http1xUpgradingExchange(context, exchangeSink, exchangeContext, request, responseBodyTransformer, this);
 			this.configurer.startHttp2Upgrade(context.pipeline(), this.configuration, this.upgradingExchange);
 			
 			return this.upgradingExchange;

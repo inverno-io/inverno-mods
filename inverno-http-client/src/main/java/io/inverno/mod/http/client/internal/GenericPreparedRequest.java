@@ -26,18 +26,22 @@ import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.internal.GenericQueryParameters;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.ExchangeInterceptor;
+import io.inverno.mod.http.client.PreExchange;
 import io.inverno.mod.http.client.PreparedRequest;
 import io.inverno.mod.http.client.RequestBodyConfigurator;
+import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 /**
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public class GenericPreparedRequest<A extends ExchangeContext> implements PreparedRequest<A, Exchange<A>> {
+public class GenericPreparedRequest<A extends ExchangeContext> implements PreparedRequest<A, Exchange<A>, PreExchange<A>> {
 
 	private final AbstractEndpoint<A> endpoint;
 	private final HeaderService headerService;
@@ -51,8 +55,7 @@ public class GenericPreparedRequest<A extends ExchangeContext> implements Prepar
 	private String pathAbsolute;
 	private String queryString;
 	private GenericQueryParameters queryParameters;
-	
-	private GenericRequestCookies requestCookies;
+	private ExchangeInterceptor<A, PreExchange<A>> interceptor;
 	
 	public GenericPreparedRequest(
 			AbstractEndpoint endpoint, 
@@ -71,40 +74,19 @@ public class GenericPreparedRequest<A extends ExchangeContext> implements Prepar
 	}
 	
 	@Override
-	public GenericRequestHeaders headers() {
-		return this.requestHeaders;
-	}
-
-	@Override
-	public GenericPreparedRequest headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException {
-		headersConfigurer.accept(this.requestHeaders);
-		return this;
-	}
-
-	/*@Override
-	public GenericPreparedRequest cookies(Consumer<RequestCookies> cookiesConfigurer) throws IllegalStateException {
-		if(this.requestCookies == null) {
-			this.requestCookies = new GenericRequestCookies(this.headerService, this.requestHeaders, parameterConverter);
+	public PreparedRequest<A, Exchange<A>, PreExchange<A>> intercept(ExchangeInterceptor<A, PreExchange<A>> interceptor) {
+		if(this.interceptor == null) {
+			this.interceptor = interceptor;
 		}
-		cookiesConfigurer.accept(this.requestCookies);
-		this.requestCookies.commit();
-		return this;
-	}*/
-	
-	@Override
-	public GenericPreparedRequest authority(String authority) {
-		this.authority = authority;
+		else {
+			this.interceptor = this.interceptor.andThen(interceptor);
+		}
 		return this;
 	}
 	
 	@Override
 	public Method getMethod() {
 		return this.method;
-	}
-
-	@Override
-	public String getAuthority() {
-		return this.authority;
 	}
 	
 	@Override
@@ -140,44 +122,66 @@ public class GenericPreparedRequest<A extends ExchangeContext> implements Prepar
 		}
 		return this.queryParameters;
 	}
-
+	
 	@Override
-	public PreparedRequest<A, Exchange<A>> intercept(ExchangeInterceptor<? super A, ? extends Exchange<A>> interceptor) {
-		throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+	public String getAuthority() {
+		return this.authority;
 	}
 
 	@Override
-	public Mono<Exchange<A>> send(List<Object> parameters, A context) {
-		// Get a connection from pool now: this is given by the endpoint
-		// the endpoint uses its configuration to establish the connection which can be either HTTP/1.x or HTTP/2
-		// in case of HTTP/2 a stream is actually allocated, it must attached to the request
-		// Once we have the connection we can create a typed request corresponding to the protocol version
-		// So ideally the connection must be the one creating the exchange => connection.send() must return Mono<Exchange> instead of Mono<Response>
-		// check the context type matches the endpoint context type
-		
-		// connection should create the exchange which is intercepted by the endpoint and after that actually send the exchange
-		
-		
-		return this.endpoint.connection().flatMap(connection -> connection.send(this.method, this.authority, this.requestHeaders.getAll(), this.getPathBuilder().buildString(parameters), null, context));
+	public GenericPreparedRequest authority(String authority) {
+		this.authority = authority;
+		return this;
 	}
 
 	@Override
-	public Mono<Exchange<A>> send(Map<String, ?> parameters, A context) {
-		// Timeout after connection() <= this must be done in the endpoint, the pooled endpoint has an event loop
-		// Let's differentiate connection timeout from request timeout shall we?
-		// timeout after send() <= done within the connection using the connection context
-		
-		// Global request timeout that start on subscribe 
-		return this.endpoint.connection().flatMap(connection -> connection.send(this.method, this.authority, this.requestHeaders.getAll(), this.getPathBuilder().buildString(parameters), null, context));
+	public GenericRequestHeaders headers() {
+		return this.requestHeaders;
 	}
 
 	@Override
-	public Mono<Exchange<A>> send(List<Object> parameters, Consumer<RequestBodyConfigurator> bodyConfigurer, A context) {
-		return this.endpoint.connection().flatMap(connection -> connection.send(this.method, this.authority, this.requestHeaders.getAll(), this.getPathBuilder().buildString(parameters), bodyConfigurer, context));
+	public GenericPreparedRequest headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException {
+		headersConfigurer.accept(this.requestHeaders);
+		return this;
+	}
+	
+	@Override
+	public Mono<Exchange<A>> send(A context, List<Object> parameters, Consumer<RequestBodyConfigurator> bodyConfigurer) {
+		return this.send(context, this.getPathBuilder().buildString(parameters), bodyConfigurer);
 	}
 
 	@Override
-	public Mono<Exchange<A>> send(Map<String, ?> parameters, Consumer<RequestBodyConfigurator> bodyConfigurer, A context) {
-		return this.endpoint.connection().flatMap(connection -> connection.send(this.method, this.authority, this.requestHeaders.getAll(), this.getPathBuilder().buildString(parameters), bodyConfigurer, context));
+	public Mono<Exchange<A>> send(A context, Map<String, ?> parameters, Consumer<RequestBodyConfigurator> bodyConfigurer) {
+		return this.send(context, this.getPathBuilder().buildString(parameters), bodyConfigurer);
+	}
+	
+	private Mono<Exchange<A>> send(A context, String path, Consumer<RequestBodyConfigurator> bodyConfigurer) {
+		if(this.interceptor != null) {
+			// Create PreExchange, intercept then proceed
+			return Mono.defer(() -> {
+				GenericPreRequest request = new GenericPreRequest(this.headerService, this.parameterConverter, this.method, path, authority, this.requestHeaders.getAll(), bodyConfigurer);
+				GenericPreResponse response = new GenericPreResponse(this.headerService, this.parameterConverter);
+				GenericPreExchange<A> preExchange = new GenericPreExchange<>(context, request, response);
+
+				return this.interceptor.intercept(preExchange)
+					.flatMap(interceptedExchange -> this.endpoint.connection()
+						.flatMap(connection -> connection.send(
+							interceptedExchange.context(), 
+							interceptedExchange.request().getMethod(), 
+							interceptedExchange.request().getAuthority(), 
+							interceptedExchange.request().headers().getAll(), 
+							path, 
+							bodyConfigurer,
+							preExchange.request().body().map(preBody -> ((GenericPreRequestBody)preBody).getTransformer()).orElse(null),
+							preExchange.response().body().getTransformer()
+						))
+					)
+					.switchIfEmpty(Mono.just(preExchange));
+			});
+			
+		}
+		else {
+			return this.endpoint.connection().flatMap(connection -> connection.send(context, this.method, this.authority, this.requestHeaders.getAll(), path, bodyConfigurer));
+		}
 	}
 }

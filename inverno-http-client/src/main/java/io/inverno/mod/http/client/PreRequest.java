@@ -13,39 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.inverno.mod.http.client;
 
 import io.inverno.mod.http.base.BaseRequest;
-import io.inverno.mod.http.base.HttpVersion;
-import java.net.SocketAddress;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface Request extends BaseRequest {
+public interface PreRequest extends BaseRequest {
+
+	PreRequest headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException;
 	
-	boolean isHeadersWritten();
-	
-	HttpVersion getProtocol();
-	
-	String getScheme();
-	
-	/**
-	 * <p>
-	 * Returns the socket address of the interface on which the request was received.
-	 * </p>
-	 * 
-	 * @return a socket address
-	 */
-	SocketAddress getLocalAddress();
-	
-	/**
-	 * <p>
-	 * Returns the socket address of the client or last proxy that sent the request.
-	 * </p>
-	 * 
-	 * @return a socket address
-	 */
-	SocketAddress getRemoteAddress();
+	PreRequest authority(String authority);
+
+	Optional<PreRequestBody> body();
 }

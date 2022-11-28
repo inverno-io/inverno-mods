@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.base.Charsets;
@@ -30,18 +29,18 @@ import reactor.core.publisher.Flux;
  */
 public class GenericResponseBody implements ResponseBody {
 
-	private Flux<ByteBuf> data;
+	private Publisher<ByteBuf> data;
 	
 	private GenericResponseBody.RawInboundData rawData;
 	private GenericResponseBody.StringInboundData stringData;
 
-	public GenericResponseBody(Flux<ByteBuf> data) {
+	public GenericResponseBody(Publisher<ByteBuf> data) {
 		this.data = data;
 	}
-	
+
 	@Override
 	public ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
-		this.data = Flux.from(transformer.apply(this.data));
+		this.data = transformer.apply(this.data);
 		return this;
 	}
 	
@@ -73,7 +72,7 @@ public class GenericResponseBody implements ResponseBody {
 
 		@Override
 		public Publisher<CharSequence> stream() {
-			return GenericResponseBody.this.data.map(buf -> {
+			return Flux.from(GenericResponseBody.this.data).map(buf -> {
 				try {
 					return buf.toString(Charsets.DEFAULT);
 				}

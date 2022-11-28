@@ -27,7 +27,7 @@ import reactor.core.publisher.Mono;
 public interface Endpoint<A extends ExchangeContext> {
 
 	// The Web client can then defined a PreparedRequest<A, WebExchange<A>>
-	PreparedRequest<A, Exchange<A>> request(Method method, String requestTarget);
+	PreparedRequest<A, Exchange<A>, PreExchange<A>> request(Method method, String requestTarget);
 	
 	Mono<Void> close();
 	

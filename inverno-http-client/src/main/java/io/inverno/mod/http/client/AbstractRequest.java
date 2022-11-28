@@ -23,9 +23,9 @@ import java.util.function.Consumer;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-interface AbstractRequest<A extends AbstractRequest<A>> extends BaseRequest {
+interface AbstractRequest extends BaseRequest {
 
-	A headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException;
+	AbstractRequest headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException;
 	
-	A authority(String authority);
+	AbstractRequest authority(String authority);
 }

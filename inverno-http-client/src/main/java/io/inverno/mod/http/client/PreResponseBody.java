@@ -15,7 +15,7 @@
  */
 package io.inverno.mod.http.client;
 
-import io.inverno.mod.http.base.InboundData;
+import io.inverno.mod.http.base.OutboundData;
 import io.netty.buffer.ByteBuf;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
@@ -24,13 +24,34 @@ import org.reactivestreams.Publisher;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface ResponseBody {
+public interface PreResponseBody {
+
+	PreResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer);
 	
-	ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer);
+	void empty();
 	
-	InboundData<ByteBuf> raw() throws IllegalStateException;
+	OutboundData<ByteBuf> raw();
 	
-	InboundData<CharSequence> string() throws IllegalStateException;
+	<T extends CharSequence> OutboundData<T> string();
 	
-	// TODO SSE
+	PreResponseBody.ResourceData resource();
+	
+	interface ResourceData {
+		
+		/**
+		 * <p>
+		 * Sets the specified resource in the response payload.
+		 * </p>
+		 * 
+		 * <p>
+		 * This method tries to determine the content type of the specified resource in
+		 * which case the content type header is set in the response.
+		 * </p>
+		 * 
+		 * @param resource a resource
+		 * 
+		 * @throws IllegalStateException if the payload has already been set
+		 */
+		void value(io.inverno.mod.base.resource.Resource resource) throws IllegalStateException;
+	}
 }

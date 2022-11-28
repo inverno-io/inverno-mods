@@ -27,6 +27,7 @@ import io.inverno.mod.http.client.Endpoint;
 import io.inverno.mod.http.client.EndpointConnectException;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfiguration;
+import io.inverno.mod.http.client.PreExchange;
 import io.inverno.mod.http.client.PreparedRequest;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -102,7 +103,7 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 	}
 	
 	@Override
-	public PreparedRequest<A, Exchange<A>> request(Method method, String requestTarget) {
+	public PreparedRequest<A, Exchange<A>, PreExchange<A>> request(Method method, String requestTarget) {
 		GenericPreparedRequest request = new GenericPreparedRequest(this, this.headerService, this.parameterConverter, method, requestTarget);
 		if(this.configuration.send_user_agent()) {
 			request.headers().set(Headers.NAME_USER_AGENT, this.configuration.user_agent());

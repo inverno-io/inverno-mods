@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client;
 
+import io.inverno.mod.http.base.BaseExchange;
 import io.inverno.mod.http.base.ExchangeContext;
-import java.util.function.Function;
-import reactor.core.publisher.Mono;
 
 /**
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface Exchange<A extends ExchangeContext> {
+public interface Exchange<A extends ExchangeContext> extends BaseExchange<A> {
 
+	@Override
 	Request request();
 
-	Mono<? extends Response> response();
-	
-	Exchange<A> transformResponse(Function<Mono<? extends Response>, Mono<? extends Response>> transformer);
-	
-	A context();
+	@Override
+	Response response();
 }

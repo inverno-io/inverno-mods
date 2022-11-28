@@ -58,6 +58,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
@@ -133,7 +135,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	public void onHttpClientUpgrade(Http1xUpgradingExchange upgradingExchange) throws Http2Exception {
 		super.onHttpClientUpgrade();
 		Http2Stream upgradingStream = this.connection().stream(1);
-		Http2UpgradedExchange upgradedExchange = new Http2UpgradedExchange(this.context, upgradingExchange.getUpgradedExchangeSink(), upgradingExchange.context(), upgradingExchange.request(), this.encoder(), upgradingStream);
+		Http2UpgradedExchange upgradedExchange = new Http2UpgradedExchange(this.context, upgradingExchange.getUpgradedExchangeSink(), upgradingExchange.context(), upgradingExchange.request(), upgradingExchange.getResponseBodyTransformer(), this.encoder(), upgradingStream);
 		upgradedExchange.lastModified = upgradingExchange.getLastModified();
 		upgradedExchange.start(this);
 	}
@@ -209,15 +211,18 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	}
 
 	@Override
-	public <A extends ExchangeContext> Mono<Exchange<A>> send(Method method, String authority, List<Map.Entry<String, String>> headers, String path, Consumer<RequestBodyConfigurator> bodyConfigurer, A exchangeContext) {
+	public <A extends ExchangeContext> Mono<Exchange<A>> send(A exchangeContext, Method method, String authority, List<Map.Entry<String, String>> headers, String path, Consumer<RequestBodyConfigurator> requestBodyConfigurer, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> requestBodyTransformer, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer) {
 		return Mono.<Exchange<ExchangeContext>>create(exchangeSink -> {
 			Http2RequestHeaders requestHeaders = new Http2RequestHeaders(this.headerService, this.parameterConverter, headers);
 			
 			GenericRequestBody requestBody = null;
-			if(bodyConfigurer != null) {
+			if(requestBodyConfigurer != null) {
 				requestBody = new GenericRequestBody();
 				GenericRequestBodyConfigurator bodyConfigurator = new GenericRequestBodyConfigurator(requestHeaders, requestBody, this.parameterConverter, this.urlEncodedBodyEncoder, this.multipartBodyEncoder, this.partFactory);
-				bodyConfigurer.accept(bodyConfigurator);
+				requestBodyConfigurer.accept(bodyConfigurator);
+				if(requestBodyTransformer != null) {
+					requestBody.transform(requestBodyTransformer);
+				}
 			}
 
 			Http2Request http2Request = new Http2Request(this.context, this.tls, this.parameterConverter, HttpVersion.HTTP_2_0, method, authority, path, requestHeaders, requestBody);
@@ -225,7 +230,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 			// We must sart the exchange on a new client stream
 			// We must then create a stream
 
-			Http2Exchange exchange = new Http2Exchange(this.context, exchangeSink, exchangeContext, http2Request, this.connection().local(), this.encoder());
+			Http2Exchange exchange = new Http2Exchange(this.context, exchangeSink, exchangeContext, http2Request, responseBodyTransformer, this.connection().local(), this.encoder());
 			
 			// Make sure the exchange is started on the connection event loop
 			// We can start directly it since HTTP/2 supports interleaving!
@@ -263,7 +268,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 				}
 			}
 			else {
-				Http2Response response = clientExchange.getResponse();
+				Http2Response response = clientExchange.response();
 				response.setResponseTrailers(new Http2ResponseTrailers(headers, this.headerService, this.parameterConverter));
 				response.data().tryEmitComplete();
 				clientExchange.complete();
@@ -286,7 +291,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 		int processed = data.readableBytes() + padding;
 		AbstractHttp2Exchange clientExchange = this.clientStreams.get(streamId);
 		if(clientExchange != null) {
-			Sinks.Many<ByteBuf> responseData = clientExchange.getResponse().data();
+			Sinks.Many<ByteBuf> responseData = clientExchange.response().data();
 			
 			if(responseData != null) {
 				data.retain();

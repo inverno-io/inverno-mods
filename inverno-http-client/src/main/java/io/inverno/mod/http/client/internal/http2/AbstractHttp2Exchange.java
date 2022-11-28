@@ -20,9 +20,12 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.internal.AbstractExchange;
 import io.inverno.mod.http.client.internal.AbstractRequest;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.concurrent.ScheduledFuture;
+import java.util.function.Function;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.MonoSink;
 
 /**
@@ -34,8 +37,8 @@ public abstract class AbstractHttp2Exchange extends AbstractExchange<AbstractReq
 	ScheduledFuture<AbstractHttp2Exchange> timeoutFuture;
 	long lastModified;
 	
-	public AbstractHttp2Exchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, AbstractRequest request) {
-		super(context, exchangeSink, exchangeContext, request);
+	public AbstractHttp2Exchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, AbstractRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer) {
+		super(context, exchangeSink, exchangeContext, request, responseBodyTransformer);
 	}
 
 	public abstract Http2Stream getStream();

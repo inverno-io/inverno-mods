@@ -27,6 +27,11 @@ package io.inverno.mod.http.base;
 public enum HttpVersion {
 
 	/**
+	 * HTTP protocol with undefined version.
+	 */
+	HTTP(0, 0, "HTTP", false),
+	
+	/**
 	 * HTTP/1.0 protocol as defined by <a href="https://tools.ietf.org/html/rfc1945">RFC 1945</a>
 	 */
 	HTTP_1_0(1, 0, "HTTP/1.0", false), 

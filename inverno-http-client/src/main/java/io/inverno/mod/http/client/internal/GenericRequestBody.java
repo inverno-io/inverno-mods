@@ -16,7 +16,6 @@
 
 package io.inverno.mod.http.client.internal;
 
-import io.inverno.mod.http.client.RequestBody;
 import io.netty.buffer.ByteBuf;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
@@ -24,12 +23,13 @@ import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
+import io.inverno.mod.http.client.PreRequestBody;
 
 /**
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public class GenericRequestBody implements RequestBody {
+public class GenericRequestBody implements PreRequestBody {
 	
 	public static final GenericRequestBody EMPTY;
 	
@@ -79,7 +79,7 @@ public class GenericRequestBody implements RequestBody {
 	}
 	
 	@Override
-	public RequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
+	public PreRequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
 		if(this.subscribed && this.dataSet) {
 			throw new IllegalStateException("Response data already posted");
 		}

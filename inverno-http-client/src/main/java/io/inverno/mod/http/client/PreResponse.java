@@ -15,37 +15,20 @@
  */
 package io.inverno.mod.http.client;
 
-import io.inverno.mod.http.base.BaseRequest;
-import io.inverno.mod.http.base.HttpVersion;
-import java.net.SocketAddress;
+import io.inverno.mod.http.base.BaseResponse;
+import io.inverno.mod.http.base.OutboundHeaders;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
+import java.util.function.Consumer;
 
 /**
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface Request extends BaseRequest {
+public interface PreResponse extends BaseResponse {
 	
-	boolean isHeadersWritten();
+	PreResponse headers(Consumer<OutboundResponseHeaders> headersConfigurer) throws IllegalStateException;
 	
-	HttpVersion getProtocol();
-	
-	String getScheme();
-	
-	/**
-	 * <p>
-	 * Returns the socket address of the interface on which the request was received.
-	 * </p>
-	 * 
-	 * @return a socket address
-	 */
-	SocketAddress getLocalAddress();
-	
-	/**
-	 * <p>
-	 * Returns the socket address of the client or last proxy that sent the request.
-	 * </p>
-	 * 
-	 * @return a socket address
-	 */
-	SocketAddress getRemoteAddress();
+	PreResponse trailers(Consumer<OutboundHeaders<?>> trailersConfigurer);
+
+	PreResponseBody body();
 }

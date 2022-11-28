@@ -20,9 +20,12 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientException;
 import io.inverno.mod.http.client.internal.AbstractRequest;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Stream;
+import java.util.function.Function;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.MonoSink;
 
 /**
@@ -33,8 +36,8 @@ public class Http2UpgradedExchange extends AbstractHttp2Exchange {
 
 	private final Http2Stream upgradingStream;
 	
-	public Http2UpgradedExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, AbstractRequest request, Http2ConnectionEncoder encoder, Http2Stream upgradingStream) {
-		super(context, exchangeSink, exchangeContext, request);
+	public Http2UpgradedExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, AbstractRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http2ConnectionEncoder encoder, Http2Stream upgradingStream) {
+		super(context, exchangeSink, exchangeContext, request, responseBodyTransformer);
 		this.upgradingStream = upgradingStream;
 	}
 

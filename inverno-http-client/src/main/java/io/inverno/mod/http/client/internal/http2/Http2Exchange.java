@@ -31,6 +31,8 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2LocalFlowController;
 import io.netty.handler.codec.http2.Http2Stream;
 import java.util.List;
+import java.util.function.Function;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.MonoSink;
 
@@ -45,8 +47,8 @@ class Http2Exchange extends AbstractHttp2Exchange {
 	
 	protected Http2Stream stream;
 	
-	public Http2Exchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http2Request request, Endpoint<Http2LocalFlowController> localEndpoint, Http2ConnectionEncoder encoder) {
-		super(context, exchangeSink, exchangeContext, request);
+	public Http2Exchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http2Request request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Endpoint<Http2LocalFlowController> localEndpoint, Http2ConnectionEncoder encoder) {
+		super(context, exchangeSink, exchangeContext, request, responseBodyTransformer);
 		this.localEndpoint = localEndpoint;
 		this.encoder = encoder;
 	}

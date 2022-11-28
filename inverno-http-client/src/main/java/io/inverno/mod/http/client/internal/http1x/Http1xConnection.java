@@ -53,6 +53,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 import reactor.core.publisher.Sinks;
@@ -217,7 +219,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 					this.respondingExchange.setResponse(new Http1xResponse(httpResponse, this.headerService, this.parameterConverter));
 				}
 				else {
-					Sinks.Many<ByteBuf> responseData = this.respondingExchange.getResponse().data();
+					Sinks.Many<ByteBuf> responseData = this.respondingExchange.response().data();
 
 					if(msg == LastHttpContent.EMPTY_LAST_CONTENT) {
 						if(responseData != null) {
@@ -240,7 +242,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 							if(httpContent instanceof LastHttpContent) {
 								HttpHeaders trailingHeaders = ((LastHttpContent)httpContent).trailingHeaders();
 								if(trailingHeaders != null) {
-									this.respondingExchange.getResponse().setResponseTrailers(new Http1xResponseTrailers(trailingHeaders, this.headerService, this.parameterConverter));
+									this.respondingExchange.response().setResponseTrailers(new Http1xResponseTrailers(trailingHeaders, this.headerService, this.parameterConverter));
 								}
 								responseData.tryEmitComplete();
 								this.respondingExchange.complete();
@@ -331,15 +333,18 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	}
 
 	@Override
-	public <A extends ExchangeContext> Mono<Exchange<A>> send(Method method, String authority, List<Map.Entry<String, String>> headers, String path, Consumer<RequestBodyConfigurator> bodyConfigurer, A exchangeContext) {
+	public <A extends ExchangeContext> Mono<Exchange<A>> send(A exchangeContext, Method method, String authority, List<Map.Entry<String, String>> headers, String path, Consumer<RequestBodyConfigurator> requestBodyConfigurer, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> requestBodyTransformer, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer) {
 		return Mono.<Exchange<ExchangeContext>>create(exchangeSink -> {
 			Http1xRequestHeaders requestHeaders = new Http1xRequestHeaders(this.headerService, this.parameterConverter, headers);
 			
 			Http1xRequestBody requestBody = null;
-			if(bodyConfigurer != null) {
+			if(requestBodyConfigurer != null) {
 				requestBody = new Http1xRequestBody();
 				Http1xRequestBodyConfigurer bodyConfigurator = new Http1xRequestBodyConfigurer(requestHeaders, requestBody, this.parameterConverter, this.urlEncodedBodyEncoder, this.multipartBodyEncoder, this.partFactory, this.supportsFileRegion);
-				bodyConfigurer.accept(bodyConfigurator);
+				requestBodyConfigurer.accept(bodyConfigurator);
+				if(requestBodyTransformer != null) {
+					requestBody.transform(requestBodyTransformer);
+				}
 			}
 			
 			Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, this.parameterConverter, this.httpVersion, method, authority, path, requestHeaders, requestBody);
@@ -347,11 +352,11 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				// This must be thread safe as multiple threads can change the exchange queue
 				EventLoop eventLoop = this.context.channel().eventLoop();
 				if(eventLoop.inEventLoop()) {
-					this.createAndRegisterExchange(context, exchangeSink, exchangeContext, http1xRequest, this);
+					this.createAndRegisterExchange(context, exchangeSink, exchangeContext, http1xRequest, responseBodyTransformer, this);
 				}
 				else {
 					eventLoop.submit(() -> {
-						this.createAndRegisterExchange(context, exchangeSink, exchangeContext, http1xRequest, this);
+						this.createAndRegisterExchange(context, exchangeSink, exchangeContext, http1xRequest, responseBodyTransformer, this);
 					});
 				}
 			}
@@ -362,12 +367,12 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		.map(exchange -> (Exchange<A>)exchange);
 	}
 	
-	protected Http1xExchange createExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Http1xConnectionEncoder encoder) throws HttpClientException {
-		return new Http1xExchange(this.context, exchangeSink, exchangeContext, request, encoder);
+	protected Http1xExchange createExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) throws HttpClientException {
+		return new Http1xExchange(this.context, exchangeSink, exchangeContext, request, responseBodyTransformer, encoder);
 	}
 
-	private void createAndRegisterExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Http1xConnectionEncoder encoder) throws HttpClientException {
-		Http1xExchange exchange = this.createExchange(context, exchangeSink, exchangeContext, request, encoder);
+	private void createAndRegisterExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) throws HttpClientException {
+		Http1xExchange exchange = this.createExchange(context, exchangeSink, exchangeContext, request, responseBodyTransformer, encoder);
 		if(this.requestTimeout != null) {
 			exchange.lastModified = System.currentTimeMillis();
 		}

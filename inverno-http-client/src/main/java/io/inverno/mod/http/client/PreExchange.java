@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client;
 
-import io.netty.buffer.ByteBuf;
-import java.util.function.Function;
-import org.reactivestreams.Publisher;
+import io.inverno.mod.http.base.BaseExchange;
+import io.inverno.mod.http.base.ExchangeContext;
 
 /**
- *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface RequestBody {
+public interface PreExchange<A extends ExchangeContext> extends BaseExchange<A> {
+
+	@Override
+	PreRequest request();
 	
-	RequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer);
+	@Override
+	PreResponse response();
 }

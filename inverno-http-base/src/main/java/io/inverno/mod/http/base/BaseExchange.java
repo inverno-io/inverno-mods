@@ -13,39 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.client;
-
-import io.inverno.mod.http.base.BaseRequest;
-import io.inverno.mod.http.base.HttpVersion;
-import java.net.SocketAddress;
+package io.inverno.mod.http.base;
 
 /**
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface Request extends BaseRequest {
-	
-	boolean isHeadersWritten();
-	
-	HttpVersion getProtocol();
-	
-	String getScheme();
+public interface BaseExchange<A extends ExchangeContext> {
+
+	/**
+	 * <p>
+	 * Returns the request part of the exchange.
+	 * </p>
+	 * 
+	 * @return the request part
+	 */
+	BaseRequest request();
 	
 	/**
 	 * <p>
-	 * Returns the socket address of the interface on which the request was received.
+	 * Returns the response part of the exchange.
 	 * </p>
 	 * 
-	 * @return a socket address
+	 * @return the response part
 	 */
-	SocketAddress getLocalAddress();
+	BaseResponse response();
 	
 	/**
 	 * <p>
-	 * Returns the socket address of the client or last proxy that sent the request.
+	 * Returns the context attached to the exchange.
 	 * </p>
 	 * 
-	 * @return a socket address
+	 * @return the exchange context or null
 	 */
-	SocketAddress getRemoteAddress();
+	A context();
+	
 }

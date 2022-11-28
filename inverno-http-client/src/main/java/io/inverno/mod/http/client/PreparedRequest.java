@@ -16,7 +16,9 @@
 
 package io.inverno.mod.http.client;
 
+import io.inverno.mod.http.base.BaseRequest;
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -27,43 +29,51 @@ import reactor.core.publisher.Mono;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public interface PreparedRequest<A extends ExchangeContext, B extends Exchange<A>> extends AbstractRequest<PreparedRequest<A, B>> {
+public interface PreparedRequest<A extends ExchangeContext, B extends Exchange<A>, C extends PreExchange<A>> extends BaseRequest {
 
-	PreparedRequest<A, B> intercept(ExchangeInterceptor<? super A, ? extends B> interceptor);
+	PreparedRequest<A, B, C> headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException;
+	
+	PreparedRequest<A, B, C> authority(String authority);
 
-	default Mono<B> send(Object... parameters) {
-		return this.send(Arrays.asList(parameters), (A)null);
+	PreparedRequest<A, B, C> intercept(ExchangeInterceptor<A, C> interceptor);
+
+	default Mono<B> send() {
+		return this.send((A)null, List.of(), null);
 	}
 	
 	default Mono<B> send(List<Object> parameters) {
-		return this.send(Arrays.asList(parameters), (A)null);
+		return this.send((A)null, Arrays.asList(parameters), null);
 	}
 
 	default Mono<B> send(Map<String, ?> parameters) {
-		return this.send(parameters, (A)null);
+		return this.send((A)null, parameters, null);
 	}
 
 	default Mono<B> send(Consumer<RequestBodyConfigurator> bodyConfigurer) {
-		return this.send(List.of(), bodyConfigurer, (A)null);
+		return this.send((A)null, List.of(), bodyConfigurer);
 	}
 	
 	default Mono<B> send(A context) {
-		return this.send(List.of(), (A)null);
+		return this.send(context, List.of(), null);
 	}
 	
 	default Mono<B> send(List<Object> parameters, Consumer<RequestBodyConfigurator> bodyConfigurer) {
-		return this.send(parameters, bodyConfigurer, (A)null);
+		return this.send((A)null, parameters, bodyConfigurer);
 	}
 
 	default Mono<B> send(Map<String, ?> parameters, Consumer<RequestBodyConfigurator> bodyConfigurer) {
-		return this.send(parameters, bodyConfigurer, (A)null);
+		return this.send((A)null, parameters, bodyConfigurer);
 	}
 	
-	Mono<B> send(List<Object> parameters, A context);
+	default Mono<B> send(A context, List<Object> parameters) {
+		return this.send(context, parameters, null);
+	}
 	
-	Mono<B> send(List<Object> parameters, Consumer<RequestBodyConfigurator> bodyConfigurer, A context);
+	Mono<B> send(A context, List<Object> parameters, Consumer<RequestBodyConfigurator> bodyConfigurer);
 	
-	Mono<B> send(Map<String, ?> parameters, A context);
+	default Mono<B> send(A context, Map<String, ?> parameters) {
+		return this.send(context, parameters, null);
+	}
 	
-	Mono<B> send(Map<String, ?> parameters, Consumer<RequestBodyConfigurator> bodyConfigurer, A context);
+	Mono<B> send(A context, Map<String, ?> parameters, Consumer<RequestBodyConfigurator> bodyConfigurer);
 }

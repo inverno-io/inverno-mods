@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.server;
 
+import io.inverno.mod.http.base.BaseExchange;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ws.WebSocket;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
@@ -43,34 +44,13 @@ import reactor.core.publisher.Mono;
  *
  * @param <A> the type of the exchange context
  */
-public interface Exchange<A extends ExchangeContext> {
+public interface Exchange<A extends ExchangeContext> extends BaseExchange<A> {
 
-	/**
-	 * <p>
-	 * Returns the request part of the exchange.
-	 * </p>
-	 * 
-	 * @return the request part
-	 */
+	@Override
 	Request request();
 	
-	/**
-	 * <p>
-	 * Returns the response part of the exchange.
-	 * </p>
-	 * 
-	 * @return the response part
-	 */
+	@Override
 	Response response();
-	
-	/**
-	 * <p>
-	 * Returns the context attached to the exchange.
-	 * </p>
-	 * 
-	 * @return the exchange context or null
-	 */
-	A context();
 	
 	/**
 	 * <p>

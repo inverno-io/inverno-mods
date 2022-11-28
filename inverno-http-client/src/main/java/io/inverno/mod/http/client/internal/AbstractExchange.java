@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.client.Exchange;
-import io.inverno.mod.http.client.Response;
 import io.inverno.mod.http.client.HttpClientException;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.Future;
 import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
+import org.reactivestreams.Publisher;
 import reactor.core.Disposable;
-import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
-import reactor.core.publisher.Sinks;
 
 /**
  *
@@ -42,23 +40,19 @@ public abstract class AbstractExchange<A extends AbstractRequest, B extends Abst
 	private final MonoSink<Exchange<ExchangeContext>> exchangeSink;
 	private final ExchangeContext exchangeContext;
 	protected final A request;
-	
-	private final Sinks.One<B> responseSink;
+	protected final Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer;
 	
 	protected B response;
 	protected AbstractExchange.Handler handler;
 	protected Disposable disposable;
-	
-	private Function<Mono<? extends Response>, Mono<? extends Response>> transformer;
 
-	public AbstractExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, A request) {
+	public AbstractExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, A request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer) {
 		this.context = context;
 		this.eventLoop = this.context.channel().eventLoop();
 		this.exchangeSink = exchangeSink;
 		this.exchangeContext = exchangeContext;
 		this.request = request;
-		
-		this.responseSink = Sinks.one();
+		this.responseBodyTransformer = responseBodyTransformer;
 	}
 	
 	public ChannelHandlerContext getChannelContext() {
@@ -98,22 +92,20 @@ public abstract class AbstractExchange<A extends AbstractRequest, B extends Abst
 	public A request() {
 		return request;
 	}
-
-	@Override
-	public Mono<? extends Response> response() {
-		if(this.transformer != null) {
-			return this.transformer.apply(this.responseSink.asMono());
-		}
-		return this.responseSink.asMono();
-	}
-
-	public B getResponse() {
-		return response;
-	}
 	
+	@Override
+	public B response() {
+		return this.response;
+	}
+
 	public final void setResponse(B response) {
 		this.response = response;
-		this.responseSink.tryEmitValue(response);
+		if(this.responseBodyTransformer != null) {
+			this.response.body().transform(this.responseBodyTransformer);
+		}
+		if(this.exchangeSink != null) {
+			this.exchangeSink.success(this);
+		}
 	}
 	
 	@Override
@@ -121,22 +113,6 @@ public abstract class AbstractExchange<A extends AbstractRequest, B extends Abst
 		return this.exchangeContext;
 	}
 
-	@Override
-	public Exchange<ExchangeContext> transformResponse(Function<Mono<? extends Response>, Mono<? extends Response>> transformer) {
-		// this can only be set before the response has been received in an interceptor for instance
-		if(this.response != null) {
-			throw new IllegalStateException("Response already received");
-		}
-		
-		if(this.transformer == null) {
-			this.transformer = transformer;
-		}
-		else {
-			this.transformer = this.transformer.andThen(transformer);
-		}
-		return this;
-	}
-	
 	public void start(AbstractExchange.Handler<A, B, C> handler) {
 		if(this.handler != null) {
 			throw new IllegalStateException("Exchange already started");
@@ -147,12 +123,7 @@ public abstract class AbstractExchange<A extends AbstractRequest, B extends Abst
 		});
 		if(this.exchangeSink != null) {
 			startFuture.addListener(future -> {
-				if(future.isSuccess()) {
-					this.exchangeSink.success(this);
-				}
-				else {
-					this.handler.exchangeError(this, future.cause());
-				}
+				this.handler.exchangeError(this, future.cause());
 			});
 		}
 	}
@@ -184,14 +155,6 @@ public abstract class AbstractExchange<A extends AbstractRequest, B extends Abst
 				this.response.data().tryEmitError(error);
 			}
 			this.response.dispose();
-		}
-		else {
-			if(error != null) {
-				this.responseSink.tryEmitError(error);
-			}
-			else {
-				this.responseSink.tryEmitError(new IllegalStateException("Exchange was disposed"));
-			}
 		}
 	}
 	

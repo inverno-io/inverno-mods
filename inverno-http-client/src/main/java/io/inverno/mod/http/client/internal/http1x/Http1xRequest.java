@@ -19,9 +19,12 @@ package io.inverno.mod.http.client.internal.http1x;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
+import io.inverno.mod.http.client.Request;
 import io.inverno.mod.http.client.internal.AbstractRequest;
 import io.netty.channel.ChannelHandlerContext;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  *
@@ -45,6 +48,14 @@ class Http1xRequest extends AbstractRequest {
 	@Override
 	public Http1xRequestHeaders headers() {
 		return (Http1xRequestHeaders)this.requestHeaders;
+	}
+	
+	Request headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException {
+		if(this.isHeadersWritten()) {
+			throw new IllegalStateException("Headers already written");
+		}
+		headersConfigurer.accept(this.requestHeaders);
+		return this;
 	}
 
 	@Override

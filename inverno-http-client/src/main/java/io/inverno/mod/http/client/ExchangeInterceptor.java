@@ -24,7 +24,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 @FunctionalInterface
-public interface ExchangeInterceptor<A extends ExchangeContext, B extends Exchange<A>> {
+public interface ExchangeInterceptor<A extends ExchangeContext, B extends PreExchange<A>> {
 
 	/**
 	 * <p>
@@ -35,7 +35,7 @@ public interface ExchangeInterceptor<A extends ExchangeContext, B extends Exchan
 	 *
 	 * @return a Mono emitting the exchange or an instrumented exchange to continue the exchange handling chain or an empty Mono to stop the exchange handling chain
 	 */
-	Mono<? extends B> intercept(B exchange);
+	Mono<B> intercept(B exchange);
 	
 	/**
 	 * <p>
@@ -76,9 +76,9 @@ public interface ExchangeInterceptor<A extends ExchangeContext, B extends Exchan
 	 */
 	@SafeVarargs
     @SuppressWarnings("varargs")
-	static <A extends ExchangeContext, B extends Exchange<A>> ExchangeInterceptor<A, B> of(ExchangeInterceptor<? super A, B>... interceptors) {
+	static <A extends ExchangeContext, B extends PreExchange<A>> ExchangeInterceptor<A, B> of(ExchangeInterceptor<? super A, B>... interceptors) {
 		return exchange -> {
-			Mono<? extends B> interceptorChain = null;
+			Mono<B> interceptorChain = null;
 			for(ExchangeInterceptor<? super A, B> interceptor : interceptors) {
 				if(interceptorChain == null) {
 					interceptorChain = interceptor.intercept(exchange);

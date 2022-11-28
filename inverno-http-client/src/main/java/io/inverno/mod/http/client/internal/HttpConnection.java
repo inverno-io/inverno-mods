@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.http.base.ExchangeContext;
@@ -21,9 +20,12 @@ import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.RequestBodyConfigurator;
+import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 /**
@@ -40,7 +42,34 @@ public interface HttpConnection {
 	
 	void setHandler(HttpConnection.Handler handler);
 
-	<A extends ExchangeContext> Mono<Exchange<A>> send(Method method, String authority, List<Map.Entry<String, String>> headers, String path, Consumer<RequestBodyConfigurator> bodyConfigurer, A exchangeContext);
+	default <A extends ExchangeContext> Mono<Exchange<A>> send(
+			A exchangeContext,
+			Method method, 
+			String authority, 
+			List<Map.Entry<String, String>> headers, 
+			String path) {
+		return this.send(exchangeContext, method, authority, headers, path, null, null, null);
+	}
+	
+	default <A extends ExchangeContext> Mono<Exchange<A>> send(
+			A exchangeContext,
+			Method method, 
+			String authority, 
+			List<Map.Entry<String, String>> headers, 
+			String path, 
+			Consumer<RequestBodyConfigurator> requestBodyConfigurer) {
+		return this.send(exchangeContext, method, authority, headers, path, requestBodyConfigurer, null, null);
+	}
+	
+	<A extends ExchangeContext> Mono<Exchange<A>> send(
+			A exchangeContext,
+			Method method, 
+			String authority, 
+			List<Map.Entry<String, String>> headers, 
+			String path, 
+			Consumer<RequestBodyConfigurator> requestBodyConfigurer,
+			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> requestBodyTransformer,
+			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer);
 	
 	// TODO shutdown gracefully
 	Mono<Void> close();

@@ -34,6 +34,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 import java.util.List;
+import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
@@ -51,8 +52,8 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 	long lastModified;
 	Http1xExchange next;
 	
-	public Http1xExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Http1xConnectionEncoder encoder) {
-		super(context, exchangeSink, exchangeContext, request);
+	public Http1xExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) {
+		super(context, exchangeSink, exchangeContext, request, responseBodyTransformer);
 		this.encoder = encoder;
 		switch(request.getProtocol()) {
 			case HTTP_1_0: this.httpVersion = HttpVersion.HTTP_1_0;

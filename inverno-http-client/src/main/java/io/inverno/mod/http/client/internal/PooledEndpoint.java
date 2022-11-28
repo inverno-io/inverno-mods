@@ -30,6 +30,7 @@ import io.inverno.mod.http.client.ConnectionTimeoutException;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.RequestBodyConfigurator;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.net.InetSocketAddress;
@@ -42,9 +43,11 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -684,8 +687,16 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 		}
 
 		@Override
-		public <A extends ExchangeContext> Mono<Exchange<A>> send(Method method, String authority, List<Map.Entry<String, String>> headers, String path, Consumer<RequestBodyConfigurator> bodyConfigurer, A exchangeContext) {
-			return this.connection.send(method, authority, headers, path, bodyConfigurer, exchangeContext);
+		public <A extends ExchangeContext> Mono<Exchange<A>> send(
+				A exchangeContext, 
+				Method method, 
+				String authority, 
+				List<Map.Entry<String, String>> headers, 
+				String path, 
+				Consumer<RequestBodyConfigurator> bodyConfigurer,
+				Function<Publisher<ByteBuf>, Publisher<ByteBuf>> requestBodyTransformer,
+				Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer) {
+			return this.connection.send(exchangeContext, method, authority, headers, path, bodyConfigurer, requestBodyTransformer, responseBodyTransformer);
 		}
 
 		@Override

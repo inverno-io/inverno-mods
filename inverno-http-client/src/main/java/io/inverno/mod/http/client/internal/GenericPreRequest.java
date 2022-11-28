@@ -19,116 +19,57 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.http.base.HttpVersion;
+import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
 import io.inverno.mod.http.base.QueryParameters;
+import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.internal.GenericQueryParameters;
+import io.inverno.mod.http.client.PreRequest;
 import io.inverno.mod.http.client.Request;
-import io.netty.channel.ChannelHandlerContext;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.Optional;
+import java.util.function.Consumer;
+import io.inverno.mod.http.client.RequestBodyConfigurator;
+import io.netty.buffer.ByteBuf;
+import java.net.SocketAddress;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import org.reactivestreams.Publisher;
+import io.inverno.mod.http.client.PreRequestBody;
 
 /**
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public abstract class AbstractRequest implements Request {
+public class GenericPreRequest implements PreRequest, Request {
 
-	private final ChannelHandlerContext context;
-	private final boolean tls;
 	private final ObjectConverter<String> parameterConverter;
-	private final HttpVersion protocol;
+	
 	private final Method method;
 	private final String path;
 	private final URIBuilder primaryPathBuilder;
-	protected final InternalRequestHeaders requestHeaders;
-	protected final Optional<GenericRequestBody> requestBody;
+	private final GenericRequestHeaders requestHeaders;
+	private final GenericPreRequestBody requestBody;
 	
-	private String scheme;
-	private String authority;
 	private String pathAbsolute;
 	private String queryString;
 	private GenericQueryParameters queryParameters;
 	
-	protected AbstractRequest(
-			ChannelHandlerContext context, 
-			boolean tls,
-			ObjectConverter<String> parameterConverter, 
-			HttpVersion protocol, 
-			Method method, 
-			String authority,
-			String path, 
-			InternalRequestHeaders requestHeaders, 
-			GenericRequestBody requestBody) {
-		this.context = context;
-		this.tls = tls;
+	private String authority;
+
+	public GenericPreRequest(HeaderService headerService, ObjectConverter<String> parameterConverter, Method method, String path, String authority, List<Map.Entry<String, String>> headers, Consumer<RequestBodyConfigurator> bodyConfigurer) {
 		this.parameterConverter = parameterConverter;
-		this.protocol = protocol;
 		this.method = method;
 		this.path = path;
-		// TODO make sure this is a path with no scheme or authority
 		this.primaryPathBuilder = URIs.uri(path, false, URIs.Option.NORMALIZED);
-		this.requestHeaders = requestHeaders;
-		this.requestBody = Optional.ofNullable(requestBody);
-	}
-
-	@Override
-	public InternalRequestHeaders headers() {
-		return this.requestHeaders;
-	}
-	
-	@Override
-	public boolean isHeadersWritten() {
-		return this.requestHeaders.isWritten();
-	}
-
-	@Override
-	public HttpVersion getProtocol() {
-		return this.protocol;
-	}
-
-	@Override
-	public String getScheme() {
-		if(this.scheme == null) {
-			this.scheme = this.tls ? "https" : "http";
-		}
-		return this.scheme;
-	}
-
-	@Override
-	public SocketAddress getLocalAddress() {
-		return this.context.channel().localAddress();
-	}
-
-	@Override
-	public SocketAddress getRemoteAddress() {
-		return this.context.channel().remoteAddress();
+		this.requestHeaders = new GenericRequestHeaders(headerService, parameterConverter);
+		this.requestBody = bodyConfigurer != null ? new GenericPreRequestBody() : null;
 	}
 	
 	@Override
 	public Method getMethod() {
 		return this.method;
-	}
-
-	@Override
-	public String getAuthority() {
-		if(this.authority == null) {
-			SocketAddress remoteAddress = this.getRemoteAddress();
-			if(remoteAddress == null) {
-				return null;
-			}
-			else if(remoteAddress instanceof InetSocketAddress) {
-				this.authority = ((InetSocketAddress)remoteAddress).getHostString();
-				int port = ((InetSocketAddress)remoteAddress).getPort();
-				if((this.tls && port != 443) || (this.tls && port != 80)) {
-					this.authority += ":" + port;
-				}
-			}
-			else {
-				this.authority = remoteAddress.toString();
-			}
-		}
-		return this.authority;
 	}
 	
 	@Override
@@ -164,8 +105,64 @@ public abstract class AbstractRequest implements Request {
 		}
 		return this.queryParameters;
 	}
+
+	@Override
+	public String getAuthority() {
+		return this.authority;
+	}
 	
-	public Optional<? extends GenericRequestBody> body() {
-		return this.requestBody;
+	@Override
+	public PreRequest authority(String authority) {
+		this.authority = authority;
+		return this;
+	}
+	
+	@Override
+	public InboundRequestHeaders headers() {
+		return this.requestHeaders;
+	}
+	
+	@Override
+	public PreRequest headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException {
+		headersConfigurer.accept(this.requestHeaders);
+		return this;
+	}
+
+	@Override
+	public Optional<PreRequestBody> body() {
+		return Optional.ofNullable(this.requestBody);
+	}
+	
+	public Function<Publisher<ByteBuf>, Publisher<ByteBuf>> getBodyTransformer() {
+		return this.requestBody != null ? this.requestBody.getTransformer() : null;
+	}
+	
+	public List<Map.Entry<String, String>> getHeaders() {
+		return this.requestHeaders.getAll();
+	} 
+
+	@Override
+	public boolean isHeadersWritten() {
+		return true;
+	}
+
+	@Override
+	public HttpVersion getProtocol() {
+		return HttpVersion.HTTP;
+	}
+
+	@Override
+	public String getScheme() {
+		return "http";
+	}
+
+	@Override
+	public SocketAddress getLocalAddress() {
+		return null;
+	}
+
+	@Override
+	public SocketAddress getRemoteAddress() {
+		return null;
 	}
 }

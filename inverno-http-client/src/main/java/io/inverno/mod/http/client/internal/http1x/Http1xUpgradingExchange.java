@@ -28,6 +28,8 @@ import io.netty.handler.codec.http2.Http2CodecUtil;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.collection.CharObjectMap;
+import java.util.function.Function;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.MonoSink;
 
 /**
@@ -39,8 +41,8 @@ public class Http1xUpgradingExchange extends Http1xExchange {
 	private final MonoSink<Exchange<ExchangeContext>> upgradedExchangeSink;
 	private Http2Connection upgradedConnection;
 	
-	public Http1xUpgradingExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Http1xConnectionEncoder encoder) {
-		super(context, null, exchangeContext, request, encoder);
+	public Http1xUpgradingExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) {
+		super(context, null, exchangeContext, request, responseBodyTransformer, encoder);
 		this.upgradedExchangeSink = exchangeSink;
 	}
 	
@@ -57,6 +59,10 @@ public class Http1xUpgradingExchange extends Http1xExchange {
 	public void dispose(Throwable error) {
 		this.upgradedExchangeSink.error(error);
 		super.dispose(error);
+	}
+	
+	public Function<Publisher<ByteBuf>, Publisher<ByteBuf>> getResponseBodyTransformer() {
+		return this.responseBodyTransformer;
 	}
 
 	public MonoSink<Exchange<ExchangeContext>> getUpgradedExchangeSink() {
