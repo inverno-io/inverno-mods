@@ -13,16 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client;
 
 import io.inverno.mod.http.base.BaseResponse;
 
 /**
- *
+ * <p>
+ * Represents a client response in a client exchange.
+ * </p>
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @see Exchange
  */
 public interface Response extends BaseResponse {
 
+	/**
+	 * <p>
+	 * Returns the response body used to consume response payload received from the server.
+	 * </p>
+	 *
+	 * @return the response body
+	 */
 	ResponseBody body();
 }

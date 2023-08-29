@@ -33,8 +33,12 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
+ * <p>
+ * Generic request headers implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class GenericRequestHeaders implements InternalRequestHeaders {
 
@@ -46,6 +50,14 @@ public class GenericRequestHeaders implements InternalRequestHeaders {
 	
 	private boolean written;
 	
+	/**
+	 * <p>
+	 * Creates empty generic request headers.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	public GenericRequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
@@ -53,6 +65,15 @@ public class GenericRequestHeaders implements InternalRequestHeaders {
 		this.underlyingHeaders = new LinkedHttpHeaders();
 	}
 	
+	/**
+	 * <p>
+	 * Creates generic request headers populated with specified header entries.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param entries            a list of HTTP header entries
+	 */
 	public GenericRequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, List<Map.Entry<String, String>> entries) {
 		this(headerService, parameterConverter);
 		if(entries != null && !entries.isEmpty()) {
@@ -100,7 +121,7 @@ public class GenericRequestHeaders implements InternalRequestHeaders {
 	@Override
 	public OutboundRequestHeaders cookies(Consumer<OutboundCookies> cookiesConfigurer) {
 		if(this.requestCookies == null) {
-			this.requestCookies = new GenericRequestCookies(this.headerService, this, this.parameterConverter);
+			this.requestCookies = new GenericRequestCookies(this, this.headerService, this.parameterConverter);
 		}
 		this.requestCookies.load();
 		cookiesConfigurer.accept(this.requestCookies);
@@ -111,7 +132,7 @@ public class GenericRequestHeaders implements InternalRequestHeaders {
 	@Override
 	public InboundCookies cookies() {
 		if(this.requestCookies == null) {
-			this.requestCookies = new GenericRequestCookies(this.headerService, this, this.parameterConverter);
+			this.requestCookies = new GenericRequestCookies(this, this.headerService, this.parameterConverter);
 		}
 		this.requestCookies.load();
 		return this.requestCookies;

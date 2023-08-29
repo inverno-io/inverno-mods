@@ -28,14 +28,13 @@ import io.inverno.mod.base.converter.StringConverter;
  * <p>
  * The parameter value converter using {@link StringConverter} by default.
  * </p>
- * 
+ *
  * <p>
- * The parameter value converter is used everywhere there's a need to convert
- * parameters (ie. query parameters, cookies, headers...).
+ * The parameter value converter is used everywhere there's a need to convert parameters (ie. query parameters, cookies, headers...).
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.6
  */
 @Bean( name = "parameterConverter", visibility = Visibility.PRIVATE )
 @Wrapper

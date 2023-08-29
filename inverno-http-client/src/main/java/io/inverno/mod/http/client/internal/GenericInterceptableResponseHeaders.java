@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.base.converter.ObjectConverter;
@@ -35,20 +34,32 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
+ * <p>
+ * Generic {@link OutboundResponseHeaders} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
-public class GenericPreResponseHeaders implements OutboundResponseHeaders {
+public class GenericInterceptableResponseHeaders implements OutboundResponseHeaders {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	
 	private final LinkedHttpHeaders underlyingHeaders;
 
-	private GenericPreResponseCookies responseCookies;
+	private GenericInterceptableResponseCookies responseCookies;
 	private int statusCode = 200;
 
-	public GenericPreResponseHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter) {
+	/**
+	 * <p>
+	 * Creates interceptable response headers.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
+	public GenericInterceptableResponseHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		this.underlyingHeaders = new LinkedHttpHeaders();
@@ -110,7 +121,7 @@ public class GenericPreResponseHeaders implements OutboundResponseHeaders {
 	@Override
 	public OutboundResponseHeaders cookies(Consumer<OutboundSetCookies> cookiesConfigurer) {
 		if(this.responseCookies == null) {
-			this.responseCookies = new GenericPreResponseCookies(this.headerService, this, this.parameterConverter);
+			this.responseCookies = new GenericInterceptableResponseCookies(this.headerService, this, this.parameterConverter);
 		}
 		cookiesConfigurer.accept(this.responseCookies);
 		return this;
@@ -119,19 +130,19 @@ public class GenericPreResponseHeaders implements OutboundResponseHeaders {
 	@Override
 	public InboundSetCookies cookies() {
 		if(this.responseCookies == null) {
-			this.responseCookies = new GenericPreResponseCookies(this.headerService, this, this.parameterConverter);
+			this.responseCookies = new GenericInterceptableResponseCookies(this.headerService, this, this.parameterConverter);
 		}
 		return this.responseCookies;
 	}
 
-		@Override
-	public GenericPreResponseHeaders add(CharSequence name, CharSequence value) {
+	@Override
+	public GenericInterceptableResponseHeaders add(CharSequence name, CharSequence value) {
 		this.underlyingHeaders.addCharSequence(name, value);
 		return this;
 	}
 
 	@Override
-	public GenericPreResponseHeaders add(Header... headers) {
+	public GenericInterceptableResponseHeaders add(Header... headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.addCharSequence(header.getHeaderName(), header.getHeaderValue());
 		}
@@ -139,13 +150,13 @@ public class GenericPreResponseHeaders implements OutboundResponseHeaders {
 	}
 	
 	@Override
-	public GenericPreResponseHeaders set(CharSequence name, CharSequence value) {
+	public GenericInterceptableResponseHeaders set(CharSequence name, CharSequence value) {
 		this.underlyingHeaders.setCharSequence(name, value);
 		return this;
 	}
 	
 	@Override
-	public GenericPreResponseHeaders set(Header... headers) {
+	public GenericInterceptableResponseHeaders set(Header... headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.setCharSequence(header.getHeaderName(), header.getHeaderValue());
 		}
@@ -153,7 +164,7 @@ public class GenericPreResponseHeaders implements OutboundResponseHeaders {
 	}
 	
 	@Override
-	public GenericPreResponseHeaders remove(CharSequence... names) {
+	public GenericInterceptableResponseHeaders remove(CharSequence... names) {
 		for(CharSequence name : names) {
 			this.underlyingHeaders.remove(name);
 		}

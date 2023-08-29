@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.base.Charsets;
@@ -36,8 +35,20 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * Generic {@link RequestBodyConfigurator} implementation.
+ * </p>
+ *
+ * <p>
+ * This implementation sets the request payload data publisher in a {@link GenericResponseBody} which is eventually subscribed when sending the request to the endpoint.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @see GenericResponseBody
+ * 
+ * @param <A> the generic request body type
  */
 public class GenericRequestBodyConfigurator<A extends GenericRequestBody> implements RequestBodyConfigurator {
 
@@ -54,6 +65,18 @@ public class GenericRequestBodyConfigurator<A extends GenericRequestBody> implem
 	protected GenericRequestBodyConfigurator.UrlEncodedData urlEncodedData;
 	protected GenericRequestBodyConfigurator.MultipartData multipartData;
 
+	/**
+	 * <p>
+	 * Creates generic request body configurator.
+	 * </p>
+	 * 
+	 * @param requestHeaders        the request headers
+	 * @param requestBody           the request body
+	 * @param parameterConverter    the parameter converter
+	 * @param urlEncodedBodyEncoder the URL encoded body encoder
+	 * @param multipartBodyEncoder  the multipart body encoder
+	 * @param partFactory           the part factory
+	 */
 	public GenericRequestBodyConfigurator(InternalRequestHeaders requestHeaders, 
 			A requestBody, 
 			ObjectConverter<String> parameterConverter, 
@@ -113,6 +136,14 @@ public class GenericRequestBodyConfigurator<A extends GenericRequestBody> implem
 		return this.multipartData;
 	}
 	
+	/**
+	 * <p>
+	 * Raw {@link OutboundData} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	protected class RawOutboundData implements OutboundData<ByteBuf> {
 
 		@Override
@@ -121,6 +152,14 @@ public class GenericRequestBodyConfigurator<A extends GenericRequestBody> implem
 		}
 	}
 	
+	/**
+	 * <p>
+	 * String {@link OutboundData} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	protected class StringOutboundData implements OutboundData<CharSequence> {
 
 		@Override
@@ -141,6 +180,14 @@ public class GenericRequestBodyConfigurator<A extends GenericRequestBody> implem
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Generic {@link RequestBodyConfigurator.Resource} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	protected class ResourceData implements RequestBodyConfigurator.Resource {
 
 		protected void populateHeaders(io.inverno.mod.base.resource.Resource resource) {
@@ -168,6 +215,14 @@ public class GenericRequestBodyConfigurator<A extends GenericRequestBody> implem
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Generic {@link RequestBodyConfigurator.UrlEncoded} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	protected class UrlEncodedData implements RequestBodyConfigurator.UrlEncoded<Parameter.Factory> {
 
 		@Override
@@ -175,6 +230,16 @@ public class GenericRequestBodyConfigurator<A extends GenericRequestBody> implem
 			data.accept(this::create, this::stream);
 		}
 
+		/**
+		 * <p>
+		 * Sets the stream of parameters to send to the endpoint.
+		 * </p>
+		 * 
+		 * @param <T>   the parameter value type
+		 * @param value the stream of parameters
+		 * 
+		 * @throws IllegalStateException if the request payload was already sent to the endpoint
+		 */
 		protected <T extends Parameter> void stream(Publisher<T> value) throws IllegalStateException {
 			Headers.ContentType contentTypeHeader = GenericRequestBodyConfigurator.this.requestHeaders.getContentTypeHeader();
 			if(contentTypeHeader == null) {
@@ -184,11 +249,30 @@ public class GenericRequestBodyConfigurator<A extends GenericRequestBody> implem
 			GenericRequestBodyConfigurator.this.requestBody.setData(GenericRequestBodyConfigurator.this.urlEncodedBodyEncoder.encode(Flux.from(value), contentTypeHeader));
 		}
 		
+		/**
+		 * <p>
+		 * Creates a parameter with specified name and value.
+		 * </p>
+		 * 
+		 * @param <T>   the parameter value type
+		 * @param name  the parameter name 
+		 * @param value the parameter value
+		 * 
+		 * @return a new parameter
+		 */
 		protected <T> Parameter create(String name, T value) {
 			return new GenericParameter(name, value, GenericRequestBodyConfigurator.this.parameterConverter);
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Generic {@link RequestBodyConfigurator.Multipart} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	protected class MultipartData implements RequestBodyConfigurator.Multipart<Part.Factory, Part<?>> {
 
 		@Override
@@ -196,6 +280,16 @@ public class GenericRequestBodyConfigurator<A extends GenericRequestBody> implem
 			data.accept(GenericRequestBodyConfigurator.this.partFactory, this::stream);
 		}
 	
+		/**
+		 * <p>
+		 * Sets the stream of parts to send to the endpoint.
+		 * </p>
+		 * 
+		 * @param <T>   the part's data type
+		 * @param value the stream of parameters
+		 * 
+		 * @throws IllegalStateException if the request payload was already sent to the endpoint
+		 */
 		protected <T extends Part<?>> void stream(Publisher<T> value) throws IllegalStateException {
 			Headers.ContentType contentTypeHeader = GenericRequestBodyConfigurator.this.requestHeaders.getContentTypeHeader();
 			if(contentTypeHeader == null) {

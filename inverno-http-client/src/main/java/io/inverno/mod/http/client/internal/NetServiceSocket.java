@@ -26,7 +26,7 @@ import io.inverno.mod.base.net.NetService;
  * </p>
  * 
  * <p>
- * The net service is used when creating the http server.
+ * The net service is used when establishing connection to the endpoint.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

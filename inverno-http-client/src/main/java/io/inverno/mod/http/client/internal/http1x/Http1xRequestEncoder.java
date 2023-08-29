@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.http.base.internal.netty.FlatHttpRequest;

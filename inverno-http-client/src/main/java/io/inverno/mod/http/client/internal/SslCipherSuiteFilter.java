@@ -30,13 +30,20 @@ import java.util.Set;
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.6
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class SslCipherSuiteFilter implements CipherSuiteFilter {
 
 	private HttpClientConfiguration configuration;
 	
+	/**
+	 * <p>
+	 * Creates a SSL cipher suite filter
+	 * </p>
+	 * 
+	 * @param configuration the HTTP client configuration
+	 */
 	public SslCipherSuiteFilter(HttpClientConfiguration configuration) {
 		this.configuration = configuration;
 	}

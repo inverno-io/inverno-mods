@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.mod.base.converter.ObjectConverter;
@@ -33,13 +32,12 @@ class Http2Request extends AbstractRequest {
 			ChannelHandlerContext context,
 			boolean tls,
 			ObjectConverter<String> parameterConverter, 
-			HttpVersion protocol, 
 			Method method, 
 			String authority,
 			String path, 
 			Http2RequestHeaders requestHeaders, 
 			GenericRequestBody requestBody) {
-		super(context, tls, parameterConverter, protocol, method, authority, path, requestHeaders, requestBody);
+		super(context, tls, parameterConverter, method, authority, path, requestHeaders, requestBody);
 	}
 
 	@Override

@@ -22,24 +22,95 @@ import io.netty.buffer.ByteBuf;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 /**
+ * <p>
+ * Generic {@link ResponseBody} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class GenericResponseBody implements ResponseBody {
 
+	Sinks.Many<ByteBuf> dataSink;
+	private boolean subscribed;
+	private boolean disposed;
+	
 	private Publisher<ByteBuf> data;
 	
 	private GenericResponseBody.RawInboundData rawData;
 	private GenericResponseBody.StringInboundData stringData;
 
-	public GenericResponseBody(Publisher<ByteBuf> data) {
-		this.data = data;
+	/**
+	 * <p>
+	 * Creates a generic response body.
+	 * </p>
+	 */
+	public GenericResponseBody() {
+		this.dataSink = Sinks.many().unicast().onBackpressureBuffer();
+		this.data = Flux.defer(() -> {
+			if(this.disposed) {
+				return Mono.error(new IllegalStateException("Response was disposed"));
+			}
+			return this.dataSink.asFlux()
+				.doOnSubscribe(ign -> this.subscribed = true)
+				.doOnDiscard(ByteBuf.class, ByteBuf::release);
+		});
 	}
 
+	/**
+	 * <p>
+	 * Disposes the response body.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method delegates to {@link #dispose(java.lang.Throwable) } with a null error.
+	 * </p>
+	 */
+	void dispose() {
+		this.dispose(null);
+	}
+	
+	/**
+	 * <p>
+	 * Disposes the response body with the specified error.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method drains received data if the response body data publisher hasn't been subscribed.
+	 * </p>
+	 * 
+	 * <p>
+	 * A non-null error indicates that the enclosing exchange did not complete successfully and that the error should be emitted by the response data publisher.
+	 * </p>
+	 * 
+	 * @param error an error or null
+	 */
+	void dispose(Throwable error) {
+		if(!this.subscribed) {
+			// Try to drain and release buffered data 
+			// when the datasink was already subscribed data are released in doOnDiscard
+			this.dataSink.asFlux().subscribe(
+				chunk -> chunk.release(), 
+				ex -> {
+					// TODO Should be ignored but can be logged as debug or trace log
+				}
+			);
+		}
+		else {
+			this.dataSink.tryEmitError(error != null ? error : new IllegalStateException("Response was disposed") );
+		}
+		this.disposed = true;
+	}
+	
 	@Override
-	public ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
+	public ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) throws IllegalArgumentException {
+		if(this.subscribed) {
+			throw new IllegalStateException("Response data already consumed");
+		}
 		this.data = transformer.apply(this.data);
 		return this;
 	}
@@ -60,6 +131,14 @@ public class GenericResponseBody implements ResponseBody {
 		return this.stringData;
 	}
 	
+	/**
+	 * <p>
+	 * Generic raw {@link InboundData} implementation.
+	 * </p>
+	 *
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	private class RawInboundData implements InboundData<ByteBuf> {
 
 		@Override
@@ -68,6 +147,14 @@ public class GenericResponseBody implements ResponseBody {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Generic string {@link InboundData} implementation.
+	 * </p>
+	 *
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	private class StringInboundData implements InboundData<CharSequence> {
 
 		@Override

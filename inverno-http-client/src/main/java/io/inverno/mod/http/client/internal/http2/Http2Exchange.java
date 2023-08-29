@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.mod.http.base.ExchangeContext;
@@ -47,7 +46,14 @@ class Http2Exchange extends AbstractHttp2Exchange {
 	
 	protected Http2Stream stream;
 	
-	public Http2Exchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http2Request request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Endpoint<Http2LocalFlowController> localEndpoint, Http2ConnectionEncoder encoder) {
+	public Http2Exchange(
+			ChannelHandlerContext context, 
+			MonoSink<Exchange<ExchangeContext>> exchangeSink,
+			ExchangeContext exchangeContext, 
+			Http2Request request, 
+			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, 
+			Endpoint<Http2LocalFlowController> localEndpoint, 
+			Http2ConnectionEncoder encoder) {
 		super(context, exchangeSink, exchangeContext, request, responseBodyTransformer);
 		this.localEndpoint = localEndpoint;
 		this.encoder = encoder;
@@ -100,10 +106,6 @@ class Http2Exchange extends AbstractHttp2Exchange {
 						this.handler.exchangeError(this, future.cause());
 					}
 				});
-				if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
-					headers.contentLength(0);
-				}
-				
 				Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.toHttp2Headers()), 0, true, finalizePromise);
 				headers.setWritten(true);
 				this.context.channel().flush();

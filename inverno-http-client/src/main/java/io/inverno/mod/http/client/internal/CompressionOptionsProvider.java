@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.core.annotation.Bean;
@@ -26,8 +25,19 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
+ * <p>
+ * A compression options provider.
+ * </p>
+ * 
+ * <p>
+ * It provides configured {@link CompressionOptions} when initializing channels.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @see EndpointChannelConfigurer
+ * @see Http2ConnectionFactory
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )
 public class CompressionOptionsProvider implements Supplier<CompressionOptions[]> {
@@ -36,10 +46,22 @@ public class CompressionOptionsProvider implements Supplier<CompressionOptions[]
 
 	private CompressionOptions[] compressionOptions;
 	
+	/**
+	 * <p>
+	 * Creates a compression options provider
+	 * </p>
+	 * 
+	 * @param configuration 
+	 */
 	public CompressionOptionsProvider(HttpClientConfiguration configuration) {
 		this.configuration = configuration;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the list of compression options configured in the module.
+	 * </p>
+	 */
 	@Override
 	public CompressionOptions[] get() {
 		if(this.compressionOptions == null) {
@@ -50,6 +72,15 @@ public class CompressionOptionsProvider implements Supplier<CompressionOptions[]
 		return compressionOptions;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the list of compression options configured in the specified configuration.
+	 * </p>
+	 * 
+	 * @param configuration an HTTP client configuration
+	 * 
+	 * @return a list of compression options
+	 */
 	public CompressionOptions[] get(HttpClientConfiguration configuration) {
 		if(configuration == this.configuration) {
 			return this.get();
@@ -57,6 +88,15 @@ public class CompressionOptionsProvider implements Supplier<CompressionOptions[]
 		return this.createOptions(configuration);
 	}
 	
+	/**
+	 * <p>
+	 * Creates compression options from the specified configuration.
+	 * </p>
+	 * 
+	 * @param configuration an HTTP client configuration
+	 * 
+	 * @return a list of compression options
+	 */
 	private CompressionOptions[] createOptions(HttpClientConfiguration configuration) {
 		List<CompressionOptions> compressionOptionsList = new ArrayList<>();
 

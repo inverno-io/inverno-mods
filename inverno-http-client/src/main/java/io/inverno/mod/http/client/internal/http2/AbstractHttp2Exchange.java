@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.internal.AbstractExchange;
 import io.inverno.mod.http.client.internal.AbstractRequest;
@@ -37,8 +37,24 @@ public abstract class AbstractHttp2Exchange extends AbstractExchange<AbstractReq
 	ScheduledFuture<AbstractHttp2Exchange> timeoutFuture;
 	long lastModified;
 	
-	public AbstractHttp2Exchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, AbstractRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer) {
-		super(context, exchangeSink, exchangeContext, request, responseBodyTransformer);
+	public AbstractHttp2Exchange(
+			ChannelHandlerContext context, 
+			MonoSink<Exchange<ExchangeContext>> exchangeSink, 
+			ExchangeContext exchangeContext, 
+			AbstractRequest request, 
+			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer) {
+		super(context, exchangeSink, exchangeContext, HttpVersion.HTTP_2_0, request, responseBodyTransformer);
+	}
+	
+	/**
+	 * <p>
+	 * Returns the channel context.
+	 * </p>
+	 * 
+	 * @return the channel context
+	 */
+	public ChannelHandlerContext getChannelContext() {
+		return this.context;
 	}
 
 	public abstract Http2Stream getStream();

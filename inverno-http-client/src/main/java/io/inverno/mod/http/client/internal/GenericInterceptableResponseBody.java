@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.base.Charsets;
@@ -22,8 +21,6 @@ import io.inverno.mod.http.base.InternalServerErrorException;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.base.OutboundData;
 import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.client.PreResponse;
-import io.inverno.mod.http.client.PreResponseBody;
 import io.inverno.mod.http.client.ResponseBody;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -32,30 +29,87 @@ import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import io.inverno.mod.http.client.InterceptableResponse;
+import io.inverno.mod.http.client.InterceptableResponseBody;
 
 /**
+ * <p>
+ * Generic {@link InterceptableResponse} implementation.
+ * </p>
+ * 
+ * <p>
+ * This implementation also implements {@link ResponseBody} which allows it to act as a proxy for the actual response body once the response has been received from the endpoint. This allows to expose
+ * the body actually received to interceptors which is required to be able to transform the response payload publisher. The {@link #setReceivedResponseBody(io.inverno.mod.http.client.ResponseBody)}
+ * shall be invoked to make this instance delegates to the received response body. At this point the interceptable response body should become immutable, only transforming the payload data publisher
+ * should be allowed.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
-public class GenericPreResponseBody implements PreResponseBody, ResponseBody {
+public class GenericInterceptableResponseBody implements InterceptableResponseBody, ResponseBody {
 
-	private final PreResponse response;
+	private final InterceptableResponse response;
 	
 	private RawOutboundData rawData;
 	private StringOutboundData stringData;
-	private PreResponseBody.ResourceData resourceData;
+	private InterceptableResponseBody.ResourceData resourceData;
 	
 	private Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer;
 	private Publisher<ByteBuf> data;
+	
+	private ResponseBody receivedBody;
 
-	public GenericPreResponseBody(PreResponse response) {
+	/**
+	 * <p>
+	 * Creates a generic interceptable response body.
+	 * </p>
+	 * 
+	 * @param response the enclosig interceptable response
+	 */
+	public GenericInterceptableResponseBody(InterceptableResponse response) {
 		this.response = response;
 	}
 	
-	private void setData(Publisher<ByteBuf> data) {
+	/**
+	 * <p>
+	 * Injects the actual response body received from the endpoint.
+	 * </p>
+	 * 
+	 * @param receivedBody the response body received from the endpoint
+	 */
+	public void setReceivedResponseBody(ResponseBody receivedBody) {
+		this.receivedBody = receivedBody;
+	}
+	
+	/**
+	 * <p>
+	 * Sets the response data publisher.
+	 * </p>
+	 * 
+	 * <p>
+	 * This is only allowed while executing interceptors before the actual response is received from the endpoint. The interceptable response will be exposed in the resulting exchange only when the
+	 * interceptable exchange has been canceled in an interceptor, otherwise the actual response received from the endpoint will simply erase the interceptable response.
+	 * </p>
+	 * 
+	 * @param data the payload data publisher
+	 * 
+	 * @throws IllegalStateException if a body has already been received from the endpoint
+	 */
+	private void setData(Publisher<ByteBuf> data) throws IllegalStateException {
+		if(this.receivedBody != null) {
+			throw new IllegalStateException("Response already received");
+		}
 		this.data = this.transformer != null ? this.transformer.apply(data) : data;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the payload data publisher set in the interceptable response body by an interceptor.
+	 * </p>
+	 * 
+	 * @return the payload data publisher
+	 */
 	private Publisher<ByteBuf> getData() {
 		if(this.data == null) {
 			if(this.transformer != null) {
@@ -66,8 +120,27 @@ public class GenericPreResponseBody implements PreResponseBody, ResponseBody {
 		return this.data;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the payload data publisher transformer.
+	 * </p>
+	 * 
+	 * <p>
+	 * Assuming the exchange hasn't been canceled in an interceptor and a response is received from the endpoint, this transformer will be applied to the actual payload data publisher.
+	 * </p>
+	 * 
+	 * @return the payload data publisher transformer or null
+	 */
+	public Function<Publisher<ByteBuf>, Publisher<ByteBuf>> getTransformer() {
+		return transformer;
+	}
+	
 	@Override
-	public GenericPreResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
+	public GenericInterceptableResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
+		if(this.receivedBody != null) {
+			this.receivedBody.transform(transformer);
+			return this;
+		}
 		if(this.transformer == null) {
 			this.transformer = transformer;
 		}
@@ -81,10 +154,6 @@ public class GenericPreResponseBody implements PreResponseBody, ResponseBody {
 		return this;
 	}
 	
-	public Function<Publisher<ByteBuf>, Publisher<ByteBuf>> getTransformer() {
-		return transformer;
-	}
-
 	@Override
 	public void empty() {
 		this.setData(Mono.empty());
@@ -93,7 +162,7 @@ public class GenericPreResponseBody implements PreResponseBody, ResponseBody {
 	@Override
 	public RawOutboundData raw() {
 		if(this.rawData == null) {
-			this.rawData = new GenericPreResponseBody.RawOutboundData();
+			this.rawData = new GenericInterceptableResponseBody.RawOutboundData();
 		}
 		return this.rawData;
 	}
@@ -102,33 +171,62 @@ public class GenericPreResponseBody implements PreResponseBody, ResponseBody {
 	@SuppressWarnings("unchecked")
 	public StringOutboundData string() {
 		if(this.stringData == null) {
-			this.stringData = new GenericPreResponseBody.StringOutboundData();
+			this.stringData = new GenericInterceptableResponseBody.StringOutboundData();
 		}
 		return this.stringData;
 	}
 
 	@Override
-	public PreResponseBody.ResourceData resource() {
+	public InterceptableResponseBody.ResourceData resource() {
 		if(this.resourceData == null) {
-			this.resourceData = new GenericPreResponseBody.ResourceData();
+			this.resourceData = new GenericInterceptableResponseBody.ResourceData();
 		}
 		return this.resourceData;
 	}
 
+	/**
+	 * <p>
+	 * Raw {@link OutboundData}/{@link InboundData} implementation.
+	 * </p>
+	 * 
+	 * <p>
+	 * This implements both outbound and inbound data as this will be used while intercepting the interceptable exchange and it might be used in the resulting exhange if an interceptor canceled the
+	 * exchange.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	private class RawOutboundData implements OutboundData<ByteBuf>, InboundData<ByteBuf> {
 
 		@SuppressWarnings("unchecked")
 		@Override
-		public <T extends ByteBuf> void stream(Publisher<T> data) {
-			GenericPreResponseBody.this.setData((Publisher<ByteBuf>) data);
+		public <T extends ByteBuf> void stream(Publisher<T> data) throws IllegalStateException {
+			GenericInterceptableResponseBody.this.setData((Publisher<ByteBuf>) data);
 		}
 
 		@Override
 		public Publisher<ByteBuf> stream() {
-			return GenericPreResponseBody.this.getData();
+			if(GenericInterceptableResponseBody.this.receivedBody != null) {
+				return GenericInterceptableResponseBody.this.receivedBody.raw().stream();
+			}
+			return GenericInterceptableResponseBody.this.getData();
 		}
 	}
 	
+	/**
+	 * <p>
+	 * String {@link OutboundData}/{@link InboundData} implementation.
+	 * </p>
+	 * 
+	 * <p>
+	 * This implements both outbound and inbound data as this will be used while intercepting the interceptable exchange and it might be used in the resulting exhange if an interceptor canceled the
+	 * exchange.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	private class StringOutboundData implements OutboundData<CharSequence>, InboundData<CharSequence> {
 
 		@Override
@@ -140,21 +238,32 @@ public class GenericPreResponseBody implements PreResponseBody, ResponseBody {
 			else {
 				data = Flux.from(value).map(chunk -> Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(chunk, Charsets.DEFAULT)));
 			}
-			GenericPreResponseBody.this.setData(data);
+			GenericInterceptableResponseBody.this.setData(data);
 		}
 		
 		@Override
 		public <T extends CharSequence> void value(T value) throws IllegalStateException {
-			GenericPreResponseBody.this.setData(value != null ? Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value, Charsets.DEFAULT))) : Mono.empty());
+			GenericInterceptableResponseBody.this.setData(value != null ? Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value, Charsets.DEFAULT))) : Mono.empty());
 		}
 
 		@Override
 		public Publisher<CharSequence> stream() {
-			return Flux.from(GenericPreResponseBody.this.getData()).map(chunk -> chunk.toString(Charsets.DEFAULT));
+			if(GenericInterceptableResponseBody.this.receivedBody != null) {
+				return GenericInterceptableResponseBody.this.receivedBody.string().stream();
+			}
+			return Flux.from(GenericInterceptableResponseBody.this.getData()).map(chunk -> chunk.toString(Charsets.DEFAULT));
 		}
 	}
 	
-	protected class ResourceData implements PreResponseBody.ResourceData {
+	/**
+	 * <p>
+	 * String {@link InterceptableResponseBody.ResourceData} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
+	protected class ResourceData implements InterceptableResponseBody.ResourceData {
 
 		/**
 		 * <p>
@@ -165,19 +274,19 @@ public class GenericPreResponseBody implements PreResponseBody, ResponseBody {
 		 * @param resource the resource
 		 */
 		protected void populateHeaders(io.inverno.mod.base.resource.Resource resource) {
-			GenericPreResponseBody.this.response.headers(h -> {
-				if(GenericPreResponseBody.this.response.headers().getContentLength() == null) {
+			GenericInterceptableResponseBody.this.response.headers(h -> {
+				if(GenericInterceptableResponseBody.this.response.headers().getContentLength() == null) {
 					resource.size().ifPresent(h::contentLength);
 				}
 				
-				if(GenericPreResponseBody.this.response.headers().contains(Headers.NAME_CONTENT_TYPE)) {
+				if(GenericInterceptableResponseBody.this.response.headers().contains(Headers.NAME_CONTENT_TYPE)) {
 					String mediaType = resource.getMediaType();
 					if(mediaType != null) {
 						h.contentType(mediaType);
 					}
 				}
 				
-				if(GenericPreResponseBody.this.response.headers().contains(Headers.NAME_LAST_MODIFIED)) {
+				if(GenericInterceptableResponseBody.this.response.headers().contains(Headers.NAME_LAST_MODIFIED)) {
 					resource.lastModified().ifPresent(lastModified -> {
 						h.set(Headers.NAME_LAST_MODIFIED, Headers.FORMATTER_RFC_5322_DATE_TIME.format(lastModified.toInstant()));
 					});
@@ -186,14 +295,14 @@ public class GenericPreResponseBody implements PreResponseBody, ResponseBody {
 		}
 		
 		@Override
-		public void value(io.inverno.mod.base.resource.Resource resource) {
+		public void value(io.inverno.mod.base.resource.Resource resource) throws IllegalStateException {
 			Objects.requireNonNull(resource);
 			// In case of file resources we should always be able to determine existence
 			// For other resources with a null exists we can still try, worst case scenario: 
 			// internal server error
 			if(resource.exists().orElse(true)) {
 				this.populateHeaders(resource);
-				GenericPreResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource is not readable: " + resource.getURI())));
+				GenericInterceptableResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource is not readable: " + resource.getURI())));
 			}
 			else {
 				throw new NotFoundException();

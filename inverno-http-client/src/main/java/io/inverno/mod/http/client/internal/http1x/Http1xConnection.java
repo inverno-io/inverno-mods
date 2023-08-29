@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
@@ -22,6 +21,7 @@ import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.client.ConnectionResetException;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.HttpClientException;
@@ -48,7 +48,6 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.ScheduledFuture;
-import java.net.SocketException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -80,7 +79,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	protected HttpConnection.Handler handler;
 	
 	private final Long maxConcurrentRequests;
-	private final Long requestTimeout;
+	private final long requestTimeout;
 	
 	private boolean read;
 	private boolean flush;
@@ -122,7 +121,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		this.maxConcurrentRequests = this.configuration.http1_max_concurrent_requests();
 		this.requestTimeout = this.configuration.request_timeout();
 	}
-
+	
 	@Override
 	public boolean isTls() {
 		return this.tls;
@@ -187,9 +186,8 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 			this.handler.onClose();
 		}
 		if(this.respondingExchange != null) {
-			this.respondingExchange.dispose(new SocketException("Connection reset by peer"), true);
+			this.respondingExchange.dispose(new ConnectionResetException("Connection reset by peer"), true);
 		}
-		// TODO normally disposing deep the responding exchange should be enough, however interceptors might change this
 	}
 
 	@Override
@@ -224,7 +222,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 					if(msg == LastHttpContent.EMPTY_LAST_CONTENT) {
 						if(responseData != null) {
 							responseData.tryEmitComplete();
-							this.respondingExchange.complete();
+							this.respondingExchange.notifyComplete();
 						}
 					}
 					else {
@@ -245,7 +243,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 									this.respondingExchange.response().setResponseTrailers(new Http1xResponseTrailers(trailingHeaders, this.headerService, this.parameterConverter));
 								}
 								responseData.tryEmitComplete();
-								this.respondingExchange.complete();
+								this.respondingExchange.notifyComplete();
 							}
 						}
 						else {
@@ -260,23 +258,22 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 			}
 		}
 		finally {
-			if(this.requestTimeout != null) {
+			if(this.respondingExchange != null) {
 				this.respondingExchange.lastModified = System.currentTimeMillis();
 			}
 		}
 	}
 	
-	private boolean validateHttpObject(ChannelHandlerContext ctx, HttpObject httpObject) {
-		// TODO this is not good 
+	private boolean validateHttpObject(ChannelHandlerContext ctx, HttpObject httpObject) throws Exception {
 		DecoderResult result = httpObject.decoderResult();
 		if(result.isFailure()) {
-			ctx.fireExceptionCaught(result.cause());
+			this.exceptionCaught(ctx, result.cause());
 			return false;
 		}
 		else if(httpObject instanceof HttpResponse) {
 			io.netty.handler.codec.http.HttpVersion version = ((HttpResponse) httpObject).protocolVersion();
 			if (version != io.netty.handler.codec.http.HttpVersion.HTTP_1_0 && version != io.netty.handler.codec.http.HttpVersion.HTTP_1_1) {
-				ctx.fireExceptionCaught(new IllegalStateException("Unsupported protocol: " + version));
+				this.exceptionCaught(ctx, new IllegalStateException("Unsupported protocol: " + version));
 				return false;
 			}
 		}
@@ -296,13 +293,22 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-		// This is ok when there was an error establishing the connection but we also have:
-		// - errors while sending the request
-		// - errors while receiving the response
-		// - errors while processing the response
-		//   - in that case we should handle this before and drain the remaining response chunks so we can still use the connection
-		
 		// In any case only network related error should get here anything else must be handled upstream
+		super.exceptionCaught(ctx, cause);
+		this.cancelTimeout();
+		// Evict the faulty connection
+		if(this.handler != null) {
+			this.handler.onError(cause);
+		}
+		// close the faulty connection
+		this.close().subscribe();
+
+		// Dispose all pending exchanges including inflight exchanges
+		if(this.respondingExchange != null) {
+			this.respondingExchange.dispose(cause, true);
+		}
+		this.requestingExchange = null;
+		this.respondingExchange = null;
 	}
 	
 	@Override
@@ -347,16 +353,16 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				}
 			}
 			
-			Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, this.parameterConverter, this.httpVersion, method, authority, path, requestHeaders, requestBody);
+			Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, this.parameterConverter, method, authority, path, requestHeaders, requestBody);
 			try {
 				// This must be thread safe as multiple threads can change the exchange queue
 				EventLoop eventLoop = this.context.channel().eventLoop();
 				if(eventLoop.inEventLoop()) {
-					this.createAndRegisterExchange(context, exchangeSink, exchangeContext, http1xRequest, responseBodyTransformer, this);
+					this.createAndRegisterExchange(this.context, exchangeSink, exchangeContext, http1xRequest, responseBodyTransformer, this);
 				}
 				else {
 					eventLoop.submit(() -> {
-						this.createAndRegisterExchange(context, exchangeSink, exchangeContext, http1xRequest, responseBodyTransformer, this);
+						this.createAndRegisterExchange(this.context, exchangeSink, exchangeContext, http1xRequest, responseBodyTransformer, this);
 					});
 				}
 			}
@@ -368,14 +374,12 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	}
 	
 	protected Http1xExchange createExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) throws HttpClientException {
-		return new Http1xExchange(this.context, exchangeSink, exchangeContext, request, responseBodyTransformer, encoder);
+		return new Http1xExchange(context, exchangeSink, exchangeContext, this.httpVersion, request, responseBodyTransformer, encoder);
 	}
 
 	private void createAndRegisterExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) throws HttpClientException {
 		Http1xExchange exchange = this.createExchange(context, exchangeSink, exchangeContext, request, responseBodyTransformer, encoder);
-		if(this.requestTimeout != null) {
-			exchange.lastModified = System.currentTimeMillis();
-		}
+		exchange.lastModified = System.currentTimeMillis();
 		if(this.exchangeQueue == null) {
 			this.exchangeQueue = exchange;
 			this.exchangeQueue.start(this);
@@ -390,7 +394,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	}
 	
 	private void startTimeout() {
-		if(this.requestTimeout == null || this.timeoutFuture != null) {
+		if(this.timeoutFuture != null) {
 			return;
 		}
 		long nextTimeout = -1;
@@ -465,10 +469,8 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	public void exchangeStart(Http1xExchange exchange) {
 		// This method MUST be invoked once for a given exchange
 		this.requestingExchange = exchange;
-		if(this.requestTimeout != null) {
-			if(System.currentTimeMillis() - exchange.lastModified > this.requestTimeout) {
-				throw new RequestTimeoutException("Exceeded timeout " + this.requestTimeout + "ms");
-			}
+		if(System.currentTimeMillis() - exchange.lastModified > this.requestTimeout) {
+			throw new RequestTimeoutException("Exceeded timeout " + this.requestTimeout + "ms");
 		}
 		if(this.respondingExchange == null) {
 			this.respondingExchange = exchange;
@@ -494,20 +496,12 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		// checking that it matches the exchange protects against multiple invocations
 		if(this.requestingExchange == exchange) {
 			if(this.requestingExchange.request().isHeadersWritten()) {
-				this.cancelTimeout();
-				// Evict the faulty connection
-				if(this.handler != null) {
-					this.handler.onError(t);
+				try {
+					this.exceptionCaught(this.context, t);
 				}
-				// close the faulty connection
-				Http1xConnection.this.close().subscribe();
-				
-				// Dispose all pending exchanges including inflight exchanges
-				if(this.respondingExchange != null) {
-					this.respondingExchange.dispose(t, true);
+				catch(Exception e) {
+					this.context.fireExceptionCaught(e);
 				}
-				this.requestingExchange = null;
-				this.respondingExchange = null;
 			}
 			else {
 				// we just need to ignore the faulty exchange and start the next one since nothing was written

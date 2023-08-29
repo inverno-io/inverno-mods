@@ -21,6 +21,7 @@ import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.client.ConnectionResetException;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.HttpClientException;
@@ -53,7 +54,6 @@ import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
-import java.net.SocketException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -83,7 +83,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	private boolean tls;
 	private Long maxConcurrentStreams;
 	private HttpConnection.Handler handler;
-	private final Long requestTimeout;
+	private final long requestTimeout;
 	
 	private Mono<Void> close;
 	private boolean closing;
@@ -175,7 +175,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 		if(this.handler != null) {
 			this.handler.onClose();
 		}
-		this.clientStreams.values().stream().forEach(exchange -> exchange.dispose(new SocketException("Connection reset by peer")));
+		this.clientStreams.values().stream().forEach(exchange -> exchange.dispose(new ConnectionResetException("Connection reset by peer")));
 	}
 	
 	@Override
@@ -208,6 +208,10 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 		//   - in that case we should handle this before and drain the remaining response chunks so we can still use the connection
 		
 		// In any case only network related error should get here anything else must be handled upstream
+		
+		// we must kill the connection
+		super.exceptionCaught(ctx, cause);
+		this.close().subscribe();
 	}
 
 	@Override
@@ -225,7 +229,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 				}
 			}
 
-			Http2Request http2Request = new Http2Request(this.context, this.tls, this.parameterConverter, HttpVersion.HTTP_2_0, method, authority, path, requestHeaders, requestBody);
+			Http2Request http2Request = new Http2Request(this.context, this.tls, this.parameterConverter, method, authority, path, requestHeaders, requestBody);
 
 			// We must sart the exchange on a new client stream
 			// We must then create a stream
@@ -236,16 +240,12 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 			// We can start directly it since HTTP/2 supports interleaving!
 			EventLoop eventLoop = this.context.channel().eventLoop();
 			if(eventLoop.inEventLoop()) {
-				if(this.requestTimeout != null) {
-					exchange.lastModified = System.currentTimeMillis();
-				}
+				exchange.lastModified = System.currentTimeMillis();
 				exchange.start(this);
 			}
 			else {
 				eventLoop.submit(() -> {
-					if(this.requestTimeout != null) {
-						exchange.lastModified = System.currentTimeMillis();
-					}
+					exchange.lastModified = System.currentTimeMillis();
 					exchange.start(this);
 				});
 			}
@@ -264,14 +264,14 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 				if(endOfStream) {
 					// empty response
 					response.data().tryEmitComplete();
-					clientExchange.complete();
+					clientExchange.notifyComplete();
 				}
 			}
 			else {
 				Http2Response response = clientExchange.response();
 				response.setResponseTrailers(new Http2ResponseTrailers(headers, this.headerService, this.parameterConverter));
 				response.data().tryEmitComplete();
-				clientExchange.complete();
+				clientExchange.notifyComplete();
 			}
 		}
 		else {
@@ -300,7 +300,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 				}
 				if(endOfStream) {
 					responseData.tryEmitComplete();
-					clientExchange.complete();
+					clientExchange.notifyComplete();
 				}
 			}
 			else {
@@ -412,10 +412,9 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	}
 	
 	private void startTimeout(AbstractHttp2Exchange exchange) {
-		if(this.requestTimeout == null || exchange.timeoutFuture != null) {
+		if(exchange.timeoutFuture != null) {
 			return;
 		}
-		
 		long nextTimeout = this.requestTimeout - (System.currentTimeMillis() - exchange.lastModified);
 		if(nextTimeout <= 0) {
 			// reset the stream
@@ -476,7 +475,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 		
 		// we can recycle the connection since a request has been processed
 		if(this.handler != null) {
-			this.handler.onExchangeTerminate(exchange);//onError(t);
+			this.handler.onExchangeTerminate(exchange);
 		}
 	}
 

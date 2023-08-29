@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.http.base.ExchangeContext;
@@ -52,20 +51,27 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 	long lastModified;
 	Http1xExchange next;
 	
-	public Http1xExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) {
-		super(context, exchangeSink, exchangeContext, request, responseBodyTransformer);
+	public Http1xExchange(
+			ChannelHandlerContext context, 
+			MonoSink<Exchange<ExchangeContext>> exchangeSink, 
+			ExchangeContext exchangeContext, 
+			io.inverno.mod.http.base.HttpVersion protocol,
+			Http1xRequest request, 
+			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, 
+			Http1xConnectionEncoder encoder) {
+		super(context, exchangeSink, exchangeContext, protocol, request, responseBodyTransformer);
 		this.encoder = encoder;
-		switch(request.getProtocol()) {
+		switch(protocol) {
 			case HTTP_1_0: this.httpVersion = HttpVersion.HTTP_1_0;
 				break;
 			case HTTP_1_1: this.httpVersion = HttpVersion.HTTP_1_1;
 				break;
-			default: throw new IllegalStateException("Invalid protocol version: " + request.getProtocol());
+			default: throw new IllegalStateException("Invalid protocol version: " + protocol);
 		}
 	}
 	
 	// this is executed in event loop
-	public void doStart() {
+	protected void doStart() {
 		// Do send the request
 		this.handler.exchangeStart(this);
 		this.request.body().ifPresentOrElse(
@@ -96,9 +102,6 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 						this.handler.exchangeError(this, future.cause());
 					}
 				});
-				if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
-					headers.contentLength(0);
-				}
 
 				this.encoder.writeFrame(this.context, new FlatFullHttpRequest(this.httpVersion, HttpMethod.valueOf(this.request.getMethod().name()), this.request.getPath(), this.fixHeaders(headers.toHttp1xHeaders()), Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE), finalizePromise);
 				headers.setWritten(true);
@@ -175,7 +178,6 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 		@Override
 		protected void hookOnComplete() {
 			// trailers if any should be send here in the last content
-			
 			Http1xRequestHeaders headers = Http1xExchange.this.request.headers();
 			ChannelPromise finalizePromise = Http1xExchange.this.context.newPromise();
 			finalizePromise.addListener(future -> {

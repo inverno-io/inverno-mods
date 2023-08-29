@@ -13,32 +13,72 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client;
 
 /**
- *
+ * <p>
+ * Base exception class used to report HTTP client errors.
+ * </p>
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class HttpClientException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * <p>
+	 * Creates an HTTP client exception.
+	 * </p>
+	 */
 	public HttpClientException() {
 	}
 
+	/**
+	 * <p>
+	 * Creates a HTTP client exception.
+	 * </p>
+	 * 
+	 * @param message the message
+	 */
 	public HttpClientException(String message) {
 		super(message);
 	}
 
+	/**
+	 * <p>
+	 * Creates a HTTP client exception.
+	 * </p>
+	 * 
+	 * @param message the message
+	 * @param cause   the cause
+	 */
 	public HttpClientException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates a HTTP client exception.
+	 * </p>
+	 * 
+	 * @param cause the cause
+	 */
 	public HttpClientException(Throwable cause) {
 		super(cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates a HTTP client exception.
+	 * </p>
+	 * 
+	 * @param message            the message
+	 * @param cause              the cause
+	 * @param enableSuppression 
+	 * @param writableStackTrace 
+	 */
 	public HttpClientException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}

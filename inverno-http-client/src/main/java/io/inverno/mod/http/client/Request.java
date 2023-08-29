@@ -16,24 +16,41 @@
 package io.inverno.mod.http.client;
 
 import io.inverno.mod.http.base.BaseRequest;
-import io.inverno.mod.http.base.HttpVersion;
 import java.net.SocketAddress;
 
 /**
+ * <p>
+ * Represents a client request in a client exchange.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @see Exchange
  */
 public interface Request extends BaseRequest {
 	
+	/**
+	 * <p>
+	 * Determines whether the request headers have been sent to the endpoint.
+	 * </p>
+	 *
+	 * @return true if headers have been sent, false otherwise
+	 */
 	boolean isHeadersWritten();
 	
-	HttpVersion getProtocol();
-	
+	/**
+	 * <p>
+	 * Returns the name of the scheme used to send the request (eg. http, https...).
+	 * </p>
+	 * 
+	 * @return the name of the scheme
+	 */
 	String getScheme();
 	
 	/**
 	 * <p>
-	 * Returns the socket address of the interface on which the request was received.
+	 * Returns the socket address of the interface on which the request was sent.
 	 * </p>
 	 * 
 	 * @return a socket address
@@ -42,7 +59,7 @@ public interface Request extends BaseRequest {
 	
 	/**
 	 * <p>
-	 * Returns the socket address of the client or last proxy that sent the request.
+	 * Returns the socket address of the endpoint or last proxy that received the request.
 	 * </p>
 	 * 
 	 * @return a socket address

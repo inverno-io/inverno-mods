@@ -19,8 +19,23 @@ import io.inverno.mod.http.base.BaseExchange;
 import io.inverno.mod.http.base.ExchangeContext;
 
 /**
- *
+ * <p>
+ * Represents an HTTP client exchange (request/response) between a client and a server.
+ * </p>
+ * 
+ * <p>
+ * An HTTP client exchange is created when an HTTP {@link HttpClient.Request} is sent to an endpoint.
+ * </p>
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @see Endpoint
+ * @see Request
+ * @see Response
+ * @see ExchangeContext
+ * 
+ * @param <A> the type of the exchange context
  */
 public interface Exchange<A extends ExchangeContext> extends BaseExchange<A> {
 

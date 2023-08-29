@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.base.converter.ObjectConverter;
@@ -34,10 +33,14 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 /**
+ * <p>
+ * Generic {@link OutboundSetCookies} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
-public class GenericPreResponseCookies implements OutboundSetCookies {
+public class GenericInterceptableResponseCookies implements OutboundSetCookies {
 
 	private final HeaderService headerService;
 	private final OutboundResponseHeaders responseHeaders;
@@ -47,14 +50,14 @@ public class GenericPreResponseCookies implements OutboundSetCookies {
 	
 	/**
 	 * <p>
-	 * Creates response cookies with the specified header service and response
-	 * headers.
+	 * Creates interceptable response cookies.
 	 * </p>
-	 * 
-	 * @param headerService   the header service
-	 * @param responseHeaders the response headers
+	 *
+	 * @param headerService      the header service
+	 * @param responseHeaders    the response headers
+	 * @param parameterConverter the parameter converter
 	 */
-	public GenericPreResponseCookies(HeaderService headerService, OutboundResponseHeaders responseHeaders, ObjectConverter<String> parameterConverter) {
+	public GenericInterceptableResponseCookies(HeaderService headerService, OutboundResponseHeaders responseHeaders, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.responseHeaders = responseHeaders;
 		this.parameterConverter = parameterConverter;

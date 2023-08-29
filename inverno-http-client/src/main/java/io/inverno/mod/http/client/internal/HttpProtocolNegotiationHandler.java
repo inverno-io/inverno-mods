@@ -29,8 +29,12 @@ import java.util.Set;
  * HTTP protocol negotiation handler.
  * </p>
  * 
+ * <p>
+ * This is used to negotiate the protocol (ALPN) when connection is estalished using TLS protocol.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.6
  */
 public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiationHandler {
 
@@ -39,6 +43,14 @@ public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiati
 	
 	private final Set<HttpVersion> supportedProtocols;
 	
+	/**
+	 * <p>
+	 * Creates an HTTP protocol negotiation handler.
+	 * </p>
+	 *
+	 * @param channelConfigurer the endpoint channel configurer
+	 * @param configuration     the HTTP client configuration
+	 */
 	public HttpProtocolNegotiationHandler(EndpointChannelConfigurer channelConfigurer, HttpClientConfiguration configuration) {
 		super(ApplicationProtocolNames.HTTP_1_1);
 		this.channelConfigurer = channelConfigurer;

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.base.converter.ObjectConverter;
@@ -32,8 +31,12 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
+ * <p>
+ * Generic request cookies implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class GenericRequestCookies implements OutboundCookies {
 
@@ -43,14 +46,35 @@ public class GenericRequestCookies implements OutboundCookies {
 	
 	private final Map<String, List<CookieParameter>> pairs;
 	
-	public GenericRequestCookies(HeaderService headerService, OutboundRequestHeaders requestHeaders, ObjectConverter<String> parameterConverter) {
-		this.headerService = headerService;
+	/**
+	 * <p>
+	 * Creates generic request cookies.
+	 * </p>
+	 * 
+	 * @param requestHeaders the request headers
+	 * @param headerService the header service
+	 * @param parameterConverter the parameter converter
+	 */
+	public GenericRequestCookies(OutboundRequestHeaders requestHeaders, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.requestHeaders = requestHeaders;
+		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		
 		this.pairs = new HashMap<>();
 	}
 	
+	/**
+	 * <p>
+	 * Loads the cookie pairs from {@code cookie} request header.
+	 * </p>
+	 * 
+	 * <p>
+	 * This shall be invoked before read or write access to cookies.
+	 * </p>
+	 * 
+	 * @see GenericRequestHeaders#cookies() 
+	 * @see GenericRequestHeaders#cookies(java.util.function.Consumer) 
+	 */
 	public void load() {
 		this.pairs.clear();
 		this.requestHeaders.<Headers.Cookie>getAllHeader(Headers.NAME_COOKIE)
@@ -59,6 +83,17 @@ public class GenericRequestCookies implements OutboundCookies {
 			.forEach(cookie -> this.pairs.computeIfAbsent(cookie.getName(), ign -> new ArrayList<>()).add(cookie));
 	}
 	
+	/**
+	 * <p>
+	 * Commits cookie pairs into {@code cookie} request header.
+	 * </p>
+	 * 
+	 * <p>
+	 * This shall be invoked after write access to cookies.
+	 * </p>
+	 * 
+	 * @see GenericRequestHeaders#cookies(java.util.function.Consumer) 
+	 */
 	public void commit() {
 		this.requestHeaders.set(Headers.NAME_COOKIE, this.headerService.encodeValue(new CookieCodec.Cookie(this.pairs)));
 	}

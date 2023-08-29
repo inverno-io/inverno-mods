@@ -28,7 +28,7 @@ import io.inverno.mod.http.base.internal.header.GenericHeaderService;
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.6
  * 
  * @see GenericHeaderService
  */

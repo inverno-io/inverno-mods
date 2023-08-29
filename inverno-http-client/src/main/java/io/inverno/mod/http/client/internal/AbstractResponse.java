@@ -20,13 +20,15 @@ import io.inverno.mod.http.base.InboundResponseHeaders;
 import io.inverno.mod.http.client.Response;
 import io.inverno.mod.http.client.ResponseBody;
 import io.netty.buffer.ByteBuf;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 /**
+ * <p>
+ * Base {@link Response} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public abstract class AbstractResponse implements Response {
 
@@ -34,12 +36,15 @@ public abstract class AbstractResponse implements Response {
 	
 	protected InboundHeaders responseTrailers;
 	
-	private boolean subscribed;
-	private boolean disposed;
-	
 	private GenericResponseBody body;
-	private Sinks.Many<ByteBuf> data;
 
+	/**
+	 * <p>
+	 * Creates a base response.
+	 * </p>
+	 * 
+	 * @param responseHeaders the response headers
+	 */
 	protected AbstractResponse(InboundResponseHeaders responseHeaders) {
 		this.responseHeaders = responseHeaders;
 	}
@@ -52,17 +57,7 @@ public abstract class AbstractResponse implements Response {
 	@Override
 	public ResponseBody body() {
 		if(this.body == null) {
-			// create a many sink
-			this.data = this.data();
-			Flux<ByteBuf> responseBodyData = Flux.defer(() -> {
-				if(this.disposed) {
-					return Mono.error(new IllegalStateException("Response was disposed"));
-				}
-				return this.data.asFlux()
-					.doOnSubscribe(ign -> this.subscribed = true)
-					.doOnDiscard(ByteBuf.class, ByteBuf::release);
-			});
-			this.body = new GenericResponseBody(responseBodyData);
+			this.body = new GenericResponseBody();
 		}
 		return this.body;
 	}
@@ -72,28 +67,50 @@ public abstract class AbstractResponse implements Response {
 		return this.responseTrailers;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the response payload data sink.
+	 * </p>
+	 * 
+	 * @return the payload data sink
+	 */
 	public Sinks.Many<ByteBuf> data() {
-		if(this.data == null) {
-			this.data = Sinks.many().unicast().onBackpressureBuffer();
-		}
-		return this.data;
-	}
-
-	public boolean isDisposed() {
-		return disposed;
+		return ((GenericResponseBody)this.body()).dataSink;
 	}
 	
+	/**
+	 * <p>
+	 * Disposes the response.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method delegates to {@link #dispose(java.lang.Throwable) } with a null error.
+	 * </p>
+	 */
 	public void dispose() {
-		if(!this.subscribed) {
-			// Try to drain and release buffered data 
-			// when the datasink was already subscribed data are released in doOnDiscard (see #body())
-			this.data.asFlux().subscribe(
-				chunk -> chunk.release(), 
-				ex -> {
-					// TODO Should be ignored but can be logged as debug or trace log
-				}
-			);
+		this.dispose(null);
+	}
+	
+	/**
+	 * <p>
+	 * Disposes the response with the specified error.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method cleans up response outstanding resources, it especially drains received data if needed.
+	 * </p>
+	 * 
+	 * <p>
+	 * A non-null error indicates that the enclosing exchange did not complete successfully and that the error should be emitted when possible (e.g. in the response data publisher).
+	 * </p>
+	 * 
+	 * @param error an error or null
+	 * 
+	 * @see GenericResponseBody#dispose(java.lang.Throwable) 
+	 */
+	public void dispose(Throwable error) {
+		if(this.body != null) {
+			this.body.dispose(error);
 		}
-		this.disposed = true;
 	}
 }

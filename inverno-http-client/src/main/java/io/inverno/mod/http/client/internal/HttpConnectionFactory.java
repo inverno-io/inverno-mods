@@ -13,17 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 
 /**
+ * <p>
+ * HTTP connection factory
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @param <A> the HTTP connection type
  */
-public interface HttpConnectionFactory<T extends HttpConnection> {
+public interface HttpConnectionFactory<A extends HttpConnection> {
 
-	public T get(HttpClientConfiguration configuration, HttpVersion httpVersion, EndpointChannelConfigurer configurer);
+	/**
+	 * <p>
+	 * Creates an HTTP connection factory for the specified protocol version.
+	 * </p>
+	 *
+	 * @param configuration the HTTP client configuration
+	 * @param httpVersion   the HTTP version
+	 * @param configurer    the channel configurer
+	 *
+	 * @return an HTTP connection
+	 */
+	A create(HttpClientConfiguration configuration, HttpVersion httpVersion, EndpointChannelConfigurer configurer);
 }

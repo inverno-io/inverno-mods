@@ -13,32 +13,72 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client;
 
 /**
- *
+ * <p>
+ * Thrown when a connection is reset by the peer.
+ * </p>
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class ConnectionResetException extends HttpClientException {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * <p>
+	 * Creates a Connection reset exception.
+	 * </p>
+	 */
 	public ConnectionResetException() {
 	}
 
+	/**
+	 * <p>
+	 * Creates a Connection reset exception.
+	 * </p>
+	 * 
+	 * @param message the message
+	 */
 	public ConnectionResetException(String message) {
 		super(message);
 	}
 
+	/**
+	 * <p>
+	 * Creates a Connection reset exception.
+	 * </p>
+	 * 
+	 * @param message the message
+	 * @param cause   the cause
+	 */
 	public ConnectionResetException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates a Connection reset exception.
+	 * </p>
+	 * 
+	 * @param cause the cause
+	 */
 	public ConnectionResetException(Throwable cause) {
 		super(cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates a Connection reset exception.
+	 * </p>
+	 * 
+	 * @param message            the message
+	 * @param cause              the cause
+	 * @param enableSuppression 
+	 * @param writableStackTrace 
+	 */
 	public ConnectionResetException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}

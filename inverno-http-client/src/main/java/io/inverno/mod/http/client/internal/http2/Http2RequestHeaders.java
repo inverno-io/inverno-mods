@@ -104,7 +104,7 @@ class Http2RequestHeaders implements InternalRequestHeaders {
 	@Override
 	public OutboundRequestHeaders cookies(Consumer<OutboundCookies> cookiesConfigurer) {
 		if(this.requestCookies == null) {
-			this.requestCookies = new GenericRequestCookies(this.headerService, this, this.parameterConverter);
+			this.requestCookies = new GenericRequestCookies(this, this.headerService, this.parameterConverter);
 		}
 		this.requestCookies.load();
 		cookiesConfigurer.accept(this.requestCookies);
@@ -115,7 +115,7 @@ class Http2RequestHeaders implements InternalRequestHeaders {
 	@Override
 	public InboundCookies cookies() {
 		if(this.requestCookies == null) {
-			this.requestCookies = new GenericRequestCookies(this.headerService, this, this.parameterConverter);
+			this.requestCookies = new GenericRequestCookies(this, this.headerService, this.parameterConverter);
 		}
 		this.requestCookies.load();
 		return this.requestCookies;

@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.OutboundRequestHeaders;
 import io.inverno.mod.http.client.Request;
@@ -36,13 +34,12 @@ class Http1xRequest extends AbstractRequest {
 			ChannelHandlerContext context, 
 			boolean tls,
 			ObjectConverter<String> parameterConverter, 
-			HttpVersion protocol, 
 			Method method, 
 			String authority,
 			String path, 
 			Http1xRequestHeaders requestHeaders, 
 			Http1xRequestBody requestBody) {
-		super(context, tls, parameterConverter, protocol, method, authority, path, requestHeaders, requestBody);
+		super(context, tls, parameterConverter, method, authority, path, requestHeaders, requestBody);
 	}
 
 	@Override

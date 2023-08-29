@@ -19,7 +19,6 @@ import java.util.function.Supplier;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.concurrent.Reactor;
-import io.inverno.mod.base.net.NetService;
 
 /**
  * <p>
@@ -31,7 +30,7 @@ import io.inverno.mod.base.net.NetService;
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.6
  */
 @Bean(name = "reactor")
 public interface ReactorSocket extends Supplier<Reactor> {

@@ -13,32 +13,72 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client;
 
 /**
- *
+ * <p>
+ * Thrown when an endpoint couldn't establish a connection to a server.
+ * </p>
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class EndpointConnectException extends HttpClientException {
 
 	private static final long serialVersionUID = 1L;
 	
+	/**
+	 * <p>
+	 * Creates an endpoint connect exception.
+	 * </p>
+	 */
 	public EndpointConnectException() {
 	}
 
+	/**
+	 * <p>
+	 * Creates an endpoint connect exception.
+	 * </p>
+	 * 
+	 * @param message the message
+	 */
 	public EndpointConnectException(String message) {
 		super(message);
 	}
 
+	/**
+	 * <p>
+	 * Creates an endpoint connect exception.
+	 * </p>
+	 * 
+	 * @param message the message
+	 * @param cause   the cause
+	 */
 	public EndpointConnectException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates an endpoint connect exception.
+	 * </p>
+	 * 
+	 * @param cause the cause
+	 */
 	public EndpointConnectException(Throwable cause) {
 		super(cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates an endpoint connect exception.
+	 * </p>
+	 * 
+	 * @param message            the message
+	 * @param cause              the cause
+	 * @param enableSuppression 
+	 * @param writableStackTrace 
+	 */
 	public EndpointConnectException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}

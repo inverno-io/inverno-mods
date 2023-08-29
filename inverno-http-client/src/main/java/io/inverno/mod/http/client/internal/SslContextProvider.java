@@ -23,17 +23,15 @@ import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolConfig.Protocol;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectedListenerFailureBehavior;
 import io.netty.handler.ssl.ApplicationProtocolConfig.SelectorFailureBehavior;
-import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.CipherSuiteFilter;
 import io.netty.handler.ssl.OpenSsl;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -41,17 +39,16 @@ import java.util.Set;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
-import javax.net.ssl.X509TrustManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
- * The server SSL context.
+ * The SSL context provider.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.6
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class SslContextProvider {
@@ -60,11 +57,27 @@ public class SslContextProvider {
 	
 	private CipherSuiteFilter cipherSuiteFilter = SupportedCipherSuiteFilter.INSTANCE;
 	
+	/**
+	 * <p>
+	 * Sets the cipher suite filter.
+	 * </p>
+	 * 
+	 * @param cipherSuiteFilter a cipher suite filter
+	 */
 	public void setCipherSuiteFilter(CipherSuiteFilter cipherSuiteFilter) {
 		this.cipherSuiteFilter = cipherSuiteFilter;
 	}
 	
-	public SslContext get(HttpClientConfiguration configuration) {
+	/**
+	 * <p>
+	 * Creates an SSL context.
+	 * </p>
+	 * 
+	 * @param configuration the HTTP client configuration.
+	 * 
+	 * @return an SSL context
+	 */
+	public SslContext create(HttpClientConfiguration configuration) {
 		// TODO make this non-blocking as this can block
 		try {
 			SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
@@ -72,23 +85,7 @@ public class SslContextProvider {
 			sslContextBuilder.sslProvider(sslProvider);
 			
 			if(configuration.tls_trust_all()) {
-				sslContextBuilder.trustManager(new X509TrustManager() {
-
-					@Override
-					public X509Certificate[] getAcceptedIssuers() {
-						return new X509Certificate[0];
-					}
-
-					@Override
-					public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-
-					}
-
-					@Override
-					public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-
-					}
-				});
+				sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
 			}
 			else if(configuration.tls_trust_manager_factory() != null) {
 				sslContextBuilder.trustManager(configuration.tls_trust_manager_factory());

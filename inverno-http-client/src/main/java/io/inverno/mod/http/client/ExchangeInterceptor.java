@@ -13,27 +13,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client;
 
 import io.inverno.mod.http.base.ExchangeContext;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * An client exchange interceptor is used to intercept a client exchange before a request is actually sent to the server.
+ * </p>
+ * 
+ * <p>
+ * A client exchange interceptor operates on a {@link InterceptableExchange} which allows to perform some processing or instrumentation that will be applied to the actual {@link Exchange}, to the request first
+ * before it is sent to the endpoint and to the response when it is received from the endpoint.
+ * </p>
+ * 
+ * <p>
+ * Multiple exchange interceptors can be chained on an {@link HttpClient.Request} or an {@link Endpoint.Request}
+ * </p>
+ * 
+ * <p>
+ * An interceptor can also prevent a request from being sent to the endpoint by returning an empty Mono, in which case the interceptable exchange is returned instead of an actual exchange.
+ * </p>
+ * 
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @param <A> the type of the exchange context
+ * @param <B> the type of the interceptable exchange
  */
 @FunctionalInterface
-public interface ExchangeInterceptor<A extends ExchangeContext, B extends PreExchange<A>> {
+public interface ExchangeInterceptor<A extends ExchangeContext, B extends InterceptableExchange<A>> {
 
 	/**
 	 * <p>
-	 * Intercepts the exchange before the exchange handler is invoked.
+	 * Intercepts the exchange before the request is sent.
 	 * </p>
 	 *
-	 * @param exchange the server exchange to handle
+	 * @param exchange the interceptable exchange to handle
 	 *
-	 * @return a Mono emitting the exchange or an instrumented exchange to continue the exchange handling chain or an empty Mono to stop the exchange handling chain
+	 * @return a Mono emitting the exchange or an instrumented exchange to continue the exchange processing or an empty Mono to stop the exchange processing and prevent the request from being sent to
+	 *         the endpoint in which case the interceptable exchange shall be returned by the sent operation.
 	 */
 	Mono<B> intercept(B exchange);
 	
@@ -69,14 +90,14 @@ public interface ExchangeInterceptor<A extends ExchangeContext, B extends PreExc
 	 * </p>
 	 *
 	 * @param <A> the type of the exchange context
-	 * @param <B> the type of exchange handled by the handler
+	 * @param <B> the type of the interceptable exchange
 	 * @param interceptors the interceptors to chain
 	 *
 	 * @return a composed interceptor
 	 */
 	@SafeVarargs
     @SuppressWarnings("varargs")
-	static <A extends ExchangeContext, B extends PreExchange<A>> ExchangeInterceptor<A, B> of(ExchangeInterceptor<? super A, B>... interceptors) {
+	static <A extends ExchangeContext, B extends InterceptableExchange<A>> ExchangeInterceptor<A, B> of(ExchangeInterceptor<? super A, B>... interceptors) {
 		return exchange -> {
 			Mono<B> interceptorChain = null;
 			for(ExchangeInterceptor<? super A, B> interceptor : interceptors) {

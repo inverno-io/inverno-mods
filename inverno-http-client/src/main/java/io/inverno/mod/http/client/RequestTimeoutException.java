@@ -13,32 +13,78 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client;
 
 /**
- *
+ * <p>
+ * Thrown when a request has timed out.
+ * </p>
+ * 
+ * <p>
+ * A request times out when no response data has been received for the timeout limit ({@link HttpClientConfiguration#request_timeout()}).
+ * </p>
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @see HttpClientConfiguration
  */
 public class RequestTimeoutException extends HttpClientException {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * <p>
+	 * Creates a Request timeout exception.
+	 * </p>
+	 */
 	public RequestTimeoutException() {
 	}
 
+	/**
+	 * <p>
+	 * Creates a Request timeout exception.
+	 * </p>
+	 * 
+	 * @param message the message
+	 */
 	public RequestTimeoutException(String message) {
 		super(message);
 	}
 
+	/**
+	 * <p>
+	 * Creates a Request timeout exception.
+	 * </p>
+	 * 
+	 * @param message the message
+	 * @param cause   the cause
+	 */
 	public RequestTimeoutException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates a Request timeout exception.
+	 * </p>
+	 * 
+	 * @param cause the cause
+	 */
 	public RequestTimeoutException(Throwable cause) {
 		super(cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates a Request timeout exception.
+	 * </p>
+	 * 
+	 * @param message            the message
+	 * @param cause              the cause
+	 * @param enableSuppression 
+	 * @param writableStackTrace 
+	 */
 	public RequestTimeoutException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}

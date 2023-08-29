@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.http.client.HttpClientConfiguration;
@@ -24,24 +23,40 @@ import io.netty.handler.ssl.SslContext;
 import java.net.InetSocketAddress;
 
 /**
+ * <p>
+ * The endpoint channel initializer used to initialize HTTP/1.x and HTTP/2 connection.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @version 1.6
+ * 
+ * @see EndpointChannelConfigurer
  */
 @Sharable
 public class EndpointChannelInitializer extends ChannelInitializer<SocketChannel> {
 
-	private final SslContextProvider sslContextProvider;
-	private final EndpointChannelConfigurer channelConfigurer;
-	private final InetSocketAddress serverAddress;
-	private final HttpClientConfiguration configuration;
-	private final SslContext sslContext;
+	protected final SslContextProvider sslContextProvider;
+	protected final EndpointChannelConfigurer channelConfigurer;
+	protected final InetSocketAddress serverAddress;
+	protected final HttpClientConfiguration configuration;
+	protected final SslContext sslContext;
 	
-	 public EndpointChannelInitializer(SslContextProvider sslContextProvider, EndpointChannelConfigurer channelConfigurer, InetSocketAddress serverAddress, HttpClientConfiguration configuration) {
+	/**
+	 * <p>
+	 * Creates the endpoint channel initializer.
+	 * </p>
+	 * 
+	 * @param sslContextProvider the SSL context provider
+	 * @param channelConfigurer  the endpoint channel configurer
+	 * @param serverAddress      the address of the endpoint
+	 * @param configuration      an HTTP client configuration
+	 */
+	public EndpointChannelInitializer(SslContextProvider sslContextProvider, EndpointChannelConfigurer channelConfigurer, InetSocketAddress serverAddress, HttpClientConfiguration configuration) {
 		this.sslContextProvider = sslContextProvider;
 		this.channelConfigurer = channelConfigurer;
 		this.serverAddress = serverAddress;
 		this.configuration = configuration;
-		this.sslContext = configuration.tls_enabled() ? this.sslContextProvider.get(configuration) : null;
+		this.sslContext = configuration.tls_enabled() ? this.sslContextProvider.create(configuration) : null;
 	}
 	
 	@Override

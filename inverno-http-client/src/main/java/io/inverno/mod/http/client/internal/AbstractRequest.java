@@ -18,7 +18,6 @@ package io.inverno.mod.http.client.internal;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.base.net.URIs;
-import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.QueryParameters;
 import io.inverno.mod.http.base.internal.GenericQueryParameters;
@@ -29,15 +28,18 @@ import java.net.SocketAddress;
 import java.util.Optional;
 
 /**
+ * <p>
+ * Base {@link Request} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public abstract class AbstractRequest implements Request {
 
 	private final ChannelHandlerContext context;
 	private final boolean tls;
 	private final ObjectConverter<String> parameterConverter;
-	private final HttpVersion protocol;
 	private final Method method;
 	private final String path;
 	private final URIBuilder primaryPathBuilder;
@@ -50,11 +52,24 @@ public abstract class AbstractRequest implements Request {
 	private String queryString;
 	private GenericQueryParameters queryParameters;
 	
+	/**
+	 * <p>
+	 * Creates a base request.
+	 * </p>
+	 * 
+	 * @param context            the channel handler context
+	 * @param tls                true if the connection is TLS, false otherwise
+	 * @param parameterConverter the parameter converter
+	 * @param method             the HTTP method
+	 * @param authority          the request authority
+	 * @param path               the requested path
+	 * @param requestHeaders     the request headers
+	 * @param requestBody        the request body
+	 */
 	protected AbstractRequest(
 			ChannelHandlerContext context, 
 			boolean tls,
 			ObjectConverter<String> parameterConverter, 
-			HttpVersion protocol, 
 			Method method, 
 			String authority,
 			String path, 
@@ -63,7 +78,6 @@ public abstract class AbstractRequest implements Request {
 		this.context = context;
 		this.tls = tls;
 		this.parameterConverter = parameterConverter;
-		this.protocol = protocol;
 		this.method = method;
 		this.path = path;
 		// TODO make sure this is a path with no scheme or authority
@@ -80,11 +94,6 @@ public abstract class AbstractRequest implements Request {
 	@Override
 	public boolean isHeadersWritten() {
 		return this.requestHeaders.isWritten();
-	}
-
-	@Override
-	public HttpVersion getProtocol() {
-		return this.protocol;
 	}
 
 	@Override
@@ -115,12 +124,12 @@ public abstract class AbstractRequest implements Request {
 		if(this.authority == null) {
 			SocketAddress remoteAddress = this.getRemoteAddress();
 			if(remoteAddress == null) {
-				return null;
+				throw new IllegalStateException("Can't resolve Authority");
 			}
 			else if(remoteAddress instanceof InetSocketAddress) {
 				this.authority = ((InetSocketAddress)remoteAddress).getHostString();
 				int port = ((InetSocketAddress)remoteAddress).getPort();
-				if((this.tls && port != 443) || (this.tls && port != 80)) {
+				if((this.tls && port != 443) || (!this.tls && port != 80)) {
 					this.authority += ":" + port;
 				}
 			}
@@ -165,6 +174,13 @@ public abstract class AbstractRequest implements Request {
 		return this.queryParameters;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the request body.
+	 * </p>
+	 * 
+	 * @return an optional returning the request body, or an empty optional if the request has no payload
+	 */
 	public Optional<? extends GenericRequestBody> body() {
 		return this.requestBody;
 	}

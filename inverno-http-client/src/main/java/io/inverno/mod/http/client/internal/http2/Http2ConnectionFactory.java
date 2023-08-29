@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.core.annotation.Bean;
@@ -65,7 +64,7 @@ public class Http2ConnectionFactory implements HttpConnectionFactory<Http2Connec
 	}
 
 	@Override
-	public Http2Connection get(HttpClientConfiguration configuration, HttpVersion httpVersion, EndpointChannelConfigurer configurer) {
+	public Http2Connection create(HttpClientConfiguration configuration, HttpVersion httpVersion, EndpointChannelConfigurer configurer) {
 		return new Http2ConnectionFactory.Http2ChannelHandlerBuilder(configuration).build();
 	}
 	

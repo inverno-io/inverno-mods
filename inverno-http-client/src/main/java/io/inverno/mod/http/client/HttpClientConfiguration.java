@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client;
 
 import io.inverno.mod.configuration.Configuration;
@@ -24,15 +23,130 @@ import java.util.Set;
 import javax.net.ssl.TrustManagerFactory;
 
 /**
- *
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * <p>
+ * HTTP client module configuration.
+ * </p>
+ * 
+ * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 @Configuration
 public interface HttpClientConfiguration {
 	
+	/**
+	 * Default HTTP versions accepted by the client.
+	 */
 	static final Set<HttpVersion> DEFAULT_HTTP_PROTOCOL_VERSIONS = Set.of(HttpVersion.HTTP_2_0, HttpVersion.HTTP_1_1);
 	
+	/**
+	 * Default user agent.
+	 */
 	static final String USER_AGENT = "Inverno" + Optional.ofNullable(HttpClientConfiguration.class.getModule().getDescriptor()).flatMap(ModuleDescriptor::version).map(version -> "/" + version).orElse("");
+	
+	/**
+	 * <p>
+	 * The number of event loops to allocate to the client.
+	 * </p>
+	 * 
+	 * <p>
+	 * If not specified, the number of thread allocated to the root event loop group
+	 * shall be used.
+	 * </p>
+	 * 
+	 * @return the number of threads to allocate
+	 */
+	Integer client_event_loop_group_size();
+	
+	/**
+	 * <p>
+	 * The maximum size of the client connection pool.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 2}.
+	 * </p>
+	 * 
+	 * @return the maximum size of the pool
+	 */
+	default Integer pool_max_size() {
+		return 2;
+	}
+	
+	/**
+	 * <p>
+	 * The pool's clean period in milliseconds.
+	 * </p>
+	 * 
+	 * <p>
+	 * This specifies the frequency at which unnecessary connections are removed from the active pool and parked until either a request burst requires the connection to be reinstated or until the keep
+	 * alive timeout is reached and the connection closed and definitely removed from the pool.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 1000} (1 seconds).
+	 * </p>
+	 * 
+	 * @return the pool's clean period
+	 */
+	default long pool_clean_period() {
+		return 1000l;
+	}
+	
+	/**
+	 * <p>
+	 * The pool's request buffer size. 
+	 * </p>
+	 * 
+	 * <p>
+	 * This represents the limit beyond which requests can't be buffered and are rejectded ({@code null} means no limit).
+	 * </p>
+	 * 
+	 * @return the pool's request buffer size
+	 */
+	Integer pool_buffer_size();
+	
+	/**
+	 * <p>
+	 * The pool's connection keep alive timeout in milliseconds.
+	 * </p>
+	 * 
+	 * <p>
+	 * The represents the time beyond which an inactive connection is closed and removed from the pool ({@code null} means no timeout).
+	 * </p>
+	 * 
+	 * @return the pool
+	 */
+	Long pool_keep_alive_timeout();
+	
+	/**
+	 * <p>
+	 * The connection timeout in milliseconds.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 60000}.
+	 * </p>
+	 * 
+	 * @return the connection timeout
+	 */
+	default long connect_timeout() {
+		return 60000l;
+	}
+	
+	/**
+	 * <p>
+	 * The request timeout in milliseconds.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 60000}.
+	 * </p>
+	 * 
+	 * @return the connection timeout
+	 */
+	default long request_timeout() {
+		return 60000l;
+	}
 	
 	/**
 	 * <p>
@@ -49,92 +163,34 @@ public interface HttpClientConfiguration {
 		return DEFAULT_HTTP_PROTOCOL_VERSIONS;
 	}
 	
+	/**
+	 * <p>
+	 * Sends {@code user-agent} header.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code true}
+	 * </p>
+	 * 
+	 * @return true to send the user agent, false otherwise.
+	 */
 	default boolean send_user_agent() {
 		return true;
 	}
 	
+	/**
+	 * <p>
+	 * The value of the {@code user-agent} header to send.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code Inverno/x.y}
+	 * </p>
+	 * 
+	 * @return the user agent
+	 */
 	default String user_agent() {
 		return USER_AGENT;
-	}
-	
-	/**
-	 * <p>
-	 * Enables/Disables HTTPS.
-	 * </p>
-	 * 
-	 * <p>
-	 * Defaults to {@code false}.
-	 * </p>
-	 * 
-	 * @return true if the option is enabled, false otherwise
-	 */
-	default boolean tls_enabled() {
-		return false;
-	}
-	
-	/**
-	 * <p>
-	 * The list of ciphers to include.
-	 * </p>
-	 * 
-	 * @return a list of ciphers
-	 */
-	String[] tls_ciphers_includes();
-
-	/**
-	 * <p>
-	 * The list of ciphers to exclude.
-	 * </p>
-	 * 
-	 * @return a list of ciphers
-	 */
-	String[] tls_ciphers_excludes();
-	
-	/**
-	 * <p>
-	 * Indicates whether all server certificates should be trusted (including self-signed certificates).
-	 * </p>
-	 * 
-	 * <p>
-	 * Note that this overrides {@link #tls_trust_manager_factory()}.
-	 * </p>
-	 * 
-	 * <p>
-	 * Defaults to {@code false}
-	 * </p>
-	 * 
-	 * @return true to trust all server certificates
-	 */
-	default boolean tls_trust_all() {
-		return false;
-	}
-	
-	/**
-	 * <p>
-	 * The trust manager factory.
-	 * </p>
-	 * 
-	 * <p>
-	 * Note that this is overridden by {@link #tls_trust_all()}.
-	 * </p>
-	 * 
-	 * @return the trust manager factory
-	 */
-	TrustManagerFactory tls_trust_manager_factory();
-	
-	/**
-	 * <p>
-	 * Sends Server Name Indication parameter during TLS handshake.
-	 * </p>
-	 * 
-	 * <p>
-	 * Defaults to {@code false}.
-	 * </p>
-	 * 
-	 * @return true if the client must send the hostname to the server during TLS handshake
-	 */
-	default boolean tls_send_sni() {
-		return false;
 	}
 	
 	/**
@@ -365,14 +421,94 @@ public interface HttpClientConfiguration {
 	
 	/**
 	 * <p>
+	 * Enables/Disables HTTPS.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}.
+	 * </p>
+	 * 
+	 * @return true if the option is enabled, false otherwise
+	 */
+	default boolean tls_enabled() {
+		return false;
+	}
+	
+	/**
+	 * <p>
+	 * The list of ciphers to include.
+	 * </p>
+	 * 
+	 * @return a list of ciphers
+	 */
+	String[] tls_ciphers_includes();
+
+	/**
+	 * <p>
+	 * The list of ciphers to exclude.
+	 * </p>
+	 * 
+	 * @return a list of ciphers
+	 */
+	String[] tls_ciphers_excludes();
+	
+	/**
+	 * <p>
+	 * Indicates whether all server certificates should be trusted (including self-signed certificates).
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that this overrides {@link #tls_trust_manager_factory()}.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}
+	 * </p>
+	 * 
+	 * @return true to trust all server certificates
+	 */
+	default boolean tls_trust_all() {
+		return false;
+	}
+	
+	/**
+	 * <p>
+	 * The trust manager factory.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that this is overridden by {@link #tls_trust_all()}.
+	 * </p>
+	 * 
+	 * @return the trust manager factory
+	 */
+	TrustManagerFactory tls_trust_manager_factory();
+	
+	/**
+	 * <p>
+	 * Sends Server Name Indication parameter during TLS handshake.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}.
+	 * </p>
+	 * 
+	 * @return true if the client must send the hostname to the server during TLS handshake
+	 */
+	default boolean tls_send_sni() {
+		return false;
+	}
+	
+	/**
+	 * <p>
 	 * The HTTP/1.1 pipelining limit which corresponds to the maximum concurrent requests on a single connection.
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to {@code 10}.
+	 * Defaults to {@code 10} ({@code null} means no limit).
 	 * </p>
 	 * 
-	 * @return 
+	 * @return the maximum HTTP/1.1 concurrent requests on a single connection
 	 */
 	default Long http1_max_concurrent_requests() {
 		return 10l;
@@ -453,34 +589,137 @@ public interface HttpClientConfiguration {
 		return Integer.MAX_VALUE;
 	}
 	
-	default Integer pool_max_size() {
-		return 2;
+	/**
+	 * <p>
+	 * WebSocket max frame size in bytes.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 65536}.
+	 * </p>
+	 * 
+	 * @return the WebSocket max frame size
+	 */
+	default Integer ws_max_frame_size() {
+		return 65536;
 	}
-	
-	default long pool_clean_period() {
-		return 1000l;
-	}
-	
-	Integer pool_buffer_size();
-	
-	Long pool_keep_alive_timeout();
-	
-	Long connect_timeout();
-	
-	Long request_timeout();
 	
 	/**
 	 * <p>
-	 * The number of event loops to allocate to the client.
+	 * Enables/Disables WebSocket per frame compression.
 	 * </p>
 	 * 
 	 * <p>
-	 * If not specified, the number of thread allocated to the root event loop group
-	 * shall be used.
+	 * Defaults to {@code false}.
 	 * </p>
 	 * 
-	 * @return the number of threads to allocate
+	 * @return true if WebSocket per frame is enabled, false otherwise
 	 */
-	Integer client_event_loop_group_size();
+	default boolean ws_frame_compression_enabled() {
+		return false;
+	}
 	
+	/**
+	 * <p>
+	 * WebSocket per frame compression level.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 6}.
+	 * </p>
+	 * 
+	 * @return the WebSocket frame compression level
+	 */
+	default int ws_frame_compression_level() {
+		return 6;
+	}
+	
+	/**
+	 * <p>
+	 * Enables/Disables WebSocket per message compression.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}.
+	 * </p>
+	 * 
+	 * @return true if WebSocket per message is enabled, false otherwise
+	 */
+	default boolean ws_message_compression_enabled() {
+		return false;
+	}
+	
+	/**
+	 * <p>
+	 * WebSocket per message compression level.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 6}.
+	 * </p>
+	 * 
+	 * @return the WebSocket message compression level
+	 */
+	default int ws_message_compression_level() {
+		return 6;
+	}
+	
+	/**
+	 * <p>
+	 * Allows WebSocket server to customize the client inflater window size.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}.
+	 * </p>
+	 * 
+	 * @return true to allow WebSocket server to customize the client inflater window size, false otherwise
+	 */
+	default boolean ws_message_allow_client_window_size() {
+		return false;
+	}
+	/**
+	 * <p>
+	 * Indicates the requested sever window size to use if server inflater is customizable.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 15}.
+	 * </p>
+	 * 
+	 * @return the requested sever window size to use if server inflater is customizable
+	 */
+	default int ws_message_requested_server_window_size() {
+		return 15;
+	}
+	
+	/**
+	 * <p>
+	 * Allows WebSocket server to activate client_no_context_takeover.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}.
+	 * </p>
+	 * 
+	 * @return true to allow WebSocket server to activate client_no_context_takeover, false otherwise
+	 */
+	default boolean ws_message_allow_client_no_context() {
+		return false;
+	}
+	
+	/**
+	 * <p>
+	 * Indicates if client needs to activate server_no_context_takeover if server is compatible with.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}
+	 * </p>
+	 * 
+	 * @return true to activate server_no_context_takeover if server is compatible with, false otherwise
+	 */
+	default boolean ws_message_requested_server_no_context() {
+		return false;
+	}
 }

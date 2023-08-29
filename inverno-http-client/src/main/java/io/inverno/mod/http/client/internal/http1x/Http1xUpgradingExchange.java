@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.internal.http2.Http2Connection;
@@ -41,8 +41,15 @@ public class Http1xUpgradingExchange extends Http1xExchange {
 	private final MonoSink<Exchange<ExchangeContext>> upgradedExchangeSink;
 	private Http2Connection upgradedConnection;
 	
-	public Http1xUpgradingExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) {
-		super(context, null, exchangeContext, request, responseBodyTransformer, encoder);
+	public Http1xUpgradingExchange(
+			ChannelHandlerContext context, 
+			MonoSink<Exchange<ExchangeContext>> exchangeSink, 
+			ExchangeContext exchangeContext, 
+			HttpVersion protocol,
+			Http1xRequest request, 
+			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, 
+			Http1xConnectionEncoder encoder) {
+		super(context, null, exchangeContext, protocol, request, responseBodyTransformer, encoder);
 		this.upgradedExchangeSink = exchangeSink;
 	}
 	

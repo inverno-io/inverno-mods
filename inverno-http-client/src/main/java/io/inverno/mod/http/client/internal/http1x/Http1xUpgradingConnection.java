@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
@@ -104,8 +103,8 @@ class Http1xUpgradingConnection extends Http1xConnection {
 					HttpResponse response = (HttpResponse)msg;
 					if(!HttpResponseStatus.SWITCHING_PROTOCOLS.equals(response.status())) {
 						// upgrade rejected by server
-						this.rejectUpgrade();
 						super.channelRead(ctx, msg);
+						this.rejectUpgrade();
 					}
 					else {
 						CharSequence upgradeHeader = response.headers().get(HttpHeaderNames.UPGRADE);
@@ -221,7 +220,7 @@ class Http1xUpgradingConnection extends Http1xConnection {
 		}
 		else if(this.upgradingExchange == null) {
 			this.state = UpgradeState.STARTED;
-			this.upgradingExchange = new Http1xUpgradingExchange(context, exchangeSink, exchangeContext, request, responseBodyTransformer, this);
+			this.upgradingExchange = new Http1xUpgradingExchange(context, exchangeSink, exchangeContext, this.httpVersion, request, responseBodyTransformer, this);
 			this.configurer.startHttp2Upgrade(context.pipeline(), this.configuration, this.upgradingExchange);
 			
 			return this.upgradingExchange;

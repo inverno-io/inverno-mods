@@ -13,32 +13,72 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client;
 
 /**
- *
+ * <p>
+ * Thrown to indicate a protocol uprade error.
+ * </p>
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
-public class HttpClientUpgradeException extends RuntimeException {
+public class HttpClientUpgradeException extends HttpClientException {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * <p>
+	 * Creates an HTTP client upgrade exception.
+	 * </p>
+	 */
 	public HttpClientUpgradeException() {
 	}
 
+	/**
+	 * <p>
+	 * Creates an HTTP client upgrade exception.
+	 * </p>
+	 * 
+	 * @param message the message
+	 */
 	public HttpClientUpgradeException(String message) {
 		super(message);
 	}
 
+	/**
+	 * <p>
+	 * Creates an HTTP client upgrade exception.
+	 * </p>
+	 * 
+	 * @param message the message
+	 * @param cause   the cause
+	 */
 	public HttpClientUpgradeException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates an HTTP client upgrade exception.
+	 * </p>
+	 * 
+	 * @param cause the cause
+	 */
 	public HttpClientUpgradeException(Throwable cause) {
 		super(cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates an HTTP client upgrade exception.
+	 * </p>
+	 * 
+	 * @param message            the message
+	 * @param cause              the cause
+	 * @param enableSuppression 
+	 * @param writableStackTrace 
+	 */
 	public HttpClientUpgradeException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}

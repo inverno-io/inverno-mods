@@ -13,40 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.http.base.InboundSetCookies;
 import io.inverno.mod.http.base.OutboundHeaders;
-import io.inverno.mod.http.base.OutboundResponseHeaders;
-import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
-import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
+ * <p>
+ * Generic {@link OutboundHeaders} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
-public class GenericPreResponseTrailers implements OutboundHeaders<GenericPreResponseTrailers> {
+public class GenericInterceptableResponseTrailers implements OutboundHeaders<GenericInterceptableResponseTrailers> {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	
 	private final LinkedHttpHeaders underlyingHeaders;
 
-	public GenericPreResponseTrailers(HeaderService headerService, ObjectConverter<String> parameterConverter) {
+	/**
+	 * <p>
+	 * Creates an interceptable response trailers.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
+	public GenericInterceptableResponseTrailers(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		this.underlyingHeaders = new LinkedHttpHeaders();
@@ -58,13 +63,13 @@ public class GenericPreResponseTrailers implements OutboundHeaders<GenericPreRes
 	}
 	
 	@Override
-	public GenericPreResponseTrailers add(CharSequence name, CharSequence value) {
+	public GenericInterceptableResponseTrailers add(CharSequence name, CharSequence value) {
 		this.underlyingHeaders.addCharSequence(name, value);
 		return this;
 	}
 
 	@Override
-	public GenericPreResponseTrailers add(Header... headers) {
+	public GenericInterceptableResponseTrailers add(Header... headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.addCharSequence(header.getHeaderName(), header.getHeaderValue());
 		}
@@ -72,13 +77,13 @@ public class GenericPreResponseTrailers implements OutboundHeaders<GenericPreRes
 	}
 	
 	@Override
-	public GenericPreResponseTrailers set(CharSequence name, CharSequence value) {
+	public GenericInterceptableResponseTrailers set(CharSequence name, CharSequence value) {
 		this.underlyingHeaders.setCharSequence(name, value);
 		return this;
 	}
 	
 	@Override
-	public GenericPreResponseTrailers set(Header... headers) {
+	public GenericInterceptableResponseTrailers set(Header... headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.setCharSequence(header.getHeaderName(), header.getHeaderValue());
 		}
@@ -86,7 +91,7 @@ public class GenericPreResponseTrailers implements OutboundHeaders<GenericPreRes
 	}
 	
 	@Override
-	public GenericPreResponseTrailers remove(CharSequence... names) {
+	public GenericInterceptableResponseTrailers remove(CharSequence... names) {
 		for(CharSequence name : names) {
 			this.underlyingHeaders.remove(name);
 		}

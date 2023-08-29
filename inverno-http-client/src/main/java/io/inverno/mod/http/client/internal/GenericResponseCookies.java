@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.base.converter.ObjectConverter;
@@ -30,13 +29,25 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
+ * <p>
+ * Generic response cookies implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class GenericResponseCookies implements InboundSetCookies {
 
 	private final Map<String, List<SetCookieParameter>> pairs;
 	
+	/**
+	 * <p>
+	 * Creates generic response cookies.
+	 * </p>
+	 * 
+	 * @param responseHeaders    the response headers
+	 * @param parameterConverter the parameter converter
+	 */
 	public GenericResponseCookies(InboundResponseHeaders responseHeaders, ObjectConverter<String> parameterConverter) {
 		this.pairs = responseHeaders.<Headers.SetCookie>getAllHeader(Headers.NAME_SET_COOKIE)
 			.stream()

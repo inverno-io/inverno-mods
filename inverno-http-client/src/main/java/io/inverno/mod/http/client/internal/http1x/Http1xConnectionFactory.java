@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.core.annotation.Bean;
@@ -26,7 +25,6 @@ import io.inverno.mod.http.client.Part;
 import io.inverno.mod.http.client.internal.EndpointChannelConfigurer;
 import io.inverno.mod.http.client.internal.HttpConnectionFactory;
 import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
-import java.util.Set;
 
 /**
  *
@@ -50,7 +48,7 @@ public class Http1xConnectionFactory implements HttpConnectionFactory<Http1xConn
 	}
 
 	@Override
-	public Http1xConnection get(HttpClientConfiguration configuration, HttpVersion httpVersion, EndpointChannelConfigurer configurer) {
+	public Http1xConnection create(HttpClientConfiguration configuration, HttpVersion httpVersion, EndpointChannelConfigurer configurer) {
 		if(HttpVersion.HTTP_2_0.equals(httpVersion)) {
 			return new Http1xUpgradingConnection(configuration, HttpVersion.HTTP_1_1, this.headerService, this.parameterConverter, this.urlEncodedBodyEncoder, this.multipartBodyEncoder, this.partFactory, configurer);
 		}
