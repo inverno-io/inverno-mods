@@ -76,18 +76,15 @@ public interface WebRequestBodyParameterInfo extends WebParameterInfo {
 		 */
 		NONE,
 		/**
-		 * The body parameter is of type {@link Publisher Publisher&lt;T&gt;} where
-		 * {@code T} represents the actual request body type.
+		 * The body parameter is of type {@link Publisher Publisher&lt;T&gt;} where {@code T} represents the actual request body type.
 		 */
 		PUBLISHER,
 		/**
-		 * The body parameter is of type {@link Mono Mono&lt;T&gt;} where {@code T}
-		 * represents the actual request body type.
+		 * The body parameter is of type {@link Mono Mono&lt;T&gt;} where {@code T} represents the actual request body type.
 		 */
 		ONE,
 		/**
-		 * The body parameter is of type {@link Flux Flux&lt;T&gt;} where {@code T}
-		 * represents the actual request body type.
+		 * The body parameter is of type {@link Flux Flux&lt;T&gt;} where {@code T} represents the actual request body type.
 		 */
 		MANY;
 	}
@@ -114,12 +111,11 @@ public interface WebRequestBodyParameterInfo extends WebParameterInfo {
 	 * <p>
 	 * Returns the actual type of the request body.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * When the request body is reactive, this corresponds to the type argument of
-	 * the reactive type.
+	 * When the request body is reactive, this corresponds to the type argument of the reactive type.
 	 * </p>
-	 * 
+	 *
 	 * @return the actual body type
 	 */
 	@Override

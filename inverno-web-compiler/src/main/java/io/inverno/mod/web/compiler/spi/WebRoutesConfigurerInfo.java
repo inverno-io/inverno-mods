@@ -68,5 +68,4 @@ public interface WebRoutesConfigurerInfo extends Info {
 	 * @return a context type
 	 */
 	TypeMirror getContextType();
-	
 }

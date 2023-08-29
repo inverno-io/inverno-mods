@@ -35,14 +35,13 @@ public class WebParameterQualifiedName extends QualifiedName {
 	
 	/**
 	 * <p>
-	 * Creates a web parameter qualified name with the specified route qualified
-	 * name and parameter name.
+	 * Creates a web parameter qualified name with the specified route qualified name and parameter name.
 	 * </p>
-	 * 
+	 *
 	 * @param routeQName the route qualified name
 	 * @param name       the parameter name
-	 * @throws QualifiedNameFormatException if the specified parameter name is
-	 *                                      invalid
+	 *
+	 * @throws QualifiedNameFormatException if the specified parameter name is invalid
 	 */
 	public WebParameterQualifiedName(WebRouteQualifiedName routeQName, String name) throws QualifiedNameFormatException {
 		super(routeQName.getValue() + "." + name);
@@ -80,16 +79,13 @@ public class WebParameterQualifiedName extends QualifiedName {
 	
 	/**
 	 * <p>
-	 * Creates a web parameter qualified name from the specified raw value of the form
-	 * {@code WebRouteQualifiedName():<parameterName>} where
-	 * {@code <parameterName>} is a valid Java name.
+	 * Creates a web parameter qualified name from the specified raw value of the form {@code WebRouteQualifiedName():<parameterName>} where {@code <parameterName>} is a valid Java name.
 	 * </p>
-	 * 
+	 *
 	 * @param qname a raw qualified name
-	 * 
+	 *
 	 * @return a web parameter qualified name
-	 * @throws QualifiedNameFormatException if the specified value is not a web parameter
-	 *                                      qualified name
+	 * @throws QualifiedNameFormatException if the specified value is not a web parameter qualified name
 	 */
 	public static WebParameterQualifiedName valueOf(String qname) throws QualifiedNameFormatException {
 		int lastSeparatorIndex = qname.lastIndexOf(".");
@@ -101,19 +97,15 @@ public class WebParameterQualifiedName extends QualifiedName {
 
 	/**
 	 * <p>
-	 * Creates a web parameter qualified name from the specified bean qualified name
-	 * of the web controller and the specified raw value of the form
-	 * {@code <routeName>:<parameterName>} where
-	 * {@code <routeName>} and {@code <parameterName>} are
-	 * valid Java names.
+	 * Creates a web parameter qualified name from the specified bean qualified name of the web controller and the specified raw value of the form {@code <routeName>:<parameterName>} where
+	 * {@code <routeName>} and {@code <parameterName>} are valid Java names.
 	 * </p>
-	 * 
+	 *
 	 * @param controllerQName a web controller qualified name
 	 * @param qname           a raw qualified name
-	 * 
+	 *
 	 * @return a web parameter qualified name
-	 * @throws QualifiedNameFormatException if the specified value is not a web
-	 *                                      parameter qualified name
+	 * @throws QualifiedNameFormatException if the specified value is not a web parameter qualified name
 	 */
 	public static WebParameterQualifiedName valueOf(BeanQualifiedName controllerQName, String qname)
 			throws QualifiedNameFormatException {

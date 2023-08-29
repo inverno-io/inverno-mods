@@ -36,16 +36,15 @@ public class WebServerControllerConfigurerQualifiedName extends BeanQualifiedNam
 	
 	/**
 	 * <p>
-	 * Creates the web router configurer qualified name of the specified module
-	 * qualifed name.
+	 * Creates the web router configurer qualified name of the specified module qualifed name.
 	 * </p>
-	 * 
+	 *
 	 * @param moduleQName the module qualified name
 	 */
 	public WebServerControllerConfigurerQualifiedName(ModuleQualifiedName moduleQName) {
 		super(moduleQName, WEB_CONTROLLER_CONFIGURER_NAME);
 		this.className = this.getModuleQName().getSourcePackageName() + "." + Character.toUpperCase(moduleQName.getModuleName().charAt(0))
-				+ moduleQName.getModuleName().substring(1)+ "_" + WEB_CONTROLLER_CONFIGURER_CLASSNAME;
+			+ moduleQName.getModuleName().substring(1) + "_" + WEB_CONTROLLER_CONFIGURER_CLASSNAME;
 	}
 	
 	/**

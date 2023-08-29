@@ -19,9 +19,9 @@ import io.inverno.core.compiler.spi.ModuleQualifiedName;
 import io.inverno.core.compiler.spi.support.AbstractSourceGenerationContext;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.base.ws.WebSocketFrame;
+import io.inverno.mod.http.base.ws.WebSocketMessage;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
-import io.inverno.mod.http.server.ws.WebSocketFrame;
-import io.inverno.mod.http.server.ws.WebSocketMessage;
 import io.inverno.mod.web.MissingRequiredParameterException;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.annotation.WebRoute;
@@ -64,11 +64,9 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * Represents a generation context used by the
- * {@link WebRouterConfigurerClassGenerator} during the generation of a web
- * router configurer in an Inverno module.
+ * Represents a generation context used by the {@link WebRouterConfigurerClassGenerator} during the generation of a web router configurer in an Inverno module.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */

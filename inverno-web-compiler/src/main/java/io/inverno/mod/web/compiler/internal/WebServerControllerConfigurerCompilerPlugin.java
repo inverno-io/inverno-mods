@@ -74,18 +74,15 @@ import javax.lang.model.type.WildcardType;
 
 /**
  * <p>
- * The web Inverno compiler plugin generates a {@link WebRouterConfigurer}
- * implementation that aggregates the routes defined in the
- * {@link WebController @WebController} beans defined in the module as well as
- * the {@link WebRoutes web router configurer} beans provided in the module.
+ * The web Inverno compiler plugin generates a {@link WebRouterConfigurer} implementation that aggregates the routes defined in the {@link WebController @WebController} beans defined in the module as
+ * well as the {@link WebRoutes web router configurer} beans provided in the module.
  * </p>
- * 
+ *
  * <p>
- * This plugin can also generates an <a href="https://www.openapis.org/">Open
- * API</a> specification for all the web controllers defined in the module. This
- * can be activated with option {@code inverno.web.generateOpenApiDefinition}.
+ * This plugin can also generates an <a href="https://www.openapis.org/">Open API</a> specification for all the web controllers defined in the module. This can be activated with option
+ * {@code inverno.web.generateOpenApiDefinition}.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
@@ -382,9 +379,9 @@ public class WebServerControllerConfigurerCompilerPlugin implements CompilerPlug
 	 * <p>
 	 * Scans the module for {@link WebRoute} annotated methods.
 	 * </p>
-	 * 
+	 *
 	 * @param execution
-	 * @param webRouteFactory 
+	 * @param webRouteFactory
 	 */
 	private void processWebRoutes(PluginExecution execution, WebRouteInfoFactory webRouteFactory) {
 		for(ExecutableElement routeElement : execution.<ExecutableElement>getElementsAnnotatedWith(WebRoute.class)) {

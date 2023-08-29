@@ -16,7 +16,7 @@
 package io.inverno.mod.web.compiler.spi;
 
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.server.ws.WebSocketMessage;
+import io.inverno.mod.http.base.ws.WebSocketMessage;
 import java.util.Optional;
 
 /**

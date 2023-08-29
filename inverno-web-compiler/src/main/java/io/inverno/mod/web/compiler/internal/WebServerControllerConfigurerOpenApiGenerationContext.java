@@ -108,11 +108,9 @@ import io.inverno.mod.web.compiler.spi.WebRouteInfo;
 
 /**
  * <p>
- * Represents a generation context used by the
- * {@link WebRouterConfigurerOpenApiGenerator} during the generation of an Open
- * API specification.
+ * Represents a generation context used by the {@link WebRouterConfigurerOpenApiGenerator} during the generation of an Open API specification.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */

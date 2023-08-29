@@ -39,10 +39,8 @@ public interface WebRouteInfo extends Info {
 	 * <p>
 	 * Returns the web controller that defines the route.
 	 * </p>
-	 * 
-	 * @return an optional returning the web controller or an empty optional if the
-	 *         route has been defined outside of a web controller (eg. in a web
-	 *         router configurer)
+	 *
+	 * @return an optional returning the web controller or an empty optional if the route has been defined outside of a web controller (eg. in a web router configurer)
 	 */
 	Optional<WebControllerInfo> getController();
 
@@ -50,10 +48,8 @@ public interface WebRouteInfo extends Info {
 	 * <p>
 	 * Returns the executable element defining the web route.
 	 * </p>
-	 * 
-	 * @return an optional returning the executable element or an empty optional if
-	 *         the route has not been defined with a method (eg. declared in a web
-	 *         router configurer)
+	 *
+	 * @return an optional returning the executable element or an empty optional if the route has not been defined with a method (eg. declared in a web router configurer)
 	 */
 	Optional<ExecutableElement> getElement();
 	

@@ -18,7 +18,7 @@ package io.inverno.mod.web.compiler.internal;
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.server.ws.WebSocketMessage;
+import io.inverno.mod.http.base.ws.WebSocketMessage;
 import io.inverno.mod.web.ErrorWebInterceptorsConfigurer;
 import io.inverno.mod.web.ErrorWebRouter;
 import io.inverno.mod.web.ErrorWebRouterConfigurer;
@@ -88,10 +88,9 @@ import org.apache.commons.text.StringEscapeUtils;
 
 /**
  * <p>
- * A {@link WebServerControllerConfigurerInfoVisitor} implementation used to generates a
- * web router configurer class in an Inverno module.
+ * A {@link WebServerControllerConfigurerInfoVisitor} implementation used to generates a web router configurer class in an Inverno module.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */

@@ -60,14 +60,13 @@ class GenericWebSseEventFactoryParameterInfo extends AbstractWebParameterInfo im
 	 * <p>
 	 * Create a generic server-sent event factory parameter.
 	 * </p>
-	 * 
+	 *
 	 * @param name             the parameter qualified name
 	 * @param reporter         the parameter reporter
 	 * @param element          the parameter element
 	 * @param eventDataType    the type of the server-sent event data
 	 * @param eventFactoryKind the event factory kind
-	 * @param dataMediaType    the media type to use to encode server-sent event
-	 *                         data
+	 * @param dataMediaType    the media type to use to encode server-sent event data
 	 */
 	public GenericWebSseEventFactoryParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement element, TypeMirror eventDataType, SseEventFactoryKind eventFactoryKind, String dataMediaType) {
 		super(name, reporter, element, eventDataType, true);

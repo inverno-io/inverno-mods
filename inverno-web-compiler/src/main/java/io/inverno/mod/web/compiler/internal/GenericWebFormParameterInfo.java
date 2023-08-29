@@ -38,13 +38,12 @@ class GenericWebFormParameterInfo extends AbstractWebParameterInfo implements We
 	 * <p>
 	 * Creates a generic web form parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param name             the parameter qualified name
 	 * @param reporter         the parameter reporter
 	 * @param parameterElement the parameter element
 	 * @param type             the parameter type
-	 * @param required         true to indicate a required parameter, false
-	 *                         otherwise
+	 * @param required         true to indicate a required parameter, false otherwise
 	 */
 	public GenericWebFormParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter,	VariableElement parameterElement, TypeMirror type, boolean required) {
 		super(name, reporter, parameterElement, type, required);

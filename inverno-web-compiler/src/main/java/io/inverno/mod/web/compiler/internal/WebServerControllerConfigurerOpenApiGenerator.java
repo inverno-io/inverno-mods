@@ -62,10 +62,9 @@ import javax.lang.model.type.TypeMirror;
 
 /**
  * <p>
- * A {@link WebServerControllerConfigurerInfoVisitor} implementation used to generates an
- * Open API specification for the web controllers defined in an Inverno module.
+ * A {@link WebServerControllerConfigurerInfoVisitor} implementation used to generates an Open API specification for the web controllers defined in an Inverno module.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */

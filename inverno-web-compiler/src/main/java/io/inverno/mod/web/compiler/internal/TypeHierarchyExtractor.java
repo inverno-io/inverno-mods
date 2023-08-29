@@ -26,19 +26,14 @@ import javax.lang.model.util.Types;
 
 /**
  * <p>
- * A type hierarchy extractor is used to extract all the type elements
- * implemented or extended by a given type and order them according to a
- * particular distance function.
+ * A type hierarchy extractor is used to extract all the type elements implemented or extended by a given type and order them according to a particular distance function.
  * </p>
- * 
+ *
  * <p>
- * The distance from a type {@code T} to type {@code U} is given by the number
- * of indirection between them, that is to say the number of {@code extends} or
- * {@code implements} keywords one should go through to get to {@code U} from
- * {@code T}. If there is a tie, the type accessed with the biggest number of
- * {@code extends} wins.
+ * The distance from a type {@code T} to type {@code U} is given by the number of indirection between them, that is to say the number of {@code extends} or {@code implements} keywords one should go
+ * through to get to {@code U} from {@code T}. If there is a tie, the type accessed with the biggest number of {@code extends} wins.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
@@ -61,8 +56,9 @@ class TypeHierarchyExtractor {
 	 * <p>
 	 * Extracts the hierarchy of the specified type element.
 	 * </p>
-	 * 
+	 *
 	 * @param typeElement a type element
+	 *
 	 * @return a list of type elements ordered from the nearest to further
 	 */
 	public List<TypeElement> extractTypeHierarchy(TypeElement typeElement) {

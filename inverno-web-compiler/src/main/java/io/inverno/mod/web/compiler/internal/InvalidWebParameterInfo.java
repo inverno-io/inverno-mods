@@ -34,12 +34,11 @@ class InvalidWebParameterInfo extends AbstractWebParameterInfo {
 	 * <p>
 	 * Creates an invalid web parameter info.
 	 * </p>
-	 * 
+	 *
 	 * @param name             the parameter qualified name
 	 * @param reporter         the parameter reporter
 	 * @param parameterElement the parameter element
-	 * @param required         true to indicate a required parameter, false
-	 *                         otherwise
+	 * @param required         true to indicate a required parameter, false otherwise
 	 */
 	public InvalidWebParameterInfo(WebParameterQualifiedName name, ReporterInfo reporter, VariableElement parameterElement, boolean required) {
 		super(name, reporter, parameterElement, parameterElement.asType(), required);

@@ -17,10 +17,9 @@ package io.inverno.mod.web.compiler.spi;
 
 /**
  * <p>
- * A web router configurer info visitor is used to process a web router
- * configurer info.
+ * A web router configurer info visitor is used to process a web router configurer info.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
@@ -35,7 +34,7 @@ public interface WebServerControllerConfigurerInfoVisitor<R, P> {
 	 * </p>
 	 *
 	 * @param controllerConfigurerInfo the info to visit
-	 * @param p					       a visitor parameter
+	 * @param p	                       a visitor parameter
 	 *
 	 * @return a visitor result
 	 */

@@ -49,7 +49,7 @@ public interface WebResponseBodyInfo {
 		 */
 		RAW,
 		/**
-		 * {@link CharSequence} is assignable from the actual response body type. 
+		 * {@link CharSequence} is assignable from the actual response body type.
 		 */
 		CHARSEQUENCE,
 		/**
@@ -57,13 +57,11 @@ public interface WebResponseBodyInfo {
 		 */
 		SSE_RAW,
 		/**
-		 * {@link CharSequence} is assignable from the actual response body type. 
+		 * {@link CharSequence} is assignable from the actual response body type.
 		 */
 		SSE_CHARSEQUENCE,
 		/**
-		 * The actual response body type is {@link WebResponseBody.SseEncoder.Event
-		 * WebResponseBody.SseEncoder.Event&lt;U&gt;} where {@code U} is not a
-		 * {@link ByteBuf}.
+		 * The actual response body type is {@link WebResponseBody.SseEncoder.EventWebResponseBody.SseEncoder.Event&lt;U&gt;} where {@code U} is not a {@link ByteBuf}.
 		 */
 		SSE_ENCODED,
 		/**
@@ -94,18 +92,15 @@ public interface WebResponseBodyInfo {
 		 */
 		NONE,
 		/**
-		 * The body is of type {@link Publisher Publisher&lt;T&gt;} where {@code T}
-		 * represents the actual response body type.
+		 * The body is of type {@link Publisher Publisher&lt;T&gt;} where {@code T} represents the actual response body type.
 		 */
 		PUBLISHER,
 		/**
-		 * The body is of type {@link Mono Mono&lt;T&gt;} where {@code T} represents the
-		 * actual response body type.
+		 * The body is of type {@link Mono Mono&lt;T&gt;} where {@code T} represents the actual response body type.
 		 */
 		ONE,
 		/**
-		 * The body is of type {@link Flux Flux&lt;T&gt;} where {@code T} represents the
-		 * actual response body type.
+		 * The body is of type {@link Flux Flux&lt;T&gt;} where {@code T} represents the actual response body type.
 		 */
 		MANY;
 	}
@@ -114,12 +109,11 @@ public interface WebResponseBodyInfo {
 	 * <p>
 	 * Returns the actual type of the response body.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * When the response body is reactive, this corresponds to the type argument of
-	 * the reactive type.
+	 * When the response body is reactive, this corresponds to the type argument of the reactive type.
 	 * </p>
-	 * 
+	 *
 	 * @return the actual body type
 	 */
 	TypeMirror getType();

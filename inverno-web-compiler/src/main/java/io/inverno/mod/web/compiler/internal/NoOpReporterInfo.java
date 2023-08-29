@@ -73,5 +73,4 @@ class NoOpReporterInfo implements ReporterInfo {
 	public void warning(String message) {
 
 	}
-
 }

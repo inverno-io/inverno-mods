@@ -31,14 +31,11 @@ public class WebConfigurerQualifiedName extends BeanQualifiedName {
 	
 	/**
 	 * <p>
-	 * Creates a web router configurer qualified name with the specified bean
-	 * qualified name and class name.
+	 * Creates a web router configurer qualified name with the specified bean qualified name and class name.
 	 * </p>
-	 * 
-	 * @param beanQName the bean qualified name of the bean defining the web router
-	 *                  configurer
-	 * @param className the canonical class name of the class defining the web
-	 *                  router configurer
+	 *
+	 * @param beanQName the bean qualified name of the bean defining the web router configurer
+	 * @param className the canonical class name of the class defining the web router configurer
 	 */
 	public WebConfigurerQualifiedName(BeanQualifiedName beanQName, String className) {
 		super(beanQName.getModuleQName(), beanQName.getBeanName());
