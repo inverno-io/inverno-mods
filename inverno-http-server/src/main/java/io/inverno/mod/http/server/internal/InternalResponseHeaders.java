@@ -33,9 +33,8 @@ public interface InternalResponseHeaders extends OutboundResponseHeaders {
 	 * <p>
 	 * Defines whether headers have been sent to the client.
 	 * </p>
-	 * 
-	 * @param written true to indicates the headers have been written, false
-	 *                otherwise
+	 *
+	 * @param written true to indicates the headers have been written, false otherwise
 	 */
 	void setWritten(boolean written);
 
@@ -53,9 +52,6 @@ public interface InternalResponseHeaders extends OutboundResponseHeaders {
 	 * Returns the value of the header with the specified name as a char sequence.
 	 * </p>
 	 * 
-	 * <p>
-	 * </p>
-	 * 
 	 * @param name the header name
 	 * 
 	 * @return the header value or null if there's no header with the specified name
@@ -66,17 +62,16 @@ public interface InternalResponseHeaders extends OutboundResponseHeaders {
 	 * <p>
 	 * Returns the values of all headers with the specified name as char sequences.
 	 * </p>
-	 * 
+	 *
 	 * @param name a header name
-	 * 
-	 * @return a list of header values or an empty list if there's no header with
-	 *         the specified name
+	 *
+	 * @return a list of header values or an empty list if there's no header with the specified name
 	 */
 	List<CharSequence> getAllCharSequence(CharSequence name);
 
 	/**
 	 * <p>
-	 * Returns all headers in the response.
+	 * Returns all headers.
 	 * </p>
 	 * 
 	 * @return a list of header entries or an empty list if there's no header

@@ -43,10 +43,9 @@ import java.util.function.Supplier;
 
 /**
  * <p>
- * A factory to create {@link Http1xChannelHandler} when a HTTP2 channel is
- * initialized.
+ * A factory to create {@link Http1xChannelHandler} when a HTTP2 channel is initialized.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */

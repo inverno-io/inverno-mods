@@ -38,8 +38,6 @@ import io.netty.channel.ChannelHandlerContext;
  */
 class Http2Request extends AbstractRequest {
 
-	private static final String PROTOCOL = "HTTP/2";
-	
 	private URIBuilder pathBuilder;
 	
 	private Method method;
@@ -70,11 +68,6 @@ class Http2Request extends AbstractRequest {
 				.orElseThrow(() -> new IllegalStateException("Request has no :path"));
 		}
 		return this.pathBuilder;
-	}
-	
-	@Override
-	public String getProtocol() {
-		return PROTOCOL;
 	}
 	
 	@Override

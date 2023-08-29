@@ -55,13 +55,12 @@ class Http1xRequest extends AbstractRequest {
 	 * <p>
 	 * Creates a HTTP1.x server request.
 	 * </p>
-	 * 
+	 *
 	 * @param context               the channel handler context
 	 * @param httpRequest           the underlying HTTP request
 	 * @param requestHeaders        the HTTP1.x request headers
 	 * @param parameterConverter    a string object converter
-	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body
-	 *                              decoder
+	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 */
 	public Http1xRequest(ChannelHandlerContext context, HttpRequest httpRequest, InboundRequestHeaders requestHeaders, ObjectConverter<String> parameterConverter, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
@@ -90,11 +89,6 @@ class Http1xRequest extends AbstractRequest {
 		// invoke the exchange handler which is supposed to create the body
 		this.body();
 		return super.data();
-	}
-	
-	@Override
-	public String getProtocol() {
-		return this.underlyingRequest.protocolVersion().text();
 	}
 	
 	@Override

@@ -39,17 +39,15 @@ import reactor.core.publisher.SignalType;
 
 /**
  * <p>
- * A multipart/form-data payload decoder implementation as defined by
- * <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
+ * A multipart/form-data payload decoder implementation as defined by <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 /*
  * Usefull:
  * - https://www.w3.org/Protocols/rfc1341/7_2_Multipart.html
- * 
  */
 @Bean(visibility = Visibility.PRIVATE)
 public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
@@ -244,13 +242,14 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 				}
 			}
 		}
-		
-		if(context.getPart().getData().isPresent()) {
+
+		int dataLength = (delimiterReaderIndex != null ? delimiterReaderIndex : buffer.readerIndex()) - readerIndex;
+		if(dataLength > 0 && context.getPart().getData().isPresent()) {
 			FluxSink<ByteBuf> partDataEmitter = context.getPart().getData().get();
-			if(readerIndex < buffer.readerIndex()) {
-				partDataEmitter.next(buffer.retainedSlice(readerIndex, buffer.readerIndex() - readerIndex));
-			}
+			partDataEmitter.next(buffer.retainedSlice(readerIndex, dataLength));
 		}
+		buffer.readerIndex(readerIndex + dataLength);
+		
 		return null;
 	}
 	
@@ -371,9 +370,7 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 			}
 			this.mixedDelimiter = "--" + partContentType.getBoundary();
 			this.part = null;
-			if(this.decodedHeaders != null) {
-				this.decodedHeaders.clear();
-			}
+			this.decodedHeaders = null;
 		}
 		
 		public boolean isMultipartMixed() {
@@ -383,9 +380,7 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 		public void endMultipartMixed() {
 			this.mixedDelimiter = null;
 			this.part = null;
-			if(this.decodedHeaders != null) {
-				this.decodedHeaders.clear();
-			}
+			this.decodedHeaders = null;
 		}
 		
 		public void startPart(GenericPart part) {
@@ -401,9 +396,7 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 			if(this.part != null) {
 				this.part.getData().ifPresent(emitter -> emitter.complete());
 				this.part = null;
-				if(this.decodedHeaders != null) {
-					this.decodedHeaders.clear();
-				}
+				this.decodedHeaders = null;
 			}
 		}
 		
@@ -446,26 +439,28 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 		
 		@Override
 		protected void hookOnNext(ByteBuf value) {
+			final ByteBuf buffer;
 			try {
-				final ByteBuf buffer;
 				if(this.keepBuffer != null && this.keepBuffer.isReadable()) {
 					buffer = Unpooled.wrappedBuffer(this.keepBuffer, value);
 				}
 				else {
 					buffer = value;
 				}
-				
-				try {
-					DecoderTask currentTask = this.task;
-					while( (currentTask = currentTask.run(buffer, this)) != null) {
-						this.task = currentTask;
-					}
+			}
+			catch(Exception e) {
+				this.emitter.error(e);
+				this.cancel();
+				value.release();
+				return;
+			}
+			
+			try {
+				DecoderTask currentTask = this.task;
+				while( (currentTask = currentTask.run(buffer, this)) != null) {
+					this.task = currentTask;
 				}
-				catch (Exception e) {
-					this.emitter.error(e);
-					this.cancel();
-				}
-				
+
 				if(buffer.isReadable()) {
 					if(this.keepBuffer != null) {
 						this.keepBuffer.discardReadBytes();
@@ -476,11 +471,17 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 						this.keepBuffer.writeBytes(buffer);
 					}
 				}
+				else {
+					// keepBuffer is released when releasing the composite buffer in the finally block 
+					this.keepBuffer = null;
+				}
+			}
+			catch (Throwable e) {
+				this.emitter.error(e);
+				this.cancel();
 			}
 			finally {
-				// TODO This hasn't been tested
-				// In case there are remaining bytes, these are not released so we must release them in some ways
-				value.release();
+				buffer.release();
 			}
 		}
 		

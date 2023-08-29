@@ -37,14 +37,12 @@ class UrlEncodedParameter extends GenericParameter {
 	 * <p>
 	 * Creates a URL encoded parameter.
 	 * </p>
-	 * 
+	 *
 	 * @param parameterConverter a string object converter
 	 * @param name               the parameter name
 	 * @param value              the parameter value
-	 * @param partial            true to indicate a partial parameter, false
-	 *                           otherwise
-	 * @param last               true if the parameter is the last parameter in the
-	 *                           payload
+	 * @param partial            true to indicate a partial parameter, false otherwise
+	 * @param last               true if the parameter is the last parameter in the payload
 	 */
 	public UrlEncodedParameter(ObjectConverter<String> parameterConverter, String name, String value, boolean partial, boolean last) {
 		super(name, value, parameterConverter);

@@ -26,15 +26,15 @@ import reactor.core.publisher.Mono;
  * <p>
  * Represents an HTTP server exchange (request/response) between a client and a server.
  * </p>
- *
- * <p>
- * The HTTP server attaches an exchange context provided by {@link ServerController#createContext()} when an exchange is created.
- * </p>
  * 
  * <p>
- * An HTTP server exchange is processed in the {@link ServerController} of the HTTP server. 
+ * An HTTP server exchange is created when a {@link Request} is received from a client by the HTTP server which then processes the exchange in the {@link ServerController}.
  * </p>
  *
+ * <p>
+ * When creating the exchange, the HTTP server also invokes {@link ServerController#createContext()} to create an exchange context and attach it to the new server exchange.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *
@@ -59,7 +59,7 @@ public interface Exchange<A extends ExchangeContext> extends BaseExchange<A> {
 	 * 
 	 * <p>
 	 * If the exchange cannot upgrade to the WebSocket protocol, an empty optional shall be returned. For instance, if the state of the exchange prevents the upgrade (e.g. error exchange) or if the
-	 * underlying HTTP protocol does not support the upgrade operation, an empty optional shall be returned. Currently only HTTP/1.1 can upgrade to the WebSocket protocol.
+	 * underlying HTTP protocol does not support the upgrade operation. Currently only HTTP/1.1 can upgrade to the WebSocket protocol.
 	 * </p>
 	 *
 	 * @param subProtocols a list of supported subprotocols negotiated during the handshake
@@ -70,21 +70,22 @@ public interface Exchange<A extends ExchangeContext> extends BaseExchange<A> {
 	
 	/**
 	 * <p>
-	 * Specifies a finalizer to the exchange which completes once the exchange is fully processed.
+	 * Specifies a finalizer which completes once the exchange is fully processed.
 	 * </p>
 	 *
 	 * <p>
-	 * A exchange is considered fully processed when the last chunk of the response has been fully sent to the client or following an error.
+	 * An exchange is considered fully processed when the last chunk of the response has been fully sent to the client or following a terminal error.
 	 * </p>
 	 *
 	 * <p>
-	 * Note that using a finalizer actually impacts HTTP pipelining since the server wait for the response to be fully sent to the client before
-	 * processing following requests.
+	 * Note that using a finalizer actually impacts HTTP pipelining since the server wait for the response to be fully sent to the client before processing subsequent requests.
+	 * </p>
+	 * 
+	 * <p>
+	 * When invoked multiple time this method chains the finalizer one after the other.
 	 * </p>
 	 *
 	 * @param finalizer a finalizer
-	 *
-	 * @return the exchange
 	 */
-	Exchange<A> finalizer(Mono<Void> finalizer);
+	void finalizer(Mono<Void> finalizer);
 }

@@ -48,10 +48,9 @@ import java.util.List;
  * <p>
  * HTTP/2 over cleartext upgrade handler.
  * </p>
- * 
+ *
  * <p>
- * Implements HTTP/2 over cleartext upgrade protocol as defined by
- * <a href="https://tools.ietf.org/html/rfc7540#section-3.2">RFC 7540 Section 3.2</a>.
+ * Implements HTTP/2 over cleartext upgrade protocol as defined by <a href="https://tools.ietf.org/html/rfc7540#section-3.2">RFC 7540 Section 3.2</a>.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

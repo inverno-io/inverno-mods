@@ -27,12 +27,11 @@ import io.netty.handler.codec.http.HttpVersion;
  * <p>
  * HTTP1.x {@link HttpRequestDecoder} implementation.
  * </p>
- * 
+ *
  * <p>
- * This implementation basically substitutes a {@link LinkedHttpHeaders} for
- * Netty's {@link DefaultHttpHeaders} in order to increase performances.
+ * This implementation basically substitutes a {@link LinkedHttpHeaders} for Netty's {@link DefaultHttpHeaders} in order to increase performances.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */

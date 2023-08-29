@@ -33,13 +33,11 @@ import java.util.stream.Collectors;
  * <p>
  * HTTP1.x response trailers implementation.
  * </p>
- * 
+ *
  * <p>
- * This implementation uses {@link LinkedHttpHeaders} instead of Netty's
- * {@link DefaultHttpHeaders} as internal headers in order to increase
- * performances.
+ * This implementation uses {@link LinkedHttpHeaders} instead of Netty's {@link DefaultHttpHeaders} as internal headers in order to increase performances.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */

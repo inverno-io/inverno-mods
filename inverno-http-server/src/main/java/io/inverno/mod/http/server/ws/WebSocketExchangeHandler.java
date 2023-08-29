@@ -16,6 +16,7 @@
 package io.inverno.mod.http.server.ws;
 
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.ws.WebSocketException;
 import reactor.core.publisher.Mono;
 
 /**

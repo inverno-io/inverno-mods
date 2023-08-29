@@ -24,16 +24,13 @@ import reactor.core.publisher.Mono;
  * </p>
  *
  * <p>
- * Multiple exchange interceptors can be chained on an exchange handler invoking the
- * {@link ReactiveExchangeHandler#intercept(io.inverno.mod.http.server.ExchangeInterceptor)} method in order to form an exchange handling chain.
+ * Multiple exchange interceptors can be chained on an exchange handler invoking {@link ReactiveExchangeHandler#intercept(io.inverno.mod.http.server.ExchangeInterceptor)} method multiple times in
+ * order to form an exchange handling chain.
  * </p>
  *
  * <p>
- * An exchange interceptor can perform some processing or instrument the exchange prior to the actual exchange processing by the exchange handler.
- * </p>
- *
- * <p>
- * It can also process the exchange and stop the exhange handling chain by returning an empty Mono in which case the exchange handler is not invoked.
+ * An exchange interceptor is meant to perform extra processing or instrumentation on the exchange prior to the actual exchange processing by the exchange handler. But it can also fully process the
+ * exchange and stop the exchange handling chain by returning an empty Mono in which case the exchange handler will not be invoked.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

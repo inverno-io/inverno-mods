@@ -16,6 +16,7 @@
 package io.inverno.mod.http.server;
 
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.server.ws.WebSocket;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
 import java.util.Optional;
@@ -28,8 +29,8 @@ import reactor.core.publisher.Mono;
  * </p>
  *
  * <p>
- * The HTTP server creates a failing exchange when an exception is thrown during the normal processing of a server {@link Exchange}. They are handled
- * in an {@link ExchangeHandler} that formats the actual response returned to the client.
+ * The HTTP server creates a failing exchange when an exception is thrown during the normal processing of a server {@link Exchange}. It is handled in an {@link ExchangeHandler} used to format the
+ * actual response returned to the client.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -74,7 +75,12 @@ public interface ErrorExchange<A extends ExchangeContext> extends Exchange<A> {
 	default ErrorExchange<A> mapError(Function<? super Throwable, ? extends Throwable> errorMapper) {
 		ErrorExchange<A> thisExchange = this;
 		return new ErrorExchange<A>() {
-
+			
+			@Override
+			public HttpVersion getProtocol() {
+				return thisExchange.getProtocol();
+			}
+			
 			@Override
 			public Request request() {
 				return thisExchange.request();
@@ -91,9 +97,8 @@ public interface ErrorExchange<A extends ExchangeContext> extends Exchange<A> {
 			}
 			
 			@Override
-			public ErrorExchange<A> finalizer(Mono<Void> finalizer) {
+			public void finalizer(Mono<Void> finalizer) {
 				thisExchange.finalizer(finalizer);
-				return this;
 			}
 
 			@Override

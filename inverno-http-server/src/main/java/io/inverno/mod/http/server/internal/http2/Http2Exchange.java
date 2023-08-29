@@ -17,6 +17,7 @@ package io.inverno.mod.http.server.internal.http2;
 
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
@@ -42,15 +43,14 @@ import java.util.Optional;
  * <p>
  * HTTP/2 {@link Exchange} implementation.
  * </p>
- * 
+ *
  * <p>
- * This implementation provides the logic to send HTTP/2 response data to the
- * client.
+ * This implementation provides the logic to send HTTP/2 response data to the client.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see AbstractExchange
  */
 class Http2Exchange extends AbstractExchange {
@@ -94,6 +94,11 @@ class Http2Exchange extends AbstractExchange {
 		this.parameterConverter = parameterConverter;
 	}
 
+	@Override
+	public HttpVersion getProtocol() {
+		return HttpVersion.HTTP_2_0;
+	}
+
 	/**
 	 * <p>
 	 * Returns an empty optional since HTTP/2 does not support WebSocket upgrade.
@@ -111,9 +116,8 @@ class Http2Exchange extends AbstractExchange {
 	 * <p>
 	 * Sets the content encoding of the response negotiated from the request.
 	 * </p>
-	 * 
-	 * @param contentEncoding the target content encoding of the response resolved
-	 *                        from the {@code accept-encoding} header of the request
+	 *
+	 * @param contentEncoding the target content encoding of the response resolved from the {@code accept-encoding} header of the request
 	 */
 	public void setContentEncoding(String contentEncoding) {
 		if(contentEncoding != null) {
@@ -123,7 +127,7 @@ class Http2Exchange extends AbstractExchange {
 	
 	@Override
 	protected ErrorExchange<ExchangeContext> createErrorExchange(Throwable error) {
-		return new GenericErrorExchange(this.request, new Http2Response(this.context, this.stream, this.encoder, this.headerService, this.parameterConverter), this.finalizer, error, this.exchangeContext);
+		return new GenericErrorExchange(this.getProtocol(), this.request, new Http2Response(this.context, this.stream, this.encoder, this.headerService, this.parameterConverter), this.finalizer, error, this.exchangeContext);
 	}
 	
 	@Override

@@ -20,10 +20,9 @@ import io.netty.handler.codec.http.HttpContentCompressor;
 
 /**
  * <p>
- * Used to determine the target content encoding of a response based on the
- * {@code accept-encoding} header of a request.
+ * Used to determine the target content encoding of a response based on the {@code accept-encoding} header of a request.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
  */

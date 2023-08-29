@@ -1,8 +1,3 @@
-import io.netty.buffer.Unpooled;
-import io.inverno.core.v1.Application;
-import io.inverno.mod.base.Charsets;
-import io.inverno.mod.http.base.Parameter;
-
 /*
  * Copyright 2020 Jeremy KUHN
  *
@@ -18,6 +13,10 @@ import io.inverno.mod.http.base.Parameter;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import io.netty.buffer.Unpooled;
+import io.inverno.core.v1.Application;
+import io.inverno.mod.base.Charsets;
+import io.inverno.mod.http.base.Parameter;
 
 /**
  * <p>
@@ -34,19 +33,15 @@ import io.inverno.mod.http.base.Parameter;
  * <dt><b>netService (required)</b></dt>
  * <dd>the Net service used to create the HTTP server</dd>
  * <dt><b>resourceService (required)</b></dt>
- * <dd>the resource service used to load resources required by the HTTP server
- * (eg. key store...)</dd>
- * <dt><b>rootHandler</b></dt>
- * <dd>override the default HTTP server root handler used to process server
- * exchanges</dd>
- * <dt><b>errorHandler</b></dt>
- * <dd>override the default HTTP server error handler used to process error
- * exchanges</dd>
+ * <dd>the resource service used to load resources required by the HTTP server (eg. key store...)</dd>
+ * <dt><b>controller</b></dt>
+ * <dd>override the default HTTP server controller used to process server exchanges</dd>
+ * <dt><b>headerCodecs</b></dt>
+ * <dd>custom header codecs</dd>
  * <dt><b>parameterConverter</b></dt>
- * <dd>override the default parameter converter used in {@link Parameter}
- * instances to convert their values</dd>
+ * <dd>override the default parameter converter used in {@link Parameter} instances to convert their values</dd>
  * </dl>
- * 
+ *
  * <p>
  * It exposes the following beans:
  * </p>
@@ -54,30 +49,27 @@ import io.inverno.mod.http.base.Parameter;
  * <dl>
  * <dt><b>httpServerConfiguration</b></dt>
  * <dd>the HTTP server module configuration</dd>
- * <dt><b>rootHandler</b></dt>
- * <dd>the HTTP server root exchange handler</dd>
- * <dt><b>errorHandler</b></dt>
- * <dd>the HTTP server error exchange handler</dd>
+ * <dt><b>controller</b></dt>
+ * <dd>the HTTP server controller</dd>
  * </dl>
  * 
  * <p>
- * A simple HTTP server using the default configuration can be started as
- * follows:
+ * A simple HTTP server using the default configuration can be started as follows:
  * </p>
- * 
+ *
  * <pre>{@code
  * NetService netService = ...;
  * ResourceService resourceService = ...;
  *
  * Application.with(new Server.Builder(netService, resourceService)
  *     .setHttpServerConfiguration(HttpServerConfigurationLoader.load(conf -> conf.server_port(8080)))
- *     .setRootHandler(
+ *     .setController(ServerController.from(
  *         exchange -> exchange
  *             .response()
  *             .body()
  *             .raw()
  *             .value(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello, world!", Charsets.DEFAULT)))
- *      )
+ *      ))
  * ).run();
  * }</pre>
  * 

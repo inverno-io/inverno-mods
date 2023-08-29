@@ -16,9 +16,9 @@
 package io.inverno.mod.http.server.internal.http1x;
 
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.internal.ws.GenericWebSocketFrame;
+import io.inverno.mod.http.base.internal.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.server.HttpServerConfiguration;
-import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketFrame;
-import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.server.internal.http1x.ws.WebSocketProtocolHandler;
 import io.inverno.mod.http.server.ws.WebSocket;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
@@ -109,12 +109,12 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 	 * <p>
 	 * Setups the channel pipeline to handle the WebSocket upgrade and opening handshake.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The resulting mono completes once the opening handshake is completed or fails if the handshake failed. It is used to notify the original {@link Http1xExchange} which restores the pipeline (see {@link #restorePipeline()
-	 * }) in case the upgrade fails.
+	 * The resulting mono completes once the opening handshake is completed or fails if the handshake failed. It is used to notify the original {@link Http1xExchange} which restores the pipeline (see 
+	 * {@link #restorePipeline() }) in case the upgrade fails.
 	 * </p>
-	 * 
+	 *
 	 * @return a Mono that completes or fails with the opening handshake
 	 */
 	Mono<Void> handshake() {

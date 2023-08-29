@@ -20,8 +20,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A reactive server controller defines how server exchanges and server error exchanges are handled, following reactive principles, within the HTTP
- * server.
+ * A reactive server controller defines how exchanges and error exchanges must be handled within the HTTP server following reactive principles.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -39,8 +38,7 @@ public interface ReactiveServerController<A extends ExchangeContext, B extends E
 	 * </p>
 	 *
 	 * <p>
-	 * The HTTP server subscribes to the returned Mono and after completion, subscribes to the exchange response body data stream to respond to the
-	 * client.
+	 * The HTTP server subscribes to the returned Mono and, on completion, subscribes to the exchange response body data publisher to respond to the client.
 	 * </p>
 	 *
 	 * @param exchange the exchange to process
@@ -57,8 +55,8 @@ public interface ReactiveServerController<A extends ExchangeContext, B extends E
 	 * </p>
 	 *
 	 * <p>
-	 * In case of error, the HTTP server creates an error exchange from the original exchange, subscribes to the returned Mono and after completion,
-	 * subscribes to the exchange response body data stream to respond to the client.
+	 * In case of error, the HTTP server creates an error exchange from the original exchange, subscribes to the returned Mono and on completion, subscribes to the error exchange response body data
+	 * publisher to respond to the client.
 	 * </p>
 	 *
 	 * @param errorExchange the error exchange to process

@@ -21,22 +21,21 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.internal.ws.GenericWebSocketFrame;
+import io.inverno.mod.http.base.internal.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.ServerController;
-import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketFrame;
-import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import java.util.function.Supplier;
 
 /**
  * <p>
- * A factory to create {@link Http1xChannelHandler} when a HTTP1.x channel is
- * initialized.
+ * A factory to create {@link Http1xChannelHandler} when a HTTP1.x channel is initialized.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
@@ -80,8 +79,8 @@ public class Http1xChannelHandlerFactory implements Supplier<Http1xChannelHandle
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
 		
-		this.webSocketFrameFactory = new GenericWebSocketFrame.GenericFactory(configuration);
-		this.webSocketMessageFactory = new GenericWebSocketMessage.GenericFactory(configuration);
+		this.webSocketFrameFactory = new GenericWebSocketFrame.GenericFactory(configuration.ws_max_frame_size());
+		this.webSocketMessageFactory = new GenericWebSocketMessage.GenericFactory(configuration.ws_max_frame_size());
 	}
 
 	@Override

@@ -47,15 +47,6 @@ public interface Request extends BaseRequest {
 	
 	/**
 	 * <p>
-	 * Returns the protocol of the request (eg. HTTP/1.1).
-	 * </p>
-	 * 
-	 * @return the protocol
-	 */
-	String getProtocol();
-	
-	/**
-	 * <p>
 	 * Returns the name of the scheme used to send the request (eg. http, https...).
 	 * </p>
 	 * 

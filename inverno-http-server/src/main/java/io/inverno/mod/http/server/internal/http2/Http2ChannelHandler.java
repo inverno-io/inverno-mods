@@ -53,12 +53,11 @@ import reactor.core.publisher.Sinks.EmitResult;
  * <p>
  * HTTP/2 channel handler implementation.
  * </p>
- * 
+ *
  * <p>
- * This is the entry point of a HTTP client connection to the HTTP server using
- * version 2 of the HTTP protocol.
+ * This is the entry point of a HTTP client connection to the HTTP server using version 2 of the HTTP protocol.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */

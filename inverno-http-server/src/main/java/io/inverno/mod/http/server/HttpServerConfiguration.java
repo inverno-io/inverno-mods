@@ -65,8 +65,7 @@ public interface HttpServerConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * If not specified, the number of thread allocated to the root event loop group
-	 * shall be used.
+	 * If not specified, the number of thread allocated to the root event loop group shall be used.
 	 * </p>
 	 * 
 	 * @return the number of threads to allocate
@@ -298,7 +297,40 @@ public interface HttpServerConfiguration {
 	default int compression_zstd_maxEncodeSize() {
 		return 1 << 10 + 0x0F;
 	}
+	
+	/**
+	 * <p>
+	 * The path to the key store.
+	 * </p>
+	 * 
+	 * @return the key store URI
+	 */
+	URI key_store();
+	
+	/**
+	 * <p>
+	 * The type of key store.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code JKS}.
+	 * </p>
+	 * 
+	 * @return the key store type
+	 */
+	default String key_store_type() {
+		return "JKS";
+	}
 
+	/**
+	 * <p>
+	 * The password of the key store.
+	 * </p>
+	 * 
+	 * @return a password
+	 */
+	String key_store_password();
+	
 	/**
 	 * <p>
 	 * Enables/Disables HTTPS.
@@ -329,6 +361,33 @@ public interface HttpServerConfiguration {
 		return 10000;
 	}
 	
+	/**
+	 * <p>
+	 * The alias of the key in the key store.
+	 * </p>
+	 * 
+	 * @return a key alias
+	 */
+//	String key_alias();
+
+	/**
+	 * <p>
+	 * The list of ciphers to include.
+	 * </p>
+	 * 
+	 * @return a list of ciphers
+	 */
+	String[] tls_ciphers_includes();
+
+	/**
+	 * <p>
+	 * The list of ciphers to exclude.
+	 * </p>
+	 * 
+	 * @return a list of ciphers
+	 */
+	String[] tls_ciphers_excludes();
+
 	/**
 	 * <p>
 	 * Enables/Disables H2C.
@@ -368,67 +427,7 @@ public interface HttpServerConfiguration {
 	default boolean h2_enabled() {
 		return true;
 	}
-
-	/**
-	 * <p>
-	 * The path to the key store.
-	 * </p>
-	 * 
-	 * @return the key store URI
-	 */
-	URI key_store();
 	
-	/**
-	 * <p>
-	 * The type of key store.
-	 * </p>
-	 * 
-	 * <p>
-	 * Defaults to {@code JKS}.
-	 * </p>
-	 * 
-	 * @return the key store type
-	 */
-	default String key_store_type() {
-		return "JKS";
-	}
-
-	/**
-	 * <p>
-	 * The password of the key store.
-	 * </p>
-	 * 
-	 * @return a password
-	 */
-	String key_store_password();
-
-	/**
-	 * <p>
-	 * The alias of the key in the key store.
-	 * </p>
-	 * 
-	 * @return a key alias
-	 */
-//	String key_alias();
-
-	/**
-	 * <p>
-	 * The list of ciphers to include.
-	 * </p>
-	 * 
-	 * @return a list of ciphers
-	 */
-	String[] tls_ciphers_includes();
-
-	/**
-	 * <p>
-	 * The list of ciphers to exclude.
-	 * </p>
-	 * 
-	 * @return a list of ciphers
-	 */
-	String[] tls_ciphers_excludes();
-
 	/**
 	 * <p>
 	 * The HTTP/2 header table size.

@@ -32,7 +32,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import java.net.SocketAddress;
 import java.util.Optional;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
 /**
@@ -51,20 +50,15 @@ public abstract class AbstractRequest implements Request {
 	protected final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
 	protected final MultipartDecoder<Part> multipartBodyDecoder;
 	
-	protected GenericQueryParameters queryParameters;
-	
-	private Optional<RequestBody> requestBody;
-	private Optional<Sinks.Many<ByteBuf>> data;
-	private boolean subscribed;
+	private GenericRequestBody requestBody;
 	
 	private String pathAbsolute;
 	private String queryString;
+	protected GenericQueryParameters queryParameters;
 	
 	/**
 	 * <p>
-	 * Creates a request with the specified channel handler context, request
-	 * headers, parameter value converter, URL encoded body decoder and multipart
-	 * body decoder.
+	 * Creates a request with the specified channel handler context, request headers, parameter value converter, URL encoded body decoder and multipart body decoder.
 	 * </p>
 	 * 
 	 * @param context               the channel handler context
@@ -84,7 +78,6 @@ public abstract class AbstractRequest implements Request {
 		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
-		this.data = Optional.empty();
 	}
 
 	/**
@@ -92,7 +85,9 @@ public abstract class AbstractRequest implements Request {
 	 * Returns or creates the primary path builder created from the request path.
 	 * </p>
 	 * 
-	 * <p>The primary path builder is used to extract absolute path, query parameters and query string and to create the path builder returned by  
+	 * <p>
+	 * The primary path builder is used to extract absolute path, query parameters and query string and to create the path builder returned by {@link #getPathBuilder() }.
+	 * </p>
 	 * 
 	 * @return the path builder
 	 */
@@ -158,43 +153,32 @@ public abstract class AbstractRequest implements Request {
 				case PATCH:
 				case DELETE: {
 					if(this.requestBody == null) {
-						// TODO deal with backpressure using a custom queue: if the queue reach a given threshold we should suspend the read on the channel: this.context.channel().config().setAutoRead(false)
-						// and resume when this flux is actually consumed (doOnRequest? this might impact performance)
-						Sinks.Many<ByteBuf> dataSink = Sinks.many().unicast().onBackpressureBuffer();
-						Flux<ByteBuf> requestBodyData = dataSink.asFlux()
-							.doOnSubscribe(ign -> this.subscribed = true)
-							.doOnDiscard(ByteBuf.class, ByteBuf::release);
-
-						this.data = Optional.of(dataSink);
-						
-						this.requestBody = Optional.of(new GenericRequestBody(
+						this.requestBody = new GenericRequestBody(
 							this.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE),
 							this.urlEncodedBodyDecoder, 
-							this.multipartBodyDecoder, 
-							requestBodyData
-						));
+							this.multipartBodyDecoder
+						);
 					}
 					break;
 				}
 				default: {
-					this.requestBody = Optional.empty();
+					this.requestBody = null;
 					break;
 				}
 			}
 		}
-		return this.requestBody;
+		return Optional.ofNullable(this.requestBody);
 	}
 
 	/**
 	 * <p>
 	 * Returns the request payload data sink.
 	 * </p>
-	 * 
-	 * @return an optional returning the payload data sink or an empty optional if
-	 *         the request has no body
+	 *
+	 * @return an optional returning the payload data sink or an empty optional if the request has no body
 	 */
 	public Optional<Sinks.Many<ByteBuf>> data() {
-		return this.data;
+		return Optional.ofNullable(this.requestBody).map(body -> body.dataSink);
 	}
 	
 	/**
@@ -203,19 +187,8 @@ public abstract class AbstractRequest implements Request {
 	 * </p>
 	 */
 	public void dispose() {
-		this.data.ifPresent(dataSink -> {
-			dataSink.tryEmitComplete();
-			if(!this.subscribed) {
-				// Try to drain and release buffered data 
-				// when the datasink was already subscribed data are released in doOnDiscard (see #body())
-				dataSink.asFlux().subscribe(
-					chunk -> chunk.release(), 
-					ex -> {
-						// TODO Should be ignored but can be logged as debug or trace log
-					}
-				);
-			}
-		});
-		this.data = Optional.empty();
+		if(this.requestBody != null) {
+			this.requestBody.dispose();
+		}
 	}
 }

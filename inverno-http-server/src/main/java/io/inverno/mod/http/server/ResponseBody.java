@@ -51,8 +51,10 @@ public interface ResponseBody {
 	 * @param transformer a request payload publisher transformer
 	 *
 	 * @return the request body
+	 * 
+	 * @throws IllegalArgumentException if data were already sent to the recipient
 	 */
-	ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer);
+	ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) throws IllegalArgumentException;
 
 	/**
 	 * <p>
@@ -211,7 +213,7 @@ public interface ResponseBody {
 		 * 
 		 * @param resource a resource
 		 * 
-		 * @throws IllegalStateException if the payload has already been set
+		 * @throws IllegalStateException if data were already sent to the recipient
 		 */
 		void value(io.inverno.mod.base.resource.Resource resource) throws IllegalStateException;
 	}

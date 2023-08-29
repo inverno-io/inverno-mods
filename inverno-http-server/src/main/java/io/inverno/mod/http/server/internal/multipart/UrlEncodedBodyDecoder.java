@@ -37,11 +37,9 @@ import reactor.core.publisher.SignalType;
 
 /**
  * <p>
- * An application/x-www-form-urlencoded payload decoder implementation as
- * defined by <a href=
- * "https://url.spec.whatwg.org/#application/x-www-form-urlencoded">application/x-www-form-urlencoded</a>.
+ * An application/x-www-form-urlencoded payload decoder implementation as defined by <a href="https://url.spec.whatwg.org/#application/x-www-form-urlencoded">application/x-www-form-urlencoded</a>.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
@@ -171,12 +169,9 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 	
 	private String decodeComponent(String value, Charset charset) throws MalformedBodyException {
 		try {
-			return URLDecoder.decode(value, Charsets.UTF_8.toString()); // RFC-3986 2
+			return URLDecoder.decode(value, charset.toString()); // RFC-3986 2
 		} 
-		catch (IllegalArgumentException e) {
-			throw new MalformedBodyException(e);
-		} 
-		catch (UnsupportedEncodingException e) {
+		catch (IllegalArgumentException | UnsupportedEncodingException e) {
 			throw new MalformedBodyException(e);
 		}
 	}

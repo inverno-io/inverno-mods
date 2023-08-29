@@ -16,6 +16,7 @@
 package io.inverno.mod.http.server.internal;
 
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.Response;
@@ -31,6 +32,7 @@ import reactor.core.publisher.Mono;
  */
 public class GenericErrorExchange implements ErrorExchange<ExchangeContext> {
 
+	private final HttpVersion protocol;
 	private final Request request;
 	private final AbstractResponse response;
 	private Mono<Void> finalizer;
@@ -42,13 +44,15 @@ public class GenericErrorExchange implements ErrorExchange<ExchangeContext> {
 	 * Creates an error exchange with the specified request, response and error.
 	 * </p>
 	 * 
+	 * @param protocol        the exchange HTTP version
 	 * @param request         the request
 	 * @param response        the response
 	 * @param finalizer       the exchange finalizer
 	 * @param error           the error
 	 * @param exchangeContext the exchange context attached to the failed exchange
 	 */
-	public GenericErrorExchange(AbstractRequest request, AbstractResponse response, Mono<Void> finalizer, Throwable error, ExchangeContext exchangeContext) {
+	public GenericErrorExchange(HttpVersion protocol, AbstractRequest request, AbstractResponse response, Mono<Void> finalizer, Throwable error, ExchangeContext exchangeContext) {
+		this.protocol = protocol;
 		this.request = request;
 		this.response = response;
 		this.finalizer = finalizer;
@@ -56,6 +60,11 @@ public class GenericErrorExchange implements ErrorExchange<ExchangeContext> {
 		this.exchangeContext = exchangeContext;
 	}
 
+	@Override
+	public HttpVersion getProtocol() {
+		return this.protocol;
+	}
+	
 	@Override
 	public Request request() {
 		return this.request;
@@ -72,14 +81,13 @@ public class GenericErrorExchange implements ErrorExchange<ExchangeContext> {
 	}
 	
 	@Override
-	public GenericErrorExchange finalizer(Mono<Void> finalizer) {
+	public void finalizer(Mono<Void> finalizer) {
 		if(this.finalizer != null) {
 			this.finalizer = this.finalizer.then(finalizer);
 		}
 		else {
 			this.finalizer = finalizer;
 		}
-		return this;
 	}
 
 	@Override

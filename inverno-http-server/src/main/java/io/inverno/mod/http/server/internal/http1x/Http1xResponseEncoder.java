@@ -40,12 +40,11 @@ import java.util.List;
  * <p>
  * HTTP1.x {@link HttpResponseEncoder} implementation.
  * </p>
- * 
+ *
  * <p>
- * This implementation basically encodes {@link LinkedHttpHeaders} used instead
- * of Netty's {@link DefaultHttpHeaders} in order to increase performances.
+ * This implementation basically encodes {@link LinkedHttpHeaders} used instead of Netty's {@link DefaultHttpHeaders} in order to increase performances.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */

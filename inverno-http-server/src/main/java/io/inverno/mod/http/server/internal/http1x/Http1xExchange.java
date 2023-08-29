@@ -27,6 +27,8 @@ import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.netty.FlatFullHttpResponse;
 import io.inverno.mod.http.base.internal.netty.FlatHttpResponse;
 import io.inverno.mod.http.base.internal.netty.FlatLastHttpContent;
+import io.inverno.mod.http.base.internal.ws.GenericWebSocketFrame;
+import io.inverno.mod.http.base.internal.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.HttpServerConfiguration;
@@ -34,8 +36,6 @@ import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.inverno.mod.http.server.internal.GenericErrorExchange;
-import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketFrame;
-import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.inverno.mod.http.server.ws.WebSocket;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
@@ -66,15 +66,14 @@ import reactor.core.publisher.BaseSubscriber;
  * <p>
  * HTTP1.x {@link Exchange} implementation.
  * </p>
- * 
+ *
  * <p>
- * This implementation provides the logic to send HTTP1.x response data to the
- * client.
+ * This implementation provides the logic to send HTTP1.x response data to the client.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see AbstractExchange
  */
 class Http1xExchange extends AbstractExchange {
@@ -146,6 +145,11 @@ class Http1xExchange extends AbstractExchange {
 	}
 
 	@Override
+	public io.inverno.mod.http.base.HttpVersion getProtocol() {
+		return this.version == HttpVersion.HTTP_1_0 ? io.inverno.mod.http.base.HttpVersion.HTTP_1_0 : io.inverno.mod.http.base.HttpVersion.HTTP_1_1;
+	}
+	
+	@Override
 	public Optional<? extends WebSocket<ExchangeContext, ? extends WebSocketExchange<ExchangeContext>>> webSocket(String... subProtocols) {
 		this.webSocket = new Http1xWebSocket(this.configuration, this.context, this, this.webSocketFrameFactory, this.webSocketMessageFactory, subProtocols);
 		return Optional.of(this.webSocket);
@@ -156,17 +160,16 @@ class Http1xExchange extends AbstractExchange {
 		return new Http1xServerControllerSubscriber();
 	}
 	
-	@Override
-	public void dispose() {
+	public void dispose(boolean deep) {
 		super.dispose();
-		if(this.next != null) {
-			this.next.dispose();
+		if(deep && this.next != null) {
+			this.next.dispose(deep);
 		}
 	}
 	
 	@Override
 	protected ErrorExchange<ExchangeContext> createErrorExchange(Throwable error) {
-		return new GenericErrorExchange(this.request, new Http1xResponse(this.version, this.context, this.headerService, this.parameterConverter), this.finalizer, error, this.exchangeContext);
+		return new GenericErrorExchange(this.getProtocol(), this.request, new Http1xResponse(this.version, this.context, this.headerService, this.parameterConverter), this.finalizer, error, this.exchangeContext);
 	}
 	
 	private Charset getCharset() {
@@ -402,7 +405,7 @@ class Http1xExchange extends AbstractExchange {
 						Http1xExchange.this.logAccess();
 						
 						// Cancel the exchange and next requests (if any) once the WebSocket upgrade completes
-						Http1xExchange.this.dispose();
+						Http1xExchange.this.dispose(true);
 					}
 				);
 			}

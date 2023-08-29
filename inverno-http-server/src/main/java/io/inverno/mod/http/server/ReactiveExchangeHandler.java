@@ -38,8 +38,7 @@ public interface ReactiveExchangeHandler<A extends ExchangeContext, B extends Ex
 
 	/**
 	 * <p>
-	 * Returns a composed exchange handler that first applies the interceptor to transform the exchange and then invoke the 
-	 * {@link #defer(io.inverno.mod.http.server.Exchange)}.
+	 * Returns a composed exchange handler that first applies the interceptor to transform the exchange and then invoke the {@link #defer(io.inverno.mod.http.server.Exchange)}.
 	 * </p>
 	 *
 	 * @param interceptor the interceptor
@@ -56,8 +55,7 @@ public interface ReactiveExchangeHandler<A extends ExchangeContext, B extends Ex
 	 * </p>
 	 *
 	 * <p>
-	 * The HTTP server subscribes to the returned Mono and after completion, subscribes to the exchange response body data stream to respond to the
-	 * client.
+	 * This method is invoked by the HTTP server which then subscribes to the resulting Mono and, on completion, to the exchange response body data publisher to respond to the client.
 	 * </p>
 	 *
 	 * @param exchange the exchange to process

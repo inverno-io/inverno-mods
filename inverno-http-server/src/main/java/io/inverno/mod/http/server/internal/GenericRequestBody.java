@@ -29,6 +29,7 @@ import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 /**
  * <p>
@@ -43,9 +44,12 @@ public class GenericRequestBody implements RequestBody {
 	private final Optional<Headers.ContentType> contentType;
 	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
 	private final MultipartDecoder<Part> multipartBodyDecoder;
+
+	Sinks.Many<ByteBuf> dataSink;
+	private boolean subscribed;
+	private boolean disposed;
 	
 	private Flux<ByteBuf> data;
-	
 	private InboundData<ByteBuf> rawData;
 	private InboundData<CharSequence> stringData;
 	private RequestBody.UrlEncoded urlEncodedData;
@@ -53,24 +57,51 @@ public class GenericRequestBody implements RequestBody {
 
 	/**
 	 * <p>
-	 * Creates a request body with the specified content type, url encoded body
-	 * decoder, multipart body decoder and payload data publisher.
+	 * Creates a request body with the specified content type, url encoded body decoder, multipart body decoder and payload data publisher.
 	 * </p>
-	 * 
+	 *
 	 * @param contentType           the request content type
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
-	 * @param data                  the payload data publisher
 	 */
-	public GenericRequestBody(Optional<Headers.ContentType> contentType, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder, Flux<ByteBuf> data) {
+	public GenericRequestBody(Optional<Headers.ContentType> contentType, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
 		this.contentType = contentType;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
-		this.data = data;
+		
+		// TODO deal with backpressure using a custom queue: if the queue reach a given threshold we should suspend the read on the channel: this.context.channel().config().setAutoRead(false)
+		// and resume when this flux is actually consumed (doOnRequest? this might impact performance)
+		this.dataSink = Sinks.many().unicast().onBackpressureBuffer();
+		this.data = Flux.defer(() -> {
+			if(this.disposed) {
+				return Mono.error(new IllegalStateException("Request was disposed"));
+			}
+			return this.dataSink.asFlux()
+				.doOnSubscribe(ign -> this.subscribed = true)
+				.doOnDiscard(ByteBuf.class, ByteBuf::release);
+		});
+	}
+
+	void dispose() {
+		this.dataSink.tryEmitComplete();
+		if(!this.subscribed) {
+			// Try to drain and release buffered data 
+			// when the datasink was already subscribed data are released in doOnDiscard
+			this.dataSink.asFlux().subscribe(
+				chunk -> chunk.release(), 
+				ex -> {
+					// TODO Should be ignored but can be logged as debug or trace log
+				}
+			);
+		}
+		this.disposed = true;
 	}
 
 	@Override
 	public RequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
+		if(this.subscribed) {
+			throw new IllegalStateException("Request data already consumed");
+		}
 		this.data = Flux.from(transformer.apply(this.data));
 		return this;
 	}
@@ -200,7 +231,7 @@ public class GenericRequestBody implements RequestBody {
 	 */
 	private class MultipartInboundData implements RequestBody.Multipart<Part> {
 
-		private Publisher<Part> parts;
+		private final Publisher<Part> parts;
 		
 		/**
 		 * <p>

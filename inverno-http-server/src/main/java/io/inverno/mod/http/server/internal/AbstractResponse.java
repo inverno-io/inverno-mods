@@ -46,10 +46,9 @@ public abstract class AbstractResponse implements Response {
 
 	/**
 	 * <p>
-	 * Creates a response with the specified channel handler context, header service
-	 * and response headers.
+	 * Creates a response with the specified channel handler context, header service and response headers.
 	 * </p>
-	 * 
+	 *
 	 * @param context         the channel handler context
 	 * @param headerService   the header service
 	 * @param responseHeaders the response headers

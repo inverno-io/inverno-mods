@@ -15,8 +15,7 @@
  */
 /**
  * <p>
- * Inverno HTTP server multipart/form-data and application/x-www-form-urlencoded
- * body decoders.
+ * Inverno HTTP server multipart/form-data and application/x-www-form-urlencoded body decoders.
  * </p>
  */
 package io.inverno.mod.http.server.internal.multipart;

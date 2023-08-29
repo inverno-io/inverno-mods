@@ -22,8 +22,7 @@ import java.util.Optional;
 
 /**
  * <p>
- * Represents a part in a multipart/form-data request body as defined by
- * <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
+ * Represents a part in a multipart/form-data request body as defined by <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

@@ -28,17 +28,15 @@ import reactor.core.publisher.Mono;
  * </p>
  *
  * <p>
- * When receiving a client request, the HTTP server creates an {@link Exchange} and invokes the server controller to actually process that request and
- * provide a response to the client. In case of error during that process, it creates an {@link ErrorExchange} from the original exchange and invokes
- * the controller again to handle the error and provide an error response to the client.
+ * When receiving a request from a client, the HTTP server creates an {@link Exchange} and invokes the server controller to actually process that request and provide a response to the client. In case
+ * of error during that process, it creates an {@link ErrorExchange} from the original exchange and invokes the controller again to handle the error and provide an error response to the client.
  * </p>
- * 
+ *
  * <p>
- * The HTTP server shall only rely on the {@link #defer(io.inverno.mod.http.server.Exchange)} and {@link #defer(io.inverno.mod.http.server.ErrorExchange)
- * } methods in order to remain reactive, the server controller only exposes non-reactive handling methods to facilitate the definition of the
- * controller using lambdas.
+ * The HTTP server shall only rely on the {@link #defer(io.inverno.mod.http.server.Exchange)} and {@link #defer(io.inverno.mod.http.server.ErrorExchange)} methods in order to remain reactive, the 
+ * server controller only exposes non-reactive handling methods to facilitate the definition of the controller using lambdas.
  * </p>
- * 
+ *
  * <p>
  * The {@link #createContext() } method is used by the server to create the exchange context associated to an Exchange.
  * </p>
@@ -205,8 +203,7 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 
 	/**
 	 * <p>
-	 * Returns a server controller that delegates to the specified exchange handler and error exchange handler and uses the specified context supplier
-	 * to create exchange contexts.
+	 * Returns a server controller that delegates to the specified exchange handler and error exchange handler and uses the specified context supplier to create exchange contexts.
 	 * </p>
 	 *
 	 * @param <U>             the type of the exchange context

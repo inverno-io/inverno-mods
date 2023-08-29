@@ -16,9 +16,11 @@
 package io.inverno.mod.http.server.internal.http1x.ws;
 
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.internal.ws.GenericWebSocketFrame;
+import io.inverno.mod.http.base.internal.ws.GenericWebSocketMessage;
+import io.inverno.mod.http.base.ws.WebSocketException;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ws.WebSocket;
-import io.inverno.mod.http.server.ws.WebSocketException;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
 import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
 import io.netty.buffer.Unpooled;

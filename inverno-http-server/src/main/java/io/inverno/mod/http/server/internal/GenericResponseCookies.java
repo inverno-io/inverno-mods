@@ -49,10 +49,9 @@ public class GenericResponseCookies implements OutboundSetCookies {
 	
 	/**
 	 * <p>
-	 * Creates response cookies with the specified header service and response
-	 * headers.
+	 * Creates response cookies with the specified header service and response headers.
 	 * </p>
-	 * 
+	 *
 	 * @param headerService   the header service
 	 * @param responseHeaders the response headers
 	 */

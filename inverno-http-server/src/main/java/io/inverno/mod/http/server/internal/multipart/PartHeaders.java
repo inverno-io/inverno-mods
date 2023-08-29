@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  * <p>
  * Generic {@link InboundRequestHeaders} implementation.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
@@ -43,7 +43,7 @@ class PartHeaders implements InboundRequestHeaders {
 
 	private final ObjectConverter<String> parameterConverter;
 	
-	private Map<String, List<? extends Header>> headers;
+	private final Map<String, List<? extends Header>> headers;
 	
 	/**
 	 * <p>

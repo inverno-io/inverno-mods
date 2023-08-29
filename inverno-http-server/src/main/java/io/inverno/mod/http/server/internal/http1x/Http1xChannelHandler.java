@@ -19,14 +19,14 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.internal.ws.GenericWebSocketFrame;
+import io.inverno.mod.http.base.internal.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.internal.AbstractExchange;
-import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketFrame;
-import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
@@ -50,12 +50,11 @@ import reactor.core.publisher.Sinks;
  * <p>
  * HTTP1.x channel handler implementation.
  * </p>
- * 
+ *
  * <p>
- * This is the entry point of a HTTP client connection to the HTTP server using
- * version 1.x of the HTTP protocol.
+ * This is the entry point of a HTTP client connection to the HTTP server using version 1.x of the HTTP protocol.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
@@ -119,8 +118,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 			this.read = true;
 			if(msg instanceof HttpRequest) {
 				HttpRequest httpRequest = (HttpRequest)msg;
-				if(httpRequest.decoderResult().isFailure()) {
-					this.onDecoderError(ctx, httpRequest.protocolVersion(), httpRequest);
+				if(this.validateHttpObject(ctx, httpRequest.protocolVersion(), httpRequest)) {
 					return;
 				}
 				this.requestingExchange = new Http1xExchange(
@@ -153,8 +151,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 				}
 				else {
 					HttpContent httpContent = (HttpContent)msg;
-					if(httpContent.decoderResult().isFailure()) {
-						this.onDecoderError(ctx, version, httpContent);
+					if(this.validateHttpObject(ctx, version, httpContent)) {
 						return;
 					}
 					this.requestingExchange.request().data().ifPresentOrElse(
@@ -194,7 +191,10 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 		}
 	}
 
-	private void onDecoderError(ChannelHandlerContext ctx, HttpVersion version, HttpObject httpObject) {
+	private boolean validateHttpObject(ChannelHandlerContext ctx, HttpVersion version, HttpObject httpObject) throws Exception {
+		if(!httpObject.decoderResult().isFailure()) {
+			return false;
+		}
 		Throwable cause = httpObject.decoderResult().cause();
 		if (cause instanceof TooLongFrameException) {
 			String causeMsg = cause.getMessage();
@@ -211,12 +211,13 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 			ChannelPromise writePromise = ctx.newPromise();
 			ctx.write(new DefaultFullHttpResponse(version, status), writePromise);
 			writePromise.addListener(res -> {
-				ctx.fireExceptionCaught(cause);
+				this.exceptionCaught(ctx, cause);
 			});
 		} 
 		else {
-			ctx.fireExceptionCaught(cause);
+			this.exceptionCaught(ctx, cause);
 		}
+		return true;
 	}
 	
 	@Override
@@ -233,7 +234,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 		}
 		else {
 			if(this.respondingExchange != null) {
-				this.respondingExchange.dispose();
+				this.respondingExchange.dispose(true);
 				ChannelPromise errorPromise = ctx.newPromise();
 				this.respondingExchange.finalizeExchange(errorPromise, () -> ctx.close());
 				errorPromise.tryFailure(cause);
@@ -293,7 +294,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 		}
 		// We have to release data...
 		if(this.respondingExchange.next != null) {
-			this.respondingExchange.next.dispose();
+			this.respondingExchange.next.dispose(true);
 		}
 		// ...and close the connection
 		ctx.close();
@@ -312,7 +313,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 		}
 		else {
 			if(this.respondingExchange.next != null) {
-				this.respondingExchange.next.dispose();
+				this.respondingExchange.next.dispose(true);
 			}
 			ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
 		}

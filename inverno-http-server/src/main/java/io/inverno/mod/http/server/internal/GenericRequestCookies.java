@@ -42,10 +42,9 @@ public class GenericRequestCookies implements InboundCookies {
 	
 	/**
 	 * <p>
-	 * Creates request cookies with the specified request headers and parameter
-	 * value converter.
+	 * Creates request cookies with the specified request headers and parameter value converter.
 	 * </p>
-	 * 
+	 *
 	 * @param requestHeaders     the request headers
 	 * @param parameterConverter an string object converter
 	 */

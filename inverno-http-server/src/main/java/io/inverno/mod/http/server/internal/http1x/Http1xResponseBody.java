@@ -60,12 +60,10 @@ class Http1xResponseBody extends GenericResponseBody {
 	
 	/**
 	 * <p>
-	 * Returns the file region data publisher to send when present instead of the
-	 * regular payload data publisher.
+	 * Returns the file region data publisher to send when present instead of the regular payload data publisher.
 	 * </p>
-	 * 
-	 * @return an optional returning a file region publisher or an empty optional if
-	 *         no file region has been set in the response
+	 *
+	 * @return an optional returning a file region publisher or an empty optional if no file region has been set in the response
 	 */
 	public Publisher<FileRegion> getFileRegionData() {
 		return this.fileRegionData;
@@ -85,13 +83,12 @@ class Http1xResponseBody extends GenericResponseBody {
 
 	/**
 	 * <p>
-	 * {@link ResponseBody.Resource} implementation that uses file region when
-	 * available.
+	 * {@link ResponseBody.Resource} implementation that uses file region when available.
 	 * </p>
-	 * 
+	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
-	 * 
+	 *
 	 * @see FileRegion
 	 */
 	private class Http1xResponseBodyResourceData extends GenericResponseBody.GenericResponseBodyResourceData {

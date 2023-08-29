@@ -45,17 +45,15 @@ import reactor.core.publisher.SignalType;
  * <p>
  * Base {@link Exchange} implementation.
  * </p>
- * 
+ *
  * <p>
- * This class also implements the subscriber used to subscribe to exchange
- * response data publisher.
+ * This class also implements the subscriber used to subscribe to exchange response data publisher.
  * </p>
- * 
+ *
  * <p>
- * Implementors must basic provide the implementation of methods that actually
- * send response data to the client.
+ * Implementors must provide the implementation of methods that actually send response data to the client.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
@@ -93,16 +91,20 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	/**
 	 * <p>
-	 * Creates an exchange with the specified channel handler context, root exchange
-	 * handler, error exchange handler, request and response.
+	 * Creates a server exchange with the specified channel handler context, root exchange handler, error exchange handler, request and response.
 	 * </p>
-	 * 
-	 * @param context      the channel handler context
-	 * @param controller   the server controller
-	 * @param request      the exchange request
-	 * @param response     the exchange response
+	 *
+	 * @param context    the channel handler context
+	 * @param controller the server controller
+	 * @param request    the exchange request
+	 * @param response   the exchange response
 	 */
-	public AbstractExchange(ChannelHandlerContext context, ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller, AbstractRequest request, AbstractResponse response) {
+	public AbstractExchange(
+			ChannelHandlerContext context, 
+			ServerController<ExchangeContext, Exchange<ExchangeContext>, 
+			ErrorExchange<ExchangeContext>> controller, AbstractRequest request, 
+			AbstractResponse response
+		) {
 		this.context = context;
 		this.contextExecutor = this.context.executor();
 		this.controller = controller;
@@ -130,33 +132,29 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	}
 	
 	@Override
-	public AbstractExchange finalizer(Mono<Void> finalizer) {
+	public void finalizer(Mono<Void> finalizer) {
 		if(this.finalizer != null) {
 			this.finalizer = this.finalizer.then(finalizer);
 		}
 		else {
 			this.finalizer = finalizer;
 		}
-		return this;
 	}
 	
 	/**
 	 * <p>
-	 * Finalizes the exchange by invoking the finalizer and the postFinalize when
-	 * the final promise completes when a finalizer has been provided, otherwise the
-	 * postFinalize runnable is invoked immediately.
+	 * Finalizes the exchange by invoking the finalizer and the postFinalize when the final promise completes when a finalizer has been provided, otherwise the postFinalize runnable is invoked
+	 * immediately.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * When using a finalizer, we have to wait for the final write operation to
-	 * complete before invoking the finalizer, this basically breaks HTTP pipelining
-	 * but this is mandatory to get a chance to reset shared resources used to
-	 * process multiple exchanges (eg. Bytebuf).
+	 * When using a finalizer, we have to wait for the final write operation to complete before invoking the finalizer, this basically breaks HTTP pipelining but this is mandatory to get a chance to
+	 * reset shared resources used to process multiple exchanges (eg. Bytebuf).
 	 * </p>
-	 * 
-	 * @param finalPromise a promise that completes with the final exchange operation 
+	 *
+	 * @param finalPromise a promise that completes with the final exchange operation
 	 * @param postFinalize a post finalize operation or null
-	 * 
+	 *
 	 * @return the promise
 	 */
 	public ChannelFuture finalizeExchange(ChannelPromise finalPromise, Runnable postFinalize) {
@@ -217,12 +215,11 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * <p>
 	 * Starts the processing of the exchange with the specified callback handler.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * This methods invokes the server root handler on the exchange and subscribe to
-	 * the response data publisher.
+	 * This methods invokes the server root handler on the exchange and subscribe to the response data publisher.
 	 * </p>
-	 * 
+	 *
 	 * @param handler an exchange callback handler
 	 */
 	public void start(Handler handler) {
@@ -271,17 +268,15 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * <p>
 	 * Executes the specified task in the event loop.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The tasks is executed immediately when the current thread is in the event
-	 * loop, otherwise it is scheduled in the event loop.
+	 * The tasks is executed immediately when the current thread is in the event loop, otherwise it is scheduled in the event loop.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * After the execution of the task, one event is requested to the response data
-	 * subscriber.
+	 * After the execution of the task, one event is requested to the response data subscriber.
 	 * </p>
-	 * 
+	 *
 	 * @param runnable the task to execute
 	 */
 	protected void executeInEventLoop(Runnable runnable) {
@@ -292,20 +287,17 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * <p>
 	 * Executes the specified task in the event loop.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The tasks is executed immediately when the current thread is in the event
-	 * loop, otherwise it is scheduled in the event loop.
+	 * The tasks is executed immediately when the current thread is in the event loop, otherwise it is scheduled in the event loop.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * After the execution of the task, the specified number of events is requested
-	 * to the response data subscriber.
+	 * After the execution of the task, the specified number of events is requested to the response data subscriber.
 	 * </p>
-	 * 
+	 *
 	 * @param runnable the task to execute
-	 * @param request  the number of events to request to the response data
-	 *                 subscriber after the task completes
+	 * @param request  the number of events to request to the response data subscriber after the task completes
 	 */
 	protected void executeInEventLoop(Runnable runnable, int request) {
 		if(this.contextExecutor.inEventLoop()) {
@@ -346,12 +338,11 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * <p>
 	 * Invokes when the exchange is started.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The default implementation basically request an unbounded amount of events to
-	 * the subscription.
+	 * The default implementation basically request an unbounded amount of events to the subscription.
 	 * </p>
-	 * 
+	 *
 	 * @param subscription the subscription to the response data publisher
 	 */
 	protected void onStart(Subscription subscription) {
@@ -369,29 +360,21 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		else {
 			// We don't have a mono and we know we have multiple chunks
 			this.many = true;
-			if(this.request.getMethod().equals(Method.HEAD)) {
-				value.release();
-				this.executeInEventLoop(this::onCompleteEmpty);
-				this.dispose();
-			}
-			else {
-				this.executeInEventLoop(() -> {
-					if(this.singleChunk != null) {
-						this.onNextMany(this.singleChunk);
-						this.singleChunk = null;
-					}
-					this.onNextMany(value);
-				});
-			}
+			this.executeInEventLoop(() -> {
+				if(this.singleChunk != null) {
+					this.onNextMany(this.singleChunk);
+					this.singleChunk = null;
+				}
+				this.onNextMany(value);
+			});
 		}
 	}
 	
 	/**
 	 * <p>
-	 * Invokes on an event when the response data publisher emits more than one
-	 * event.
+	 * Invokes on an event when the response data publisher emits more than one event.
 	 * </p>
-	 * 
+	 *
 	 * @param value the event data
 	 */
 	protected abstract void onNextMany(ByteBuf value);
@@ -403,7 +386,6 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 */
 	@Override
 	protected final void hookOnError(Throwable throwable) {
-		this.dispose();
 		// if headers are already written => close the connection nothing we can do
 		// if headers are not already written => we should invoke the error handler
 		// what we need is to continue processing
@@ -454,7 +436,6 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	@Override
 	protected final void hookOnComplete() {
-		this.dispose();
 		if(this.transferedLength == 0) {
 			if(this.response.headers().getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
 				this.response.headers().contentLength(0);
@@ -497,31 +478,6 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * </p>
 	 */
 	protected void logAccess() {
-		// HTTP access
-		/*LOGGER.info(MARKER_ACCESS, () -> {
-			InetSocketAddress inetRemoteAddress = (InetSocketAddress)this.request.getRemoteAddress();
-//			InetSocketAddress inetLocalAddress = (InetSocketAddress)this.request.getLocalAddress();
-			String method = this.request.getMethod().name();
-			StringMapMessage accessLogMessage = new StringMapMessage()
-//				.with("remoteAddress", inetRemoteAddress.getAddress().getHostAddress()) // %a - Remote IP address
-				.with("remoteHost", inetRemoteAddress.getAddress().getHostName()) // %h - Remote host name
-//				.with("localAddress", inetLocalAddress.getAddress().getHostAddress()) // %A - Local IP address
-//				.with("localPort", Integer.toString(inetLocalAddress.getPort())) // %p - Local port
-				.with("bytes", Integer.toString(this.transferedLength)) // %B - Bytes sent, excluding HTTP headers
-//				.with("protocol", this.request.getProtocol()) // %H - Request protocol
-//				.with("remoteLogicalUsername", "-") // %l - Remote logical username from identd (always returns '-')
-//				.with("method", method) // %m - Request method
-//				.with("query", this.request.getQuery()) // %q - Query string (prepended with a '?' if it exists, otherwise an empty string
-				.with("request", method + " " + this.request.getPath()) // %r - First line of the request
-				.with("status", Integer.toString(this.response.headers().getStatusCode())) // %s - HTTP status code of the response
-//				.with("path", this.request.getPathAbsolute()) // %U - Requested URL path
-//				.with("authority", this.request.getAuthority()) // %v - Local server name
-				.with("referer", this.request.headers().get(Headers.NAME_REFERER).orElse("")) // %{Referer}i - referer
-				.with("userAgent", this.request.headers().get(Headers.NAME_USER_AGENT).orElse("")); // %{User-agent}i - user agent
-			
-			return accessLogMessage;
-		});*/
-		
 		LOGGER.info(MARKER_ACCESS, () -> new AccessLogMessage());
 	}
 	
@@ -653,14 +609,14 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	/**
 	 * <p>
-	 * Invokes when the response data publisher completes with no data.
+	 * Invoked when the response data publisher completes with no data.
 	 * </p>
 	 */
 	protected abstract void onCompleteEmpty();
 	
 	/**
 	 * <p>
-	 * Invokes when the response data publisher completes with a single data.
+	 * Invoked when the response data publisher completes with a single data.
 	 * </p>
 	 * 
 	 * @param value the single byte buffer
@@ -669,7 +625,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	/**
 	 * <p>
-	 * Invokes when the response data publisher completes with many data.
+	 * Invoked when the response data publisher completes with many data.
 	 * </p>
 	 */
 	protected abstract void onCompleteMany();
@@ -681,7 +637,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	/**
 	 * <p>
-	 * Exchange callbacks handler
+	 * Exchange callbacks handler.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -691,20 +647,58 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 */
 	public static interface Handler {
 		
+		/**
+		 * Default handler.
+		 */
 		static Handler DEFAULT = new Handler() {};
 		
+		/**
+		 * <p>
+		 * Notifies that the exchange has started.
+		 * </p>
+		 * 
+		 * @param ctx      the channel handler context
+		 * @param exchange the exchange
+		 */
 		default void exchangeStart(ChannelHandlerContext ctx, AbstractExchange exchange) {
 			
 		}
 
+		/**
+		 * <p>
+		 * Notifies request data was received.
+		 * </p>
+		 * 
+		 * @param ctx the channel handler context.
+		 * @param t   the received data
+		 */
 		default void exchangeNext(ChannelHandlerContext ctx, ByteBuf t) {
 			
 		}
 
+		/**
+		 * <p>
+		 * Notifies that an error was raised during the processing of the exchange.
+		 * </p>
+		 * 
+		 * @param ctx the chanel handler context
+		 * @param t   an error
+		 */
 		default void exchangeError(ChannelHandlerContext ctx, Throwable t) {
 			this.exchangeComplete(ctx);
 		}
 
+		/**
+		 * <p>
+		 * Notifies that the exchange has completed.
+		 * </p>
+		 * 
+		 * <p>
+		 * This means the response has been fully sent.
+		 * </p>
+		 * 
+		 * @param ctx the channel handler context
+		 */
 		default void exchangeComplete(ChannelHandlerContext ctx) {
 			
 		}
@@ -712,11 +706,9 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	/**
 	 * <p>
-	 * An error subscriber which is created to subscribe to the response data
-	 * publisher of the error exchange created when the response data publisher
-	 * completes with an error.
+	 * An error subscriber which is created to subscribe to the response data publisher of the error exchange created when the response data publisher completes with an error.
 	 * </p>
-	 * 
+	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
@@ -766,20 +758,24 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 
 		@Override
 		protected void hookOnComplete() {
-			AbstractExchange.this.single = AbstractExchange.this.response.isSingle();
-			AbstractExchange.this.disposable = AbstractExchange.this;
-			AbstractExchange.this.response.dataSubscribe(AbstractExchange.this);
+			if(AbstractExchange.this.request.getMethod().equals(Method.HEAD)) {
+				AbstractExchange.this.executeInEventLoop(AbstractExchange.this::onCompleteEmpty);
+				AbstractExchange.this.dispose();
+			}
+			else {
+				AbstractExchange.this.single = AbstractExchange.this.response.isSingle();
+				AbstractExchange.this.disposable = AbstractExchange.this;
+				AbstractExchange.this.response.dataSubscribe(AbstractExchange.this);
+			}
 		}
 	}
 	
 	/**
 	 * <p>
-	 * An subscriber to consume the error exchange deferred handle Mono supplied by
-	 * {@link ErrorExchangeHandler#defer(Exchange)}. On complete it uses the
-	 * {@link AbstractExchange#errorSubscriber} to subscribe to the error exchange
-	 * response data publisher.
+	 * An subscriber to consume the error exchange deferred handle Mono supplied by {@link ErrorExchangeHandler#defer(Exchange)}. On complete it uses the {@link AbstractExchange#errorSubscriber} to
+	 * subscribe to the error exchange response data publisher.
 	 * </p>
-	 * 
+	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.3
 	 */

@@ -39,8 +39,7 @@ public interface Response extends BaseResponse {
 	 * </p>
 	 *
 	 * <p>
-	 * Any attempts to specify new headers in the response, once headers haven been sent to the client, will result in an
-	 * {@link IllegalStateException} being thrown.
+	 * Any attempts to specify new headers in the response, once headers haven been sent to the client, will result in an {@link IllegalStateException} being thrown.
 	 * </p>
 	 *
 	 * @return true if headers have been sent, false otherwise

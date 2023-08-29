@@ -18,7 +18,6 @@ package io.inverno.mod.http.server.internal.multipart;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.InboundData;
-import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.server.Part;
 import io.netty.buffer.ByteBuf;
@@ -91,9 +90,8 @@ class GenericPart implements Part {
 	 * <p>
 	 * Returns the part's data sink.
 	 * </p>
-	 * 
-	 * @return an optional returning the payload data sink or an empty optional if
-	 *         the part has no body
+	 *
+	 * @return an optional returning the payload data sink or an empty optional if the part has no body
 	 */
 	public Optional<FluxSink<ByteBuf>> getData() {
 		return Optional.ofNullable(this.dataEmitter);

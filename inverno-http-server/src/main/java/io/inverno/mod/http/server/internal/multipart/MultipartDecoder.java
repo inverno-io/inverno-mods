@@ -33,13 +33,12 @@ public interface MultipartDecoder<A> {
 
 	/**
 	 * <p>
-	 * Decodes the specified payload data publisher formated according to the
-	 * specified content type.
+	 * Decodes the specified payload data publisher formated according to the specified content type.
 	 * </p>
-	 * 
+	 *
 	 * @param data        the payload data publisher
 	 * @param contentType the payload content type
-	 * 
+	 *
 	 * @return a part publisher
 	 */
 	Flux<A> decode(Flux<ByteBuf> data, Headers.ContentType contentType);

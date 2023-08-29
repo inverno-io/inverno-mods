@@ -136,9 +136,9 @@ public class GenericResponseBody implements ResponseBody {
 	}
 
 	@Override
-	public ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
+	public ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) throws IllegalArgumentException {
 		if(this.subscribed && this.dataSet) {
-			throw new IllegalStateException("Response data already posted");
+			throw new IllegalStateException("Response data already consumed");
 		}
 
 		if(this.transformer == null) {

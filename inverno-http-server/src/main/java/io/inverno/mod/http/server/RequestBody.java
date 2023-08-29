@@ -48,7 +48,7 @@ public interface RequestBody {
 	 * <p>
 	 * This can be used in an exchange interceptor in order to decorate the request data publisher.
 	 * </p>
-	 *
+	 * 
 	 * @param transformer a request payload publisher transformer
 	 *
 	 * @return the request body
@@ -101,8 +101,7 @@ public interface RequestBody {
 
 	/**
 	 * <p>
-	 * A multipart/form-data consumer as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
+	 * A multipart/form-data consumer as defined by <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
 	 * </p>
 	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -115,10 +114,9 @@ public interface RequestBody {
 	
 	/**
 	 * <p>
-	 * An application/x-www-form-urlencoded data consumer as defined by <a href=
-	 * "https://url.spec.whatwg.org/#application/x-www-form-urlencoded">application/x-www-form-urlencoded</a>.
+	 * An application/x-www-form-urlencoded data consumer as defined by <a href="https://url.spec.whatwg.org/#application/x-www-form-urlencoded">application/x-www-form-urlencoded</a>.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Note that, unlike other the body decoders, parameters publishers are cached and can be subscribed by mutliple subscribers.
 	 * </p>
