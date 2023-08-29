@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2023 Jeremy KUHN
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,26 @@
 package io.inverno.mod.configuration.source;
 
 import io.inverno.mod.base.resource.ClasspathResource;
-import io.inverno.mod.configuration.ConfigurationKey.Parameter;
+import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationProperty;
 import io.inverno.mod.configuration.ConfigurationQueryResult;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public class PropertyFileConfigurationSourceTest {
+public class PropertiesConfigurationSourceTest {
 
 	static {
 		System.setProperty("org.apache.logging.log4j.simplelog.level", "INFO");
@@ -40,8 +43,13 @@ public class PropertyFileConfigurationSourceTest {
 	}
 	
 	@Test
-	public void testPropertyFileConfigurationSource() throws URISyntaxException {
-		PropertyFileConfigurationSource src = new PropertyFileConfigurationSource(new ClasspathResource(URI.create("classpath:/test-configuration.properties")));
+	public void testPropertyFileConfigurationSource() throws URISyntaxException, IOException {
+		Properties properties = new Properties();
+		try(InputStream input = ClassLoader.getSystemResourceAsStream("test-configuration.properties")) {
+			properties.load(input);
+		}
+
+		PropertiesConfigurationSource src = new PropertiesConfigurationSource(properties);
 		List<ConfigurationQueryResult> results = src
 			.get("tata.toto").withParameters("tutu", "plop", "test", 5).and()
 			.get("tata.toto").withParameters("tutu", "plop").and()
@@ -62,14 +70,14 @@ public class PropertyFileConfigurationSourceTest {
 		ConfigurationQueryResult current = resultIterator.next();
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
-		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("test", 5), Parameter.of("tutu", "plop"))));
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(ConfigurationKey.Parameter.of("test", 5), ConfigurationKey.Parameter.of("tutu", "plop"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals(563, current.getResult().get().asInteger().get());
 		
 		current = resultIterator.next();
 		Assertions.assertTrue(current.getResult().isPresent());
 		Assertions.assertEquals("tata.toto", current.getResult().get().getKey().getName());
-		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("tutu", "plop"))));
+		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(ConfigurationKey.Parameter.of("tutu", "plop"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
 		Assertions.assertEquals(65432, current.getResult().get().asInteger().get());
 		
@@ -93,8 +101,13 @@ public class PropertyFileConfigurationSourceTest {
 	}
 	
 	@Test
-	public void testList() {
-		PropertyFileConfigurationSource source = new PropertyFileConfigurationSource(new ClasspathResource(URI.create("classpath:/test-configuration.properties")));
+	public void testList() throws IOException {
+		Properties properties = new Properties();
+		try(InputStream input = ClassLoader.getSystemResourceAsStream("test-configuration.properties")) {
+			properties.load(input);
+		}
+
+		PropertiesConfigurationSource source = new PropertiesConfigurationSource(properties);
 		
 		List<ConfigurationProperty> result = source.list("logging.level").executeAll().collectList().block();
 		Assertions.assertEquals(4, result.size());
@@ -111,7 +124,7 @@ public class PropertyFileConfigurationSourceTest {
 		result = source.list("logging.level").execute().collectList().block();
 		Assertions.assertEquals(0, result.size());
 
-		result = source.list("logging.level").withParameters(Parameter.of("environment", "prod"), Parameter.wildcard("name")).execute().collectList().block();
+		result = source.list("logging.level").withParameters(ConfigurationKey.Parameter.of("environment", "prod"), ConfigurationKey.Parameter.wildcard("name")).execute().collectList().block();
 		Assertions.assertEquals(3, result.size());
 		Assertions.assertEquals(
 			Set.of(
@@ -122,10 +135,10 @@ public class PropertyFileConfigurationSourceTest {
 			result.stream().map(p -> p.toString()).collect(Collectors.toSet())
 		);
 
-		result = source.list("logging.level").withParameters(Parameter.of("environment", "dev")).execute().collectList().block();
+		result = source.list("logging.level").withParameters(ConfigurationKey.Parameter.of("environment", "dev")).execute().collectList().block();
 		Assertions.assertEquals(0, result.size());
 
-		result = source.list("logging.level").withParameters(Parameter.of("environment", "dev")).executeAll().collectList().block();
+		result = source.list("logging.level").withParameters(ConfigurationKey.Parameter.of("environment", "dev")).executeAll().collectList().block();
 		Assertions.assertEquals(1, result.size());
 		Assertions.assertEquals(
 			Set.of(
