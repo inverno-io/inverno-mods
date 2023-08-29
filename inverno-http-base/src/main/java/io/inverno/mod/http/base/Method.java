@@ -17,15 +17,14 @@ package io.inverno.mod.http.base;
 
 /**
  * <p>
- * Enumeration of HTTP methods as defined by
- * <a href="https://tools.ietf.org/html/rfc7231#section-4.3">RFC 7231 Section
- * 4.3</a>.
+ * Enumeration of HTTP methods as defined by <a href="https://tools.ietf.org/html/rfc7231#section-4.3">RFC 7231 Section 4.3</a>.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 public enum Method {
+	
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.1">RFC 7231 Section 4.3.1</a>
 	 */
@@ -35,11 +34,11 @@ public enum Method {
 	 */
 	HEAD,
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.1">RFC 7231 Section 4.3.1</a>
+	 * <a href="https://tools.ietf.org/html/rfc5789">RFC 5789</a>
 	 */
 	PATCH,
 	/**
-	 * <a href="https://tools.ietf.org/html/rfc5789">RFC 5789</a>
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-4.3.3">RFC 7231 Section 4.3.1</a>
 	 */
 	POST,
 	/**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Jeremy KUHN
+ * Copyright 2023 Jeremy KUHN
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.base;
 
 /**
  * <p>
- * Represents mutable outbound HTTP cookies.
+ * Inverno HTTP WebSocket base API.
  * </p>
- * 
- * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.6
- * 
- * @see Cookie
- * @see OutboundRequestHeaders
  */
-public interface OutboundCookies extends InboundCookies {
-
-	/**
-	 * <p>
-	 * Adds a cookie.
-	 * </p>
-	 * 
-	 * @param <T>   the value type
-	 * @param name  the name
-	 * @param value the value
-	 * 
-	 * @return the outbound cookies
-	 */
-	<T> OutboundCookies addCookie(String name, T value);
-}
+package io.inverno.mod.http.base.ws;

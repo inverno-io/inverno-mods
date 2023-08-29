@@ -18,8 +18,20 @@ package io.inverno.mod.http.base;
 import io.inverno.mod.http.base.header.Headers;
 
 /**
- *
+ * <p>
+ * Represents immutable inbound HTTP request headers.
+ * </p>
+ * 
+ * <p>
+ * This extends the {@link InboundHeaders} to expose request specific information like content type, content length and cookies.
+ * </p>
+ * 
+ * <p>
+ * An inbound request is received by a server in a server exchange.
+ * </p>
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public interface InboundRequestHeaders extends InboundHeaders {
 	
@@ -50,5 +62,12 @@ public interface InboundRequestHeaders extends InboundHeaders {
 	 */
 	Long getContentLength();
 	
+	/**
+	 * <p>
+	 * Returns the cookies defined in the request.
+	 * </p>
+	 * 
+	 * @return the cookies
+	 */
 	InboundCookies cookies();
 }

@@ -112,7 +112,7 @@ public class OutboundDataSequencer {
 
 		@Override
 		protected void hookOnComplete() {
-			if(this.currentBuffer.readableBytes() > 0) {
+			if(this.currentBuffer != null && this.currentBuffer.readableBytes() > 0) {
 				this.dataSink.next(this.currentBuffer);
 			}
 			this.dataSink.complete();

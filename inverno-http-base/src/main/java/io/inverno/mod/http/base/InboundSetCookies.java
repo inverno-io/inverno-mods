@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.base;
 
+import io.inverno.mod.http.base.header.SetCookie;
 import io.inverno.mod.http.base.header.SetCookieParameter;
 import java.util.List;
 import java.util.Map;
@@ -22,63 +23,78 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
+ * <p>
+ * Represents immutable inbound HTTP set-cookies.
+ * </p>
+ * 
+ * <p>
+ * Inbound set-cookies are recevieved by a client in a response in a client exchange.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @see SetCookie
+ * @see InboundResponseHeaders
  */
 public interface InboundSetCookies {
 	
 	/**
 	 * <p>
-	 * Determines whether a set cookie with the specified name is present.
+	 * Determines whether a set-cookie with the specified name is present.
 	 * </p>
 	 * 
-	 * @param name a set cookie name
+	 * @param name a set-cookie name
 	 * 
-	 * @return true if a set cookie is present, false otherwise
+	 * @return true if a set-cookie is present, false otherwise
 	 */
 	boolean contains(String name);
 	
 	/**
 	 * <p>
-	 * Returns the names of the set cookies sent in the request.
+	 * Returns the names of the set-cookies sent in the request.
 	 * </p>
 	 * 
-	 * @return a list of set cookie names
+	 * <p>
+	 * Returns the names of the set-cookies.
+	 * </p>
+	 * 
+	 * @return a list of set-cookie names
 	 */
 	Set<String> getNames();
 	
 	/**
 	 * <p>
-	 * Returns the set cookie with the specified name.
+	 * Returns the set-cookie with the specified name.
 	 * </p>
 	 *
 	 * <p>
-	 * If there are multiple set cookies with the same name, this method returns the first one.
+	 * If there are multiple set-cookies with the same name, this method returns the first one.
 	 * </p>
 	 *
-	 * @param name a cookie name
+	 * @param name a set-cookie name
 	 *
-	 * @return an optional returning the set cookie parameter or an empty optional if there's no set cookie with the specified name
+	 * @return an optional returning the set-cookie parameter or an empty optional if there's no set-cookie with the specified name
 	 */
 	Optional<SetCookieParameter> get(String name);
 	
 	/**
 	 * <p>
-	 * Returns all set cookies with the specified name.
+	 * Returns all set-cookies with the specified name.
 	 * </p>
 	 *
-	 * @param name a cookie name
+	 * @param name a set-cookie name
 	 *
-	 * @return a list of set cookie parameters or an empty list if there's no set cookie with the specified name
+	 * @return a list of set-cookie parameters or an empty list if there's no set-cookie with the specified name
 	 */
 	List<SetCookieParameter> getAll(String name);
 	
 	/**
 	 * <p>
-	 * Returns all set cookies sent in the request.
+	 * Returns all set-cookies.
 	 * </p>
 	 * 
-	 * @return the set cookies grouped by name
+	 * @return the set-cookies grouped by name
 	 */
 	Map<String, List<SetCookieParameter>> getAll();
 }

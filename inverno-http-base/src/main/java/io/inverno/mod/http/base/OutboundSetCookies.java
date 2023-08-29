@@ -19,20 +19,27 @@ import io.inverno.mod.http.base.header.SetCookie;
 import java.util.function.Consumer;
 
 /**
+ * <p>
+ * Represents mutable outbound HTTP set-cookies.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @see SetCookie
+ * @see OutboundResponseHeaders
  */
 public interface OutboundSetCookies extends InboundSetCookies {
 
 	/**
 	 * <p>
-	 * Adds a cookie with the specified name and value.
+	 * Adds a set-cookie with the specified name and value.
 	 * </p>
 	 * 
 	 * @param name  a cookie name
 	 * @param value a cookie value
 	 * 
-	 * @return the response cookies
+	 * @return the outbound set-cookies
 	 */
 	default OutboundSetCookies addCookie(String name, String value) {
 		return this.addCookie(configurator -> {
@@ -43,12 +50,12 @@ public interface OutboundSetCookies extends InboundSetCookies {
 
 	/**
 	 * <p>
-	 * Adds a cookie created with the specified configurer.
+	 * Adds a set-cookie.
 	 * </p>
 	 * 
-	 * @param configurer a cookie configurer
+	 * @param configurer a set-cookie configurer
 	 * 
-	 * @return the response cookies
+	 * @return the outbound set-cookies
 	 */
 	OutboundSetCookies addCookie(Consumer<SetCookie.Configurator> configurer);
 }

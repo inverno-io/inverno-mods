@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.server.internal.http1x.ws;
+package io.inverno.mod.http.base.internal.ws;
 
 import io.inverno.mod.base.Charsets;
-import io.inverno.mod.http.server.HttpServerConfiguration;
-import io.inverno.mod.http.server.ws.WebSocketException;
-import io.inverno.mod.http.server.ws.WebSocketFrame;
+import io.inverno.mod.http.base.ws.WebSocketException;
+import io.inverno.mod.http.base.ws.WebSocketFrame;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
@@ -39,7 +38,14 @@ import io.netty.util.CharsetUtil;
  */
 public class GenericWebSocketFrame implements WebSocketFrame {
 	
+	/**
+	 * The kind of frame (e.g. TEXT or BINARY)
+	 */
 	private final WebSocketFrame.Kind kind;
+	
+	/**
+	 * The underlying Netty frame
+	 */
 	private final io.netty.handler.codec.http.websocketx.WebSocketFrame underlyingFrame;
 	
 	/**
@@ -179,10 +185,10 @@ public class GenericWebSocketFrame implements WebSocketFrame {
 		 * Creates a generic WebSocker frame factory.
 		 * </p>
 		 * 
-		 * @param configuration the server configuration
+		 * @param maxFrameSize the maximum size of a frame
 		 */
-		public GenericFactory(HttpServerConfiguration configuration) {
-			this.maxFrameSize = configuration.ws_max_frame_size();
+		public GenericFactory(int maxFrameSize) {
+			this.maxFrameSize = maxFrameSize;
 		}
 		
 		/**

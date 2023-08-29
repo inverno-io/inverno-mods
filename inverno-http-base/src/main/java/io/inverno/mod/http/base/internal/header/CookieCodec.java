@@ -61,7 +61,7 @@ public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, Co
 	
 	/**
 	 * <p>
-	 * {@link Headers.Cookie} header implemetation.
+	 * {@link Headers.Cookie} header implementation.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

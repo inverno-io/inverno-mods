@@ -34,12 +34,11 @@ public class MethodNotAllowedException extends HttpException {
 	/**
 	 * The list of methods allowed by the requested resource.
 	 */
-	private Set<Method> allowedMethods;
+	private final Set<Method> allowedMethods;
 	
 	/**
 	 * <p>
-	 * Creates a method not allowed exception with the specified list of methods
-	 * allowed by the requested resource.
+	 * Creates a method not allowed exception with the specified list of methods allowed by the requested resource.
 	 * </p>
 	 * 
 	 * @param allowedMethods a list of allowed methods
@@ -51,8 +50,7 @@ public class MethodNotAllowedException extends HttpException {
 
 	/**
 	 * <p>
-	 * Creates a method not allowed exception with the specified list of methods
-	 * allowed by the requested resource and message.
+	 * Creates a method not allowed exception with the specified list of methods allowed by the requested resource and message.
 	 * </p>
 	 * 
 	 * @param allowedMethods a list of allowed methods
@@ -65,8 +63,7 @@ public class MethodNotAllowedException extends HttpException {
 
 	/**
 	 * <p>
-	 * Creates a method not allowed exception with the specified list of methods
-	 * allowed by the requested resource and cause.
+	 * Creates a method not allowed exception with the specified list of methods allowed by the requested resource and cause.
 	 * </p>
 	 * 
 	 * @param allowedMethods a list of allowed methods
@@ -79,8 +76,7 @@ public class MethodNotAllowedException extends HttpException {
 
 	/**
 	 * <p>
-	 * Creates a method not allowed exception with the specified list of methods
-	 * allowed by the requested resource, message and cause.
+	 * Creates a method not allowed exception with the specified list of methods allowed by the requested resource, message and cause.
 	 * </p>
 	 * 
 	 * @param allowedMethods a list of allowed methods

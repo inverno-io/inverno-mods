@@ -16,11 +16,37 @@
 package io.inverno.mod.http.base;
 
 /**
+ * <p>
+ * Base HTTP exchange (request/response) for representing server or client exchanges.
+ * </p>
+ *
+ * <p>
+ * An HTTP exchange basically comes down to a {@link #request() request} and a {@link #response() response} being exchanged between a client and a server. In a client exchange, the client sends the
+ * request to the server and receives the response from the server. In a server exchange, the server receives the request from the client and sends the response to the client.
+ * </p>
+ *
+ * <p>
+ * A {@link #context() context} is also attached to every exchange to provide contextual data and operation during during the processing of the exchange.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @see ExchangeContext
+ * 
+ * @param <A> The exchange context type 
  */
 public interface BaseExchange<A extends ExchangeContext> {
 
+	/**
+	 * <p>
+	 * Returns the protocol of the exchange (eg. HTTP/1.1).
+	 * </p>
+	 * 
+	 * @return the protocol
+	 */
+	HttpVersion getProtocol();
+	
 	/**
 	 * <p>
 	 * Returns the request part of the exchange.

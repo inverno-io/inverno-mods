@@ -86,8 +86,7 @@ public class NotAcceptableException extends HttpException {
 	
 	/**
 	 * <p>
-	 * Creates a not acceptable exception with the specified list of media types
-	 * accepted by the requested resource.
+	 * Creates a not acceptable exception with the specified list of media types accepted by the requested resource.
 	 * </p>
 	 * 
 	 * @param acceptableMediaTypes a list of acceptable media types
@@ -99,8 +98,7 @@ public class NotAcceptableException extends HttpException {
 
 	/**
 	 * <p>
-	 * Creates a not acceptable exception with the specified list of media types
-	 * accepted by the requested resource and message.
+	 * Creates a not acceptable exception with the specified list of media types accepted by the requested resource and message.
 	 * </p>
 	 * 
 	 * @param acceptableMediaTypes a list of acceptable media types
@@ -113,8 +111,7 @@ public class NotAcceptableException extends HttpException {
 
 	/**
 	 * <p>
-	 * Creates a not acceptable exception with the specified list of media types
-	 * accepted by the requested resource and cause.
+	 * Creates a not acceptable exception with the specified list of media types accepted by the requested resource and cause.
 	 * </p>
 	 * 
 	 * @param acceptableMediaTypes a list of acceptable media types
@@ -127,8 +124,7 @@ public class NotAcceptableException extends HttpException {
 
 	/**
 	 * <p>
-	 * Creates a not acceptable exception with the specified list of media types
-	 * accepted by the requested resource, message and cause.
+	 * Creates a not acceptable exception with the specified list of media types accepted by the requested resource, message and cause.
 	 * </p>
 	 * 
 	 * @param acceptableMediaTypes a list of acceptable media types

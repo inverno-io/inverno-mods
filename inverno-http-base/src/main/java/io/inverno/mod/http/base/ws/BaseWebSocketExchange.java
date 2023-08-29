@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.server.ws;
+package io.inverno.mod.http.base.ws;
 
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.ws.WebSocketStatus;
-import io.inverno.mod.http.server.Exchange;
-import io.inverno.mod.http.server.Request;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
@@ -45,16 +42,7 @@ import reactor.core.publisher.Mono;
  * 
  * @param <A> the type of the exchange context
  */
-public interface WebSocketExchange<A extends ExchangeContext> {
-	
-	/**
-	 * <p>
-	 * Returns the original HTTP upgrade request.
-	 * </p>
-	 * 
-	 * @return the HTTP request
-	 */
-	Request request();
+public interface BaseWebSocketExchange<A extends ExchangeContext> {
 	
 	/**
 	 * <p>
@@ -89,7 +77,7 @@ public interface WebSocketExchange<A extends ExchangeContext> {
 	 * 
 	 * @return the inbound part
 	 */
-	WebSocketExchange.Inbound inbound();
+	BaseWebSocketExchange.Inbound inbound();
 	
 	/**
 	 * <p>
@@ -102,7 +90,7 @@ public interface WebSocketExchange<A extends ExchangeContext> {
 	 * 
 	 * @return the outbound part
 	 */
-	WebSocketExchange.Outbound outbound();
+	BaseWebSocketExchange.Outbound outbound();
 	
 	/**
 	 * <p>
@@ -217,7 +205,7 @@ public interface WebSocketExchange<A extends ExchangeContext> {
 	 * 
 	 * @return the WebSocket exchange
 	 */
-	WebSocketExchange<A> finalizer(Mono<Void> finalizer);
+	BaseWebSocketExchange<A> finalizer(Mono<Void> finalizer);
 	
 	/**
 	 * <p>

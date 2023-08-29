@@ -25,7 +25,6 @@ import org.junit.jupiter.api.Assertions;
  */
 public class AuthorizationCodecTest {
 	
-	
 	@Test
 	public void testAuthorization() {
 		AuthorizationCodec codec = new AuthorizationCodec();

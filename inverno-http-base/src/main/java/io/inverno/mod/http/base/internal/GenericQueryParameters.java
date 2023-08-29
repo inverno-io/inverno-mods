@@ -27,14 +27,33 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
+ * <p>
+ * A generic {@link QueryParameters} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class GenericQueryParameters implements QueryParameters {
 
+	/**
+	 * The underlying map of raw parameters
+	 */
 	private final Map<String, List<String>> queryParameters;
+	
+	/**
+	 * The parameter converter used to convert parameters' raw values
+	 */
 	private final ObjectConverter<String> parameterConverter;
 	
+	/**
+	 * <p>
+	 * Creates query parameters.
+	 * </p>
+	 *
+	 * @param queryParameters    a map of query parameters extracted from the query URI
+	 * @param parameterConverter a parameter converter
+	 */
 	public GenericQueryParameters(Map<String, List<String>> queryParameters, ObjectConverter<String> parameterConverter) {
 		this.queryParameters = queryParameters;
 		this.parameterConverter = parameterConverter;

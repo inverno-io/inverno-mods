@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.base;
 
+import io.inverno.mod.http.base.header.Cookie;
 import io.inverno.mod.http.base.header.CookieParameter;
 import java.util.List;
 import java.util.Map;
@@ -22,12 +23,23 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
+ * <p>
+ * Represents immutable inbound HTTP cookies.
+ * </p>
+ * 
+ * <p>
+ * Inbound cookies are recevieved by a server in a request in a server exchange.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @see Cookie
+ * @see InboundRequestHeaders
  */
 public interface InboundCookies {
 
-		/**
+	/**
 	 * <p>
 	 * Determines whether a cookie with the specified name is present.
 	 * </p>
@@ -40,7 +52,7 @@ public interface InboundCookies {
 	
 	/**
 	 * <p>
-	 * Returns the names of the cookies sent in the request.
+	 * Returns the names of the cookies.
 	 * </p>
 	 * 
 	 * @return a list of cookie names
@@ -75,7 +87,7 @@ public interface InboundCookies {
 	
 	/**
 	 * <p>
-	 * Returns all cookies sent in the request.
+	 * Returns all cookies.
 	 * </p>
 	 * 
 	 * @return the cookies grouped by name

@@ -18,32 +18,53 @@ package io.inverno.mod.http.base;
 import java.util.function.Consumer;
 
 /**
+ * <p>
+ * Represents mutable outbound HTTP request headers.
+ * </p>
+ * 
+ * <p>
+ * This extends the {@link OutboundHeaders} to expose request specific information like content type, content length and cookies.
+ * </p>
+ * 
+ * <p>
+ * An inbound response is received by a client in a client exchange.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public interface OutboundRequestHeaders extends InboundRequestHeaders, OutboundHeaders<OutboundRequestHeaders> {
 
 	/**
 	 * <p>
-	 * Sets the response content type header field value.
+	 * Sets the request content type header field value.
 	 * </p>
 	 * 
 	 * @param contentType the content type
 	 * 
-	 * @return the response headers
+	 * @return the request headers
 	 */
 	OutboundRequestHeaders contentType(String contentType);
 
 	/**
 	 * <p>
-	 * Sets the response content length.
+	 * Sets the request content length.
 	 * </p>
 	 * 
 	 * @param contentLength the content length
 	 * 
-	 * @return the response headers
+	 * @return the request headers
 	 */
 	OutboundRequestHeaders contentLength(long contentLength);
 	
+	/**
+	 * <p>
+	 * Sets the request cookies.
+	 * </p>
+	 * 
+	 * @param cookiesConfigurer an outbound cookies configurer
+	 * 
+	 * @return the request headers
+	 */
 	OutboundRequestHeaders cookies(Consumer<OutboundCookies> cookiesConfigurer);
 }

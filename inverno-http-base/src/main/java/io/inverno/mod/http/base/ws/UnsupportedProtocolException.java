@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.server.ws;
+package io.inverno.mod.http.base.ws;
 
-import io.inverno.mod.http.base.BadRequestException;
 import io.inverno.mod.http.base.HttpException;
+import io.inverno.mod.http.base.Status;
 import java.util.Optional;
 import java.util.Set;
 
@@ -30,7 +30,7 @@ import java.util.Set;
  *
  * @see HttpException
  */
-public class UnsupportedProtocolException extends BadRequestException {
+public class UnsupportedProtocolException extends WebSocketException {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -45,7 +45,7 @@ public class UnsupportedProtocolException extends BadRequestException {
 	 * </p>
 	 */
 	public UnsupportedProtocolException() {
-		super();
+		super(Status.BAD_REQUEST);
 		this.supportedProtocols = Optional.empty();
 	}
 
@@ -57,7 +57,7 @@ public class UnsupportedProtocolException extends BadRequestException {
 	 * @param message a message
 	 */
 	public UnsupportedProtocolException(String message) {
-		super(message);
+		super(Status.BAD_REQUEST, message);
 		this.supportedProtocols = Optional.empty();
 	}
 
@@ -69,7 +69,7 @@ public class UnsupportedProtocolException extends BadRequestException {
 	 * @param cause a cause
 	 */
 	public UnsupportedProtocolException(Throwable cause) {
-		super(cause);
+		super(Status.BAD_REQUEST, cause);
 		this.supportedProtocols = Optional.empty();
 	}
 
@@ -82,7 +82,7 @@ public class UnsupportedProtocolException extends BadRequestException {
 	 * @param cause   a cause
 	 */
 	public UnsupportedProtocolException(String message, Throwable cause) {
-		super(message, cause);
+		super(Status.BAD_REQUEST, message, cause);
 		this.supportedProtocols = Optional.empty();
 	}
 	
@@ -95,7 +95,7 @@ public class UnsupportedProtocolException extends BadRequestException {
 	 * @param supportedProtocols   a list of supported subprotocols
 	 */
 	public UnsupportedProtocolException(Set<String> supportedProtocols) {
-		super();
+		super(Status.BAD_REQUEST);
 		this.supportedProtocols = Optional.ofNullable(supportedProtocols);
 	}
 
@@ -109,7 +109,7 @@ public class UnsupportedProtocolException extends BadRequestException {
 	 * @param message              a message
 	 */
 	public UnsupportedProtocolException(Set<String> supportedProtocols, String message) {
-		super(message);
+		super(Status.BAD_REQUEST, message);
 		this.supportedProtocols = Optional.ofNullable(supportedProtocols);
 	}
 
@@ -123,7 +123,7 @@ public class UnsupportedProtocolException extends BadRequestException {
 	 * @param cause                a cause
 	 */
 	public UnsupportedProtocolException(Set<String> supportedProtocols, Throwable cause) {
-		super(cause);
+		super(Status.BAD_REQUEST, cause);
 		this.supportedProtocols = Optional.ofNullable(supportedProtocols);
 	}
 
@@ -138,7 +138,7 @@ public class UnsupportedProtocolException extends BadRequestException {
 	 * @param cause                a cause
 	 */
 	public UnsupportedProtocolException(Set<String> supportedProtocols, String message, Throwable cause) {
-		super(message, cause);
+		super(Status.BAD_REQUEST, message, cause);
 		this.supportedProtocols = Optional.ofNullable(supportedProtocols);
 	}
 	

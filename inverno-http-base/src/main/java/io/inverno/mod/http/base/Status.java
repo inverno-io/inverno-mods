@@ -17,9 +17,7 @@ package io.inverno.mod.http.base;
 
 /**
  * <p>
- * Enumeration of HTTP statuses as defined by
- * <a href="https://tools.ietf.org/html/rfc7231#section-6">RFC 7231 Section
- * 6</a>.
+ * Enumeration of HTTP statuses as defined by <a href="https://tools.ietf.org/html/rfc7231#section-6">RFC 7231 Section 6</a>.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -241,12 +239,11 @@ public enum Status {
 	 * <p>
 	 * Returns the HTTP status corresponding to the specified code.
 	 * </p>
-	 * 
+	 *
 	 * @param code an HTTP code
-	 * 
+	 *
 	 * @return a HTTP status
-	 * @throws IllegalArgumentException if the specified status doesn't correspond
-	 *                                  to a known HTTP status
+	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
 	 */
 	public static Status valueOf(int code) {
 		for(Status status : values()) {
@@ -259,11 +256,9 @@ public enum Status {
 	
 	/**
 	 * <p>
-	 * Describes the category of an HTTP status as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-6">RFC 7231 Section
-	 * 6</a>.
+	 * Describes the category of an HTTP status as defined by <a href="https://tools.ietf.org/html/rfc7231#section-6">RFC 7231 Section 6</a>.
 	 * </p>
-	 * 
+	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.0
 	 */
@@ -290,18 +285,17 @@ public enum Status {
 		 */
 		SERVER_ERROR((byte)5);
 		
-		private byte categoryId;
+		private final byte categoryId;
 		
 		/**
 		 * <p>
 		 * Returns the HTTP status category corresponding to the specified category id.
 		 * </p>
-		 * 
+		 *
 		 * @param categoryId a category id
-		 * 
+		 *
 		 * @return a HTTP status category
-		 * @throws IllegalArgumentException if the specified id doesn't correspond to a
-		 *                                  known HTTP status category
+		 * @throws IllegalArgumentException if the specified id doesn't correspond to a known HTTP status category
 		 */
 		private Category(byte categoryId) {
 			this.categoryId = categoryId;
@@ -311,12 +305,11 @@ public enum Status {
 		 * <p>
 		 * Returns the HTTP status corresponding to the specified HTTP status code.
 		 * </p>
-		 * 
+		 *
 		 * @param statusCode an HTTP status code
-		 * 
+		 *
 		 * @return a HTTP status category
-		 * @throws IllegalArgumentException if the specified status doesn't correspond
-		 *                                  to a known HTTP status
+		 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
 		 */
 		public static Category valueOf(int statusCode) {
 			int statusCategoryId = statusCode / 100;

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.base;
 
 import org.reactivestreams.Publisher;
@@ -21,6 +20,10 @@ import org.reactivestreams.Publisher;
 /**
  * <p>
  * A generic inbound data consumer.
+ * </p>
+ * 
+ * <p>
+ * It is used to consume the payload received by a client or a server either in a response or a request.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

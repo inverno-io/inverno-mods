@@ -15,7 +15,6 @@
  */
 package io.inverno.mod.http.base;
 
-import io.inverno.mod.http.base.Parameter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,13 +22,13 @@ import java.util.Set;
 
 /**
  * <p>
- * Represents the query parameters sent of a client request in a server exchange.
+ * Represents the query parameters of a request.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
- * @see Request
+ * @see BaseRequest
  */
 public interface QueryParameters {
 

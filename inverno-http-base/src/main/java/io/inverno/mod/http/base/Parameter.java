@@ -19,8 +19,7 @@ import io.inverno.mod.base.converter.Convertible;
 
 /**
  * <p>
- * Base parameter interface defining common HTTP parameter (eg. header, cookie,
- * query parameter...).
+ * Base parameter interface defining common HTTP parameter (eg. header, cookie, query parameter...).
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -38,8 +37,27 @@ public interface Parameter extends Convertible<String> {
 	@Override
 	String getName();
 	
+	/**
+	 * <p>
+	 * A factory for creating parameters.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	interface Factory {
 		
+		/**
+		 * <p>
+		 * Creates a parameter with the specified name and value.
+		 * </p>
+		 *
+		 * @param <T>   the value type
+		 * @param name  the name
+		 * @param value the value
+		 *
+		 * @return a new parameter
+		 */
 		<T> Parameter create(String name, T value);
 	}
 }

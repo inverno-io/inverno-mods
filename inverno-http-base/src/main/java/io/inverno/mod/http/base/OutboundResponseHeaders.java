@@ -18,8 +18,20 @@ package io.inverno.mod.http.base;
 import java.util.function.Consumer;
 
 /**
+ * <p>
+ * Represents mutable outbound HTTP response headers.
+ * </p>
+ * 
+ * <p>
+ * This extends the {@link OutboundHeaders} to expose response specific information like response status, content type, content length and set-cookies.
+ * </p>
+ * 
+ * <p>
+ * An inbound response is received by a client in a client exchange.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public interface OutboundResponseHeaders extends InboundResponseHeaders, OutboundHeaders<OutboundResponseHeaders> {
 
@@ -67,5 +79,14 @@ public interface OutboundResponseHeaders extends InboundResponseHeaders, Outboun
 	 */
 	OutboundResponseHeaders contentLength(long contentLength);
 	
+	/**
+	 * <p>
+	 * Sets the response set-cookies.
+	 * </p>
+	 * 
+	 * @param cookiesConfigurer an outbound set-cookies configurer
+	 * 
+	 * @return the response headers
+	 */
 	OutboundResponseHeaders cookies(Consumer<OutboundSetCookies> cookiesConfigurer);
 }

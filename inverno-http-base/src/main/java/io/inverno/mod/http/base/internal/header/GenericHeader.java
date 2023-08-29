@@ -69,7 +69,9 @@ public class GenericHeader implements Header {
 	 */
 	public GenericHeader(String headerName, String headerValue) {
 		this.headerName = headerName.toLowerCase();
-		this.headerValue = headerValue;
+		if(headerValue != null) {
+			this.headerValue = headerValue.trim();
+		}
 	}
 
 	@Override

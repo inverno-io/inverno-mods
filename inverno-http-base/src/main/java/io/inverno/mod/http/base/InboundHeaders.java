@@ -22,8 +22,12 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
+ * <p>
+ * Represents immutable inbound HTTP headers.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public interface InboundHeaders {
 	
@@ -52,10 +56,10 @@ public interface InboundHeaders {
 	
 	/**
 	 * <p>
-	 * Returns the names of the headers in the request.
+	 * Returns the names of the headers specified in the HTTP message.
 	 * </p>
 	 * 
-	 * @return a list of header names
+	 * @return the header names
 	 */
 	Set<String> getNames();
 
@@ -65,7 +69,7 @@ public interface InboundHeaders {
 	 * </p>
 	 *
 	 * <p>
-	 * If there are multiple headers with the same name, this method returns the first one.
+	 * If there are multiple headers with the same name, the first one is returned.
 	 * </p>
 	 *
 	 * @param name a header name
@@ -87,7 +91,7 @@ public interface InboundHeaders {
 	
 	/**
 	 * <p>
-	 * Returns all headers in the request.
+	 * Returns all headers specified in the HTTP message.
 	 * </p>
 	 * 
 	 * @return a list of header entries or an empty list if there's no header
@@ -100,7 +104,7 @@ public interface InboundHeaders {
 	 * </p>
 	 *
 	 * <p>
-	 * If there are multiple headers with the same name, this method returns the first one.
+	 * If there are multiple headers with the same name, the first one is returned.
 	 * </p>
 	 *
 	 * @param <T>  the decoded header type
@@ -124,7 +128,7 @@ public interface InboundHeaders {
 	
 	/**
 	 * <p>
-	 * Decodes and returns all headers in the request.
+	 * Decodes and returns all headers specified in the HTTP message.
 	 * </p>
 	 * 
 	 * @return a list of headers or an empty list if there's no header
@@ -137,7 +141,7 @@ public interface InboundHeaders {
 	 * </p>
 	 *
 	 * <p>
-	 * If there are multiple headers with the same name, this method returns the first one.
+	 * If there are multiple headers with the same name, the first one is returned.
 	 * </p>
 	 *
 	 * @param name a header name
@@ -159,7 +163,7 @@ public interface InboundHeaders {
 	
 	/**
 	 * <p>
-	 * Returns all headers in the request as parameters.
+	 * Returns all headers specified in the HTTP message as parameters.
 	 * </p>
 	 * 
 	 * @return a list of parameters or an empty list if there's no header

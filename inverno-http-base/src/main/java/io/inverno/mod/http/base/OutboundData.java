@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.base;
 
 import org.reactivestreams.Publisher;
@@ -22,6 +21,10 @@ import reactor.core.publisher.Mono;
 /**
  * <p>
  * A generic outbound data producer.
+ * </p>
+ * 
+ * <p>
+ * It is used to set the payload sent to a client or a server either in a response or a request.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -40,7 +43,7 @@ public interface OutboundData<A> {
 	 * @param <T>   the type of data
 	 * @param value the data publisher
 	 * 
-	 * @throws IllegalStateException if the outbound data have already been set
+	 * @throws IllegalStateException if data were already sent to the recipient
 	 */
 	<T extends A> void stream(Publisher<T> value) throws IllegalStateException;
 	
@@ -52,7 +55,7 @@ public interface OutboundData<A> {
 	 * @param <T>   the type of data
 	 * @param value the value to set
 	 * 
-	 * @throws IllegalStateException if the outbound data have already been set
+	 * @throws IllegalStateException if data were already sent to the recipient
 	 */
 	default <T extends A> void value(T value) throws IllegalStateException {
 		this.stream(Mono.justOrEmpty(value));

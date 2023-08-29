@@ -87,12 +87,10 @@ public class ServiceUnavailableException extends HttpException {
 
 	/**
 	 * <p>
-	 * Creates a service unavailable exception with the specified interval in
-	 * seconds after which the failed request may be retried.
+	 * Creates a service unavailable exception with the specified interval in seconds after which the failed request may be retried.
 	 * </p>
-	 * 
-	 * @param retryAfter interval in seconds after which the failed request may be
-	 *                   retried
+	 *
+	 * @param retryAfter interval in seconds after which the failed request may be retried
 	 */
 	public ServiceUnavailableException(long retryAfter) {
 		super(Status.SERVICE_UNAVAILABLE);
@@ -101,12 +99,10 @@ public class ServiceUnavailableException extends HttpException {
 
 	/**
 	 * <p>
-	 * Creates a service unavailable exception with the specified interval in
-	 * seconds after which the failed request may be retried and message.
+	 * Creates a service unavailable exception with the specified interval in seconds after which the failed request may be retried and message.
 	 * </p>
-	 * 
-	 * @param retryAfter interval in seconds after which the failed request may be
-	 *                   retried
+	 *
+	 * @param retryAfter interval in seconds after which the failed request may be retried
 	 * @param message    a message
 	 */
 	public ServiceUnavailableException(long retryAfter, String message) {
@@ -116,12 +112,10 @@ public class ServiceUnavailableException extends HttpException {
 	
 	/**
 	 * <p>
-	 * Creates a service unavailable exception with the specified interval in
-	 * seconds after which the failed request may be retried and cause.
+	 * Creates a service unavailable exception with the specified interval in seconds after which the failed request may be retried and cause.
 	 * </p>
-	 * 
-	 * @param retryAfter interval in seconds after which the failed request may be
-	 *                   retried
+	 *
+	 * @param retryAfter interval in seconds after which the failed request may be retried
 	 * @param cause      a cause
 	 */
 	public ServiceUnavailableException(long retryAfter, Throwable cause) {
@@ -131,12 +125,10 @@ public class ServiceUnavailableException extends HttpException {
 
 	/**
 	 * <p>
-	 * Creates a service unavailable exception with the specified interval in
-	 * seconds after which the failed request may be retried, message and cause.
+	 * Creates a service unavailable exception with the specified interval in seconds after which the failed request may be retried, message and cause.
 	 * </p>
-	 * 
-	 * @param retryAfter interval in seconds after which the failed request may be
-	 *                   retried
+	 *
+	 * @param retryAfter interval in seconds after which the failed request may be retried
 	 * @param message    a message
 	 * @param cause      a cause
 	 */
@@ -147,10 +139,9 @@ public class ServiceUnavailableException extends HttpException {
 	
 	/**
 	 * <p>
-	 * Creates a service unavailable exception with the specified date time after
-	 * which the failed request may be retried.
+	 * Creates a service unavailable exception with the specified date time after which the failed request may be retried.
 	 * </p>
-	 * 
+	 *
 	 * @param retryAfter a date time after which the failed request may be retried
 	 */
 	public ServiceUnavailableException(ZonedDateTime retryAfter) {
@@ -160,10 +151,9 @@ public class ServiceUnavailableException extends HttpException {
 
 	/**
 	 * <p>
-	 * Creates a service unavailable exception with the specified date time after
-	 * which the failed request may be retried and message.
+	 * Creates a service unavailable exception with the specified date time after which the failed request may be retried and message.
 	 * </p>
-	 * 
+	 *
 	 * @param retryAfter a date time after which the failed request may be retried
 	 * @param message    a message
 	 */
@@ -174,10 +164,9 @@ public class ServiceUnavailableException extends HttpException {
 
 	/**
 	 * <p>
-	 * Creates a service unavailable exception with the specified date time after
-	 * which the failed request may be retried and cause.
+	 * Creates a service unavailable exception with the specified date time after which the failed request may be retried and cause.
 	 * </p>
-	 * 
+	 *
 	 * @param retryAfter a date time after which the failed request may be retried
 	 * @param cause      a cause
 	 */
@@ -188,10 +177,9 @@ public class ServiceUnavailableException extends HttpException {
 
 	/**
 	 * <p>
-	 * Creates a service unavailable exception with the specified date time after
-	 * which the failed request may be retried, message and cause.
+	 * Creates a service unavailable exception with the specified date time after which the failed request may be retried, message and cause.
 	 * </p>
-	 * 
+	 *
 	 * @param retryAfter a date time after which the failed request may be retried
 	 * @param message    a message
 	 * @param cause      a cause

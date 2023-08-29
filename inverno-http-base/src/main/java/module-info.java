@@ -64,4 +64,5 @@ module io.inverno.mod.http.base {
 	exports io.inverno.mod.http.base.internal to io.inverno.mod.http.client, io.inverno.mod.http.server;
 	exports io.inverno.mod.http.base.internal.header to io.inverno.mod.http.client, io.inverno.mod.http.server, io.inverno.mod.web;
 	exports io.inverno.mod.http.base.internal.netty to io.inverno.mod.http.client, io.inverno.mod.http.server;
+	exports io.inverno.mod.http.base.internal.ws to io.inverno.mod.http.client, io.inverno.mod.http.server;
 }

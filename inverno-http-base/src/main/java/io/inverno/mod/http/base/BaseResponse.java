@@ -16,12 +16,40 @@
 package io.inverno.mod.http.base;
 
 /**
+ * <p>
+ * Base HTTP response for representing client or server responses.
+ * </p>
+ *
+ * <p>
+ * It exposes content information following HTTP response message format as defined by <a href="https://tools.ietf.org/html/rfc7230">RFC7230</a> and
+ * <a href="https://tools.ietf.org/html/rfc7231">RFC7231</a>.
+ * </p>
+ *
+ * <p>
+ * Considering a client exchange, where the response is received by the client from the server, implementation shall only provide methods to access HTTP response content. Considering a server
+ * exchange, where the response is provided and sent from the server to the client, implementation shall only provide methods to set HTTP response content.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public interface BaseResponse {
 
+	/**
+	 * <p>
+	 * Returns the HTTP headers of the response.
+	 * </p>
+	 * 
+	 * @return the response headers
+	 */
 	InboundResponseHeaders headers();
 	
+	/**
+	 * <p>
+	 * Returns the HTTP response trailer headers.
+	 * </p>
+	 * 
+	 * @return the response trailer headers
+	 */
 	InboundHeaders trailers();
 }

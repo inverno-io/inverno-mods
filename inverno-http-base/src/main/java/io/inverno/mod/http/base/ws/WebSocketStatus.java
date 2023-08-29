@@ -16,8 +16,12 @@
 package io.inverno.mod.http.base.ws;
 
 /**
+ * <p>
+ * Represents WebSocket status codes as defined by <a href="https://datatracker.ietf.org/doc/html/rfc6455#section-7.4">RC 6455 Section 7.4</a>.
+ * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.5
  */
 public enum WebSocketStatus {
 	
@@ -228,15 +232,40 @@ public enum WebSocketStatus {
 		this.reason = reason;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the actual WebSocket status code.
+	 * </p>
+	 * 
+	 * @return the status code
+	 */
 	public short getCode() {
 		return code;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the reason describing the status.
+	 * </p>
+	 * 
+	 * @return a reason
+	 */
 	public String getReason() {
 		return reason;
 	}
 	
-	public static WebSocketStatus valueOf(short code) {
+	/**
+	 * <p>
+	 * Returns the status correspoding to the specified code.
+	 * </p>
+	 * 
+	 * @param code a code
+	 * 
+	 * @return a WebSocket status
+	 * 
+	 * @throws IllegalArgumentException if the specified code doesn't correspond to a supported status
+	 */
+	public static WebSocketStatus valueOf(short code) throws IllegalArgumentException{
 		switch(code) {
 			case 1000: return NORMAL_CLOSURE;
 			case 1001: return ENDPOINT_UNAVAILABLE;

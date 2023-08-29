@@ -19,17 +19,31 @@ import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.base.net.URIs;
 
 /**
+ * <p>
+ * Base HTTP request for representing client or server requests.
+ * </p>
+ *
+ * <p>
+ * It exposes content information following HTTP request message format as defined by <a href="https://tools.ietf.org/html/rfc7230">RFC7230</a> and
+ * <a href="https://tools.ietf.org/html/rfc7231">RFC7231</a>.
+ * </p>
+ *
+ * <p>
+ * Considering a client exchange, where the request is created and sent from the client to the server, implementation shall provide methods to set HTTP request content. Considering a server exchange,
+ * where the request is received by the server from the client, implementation shall only provide methods to access HTTP request content.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public interface BaseRequest {
 	
 	/**
 	 * <p>
-	 * Returns the HTTP headers sent in the request.
+	 * Returns the HTTP headers of the request.
 	 * </p>
 	 * 
-	 * @return the headers
+	 * @return the request headers
 	 */
 	InboundRequestHeaders headers();
 
@@ -57,8 +71,7 @@ public interface BaseRequest {
 	 * </p>
 	 *
 	 * <p>
-	 * This path corresponds to the origin form as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-5.3.1">RFC 7230 Section 5.3.1</a>, as such it may contain a query URI component.
+	 * This path corresponds to the origin form as defined by <a href="https://tools.ietf.org/html/rfc7230#section-5.3.1">RFC 7230 Section 5.3.1</a>, as such it may contain a query URI component.
 	 * </p>
 	 *
 	 * @return the path to the targeted resource
@@ -71,13 +84,12 @@ public interface BaseRequest {
 	 * </p>
 	 *
 	 * <p>
-	 * This path corresponds to the absolute path of the origin form as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-5.3.1">RFC 7230 Section 5.3.1</a>, as such it only contains the path URI component.
+	 * This path corresponds to the absolute path of the origin form as defined by <a href="https://tools.ietf.org/html/rfc7230#section-5.3.1">RFC 7230 Section 5.3.1</a>, as such it only contains the
+	 * path URI component.
 	 * </p>
 	 *
 	 * <p>
-	 * The resulting path is also normalized as defined by
-	 * <a href="https://tools.ietf.org/html/rfc3986#section-6">RFC 3986 Section 6</a>.
+	 * The resulting path is also normalized as defined by <a href="https://tools.ietf.org/html/rfc3986#section-6">RFC 3986 Section 6</a>.
 	 * </p>
 	 *
 	 * @return the normalized absolute path to the targeted resource
@@ -90,8 +102,7 @@ public interface BaseRequest {
 	 * </p>
 	 *
 	 * <p>
-	 * This method always returns a new {@link URIBuilder} instance with {@link URIs.Option#NORMALIZED} option. It is then safe to use it to build
-	 * relative paths.
+	 * This method always returns a new {@link URIBuilder} instance with {@link URIs.Option#NORMALIZED} option. It is then safe to use it to build relative paths.
 	 * </p>
 	 *
 	 * @return a new URI builder
@@ -109,10 +120,10 @@ public interface BaseRequest {
 	
 	/**
 	 * <p>
-	 * Returns the query parameters sent in the request.
+	 * Returns the query parameters of the request.
 	 * </p>
 	 * 
-	 * @return the query parameters
+	 * @return the request query parameters
 	 */
 	QueryParameters queryParameters();
 }

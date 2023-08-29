@@ -46,8 +46,7 @@ public class HttpException extends RuntimeException {
 	
 	/**
 	 * <p>
-	 * Creates an HTTP exception with default status
-	 * {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)}.
+	 * Creates an HTTP exception with default status {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)}.
 	 * </p>
 	 */
 	public HttpException() {
@@ -56,9 +55,7 @@ public class HttpException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates an HTTP exception with default status
-	 * {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)} and
-	 * specified message.
+	 * Creates an HTTP exception with default status {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)} and specified message.
 	 * </p>
 	 * 
 	 * @param message a message
@@ -69,9 +66,7 @@ public class HttpException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates an HTTP exception with default status
-	 * {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)} and
-	 * specified cause.
+	 * Creates an HTTP exception with default status {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)} and specified cause.
 	 * </p>
 	 * 
 	 * @param cause a cause
@@ -82,9 +77,7 @@ public class HttpException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates an HTTP exception with default status
-	 * {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)}, specified
-	 * message and cause
+	 * Creates an HTTP exception with default status {@link Status#INTERNAL_SERVER_ERROR Internal Server Error (500)}, specified message and cause
 	 * </p>
 	 * 
 	 * @param message a message
@@ -101,8 +94,7 @@ public class HttpException extends RuntimeException {
 	 * 
 	 * @param statusCode an HTTP status code
 	 * 
-	 * @throws IllegalArgumentException if the specified status doesn't correspond
-	 *                                  to a known HTTP status
+	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
 	 */
 	public HttpException(int statusCode) throws IllegalArgumentException {
 		this.setStatusCode(statusCode);
@@ -112,12 +104,11 @@ public class HttpException extends RuntimeException {
 	 * <p>
 	 * Creates an HTTP exception with specified HTTP status code and message.
 	 * </p>
-	 * 
+	 *
 	 * @param statusCode an HTTP status code
 	 * @param message    a message
-	 * 
-	 * @throws IllegalArgumentException if the specified status doesn't correspond
-	 *                                  to a known HTTP status
+	 *
+	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
 	 */
 	public HttpException(int statusCode, String message) throws IllegalArgumentException {
 		super(message);
@@ -128,12 +119,11 @@ public class HttpException extends RuntimeException {
 	 * <p>
 	 * Creates an HTTP exception with specified HTTP status code and cause.
 	 * </p>
-	 * 
+	 *
 	 * @param statusCode an HTTP status code
 	 * @param cause      a cause
-	 * 
-	 * @throws IllegalArgumentException if the specified status doesn't correspond
-	 *                                  to a known HTTP status
+	 *
+	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
 	 */
 	public HttpException(int statusCode, Throwable cause) throws IllegalArgumentException {
 		super(cause);
@@ -144,13 +134,12 @@ public class HttpException extends RuntimeException {
 	 * <p>
 	 * Creates an HTTP exception with specified HTTP status code, message and cause.
 	 * </p>
-	 * 
+	 *
 	 * @param statusCode an HTTP status code
 	 * @param message    a message
 	 * @param cause      a cause
-	 * 
-	 * @throws IllegalArgumentException if the specified status doesn't correspond
-	 *                                  to a known HTTP status
+	 *
+	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
 	 */
 	public HttpException(int statusCode, String message, Throwable cause) throws IllegalArgumentException {
 		super(message, cause);

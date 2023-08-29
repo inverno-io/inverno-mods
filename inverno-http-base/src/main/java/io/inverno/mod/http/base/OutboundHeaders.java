@@ -18,8 +18,14 @@ package io.inverno.mod.http.base;
 import io.inverno.mod.http.base.header.Header;
 
 /**
+ * <p>
+ * Represents mutable outbound HTTP headers.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @version 1.6
+ * 
+ * @param <A> the outbound headers type
  */
 public interface OutboundHeaders<A extends OutboundHeaders<A>> extends InboundHeaders {
 
@@ -40,7 +46,7 @@ public interface OutboundHeaders<A extends OutboundHeaders<A>> extends InboundHe
 	 * @param name  the header name
 	 * @param value the header value
 	 * 
-	 * @return the response headers
+	 * @return the outbound headers
 	 */
 	A add(CharSequence name, CharSequence value);
 
@@ -51,7 +57,7 @@ public interface OutboundHeaders<A extends OutboundHeaders<A>> extends InboundHe
 	 * 
 	 * @param headers the headers to add
 	 * 
-	 * @return the response headers
+	 * @return the outbound headers
 	 */
 	A add(Header... headers);
 
@@ -63,7 +69,7 @@ public interface OutboundHeaders<A extends OutboundHeaders<A>> extends InboundHe
 	 * @param name  the header name
 	 * @param value the header value
 	 * 
-	 * @return the response headers
+	 * @return the outbound headers
 	 */
 	A set(CharSequence name, CharSequence value);
 
@@ -74,7 +80,7 @@ public interface OutboundHeaders<A extends OutboundHeaders<A>> extends InboundHe
 	 * 
 	 * @param headers the headers to set
 	 * 
-	 * @return the response headers
+	 * @return the outbound headers
 	 */
 	A set(Header... headers);
 
@@ -85,7 +91,7 @@ public interface OutboundHeaders<A extends OutboundHeaders<A>> extends InboundHe
 	 * 
 	 * @param names the names of the headers to remove
 	 * 
-	 * @return the response headers
+	 * @return the outbound headers
 	 */
 	A remove(CharSequence... names);
 }

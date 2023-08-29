@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.server.internal.http1x.ws;
+package io.inverno.mod.http.base.internal.ws;
 
-import io.inverno.mod.http.server.HttpServerConfiguration;
-import io.inverno.mod.http.server.ws.WebSocketFrame;
-import io.inverno.mod.http.server.ws.WebSocketMessage;
+import io.inverno.mod.http.base.ws.WebSocketFrame;
+import io.inverno.mod.http.base.ws.WebSocketMessage;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
@@ -127,10 +126,10 @@ public class GenericWebSocketMessage implements WebSocketMessage {
 		 * Creates a generic WebSocket message factory.
 		 * </p>
 		 * 
-		 * @param configuration the server configuration
+		 * @param maxFrameSize the maximum size of a frame
 		 */
-		public GenericFactory(HttpServerConfiguration configuration) {
-			this.maxFrameSize = configuration.ws_max_frame_size();
+		public GenericFactory(int maxFrameSize) {
+			this.maxFrameSize = maxFrameSize;
 		}
 
 		@Override
