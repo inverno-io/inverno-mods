@@ -29,6 +29,7 @@ module io.inverno.mod.test {
 	requires io.inverno.mod.redis.lettuce;
 	requires io.inverno.mod.boot;
 	requires io.inverno.mod.web;
+	requires io.inverno.mod.http.client;
 	
 	requires io.inverno.test;
 	
@@ -41,5 +42,6 @@ module io.inverno.mod.test {
 	requires org.mockito;
 	
 	exports io.inverno.mod.test.configuration;
+	exports io.inverno.mod.test.http;
 	exports io.inverno.mod.test.web;
 }

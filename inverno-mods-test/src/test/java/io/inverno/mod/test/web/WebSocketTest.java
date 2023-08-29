@@ -1241,11 +1241,11 @@ public class WebSocketTest extends AbstractInvernoModTest {
 		
 		private StringBuilder acc;
 		
-		public TestWebSocketListener() {
+		 public TestWebSocketListener() {
 			super();
 			this.take = Integer.MAX_VALUE;
 			this.result = new CompletableFuture<>();
-			this.messages = new ArrayList<String>();
+			this.messages = new ArrayList<>();
 		}
 
 		@Override

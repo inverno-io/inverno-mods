@@ -49,7 +49,7 @@ public class WebRoutesConfigurer implements io.inverno.mod.web.WebRoutesConfigur
 				        .body().raw().stream(Flux.from(exchange.request().body().get().multipart().stream())
 				            .flatMap(part -> part.getFilename()
 				                .map(fileName -> Flux.<ByteBuf, FileResource>using(
-				                        () -> new FileResource("uploads/" + part.getFilename().get()),
+				                        () -> new FileResource("target/uploads/" + part.getFilename().get()),
 				                        file -> file.write(part.raw().stream()).map(Flux::from).get()
 				                            .reduce(0, (acc, cur) -> acc + cur)
 				                            .map(size -> Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Uploaded " + fileName + "(" + part.headers().getContentType() + "): " + size + " Bytes\n", Charsets.DEFAULT))), 
