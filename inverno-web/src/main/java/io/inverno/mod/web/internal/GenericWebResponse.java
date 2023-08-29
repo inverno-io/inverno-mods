@@ -43,10 +43,9 @@ class GenericWebResponse implements WebResponse {
 	
 	/**
 	 * <p>
-	 * Creates a generic web response with the specified underlying response and
-	 * data conversion service.
+	 * Creates a generic web response with the specified underlying response and data conversion service.
 	 * </p>
-	 * 
+	 *
 	 * @param response              the underlying response
 	 * @param dataConversionService the data conversion service
 	 */

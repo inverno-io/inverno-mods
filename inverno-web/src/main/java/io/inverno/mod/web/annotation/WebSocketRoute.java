@@ -17,7 +17,7 @@ package io.inverno.mod.web.annotation;
 
 import io.inverno.mod.base.converter.MediaTypeConverter;
 import io.inverno.mod.base.net.URIBuilder;
-import io.inverno.mod.http.server.ws.WebSocketMessage;
+import io.inverno.mod.http.base.ws.WebSocketMessage;
 import io.inverno.mod.web.Web2SocketExchange;
 import io.netty.buffer.ByteBuf;
 import java.lang.annotation.Documented;

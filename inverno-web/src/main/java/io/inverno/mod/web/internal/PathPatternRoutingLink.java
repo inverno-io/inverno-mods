@@ -30,16 +30,14 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A routing link responsible to route an exchange based on the absolute
- * normalized path as defined by {@link PathAware}.
+ * A routing link responsible to route an exchange based on the absolute normalized path as defined by {@link PathAware}.
  * </p>
- * 
+ *
  * <p>
- * This link operates on routes defined with a parameterized path using the
- * corresponding {@link URIPattern} to match an exchange path, routes defined
- * with static path are handled by the {@link PathRoutingLink}.
+ * This link operates on routes defined with a parameterized path using the corresponding {@link URIPattern} to match an exchange path, routes defined with static path are handled by the
+ * {@link PathRoutingLink}.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *

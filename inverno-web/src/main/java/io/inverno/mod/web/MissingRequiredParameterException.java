@@ -19,15 +19,13 @@ import io.inverno.mod.http.base.BadRequestException;
 
 /**
  * <p>
- * Thrown to indicates that a required parameter is missing to process the
- * request.
+ * Thrown to indicates that a required parameter is missing to process the request.
  * </p>
- * 
+ *
  * <p>
- * The missing parameter could be any kind of request parameters: a query
- * parameter, a header, a cookie, path parameter...
+ * The missing parameter could be any kind of request parameters: a query parameter, a header, a cookie, path parameter...
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
@@ -46,14 +44,14 @@ public class MissingRequiredParameterException extends BadRequestException {
 	 * </p>
 	 */
 	public MissingRequiredParameterException() {
+	
 	}
 	
 	/**
 	 * <p>
-	 * Creates a missing required parameter exception for the specified parameter
-	 * name.
+	 * Creates a missing required parameter exception for the specified parameter name.
 	 * </p>
-	 * 
+	 *
 	 * @param parameterName the name of the missing parameter
 	 */
 	public MissingRequiredParameterException(String parameterName) {
@@ -74,10 +72,9 @@ public class MissingRequiredParameterException extends BadRequestException {
 
 	/**
 	 * <p>
-	 * Creates a missing required parameter exception with the specified parameter
-	 * name and cause.
+	 * Creates a missing required parameter exception with the specified parameter name and cause.
 	 * </p>
-	 * 
+	 *
 	 * @param parameterName the name of the missing parameter
 	 * @param cause         the cause
 	 */

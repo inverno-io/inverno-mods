@@ -124,8 +124,7 @@ class GenericWebRoute implements WebRoute<ExchangeContext> {
 	
 	/**
 	 * <p>
-	 * Sets the route parameterized path as defined by
-	 * {@link WebRoute#getPathPattern()}.
+	 * Sets the route parameterized path as defined by {@link WebRoute#getPathPattern()}.
 	 * </p>
 	 * 
 	 * @param pathPattern a path pattern
@@ -158,8 +157,7 @@ class GenericWebRoute implements WebRoute<ExchangeContext> {
 	
 	/**
 	 * <p>
-	 * Sets the route consumed media range as defined by
-	 * {@link WebRoute#getConsume()}.
+	 * Sets the route consumed media range as defined by {@link WebRoute#getConsume()}.
 	 * </p>
 	 * 
 	 * @param mediaRange a media range
@@ -175,8 +173,7 @@ class GenericWebRoute implements WebRoute<ExchangeContext> {
 	
 	/**
 	 * <p>
-	 * Sets the route produced media type as defined by
-	 * {@link WebRoute#getProduce()}.
+	 * Sets the route produced media type as defined by {@link WebRoute#getProduce()}.
 	 * </p>
 	 * 
 	 * @param mediaType a media type

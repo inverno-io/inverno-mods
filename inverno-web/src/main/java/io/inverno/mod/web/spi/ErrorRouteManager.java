@@ -24,9 +24,7 @@ import io.inverno.mod.http.server.ErrorExchange;
  * </p>
  *
  * <p>
- * An error route manager is used to manage the routes of an error router. It is
- * created by an error router and allows to define, enable, disable, remove and
- * find routes in an error router.
+ * An error route manager is used to manage the routes of an error router. It is created by an error router and allows to define, enable, disable, remove and find routes in an error router.
  * </p>
  *
  * <p>

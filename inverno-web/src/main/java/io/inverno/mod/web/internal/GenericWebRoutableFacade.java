@@ -68,6 +68,14 @@ class GenericWebRoutableFacade<A extends WebRoutable<ExchangeContext, A>> implem
 		return this.initialRoutable.getRoutes();
 	}
 	
+	/**
+	 * <p>
+	 * A {@link WebRouteManager} facade.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.3
+	 */
 	private class WebRouteManagerFacade implements WebRouteManager<ExchangeContext, GenericWebRoutableFacade<A>> {
 
 		private final WebRouteManager<ExchangeContext, A> routeManager;
@@ -136,6 +144,14 @@ class GenericWebRoutableFacade<A extends WebRoutable<ExchangeContext, A>> implem
 		}
 	}
 	
+	/**
+	 * <p>
+	 * A {@link WebSocketRouteManager} facade.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.3
+	 */
 	private class WebSocketRouteManagerFacade implements WebSocketRouteManager<ExchangeContext, GenericWebRoutableFacade<A>> {
 		
 		private final WebSocketRouteManager<ExchangeContext, A> webSocketRouteManager;

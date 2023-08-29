@@ -17,13 +17,12 @@ package io.inverno.mod.web.internal;
 
 /**
  * <p>
- * Thrown by the {@link DataConversionService} to indicates that there's no
- * converter for the specified media type.
+ * Thrown by the {@link DataConversionService} to indicates that there's no converter for the specified media type.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see DataConversionService
  */
 public class NoConverterException extends Exception {

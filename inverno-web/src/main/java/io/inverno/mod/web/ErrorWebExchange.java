@@ -17,28 +17,27 @@ package io.inverno.mod.web;
 
 
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.server.ErrorExchange;
 import java.util.function.Function;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * An error exchange that extends the HTTP server {@link ErrorExchange} with
- * features for the Web.
+ * An error exchange that extends the HTTP server {@link ErrorExchange} with features for the Web.
  * </p>
- * 
+ *
  * <p>
- * It especially supports response body encoding based on the response content
- * type.
+ * It especially supports response body encoding based on the response content type.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ErrorWebRoute
  * @see ErrorWebRouteManager
  * @see ErrorWebRouter
- * 
+ *
  * @param <A> the type of the exchange context
  */
 public interface ErrorWebExchange<A extends ExchangeContext> extends ErrorExchange<A> {
@@ -53,6 +52,11 @@ public interface ErrorWebExchange<A extends ExchangeContext> extends ErrorExchan
 	default ErrorWebExchange<A> mapError(Function<? super Throwable, ? extends Throwable> errorMapper) {
 		ErrorWebExchange<A> thisExchange = this;
 		return new ErrorWebExchange<A>() {
+			
+			@Override
+			public HttpVersion getProtocol() {
+				return thisExchange.getProtocol();
+			}
 
 			@Override
 			public WebRequest request() {
@@ -70,9 +74,8 @@ public interface ErrorWebExchange<A extends ExchangeContext> extends ErrorExchan
 			}
 			
 			@Override
-			public ErrorWebExchange<A> finalizer(Mono<Void> finalizer) {
+			public void finalizer(Mono<Void> finalizer) {
 				thisExchange.finalizer(finalizer);
-				return this;
 			}
 
 			@Override
@@ -81,5 +84,4 @@ public interface ErrorWebExchange<A extends ExchangeContext> extends ErrorExchan
 			}
 		};
 	}
-	
 }

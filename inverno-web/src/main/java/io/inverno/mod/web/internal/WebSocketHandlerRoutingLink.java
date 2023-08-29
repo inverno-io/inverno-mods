@@ -17,9 +17,9 @@ package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpException;
+import io.inverno.mod.http.base.ws.WebSocketException;
 import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.http.server.ReactiveExchangeHandler;
-import io.inverno.mod.http.server.ws.WebSocketException;
 import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
 import io.inverno.mod.web.Web2SocketExchange;
 import io.inverno.mod.web.WebExchange;

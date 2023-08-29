@@ -24,8 +24,7 @@ import io.inverno.mod.web.spi.PathAware;
 
 /**
  * <p>
- * An error web route specifies criteria used to determine the error web exchange handler to execute to handle a failing
- * request.
+ * An error web route specifies criteria used to determine the error web exchange handler to execute to handle a failing request.
  * </p>
  *
  * <p>
@@ -44,7 +43,7 @@ import io.inverno.mod.web.spi.PathAware;
  *
  * @see ErrorWebExchange
  * @see ErrorWebRouter
- * 
+ *
  * @param <A> the type of the exchange context
  */
 public interface ErrorWebRoute<A extends ExchangeContext> extends InterceptableRoute<A, ErrorWebExchange<A>>, ErrorAware, PathAware, AcceptAware {

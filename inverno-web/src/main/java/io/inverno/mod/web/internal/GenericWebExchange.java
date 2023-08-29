@@ -16,6 +16,7 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ws.WebSocket;
 import io.inverno.mod.web.Web2SocketExchange;
@@ -23,7 +24,7 @@ import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebRequest;
 import io.inverno.mod.web.WebResponse;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.Consumer;
 import reactor.core.publisher.Mono;
 
 /**
@@ -45,7 +46,7 @@ class GenericWebExchange implements WebExchange<ExchangeContext> {
 	
 	private final GenericWebResponse response;
 	
-	private final Function<Mono<Void>, Exchange<ExchangeContext>> finalizerConsumer;
+	private final Consumer<Mono<Void>> finalizerConsumer;
 	
 	private final DataConversionService dataConversionService;
 	
@@ -59,12 +60,17 @@ class GenericWebExchange implements WebExchange<ExchangeContext> {
 	 * @param response          a web response
 	 * @param finalizerSupplier the deferred exchange finalizer
 	 */
-	public GenericWebExchange(Exchange<ExchangeContext> exchange, GenericWebRequest request, GenericWebResponse response, Function<Mono<Void>, Exchange<ExchangeContext>> finalizerConsumer, DataConversionService dataConversionService) {
+	public GenericWebExchange(Exchange<ExchangeContext> exchange, GenericWebRequest request, GenericWebResponse response, Consumer<Mono<Void>> finalizerConsumer, DataConversionService dataConversionService) {
 		this.exchange = exchange;
 		this.request = request;
 		this.response = response;
 		this.finalizerConsumer = finalizerConsumer;
 		this.dataConversionService = dataConversionService;
+	}
+
+	@Override
+	public HttpVersion getProtocol() {
+		return this.exchange.getProtocol();
 	}
 
 	@Override
@@ -88,8 +94,7 @@ class GenericWebExchange implements WebExchange<ExchangeContext> {
 	}
 	
 	@Override
-	public Exchange<ExchangeContext> finalizer(Mono<Void> finalizer) {
-		this.finalizerConsumer.apply(finalizer);
-		return this;
+	public void finalizer(Mono<Void> finalizer) {
+		this.finalizerConsumer.accept(finalizer);
 	}
 }

@@ -16,11 +16,12 @@
 package io.inverno.mod.web.internal;
 
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.base.HttpVersion;
+import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.web.ErrorWebExchange;
 import io.inverno.mod.web.WebRequest;
 import io.inverno.mod.web.WebResponse;
-import java.util.function.Function;
+import java.util.function.Consumer;
 import reactor.core.publisher.Mono;
 
 /**
@@ -35,6 +36,8 @@ import reactor.core.publisher.Mono;
  */
 class GenericErrorWebExchange implements ErrorWebExchange<ExchangeContext> {
 
+	private final ErrorExchange<ExchangeContext> errorExchange;
+	
 	private final GenericWebRequest request;
 	
 	private final GenericWebResponse response;
@@ -43,9 +46,10 @@ class GenericErrorWebExchange implements ErrorWebExchange<ExchangeContext> {
 	
 	private final ExchangeContext context;
 	
-	private final Function<Mono<Void>, Exchange<ExchangeContext>> finalizerConsumer;
+	private final Consumer<Mono<Void>> finalizerConsumer;
 	
-	public GenericErrorWebExchange(GenericWebRequest request, GenericWebResponse response, Throwable error, ExchangeContext context, Function<Mono<Void>, Exchange<ExchangeContext>> finalizerConsumer) {
+	public GenericErrorWebExchange(ErrorExchange<ExchangeContext> errorExchange, GenericWebRequest request, GenericWebResponse response, Throwable error, ExchangeContext context, Consumer<Mono<Void>> finalizerConsumer) {
+		this.errorExchange = errorExchange;
 		this.request = request;
 		this.response = response;
 		this.error = error;
@@ -53,6 +57,11 @@ class GenericErrorWebExchange implements ErrorWebExchange<ExchangeContext> {
 		this.finalizerConsumer = finalizerConsumer;
 	}
 
+	@Override
+	public HttpVersion getProtocol() {
+		return this.errorExchange.getProtocol();
+	}
+	
 	@Override
 	public WebRequest request() {
 		return this.request;
@@ -74,8 +83,7 @@ class GenericErrorWebExchange implements ErrorWebExchange<ExchangeContext> {
 	}
 	
 	@Override
-	public GenericErrorWebExchange finalizer(Mono<Void> finalizer) {
-		this.finalizerConsumer.apply(finalizer);
-		return this;
+	public void finalizer(Mono<Void> finalizer) {
+		this.finalizerConsumer.accept(finalizer);
 	}
 }

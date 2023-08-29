@@ -48,10 +48,9 @@ class GenericWebRequestBody implements WebRequestBody {
 	
 	/**
 	 * <p>
-	 * creates a generic web request body with the specified underlying request and
-	 * request body and data conversion service.
+	 * creates a generic web request body with the specified underlying request and request body and data conversion service.
 	 * </p>
-	 * 
+	 *
 	 * @param request               the underlying request
 	 * @param requestBody           the unedrlying request body
 	 * @param dataConversionService the data conversion service

@@ -25,14 +25,12 @@ import io.inverno.mod.web.spi.PathAware;
 
 /**
  * <p>
- * Represents the path parameters extracted from the absolute path of a request
- * following the {@link URIPattern} used to define the route to the targeted
- * resource.
+ * Represents the path parameters extracted from the absolute path of a request following the {@link URIPattern} used to define the route to the targeted resource.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see URIPattern
  * @see PathAware
  */
@@ -51,11 +49,10 @@ public interface PathParameters {
 	 * <p>
 	 * Returns the path parameter with the specified name.
 	 * </p>
-	 * 
+	 *
 	 * @param name a parameter name
-	 * 
-	 * @return an optional returning the parameter or an empty optional if there's
-	 *         no parameter with that name
+	 *
+	 * @return an optional returning the parameter or an empty optional if there's no parameter with that name
 	 */
 	Optional<Parameter> get(String name);
 	

@@ -60,8 +60,7 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor<ExchangeCo
 	
 	/**
 	 * <p>
-	 * Creates a generic error web route extractor in the specified generic error
-	 * web router.
+	 * Creates a generic error web route extractor in the specified generic error web router.
 	 * </p>
 	 * 
 	 * @param router a generic error web router

@@ -21,13 +21,12 @@ import io.inverno.mod.http.server.Request;
 
 /**
  * <p>
- * A request with supports for path parameters and body decoding based on the
- * request content type.
+ * A request with supports for path parameters and body decoding based on the request content type.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see WebExchange
  */
 public interface WebRequest extends Request {

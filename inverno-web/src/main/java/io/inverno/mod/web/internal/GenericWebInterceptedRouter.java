@@ -228,6 +228,14 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 		return this;
 	}
 
+	/**
+	 * <p>
+	 * A {@link WebRouter} facade.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.3
+	 */
 	private class WebRouterFacade implements WebRouter<ExchangeContext> {
 		
 		private final GenericWebInterceptedRouter interceptedRouter;
@@ -297,6 +305,14 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 			return interceptedRouter;
 		}
 
+		/**
+		 * <p>
+		 * A {@link WebRouteManager} facade.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+		 * @since 1.3
+		 */
 		private class WebRouteManagerFacade implements WebRouteManager<ExchangeContext, WebRouter<ExchangeContext>> {
 
 			private final WebRouteManager<ExchangeContext, WebInterceptedRouter<ExchangeContext>> routeManager;
@@ -365,6 +381,14 @@ class GenericWebInterceptedRouter extends AbstractWebRouter implements WebInterc
 			}
 		}
 		
+		/**
+		 * <p>
+		 * A {@link WebSocketRouteManager} facade.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+		 * @since 1.3
+		 */
 		private class WebSocketRouteManagerFacade implements WebSocketRouteManager<ExchangeContext, WebRouter<ExchangeContext>> {
 			
 			private final WebSocketRouteManager<ExchangeContext, WebInterceptedRouter<ExchangeContext>> webSocketrouteManager;

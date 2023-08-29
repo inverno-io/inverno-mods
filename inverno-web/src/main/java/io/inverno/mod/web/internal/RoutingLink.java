@@ -26,32 +26,26 @@ import java.util.function.Supplier;
  * <p>
  * Represents link in a routing chain.
  * </p>
- * 
+ *
  * <p>
- * A {@link Router router} can be implemented around a routing chain
- * through which an exchange is routed to the right handler based on a set of
- * criteria. The chain is composed of multiple routing links, each responsible
- * to route the exchange based on a particular set of criteria. The routes in a
- * router are then exploded in the chain.
+ * A {@link Router router} can be implemented around a routing chain through which an exchange is routed to the right handler based on a set of criteria. The chain is composed of multiple routing
+ * links, each responsible to route the exchange based on a particular set of criteria. The routes in a router are then exploded in the chain.
  * </p>
- * 
+ *
  * <p>
- * The order of the routing link in the chain is then relevant to route an
- * exchange, they must ordered from the most important to the least important.
+ * The order of the routing link in the chain is then relevant to route an exchange, they must ordered from the most important to the least important.
  * </p>
- * 
+ *
  * <p>
- * A routing link is itself an exchange handler which is invoked to handle an
- * exchange. If a link in a routing chain can't route an exchange further, it
- * must throw a {@link RouteNotFoundException}.
+ * A routing link is itself an exchange handler which is invoked to handle an exchange. If a link in a routing chain can't route an exchange further, it must throw a {@link RouteNotFoundException}.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see GenericErrorWebRouter
  * @see GenericWebRouter
- * 
+ *
  * @param <A> the type of the exchange context
  * @param <B> the type of exchange handled by the link
  * @param <C> the routing link type

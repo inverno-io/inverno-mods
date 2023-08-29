@@ -155,7 +155,7 @@ class GenericErrorWebRoute implements ErrorWebRoute<ExchangeContext> {
 	
 	/**
 	 * <p>
-	 * Sets the route language as defined by {@link ErrorWebRoute#getLanguage()}
+	 * Sets the route language as defined by {@link ErrorWebRoute#getLanguage()}.
 	 * </p>
 	 * 
 	 * @param language a language tag
@@ -171,8 +171,7 @@ class GenericErrorWebRoute implements ErrorWebRoute<ExchangeContext> {
 	
 	/**
 	 * <p>
-	 * Sets the route produced media type as defined by
-	 * {@link ErrorWebRoute#getProduce()}
+	 * Sets the route produced media type as defined by {@link ErrorWebRoute#getProduce()}.
 	 * </p>
 	 * 
 	 * @param mediaType a media type

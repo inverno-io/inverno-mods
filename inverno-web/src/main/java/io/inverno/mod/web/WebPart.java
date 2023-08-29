@@ -24,41 +24,38 @@ import io.inverno.mod.http.server.Part;
  * <p>
  * A part with payload decoding support.
  * </p>
- * 
+ *
  * <p>
- * Implementors should rely on {@link MediaTypeConverter} to decode a part's
- * payload based on its content type.
+ * Implementors should rely on {@link MediaTypeConverter} to decode a part's payload based on its content type.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see MediaTypeConverter
  */
 public interface WebPart extends Part {
 
 	/**
 	 * <p>
-	 * Returns a decoder to decode the part's payload to the specified type based on
-	 * the part's content type.
+	 * Returns a decoder to decode the part's payload to the specified type based on the part's content type.
 	 * </p>
-	 * 
+	 *
 	 * @param <A>  the decoded type
 	 * @param type a class of A
-	 * 
+	 *
 	 * @return a decoder
 	 */
 	<A> InboundDataDecoder<A> decoder(Class<A> type);
 	
 	/**
 	 * <p>
-	 * Returns a decoder to decode the part's payload to the specified type based on
-	 * the part's content type.
+	 * Returns a decoder to decode the part's payload to the specified type based on the part's content type.
 	 * </p>
-	 * 
+	 *
 	 * @param <A>  the decoded type
 	 * @param type the decoded type
-	 * 
+	 *
 	 * @return a decoder
 	 */
 	<A> InboundDataDecoder<A> decoder(Type type);

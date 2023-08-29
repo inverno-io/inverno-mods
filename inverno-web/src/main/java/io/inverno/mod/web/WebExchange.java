@@ -58,5 +58,4 @@ public interface WebExchange<A extends ExchangeContext> extends Exchange<A> {
 	
 	@Override
 	public Optional<? extends WebSocket<A, Web2SocketExchange<A>>> webSocket(String... subProtocols);
-	
 }

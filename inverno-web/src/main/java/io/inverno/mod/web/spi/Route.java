@@ -23,28 +23,25 @@ import io.inverno.mod.http.server.ReactiveExchangeHandler;
  * <p>
  * Base route interface.
  * </p>
- * 
+ *
  * <p>
- * A route specifies an exchange handler and a set of criteria used by a router
- * to determine the exchange handler to execute in response of a particular
- * request matching these criteria.
+ * A route specifies an exchange handler and a set of criteria used by a router to determine the exchange handler to execute in response of a particular request matching these criteria.
  * </p>
- * 
+ *
  * <p>
- * A route defines then a <i>path</i> to a resource, it is used by a router to
- * route a request to the handler matching the resource being requested.
+ * A route defines then a <i>path</i> to a resource, it is used by a router to route a request to the handler matching the resource being requested.
  * </p>
- * 
+ *
  * <p>
  * A route is defined in a router using a route manager.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see Exchange
  * @see Router
- * 
+ *
  * @param <A> the type of the exchange context
  * @param <B> the type of exchange handled by the route
  */
@@ -52,10 +49,9 @@ public interface Route<A extends ExchangeContext, B extends Exchange<A>> {
 
 	/**
 	 * <p>
-	 * Returns the route handler used to process a request matching the route's
-	 * criteria.
+	 * Returns the route handler used to process a request matching the route's criteria.
 	 * </p>
-	 * 
+	 *
 	 * @return an exchange handler
 	 */
 	ReactiveExchangeHandler<A, B> getHandler();

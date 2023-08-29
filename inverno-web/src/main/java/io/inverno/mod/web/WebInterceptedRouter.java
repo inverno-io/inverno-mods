@@ -21,8 +21,8 @@ import java.util.List;
 
 /**
  * <p>
- * A web intercepted router attaches interceptors to route handler based on the parameters of the Web route including
- * the path or path pattern, the method, the content type and the accepted content type and language.
+ * A web intercepted router attaches interceptors to route handler based on the parameters of the Web route including the path or path pattern, the method, the content type and the accepted content
+ * type and language.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

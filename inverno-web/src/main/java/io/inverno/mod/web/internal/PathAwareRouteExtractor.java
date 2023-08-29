@@ -38,12 +38,11 @@ interface PathAwareRouteExtractor<A extends ExchangeContext, B extends Exchange<
 
 	/**
 	 * <p>
-	 * Sets the extractor to extract routes defined with the specified static
-	 * normalized absolute path.
+	 * Sets the extractor to extract routes defined with the specified static normalized absolute path.
 	 * </p>
-	 * 
+	 *
 	 * @param path the path of the routes to extract
-	 * 
+	 *
 	 * @return the route extractor
 	 */
 	D path(String path);

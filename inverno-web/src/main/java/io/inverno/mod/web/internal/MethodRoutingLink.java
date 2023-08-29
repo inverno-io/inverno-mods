@@ -28,10 +28,9 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A routing link responsible to route an exchange based on the HTTP method as
- * defined by {@link MethodAware}.
+ * A routing link responsible to route an exchange based on the HTTP method as defined by {@link MethodAware}.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *

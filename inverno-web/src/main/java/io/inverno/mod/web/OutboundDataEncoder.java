@@ -23,20 +23,18 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A response payload producer used to encode the payload from a single object
- * or many objects.
+ * A response payload producer used to encode the payload from a single object or many objects.
  * </p>
- * 
+ *
  * <p>
- * Implementors should rely on a {@link MediaTypeConverter} to encode a payload
- * as a publisher of objects to a raw payload as a publisher of {@link ByteBuf}.
+ * Implementors should rely on a {@link MediaTypeConverter} to encode a payload as a publisher of objects to a raw payload as a publisher of {@link ByteBuf}.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see MediaTypeConverter
- * 
+ *
  * @param <A> the type of the object to encode
  */
 public interface OutboundDataEncoder<A> extends OutboundData<A> {

@@ -34,6 +34,8 @@ import reactor.core.publisher.Mono;
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @param <A> the type of the exchange context
  */
 public interface Web2SocketExchange<A extends ExchangeContext> extends WebSocketExchange<A> {
 

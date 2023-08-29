@@ -21,13 +21,13 @@ import java.util.List;
 
 /**
  * <p>
- * A web intercepted error router attaches interceptors to error route handlers based on the parameters of the Error Web
- * route including the error type, path or path pattern, the accepted content type and language.
+ * A web intercepted error router attaches interceptors to error route handlers based on the parameters of the Error Web route including the error type, path or path pattern, the accepted content type
+ * and language.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
- * 
+ *
  * @param <A> the type of the exchange context
  */
 public interface ErrorWebInterceptedRouter<A extends ExchangeContext> extends
@@ -41,8 +41,7 @@ public interface ErrorWebInterceptedRouter<A extends ExchangeContext> extends
 	 * </p>
 	 *
 	 * <p>
-	 * Web interceptors previously defined in this router will be applied first to the routes created within the
-	 * configurer.
+	 * Web interceptors previously defined in this router will be applied first to the routes created within the configurer.
 	 * </p>
 	 *
 	 * <p>
@@ -61,8 +60,7 @@ public interface ErrorWebInterceptedRouter<A extends ExchangeContext> extends
 	 * </p>
 	 *
 	 * <p>
-	 * Web interceptors previously defined in this router will be applied first to the routes created within the
-	 * configurers.
+	 * Web interceptors previously defined in this router will be applied first to the routes created within the configurers.
 	 * </p>
 	 *
 	 * <p>

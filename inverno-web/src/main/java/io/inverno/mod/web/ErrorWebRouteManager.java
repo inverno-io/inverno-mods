@@ -23,18 +23,17 @@ import io.inverno.mod.web.spi.PathAware;
 
 /**
  * <p>
- * An error web route manager is used to manage the routes of an error web
- * router. It is created by an error web router and allows to define, enable,
- * disable, remove and find error web routes in an error web router.
+ * An error web route manager is used to manage the routes of an error web router. It is created by an error web router and allows to define, enable, disable, remove and find error web routes in an
+ * error web router.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ErrorWebExchange
  * @see ErrorWebRoute
  * @see ErrorWebRouter
- * 
+ *
  * @param <A> the type of the exchange context
  * @param <B> the Error Web routable type
  */

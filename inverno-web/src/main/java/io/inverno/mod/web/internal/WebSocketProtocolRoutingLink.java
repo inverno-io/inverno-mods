@@ -20,7 +20,7 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpException;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.server.ws.UnsupportedProtocolException;
+import io.inverno.mod.http.base.ws.UnsupportedProtocolException;
 import io.inverno.mod.web.WebExchange;
 import io.inverno.mod.web.WebSocketProtocolAware;
 import io.inverno.mod.web.spi.Route;

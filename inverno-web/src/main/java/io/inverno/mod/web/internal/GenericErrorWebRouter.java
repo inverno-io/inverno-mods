@@ -152,7 +152,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 		if(exchange.response().isHeadersWritten()) {
 			throw new IllegalStateException("Headers already written", exchange.getError());
 		}
-		return this.firstLink.defer(new GenericErrorWebExchange(new GenericWebRequest(exchange.request(), this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange.getError(), exchange.context(), exchange::finalizer));
+		return this.firstLink.defer(new GenericErrorWebExchange(exchange, new GenericWebRequest(exchange.request(), this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange.getError(), exchange.context(), exchange::finalizer));
 	}
 	
 	/**

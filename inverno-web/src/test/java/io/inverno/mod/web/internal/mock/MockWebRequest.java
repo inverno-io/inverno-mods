@@ -35,7 +35,6 @@ public class MockWebRequest implements WebRequest {
 	private final String scheme;
 	private final String path;
 	private final URIBuilder pathBuilder;
-	private final String protocol;
 	private final Method method;
 	private final MockRequestHeaders headers;
 	private final MockQueryParameters queryParameters;
@@ -44,12 +43,11 @@ public class MockWebRequest implements WebRequest {
 	private final MockPathParameters pathParameters;
 	private final WebRequestBody mockBody;
 	
-	public MockWebRequest(String authority, String scheme, String path, String protocol, Method method, MockRequestHeaders headers, MockQueryParameters queryParameters, SocketAddress localAddress, SocketAddress remoteAddress, WebRequestBody mockBody) {
+	public MockWebRequest(String authority, String scheme, String path, Method method, MockRequestHeaders headers, MockQueryParameters queryParameters, SocketAddress localAddress, SocketAddress remoteAddress, WebRequestBody mockBody) {
 		this.authority = authority;
 		this.scheme = scheme;
 		this.path = path;
 		this.pathBuilder = URIs.uri(path, false, URIs.Option.NORMALIZED);
-		this.protocol = protocol;
 		this.method = method;
 		this.headers = headers;
 		this.queryParameters = queryParameters;
@@ -123,11 +121,6 @@ public class MockWebRequest implements WebRequest {
 	@Override
 	public Optional<WebRequestBody> body() {
 		return Optional.ofNullable(this.mockBody);
-	}
-
-	@Override
-	public String getProtocol() {
-		return this.protocol;
 	}
 
 	@Override

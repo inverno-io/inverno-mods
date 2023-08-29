@@ -31,50 +31,43 @@ import io.inverno.mod.web.MissingRequiredParameterException;
 
 /**
  * <p>
- * Binds the value of a HTTP header to a web route method parameter whose name
- * indicates the name of the header.
+ * Binds the value of a HTTP header to a web route method parameter whose name indicates the name of the header.
  * </p>
- * 
+ *
  * <p>
- * The annotated parameter can be of any type as long as it can be decoded by
- * the parameter converter injected in the web module.
+ * The annotated parameter can be of any type as long as it can be decoded by the parameter converter injected in the web module.
  * </p>
- * 
+ *
  * <p>
- * A header parameter can be defined as optional when the method parameter is an
- * {@link Optional}, it is otherwise considered as required and a
- * {@link MissingRequiredParameterException} will be thrown if the route is
- * invoked with the parameter missing.
+ * A header parameter can be defined as optional when the method parameter is an {@link Optional}, it is otherwise considered as required and a {@link MissingRequiredParameterException} will be thrown
+ * if the route is invoked with the parameter missing.
  * </p>
- * 
+ *
  * <p>
- * If the request contains multiple headers with the same name, the first one is
- * bound unless the method parameter is an array, a {@link Collection}, a
- * {@link List} or a {@link Set} in which case all values are bound. The
- * parameter converter may also split raw values around a value separator (eg.
- * value {@code 1,2,3,4} can be bound to a list of integers).
+ * If the request contains multiple headers with the same name, the first one is bound unless the method parameter is an array, a {@link Collection}, a {@link List} or a {@link Set} in which case all
+ * values are bound. The parameter converter may also split raw values around a value separator (eg. value {@code 1,2,3,4} can be bound to a list of integers).
  * </p>
- * 
+ *
  * <pre>{@code
  * @WebRoute( ... )
  * public void handler(@HeaderParam int requiredHeader) {
  *     ...
  * }
- * 
+ *
  * @WebRoute( ... )
  * public void handler(@HeaderParam Optional<Integer> optionalHeader) {
  *     ...
  * }
- * 
+ *
  * @WebRoute( ... )
  * public void handler(@HeaderParam List<Integer> multiValueHeader) {
  *     ...
  * }
  * }</pre>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see WebRoute
  * @see ObjectConverter
  */

@@ -47,10 +47,9 @@ public interface Routable<
 
 	/**
 	 * <p>
-	 * Returns a route manager to define, enable, disable, remove or find routes
-	 * in the router.
+	 * Returns a route manager to define, enable, disable, remove or find routes in the router.
 	 * </p>
-	 * 
+	 *
 	 * @return a route manager
 	 */
 	D route();

@@ -19,10 +19,9 @@ import io.inverno.mod.http.base.NotFoundException;
 
 /**
  * <p>
- * Thrown by a routing link to indicate that the route resolved to process a
- * request is disabled.
+ * Thrown by a routing link to indicate that the route resolved to process a request is disabled.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */

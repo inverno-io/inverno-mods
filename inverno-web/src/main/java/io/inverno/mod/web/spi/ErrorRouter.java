@@ -19,28 +19,23 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.ExchangeHandler;
 
-
 /**
  * <p>
  * Base error router interface.
  * </p>
  *
  * <p>
- * An error router uses route definitions to determine the error exchange
- * handler to invoke in order to process an error.
+ * An error router uses route definitions to determine the error exchange handler to invoke in order to process an error.
  * </p>
  *
  * <p>
- * Routes are defined in the router using an error route manager that allows to
- * specify route criteria and eventually the error exchange handler to invoke to
- * process an error that matches the criteria.
+ * Routes are defined in the router using an error route manager that allows to specify route criteria and eventually the error exchange handler to invoke to process an error that matches the
+ * criteria.
  * </p>
  *
  * <p>
- * An error router is itself an error exchange handler that implements a routing
- * logic to delegate the actual error exchange processing to the error exchange
- * handler defined in the route matching the original request. An error router
- * is typically used as error handler in a HTTP server.
+ * An error router is itself an error exchange handler that implements a routing logic to delegate the actual error exchange processing to the error exchange handler defined in the route matching the
+ * original request. An error router is typically used as error handler in a HTTP server.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

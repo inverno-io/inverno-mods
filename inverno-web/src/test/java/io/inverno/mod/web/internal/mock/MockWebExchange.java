@@ -16,6 +16,7 @@
 package io.inverno.mod.web.internal.mock;
 
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ws.WebSocket;
 import io.inverno.mod.web.Web2SocketExchange;
@@ -29,11 +30,13 @@ import reactor.core.publisher.Mono;
  */
 public class MockWebExchange implements WebExchange<ExchangeContext> {
 
+	private final HttpVersion protocol;
 	private final MockWebRequest mockRequest;
 	private final MockWebResponse mockResponse;
 	private final ExchangeContext context;
 	
-	public MockWebExchange(MockWebRequest mockRequest, MockWebResponse mockResponse, ExchangeContext context) {
+	public MockWebExchange(HttpVersion protocol, MockWebRequest mockRequest, MockWebResponse mockResponse, ExchangeContext context) {
+		this.protocol = protocol;
 		this.mockRequest = mockRequest;
 		this.mockResponse = mockResponse;
 		this.context = context;
@@ -45,6 +48,11 @@ public class MockWebExchange implements WebExchange<ExchangeContext> {
 	
 	public static MockExchangeBuilder from(String path, Method method) {
 		return new MockExchangeBuilder().method(method).path(path);
+	}
+
+	@Override
+	public HttpVersion getProtocol() {
+		return this.protocol;
 	}
 	
 	@Override
@@ -68,7 +76,6 @@ public class MockWebExchange implements WebExchange<ExchangeContext> {
 	}
 	
 	@Override
-	public MockWebExchange finalizer(Mono<Void> finalizer) {
-		return this;
+	public void finalizer(Mono<Void> finalizer) {
 	}
 }

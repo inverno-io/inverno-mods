@@ -24,20 +24,19 @@ import java.util.List;
  * <p>
  * Base interceptor manager interface.
  * </p>
- * 
+ *
  * <p>
- * An interceptor manager is used to configure interceptors in a {@link InterceptedRouter}. It is created by a
- * router and allows to define interceptors in an intercepting router.
+ * An interceptor manager is used to configure interceptors in a {@link InterceptedRouter}. It is created by a router and allows to define interceptors in an intercepting router.
  * </p>
- * 
+ *
  * <p>
  * A typical implementation should define methods to set criteria used by the router to match a route to an interceptor and an exchange interceptor that is eventually chained with the route exchange
  * handler.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.3
- * 
+ *
  * @param <A> the type of the exchange context
  * @param <B> the type of exchange handled by the interceptor
  * @param <C> the interceptable type

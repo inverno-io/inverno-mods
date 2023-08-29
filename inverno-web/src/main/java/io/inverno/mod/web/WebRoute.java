@@ -42,10 +42,9 @@ import io.inverno.mod.web.spi.PathAware;
  * </ul>
  *
  * <p>
- * The path to the resource can be either static or dynamic if a parameterized path is specified as defined by {@link
- * io.inverno.mod.base.net.URIBuilder}. When defined with a parameterized path, a router can extract path parameters
- * from the {@link io.inverno.mod.base.net.URIMatcher} that matches the request. For instance, path
- * <code>/books/{id}</code> defines path parameter {@code id} and matches paths: {@code /books/1}, {@code /books/2}...
+ * The path to the resource can be either static or dynamic if a parameterized path is specified as defined by {@link io.inverno.mod.base.net.URIBuilder}. When defined with a parameterized path, a 
+ * router can extract path parameters from the {@link io.inverno.mod.base.net.URIMatcher} that matches the request. For instance, path <code>/books/{id}</code> defines path parameter {@code id} and 
+ * matches paths: {@code /books/1}, {@code /books/2}...
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

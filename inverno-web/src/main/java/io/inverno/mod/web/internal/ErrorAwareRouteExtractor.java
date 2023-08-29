@@ -37,12 +37,11 @@ interface ErrorAwareRouteExtractor<A extends ExchangeContext, B extends Exchange
 
 	/**
 	 * <p>
-	 * Sets the extractor to extract routes which support the specified type of
-	 * error.
+	 * Sets the extractor to extract routes which support the specified type of error.
 	 * </p>
-	 * 
+	 *
 	 * @param error the error type supported by the routes to extract
-	 * 
+	 *
 	 * @return the route extractor
 	 */
 	D error(Class<? extends Throwable> error);

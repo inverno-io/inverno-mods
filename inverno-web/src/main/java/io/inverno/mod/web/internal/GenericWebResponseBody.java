@@ -47,10 +47,9 @@ class GenericWebResponseBody implements WebResponseBody {
 	
 	/**
 	 * <p>
-	 * Creates a generic web response body with the specified underlying response
-	 * and response body and data conversion service.
+	 * Creates a generic web response body with the specified underlying response and response body and data conversion service.
 	 * </p>
-	 * 
+	 *
 	 * @param response              the underlying response
 	 * @param responseBody          the underlying response body
 	 * @param dataConversionService the data conversion service

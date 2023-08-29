@@ -42,13 +42,11 @@ public interface ErrorWebInterceptorManager<A extends ExchangeContext, B extends
 
 	/**
 	 * <p>
-	 * Specifies an error web exchange interceptor to apply to the resources matching the criteria defined in the web
-	 * interceptor manager.
+	 * Specifies an error web exchange interceptor to apply to the resources matching the criteria defined in the web interceptor manager.
 	 * </p>
 	 *
 	 * <p>
-	 * This method basically appends the interceptor and the associated route criteria to the web intercepted router it
-	 * comes from.
+	 * This method basically appends the interceptor and the associated route criteria to the web intercepted router it comes from.
 	 * </p>
 	 *
 	 * @param interceptor the error web exchange interceptor
@@ -59,13 +57,11 @@ public interface ErrorWebInterceptorManager<A extends ExchangeContext, B extends
 
 	/**
 	 * <p>
-	 * Specifies multiple error web exchange interceptors to apply to the resources matching the criteria defined in the
-	 * web interceptor manager.
+	 * Specifies multiple error web exchange interceptors to apply to the resources matching the criteria defined in the web interceptor manager.
 	 * </p>
 	 *
 	 * <p>
-	 * This method basically appends the interceptors and the associated route criteria to the web intercepted router it
-	 * comes from.
+	 * This method basically appends the interceptors and the associated route criteria to the web intercepted router it comes from.
 	 * </p>
 	 *
 	 * @param interceptors a list of error web exchange interceptors
@@ -81,8 +77,7 @@ public interface ErrorWebInterceptorManager<A extends ExchangeContext, B extends
 	 *
 	 * <p>
 	 * The specified path can be specified as a parameterized path and include path pattern like {@code ?}, {@code *},
-	 * {@code **} as defined by {@link URIBuilder}. Note that this path is only meant to filter routes and as a result
-	 * path parameters have no use.
+	 * {@code **} as defined by {@link URIBuilder}. Note that this path is only meant to filter routes and as a result path parameters have no use.
 	 * </p>
 	 *
 	 * @param path a path
@@ -103,8 +98,7 @@ public interface ErrorWebInterceptorManager<A extends ExchangeContext, B extends
 	 *
 	 * <p>
 	 * The specified path can be specified as a parameterized path and include path pattern like {@code ?}, {@code *},
-	 * {@code **} as defined by {@link URIBuilder}. Note that this path is only meant to filter routes and as a result
-	 * path parameters have no use.
+	 * {@code **} as defined by {@link URIBuilder}. Note that this path is only meant to filter routes and as a result path parameters have no use.
 	 * </p>
 	 *
 	 * @param path               a path

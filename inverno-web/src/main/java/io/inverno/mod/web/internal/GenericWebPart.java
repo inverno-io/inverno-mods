@@ -43,10 +43,9 @@ class GenericWebPart implements WebPart {
 	
 	/**
 	 * <p>
-	 * Creates a generic web part with the specified underlying part and data
-	 * conversion service.
+	 * Creates a generic web part with the specified underlying part and data conversion service.
 	 * </p>
-	 * 
+	 *
 	 * @param part                  the underlying part
 	 * @param dataConversionService the data conversion service
 	 */

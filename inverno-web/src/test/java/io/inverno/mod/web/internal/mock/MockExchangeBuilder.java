@@ -16,6 +16,7 @@
 package io.inverno.mod.web.internal.mock;
 
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.internal.header.AcceptCodec;
@@ -40,7 +41,7 @@ public class MockExchangeBuilder {
 	private String authority = "localhost";
 	private String scheme = "http";
 	private String path = "/";
-	private String protocol = "HTTP/1.1";
+	private HttpVersion protocol = HttpVersion.HTTP_1_1;
 	private Method method = Method.GET;
 	private Map<String, List<String>> headers = Map.of();
 
@@ -70,7 +71,7 @@ public class MockExchangeBuilder {
 		return this;
 	}
 	
-	public MockExchangeBuilder protocol(String protocol) {
+	public MockExchangeBuilder protocol(HttpVersion protocol) {
 		this.protocol = protocol;
 		return this;
 	}
@@ -121,10 +122,10 @@ public class MockExchangeBuilder {
 	}
 	
 	public MockWebExchange build() {
-		MockWebRequest mockRequest = new MockWebRequest(this.authority, this.scheme, this.path, this.protocol, this.method, new MockRequestHeaders(HEADER_SERVICE, this.headers, new MockRequestCookies(this.requestCookies)), new MockQueryParameters(this.requestQueryParameters), this.localAddress, this.remoteAddress, this.mockRequestBody);
+		MockWebRequest mockRequest = new MockWebRequest(this.authority, this.scheme, this.path, this.method, new MockRequestHeaders(HEADER_SERVICE, this.headers, new MockRequestCookies(this.requestCookies)), new MockQueryParameters(this.requestQueryParameters), this.localAddress, this.remoteAddress, this.mockRequestBody);
 		MockWebResponse mockResponse = new MockWebResponse(HEADER_SERVICE, this.mockResponseBody);
 		
-		return new MockWebExchange(mockRequest, mockResponse, this.context);
+		return new MockWebExchange(this.protocol, mockRequest, mockResponse, this.context);
 	}
 
 }

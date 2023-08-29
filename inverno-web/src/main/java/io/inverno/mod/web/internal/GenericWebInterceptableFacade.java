@@ -64,8 +64,7 @@ class GenericWebInterceptableFacade implements WebInterceptable<ExchangeContext,
 
 	/**
 	 * <p>
-	 * A Web interceptor manager that delegates to an underlying interceptor manager while keeping track of the
-	 * resulting Web intercepted router.
+	 * A Web interceptor manager that delegates to an underlying interceptor manager while keeping track of the resulting Web intercepted router.
 	 * </p>
 	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

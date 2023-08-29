@@ -99,7 +99,7 @@ public interface WebRouteManager<A extends ExchangeContext, B extends WebRoutabl
 	/**
 	 * <p>
 	 * Specifies the media range defining the content types accepted by the resource served by the web route as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>.
 	 * </p>
 	 *
 	 * @param mediaRange a media range

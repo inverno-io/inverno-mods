@@ -28,13 +28,12 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A routing link responsible to route an error exchange based on the type of
- * error as defined by {@link ErrorAware}.
+ * A routing link responsible to route an error exchange based on the type of error as defined by {@link ErrorAware}.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @param <A> the type of the exchange context
  */
 class ThrowableRoutingLink<A extends ExchangeContext> extends RoutingLink<A, ErrorWebExchange<A>, ThrowableRoutingLink<A>, ErrorWebRoute<A>> {

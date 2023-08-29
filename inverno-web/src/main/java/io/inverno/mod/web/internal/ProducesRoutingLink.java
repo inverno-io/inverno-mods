@@ -33,10 +33,9 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A routing link responsible to route an exchange based on the content types
- * accepted by the client as defined by {@link AcceptAware}.
+ * A routing link responsible to route an exchange based on the content types accepted by the client as defined by {@link AcceptAware}.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  *

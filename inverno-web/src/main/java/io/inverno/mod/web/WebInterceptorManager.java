@@ -95,8 +95,7 @@ public interface WebInterceptorManager<A extends ExchangeContext, B extends WebI
 	
 	/**
 	 * <p>
-	 * Specifies the media range defining the content types accepted by the route to intercept as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>
+	 * Specifies the media range defining the content types accepted by the route to intercept as defined by <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>.
 	 * </p>
 	 *
 	 * @param mediaRange a media range

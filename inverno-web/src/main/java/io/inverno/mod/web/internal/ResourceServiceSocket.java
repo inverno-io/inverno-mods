@@ -24,15 +24,14 @@ import io.inverno.mod.base.resource.ResourceService;
  * <p>
  * The {@link ResourceService} socket.
  * </p>
- * 
+ *
  * <p>
- * A resource service is required by the HTTP server module and to load Open API
- * specifications among other things.
+ * A resource service is required by the HTTP server module and to load Open API specifications among other things.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see OpenApiWebRouterConfigurer
  * @see WebjarsWebRouterConfigurer
  */

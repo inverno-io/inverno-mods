@@ -27,15 +27,14 @@ import java.util.function.Function;
  * <p>
  * A request body with payload decoding support.
  * </p>
- * 
+ *
  * <p>
- * Implementors should rely on {@link MediaTypeConverter} to decode a payload
- * based on the content type of the request.
+ * Implementors should rely on {@link MediaTypeConverter} to decode a payload based on the content type of the request.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see WebRequest
  * @see MediaTypeConverter
  */
@@ -46,26 +45,24 @@ public interface WebRequestBody extends RequestBody {
 
 	/**
 	 * <p>
-	 * Returns a decoder to decode the payload to the specified type based on
-	 * the content type of the request.
+	 * Returns a decoder to decode the payload to the specified type based on the content type of the request.
 	 * </p>
-	 * 
+	 *
 	 * @param <A>  the decoded type
 	 * @param type a class of A
-	 * 
+	 *
 	 * @return a decoder
 	 */
 	<A> InboundDataDecoder<A> decoder(Class<A> type);
 	
 	/**
 	 * <p>
-	 * Returns a decoder to decode the payload to the specified type based on
-	 * the content type of the request.
+	 * Returns a decoder to decode the payload to the specified type based on the content type of the request.
 	 * </p>
-	 * 
+	 *
 	 * @param <A>  the decoded type
 	 * @param type the decoded type
-	 * 
+	 *
 	 * @return a decoder
 	 */
 	<A> InboundDataDecoder<A> decoder(Type type);

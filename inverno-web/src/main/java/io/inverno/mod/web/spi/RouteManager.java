@@ -26,13 +26,11 @@ import java.util.Set;
  * </p>
  *
  * <p>
- * A route manager is used to manage the routes of a router. It is created by a router and allows to define, enable,
- * disable, remove and find routes in a router.
+ * A route manager is used to manage the routes of a router. It is created by a router and allows to define, enable, disable, remove and find routes in a router.
  * </p>
  *
  * <p>
- * A typical implementation should define methods to set criteria used by the router to match an incoming exchange to a
- * route and an exchange handler that eventually handles the matched exchange.
+ * A typical implementation should define methods to set criteria used by the router to match an incoming exchange to a route and an exchange handler that eventually handles the matched exchange.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -73,8 +71,7 @@ public interface RouteManager<
 
 	/**
 	 * <p>
-	 * Enables all the routes that matches the criteria specified in the route manager and defined in the router it
-	 * comes from.
+	 * Enables all the routes that matches the criteria specified in the route manager and defined in the router it comes from.
 	 * </p>
 	 *
 	 * @return the routable
@@ -83,8 +80,7 @@ public interface RouteManager<
 
 	/**
 	 * <p>
-	 * Disables all the routes that matches the criteria specified in the route manager and defined in the router it
-	 * comes from.
+	 * Disables all the routes that matches the criteria specified in the route manager and defined in the router it comes from.
 	 * </p>
 	 *
 	 * @return the routable
@@ -93,8 +89,7 @@ public interface RouteManager<
 
 	/**
 	 * <p>
-	 * Removes all the routes that matches the criteria specified in the route manager and defined in the router it
-	 * comes from.
+	 * Removes all the routes that matches the criteria specified in the route manager and defined in the router it comes from.
 	 * </p>
 	 *
 	 * @return the routable
@@ -103,8 +98,7 @@ public interface RouteManager<
 
 	/**
 	 * <p>
-	 * Finds all the routes that matches the criteria specified in the route manager and defined in the router it comes
-	 * from.
+	 * Finds all the routes that matches the criteria specified in the route manager and defined in the router it comes from.
 	 * </p>
 	 *
 	 * @return a set of routes or an empty set if no route matches the criteria

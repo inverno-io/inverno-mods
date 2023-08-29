@@ -23,20 +23,18 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A request payload consumer used to decode the payload to a single object or
- * many objects.
+ * A request payload consumer used to decode the payload to a single object or many objects.
  * </p>
- * 
+ *
  * <p>
- * Implementors should rely on a {@link MediaTypeConverter} to decode a raw
- * payload as a publisher of {@link ByteBuf} to a publisher of decoded objects.
+ * Implementors should rely on a {@link MediaTypeConverter} to decode a raw payload as a publisher of {@link ByteBuf} to a publisher of decoded objects.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see MediaTypeConverter
- * 
+ *
  * @param <A> the type of the decoded object
  */
 public interface InboundDataDecoder<A> extends InboundData<A> {

@@ -24,33 +24,28 @@ import io.inverno.mod.http.server.ExchangeHandler;
  * <p>
  * Base router interface.
  * </p>
- * 
+ *
  * <p>
- * A router uses route definitions to determine the exchange handler to invoke
- * in order to process a request.
+ * A router uses route definitions to determine the exchange handler to invoke in order to process a request.
  * </p>
- * 
+ *
  * <p>
- * Routes are defined in the router using a route manager that allows to specify
- * route criteria and eventually the exchange handler to invoke to process a
- * request that matches the criteria.
+ * Routes are defined in the router using a route manager that allows to specify route criteria and eventually the exchange handler to invoke to process a request that matches the criteria.
  * </p>
- * 
+ *
  * <p>
- * A router is itself an exchange handler that implements a routing logic to
- * delegate the actual exchange processing to the exchange handler defined in
- * the route matching the original request. A router is typically used as root
- * handler in a HTTP server.
+ * A router is itself an exchange handler that implements a routing logic to delegate the actual exchange processing to the exchange handler defined in the route matching the original request. A
+ * router is typically used as root handler in a HTTP server.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see Exchange
  * @see ExchangeHandler
  * @see Route
  * @see RouteManager
- * 
+ *
  * @param <A> the type of the exchange context
  * @param <B> the type of exchange handled by the route
  * @param <C> the router type
