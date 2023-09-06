@@ -80,6 +80,9 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	private Mono<Void> finalizer;
 	
 	private boolean closed;
+	
+	private boolean inClosed;
+	private boolean outClosed;
 
 	public GenericWebSocketExchange(
 			ChannelHandlerContext context, 
@@ -230,28 +233,40 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	
 	@Override
 	protected void hookOnCancel() {
-		this.close(WebSocketStatus.ENDPOINT_UNAVAILABLE);
+		
 	}
 
 	@Override
 	protected void hookOnComplete() {
-		// close the web socket normally
-		this.close(WebSocketStatus.NORMAL_CLOSURE);
+		
 	}
 
 	@Override
 	protected void hookOnError(Throwable throwable) {
 		// Close the WebSocket with error
-		LOGGER.error("WebSocketExchange processing error", throwable);
+		LOGGER.error("WebSocketExchange outbound error", throwable);
 		this.close(WebSocketStatus.INTERNAL_SERVER_ERROR, throwable.getMessage());
 	}
 
 	@Override
 	public void dispose() {
+		this.dispose(null);
+	}
+	
+	public void dispose(Throwable error) {
 		super.dispose();
-		// Drain and release frames
+		if(!this.started) {
+			// error should never be null here, if we get here it has to be a handshake error (i.e. no outbound and no inbound could possibly be provided or subscribed
+			this.exchangeSink.error(error != null ? error : new IllegalStateException("Exchange has been disposed"));
+		}
+		
 		this.inboundFrames.ifPresent(frameSink -> {
-			frameSink.tryEmitComplete();
+			if(error != null) {
+				frameSink.tryEmitError(error);
+			}
+			else {
+				frameSink.tryEmitComplete();
+			}
 			if(!this.inboundSubscribed) {
 				this.inboundSubscribed = true;
 				frameSink.asFlux().subscribe(
@@ -267,13 +282,13 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 		this.inboundFrames = Optional.empty();
 	}
 	
-	public void dispose(Throwable error) {
-		this.dispose();
-		if(!this.started) {
-			this.exchangeSink.error(error);
-		}
-	}
-	
+	/**
+	 * <p>
+	 * Returns the inbound frames sink if any.
+	 * </p>
+	 * 
+	 * @return an optional returning the inbound frames sink or an empty optional
+	 */
 	public Optional<Sinks.Many<WebSocketFrame>> inboundFrames() {
 		return inboundFrames;
 	}
@@ -340,6 +355,10 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 			this.inbound = new GenericInbound(inboundFrameSink.asFlux()
 				.doOnSubscribe(ign -> this.inboundSubscribed = true)
 				.doOnDiscard(GenericWebSocketFrame.class, frame -> frame.release())
+				.doOnTerminate(() -> {
+					this.inbound = null;
+					this.inboundFrames = Optional.empty();
+				})
 			);
 			this.inboundFrames = Optional.of(inboundFrameSink);
 		}
@@ -356,47 +375,52 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 
 	@Override
 	public void close(short code, String reason) {
-		boolean mustClose = !this.closed;
-		// we must do this before dispose since close is also invoked in hookOnCancel()
-		// the exchange can be disposed without a close leading to close() but when the exchange is closed we must not send a close frame twice
-		this.closed = true;
-		this.dispose();
-		if(mustClose) {
+		if(!this.outClosed) {
 			this.executeInEventLoop(() -> {
-				ChannelPromise closePromise = this.context.newPromise();
-				
-				String cleanReason = reason;
-				// 125 bytes is the limit: code is encoded on 2 bytes, reason must be 123 bytes
-				if(cleanReason != null && cleanReason.length() >= 123) {
-					cleanReason = new StringBuilder(cleanReason.substring(0, 120)).append("...").toString();
+				if(!this.outClosed) {
+					this.outClosed = true;
+					String cleanReason = reason;
+					// 125 bytes is the limit: code is encoded on 2 bytes, reason must be 123 bytes
+					if(cleanReason != null && cleanReason.length() >= 123) {
+						cleanReason = new StringBuilder(cleanReason.substring(0, 120)).append("...").toString();
+					}
+					this.context.writeAndFlush(new CloseWebSocketFrame(code, cleanReason));
+					LOGGER.debug("WebSocket close frame sent ({}): {}", code, reason);
+					
+					if(!this.inClosed) {
+						// TODO we must wait until a close frame is received
+					}
 				}
-				
-				this.context.writeAndFlush(new CloseWebSocketFrame(code, cleanReason), closePromise);
-				closePromise.addListener(ChannelFutureListener.CLOSE);
-				closePromise.addListener(ign -> LOGGER.debug("WebSocket closed ({}): {}", code, reason));
-				this.finalizeExchange(closePromise);
 			});
 		}
 	}
 	
 	/**
 	 * <p>
-	 * Sets the exchange as closed with the following code and reason.
+	 * Invoked when a WebSocket close frame is received.
 	 * </p>
 	 * 
-	 * <p>
-	 * A WebSocket exchange can be closed after the reception of a close frame from the server or when the {@link #close(short, java.lang.String) } method is invoked or when the exchange is disposed.
-	 * No close message is sent to the client once the exchange is set to closed.
-	 * </p>
-	 * 
-	 * @param code   the WebSocket close code
-	 * @param reason the close reason
+	 * @param code
+	 * @param reason 
 	 */
-	public void setClosed(short code, String reason) {
-		if(!this.closed) {
-			LOGGER.debug("WebSocket closed ({}): {}", code, reason);
+	public void onCloseReceived(short code, String reason) {
+		if(!this.inClosed) {
+			LOGGER.debug("WebSocket close frame received ({}): {}", code, reason);
 		}
-		this.closed = true;
+		this.inClosed = true;
+		
+		// TODO we currently cancel output and send back the close frame, we should maybe try to delay this until the outbound is in a proper shape (i.e. if there's an inflight fragmented message,
+		// wait for the final frame)
+		
+		// Cancel output and send a close frame back
+		this.dispose();
+		this.close(code, reason);
+		
+		// Then close the channel
+		ChannelPromise closePromise = this.context.newPromise();
+		this.context.close(closePromise);
+		closePromise.addListener(ign -> LOGGER.debug("WebSocket closed ({}): {}", code, reason));
+		this.finalizeExchange(closePromise);
 	}
 	
 	@Override
