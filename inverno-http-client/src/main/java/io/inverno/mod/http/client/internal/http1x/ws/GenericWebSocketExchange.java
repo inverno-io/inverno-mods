@@ -248,7 +248,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	
 	@Override
 	protected void hookOnCancel() {
-		
+		this.close(WebSocketStatus.ENDPOINT_UNAVAILABLE);
 	}
 
 	@Override

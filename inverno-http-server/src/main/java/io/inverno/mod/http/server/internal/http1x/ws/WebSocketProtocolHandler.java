@@ -32,6 +32,7 @@ import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CorruptedWebSocketFrameException;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
@@ -122,14 +123,8 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 			this.webSocketExchange.inboundFrames().ifPresent(framesSink -> framesSink.tryEmitNext(new GenericWebSocketFrame(frame.retain())));
 		}
 		else if(frame instanceof CloseWebSocketFrame) {
-			// handle close properly
 			CloseWebSocketFrame closeFrame = (CloseWebSocketFrame)frame;
-			ChannelPromise closePromise = ctx.newPromise();
-			ctx.writeAndFlush(Unpooled.EMPTY_BUFFER, closePromise);
-			closePromise.addListener(ChannelFutureListener.CLOSE);
-			this.webSocketExchange.setClosed((short)closeFrame.statusCode(), closeFrame.reasonText());
-			this.webSocketExchange.dispose();
-			this.webSocketExchange.finalizeExchange(closePromise);
+			this.webSocketExchange.onCloseReceived((short)closeFrame.statusCode(), closeFrame.reasonText());
 		}
 		else {
 			super.decode(ctx, frame, out);
@@ -138,6 +133,28 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 	
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+		if(this.webSocketExchange != null) {
+			if(cause instanceof WebSocketHandshakeException) {
+				// No need to finalize exchange as it hasn't been emitted yet
+				LOGGER.error("WebSocket handshake error", cause);
+				this.handshake.tryEmitError(cause);
+				ctx.close();
+			}
+			else if(cause instanceof CorruptedWebSocketFrameException) {
+				LOGGER.error("WebSocket procotol error", cause);
+				CorruptedWebSocketFrameException corruptedWSFrameException = (CorruptedWebSocketFrameException)cause;
+				this.webSocketExchange.close((short)corruptedWSFrameException.closeStatus().code(), corruptedWSFrameException.closeStatus().reasonText());
+				this.webSocketExchange.dispose();
+			}
+			else {
+				LOGGER.error("WebSocket procotol error", cause);
+				this.webSocketExchange.dispose(cause);
+				ChannelPromise closePromise = ctx.newPromise();
+				ctx.close(closePromise);
+				this.webSocketExchange.finalizeExchange(closePromise);
+			}
+		}
+		
 		if (cause instanceof WebSocketHandshakeException) {
 			this.handshake.tryEmitError(cause);
 		}
@@ -145,7 +162,7 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 			LOGGER.error("WebSocket procotol error", cause);
 			CorruptedWebSocketFrameException corruptedWSFrameException = (CorruptedWebSocketFrameException)cause;
 			this.webSocketExchange.close((short)corruptedWSFrameException.closeStatus().code(), corruptedWSFrameException.closeStatus().reasonText());
-			this.webSocketExchange.dispose();
+			this.webSocketExchange.dispose(cause);
 		}
 		else {
 			// This is the last channel handler so we don't want to propagate the error

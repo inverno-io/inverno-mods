@@ -212,11 +212,10 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 				ctx.close();
 			}
 			else if(cause instanceof CorruptedWebSocketFrameException) {
-				
 				LOGGER.error("WebSocket procotol error", cause);
 				CorruptedWebSocketFrameException corruptedWSFrameException = (CorruptedWebSocketFrameException)cause;
 				this.webSocketExchange.close((short)corruptedWSFrameException.closeStatus().code(), corruptedWSFrameException.closeStatus().reasonText());
-				this.webSocketExchange.dispose();
+				this.webSocketExchange.dispose(cause);
 			}
 			else {
 				LOGGER.error("WebSocket procotol error", cause);
@@ -226,7 +225,6 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 				this.webSocketExchange.finalizeExchange(closePromise);
 			}
 		}
-		super.exceptionCaught(ctx, cause);
 	}
 	
 	@Override
