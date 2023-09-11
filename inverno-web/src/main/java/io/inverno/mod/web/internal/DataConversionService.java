@@ -24,6 +24,7 @@ import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.BadRequestException;
 import io.inverno.mod.http.base.InboundData;
 import io.inverno.mod.http.base.OutboundData;
+import io.inverno.mod.http.base.ws.BaseWebSocketExchange;
 import io.inverno.mod.http.base.ws.WebSocketException;
 import io.inverno.mod.http.base.ws.WebSocketFrame;
 import io.inverno.mod.http.base.ws.WebSocketMessage;
@@ -756,6 +757,22 @@ public class DataConversionService {
 			this.outbound = outbound;
 			this.converterSupplier = converterSupplier;
 		}
+
+		@Override
+		public BaseWebSocketExchange.Outbound closeOnComplete(boolean closeOnComplete) {
+			this.outbound.closeOnComplete(closeOnComplete);
+			return this;
+		}
+		
+		@Override
+		public void frames(Function<WebSocketFrame.Factory, Publisher<WebSocketFrame>> frames) {
+			this.outbound.frames(frames);
+		}
+
+		@Override
+		public void messages(Function<WebSocketMessage.Factory, Publisher<WebSocketMessage>> messages) {
+			this.outbound.messages(messages);
+		}
 		
 		@Override
 		public <T> void encodeTextMessages(Publisher<T> messages, Type type) {
@@ -789,16 +806,6 @@ public class DataConversionService {
 					Flux.from(DataConversionService.GenericWebSocketOutbound.this.converter.encodeOne(Mono.just(message), type))
 				)));
 			}
-		}
-
-		@Override
-		public void frames(Function<WebSocketFrame.Factory, Publisher<WebSocketFrame>> frames) {
-			this.outbound.frames(frames);
-		}
-
-		@Override
-		public void messages(Function<WebSocketMessage.Factory, Publisher<WebSocketMessage>> messages) {
-			this.outbound.messages(messages);
 		}
 	}
 	

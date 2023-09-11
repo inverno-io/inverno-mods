@@ -26,7 +26,6 @@ import io.inverno.mod.http.client.Request;
 import io.inverno.mod.http.client.internal.AbstractRequest;
 import io.inverno.mod.http.client.ws.WebSocketExchange;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -47,8 +46,12 @@ import reactor.core.publisher.MonoSink;
 import reactor.core.publisher.Sinks;
 
 /**
+ * <p>
+ * Generic {@link WebSocketExchange} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> implements WebSocketExchange<ExchangeContext> {
 
@@ -79,11 +82,23 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	
 	private Mono<Void> finalizer;
 	
-	private boolean closed;
-	
 	private boolean inClosed;
 	private boolean outClosed;
 
+	/**
+	 * <p>
+	 * Creates a WebSocket exchange.
+	 * </p>
+	 * 
+	 * @param context         the channel context
+	 * @param exchangeSink    the WebSocket exchange sink
+	 * @param handshaker      the WebSocket handshaker
+	 * @param exchangeContext the exchange context
+	 * @param request         the originating HTTP request
+	 * @param subProtocol     the subprotocol
+	 * @param frameFactory    the WebSocket frame factory
+	 * @param messageFactory  the WebSocket message factory
+	 */
 	public GenericWebSocketExchange(
 			ChannelHandlerContext context, 
 			MonoSink<WebSocketExchange<ExchangeContext>> exchangeSink, 
@@ -205,7 +220,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	
 	/**
 	 * <p>
-	 * Invokes when the WebSocket exchange is started.
+	 * Invoked when the WebSocket exchange is started.
 	 * </p>
 	 *
 	 * <p>
@@ -238,7 +253,9 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 
 	@Override
 	protected void hookOnComplete() {
-		
+		if(this.outbound != null && this.outbound.closeOnComplete) {
+			this.close();
+		}
 	}
 
 	@Override
@@ -429,6 +446,14 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 		return this;
 	}
 	
+	/**
+	 * <p>
+	 * Generic {@link WebSocketExchange.Inbound} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.5
+	 */
 	protected class GenericInbound implements Inbound {
 
 		private final Flux<WebSocketFrame> frames;
@@ -436,6 +461,13 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 		// This is OK because frames is a unicast publisher!!!
 		private WebSocketFrame.Kind currentFrameKind;
 		
+		/**
+		 * <p>
+		 * Creates a generic WebSocket exchange inbound part.
+		 * </p>
+		 * 
+		 * @param frames the inbound frames publisher
+		 */
 		public GenericInbound(Flux<WebSocketFrame> frames) {
 			this.frames = frames;
 		}
@@ -524,7 +556,23 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 		}
 	}
 
+	/**
+	 * <p>
+	 * Generic {@link WebSocketExchange.Outbound} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.5
+	 */
 	protected class GenericOutbound implements Outbound {
+		
+		protected boolean closeOnComplete = true;
+
+		@Override
+		public Outbound closeOnComplete(boolean closeOnComplete) {
+			this.closeOnComplete = closeOnComplete;
+			return this;
+		}
 
 		@Override
 		public void frames(Function<WebSocketFrame.Factory, Publisher<WebSocketFrame>> frames) {

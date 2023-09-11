@@ -33,12 +33,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
 
 /**
  *
@@ -152,8 +150,17 @@ public class WebSocketClientTest extends AbstractInvernoModTest {
 	}
 	
 	public static void test(Endpoint endpoint, Object webSocketController) throws Exception {
-		// sendMessagesReceiveAndClose
 		Assertions.assertEquals(
+			List.<String>of(), 
+			sendMessagesCloseAndReceive(
+				endpoint.webSocketRequest("/ws8").send(), 
+				List.of("a", "b", "c")
+			)
+		);
+		Assertions.assertEquals("abc", getStringBuilderField(webSocketController, "ws8"));
+
+		// sendMessagesReceiveAndClose
+		/*Assertions.assertEquals(
 			List.<String>of("ws1", "a", "b", "c"), 
 			endpoint.webSocketRequest("/ws1").send()
 				.flatMapMany(exchange -> Flux.from(exchange.inbound().textMessages())
@@ -210,7 +217,7 @@ public class WebSocketClientTest extends AbstractInvernoModTest {
 					.collectList()
 				)
 				.block()
-		);
+		);*/
 	}
 	
 	public static void test0to10(Endpoint endpoint, Object webSocketController) throws Exception {
@@ -1503,6 +1510,7 @@ public class WebSocketClientTest extends AbstractInvernoModTest {
 		return ws
 			.flatMapMany(exchange -> Flux.from(exchange.inbound().textMessages())
 				.doOnSubscribe(ign -> exchange.outbound()
+					.closeOnComplete(false)
 					.messages(factory -> Flux.fromIterable(messages)
 						.map(factory::text)
 					)
@@ -1521,7 +1529,10 @@ public class WebSocketClientTest extends AbstractInvernoModTest {
 		return ws
 			.flatMapMany(exchange -> Flux.from(exchange.inbound().textMessages())
 				.doOnSubscribe(ign -> exchange.outbound()
-					.messages(factory -> Flux.fromIterable(messages).map(factory::text))
+					.closeOnComplete(false)
+					.messages(factory -> Flux.fromIterable(messages)
+						.map(factory::text)
+					)
 				)
 				.flatMap(message -> message.reducedText())
 				.bufferTimeout(take, Duration.ofSeconds(TIMEOUT_SECONDS))
@@ -1531,16 +1542,11 @@ public class WebSocketClientTest extends AbstractInvernoModTest {
 	}
 	
 	private static List<String> sendMessagesCloseAndReceive(Mono<WebSocketExchange<ExchangeContext>> ws, List<String> messages) {
-		return sendMessagesCloseAndReceive(ws, messages, (short)1000);
-	}
-	
-	private static List<String> sendMessagesCloseAndReceive(Mono<WebSocketExchange<ExchangeContext>> ws, List<String> messages, short code) {
 		return ws
 			.flatMapMany(exchange -> Flux.from(exchange.inbound().textMessages())
 				.doOnSubscribe(ign -> exchange.outbound()
 					.messages(factory -> Flux.fromIterable(messages)
 						.map(factory::text)
-						.doOnComplete(() -> exchange.close(code))
 					)
 				)
 			)

@@ -299,11 +299,35 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 		
 		/**
 		 * <p>
-		 * Specifies the stream of frames sent to the client.
+		 * Specifies whether the WebSocket exchange should be closed when the frames publisher completes successfully.
+		 * </p>
+		 *
+		 * <p>
+		 * When the WebSocket frames publisher completes, it is sometimes desirable to keep the socket opened in order to consume yet to be received messages sent by the remove endpoint before or
+		 * after receiving the close frame. Note that when the publisher terminates in error, this is considered a failure and the WebSocket exchange is always closed.
+		 * </p>
+		 * 
+		 * <p>
+		 * The default behaviour is to close the WebSocket exchange.
+		 * </p>
+		 *
+		 * @param closeOnComplete true to close the WebSocket exchange when the frames publisher completes, false otherwise
+		 * 
+		 * @return the outound
+		 */
+		Outbound closeOnComplete(boolean closeOnComplete);
+		
+		/**
+		 * <p>
+		 * Sets the stream of frames sent to the client.
 		 * </p>
 		 * 
 		 * <p>
 		 * WebSocket frames should be created using the provided {@link WebSocketFrame.Factory}.
+		 * </p>
+		 * 
+		 * <p>
+		 * By default, the WebSocket exchange is closed when the frames publisher completes, invoke {@link #closeOnComplete(boolean) } to change that behaviour.
 		 * </p>
 		 * 
 		 * @param frames a function that returns a publisher of WebSocket frames created using the provided factory
@@ -312,11 +336,15 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 		
 		/**
 		 * <p>
-		 * Specifies the stream of messages sent to the client.
+		 * Sets the stream of messages sent to the client.
 		 * </p>
 		 * 
 		 * <p>
 		 * WebSocket messages should be created using the provided {@link WebSocketMessage.Factory}.
+		 * </p>
+		 * 
+		 * <p>
+		 * By default, the WebSocket exchange is closed when the messages publisher completes, invoke {@link #closeOnComplete(boolean) } to change that behaviour.
 		 * </p>
 		 * 
 		 * @param messages a function that returns a publisher of WebSocket messages created using the provided factory

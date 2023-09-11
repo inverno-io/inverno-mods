@@ -526,6 +526,14 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	 */
 	protected class GenericOutbound implements Outbound {
 
+		protected boolean closeOnComplete = true;
+
+		@Override
+		public Outbound closeOnComplete(boolean closeOnComplete) {
+			this.closeOnComplete = closeOnComplete;
+			return this;
+		}
+		
 		@Override
 		public void frames(Function<WebSocketFrame.Factory, Publisher<WebSocketFrame>> frames) {
 			GenericWebSocketExchange.this.setOutboundFrames(frames.apply(GenericWebSocketExchange.this.frameFactory));
