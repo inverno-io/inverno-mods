@@ -20,17 +20,35 @@ import io.netty.channel.FileRegion;
 import org.reactivestreams.Publisher;
 
 /**
+ * <p>
+ * HTTP/1.x request body with support for {@link FileRegion} data.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class Http1xRequestBody extends GenericRequestBody {
 
 	private Publisher<FileRegion> fileRegionData;
 
+	/**
+	 * <p>
+	 * Sets the request body data as file region data.
+	 * </p>
+	 * 
+	 * @param fileRegionData a publisher of file region
+	 */
 	public void setFileRegionData(Publisher<FileRegion> fileRegionData) {
 		this.fileRegionData = fileRegionData;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the request body file region data publisher.
+	 * </p>
+	 * 
+	 * @return a publisher of file region data or null if the body is not made of file region data.
+	 */
 	public Publisher<FileRegion> getFileRegionData() {
 		return this.fileRegionData;
 	}

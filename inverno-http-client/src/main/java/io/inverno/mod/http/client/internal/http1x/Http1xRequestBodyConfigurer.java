@@ -21,6 +21,7 @@ import io.inverno.mod.http.base.InternalServerErrorException;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.client.Part;
+import io.inverno.mod.http.client.RequestBodyConfigurator;
 import io.inverno.mod.http.client.internal.GenericRequestBodyConfigurator;
 import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
 import io.netty.channel.DefaultFileRegion;
@@ -32,8 +33,12 @@ import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 
 /**
- *
+ * <p>
+ * An HTTP/1.x {@link RequestBodyConfigurator} implementation.
+ * </p>
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 class Http1xRequestBodyConfigurer extends GenericRequestBodyConfigurator<Http1xRequestBody> {
 
@@ -41,6 +46,19 @@ class Http1xRequestBodyConfigurer extends GenericRequestBodyConfigurator<Http1xR
 
 	private final boolean supportsFileRegion;
 	
+	/**
+	 * <p>
+	 * Creates an HTTP/1.x request body configurer.
+	 * </p>
+	 *
+	 * @param requestHeaders        the request headers
+	 * @param requestBody           the request body to configure
+	 * @param parameterConverter    the parameter converter
+	 * @param urlEncodedBodyEncoder the URL encoded body encoder
+	 * @param multipartBodyEncoder  the multipart body encoder
+	 * @param partFactory           the part factory
+	 * @param supportsFileRegion    true if file region are supported (i.e. not TLS), false otherwise
+	 */
 	public Http1xRequestBodyConfigurer(
 			Http1xRequestHeaders requestHeaders,
 			Http1xRequestBody requestBody, 
@@ -66,6 +84,14 @@ class Http1xRequestBodyConfigurer extends GenericRequestBodyConfigurator<Http1xR
 		}
 	}
 	
+	/**
+	 * <p>
+	 * HTTP/1.x {@link RequestBodyConfigurator.Resource} implementation with support for for {@link FileRegion} data.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	protected class Http1xResourceData extends GenericRequestBodyConfigurator.ResourceData {
 
 		@Override

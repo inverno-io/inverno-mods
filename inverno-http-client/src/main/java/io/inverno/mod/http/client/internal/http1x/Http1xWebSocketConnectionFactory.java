@@ -23,8 +23,12 @@ import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.internal.WebSocketConnectionFactory;
 
 /**
+ * <p>
+ * HTTP/1.x {@link WebSocketConnectionFactory} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )
 public class Http1xWebSocketConnectionFactory implements WebSocketConnectionFactory<Http1xWebSocketConnection> {
@@ -32,6 +36,14 @@ public class Http1xWebSocketConnectionFactory implements WebSocketConnectionFact
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 
+	/**
+	 * <p>
+	 * Creates an HTTP/1.x WebSocket connection factory.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	public Http1xWebSocketConnectionFactory(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;

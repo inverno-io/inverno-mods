@@ -28,14 +28,40 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.MonoSink;
 
 /**
+ * <p>
+ * HTTP/2 {@link Exchange} implementation representing an upgraded H2C exchange.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @see Http1xUpgradingExchange
  */
 public class Http2UpgradedExchange extends AbstractHttp2Exchange {
 
 	private final Http2Stream upgradingStream;
 	
-	public Http2UpgradedExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, AbstractRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http2ConnectionEncoder encoder, Http2Stream upgradingStream) {
+	/**
+	 * <p>
+	 * Creates an upgraded HTTP/2 exchange.
+	 * </p>
+	 * 
+	 * @param context                 the channel context
+	 * @param exchangeSink            the exchane sink
+	 * @param exchangeContext         the exchange context
+	 * @param request                 the original upgrading HTTP request
+	 * @param responseBodyTransformer the response body transformer
+	 * @param encoder                 the HTTP/2 connection encoder
+	 * @param upgradingStream         the HTTP/2 upgrading stream
+	 */
+	public Http2UpgradedExchange(
+			ChannelHandlerContext context, 
+			MonoSink<Exchange<ExchangeContext>> exchangeSink, 
+			ExchangeContext exchangeContext, 
+			AbstractRequest request, 
+			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, 
+			Http2ConnectionEncoder encoder, 
+			Http2Stream upgradingStream) {
 		super(context, exchangeSink, exchangeContext, request, responseBodyTransformer);
 		this.upgradingStream = upgradingStream;
 	}

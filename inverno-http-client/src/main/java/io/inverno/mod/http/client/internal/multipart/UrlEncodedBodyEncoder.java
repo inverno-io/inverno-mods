@@ -29,14 +29,23 @@ import java.util.function.Function;
 import reactor.core.publisher.Flux;
 
 /**
+ * <p>
+ * An application/x-www-form-urlencoded payload encoder implementation as defined by <a href="https://url.spec.whatwg.org/#application/x-www-form-urlencoded">application/x-www-form-urlencoded</a>.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 @Bean(visibility = Bean.Visibility.PRIVATE)
 public class UrlEncodedBodyEncoder implements MultipartEncoder<Parameter> {
 
 	private final OutboundDataSequencer dataSequencer;
 
+	/**
+	 * <p>
+	 * Creates a URL encoded payload encoder.
+	 * </p>
+	 */
 	public UrlEncodedBodyEncoder() {
 		this.dataSequencer = new OutboundDataSequencer();
 	}
@@ -50,12 +59,27 @@ public class UrlEncodedBodyEncoder implements MultipartEncoder<Parameter> {
 		return this.dataSequencer.sequence(data.map(new ParameterMapper(contentType.getCharset())));
 	}
 	
+	/**
+	 * <p>
+	 * A part mapper used to map a parameter to a payload data publisher.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	private class ParameterMapper implements Function<Parameter, ByteBuf> {
 
 		private final Charset charset;
 		
 		private boolean amp;
 
+		/**
+		 * <p>
+		 * Creates a parameter mapper.
+		 * </p>
+		 * 
+		 * @param charset the charset
+		 */
 		public ParameterMapper(Charset charset) {
 			this.charset = Charsets.orDefault(charset);
 		}

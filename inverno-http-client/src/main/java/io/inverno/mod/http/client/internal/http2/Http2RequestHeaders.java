@@ -37,8 +37,12 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
+ * <p>
+ * HTTP/2 {@link OutboundRequestHeaders} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 class Http2RequestHeaders implements InternalRequestHeaders {
 
@@ -50,6 +54,14 @@ class Http2RequestHeaders implements InternalRequestHeaders {
 	
 	private boolean written;
 
+	/**
+	 * <p>
+	 * Creates blank HTTP/2 request headers.
+	 * </p>
+	 *
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	public Http2RequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
@@ -57,6 +69,15 @@ class Http2RequestHeaders implements InternalRequestHeaders {
 		this.underlyingHeaders = new DefaultHttp2Headers();
 	}
 	
+	/**
+	 * <p>
+	 * Creates HTTP/2 request headers populated with specified header entries.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param entries            a list of HTTP header entries
+	 */
 	public Http2RequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, List<Map.Entry<String, String>> entries) {
 		this(headerService, parameterConverter);
 		if(entries != null && !entries.isEmpty()) {

@@ -24,8 +24,12 @@ import io.netty.buffer.ByteBuf;
 import java.util.function.Consumer;
 
 /**
+ * <p>
+ * Generic {@link Part.Factory} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )
 public class GenericPartFactory implements Part.Factory {
@@ -33,6 +37,14 @@ public class GenericPartFactory implements Part.Factory {
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 
+	/**
+	 * <p>
+	 * Creates a generic part factory.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	public GenericPartFactory(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;

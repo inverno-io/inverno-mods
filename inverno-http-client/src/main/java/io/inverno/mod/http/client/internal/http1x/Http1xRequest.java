@@ -25,11 +25,29 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
+ * <p>
+ * HTTP/1.x {@link Request} implementation
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 class Http1xRequest extends AbstractRequest {
 
+	/**
+	 * <p>
+	 * Creates an HTTP/1.x request.
+	 * </p>
+	 *
+	 * @param context            the channel context
+	 * @param tls                true if connection is secured, false otherwise
+	 * @param parameterConverter the parameter converter
+	 * @param method             the HTTP method
+	 * @param authority          the requested authority
+	 * @param path               the request target path
+	 * @param requestHeaders     the request headers
+	 * @param requestBody        the request body
+	 */
 	public Http1xRequest(
 			ChannelHandlerContext context, 
 			boolean tls,
@@ -47,6 +65,17 @@ class Http1xRequest extends AbstractRequest {
 		return (Http1xRequestHeaders)this.requestHeaders;
 	}
 	
+	/**
+	 * <p>
+	 * Specifies HTTP headers in the request.
+	 * </p>
+	 * 
+	 * @param headersConfigurer an HTTP headers configurer
+	 * 
+	 * @return the request
+	 * 
+	 * @throws IllegalStateException when the request has already been sent 
+	 */
 	Request headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException {
 		if(this.isHeadersWritten()) {
 			throw new IllegalStateException("Headers already written");

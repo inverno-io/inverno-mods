@@ -54,8 +54,12 @@ import reactor.core.publisher.MonoSink;
 import reactor.core.scheduler.Schedulers;
 
 /**
+ * <p>
+ * HTTP/1.x {@link WebSocketConnection} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Object> implements WebSocketConnection {
 
@@ -75,6 +79,15 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	
 	private GenericWebSocketExchange webSocketExchange;
 
+	/**
+	 * <p>
+	 * Creates an HTTP/1.x WebSocket connection.
+	 * </p>
+	 * 
+	 * @param configuration      the HTTP client configurartion
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	public Http1xWebSocketConnection(
 			HttpClientConfiguration configuration, 
 			HeaderService headerService, 
@@ -149,7 +162,27 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 		.map(exchange -> (WebSocketExchange<A>)exchange);
 	}
 	
-	private void sendHandshake(ChannelHandlerContext context, MonoSink<WebSocketExchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, String authority, List<Map.Entry<String, String>> headers, String path, String subprotocol) {
+	/**
+	 * <p>
+	 * Sends the WebSocket handshake.
+	 * </p>
+	 * 
+	 * @param context         the channel context
+	 * @param exchangeSink    the WebSocket exchange sink
+	 * @param exchangeContext the exchange context
+	 * @param authority       the requested authority
+	 * @param headers         a list of HTTP header entries
+	 * @param path            the request target path
+	 * @param subprotocol     the subprotocol
+	 */
+	private void sendHandshake(
+			ChannelHandlerContext context, 
+			MonoSink<WebSocketExchange<ExchangeContext>> exchangeSink, 
+			ExchangeContext exchangeContext, 
+			String authority, 
+			List<Map.Entry<String, String>> headers, 
+			String path, 
+			String subprotocol) {
 		if(this.webSocketExchange != null) {
 			throw new IllegalStateException("Handshake already sent");
 		}

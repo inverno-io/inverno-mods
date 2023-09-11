@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2022 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import io.netty.channel.ChannelPromise;
 
 /**
  * <p>
- * A HTTP1.x connection encoder used to write data frame to the client.
+ * A HTTP1.x connection encoder used to write data frame to the server.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @since 1.6
  */
 interface Http1xConnectionEncoder {
 

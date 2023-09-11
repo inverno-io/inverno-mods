@@ -17,19 +17,40 @@ package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.client.Response;
 import io.inverno.mod.http.client.internal.AbstractResponse;
 import io.netty.handler.codec.http2.Http2Headers;
 
 /**
+ * <p>
+ * HTTP/2 {@link Response} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 class Http2Response extends AbstractResponse {
 
+	/**
+	 * <p>
+	 * Creates an HTTP/2 response.
+	 * </p>
+	 * 
+	 * @param headers            the underlying HTTP/2 headers
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	public Http2Response(Http2Headers headers, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		super(new Http2ResponseHeaders(headers, headerService, parameterConverter));
 	}
 	
+	/**
+	 * <p>
+	 * Sets the response trailers.
+	 * </p>
+	 * 
+	 * @param responseTrailers the response trailers to set
+	 */
 	public void setResponseTrailers(Http2ResponseTrailers responseTrailers) {
 		this.responseTrailers = responseTrailers;
 	}

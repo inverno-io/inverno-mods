@@ -286,7 +286,7 @@ public class EndpointChannelConfigurer {
 			// This reserves stream 1 and sets the initial upgraded exchange in the connection
 			connection.onHttpClientUpgrade(upgradingExchange);
 			
-			// 5. Popagate buffered messages to the HTTP/2 connection handler
+			// 5. Propagate buffered messages to the HTTP/2 connection handler
 			if(messageBuffer != null) {
 				Object current;
 				while( (current = messageBuffer.poll()) != null) {

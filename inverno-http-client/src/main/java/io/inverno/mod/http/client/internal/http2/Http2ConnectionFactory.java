@@ -34,8 +34,12 @@ import io.netty.handler.codec.http2.Http2Settings;
 import java.util.Optional;
 
 /**
+ * <p>
+ * HTTP/2 {@link HttpConnectionFactory} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )
 public class Http2ConnectionFactory implements HttpConnectionFactory<Http2Connection> {
@@ -48,6 +52,18 @@ public class Http2ConnectionFactory implements HttpConnectionFactory<Http2Connec
 	
 	private final CompressionOptionsProvider compressionOptionsProvider;
 	
+	/**
+	 * <p>
+	 * Creates an HTTP/2 connection factory.
+	 * </p>
+	 * 
+	 * @param compressionOptionsProvider the compression option provider
+	 * @param headerService              the header service
+	 * @param parameterConverter         the parameter converter
+	 * @param urlEncodedBodyEncoder      the URL encoded body encoder
+	 * @param multipartBodyEncoder       the multipart body encoder
+	 * @param partFactory                the part factory
+	 */
 	public Http2ConnectionFactory(
 			CompressionOptionsProvider compressionOptionsProvider,
 			HeaderService headerService, 
@@ -68,10 +84,25 @@ public class Http2ConnectionFactory implements HttpConnectionFactory<Http2Connec
 		return new Http2ConnectionFactory.Http2ChannelHandlerBuilder(configuration).build();
 	}
 	
+	/**
+	 * <p>
+	 * HTTP/2 channel handler builder.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	private class Http2ChannelHandlerBuilder extends AbstractHttp2ConnectionHandlerBuilder<Http2Connection, Http2ChannelHandlerBuilder> {
 
 		private final HttpClientConfiguration configuration;
 		
+		/**
+		 * <p>
+		 * Creates an HTTP/2 channel handler builder.
+		 * </p>
+		 * 
+		 * @param configuration the HTTP client configurartion
+		 */
 		public Http2ChannelHandlerBuilder(HttpClientConfiguration configuration) {
 			this.configuration = configuration;
 			

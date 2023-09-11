@@ -36,8 +36,12 @@ import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.MonoSink;
 
 /**
+ * <p>
+ * HTTP/2 {@link Exchange} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 class Http2Exchange extends AbstractHttp2Exchange {
 
@@ -46,6 +50,19 @@ class Http2Exchange extends AbstractHttp2Exchange {
 	
 	protected Http2Stream stream;
 	
+	/**
+	 * <p>
+	 * Creates an HTTP/2 exchange.
+	 * </p>
+	 * 
+	 * @param context                 the channel context
+	 * @param exchangeSink            the exchange sink
+	 * @param exchangeContext         the exchange context
+	 * @param request                 the HTTP/2 request
+	 * @param responseBodyTransformer the response body transformer
+	 * @param localEndpoint           the local HTTP/2 endpoint
+	 * @param encoder                 the HTTP/2 connection encoder
+	 */
 	public Http2Exchange(
 			ChannelHandlerContext context, 
 			MonoSink<Exchange<ExchangeContext>> exchangeSink,
@@ -113,6 +130,15 @@ class Http2Exchange extends AbstractHttp2Exchange {
 		);
 	}
 	
+	/**
+	 * <p>
+	 * Sets required headers (e.g. {@code :method}, {@code :scheme}, {@code :authority}, {@code :path}...).
+	 * </p>
+	 * 
+	 * @param headers the request HTTP/2 headers
+	 * 
+	 * @return the HTTP headers
+	 */
 	private Http2Headers fixHeaders(Http2Headers headers) {
 		return headers
 			.method(this.request.getMethod().name())
@@ -121,6 +147,14 @@ class Http2Exchange extends AbstractHttp2Exchange {
 			.path(this.request.getPath());
 	}
 	
+	/**
+	 * <p>
+	 * A data subscriber used to consume request body publisher and send HTTP/2 frames to the remote endpoint.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	private class DataSubscriber extends BaseSubscriber<ByteBuf> {
 		
 		private final boolean single;

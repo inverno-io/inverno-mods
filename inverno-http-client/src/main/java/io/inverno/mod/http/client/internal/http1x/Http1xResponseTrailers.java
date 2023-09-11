@@ -29,8 +29,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
+ * <p>
+ * HTTP/1.x {@link InboundHeaders} implementation to represent HTTP trailers.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 class Http1xResponseTrailers implements InboundHeaders {
 	
@@ -39,6 +43,15 @@ class Http1xResponseTrailers implements InboundHeaders {
 	
 	private final HttpHeaders underlyingTrailers;
 
+	/**
+	 * <p>
+	 * Creates HTTP/1.x response trailers.
+	 * </p>
+	 *
+	 * @param httpTrailers       the underlying HTTP trailers
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	public Http1xResponseTrailers(HttpHeaders httpTrailers, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;

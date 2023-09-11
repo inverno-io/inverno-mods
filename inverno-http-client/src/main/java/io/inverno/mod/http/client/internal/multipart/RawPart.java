@@ -17,15 +17,28 @@ package io.inverno.mod.http.client.internal.multipart;
 
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.client.Part;
 import io.netty.buffer.ByteBuf;
 import org.reactivestreams.Publisher;
 
 /**
+ * <p>
+ * A {@link Part} implementation for representing part's with raw data.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class RawPart extends AbstractDataPart<ByteBuf> {
 
+	/**
+	 * <p>
+	 * Creates a raw part.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	public RawPart(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		super(headerService, parameterConverter);
 	}

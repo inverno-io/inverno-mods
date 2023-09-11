@@ -20,10 +20,26 @@ import io.netty.buffer.ByteBuf;
 import reactor.core.publisher.Flux;
 
 /**
+ * <p>
+ * Base multipart payload encoder.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @param <A> the type of data sent in the part
  */
 public interface MultipartEncoder<A> {
 
+	/**
+	 * <p>
+	 * Encodes the specified payload data publisher formated according to the specified content type.
+	 * </p>
+	 *
+	 * @param data        the data to encode
+	 * @param contentType the content type
+	 *
+	 * @return a stream of bytes
+	 */
 	Flux<ByteBuf> encode(Flux<A> data, Headers.ContentType contentType);
 }

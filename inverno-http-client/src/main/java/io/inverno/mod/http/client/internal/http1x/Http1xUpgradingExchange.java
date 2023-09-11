@@ -33,14 +33,31 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.MonoSink;
 
 /**
+ * <p>
+ * HTTP/1.x {@link Exchange} implementation supporting H2C upgrade.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class Http1xUpgradingExchange extends Http1xExchange {
 
 	private final MonoSink<Exchange<ExchangeContext>> upgradedExchangeSink;
 	private Http2Connection upgradedConnection;
 	
+	/**
+	 * <p>
+	 * Creates an HTTP/1.x upgrading exchange.
+	 * </p>
+	 * 
+	 * @param context                 the channel context
+	 * @param exchangeSink            the upgraded exchange sink
+	 * @param exchangeContext         the exchange context
+	 * @param protocol                the HTTP/1.x protocol version
+	 * @param request                 the HTTP/1.x request
+	 * @param responseBodyTransformer the response body transformer
+	 * @param encoder                 the HTTP/1.x connection encoder
+	 */
 	public Http1xUpgradingExchange(
 			ChannelHandlerContext context, 
 			MonoSink<Exchange<ExchangeContext>> exchangeSink, 
@@ -53,6 +70,13 @@ public class Http1xUpgradingExchange extends Http1xExchange {
 		this.upgradedExchangeSink = exchangeSink;
 	}
 	
+	/**
+	 * <p>
+	 * Initializes the H2C upgrade process.
+	 * </p>
+	 * 
+	 * @param upgradedConnection the HTTP/2 upgraded connection
+	 */
 	public void init(Http2Connection upgradedConnection) {
 		this.upgradedConnection = upgradedConnection;
 		this.request.headers(headers -> {
@@ -68,22 +92,59 @@ public class Http1xUpgradingExchange extends Http1xExchange {
 		super.dispose(error);
 	}
 	
+	/**
+	 * <p>
+	 * Returns the response body transformer.
+	 * </p>
+	 * 
+	 * @return the response body transformer
+	 */
 	public Function<Publisher<ByteBuf>, Publisher<ByteBuf>> getResponseBodyTransformer() {
 		return this.responseBodyTransformer;
 	}
 
+	/**
+	 * <p>
+	 * Returns the ugraded exchange sink.
+	 * </p>
+	 * 
+	 * @return the upgraded exchange sink
+	 */
 	public MonoSink<Exchange<ExchangeContext>> getUpgradedExchangeSink() {
 		return this.upgradedExchangeSink;
 	}
 
+	/**
+	 * <p>
+	 * Returns the HTTP/2 upgraded connection.
+	 * </p>
+	 * 
+	 * @return the HTTP/2 uprgaded connection
+	 */
 	public Http2Connection getUpgradedConnection() {
 		return upgradedConnection;
 	}
 
+	/**
+	 * <p>
+	 * Returne the exchange's last modified.
+	 * </p>
+	 * 
+	 * @return the last modified
+	 */
 	public long getLastModified() {
 		return lastModified;
 	}
 	
+	/**
+	 * <p>
+	 * Encodes the HTTP/2 settings to be sent as HTTP/1.x header within the upgrade request.
+	 * </p>
+	 * 
+	 * @param settings the HTTP/2 settings
+	 * 
+	 * @return the encoded settings
+	 */
 	private CharSequence encodeSettingsHeaderValue(Http2Settings settings) {
         ByteBuf buf = null;
 		ByteBuf encodedBuf = null;

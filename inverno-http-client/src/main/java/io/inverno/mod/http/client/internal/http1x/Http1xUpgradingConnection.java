@@ -45,13 +45,25 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.MonoSink;
 
 /**
+ * <p>
+ * HTTP/1.x {@link HttpConnection} supporting H2C upgrade.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 class Http1xUpgradingConnection extends Http1xConnection {
 
 	private static final int MAX_MESSAGE_BUFFER_SIZE = 65536;
 	
+	/**
+	 * <p>
+	 * Specifies H2C upgrade states.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	private enum UpgradeState {
 		STARTED,
 		RECEIVED,
@@ -70,6 +82,20 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	private Deque<Object> messageBuffer;
 	private int messageBufferSize;
 	
+	/**
+	 * <p>
+	 * Creates an HTTP/1.x upgrading connection.
+	 * </p>
+	 * 
+	 * @param configuration         the HTTP client configurartion
+	 * @param httpVersion           the HTTP/1.x protocol version
+	 * @param headerService         the header service
+	 * @param parameterConverter    the parameter converter
+	 * @param urlEncodedBodyEncoder the URL encoded body encoder
+	 * @param multipartBodyEncoder  the multipart body encoder
+	 * @param partFactory           the part factory
+	 * @param configurer            the endpoint channel configurer
+	 */
 	public Http1xUpgradingConnection(
 			HttpClientConfiguration configuration, 
 			HttpVersion httpVersion, 
@@ -173,6 +199,13 @@ class Http1xUpgradingConnection extends Http1xConnection {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Buffers message until upgrade is complete.
+	 * </p>
+	 * 
+	 * @param msg the message to buffer
+	 */
 	private void bufferMessage(Object msg) {
 		if(this.messageBuffer == null) {
 			this.messageBuffer = new ArrayDeque<>();
@@ -191,6 +224,11 @@ class Http1xUpgradingConnection extends Http1xConnection {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Rejects the upgrade.
+	 * </p>
+	 */
 	private void rejectUpgrade() {
 		this.upgradingExchange.getUpgradedExchangeSink().success(this.upgradingExchange);
 		this.state = UpgradeState.COMPLETED;
@@ -201,6 +239,11 @@ class Http1xUpgradingConnection extends Http1xConnection {
 		this.upgradingExchange = null;
 	}
 
+	/**
+	 * <p>
+	 * Accepts the upgrade.
+	 * </p>
+	 */
 	private void acceptUpgrade() {
 		this.state = UpgradeState.PREPARED;
 		this.configurer.completeHttp2Upgrade(this.context.pipeline(), configuration, this.upgradingExchange, this.messageBuffer);

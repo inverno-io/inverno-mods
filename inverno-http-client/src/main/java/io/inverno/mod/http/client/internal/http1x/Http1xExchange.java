@@ -40,8 +40,12 @@ import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.MonoSink;
 
 /**
- *
+ * <p>
+ * HTTP/1.x {@link Exchange} implementation.
+ * </p>
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Http1xExchange> {
 
@@ -51,6 +55,19 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 	long lastModified;
 	Http1xExchange next;
 	
+	/**
+	 * <p>
+	 * Creates an HTTP/1.x exchange.
+	 * </p>
+	 *
+	 * @param context                 the channel context
+	 * @param exchangeSink            the exchange sink
+	 * @param exchangeContext         the exchange context
+	 * @param protocol                the HTTP/1.x protocol version
+	 * @param request                 the HTTP/1.x request
+	 * @param responseBodyTransformer the response body transformer
+	 * @param encoder                 the HTTP/1.x connection encoder
+	 */
 	public Http1xExchange(
 			ChannelHandlerContext context, 
 			MonoSink<Exchange<ExchangeContext>> exchangeSink, 
@@ -70,6 +87,15 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Starts the exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * This basically sends the request to the remote endpoint.
+	 * </p>
+	 */
 	// this is executed in event loop
 	protected void doStart() {
 		// Do send the request
@@ -110,14 +136,38 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 		);
 	}
 	
+	/**
+	 * <p>
+	 * Sets required headers (e.g. {@code host}...)
+	 * </p>
+	 * 
+	 * @param headers the request HTTP headers
+	 * 
+	 * @return the HTTP headers
+	 */
 	private HttpHeaders fixHeaders(HttpHeaders headers) {
 		return headers.set(Headers.NAME_HOST, this.request.getAuthority());
 	}
 
+	/**
+	 * <p>
+	 * Disposes the exchange.
+	 * </p>
+	 * 
+	 * @param deep true to also dispose subsequent exchanges, false otherwise.
+	 */
 	public void dispose(boolean deep) {
 		this.dispose(null, deep);
 	}
 	
+	/**
+	 * <p>
+	 * Disposes the exchange with the following error.
+	 * </p>
+	 * 
+	 * @param error the error
+	 * @param deep true to also dispose subsequent exchanges, false otherwise.
+	 */
 	public void dispose(Throwable error, boolean deep) {
 		this.dispose(error);
 		
@@ -126,6 +176,14 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 		}
 	}
 	
+	/**
+	 * <p>
+	 * A data subscriber used to consume request body publisher and send HTTP frames to the remote endpoint.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	private class DataSubscriber extends BaseSubscriber<ByteBuf> {
 		
 		private final boolean single;
@@ -134,10 +192,24 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 		private boolean many;
 		private long transferedLength;
 		
+		/**
+		 * <p>
+		 * Creates a data subscriber.
+		 * </p>
+		 * 
+		 * @param single true if the data publisher to consume is a single publisher (i.e. {@link Mono}), false otherwise or if it couldn't be determined.
+		 */
 		public DataSubscriber(boolean single) {
 			this.single = single;
 		}
 
+		/**
+		 * <p>
+		 * Returns the number of bytes that were transfered to the remote endpoint.
+		 * </p>
+		 * 
+		 * @return the number of bytes transfered
+		 */
 		public long getTransferedLength() {
 			return transferedLength;
 		}
@@ -224,10 +296,25 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 		}
 	}
 	
+	/**
+	 * <p>
+	 * A specific data subscriber used to consume request body resource and send {@link FileRegion} to the remote endpoint.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	private class FileRegionDataSubscriber extends BaseSubscriber<FileRegion> {
 
 		private long transferedLength;
 
+		/**
+		 * <p>
+		 * Returns the number of bytes that were transfered to the remote endpoint.
+		 * </p>
+		 * 
+		 * @return the number of bytes transfered
+		 */
 		public long getTransferedLength() {
 			return transferedLength;
 		}

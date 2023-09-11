@@ -25,8 +25,14 @@ import java.nio.charset.Charset;
 import java.util.function.Consumer;
 
 /**
+ * <p>
+ * Base {@link Part} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
+ * 
+ * @param <A> the type of data sent in the part
  */
 public abstract class AbstractPart<A> implements Part<A> {
 
@@ -35,10 +41,27 @@ public abstract class AbstractPart<A> implements Part<A> {
 	protected String name;
 	protected String filename;
 
+	/**
+	 * <p>
+	 * Creates a part.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	protected AbstractPart(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headers = new PartHeaders(headerService, parameterConverter);
 	}
 
+	/**
+	 * <p>
+	 * Creates a part.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param headers            the part headers
+	 */
 	protected AbstractPart(HeaderService headerService, ObjectConverter<String> parameterConverter, PartHeaders headers) {
 		this.headers = headers;
 	}
@@ -66,6 +89,15 @@ public abstract class AbstractPart<A> implements Part<A> {
 		return this;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the part's {@code content-disposition} header value.
+	 * </p>
+	 * 
+	 * @param charset the charset
+	 * 
+	 * @return a {@code content-disposition} header value
+	 */
 	public String getContentDisposition(Charset charset) {
 		StringBuilder contentDisposition = new StringBuilder()
 			.append(Headers.ContentDisposition.TYPE_FORM_DATA).append(";")
@@ -74,7 +106,6 @@ public abstract class AbstractPart<A> implements Part<A> {
 		if(this.filename != null) {
 			contentDisposition.append(";").append(Headers.ContentDisposition.FILENAME).append("=\"").append(URIs.encodeQuery(this.filename, charset)).append("\"");
 		}
-		
 		return contentDisposition.toString();
 	}
 }

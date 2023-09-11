@@ -34,8 +34,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
+ * <p>
+ * HTTP/2 {@link InboundResponseHeaders} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 class Http2ResponseHeaders implements InboundResponseHeaders {
 
@@ -45,12 +49,30 @@ class Http2ResponseHeaders implements InboundResponseHeaders {
 	private final Http2Headers underlyingHeaders;
 	private InboundSetCookies responseCookies;
 	
+	/**
+	 * <p>
+	 * Creates HTTP/2 respone headers.
+	 * </p>
+	 * 
+	 * @param headers            the underlying HTTP/2 headers
+	 * @param headerService      the headers service
+	 * @param parameterConverter the parameter converter
+	 */
 	public Http2ResponseHeaders(Http2Headers headers, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.underlyingHeaders = headers;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 	}
 	
+	/**
+	 * <p>
+	 * Returns the specified header value as String.
+	 * </p>
+	 * 
+	 * @param name the header name
+	 * 
+	 * @return a string or null if there's no header defined with the specified name
+	 */
 	private String getHeaderValue(String name) {
 		CharSequence header = this.underlyingHeaders.get(name);
 		return header != null ? header.toString() : null;

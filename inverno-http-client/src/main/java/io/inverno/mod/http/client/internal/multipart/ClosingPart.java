@@ -22,11 +22,18 @@ import java.util.function.Consumer;
 import org.reactivestreams.Publisher;
 
 /**
+ * <p>
+ * A dummy part used to indicate the end of a multipart form data body.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class ClosingPart implements Part<Object> {
 
+	/**
+	 * The closing part singletong used as a flag in a stream of parts to indicate the end of the body.
+	 */
 	public static final ClosingPart INSTANCE = new ClosingPart();
 	
 	@Override

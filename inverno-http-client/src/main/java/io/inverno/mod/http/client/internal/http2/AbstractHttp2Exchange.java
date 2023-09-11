@@ -29,14 +29,29 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.MonoSink;
 
 /**
+ * <p>
+ * Base HTTP/2 {@link Exchange} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public abstract class AbstractHttp2Exchange extends AbstractExchange<AbstractRequest, Http2Response, AbstractHttp2Exchange> {
 
 	ScheduledFuture<AbstractHttp2Exchange> timeoutFuture;
 	long lastModified;
 	
+	/**
+	 * <p>
+	 * Creates an HTTP/2 exchane.
+	 * </p>
+	 *
+	 * @param context                 the channel context
+	 * @param exchangeSink            the exchange sink
+	 * @param exchangeContext         the exchange context
+	 * @param request                 the HTTP request
+	 * @param responseBodyTransformer the response body transformer
+	 */
 	public AbstractHttp2Exchange(
 			ChannelHandlerContext context, 
 			MonoSink<Exchange<ExchangeContext>> exchangeSink, 
@@ -57,5 +72,12 @@ public abstract class AbstractHttp2Exchange extends AbstractExchange<AbstractReq
 		return this.context;
 	}
 
+	/**
+	 * <p>
+	 * Returns the HTTP/2 stream bound to the exchange.
+	 * </p>
+	 * 
+	 * @return the HTTP/2 stream
+	 */
 	public abstract Http2Stream getStream();
 }

@@ -25,11 +25,23 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * A {@link Part} implementation for representing part's with string data.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class StringPart<T extends CharSequence> extends AbstractDataPart<T> {
 
+	/**
+	 * <p>
+	 * Creates a string part.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	public StringPart(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		super(headerService, parameterConverter);
 	}

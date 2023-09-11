@@ -16,18 +16,37 @@
 package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.client.HttpClient.Request;
 import io.inverno.mod.http.client.internal.AbstractRequest;
 import io.inverno.mod.http.client.internal.GenericRequestBody;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
+ * /**
+ * <p>
+ * HTTP/2 {@link Request} implementation
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 class Http2Request extends AbstractRequest {
 
+	/**
+	 * <p>
+	 * Creates an HTTP/2 request.
+	 * </p>
+	 * 
+	 * @param context            the channel context
+	 * @param tls                true if connection is secured, false otherwise
+	 * @param parameterConverter the parameter converter
+	 * @param method             the HTTP method
+	 * @param authority          the requested authority
+	 * @param path               the request target path
+	 * @param requestHeaders     the request headers
+	 * @param requestBody        the request body
+	 */
 	public Http2Request(
 			ChannelHandlerContext context,
 			boolean tls,

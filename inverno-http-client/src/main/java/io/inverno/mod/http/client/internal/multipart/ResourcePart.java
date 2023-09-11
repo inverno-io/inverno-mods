@@ -20,14 +20,23 @@ import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.client.Part;
 import io.netty.buffer.ByteBuf;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * A {@link Part} implementation for representing part's with {@link Resource} as data.
+ * </p>
  *
+ * <p>
+ * Following {@link Part} interface, it is possible to provide multiple {@link Resource} into the part resulting in multiple {@link FilePart}.
+ * </p>
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class ResourcePart extends AbstractPart<Resource> {
 
@@ -36,6 +45,14 @@ public class ResourcePart extends AbstractPart<Resource> {
 	
 	private Publisher<? extends Resource> resources;
 
+	/**
+	 * <p>
+	 * Creates a resource part.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	public ResourcePart(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		super(headerService, parameterConverter);
 		
@@ -48,6 +65,13 @@ public class ResourcePart extends AbstractPart<Resource> {
 		this.resources = value;
 	}
 
+	/**
+	 * <p>
+	 * Returns a {@link FilePart} publisher.
+	 * </p>
+	 * 
+	 * @return a {@link FilePart} publisher
+	 */
 	public Publisher<ResourcePart.FilePart> getFileParts() {
 		if(this.resources == null) {
 			return Mono.empty();
@@ -57,8 +81,26 @@ public class ResourcePart extends AbstractPart<Resource> {
 			.map(resource -> new ResourcePart.FilePart(this.name, this.filename, resource, new PartHeaders(this.headerService, this.parameterConverter, this.headers.getAll())));
 	}
 	
+	/**
+	 * <p>
+	 * A file {@link Part} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	public class FilePart extends AbstractDataPart<ByteBuf> {
 
+		/**
+		 * <p>
+		 * Creates a file part.
+		 * </p>
+		 * 
+		 * @param name     the part's name
+		 * @param filename the file name
+		 * @param resource the resource
+		 * @param headers  the part's headers
+		 */
 		public FilePart(String name, String filename, Resource resource, PartHeaders headers) {
 			super(ResourcePart.this.headerService, ResourcePart.this.parameterConverter, headers);
 			
@@ -83,6 +125,13 @@ public class ResourcePart extends AbstractPart<Resource> {
 			}
 		}
 		
+		/**
+		 * <p>
+		 * This is unsupported because data are provided in the resource.
+		 * </p>
+		 * 
+		 * @throws UnsupportedOperationException
+		 */
 		@Override
 		public <T extends ByteBuf> void stream(Publisher<T> value) throws IllegalStateException {
 			throw new UnsupportedOperationException();

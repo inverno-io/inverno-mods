@@ -23,19 +23,47 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * <p>
+ * A {@link OutboundRequestHeaders} implementation used for representing part's headers in a multipart form data body.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class PartHeaders extends GenericRequestHeaders {
 
+	/**
+	 * <p>
+	 * Creates blank part's headers.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	public PartHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		super(headerService, parameterConverter);
 	}
 
+	/**
+	 * <p>
+	 * Creates part's headers populated with specified header entries.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param entries            a list of HTTP header entries
+	 */
 	public PartHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, List<Map.Entry<String, String>> entries) {
 		super(headerService, parameterConverter, entries);
 	}
 	
+	/**
+	 * <p>
+	 * Encodes the specified buffer into the headers.
+	 * </p>
+	 * 
+	 * @param buf a byte buf
+	 */
 	public void encode(ByteBuf buf) {
 		this.underlyingHeaders.encode(buf);
 	}

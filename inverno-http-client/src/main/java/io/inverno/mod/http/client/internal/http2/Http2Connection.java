@@ -30,6 +30,7 @@ import io.inverno.mod.http.client.RequestBodyConfigurator;
 import io.inverno.mod.http.client.RequestTimeoutException;
 import io.inverno.mod.http.client.internal.AbstractExchange;
 import io.inverno.mod.http.client.internal.AbstractRequest;
+import io.inverno.mod.http.client.internal.EndpointChannelConfigurer;
 import io.inverno.mod.http.client.internal.GenericRequestBody;
 import io.inverno.mod.http.client.internal.GenericRequestBodyConfigurator;
 import io.inverno.mod.http.client.internal.HttpConnection;
@@ -65,8 +66,12 @@ import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 
 /**
- *
+ * <p>
+ * HTTP/2 {@link HttpConnection} implementation.
+ * </p>
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class Http2Connection extends Http2ConnectionHandler implements Http2FrameListener, io.netty.handler.codec.http2.Http2Connection.Listener, HttpConnection, AbstractExchange.Handler<AbstractRequest, Http2Response, AbstractHttp2Exchange> {
 	
@@ -89,6 +94,21 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	private boolean closing;
 	private boolean closed;
 	
+	/**
+	 * <p>
+	 * Creates an HTTP/2 connection.
+	 * </p>
+	 * 
+	 * @param configuration         the HTTP client configurartion
+	 * @param decoder               the HTTP/2 connection decoder
+	 * @param encoder               the HTTP/2 connection encoder
+	 * @param initialSettings       the HTTP/2 initial settings
+	 * @param headerService         the header service
+	 * @param parameterConverter    the parameter converter
+	 * @param urlEncodedBodyEncoder the URL encoded body encoder
+	 * @param multipartBodyEncoder  the multipart body encoder
+	 * @param partFactory           the part factory
+	 */
 	public Http2Connection(
 			HttpClientConfiguration configuration, 
 			Http2ConnectionDecoder decoder, 
@@ -132,6 +152,15 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 		this.handler = handler;
 	}
 
+	/**
+	 * <p>
+	 * Invoked by {@link EndpointChannelConfigurer} when finalizing the H2C upgrade to start the upgraded exchange.
+	 * </p>
+	 * 
+	 * @param upgradingExchange the HTTP/1.x upgrading exchange
+	 * 
+	 * @throws Http2Exception if there was an error during the client upgrade
+	 */
 	public void onHttpClientUpgrade(Http1xUpgradingExchange upgradingExchange) throws Http2Exception {
 		super.onHttpClientUpgrade();
 		Http2Stream upgradingStream = this.connection().stream(1);

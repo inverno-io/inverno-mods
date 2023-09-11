@@ -33,8 +33,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
+ * <p>
+ * HTTP/1.x {@link InboundResponseHeaders} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 class Http1xResponseHeaders implements InboundResponseHeaders {
 	
@@ -47,15 +51,21 @@ class Http1xResponseHeaders implements InboundResponseHeaders {
 	private final int statusCode;
 	private Status status;
 
+	/**
+	 * <p>
+	 * Creates HTTP/1.x response headers.
+	 * </p>
+	 * 
+	 * @param headers            the underlying HTTP headers
+	 * @param statusCode         the response status code
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	public Http1xResponseHeaders(HttpHeaders headers, int statusCode, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		this.underlyingHeaders = headers;
 		this.statusCode = statusCode;
-	}
-
-	HttpHeaders getUnderlyingHeaders() {
-		return underlyingHeaders;
 	}
 	
 	@Override

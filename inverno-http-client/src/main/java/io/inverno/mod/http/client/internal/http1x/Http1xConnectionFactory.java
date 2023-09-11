@@ -27,8 +27,12 @@ import io.inverno.mod.http.client.internal.HttpConnectionFactory;
 import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
 
 /**
+ * <p>
+ * HTTP/1.x {@link HttpConnectionFactory} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )
 public class Http1xConnectionFactory implements HttpConnectionFactory<Http1xConnection> {
@@ -39,6 +43,17 @@ public class Http1xConnectionFactory implements HttpConnectionFactory<Http1xConn
 	private final MultipartEncoder<Part<?>> multipartBodyEncoder;
 	private final Part.Factory partFactory;
 
+	/**
+	 * <p>
+	 * Creates an HTTP/1.x connection factory.
+	 * </p>
+	 *
+	 * @param headerService         the header service
+	 * @param parameterConverter    the parameter converter
+	 * @param urlEncodedBodyEncoder the URL encoded body encoder
+	 * @param multipartBodyEncoder  the multipart body encoder
+	 * @param partFactory           the part factory
+	 */
 	public Http1xConnectionFactory(HeaderService headerService, ObjectConverter<String> parameterConverter, MultipartEncoder<Parameter> urlEncodedBodyEncoder, MultipartEncoder<Part<?>> multipartBodyEncoder, Part.Factory partFactory) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;

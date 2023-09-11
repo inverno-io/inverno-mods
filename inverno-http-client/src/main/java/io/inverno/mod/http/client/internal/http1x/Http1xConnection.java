@@ -24,7 +24,6 @@ import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.ConnectionResetException;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfiguration;
-import io.inverno.mod.http.client.HttpClientException;
 import io.inverno.mod.http.client.Part;
 import io.inverno.mod.http.client.RequestBodyConfigurator;
 import io.inverno.mod.http.client.RequestTimeoutException;
@@ -60,8 +59,12 @@ import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 
 /**
+ * <p>
+ * HTTP/1.x {@link HttpConnection} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class Http1xConnection extends ChannelDuplexHandler implements HttpConnection, Http1xConnectionEncoder, AbstractExchange.Handler<Http1xRequest, Http1xResponse, Http1xExchange> {
 
@@ -102,6 +105,19 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	// New request should be chain to the head
 	private Http1xExchange exchangeQueue;
 	
+	/**
+	 * <p>
+	 * Creates an HTTP/1.x connection.
+	 * </p>
+	 *
+	 * @param configuration         the HTTP client configurartion
+	 * @param httpVersion           the HTTP/1.x protocol version
+	 * @param headerService         the header service
+	 * @param parameterConverter    the parameter converter
+	 * @param urlEncodedBodyEncoder the URL encoded body encoder
+	 * @param multipartBodyEncoder  the multipart body encoder
+	 * @param partFactory           the part factory
+	 */
 	public Http1xConnection(
 			HttpClientConfiguration configuration, 
 			HttpVersion httpVersion, 
@@ -264,6 +280,17 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Validates the HTTP object.
+	 * </p>
+	 * 
+	 * @param ctx the channel context
+	 * @param httpObject the HTTP object to validate
+	 * 
+	 * @return true if the object is valid, false otherwise
+	 * @throws Exception if {@link #exceptionCaught(io.netty.channel.ChannelHandlerContext, java.lang.Throwable)} throws an exception
+	 */
 	private boolean validateHttpObject(ChannelHandlerContext ctx, HttpObject httpObject) throws Exception {
 		DecoderResult result = httpObject.decoderResult();
 		if(result.isFailure()) {
@@ -373,11 +400,46 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		.map(exchange -> (Exchange<A>)exchange);
 	}
 	
-	protected Http1xExchange createExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) throws HttpClientException {
+	/**
+	 * <p>
+	 * Creates the HTTP/1.x exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method shall be overridden to provide specific exchange implementation for protocol upgrade.
+	 * </p>
+	 * 
+	 * @param context                 the channel context
+	 * @param exchangeSink            the exchange sink
+	 * @param exchangeContext         the exchange context
+	 * @param request                 the HTTP/1.x request
+	 * @param responseBodyTransformer the response body transformer
+	 * @param encoder                 the HTTP/1.x connection encoder
+	 * 
+	 * @return a new HTTP/1.x exchange
+	 */
+	protected Http1xExchange createExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) {
 		return new Http1xExchange(context, exchangeSink, exchangeContext, this.httpVersion, request, responseBodyTransformer, encoder);
 	}
 
-	private void createAndRegisterExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) throws HttpClientException {
+	/**
+	 * <p>
+	 * Creates the HTTP/1.x exchange and registers it in the connection.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method is invoked when sending the request to create and register the exchange in the connection. A registered exchange is added to the HTTP/1.x connection's exchange queue, corresponding 
+	 * requests are sent in sequence to the remote endpoint.
+	 * </p>
+	 * 
+	 * @param context                 the channel context
+	 * @param exchangeSink            the exchange sink
+	 * @param exchangeContext         the exchange context
+	 * @param request                 the HTTP/1.x request
+	 * @param responseBodyTransformer the response body transformer
+	 * @param encoder                 the HTTP/1.x connection encoder
+	 */
+	private void createAndRegisterExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) {
 		Http1xExchange exchange = this.createExchange(context, exchangeSink, exchangeContext, request, responseBodyTransformer, encoder);
 		exchange.lastModified = System.currentTimeMillis();
 		if(this.exchangeQueue == null) {
@@ -393,6 +455,11 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Starts the request timeout.
+	 * </p>
+	 */
 	private void startTimeout() {
 		if(this.timeoutFuture != null) {
 			return;
@@ -459,6 +526,11 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Cancels the request timeout.
+	 * </p>
+	 */
 	private void cancelTimeout() {
 		if(this.timeoutFuture != null) {
 			this.timeoutFuture.cancel(false);

@@ -17,19 +17,40 @@ package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.client.Response;
 import io.inverno.mod.http.client.internal.AbstractResponse;
 import io.netty.handler.codec.http.HttpResponse;
 
 /**
+ * <p>
+ * HTTP/1.x {@link Response} implementation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 class Http1xResponse extends AbstractResponse {
 
+	/**
+	 * <p>
+	 * Creates HTTP/1.x response.
+	 * </p>
+	 *
+	 * @param httpResponse       the underlying Netty's HTTP response
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	public Http1xResponse(HttpResponse httpResponse, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		super(new Http1xResponseHeaders(httpResponse.headers(), httpResponse.status().code(), headerService, parameterConverter));
 	}
 	
+	/**
+	 * <p>
+	 * Sets the response trailers.
+	 * </p>
+	 * 
+	 * @param responseTrailers the response trailers to set
+	 */
 	public void setResponseTrailers(Http1xResponseTrailers responseTrailers) {
 		this.responseTrailers = responseTrailers;
 	}

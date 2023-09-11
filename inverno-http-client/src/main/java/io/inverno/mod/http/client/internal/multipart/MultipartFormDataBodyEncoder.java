@@ -32,14 +32,23 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
+ * <p>
+ * A multipart/form-data payload encoder implementation as defined by <a href="https://tools.ietf.org/html/rfc7578">RFC 7578</a>.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )
 public class MultipartFormDataBodyEncoder implements MultipartEncoder<Part<?>> {
 
 	private final OutboundDataSequencer dataSequencer;
 
+	/**
+	 * <p>
+	 * Creates a multipart form data payload encoder.
+	 * </p>
+	 */
 	public MultipartFormDataBodyEncoder() {
 		this.dataSequencer = new OutboundDataSequencer();
 	}
@@ -65,6 +74,14 @@ public class MultipartFormDataBodyEncoder implements MultipartEncoder<Part<?>> {
 		);
 	}
 	
+	/**
+	 * <p>
+	 * A part mapper used to map a part to a payload data publisher.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	private class PartMapper implements Function<Part<?>, Publisher<ByteBuf>> {
 
 		private static final int CRLF_SHORT = (HttpConstants.CR << 8) | HttpConstants.LF;
@@ -77,6 +94,14 @@ public class MultipartFormDataBodyEncoder implements MultipartEncoder<Part<?>> {
 
 		private boolean encapsulation;
 		
+		/**
+		 * <p>
+		 * Creates a part mapper.
+		 * </p>
+		 * 
+		 * @param boundary the multipart form data boundary
+		 * @param charset  the charset
+		 */
 		public PartMapper(String boundary, Charset charset) {
 			this.charset = Charsets.orDefault(charset);
 			this.delimiter = Unpooled.wrappedBuffer(("--" + boundary).getBytes(this.charset));

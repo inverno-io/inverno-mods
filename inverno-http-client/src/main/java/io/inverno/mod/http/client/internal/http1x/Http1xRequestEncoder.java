@@ -36,8 +36,12 @@ import java.net.SocketAddress;
 import java.util.List;
 
 /**
+ * <p>
+ * HTTP/1.x {@link HttpRequestEncoder} implemenation.
+ * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.6
  */
 public class Http1xRequestEncoder extends HttpRequestEncoder {
 	
@@ -45,6 +49,13 @@ public class Http1xRequestEncoder extends HttpRequestEncoder {
 	
 	private final ByteBufAllocator byteBufAllocator;
 
+	/**
+	 * <p>
+	 * Creates an HTTP/1.x request encoder.
+	 * </p>
+	 * 
+	 * @param byteBufAllocator 
+	 */
 	public Http1xRequestEncoder(ByteBufAllocator byteBufAllocator) {
 		this.byteBufAllocator = byteBufAllocator;
 	}
@@ -75,6 +86,14 @@ public class Http1xRequestEncoder extends HttpRequestEncoder {
 		return (msg instanceof FlatHttpRequest && ((FlatHttpRequest) msg).isEmpty()) || super.isContentAlwaysEmpty(msg);
 	}
 	
+	/**
+	 * <p>
+	 * Channel handler context proxy.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.6
+	 */
 	private final class ChannelHandlerContextProxy implements ChannelHandlerContext {
 
 		private final ChannelHandlerContext context;
@@ -301,5 +320,4 @@ public class Http1xRequestEncoder extends HttpRequestEncoder {
 			return this.context.channel().hasAttr(key);
 		}
 	}
-	
 }
