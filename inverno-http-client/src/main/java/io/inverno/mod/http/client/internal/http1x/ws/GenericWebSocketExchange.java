@@ -33,7 +33,9 @@ import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.concurrent.ScheduledFuture;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -66,6 +68,9 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	private final GenericWebSocketFrame.GenericFactory frameFactory;
 	private final GenericWebSocketMessage.GenericFactory messageFactory;
 	
+	private final boolean closeOnOutboundComplete;
+	private final long inboundCloseFrameTimeout;
+	
 	private final EventExecutor contextExecutor;
 	
 	private Optional<Sinks.Many<WebSocketFrame>> inboundFrames;
@@ -84,20 +89,23 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	
 	private boolean inClosed;
 	private boolean outClosed;
+	private ScheduledFuture<?> inboundCloseMessageTimeoutFuture;
 
 	/**
 	 * <p>
 	 * Creates a WebSocket exchange.
 	 * </p>
 	 * 
-	 * @param context         the channel context
-	 * @param exchangeSink    the WebSocket exchange sink
-	 * @param handshaker      the WebSocket handshaker
-	 * @param exchangeContext the exchange context
-	 * @param request         the originating HTTP request
-	 * @param subProtocol     the subprotocol
-	 * @param frameFactory    the WebSocket frame factory
-	 * @param messageFactory  the WebSocket message factory
+	 * @param context                  the channel context
+	 * @param exchangeSink             the WebSocket exchange sink
+	 * @param handshaker               the WebSocket handshaker
+	 * @param exchangeContext          the exchange context
+	 * @param request                  the originating HTTP request
+	 * @param subProtocol              the subprotocol
+	 * @param frameFactory             the WebSocket frame factory
+	 * @param messageFactory           the WebSocket message factory
+	 * @param closeOnOutboundComplete  true to close WebSocket when outbound publisher completes, false otherwise
+	 * @param inboundCloseFrameTimeout the time to wait for a close frame before closing the WebSocket unilatterally
 	 */
 	public GenericWebSocketExchange(
 			ChannelHandlerContext context, 
@@ -107,7 +115,9 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 			AbstractRequest request, 
 			String subProtocol,
 			GenericWebSocketFrame.GenericFactory frameFactory, 
-			GenericWebSocketMessage.GenericFactory messageFactory) {
+			GenericWebSocketMessage.GenericFactory messageFactory,
+			boolean closeOnOutboundComplete,
+			long inboundCloseFrameTimeout) {
 		this.context = context;
 		this.exchangeSink = exchangeSink;
 		this.handshaker = handshaker;
@@ -116,6 +126,9 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 		this.subProtocol = subProtocol;
 		this.frameFactory = frameFactory;
 		this.messageFactory = messageFactory;
+		
+		this.closeOnOutboundComplete = closeOnOutboundComplete;
+		this.inboundCloseFrameTimeout = inboundCloseFrameTimeout;
 		
 		this.contextExecutor = this.context.executor();
 		
@@ -405,7 +418,19 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 					LOGGER.debug("WebSocket close frame sent ({}): {}", code, reason);
 					
 					if(!this.inClosed) {
-						// TODO we must wait until a close frame is received
+						this.inboundCloseMessageTimeoutFuture = this.contextExecutor.schedule(
+							() -> {
+								this.dispose(new WebSocketException("Inbound close frame timeout"));
+								
+								// Then close the channel
+								ChannelPromise closePromise = this.context.newPromise();
+								this.context.close(closePromise);
+								closePromise.addListener(ign -> LOGGER.debug("WebSocket closed ({}): {}", code, reason));
+								this.finalizeExchange(closePromise);
+							},
+							this.inboundCloseFrameTimeout, 
+							TimeUnit.MILLISECONDS
+						);
 					}
 				}
 			});
@@ -425,6 +450,10 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 			LOGGER.debug("WebSocket close frame received ({}): {}", code, reason);
 		}
 		this.inClosed = true;
+		if(this.inboundCloseMessageTimeoutFuture != null) {
+			this.inboundCloseMessageTimeoutFuture.cancel(false);
+			this.inboundCloseMessageTimeoutFuture = null;
+		}
 		
 		// TODO we currently cancel output and send back the close frame, we should maybe try to delay this until the outbound is in a proper shape (i.e. if there's an inflight fragmented message,
 		// wait for the final frame)
@@ -566,7 +595,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	 */
 	protected class GenericOutbound implements Outbound {
 		
-		protected boolean closeOnComplete = true;
+		protected boolean closeOnComplete = GenericWebSocketExchange.this.closeOnOutboundComplete;
 
 		@Override
 		public Outbound closeOnComplete(boolean closeOnComplete) {

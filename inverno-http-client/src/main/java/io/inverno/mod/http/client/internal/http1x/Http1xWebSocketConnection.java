@@ -70,6 +70,9 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	private final GenericWebSocketFrame.GenericFactory frameFactory;
 	private final GenericWebSocketMessage.GenericFactory messageFactory;
 	
+	private final boolean closeOnOutboundComplete;
+	private final long inboundCloseFrameTimeout;
+	
 	private ChannelHandlerContext context;
 	private boolean tls;
 	
@@ -97,6 +100,8 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 		
 		this.frameFactory = new GenericWebSocketFrame.GenericFactory(configuration.ws_max_frame_size());
 		this.messageFactory = new GenericWebSocketMessage.GenericFactory(configuration.ws_max_frame_size());
+		this.closeOnOutboundComplete = configuration.ws_close_on_outbound_complete();
+		this.inboundCloseFrameTimeout = configuration.ws_inbound_close_frame_timeout();
 	}
 	
 	@Override
@@ -196,9 +201,25 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 		}
 
 		URI webSocketURI = URI.create((this.tls ? "wss:// ": "ws://") + http1xRequest.getAuthority() + path);
-		WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(webSocketURI, WebSocketVersion.V13, subprotocol, true, httpHeaders);
+		WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(
+			webSocketURI, 
+			WebSocketVersion.V13, 
+			subprotocol, 
+			true, 
+			httpHeaders);
 		
-		this.webSocketExchange = new GenericWebSocketExchange(context, exchangeSink, handshaker, exchangeContext, http1xRequest, subprotocol, this.frameFactory, this.messageFactory);
+		this.webSocketExchange = new GenericWebSocketExchange(
+			context, 
+			exchangeSink, 
+			handshaker, 
+			exchangeContext, 
+			http1xRequest, 
+			subprotocol, 
+			this.frameFactory, 
+			this.messageFactory, 
+			this.closeOnOutboundComplete, 
+			this.inboundCloseFrameTimeout
+		);
 		this.webSocketExchange.start();
 	}
 

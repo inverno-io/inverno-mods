@@ -17,6 +17,7 @@ package io.inverno.mod.http.client;
 
 import io.inverno.mod.configuration.Configuration;
 import io.inverno.mod.http.base.HttpVersion;
+import io.inverno.mod.http.client.ws.WebSocketExchange;
 import java.lang.module.ModuleDescriptor;
 import java.util.Optional;
 import java.util.Set;
@@ -710,7 +711,7 @@ public interface HttpClientConfiguration {
 	
 	/**
 	 * <p>
-	 * Indicates if client needs to activate server_no_context_takeover if server is compatible with.
+	 * Indicates whether client needs to activate server_no_context_takeover if server is compatible with.
 	 * </p>
 	 * 
 	 * <p>
@@ -721,5 +722,39 @@ public interface HttpClientConfiguration {
 	 */
 	default boolean ws_message_requested_server_no_context() {
 		return false;
+	}
+	
+	/**
+	 * <p>
+	 * Indicates whether a WebSocket should be closed when the outbound frames publisher completes.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that this behaviour can be overridden by invoking {@link WebSocketExchange.Outbound#closeOnComplete(boolean) } on the WebSocket exchange's outbound.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}
+	 * </p>
+	 * 
+	 * @return true to close the WebSocket when the outbound frames publisher completes, false otherwise.
+	 */
+	default boolean ws_close_on_outbound_complete() {
+		return true;
+	}
+	
+	/**
+	 * <p>
+	 * The time in milliseconds to wait after a close frame has been sent for a close frame to be received before closing the WebSocket unilaterally.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 60000}.
+	 * </p>
+	 * 
+	 * @return the inbound close frame timeout
+	 */
+	default long ws_inbound_close_frame_timeout() {
+		return 60000l;
 	}
 }

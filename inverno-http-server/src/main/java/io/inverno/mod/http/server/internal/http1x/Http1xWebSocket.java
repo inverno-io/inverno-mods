@@ -59,7 +59,7 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 	private final GenericWebSocketFrame.GenericFactory frameFactory;
 	private final GenericWebSocketMessage.GenericFactory messageFactory;
 	
-	private final WebSocketServerProtocolConfig config;
+	private final WebSocketServerProtocolConfig protocolConfig;
 	
 	private WebSocketExchangeHandler<? super ExchangeContext, WebSocketExchange<ExchangeContext>> handler;
 	private Mono<Void> fallback;
@@ -102,7 +102,7 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 			webSocketConfigBuilder.handshakeTimeoutMillis(configuration.ws_handshake_timeout());
 		}
 		
-		this.config = webSocketConfigBuilder.build();
+		this.protocolConfig = webSocketConfigBuilder.build();
 	}
 	
 	/**
@@ -119,7 +119,14 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 	 */
 	Mono<Void> handshake() {
 		return Mono.defer(() -> {
-			WebSocketProtocolHandler webSocketProtocolHandler = new WebSocketProtocolHandler(this.config, this.handler, this.exchange, this.frameFactory, this.messageFactory);
+			WebSocketProtocolHandler webSocketProtocolHandler = new WebSocketProtocolHandler(
+				this.configuration, 
+				this.protocolConfig, 
+				this.handler, 
+				this.exchange, 
+				this.frameFactory, 
+				this.messageFactory
+			);
 		
 			ChannelPipeline pipeline = this.context.pipeline();
 			this.initialChannelHandlers = pipeline.toMap();

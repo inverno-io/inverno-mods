@@ -20,11 +20,10 @@ import io.inverno.mod.http.base.internal.ws.GenericWebSocketFrame;
 import io.inverno.mod.http.base.internal.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.base.ws.WebSocketException;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.ws.WebSocket;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
 import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
@@ -32,7 +31,6 @@ import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CorruptedWebSocketFrameException;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
@@ -59,6 +57,9 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 	private final GenericWebSocketFrame.GenericFactory frameFactory;
 	private final GenericWebSocketMessage.GenericFactory messageFactory;
 	
+	private final boolean closeOnOutboundComplete;
+	private final long inboundCloseFrameTimeout;
+	
 	private final Sinks.One<Void> handshake;
 	
 	private GenericWebSocketExchange webSocketExchange;
@@ -68,23 +69,27 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 	 * Creates a WebSocket protocol handler
 	 * </p>
 	 *
-	 * @param config         the WebServer protocol configuration
+	 * @param configuration  the HTTP server configurartion
+	 * @param protocolConfig the WebServer protocol configuration
 	 * @param handler        the WebSocket exchange handler
 	 * @param exchange       the original HTTP/1.x exchange
 	 * @param frameFactory   the WebSocket frame factory
 	 * @param messageFactory the WebSocket message factory
 	 */
 	public WebSocketProtocolHandler(
-			WebSocketServerProtocolConfig config, 
+			HttpServerConfiguration configuration,
+			WebSocketServerProtocolConfig protocolConfig, 
 			WebSocketExchangeHandler<ExchangeContext, WebSocketExchange<ExchangeContext>> handler, 
 			Exchange<ExchangeContext> exchange, 
 			GenericWebSocketFrame.GenericFactory frameFactory, 
 			GenericWebSocketMessage.GenericFactory messageFactory) {
-		super(config);
+		super(protocolConfig);
 		this.handler = handler;
 		this.exchange = exchange;
 		this.frameFactory = frameFactory;
 		this.messageFactory = messageFactory;
+		this.closeOnOutboundComplete = configuration.ws_close_on_outbound_complete();
+		this.inboundCloseFrameTimeout = configuration.ws_inbound_close_frame_timeout();
 		
 		this.handshake = Sinks.one();
 	}
@@ -104,7 +109,16 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 		if(evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
 			WebSocketServerProtocolHandler.HandshakeComplete handshakeComplete = (WebSocketServerProtocolHandler.HandshakeComplete)evt;
-			this.webSocketExchange = new GenericWebSocketExchange(ctx, this.exchange, handshakeComplete.selectedSubprotocol(), this.handler, this.frameFactory, this.messageFactory);
+			this.webSocketExchange = new GenericWebSocketExchange(
+				ctx, 
+				this.exchange, 
+				handshakeComplete.selectedSubprotocol(), 
+				this.handler, 
+				this.frameFactory, 
+				this.messageFactory, 
+				this.closeOnOutboundComplete, 
+				this.inboundCloseFrameTimeout
+			);
 			this.handshake.tryEmitEmpty();
 			this.webSocketExchange.start();
 		}
