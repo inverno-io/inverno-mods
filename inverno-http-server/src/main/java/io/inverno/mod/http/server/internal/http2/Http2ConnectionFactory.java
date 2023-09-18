@@ -26,7 +26,7 @@ import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.ServerController;
-import io.inverno.mod.http.server.internal.http1x.Http1xChannelHandler;
+import io.inverno.mod.http.server.internal.http1x.Http1xConnection;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.handler.codec.compression.CompressionOptions;
 import io.netty.handler.codec.compression.StandardCompressionOptions;
@@ -43,14 +43,14 @@ import java.util.function.Supplier;
 
 /**
  * <p>
- * A factory to create {@link Http1xChannelHandler} when a HTTP2 channel is initialized.
+ * A factory to create {@link Http2Connection} when a HTTP2 channel is initialized.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 @Bean(visibility = Visibility.PRIVATE)
-public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler> {
+public class Http2ConnectionFactory implements Supplier<Http2Connection> {
 
 	private final HttpServerConfiguration configuration;
 	private final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
@@ -63,7 +63,7 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 	
 	/**
 	 * <p>
-	 * Creates a HTTP/2 channel handler factory.
+	 * Creates a HTTP/2 connection factory.
 	 * <p>
 	 * 
 	 * @param configuration         the HTTP server configuration
@@ -74,7 +74,7 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 */
 	@SuppressWarnings({ "unchecked" })
-	public Http2ChannelHandlerFactory(
+	public Http2ConnectionFactory(
 			HttpServerConfiguration configuration, 
 			ServerController<?, ? extends Exchange<?>, ? extends ErrorExchange<?>> controller,
 			HeaderService headerService, 
@@ -105,46 +105,46 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 	}
 
 	@Override
-	public Http2ChannelHandler get() {
+	public Http2Connection get() {
 		return new Http2ChannelHandlerBuilder().build();
 	}
 
-	private class Http2ChannelHandlerBuilder extends AbstractHttp2ConnectionHandlerBuilder<Http2ChannelHandler, Http2ChannelHandlerBuilder> {
+	private class Http2ChannelHandlerBuilder extends AbstractHttp2ConnectionHandlerBuilder<Http2Connection, Http2ChannelHandlerBuilder> {
 		
 		public Http2ChannelHandlerBuilder() {
 			//this.frameLogger(new Http2FrameLogger(LogLevel.INFO, Http2ConnectionAndFrameHandler.class));
 			
 			Http2Settings initialSettings = this.initialSettings();
 			
-			Optional.ofNullable(Http2ChannelHandlerFactory.this.configuration.http2_header_table_size()).ifPresent(initialSettings::headerTableSize);
-			Optional.ofNullable(Http2ChannelHandlerFactory.this.configuration.http2_max_concurrent_streams()).ifPresent(initialSettings::maxConcurrentStreams);
-			Optional.ofNullable(Http2ChannelHandlerFactory.this.configuration.http2_initial_window_size()).ifPresent(initialSettings::initialWindowSize);
-			Optional.ofNullable(Http2ChannelHandlerFactory.this.configuration.http2_max_frame_size()).ifPresent(initialSettings::maxFrameSize);
-			Optional.ofNullable(Http2ChannelHandlerFactory.this.configuration.http2_max_header_list_size()).ifPresent(initialSettings::maxHeaderListSize);
+			Optional.ofNullable(Http2ConnectionFactory.this.configuration.http2_header_table_size()).ifPresent(initialSettings::headerTableSize);
+			Optional.ofNullable(Http2ConnectionFactory.this.configuration.http2_max_concurrent_streams()).ifPresent(initialSettings::maxConcurrentStreams);
+			Optional.ofNullable(Http2ConnectionFactory.this.configuration.http2_initial_window_size()).ifPresent(initialSettings::initialWindowSize);
+			Optional.ofNullable(Http2ConnectionFactory.this.configuration.http2_max_frame_size()).ifPresent(initialSettings::maxFrameSize);
+			Optional.ofNullable(Http2ConnectionFactory.this.configuration.http2_max_header_list_size()).ifPresent(initialSettings::maxHeaderListSize);
 		}
 		
 
 		@Override
-		protected Http2ChannelHandler build(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings) throws Exception {
+		protected Http2Connection build(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings) throws Exception {
 			Http2ContentEncodingResolver contentEncodingResolver = null;
-			if (Http2ChannelHandlerFactory.this.configuration.compression_enabled()) {
+			if (Http2ConnectionFactory.this.configuration.compression_enabled()) {
 				encoder = new CompressorHttp2ConnectionEncoder(
 					encoder,
-					Http2ChannelHandlerFactory.this.compressionOptions
+					Http2ConnectionFactory.this.compressionOptions
 				);
-				contentEncodingResolver = new Http2ContentEncodingResolver(Http2ChannelHandlerFactory.this.compressionOptions);
+				contentEncodingResolver = new Http2ContentEncodingResolver(Http2ConnectionFactory.this.compressionOptions);
 			}
 			
-			Http2ChannelHandler handler = new Http2ChannelHandler(
-				Http2ChannelHandlerFactory.this.configuration,
+			Http2Connection handler = new Http2Connection(
+				Http2ConnectionFactory.this.configuration,
 				decoder, 
 				encoder, 
 				initialSettings,
-				Http2ChannelHandlerFactory.this.controller, 
-				Http2ChannelHandlerFactory.this.headerService,
-				Http2ChannelHandlerFactory.this.parameterConverter,
-				Http2ChannelHandlerFactory.this.urlEncodedBodyDecoder,
-				Http2ChannelHandlerFactory.this.multipartBodyDecoder,
+				Http2ConnectionFactory.this.controller, 
+				Http2ConnectionFactory.this.headerService,
+				Http2ConnectionFactory.this.parameterConverter,
+				Http2ConnectionFactory.this.urlEncodedBodyDecoder,
+				Http2ConnectionFactory.this.multipartBodyDecoder,
 				contentEncodingResolver
 			);
 			this.frameListener(handler);
@@ -152,7 +152,7 @@ public class Http2ChannelHandlerFactory implements Supplier<Http2ChannelHandler>
 		}
 		
 		@Override
-		public Http2ChannelHandler build() {
+		public Http2Connection build() {
 			return super.build();
 		}
 	}

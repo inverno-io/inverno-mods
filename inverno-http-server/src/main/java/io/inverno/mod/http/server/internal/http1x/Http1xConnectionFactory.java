@@ -33,14 +33,14 @@ import java.util.function.Supplier;
 
 /**
  * <p>
- * A factory to create {@link Http1xChannelHandler} when a HTTP1.x channel is initialized.
+ * A factory to create {@link Http1xConnection} when a HTTP/1.x channel is initialized.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 @Bean(visibility = Visibility.PRIVATE)
-public class Http1xChannelHandlerFactory implements Supplier<Http1xChannelHandler> {
+public class Http1xConnectionFactory implements Supplier<Http1xConnection> {
 
 	private final HttpServerConfiguration configuration;
 	private final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
@@ -54,7 +54,7 @@ public class Http1xChannelHandlerFactory implements Supplier<Http1xChannelHandle
 	
 	/**
 	 * <p>
-	 * Creates a HTTP1.x channel handler factory.
+	 * Creates a HTTP1.x connection factory.
 	 * <p>
 	 * 
 	 * @param configuration         the server configuration
@@ -65,7 +65,7 @@ public class Http1xChannelHandlerFactory implements Supplier<Http1xChannelHandle
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 */
 	@SuppressWarnings({ "unchecked" })
-	public Http1xChannelHandlerFactory(
+	public Http1xConnectionFactory(
 			HttpServerConfiguration configuration,
 			ServerController<?, ? extends Exchange<?>, ? extends ErrorExchange<?>> controller,
 			HeaderService headerService, 
@@ -84,7 +84,7 @@ public class Http1xChannelHandlerFactory implements Supplier<Http1xChannelHandle
 	}
 
 	@Override
-	public Http1xChannelHandler get() {
-		return new Http1xChannelHandler(this.configuration, this.controller, this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.webSocketFrameFactory, this.webSocketMessageFactory);
+	public Http1xConnection get() {
+		return new Http1xConnection(this.configuration, this.controller, this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.webSocketFrameFactory, this.webSocketMessageFactory);
 	}
 }

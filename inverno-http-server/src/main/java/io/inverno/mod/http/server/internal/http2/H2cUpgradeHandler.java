@@ -18,7 +18,7 @@ package io.inverno.mod.http.server.internal.http2;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.netty.FlatFullHttpResponse;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
-import io.inverno.mod.http.server.internal.HttpChannelConfigurer;
+import io.inverno.mod.http.server.internal.HttpServerChannelConfigurer;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -58,9 +58,9 @@ import java.util.List;
  */
 public class H2cUpgradeHandler extends ChannelInboundHandlerAdapter {
 
-	private final HttpChannelConfigurer configurer;
+	private final HttpServerChannelConfigurer configurer;
 	
-	private Http2ChannelHandler http2Connection;
+	private Http2Connection http2Connection;
 	
 	private boolean upgrading;
 	
@@ -71,7 +71,7 @@ public class H2cUpgradeHandler extends ChannelInboundHandlerAdapter {
 	 * 
 	 * @param configurer the HTTP channel configurer
 	 */
-	public H2cUpgradeHandler(HttpChannelConfigurer configurer) {
+	public H2cUpgradeHandler(HttpServerChannelConfigurer configurer) {
 		this.configurer = configurer;
 	}
 	

@@ -30,7 +30,7 @@ import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
  */
 public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiationHandler {
 
-	private final HttpChannelConfigurer channelConfigurer;
+	private final HttpServerChannelConfigurer channelConfigurer;
 	
 	/**
 	 * <p>
@@ -39,7 +39,7 @@ public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiati
 	 * 
 	 * @param channelConfigurer the channel configurer
 	 */
-	public HttpProtocolNegotiationHandler(HttpChannelConfigurer channelConfigurer) {
+	public HttpProtocolNegotiationHandler(HttpServerChannelConfigurer channelConfigurer) {
 		super(ApplicationProtocolNames.HTTP_1_1);
 		this.channelConfigurer = channelConfigurer;
 	}
@@ -47,10 +47,10 @@ public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiati
 	@Override
 	protected void configurePipeline(ChannelHandlerContext ctx, String protocol) throws Exception {
 		ChannelPipeline pipeline = ctx.pipeline();
-		if (ApplicationProtocolNames.HTTP_2.equals(protocol)) {
+		if(ApplicationProtocolNames.HTTP_2.equals(protocol)) {
 			this.channelConfigurer.configureHttp2(pipeline);
         }
-		else if (ApplicationProtocolNames.HTTP_1_1.equals(protocol)) {
+		else if(ApplicationProtocolNames.HTTP_1_1.equals(protocol)) {
 			this.channelConfigurer.configureHttp1x(pipeline);
         }
 		else {

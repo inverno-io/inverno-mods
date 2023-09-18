@@ -33,7 +33,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http2.DelegatingDecompressorFrameListener;
-import io.netty.handler.codec.http2.Http2Connection;
 import io.netty.handler.codec.http2.Http2ConnectionDecoder;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2ConnectionHandler;
@@ -51,7 +50,7 @@ import reactor.core.publisher.Sinks.EmitResult;
 
 /**
  * <p>
- * HTTP/2 channel handler implementation.
+ * HTTP/2 connection.
  * </p>
  *
  * <p>
@@ -61,7 +60,7 @@ import reactor.core.publisher.Sinks.EmitResult;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2FrameListener, Http2Connection.Listener {
+public class Http2Connection extends Http2ConnectionHandler implements Http2FrameListener, io.netty.handler.codec.http2.Http2Connection.Listener {
 
 	private final HttpServerConfiguration configuration; 
 	private final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
@@ -75,7 +74,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 
 	/**
 	 * <p>
-	 * Creates a HTTP/2 channel handler.
+	 * Creates a HTTP/2 connection.
 	 * </p>
 	 *
 	 * @param configuration           the HTTP server configuration
@@ -89,7 +88,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 	 * @param multipartBodyDecoder    the multipart/form-data body decoder
 	 * @param contentEncodingResolver a content encoding resolver
 	 */
-	public Http2ChannelHandler(
+	public Http2Connection(
 			HttpServerConfiguration configuration,
 			Http2ConnectionDecoder decoder, 
 			Http2ConnectionEncoder encoder,
@@ -182,7 +181,7 @@ public class Http2ChannelHandler extends Http2ConnectionHandler implements Http2
 			streamExchange.start(new AbstractExchange.Handler() {
 				@Override
 				public void exchangeError(ChannelHandlerContext ctx, Throwable t) {
-					Http2ChannelHandler.this.resetStream(ctx, streamId, Http2Error.INTERNAL_ERROR.code(), ctx.voidPromise());
+					Http2Connection.this.resetStream(ctx, streamId, Http2Error.INTERNAL_ERROR.code(), ctx.voidPromise());
 				}
 			});
 		} 

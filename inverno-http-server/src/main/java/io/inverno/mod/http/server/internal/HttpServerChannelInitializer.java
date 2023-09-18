@@ -31,9 +31,9 @@ import io.inverno.core.annotation.Bean.Visibility;
  */
 @Bean(visibility = Visibility.PRIVATE)
 @Sharable
-public class HttpChannelInitializer extends ChannelInitializer<SocketChannel> {
+public class HttpServerChannelInitializer extends ChannelInitializer<SocketChannel> {
 
-	private final HttpChannelConfigurer channelConfigurer;
+	private final HttpServerChannelConfigurer channelConfigurer;
 	
 	/**
 	 * <p>
@@ -42,7 +42,7 @@ public class HttpChannelInitializer extends ChannelInitializer<SocketChannel> {
 	 * 
 	 * @param channelConfigurer the channel configurer
 	 */
-	public HttpChannelInitializer(HttpChannelConfigurer channelConfigurer) {
+	public HttpServerChannelInitializer(HttpServerChannelConfigurer channelConfigurer) {
 		this.channelConfigurer = channelConfigurer;
 	}
 	

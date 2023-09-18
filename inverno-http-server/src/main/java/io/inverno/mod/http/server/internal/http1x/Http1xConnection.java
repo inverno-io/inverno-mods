@@ -48,7 +48,7 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * HTTP1.x channel handler implementation.
+ * HTTP/1.x connection.
  * </p>
  *
  * <p>
@@ -58,7 +58,7 @@ import reactor.core.publisher.Sinks;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1xConnectionEncoder, AbstractExchange.Handler {
+public class Http1xConnection extends ChannelDuplexHandler implements Http1xConnectionEncoder, AbstractExchange.Handler {
 
 	private final HttpServerConfiguration configuration;
 	private final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
@@ -80,7 +80,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	
 	/**
 	 * <p>
-	 * Creates a HTTP1.x channel handler.
+	 * Creates a HTTP1.x connection.
 	 * </p>
 	 *
 	 * @param configuration           the server configuration
@@ -92,7 +92,7 @@ public class Http1xChannelHandler extends ChannelDuplexHandler implements Http1x
 	 * @param webSocketFrameFactory   the WebSocket frame factory
 	 * @param webSocketMessageFactory the WebSocket message factory
 	 */
-	public Http1xChannelHandler(
+	public Http1xConnection(
 			HttpServerConfiguration configuration,
 			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller,
 			HeaderService headerService, 

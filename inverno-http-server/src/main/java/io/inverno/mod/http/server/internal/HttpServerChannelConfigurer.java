@@ -20,11 +20,11 @@ import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.core.annotation.Lazy;
 import io.inverno.mod.base.net.NetService;
 import io.inverno.mod.http.server.HttpServerConfiguration;
-import io.inverno.mod.http.server.internal.http1x.Http1xChannelHandler;
+import io.inverno.mod.http.server.internal.http1x.Http1xConnection;
 import io.inverno.mod.http.server.internal.http1x.Http1xRequestDecoder;
 import io.inverno.mod.http.server.internal.http1x.Http1xResponseEncoder;
 import io.inverno.mod.http.server.internal.http2.H2cUpgradeHandler;
-import io.inverno.mod.http.server.internal.http2.Http2ChannelHandler;
+import io.inverno.mod.http.server.internal.http2.Http2Connection;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.compression.CompressionOptions;
@@ -40,14 +40,14 @@ import java.util.function.Supplier;
 
 /**
  * <p>
- * A configurer used to configure a channel pipeline for HTTP/1x and/or HTTP/2.
+ * A configurer used to configure a channel pipeline for HTTP/1x and/or HTTP/2 connections.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
 @Bean(visibility = Visibility.PRIVATE)
-public class HttpChannelConfigurer {
+public class HttpServerChannelConfigurer {
 
 	private final HttpServerConfiguration configuration;
 	
@@ -55,8 +55,8 @@ public class HttpChannelConfigurer {
 	private final ByteBufAllocator allocator;
 	private final ByteBufAllocator directAllocator;
 
-	private final Supplier<Http1xChannelHandler> http1xChannelHandlerFactory;
-	private final Supplier<Http2ChannelHandler> http2ChannelHandlerFactory;
+	private final Supplier<Http1xConnection> http1xChannelHandlerFactory;
+	private final Supplier<Http2Connection> http2ChannelHandlerFactory;
 	
 	private final CompressionOptions[] compressionOptions;
 	
@@ -71,12 +71,12 @@ public class HttpChannelConfigurer {
 	 * @param http1xChannelHandlerFactory        a HTTP1.x channel handler factory
 	 * @param http2ChannelHandlerFactory         a HTTP/2 channel handler factory
 	 */
-	public HttpChannelConfigurer(
+	public HttpServerChannelConfigurer(
 		HttpServerConfiguration configuration,
 		NetService netService,
 		@Lazy Supplier<SslContext> sslContextSupplier, 
-		Supplier<Http1xChannelHandler> http1xChannelHandlerFactory,
-		Supplier<Http2ChannelHandler> http2ChannelHandlerFactory) {
+		Supplier<Http1xConnection> http1xChannelHandlerFactory,
+		Supplier<Http2Connection> http2ChannelHandlerFactory) {
 		this.configuration = configuration;
 		this.allocator = netService.getByteBufAllocator();
 		this.directAllocator = netService.getDirectByteBufAllocator();
@@ -142,7 +142,7 @@ public class HttpChannelConfigurer {
 	 * 
 	 * @return the HTTP/1.x handler
 	 */
-	public Http1xChannelHandler configureHttp1x(ChannelPipeline pipeline) {
+	public Http1xConnection configureHttp1x(ChannelPipeline pipeline) {
 		this.initHttp1x(pipeline);
 		return this.handleHttp1x(pipeline);
 	}
@@ -175,8 +175,8 @@ public class HttpChannelConfigurer {
 	 * 
 	 * @return the HTTP/1.x handler
 	 */
-	private Http1xChannelHandler handleHttp1x(ChannelPipeline pipeline) {
-		Http1xChannelHandler handler = this.http1xChannelHandlerFactory.get();
+	private Http1xConnection handleHttp1x(ChannelPipeline pipeline) {
+		Http1xConnection handler = this.http1xChannelHandlerFactory.get();
 		pipeline.addLast("http1xHandler", handler);
 		return handler;
 	}
@@ -190,7 +190,7 @@ public class HttpChannelConfigurer {
 	 * 
 	 * @return the HTTP/2 handler
 	 */
-	public Http2ChannelHandler configureHttp2(ChannelPipeline pipeline) {
+	public Http2Connection configureHttp2(ChannelPipeline pipeline) {
 		return this.handleHttp2(pipeline);
 	}
 	
@@ -203,8 +203,8 @@ public class HttpChannelConfigurer {
 	 * 
 	 * @return the HTTP/2 handler
 	 */
-	private Http2ChannelHandler handleHttp2(ChannelPipeline pipeline) {
-		Http2ChannelHandler handler = this.http2ChannelHandlerFactory.get();
+	private Http2Connection handleHttp2(ChannelPipeline pipeline) {
+		Http2Connection handler = this.http2ChannelHandlerFactory.get();
 		pipeline.addLast("http2Handler", handler);
 		return handler;
 	}
@@ -235,7 +235,7 @@ public class HttpChannelConfigurer {
 	 * 
 	 * @return the HTTP/2 handler
 	 */
-	public Http2ChannelHandler startHttp2Upgrade(ChannelPipeline pipeline) {
+	public Http2Connection startHttp2Upgrade(ChannelPipeline pipeline) {
 		pipeline.remove("http1xEncoder");
 		if (this.configuration.decompression_enabled()) {
 			pipeline.remove("http1xDecompressor");
