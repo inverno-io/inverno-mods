@@ -239,7 +239,6 @@ public interface HttpClientConfiguration {
 		return 0;
 	}
 	
-	// Brotli lib is currently an unnamed module so we can't configure it...
 	/**
 	 * <p>
 	 * Brotly compression quality.
@@ -251,9 +250,9 @@ public interface HttpClientConfiguration {
 	 * 
 	 * @return the brotli compression quality
 	 */
-	/*default int compression_brotli_quality() {
+	default int compression_brotli_quality() {
 		return 4;
-	}*/
+	}
 	
 	/**
 	 * <p>
@@ -266,9 +265,9 @@ public interface HttpClientConfiguration {
 	 * 
 	 * @return the brotli compression window
 	 */
-	/*default int compression_brotli_window() {
+	default int compression_brotli_window() {
 		return -1;
-	}*/
+	}
 
 	/**
 	 * <p>
@@ -281,9 +280,9 @@ public interface HttpClientConfiguration {
 	 * 
 	 * @return the brotli compression mode
 	 */
-	/*default int compression_brotli_mode() {
+	default int compression_brotli_mode() {
 		return 1;
-	}*/
+	}
 	
 	/**
 	 * <p>

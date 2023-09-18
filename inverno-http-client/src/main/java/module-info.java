@@ -76,6 +76,12 @@ module io.inverno.mod.http.client {
 	requires io.inverno.core;
 	requires static io.inverno.core.annotation; // for javadoc...
 	
+	requires transitive io.inverno.mod.base;
+	requires io.inverno.mod.configuration;
+	requires transitive io.inverno.mod.http.base;
+	
+	requires org.apache.logging.log4j;
+	
 	requires jdk.unsupported; // required by netty for low level API for accessing direct buffers
 	requires transitive reactor.core;
 	requires transitive org.reactivestreams;
@@ -86,11 +92,7 @@ module io.inverno.mod.http.client {
 	requires io.netty.codec.http2;
 	requires io.netty.handler;
 	
-	requires transitive io.inverno.mod.base;
-	requires io.inverno.mod.configuration;
-	requires transitive io.inverno.mod.http.base;
-	
-	requires org.apache.logging.log4j;
+	requires static com.aayushatharva.brotli4j;
 	
 	exports io.inverno.mod.http.client;
 	exports io.inverno.mod.http.client.ws;

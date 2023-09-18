@@ -51,6 +51,13 @@
 			<artifactId>inverno-http-base</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>com.aayushatharva.brotli4j</groupId>
+			<artifactId>brotli4j</artifactId>
+			<optional>true</optional>
+		</dependency>
+		
 		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-codec-http2</artifactId>

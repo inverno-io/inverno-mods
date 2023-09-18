@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.server.internal.http2;
 
+import com.aayushatharva.brotli4j.encoder.Encoder;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.mod.base.converter.ObjectConverter;
@@ -28,6 +29,7 @@ import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.internal.http1x.Http1xConnection;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
+import io.netty.handler.codec.compression.Brotli;
 import io.netty.handler.codec.compression.CompressionOptions;
 import io.netty.handler.codec.compression.StandardCompressionOptions;
 import io.netty.handler.codec.compression.Zstd;
@@ -96,10 +98,9 @@ public class Http2ConnectionFactory implements Supplier<Http2Connection> {
 			compressionOptionsList.add(StandardCompressionOptions.zstd(this.configuration.compression_zstd_compressionLevel(), this.configuration.compression_zstd_blockSize(), this.configuration.compression_zstd_maxEncodeSize()));
 		}
 		
-		// Brotli lib is currently an unnamed module so we can't configure it...
-		/*if(Brotli.isAvailable()) {
-			compressionOptionsList.add(StandardCompressionOptions.brotli(new Encoder.Parameters().setQuality(this.configuration.compression_brotli_quality()).setMode(this.configuration.compression_brotli_mode()).setWindow(this.configuration.compression_brotli_window())));
-		}*/
+		if(Brotli.isAvailable()) {
+			compressionOptionsList.add(StandardCompressionOptions.brotli(new Encoder.Parameters().setQuality(this.configuration.compression_brotli_quality()).setMode(Encoder.Mode.of(this.configuration.compression_brotli_mode())).setWindow(this.configuration.compression_brotli_window())));
+		}
 		
 		this.compressionOptions = compressionOptionsList.stream().toArray(CompressionOptions[]::new);
 	}

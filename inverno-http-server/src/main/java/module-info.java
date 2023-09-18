@@ -98,6 +98,8 @@ module io.inverno.mod.http.server {
 	requires io.netty.codec.http2;
 	requires io.netty.handler;
 	
+	requires static com.aayushatharva.brotli4j;
+	
 	exports io.inverno.mod.http.server;
 	exports io.inverno.mod.http.server.ws;
 }
