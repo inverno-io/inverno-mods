@@ -171,17 +171,15 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	 * <p>
 	 * Executes the specified task in the event loop.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The tasks is executed immediately when the current thread is in the event
-	 * loop, otherwise it is scheduled in the event loop.
+	 * The tasks is executed immediately when the current thread is in the event loop, otherwise it is scheduled in the event loop.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * After the execution of the task, one event is requested to the response data
-	 * subscriber.
+	 * After the execution of the task, one event is requested to the response data subscriber.
 	 * </p>
-	 * 
+	 *
 	 * @param runnable the task to execute
 	 */
 	protected void executeInEventLoop(Runnable runnable) {
@@ -192,20 +190,17 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	 * <p>
 	 * Executes the specified task in the event loop.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The tasks is executed immediately when the current thread is in the event
-	 * loop, otherwise it is scheduled in the event loop.
+	 * The tasks is executed immediately when the current thread is in the event loop, otherwise it is scheduled in the event loop.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * After the execution of the task, the specified number of events is requested
-	 * to the response data subscriber.
+	 * After the execution of the task, the specified number of events is requested to the response data subscriber.
 	 * </p>
-	 * 
+	 *
 	 * @param runnable the task to execute
-	 * @param request  the number of events to request to the response data
-	 *                 subscriber after the task completes
+	 * @param request  the number of events to request to the response data subscriber after the task completes
 	 */
 	protected void executeInEventLoop(Runnable runnable, int request) {
 		if(this.contextExecutor.inEventLoop()) {
