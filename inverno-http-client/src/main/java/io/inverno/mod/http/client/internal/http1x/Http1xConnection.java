@@ -321,7 +321,6 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		// In any case only network related error should get here anything else must be handled upstream
-		super.exceptionCaught(ctx, cause);
 		this.cancelTimeout();
 		// Evict the faulty connection
 		if(this.handler != null) {

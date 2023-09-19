@@ -239,7 +239,6 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 		// In any case only network related error should get here anything else must be handled upstream
 		
 		// we must kill the connection
-		super.exceptionCaught(ctx, cause);
 		this.close().subscribe();
 	}
 
