@@ -17,7 +17,6 @@ package io.inverno.mod.http.server.internal.http1x;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.util.Optional;
 
 import org.reactivestreams.Publisher;
 

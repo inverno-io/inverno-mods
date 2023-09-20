@@ -360,10 +360,11 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		else {
 			// We don't have a mono and we know we have multiple chunks
 			this.many = true;
+			final ByteBuf firstValue = this.singleChunk;
+			this.singleChunk = null;
 			this.executeInEventLoop(() -> {
-				if(this.singleChunk != null) {
-					this.onNextMany(this.singleChunk);
-					this.singleChunk = null;
+				if(firstValue != null) {
+					this.onNextMany(firstValue);
 				}
 				this.onNextMany(value);
 			});
