@@ -34,6 +34,7 @@ import io.inverno.mod.test.configuration.ConfigurationInvocationHandler;
 import io.inverno.test.InvernoCompilationException;
 import io.inverno.test.InvernoModuleLoader;
 import io.inverno.test.InvernoModuleProxy;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -47,6 +48,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -4157,9 +4160,9 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		// curl -i http://127.0.0.1:8080/static/get_resource.txt
+		// curl -i http://127.0.0.1:8080/static/get_resource_small.txt
 		endpoint
-			.request(Method.GET, "/static/get_resource.txt")
+			.request(Method.GET, "/static/get_resource_small.txt")
 			.send()
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
@@ -4171,6 +4174,43 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
 				Assertions.assertEquals("This is a test resource.", body);
+			})
+			.block();
+		
+		// curl -i http://127.0.0.1:8080/static/get_resource_big.txt
+		endpoint
+			.request(Method.GET, "/static/get_resource_big.txt")
+			.send()
+			.flatMap(exchange -> {
+				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(1060500), exchange.response().headers().getContentLength());
+				
+				return Flux.from(exchange.response().body().raw().stream())
+					.reduceWith(
+						() -> new ByteArrayOutputStream(), 
+						(output, chunk) -> {
+							try {
+								chunk.readBytes(output, chunk.readableBytes());
+							}
+							catch(IOException e) {
+								throw new UncheckedIOException(e);
+							}
+							finally {
+								chunk.release();
+							}
+							return output;
+						}
+					)
+					.map(output -> output.toByteArray());
+			})
+			.doOnNext(body -> {
+				try {
+					Assertions.assertArrayEquals(Files.readAllBytes(Path.of("src/test/resources/post_resource_big.txt")), body);
+				} 
+				catch (IOException e) {
+					throw new UncheckedIOException(e);
+				}
 			})
 			.block();
 		
