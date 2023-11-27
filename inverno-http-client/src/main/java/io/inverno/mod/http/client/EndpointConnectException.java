@@ -68,18 +68,4 @@ public class EndpointConnectException extends HttpClientException {
 	public EndpointConnectException(Throwable cause) {
 		super(cause);
 	}
-
-	/**
-	 * <p>
-	 * Creates an endpoint connect exception.
-	 * </p>
-	 * 
-	 * @param message            the message
-	 * @param cause              the cause
-	 * @param enableSuppression 
-	 * @param writableStackTrace 
-	 */
-	public EndpointConnectException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
 }

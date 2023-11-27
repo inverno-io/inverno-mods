@@ -25,6 +25,8 @@ import java.util.Map;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
+ * 
+ * @param <T> the type of the scoped instances 
  */
 public abstract class KeyScope<T> extends Scope<T> {
 

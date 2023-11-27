@@ -25,8 +25,7 @@ import java.util.Map;
 
 /**
  * <p>
- * A parameterized {@link Header} implementation to represents HTTP headers with
- * parameters.
+ * A parameterized {@link Header} implementation to represents HTTP headers with parameters.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -123,10 +122,9 @@ public class ParameterizedHeader extends GenericHeader {
 	
 	/**
 	 * <p>
-	 * Creates a parameterized header with the specified header name, header raw
-	 * value, header parameterized value and parameters.
+	 * Creates a parameterized header with the specified header name, header raw value, header parameterized value and parameters.
 	 * </p>
-	 * 
+	 *
 	 * @param headerName         the header name
 	 * @param headerValue        the header value
 	 * @param parameterizedValue the header parameterized value
@@ -140,8 +138,7 @@ public class ParameterizedHeader extends GenericHeader {
 	
 	/**
 	 * <p>
-	 * Returns the header parameterized value defined before the list of parameters
-	 * in the header raw value.
+	 * Returns the header parameterized value defined before the list of parameters in the header raw value.
 	 * </p>
 	 * 
 	 * @return the header parameterized value
@@ -151,7 +148,9 @@ public class ParameterizedHeader extends GenericHeader {
 	}
 	
 	/**
-	 * <p>Returns the header parameters.</p>
+	 * <p>
+	 * Returns the header parameters.
+	 * </p>
 	 * 
 	 * @return a map of parameters
 	 */

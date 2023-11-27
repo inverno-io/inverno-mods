@@ -48,7 +48,7 @@ public interface InterceptableRequestBody {
 	 *
 	 * @return the request body
 	 * 
-	 * @throw IllegalStateException if the request payload publisher has already been subscribed
+	 * @throws IllegalStateException if the request payload publisher has already been subscribed
 	 */
 	InterceptableRequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) throws IllegalStateException;
 }

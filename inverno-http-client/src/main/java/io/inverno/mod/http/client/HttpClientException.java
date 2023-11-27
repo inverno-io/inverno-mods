@@ -68,18 +68,4 @@ public class HttpClientException extends RuntimeException {
 	public HttpClientException(Throwable cause) {
 		super(cause);
 	}
-
-	/**
-	 * <p>
-	 * Creates a HTTP client exception.
-	 * </p>
-	 * 
-	 * @param message            the message
-	 * @param cause              the cause
-	 * @param enableSuppression 
-	 * @param writableStackTrace 
-	 */
-	public HttpClientException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
 }

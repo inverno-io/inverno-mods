@@ -3513,10 +3513,10 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		Assertions.assertEquals(24, response.headers().firstValue("content-length").map(Integer::parseInt).orElse(-1));
 		Assertions.assertEquals("This is a test resource.", response.body());
 		
-		// curl -i http://127.0.0.1:8080/static/get_resource.txt
+		// curl -i http://127.0.0.1:8080/static/get_resource_small.txt
 		response = client.send(
 			HttpRequest.newBuilder()
-					.uri(baseURI.resolve("/static/get_resource.txt"))
+					.uri(baseURI.resolve("/static/get_resource_small.txt"))
 					.version(version)
 					.GET()
 					.build(),

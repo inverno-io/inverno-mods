@@ -70,18 +70,4 @@ public class ConnectionTimeoutException extends HttpClientException {
 	public ConnectionTimeoutException(Throwable cause) {
 		super(cause);
 	}
-
-	/**
-	 * <p>
-	 * Creates a Connection timeout exception.
-	 * </p>
-	 * 
-	 * @param message            the message
-	 * @param cause              the cause
-	 * @param enableSuppression 
-	 * @param writableStackTrace 
-	 */
-	public ConnectionTimeoutException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
 }

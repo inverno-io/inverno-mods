@@ -46,12 +46,10 @@ public abstract class AbstractHeaderCodec<A extends Header, B extends HeaderBuil
 	
 	/**
 	 * <p>
-	 * Creates a header codec with the specified builder supplier and supported
-	 * header names.
+	 * Creates a header codec with the specified builder supplier and supported header names.
 	 * </p>
-	 * 
-	 * @param builderSupplier      a supplier to create header builder instances
-	 *                             when decoding a header
+	 *
+	 * @param builderSupplier      a supplier to create header builder instances when decoding a header
 	 * @param supportedHeaderNames the list of header names supported by the codec
 	 */
 	protected AbstractHeaderCodec(Supplier<B> builderSupplier, Set<String> supportedHeaderNames) {

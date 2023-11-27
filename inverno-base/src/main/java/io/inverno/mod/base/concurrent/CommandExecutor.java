@@ -37,6 +37,8 @@ import java.util.function.Consumer;
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
+ * 
+ * @param <A> the target state type
  */
 public class CommandExecutor<A> {
 	

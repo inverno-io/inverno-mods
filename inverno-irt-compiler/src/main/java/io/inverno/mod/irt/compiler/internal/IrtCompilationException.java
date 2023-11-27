@@ -33,6 +33,9 @@ public class IrtCompilationException extends RuntimeException {
 
 	private static final long serialVersionUID = 4026172320823928324L;
 
+	/**
+	 * The range in the IRT source file where the error was detected.
+	 */
 	private Range range;
 	
 	/**

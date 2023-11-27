@@ -193,7 +193,7 @@ public class GenericWebSocketFrame implements WebSocketFrame {
 		
 		/**
 		 * <p>
-		 * Checks that the specified payload data is valid for the specified frame type according to the server configuration.
+		 * Checks that the specified payload data is valid for the specified frame type according to the configuration.
 		 * </p>
 		 *
 		 * @param payload the payload data to test
@@ -201,7 +201,7 @@ public class GenericWebSocketFrame implements WebSocketFrame {
 		 *
 		 * @return the payload data
 		 *
-		 * @throws WebSocketException if the specified data are invalid according to the server configuration
+		 * @throws WebSocketException if the specified data are invalid according to the configuration
 		 */
 		private ByteBuf checkPayload(ByteBuf payload, WebSocketFrame.Kind kind) throws WebSocketException {
 			if(payload == null) {

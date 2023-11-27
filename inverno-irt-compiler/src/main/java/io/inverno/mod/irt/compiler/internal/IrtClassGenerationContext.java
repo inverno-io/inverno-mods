@@ -53,16 +53,22 @@ import io.netty.buffer.ByteBuf;
 
 /**
  * <p>
- * Represents a generation context used by the {@link IrtClassGenerator}
- * during the generation of an Inverno Reactive Template class.
+ * Represents a generation context used by the {@link IrtClassGenerator} during the generation of an Inverno Reactive Template class.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
- *
  */
 public class IrtClassGenerationContext {
 
+	/**
+	 * <p>
+	 * Represents the generation mode.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.2
+	 */
 	public static enum GenerationMode {
 		IRT_CLASS,
 		TEMPLATE_SET_INTERFACES,
@@ -602,7 +608,13 @@ public class IrtClassGenerationContext {
 	 */
 	public static class Options {
 		
+		/**
+		 * The charset option.
+		 */
 		public static final String OPTION_CHARSET = "charset";
+		/**
+		 * The modes option.
+		 */
 		public static final String OPTION_MODES = "modes";
 
 		private Charset charset = Charsets.DEFAULT;

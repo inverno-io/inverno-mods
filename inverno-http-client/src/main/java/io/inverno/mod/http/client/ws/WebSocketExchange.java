@@ -36,7 +36,7 @@ import io.inverno.mod.http.client.Request;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  * 
- * @param <A>
+ * @param <A> the type of the exchange context
  */
 public interface WebSocketExchange<A extends ExchangeContext> extends BaseWebSocketExchange<A> {
 

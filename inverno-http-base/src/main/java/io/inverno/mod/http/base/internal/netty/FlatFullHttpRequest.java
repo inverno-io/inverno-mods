@@ -34,6 +34,18 @@ public class FlatFullHttpRequest extends FlatHttpRequest implements FullHttpRequ
 
 	private final HttpHeaders trailingHeaders;
 	
+	/**
+	 * <p>
+	 * Creates a flat full HTTP request.
+	 * </p>
+	 * 
+	 * @param version         the HTTP version
+	 * @param method          the HTTP method
+	 * @param uri             the request URI
+	 * @param headers         the HTTP headers
+	 * @param content         the request content
+	 * @param trailingHeaders the trailing HTTPheaders
+	 */
 	public FlatFullHttpRequest(HttpVersion version, HttpMethod method, String uri, HttpHeaders headers, ByteBuf content, HttpHeaders trailingHeaders) {
 		super(version, method, uri, headers, content);
 		this.trailingHeaders = trailingHeaders;

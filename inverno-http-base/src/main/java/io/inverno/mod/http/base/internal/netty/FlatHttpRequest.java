@@ -23,6 +23,7 @@ import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpVersion;
 
 /**
@@ -45,15 +46,44 @@ public class FlatHttpRequest implements HttpRequest, HttpContent {
 	
 	private boolean empty;
 
+	/**
+	 * <p>
+	 * Creates a flat HTTP request.
+	 * </p>
+	 * 
+	 * @param content the request content
+	 */
 	public FlatHttpRequest(ByteBuf content) {
 		this.content = content;
 	}
 	
+	/**
+	 * <p>
+	 * Creates a flat HTTP request.
+	 * </p>
+	 * 
+	 * @param version the HTTP version
+	 * @param method  the HTTP method
+	 * @param uri     the request URI
+	 * @param headers the HTTP headers
+	 * @param empty   true to create an empty request, false otherwise
+	 */
 	public FlatHttpRequest(HttpVersion version, HttpMethod method, String uri, HttpHeaders headers, boolean empty) {
 		this(version, method, uri, headers, Unpooled.EMPTY_BUFFER);
 		this.empty = empty;
 	}
 
+	/**
+	 * <p>
+	 * Creates a flat HTTP request.
+	 * </p>
+	 * 
+	 * @param version the HTTP version
+	 * @param method  the HTTP method
+	 * @param uri     the request URI
+	 * @param headers the HTTP headers
+	 * @param content the request content
+	 */
 	public FlatHttpRequest(HttpVersion version, HttpMethod method, String uri, HttpHeaders headers, ByteBuf content) {
 		this.method = method;
 		this.uri = uri;
@@ -63,6 +93,13 @@ public class FlatHttpRequest implements HttpRequest, HttpContent {
 		this.empty = content.readableBytes() == 0;
 	}
 	
+	/**
+	 * <p>
+	 * Determines whether the request is empty.
+	 * </p>
+	 * 
+	 * @return true if the request has no content, false otherwise
+	 */
 	public boolean isEmpty() {
 		return empty;
 	}

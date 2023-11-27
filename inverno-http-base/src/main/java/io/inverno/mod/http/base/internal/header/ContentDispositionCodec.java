@@ -56,31 +56,6 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 	 */
 	public static final class ContentDisposition extends ParameterizedHeader implements Headers.ContentDisposition {
 
-		/**
-		 * The name parameter name.
-		 */
-		public static final String NAME = "name";
-		/**
-		 * The filename parameter name.
-		 */
-		public static final String FILENAME = "filename";
-		/**
-		 * The creation date parameter name. 
-		 */
-		public static final String CREATION_DATE = "creation-date";
-		/**
-		 * The modification date parameter name.
-		 */
-		public static final String MODIFICATION_DATE = "modification-date";
-		/**
-		 * The read date parameter name.
-		 */
-		public static final String READ_DATE = "read-date";
-		/**
-		 * The size parameter name.
-		 */
-		public static final String SIZE = "size";
-		
 		private final String dispositionType;
 		private final String partName;
 		private final String filename;
@@ -169,7 +144,7 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 			
 			@Override
 			public Builder parameter(String name, String value) {
-				if(name.equals(NAME)) {
+				if(name.equals(PART_NAME)) {
 					this.partName = value;
 				}
 				else if(name.equals(FILENAME)) {
@@ -185,7 +160,7 @@ public class ContentDispositionCodec extends ParameterizedHeaderCodec<ContentDis
 					this.readDateTime = value;
 				}
 				else if(name.equals(SIZE)) {
-					this.size = Integer.parseInt(value);
+					this.size = Integer.valueOf(value);
 				}
 				return super.parameter(name, value);
 			}

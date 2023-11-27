@@ -24,6 +24,8 @@ import io.inverno.mod.security.jose.jwk.JWK;
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ *
+ * @param <A> the type of key
  */
 public interface JWAAlgorithm<A extends JWK> {
 

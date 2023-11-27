@@ -61,7 +61,7 @@ public interface WebResponseBodyInfo {
 		 */
 		SSE_CHARSEQUENCE,
 		/**
-		 * The actual response body type is {@link WebResponseBody.SseEncoder.EventWebResponseBody.SseEncoder.Event&lt;U&gt;} where {@code U} is not a {@link ByteBuf}.
+		 * The actual response body type is {@link WebResponseBody.SseEncoder.Event Event&lt;U&gt;} where {@code U} is not a {@link ByteBuf}.
 		 */
 		SSE_ENCODED,
 		/**

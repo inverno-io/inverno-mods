@@ -296,9 +296,7 @@ public final class Headers {
 	
 	/**
 	 * <p>
-	 * Content-type HTTP header as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-3.1.1.5">RFC 7231
-	 * Section 3.1.1.5</a>.
+	 * Content-type HTTP header as defined by <a href="https://tools.ietf.org/html/rfc7231#section-3.1.1.5">RFC 7231 Section 3.1.1.5</a>.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -390,12 +388,24 @@ public final class Headers {
 	 */
 	public static interface Authorization extends Header {
 		
+		/**
+		 * Designates the {@code basic} authentication scheme as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7617">RFC 7617 Section 2</a>.
+		 */
 		public static final String AUTH_SCHEME_BASIC = "basic";
 		
+		/**
+		 * Designates the {@code bearer} authentication scheme as defined by <a href="https://www.rfc-editor.org/rfc/rfc6750.html#section-2.1">RFC 6750 Section 2.1</a>
+		 */
 		public static final String AUTH_SCHEME_BEARER = "bearer";
 		
+		/**
+		 * Designates the {@code digest} authentication scheme as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7616#section-3.4">RFC 7616 Section 3.4</a>.
+		 */
 		public static final String AUTH_SCHEME_DIGEST = "digest";
 		
+		/**
+		 * Desginates the {@code negotiate} authentication scheme as defined by <a href="https://datatracker.ietf.org/doc/html/rfc4559#section-4">RFC 4559 Section 4</a>.
+		 */
 		public static final String AUTH_SCHEME_NEGOTIATE = "negotiate";
 		
 		/**
@@ -428,8 +438,7 @@ public final class Headers {
 	
 		/**
 	 * <p>
-	 * Content-disposition HTTP header as defined by
-	 * <a href="https://tools.ietf.org/html/rfc6266#section-4.1">RFC 6266 Section 4.1</a>.
+	 * Content-disposition HTTP header as defined by <a href="https://tools.ietf.org/html/rfc6266#section-4.1">RFC 6266 Section 4.1</a>.
 	 * </p>
 	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -533,9 +542,7 @@ public final class Headers {
 	
 	/**
 	 * <p>
-	 * Set-cookie HTTP header as defined by
-	 * <a href="https://tools.ietf.org/html/rfc6265#section-4.1">RFC 6265 Section
-	 * 4.1</a>.
+	 * Set-cookie HTTP header as defined by <a href="https://tools.ietf.org/html/rfc6265#section-4.1">RFC 6265 Section 4.1</a>.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -552,20 +559,56 @@ public final class Headers {
 		 * @since 1.5
 		 */
 		enum SameSitePolicy {
+			/**
+			 * Send the cookie when navigating to the origin site from an external site.
+			 */
 			LAX("Lax"),
+			/**
+			 * Only send cookie for same-site requests.
+			 */
 			STRICT("Strict"),
+			/**
+			 * Send the cookie with both same-site and cross-site requests.
+			 * 
+			 * The secure attribute must be set to {@code true}.
+			 */
 			NONE("None");
 
 			private final String value;
 
+			/**
+			 * <p>
+			 * Creates a same-site policy
+			 * </p>
+			 * 
+			 * @param value the policy value
+			 */
 			private SameSitePolicy(String value) {
 				this.value = value;
 			}
 
+			/**
+			 * <p>
+			 * Returns the policy value.
+			 * </p>
+			 * 
+			 * @return the policy value
+			 */
 			public String getValue() {
 				return value;
 			}
 
+			/**
+			 * <p>
+			 * Returns the same-site policy corresponding to the specified value.
+			 * </p>
+			 * 
+			 * @param value the policy value
+			 * 
+			 * @return a same-site policy
+			 * 
+			 * @throws IllegalArgumentException if the specified value does not correspond to a known policy
+			 */
 			public static SameSitePolicy fromValue(String value) throws IllegalArgumentException {
 				switch (value) {
 					case "Lax":
@@ -693,9 +736,7 @@ public final class Headers {
 	
 	/**
 	 * <p>
-	 * Cookie HTTP header as defined by
-	 * <a href="https://tools.ietf.org/html/rfc6265#section-4.2">RFC 6265 Section
-	 * 4.2</a>.
+	 * Cookie HTTP header as defined by <a href="https://tools.ietf.org/html/rfc6265#section-4.2">RFC 6265 Section 4.2</a>.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -715,9 +756,7 @@ public final class Headers {
 	
 	/**
 	 * <p>
-	 * Accept HTTP header as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section
-	 * 5.3.2</a>.
+	 * Accept HTTP header as defined by <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -741,14 +780,12 @@ public final class Headers {
 		
 		/**
 		 * <p>
-		 * Returns the content type in the specified collection that best matches the
-		 * accept header.
+		 * Returns the content type in the specified collection that best matches the accept header.
 		 * </p>
-		 * 
+		 *
 		 * @param contentTypes a collection of content types
-		 * 
-		 * @return an optional returning an accept match or an empty optional if no
-		 *         match was found
+		 *
+		 * @return an optional returning an accept match or an empty optional if no match was found
 		 */
 		default Optional<AcceptMatch<MediaRange, Headers.ContentType>> findBestMatch(Collection<Headers.ContentType> contentTypes) {
 			return this.findBestMatch(contentTypes, Function.identity());
@@ -756,17 +793,14 @@ public final class Headers {
 		
 		/**
 		 * <p>
-		 * Returns the item from the specified collection whose content type best
-		 * matches the accept header.
+		 * Returns the item from the specified collection whose content type best matches the accept header.
 		 * </p>
-		 * 
+		 *
 		 * @param <T>                  the type of the item
 		 * @param items                a collection items
-		 * @param contentTypeExtractor a function that extracts the content type of an
-		 *                             item
-		 * 
-		 * @return an optional returning an accept match or an empty optional if no
-		 *         match was found
+		 * @param contentTypeExtractor a function that extracts the content type of an item
+		 *
+		 * @return an optional returning an accept match or an empty optional if no match was found
 		 */
 		default <T> Optional<AcceptMatch<MediaRange, T>> findBestMatch(Collection<T> items, Function<T, Headers.ContentType> contentTypeExtractor) {
 			for(MediaRange mediaRange : this.getMediaRanges()) {
@@ -781,12 +815,11 @@ public final class Headers {
 		
 		/**
 		 * <p>
-		 * Returns all the content types in the specified collection that matches the
-		 * accept header sorted from best to worst.
+		 * Returns all the content types in the specified collection that matches the accept header sorted from best to worst.
 		 * </p>
-		 * 
+		 *
 		 * @param contentTypes a collection of content types
-		 * 
+		 *
 		 * @return a collection of accept matches
 		 */
 		default Collection<AcceptMatch<MediaRange, Headers.ContentType>> findAllMatch(Collection<Headers.ContentType> contentTypes) {
@@ -795,15 +828,13 @@ public final class Headers {
 		
 		/**
 		 * <p>
-		 * Returns all the items in the specified collection whose content type matches
-		 * the accept header sorted from best to worst.
+		 * Returns all the items in the specified collection whose content type matches the accept header sorted from best to worst.
 		 * </p>
-		 * 
+		 *
 		 * @param <T>                  the type of the item
 		 * @param items                a collection of items
-		 * @param contentTypeExtractor a function that extracts the content type of an
-		 *                             item
-		 * 
+		 * @param contentTypeExtractor a function that extracts the content type of an item
+		 *
 		 * @return a collection of accept matches
 		 */
 		default <T> Collection<AcceptMatch<MediaRange, T>> findAllMatch(Collection<T> items, Function<T, Headers.ContentType> contentTypeExtractor) {
@@ -823,11 +854,10 @@ public final class Headers {
 		 * <p>
 		 * Merges multiple accept headers into one.
 		 * </p>
-		 * 
+		 *
 		 * @param acceptHeaders a list of accept headers.
-		 * 
-		 * @return an optional returning an accept header or an empty optional if the
-		 *         specified list was null or empty
+		 *
+		 * @return an optional returning an accept header or an empty optional if the specified list was null or empty
 		 */
 		static Optional<Accept> merge(List<Accept> acceptHeaders) {
 			if(acceptHeaders == null || acceptHeaders.isEmpty()) {
@@ -863,11 +893,9 @@ public final class Headers {
 		
 		/**
 		 * <p>
-		 * Accept HTTP header media range as defined by
-		 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section
-		 * 5.3.2</a>.
+		 * Accept HTTP header media range as defined by <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>.
 		 * </p>
-		 * 
+		 *
 		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 		 * @since 1.0
 		 */
@@ -907,11 +935,9 @@ public final class Headers {
 			
 			/**
 			 * <p>
-			 * Returns the media range quality value as defined by
-			 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.1">RFC 7231 Section
-			 * 5.3.1</a>.
+			 * Returns the media range quality value as defined by <a href="https://tools.ietf.org/html/rfc7231#section-5.3.1">RFC 7231 Section 5.3.1</a>.
 			 * </p>
-			 * 
+			 *
 			 * @return the media range quality value
 			 */
 			float getWeight();
@@ -934,8 +960,7 @@ public final class Headers {
 			 * 
 			 * @return true if the content type matches the range, false otherwise
 			 */
-			// When this range doesn't define any parameters, this method returns true as
-			// soon as the media types are compatible.
+			// When this range doesn't define any parameters, this method returns true as soon as the media types are compatible.
 			// The best match is then the most precise one.
 			default boolean matches(Headers.ContentType contentType) {
 				String requestType = contentType.getType();
@@ -975,8 +1000,7 @@ public final class Headers {
 			 * </p>
 			 * 
 			 * <p>
-			 * The score is calculated by assigning a score to the media range part and add
-			 * all:
+			 * The score is calculated by assigning a score to the media range part and add all:
 			 * </p>
 			 * 
 			 * <ul>
@@ -1038,15 +1062,13 @@ public final class Headers {
 			
 			/**
 			 * <p>
-			 * Returns the first media range in the specified list that matches the
-			 * specified content type.
+			 * Returns the first media range in the specified list that matches the specified content type.
 			 * </p>
-			 * 
+			 *
 			 * @param contentType a content type
 			 * @param mediaRanges a list of media ranges
-			 * 
-			 * @return an optional returning the first match or an empty optional if no
-			 *         match was found
+			 *
+			 * @return an optional returning the first match or an empty optional if no match was found
 			 */
 			static Optional<AcceptMatch<MediaRange, Headers.ContentType>> findFirstMatch(Headers.ContentType contentType, List<MediaRange> mediaRanges) {
 				return findFirstMatch(contentType, mediaRanges, Function.identity());
@@ -1054,17 +1076,15 @@ public final class Headers {
 			
 			/**
 			 * <p>
-			 * Returns the first item in the specified collection whose media range matches
-			 * the specified content type.
+			 * Returns the first item in the specified collection whose media range matches the specified content type.
 			 * </p>
-			 * 
+			 *
 			 * @param <T>                 the type of the item
 			 * @param contentType         a content type
 			 * @param items               a collection of items
 			 * @param mediaRangeExtractor a function that extracts the media type of an item
-			 * 
-			 * @return an optional returning the first match or an empty optional if no
-			 *         match was found
+			 *
+			 * @return an optional returning the first match or an empty optional if no match was found
 			 */
 			static <T> Optional<AcceptMatch<T, Headers.ContentType>> findFirstMatch(Headers.ContentType contentType, Collection<T> items, Function<T, MediaRange> mediaRangeExtractor) {
 				String requestType = contentType.getType();
@@ -1191,9 +1211,7 @@ public final class Headers {
 	
 	/**
 	 * <p>
-	 * Accept-language HTTP header as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.5">RFC 7231 Section
-	 * 5.3.5</a>.
+	 * Accept-language HTTP header as defined by <a href="https://tools.ietf.org/html/rfc7231#section-5.3.5">RFC 7231 Section 5.3.5</a>.
 	 * </p>
 	 * 
 	 * https://tools.ietf.org/html/rfc4647#section-3.3.1
@@ -1219,14 +1237,12 @@ public final class Headers {
 		
 		/**
 		 * <p>
-		 * Returns the language range in the specified collection that best matches the
-		 * accept language header.
+		 * Returns the language range in the specified collection that best matches the accept language header.
 		 * </p>
-		 * 
+		 *
 		 * @param languageRanges a collection of language ranges
-		 * 
-		 * @return an optional returning an accept match or an empty optional if no
-		 *         match was found
+		 *
+		 * @return an optional returning an accept match or an empty optional if no match was found
 		 */
 		default Optional<AcceptMatch<LanguageRange, LanguageRange>> findBestMatch(Collection<Headers.AcceptLanguage.LanguageRange> languageRanges) {
 			return this.findBestMatch(languageRanges, Function.identity());
@@ -1234,17 +1250,14 @@ public final class Headers {
 		
 		/**
 		 * <p>
-		 * Returns the item from the specified collection whose language range best
-		 * matches the accept language header.
+		 * Returns the item from the specified collection whose language range best matches the accept language header.
 		 * </p>
-		 * 
+		 *
 		 * @param <T>                    the type of the item
 		 * @param items                  a collection of items
-		 * @param languageRangeExtractor a function that extracts the language range of
-		 *                               an item
-		 * 
-		 * @return an optional returning an accept match or an empty optional if no
-		 *         match was found
+		 * @param languageRangeExtractor a function that extracts the language range of an item
+		 *
+		 * @return an optional returning an accept match or an empty optional if no match was found
 		 */
 		default <T> Optional<AcceptMatch<LanguageRange,T>> findBestMatch(Collection<T> items, Function<T, Headers.AcceptLanguage.LanguageRange> languageRangeExtractor) {
 			return this.findAllMatch(items, languageRangeExtractor).stream().findFirst();
@@ -1252,12 +1265,11 @@ public final class Headers {
 		
 		/**
 		 * <p>
-		 * Returns all the language ranges in the specified collection that matches the
-		 * accept language header sorted from best to worst.
+		 * Returns all the language ranges in the specified collection that matches the accept language header sorted from best to worst.
 		 * </p>
-		 * 
+		 *
 		 * @param languageRanges a collection of language ranges
-		 * 
+		 *
 		 * @return a collection of accept matches
 		 */
 		default Collection<AcceptMatch<LanguageRange, LanguageRange>> findAllMatch(Collection<Headers.AcceptLanguage.LanguageRange> languageRanges) {
@@ -1266,15 +1278,13 @@ public final class Headers {
 		
 		/**
 		 * <p>
-		 * Returns all the items in the specified collection whose language range
-		 * matches the accept language header sorted from best to worst.
+		 * Returns all the items in the specified collection whose language range matches the accept language header sorted from best to worst.
 		 * </p>
-		 * 
+		 *
 		 * @param <T>                    the type of the item
 		 * @param items                  a collection of items
-		 * @param languageRangeExtractor a function that extracts the language range of
-		 *                               an item
-		 * 
+		 * @param languageRangeExtractor a function that extracts the language range of an item
+		 *
 		 * @return a collection of accept matches
 		 */
 		default <T> Collection<AcceptMatch<LanguageRange,T>> findAllMatch(Collection<T> items, Function<T, Headers.AcceptLanguage.LanguageRange> languageRangeExtractor) {
@@ -1305,11 +1315,10 @@ public final class Headers {
 		 * <p>
 		 * Merges multiple accept language headers into one.
 		 * </p>
-		 * 
+		 *
 		 * @param acceptLanguageHeaders a list of accept language headers.
-		 * 
-		 * @return an optional returning an accept language header or an empty optional
-		 *         if the specified list was null or empty
+		 *
+		 * @return an optional returning an accept language header or an empty optional if the specified list was null or empty
 		 */
 		static Optional<AcceptLanguage> merge(List<AcceptLanguage> acceptLanguageHeaders) {
 			if(acceptLanguageHeaders.isEmpty()) {
@@ -1345,11 +1354,9 @@ public final class Headers {
 		
 		/**
 		 * <p>
-		 * Accept language HTTP header language range as defined by
-		 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.5">RFC 7231 Section
-		 * 5.3.5</a>.
+		 * Accept language HTTP header language range as defined by <a href="https://tools.ietf.org/html/rfc7231#section-5.3.5">RFC 7231 Section 5.3.5</a>.
 		 * </p>
-		 * 
+		 *
 		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 		 * @since 1.0
 		 */
@@ -1389,11 +1396,9 @@ public final class Headers {
 			
 			/**
 			 * <p>
-			 * Returns the language range quality value as defined by
-			 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.1">RFC 7231 Section
-			 * 5.3.1</a>.
+			 * Returns the language range quality value as defined by <a href="https://tools.ietf.org/html/rfc7231#section-5.3.1">RFC 7231 Section 5.3.1</a>.
 			 * </p>
-			 * 
+			 *
 			 * @return the language range quality value
 			 */
 			float getWeight();
@@ -1437,8 +1442,7 @@ public final class Headers {
 			 * </p>
 			 * 
 			 * <p>
-			 * The score is calculated by assigning a score to the media range part and add
-			 * all:
+			 * The score is calculated by assigning a score to the media range part and add all:
 			 * </p>
 			 * 
 			 * <ul>
@@ -1475,15 +1479,13 @@ public final class Headers {
 			
 			/**
 			 * <p>
-			 * Returns the first language range in the specified list that matches the
-			 * specified language range.
+			 * Returns the first language range in the specified list that matches the specified language range.
 			 * </p>
-			 * 
+			 *
 			 * @param languageRange  a language range
 			 * @param languageRanges a list of language ranges
-			 * 
-			 * @return an optional returning the first match or an empty optional if no
-			 *         match was found
+			 *
+			 * @return an optional returning the first match or an empty optional if no match was found
 			 */
 			static Optional<AcceptMatch<LanguageRange, LanguageRange>> findFirstMatch(LanguageRange languageRange, List<LanguageRange> languageRanges) {
 				return findFirstMatch(languageRange, languageRanges, Function.identity());
@@ -1491,18 +1493,15 @@ public final class Headers {
 
 			/**
 			 * <p>
-			 * Returns the first item in the specified collection whose language range
-			 * matches the specified language range.
+			 * Returns the first item in the specified collection whose language range matches the specified language range.
 			 * </p>
-			 * 
+			 *
 			 * @param <T>                    the type of the item
 			 * @param languageRange          a language range
 			 * @param items                  a collection of items
-			 * @param languageRangeExtractor a function that extracts the language range of
-			 *                               an item
-			 * 
-			 * @return an optional returning the first match or an empty optional if no
-			 *         match was found
+			 * @param languageRangeExtractor a function that extracts the language range of an item
+			 *
+			 * @return an optional returning the first match or an empty optional if no match was found
 			 */
 			static <T> Optional<AcceptMatch<T, LanguageRange>> findFirstMatch(LanguageRange languageRange, Collection<T> items, Function<T, LanguageRange> languageRangeExtractor) {
 				String requestPrimarySubTag = languageRange.getPrimarySubTag();

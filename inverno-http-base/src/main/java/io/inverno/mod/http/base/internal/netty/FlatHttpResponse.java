@@ -43,11 +43,31 @@ public class FlatHttpResponse implements HttpResponse, HttpContent {
 	
 	private boolean empty;
 
+	/**
+	 * <p>
+	 * Creates a flat HTTP response.
+	 * </p>
+	 * 
+	 * @param version the HTTP version
+	 * @param status  the HTTP response status
+	 * @param headers the HTTP headers
+	 * @param empty   true to create an empty response, false otherwise
+	 */
 	public FlatHttpResponse(HttpVersion version, HttpResponseStatus status, HttpHeaders headers, boolean empty) {
 		this(version, status, headers, Unpooled.EMPTY_BUFFER);
 		this.empty = empty;
 	}
 
+	/**
+	 * <p>
+	 * Creates a flat HTTP response.
+	 * </p>
+	 * 
+	 * @param version the HTTP version
+	 * @param status  the HTTP response status
+	 * @param headers the HTTP headers
+	 * @param content the response content
+	 */
 	public FlatHttpResponse(HttpVersion version, HttpResponseStatus status, HttpHeaders headers, ByteBuf content) {
 		this.status = status;
 		this.version = version;
@@ -56,6 +76,13 @@ public class FlatHttpResponse implements HttpResponse, HttpContent {
 		this.empty = content.readableBytes() == 0;
 	}
 
+	/**
+	 * <p>
+	 * Determines whether the reponse is empty.
+	 * </p>
+	 * 
+	 * @return true if the response has no content, false otherwise
+	 */
 	public boolean isEmpty() {
 		return empty;
 	}

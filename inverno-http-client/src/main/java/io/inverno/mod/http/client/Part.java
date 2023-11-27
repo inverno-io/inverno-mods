@@ -74,7 +74,7 @@ public interface Part<A> extends OutboundData<A> {
 	/**
 	 * <p>
 	 * Specifies the part's headers.
-	 * <p>
+	 * </p>
 	 * 
 	 * @param headersConfigurer a headers configurer
 	 * 

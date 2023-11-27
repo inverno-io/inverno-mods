@@ -109,10 +109,9 @@ public class MultiParameterizedHeader extends ParameterizedHeader {
 	
 	/**
 	 * <p>
-	 * Creates a multi-parameterized header with the specified header name, header
-	 * raw value and list of headers.
+	 * Creates a multi-parameterized header with the specified header name, header raw value and list of headers.
 	 * </p>
-	 * 
+	 *
 	 * @param headerName  the header name
 	 * @param headerValue the header value
 	 * @param headers     the list of headers in the multi-parameterized header

@@ -27,7 +27,7 @@ import io.netty.util.CharsetUtil;
  * <p>
  * Just like {@link ByteBuf}, a WebSocket frame is reference counted to optimize memory. As a result, a WebSocket frame received in an inbound part of a WebSocket exchange must be released in the
  * WebSocket exchange handler if this is the final operation on the frame. Likewise when emitting a WebSocket frame in an outbound publisher of a WebSocket exchange, its reference count must be
- * greater than {@code 1} as it will be released after being sent to the client.
+ * greater than {@code 1} as it will be released after being sent to the endpoint.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -76,7 +76,7 @@ public interface WebSocketFrame {
 	 * </p>
 	 * 
 	 * <p>
-	 * It allows to create frames that comply with server's configuration (e.g. max frame size...).
+	 * It allows to create frames that comply with the configuration (e.g. max frame size...).
 	 * </p>
 	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -275,8 +275,8 @@ public interface WebSocketFrame {
 	 * </p>
 	 * 
 	 * <p>
-	 * A WebSocket frame is reference counted to optimize memory usage, as a result a frame can only be written once to the client (the frame and its data are released once the frame has been sent to
-	 * the client). Using a retained duplicate allows to create multiple frames that share the same memory and that can be sent to multiple client.
+	 * A WebSocket frame is reference counted to optimize memory usage, as a result a frame can only be written once to the WebSocket endpoint (the frame and its data are released once the frame has 
+	 * been sent). Using a retained duplicate allows to create multiple frames that share the same memory and that can be sent to multiple endpoints.
 	 * </p>
 	 * 
 	 * @return a retained WebSocket frame

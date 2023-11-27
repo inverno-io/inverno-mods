@@ -100,14 +100,13 @@ public interface HeaderCodec<A extends Header> {
 	
 	/**
 	 * <p>
-	 * Decodes the specified raw value {@link ByteBuf} for the specified header
-	 * name using the specified charset.
+	 * Decodes the specified raw value {@link ByteBuf} for the specified header name using the specified charset.
 	 * </p>
-	 * 
+	 *
 	 * @param name    a header name
 	 * @param buffer  a header raw value
 	 * @param charset the charset to use for decoding
-	 * 
+	 *
 	 * @return a decoded header instance
 	 */
 	A decode(String name, ByteBuf buffer, Charset charset);
@@ -116,31 +115,26 @@ public interface HeaderCodec<A extends Header> {
 	 * <p>
 	 * Encodes the specified header as a string.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The resulting value is a header field as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section
-	 * 3.2</a>.
+	 * The resulting value is a header field as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section 3.2</a>.
 	 * </p>
-	 * 
+	 *
 	 * @param header the header to encode
-	 * 
+	 *
 	 * @return the encoded header
 	 */
 	String encode(A header);
 	
 	/**
 	 * <p>
-	 * Encodes the specified header in the specified {@link ByteBuffer}
-	 * using the specified charset.
+	 * Encodes the specified header in the specified {@link ByteBuffer} using the specified charset.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The resulting value is a header field as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section
-	 * 3.2</a>.
+	 * The resulting value is a header field as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section 3.2</a>.
 	 * </p>
-	 * 
+	 *
 	 * @param header  the header to encode
 	 * @param buffer  the destination byte buffer
 	 * @param charset the charset to use for encoding
@@ -153,30 +147,26 @@ public interface HeaderCodec<A extends Header> {
 	 * <p>
 	 * Encodes the value of the specified header as a string.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The resulting value corresponds to the header field value as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section
-	 * 3.2</a>.
+	 * The resulting value corresponds to the header field value as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section 3.2</a>.
 	 * </p>
-	 * 
+	 *
 	 * @param header the header to encode
+	 *
 	 * @return the encoded header value
 	 */
 	String encodeValue(A header);
 
 	/**
 	 * <p>
-	 * Encodes the value of the specified header in the specified {@link ByteBuffer}
-	 * using the specified charset.
+	 * Encodes the value of the specified header in the specified {@link ByteBuffer} using the specified charset.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * The resulting value corresponds to the header field value as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section
-	 * 3.2</a>.
+	 * The resulting value corresponds to the header field value as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section 3.2</a>.
 	 * </p>
-	 * 
+	 *
 	 * @param header  the header to encode
 	 * @param buffer  the destination byte buffer
 	 * @param charset the charset to use for encoding

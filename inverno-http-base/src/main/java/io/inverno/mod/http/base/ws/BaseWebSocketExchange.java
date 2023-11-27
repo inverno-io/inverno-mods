@@ -26,19 +26,16 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * A WebSocket exchange is bidirectional and as a result provided an {@link Inbound} and an {@link Outbound} exposing WebSocket frames and messages respectively received and sent by the server.
+ * A WebSocket exchange is bidirectional and as a result provided an {@link Inbound} and an {@link Outbound} exposing WebSocket frames and messages respectively received and sent by a client or a 
+ * server.
  * </p>
  * 
  * <p>
- * A WebSocket exchange is created from the HTTP server exchange (see {@link Exchange#webSocket(java.lang.String...) }) once the WebSocket opening handshake has completed. It is processed in a
- * {@link WebSocketExchangeHandler} specified in the {@link WebSocket}.
+ * A WebSocket exchange can be created from an HTTP server exchange once the WebSocket opening handshake has completed or from an HTTP client to open a WebSocket connection to an HTTP server.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
- * 
- * @see WebSocket
- * @see WebSocketExchangeHandler
  * 
  * @param <A> the type of the exchange context
  */
@@ -72,7 +69,7 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 	 * </p>
 	 * 
 	 * <p>
-	 * This basically corresponds to the stream of WebSocket frames sent by the client to the server.
+	 * This basically corresponds to the stream of WebSocket frames received by the server from the client or by the client from the server.
 	 * </p>
 	 * 
 	 * @return the inbound part
@@ -85,7 +82,7 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 	 * </p>
 	 * 
 	 * <p>
-	 * This basically corresponds to the stream of WebSocket frames sent by the server to the client.
+	 * This basically corresponds to the stream of WebSocket frames sent by the server to the client or by the client to the server.
 	 * </p>
 	 * 
 	 * @return the outbound part
@@ -213,8 +210,8 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 	 * </p>
 	 * 
 	 * <p>
-	 * It exposes the frames or messages received by the server from the client. It is only possible to subscribe to one of the exposed publishers, subscribing to both frames and messages will result
-	 * in an {@link IllegalStateException}.
+	 * It exposes the frames or messages received by the server from the client or by the client from the server. It is only possible to subscribe to one of the exposed publishers, subscribing to both
+	 * frames and messages will result in an {@link IllegalStateException}.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -224,7 +221,7 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 		
 		/**
 		 * <p>
-		 * Returns the frames received by the server from the client.
+		 * Returns the received frames.
 		 * </p>
 		 * 
 		 * <p>
@@ -237,7 +234,7 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 		
 		/**
 		 * <p>
-		 * Returns the messages received by the server from the client.
+		 * Returns the received messages.
 		 * </p>
 		 * 
 		 * <p>
@@ -250,7 +247,7 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 		
 		/**
 		 * <p>
-		 * Returns the text messages received by the server from the client.
+		 * Returns the received text messages.
 		 * </p>
 		 * 
 		 * <p>
@@ -267,7 +264,7 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 		
 		/**
 		 * <p>
-		 * Returns the binary messages received by the server from the client.
+		 * Returns the received binary messages.
 		 * </p>
 		 * 
 		 * <p>
@@ -289,7 +286,8 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 	 * </p>
 	 * 
 	 * <p>
-	 * It allows to set the stream of frames or messages that must be sent to the client. It is only possible to specify either a stream of frames or a stream of messages.
+	 * It allows to set the stream of frames or messages that must be sent to the client by the server or to the server by the client. It is only possible to specify either a stream of frames or a 
+	 * stream of messages.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -319,7 +317,7 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 		
 		/**
 		 * <p>
-		 * Sets the stream of frames sent to the client.
+		 * Sets the stream of frames to send.
 		 * </p>
 		 * 
 		 * <p>
@@ -336,7 +334,7 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 		
 		/**
 		 * <p>
-		 * Sets the stream of messages sent to the client.
+		 * Sets the stream of messages to send.
 		 * </p>
 		 * 
 		 * <p>

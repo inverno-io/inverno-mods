@@ -54,8 +54,8 @@ public interface WebSocketMessage {
 	 * </p>
 	 * 
 	 * <p>
-	 * It allows to create message that comply with server's configuration (e.g. max frame size...). The specified payload data publisher can be rearranged to comply with max frame size by splitting
-	 * big fragments into smaller frames.
+	 * It allows to create message that comply with the configuration (e.g. max frame size...). The specified payload data publisher can be rearranged to comply with max frame size by splitting big 
+	 * fragments into smaller frames.
 	 * </p>
 	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

@@ -70,18 +70,4 @@ public class ConnectionPoolException extends HttpClientException {
 	public ConnectionPoolException(Throwable cause) {
 		super(cause);
 	}
-
-	/**
-	 * <p>
-	 * Creates a Connection pool exception.
-	 * </p>
-	 * 
-	 * @param message            the message
-	 * @param cause              the cause 
-	 * @param enableSuppression
-	 * @param writableStackTrace 
-	 */
-	public ConnectionPoolException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
 }

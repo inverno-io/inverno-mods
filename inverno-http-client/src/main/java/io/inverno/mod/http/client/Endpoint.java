@@ -26,7 +26,7 @@ import reactor.core.publisher.Mono;
 /**
  * <p>
  * An endpoint represents the terminal end in an HTTP communication between a client and a server.
- * <p>
+ * </p>
  *
  * <p>
  * It is obtained from the {@link HttpClient} and it is bound to an IP Socket Address of an HTTP server. It exposes methods to send HTTP requests or open Web sockets.

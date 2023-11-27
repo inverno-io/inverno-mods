@@ -39,6 +39,8 @@ import java.util.regex.Pattern;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ * 
+ * @param <A> the value type
  */
 public interface Convertible<A> {
 

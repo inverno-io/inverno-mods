@@ -68,18 +68,4 @@ public class ConnectionResetException extends HttpClientException {
 	public ConnectionResetException(Throwable cause) {
 		super(cause);
 	}
-
-	/**
-	 * <p>
-	 * Creates a Connection reset exception.
-	 * </p>
-	 * 
-	 * @param message            the message
-	 * @param cause              the cause
-	 * @param enableSuppression 
-	 * @param writableStackTrace 
-	 */
-	public ConnectionResetException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
 }

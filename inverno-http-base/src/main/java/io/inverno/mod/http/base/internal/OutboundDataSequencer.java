@@ -61,7 +61,7 @@ public class OutboundDataSequencer {
 	/**
 	 * <p>
 	 * Sequences the specified flux of data by buffering them up to the buffer capacity before emitting them in the resulting flux.
-	 * <p>
+	 * </p>
 	 * 
 	 * @param data the data to sequence
 	 * 

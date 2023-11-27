@@ -68,6 +68,11 @@ public class IrtCompilerPlugin implements CompilerPlugin {
 	
 	private ModuleElement irtModuleElement;
 	
+	/**
+	 * <p>
+	 * Creates an IRT compiler plugin.
+	 * </p>
+	 */
 	public IrtCompilerPlugin() {
 		this.irtFileExtension = DEFAULT_IRT_SOURCE_EXTENSION;
 		this.generator = new IrtClassGenerator();

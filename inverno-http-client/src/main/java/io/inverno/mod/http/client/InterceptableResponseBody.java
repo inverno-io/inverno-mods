@@ -50,7 +50,7 @@ public interface InterceptableResponseBody {
 	 *
 	 * @return the response body
 	 * 
-	 * @throw IllegalStateException if the response payload publisher has already been subscribed
+	 * @throws IllegalStateException if the response payload publisher has already been subscribed
 	 */
 	InterceptableResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) throws IllegalStateException;
 	

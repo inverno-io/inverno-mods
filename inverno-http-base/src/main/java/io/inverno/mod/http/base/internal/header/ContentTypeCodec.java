@@ -104,8 +104,7 @@ public class ContentTypeCodec extends ParameterizedHeaderCodec<ContentTypeCodec.
 		
 		/**
 		 * <p>
-		 * Creates a content-type header with the specified media type, charset,
-		 * boundary and parameters.
+		 * Creates a content-type header with the specified media type, charset, boundary and parameters.
 		 * </p>
 		 * 
 		 * @param mediaType  a raw media type

@@ -29,6 +29,8 @@ import io.netty.util.concurrent.FastThreadLocal;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
+ * 
+ * @param <T> the type of the scoped instances 
  */
 public abstract class ReactorScope<T> extends Scope<T> {
 
@@ -65,6 +67,7 @@ public abstract class ReactorScope<T> extends Scope<T> {
 	 * </p>
 	 * 
 	 * @return the instance
+	 * 
 	 * @throws IllegalStateException when the method is invoked outside the reactor
 	 */
 	public final T get() {
@@ -94,12 +97,13 @@ public abstract class ReactorScope<T> extends Scope<T> {
 	
 	/**
 	 * <p>
-	 * {@link FastThreadLocal} implementation that delegates the creation of its
-	 * inital to the enclosing {@link ReactorScope}.
+	 * {@link FastThreadLocal} implementation that delegates the creation of its inital to the enclosing {@link ReactorScope}.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.2
+	 * 
+	 * @param <T> the type of the thread-local variable
 	 */
 	private class ReactorThreadLocal extends FastThreadLocal<T> {
 		

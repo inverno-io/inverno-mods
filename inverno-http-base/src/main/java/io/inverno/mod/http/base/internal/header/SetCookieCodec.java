@@ -99,7 +99,9 @@ public class SetCookieCodec extends ParameterizedHeaderCodec<SetCookieCodec.SetC
 		private Headers.SetCookie.SameSitePolicy sameSite;
 		
 		/**
-		 * <p>Creates an empty set-cookie header.</p>
+		 * <p>
+		 * Creates an empty set-cookie header.
+		 * </p>
 		 */
 		public SetCookie() {
 			super(Headers.NAME_SET_COOKIE, null, null, null);

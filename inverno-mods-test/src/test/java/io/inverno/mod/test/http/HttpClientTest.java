@@ -4064,12 +4064,20 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
-				System.out.println(body);
 				Assertions.assertEquals("Uploaded post_resource_big.txt(text/plain): 1060500 Bytes\n", body);
 			})
 			.block();
 		
 		Assertions.assertArrayEquals(Files.readAllBytes(Path.of("src/test/resources/post_resource_big.txt")), Files.readAllBytes(Path.of("target/uploads/post_resource_big.txt")));
+		// TODO the next request is test_sse, it seems the HTTP connection is not always in a proper state to proceed after this, we need to understand why... 
+		// We probably release the exchange too early so the next exchange starts whereas the previous one is not yet finished
+		// The state is ST_CONTENT_CHUNK, and we are uploading, could this be a netty issue?
+		/*try {
+			Thread.sleep(500);
+		}
+		catch(Exception e) {
+			
+		}*/
 	}
 	
 	private void test_sse(Endpoint endpoint) throws IOException, InterruptedException {

@@ -34,10 +34,27 @@ public class FlatLastHttpContent extends DefaultByteBufHolder implements LastHtt
 	private final HttpHeaders trailingHeaders;
 	private DecoderResult result;
 
+	/**
+	 * <p>
+	 * Creates a flat last HTTP content.
+	 * </p>
+	 * 
+	 * @param content         the content
+	 * @param trailingHeaders the trailing HTTP headers
+	 */
 	public FlatLastHttpContent(ByteBuf content, HttpHeaders trailingHeaders) {
 		this(content, trailingHeaders, DecoderResult.SUCCESS);
 	}
 
+	/**
+	 * <p>
+	 * Creates a flat HTTP content.
+	 * </p>
+	 * 
+	 * @param content         the content
+	 * @param trailingHeaders the trailing HTTP headers
+	 * @param result          the decoder result
+	 */
 	public FlatLastHttpContent(ByteBuf content, HttpHeaders trailingHeaders, DecoderResult result) {
 		super(content);
 		this.trailingHeaders = trailingHeaders;

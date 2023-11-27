@@ -16,7 +16,9 @@
 package io.inverno.mod.http.base.header;
 
 /**
- * <p>Base HTTP header interface defining common HTTP header.</p>  
+ * <p>
+ * Base HTTP header interface defining common HTTP header.
+ * </p>  
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

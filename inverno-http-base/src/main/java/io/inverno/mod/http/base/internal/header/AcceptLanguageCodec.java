@@ -42,8 +42,7 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 
 	/**
 	 * <p>
-	 * Creates an accept-language header codec that allows multiple language ranges
-	 * to be specified in the header value.
+	 * Creates an accept-language header codec that allows multiple language ranges to be specified in the header value.
 	 * </p>
 	 */
 	@BeanSocket
@@ -53,10 +52,9 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 	
 	/**
 	 * <p>
-	 * Creates an accept-language header codec that allows or not multiple language
-	 * ranges to be specified in the header value.
+	 * Creates an accept-language header codec that allows or not multiple language ranges to be specified in the header value.
 	 * </p>
-	 * 
+	 *
 	 * @param allowMultiple true to allow multiple language ranges, false otherwise
 	 */
 	public AcceptLanguageCodec(boolean allowMultiple) {
@@ -143,15 +141,16 @@ public class AcceptLanguageCodec extends ParameterizedHeaderCodec<AcceptLanguage
 				this.weight = weight;
 				
 				String[] splitLanguageTag = this.languageTag.split("-");
-				if(splitLanguageTag.length == 2) {
-					this.setPrimarySubTag(splitLanguageTag[0]);
-					this.setSecondarySubTag(splitLanguageTag[1]);
-				}
-				else if(splitLanguageTag.length == 1) {
-					this.setPrimarySubTag(splitLanguageTag[0]);
-				}
-				else {
-					throw new NotAcceptableException("Empty language tag");
+				switch (splitLanguageTag.length) {
+					case 2:
+						this.setPrimarySubTag(splitLanguageTag[0]);
+						this.setSecondarySubTag(splitLanguageTag[1]);
+						break;
+					case 1:
+						this.setPrimarySubTag(splitLanguageTag[0]);
+						break;
+					default:
+						throw new NotAcceptableException("Empty language tag");
 				}
 				
 				this.score = Headers.AcceptLanguage.LanguageRange.super.getScore();

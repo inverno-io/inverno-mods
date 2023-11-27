@@ -35,15 +35,13 @@ import java.util.Set;
  * <p>
  * Generic {@link HeaderService} implementation.
  * </p>
- * 
+ *
  * <p>
- * This implementation uses multiple HTTP header codecs to encode/decode various
- * HTTP headers based on their name.
+ * This implementation uses multiple HTTP header codecs to encode/decode various HTTP headers based on their name.
  * </p>
- * 
+ *
  * <p>
- * The {@link GenericHeaderCodec} is used when no other codec supports the
- * header to encode/decode.
+ * The {@link GenericHeaderCodec} is used when no other codec supports the header to encode/decode.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -71,14 +69,12 @@ public class GenericHeaderService implements HeaderService {
 	
 	/**
 	 * <p>
-	 * Creates a generic header service with the specified list of HTTP header
-	 * codecs.
+	 * Creates a generic header service with the specified list of HTTP header codecs.
 	 * </p>
-	 * 
+	 *
 	 * @param codecs a list of header codecs
-	 * 
-	 * @throws IllegalArgumentException if multiple codecs supporting the same
-	 *                                  header name have been specified.
+	 *
+	 * @throws IllegalArgumentException if multiple codecs supporting the same header name have been specified.
 	 */
 	public GenericHeaderService(List<HeaderCodec<?>> codecs) throws IllegalArgumentException {
 		this.setHeaderCodecs(codecs);
@@ -92,11 +88,10 @@ public class GenericHeaderService implements HeaderService {
 	 * <p>
 	 * Sets the header codecs used to encode and decode headers.
 	 * </p>
-	 * 
+	 *
 	 * @param codecs a list of header codecs
-	 * 
-	 * @throws IllegalArgumentException if multiple codecs supporting the same
-	 *                                  header name have been specified.
+	 *
+	 * @throws IllegalArgumentException if multiple codecs supporting the same header name have been specified.
 	 */
 	public void setHeaderCodecs(List<HeaderCodec<?>> codecs) {
 		this.codecs = new HashMap<>();
@@ -191,12 +186,11 @@ public class GenericHeaderService implements HeaderService {
 	 * <p>
 	 * Returns the header codec for the specified header name.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>  the header type
 	 * @param name the header name
-	 * 
-	 * @return an optional returning the header codec or an empty optional if
-	 *         there's no codec for the specified header name
+	 *
+	 * @return an optional returning the header codec or an empty optional if there's no codec for the specified header name
 	 */
 	@SuppressWarnings("unchecked")
 	public <T extends Header> Optional<HeaderCodec<T>> getHeaderCodec(String name) {

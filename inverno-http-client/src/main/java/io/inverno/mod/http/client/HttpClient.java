@@ -349,7 +349,7 @@ public interface HttpClient {
 		/**
 		 * <p>
 		 * Returns the subprotocol requested to the server by the client.
-		 * <p>
+		 * </p>
 		 * 
 		 * @return the subprotocol or null if no particular subprotocol is to be requested
 		 */

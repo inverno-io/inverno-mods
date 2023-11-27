@@ -73,13 +73,20 @@ public class CookieCodec extends ParameterizedHeaderCodec<CookieCodec.Cookie, Co
 		
 		private final Map<String, List<CookieParameter>> pairs;
 		
-		private Cookie(String headerValue, Map<String, String> parameters, Map<String, List<CookieParameter>> pairs) {
-			super(Headers.NAME_COOKIE, headerValue, null, parameters);
+		/**
+		 * <p>
+		 * Creates a cookie header.
+		 * </p>
+		 * 
+		 * @param pairs the cookie pairs
+		 */
+		public Cookie(Map<String, List<CookieParameter>> pairs) {
+			super(Headers.NAME_COOKIE, null, null, null);
 			this.pairs = pairs != null ? Collections.unmodifiableMap(pairs) : Map.of();
 		}
 		
-		public Cookie(Map<String, List<CookieParameter>> pairs) {
-			super(Headers.NAME_COOKIE, null, null, null);
+		private Cookie(String headerValue, Map<String, String> parameters, Map<String, List<CookieParameter>> pairs) {
+			super(Headers.NAME_COOKIE, headerValue, null, parameters);
 			this.pairs = pairs != null ? Collections.unmodifiableMap(pairs) : Map.of();
 		}
 		

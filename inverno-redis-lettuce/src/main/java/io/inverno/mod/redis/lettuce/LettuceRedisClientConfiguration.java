@@ -148,7 +148,7 @@ public interface LettuceRedisClientConfiguration {
 	 * Defaults to {@code 60000}.
 	 * </p>
 	 * 
-	 * @return 
+	 * @return the connection timeout
 	 */
 	default long timeout() {
 		return 60000l;
@@ -163,7 +163,7 @@ public interface LettuceRedisClientConfiguration {
 	 * Defaults to {@code 8}.
 	 * </p>
 	 * 
-	 * @return 
+	 * @return the maximum active connection in the pool
 	 */
 	default int pool_max_active() {
 		return 8;
@@ -178,7 +178,7 @@ public interface LettuceRedisClientConfiguration {
 	 * Defaults to {@code 0}.
 	 * </p>
 	 * 
-	 * @return 
+	 * @return the minimum idle connection in the pool
 	 */
 	default int pool_min_idle() {
 		return 0;
@@ -193,7 +193,7 @@ public interface LettuceRedisClientConfiguration {
 	 * Defaults to {@code 8}.
 	 * </p>
 	 * 
-	 * @return 
+	 * @return the maximum idle connection in the pool
 	 */
 	default int pool_max_idle() {
 		return 8;

@@ -35,6 +35,9 @@ import java.util.function.Supplier;
  * @since 1.0
  * 
  * @see AbstractHeaderCodec
+ * 
+ * @param <A> the header type encoded/decoded by the codec
+ * @param <B> the header builder type
  */
 public class GenericHeaderCodec<A extends Header, B extends HeaderBuilder<A, B>> extends AbstractHeaderCodec<A, B> {
 
@@ -42,6 +45,9 @@ public class GenericHeaderCodec<A extends Header, B extends HeaderBuilder<A, B>>
 	 * <p>
 	 * Creates a generic HTTP header codec.
 	 * </p>
+	 * 
+	 * @param builderSupplier      a supplier to create header builder instances when decoding a header
+	 * @param supportedHeaderNames the list of header names supported by the codec
 	 */
 	protected GenericHeaderCodec(Supplier<B> builderSupplier, Set<String> supportedHeaderNames) {
 		super(builderSupplier, supportedHeaderNames);

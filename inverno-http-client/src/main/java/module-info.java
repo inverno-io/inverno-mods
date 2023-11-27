@@ -33,8 +33,8 @@ import io.inverno.mod.http.base.Parameter;
  * <dd>the reactor used in the connection pool</dd>
  * <dt><b>headerCodecs</b></dt>
  * <dd>custom header codecs</dd>
- * <dt><b>parameterConverter<b></dt>
- * <dd><dd>override the default parameter converter used in {@link Parameter} instances to convert their values</dd></dd>
+ * <dt><b>parameterConverter</b></dt>
+ * <dd>override the default parameter converter used in {@link Parameter} instances to convert their values</dd>
  * </dl>
  * 
  * <p>
@@ -66,7 +66,6 @@ import io.inverno.mod.http.base.Parameter;
  *	.reduceWith(() -> new StringBuilder(), (acc, chunk) -> acc.append(chunk))
  *	.map(StringBuilder::toString).block();
  * }</pre>
- * 
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6

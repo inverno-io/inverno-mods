@@ -83,7 +83,7 @@ public interface InboundResponseHeaders extends InboundHeaders {
 	/**
 	 * <p>
 	 * Returns the set-cookies defined in the response.
-	 * <p>
+	 * </p>
 	 * 
 	 * @return the set-cookies
 	 */

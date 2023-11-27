@@ -29,7 +29,9 @@ import java.util.function.Consumer;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
  * 
- * @see TypeVariable
+ * @see TypeVariable the type of the parent builder
+ * 
+ * @param <A> 
  */
 public class GenericTypeVariableBuilder<A> implements TypeVariableBuilder<A> {
 

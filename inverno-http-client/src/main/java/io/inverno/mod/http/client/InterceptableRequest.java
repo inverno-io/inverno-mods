@@ -97,7 +97,7 @@ public interface InterceptableRequest extends BaseRequest {
 	 * 
 	 * <p>
 	 * Once the request is sent, it is no longer possible to modify it resultig in {@link IllegalArgumentException}.
-	 * <p>
+	 * </p>
 	 * 
 	 * @return true if the request has been sent, false otherwise
 	 */

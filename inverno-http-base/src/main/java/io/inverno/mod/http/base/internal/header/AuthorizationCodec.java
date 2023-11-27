@@ -28,7 +28,12 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * <p>
+ * Authorization HTTP {@link HeaderCodec} implementation.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.5
  */
 @Bean(visibility = Bean.Visibility.PRIVATE)
 public class AuthorizationCodec implements HeaderCodec<AuthorizationCodec.Authorization> {
@@ -41,11 +46,23 @@ public class AuthorizationCodec implements HeaderCodec<AuthorizationCodec.Author
 	
 	private final Map<String, ParameterizedHeaderCodec<Authorization, Authorization.ParametersBuilder>> parametersCodecs;
 	
+	/**
+	 * <p>
+	 * Creates an authorization header codec.
+	 * </p>
+	 */
 	@BeanSocket
 	public AuthorizationCodec() {
 		this(Set.of(Headers.Authorization.AUTH_SCHEME_BASIC, Headers.Authorization.AUTH_SCHEME_BEARER, Headers.Authorization.AUTH_SCHEME_NEGOTIATE));
 	}
 	
+	/**
+	 * <p>
+	 * Creates an authorization header codec with the specified expected schemes.
+	 * </p>
+	 * 
+	 * @param tokenExpectedSchemes a set of authorization schemes
+	 */
 	public AuthorizationCodec(Set<String> tokenExpectedSchemes) {
 		this.tokenExpectedSchemes = tokenExpectedSchemes;
 		
@@ -127,18 +144,47 @@ public class AuthorizationCodec implements HeaderCodec<AuthorizationCodec.Author
 		return SUPPORTED_HEADER_NAMES;
 	}
 	
+	/**
+	 * <p>
+	 * {@link Headers.Authorization} header implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.5
+	 * 
+	 * @see ParameterizedHeader
+	 */
 	public static final class Authorization extends ParameterizedHeader implements Headers.Authorization {
 
 		private final String authScheme;
 		
 		private String token;
 		
+		/**
+		 * <p>
+		 * Creates an authorization header.
+		 * </p>
+		 * 
+		 * @param headerValue    the header value
+		 * @param authScheme     the authorization scheme
+		 * @param authParameters the authorization header parameters
+		 */
 		public Authorization(String headerValue, String authScheme, Map<String, String> authParameters) {
 			super(Headers.NAME_AUTHORIZATION, headerValue, authScheme, authParameters);
 			
 			this.authScheme = authScheme;
 		}
 		
+		/**
+		 * <p>
+		 * Creates an authorization header.
+		 * </p>
+		 * 
+		 * @param headerName  the header name
+		 * @param headerValue the header value
+		 * @param authScheme  the authorization scheme
+		 * @param token       the token
+		 */
 		public Authorization(String headerName, String headerValue, String authScheme, String token) {
 			super(headerName, headerValue, authScheme, Map.of());
 			
@@ -156,6 +202,14 @@ public class AuthorizationCodec implements HeaderCodec<AuthorizationCodec.Author
 			return this.token;
 		}
 		
+		/**
+		 * <p>
+		 * An authorization token builder.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+		 * @since 1.5
+		 */
 		public static final class TokenBuilder implements HeaderBuilder<AuthorizationCodec.Authorization, TokenBuilder> {
 
 			private final String authScheme;
@@ -164,6 +218,13 @@ public class AuthorizationCodec implements HeaderCodec<AuthorizationCodec.Author
 			
 			private String token;
 
+			/**
+			 * <p>
+			 * Creates a token builder.
+			 * </p>
+			 * 
+			 * @param authScheme the authorization scheme
+			 */
 			public TokenBuilder(String authScheme) {
 				this.authScheme = authScheme;
 			}
@@ -186,10 +247,25 @@ public class AuthorizationCodec implements HeaderCodec<AuthorizationCodec.Author
 			}
 		}
 		
+		/**
+		 * <p>
+		 * An authorization parameters builder.
+		 * </p>
+		 * 
+		 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+		 * @since 1.5
+		 */
 		public static final class ParametersBuilder extends ParameterizedHeader.AbstractBuilder<Authorization, ParametersBuilder> {
 
 			private final String authScheme;
 			
+			/**
+			 * <p>
+			 * Creates an authorization parameters builder.
+			 * </p>
+			 * 
+			 * @param authScheme the authorization scheme
+			 */
 			public ParametersBuilder(String authScheme) {
 				this.authScheme = authScheme;
 			}
@@ -201,8 +277,23 @@ public class AuthorizationCodec implements HeaderCodec<AuthorizationCodec.Author
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Token header codec {@link HeaderCodec} implementation.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.5
+	 */
 	private static final class TokenHeaderCodec extends GenericHeaderCodec<AuthorizationCodec.Authorization, Authorization.TokenBuilder> {
 
+		/**
+		 * <p>
+		 * Creates a token header codec.
+		 * </p>
+		 * 
+		 * @param authScheme the authorization scheme
+		 */
 		public TokenHeaderCodec(String authScheme) {
 			super(() -> new Authorization.TokenBuilder(authScheme), Set.of(Headers.NAME_AUTHORIZATION));
 		}

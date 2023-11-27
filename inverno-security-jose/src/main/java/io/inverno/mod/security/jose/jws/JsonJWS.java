@@ -125,6 +125,8 @@ public interface JsonJWS<A, B extends JsonJWS.Signature<A>> extends JsonJOSEObje
 	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.5
+	 *
+	 * @param <A> the payload type
 	 */
 	interface BuiltSignature<A> extends Signature<A> {
 		
@@ -145,6 +147,8 @@ public interface JsonJWS<A, B extends JsonJWS.Signature<A>> extends JsonJOSEObje
 	 *
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.5
+	 * 
+	 * @param <A> the payload type
 	 */
 	interface ReadSignature<A> extends Signature<A> {
 		

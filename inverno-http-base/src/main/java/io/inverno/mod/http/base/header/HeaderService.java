@@ -22,18 +22,16 @@ import io.netty.buffer.ByteBuf;
 
 /**
  * <p>
- * Provides a unified access to HTTP headers, giving the ability to decode or
- * encode {@link Header} instances for various headers.
+ * Provides a unified access to HTTP headers, giving the ability to decode or encode {@link Header} instances for various headers.
  * </p>
- * 
+ *
  * <p>
- * Implementations can rely on multiple {@link HeaderCodec} to decode and encode
- * headers based on the header name.
+ * Implementations can rely on multiple {@link HeaderCodec} to decode and encode headers based on the header name.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see Header
  * @see HeaderCodec
  */
@@ -41,29 +39,25 @@ public interface HeaderService {
 
 	/**
 	 * <p>
-	 * Decodes the specified header field as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section
-	 * 3.2</a>.
+	 * Decodes the specified header field as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section 3.2</a>.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>    the decoded header type
 	 * @param header a raw header field
-	 * 
+	 *
 	 * @return a decoded header instance
 	 */
 	<T extends Header> T decode(String header);
 	
 	/**
 	 * <p>
-	 * Decodes the specified header field {@link ByteBuf} as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section
-	 * 3.2</a> using the specified charset.
+	 * Decodes the specified header field {@link ByteBuf} as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section 3.2</a> using the specified charset.
 	 * </p>
-	 * 
+	 *
 	 * @param <T>     the decoded header type
 	 * @param buffer  a raw header field
 	 * @param charset the charset to use for decoding
-	 * 
+	 *
 	 * @return a decoded header instance
 	 */
 	<T extends Header> T decode(ByteBuf buffer, Charset charset);
@@ -83,8 +77,7 @@ public interface HeaderService {
 	
 	/**
 	 * <p>
-	 * Decodes the specified raw value {@link ByteBuf} for the specified header
-	 * name using the specified charset.
+	 * Decodes the specified raw value {@link ByteBuf} for the specified header name using the specified charset.
 	 * </p>
 	 * 
 	 * @param <T>     the decoded header type
@@ -102,9 +95,7 @@ public interface HeaderService {
 	 * </p>
 	 * 
 	 * <p>
-	 * The resulting value is a header field as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section
-	 * 3.2</a>.
+	 * The resulting value is a header field as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section 3.2</a>.
 	 * </p>
 	 * 
 	 * @param <T>    the encoded header type
@@ -121,9 +112,7 @@ public interface HeaderService {
 	 * </p>
 	 * 
 	 * <p>
-	 * The resulting value is a header field as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section
-	 * 3.2</a>.
+	 * The resulting value is a header field as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section 3.2</a>.
 	 * </p>
 	 * 
 	 * @param <T>     the encoded header type
@@ -139,9 +128,7 @@ public interface HeaderService {
 	 * </p>
 	 * 
 	 * <p>
-	 * The resulting value corresponds to the header field value as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section
-	 * 3.2</a>.
+	 * The resulting value corresponds to the header field value as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section 3.2</a>.
 	 * </p>
 	 * 
 	 * @param <T>    the encoded header type
@@ -157,9 +144,7 @@ public interface HeaderService {
 	 * </p>
 	 * 
 	 * <p>
-	 * The resulting value corresponds to the header field value as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section
-	 * 3.2</a>.
+	 * The resulting value corresponds to the header field value as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2">RFC 7230 Section 3.2</a>.
 	 * </p>
 	 * 
 	 * @param <T>     the encoded header type
@@ -171,9 +156,7 @@ public interface HeaderService {
 	
 	/**
 	 * <p>
-	 * Determines whether the specified character is a valid header token character
-	 * as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2.6">RFC
-	 * 7230 Section 3.2.6</a>.
+	 * Determines whether the specified character is a valid header token character as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2.6">RFC 7230 Section 3.2.6</a>.
 	 * </p>
 	 * 
 	 * @param character the character to test
@@ -200,9 +183,7 @@ public interface HeaderService {
 	
 	/**
 	 * <p>
-	 * Determines whether the specified value is a valid header token as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.2.6">RFC 7230 Section
-	 * 3.2.6</a>.
+	 * Determines whether the specified value is a valid header token as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2.6">RFC 7230 Section 3.2.6</a>.
 	 * </p>
 	 * 
 	 * @param value the value to test
@@ -223,8 +204,7 @@ public interface HeaderService {
 	
 	/**
 	 * <p>
-	 * Determines whether the specified character is a valid header base64 character as defined by
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.2">RFC 7235 Section 2.1</a>.
+	 * Determines whether the specified character is a valid header base64 character as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.2">RFC 7235 Section 2.1</a>.
 	 * </p>
 	 *
 	 * @param character the character to test
@@ -243,8 +223,7 @@ public interface HeaderService {
 	
 	/**
 	 * <p>
-	 * Determines whether the specified value is a valid header base64 token as defined by
-	 * <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.2">RFC 7235 Section 2.1</a>.
+	 * Determines whether the specified value is a valid header base64 token as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7235#section-4.2">RFC 7235 Section 2.1</a>.
 	 * </p>
 	 *
 	 * @param value the value to test
@@ -274,11 +253,8 @@ public interface HeaderService {
 	
 	/**
 	 * <p>
-	 * Determines whether the specified character is a valid header content
-	 * character as defined by
-	 * <a href="https://tools.ietf.org/html/rfc7230#section-3.2.6">RFC 7230 Section
-	 * 3.2.6</a> and <a href="https://tools.ietf.org/html/rfc5234#appendix-B.1">RFC
-	 * 5234 Appendix B.1</a>
+	 * Determines whether the specified character is a valid header content character as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2.6">RFC 7230 Section 3.2.6</a> and 
+	 * <a href="https://tools.ietf.org/html/rfc5234#appendix-B.1">RFC 5234 Appendix B.1</a>
 	 * </p>
 	 * 
 	 * @param character the character to test
@@ -291,11 +267,8 @@ public interface HeaderService {
 	
 	/**
 	 * <p>
-	 * Determines whether the specified value is a valid header content as defined
-	 * by <a href="https://tools.ietf.org/html/rfc7230#section-3.2.6">RFC 7230
-	 * Section 3.2.6</a> and
-	 * <a href="https://tools.ietf.org/html/rfc5234#appendix-B.1">RFC 5234 Appendix
-	 * B.1</a>
+	 * Determines whether the specified value is a valid header content as defined by <a href="https://tools.ietf.org/html/rfc7230#section-3.2.6">RFC 7230 Section 3.2.6</a> and
+	 * <a href="https://tools.ietf.org/html/rfc5234#appendix-B.1">RFC 5234 Appendix B.1</a>
 	 * </p>
 	 * 
 	 * @param value the value to test

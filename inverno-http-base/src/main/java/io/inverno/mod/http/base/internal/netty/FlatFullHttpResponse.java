@@ -33,6 +33,17 @@ public class FlatFullHttpResponse extends FlatHttpResponse implements FullHttpRe
 
 	private final HttpHeaders trailingHeaders;
 
+	/**
+	 * <p>
+	 * Creates a flat full HTTP response.
+	 * </p>
+	 * 
+	 * @param version         the HTTP version
+	 * @param status          the HTTP response status
+	 * @param headers         the HTTP headers
+	 * @param content         the response content
+	 * @param trailingHeaders the trailing HTTP headers
+	 */
 	public FlatFullHttpResponse(HttpVersion version, HttpResponseStatus status, HttpHeaders headers, ByteBuf content, HttpHeaders trailingHeaders) {
 		super(version, status, headers, content);
 		this.trailingHeaders = trailingHeaders;

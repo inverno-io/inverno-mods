@@ -34,7 +34,7 @@ public interface SetCookie extends Cookie {
 	 * Returns cookie's expires attribute.
 	 * </p>
 	 * 
-	 * @return 
+	 * @return the expires or null
 	 */
 	ZonedDateTime getExpires();
 	

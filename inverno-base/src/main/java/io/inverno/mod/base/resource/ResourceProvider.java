@@ -33,6 +33,8 @@ import java.util.stream.Stream;
  * @since 1.0
  * 
  * @see ResourceService
+ * 
+ * @param <A> the resource type
  */
 public interface ResourceProvider<A extends Resource> {
 	

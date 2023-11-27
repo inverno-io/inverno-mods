@@ -68,18 +68,4 @@ public class HttpClientUpgradeException extends HttpClientException {
 	public HttpClientUpgradeException(Throwable cause) {
 		super(cause);
 	}
-
-	/**
-	 * <p>
-	 * Creates an HTTP client upgrade exception.
-	 * </p>
-	 * 
-	 * @param message            the message
-	 * @param cause              the cause
-	 * @param enableSuppression 
-	 * @param writableStackTrace 
-	 */
-	public HttpClientUpgradeException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
 }

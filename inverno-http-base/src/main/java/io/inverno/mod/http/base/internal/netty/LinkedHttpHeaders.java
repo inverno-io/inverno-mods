@@ -58,10 +58,24 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	
 	private HeaderNode[] buckets = new HeaderNode[16];
 	
+	/**
+	 * <p>
+	 * Creates linked HTTP headers.
+	 * </p>
+	 */
 	public LinkedHttpHeaders() {
 		this.head = this.tail = new HeaderNode();
 	}
 	
+	/**
+	 * <p>
+	 * Converts the specified value to a char sequence.
+	 * </p>
+	 * 
+	 * @param value the value to convert
+	 * 
+	 * @return a char sequence
+	 */
 	private CharSequence convertToCharSequence(Object value) {
 		if(value instanceof CharSequence) {
 			return (CharSequence)value;
@@ -80,6 +94,15 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Returns a header value as char sequence.
+	 * </p>
+	 * 
+	 * @param name the name of the header
+	 * 
+	 * @return the value or null
+	 */
 	private CharSequence get0(CharSequence name) {
 		int hashCode = AsciiString.hashCode(name);
 		int bucketIndex = hashCode & 0x0000000F;
@@ -127,6 +150,15 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	    return values;
 	}
 	
+	/**
+	 * <p>
+	 * Returns all header values as char sequences.
+	 * </p>
+	 * 
+	 * @param name the name of the header
+	 * 
+	 * @return a list of values or an empty list
+	 */
 	public List<CharSequence> getAllCharSequence(CharSequence name) {
 		LinkedList<CharSequence> values = new LinkedList<>();
 	    int h = AsciiString.hashCode(name);
@@ -142,6 +174,15 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	    return values;
 	}
 	
+	/**
+	 * <p>
+	 * Returns a header value as char sequence.
+	 * </p>
+	 * 
+	 * @param name the name of the header
+	 * 
+	 * @return the value or null
+	 */
 	public CharSequence getCharSequence(CharSequence name) {
 		return this.get0(name);
 	}
@@ -159,11 +200,30 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		return value != null ? Integer.parseInt(value) : defaultValue;
 	}
 	
+	/**
+	 * <p>
+	 * Returns a header value as long.
+	 * </p>
+	 * 
+	 * @param name the name of the header
+	 * 
+	 * @return the value or null
+	 */
 	public Long getLong(CharSequence name) {
 		String value = this.get(name);
 		return value != null ? Long.parseLong(value) : null;
 	}
 
+	/**
+	 * <p>
+	 * Returns a header value as long defaulting the the specified default value.
+	 * </p>
+	 * 
+	 * @param name         the name of the header
+	 * @param defaultValue the default value
+	 * 
+	 * @return the value or the default value
+	 */
 	public long getLong(CharSequence name, long defaultValue) {
 		Objects.requireNonNull(name);
 		String value = this.get(name);
@@ -195,12 +255,30 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		return value != null ? Headers.FORMATTER_RFC_5322_DATE_TIME.parse(value).getLong(ChronoField.MILLI_OF_SECOND) : defaultValue;
 	}
 
+	/**
+	 * <p>
+	 * Adds the specified header.
+	 * </p>
+	 * 
+	 * @param name  the name of the header
+	 * @param value the value of the header
+	 */
 	private void add0(CharSequence name, CharSequence value) {
 		int hashCode = AsciiString.hashCode(name);
 		int bucketIndex = hashCode & 0x0000000F;
 		this.add0(name, value, hashCode, bucketIndex);
 	}
 	
+	/**
+	 * <p>
+	 * Adds the specified header with specified hashcode to the specified bucket.
+	 * </p>
+	 * 
+	 * @param name        the name of the header
+	 * @param value       the value of the header
+	 * @param hashCode    the hashcode of the header
+	 * @param bucketIndex the index of the bucket
+	 */
 	private void add0(CharSequence name, CharSequence value, int hashCode, int bucketIndex) {
 		HeaderNode bucketHead = buckets[bucketIndex];
 		HeaderNode newNode;
@@ -244,11 +322,31 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	    return this;
 	}
 	
+	/**
+	 * <p>
+	 * Adds the specified header.
+	 * </p>
+	 * 
+	 * @param name  the name of the header
+	 * @param value the value of the header
+	 * 
+	 * @return the HTTP headers
+	 */
 	public HttpHeaders addCharSequence(CharSequence name, CharSequence value) {
 		this.add0(name, value);
 	    return this;
 	}
 	
+	/**
+	 * <p>
+	 * Adds the specified header with multiple values.
+	 * </p>
+	 * 
+	 * @param name   the name of the header
+	 * @param values an iterable providing the values
+	 * 
+	 * @return 
+	 */
 	public HttpHeaders addCharSequence(CharSequence name, Iterable<CharSequence> values) {
 		int hashCode = AsciiString.hashCode(name);
 	    int bucketIndex = hashCode & 0x0000000F;
@@ -264,6 +362,16 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		return this;
 	}
 	
+	/**
+	 * <p>
+	 * Adds the specified header.
+	 * </p>
+	 * 
+	 * @param name the name of the header
+	 * @param value the value of the header
+	 * 
+	 * @return the HTTP headers
+	 */
 	public HttpHeaders addLong(CharSequence name, long value) {
 		this.add0(name, Long.toString(value));
 		return this;
@@ -275,12 +383,34 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		return this;
 	}
 
+	/**
+	 * <p>
+	 * Sets the value of the specified header.
+	 * </p>
+	 * 
+	 * @param name  the name of the header
+	 * @param value the value to set
+	 * 
+	 * @return the HTTP headers
+	 */
 	private LinkedHttpHeaders set0(CharSequence name, CharSequence value) {
 		int hashCode = AsciiString.hashCode(name);
 		int bucketIndex = hashCode & 0x0000000F;
 		return this.set0(name, value, hashCode, bucketIndex);
 	}
 	
+	/**
+	 * <p>
+	 * Sets the value of the specified header with specified hashcode to the specified bucket.
+	 * </p>
+	 * 
+	 * @param name        the name of the header
+	 * @param value       the value to set
+	 * @param hashCode    the hashcode of the header
+	 * @param bucketIndex the index of the bucket
+	 * 
+	 * @return the HTTP headers
+	 */
 	private LinkedHttpHeaders set0(CharSequence name, CharSequence value, int hashCode, int bucketIndex) {
 		remove0(name, hashCode, bucketIndex);
 		if (value != null) {
@@ -321,11 +451,31 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	    return this;
 	}
 
+	/**
+	 * <p>
+	 * Sets the value of the specified header.
+	 * </p>
+	 * 
+	 * @param name  the name of the header
+	 * @param value the value to set
+	 * 
+	 * @return the HTTP headers
+	 */
 	public LinkedHttpHeaders setCharSequence(CharSequence name, CharSequence value) {
 		this.set0(name, value);
 		return this;
 	}
 	
+	/**
+	 * <p>
+	 * Sets multiple values for the specified header.
+	 * </p>
+	 * 
+	 * @param name   the name of the header
+	 * @param values an iterable providing the values
+	 * 
+	 * @return the HTTP headers
+	 */
 	public HttpHeaders setCharSequence(CharSequence name, Iterable<CharSequence> values) {
 		int hashCode = AsciiString.hashCode(name);
 	    int bucketIndex = hashCode & 0x0000000F;
@@ -341,6 +491,16 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		return this;
 	}
 	
+	/**
+	 * <p>
+	 * Sets the value of the specified header.
+	 * </p>
+	 * 
+	 * @param name  the name of the header
+	 * @param value the value to set
+	 * 
+	 * @return the HTTP headers
+	 */
 	public HttpHeaders setLong(CharSequence name, long value) {
 		this.set0(name, Long.toString(value));
 		return this;
@@ -352,12 +512,28 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		return this;
 	}
 	
+	/**
+	 * <p>
+	 * Removes the specified header.
+	 * </p>
+	 * 
+	 * @param name the name of the header
+	 */
 	private void remove0(CharSequence name) {
 		int hashCode = AsciiString.hashCode(name);
 		int bucketIndex = hashCode & 0x0000000F;
 		this.remove0(name, hashCode, bucketIndex);
 	}
 	
+	/**
+	 * <p>
+	 * Removes the header with specified hashcode from the specified bucket.
+	 * </p>
+	 * 
+	 * @param name        the name of the header
+	 * @param hashCode    the hashcode
+	 * @param bucketIndex the index of the bucket
+	 */
 	private void remove0(CharSequence name, int hashCode, int bucketIndex) {
 		HeaderNode current = buckets[bucketIndex];
 		HeaderNode previous = null;
@@ -412,6 +588,13 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		return entries;
 	}
 	
+	/**
+	 * <p>
+	 * Returns headers as entries of char sequences.
+	 * </p>
+	 * 
+	 * @return the headers entries
+	 */
 	public List<Entry<CharSequence, CharSequence>> entriesCharSequence() {
 		List<Map.Entry<CharSequence, CharSequence>> entries = new ArrayList<>();
 		for(Iterator<Map.Entry<CharSequence, CharSequence>> entriesIterator = this.iteratorCharSequence();entriesIterator.hasNext();) {
@@ -431,6 +614,17 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		return names;
 	}
 
+	/**
+	 * <p>
+	 * Determines whether the headers contain the specified header with the specified value.
+	 * </p>
+	 * 
+	 * @param name       the name of the header
+	 * @param value      the value of the header
+	 * @param ignoreCase true to ignore the case, false otherwise
+	 * 
+	 * @return true if the headers contain the header, false otherwise
+	 */
 	private boolean contains0(CharSequence name, CharSequence value, boolean ignoreCase) {
 		int hashCode = AsciiString.hashCode(name);
 		int bucketIndex = hashCode & 0x0000000F;
@@ -526,6 +720,13 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		};
 	}
 	
+	/**
+	 * <p>
+	 * Encodes the headers into the specified buffer.
+	 * </p>
+	 * 
+	 * @param buf the traget buffer
+	 */
 	public void encode(ByteBuf buf) {
 		HeaderNode current = this.tail.previous;
 		while (current != null) {
@@ -535,9 +736,18 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	}
 
 	private static final int COLON_AND_SPACE_SHORT = (HttpConstants.COLON << 8) | HttpConstants.SP;
-	static final int CRLF_SHORT = (HttpConstants.CR << 8) | HttpConstants.LF;
+	private static final int CRLF_SHORT = (HttpConstants.CR << 8) | HttpConstants.LF;
 
-	static void encoderHeader(CharSequence name, CharSequence value, ByteBuf buf) {
+	/**
+	 * <p>
+	 * Encode the specified header into the specified buffer.
+	 * </p>
+	 * 
+	 * @param name  the name of the header
+	 * @param value the header value
+	 * @param buf   the target buffer
+	 */
+	private static void encoderHeader(CharSequence name, CharSequence value, ByteBuf buf) {
 		final int nameLen = name.length();
 		final int valueLen = value.length();
 		final int headerLen = nameLen + valueLen + 4;
@@ -554,6 +764,15 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		buf.writerIndex(offset);
 	}
 
+	/**
+	 * <p>
+	 * Writes the specified value in ASCII to the specified buffer.
+	 * </p>
+	 * 
+	 * @param buf    the target buffer
+	 * @param offset the buffer offset
+	 * @param value  the value to write
+	 */
 	private static void writeAscii(ByteBuf buf, int offset, CharSequence value) {
 		if (value instanceof AsciiString) {
 			ByteBufUtil.copy((AsciiString) value, 0, buf, offset, value.length());
@@ -563,6 +782,14 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		}
 	}
 
+	/**
+	 * <p>
+	 * Represents a header node in the internal linked list.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.0
+	 */
 	private final class HeaderNode implements Map.Entry<CharSequence, CharSequence> {
 
 		final CharSequence key;
@@ -572,12 +799,26 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		HeaderNode next, previous;
 		HeaderNode bucketNext;
 		
+		/**
+		 * <p>
+		 * Creates a header node.
+		 * </p>
+		 */
 		private HeaderNode() {
 			this.hashCode = -1;
 			this.key = null;
 			this.value = null;
 		}
 		
+		/**
+		 * <p>
+		 * Creates a header node.
+		 * </p>
+		 * 
+		 * @param hashCode the hashcode
+		 * @param key      the header name
+		 * @param value    the header value
+		 */
 		private HeaderNode(int hashCode, CharSequence key, CharSequence value) {
 			this.hashCode = hashCode;
 			this.key = key;

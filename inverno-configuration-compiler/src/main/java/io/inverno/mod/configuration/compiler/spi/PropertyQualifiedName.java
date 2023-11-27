@@ -20,8 +20,12 @@ import io.inverno.core.compiler.spi.ModuleQualifiedName;
 import io.inverno.core.compiler.spi.QualifiedNameFormatException;
 
 /**
+ * <p>
+ * A qualified name identifying a property.
+ * </p>
+ * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- *
+ * @since 1.0
  */
 public class PropertyQualifiedName extends BeanQualifiedName {
 
@@ -36,8 +40,7 @@ public class PropertyQualifiedName extends BeanQualifiedName {
 
 	/**
 	 * <p>
-	 * Creates a property qualified name with the specified bean qualified name and
-	 * property name.
+	 * Creates a property qualified name with the specified bean qualified name and property name.
 	 * </p>
 	 * 
 	 * @param beanQName a bean qualified name
@@ -78,16 +81,13 @@ public class PropertyQualifiedName extends BeanQualifiedName {
 
 	/**
 	 * <p>
-	 * Creates a property qualified name from the specified raw value of the form
-	 * {@code BeanQualifiedName():<propertyName>} where
-	 * {@code <propertyName>} is a valid Java name.
+	 * Creates a property qualified name from the specified raw value of the form {@code BeanQualifiedName():<propertyName>} where {@code <propertyName>} is a valid Java name.
 	 * </p>
 	 * 
 	 * @param qname a raw qualified name
 	 * 
 	 * @return a property qualified name
-	 * @throws QualifiedNameFormatException if the specified value is not a property
-	 *                                      qualified name
+	 * @throws QualifiedNameFormatException if the specified value is not a property qualified name
 	 */
 	public static PropertyQualifiedName valueOf(String qname) throws QualifiedNameFormatException {
 		int lastSeparatorIndex = qname.lastIndexOf(".");
@@ -99,19 +99,15 @@ public class PropertyQualifiedName extends BeanQualifiedName {
 
 	/**
 	 * <p>
-	 * Creates a property qualified name from the specified module qualified name
-	 * and the specified raw value of the form
-	 * {@code <beanName>:<propertyName>} where
-	 * {@code <beanName>} and {@code <propertyName>} are valid
-	 * Java names.
+	 * Creates a property qualified name from the specified module qualified name and the specified raw value of the form {@code <beanName>:<propertyName>} where {@code <beanName>} and 
+	 * {@code <propertyName>} are valid Java names.
 	 * </p>
 	 * 
 	 * @param moduleQName a module qualified name
 	 * @param qname       a raw qualified name
 	 * 
 	 * @return a property qualified name
-	 * @throws QualifiedNameFormatException if the specified value is not a property
-	 *                                      qualified name
+	 * @throws QualifiedNameFormatException if the specified value is not a property qualified name
 	 */
 	public static PropertyQualifiedName valueOf(ModuleQualifiedName moduleQName, String qname)
 			throws QualifiedNameFormatException {

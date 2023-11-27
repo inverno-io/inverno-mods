@@ -27,6 +27,9 @@ import java.util.Optional;
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
+ *
+ * @param <A> the identity type
+ * @param <B> the access controller type
  */
 interface DelegatingSecurityContext<A extends Identity, B extends AccessController> extends SecurityContext<A, B> {
 

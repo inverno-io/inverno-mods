@@ -28,6 +28,8 @@ import io.inverno.mod.base.Scope;
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
+ * 
+ * @param <T> the type of the scoped instances
  */
 public abstract class ThreadScope<T> extends Scope<T> {
 

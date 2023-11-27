@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.http.base;
 
+import io.inverno.mod.http.base.header.Cookie;
+
 /**
  * <p>
  * Represents mutable outbound HTTP cookies.

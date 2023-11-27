@@ -45,8 +45,7 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 
 	/**
 	 * <p>
-	 * Creates an accept header codec that allows multiple media ranges to be
-	 * specified in the header value.
+	 * Creates an accept header codec that allows multiple media ranges to be specified in the header value.
 	 * </p>
 	 */
 	@BeanSocket
@@ -56,10 +55,9 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 	
 	/**
 	 * <p>
-	 * Creates an accept header codec that allows or not multiple media ranges to be
-	 * specified in the header value.
+	 * Creates an accept header codec that allows or not multiple media ranges to be specified in the header value.
 	 * </p>
-	 * 
+	 *
 	 * @param allowMultiple true to allow multiple media ranges, false otherwise
 	 */
 	public AcceptCodec(boolean allowMultiple) {
@@ -144,10 +142,9 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 			
 			/**
 			 * <p>
-			 * Creates a media range with the specified media type, quality value and
-			 * parameters.
+			 * Creates a media range with the specified media type, quality value and parameters.
 			 * </p>
-			 * 
+			  
 			 * @param mediaType  a media type
 			 * @param weight     a quality value
 			 * @param parameters a map of parameters
@@ -162,10 +159,9 @@ public class AcceptCodec extends ParameterizedHeaderCodec<AcceptCodec.Accept, Ac
 			
 			/**
 			 * <p>
-			 * Creates a media range with the specified type, sub-type, quality value and
-			 * parameters.
+			 * Creates a media range with the specified type, sub-type, quality value and parameters.
 			 * </p>
-			 * 
+			 *
 			 * @param type       a type
 			 * @param subType    a sub-type
 			 * @param weight     a quality value

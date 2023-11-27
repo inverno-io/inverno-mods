@@ -28,10 +28,9 @@ import java.util.function.Supplier;
 
 /**
  * <p>
- * A generic parameterized {@link HeaderCodec} implementation used to
- * encode/decode various parameterized headers.
+ * A generic parameterized {@link HeaderCodec} implementation used to encode/decode various parameterized headers.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  * 
@@ -135,8 +134,6 @@ public class ParameterizedHeaderCodec<A extends ParameterizedHeader, B extends P
 	 * <p>
 	 * Decodes the specified raw value ByteBuf for the specified header name using the specified charset.
 	 * </p>
-	 *
-	 * name - a header name buffer - a header raw value charset - the charset to use for decoding
 	 *
 	 * @param name    a header name
 	 * @param buffer  a header raw value
