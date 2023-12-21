@@ -165,16 +165,22 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		this.close = Mono.<Void>create(sink -> {
 			if(!this.closed && !this.closing) {
 				this.closing = true;
-				ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
-					.addListener(ChannelFutureListener.CLOSE)
-					.addListener(future -> {
-						if(future.isSuccess()) {
-							sink.success();
-						}
-						else {
-							sink.error(future.cause());
-						}
-					});
+				ChannelFuture closeFuture;
+				if(ctx.channel().isActive()) {
+					closeFuture = ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
+						.addListener(ChannelFutureListener.CLOSE);
+				}
+				else {
+					closeFuture = ctx.close();
+				}
+				closeFuture.addListener(future -> {
+					if(future.isSuccess()) {
+						sink.success();
+					}
+					else {
+						sink.error(future.cause());
+					}
+				});
 			}
 			else {
 				sink.success();

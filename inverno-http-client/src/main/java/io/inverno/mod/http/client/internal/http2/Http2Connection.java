@@ -38,6 +38,7 @@ import io.inverno.mod.http.client.internal.http1x.Http1xUpgradingExchange;
 import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoop;
@@ -176,16 +177,22 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 		this.close = Mono.<Void>create(sink -> {
 			if(!this.closed && !this.closing) {
 				this.closing = true;
-				ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
-					.addListener(ChannelFutureListener.CLOSE)
-					.addListener(future -> {
-						if(future.isSuccess()) {
-							sink.success();
-						}
-						else {
-							sink.error(future.cause());
-						}
-					});
+				ChannelFuture closeFuture;
+				if(ctx.channel().isActive()) {
+					closeFuture = ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
+						.addListener(ChannelFutureListener.CLOSE);
+				}
+				else {
+					closeFuture = ctx.close();
+				}
+				closeFuture.addListener(future -> {
+					if(future.isSuccess()) {
+						sink.success();
+					}
+					else {
+						sink.error(future.cause());
+					}
+				});
 			}
 			else {
 				sink.success();

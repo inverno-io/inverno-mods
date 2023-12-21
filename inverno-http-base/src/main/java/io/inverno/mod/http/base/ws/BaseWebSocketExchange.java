@@ -301,7 +301,7 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 		 * </p>
 		 *
 		 * <p>
-		 * When the WebSocket frames publisher completes, it is sometimes desirable to keep the socket opened in order to consume yet to be received messages sent by the remove endpoint before or
+		 * When the WebSocket frames publisher completes, it is sometimes desirable to keep the socket opened in order to consume yet to be received messages sent by the remote endpoint before or
 		 * after receiving the close frame. Note that when the publisher terminates in error, this is considered a failure and the WebSocket exchange is always closed.
 		 * </p>
 		 * 
