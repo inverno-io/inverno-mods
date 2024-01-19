@@ -140,7 +140,7 @@ public class PooledEndpoint extends AbstractEndpoint {
 		this.maxSize = this.configuration.pool_max_size();
 		this.bufferSize = this.configuration.pool_buffer_size();
 		this.cleanPeriod = this.configuration.pool_clean_period();
-		this.connectTimeout = this.configuration.connect_timeout();
+		this.connectTimeout = this.configuration.pool_connect_timeout();
 		
 		if(this.maxSize <= 0) {
 			throw new IllegalArgumentException("max_pool_size must be a greater than 1");

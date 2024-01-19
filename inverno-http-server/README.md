@@ -7,7 +7,7 @@
 [chunked-transfer-encoding]: https://en.wikipedia.org/wiki/Chunked_transfer_encoding
 [epoll]: https://en.wikipedia.org/wiki/Epoll
 [kqueue]: https://en.wikipedia.org/wiki/Kqueue
-[jdk-providers]: https://docs.oracle.com/en/java/javase/11/security/oracle-providers.html
+[jdk-providers]: https://docs.oracle.com/en/java/javase/21/security/oracle-providers.html
 [server-sent-events]: https://en.wikipedia.org/wiki/Server-sent_events
 
 [rfc-7540-8.1.2.4]: https://tools.ietf.org/html/rfc7540#section-8.1.2.4
@@ -16,7 +16,7 @@
 
 # HTTP Server
 
-The Inverno *http-server* module provides fully reactive HTTP/1.x and HTTP/2 server based on [Netty][netty].
+The Inverno *http-server* module provides a fully reactive HTTP/1.x and HTTP/2 server based on [Netty][netty].
 
 It especially supports:
 
@@ -48,7 +48,7 @@ module io.inverno.example.app_http {
 }
 ```
 
-The *http-base* module which provides the header service used by the HTTP server is composed as a transitive dependency in the *http-server* module and as a result it doesn't need to be specified here nor provided in an enclosing module.
+The *http-base* module which provides base HTTP API and services is composed as a transitive dependency in the *http-server* module and as a result it doesn't need to be specified here nor provided in an enclosing module.
 
 We also need to declare these dependencies in the build descriptor:
 
@@ -120,7 +120,7 @@ The above example starts a HTTP/1.x server using default configuration and a def
      ║ Application class   : io.inverno.example.app_http.Main                                     ║
      ║                                                                                            ║
      ║ Modules             :                                                                      ║
-     ║  ....                                                                                      ║
+     ║  ...                                                                                       ║
      ╚════════════════════════════════════════════════════════════════════════════════════════════╝
 
 
@@ -151,7 +151,7 @@ The HTTP server uses a **server controller** to handle client request. The modul
 
 ## Configuration
 
-The first thing we might want to do is to create a configuration in the *app_http* module for easy *http-server* module setup. The HTTP server configuration is actually done in the `BootConfiguration` defined in the *boot* module for low level network configuration and `HttpServerConfiguration` in the *http-server* module configuration for the HTTP server itself. 
+The first thing we might want to do is to create a configuration in the *app_http* module for easy *http-server* module setup. The HTTP server configuration is actually done in the `BootConfiguration` defined in the *boot* module for low level network configuration and in `HttpServerConfiguration` defined in the *http-server* module for the HTTP server itself. 
 
 The following configuration can then be created in the *app_http* module:
 
@@ -391,7 +391,6 @@ public class Main {
                     .http_server(server -> server
                         .decompression_enabled(true)
                         .compression_enabled(true)
-                        .compression_level(6)
                     )
                 )
             )
@@ -411,6 +410,19 @@ content-encoding: gzip
 content-length: 39
 
 Hello
+```
+
+`deflate` and `gzip` compression algorithms are supported by default, Zstandard or Brotli support can be added by adding corresponding dependencies to the project, for instance:
+
+```xml
+<dependency>
+	<groupId>com.aayushatharva.brotli4j</groupId>
+	<artifactId>brotli4j</artifactId>
+</dependency>
+<dependency>
+	<groupId>com.aayushatharva.brotli4j</groupId>
+	<artifactId>native-linux-x86_64</artifactId>
+</dependency>
 ```
 
 ### TLS
@@ -1058,13 +1070,13 @@ Request cookie can be obtained in a similar way as follows:
 ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     ...
     // get a specific cookie, if there are multiple cookie with the same name, the first one is returned
-    int someInteger = exchange.request().cookies().get("some-integer").map(Parameter::asInteger).orElseThrow(() -> new BadRequestException("Missing some-integer"));
+    int someInteger = exchange.request().headers().cookies().get("some-integer").map(Parameter::asInteger).orElseThrow(() -> new BadRequestException("Missing some-integer"));
 
     // get all cookies with a given name
-    List<Integer> someIntergers = exchange.request().cookies().getAll("some-integer").stream().map(Parameter::asInteger).collect(Collectors.toList());
+    List<Integer> someIntergers = exchange.request().headers().cookies().getAll("some-integer").stream().map(Parameter::asInteger).collect(Collectors.toList());
 
     // get all cookies
-    Map<String, List<CookieParameter>> queryParameters = exchange.request().cookies().getAll();
+    Map<String, List<CookieParameter>> queryParameters = exchange.request().headers().cookies().getAll();
     ...
 };
 ```
@@ -1219,6 +1231,8 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
 };
 ```
 
+### WebSocket exchange
+
 The `WebSocketExchange` also exposes:
 
 - the original HTTP request, 
@@ -1259,7 +1273,7 @@ The WebSocket protocol is bidirectional and allows sending and receiving data on
 
 ### Inbound
 
-In a WebSocket exchange, the `Inbound` exposes the stream of frames sent by the client to the server. It allows to consume WebSocket frames (text or binary) or messages (text or binary).
+In a WebSocket exchange, the `Inbound` exposes the stream of frames received by the server from the client. It allows to consume WebSocket frames (text or binary) or messages (text or binary).
 
 The following handler simply logs incoming frames:
 
@@ -1321,14 +1335,15 @@ Messages can be filtered by type (text or binary) by invoking `WebSocketExchange
 
 In a WebSocket exchange, the `Outbound` exposes the stream of frames sent by the server to the client. It allows to specify the stream of WebSocket frames (text or binary) or messages (text or binary) to send to the client. WebSocket frames and messages are created using provided factories.
 
-The following handler simply sends three text frames to the client. The WebSocket is closed automatically when the outbound publisher terminates.
+The following handler simply sends three text frames to the client.
 
 ```java
 ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.webSocket()
         .orElseThrow(() -> new InternalServerErrorException())
         .handler(webSocketExchange -> {
-            webSocketExchange.outbound().frames(factory -> Flux.just("ONE", "TWO", "THREE").map(factory::text));
+            webSocketExchange.outbound()
+                .frames(factory -> Flux.just("ONE", "TWO", "THREE").map(factory::text));
         });
 }
 ```
@@ -1340,10 +1355,27 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
     exchange.webSocket()
         .orElseThrow(() -> new InternalServerErrorException())
         .handler(webSocketExchange -> {
-            webSocketExchange.outbound().messages(factory -> Flux.just("ONE", "TWO", "THREE").map(content -> factory.text(Flux.just("message: ", content))));
+            webSocketExchange.outbound()
+                .messages(factory -> Flux.just("ONE", "TWO", "THREE").map(content -> factory.text(Flux.just("message: ", content))));
         });
 }
 ```
+
+By default, a close frame is automatically sent when the outbound publisher terminates. This behaviour can be changed by configuration by setting the `ws_close_on_outbound_complete` parameter to ̀`false` or on the `Outbound` itself using the `closeOnComplete()` method:
+
+```java
+ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
+    exchange.webSocket()
+        .orElseThrow(() -> new InternalServerErrorException())
+        .handler(webSocketExchange -> {
+            webSocketExchange.outbound()
+                .closeOnComplete(false)
+                .frames(factory -> Flux.just("ONE", "TWO", "THREE").map(factory::text));
+        });
+}
+```
+
+After a close frame has been sent, if the inbound publisher has not been subscribed or if it has terminated, the connection is closed right away, otherwise the server waits up to a configured timeout (`ws_inbound_close_frame_timeout` defaults to 60000ms) for the client to respond with a corresponding close frame before closing the connection.
 
 ### A simple chat server
 
@@ -1360,10 +1392,10 @@ import io.inverno.mod.base.resource.PathResource;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpException;
+import io.inverno.mod.http.base.ws.WebSocketFrame;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.ServerController;
-import io.inverno.mod.http.server.ws.WebSocketFrame;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 

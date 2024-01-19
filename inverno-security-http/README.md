@@ -642,7 +642,7 @@ CredentialsExtractor<TokenCredentials> headerTokenCredentialsExtractor = exchang
 };
 
 CredentialsExtractor<TokenCredentials> cookieTokenCredentialsExtractor = exchange -> {
-    return Mono.fromSupplier(() -> exchange.request().cookies().get("token").map(cookie -> new TokenCredentials(cookie.asString())).orElse(null));
+    return Mono.fromSupplier(() -> exchange.request().headers().cookies().get("token").map(cookie -> new TokenCredentials(cookie.asString())).orElse(null));
 };
 
 CredentialsExtractor<TokenCredentials> queryTokenCredentialsExtractor = exchange -> {

@@ -141,8 +141,8 @@ public class GenericHttpClient implements @Provide HttpClient {
 		}
 
 		@Override
-		public GenericEndpointBuilder configuration(HttpClientConfiguration confiuration) {
-			this.configuration = confiuration;
+		public GenericEndpointBuilder configuration(HttpClientConfiguration configuration) {
+			this.configuration = configuration;
 			return this;
 		}
 

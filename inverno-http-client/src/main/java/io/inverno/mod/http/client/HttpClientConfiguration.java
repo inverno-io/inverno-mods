@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.http.client;
 
+import io.inverno.mod.base.net.NetClientConfiguration;
 import io.inverno.mod.configuration.Configuration;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.client.ws.WebSocketExchange;
@@ -80,7 +81,7 @@ public interface HttpClientConfiguration {
 	 * 
 	 * <p>
 	 * This specifies the frequency at which unnecessary connections are removed from the active pool and parked until either a request burst requires the connection to be reinstated or until the keep
-	 * alive timeout is reached and the connection closed and definitely removed from the pool.
+	 * alive timeout is reached in which case the connection is closed and definitely removed from the pool.
 	 * </p>
 	 * 
 	 * <p>
@@ -115,22 +116,33 @@ public interface HttpClientConfiguration {
 	 * The represents the time beyond which an inactive connection is closed and removed from the pool ({@code null} means no timeout).
 	 * </p>
 	 * 
+	 * <p>
+	 * Defaults to {@code 60000}.
+	 * </p>
+	 * 
 	 * @return the pool
 	 */
-	Long pool_keep_alive_timeout();
+	default Long pool_keep_alive_timeout() {
+		return 60000l;
+	}
 	
 	/**
 	 * <p>
-	 * The connection timeout in milliseconds.
+	 * The pool connection timeout in milliseconds.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that this timeout specifies the maximum time to wait for the connection pool to return a connection, this differs from {@link NetClientConfiguration#connect_timeout() } which specifies the
+	 * connection timeout at the socket level.
 	 * </p>
 	 * 
 	 * <p>
 	 * Defaults to {@code 60000}.
 	 * </p>
 	 * 
-	 * @return the connection timeout
+	 * @return the pool connection timeout
 	 */
-	default long connect_timeout() {
+	default long pool_connect_timeout() {
 		return 60000l;
 	}
 	

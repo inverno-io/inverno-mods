@@ -25,7 +25,7 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * An endpoint represents the terminal end in an HTTP communication between a client and a server.
+ * An endpoint represents the terminal end in an HTTP communication from a client to a server.
  * </p>
  *
  * <p>

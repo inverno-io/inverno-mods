@@ -213,7 +213,7 @@ public interface HttpClient {
 		 * </p>
 		 * 
 		 * <p>
-		 * When invoked multiple time this method chains the finalizer one after the other.
+		 * When invoked multiple time this method chains the interceptors one after the other.
 		 * </p>
 		 * 
 		 * @param interceptor an exchange interceptor
