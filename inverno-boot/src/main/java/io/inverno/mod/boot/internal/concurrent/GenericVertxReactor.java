@@ -94,9 +94,10 @@ public class GenericVertxReactor implements VertxReactor, InternalReactor {
 		this.vertx = new VertxBuilder(options).threadFactory(new ReactorVertxThreadFactory(this)).init().vertx();
 
 		// This is kind of dangerous if Vert.x decide to make VertxImpl private we might be in trouble... 
-		this.coreEventLoopGroup = this.vertx.nettyEventLoopGroup();
+		this.coreEventLoopGroup = ((VertxImpl)this.vertx).nettyEventLoopGroup();
 		this.acceptorEventLoopGroup = new EventLoopGroupWrapper(((VertxImpl)this.vertx).getAcceptorEventLoopGroup());
 		
+		this.coreEventLoops = new EventLoop[this.coreEventLoopGroupSize];
 		for(int i=0;i<this.coreEventLoopGroupSize;i++) {
 			this.coreEventLoops[i] = this.coreEventLoopGroup.next();
 		}
