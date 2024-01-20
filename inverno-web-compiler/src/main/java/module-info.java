@@ -38,14 +38,14 @@ import io.inverno.mod.web.annotation.WebRoutes;
  */
 module io.inverno.mod.web.compiler {
 	requires transitive io.inverno.core.compiler;
-	
 	requires io.inverno.mod.base;
 	requires transitive io.inverno.mod.http.base;
 	requires io.inverno.mod.http.server;
 	requires io.inverno.mod.web;
 	
-	requires reactor.core;
+	requires org.apache.commons.text;
 	requires org.reactivestreams;
+	requires reactor.core;
 	
 	exports io.inverno.mod.web.compiler.spi;
 	

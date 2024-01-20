@@ -116,6 +116,7 @@ module io.inverno.mod.security {
 	
 	requires com.fasterxml.jackson.databind;
 	requires org.apache.commons.lang3;
+	requires org.apache.commons.text;
 	requires org.apache.logging.log4j;
 	requires static org.bouncycastle.provider;
 	requires transitive org.reactivestreams;
