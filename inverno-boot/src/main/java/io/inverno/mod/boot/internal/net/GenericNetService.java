@@ -141,8 +141,8 @@ public class GenericNetService implements @Provide NetService {
 			}
 			case IO_URING: {
 				bootstrap.channelFactory(IOUringSocketChannel::new);
-				bootstrap.option(EpollChannelOption.TCP_QUICKACK, clientConfiguration.tcp_quickack())
-					.option(EpollChannelOption.TCP_CORK, clientConfiguration.tcp_cork());
+				bootstrap.option(IOUringChannelOption.TCP_QUICKACK, clientConfiguration.tcp_quickack())
+					.option(IOUringChannelOption.TCP_CORK, clientConfiguration.tcp_cork());
 				break;
 			}
 			default: {
