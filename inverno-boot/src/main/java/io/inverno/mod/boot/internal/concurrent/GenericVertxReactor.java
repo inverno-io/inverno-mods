@@ -83,10 +83,6 @@ public class GenericVertxReactor implements VertxReactor, InternalReactor {
 	public void init() {
 		this.logger.debug("Starting Vert.x...");
 		
-		if(this.transportType == TransportType.IO_URING) {
-			throw new IllegalStateException("io_uring Transport type is not supported with Vert.x reactor");
-		}
-		
 		VertxOptions options = new VertxOptions()
 			.setPreferNativeTransport(this.configuration.prefer_native_transport())
 			.setEventLoopPoolSize(this.configuration.reactor_event_loop_group_size());
