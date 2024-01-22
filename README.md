@@ -125,6 +125,19 @@ Configurations are defined as simple interfaces in a module which are processed 
 
 The Inverno HTTP base module provides the foundational API as well as common services for HTTP client and server development, in particular an extensible HTTP header service used to decode and encode HTTP headers.
 
+### inverno-http-client
+
+The Inverno HTTP client module provides a fully reactive HTTP/1.x and HTTP/2 client implementation based on Netty. 
+
+It supports the following features:
+
+- SSL
+- HTTP compression/decompression
+- HTTP/2 over cleartext upgrade
+- URL encoded form data
+- Multipart form data
+- WebSocket
+
 ### inverno-http-server
 
 The Inverno HTTP server module provides a fully reactive HTTP/1.x and HTTP/2 server implementation based on Netty. 
@@ -137,6 +150,7 @@ It supports the following features:
 - HTTP/2 over cleartext upgrade
 - URL encoded form data
 - Multipart form data
+- WebSocket
 
 ### inverno-irt
 
