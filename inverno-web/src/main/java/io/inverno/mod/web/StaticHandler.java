@@ -131,7 +131,7 @@ public class StaticHandler<A extends ExchangeContext> implements ExchangeHandler
 			resourcePath.resolve(this.welcomePage);
 		}
 		
-		if(resourcePath.isAbsolute()) {
+		if(resourcePath.isAbsolute() || resourcePath.getRoot() != null) {
 			throw new BadRequestException("Static resource path can't be absolute");
 		}
 		if(resourcePath.startsWith("..")) {
