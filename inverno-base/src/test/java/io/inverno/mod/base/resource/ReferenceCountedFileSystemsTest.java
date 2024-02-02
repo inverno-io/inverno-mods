@@ -19,10 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Map;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -33,8 +31,7 @@ public class ReferenceCountedFileSystemsTest {
 	
 	@Test
 	public void testFileSystemWithFileURI() throws IOException {
-		File jarFile = new File("src/test/resources/test.jar");
-		URI uri = URI.create("jar:file:/C:/Users/jkuhn/Documents/Devel/git/inverno-mods/inverno-base/src/test/resources/test.jar");
+		URI uri = URI.create("jar:" + new File("src/test/resources/test.jar").toURI().toString());
 		
 		try(FileSystem fileSystem = ReferenceCountedFileSystems.getFileSystem(uri)) {
 			Assertions.assertEquals("This is a test", Files.readString(fileSystem.getPath("/ign/test.txt")));
