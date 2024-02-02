@@ -18,8 +18,8 @@ package io.inverno.mod.http.client.internal.multipart;
 
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.converter.StringConverter;
-import io.inverno.mod.base.resource.FileResource;
 import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.base.resource.PathResource;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.http.base.internal.header.ContentDispositionCodec;
 import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
@@ -27,10 +27,10 @@ import io.inverno.mod.http.base.internal.header.GenericHeaderService;
 import io.inverno.mod.http.client.Part;
 import io.netty.buffer.ByteBuf;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -50,9 +50,9 @@ public class MultipartFormDataBodyEncoderTest {
 		Part<String> p1 = partFactory.string(part -> part.name("getform").value("POST"));
 		Part<String> p2 = partFactory.string(part -> part.name("info").value("first value"));
 		Part<String> p3 = partFactory.string(part -> part.name("secondinfo").value("secondvalue ���&"));
-		Part<String> p4 = partFactory.string(part -> part.name("thirdinfo").value(textArea));
-		Part<String> p5 = partFactory.string(part -> part.name("fourthinfo").value(textAreaLong));
-		Part<Resource> p6 = partFactory.resource(part -> part.name("myfile").headers(headers -> headers.contentType("application/x-zip-compressed")).value(new FileResource("src/test/resources/file.txt")));
+		Part<String> p4 = partFactory.string(part -> part.name("thirdinfo").value(TEXT_AREA));
+		Part<String> p5 = partFactory.string(part -> part.name("fourthinfo").value(TEXT_AREA_LONG));
+		Part<Resource> p6 = partFactory.resource(part -> part.name("myfile").headers(headers -> headers.contentType("application/x-zip-compressed")).value(new PathResource(FILE)));
 		
 		MultipartFormDataBodyEncoder encoder = new MultipartFormDataBodyEncoder();
 		
@@ -73,15 +73,46 @@ public class MultipartFormDataBodyEncoderTest {
 			)
 			.block();
 		
-//		Files.write(new File("src/test/resources/multipart_body.txt").toPath(), multipartBody.toByteArray(), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-
-		byte[] expected = Files.readAllBytes(new File("src/test/resources/multipart_body.txt").toPath());
-		Assertions.assertArrayEquals(expected, multipartBody.toByteArray());
+		Assertions.assertArrayEquals(getExpected(), multipartBody.toByteArray());
 	}
 	
-	private static final String textArea = "short text";
-    // use to simulate a big TEXTAREA field in a form
-    private static final String textAreaLong =
+	private static byte[] getExpected() throws IOException {
+		return ("--boundary\r\n" +
+				"content-disposition: form-data;name=\"getform\"\r\n" +
+				"\r\n" +
+				"POST\r\n" +
+				"--boundary\r\n" +
+				"content-disposition: form-data;name=\"info\"\r\n" +
+				"\r\n" +
+				"first value\r\n" +
+				"--boundary\r\n" +
+				"content-disposition: form-data;name=\"secondinfo\"\r\n" +
+				"\r\n" +
+				"secondvalue ���&\r\n" +
+				"--boundary\r\n" +
+				"content-disposition: form-data;name=\"thirdinfo\"\r\n" +
+				"\r\n" +
+				TEXT_AREA + "\r\n" +
+				"--boundary\r\n" +
+				"content-disposition: form-data;name=\"fourthinfo\"\r\n" +
+				"\r\n" +
+				TEXT_AREA_LONG + "\r\n" +
+				"--boundary\r\n" +
+				"content-type: application/x-zip-compressed\r\n" +
+				"content-length: " + Files.size(FILE) + "\r\n" +
+				"content-disposition: form-data;name=\"myfile\";filename=\"file.txt\"\r\n" +
+				"\r\n" +
+				Files.readString(FILE) + "\r\n" +
+				"--boundary--\r\n"
+			)
+			.getBytes();
+	}
+	
+	private static final Path FILE = Path.of("src/test/resources/file.txt");
+	
+	private static final String TEXT_AREA = "short text";
+
+	private static final String TEXT_AREA_LONG =
             "lkjlkjlKJLKJLKJLKJLJlkj lklkj\r\n\r\nLKJJJJJJJJKKKKKKKKKKKKKKK ����&\r\n\r\n" +
             "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM\r\n" +
             "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM\r\n" +

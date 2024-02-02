@@ -95,7 +95,7 @@ public class ZipResourceProvider extends AbstractResourceProvider<ZipResource> i
 		
         try(FileSystem fs = this.getFileSystem(zipFsURI)) {
         	// We have to collect here because otherwise the file system is closed before the execution of the pattern resolver
-        	return PathPatternResolver.resolve(fs.getPath(pathPattern), fs.getPath("/"), p -> new ZipResource(p.toUri(), this.mediaTypeService)).collect(Collectors.toList()).stream();
+        	return PathPatternResolver.resolve(pathPattern, fs.getPath("/"), p -> new ZipResource(p.toUri(), this.mediaTypeService)).collect(Collectors.toList()).stream();
         } 
         catch (IOException e) {
         	throw new ResourceException("Error resolving paths from pattern: " + spec, e);

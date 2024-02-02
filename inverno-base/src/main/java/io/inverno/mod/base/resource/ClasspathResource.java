@@ -385,7 +385,7 @@ public class ClasspathResource extends AbstractAsyncResource {
 	@Override
 	public Resource resolve(Path path) throws IllegalArgumentException {
 		try {
-			URI resolvedUri = new URI(ClasspathResource.SCHEME_CLASSPATH, Path.of(this.uri.getRawPath()).resolve(path).toString(), null);
+			URI resolvedUri = new URI(ClasspathResource.SCHEME_CLASSPATH, pathToSanitizedString(Path.of(this.uri.getRawPath()).resolve(path)), null);
 			ClasspathResource resolvedResource;
 			if(this.clazz != null) {
 				resolvedResource = new ClasspathResource(resolvedUri, this.clazz, this.getMediaTypeService());

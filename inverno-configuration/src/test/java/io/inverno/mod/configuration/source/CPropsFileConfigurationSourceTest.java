@@ -74,11 +74,14 @@ public class CPropsFileConfigurationSourceTest {
 		Assertions.assertEquals("text_block", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().containsAll(List.of(Parameter.of("context", "text_block"))));
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("\n" + 
-				"		Hey \n" + 
-				"		   This is \n" + 
-				"				a \n" + 
-				"			text 		block\n" + 
+		
+		
+		
+		Assertions.assertEquals(System.lineSeparator() + 
+				"		Hey " + System.lineSeparator() +
+				"		   This is " + System.lineSeparator() +
+				"				a " + System.lineSeparator() +
+				"			text 		block" + System.lineSeparator() +
 				"	", current.getResult().get().asString().get());
 		
 		current = resultIterator.next();
@@ -86,11 +89,11 @@ public class CPropsFileConfigurationSourceTest {
 		Assertions.assertEquals("plip.plap.json", current.getResult().get().getKey().getName());
 		Assertions.assertTrue(current.getResult().get().getKey().getParameters().isEmpty());
 		Assertions.assertTrue(current.getResult().get().isPresent());
-		Assertions.assertEquals("\n" + 
-				"		{\n" + 
-				"			\"title\":\"Some json\",\n" + 
-				"			table = [\"abc,\"bcd\"]\n" + 
-				"		}\n" + 
+		Assertions.assertEquals(System.lineSeparator() + 
+				"		{" + System.lineSeparator() +
+				"			\"title\":\"Some json\"," + System.lineSeparator() +
+				"			table = [\"abc,\"bcd\"]" + System.lineSeparator() +
+				"		}" + System.lineSeparator() +
 				"	", current.getResult().get().asString().get());
 		
 		current = resultIterator.next();

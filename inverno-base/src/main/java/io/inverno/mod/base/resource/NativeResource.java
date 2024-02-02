@@ -300,7 +300,7 @@ public class NativeResource extends AbstractAsyncResource {
 	@Override
 	public NativeResource resolve(Path path) throws ResourceException {
 		try {
-			URI resolvedUri = new URI(NativeResource.SCHEME_RESOURCE, Path.of(this.uri.getRawSchemeSpecificPart()).resolve(path).toString(), null);
+			URI resolvedUri = new URI(NativeResource.SCHEME_RESOURCE, pathToSanitizedString(Path.of(this.uri.getRawSchemeSpecificPart()).resolve(path)), null);
 			NativeResource resolvedResource = new NativeResource(resolvedUri, this.getMediaTypeService());
 			resolvedResource.setExecutor(this.getExecutor());
 			return resolvedResource;

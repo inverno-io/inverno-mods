@@ -35,7 +35,6 @@ import java.net.InetSocketAddress;
 @Sharable
 public class EndpointChannelInitializer extends ChannelInitializer<SocketChannel> {
 
-	protected final SslContextProvider sslContextProvider;
 	protected final EndpointChannelConfigurer channelConfigurer;
 	protected final InetSocketAddress serverAddress;
 	protected final HttpClientConfiguration configuration;
@@ -52,11 +51,10 @@ public class EndpointChannelInitializer extends ChannelInitializer<SocketChannel
 	 * @param configuration      an HTTP client configuration
 	 */
 	public EndpointChannelInitializer(SslContextProvider sslContextProvider, EndpointChannelConfigurer channelConfigurer, InetSocketAddress serverAddress, HttpClientConfiguration configuration) {
-		this.sslContextProvider = sslContextProvider;
 		this.channelConfigurer = channelConfigurer;
 		this.serverAddress = serverAddress;
 		this.configuration = configuration;
-		this.sslContext = configuration.tls_enabled() ? this.sslContextProvider.create(configuration) : null;
+		this.sslContext = configuration.tls_enabled() ? sslContextProvider.create(configuration) : null;
 	}
 	
 	@Override

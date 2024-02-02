@@ -54,17 +54,16 @@ public abstract class AbstractResourceProvider<A extends Resource> implements Re
 	 * <p>
 	 * Returns a file system for the specified URI.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * Returned instances are referenced counted so they can be reused when multiple
-	 * threads needs to access the same file system.
+	 * Returned instances are referenced counted so they can be reused when multiple threads needs to access the same file system.
 	 * </p>
-	 * 
+	 *
 	 * @param uri a URI a URI
 	 * @return a file system a file system
 	 * @throws IOException if there was error resolving the file system
 	 */
-	protected FileSystem getFileSystem(URI uri) throws IOException {
+	protected final FileSystem getFileSystem(URI uri) throws IOException {
 		return ReferenceCountedFileSystems.getFileSystem(uri);
 	}
 }

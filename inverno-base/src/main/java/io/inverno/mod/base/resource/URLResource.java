@@ -232,7 +232,19 @@ public class URLResource extends AbstractAsyncResource {
 	@Override
 	public URLResource resolve(Path path) {
 		try {
-			URI resolvedUri = new URI(this.uri.getScheme(), this.uri.getAuthority(), Path.of(this.uri.getPath()).resolve(path).toString(), this.uri.getQuery(), this.uri.getFragment());
+			String resolvedPath;
+			if(IS_WINDOWS_PATH && "file".equalsIgnoreCase(this.uri.getScheme())) {
+				if(this.uri.getRawQuery() != null || this.uri.getRawFragment() != null) {
+					resolvedPath = "/" + pathToSanitizedString(Path.of(new URI("file", Path.of(this.uri).resolve(path).toUri().getRawSchemeSpecificPart(), null)).resolve(path));
+				}
+				else {
+					resolvedPath = "/" + pathToSanitizedString(Path.of(this.uri).resolve(path));
+				}
+			}
+			else {
+				resolvedPath = pathToSanitizedString(Path.of(this.uri.getRawPath()).resolve(path));
+			}
+			URI resolvedUri = new URI(this.uri.getScheme(), this.uri.getAuthority(), resolvedPath, this.uri.getQuery(), this.uri.getFragment());
 			URLResource resolvedResource = new URLResource(resolvedUri, this.getMediaTypeService());
 			resolvedResource.setExecutor(this.getExecutor());
 			return resolvedResource;

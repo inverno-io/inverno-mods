@@ -308,7 +308,7 @@ public class ModuleResource extends AbstractAsyncResource {
 	@Override
 	public ModuleResource resolve(Path path) throws ResourceException {
 		try {
-			URI resolvedUri = new URI(ModuleResource.SCHEME_MODULE, this.uri.getAuthority(), Path.of(this.uri.getPath()).resolve(path).toString(), null, null);
+			URI resolvedUri = new URI(ModuleResource.SCHEME_MODULE, this.uri.getAuthority(), pathToSanitizedString(Path.of(this.uri.getRawPath()).resolve(path)), null, null);
 			ModuleResource resolvedResource = new ModuleResource(resolvedUri, this.getMediaTypeService());
 			resolvedResource.setExecutor(this.getExecutor());
 			return resolvedResource;

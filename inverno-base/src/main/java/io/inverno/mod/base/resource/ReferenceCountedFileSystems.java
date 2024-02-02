@@ -46,7 +46,7 @@ import java.util.Set;
  */
 final class ReferenceCountedFileSystems {
 
-	private static Map<Path, ReferenceCountedFileSystem> fileSystems = new HashMap<>();
+	private static final Map<URI, ReferenceCountedFileSystem> FILE_SYSTEMS = new HashMap<>();
 	
 	private ReferenceCountedFileSystems() {}
 	
@@ -76,17 +76,12 @@ final class ReferenceCountedFileSystems {
 	 * @throws IOException if an I/O error occurs creating the file system
 	 */
 	public static FileSystem getFileSystem(URI uri, Map<String,?> env) throws IOException {
-		synchronized (fileSystems) {
-			String spec = uri.getRawSchemeSpecificPart();
-            int sep = spec.indexOf("!/");
-            if (sep != -1) {
-                spec = spec.substring(0, sep);
-            }
-			Path fsPath = Path.of(spec).toAbsolutePath();
-			ReferenceCountedFileSystem fs = fileSystems.get(fsPath);
+		synchronized (FILE_SYSTEMS) {
+			URI normalizedURI = uri.normalize();
+			ReferenceCountedFileSystem fs = FILE_SYSTEMS.get(normalizedURI);
 			if(fs == null) {
-				fs = new ReferenceCountedFileSystem(fsPath, FileSystems.newFileSystem(uri, env));
-				fileSystems.put(fsPath, fs);
+				fs = new ReferenceCountedFileSystem(normalizedURI, FileSystems.newFileSystem(uri, env));
+				FILE_SYSTEMS.put(normalizedURI, fs);
 			}
 			fs.retain();
 			return fs;
@@ -103,7 +98,7 @@ final class ReferenceCountedFileSystems {
 	 */
 	private static class ReferenceCountedFileSystem extends FileSystem {
 
-		private final Path path;
+		private final URI uri;
 		
 		private final FileSystem fs;
 		
@@ -111,8 +106,8 @@ final class ReferenceCountedFileSystems {
 		
 		private boolean closed;
 		
-		public ReferenceCountedFileSystem(Path path, FileSystem fs) {
-			this.path = path;
+		public ReferenceCountedFileSystem(URI uri, FileSystem fs) {
+			this.uri = uri;
 			this.fs = fs;
 		}
 		
@@ -134,7 +129,7 @@ final class ReferenceCountedFileSystems {
 				this.closed = this.refCount-- == 0;
 			}
 			if(this.closed) {
-				fileSystems.remove(this.path);
+				FILE_SYSTEMS.remove(this.uri);
 				this.fs.close();
 			}
 			return this;

@@ -61,6 +61,11 @@ public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiati
 	}
 
 	@Override
+	protected void handshakeFailure(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+		ctx.fireExceptionCaught(cause);
+	}
+	
+	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
 		// wait for after the pipeline is configured
 	}

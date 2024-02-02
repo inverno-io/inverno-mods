@@ -121,22 +121,22 @@ public class ByteBufConverterTest {
 		Assertions.assertEquals("fr_FR", buffer.toString(Charsets.DEFAULT));
 		
 		buffer = CONVERTER.encode(new File("/abc.txt"));
-		Assertions.assertEquals("/abc.txt", buffer.toString(Charsets.DEFAULT));
+		Assertions.assertEquals(File.separator + "abc.txt", buffer.toString(Charsets.DEFAULT));
 		
 		buffer = CONVERTER.encode(Path.of("/abc.txt"));
-		Assertions.assertEquals("/abc.txt", buffer.toString(Charsets.DEFAULT));
+		Assertions.assertEquals(File.separator + "abc.txt", buffer.toString(Charsets.DEFAULT));
 		
 		buffer = CONVERTER.encode(new URI("http://127.0.0.1:8080/abc"));
 		Assertions.assertEquals("http://127.0.0.1:8080/abc", buffer.toString(Charsets.DEFAULT));
 		
-		buffer = CONVERTER.encode(new URL("http://127.0.0.1:8080/abc"));
+		buffer = CONVERTER.encode(new URI("http://127.0.0.1:8080/abc").toURL());
 		Assertions.assertEquals("http://127.0.0.1:8080/abc", buffer.toString(Charsets.DEFAULT));
 		
 		buffer = CONVERTER.encode(Pattern.compile("[a-b]+.*"));
 		Assertions.assertEquals("[a-b]+.*", buffer.toString(Charsets.DEFAULT));
 		
 		buffer = CONVERTER.encode(InetAddress.getByName("localhost"));
-		Assertions.assertEquals("localhost", buffer.toString(Charsets.DEFAULT));
+		Assertions.assertTrue(buffer.toString(Charsets.DEFAULT).matches("localhost|127\\.0\\.0\\.1"));
 		
 		buffer = CONVERTER.encode(String.class);
 		Assertions.assertEquals("java.lang.String", buffer.toString(Charsets.DEFAULT));

@@ -198,7 +198,6 @@ public class ZipResource extends AbstractAsyncResource {
 		}
 		if(this.pathResource == null) {
 			try {
-//				this.fileSystem = FileSystems.newFileSystem(this.zipFsUri, Map.of("create", "true"));
 				this.fileSystem = ReferenceCountedFileSystems.getFileSystem(this.zipFsUri, Map.of("create", "true"));
 				PathResource resolvedResource = new PathResource(this.fileSystem.getPath(this.resourcePath.toString()), this.getMediaTypeService());
 				resolvedResource.setExecutor(this.getExecutor());
@@ -350,7 +349,7 @@ public class ZipResource extends AbstractAsyncResource {
 	@Override
 	public Resource resolve(Path path) {
 		try {
-			URI resolvedURI = new URI(ZipResource.SCHEME_ZIP, this.zipFsUri.getSchemeSpecificPart()+ "!" + this.resourcePath.resolve(path).normalize().toString(), null);
+			URI resolvedURI = new URI(ZipResource.SCHEME_ZIP, this.zipUri + "!" + pathToSanitizedString(this.resourcePath.resolve(path)), null);
 			ZipResource resolvedResource = new ZipResource(resolvedURI, this.getMediaTypeService());
 			resolvedResource.setExecutor(this.getExecutor());
 			return resolvedResource;

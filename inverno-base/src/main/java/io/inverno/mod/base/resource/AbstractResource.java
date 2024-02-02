@@ -15,6 +15,9 @@
  */
 package io.inverno.mod.base.resource;
 
+import java.io.File;
+import java.nio.file.Path;
+
 /**
  * <p>
  * Base implementation for {@link Resource}.
@@ -27,6 +30,8 @@ package io.inverno.mod.base.resource;
  */
 public abstract class AbstractResource implements Resource {
 
+	protected static final boolean IS_WINDOWS_PATH = File.separatorChar == '\\';
+	
 	private static MediaTypeService defaultMediaTypeService;
 	
 	private MediaTypeService mediaTypeService;
@@ -58,6 +63,13 @@ public abstract class AbstractResource implements Resource {
 		return defaultMediaTypeService;
 	}
 
+	protected static String pathToSanitizedString(Path path) {
+		if(IS_WINDOWS_PATH) {
+			return path.normalize().toString().replace("\\", "/");
+		}
+		return path.normalize().toString();
+	}
+	
 	/**
 	 * <p>
 	 * Sets the media type service.

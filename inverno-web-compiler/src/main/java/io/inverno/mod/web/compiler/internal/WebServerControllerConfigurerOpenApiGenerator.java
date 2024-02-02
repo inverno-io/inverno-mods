@@ -36,6 +36,7 @@ import io.inverno.mod.web.compiler.spi.WebQueryParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebRequestBodyParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebRequestBodyParameterInfo.RequestBodyKind;
 import io.inverno.mod.web.compiler.spi.WebResponseBodyInfo;
+import static io.inverno.mod.web.compiler.spi.WebResponseBodyInfo.ResponseBodyReactiveKind.MANY;
 import io.inverno.mod.web.compiler.spi.WebRouteInfo;
 import io.inverno.mod.web.compiler.spi.WebRouterConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.WebRoutesConfigurerInfo;
@@ -262,7 +263,13 @@ class WebServerControllerConfigurerOpenApiGenerator implements WebServerControll
 				operation.append(System.lineSeparator()).append(context.indent(1)).append("responses:");
 
 				routeInfo.getElement()
-					.map(routeElement -> dctContext.getResponses(routeElement, routeInfo.getResponseBody().getType()))
+					.map(routeElement -> {
+						TypeMirror resolvedResponseBodyType = routeInfo.getResponseBody().getType();
+						if(routeInfo.getResponseBody().getBodyReactiveKind() == WebResponseBodyInfo.ResponseBodyReactiveKind.PUBLISHER || routeInfo.getResponseBody().getBodyReactiveKind() == WebResponseBodyInfo.ResponseBodyReactiveKind.MANY) {
+							resolvedResponseBodyType = dctContext.getTypeUtils().getArrayType(resolvedResponseBodyType);
+						}
+						return dctContext.getResponses(routeElement, resolvedResponseBodyType);
+					})
 					.ifPresentOrElse(
 						responses -> {
 							operation.append(System.lineSeparator()).append(responses.stream()

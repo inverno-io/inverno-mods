@@ -93,7 +93,7 @@ public class JarResource extends ZipResource {
 	@Override
 	public Resource resolve(Path path) {
 		try {
-			URI resolvedURI = new URI(JarResource.SCHEME_JAR, this.zipFsUri.getSchemeSpecificPart()+ "!" + this.resourcePath.resolve(path).normalize().toString(), null);
+			URI resolvedURI = new URI(JarResource.SCHEME_JAR, this.zipUri + "!" + pathToSanitizedString(this.resourcePath.resolve(path)), null);
 			JarResource resolvedResource = new JarResource(resolvedURI, this.getMediaTypeService());
 			resolvedResource.setExecutor(this.getExecutor());
 			return resolvedResource;

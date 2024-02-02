@@ -292,6 +292,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 			ByteArrayOutputStream errorOut = new ByteArrayOutputStream();
 			PrintStream errorStream = new PrintStream(errorOut);
 			
+			errorStream.append("<!DOCTYPE html>");
 			errorStream.append("<html>");
 			errorStream.append("<head>");
 			errorStream.append("<title>").append(status).append(" ").append(error.getStatusReasonPhrase()).append("</title>");

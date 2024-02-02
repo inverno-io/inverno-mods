@@ -94,7 +94,7 @@ public class JarResourceProvider extends AbstractResourceProvider<JarResource> i
 		
         try(FileSystem fs = this.getFileSystem(jarFsURI)) {
         	// We have to collect here because otherwise the file system is closed before the execution of the pattern resolver
-        	return PathPatternResolver.resolve(fs.getPath(pathPattern), fs.getPath("/"), p -> new JarResource(p.toUri(), this.mediaTypeService)).collect(Collectors.toList()).stream();
+        	return PathPatternResolver.resolve(pathPattern, fs.getPath("/"), p -> new JarResource(p.toUri(), this.mediaTypeService)).collect(Collectors.toList()).stream();
         } 
         catch (IOException e) {
         	throw new ResourceException("Error resolving resources from pattern: " + spec, e);
@@ -105,6 +105,4 @@ public class JarResourceProvider extends AbstractResourceProvider<JarResource> i
 	public Set<String> getSupportedSchemes() {
 		return Set.of(JarResource.SCHEME_JAR);
 	}
-
-	
 }

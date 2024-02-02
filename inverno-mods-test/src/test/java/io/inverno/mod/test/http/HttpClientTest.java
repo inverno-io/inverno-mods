@@ -4042,7 +4042,7 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
-				Assertions.assertEquals("Uploaded post_resource_small.txt(text/plain): 28 Bytes\n", body);
+				Assertions.assertEquals("Uploaded post_resource_small.txt(text/plain): " + new File("src/test/resources/post_resource_small.txt").length() + " Bytes\n", body);
 			})
 			.block();
 		
@@ -4064,7 +4064,7 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
-				Assertions.assertEquals("Uploaded post_resource_big.txt(text/plain): 1060500 Bytes\n", body);
+				Assertions.assertEquals("Uploaded post_resource_big.txt(text/plain): " + new File("src/test/resources/post_resource_big.txt").length() + " Bytes\n", body);
 			})
 			.block();
 		
@@ -4192,7 +4192,7 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.flatMap(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
 				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(1060500), exchange.response().headers().getContentLength());
+				Assertions.assertEquals(new File("src/test/resources/post_resource_big.txt").length(), exchange.response().headers().getContentLength());
 				
 				return Flux.from(exchange.response().body().raw().stream())
 					.reduceWith(
