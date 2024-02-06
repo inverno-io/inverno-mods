@@ -22,7 +22,6 @@ import io.inverno.mod.security.jose.jwk.oct.OCTJWK;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Set;
 import javax.crypto.Mac;
 
