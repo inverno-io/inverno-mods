@@ -124,6 +124,7 @@
 		<module>inverno-security-ldap</module>
 		<module>inverno-sql</module>
 		<module>inverno-sql-vertx</module>
+		<module>inverno-web-client</module>
 		<module>inverno-web-server</module>
 		
 		<module>inverno-mods-test</module>
