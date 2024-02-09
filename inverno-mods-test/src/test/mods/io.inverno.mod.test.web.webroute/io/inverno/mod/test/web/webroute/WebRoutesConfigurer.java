@@ -22,8 +22,8 @@ import io.inverno.mod.base.resource.FileResource;
 import io.inverno.mod.http.base.BadRequestException;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.web.StaticHandler;
-import io.inverno.mod.web.WebRoutable;
+import io.inverno.mod.web.server.StaticHandler;
+import io.inverno.mod.web.server.WebRoutable;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import reactor.core.publisher.Flux;
@@ -32,7 +32,7 @@ import reactor.core.publisher.Flux;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 @Bean( visibility = Visibility.PRIVATE )
-public class WebRoutesConfigurer implements io.inverno.mod.web.WebRoutesConfigurer<ExchangeContext> {
+public class WebRoutesConfigurer implements io.inverno.mod.web.server.WebRoutesConfigurer<ExchangeContext> {
 
 	@Override
 	public void configure(WebRoutable<ExchangeContext, ?> routes) {

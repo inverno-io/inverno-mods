@@ -1,6 +1,6 @@
-import io.inverno.mod.web.WebRouterConfigurer;
-import io.inverno.mod.web.annotation.WebController;
-import io.inverno.mod.web.annotation.WebRoutes;
+import io.inverno.mod.web.server.WebRouterConfigurer;
+import io.inverno.mod.web.server.annotation.WebController;
+import io.inverno.mod.web.server.annotation.WebRoutes;
 
 /*
  * Copyright 2020 Jeremy KUHN
@@ -27,7 +27,7 @@ import io.inverno.mod.web.annotation.WebRoutes;
  * 
  * <p>
  * This generated web router configurer bean can then be used to configure the
- * web router of a web module instance.
+ * web router of a web server module instance.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -41,7 +41,7 @@ module io.inverno.mod.web.compiler {
 	requires io.inverno.mod.base;
 	requires transitive io.inverno.mod.http.base;
 	requires io.inverno.mod.http.server;
-	requires io.inverno.mod.web;
+	requires io.inverno.mod.web.server;
 	
 	requires org.apache.commons.text;
 	requires org.reactivestreams;

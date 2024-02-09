@@ -19,10 +19,10 @@ import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.test.web.webroute.dto.GenericMessage;
-import io.inverno.mod.web.WebExchange;
-import io.inverno.mod.web.annotation.Body;
-import io.inverno.mod.web.annotation.PathParam;
-import io.inverno.mod.web.annotation.WebRoute;
+import io.inverno.mod.web.server.WebExchange;
+import io.inverno.mod.web.server.annotation.Body;
+import io.inverno.mod.web.server.annotation.PathParam;
+import io.inverno.mod.web.server.annotation.WebRoute;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

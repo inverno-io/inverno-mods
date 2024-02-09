@@ -28,10 +28,10 @@ import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.test.web.webroute.dto.GenericMessage;
-import io.inverno.mod.web.WebExchange;
-import io.inverno.mod.web.annotation.FormParam;
-import io.inverno.mod.web.annotation.WebController;
-import io.inverno.mod.web.annotation.WebRoute;
+import io.inverno.mod.web.server.WebExchange;
+import io.inverno.mod.web.server.annotation.FormParam;
+import io.inverno.mod.web.server.annotation.WebController;
+import io.inverno.mod.web.server.annotation.WebRoute;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

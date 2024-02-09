@@ -18,7 +18,7 @@ package io.inverno.mod.web.compiler.internal;
 import io.inverno.core.compiler.spi.ReporterInfo;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.ws.WebSocketMessage;
-import io.inverno.mod.web.annotation.WebRoutes;
+import io.inverno.mod.web.server.annotation.WebRoutes;
 import io.inverno.mod.web.compiler.spi.WebRouteQualifiedName;
 import io.inverno.mod.web.compiler.spi.WebSocketOutboundPublisherInfo;
 import io.inverno.mod.web.compiler.spi.WebSocketRouteInfo;

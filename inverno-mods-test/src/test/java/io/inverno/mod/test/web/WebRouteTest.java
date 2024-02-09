@@ -81,7 +81,7 @@ public class WebRouteTest extends AbstractInvernoModTest {
 			new Class<?>[] { httpConfigClass },
 			httpConfigHandler);
 		
-		Class<?> webConfigClass = moduleLoader.loadClass(MODULE_WEBROUTE, "io.inverno.mod.web.WebConfiguration");
+		Class<?> webConfigClass = moduleLoader.loadClass(MODULE_WEBROUTE, "io.inverno.mod.web.server.WebServerConfiguration");
 		ConfigurationInvocationHandler webConfigHandler = new ConfigurationInvocationHandler(webConfigClass, Map.of("http_server", httpConfig));
 		Object webConfig = Proxy.newProxyInstance(webConfigClass.getClassLoader(),
 			new Class<?>[] { webConfigClass },

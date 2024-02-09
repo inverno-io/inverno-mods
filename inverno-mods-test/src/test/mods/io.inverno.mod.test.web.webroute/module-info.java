@@ -22,7 +22,7 @@ open module io.inverno.mod.test.web.webroute {
 	requires io.inverno.core;
 	
 	requires io.inverno.mod.boot;
-	requires io.inverno.mod.web;
+	requires io.inverno.mod.web.server;
 	
 	exports io.inverno.mod.test.web.webroute;
 	exports io.inverno.mod.test.web.webroute.dto;

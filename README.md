@@ -33,13 +33,13 @@ The objective is to provide a complete consistent set of high end tools and comp
 
 ## Using a module
 
-Modules can be used in a Inverno module by defining dependencies in the module descriptor. For instance you can create a Web application module using the *boot* and *web* modules:
+Modules can be used in a Inverno module by defining dependencies in the module descriptor. For instance you can create a Web application module using the *boot* and *web-server* modules:
 
 ```java
 @io.inverno.core.annotation.Module
 module io.inverno.example.webApp {
     requires io.inverno.mod.boot;
-    requires io.inverno.mod.web;
+    requires io.inverno.mod.web.server;
 }
 ```
 
@@ -49,8 +49,8 @@ A simple microservice application can then be created in a few lines of code as 
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.v1.Application;
 import io.inverno.mod.base.resource.MediaTypes;
-import io.inverno.mod.web.annotation.WebController;
-import io.inverno.mod.web.annotation.WebRoute;
+import io.inverno.mod.web.server.annotation.WebController;
+import io.inverno.mod.web.server.annotation.WebRoute;
 
 @Bean
 @WebController
@@ -231,9 +231,9 @@ The Inverno SQL client Vert.x implementation module provides SQL Client implemen
 
 It also exposes a pool based Sql Client bean created using the module's configuration that can be used as is to query a RDBMS.
 
-### inverno-web
+### inverno-web-server
 
-The Inverno Web module provides advanced features on top of the HTTP server module, including:
+The Inverno Web server module provides advanced features on top of the HTTP server module, including:
 
 - request routing based on path, path pattern, HTTP method, request and response content negotiation including request and response content type and language of the response.
 - path parameters

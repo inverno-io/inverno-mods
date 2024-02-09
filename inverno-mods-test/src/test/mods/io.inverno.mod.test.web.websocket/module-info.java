@@ -18,7 +18,7 @@ open module io.inverno.mod.test.web.websocket {
 	requires io.inverno.core;
 	
 	requires io.inverno.mod.boot;
-	requires io.inverno.mod.web;
+	requires io.inverno.mod.web.server;
 	
 	requires java.net.http;
 	

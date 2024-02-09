@@ -21,7 +21,7 @@ import org.reactivestreams.Publisher;
 
 import io.netty.buffer.ByteBuf;
 import io.inverno.mod.base.resource.Resource;
-import io.inverno.mod.web.WebResponseBody;
+import io.inverno.mod.web.server.WebResponseBody;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

@@ -70,8 +70,8 @@ package io.inverno.example.app_web_security;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.v1.Application;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.web.annotation.WebController;
-import io.inverno.mod.web.annotation.WebRoute;
+import io.inverno.mod.web.server.annotation.WebController;
+import io.inverno.mod.web.server.annotation.WebRoute;
 
 @Bean
 @WebController
@@ -125,13 +125,13 @@ $ mvn inverno:run
 10:19:32.801 [main] INFO  io.inverno.example.app_web_security.App_web_security - Starting Module io.inverno.example.app_web_security...
 10:19:32.801 [main] INFO  io.inverno.mod.boot.Boot - Starting Module io.inverno.mod.boot...
 10:19:33.002 [main] INFO  io.inverno.mod.boot.Boot - Module io.inverno.mod.boot started in 200ms
-10:19:33.002 [main] INFO  io.inverno.mod.web.Web - Starting Module io.inverno.mod.web...
+10:19:33.002 [main] INFO  io.inverno.mod.web.server.Web - Starting Module io.inverno.mod.web.server...
 10:19:33.002 [main] INFO  io.inverno.mod.http.server.Server - Starting Module io.inverno.mod.http.server...
 10:19:33.002 [main] INFO  io.inverno.mod.http.base.Base - Starting Module io.inverno.mod.http.base...
 10:19:33.009 [main] INFO  io.inverno.mod.http.base.Base - Module io.inverno.mod.http.base started in 6ms
 10:19:33.110 [main] INFO  io.inverno.mod.http.server.internal.HttpServer - HTTP Server (nio) listening on http://0.0.0.0:8080
 10:19:33.111 [main] INFO  io.inverno.mod.http.server.Server - Module io.inverno.mod.http.server started in 109ms
-10:19:33.111 [main] INFO  io.inverno.mod.web.Web - Module io.inverno.mod.web started in 109ms
+10:19:33.111 [main] INFO  io.inverno.mod.web.server.Web - Module io.inverno.mod.web.server started in 109ms
 10:19:33.112 [main] INFO  io.inverno.example.app_web_security.App_web_security - Module io.inverno.example.app_web_security started in 312ms
 10:19:33.115 [main] INFO  io.inverno.core.v1.Application - Application io.inverno.example.app_web_security started in 375ms
 ```
@@ -166,10 +166,10 @@ import io.inverno.mod.security.http.basic.BasicAuthenticationErrorInterceptor;
 import io.inverno.mod.security.http.basic.BasicCredentialsExtractor;
 import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.security.identity.Identity;
-import io.inverno.mod.web.ErrorWebRouter;
-import io.inverno.mod.web.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.WebInterceptable;
-import io.inverno.mod.web.WebInterceptorsConfigurer;
+import io.inverno.mod.web.server.ErrorWebRouter;
+import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
+import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import java.util.List;
 
 @Bean( visibility = Bean.Visibility.PRIVATE )
@@ -264,10 +264,10 @@ import io.inverno.mod.security.http.basic.BasicCredentialsExtractor;
 import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.security.identity.PersonIdentity;
 import io.inverno.mod.security.identity.UserIdentityResolver;
-import io.inverno.mod.web.ErrorWebRouter;
-import io.inverno.mod.web.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.WebInterceptable;
-import io.inverno.mod.web.WebInterceptorsConfigurer;
+import io.inverno.mod.web.server.ErrorWebRouter;
+import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
+import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import java.util.List;
 
 @Bean( visibility = Bean.Visibility.PRIVATE )
@@ -321,8 +321,8 @@ import io.inverno.mod.http.base.Method;
 import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.http.context.SecurityContext;
 import io.inverno.mod.security.identity.PersonIdentity;
-import io.inverno.mod.web.annotation.WebController;
-import io.inverno.mod.web.annotation.WebRoute;
+import io.inverno.mod.web.server.annotation.WebController;
+import io.inverno.mod.web.server.annotation.WebRoute;
 
 @Bean
 @WebController
@@ -362,8 +362,8 @@ import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
 import io.inverno.mod.security.http.context.SecurityContext;
 import io.inverno.mod.security.identity.PersonIdentity;
-import io.inverno.mod.web.annotation.WebController;
-import io.inverno.mod.web.annotation.WebRoute;
+import io.inverno.mod.web.server.annotation.WebController;
+import io.inverno.mod.web.server.annotation.WebRoute;
 import reactor.core.publisher.Mono;
 
 @Bean
@@ -411,10 +411,10 @@ import io.inverno.mod.security.http.basic.BasicCredentialsExtractor;
 import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.security.identity.PersonIdentity;
 import io.inverno.mod.security.identity.UserIdentityResolver;
-import io.inverno.mod.web.ErrorWebRouter;
-import io.inverno.mod.web.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.WebInterceptable;
-import io.inverno.mod.web.WebInterceptorsConfigurer;
+import io.inverno.mod.web.server.ErrorWebRouter;
+import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
+import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import java.util.List;
 
 @Bean( visibility = Bean.Visibility.PRIVATE )
@@ -504,10 +504,10 @@ import io.inverno.mod.security.http.basic.BasicCredentialsExtractor;
 import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.security.identity.PersonIdentity;
 import io.inverno.mod.security.identity.UserIdentityResolver;
-import io.inverno.mod.web.ErrorWebRouter;
-import io.inverno.mod.web.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.WebInterceptable;
-import io.inverno.mod.web.WebInterceptorsConfigurer;
+import io.inverno.mod.web.server.ErrorWebRouter;
+import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
+import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import java.util.List;
 
 @Bean( visibility = Bean.Visibility.PRIVATE )
@@ -540,8 +540,8 @@ import io.inverno.mod.security.accesscontrol.AccessController;
 import io.inverno.mod.security.accesscontrol.RoleBasedAccessController;
 import io.inverno.mod.security.http.context.SecurityContext;
 import io.inverno.mod.security.identity.PersonIdentity;
-import io.inverno.mod.web.annotation.WebController;
-import io.inverno.mod.web.annotation.WebRoute;
+import io.inverno.mod.web.server.annotation.WebController;
+import io.inverno.mod.web.server.annotation.WebRoute;
 
 @Bean
 @WebController
@@ -592,8 +592,8 @@ import io.inverno.mod.security.identity.IdentityResolver;
 import io.inverno.mod.security.http.CredentialsExtractor;
 import io.inverno.mod.security.http.SecurityInterceptor;
 import io.inverno.mod.security.http.context.InterceptingSecurityContext;
-import io.inverno.mod.web.WebInterceptable;
-import io.inverno.mod.web.WebInterceptorsConfigurer;
+import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 
 public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>> {
 
@@ -680,8 +680,8 @@ import io.inverno.mod.security.http.AccessControlInterceptor;
 import io.inverno.mod.security.http.CredentialsExtractor;
 import io.inverno.mod.security.http.SecurityInterceptor;
 import io.inverno.mod.security.http.context.InterceptingSecurityContext;
-import io.inverno.mod.web.WebInterceptable;
-import io.inverno.mod.web.WebInterceptorsConfigurer;
+import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import java.util.List;
 
 public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>> {
@@ -721,8 +721,8 @@ import io.inverno.mod.security.http.SecurityInterceptor;
 import io.inverno.mod.security.http.context.InterceptingSecurityContext;
 import io.inverno.mod.security.identity.Identity;
 import io.inverno.mod.security.identity.IdentityResolver;
-import io.inverno.mod.web.WebInterceptable;
-import io.inverno.mod.web.WebInterceptorsConfigurer;
+import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 import java.util.List;
 
 public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, RoleBasedAccessController>> {
@@ -1177,12 +1177,12 @@ import io.inverno.mod.security.jose.jwk.oct.OCTJWK;
 import io.inverno.mod.security.jose.jws.JWSAuthentication;
 import io.inverno.mod.security.jose.jws.JWSAuthenticator;
 import io.inverno.mod.security.jose.jws.JWSService;
-import io.inverno.mod.web.ErrorWebRouter;
-import io.inverno.mod.web.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.WebInterceptable;
-import io.inverno.mod.web.WebInterceptorsConfigurer;
-import io.inverno.mod.web.WebRoutable;
-import io.inverno.mod.web.WebRoutesConfigurer;
+import io.inverno.mod.web.server.ErrorWebRouter;
+import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
+import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebInterceptorsConfigurer;
+import io.inverno.mod.web.server.WebRoutable;
+import io.inverno.mod.web.server.WebRoutesConfigurer;
 import java.util.List;
 import reactor.core.publisher.Mono;
 
@@ -1302,8 +1302,8 @@ package io.inverno.example.app_web_security;
 
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.security.http.cors.CORSInterceptor;
-import io.inverno.mod.web.WebInterceptable;
-import io.inverno.mod.web.WebInterceptorsConfigurer;
+import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 
 public class SecurityConfigurer implements WebInterceptorsConfigurer<ExchangeContext> {
 
@@ -1331,8 +1331,8 @@ package io.inverno.example.app_web_security;
 
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.security.http.csrf.CSRFDoubleSubmitCookieInterceptor;
-import io.inverno.mod.web.WebInterceptable;
-import io.inverno.mod.web.WebInterceptorsConfigurer;
+import io.inverno.mod.web.server.WebInterceptable;
+import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 
 public class SecurityConfigurer implements WebInterceptorsConfigurer<ExchangeContext> {
 

@@ -17,8 +17,8 @@ package io.inverno.mod.web.compiler.internal;
 
 import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.web.annotation.WebRoute;
-import io.inverno.mod.web.annotation.WebSocketRoute;
+import io.inverno.mod.web.server.annotation.WebRoute;
+import io.inverno.mod.web.server.annotation.WebSocketRoute;
 import io.inverno.mod.web.compiler.spi.WebControllerInfo;
 import io.inverno.mod.web.compiler.spi.WebRouteInfo;
 import io.inverno.mod.web.compiler.spi.WebSocketRouteInfo;

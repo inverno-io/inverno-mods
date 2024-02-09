@@ -17,7 +17,7 @@ package io.inverno.mod.test.web.webroute;
 
 import io.inverno.core.annotation.NestedBean;
 import io.inverno.mod.configuration.Configuration;
-import io.inverno.mod.web.WebConfiguration;
+import io.inverno.mod.web.server.WebServerConfiguration;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -26,5 +26,5 @@ import io.inverno.mod.web.WebConfiguration;
 public interface WebRouteConfiguration {
 
 	@NestedBean
-	WebConfiguration web();
+	WebServerConfiguration web();
 }

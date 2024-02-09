@@ -23,7 +23,7 @@ import javax.lang.model.element.ExecutableElement;
 import io.inverno.core.compiler.spi.ReporterInfo;
 import io.inverno.core.compiler.spi.support.AbstractInfo;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.web.annotation.WebRoutes;
+import io.inverno.mod.web.server.annotation.WebRoutes;
 import io.inverno.mod.web.compiler.spi.WebControllerInfo;
 import io.inverno.mod.web.compiler.spi.WebParameterInfo;
 import io.inverno.mod.web.compiler.spi.WebResponseBodyInfo;

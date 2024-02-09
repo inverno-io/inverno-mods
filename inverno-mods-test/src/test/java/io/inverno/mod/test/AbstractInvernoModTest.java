@@ -43,9 +43,9 @@ public class AbstractInvernoModTest extends AbstractInvernoTest {
 					return Optional.of(new File("../inverno-web-compiler/target/classes")).filter(File::exists).orElse(file);
 				}
 			}
-			else if(file.getName().startsWith("inverno-web")) {
-				if(new File("../inverno-web").exists()) {
-					return Optional.of(new File("../inverno-web/target/classes")).filter(File::exists).orElse(file);
+			else if(file.getName().startsWith("inverno-web-server")) {
+				if(new File("../inverno-web-server").exists()) {
+					return Optional.of(new File("../inverno-web-server/target/classes")).filter(File::exists).orElse(file);
 				}
 			}
 			else if(file.getName().startsWith("inverno-http-server")) {

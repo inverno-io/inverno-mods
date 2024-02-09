@@ -28,7 +28,7 @@ module io.inverno.mod.test {
 	requires io.inverno.mod.configuration;
 	requires io.inverno.mod.redis.lettuce;
 	requires io.inverno.mod.boot;
-	requires io.inverno.mod.web;
+	requires io.inverno.mod.web.server;
 	requires io.inverno.mod.http.client;
 	
 	requires io.inverno.test;

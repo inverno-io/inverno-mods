@@ -23,15 +23,15 @@ import io.inverno.core.compiler.spi.plugin.PluginContext;
 import io.inverno.core.compiler.spi.plugin.PluginExecution;
 import io.inverno.core.compiler.spi.plugin.PluginExecutionException;
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.web.ErrorWebInterceptorsConfigurer;
-import io.inverno.mod.web.ErrorWebRouterConfigurer;
-import io.inverno.mod.web.ErrorWebRoutesConfigurer;
-import io.inverno.mod.web.WebInterceptorsConfigurer;
-import io.inverno.mod.web.WebRouterConfigurer;
-import io.inverno.mod.web.WebRoutesConfigurer;
-import io.inverno.mod.web.annotation.WebController;
-import io.inverno.mod.web.annotation.WebRoute;
-import io.inverno.mod.web.annotation.WebRoutes;
+import io.inverno.mod.web.server.ErrorWebInterceptorsConfigurer;
+import io.inverno.mod.web.server.ErrorWebRouterConfigurer;
+import io.inverno.mod.web.server.ErrorWebRoutesConfigurer;
+import io.inverno.mod.web.server.WebInterceptorsConfigurer;
+import io.inverno.mod.web.server.WebRouterConfigurer;
+import io.inverno.mod.web.server.WebRoutesConfigurer;
+import io.inverno.mod.web.server.annotation.WebController;
+import io.inverno.mod.web.server.annotation.WebRoute;
+import io.inverno.mod.web.server.annotation.WebRoutes;
 import io.inverno.mod.web.compiler.internal.WebServerControllerConfigurerClassGenerationContext.GenerationMode;
 import io.inverno.mod.web.compiler.spi.ErrorWebInterceptorsConfigurerInfo;
 import io.inverno.mod.web.compiler.spi.ErrorWebRouterConfigurerInfo;
@@ -359,7 +359,7 @@ public class WebServerControllerConfigurerCompilerPlugin implements CompilerPlug
 			
 			if(webRouterConfigurerInfo.getControllers().length > 0 && this.pluginContext.getOptions().isOptionActivated(WebServerControllerConfigurerCompilerPlugin.OPTION_GENERATE_OPENAPI_DEFINITION, false)) {
 				try {
-					execution.createResourceFile("META-INF/inverno/web/" + webRouterConfigurerQName.getModuleQName().toString() + "/openapi.yml", execution.getElements().stream().toArray(Element[]::new), () -> {
+					execution.createResourceFile("META-INF/inverno/web/server/" + webRouterConfigurerQName.getModuleQName().toString() + "/openapi.yml", execution.getElements().stream().toArray(Element[]::new), () -> {
 						return webRouterConfigurerInfo.accept(this.openApiGenerator, new WebServerControllerConfigurerOpenApiGenerationContext(this.pluginContext.getTypeUtils(), this.pluginContext.getElementUtils(), this.pluginContext.getDocUtils(), WebServerControllerConfigurerOpenApiGenerationContext.GenerationMode.ROUTER_SPEC)).toString();
 					});
 				} 
