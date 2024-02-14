@@ -29,6 +29,8 @@ import io.inverno.mod.http.base.Parameter;
  * <dd>the HTTP client module configuration</dd>
  * <dt><b>netService (required)</b></dt>
  * <dd>the Net service used to create the HTTP client</dd>
+ * <dt><b>resourceService (required)</b></dt>
+ * <dd>the resource service used to load resources required by the HTTP client (eg. key store...)</dd>
  * <dt><b>reactor (required)</b></dt>
  * <dd>the reactor used in the connection pool</dd>
  * <dt><b>headerCodecs</b></dt>

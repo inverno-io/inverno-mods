@@ -112,7 +112,7 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			bootMod.start();
 			testServerMod.start();
 		
-			Client clientMod = new Client.Builder(bootMod.netService(), bootMod.reactor()).build();
+			Client clientMod = new Client.Builder(bootMod.netService(), bootMod.reactor(), bootMod.resourceService()).build();
 			try {
 				clientMod.start();
 				Endpoint endpointH2C = clientMod.httpClient().endpoint("127.0.0.1", port)

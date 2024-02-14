@@ -98,7 +98,7 @@ public class WebSocketClientTest extends AbstractInvernoModTest {
 			testWebSocketServerMod.start();
 			final Object webSocketController = testWebSocketServerMod.getBean("webSocketController");
 		
-			Client clientMod = new Client.Builder(bootMod.netService(), bootMod.reactor()).build();
+			Client clientMod = new Client.Builder(bootMod.netService(), bootMod.reactor(), bootMod.resourceService()).build();
 			try {
 				clientMod.start();
 				Endpoint endpoint = clientMod.httpClient().endpoint("127.0.0.1", port)
