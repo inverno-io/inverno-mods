@@ -18,7 +18,7 @@ package io.inverno.mod.http.server;
 import io.inverno.mod.http.base.BaseRequest;
 import io.inverno.mod.http.base.InboundCookies;
 import io.inverno.mod.http.base.InboundRequestHeaders;
-import java.net.SocketAddress;
+import java.security.cert.Certificate;
 import java.util.Optional;
 
 /**
@@ -44,33 +44,6 @@ public interface Request extends BaseRequest {
 	 */
 	@Deprecated
 	InboundCookies cookies();
-	
-	/**
-	 * <p>
-	 * Returns the name of the scheme used to send the request (eg. http, https...).
-	 * </p>
-	 * 
-	 * @return the name of the scheme
-	 */
-	String getScheme();
-	
-	/**
-	 * <p>
-	 * Returns the socket address of the interface on which the request was received.
-	 * </p>
-	 * 
-	 * @return a socket address
-	 */
-	SocketAddress getLocalAddress();
-	
-	/**
-	 * <p>
-	 * Returns the socket address of the client or last proxy that sent the request.
-	 * </p>
-	 * 
-	 * @return a socket address
-	 */
-	SocketAddress getRemoteAddress();
 	
 	/**
 	 * <p>

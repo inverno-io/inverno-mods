@@ -16,7 +16,6 @@
 package io.inverno.mod.http.client;
 
 import io.inverno.mod.http.base.BaseRequest;
-import java.net.SocketAddress;
 
 /**
  * <p>
@@ -47,22 +46,4 @@ public interface Request extends BaseRequest {
 	 * @return the name of the scheme
 	 */
 	String getScheme();
-	
-	/**
-	 * <p>
-	 * Returns the socket address of the interface on which the request was sent.
-	 * </p>
-	 * 
-	 * @return a socket address
-	 */
-	SocketAddress getLocalAddress();
-	
-	/**
-	 * <p>
-	 * Returns the socket address of the endpoint or last proxy that received the request.
-	 * </p>
-	 * 
-	 * @return a socket address
-	 */
-	SocketAddress getRemoteAddress();
 }

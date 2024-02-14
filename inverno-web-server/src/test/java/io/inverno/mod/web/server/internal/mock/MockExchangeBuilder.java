@@ -27,6 +27,7 @@ import io.inverno.mod.web.server.WebRequestBody;
 import io.inverno.mod.web.server.WebResponseBody;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.security.cert.Certificate;
 import java.util.List;
 import java.util.Map;
 
@@ -48,7 +49,9 @@ public class MockExchangeBuilder {
 	private Map<String, List<String>> requestQueryParameters = Map.of();
 	private Map<String, List<String>> requestCookies = Map.of();
 	private SocketAddress localAddress = new InetSocketAddress("localhost", 8080);
+	private Certificate[] localCertificates;
 	private SocketAddress remoteAddress = new InetSocketAddress("localhost", 8080);
+	private Certificate[] remoteCertificates;
 	
 	private WebRequestBody mockRequestBody;
 	
@@ -101,8 +104,18 @@ public class MockExchangeBuilder {
 		return this;
 	}
 	
+	public MockExchangeBuilder localCertificates(Certificate[] localCertificates) {
+		this.localCertificates = localCertificates;
+		return this;
+	}
+	
 	public MockExchangeBuilder remoteAddress(SocketAddress remoteAddress) {
 		this.remoteAddress = remoteAddress;
+		return this;
+	}
+	
+	public MockExchangeBuilder remoteCertificates(Certificate[] remoteCertificates) {
+		this.remoteCertificates = remoteCertificates;
 		return this;
 	}
 	
@@ -122,7 +135,7 @@ public class MockExchangeBuilder {
 	}
 	
 	public MockWebExchange build() {
-		MockWebRequest mockRequest = new MockWebRequest(this.authority, this.scheme, this.path, this.method, new MockRequestHeaders(HEADER_SERVICE, this.headers, new MockRequestCookies(this.requestCookies)), new MockQueryParameters(this.requestQueryParameters), this.localAddress, this.remoteAddress, this.mockRequestBody);
+		MockWebRequest mockRequest = new MockWebRequest(this.authority, this.scheme, this.path, this.method, new MockRequestHeaders(HEADER_SERVICE, this.headers, new MockRequestCookies(this.requestCookies)), new MockQueryParameters(this.requestQueryParameters), this.localAddress, this.localCertificates, this.remoteAddress, this.remoteCertificates, this.mockRequestBody);
 		MockWebResponse mockResponse = new MockWebResponse(HEADER_SERVICE, this.mockResponseBody);
 		
 		return new MockWebExchange(this.protocol, mockRequest, mockResponse, this.context);

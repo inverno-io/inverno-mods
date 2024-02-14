@@ -30,7 +30,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.ssl.SslHandler;
+import java.security.cert.Certificate;
 import java.util.Optional;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import reactor.core.publisher.Sinks.Many;
 
 /**
@@ -92,6 +94,14 @@ class Http1xRequest extends AbstractRequest {
 	}
 	
 	@Override
+	public String getScheme() {
+		if(this.scheme == null) {
+			this.scheme = this.context.pipeline().get(SslHandler.class) != null ? "https" : "http";
+		}
+		return this.scheme;
+	}
+
+	@Override
 	public Method getMethod() {
 		if(this.method == null) {
 			try {
@@ -102,14 +112,6 @@ class Http1xRequest extends AbstractRequest {
 			}
 		}
 		return method;
-	}
-	
-	@Override
-	public String getScheme() {
-		if(this.scheme == null) {
-			this.scheme = this.context.pipeline().get(SslHandler.class) != null ? "https" : "http";
-		}
-		return this.scheme;
 	}
 	
 	@Override

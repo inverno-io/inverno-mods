@@ -20,6 +20,7 @@ import io.inverno.mod.configuration.Configuration;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.client.ws.WebSocketExchange;
 import java.lang.module.ModuleDescriptor;
+import java.net.URI;
 import java.util.Optional;
 import java.util.Set;
 import javax.net.ssl.TrustManagerFactory;
@@ -448,21 +449,104 @@ public interface HttpClientConfiguration {
 	
 	/**
 	 * <p>
-	 * The list of ciphers to include.
+	 * The path to the key store.
 	 * </p>
 	 * 
-	 * @return a list of ciphers
+	 * <p>
+	 * Note that this overrides both {@link #tls_trust_manager_factory()} and {@link #tls_trust_all()}.
+	 * </p>
+	 * 
+	 * @return the key store URI
 	 */
-	String[] tls_ciphers_includes();
+	URI tls_key_store();
+	
+	/**
+	 * <p>
+	 * The type of key store.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code JKS}.
+	 * </p>
+	 * 
+	 * @return the key store type
+	 */
+	default String tls_key_store_type() {
+		return "JKS";
+	}
 
 	/**
 	 * <p>
-	 * The list of ciphers to exclude.
+	 * The password of the key store.
 	 * </p>
 	 * 
-	 * @return a list of ciphers
+	 * @return a password
 	 */
-	String[] tls_ciphers_excludes();
+	String tls_key_store_password();
+	
+	/**
+	 * <p>
+	 * The alias of the key in the key store.
+	 * </p>
+	 * 
+	 * @return a key alias
+	 */
+	String tls_key_alias();
+	
+	/**
+	 * <p>
+	 * The password for the alias of the key in the key store.
+	 * </p>
+	 * 
+	 * @return a password
+	 */
+	String tls_key_alias_password();
+	
+	/**
+	 * <p>
+	 * The path to the key store.
+	 * </p>
+	 * 
+	 * @return the key store URI
+	 */
+	URI tls_trust_store();
+	
+	/**
+	 * <p>
+	 * The type of key store.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code JKS}.
+	 * </p>
+	 * 
+	 * @return the key store type
+	 */
+	default String tls_trust_store_type() {
+		return "JKS";
+	}
+	
+	/**
+	 * <p>
+	 * The password of the key store.
+	 * </p>
+	 * 
+	 * @return a password
+	 */
+	String tls_trust_store_password();
+	
+	/**
+	 * <p>
+	 * The trust manager factory.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that this overrides {@link #tls_trust_all()}.
+	 * </p>
+	 * 
+	 * @return the trust manager factory
+	 */
+	TrustManagerFactory tls_trust_manager_factory();
 	
 	/**
 	 * <p>
@@ -485,19 +569,6 @@ public interface HttpClientConfiguration {
 	
 	/**
 	 * <p>
-	 * The trust manager factory.
-	 * </p>
-	 * 
-	 * <p>
-	 * Note that this is overridden by {@link #tls_trust_all()}.
-	 * </p>
-	 * 
-	 * @return the trust manager factory
-	 */
-	TrustManagerFactory tls_trust_manager_factory();
-	
-	/**
-	 * <p>
 	 * Sends Server Name Indication parameter during TLS handshake.
 	 * </p>
 	 * 
@@ -510,6 +581,24 @@ public interface HttpClientConfiguration {
 	default boolean tls_send_sni() {
 		return false;
 	}
+	
+	/**
+	 * <p>
+	 * The list of ciphers to include.
+	 * </p>
+	 * 
+	 * @return a list of ciphers
+	 */
+	String[] tls_ciphers_includes();
+
+	/**
+	 * <p>
+	 * The list of ciphers to exclude.
+	 * </p>
+	 * 
+	 * @return a list of ciphers
+	 */
+	String[] tls_ciphers_excludes();
 	
 	/**
 	 * <p>

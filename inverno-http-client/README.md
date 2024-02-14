@@ -500,9 +500,79 @@ this.endpoint = httpClient.endpoint("example.org", 80) // Creates the endpoint
 )
 ```
 
-Untrustworthy connections are discarded by default. For instance, connecting to a server using a self-signed certificate will fail which can become an issue on development or testing environments. In order to trust all certificates and allow for untrustworthy connections, the `tls_trust_all` parameter must be enabled.
+Untrustworthy connections are discarded by default. For instance, connecting to a server using a self-signed certificate will fail which can become an issue on development or testing environments. 
 
-> A custom `TrustManagerFactory` can also be set in `tls_trust_manager_factory` configuration parameter to fully customize how certificates are evaluated.
+By default, the client relies on JDK's truststore (`$JAVA_HOME/lib/security/cacerts`) but it can also be configured with a specific trust store:
+
+```java
+this.endpoint = httpClient.endpoint("example.org", 80) // Creates the endpoint
+	.configuration(
+		HttpClientConfigurationLoader.load(baseConfiguration.http_client(), configuration -> configuration
+			.tls_enabled(true)
+			.tls_trust_store(URI.create("file:/path/to/truststore.p12"))
+			.tls_trust_store_type("PKCS12")
+			.tls_trust_store_password("password")
+		)
+	)
+	.build();
+)
+```
+
+It is also possible to trust all certificates which can be convenient in a testing environment:
+
+```java
+this.endpoint = httpClient.endpoint("example.org", 80) // Creates the endpoint
+	.configuration(
+		HttpClientConfigurationLoader.load(baseConfiguration.http_client(), configuration -> configuration
+			.tls_enabled(true)
+			.tls_trust_all(true)
+		)
+	)
+	.build();
+)
+```
+
+> A custom `TrustManagerFactory` can also be set in `tls_trust_manager_factory` configuration parameter to fully customize how certificates are verified.
+
+The HTTP client can also be configured to support Mutual TLS authentication (mTLS) by specifying a keystore containing the client certificate and private key (which should then be trusted by the server for the authentication to succeed):
+
+
+```java
+this.endpoint = httpClient.endpoint("example.org", 80) // Creates the endpoint
+    .configuration(
+        HttpClientConfigurationLoader.load(baseConfiguration.http_client(), configuration -> configuration
+            .tls_enabled(true)
+            .tls_key_store(URI.create("module://io.inverno.example.app_http/keystore.jks"))
+            .tls_key_store_password("password")
+            .tls_trust_store(URI.create("file:/path/to/truststore.p12"))
+			.tls_trust_store_password("password")
+		)
+	)
+	.build();
+)
+```
+
+> When an application using the *http-client* module is packaged as an application image, you'll need to make sure TLS related modules from the JDK are included in the runtime image otherwise TLS might not work. You can refer to the [JDK providers documentation][jdk-providers] in the security developer's guide to find out which modules should be added depending on your needs. Most of the time you'll simply add `jdk.crypto.ec` module in the Inverno Maven plugin configuration:
+> 
+> ```xml
+> <project>
+>     <build>
+>         <plugins>
+>             <plugin>
+>                 <groupId>io.inverno.tool</groupId>
+>                 <artifactId>inverno-maven-plugin</artifactId>
+>                 <executions>
+>                     <execution>
+>                         <configuration>
+>                             <addModules>jdk.crypto.ec</addModules>
+>                         </configuration>
+>                     </execution>
+>                 </executions>
+>             </plugin>
+>         </plugins>
+>     </build>
+> </project>
+> ```
 
 ## Endpoint
 

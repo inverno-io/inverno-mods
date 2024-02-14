@@ -17,6 +17,8 @@ package io.inverno.mod.http.client.internal;
 
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
+import io.inverno.mod.base.resource.Resource;
+import io.inverno.mod.base.resource.ResourceService;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
@@ -30,15 +32,24 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.SupportedCipherSuiteFilter;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import java.io.IOException;
+import java.nio.channels.Channels;
 import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
+import javax.net.ssl.TrustManagerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -56,6 +67,19 @@ public class SslContextProvider {
 	private static final Logger LOGGER = LogManager.getLogger(SslContextProvider.class);
 	
 	private CipherSuiteFilter cipherSuiteFilter = SupportedCipherSuiteFilter.INSTANCE;
+	
+	private final ResourceService resourceService;
+
+	/**
+	 * <p>
+	 * Creates an SSL context provider.
+	 * </p>
+	 * 
+	 * @param resourceService the resource service
+	 */
+	public SslContextProvider(ResourceService resourceService) {
+		this.resourceService = resourceService;
+	}
 	
 	/**
 	 * <p>
@@ -79,16 +103,72 @@ public class SslContextProvider {
 	 */
 	public SslContext create(HttpClientConfiguration configuration) {
 		// TODO make this non-blocking as this can block
+		// TODO Cache keystores and truststores: that's a tough call actually considering these are only created when an endpoint is created
 		try {
 			SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
 			SslProvider sslProvider = SslProvider.isAlpnSupported(SslProvider.OPENSSL) ? SslProvider.OPENSSL : SslProvider.JDK;
 			sslContextBuilder.sslProvider(sslProvider);
-			
-			if(configuration.tls_trust_all()) {
-				sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
+		
+			if(configuration.tls_key_store() != null) {
+				try (Resource keystoreResource = this.resourceService.getResource(configuration.tls_key_store())) {
+					keystoreResource.openReadableByteChannel().ifPresentOrElse(
+						ksChannel -> {
+							try {
+								KeyStore ks = KeyStore.getInstance(configuration.tls_key_store_type());
+								ks.load(Channels.newInputStream(ksChannel), configuration.tls_key_store_password().toCharArray());
+
+								String keyPassword = configuration.tls_key_store_password();
+								if(configuration.tls_key_alias() != null) {
+									if(!ks.containsAlias(configuration.tls_key_alias())) {
+										throw new IllegalArgumentException("tls_key_store does not contain alias: " + configuration.tls_key_alias());
+									}
+									for (String alias : Collections.list(ks.aliases())) {
+										if(!configuration.tls_key_alias().equals(alias)) {
+											ks.deleteEntry(alias);
+										}
+									}
+									if(configuration.tls_key_alias_password() != null) {
+										keyPassword = configuration.tls_key_alias_password();
+									}
+								}
+								final KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+								kmf.init(ks, keyPassword.toCharArray());
+								sslContextBuilder.keyManager(kmf);
+							}
+							catch (UnrecoverableKeyException | KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+								throw new RuntimeException("Error initializing SSL context", e);
+							}
+						},
+						() -> {
+							throw new IllegalStateException("tls_key_store does not exist or is not readable: " + configuration.tls_key_store());
+						}
+					);
+				}
 			}
-			else if(configuration.tls_trust_manager_factory() != null) {
+			
+			if(configuration.tls_trust_manager_factory() != null) {
 				sslContextBuilder.trustManager(configuration.tls_trust_manager_factory());
+			}
+			else if(configuration.tls_trust_store() != null) {
+				try (Resource trustStoreResource = this.resourceService.getResource(configuration.tls_trust_store())) {
+					trustStoreResource.openReadableByteChannel().ifPresent(
+						tsChannel -> {
+						try {
+							KeyStore ts = KeyStore.getInstance(configuration.tls_trust_store_type());
+							ts.load(Channels.newInputStream(tsChannel), configuration.tls_trust_store_password().toCharArray());
+
+							TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+							tmf.init(ts);
+							sslContextBuilder.trustManager(tmf);
+						} 
+						catch (KeyStoreException | NoSuchAlgorithmException | CertificateException | IOException e) {
+							throw new RuntimeException("Error initializing SSL context", e);
+						}
+					});
+				}
+			}
+			else if(configuration.tls_trust_all()) {
+				sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
 			}
 
 			if (sslProvider == SslProvider.OPENSSL) {

@@ -9,6 +9,7 @@
 [kqueue]: https://en.wikipedia.org/wiki/Kqueue
 [jdk-providers]: https://docs.oracle.com/en/java/javase/21/security/oracle-providers.html
 [server-sent-events]: https://en.wikipedia.org/wiki/Server-sent_events
+[mTLS]: https://en.wikipedia.org/wiki/Mutual_authentication
 
 [rfc-7540-8.1.2.4]: https://tools.ietf.org/html/rfc7540#section-8.1.2.4
 [rfc-6455]: https://datatracker.ietf.org/doc/html/rfc6455
@@ -447,9 +448,34 @@ public class Main {
                     .http_server(server -> server
                         .server_port(8443)
                         .tls_enabled(true)
-                        .key_store(URI.create("module://io.inverno.example.app_http/keystore.jks"))
-                        .key_alias("selfsigned")
-                        .key_store_password("password")
+                        .tls_key_store(URI.create("module://io.inverno.example.app_http/keystore.jks"))
+                        .tls_key_alias("selfsigned")
+                        .tls_key_store_password("password")
+                    )
+                )
+            )
+        ).run();
+    }
+}
+```
+
+The HTTP server can also be configured to support Mutual TLS authentication (mTLS) by specifying a truststore containing the client CA certificate and the client authentication type which must be either `REQUESTED` (the TLS handshake won't fail if the client does not provide authentication) or `REQUIRED` (the TLS exchange will fail if the client does not provide authentication).
+
+```java
+public class Main {
+
+    public static void main(String[] args) {
+        Application.with(new App_http.Builder()
+            .setApp_httpConfiguration(
+                App_httpConfigurationLoader.load(configuration -> configuration
+                    .http_server(server -> server
+                        .server_port(8443)
+                        .tls_enabled(true)
+                        .tls_key_store(URI.create("module://io.inverno.example.app_http/keystore.jks"))
+                        .tls_key_store_password("password")
+						.tls_client_auth(HttpServerConfiguration.ClientAuth.REQUESTED)
+						.tls_trust_store(URI.create("module://io.inverno.example.app_http/truststore.jks"))
+						.tls_trust_store_password("password")
                     )
                 )
             )
@@ -1133,6 +1159,14 @@ exchange.request().getQuery();
 exchange.request().getRemoteAddress();
 ```
 
+- the certificates chain sent by the authenticated client:
+
+```java
+exchange.request().getRemoteCertificates();
+```
+
+> The server must be configured with [mTLS](#tls) support
+
 #### Response status
 
 The response status can be set in the response headers following HTTP/2 specification as defined by [RFC 7540 Section 8.1.2.4][rfc-7540-8.1.2.4].
@@ -1198,7 +1232,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
 };
 ```
 
-## WebSocket
+## Web Socket
 
 An HTTP exchange can be upgraded to a WebSocket exchange as defined by [RFC 6455][rfc-6455].
 
@@ -1495,8 +1529,8 @@ public class Main {
                         // TLS
                         .server_port(8443)
                         .tls_enabled(true)
-                        .key_store(URI.create("module:/keystore.jks"))
-                        .key_store_password("password")
+                        .tls_key_store(URI.create("module:/keystore.jks"))
+                        .tls_key_store_password("password")
                         // Enable HTTP/2
                         .h2_enabled(true)
                     )

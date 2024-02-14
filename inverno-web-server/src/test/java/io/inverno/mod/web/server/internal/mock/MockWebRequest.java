@@ -23,6 +23,7 @@ import io.inverno.mod.http.base.Method;
 import io.inverno.mod.web.server.WebRequest;
 import io.inverno.mod.web.server.WebRequestBody;
 import java.net.SocketAddress;
+import java.security.cert.Certificate;
 import java.util.Optional;
 
 /**
@@ -39,11 +40,13 @@ public class MockWebRequest implements WebRequest {
 	private final MockRequestHeaders headers;
 	private final MockQueryParameters queryParameters;
 	private final SocketAddress localAddress;
+	private Certificate[] localCertificates;
 	private final SocketAddress remoteAddress;
+	private Certificate[] remoteCertificates;
 	private final MockPathParameters pathParameters;
 	private final WebRequestBody mockBody;
 	
-	public MockWebRequest(String authority, String scheme, String path, Method method, MockRequestHeaders headers, MockQueryParameters queryParameters, SocketAddress localAddress, SocketAddress remoteAddress, WebRequestBody mockBody) {
+	public MockWebRequest(String authority, String scheme, String path, Method method, MockRequestHeaders headers, MockQueryParameters queryParameters, SocketAddress localAddress, Certificate[] localCertificates, SocketAddress remoteAddress, Certificate[] remoteCertificates, WebRequestBody mockBody) {
 		this.authority = authority;
 		this.scheme = scheme;
 		this.path = path;
@@ -52,7 +55,9 @@ public class MockWebRequest implements WebRequest {
 		this.headers = headers;
 		this.queryParameters = queryParameters;
 		this.localAddress = localAddress;
+		this.localCertificates = localCertificates;
 		this.remoteAddress = remoteAddress;
+		this.remoteCertificates = remoteCertificates;
 		this.pathParameters = new MockPathParameters();
 		this.mockBody = mockBody;
 	}
@@ -114,6 +119,11 @@ public class MockWebRequest implements WebRequest {
 	}
 
 	@Override
+	public Optional<Certificate[]> getRemoteCertificates() {
+		return Optional.ofNullable(this.localCertificates);
+	}
+	
+	@Override
 	public MockPathParameters pathParameters() {
 		return this.pathParameters;
 	}
@@ -128,4 +138,8 @@ public class MockWebRequest implements WebRequest {
 		return this.localAddress;
 	}
 
+	@Override
+	public Optional<Certificate[]> getLocalCertificates() {
+		return Optional.ofNullable(this.remoteCertificates);
+	}
 }

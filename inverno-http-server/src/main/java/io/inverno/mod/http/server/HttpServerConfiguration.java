@@ -18,6 +18,7 @@ package io.inverno.mod.http.server;
 import io.inverno.mod.configuration.Configuration;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
 import java.net.URI;
+import javax.net.ssl.TrustManagerFactory;
 
 /**
  * <p>
@@ -29,6 +30,29 @@ import java.net.URI;
  */
 @Configuration( name = "configuration" )
 public interface HttpServerConfiguration {
+	
+	/**
+	 * <p>
+	 * The HTTP client authentication type.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.7
+	 */
+	public static enum ClientAuth {
+		/**
+		 * Indicates that client authentication will not be requested during TLS handshake.
+		 */
+		NONE,
+		/**
+		 * Indicates that client authentication will be requested during TLS handshake but that it is not required for the handshake to succeed.
+		 */
+		REQUESTED,
+		/**
+		 * Indicates that client authentication will be requested during TLS handshake and that the handshake will fail if the client does not present authentication.
+		 */
+		REQUIRED;
+	}
 	
 	/**
 	 * <p>
@@ -300,39 +324,6 @@ public interface HttpServerConfiguration {
 	
 	/**
 	 * <p>
-	 * The path to the key store.
-	 * </p>
-	 * 
-	 * @return the key store URI
-	 */
-	URI key_store();
-	
-	/**
-	 * <p>
-	 * The type of key store.
-	 * </p>
-	 * 
-	 * <p>
-	 * Defaults to {@code JKS}.
-	 * </p>
-	 * 
-	 * @return the key store type
-	 */
-	default String key_store_type() {
-		return "JKS";
-	}
-
-	/**
-	 * <p>
-	 * The password of the key store.
-	 * </p>
-	 * 
-	 * @return a password
-	 */
-	String key_store_password();
-	
-	/**
-	 * <p>
 	 * Enables/Disables HTTPS.
 	 * </p>
 	 * 
@@ -345,6 +336,118 @@ public interface HttpServerConfiguration {
 	default boolean tls_enabled() {
 		return false;
 	}
+	
+	/**
+	 * <p>
+	 * The path to the key store.
+	 * </p>
+	 * 
+	 * @return the key store URI
+	 */
+	URI tls_key_store();
+	
+	/**
+	 * <p>
+	 * The type of key store.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code JKS}.
+	 * </p>
+	 * 
+	 * @return the key store type
+	 */
+	default String tls_key_store_type() {
+		return "JKS";
+	}
+
+	/**
+	 * <p>
+	 * The password of the key store.
+	 * </p>
+	 * 
+	 * @return a password
+	 */
+	String tls_key_store_password();
+	
+	/**
+	 * <p>
+	 * The alias of the key in the key store.
+	 * </p>
+	 * 
+	 * @return a key alias
+	 */
+	String tls_key_alias();
+	
+	/**
+	 * <p>
+	 * The password for the alias of the key in the key store.
+	 * </p>
+	 * 
+	 * @return a password
+	 */
+	String tls_key_alias_password();
+	
+	/**
+	 * <p>
+	 * The client authentication type.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@link ClientAuth#NONE}.
+	 * </p>
+	 * 
+	 * @return 
+	 */
+	default ClientAuth tls_client_auth() {
+		return ClientAuth.NONE;
+	}
+	
+	/**
+	 * <p>
+	 * The path to the key store.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that this overrides {@link #tls_trust_manager_factory()}.
+	 * </p>
+	 * 
+	 * @return the key store URI
+	 */
+	URI tls_trust_store();
+	
+	/**
+	 * <p>
+	 * The type of key store.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code JKS}.
+	 * </p>
+	 * 
+	 * @return the key store type
+	 */
+	default String tls_trust_store_type() {
+		return "JKS";
+	}
+	
+	/**
+	 * <p>
+	 * The password of the key store.
+	 * </p>
+	 * 
+	 * @return a password
+	 */
+	String tls_trust_store_password();
+	
+	/**
+	 * <p>
+	 * The trust manager factory.
+	 * </p>
+	 * 
+	 * @return the trust manager factory
+	 */
+	TrustManagerFactory tls_trust_manager_factory();
 	
 	/**
 	 * <p>
@@ -361,15 +464,6 @@ public interface HttpServerConfiguration {
 		return 10000;
 	}
 	
-	/**
-	 * <p>
-	 * The alias of the key in the key store.
-	 * </p>
-	 * 
-	 * @return a key alias
-	 */
-//	String key_alias();
-
 	/**
 	 * <p>
 	 * The list of ciphers to include.

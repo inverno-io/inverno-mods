@@ -39,6 +39,7 @@ import org.reactivestreams.Publisher;
 import io.inverno.mod.http.client.InterceptableExchange;
 import io.inverno.mod.http.client.InterceptableRequest;
 import io.inverno.mod.http.client.InterceptableRequestBody;
+import java.security.cert.Certificate;
 
 /**
  * <p>
@@ -277,8 +278,18 @@ public class HttpClientRequest<A extends ExchangeContext> implements HttpClient.
 	}
 
 	@Override
+	public Optional<Certificate[]> getLocalCertificates() {
+		return this.sentRequest != null ? this.sentRequest.getLocalCertificates() : null;
+	}
+	
+	@Override
 	public SocketAddress getRemoteAddress() {
 		return this.sentRequest != null ? this.sentRequest.getRemoteAddress() : null;
+	}
+
+	@Override
+	public Optional<Certificate[]> getRemoteCertificates() {
+		return this.sentRequest != null ? this.sentRequest.getRemoteCertificates() : null;
 	}
 	
 	@Override

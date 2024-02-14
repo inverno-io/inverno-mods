@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy KUHN
+ * Copyright 2021 Jeremy KUHN
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.inverno.mod.http.client.internal;
+
+import java.util.function.Supplier;
+
+import io.inverno.core.annotation.Bean;
+import io.inverno.mod.base.resource.ResourceService;
+
 /**
  * <p>
- * The Inverno framework Web client module provides a Web enabled HTTP1.x and HTTP/2 client.
+ * The {@link ResourceService} socket.
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.7
  */
-@io.inverno.core.annotation.Module
-module io.inverno.mod.web.client {
-	requires io.inverno.core;
-	requires static io.inverno.core.annotation; // for javadoc...
-	
-	requires transitive io.inverno.mod.base;
-	requires io.inverno.mod.configuration;
-	requires transitive io.inverno.mod.http.client;
+@Bean(name = "resourceService")
+public interface ResourceServiceSocket extends Supplier<ResourceService> {
 
-	requires org.apache.commons.text;
-	requires org.apache.logging.log4j;
-	requires reactor.core;
-	requires org.reactivestreams;
-	
-	exports io.inverno.mod.web.client;
 }

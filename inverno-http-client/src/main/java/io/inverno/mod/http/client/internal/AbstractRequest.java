@@ -23,9 +23,14 @@ import io.inverno.mod.http.base.QueryParameters;
 import io.inverno.mod.http.base.internal.GenericQueryParameters;
 import io.inverno.mod.http.client.Request;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.ssl.SslHandler;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.security.cert.Certificate;
 import java.util.Optional;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -36,6 +41,8 @@ import java.util.Optional;
  * @since 1.6
  */
 public abstract class AbstractRequest implements Request {
+	
+	private static final Logger LOGGER = LogManager.getLogger(AbstractRequest.class);
 
 	private final ChannelHandlerContext context;
 	private final boolean tls;
@@ -110,8 +117,30 @@ public abstract class AbstractRequest implements Request {
 	}
 
 	@Override
+	public Optional<Certificate[]> getLocalCertificates() {
+		return Optional.ofNullable(this.context.pipeline().get(SslHandler.class))
+			.map(handler -> handler.engine().getSession().getLocalCertificates())
+			.filter(certificates -> certificates.length > 0);
+	}
+	
+	@Override
 	public SocketAddress getRemoteAddress() {
 		return this.context.channel().remoteAddress();
+	}
+
+	@Override
+	public Optional<Certificate[]> getRemoteCertificates() {
+		return Optional.ofNullable(this.context.pipeline().get(SslHandler.class))
+			.map(handler -> {
+				try {
+					return handler.engine().getSession().getPeerCertificates();
+				} 
+				catch(SSLPeerUnverifiedException e) {
+					LOGGER.debug("Could not verify identity of the client", e);
+					return null;
+				}
+			})
+			.filter(certificates -> certificates.length > 0);
 	}
 	
 	@Override

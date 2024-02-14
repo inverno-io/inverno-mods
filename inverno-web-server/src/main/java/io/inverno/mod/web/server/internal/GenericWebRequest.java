@@ -25,6 +25,7 @@ import io.inverno.mod.http.server.Request;
 import io.inverno.mod.web.server.WebRequest;
 import io.inverno.mod.web.server.WebRequestBody;
 import java.net.SocketAddress;
+import java.security.cert.Certificate;
 import java.util.Optional;
 
 /**
@@ -138,10 +139,25 @@ class GenericWebRequest implements WebRequest {
 	public String getQuery() {
 		return this.request.getQuery();
 	}
+	
+	@Override
+	public SocketAddress getLocalAddress() {
+		return this.request.getLocalAddress();
+	}
 
+	@Override
+	public Optional<Certificate[]> getLocalCertificates() {
+		return this.request.getLocalCertificates();
+	}
+	
 	@Override
 	public SocketAddress getRemoteAddress() {
 		return this.request.getRemoteAddress();
+	}
+
+	@Override
+	public Optional<Certificate[]> getRemoteCertificates() {
+		return this.request.getRemoteCertificates();
 	}
 
 	@Override
@@ -155,10 +171,5 @@ class GenericWebRequest implements WebRequest {
 			}
 		}
 		return this.webRequestBody;
-	}
-
-	@Override
-	public SocketAddress getLocalAddress() {
-		return this.request.getLocalAddress();
 	}
 }
