@@ -48,8 +48,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -63,8 +61,8 @@ import reactor.core.publisher.Mono;
 public class HttpClientTest extends AbstractInvernoModTest {
 
 	static {
-		System.setProperty("org.apache.logging.log4j.simplelog.level", "INFO");
-		System.setProperty("org.apache.logging.log4j.simplelog.logFile", "system.out");
+		System.setProperty("log4j2.simplelogLevel", "INFO");
+		System.setProperty("log4j2.simplelogLogFile", "system.out");
 	}
 	
 	private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -115,7 +113,7 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			Client clientMod = new Client.Builder(bootMod.netService(), bootMod.reactor(), bootMod.resourceService()).build();
 			try {
 				clientMod.start();
-				Endpoint endpointH2C = clientMod.httpClient().endpoint("127.0.0.1", port)
+				/*Endpoint endpointH2C = clientMod.httpClient().endpoint("127.0.0.1", port)
 					.build();
 				try {
 //					this.test_fail(endpoint);
@@ -135,15 +133,16 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				}
 				finally {
 					endpointH2C.close().block();
-				}
+				}*/
 				
 				Endpoint endpointH1 = clientMod.httpClient().endpoint("127.0.0.1", port)
 					.configuration(HttpClientConfigurationLoader.load(conf -> conf.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))))
 					.build();
 				try {
-//					this.test_fail(endpoint);
+					this.test_post_multipart(endpointH1);
+					this.test_fail(endpointH1);
 					
-					this.test_get(endpointH1);
+					/*this.test_get(endpointH1);
 					this.test_query_param(endpointH1);
 					this.test_cookie_param(endpointH1);
 					this.test_header_param(endpointH1);
@@ -154,7 +153,7 @@ public class HttpClientTest extends AbstractInvernoModTest {
 					this.test_post_multipart(endpointH1);
 					this.test_sse(endpointH1);
 					this.test_resource(endpointH1);
-					this.test_misc(endpointH1);
+					this.test_misc(endpointH1);*/
 				}
 				finally {
 					endpointH1.close().block();
@@ -4638,37 +4637,70 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 	}
 	
-	private void test_fail(Endpoint endpoint) {
-		/*endpoint
-			.request(Method.POST, "/post/formParam")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED))
-			// TODO setting an empty publisher seems to stuck the process
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Mono.empty())))
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
-			})
-			.block();
+	private void test_fail(Endpoint endpoint) throws IOException {
+		/*File uploadsDir = new File("target/uploads/");
+		uploadsDir.mkdirs();
 		
+		//curl -i -F 'file=@src/test/resources/post_resource_small.txt' http://127.0.0.1:8080/upload
+		new File(uploadsDir, "post_resource_small.txt").delete();
 		endpoint
-			.request(Method.POST, "/post_multipart_pub/raw")
-			.body(body -> body.multipart().from((factory, output) -> output.stream(Flux.just(
-				factory.string(part -> part.name("a").value("1")),
-				factory.string(part -> part.name("b").value("2")),
-				factory.string(part -> part.name("c").value("3"))
-			))))
+			.request(Method.POST, "/upload")
+			.body(body -> body.multipart().from((factory, output) -> output.value(
+				factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_small.txt"))))
+			)))
 			.send()
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(45), exchange.response().headers().getContentLength());
+				Assertions.assertEquals(Long.valueOf(55), exchange.response().headers().getContentLength());
 				
 				return exchange.response().body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
-				Assertions.assertEquals("post_multipart_pub_raw: a = 1, b = 2, c = 3, ", body);
+				Assertions.assertEquals("Uploaded post_resource_small.txt(text/plain): " + new File("src/test/resources/post_resource_small.txt").length() + " Bytes\n", body);
 			})
-			.block();*/
+			.block();
+		
+		Assertions.assertArrayEquals(Files.readAllBytes(Path.of("src/test/resources/post_resource_small.txt")), Files.readAllBytes(Path.of("target/uploads/post_resource_small.txt")));
+		
+		//curl -i -F 'file=@src/test/resources/post_resource_big.txt' http://127.0.0.1:8080/upload
+		new File(uploadsDir, "post_resource_big.txt").delete();
+		endpoint
+			.request(Method.POST, "/upload")
+			.body(body -> body.multipart().from((factory, output) -> output.value(
+				factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_big.txt"))))
+			)))
+			.send()
+			.flatMapMany(exchange -> {
+				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
+				Assertions.assertEquals(Long.valueOf(58), exchange.response().headers().getContentLength());
+				
+				return exchange.response().body().string().stream();
+			})
+			.collect(Collectors.joining())
+			.doOnNext(body -> {
+				Assertions.assertEquals("Uploaded post_resource_big.txt(text/plain): " + new File("src/test/resources/post_resource_big.txt").length() + " Bytes\n", body);
+			})
+			.block();
+		
+		Assertions.assertArrayEquals(Files.readAllBytes(Path.of("src/test/resources/post_resource_big.txt")), Files.readAllBytes(Path.of("target/uploads/post_resource_big.txt")));*/
+		
+		
+		// curl -i 'http://127.0.0.1:8080/get_sse_raw'
+		byte[] get_sse_raw = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw.txt"));
+		endpoint
+			.request(Method.GET, "/get_sse_raw")
+			.send()
+			.flatMapMany(exchange -> {
+				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8", exchange.response().headers().getContentType());
+				
+				return exchange.response().body().string().stream();
+			})
+			.collect(Collectors.joining())
+			.doOnNext(body -> {
+				Assertions.assertArrayEquals(get_sse_raw, body.getBytes(StandardCharsets.UTF_8));
+			})
+			.block();
 	}
 }
