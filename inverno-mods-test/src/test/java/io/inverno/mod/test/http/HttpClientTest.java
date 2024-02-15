@@ -113,10 +113,10 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			Client clientMod = new Client.Builder(bootMod.netService(), bootMod.reactor(), bootMod.resourceService()).build();
 			try {
 				clientMod.start();
-				/*Endpoint endpointH2C = clientMod.httpClient().endpoint("127.0.0.1", port)
+				Endpoint endpointH2C = clientMod.httpClient().endpoint("127.0.0.1", port)
 					.build();
 				try {
-//					this.test_fail(endpoint);
+//					this.test_fail(endpointH2C);
 					
 					this.test_get(endpointH2C);
 					this.test_query_param(endpointH2C);
@@ -133,16 +133,15 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				}
 				finally {
 					endpointH2C.close().block();
-				}*/
+				}
 				
 				Endpoint endpointH1 = clientMod.httpClient().endpoint("127.0.0.1", port)
 					.configuration(HttpClientConfigurationLoader.load(conf -> conf.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))))
 					.build();
 				try {
-					this.test_post_multipart(endpointH1);
-					this.test_fail(endpointH1);
+//					this.test_fail(endpointH1);
 					
-					/*this.test_get(endpointH1);
+					this.test_get(endpointH1);
 					this.test_query_param(endpointH1);
 					this.test_cookie_param(endpointH1);
 					this.test_header_param(endpointH1);
@@ -153,7 +152,7 @@ public class HttpClientTest extends AbstractInvernoModTest {
 					this.test_post_multipart(endpointH1);
 					this.test_sse(endpointH1);
 					this.test_resource(endpointH1);
-					this.test_misc(endpointH1);*/
+					this.test_misc(endpointH1);
 				}
 				finally {
 					endpointH1.close().block();
@@ -4638,69 +4637,6 @@ public class HttpClientTest extends AbstractInvernoModTest {
 	}
 	
 	private void test_fail(Endpoint endpoint) throws IOException {
-		/*File uploadsDir = new File("target/uploads/");
-		uploadsDir.mkdirs();
 		
-		//curl -i -F 'file=@src/test/resources/post_resource_small.txt' http://127.0.0.1:8080/upload
-		new File(uploadsDir, "post_resource_small.txt").delete();
-		endpoint
-			.request(Method.POST, "/upload")
-			.body(body -> body.multipart().from((factory, output) -> output.value(
-				factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_small.txt"))))
-			)))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(Long.valueOf(55), exchange.response().headers().getContentLength());
-				
-				return exchange.response().body().string().stream();
-			})
-			.collect(Collectors.joining())
-			.doOnNext(body -> {
-				Assertions.assertEquals("Uploaded post_resource_small.txt(text/plain): " + new File("src/test/resources/post_resource_small.txt").length() + " Bytes\n", body);
-			})
-			.block();
-		
-		Assertions.assertArrayEquals(Files.readAllBytes(Path.of("src/test/resources/post_resource_small.txt")), Files.readAllBytes(Path.of("target/uploads/post_resource_small.txt")));
-		
-		//curl -i -F 'file=@src/test/resources/post_resource_big.txt' http://127.0.0.1:8080/upload
-		new File(uploadsDir, "post_resource_big.txt").delete();
-		endpoint
-			.request(Method.POST, "/upload")
-			.body(body -> body.multipart().from((factory, output) -> output.value(
-				factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_big.txt"))))
-			)))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(Long.valueOf(58), exchange.response().headers().getContentLength());
-				
-				return exchange.response().body().string().stream();
-			})
-			.collect(Collectors.joining())
-			.doOnNext(body -> {
-				Assertions.assertEquals("Uploaded post_resource_big.txt(text/plain): " + new File("src/test/resources/post_resource_big.txt").length() + " Bytes\n", body);
-			})
-			.block();
-		
-		Assertions.assertArrayEquals(Files.readAllBytes(Path.of("src/test/resources/post_resource_big.txt")), Files.readAllBytes(Path.of("target/uploads/post_resource_big.txt")));*/
-		
-		
-		// curl -i 'http://127.0.0.1:8080/get_sse_raw'
-		byte[] get_sse_raw = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw.txt"));
-		endpoint
-			.request(Method.GET, "/get_sse_raw")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8", exchange.response().headers().getContentType());
-				
-				return exchange.response().body().string().stream();
-			})
-			.collect(Collectors.joining())
-			.doOnNext(body -> {
-				Assertions.assertArrayEquals(get_sse_raw, body.getBytes(StandardCharsets.UTF_8));
-			})
-			.block();
 	}
 }
