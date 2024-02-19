@@ -216,15 +216,15 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 		
 		@Override
 		protected void hookOnNext(ByteBuf value) {
-			this.transferedLength += value.readableBytes();
-			Http1xRequestHeaders headers = Http1xExchange.this.request.headers();
+			Http1xExchange.this.executeInEventLoop(() -> {
+				this.transferedLength += value.readableBytes();
+				Http1xRequestHeaders headers = Http1xExchange.this.request.headers();
 
-			if( (this.single || !this.many) && this.singleChunk == null) {
-				this.singleChunk = value;
-			}
-			else {
-				this.many = true;
-				Http1xExchange.this.executeInEventLoop(() -> {
+				if( (this.single || !this.many) && this.singleChunk == null) {
+					this.singleChunk = value;
+				}
+				else {
+					this.many = true;
 					if(!headers.isWritten()) {
 						List<String> transferEncodings = headers.getAll(Headers.NAME_TRANSFER_ENCODING);
 						if(headers.getContentLength() == null && !transferEncodings.contains(Headers.VALUE_CHUNKED)) {
@@ -243,49 +243,47 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 					else {
 						Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new DefaultHttpContent(value), Http1xExchange.this.context.voidPromise());
 					}
-				});
-			}
+				}
+			});
 		}
 		
 		@Override
 		protected void hookOnComplete() {
-			// trailers if any should be send here in the last content
-			Http1xRequestHeaders headers = Http1xExchange.this.request.headers();
-			ChannelPromise finalizePromise = Http1xExchange.this.context.newPromise();
-			finalizePromise.addListener(future -> {
-				if(future.isSuccess()) {
-					Http1xExchange.this.handler.requestComplete(Http1xExchange.this);
-				}
-				else {
-					Http1xExchange.this.handler.exchangeError(Http1xExchange.this, future.cause());
-				}
-			});
-			if(this.transferedLength == 0) {
-				// empty response
-				if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
-					headers.contentLength(0);
-				}
-				Http1xExchange.this.executeInEventLoop(() -> {
+			Http1xExchange.this.executeInEventLoop(() -> {
+				// trailers if any should be send here in the last content
+				Http1xRequestHeaders headers = Http1xExchange.this.request.headers();
+				ChannelPromise finalizePromise = Http1xExchange.this.context.newPromise();
+				finalizePromise.addListener(future -> {
+					if(future.isSuccess()) {
+						Http1xExchange.this.handler.requestComplete(Http1xExchange.this);
+					}
+					else {
+						Http1xExchange.this.handler.exchangeError(Http1xExchange.this, future.cause());
+					}
+				});
+				if(this.transferedLength == 0) {
+					// empty response
+					if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
+						headers.contentLength(0);
+					}
+
 					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatFullHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.toHttp1xHeaders()), Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE), finalizePromise);
 					headers.setWritten(true);
-				});
-			}
-			else if(this.singleChunk != null) {
-				// single
-				if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
-					headers.contentLength(this.transferedLength);
+
 				}
-				Http1xExchange.this.executeInEventLoop(() -> {
+				else if(this.singleChunk != null) {
+					// single
+					if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
+						headers.contentLength(this.transferedLength);
+					}
 					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatFullHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.toHttp1xHeaders()), this.singleChunk, EmptyHttpHeaders.INSTANCE), finalizePromise);
 					headers.setWritten(true);
-				});
-			}
-			else {
-				// many
-				Http1xExchange.this.executeInEventLoop(() -> {
+				}
+				else {
+					// many
 					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE), finalizePromise);
-				});
-			}
+				}
+			});
 		}
 
 		@Override

@@ -358,7 +358,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	public void onRstStreamRead(ChannelHandlerContext ctx, int streamId, long errorCode) throws Http2Exception {
 		AbstractHttp2Exchange clientStream = this.clientStreams.remove(streamId);
 		if (clientStream != null) {
-			clientStream.dispose(new IllegalStateException("Stream was reset (" + errorCode + ")"));
+			clientStream.dispose(new IllegalStateException("Stream " + streamId +" was reset (" + errorCode + ")"));
 		} 
 	}
 

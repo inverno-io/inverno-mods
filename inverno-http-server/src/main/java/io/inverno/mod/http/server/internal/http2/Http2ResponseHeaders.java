@@ -175,7 +175,7 @@ class Http2ResponseHeaders implements InternalResponseHeaders {
 	@Override
 	public Http2ResponseHeaders add(Header... headers) {
 		for(Header header : headers) {
-			this.underlyingHeaders.add(header.getHeaderName(), header.getHeaderValue());
+			this.underlyingHeaders.add(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
 		return this;
 	}
@@ -189,7 +189,7 @@ class Http2ResponseHeaders implements InternalResponseHeaders {
 	@Override
 	public Http2ResponseHeaders set(Header... headers) {
 		for(Header header : headers) {
-			this.underlyingHeaders.set(header.getHeaderName(), header.getHeaderValue());
+			this.underlyingHeaders.set(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
 		return this;
 	}

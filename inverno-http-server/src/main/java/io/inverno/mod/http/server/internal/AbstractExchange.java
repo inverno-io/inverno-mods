@@ -195,8 +195,38 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		return this.transferedLength;
 	}
 	
+	/**
+	 * <p>
+	 * Disposes the exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method delegates to {@link #dispose(java.lang.Throwable) } with a null error.
+	 * </p>
+	 */
 	@Override
 	public void dispose() {
+		this.dispose(null);
+	}
+	
+	/**
+	 * <p>
+	 * Disposes the exchange with the specified error.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method cleans up exchange outstanding resources, it especially disposes the request which in turns drains received data if needed.
+	 * </p>
+	 * 
+	 * <p>
+	 * A non-null error indicates that the exchange did not complete successfully and that the error should be emitted when possible (e.g. in the request data publisher).
+	 * </p>
+	 * 
+	 * @param error an error or null
+	 * 
+	 * @see AbstractRequest#dispose(java.lang.Throwable) 
+	 */
+	public void dispose(Throwable error) {
 		if(this.disposable == this) {
 			super.dispose();
 		}
@@ -208,7 +238,16 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	@Override
 	public boolean isDisposed() {
-		return this.disposable != null ? this.disposable.isDisposed() : true;
+		if(this.handler == null) {
+			return false;
+		}
+		if(this.disposable != null) {
+			if(this.disposable == this) {
+				return super.isDisposed();
+			}
+			return this.disposable.isDisposed();
+		}
+		return true;
 	}
 	
 	/**
@@ -761,7 +800,6 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		protected void hookOnComplete() {
 			if(AbstractExchange.this.request.getMethod().equals(Method.HEAD)) {
 				AbstractExchange.this.executeInEventLoop(AbstractExchange.this::onCompleteEmpty);
-				AbstractExchange.this.dispose();
 			}
 			else {
 				AbstractExchange.this.single = AbstractExchange.this.response.isSingle();

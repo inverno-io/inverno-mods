@@ -1,5 +1,6 @@
 package io.inverno.mod.http.server.internal.multipart;
 
+import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.converter.StringConverter;
 import io.inverno.mod.base.resource.FileResource;
 import io.inverno.mod.http.base.header.HeaderService;
@@ -20,6 +21,8 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 public class MultipartBodyDecoderTest {
 	
@@ -318,5 +321,46 @@ public class MultipartBodyDecoderTest {
 			.block();
 		
 		Assertions.assertEquals(List.of("abcdefghi\n\n\n"), bodies);
+	}
+	
+	@Test
+	public void testCancelPartStreamSubscription() {
+		Headers.ContentType contentType = HEADER_SERVICE.<Headers.ContentType>decode("content-type: multipart/form-data; boundary=------------------------76c6a8d26e6eecc3");
+		
+		ByteBuf buf1 = Unpooled.copiedBuffer("--------------------------76c6a8d26e6eecc3\r\n" +
+			"content-disposition: form-data;name=\"a\"\r\n" +
+			"\r\n", StandardCharsets.UTF_8);
+		
+		ByteBuf buf2 = Unpooled.copiedBuffer("1", StandardCharsets.UTF_8);
+		
+		ByteBuf buf3 = Unpooled.copiedBuffer("\r\n--------------------------76c6a8d26e6eecc3\r\n" +
+			"content-disposition: form-data;name=\"b\"\r\n" +
+			"\r\n", StandardCharsets.UTF_8);
+		
+		ByteBuf buf4 = Unpooled.copiedBuffer("2", StandardCharsets.UTF_8);
+		
+		ByteBuf buf5 = Unpooled.copiedBuffer("\r\n" +
+			"--------------------------76c6a8d26e6eecc3--\r\n", StandardCharsets.UTF_8);
+		
+		Sinks.Many<ByteBuf> dataSink = Sinks.many().unicast().onBackpressureBuffer();
+		
+		dataSink.tryEmitNext(buf1);
+		dataSink.tryEmitNext(buf2);
+		dataSink.tryEmitNext(buf3);
+		dataSink.tryEmitNext(buf4);
+		dataSink.tryEmitNext(buf5);
+		
+		String response = Mono.from(DECODER.decode(dataSink.asFlux(), contentType)).flatMapMany(
+				part -> Flux.concat(
+					Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(part.getName() + " = ", Charsets.DEFAULT))), 
+					Flux.from(part.raw().stream()),
+					Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(", ", Charsets.DEFAULT)))
+				)
+			)
+			.reduceWith(() -> Unpooled.unreleasableBuffer(Unpooled.buffer()), (acc, chunk) -> { try { return acc.writeBytes(chunk); } finally { chunk.release(); } })
+			.map(buf -> "post_multipart_mono_raw: " + buf.toString(Charsets.DEFAULT))
+			.block();
+		
+		Assertions.assertEquals("post_multipart_mono_raw: a = 1, ", response);
 	}
 }

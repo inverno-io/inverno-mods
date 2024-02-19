@@ -178,7 +178,7 @@ class Http1xResponseHeaders implements InternalResponseHeaders {
 	@Override
 	public Http1xResponseHeaders add(Header... headers) {
 		for(Header header : headers) {
-			this.underlyingHeaders.addCharSequence(header.getHeaderName(), header.getHeaderValue());
+			this.underlyingHeaders.addCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
 		return this;
 	}
@@ -192,7 +192,7 @@ class Http1xResponseHeaders implements InternalResponseHeaders {
 	@Override
 	public Http1xResponseHeaders set(Header... headers) {
 		for(Header header : headers) {
-			this.underlyingHeaders.setCharSequence(header.getHeaderName(), header.getHeaderValue());
+			this.underlyingHeaders.setCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
 		return this;
 	}

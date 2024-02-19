@@ -193,10 +193,18 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 		private ByteBuf keepBuffer;
 		private UrlEncodedParameter partialParameter;
 		
+		private boolean canceling;
+		
 		public BodyDataSubscriber(Headers.ContentType contentType, FluxSink<Parameter> emitter) {
 			this.charset = Charsets.orDefault(contentType.getCharset());
 			this.emitter = emitter;
-			this.emitter.onCancel(() -> this.cancel());
+			this.emitter.onCancel(() -> {
+				this.canceling = true;
+				if(this.partialParameter == null) {
+					// Otherwise we need to consume until we reach the next part or if we complete
+					this.cancel();
+				}
+			});
 		}
 		
 		private void emitPartialParameter() {
@@ -209,17 +217,17 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 		
 		@Override
 		protected void hookOnNext(ByteBuf value) {
+			final ByteBuf buffer;
+			if(this.keepBuffer != null && this.keepBuffer.isReadable()) {
+				buffer = Unpooled.wrappedBuffer(this.keepBuffer, value);
+			}
+			else {
+				buffer = value;
+			}
+
 			try {
-				final ByteBuf buffer;
-				if(this.keepBuffer != null && this.keepBuffer.isReadable()) {
-					buffer = Unpooled.wrappedBuffer(this.keepBuffer, value);
-				}
-				else {
-					buffer = value;
-				}
-				
 				UrlEncodedParameter nextParameter = null;
-				while( (nextParameter = UrlEncodedBodyDecoder.this.readParameter(buffer, this.charset)) != null ) {
+				while( (nextParameter = UrlEncodedBodyDecoder.this.readParameter(buffer, this.charset)) != null && !this.isDisposed()) {
 					if(nextParameter.isLast()) {
 						if(!nextParameter.isPartial()) {
 							this.emitter.next(nextParameter);
@@ -243,23 +251,31 @@ public class UrlEncodedBodyDecoder implements MultipartDecoder<Parameter> {
 					}
 					else {
 						this.emitter.next(nextParameter);
+						if(this.canceling) {
+							this.cancel();
+						}
 					}
 				}
 				
-				if(buffer.isReadable()) {
-					if(this.keepBuffer != null) {
-						this.keepBuffer.discardReadBytes();
-						this.keepBuffer.writeBytes(buffer);
-					}
-					else {
-						this.keepBuffer = buffer.alloc().buffer(buffer.readableBytes());
-						this.keepBuffer.writeBytes(buffer);
+				if(!this.isDisposed()) {
+					if(buffer.isReadable()) {
+						if(this.keepBuffer != null) {
+							this.keepBuffer.clear();
+							this.keepBuffer.writeBytes(buffer);
+						}
+						else {
+							this.keepBuffer = buffer.alloc().buffer(buffer.readableBytes());
+							this.keepBuffer.writeBytes(buffer);
+						}
 					}
 				}
 			}
-			catch(Exception e) {
+			catch(Throwable e) {
 				this.emitter.error(e);
 				this.cancel();
+			}
+			finally {
+				value.release();
 			}
 		}
 		

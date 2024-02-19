@@ -29,7 +29,6 @@ import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2LocalFlowController;
 import io.netty.handler.codec.http2.Http2Stream;
-import java.util.List;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.BaseSubscriber;
@@ -173,76 +172,69 @@ class Http2Exchange extends AbstractHttp2Exchange {
 		
 		@Override
 		protected void hookOnNext(ByteBuf value) {
-			this.transferedLength += value.readableBytes();
-			Http2RequestHeaders headers = ((Http2Request)Http2Exchange.this.request).headers();
+			Http2Exchange.this.executeInEventLoop(() -> {
+				this.transferedLength += value.readableBytes();
+				Http2RequestHeaders headers = ((Http2Request)Http2Exchange.this.request).headers();
 
-			if( (this.single || !this.many) && this.singleChunk == null) {
-				this.singleChunk = value;
-			}
-			else {
-				this.many = true;
-				Http2Exchange.this.executeInEventLoop(() -> {
+				if( (this.single || !this.many) && this.singleChunk == null) {
+					this.singleChunk = value;
+				}
+				else {
+					this.many = true;
 					if(!headers.isWritten()) {
-						List<String> transferEncodings = headers.getAll(Headers.NAME_TRANSFER_ENCODING);
-						if(headers.getContentLength() == null && !transferEncodings.contains(Headers.VALUE_CHUNKED)) {
-							headers.set(Headers.NAME_TRANSFER_ENCODING, Headers.VALUE_CHUNKED);
-						}
 						Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.toHttp2Headers()), 0, false, Http2Exchange.this.context.voidPromise());
 						headers.setWritten(true);
 						if(this.singleChunk != null) {
 							Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), this.singleChunk, 0, false, Http2Exchange.this.context.voidPromise());
 							this.singleChunk = null;
 						}
+						Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), value, 0, false, Http2Exchange.this.context.voidPromise());
 					}
 					else {
 						Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), value, 0, false, Http2Exchange.this.context.voidPromise());
 					}
 					Http2Exchange.this.context.channel().flush();
-				});
-			}
+				}
+			});
 		}
 		
 		@Override
 		protected void hookOnComplete() {
-			// trailers if any should be send here in the last content
-			Http2RequestHeaders headers = ((Http2Request)Http2Exchange.this.request).headers();
-			ChannelPromise finalizePromise = Http2Exchange.this.context.newPromise();
-			finalizePromise.addListener(future -> {
-				if(future.isSuccess()) {
-					Http2Exchange.this.handler.requestComplete(Http2Exchange.this);
-				}
-				else {
-					Http2Exchange.this.handler.exchangeError(Http2Exchange.this, future.cause());
-				}
-			});
-			if(this.transferedLength == 0) {
-				// empty response
-				if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
-					headers.contentLength(0);
-				}
-				Http2Exchange.this.executeInEventLoop(() -> {
+			Http2Exchange.this.executeInEventLoop(() -> {
+				// trailers if any should be send here in the last content
+				Http2RequestHeaders headers = ((Http2Request)Http2Exchange.this.request).headers();
+				ChannelPromise finalizePromise = Http2Exchange.this.context.newPromise();
+				finalizePromise.addListener(future -> {
+					if(future.isSuccess()) {
+						Http2Exchange.this.handler.requestComplete(Http2Exchange.this);
+					}
+					else {
+						Http2Exchange.this.handler.exchangeError(Http2Exchange.this, future.cause());
+					}
+				});
+				if(this.transferedLength == 0) {
+					// empty response
+					if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
+						headers.contentLength(0);
+					}
 					Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.toHttp2Headers()), 0, true, finalizePromise);
 					headers.setWritten(true);
-				});
-			}
-			else if(this.singleChunk != null) {
-				// single
-				if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
-					headers.contentLength(this.transferedLength);
 				}
-				Http2Exchange.this.executeInEventLoop(() -> {
+				else if(this.singleChunk != null) {
+					// single
+					if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
+						headers.contentLength(this.transferedLength);
+					}
 					Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.toHttp2Headers()), 0, false, Http2Exchange.this.context.voidPromise());
 					Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), this.singleChunk, 0, true, finalizePromise);
 					headers.setWritten(true);
-				});
-			}
-			else {
-				// many
-				Http2Exchange.this.executeInEventLoop(() -> {
+				}
+				else {
+					// many
 					Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Unpooled.EMPTY_BUFFER, 0, true, finalizePromise);
-				});
-			}
-			Http2Exchange.this.context.channel().flush();
+				}
+				Http2Exchange.this.context.channel().flush();
+			});
 		}
 
 		@Override

@@ -27,6 +27,8 @@ import java.util.Optional;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 /**
  * <p>
@@ -44,8 +46,11 @@ class GenericPart implements Part {
 
 	private PartHeaders partHeaders;
 	
+	private Sinks.Many<ByteBuf> dataSink;
+	private boolean subscribed;
+	private boolean disposed;
+	
 	private Flux<ByteBuf> data;
-	private FluxSink<ByteBuf> dataEmitter;
 	
 	private InboundData<ByteBuf> rawData;
 	private InboundData<CharSequence> stringData;
@@ -72,7 +77,7 @@ class GenericPart implements Part {
 	 * @param name               the part's name
 	 * @param filename           the part's file name
 	 * @param headers            the part's headers
-	 * @param contentType          the part's media type
+	 * @param contentType        the part's media type
 	 * @param charset            the part's charset
 	 * @param contentLength      the part's content length
 	 */
@@ -81,20 +86,71 @@ class GenericPart implements Part {
 		this.filename = filename;
 		this.partHeaders = new PartHeaders(headers, parameterConverter);
 		
-		this.data = Flux.<ByteBuf>create(emitter -> {
-			this.dataEmitter = emitter;
-		}).doOnDiscard(ByteBuf.class, ByteBuf::release);
+		this.dataSink = Sinks.many().unicast().onBackpressureBuffer();
+		this.data = Flux.defer(() -> {
+			if(this.disposed) {
+				return Mono.error(new IllegalStateException("Part was disposed"));
+			}
+			return this.dataSink.asFlux()
+				.doOnSubscribe(ign -> this.subscribed = true)
+				.doOnDiscard(ByteBuf.class, ByteBuf::release);
+		});
 	}
 	
 	/**
 	 * <p>
-	 * Returns the part's data sink.
+	 * Disposes the part.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method delegates to {@link #dispose(java.lang.Throwable) } with a null error.
+	 * </p>
+	 */
+	void dispose() {
+		this.dispose(null);
+	}
+	
+	/**
+	 * <p>
+	 * Disposes the part with the specified error.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method drains received data if the part data publisher hasn't been subscribed.
+	 * </p>
+	 * 
+	 * <p>
+	 * A non-null error indicates that the enclosing exchange did not complete successfully and that the error should be emitted by the part data publisher.
+	 * </p>
+	 * 
+	 * @param error an error or null
+	 */
+	void dispose(Throwable error) {
+		if(!this.subscribed) {
+			// Try to drain and release buffered data 
+			// when the datasink was already subscribed data are released in doOnDiscard
+			this.dataSink.asFlux().subscribe(
+				chunk -> chunk.release(), 
+				ex -> {
+					// TODO Should be ignored but can be logged as debug or trace log
+				}
+			);
+		}
+		else {
+			this.dataSink.tryEmitError(error != null ? error : new IllegalStateException("Part was disposed") );
+		}
+		this.disposed = true;
+	}
+	
+	/**
+	 * <p>
+	 * Returns the part data sink.
 	 * </p>
 	 *
-	 * @return an optional returning the payload data sink or an empty optional if the part has no body
+	 * @return the part data sink
 	 */
-	public Optional<FluxSink<ByteBuf>> getData() {
-		return Optional.ofNullable(this.dataEmitter);
+	Sinks.Many<ByteBuf> data() {
+		return this.dataSink;
 	}
 	
 	@Override

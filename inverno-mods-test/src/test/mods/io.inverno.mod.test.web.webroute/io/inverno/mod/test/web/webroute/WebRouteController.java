@@ -449,122 +449,122 @@ public class WebRouteController {
 	
 	public boolean get_encoded_headerParam;
 	
-	// curl --insecure -iv -H 'headerParam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam'
-	// curl --insecure -iv -H 'headerParam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam'
-	// curl --insecure -iv -H 'headerParam: abc' -H 'headerParam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam'
+	// curl --insecure -iv -H 'headerparam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam'
+	// curl --insecure -iv -H 'headerparam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam'
+	// curl --insecure -iv -H 'headerparam: abc' -H 'headerParam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam'
 	// curl --insecure -iv 'http://127.0.0.1:8080/get_encoded/headerParam'
 	@WebRoute(path = "/get_encoded/headerParam", method = Method.GET, produces = MediaTypes.TEXT_PLAIN)
-	public String get_encoded_headerParam(@HeaderParam String headerParam) {
+	public String get_encoded_headerParam(@HeaderParam String headerparam) {
 		this.get_encoded_headerParam = true;
-		return "get_encoded_headerParam: " + headerParam;
+		return "get_encoded_headerParam: " + headerparam;
 	}
 	
 	public boolean get_encoded_headerParam_opt;
 	
-	// curl --insecure -iv -H 'headerParam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
-	// curl --insecure -iv -H 'headerParam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
-	// curl --insecure -iv -H 'headerParam: abc' -H 'headerParam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
+	// curl --insecure -iv -H 'headerparam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
+	// curl --insecure -iv -H 'headerparam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
+	// curl --insecure -iv -H 'headerparam: abc' -H 'headerparam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
 	// curl --insecure -iv 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
 	@WebRoute(path = "/get_encoded/headerParam/opt", method = Method.GET, produces = MediaTypes.TEXT_PLAIN)
-	public String get_encoded_headerParam_opt(@HeaderParam Optional<String> headerParam) {
+	public String get_encoded_headerParam_opt(@HeaderParam Optional<String> headerparam) {
 		this.get_encoded_headerParam_opt = true;
-		return "get_encoded_headerParam_opt: " + headerParam.orElse("empty");
+		return "get_encoded_headerParam_opt: " + headerparam.orElse("empty");
 	}
 	
 	public boolean get_encoded_headerParam_collection;
 	
-	// curl --insecure -iv -H 'headerParam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
-	// curl --insecure -iv -H 'headerParam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
-	// curl --insecure -iv -H 'headerParam: abc' -H 'headerParam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
+	// curl --insecure -iv -H 'headerparam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
+	// curl --insecure -iv -H 'headerparam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
+	// curl --insecure -iv -H 'headerparam: abc' -H 'headerparam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
 	// curl --insecure -iv 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
 	@WebRoute(path = "/get_encoded/headerParam/collection", method = Method.GET, produces = MediaTypes.TEXT_PLAIN)
-	public String get_encoded_headerParam_collection(@HeaderParam Collection<String> headerParam) {
+	public String get_encoded_headerParam_collection(@HeaderParam Collection<String> headerparam) {
 		this.get_encoded_headerParam_collection = true;
-		return "get_encoded_headerParam_collection: " + headerParam.stream().collect(Collectors.joining(", "));
+		return "get_encoded_headerParam_collection: " + headerparam.stream().collect(Collectors.joining(", "));
 	}
 	
 	public boolean get_encoded_headerParam_collection_opt;
 	
-	// curl --insecure -iv -H 'headerParam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
-	// curl --insecure -iv -H 'headerParam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
-	// curl --insecure -iv -H 'headerParam: abc' -H 'headerParam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
+	// curl --insecure -iv -H 'headerparam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
+	// curl --insecure -iv -H 'headerparam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
+	// curl --insecure -iv -H 'headerparam: abc' -H 'headerparam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
 	// curl --insecure -iv 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
 	@WebRoute(path = "/get_encoded/headerParam/collection/opt", method = Method.GET, produces = MediaTypes.TEXT_PLAIN)
-	public String get_encoded_headerParam_collection_opt(@HeaderParam Optional<Collection<String>> headerParam) {
+	public String get_encoded_headerParam_collection_opt(@HeaderParam Optional<Collection<String>> headerparam) {
 		this.get_encoded_headerParam_collection_opt = true;
-		return "get_encoded_headerParam_collection_opt: " + headerParam.orElse(List.of()).stream().collect(Collectors.joining(", "));
+		return "get_encoded_headerParam_collection_opt: " + headerparam.orElse(List.of()).stream().collect(Collectors.joining(", "));
 	}
 	
 	public boolean get_encoded_headerParam_list;
 	
-	// curl --insecure -iv -H 'headerParam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
-	// curl --insecure -iv -H 'headerParam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
-	// curl --insecure -iv -H 'headerParam: abc' -H 'headerParam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
+	// curl --insecure -iv -H 'headerparam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
+	// curl --insecure -iv -H 'headerparam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
+	// curl --insecure -iv -H 'headerparam: abc' -H 'headerparam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
 	// curl --insecure -iv 'http://127.0.0.1:8080/get_encoded/headerParam/list'
 	@WebRoute(path = "/get_encoded/headerParam/list", method = Method.GET, produces = MediaTypes.TEXT_PLAIN)
-	public String get_encoded_headerParam_list(@HeaderParam List<String> headerParam) {
+	public String get_encoded_headerParam_list(@HeaderParam List<String> headerparam) {
 		this.get_encoded_headerParam_list = true;
-		return "get_encoded_headerParam_list: " + headerParam.stream().collect(Collectors.joining(", "));
+		return "get_encoded_headerParam_list: " + headerparam.stream().collect(Collectors.joining(", "));
 	}
 	
 	public boolean get_encoded_headerParam_list_opt;
 	
-	// curl --insecure -iv -H 'headerParam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
-	// curl --insecure -iv -H 'headerParam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
-	// curl --insecure -iv -H 'headerParam: abc' -H 'headerParam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
+	// curl --insecure -iv -H 'headerparam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
+	// curl --insecure -iv -H 'headerparam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
+	// curl --insecure -iv -H 'headerparam: abc' -H 'headerparam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
 	// curl --insecure -iv 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
 	@WebRoute(path = "/get_encoded/headerParam/list/opt", method = Method.GET, produces = MediaTypes.TEXT_PLAIN)
-	public String get_encoded_headerParam_list_opt(@HeaderParam Optional<List<String>> headerParam) {
+	public String get_encoded_headerParam_list_opt(@HeaderParam Optional<List<String>> headerparam) {
 		this.get_encoded_headerParam_list_opt = true;
-		return "get_encoded_headerParam_list_opt: " + headerParam.orElse(List.of()).stream().collect(Collectors.joining(", "));
+		return "get_encoded_headerParam_list_opt: " + headerparam.orElse(List.of()).stream().collect(Collectors.joining(", "));
 	}
 	
 	public boolean get_encoded_headerParam_set;
 	
-	// curl --insecure -iv -H 'headerParam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
-	// curl --insecure -iv -H 'headerParam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
-	// curl --insecure -iv -H 'headerParam: abc' -H 'headerParam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
+	// curl --insecure -iv -H 'headerparam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
+	// curl --insecure -iv -H 'headerparam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
+	// curl --insecure -iv -H 'headerparam: abc' -H 'headerparam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
 	// curl --insecure -iv 'http://127.0.0.1:8080/get_encoded/headerParam/set'
 	@WebRoute(path = "/get_encoded/headerParam/set", method = Method.GET, produces = MediaTypes.TEXT_PLAIN)
-	public String get_encoded_headerParam_set(@HeaderParam Set<String> headerParam) {
+	public String get_encoded_headerParam_set(@HeaderParam Set<String> headerparam) {
 		this.get_encoded_headerParam_set = true;
-		return "get_encoded_headerParam_set: " + headerParam.stream().collect(Collectors.joining(", "));
+		return "get_encoded_headerParam_set: " + headerparam.stream().collect(Collectors.joining(", "));
 	}
 	
 	public boolean get_encoded_headerParam_set_opt;
 	
-	// curl --insecure -iv -H 'headerParam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
-	// curl --insecure -iv -H 'headerParam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
-	// curl --insecure -iv -H 'headerParam: abc' -H 'headerParam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
+	// curl --insecure -iv -H 'headerparam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
+	// curl --insecure -iv -H 'headerparam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
+	// curl --insecure -iv -H 'headerparam: abc' -H 'headerparam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
 	// curl --insecure -iv 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
 	@WebRoute(path = "/get_encoded/headerParam/set/opt", method = Method.GET, produces = MediaTypes.TEXT_PLAIN)
-	public String get_encoded_headerParam_set_opt(@HeaderParam Optional<Set<String>> headerParam) {
+	public String get_encoded_headerParam_set_opt(@HeaderParam Optional<Set<String>> headerparam) {
 		this.get_encoded_headerParam_set_opt = true;
-		return "get_encoded_headerParam_set_opt: " + headerParam.orElse(Set.of()).stream().collect(Collectors.joining(", "));
+		return "get_encoded_headerParam_set_opt: " + headerparam.orElse(Set.of()).stream().collect(Collectors.joining(", "));
 	}
 	
 	public boolean get_encoded_headerParam_array;
 	
-	// curl --insecure -iv -H 'headerParam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
-	// curl --insecure -iv -H 'headerParam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
-	// curl --insecure -iv -H 'headerParam: abc' -H 'headerParam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
+	// curl --insecure -iv -H 'headerparam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
+	// curl --insecure -iv -H 'headerparam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
+	// curl --insecure -iv -H 'headerparam: abc' -H 'headerparam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
 	// curl --insecure -iv 'http://127.0.0.1:8080/get_encoded/headerParam/array'
 	@WebRoute(path = "/get_encoded/headerParam/array", method = Method.GET, produces = MediaTypes.TEXT_PLAIN)
-	public String get_encoded_headerParam_array(@HeaderParam String[] headerParam) {
+	public String get_encoded_headerParam_array(@HeaderParam String[] headerparam) {
 		this.get_encoded_headerParam_array = true;
-		return "get_encoded_headerParam_array: " + Arrays.stream(headerParam).collect(Collectors.joining(", "));
+		return "get_encoded_headerParam_array: " + Arrays.stream(headerparam).collect(Collectors.joining(", "));
 	}
 	
 	public boolean get_encoded_headerParam_array_opt;
 	
-	// curl --insecure -iv -H 'headerParam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
-	// curl --insecure -iv -H 'headerParam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
-	// curl --insecure -iv -H 'headerParam: abc' -H 'headerParam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
+	// curl --insecure -iv -H 'headerparam: abc' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
+	// curl --insecure -iv -H 'headerparam: abc,def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
+	// curl --insecure -iv -H 'headerparam: abc' -H 'headerparam: def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
 	// curl --insecure -iv 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
 	@WebRoute(path = "/get_encoded/headerParam/array/opt", method = Method.GET, produces = MediaTypes.TEXT_PLAIN)
-	public String get_encoded_headerParam_array_opt(@HeaderParam Optional<String[]> headerParam) {
+	public String get_encoded_headerParam_array_opt(@HeaderParam Optional<String[]> headerparam) {
 		this.get_encoded_headerParam_array_opt = true;
-		return "get_encoded_headerParam_array_opt: " + headerParam.map(Arrays::stream).orElse(Stream.of()).collect(Collectors.joining(", "));
+		return "get_encoded_headerParam_array_opt: " + headerparam.map(Arrays::stream).orElse(Stream.of()).collect(Collectors.joining(", "));
 	}
 	
 	public boolean get_encoded_pathParam;

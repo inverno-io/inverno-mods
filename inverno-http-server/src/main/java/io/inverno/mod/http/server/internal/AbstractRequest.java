@@ -207,17 +207,42 @@ public abstract class AbstractRequest implements Request {
 	 * @return an optional returning the payload data sink or an empty optional if the request has no body
 	 */
 	public Optional<Sinks.Many<ByteBuf>> data() {
-		return Optional.ofNullable(this.requestBody).map(body -> body.dataSink);
+		return this.body().map(body -> ((GenericRequestBody)body).dataSink);
 	}
 	
 	/**
 	 * <p>
-	 * Drains and release the request data flux.
+	 * Disposes the request.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method delegates to {@link #dispose(java.lang.Throwable) } with a null error.
 	 * </p>
 	 */
 	public void dispose() {
+		this.dispose(null);
+	}
+	
+	/**
+	 * <p>
+	 * Disposes the request with the specified error.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method cleans up request outstanding resources, it especially drains received data if needed.
+	 * </p>
+	 * 
+	 * <p>
+	 * A non-null error indicates that the enclosing exchange did not complete successfully and that the error should be emitted when possible (e.g. in the request data publisher).
+	 * </p>
+	 * 
+	 * @param error an error or null
+	 * 
+	 * @see GenericRequestBody#dispose(java.lang.Throwable) 
+	 */
+	public void dispose(Throwable error) {
 		if(this.requestBody != null) {
-			this.requestBody.dispose();
+			this.requestBody.dispose(error);
 		}
 	}
 }

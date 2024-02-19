@@ -19,17 +19,31 @@ import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.server.ExchangeHandler;
+import io.inverno.mod.web.server.WebExchange;
 import io.inverno.mod.web.server.WebRoute;
+import io.inverno.mod.web.server.internal.mock.MockWebExchange;
 import io.inverno.mod.web.server.spi.Route;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import reactor.core.publisher.Mono;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
 public class GenericWebRouterTest {
+	
+	@SuppressWarnings("unchecked")
+	private static ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> mockExchangeHandler() {
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> mockExchangeHandler = Mockito.mock(ExchangeHandler.class);
+		Mockito.when(mockExchangeHandler.defer(Mockito.any())).thenReturn(Mono.empty());
+		return mockExchangeHandler;
+	}
 	
 	@Test
 	public void testGetRoutes() {
@@ -215,4 +229,32 @@ public class GenericWebRouterTest {
 		Assertions.assertEquals(4, routes.size());
 	}
 	
+	@Test
+	public void testMixMethodWithSamePath() {
+		GenericWebRouter router = new GenericWebRouter(null, null, null);
+		
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> mockHandler1 = mockExchangeHandler();
+		ExchangeHandler<ExchangeContext, WebExchange<ExchangeContext>> mockHandler2 = mockExchangeHandler();
+		
+		router
+			.route()
+				.path("/hello", false)
+				.method(Method.GET)
+				.produces("text/plain")
+				.handler(mockHandler1)
+			.route()
+				.path("/hello", false)
+				.method(Method.POST)
+				.consumes("text/plain")
+				.produces("text/plain")
+				.handler(mockHandler2);
+		
+		MockWebExchange exchange1 = MockWebExchange.from("/hello", Method.GET).build();
+		router.defer(exchange1).block();
+		Mockito.verify(mockHandler1).defer(Mockito.any());
+		
+		MockWebExchange exchange2 = MockWebExchange.from("/hello", Method.POST).headers(Map.of("content-type", List.of("text/plain"), "accept", List.of("text/plain"))).build();
+		router.defer(exchange2).block();
+		Mockito.verify(mockHandler2).defer(Mockito.any());
+	}
 }

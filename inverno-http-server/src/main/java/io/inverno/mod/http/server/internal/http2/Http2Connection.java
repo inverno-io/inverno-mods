@@ -117,25 +117,13 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		PromiseCombiner finalPromise = new PromiseCombiner(ctx.executor());
 		for(Http2Exchange exchange : this.serverStreams.values()) {
-			exchange.dispose();
+			exchange.dispose(cause);
 			ChannelPromise errorPromise = ctx.newPromise();
 			exchange.finalizeExchange(errorPromise, null);
 			errorPromise.tryFailure(cause);
 			finalPromise.add((ChannelFuture)errorPromise);
 		}
-		
 		finalPromise.finish(ctx.newPromise().addListener(ChannelFutureListener.CLOSE));
-	}
-
-	@Override
-	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-		super.channelInactive(ctx);
-	}
-	
-	@Override
-	public void onError(ChannelHandlerContext ctx, boolean outbound, Throwable cause) {
-		super.onError(ctx, outbound, cause);
-		ctx.close();
 	}
 
 	@Override
@@ -145,14 +133,18 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 
 		Http2Exchange serverStream = this.serverStreams.get(streamId);
 		if (serverStream != null) {
-			serverStream.request().data().ifPresent(sink -> {
-				data.retain();
-				if(sink.tryEmitNext(data) != EmitResult.OK) {
-					data.release();
+			// when exchange is complete (i.e. response has been sent) the stream MUST be reset
+			// If we get there and the exchange is disposed then we must not populate the data BUT eventually we must dispose the exchange
+			if(!serverStream.isDisposed()) {
+				serverStream.request().data().ifPresent(sink -> {
+					data.retain();
+					if(sink.tryEmitNext(data) != EmitResult.OK) {
+						data.release();
+					}
+				});
+				if (endOfStream) {
+					serverStream.request().data().ifPresent(sink -> sink.tryEmitComplete());
 				}
-			});
-			if (endOfStream) {
-				serverStream.request().data().ifPresent(sink -> sink.tryEmitComplete());
 			}
 		} 
 		else {
@@ -181,10 +173,16 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 			streamExchange.start(new AbstractExchange.Handler() {
 				@Override
 				public void exchangeError(ChannelHandlerContext ctx, Throwable t) {
+					streamExchange.dispose(t);
 					Http2Connection.this.resetStream(ctx, streamId, Http2Error.INTERNAL_ERROR.code(), ctx.voidPromise());
 				}
+
+				@Override
+				public void exchangeComplete(ChannelHandlerContext ctx) {
+					streamExchange.dispose();
+				}
 			});
-		} 
+		}
 		else {
 			// Continuation frame
 			((Http2RequestHeaders) exchange.request().headers()).getUnderlyingHeaders().add(headers);
@@ -204,7 +202,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	public void onRstStreamRead(ChannelHandlerContext ctx, int streamId, long errorCode) throws Http2Exception {
 		Http2Exchange serverStream = this.serverStreams.remove(streamId);
 		if (serverStream != null) {
-			serverStream.dispose();
+			serverStream.dispose(new IllegalStateException("Stream " + streamId +" was reset (" + errorCode + ")"));
 		} 
 		else {
 			// TODO this should never happen?
@@ -240,13 +238,11 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	}
 
 	@Override
-	public void onGoAwayRead(ChannelHandlerContext ctx, int lastStreamId, long errorCode, ByteBuf debugData)
-			throws Http2Exception {
+	public void onGoAwayRead(ChannelHandlerContext ctx, int lastStreamId, long errorCode, ByteBuf debugData) throws Http2Exception {
 	}
 
 	@Override
-	public void onWindowUpdateRead(ChannelHandlerContext ctx, int streamId, int windowSizeIncrement)
-			throws Http2Exception {
+	public void onWindowUpdateRead(ChannelHandlerContext ctx, int streamId, int windowSizeIncrement) throws Http2Exception {
 	}
 
 	@Override

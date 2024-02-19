@@ -81,9 +81,36 @@ public class GenericRequestBody implements RequestBody {
 				.doOnDiscard(ByteBuf.class, ByteBuf::release);
 		});
 	}
-
+	
+	/**
+	 * <p>
+	 * Disposes the request body.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method delegates to {@link #dispose(java.lang.Throwable) } with a null error.
+	 * </p>
+	 */
 	void dispose() {
-		this.dataSink.tryEmitComplete();
+		this.dispose(null);
+	}
+
+	/**
+	 * <p>
+	 * Disposes the request body with the specified error.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method drains received data if the request body data publisher hasn't been subscribed.
+	 * </p>
+	 * 
+	 * <p>
+	 * A non-null error indicates that the enclosing exchange did not complete successfully and that the error should be emitted by the request data publisher.
+	 * </p>
+	 * 
+	 * @param error an error or null
+	 */
+	void dispose(Throwable error) {
 		if(!this.subscribed) {
 			// Try to drain and release buffered data 
 			// when the datasink was already subscribed data are released in doOnDiscard
@@ -93,6 +120,9 @@ public class GenericRequestBody implements RequestBody {
 					// TODO Should be ignored but can be logged as debug or trace log
 				}
 			);
+		}
+		else {
+			this.dataSink.tryEmitError(error != null ? error : new IllegalStateException("Request was disposed") );
 		}
 		this.disposed = true;
 	}

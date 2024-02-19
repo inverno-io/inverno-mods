@@ -18,7 +18,6 @@ package io.inverno.mod.http.server;
 import io.inverno.mod.http.base.BaseRequest;
 import io.inverno.mod.http.base.InboundCookies;
 import io.inverno.mod.http.base.InboundRequestHeaders;
-import java.security.cert.Certificate;
 import java.util.Optional;
 
 /**

@@ -144,7 +144,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements Http1xConn
 					this.exchangeQueue = this.requestingExchange;
 				}
 			}
-			else if(this.requestingExchange != null) {
+			else if(this.requestingExchange != null && !this.requestingExchange.isDisposed()) {
 				HttpVersion version = this.requestingExchange.version;
 				if(msg == LastHttpContent.EMPTY_LAST_CONTENT) {
 					this.requestingExchange.request().data().ifPresent(sink -> sink.tryEmitComplete());
@@ -234,7 +234,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements Http1xConn
 		}
 		else {
 			if(this.respondingExchange != null) {
-				this.respondingExchange.dispose(true);
+				this.respondingExchange.dispose(cause, true);
 				ChannelPromise errorPromise = ctx.newPromise();
 				this.respondingExchange.finalizeExchange(errorPromise, () -> ctx.close());
 				errorPromise.tryFailure(cause);
@@ -293,15 +293,14 @@ public class Http1xConnection extends ChannelDuplexHandler implements Http1xConn
 			ctx.flush();
 		}
 		// We have to release data...
-		if(this.respondingExchange.next != null) {
-			this.respondingExchange.next.dispose(true);
-		}
+		this.respondingExchange.dispose(t, true);
 		// ...and close the connection
 		ctx.close();
 	}
 	
 	@Override
 	public void exchangeComplete(ChannelHandlerContext ctx) {
+		this.respondingExchange.dispose();
 		if(this.respondingExchange.keepAlive) {
 			if(this.respondingExchange.next != null) {
 				this.respondingExchange.next.start(this);

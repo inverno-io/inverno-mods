@@ -63,11 +63,15 @@ public class HttpClientTest extends AbstractInvernoModTest {
 	static {
 		System.setProperty("log4j2.simplelogLevel", "INFO");
 		System.setProperty("log4j2.simplelogLogFile", "system.out");
+//		System.setProperty("io.netty.leakDetection.level", "PARANOID");
+//		System.setProperty("io.netty.leakDetection.targetRecords", "20");
 	}
 	
 	private static final ObjectMapper MAPPER = new ObjectMapper();
 	
 	private static final String MODULE_WEBROUTE = "io.inverno.mod.test.web.webroute";
+	
+	private static HttpVersion testHttpVersion;
 	
 	public static int getFreePort() {
 		try (ServerSocket serverSocket = new ServerSocket(0)) {
@@ -87,7 +91,7 @@ public class HttpClientTest extends AbstractInvernoModTest {
 		int port = getFreePort();
 		
 		Class<?> httpConfigClass = moduleLoader.loadClass(MODULE_WEBROUTE, "io.inverno.mod.http.server.HttpServerConfiguration");
-		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", port, "h2_enabled", true));
+		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", port, "h2c_enabled", true));
 		Object httpConfig = Proxy.newProxyInstance(httpConfigClass.getClassLoader(),
 			new Class<?>[] { httpConfigClass },
 			httpConfigHandler);
@@ -113,6 +117,9 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			Client clientMod = new Client.Builder(bootMod.netService(), bootMod.reactor(), bootMod.resourceService()).build();
 			try {
 				clientMod.start();
+				
+				testHttpVersion = HttpVersion.HTTP_2_0;
+				// TODO HTTP/2 tests are failing because transfer encoding chunked does not exist in HTTP/2...
 				Endpoint endpointH2C = clientMod.httpClient().endpoint("127.0.0.1", port)
 					.build();
 				try {
@@ -130,11 +137,14 @@ public class HttpClientTest extends AbstractInvernoModTest {
 					this.test_sse(endpointH2C);
 					this.test_resource(endpointH2C);
 					this.test_misc(endpointH2C);
+				
+					System.gc();
 				}
 				finally {
 					endpointH2C.close().block();
 				}
 				
+				testHttpVersion = HttpVersion.HTTP_1_1;
 				Endpoint endpointH1 = clientMod.httpClient().endpoint("127.0.0.1", port)
 					.configuration(HttpClientConfigurationLoader.load(conf -> conf.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))))
 					.build();
@@ -153,6 +163,8 @@ public class HttpClientTest extends AbstractInvernoModTest {
 					this.test_sse(endpointH1);
 					this.test_resource(endpointH1);
 					this.test_misc(endpointH1);
+					
+					System.gc();
 				}
 				finally {
 					endpointH1.close().block();
@@ -166,6 +178,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			testServerMod.stop();
 			bootMod.stop();
 		}
+	}
+	
+	// For troubleshooting
+	private void test_fail(Endpoint endpoint) throws IOException {
+		
 	}
 	
 	private void test_get(Endpoint endpoint) {
@@ -245,8 +262,13 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
 				Assertions.assertNull(exchange.response().headers().getContentType());
 				Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_CONTENT_LENGTH).isEmpty());
-				Assertions.assertEquals("chunked", exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
-				
+
+				switch(testHttpVersion) {
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+						break;
+					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+						break;
+				}
 				return exchange.response().body().string().stream();
 			})
 			.collect(Collectors.joining())
@@ -374,7 +396,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
 				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
 				Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_CONTENT_LENGTH).isEmpty());
-				Assertions.assertEquals("chunked", exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+				switch(testHttpVersion) {
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+						break;
+					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+						break;
+				}
 				
 				return exchange.response().body().string().stream();
 			})
@@ -409,7 +436,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
 				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
 				Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_CONTENT_LENGTH).isEmpty());
-				Assertions.assertEquals("chunked", exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+				switch(testHttpVersion) {
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+						break;
+					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+						break;
+				}
 				
 				return exchange.response().body().string().stream();
 			})
@@ -1619,11 +1651,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 	}
 	
 	private void test_header_param(Endpoint endpoint) {
-		//curl -i -H 'headerParam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam'
+		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
+				.add("headerparam", "abc")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1639,12 +1671,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' -H 'headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam'
+		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
-				.add("headerParam", "def,hij")
+				.add("headerparam", "abc")
+				.add("headerparam", "def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1669,11 +1701,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
+		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/opt")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
+				.add("headerparam", "abc")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1689,12 +1721,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' -H 'headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
+		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/opt")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
-				.add("headerParam", "def,hij")
+				.add("headerparam", "abc")
+				.add("headerparam", "def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1727,11 +1759,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
+		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/collection")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
+				.add("headerparam", "abc")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1747,11 +1779,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
+		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/collection")
 			.headers(headers -> headers
-				.add("headerParam", "abc,def,hij")
+				.add("headerparam", "abc,def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1767,12 +1799,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' -H 'headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
+		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/collection")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
-				.add("headerParam", "def,hij")
+				.add("headerparam", "abc")
+				.add("headerparam", "def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1797,11 +1829,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
+		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/collection/opt")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
+				.add("headerparam", "abc")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1817,11 +1849,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
+		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/collection/opt")
 			.headers(headers -> headers
-				.add("headerParam", "abc,def,hij")
+				.add("headerparam", "abc,def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1837,12 +1869,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' -H 'headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
+		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/collection/opt")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
-				.add("headerParam", "def,hij")
+				.add("headerparam", "abc")
+				.add("headerparam", "def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1875,11 +1907,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 
-		//curl -i -H 'headerParam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
+		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/list")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
+				.add("headerparam", "abc")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1895,11 +1927,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 
-		//curl -i -H 'headerParam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
+		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/list")
 			.headers(headers -> headers
-				.add("headerParam", "abc,def,hij")
+				.add("headerparam", "abc,def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1915,12 +1947,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 
-		//curl -i -H 'headerParam:abc' -H 'headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
+		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/list")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
-				.add("headerParam", "def,hij")
+				.add("headerparam", "abc")
+				.add("headerparam", "def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1945,11 +1977,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
+		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/list/opt")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
+				.add("headerparam", "abc")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1965,11 +1997,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
+		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/list/opt")
 			.headers(headers -> headers
-				.add("headerParam", "abc,def,hij")
+				.add("headerparam", "abc,def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -1985,12 +2017,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' -H 'headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
+		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/list/opt")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
-				.add("headerParam", "def,hij")
+				.add("headerparam", "abc")
+				.add("headerparam", "def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -2023,11 +2055,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
+		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/set")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
+				.add("headerparam", "abc")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -2043,11 +2075,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
+		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/set")
 			.headers(headers -> headers
-				.add("headerParam", "abc,def,hij")
+				.add("headerparam", "abc,def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -2065,12 +2097,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' -H 'headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
+		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/set")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
-				.add("headerParam", "def,hij")
+				.add("headerparam", "abc")
+				.add("headerparam", "def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -2097,11 +2129,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
+		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/set/opt")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
+				.add("headerparam", "abc")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -2117,11 +2149,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
+		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/set/opt")
 			.headers(headers -> headers
-				.add("headerParam", "abc,def,hij")
+				.add("headerparam", "abc,def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -2139,12 +2171,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' -H 'headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
+		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/set/opt")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
-				.add("headerParam", "def,hij")
+				.add("headerparam", "abc")
+				.add("headerparam", "def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -2179,11 +2211,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
+		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/array")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
+				.add("headerparam", "abc")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -2199,11 +2231,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
+		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/array")
 			.headers(headers -> headers
-				.add("headerParam", "abc,def,hij")
+				.add("headerparam", "abc,def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -2219,12 +2251,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' -H 'headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
+		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/array")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
-				.add("headerParam", "def,hij")
+				.add("headerparam", "abc")
+				.add("headerparam", "def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -2249,11 +2281,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 
-		//curl -i -H 'headerParam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
+		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/array/opt")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
+				.add("headerparam", "abc")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -2269,11 +2301,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
+		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/array/opt")
 			.headers(headers -> headers
-				.add("headerParam", "abc,def,hij")
+				.add("headerparam", "abc,def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -2289,12 +2321,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.block();
 		
-		//curl -i -H 'headerParam:abc' -H 'headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
+		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/array/opt")
 			.headers(headers -> headers
-				.add("headerParam", "abc")
-				.add("headerParam", "def,hij")
+				.add("headerparam", "abc")
+				.add("headerparam", "def,hij")
 			)
 			.send()
 			.flatMapMany(exchange -> {
@@ -2669,7 +2701,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
 				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).get());
+				switch(testHttpVersion) {
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+						break;
+					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+						break;
+				}
 				
 				return exchange.response().body().string().stream();
 			})
@@ -2703,7 +2740,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
 				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).get());
+				switch(testHttpVersion) {
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+						break;
+					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+						break;
+				}
 				
 				return exchange.response().body().string().stream();
 			})
@@ -2742,7 +2784,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
 				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).get());
+				switch(testHttpVersion) {
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+						break;
+					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+						break;
+				}
 				
 				return exchange.response().body().string().stream();
 			})
@@ -3321,7 +3368,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
 				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).get());
+				switch(testHttpVersion) {
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+						break;
+					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+						break;
+				}
 				
 				return exchange.response().body().string().stream();
 			})
@@ -3380,7 +3432,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
 				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).get());
+				switch(testHttpVersion) {
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+						break;
+					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+						break;
+				}
 				
 				return exchange.response().body().string().stream();
 			})
@@ -3418,7 +3475,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
 				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).get());
+				switch(testHttpVersion) {
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+						break;
+					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+						break;
+				}
 				
 				return exchange.response().body().string().stream();
 			})
@@ -3899,6 +3961,7 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			))))
 			.send()
 			.flatMapMany(exchange -> {
+				System.out.println("Exchange");
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
 				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
 				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
@@ -4067,6 +4130,7 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 		
 		Assertions.assertArrayEquals(Files.readAllBytes(Path.of("src/test/resources/post_resource_big.txt")), Files.readAllBytes(Path.of("target/uploads/post_resource_big.txt")));
+		
 		// TODO the next request is test_sse, it seems the HTTP connection is not always in a proper state to proceed after this, we need to understand why... 
 		// We probably release the exchange too early so the next exchange starts whereas the previous one is not yet finished
 		// The state is ST_CONTENT_CHUNK, and we are uploading, could this be a netty issue?
@@ -4080,7 +4144,8 @@ public class HttpClientTest extends AbstractInvernoModTest {
 	
 	private void test_sse(Endpoint endpoint) throws IOException, InterruptedException {
 		// curl -i 'http://127.0.0.1:8080/get_sse_raw'
-		byte[] get_sse_raw = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw.txt"));
+		byte[] get_sse_raw_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http11.txt"));
+		byte[] get_sse_raw_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http2.txt"));
 		endpoint
 			.request(Method.GET, "/get_sse_raw")
 			.send()
@@ -4092,12 +4157,18 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
-				Assertions.assertArrayEquals(get_sse_raw, body.getBytes(StandardCharsets.UTF_8));
+				switch(testHttpVersion) {
+					case HTTP_1_1: Assertions.assertArrayEquals(get_sse_raw_http11, body.getBytes(StandardCharsets.UTF_8));
+						break;
+					case HTTP_2_0: Assertions.assertArrayEquals(get_sse_raw_http2, body.getBytes(StandardCharsets.UTF_8));
+						break;
+				}
 			})
 			.block();
 		
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded'
-		byte[] get_sse_encoded = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded.txt"));
+		byte[] get_sse_encoded_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http11.txt"));
+		byte[] get_sse_encoded_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http2.txt"));
 		endpoint
 			.request(Method.GET, "/get_sse_encoded")
 			.send()
@@ -4109,12 +4180,19 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
-				Assertions.assertArrayEquals(get_sse_encoded, body.getBytes(StandardCharsets.UTF_8));
+				switch(testHttpVersion) {
+					case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_http11, body.getBytes(StandardCharsets.UTF_8));
+						break;
+					case HTTP_2_0: Assertions.assertArrayEquals(get_sse_encoded_http2, body.getBytes(StandardCharsets.UTF_8));
+						break;
+				}
+				
 			})
 			.block();
 		
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded/json'
-		byte[] get_sse_encoded_json = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json.txt"));
+		byte[] get_sse_encoded_json_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http11.txt"));
+		byte[] get_sse_encoded_json_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http2.txt"));
 		endpoint
 			.request(Method.GET, "/get_sse_encoded/json")
 			.send()
@@ -4126,12 +4204,19 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
-				Assertions.assertArrayEquals(get_sse_encoded_json, body.getBytes(StandardCharsets.UTF_8));
+				switch(testHttpVersion) {
+					case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_json_http11, body.getBytes(StandardCharsets.UTF_8));
+						break;
+					case HTTP_2_0: Assertions.assertArrayEquals(get_sse_encoded_json_http2, body.getBytes(StandardCharsets.UTF_8));
+						break;
+				}
+				
 			})
 			.block();
 		
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded/json/map'
-		byte[] get_sse_encoded_json_map = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map.txt"));
+		byte[] get_sse_encoded_json_map_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http11.txt"));
+		byte[] get_sse_encoded_json_map_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http2.txt"));
 		endpoint
 			.request(Method.GET, "/get_sse_encoded/json/map")
 			.send()
@@ -4143,7 +4228,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
-				Assertions.assertArrayEquals(get_sse_encoded_json_map, body.getBytes(StandardCharsets.UTF_8));
+				switch(testHttpVersion) {
+					case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_json_map_http11, body.getBytes(StandardCharsets.UTF_8));
+						break;
+					case HTTP_2_0: Assertions.assertArrayEquals(get_sse_encoded_json_map_http2, body.getBytes(StandardCharsets.UTF_8));
+						break;
+				}
 			})
 			.block();
 	}
@@ -4634,9 +4724,5 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/terminal/a/b/c", body);
 			})
 			.block();
-	}
-	
-	private void test_fail(Endpoint endpoint) throws IOException {
-		
 	}
 }

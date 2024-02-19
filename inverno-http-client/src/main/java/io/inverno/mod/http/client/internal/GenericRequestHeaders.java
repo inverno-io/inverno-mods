@@ -147,7 +147,7 @@ public class GenericRequestHeaders implements InternalRequestHeaders {
 	@Override
 	public GenericRequestHeaders add(Header... headers) {
 		for(Header header : headers) {
-			this.underlyingHeaders.addCharSequence(header.getHeaderName(), header.getHeaderValue());
+			this.underlyingHeaders.addCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
 		return this;
 	}

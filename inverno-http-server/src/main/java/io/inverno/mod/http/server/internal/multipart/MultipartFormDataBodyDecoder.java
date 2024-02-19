@@ -228,11 +228,8 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 					delimiterIndex++;
 					if(delimiterIndex == delimiterLength) {
 						// We found the delimiter
-						if(context.getPart().getData().isPresent()) {
-							FluxSink<ByteBuf> partDataEmitter = context.getPart().getData().get();
-							if(readerIndex < delimiterReaderIndex) {
-								partDataEmitter.next(buffer.retainedSlice(readerIndex, delimiterReaderIndex - readerIndex));
-							}
+						if(readerIndex < delimiterReaderIndex) {
+							context.getPart().data().tryEmitNext(buffer.retainedSlice(readerIndex, delimiterReaderIndex - readerIndex));
 						}
 						return this::end;
 					}
@@ -244,9 +241,8 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 		}
 
 		int dataLength = (delimiterReaderIndex != null ? delimiterReaderIndex : buffer.readerIndex()) - readerIndex;
-		if(dataLength > 0 && context.getPart().getData().isPresent()) {
-			FluxSink<ByteBuf> partDataEmitter = context.getPart().getData().get();
-			partDataEmitter.next(buffer.retainedSlice(readerIndex, dataLength));
+		if(dataLength > 0) {
+			context.getPart().data().tryEmitNext(buffer.retainedSlice(readerIndex, dataLength));
 		}
 		buffer.readerIndex(readerIndex + dataLength);
 		
@@ -349,12 +345,20 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 		
 		private Map<String, List<Header>> decodedHeaders;
 		
+		private boolean canceling;
+		
 		public BodyDataSubscriber(Headers.ContentType contentType, FluxSink<Part> emitter) {
 			this.contentType = contentType;
 			this.delimiter = "--" + contentType.getBoundary();
 			this.task = MultipartFormDataBodyDecoder.this::boundary;
 			this.emitter = emitter;
-			this.emitter.onCancel(() -> this.cancel());
+			this.emitter.onCancel(() -> {
+				this.canceling = true;
+				if(this.part == null) {
+					// Otherwise we need to consume until we reach the next part or if we complete
+					this.cancel();
+				}
+			});
 		}
 		
 		public String getDelimiter() {
@@ -394,9 +398,20 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 		
 		public void endPart() {
 			if(this.part != null) {
-				this.part.getData().ifPresent(emitter -> emitter.complete());
+				this.part.data().tryEmitComplete();
+				this.endPart(null);
+			}
+		}
+		
+		public void endPart(Throwable error) {
+			if(this.part != null) {
+				// This should basically discard part data (i.e. release) if the part data publisher hasn't been subscribed
+				this.part.dispose(error);
 				this.part = null;
 				this.decodedHeaders = null;
+				if(this.canceling) {
+					this.cancel();
+				}
 			}
 		}
 		
@@ -440,40 +455,34 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 		@Override
 		protected void hookOnNext(ByteBuf value) {
 			final ByteBuf buffer;
-			try {
-				if(this.keepBuffer != null && this.keepBuffer.isReadable()) {
-					buffer = Unpooled.wrappedBuffer(this.keepBuffer, value);
-				}
-				else {
-					buffer = value;
-				}
+			if(this.keepBuffer != null && this.keepBuffer.isReadable()) {
+				buffer = Unpooled.wrappedBuffer(this.keepBuffer, value);
 			}
-			catch(Exception e) {
-				this.emitter.error(e);
-				this.cancel();
-				value.release();
-				return;
+			else {
+				buffer = value;
 			}
 			
 			try {
 				DecoderTask currentTask = this.task;
-				while( (currentTask = currentTask.run(buffer, this)) != null) {
+				while( (currentTask = currentTask.run(buffer, this)) != null && !this.isDisposed()) {
 					this.task = currentTask;
 				}
-
-				if(buffer.isReadable()) {
-					if(this.keepBuffer != null) {
-						this.keepBuffer.discardReadBytes();
-						this.keepBuffer.writeBytes(buffer);
+				
+				if(!this.isDisposed()) {
+					if(buffer.isReadable()) {
+						if(this.keepBuffer != null) {
+							this.keepBuffer.discardReadBytes();
+							this.keepBuffer.writeBytes(buffer);
+						}
+						else {
+							this.keepBuffer = Unpooled.unreleasableBuffer(Unpooled.buffer(buffer.readableBytes()));
+							this.keepBuffer.writeBytes(buffer);
+						}
 					}
 					else {
-						this.keepBuffer = Unpooled.unreleasableBuffer(Unpooled.buffer(buffer.readableBytes()));
-						this.keepBuffer.writeBytes(buffer);
+						// keepBuffer is released when releasing the composite buffer in the finally block 
+						this.keepBuffer = null;
 					}
-				}
-				else {
-					// keepBuffer is released when releasing the composite buffer in the finally block 
-					this.keepBuffer = null;
 				}
 			}
 			catch (Throwable e) {
@@ -494,9 +503,11 @@ public class MultipartFormDataBodyDecoder implements MultipartDecoder<Part> {
 		protected void hookOnComplete() {
 			this.emitter.complete();
 		}
-		
+
 		@Override
 		protected void hookFinally(SignalType type) {
+			// if we have an error we might want to propagate that error to the part data sink
+			this.endPart();
 			if(this.keepBuffer != null) {
 				this.keepBuffer.release();
 				this.keepBuffer = null;

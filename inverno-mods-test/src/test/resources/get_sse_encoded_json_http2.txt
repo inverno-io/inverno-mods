@@ -1,0 +1,20 @@
+id:0
+event:get_sse_encoded_json
+data:{"message":"SSE - 0\r\n"}
+
+id:1
+event:get_sse_encoded_json
+data:{"message":"SSE - 1\r\n"}
+
+id:2
+event:get_sse_encoded_json
+data:{"message":"SSE - 2\r\n"}
+
+id:3
+event:get_sse_encoded_json
+data:{"message":"SSE - 3\r\n"}
+
+id:4
+event:get_sse_encoded_json
+data:{"message":"SSE - 4\r\n"}
+

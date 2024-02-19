@@ -161,9 +161,13 @@ class Http1xExchange extends AbstractExchange {
 	}
 	
 	public void dispose(boolean deep) {
-		super.dispose();
+		this.dispose(null);
+	}
+	
+	public void dispose(Throwable error, boolean deep) {
+		super.dispose(error);
 		if(deep && this.next != null) {
-			this.next.dispose(deep);
+			this.next.dispose(error, deep);
 		}
 	}
 	

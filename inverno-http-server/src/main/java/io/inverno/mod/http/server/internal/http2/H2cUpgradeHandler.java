@@ -31,11 +31,9 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
-import io.netty.handler.codec.http2.DefaultHttp2DataFrame;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.DefaultHttp2HeadersFrame;
 import io.netty.handler.codec.http2.Http2CodecUtil;
-import io.netty.handler.codec.http2.Http2DataFrame;
 import io.netty.handler.codec.http2.Http2HeadersFrame;
 import io.netty.handler.codec.http2.Http2Settings;
 import java.io.ByteArrayInputStream;
@@ -79,6 +77,7 @@ public class H2cUpgradeHandler extends ChannelInboundHandlerAdapter {
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		this.upgrading |= msg instanceof HttpRequest && ((HttpRequest) msg).headers().contains(Headers.NAME_UPGRADE, Headers.VALUE_UPGRADE_H2C, true);
 		if(!this.upgrading) {
+			// Not an H2C upgrade request: forward to http1xHandler
 			ctx.fireChannelRead(msg);
 			return;
 		}
@@ -168,10 +167,17 @@ public class H2cUpgradeHandler extends ChannelInboundHandlerAdapter {
 			// just ignore content if connection is null since error should have been reported
 			HttpContent content = (HttpContent)msg;
 			boolean endStream = content instanceof LastHttpContent;
-			Http2DataFrame dataFrame = new DefaultHttp2DataFrame(content.content(), endStream, 0);
-			this.http2Connection.onDataRead(ctx, 1, dataFrame.content(), dataFrame.padding(), dataFrame.isEndStream());
-			if(endStream) {
-				this.configurer.completeHttp2Upgrade(ctx.pipeline());
+			
+			try {
+				this.http2Connection.onDataRead(ctx, 1, content.content(), 0, endStream);
+				if(endStream) {
+					this.configurer.completeHttp2Upgrade(ctx.pipeline());
+				}
+			}
+			finally {
+				// Http2Connection usually receives non-retained buffers which is not the case when the buffer comes from the http1xDecoder
+				// For some reason we can't do this before otherwise it leads to a protocol error
+				content.content().release();
 			}
 		}
 	}

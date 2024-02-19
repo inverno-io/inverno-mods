@@ -47,6 +47,8 @@ public class WebSocketClientTest extends AbstractInvernoModTest {
 	static {
 		System.setProperty("org.apache.logging.log4j.simplelog.level", "INFO");
 		System.setProperty("org.apache.logging.log4j.simplelog.logFile", "system.out");
+//		System.setProperty("io.netty.leakDetection.level", "PARANOID");
+//		System.setProperty("io.netty.leakDetection.targetRecords", "20");
 	}
 	
 	private static final ScheduledExecutorService EXECUTOR = Executors.newSingleThreadScheduledExecutor();

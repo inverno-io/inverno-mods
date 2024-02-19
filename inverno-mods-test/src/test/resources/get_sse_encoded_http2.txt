@@ -1,0 +1,25 @@
+id:0
+event:get_sse_encoded_json
+data:SSE - 0
+data:
+
+id:1
+event:get_sse_encoded_json
+data:SSE - 1
+data:
+
+id:2
+event:get_sse_encoded_json
+data:SSE - 2
+data:
+
+id:3
+event:get_sse_encoded_json
+data:SSE - 3
+data:
+
+id:4
+event:get_sse_encoded_json
+data:SSE - 4
+data:
+

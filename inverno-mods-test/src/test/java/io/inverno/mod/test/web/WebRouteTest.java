@@ -33,7 +33,6 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -52,6 +51,8 @@ public class WebRouteTest extends AbstractInvernoModTest {
 	static {
 		System.setProperty("org.apache.logging.log4j.simplelog.level", "INFO");
 		System.setProperty("org.apache.logging.log4j.simplelog.logFile", "system.out");
+//		System.setProperty("io.netty.leakDetection.level", "PARANOID");
+//		System.setProperty("io.netty.leakDetection.targetRecords", "20");
 	}
 	
 	private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -76,7 +77,7 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		int port = getFreePort();
 		
 		Class<?> httpConfigClass = moduleLoader.loadClass(MODULE_WEBROUTE, "io.inverno.mod.http.server.HttpServerConfiguration");
-		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", port, "h2_enabled", true));
+		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", port, "h2c_enabled", true));
 		Object httpConfig = Proxy.newProxyInstance(httpConfigClass.getClassLoader(),
 			new Class<?>[] { httpConfigClass },
 			httpConfigHandler);
@@ -201,7 +202,12 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertTrue(response.headers().firstValue("content-type").isEmpty());
 		Assertions.assertTrue(response.headers().firstValue("content-length").isEmpty());
-		Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+		switch(version) {
+			case HTTP_1_1: Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+				break;
+			case HTTP_2: Assertions.assertTrue(response.headers().firstValue("transfer-encoding").isEmpty());
+				break;
+		}
 		Assertions.assertEquals("get_raw_flux", response.body());
 
 		//curl -i 'http://127.0.0.1:8080/get_encoded'
@@ -311,7 +317,12 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/plain", response.headers().firstValue("content-type").orElse(null));
 		Assertions.assertTrue(response.headers().firstValue("content-length").isEmpty());
-		Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+		switch(version) {
+			case HTTP_1_1: Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+				break;
+			case HTTP_2: Assertions.assertTrue(response.headers().firstValue("transfer-encoding").isEmpty());
+				break;
+		}
 		Assertions.assertEquals("get_encoded_pub", response.body());
 
 		//curl -i 'http://127.0.0.1:8080/get_encoded/mono'
@@ -340,7 +351,12 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/plain", response.headers().firstValue("content-type").orElse(null));
 		Assertions.assertTrue(response.headers().firstValue("content-length").isEmpty());
-		Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+		switch(version) {
+			case HTTP_1_1: Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+				break;
+			case HTTP_2: Assertions.assertTrue(response.headers().firstValue("transfer-encoding").isEmpty());
+				break;
+		}
 		Assertions.assertEquals("get_encoded_flux", response.body());
 	}
 	
@@ -2227,7 +2243,12 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		);
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("application/json", response.headers().firstValue("content-type").orElse(null));
-		Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+		switch(version) {
+			case HTTP_1_1: Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+				break;
+			case HTTP_2: Assertions.assertTrue(response.headers().firstValue("transfer-encoding").isEmpty());
+				break;
+		}
 		Assertions.assertEquals("[{\"message\":\"Hello, world!\"},{\"message\":\"Salut, monde!\"},{\"message\":\"Hallo, welt!\"}]", response.body());
 
 		//curl -i 'http://127.0.0.1:8080/get_encoded/json/dto/generic'
@@ -2255,7 +2276,12 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		);
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("application/json", response.headers().firstValue("content-type").orElse(null));
-		Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+		switch(version) {
+			case HTTP_1_1: Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+				break;
+			case HTTP_2: Assertions.assertTrue(response.headers().firstValue("transfer-encoding").isEmpty());
+				break;
+		}
 		Assertions.assertEquals("[{\"@type\":\"string\",\"id\":1,\"message\":\"Hello, world!\"},{\"@type\":\"integer\",\"id\":2,\"message\":123456}]", response.body());
 
 		//curl -i 'http://127.0.0.1:8080/get_encoded/json/map'
@@ -2283,7 +2309,12 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		);
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("application/json", response.headers().firstValue("content-type").orElse(null));
-		Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+		switch(version) {
+			case HTTP_1_1: Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+				break;
+			case HTTP_2: Assertions.assertTrue(response.headers().firstValue("transfer-encoding").isEmpty());
+				break;
+		}
 		Assertions.assertEquals(List.of(Map.of("a", 1, "b", 2), Map.of("c", 3, "d", 4)), MAPPER.readerFor(new TypeReference<List<Map<String, Integer>>>() {}).readValue(response.body()));
 	}
 	
@@ -2738,7 +2769,12 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		);
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/plain", response.headers().firstValue("content-type").orElse(null));
-		Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+		switch(version) {
+			case HTTP_1_1: Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+				break;
+			case HTTP_2: Assertions.assertTrue(response.headers().firstValue("transfer-encoding").isEmpty());
+				break;
+		}
 		Assertions.assertEquals("post_formParam_flux: a=1, b=2, c=3, c=4, ", response.body());
 	}
 	
@@ -2788,7 +2824,12 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		);
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/plain", response.headers().firstValue("content-type").orElse(null));
-		Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+		switch(version) {
+			case HTTP_1_1: Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+				break;
+			case HTTP_2: Assertions.assertTrue(response.headers().firstValue("transfer-encoding").isEmpty());
+				break;
+		}
 		Assertions.assertEquals("post_raw_pub_raw: a,b,c", response.body());
 
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw_mono_raw'
@@ -2818,7 +2859,12 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		);
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/plain", response.headers().firstValue("content-type").orElse(null));
-		Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+		switch(version) {
+			case HTTP_1_1: Assertions.assertEquals("chunked", response.headers().firstValue("transfer-encoding").orElse(null));
+				break;
+			case HTTP_2: Assertions.assertTrue(response.headers().firstValue("transfer-encoding").isEmpty());
+				break;
+		}
 		Assertions.assertEquals("post_raw_flux_raw: a,b,c", response.body());
 
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw/pub'
@@ -3428,7 +3474,8 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		HttpResponse<String> response;
 		
 		// curl -i 'http://127.0.0.1:8080/get_sse_raw'
-		byte[] get_sse_raw = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw.txt"));
+		byte[] get_sse_raw_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http11.txt"));
+		byte[] get_sse_raw_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http2.txt"));
 		response = client.send(
 			HttpRequest.newBuilder()
 				.uri(baseURI.resolve("/get_sse_raw"))
@@ -3441,10 +3488,16 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/event-stream;charset=utf-8", response.headers().firstValue("content-type").orElse(null));
 //		Files.write(Path.of("src/test/resources/get_sse_raw.txt"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-		Assertions.assertArrayEquals(get_sse_raw, response.body().getBytes(StandardCharsets.UTF_8));
+		switch(version) {
+			case HTTP_1_1: Assertions.assertArrayEquals(get_sse_raw_http11, response.body().getBytes(StandardCharsets.UTF_8));
+				break;
+			case HTTP_2: Assertions.assertArrayEquals(get_sse_raw_http2, response.body().getBytes(StandardCharsets.UTF_8));
+				break;
+		}
 		
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded'
-		byte[] get_sse_encoded = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded.txt"));
+		byte[] get_sse_encoded_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http11.txt"));
+		byte[] get_sse_encoded_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http2.txt"));
 		client = HttpClient.newHttpClient();
 		response = client.send(
 			HttpRequest.newBuilder()
@@ -3458,10 +3511,16 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/event-stream;charset=utf-8", response.headers().firstValue("content-type").orElse(null));
 //		Files.write(Path.of("src/test/resources/get_sse_encoded.txt"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-		Assertions.assertArrayEquals(get_sse_encoded, response.body().getBytes(StandardCharsets.UTF_8));
+		switch(version) {
+			case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_http11, response.body().getBytes(StandardCharsets.UTF_8));
+				break;
+			case HTTP_2: Assertions.assertArrayEquals(get_sse_encoded_http2, response.body().getBytes(StandardCharsets.UTF_8));
+				break;
+		}
 		
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded/json'
-		byte[] get_sse_encoded_json = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json.txt"));
+		byte[] get_sse_encoded_json_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http11.txt"));
+		byte[] get_sse_encoded_json_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http2.txt"));
 		client = HttpClient.newHttpClient();
 		response = client.send(
 			HttpRequest.newBuilder()
@@ -3475,10 +3534,17 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/event-stream;charset=utf-8", response.headers().firstValue("content-type").orElse(null));
 //		Files.write(Path.of("src/test/resources/get_sse_encoded_json.txt"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-		Assertions.assertArrayEquals(get_sse_encoded_json, response.body().getBytes(StandardCharsets.UTF_8));
+		switch(version) {
+			case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_json_http11, response.body().getBytes(StandardCharsets.UTF_8));
+				break;
+			case HTTP_2: Assertions.assertArrayEquals(get_sse_encoded_json_http2, response.body().getBytes(StandardCharsets.UTF_8));
+				break;
+		}
+		
 		
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded/json/map'
-		byte[] get_sse_encoded_json_map = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map.txt"));
+		byte[] get_sse_encoded_json_map_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http11.txt"));
+		byte[] get_sse_encoded_json_map_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http2.txt"));
 		client = HttpClient.newHttpClient();
 		response = client.send(
 			HttpRequest.newBuilder()
@@ -3491,8 +3557,13 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/event-stream;charset=utf-8", response.headers().firstValue("content-type").orElse(null));
-		Files.write(Path.of("src/test/resources/get_sse_encoded_json_map.txt"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-		Assertions.assertArrayEquals(get_sse_encoded_json_map, response.body().getBytes(StandardCharsets.UTF_8));
+//		Files.write(Path.of("src/test/resources/get_sse_encoded_json_map.txt"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+		switch(version) {
+			case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_json_map_http11, response.body().getBytes(StandardCharsets.UTF_8));
+				break;
+			case HTTP_2: Assertions.assertArrayEquals(get_sse_encoded_json_map_http2, response.body().getBytes(StandardCharsets.UTF_8));
+				break;
+		}
 	}
 	
 	public void test_resource(URI baseURI, HttpClient.Version version) throws IOException, InterruptedException {
