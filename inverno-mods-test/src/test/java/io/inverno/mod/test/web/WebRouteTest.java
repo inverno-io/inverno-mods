@@ -3474,8 +3474,8 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		HttpResponse<String> response;
 		
 		// curl -i 'http://127.0.0.1:8080/get_sse_raw'
-		byte[] get_sse_raw_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http11.txt"));
-		byte[] get_sse_raw_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http2.txt"));
+		byte[] get_sse_raw_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http11.dat"));
+		byte[] get_sse_raw_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http2.dat"));
 		response = client.send(
 			HttpRequest.newBuilder()
 				.uri(baseURI.resolve("/get_sse_raw"))
@@ -3487,7 +3487,7 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/event-stream;charset=utf-8", response.headers().firstValue("content-type").orElse(null));
-//		Files.write(Path.of("src/test/resources/get_sse_raw.txt"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+//		Files.write(Path.of("src/test/resources/get_sse_raw.dat"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 		switch(version) {
 			case HTTP_1_1: Assertions.assertArrayEquals(get_sse_raw_http11, response.body().getBytes(StandardCharsets.UTF_8));
 				break;
@@ -3496,8 +3496,8 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		}
 		
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded'
-		byte[] get_sse_encoded_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http11.txt"));
-		byte[] get_sse_encoded_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http2.txt"));
+		byte[] get_sse_encoded_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http11.dat"));
+		byte[] get_sse_encoded_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http2.dat"));
 		client = HttpClient.newHttpClient();
 		response = client.send(
 			HttpRequest.newBuilder()
@@ -3510,7 +3510,7 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/event-stream;charset=utf-8", response.headers().firstValue("content-type").orElse(null));
-//		Files.write(Path.of("src/test/resources/get_sse_encoded.txt"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+//		Files.write(Path.of("src/test/resources/get_sse_encoded.dat"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 		switch(version) {
 			case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_http11, response.body().getBytes(StandardCharsets.UTF_8));
 				break;
@@ -3519,8 +3519,8 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		}
 		
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded/json'
-		byte[] get_sse_encoded_json_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http11.txt"));
-		byte[] get_sse_encoded_json_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http2.txt"));
+		byte[] get_sse_encoded_json_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http11.dat"));
+		byte[] get_sse_encoded_json_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http2.dat"));
 		client = HttpClient.newHttpClient();
 		response = client.send(
 			HttpRequest.newBuilder()
@@ -3533,7 +3533,7 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/event-stream;charset=utf-8", response.headers().firstValue("content-type").orElse(null));
-//		Files.write(Path.of("src/test/resources/get_sse_encoded_json.txt"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+//		Files.write(Path.of("src/test/resources/get_sse_encoded_json.dat"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 		switch(version) {
 			case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_json_http11, response.body().getBytes(StandardCharsets.UTF_8));
 				break;
@@ -3543,8 +3543,8 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		
 		
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded/json/map'
-		byte[] get_sse_encoded_json_map_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http11.txt"));
-		byte[] get_sse_encoded_json_map_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http2.txt"));
+		byte[] get_sse_encoded_json_map_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http11.dat"));
+		byte[] get_sse_encoded_json_map_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http2.dat"));
 		client = HttpClient.newHttpClient();
 		response = client.send(
 			HttpRequest.newBuilder()
@@ -3557,7 +3557,7 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/event-stream;charset=utf-8", response.headers().firstValue("content-type").orElse(null));
-//		Files.write(Path.of("src/test/resources/get_sse_encoded_json_map.txt"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+//		Files.write(Path.of("src/test/resources/get_sse_encoded_json_map.dat"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 		switch(version) {
 			case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_json_map_http11, response.body().getBytes(StandardCharsets.UTF_8));
 				break;

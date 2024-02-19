@@ -43,6 +43,7 @@ import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -4144,8 +4145,8 @@ public class HttpClientTest extends AbstractInvernoModTest {
 	
 	private void test_sse(Endpoint endpoint) throws IOException, InterruptedException {
 		// curl -i 'http://127.0.0.1:8080/get_sse_raw'
-		byte[] get_sse_raw_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http11.txt"));
-		byte[] get_sse_raw_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http2.txt"));
+		byte[] get_sse_raw_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http11.dat"));
+		byte[] get_sse_raw_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http2.dat"));
 		endpoint
 			.request(Method.GET, "/get_sse_raw")
 			.send()
@@ -4167,8 +4168,8 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 		
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded'
-		byte[] get_sse_encoded_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http11.txt"));
-		byte[] get_sse_encoded_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http2.txt"));
+		byte[] get_sse_encoded_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http11.dat"));
+		byte[] get_sse_encoded_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http2.dat"));
 		endpoint
 			.request(Method.GET, "/get_sse_encoded")
 			.send()
@@ -4191,8 +4192,8 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 		
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded/json'
-		byte[] get_sse_encoded_json_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http11.txt"));
-		byte[] get_sse_encoded_json_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http2.txt"));
+		byte[] get_sse_encoded_json_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http11.dat"));
+		byte[] get_sse_encoded_json_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http2.dat"));
 		endpoint
 			.request(Method.GET, "/get_sse_encoded/json")
 			.send()
@@ -4215,8 +4216,8 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 		
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded/json/map'
-		byte[] get_sse_encoded_json_map_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http11.txt"));
-		byte[] get_sse_encoded_json_map_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http2.txt"));
+		byte[] get_sse_encoded_json_map_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http11.dat"));
+		byte[] get_sse_encoded_json_map_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http2.dat"));
 		endpoint
 			.request(Method.GET, "/get_sse_encoded/json/map")
 			.send()
