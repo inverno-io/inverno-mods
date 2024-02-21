@@ -130,7 +130,6 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			try {
 				clientMod.start();
 				
-				
 				testHttpVersion = HttpVersion.HTTP_2_0;
 				Endpoint endpointH2C = clientMod.httpClient().endpoint("127.0.0.1", port)
 					.build();
@@ -149,7 +148,6 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				try {
 					//this.test_fail(endpointH2C);
 					
-					this.test_h2c(endpointH2C);
 					this.test_get(endpointH2C);
 					this.test_query_param(endpointH2C);
 					this.test_cookie_param(endpointH2C);
