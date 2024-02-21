@@ -32,9 +32,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
-import io.netty.handler.codec.http2.DefaultHttp2HeadersFrame;
 import io.netty.handler.codec.http2.Http2CodecUtil;
-import io.netty.handler.codec.http2.Http2HeadersFrame;
 import io.netty.handler.codec.http2.Http2Settings;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
@@ -53,7 +51,12 @@ import java.util.List;
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
+ * 
+ * @deprecated Replaced by Netty's {@link HttpServerUpgradeHandler}
+ * 
+ * @see HttpServerChannelConfigurer
  */
+@Deprecated
 public class H2cUpgradeHandler extends ChannelInboundHandlerAdapter {
 
 	private final HttpServerChannelConfigurer configurer;
@@ -154,8 +157,7 @@ public class H2cUpgradeHandler extends ChannelInboundHandlerAdapter {
 					request.headers().remove("host");
 					request.headers().forEach(header -> headers.set(header.getKey().toLowerCase(), header.getValue()));
 
-					Http2HeadersFrame headersFrame = new DefaultHttp2HeadersFrame(headers, false);
-					this.http2Connection.onHeadersRead(ctx, 1, headersFrame.headers(), headersFrame.padding(), headersFrame.isEndStream());
+					this.http2Connection.onHeadersRead(ctx, 1, headers, 0, false);
 				} 
 				catch (IOException e) {
 					this.sendBadRequest(request.protocolVersion(), ctx);

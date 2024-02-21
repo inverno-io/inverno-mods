@@ -215,7 +215,7 @@ class Http1xExchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected void onNextMany(ByteBuf value) {
+	protected void onNextMany(ByteBuf value, ChannelPromise nextPromise) {
 		try {
 			Http1xResponseHeaders headers = (Http1xResponseHeaders)this.response.headers();
 			if(!headers.isWritten()) {
@@ -224,17 +224,17 @@ class Http1xExchange extends AbstractExchange {
 					headers.set(Headers.NAME_TRANSFER_ENCODING, Headers.VALUE_CHUNKED);
 					headers.get(Headers.NAME_CONTENT_TYPE).ifPresent(contentType -> this.manageChunked = contentType.regionMatches(true, 0, MediaTypes.TEXT_EVENT_STREAM, 0, MediaTypes.TEXT_EVENT_STREAM.length()));
 				}
-				this.encoder.writeFrame(this.context, this.createHttpResponse(headers, (Http1xResponseTrailers)this.response.trailers()), this.context.voidPromise());
+				this.encoder.writeFrame(this.context, this.createHttpResponse(headers, (Http1xResponseTrailers)this.response.trailers()), nextPromise);
 				headers.setWritten(true);
 			}
 			if(this.manageChunked) {
 				// We must handle chunked transfer encoding
 				ByteBuf chunked_header = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(Integer.toHexString(value.readableBytes()) + "\r\n", Charsets.orDefault(this.getCharset())));
 				ByteBuf chunked_trailer = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("\r\n", Charsets.orDefault(this.getCharset())));
-				this.encoder.writeFrame(this.context, new DefaultHttpContent(Unpooled.wrappedBuffer(chunked_header, value, chunked_trailer)), this.context.voidPromise());
+				this.encoder.writeFrame(this.context, new DefaultHttpContent(Unpooled.wrappedBuffer(chunked_header, value, chunked_trailer)), nextPromise);
 			}
 			else {
-				this.encoder.writeFrame(this.context, new DefaultHttpContent(value), this.context.voidPromise());
+				this.encoder.writeFrame(this.context, new DefaultHttpContent(value), nextPromise);
 			}
 		}
 		finally {
@@ -280,7 +280,7 @@ class Http1xExchange extends AbstractExchange {
 				this.encoder.writeFrame(this.context, this.createHttpResponse(headers, http1xResponse.trailers()), this.context.voidPromise());
 				headers.setWritten(true);
 				FileRegionDataSubscriber subscriber = new FileRegionDataSubscriber();
-				this.disposable = subscriber;
+				this.subscriber = subscriber;
 				fileRegionData.subscribe(subscriber);
 			}
 		}
@@ -395,7 +395,7 @@ class Http1xExchange extends AbstractExchange {
 							Http1xExchange.this.webSocket.restorePipeline();
 							
 							AbstractExchange.ServerControllerSubscriber serverControllerSubscriber = Http1xExchange.super.createServerControllerSubscriber();
-							Http1xExchange.this.disposable = serverControllerSubscriber;
+							Http1xExchange.this.subscriber = serverControllerSubscriber;
 							Http1xExchange.this.webSocket.getFallback().subscribe(serverControllerSubscriber);
 						}
 						else {

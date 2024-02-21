@@ -24,9 +24,10 @@ import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.internal.http1x.Http1xConnection;
 import io.inverno.mod.http.server.internal.http1x.Http1xRequestDecoder;
 import io.inverno.mod.http.server.internal.http1x.Http1xResponseEncoder;
-import io.inverno.mod.http.server.internal.http2.H2cUpgradeHandler;
+import io.inverno.mod.http.server.internal.http2.DirectH2cUpgradeHandler;
 import io.inverno.mod.http.server.internal.http2.Http2Connection;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.compression.Brotli;
 import io.netty.handler.codec.compression.CompressionOptions;
@@ -34,8 +35,12 @@ import io.netty.handler.codec.compression.StandardCompressionOptions;
 import io.netty.handler.codec.compression.Zstd;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import io.netty.handler.codec.http.HttpServerUpgradeHandler;
+import io.netty.handler.codec.http2.Http2CodecUtil;
+import io.netty.handler.codec.http2.Http2ServerUpgradeCodec;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.util.AsciiString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -57,8 +62,8 @@ public class HttpServerChannelConfigurer {
 	private final ByteBufAllocator allocator;
 	private final ByteBufAllocator directAllocator;
 
-	private final Supplier<Http1xConnection> http1xChannelHandlerFactory;
-	private final Supplier<Http2Connection> http2ChannelHandlerFactory;
+	private final Supplier<Http1xConnection> http1xConnectionFactory;
+	private final Supplier<Http2Connection> http2ConnectionFactory;
 	
 	private final CompressionOptions[] compressionOptions;
 	
@@ -83,8 +88,8 @@ public class HttpServerChannelConfigurer {
 		this.allocator = netService.getByteBufAllocator();
 		this.directAllocator = netService.getDirectByteBufAllocator();
 		
-		this.http1xChannelHandlerFactory = http1xChannelHandlerFactory;
-		this.http2ChannelHandlerFactory = http2ChannelHandlerFactory;
+		this.http1xConnectionFactory = http1xChannelHandlerFactory;
+		this.http2ConnectionFactory = http2ChannelHandlerFactory;
 		
 		if(this.configuration.tls_enabled()) {
 			this.sslContext = sslContextSupplier.get();			
@@ -157,6 +162,7 @@ public class HttpServerChannelConfigurer {
 	 * @param pipeline the pipeline to configure
 	 */
 	private void initHttp1x(ChannelPipeline pipeline) {
+		// TODO add prior knowledge first to be able to do cleartext h2 right away after reading the preface
 		pipeline.addLast("http1xDecoder", new Http1xRequestDecoder());
 		pipeline.addLast("http1xEncoder", new Http1xResponseEncoder(this.directAllocator));
 		if (this.configuration.decompression_enabled()) {
@@ -177,7 +183,7 @@ public class HttpServerChannelConfigurer {
 	 * @return the HTTP/1.x handler
 	 */
 	private Http1xConnection handleHttp1x(ChannelPipeline pipeline) {
-		Http1xConnection handler = this.http1xChannelHandlerFactory.get();
+		Http1xConnection handler = this.http1xConnectionFactory.get();
 		pipeline.addLast("http1xHandler", handler);
 		return handler;
 	}
@@ -205,7 +211,7 @@ public class HttpServerChannelConfigurer {
 	 * @return the HTTP/2 handler
 	 */
 	private Http2Connection handleHttp2(ChannelPipeline pipeline) {
-		Http2Connection handler = this.http2ChannelHandlerFactory.get();
+		Http2Connection handler = this.http2ConnectionFactory.get();
 		pipeline.addLast("http2Handler", handler);
 		return handler;
 	}
@@ -218,9 +224,68 @@ public class HttpServerChannelConfigurer {
 	 * @param pipeline the pipeline to configure
 	 */
 	public void configureH2C(ChannelPipeline pipeline) {
+		pipeline.addLast("directH2cHandler", new DirectH2cUpgradeHandler(this::completeDirectH2c, this.http2ConnectionFactory));
 		this.initHttp1x(pipeline);
-		pipeline.addLast("h2cUpgradeHandler", new H2cUpgradeHandler(this));
+		pipeline.addLast("h2cUpgradeHandler", new HttpServerUpgradeHandler(this::completeH2cUpgrade, this::createH2cUpgradeCodec, this.configuration.h2c_max_content_length()));
 		this.handleHttp1x(pipeline);
+	}
+	
+	/**
+	 * <p>
+	 * Creates the HTTP/2 upgrade codec requried when upgrading to HTTP/2 over clear text.
+	 * </p>
+	 * 
+	 * @param protocol the protocol specified in the {@code upgrade} header
+	 * 
+	 * @return a new upgrade codec
+	 */
+	private HttpServerUpgradeHandler.UpgradeCodec createH2cUpgradeCodec(CharSequence protocol) {
+		if(AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {
+			return new Http2ServerUpgradeCodec(this.http2ConnectionFactory.get());
+		}
+		else {
+			return null;
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Removes HTTP/1x handlers and H2C upgrade handler on direct HTTP/2 connection over clear text.
+	 * </p>
+	 * 
+	 * <p>
+	 * The direct H2C handler removal is handled by the handler itself.
+	 * </p>
+	 * 
+	 * @param ctx the channel context
+	 */
+	private void completeDirectH2c(ChannelHandlerContext ctx) {
+		this.completeH2cUpgrade(ctx);
+		ctx.pipeline().remove("h2cUpgradeHandler");
+	}
+	
+	/**
+	 * <p>
+	 * Removes HTTP/1x handlers on upgraded HTTP/2 connection over clear text.
+	 * </p>
+	 * 
+	 * <p>
+	 * The H2C upgrade handler removal is handled by the handler itself.
+	 * </p>
+	 * 
+	 * @param ctx the channel context
+	 */
+	private void completeH2cUpgrade(ChannelHandlerContext ctx) {
+		ChannelPipeline pipeline = ctx.pipeline();
+		pipeline.remove("http1xEncoder");
+		pipeline.remove("http1xDecoder");
+		if (HttpServerChannelConfigurer.this.configuration.decompression_enabled()) {
+			pipeline.remove("http1xDecompressor");
+		}
+		if (HttpServerChannelConfigurer.this.configuration.compression_enabled()) {
+			pipeline.remove("http1xCompressor");
+		}
+		pipeline.remove("http1xHandler");
 	}
 	
 	/**
@@ -235,7 +300,10 @@ public class HttpServerChannelConfigurer {
 	 * @param pipeline the pipeline to configure
 	 * 
 	 * @return the HTTP/2 handler
+	 * 
+	 * @deprecated Replaced by Netty's {@link HttpServerUpgradeHandler}
 	 */
+	@Deprecated
 	public Http2Connection startHttp2Upgrade(ChannelPipeline pipeline) {
 		pipeline.remove("http1xEncoder");
 		if (this.configuration.decompression_enabled()) {
@@ -258,7 +326,10 @@ public class HttpServerChannelConfigurer {
 	 * </p>
 	 * 
 	 * @param pipeline the pipeline to configure
+	 * 
+	 * @deprecated Replaced by Netty's {@link HttpServerUpgradeHandler}
 	 */
+	@Deprecated
 	public void completeHttp2Upgrade(ChannelPipeline pipeline) {
 		pipeline.remove("http1xDecoder");
 		pipeline.remove("h2cUpgradeHandler");

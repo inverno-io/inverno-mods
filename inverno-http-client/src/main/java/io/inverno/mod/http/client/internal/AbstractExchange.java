@@ -284,7 +284,7 @@ public abstract class AbstractExchange<A extends AbstractRequest, B extends Abst
 		if(this.response != null) {
 			this.response.dispose(error);
 		}
-		else {
+		else if(this.exchangeSink != null) {
 			this.exchangeSink.error(error != null ? error : new HttpClientException("Exchange disposed"));
 		}
 	}

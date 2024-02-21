@@ -264,11 +264,6 @@ public class Http1xConnection extends ChannelDuplexHandler implements Http1xConn
 			this.exchangeQueue.next = null;
 		}
 	}
-
-	@Override
-	public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-//		super.channelWritabilityChanged(ctx);
-	}
 	
 	@Override
 	public ChannelFuture writeFrame(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {

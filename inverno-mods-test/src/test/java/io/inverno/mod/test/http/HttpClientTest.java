@@ -43,14 +43,15 @@ import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -81,6 +82,16 @@ public class HttpClientTest extends AbstractInvernoModTest {
 		catch (IOException e) {
 			throw new UncheckedIOException(e);
 		}
+	}
+	
+	@BeforeAll
+	public static void init() {
+		// TODO we must refactor AbstractInvernoTest expose something static or not but we don't want inheritance anymore
+	}
+	
+	@AfterAll
+	public static void destroy() {
+		
 	}
 	
 	@Test
@@ -119,13 +130,26 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			try {
 				clientMod.start();
 				
+				
 				testHttpVersion = HttpVersion.HTTP_2_0;
-				// TODO HTTP/2 tests are failing because transfer encoding chunked does not exist in HTTP/2...
 				Endpoint endpointH2C = clientMod.httpClient().endpoint("127.0.0.1", port)
 					.build();
 				try {
-//					this.test_fail(endpointH2C);
+					// TODO test_h2c check that 413 - PAYLOAD_TOO_LARGE is returned when sending an h2c request with a large payload, the connection should then be closed by peer, for some reason it 
+					// stays in the pool and next request uses it whereas it should be removed
+					this.test_h2c(endpointH2C);
+				}
+				finally {
+					endpointH2C.close().block();
+				}
+				
+				testHttpVersion = HttpVersion.HTTP_2_0;
+				endpointH2C = clientMod.httpClient().endpoint("127.0.0.1", port)
+					.build();
+				try {
+					//this.test_fail(endpointH2C);
 					
+					this.test_h2c(endpointH2C);
 					this.test_get(endpointH2C);
 					this.test_query_param(endpointH2C);
 					this.test_cookie_param(endpointH2C);
@@ -181,8 +205,26 @@ public class HttpClientTest extends AbstractInvernoModTest {
 		}
 	}
 	
+	private void test_h2c(Endpoint endpoint) {
+		File uploadsDir = new File("target/uploads/");
+		uploadsDir.mkdirs();
+		
+		//curl -i -F 'file=@src/test/resources/post_resource_big.txt' http://127.0.0.1:8080/upload
+		new File(uploadsDir, "post_resource_big.txt").delete();
+		endpoint
+			.request(Method.POST, "/upload")
+			.body(body -> body.multipart().from((factory, output) -> output.value(
+				factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_big.txt"))))
+			)))
+			.send()
+			.doOnNext(exchange -> {
+				Assertions.assertEquals(Status.PAYLOAD_TOO_LARGE, exchange.response().headers().getStatus());
+			})
+			.block();
+	}
+	
 	// For troubleshooting
-	private void test_fail(Endpoint endpoint) throws IOException {
+	private void test_fail(Endpoint endpoint) {
 		
 	}
 	
@@ -3962,7 +4004,6 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			))))
 			.send()
 			.flatMapMany(exchange -> {
-				System.out.println("Exchange");
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
 				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
 				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());

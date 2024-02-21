@@ -55,8 +55,7 @@ public class UrlEncodedBodyEncoder implements MultipartEncoder<Parameter> {
 		if(contentType == null || !contentType.getMediaType().equalsIgnoreCase(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED)) {
 			throw new IllegalArgumentException("Content type is not " + MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED);
 		}
-		
-		return this.dataSequencer.sequence(data.map(new ParameterMapper(contentType.getCharset())));
+		return data.map(new ParameterMapper(contentType.getCharset())).transform(new OutboundDataSequencer());
 	}
 	
 	/**

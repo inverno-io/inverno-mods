@@ -27,7 +27,6 @@ import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.ServerController;
-import io.inverno.mod.http.server.internal.http1x.Http1xConnection;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.handler.codec.compression.Brotli;
 import io.netty.handler.codec.compression.CompressionOptions;

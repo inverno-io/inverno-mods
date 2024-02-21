@@ -154,7 +154,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	}
 
 	@Override
-	public void setHandler(Handler handler) {
+	public void setHandler(HttpConnection.Handler handler) {
 		this.handler = handler;
 	}
 
@@ -352,7 +352,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		else {
 			return ctx.writeAndFlush(msg, promise);
 		}
-	
+
 		// Servers might not send response chunk while the request is being received (missing flush) this might be an issue for timeouts but also in general
 		/*try {
 			if(this.read) {

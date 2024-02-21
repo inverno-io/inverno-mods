@@ -41,17 +41,6 @@ import reactor.core.publisher.Mono;
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )
 public class MultipartFormDataBodyEncoder implements MultipartEncoder<Part<?>> {
-
-	private final OutboundDataSequencer dataSequencer;
-
-	/**
-	 * <p>
-	 * Creates a multipart form data payload encoder.
-	 * </p>
-	 */
-	public MultipartFormDataBodyEncoder() {
-		this.dataSequencer = new OutboundDataSequencer();
-	}
 	
 	@Override
 	public Flux<ByteBuf> encode(Flux<Part<?>> data, Headers.ContentType contentType) {
@@ -62,16 +51,17 @@ public class MultipartFormDataBodyEncoder implements MultipartEncoder<Part<?>> {
 			throw new IllegalArgumentException("Missing multipart form data boundary");
 		}
 		
-		return this.dataSequencer.sequence(data
-			.flatMapSequential(part -> {
+		final PartMapper partMapper = new PartMapper(contentType.getBoundary(), contentType.getCharset());
+		
+		return data
+			.concatMap(part -> {
 				if(part instanceof ResourcePart) {
-					return ((ResourcePart)part).getFileParts();
+					return Flux.from(((ResourcePart)part).getFileParts()).concatMap(partMapper);
 				}
-				return Mono.just(part);
+				return partMapper.apply(part);
 			})
-			.concatWithValues(ClosingPart.INSTANCE)
-			.flatMapSequential(new PartMapper(contentType.getBoundary(), contentType.getCharset()))
-		);
+			.concatWith(partMapper.apply(ClosingPart.INSTANCE))
+			.transform(new OutboundDataSequencer());
 	}
 	
 	/**

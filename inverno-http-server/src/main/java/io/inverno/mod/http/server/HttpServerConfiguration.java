@@ -486,20 +486,34 @@ public interface HttpServerConfiguration {
 	 * <p>
 	 * Enables/Disables H2C.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * This only applies when SSL is disabled, otherwise {@link #h2_enabled()} is
-	 * considered.
+	 * This only applies when SSL is disabled, otherwise {@link #h2_enabled()} is considered.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * Defaults to {@code false}.
 	 * </p>
-	 * 
+	 *
 	 * @return true if the option is enabled, false otherwise
 	 */
 	default boolean h2c_enabled() {
 		return false;
+	}
+	
+	/**
+	 * <p>
+	 * The maximum length in bytes of the content of an H2C upgrade request.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 8192}.
+	 * </p>
+	 * 
+	 * @return the maximum content length of an H2C upgrade request
+	 */
+	default int h2c_max_content_length() {
+		return 8192;
 	}
 	
 	/**

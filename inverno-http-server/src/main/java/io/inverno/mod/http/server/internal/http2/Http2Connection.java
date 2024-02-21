@@ -31,7 +31,10 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpServerUpgradeHandler;
+import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.DelegatingDecompressorFrameListener;
 import io.netty.handler.codec.http2.Http2ConnectionDecoder;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
@@ -114,7 +117,52 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	}
 
 	@Override
+	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+		if(evt instanceof HttpServerUpgradeHandler.UpgradeEvent) {
+			HttpServerUpgradeHandler.UpgradeEvent upgradeEvent = (HttpServerUpgradeHandler.UpgradeEvent) evt;
+
+			FullHttpRequest request = upgradeEvent.upgradeRequest();
+			String host = request.headers().get("host");
+			request.headers()
+				.remove("http2-settings")
+				.remove("host");
+			
+			DefaultHttp2Headers headers = new DefaultHttp2Headers();
+			headers.method(request.method().name())
+				.path(request.uri())
+				.scheme("http");
+			
+			if(host != null) {
+				headers.authority(host);
+			}
+			request.headers().forEach(header -> headers.set(header.getKey().toLowerCase(), header.getValue()));
+			
+			boolean endStream = request.content() == null || !request.content().isReadable();
+			
+			this.onHeadersRead(ctx, 1, headers, 0, endStream);
+			if(!endStream) {
+				this.onDataRead(ctx, 1, request.content(), 0, true); 
+			}
+		}
+		super.userEventTriggered(ctx, evt);
+	}
+
+	@Override
+	public void onError(ChannelHandlerContext ctx, boolean outbound, Throwable cause) {
+		cause.printStackTrace();
+		super.onError(ctx, outbound, cause);
+	}
+
+	@Override
+	protected void onStreamError(ChannelHandlerContext ctx, boolean outbound, Throwable cause, Http2Exception.StreamException http2Ex) {
+		cause.printStackTrace();
+		http2Ex.printStackTrace();
+		super.onStreamError(ctx, outbound, cause, http2Ex); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/OverriddenMethodBody
+	}
+	
+	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+		cause.printStackTrace();
 		PromiseCombiner finalPromise = new PromiseCombiner(ctx.executor());
 		for(Http2Exchange exchange : this.serverStreams.values()) {
 			exchange.dispose(cause);
@@ -125,7 +173,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 		}
 		finalPromise.finish(ctx.newPromise().addListener(ChannelFutureListener.CLOSE));
 	}
-
+	
 	@Override
 	public int onDataRead(ChannelHandlerContext ctx, int streamId, ByteBuf data, int padding, boolean endOfStream) throws Http2Exception {
 		// TODO flow control?
@@ -151,7 +199,6 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 			// TODO this should never happen?
 			throw new IllegalStateException("Unable to push data to unmanaged stream " + streamId);
 		}
-
 		return processed;
 	}
 

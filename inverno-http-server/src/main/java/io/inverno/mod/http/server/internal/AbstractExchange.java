@@ -27,7 +27,9 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.EventExecutor;
+import io.netty.util.concurrent.Future;
 import java.net.InetSocketAddress;
+import java.util.concurrent.Callable;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,7 +38,6 @@ import org.apache.logging.log4j.MarkerManager;
 import org.apache.logging.log4j.message.MultiformatMessage;
 import org.apache.logging.log4j.util.Strings;
 import org.reactivestreams.Subscription;
-import reactor.core.Disposable;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SignalType;
@@ -83,9 +84,16 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	private ByteBuf singleChunk;
 	
 	/**
-	 * the current disposable
+	 * the current subscriber:
+	 * 
+	 * <ul>
+	 * <li>{@link ServerControllerSubscriber} subscribes on the handle returned by {@link ServerController#defer(io.inverno.mod.http.server.Exchange) }.</li>
+	 * <li>{@code this} subscribes on response data stream.</li>
+	 * <li>{@link ErrorHandlerSubscriber} subscribes on the handle returned by {@link ServerController#defer(io.inverno.mod.http.server.ErrorExchange)} which is invoked on errors while consuming 
+	 * response data stream.</li>
+	 * </ul>
 	 */
-	protected Disposable disposable;
+	protected BaseSubscriber<?> subscriber;
 	
 	protected static final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> LAST_RESORT_ERROR_CONTROLLER = exchange -> {};
 	
@@ -227,11 +235,11 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * @see AbstractRequest#dispose(java.lang.Throwable) 
 	 */
 	public void dispose(Throwable error) {
-		if(this.disposable == this) {
+		if(this.subscriber == this) {
 			super.dispose();
 		}
-		else if(this.disposable != null) {
-			this.disposable.dispose();
+		else if(this.subscriber != null) {
+			this.subscriber.dispose();
 		}
 		this.request.dispose();
 	}
@@ -241,11 +249,11 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		if(this.handler == null) {
 			return false;
 		}
-		if(this.disposable != null) {
-			if(this.disposable == this) {
+		if(this.subscriber != null) {
+			if(this.subscriber == this) {
 				return super.isDisposed();
 			}
-			return this.disposable.isDisposed();
+			return this.subscriber.isDisposed();
 		}
 		return true;
 	}
@@ -288,7 +296,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			}
 		}
 		ServerControllerSubscriber subscriber = this.createServerControllerSubscriber();
-		this.disposable = subscriber;
+		this.subscriber = subscriber;
 		deferHandle.subscribe(subscriber);
 	}
 	
@@ -312,14 +320,23 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * The tasks is executed immediately when the current thread is in the event loop, otherwise it is scheduled in the event loop.
 	 * </p>
 	 *
-	 * <p>
-	 * After the execution of the task, one event is requested to the response data subscriber.
-	 * </p>
-	 *
 	 * @param runnable the task to execute
+	 * 
+	 * @return a future which completes once the task completes
 	 */
-	protected void executeInEventLoop(Runnable runnable) {
-		this.executeInEventLoop(runnable, 1);
+	protected Future<?> executeInEventLoop(Runnable runnable) {
+		if(this.contextExecutor.inEventLoop()) {
+			try {
+				runnable.run();
+				return this.contextExecutor.newSucceededFuture(null);
+			}
+			catch(Throwable e) {
+				return this.contextExecutor.newFailedFuture(e);
+			}
+		}
+		else {
+			return this.contextExecutor.submit(runnable);
+		}
 	}
 	
 	/**
@@ -331,29 +348,22 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * The tasks is executed immediately when the current thread is in the event loop, otherwise it is scheduled in the event loop.
 	 * </p>
 	 *
-	 * <p>
-	 * After the execution of the task, the specified number of events is requested to the response data subscriber.
-	 * </p>
-	 *
-	 * @param runnable the task to execute
-	 * @param request  the number of events to request to the response data subscriber after the task completes
+	 * @param <T> that task result type
+	 * @param callable the task to execute
+	 * 
+	 * @return a future which completes once the task completes and returns the task result
 	 */
-	protected void executeInEventLoop(Runnable runnable, int request) {
+	protected <T> Future<T> executeInEventLoop(Callable<T> callable) {
 		if(this.contextExecutor.inEventLoop()) {
-			runnable.run();
-			this.request(request);
+			try {
+				return this.contextExecutor.newSucceededFuture(callable.call());
+			}
+			catch(Throwable e) {
+				return this.contextExecutor.newFailedFuture(e);
+			}
 		}
 		else {
-			this.contextExecutor.execute(() -> {
-				try {
-					runnable.run();
-					this.request(request);
-				}
-				catch (Throwable throwable) {
-					this.cancel();
-					this.hookOnError(throwable);
-				}
-			});
+			return this.contextExecutor.submit(callable);
 		}
 	}
 	
@@ -385,7 +395,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * @param subscription the subscription to the response data publisher
 	 */
 	protected void onStart(Subscription subscription) {
-		subscription.request(Long.MAX_VALUE);
+		subscription.request(1);
 		LOGGER.debug(() -> "Exchange started");
 	}
 	
@@ -395,6 +405,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		if( (this.single || !this.many) && this.singleChunk == null) {
 			// either we know we have a mono or we don't know yet if we have many
 			this.singleChunk = value;
+			this.subscriber.request(1);
 		}
 		else {
 			// We don't have a mono and we know we have multiple chunks
@@ -402,10 +413,19 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			final ByteBuf firstValue = this.singleChunk;
 			this.singleChunk = null;
 			this.executeInEventLoop(() -> {
+				ChannelPromise nextPromise = this.context.newPromise().addListener(future -> {
+					if(future.isSuccess()) {
+						this.subscriber.request(1);
+					}
+					else {
+						this.subscriber.cancel();
+						this.hookOnError(future.cause());
+					}
+				});
 				if(firstValue != null) {
-					this.onNextMany(firstValue);
+					this.onNextMany(firstValue, this.context.voidPromise());
 				}
-				this.onNextMany(value);
+				this.onNextMany(value, nextPromise);
 			});
 		}
 	}
@@ -414,10 +434,15 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * <p>
 	 * Invokes on an event when the response data publisher emits more than one event.
 	 * </p>
-	 *
-	 * @param value the event data
+	 * 
+	 * <p>
+	 * The specified promise will request next events on success.
+	 * </p>
+	 * 
+	 * @param value       the event data
+	 * @param nextPromise the promise used to request next event
 	 */
-	protected abstract void onNextMany(ByteBuf value);
+	protected abstract void onNextMany(ByteBuf value, ChannelPromise nextPromise);
 	
 	/**
 	 * <p>
@@ -446,7 +471,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				Mono<Void> deferHandle = this.controller.defer(errorExchange);
 				this.executeInEventLoop(() -> {
 					ErrorHandlerSubscriber subscriber = new ErrorHandlerSubscriber(throwable);
-					this.disposable = subscriber;
+					this.subscriber = subscriber;
 					deferHandle.subscribe(subscriber);
 				});
 			} 
@@ -458,7 +483,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				Mono<Void> deferHandle = LAST_RESORT_ERROR_CONTROLLER.defer(errorExchange);
 				this.executeInEventLoop(() -> {
 					ErrorHandlerSubscriber subscriber = new ErrorHandlerSubscriber(throwable);
-					this.disposable = subscriber;
+					this.subscriber = subscriber;
 					deferHandle.subscribe(subscriber);
 				});
 			}
@@ -803,7 +828,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			}
 			else {
 				AbstractExchange.this.single = AbstractExchange.this.response.isSingle();
-				AbstractExchange.this.disposable = AbstractExchange.this;
+				AbstractExchange.this.subscriber = AbstractExchange.this;
 				AbstractExchange.this.response.dataSubscribe(AbstractExchange.this);
 			}
 		}
@@ -835,7 +860,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		protected void hookOnComplete() {
 			AbstractExchange.this.single = AbstractExchange.this.response.isSingle();
 			ErrorSubscriber subscriber = new ErrorSubscriber(this.originalError);
-			AbstractExchange.this.disposable = subscriber;
+			AbstractExchange.this.subscriber = subscriber;
 			AbstractExchange.this.response.dataSubscribe(subscriber);
 		}
 	}

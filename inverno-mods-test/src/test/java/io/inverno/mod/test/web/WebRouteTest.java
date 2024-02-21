@@ -3541,7 +3541,6 @@ public class WebRouteTest extends AbstractInvernoModTest {
 				break;
 		}
 		
-		
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded/json/map'
 		byte[] get_sse_encoded_json_map_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http11.dat"));
 		byte[] get_sse_encoded_json_map_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http2.dat"));

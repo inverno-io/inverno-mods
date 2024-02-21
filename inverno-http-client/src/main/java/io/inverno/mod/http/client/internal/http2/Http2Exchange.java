@@ -31,6 +31,7 @@ import io.netty.handler.codec.http2.Http2LocalFlowController;
 import io.netty.handler.codec.http2.Http2Stream;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.MonoSink;
 
@@ -171,6 +172,11 @@ class Http2Exchange extends AbstractHttp2Exchange {
 		}
 		
 		@Override
+		protected void hookOnSubscribe(Subscription subscription) {
+			subscription.request(1);
+		}
+
+		@Override
 		protected void hookOnNext(ByteBuf value) {
 			Http2Exchange.this.executeInEventLoop(() -> {
 				this.transferedLength += value.readableBytes();
@@ -178,9 +184,19 @@ class Http2Exchange extends AbstractHttp2Exchange {
 
 				if( (this.single || !this.many) && this.singleChunk == null) {
 					this.singleChunk = value;
+					this.request(1);
 				}
 				else {
 					this.many = true;
+					ChannelPromise nextPromise = Http2Exchange.this.context.newPromise().addListener(future -> {
+						if(future.isSuccess()) {
+							this.request(1);
+						}
+						else {
+							this.cancel();
+							this.hookOnError(future.cause());
+						}
+					});
 					if(!headers.isWritten()) {
 						Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.toHttp2Headers()), 0, false, Http2Exchange.this.context.voidPromise());
 						headers.setWritten(true);
@@ -188,10 +204,10 @@ class Http2Exchange extends AbstractHttp2Exchange {
 							Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), this.singleChunk, 0, false, Http2Exchange.this.context.voidPromise());
 							this.singleChunk = null;
 						}
-						Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), value, 0, false, Http2Exchange.this.context.voidPromise());
+						Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), value, 0, false, nextPromise);
 					}
 					else {
-						Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), value, 0, false, Http2Exchange.this.context.voidPromise());
+						Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), value, 0, false, nextPromise);
 					}
 					Http2Exchange.this.context.channel().flush();
 				}

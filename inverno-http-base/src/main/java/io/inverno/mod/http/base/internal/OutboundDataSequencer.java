@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.inverno.mod.http.base.internal;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import reactor.core.publisher.BaseSubscriber;
+import java.util.Iterator;
+import java.util.function.Function;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
-import reactor.core.publisher.SignalType;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -35,91 +34,94 @@ import reactor.core.publisher.SignalType;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-public class OutboundDataSequencer {
+public class OutboundDataSequencer implements Function<Flux<ByteBuf>, Flux<ByteBuf>> {
 
 	/**
 	 * The default outbound buffer capacity.
 	 */
 	public static final int DEFAULT_BUFFER_CAPACITY = 8192;
-	
+
 	/**
 	 * The outbound buffer capacity.
 	 */
-	private int bufferCapacity = DEFAULT_BUFFER_CAPACITY;
+	private final int bufferCapacity;
+
+	private int accumulatedSize;
+
+	private ByteBuf retainedBuffer;
 
 	/**
 	 * <p>
-	 * Sets the outbound buffer capacity.
+	 * Creates an outbound data sequencer with {@link #DEFAULT_BUFFER_CAPACITY}.
+	 * </p>
+	 */
+	public OutboundDataSequencer() {
+		this(DEFAULT_BUFFER_CAPACITY);
+	}
+	
+	/**
+	 * <p>
+	 * Creates an outbound data sequencer.
 	 * </p>
 	 * 
-	 * @param bufferCapacity a buffer capacity
+	 * @param bufferCapacity the buffer capacity
 	 */
-	public void setBufferCapacity(int bufferCapacity) {
+	public OutboundDataSequencer(int bufferCapacity) {
 		this.bufferCapacity = bufferCapacity;
 	}
 	
-	/**
-	 * <p>
-	 * Sequences the specified flux of data by buffering them up to the buffer capacity before emitting them in the resulting flux.
-	 * </p>
-	 * 
-	 * @param data the data to sequence
-	 * 
-	 * @return a flux of buffered data
-	 */
-	public Flux<ByteBuf> sequence(Flux<ByteBuf> data) {
-		return Flux.create(dataSink -> {
-			data.subscribe(new DataSubscriber(dataSink));
-		});
-	}
-	
-	/**
-	 * <p>
-	 * The subscriber used to bufferize outbound data.
-	 * </p>
-	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.6
-	 */
-	private class DataSubscriber extends BaseSubscriber<ByteBuf> {
+	@Override
+	public Flux<ByteBuf> apply(Flux<ByteBuf> data) {
+		return data.bufferUntil(buffer -> {
+					this.accumulatedSize += buffer.readableBytes();
+					return this.accumulatedSize >= this.bufferCapacity;
+				}
+			)
+			.map(accBuffers -> {
+				ByteBuf[] buffers;
+				int index;
+				if(this.retainedBuffer == null) {
+					buffers = new ByteBuf[accBuffers.size()];
+					index = 0;
+				}
+				else {
+					buffers = new ByteBuf[accBuffers.size() + 1];
+					buffers[0] = this.retainedBuffer;
+					index = 1;
+				}
 
-		private final FluxSink<ByteBuf> dataSink;
-		
-		private ByteBuf currentBuffer;
-		
-		public DataSubscriber(FluxSink<ByteBuf> dataSink) {
-			this.dataSink = dataSink;
-		}
-		
-		@Override
-		protected void hookOnNext(ByteBuf buffer) {
-			if(this.currentBuffer == null) {
-				this.currentBuffer = buffer;
-			}
-			else {
-				this.currentBuffer = Unpooled.wrappedBuffer(this.currentBuffer, buffer);
-			}
-			
-			if(this.currentBuffer.readableBytes() > OutboundDataSequencer.this.bufferCapacity) {
-				this.dataSink.next(this.currentBuffer.readRetainedSlice(OutboundDataSequencer.this.bufferCapacity));
-			}
-		}
+				for(ByteBuf b : accBuffers) {
+					buffers[index++] = b;
+				}
 
-		@Override
-		protected void hookOnError(Throwable throwable) {
-			this.dataSink.error(throwable);
-		}
+				ByteBuf buffer = Unpooled.wrappedBuffer(buffers);
+				if(this.accumulatedSize > this.bufferCapacity) {
+					this.retainedBuffer = buffer;
+					buffer = buffer.readRetainedSlice(this.bufferCapacity);
+					this.accumulatedSize = this.retainedBuffer.readableBytes();
 
-		@Override
-		protected void hookOnComplete() {
-			if(this.currentBuffer != null && this.currentBuffer.readableBytes() > 0) {
-				this.dataSink.next(this.currentBuffer);
-			}
-			this.dataSink.complete();
-		}
-
-		@Override
-		protected void hookFinally(SignalType type) {
-		}
+				}
+				else {
+					this.retainedBuffer = null;
+					this.accumulatedSize = 0;
+				}
+				return buffer;
+			})
+			.concatWith(Flux.defer(() -> {
+				return Mono.justOrEmpty(this.retainedBuffer)
+					.flatMapIterable(buffer -> {
+						return (Iterable<ByteBuf>) () -> new Iterator<ByteBuf>() {
+							@Override
+							public boolean hasNext() {
+								return buffer.isReadable();
+							}
+							
+							@Override
+							public ByteBuf next() {
+								return buffer.readRetainedSlice(Math.min(buffer.readableBytes(), bufferCapacity));
+							}
+						};
+					});
+			}));
 	}
 }

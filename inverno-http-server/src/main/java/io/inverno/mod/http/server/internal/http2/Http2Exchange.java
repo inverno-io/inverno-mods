@@ -131,7 +131,7 @@ class Http2Exchange extends AbstractExchange {
 	}
 	
 	@Override
-	protected void onNextMany(ByteBuf value) {
+	protected void onNextMany(ByteBuf value, ChannelPromise nextPromise) {
 		try {
 			Http2ResponseHeaders headers = (Http2ResponseHeaders)this.response.headers();
 			if(!headers.isWritten()) {
@@ -147,7 +147,7 @@ class Http2Exchange extends AbstractExchange {
 				}
 			});*/
 			
-			this.encoder.writeData(this.context, this.stream.id(), value, 0, false, this.context.voidPromise());
+			this.encoder.writeData(this.context, this.stream.id(), value, 0, false, nextPromise);
 			this.context.channel().flush();
 		}
 		finally {

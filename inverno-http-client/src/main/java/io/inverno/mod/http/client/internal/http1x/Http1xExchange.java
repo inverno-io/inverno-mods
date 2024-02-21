@@ -37,6 +37,7 @@ import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 
 /**
@@ -213,6 +214,11 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 		public long getTransferedLength() {
 			return transferedLength;
 		}
+
+		@Override
+		protected void hookOnSubscribe(Subscription subscription) {
+			subscription.request(1);
+		}
 		
 		@Override
 		protected void hookOnNext(ByteBuf value) {
@@ -222,9 +228,20 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 
 				if( (this.single || !this.many) && this.singleChunk == null) {
 					this.singleChunk = value;
+					this.request(1);
 				}
 				else {
 					this.many = true;
+					ChannelPromise nextPromise = Http1xExchange.this.context.newPromise().addListener(future -> {
+						if(future.isSuccess()) {
+							this.request(1);
+						}
+						else {
+							this.cancel();
+							this.hookOnError(future.cause());
+						}
+					});
+					
 					if(!headers.isWritten()) {
 						List<String> transferEncodings = headers.getAll(Headers.NAME_TRANSFER_ENCODING);
 						if(headers.getContentLength() == null && !transferEncodings.contains(Headers.VALUE_CHUNKED)) {
@@ -232,16 +249,16 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 						}
 						if(this.singleChunk != null) {
 							Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.toHttp1xHeaders()), this.singleChunk), Http1xExchange.this.context.voidPromise());
-							Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new DefaultHttpContent(value), Http1xExchange.this.context.voidPromise());
+							Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new DefaultHttpContent(value), nextPromise);
 							this.singleChunk = null;
 						}
 						else {
-							Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.toHttp1xHeaders()), value), Http1xExchange.this.context.voidPromise());
+							Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.toHttp1xHeaders()), value), nextPromise);
 						}
 						headers.setWritten(true);
 					}
 					else {
-						Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new DefaultHttpContent(value), Http1xExchange.this.context.voidPromise());
+						Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new DefaultHttpContent(value), nextPromise);
 					}
 				}
 			});
