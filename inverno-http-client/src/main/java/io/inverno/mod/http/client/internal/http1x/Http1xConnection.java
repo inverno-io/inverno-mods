@@ -237,6 +237,12 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 						return;
 					}
 					this.respondingExchange.setResponse(new Http1xResponse(httpResponse, this.headerService, this.parameterConverter));
+					// Remove the to-be-closed connection as soon as we know
+					if(this.respondingExchange.isClose()) {
+						if(this.handler != null) {
+							this.handler.onClose();
+						}
+					}
 				}
 				else {
 					Sinks.Many<ByteBuf> responseData = this.respondingExchange.response().data();
@@ -586,9 +592,15 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				
 				// Since we haven't written anything there is no need to reset the connection but we should dispose the exchange
 				this.requestingExchange.dispose(t, false);
-				// we can recycle the connection since a request has been processed
-				if(this.handler != null) {
-					this.handler.onExchangeTerminate(this.requestingExchange);
+				if(exchange.isClose()) {
+					// Connection should already have been removed from the pool, make sure connection is closed
+					this.close().subscribe();
+				}
+				else {
+					// we can recycle the connection since a request has been processed
+					if(this.handler != null) {
+						this.handler.onExchangeTerminate(this.requestingExchange);
+					}
 				}
 				
 				if(this.requestingExchange == this.respondingExchange) {
@@ -617,9 +629,17 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 			// We received the complete response we can dispose the exchange
 			this.respondingExchange.dispose();
 			// we can recycle the connection since a request has been processed
-			if(this.handler != null) {
-				this.handler.onExchangeTerminate(exchange);
+			if(exchange.isClose()) {
+				// Connection should already have been removed from the pool, make sure connection is closed
+				this.close().subscribe();
 			}
+			else {
+				// we can recycle the connection since a request has been processed
+				if(this.handler != null) {
+					this.handler.onExchangeTerminate(this.requestingExchange);
+				}
+			}
+			
 			if(this.respondingExchange.next != null) {
 				this.respondingExchange = respondingExchange.next;
 				this.startTimeout();

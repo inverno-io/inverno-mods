@@ -417,7 +417,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 					if(future.isSuccess()) {
 						this.subscriber.request(1);
 					}
-					else {
+					else if(!this.subscriber.isDisposed()) {
 						this.subscriber.cancel();
 						this.hookOnError(future.cause());
 					}
@@ -426,6 +426,12 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 					this.onNextMany(firstValue, this.context.voidPromise());
 				}
 				this.onNextMany(value, nextPromise);
+			})
+			.addListener(future -> {
+				if(!future.isSuccess() && !this.subscriber.isDisposed()) {
+					this.subscriber.cancel();
+					this.hookOnError(future.cause());
+				}
 			});
 		}
 	}

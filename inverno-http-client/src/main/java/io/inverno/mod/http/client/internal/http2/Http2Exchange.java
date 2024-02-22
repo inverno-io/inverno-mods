@@ -192,7 +192,7 @@ class Http2Exchange extends AbstractHttp2Exchange {
 						if(future.isSuccess()) {
 							this.request(1);
 						}
-						else {
+						else if(!this.isDisposed()) {
 							this.cancel();
 							this.hookOnError(future.cause());
 						}
@@ -210,6 +210,12 @@ class Http2Exchange extends AbstractHttp2Exchange {
 						Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), value, 0, false, nextPromise);
 					}
 					Http2Exchange.this.context.channel().flush();
+				}
+			})
+			.addListener(future -> {
+				if(!future.isSuccess() && !this.isDisposed()) {
+					this.cancel();
+					this.hookOnError(future.cause());
 				}
 			});
 		}

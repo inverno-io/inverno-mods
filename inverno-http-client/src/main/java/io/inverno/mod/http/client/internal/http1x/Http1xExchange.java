@@ -32,6 +32,9 @@ import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import java.util.List;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
@@ -136,6 +139,17 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 			}	
 		);
 	}
+
+	/**
+	 * <p>
+	 * Determines whether the connection will be closed uppon response (i.e. {@code connection: close}).
+	 * </p>
+	 * 
+	 * @return true if the connection will be closed, false otherwise
+	 */
+	boolean isClose() {
+		return this.response != null && this.response.headers().contains(Headers.NAME_CONNECTION, Headers.VALUE_CLOSE);
+	}
 	
 	/**
 	 * <p>
@@ -236,12 +250,12 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 						if(future.isSuccess()) {
 							this.request(1);
 						}
-						else {
+						else if(!this.isDisposed()) {
 							this.cancel();
 							this.hookOnError(future.cause());
 						}
 					});
-					
+
 					if(!headers.isWritten()) {
 						List<String> transferEncodings = headers.getAll(Headers.NAME_TRANSFER_ENCODING);
 						if(headers.getContentLength() == null && !transferEncodings.contains(Headers.VALUE_CHUNKED)) {
@@ -261,6 +275,25 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 						Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new DefaultHttpContent(value), nextPromise);
 					}
 				}
+			})
+			.addListener(future -> {
+				if(!future.isSuccess() && !this.isDisposed()) {
+					this.cancel();
+					this.hookOnError(future.cause());
+				}
+			});
+		}
+
+		/**
+		 * <p>
+		 * This can happens when the exchange is disposed before the request has been fully sent, typically when the server send a complete response before in which case we must try to send a last 
+		 * http content to restore the flow.
+		 * </p>
+		 */
+		@Override
+		protected void hookOnCancel() {
+			Http1xExchange.this.executeInEventLoop(() -> {
+				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.voidPromise());
 			});
 		}
 		
@@ -298,7 +331,7 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 				}
 				else {
 					// many
-					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE), finalizePromise);
+					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, finalizePromise);
 				}
 			});
 		}
@@ -355,11 +388,24 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 			});
 		}
 		
+		/**
+		 * <p>
+		 * This can happens when the exchange is disposed before the request has been fully sent, typically when the server send a complete response before in which case we must try to send a last 
+		 * http content to restore the flow.
+		 * </p>
+		 */
+		@Override
+		protected void hookOnCancel() {
+			Http1xExchange.this.executeInEventLoop(() -> {
+				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.voidPromise());
+			});
+		}
+		
 		@Override
 		protected void hookOnComplete() {
 			// trailers if any should be send here in the last content
 			Http1xExchange.this.executeInEventLoop(() -> {
-				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE), Http1xExchange.this.context.newPromise().addListener(future -> {
+				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.newPromise().addListener(future -> {
 					if(future.isSuccess()) {
 						Http1xExchange.this.handler.requestComplete(Http1xExchange.this);
 					}

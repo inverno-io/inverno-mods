@@ -411,12 +411,6 @@ public class PooledEndpoint extends AbstractEndpoint {
 						pool.capacity += pooledConnection.capacity - 1;
 						pooledConnection.allocated++;
 						request.success(pooledConnection);
-						
-						/*PooledEndpoint.ConnectionRequest bufferedRequest = null;
-						while(pooledConnection.allocated < pooledConnection.capacity && (bufferedRequest = pool.requestBuffer.poll()) != null) {
-							pooledConnection.allocated++;
-							bufferedRequest.success(pooledConnection);
-						}*/
 						this.drainBuffer();
 					}
 				});
@@ -461,6 +455,7 @@ public class PooledEndpoint extends AbstractEndpoint {
 	 */
 	private void recycle(PooledHttpConnection connection) {
 		this.commandExecutor.execute(pool -> {
+			LOGGER.debug("Recyle connection...");
 			if(pool.closing || pool.closed) {
 				return;
 			}
@@ -489,6 +484,7 @@ public class PooledEndpoint extends AbstractEndpoint {
 	private void remove(PooledHttpConnection connection) {
 		// Remove the connection from the pool
 		this.commandExecutor.execute(pool -> {
+			LOGGER.debug("Remove connection...");
 			if(!connection.removed && !pool.closing && !pool.closed) {
 				if(connection.parked) {
 					pool.parkedConnections.remove(connection);
@@ -526,7 +522,8 @@ public class PooledEndpoint extends AbstractEndpoint {
 	private void park(PooledHttpConnection connection) {
 		// Remove the connection from the pool and park it
 		this.commandExecutor.execute(pool -> {
-			if(!connection.parked && !pool.closing && !pool.closed && pool.connections[connection.index] == connection) {
+			LOGGER.debug("Park connection...");
+			if(!connection.removed && !connection.parked && !pool.closing && !pool.closed && pool.connections[connection.index] == connection) {
 				PooledHttpConnection last = pool.connections[--pool.size];
 				last.index = connection.index;
 				pool.connections[connection.index] = last;
@@ -559,12 +556,15 @@ public class PooledEndpoint extends AbstractEndpoint {
 	 */
 	private void setCapacity(PooledHttpConnection connection, long capacity) {
 		this.commandExecutor.execute(pool -> {
-			long oldCapacity = connection.capacity;
-			connection.capacity = capacity;
-			pool.capacity += (capacity - oldCapacity);
-			pool.totalCapacity += (capacity - oldCapacity);
-			if(capacity > oldCapacity) {
-				pool.drainBuffer();
+			LOGGER.debug("Set connection capacity...");
+			if(!connection.removed) {
+				long oldCapacity = connection.capacity;
+				connection.capacity = capacity;
+				pool.capacity += (capacity - oldCapacity);
+				pool.totalCapacity += (capacity - oldCapacity);
+				if(capacity > oldCapacity) {
+					pool.drainBuffer();
+				}
 			}
 		});
 	}
@@ -572,6 +572,7 @@ public class PooledEndpoint extends AbstractEndpoint {
 	@Override
 	public Mono<Void> close() {
 		return Mono.defer(() -> {
+			LOGGER.debug("Close pool...");
 			this.closing = true;
 			this.cleanFuture.cancel(false);
 			Sinks.Many<PooledEndpoint.PooledHttpConnection> sink = Sinks.many().unicast().onBackpressureBuffer();
