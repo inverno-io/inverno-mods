@@ -23,6 +23,8 @@ import io.inverno.mod.base.resource.FileResource;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.boot.Boot;
 import io.inverno.mod.http.base.HttpVersion;
+import static io.inverno.mod.http.base.HttpVersion.HTTP_1_1;
+import static io.inverno.mod.http.base.HttpVersion.HTTP_2_0;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Headers;
@@ -4764,5 +4766,68 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/terminal/a/b/c", body);
 			})
 			.block();
+	}
+	
+	private void test_parallel(Endpoint endpoint) {
+		// By default: 
+		// - pool_max_size=2
+		// - http2_max_concurrent_streams=100
+		// - http1_max_concurrent_requests=10
+		
+		// Just make sure all pool connections are created
+		Flux.range(0, 10)
+			.flatMap(i -> endpoint
+				.request(Method.GET, "/get_delay100")
+				.send()
+				.flatMap(exchange -> Flux.from(exchange.response().body().string().stream()).collect(Collectors.joining()))
+			)
+			.blockLast();
+		
+		switch(testHttpVersion) {
+			case HTTP_1_1: {
+				long t0 = System.currentTimeMillis();
+				Flux.range(0, 50)
+					.flatMap(i -> endpoint
+						.request(Method.GET, "/get_delay100")
+						.send()
+						.flatMap(exchange -> Flux.from(exchange.response().body().string().stream()).collect(Collectors.joining()))
+					)
+					.doOnNext(body -> Assertions.assertEquals("get_delay100", body))
+					.blockLast();
+				long total = System.currentTimeMillis() - t0;
+				
+				// We should take 100 * 50 / 2 = 2500ms in theory
+				// In practice:
+				// - ...
+				
+				// Let's be protective here and use a 2500ms delta
+				// as long as we are not taking more than 5 seconds we know the pool is doing its job
+				// Running a clean test the batch completes in 2552ms
+				Assertions.assertEquals(2500, total, 2500); 
+				break;
+			}
+			case HTTP_2_0: {
+				long t0 = System.currentTimeMillis();
+				Flux.range(0, 150)
+					.flatMap(i -> endpoint
+						.request(Method.GET, "/get_delay100")
+						.send()
+						.flatMap(exchange -> Flux.from(exchange.response().body().string().stream()).collect(Collectors.joining()))
+					)
+					.doOnNext(body -> Assertions.assertEquals("get_delay100", body))
+					.blockLast();
+				long total = System.currentTimeMillis() - t0;
+				// Each connection will process 75 requests since we allow up to 100 concurrent streams all requests should be processed in parallel, we should take around 100ms in theory
+				// In practice:
+				// - the event loop group is processing the request, we have 2*cores thread available (so all requests won't be processed in parallel)
+				// - ...
+				
+				// Let's be protective here and use a 150ms delta
+				// In theory with one connection we should process 100 requests and then 50 leading to 200ms
+				// Running a clean test the batch should completes in 163ms
+				Assertions.assertEquals(100, total, 200);
+				break;
+			}
+		}
 	}
 }

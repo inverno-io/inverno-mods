@@ -958,6 +958,8 @@ endpoint
 
 The response body is exposed in a reactive way which allows to process it while it is being received by the client. 
 
+In order to prevent locking and possible memory leaks, the underlying connection will discard unsubscribed data after receiving the final response content, it is therefore important to subscribe to the payload data publisher immediately when the exchange is emitted which happens after the beginning of the response is received (start line and heades) and before the payload is received.
+
 ##### string
 
 The response body can be consumed as `CharSequence` as follows:

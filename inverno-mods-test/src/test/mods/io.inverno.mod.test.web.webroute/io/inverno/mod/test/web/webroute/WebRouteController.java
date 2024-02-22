@@ -1328,4 +1328,9 @@ public class WebRouteController {
 		this.get_path_param_terminal = true;
 		return exchange.request().getPathAbsolute();
 	}
+	
+	@WebRoute(path = "/get_delay100", method = Method.GET, produces = MediaTypes.TEXT_PLAIN)
+	public Mono<String> get_delay100() {
+		return Mono.just("get_delay100").delayElement(Duration.ofMillis(100));
+	}
 }

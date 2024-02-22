@@ -88,6 +88,12 @@ public interface Endpoint {
 	 * Sends an HTTP request.
 	 * </p>
 	 * 
+	 * <p>
+	 * The request is only sent when the returned publisher is subscribed, the HTTP exchange is emitted after the begining of the HTTP response has been received (i.e. start line and headers) but
+	 * before the response body, if response payload has to be consumed its data publisher MUST BE subscribed immediately. In order to prevent locking the underlying connection will dispose the
+	 * response data as soon as the complete response has been received before leading to unsubscribed data to be discarded.
+	 * </p>
+	 * 
 	 * @param <A>     the exchange context type
 	 * @param request an HTTP request
 	 * 
@@ -100,7 +106,7 @@ public interface Endpoint {
 	 * Closes the endpoint.
 	 * </p>
 	 * 
-	 * @return a mono which completes oce the endpoint is closed.
+	 * @return a mono which completes once the endpoint is closed.
 	 */
 	Mono<Void> close();
 	
@@ -171,6 +177,11 @@ public interface Endpoint {
 		/**
 		 * <p>
 		 * Sends the request.
+		 * </p>
+		 * 
+		 * <p>
+		 * The request is sent when the exchange publisher is subscribed, the response body MUST BE subscribed immediately after the exchange has been emitted otherwise data will be discarded when the
+		 * complete response has been received (see {@link #send(io.inverno.mod.http.client.HttpClient.Request) })
 		 * </p>
 		 * 
 		 * @return an exchange mono
