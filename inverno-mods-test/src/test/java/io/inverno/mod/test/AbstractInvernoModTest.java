@@ -15,103 +15,95 @@
  */
 package io.inverno.mod.test;
 
-import io.inverno.test.AbstractInvernoTest;
-import java.io.File;
+import io.inverno.test.InvernoCompilerExtension;
+import io.inverno.test.InvernoCompilerTest;
+import io.inverno.test.InvernoTestCompiler;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Function;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- *
  */
-public class AbstractInvernoModTest extends AbstractInvernoTest {
-
-	public AbstractInvernoModTest() {
-		super((Function<File, File>)file -> {
-			if(file.getName().startsWith("inverno-configuration-compiler")) {
-				if(new File("../inverno-configuration-compiler").exists()) {
-					return Optional.of(new File("../inverno-configuration-compiler/target/classes")).filter(File::exists).orElse(file);
-				}
+@ExtendWith(InvernoCompilerExtension.class)
+public class AbstractInvernoModTest implements InvernoCompilerTest {
+	
+	public static final Function<Path, Path> MODULE_OVERRIDE = path -> {
+			if(path.getFileName().toString().startsWith("inverno-configuration-compiler")) {
+				return Optional.of(Path.of("../inverno-configuration-compiler/target/classes")).filter(Files::exists).orElse(path);
 			}
-			else if(file.getName().startsWith("inverno-configuration")) {
-				if(new File("../inverno-configuration").exists()) {
-					return Optional.of(new File("../inverno-configuration/target/classes")).filter(File::exists).orElse(file);
-				}
+			else if(path.getFileName().toString().startsWith("inverno-configuration")) {
+				return Optional.of(Path.of("../inverno-configuration/target/classes")).filter(Files::exists).orElse(path);
 			}
-			else if(file.getName().startsWith("inverno-web-compiler")) {
-				if(new File("../inverno-web-compiler").exists()) {
-					return Optional.of(new File("../inverno-web-compiler/target/classes")).filter(File::exists).orElse(file);
-				}
+			else if(path.getFileName().toString().startsWith("inverno-web-compiler")) {
+				return Optional.of(Path.of("../inverno-web-compiler/target/classes")).filter(Files::exists).orElse(path);
 			}
-			else if(file.getName().startsWith("inverno-web-server")) {
-				if(new File("../inverno-web-server").exists()) {
-					return Optional.of(new File("../inverno-web-server/target/classes")).filter(File::exists).orElse(file);
-				}
+			else if(path.getFileName().toString().startsWith("inverno-web-server")) {
+				return Optional.of(Path.of("../inverno-web-server/target/classes")).filter(Files::exists).orElse(path);
 			}
-			else if(file.getName().startsWith("inverno-http-server")) {
-				if(new File("../inverno-http-server").exists()) {
-					return Optional.of(new File("../inverno-http-server/target/classes")).filter(File::exists).orElse(file);
-				}
+			else if(path.getFileName().toString().startsWith("inverno-http-server")) {
+				return Optional.of(Path.of("../inverno-http-server/target/classes")).filter(Files::exists).orElse(path);
 			}
-			else if(file.getName().startsWith("inverno-http-base")) {
-				if(new File("../inverno-http-base").exists()) {
-					return Optional.of(new File("../inverno-http-base/target/classes")).filter(File::exists).orElse(file);
-				}
+			else if(path.getFileName().toString().startsWith("inverno-http-base")) {
+				return Optional.of(Path.of("../inverno-http-base/target/classes")).filter(Files::exists).orElse(path);
 			}
-			else if(file.getName().startsWith("inverno-boot")) {
-				if(new File("../inverno-boot").exists()) {
-					return Optional.of(new File("../inverno-boot/target/classes")).filter(File::exists).orElse(file);
-				}
+			else if(path.getFileName().toString().startsWith("inverno-boot")) {
+				return Optional.of(Path.of("../inverno-boot/target/classes")).filter(Files::exists).orElse(path);
 			}
-			else if(file.getName().startsWith("inverno-base")) {
-				if(new File("../inverno-base").exists()) {
-					return Optional.of(new File("../inverno-base/target/classes")).filter(File::exists).orElse(file);
-				}
+			else if(path.getFileName().toString().startsWith("inverno-base")) {
+				return Optional.of(Path.of("../inverno-base/target/classes")).filter(Files::exists).orElse(path);
 			}
-			else if(file.getName().startsWith("inverno-core-annotation")) {
-				if(new File("../inverno-core-annotation").exists()) {
-					return Optional.of(new File("../inverno-core-annotation/target/classes")).filter(File::exists).orElse(file);
-				}
+			else if(path.getFileName().toString().startsWith("inverno-core-annotation")) {
+				return Optional.of(Path.of("../inverno-core-annotation/target/classes")).filter(Files::exists).orElse(path);
 			}
-			else if(file.getName().startsWith("inverno-core-compiler")) {
-				if(new File("../inverno-core-compiler").exists()) {
-					return Optional.of(new File("../inverno-core-compiler/target/classes")).filter(File::exists).orElse(file);
-				}
+			else if(path.getFileName().toString().startsWith("inverno-core-compiler")) {
+				return Optional.of(Path.of("../inverno-core-compiler/target/classes")).filter(Files::exists).orElse(path);
 			}
-			else if(file.getName().startsWith("inverno-core")) {
-				if(new File("../inverno-core").exists()) {
-					return Optional.of(new File("../inverno-core/target/classes")).filter(File::exists).orElse(file);
-				}
+			else if(path.getFileName().toString().startsWith("inverno-core")) {
+				return Optional.of(Path.of("../inverno-core/target/classes")).filter(Files::exists).orElse(path);
 			}
-			return file;
-		},
-		file -> {
-			if(file.getName().startsWith("inverno-core-compiler")) {
-				if(new File("../inverno-core-compiler").exists()) {
-					return Optional.of(new File("../inverno-core-compiler/target/classes")).filter(File::exists).orElse(file);
-				}
+			return path;
+		};
+	
+	public static final Function<Path, Path> ANNOTATION_PROCESSOR_MODULE_OVERRIDE = path -> {
+			if(path.getFileName().toString().startsWith("inverno-core-compiler")) {
+				return Optional.of(Path.of("../inverno-core-compiler/target/classes")).filter(Files::exists).orElse(path);
 			}
-			else if(file.getName().startsWith("inverno-core-annotation")) {
-				if(new File("../inverno-core-annotation").exists()) {
-					return Optional.of(new File("../inverno-core-annotation/target/classes")).filter(File::exists).orElse(file);
-				}
+			else if(path.getFileName().toString().startsWith("inverno-core-annotation")) {
+				return Optional.of(Path.of("../inverno-core-annotation/target/classes")).filter(Files::exists).orElse(path);
 			}
-			else if(file.getName().startsWith("inverno-configuration-compiler")) {
-				if(new File("../inverno-configuration-compiler").exists()) {
-					return Optional.of(new File("../inverno-configuration-compiler/target/classes")).filter(File::exists).orElse(file);
-				}
+			else if(path.getFileName().toString().startsWith("inverno-configuration-compiler")) {
+				return Optional.of(Path.of("../inverno-configuration-compiler/target/classes")).filter(Files::exists).orElse(path);
 			}
-			else if(file.getName().startsWith("inverno-configuration")) {
-				if(new File("../inverno-configuration").exists()) {
-					return Optional.of(new File("../inverno-configuration/target/classes")).filter(File::exists).orElse(file);
-				}
+			else if(path.getFileName().toString().startsWith("inverno-configuration")) {
+				return Optional.of(Path.of("../inverno-configuration/target/classes")).filter(Files::exists).orElse(path);
 			}
-			else if(file.getName().startsWith("inverno-base")) {
-				if(new File("../inverno-base").exists()) {
-					return Optional.of(new File("../inverno-base/target/classes")).filter(File::exists).orElse(file);
-				}
+			else if(path.getFileName().toString().startsWith("inverno-base")) {
+				return Optional.of(Path.of("../inverno-base/target/classes")).filter(Files::exists).orElse(path);
 			}
 			return null;
-		});
+		};
+	
+	private InvernoTestCompiler invernoCompiler;
+
+	@Override
+	public void setInvernoCompiler(InvernoTestCompiler invernoCompiler) {
+		this.invernoCompiler = invernoCompiler;
+	}
+
+	public InvernoTestCompiler getInvernoCompiler() {
+		return invernoCompiler;
+	}
+	
+	@Override
+	public Function<Path, Path> getModuleOverride() {
+		return MODULE_OVERRIDE;
+	}
+
+	@Override
+	public Function<Path, Path> getAnnotationProcessorModuleOverride() {
+		return ANNOTATION_PROCESSOR_MODULE_OVERRIDE;
 	}
 }

@@ -91,7 +91,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testConfigurationBeanNameConflict() throws IOException, InvernoCompilationException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException, ClassNotFoundException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		try {
 			this.getInvernoCompiler().compile(MODULEE);
 			Assertions.fail("Should throw a InvernoCompilationException");
@@ -110,7 +110,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testConfiguration_none() throws IOException, InvernoCompilationException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException, InvocationTargetException, NoSuchMethodException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEA);
 		InvernoModuleProxy moduleA = moduleLoader.load(MODULEA).build();
 		moduleA.start();
@@ -135,7 +135,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testConfiguration_override() throws IOException, InvernoCompilationException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEA);
 		
 		Class<?> configAClass = moduleLoader.loadClass(MODULEA, "io.inverno.mod.test.config.moduleA.ConfigA");
@@ -168,7 +168,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 
 	@Test
 	public void testConfigurationConflict() throws IOException, InvernoCompilationException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		try {
 			this.getInvernoCompiler().compile(MODULEB);
 			Assertions.fail("Should throw a InvernoCompilationException");
@@ -190,7 +190,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testNestedConfiguration_none_none() throws IOException, InvernoCompilationException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEA, MODULEC);
 		InvernoModuleProxy moduleC = moduleLoader.load(MODULEC).build();
 		moduleC.start();
@@ -226,7 +226,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testNestedConfiguration_impl_null() throws IOException, InvernoCompilationException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException, ClassNotFoundException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEA, MODULEC);
 		
 		Class<?> configCClass = moduleLoader.loadClass(MODULEC, "io.inverno.mod.test.config.moduleC.ConfigC");
@@ -247,7 +247,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testNestedConfiguration_impl_impl() throws IOException, InvernoCompilationException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException, ClassNotFoundException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEA, MODULEC);
 		
 		Class<?> configAClass = moduleLoader.loadClass(MODULEA, "io.inverno.mod.test.config.moduleA.ConfigA");
@@ -297,7 +297,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testNestedConfiguration_none_default() throws IOException, InvernoCompilationException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEA, MODULED);
 		InvernoModuleProxy moduleD = moduleLoader.load(MODULED).build();
 		moduleD.start();
@@ -334,7 +334,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testNestedConfiguration_impl_default() throws IOException, InvernoCompilationException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException, ClassNotFoundException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEA, MODULED);
 		
 		Class<?> configDClass = moduleLoader.loadClass(MODULED, "io.inverno.mod.test.config.moduleD.ConfigD");
@@ -378,7 +378,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testLoaderNested_static_load_configurer_configurer() throws IOException, InvernoCompilationException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEA, MODULEC);
 		
 		Class<?> configCLoaderClass = moduleLoader.loadClass(MODULEC, "io.inverno.mod.test.config.moduleC.ConfigCLoader");
@@ -414,7 +414,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testLoaderNested_static_load_configurer_none() throws IOException, InvernoCompilationException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEA, MODULEC);
 		
 		Class<?> configCLoaderClass = moduleLoader.loadClass(MODULEC, "io.inverno.mod.test.config.moduleC.ConfigCLoader");
@@ -443,7 +443,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testLoaderNested_load() throws IOException, InvernoCompilationException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEA, MODULEC);
 		
 		Class<?> configCLoaderClass = moduleLoader.loadClass(MODULEC, "io.inverno.mod.test.config.moduleC.ConfigCLoader");
@@ -470,7 +470,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	}
 	
 	public void testLoaderNested_withConfigurer_load() throws IOException, InvernoCompilationException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEA, MODULEC);
 		
 		Class<?> configCLoaderClass = moduleLoader.loadClass(MODULEC, "io.inverno.mod.test.config.moduleC.ConfigCLoader");
@@ -511,7 +511,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testLoaderNested_withSource_load() throws IOException, InvernoCompilationException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEA, MODULEC);
 		
 		Class<?> configCLoaderClass = moduleLoader.loadClass(MODULEC, "io.inverno.mod.test.config.moduleC.ConfigCLoader");
@@ -548,7 +548,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testLoaderNested_withSource_withConfigurer_load() throws IOException, InvernoCompilationException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEA, MODULEC);
 		
 		Class<?> configCLoaderClass = moduleLoader.loadClass(MODULEC, "io.inverno.mod.test.config.moduleC.ConfigCLoader");
@@ -590,7 +590,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testLoaderNested_withSource_withParameters_load() throws IOException, InvernoCompilationException, ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEA, MODULEC);
 		
 		Class<?> configCLoaderClass = moduleLoader.loadClass(MODULEC, "io.inverno.mod.test.config.moduleC.ConfigCLoader");
@@ -635,7 +635,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testConfigurationName() throws IOException, InvernoCompilationException, ClassNotFoundException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEF);
 		
 		Class<?> configFClass = moduleLoader.loadClass(MODULEF, "io.inverno.mod.test.config.moduleF.ConfigF");
@@ -668,7 +668,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testConfigurationNoBeanGeneration() throws IOException, InvernoCompilationException, ClassNotFoundException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEG);
 		
 		InvernoModuleProxy moduleG = moduleLoader.load(MODULEG).build();
@@ -687,7 +687,7 @@ public class ConfigurationTest extends AbstractInvernoModTest {
 	
 	@Test
 	public void testConfigurationNonOverridableBeanGeneration() throws IOException, InvernoCompilationException, ClassNotFoundException, IllegalArgumentException, IllegalAccessException, NoSuchFieldException, SecurityException {
-		this.clearModuleTarget();
+		this.getInvernoCompiler().cleanModuleTarget();
 		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULEH);
 		
 		InvernoModuleProxy moduleH = moduleLoader.load(MODULEH).build();

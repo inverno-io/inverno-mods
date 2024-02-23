@@ -823,6 +823,15 @@ public class WebRouteController {
 		return "post_formParam_array_opt: " + formParam.map(Arrays::stream).orElse(Stream.of()).collect(Collectors.joining(", "));
 	}
 	
+	public boolean post_formParam_mono;
+	
+	// curl -iv -X POST -H 'content-type:application/x-www-form-urlencoded' -d 'a=1&b=2&c=3' 'http://127.0.0.1:8080/post/formParam/mono'
+	@WebRoute(path = "/post/formParam/mono", method = Method.POST, produces = MediaTypes.TEXT_PLAIN, consumes = MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED)
+	public Mono<String> post_formParam_mono(@Body Mono<Parameter> data) {
+		this.post_formParam_mono = true;
+		return data.map(p -> "post_formParam_mono: " + p.getName() + "=" + p.getValue());
+	}
+	
 	public boolean post_formParam_flux;
 	
 	// curl -iv -X POST -H 'content-type:application/x-www-form-urlencoded' -d 'a=1&b=2&c=3' 'http://127.0.0.1:8080/post/formParam/flux'

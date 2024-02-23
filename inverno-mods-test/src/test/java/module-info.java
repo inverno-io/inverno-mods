@@ -36,6 +36,7 @@ module io.inverno.mod.test {
 	requires java.net.http;
 	
 	requires org.junit.jupiter.api;
+	requires org.junit.jupiter.params;
 	requires org.junit.platform.launcher;
 	requires org.junit.platform.commons;
 	requires org.junit.jupiter.engine;

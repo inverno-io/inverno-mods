@@ -1,12 +1,12 @@
 /*
- * Copyright 2023 Jeremy KUHN
- * 
+ * Copyright 2024 Jeremy Kuhn
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,13 +18,12 @@ package io.inverno.mod.test.http;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.base.resource.FileResource;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.boot.Boot;
 import io.inverno.mod.http.base.HttpVersion;
-import static io.inverno.mod.http.base.HttpVersion.HTTP_1_1;
-import static io.inverno.mod.http.base.HttpVersion.HTTP_2_0;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Headers;
@@ -36,13 +35,13 @@ import io.inverno.mod.test.configuration.ConfigurationInvocationHandler;
 import io.inverno.test.InvernoCompilationException;
 import io.inverno.test.InvernoModuleLoader;
 import io.inverno.test.InvernoModuleProxy;
+import io.inverno.test.InvernoTestCompiler;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Proxy;
 import java.net.ServerSocket;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -51,18 +50,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- *
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  */
-public class HttpClientTest extends AbstractInvernoModTest {
+public class HttpClientTest {
 
 	static {
 		System.setProperty("log4j2.simplelogLevel", "INFO");
@@ -75,37 +78,30 @@ public class HttpClientTest extends AbstractInvernoModTest {
 	
 	private static final String MODULE_WEBROUTE = "io.inverno.mod.test.web.webroute";
 	
-	private static HttpVersion testHttpVersion;
+	private static int testServerPort;
+	private static InvernoModuleProxy testServerModuleProxy;
 	
-	public static int getFreePort() {
-		try (ServerSocket serverSocket = new ServerSocket(0)) {
-			return serverSocket.getLocalPort();
-		} 
-		catch (IOException e) {
-			throw new UncheckedIOException(e);
-		}
-	}
+	private static Boot bootModule;
+	private static Client httpClientModule;
+	
+	private static Endpoint h11Endpoint;
+	private static Endpoint h2cEndpoint;
 	
 	@BeforeAll
-	public static void init() {
-		// TODO we must refactor AbstractInvernoTest expose something static or not but we don't want inheritance anymore
-	}
-	
-	@AfterAll
-	public static void destroy() {
+	public static void init() throws IOException, InvernoCompilationException, ClassNotFoundException, InterruptedException {
+		InvernoTestCompiler invernoCompiler = InvernoTestCompiler.builder()
+			.moduleOverride(AbstractInvernoModTest.MODULE_OVERRIDE)
+			.annotationProcessorModuleOverride(AbstractInvernoModTest.ANNOTATION_PROCESSOR_MODULE_OVERRIDE)
+			.build();
 		
-	}
-	
-	@Test
-	public void testHttpClient() throws IOException, InvernoCompilationException, ClassNotFoundException, InterruptedException {
-		this.clearModuleTarget();
+		invernoCompiler.cleanModuleTarget();
 		
-		InvernoModuleLoader moduleLoader = this.getInvernoCompiler().compile(MODULE_WEBROUTE);
+		InvernoModuleLoader moduleLoader = invernoCompiler.compile(MODULE_WEBROUTE);
 		
-		int port = getFreePort();
+		testServerPort = getFreePort();
 		
 		Class<?> httpConfigClass = moduleLoader.loadClass(MODULE_WEBROUTE, "io.inverno.mod.http.server.HttpServerConfiguration");
-		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", port, "h2c_enabled", true));
+		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", testServerPort, "h2c_enabled", true));
 		Object httpConfig = Proxy.newProxyInstance(httpConfigClass.getClassLoader(),
 			new Class<?>[] { httpConfigClass },
 			httpConfigHandler);
@@ -122,112 +118,61 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			new Class<?>[] { webRouteConfigClass },
 			webRouteConfigHandler);
 		
-		Boot bootMod = new Boot.Builder().build();
-		InvernoModuleProxy testServerMod = moduleLoader.load(MODULE_WEBROUTE).optionalDependency("webRouteConfiguration", webRouteConfigClass, webRouteConfig).build();
-		try {
-			bootMod.start();
-			testServerMod.start();
+		testServerModuleProxy = moduleLoader.load(MODULE_WEBROUTE).optionalDependency("webRouteConfiguration", webRouteConfigClass, webRouteConfig).build();
+		testServerModuleProxy.start();
 		
-			Client clientMod = new Client.Builder(bootMod.netService(), bootMod.reactor(), bootMod.resourceService()).build();
-			try {
-				clientMod.start();
-				
-				testHttpVersion = HttpVersion.HTTP_2_0;
-				Endpoint endpointH2C = clientMod.httpClient().endpoint("127.0.0.1", port)
-					.build();
-				try {
-					//this.test_fail(endpointH2C);
-					
-					this.test_h2c(endpointH2C);
-					this.test_get(endpointH2C);
-					this.test_query_param(endpointH2C);
-					this.test_cookie_param(endpointH2C);
-					this.test_header_param(endpointH2C);
-					this.test_path_param(endpointH2C);
-					this.test_get_encoded(endpointH2C);
-					this.test_form_param(endpointH2C);
-					this.test_post(endpointH2C);
-					this.test_post_multipart(endpointH2C);
-					this.test_sse(endpointH2C);
-					this.test_resource(endpointH2C);
-					this.test_misc(endpointH2C);
-				
-					System.gc();
-				}
-				finally {
-					endpointH2C.close().block();
-				}
-				
-				testHttpVersion = HttpVersion.HTTP_1_1;
-				Endpoint endpointH1 = clientMod.httpClient().endpoint("127.0.0.1", port)
-					.configuration(HttpClientConfigurationLoader.load(conf -> conf.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))))
-					.build();
-				try {
-//					this.test_fail(endpointH1);
-					
-					this.test_get(endpointH1);
-					this.test_query_param(endpointH1);
-					this.test_cookie_param(endpointH1);
-					this.test_header_param(endpointH1);
-					this.test_path_param(endpointH1);
-					this.test_get_encoded(endpointH1);
-					this.test_form_param(endpointH1);
-					this.test_post(endpointH1);
-					this.test_post_multipart(endpointH1);
-					this.test_sse(endpointH1);
-					this.test_resource(endpointH1);
-					this.test_misc(endpointH1);
-					
-					System.gc();
-				}
-				finally {
-					endpointH1.close().block();
-				}
-			}
-			finally {
-				clientMod.stop();
-			}
+		bootModule = new Boot.Builder().build();
+		bootModule.start();
+		
+		httpClientModule = new Client.Builder(bootModule.netService(), bootModule.reactor(), bootModule.resourceService()).build();
+		httpClientModule.start();
+		
+		h11Endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))))
+			.build();
+		
+		h2cEndpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.build();
+	}
+	
+	@AfterAll
+	public static void destroy() {
+		if(h2cEndpoint != null) {
+			h2cEndpoint.close().block();
 		}
-		finally {
-			testServerMod.stop();
-			bootMod.stop();
+		if(h11Endpoint != null) {
+			h11Endpoint.close().block();
+		}
+		if(httpClientModule != null) {
+			httpClientModule.stop();
+		}
+		if(bootModule != null) {
+			bootModule.stop();
+		}
+		if(testServerModuleProxy != null) {
+			testServerModuleProxy.stop();
 		}
 	}
 	
-	private void test_h2c(Endpoint endpoint) {
-		File uploadsDir = new File("target/uploads/");
-		uploadsDir.mkdirs();
-		
-		// This should result in a failed connection, next request will create a new connection
-		
-		try {
-		//curl -i -F 'file=@src/test/resources/post_resource_big.txt' http://127.0.0.1:8080/upload
-		new File(uploadsDir, "post_resource_big.txt").delete();
-		endpoint
-			.request(Method.POST, "/upload")
-			.body(body -> body.multipart().from((factory, output) -> output.value(
-				factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_big.txt"))))
-			)))
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.PAYLOAD_TOO_LARGE, exchange.response().headers().getStatus());
-			})
-			.block();
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-			// TODO This fails some times with a broken pipe error, I couldn't figure out what's wrong because I wasn't able to reproduce it in a deterministic way
-			// the problem arise when the connection is closed and we still are trying to write on the socket, this is normally handled but for some reason the exception propagates
-			// Let's leave it for now at least we can check that the endpoint properly create a new connection on the next request
+	private static int getFreePort() {
+		try (ServerSocket serverSocket = new ServerSocket(0)) {
+			return serverSocket.getLocalPort();
+		} 
+		catch (IOException e) {
+			throw new UncheckedIOException(e);
 		}
 	}
 	
-	// For troubleshooting
-	private void test_fail(Endpoint endpoint) {
-		
+	public static Stream<Arguments> provideEndpointAndHttpVersion() {
+		return Stream.of(
+			Arguments.of(h11Endpoint, HttpVersion.HTTP_1_1),
+			Arguments.of(h2cEndpoint, HttpVersion.HTTP_2_0)
+		);
 	}
 	
-	private void test_get(Endpoint endpoint) {
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_void(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_void'
 		endpoint
 			.request(Method.GET, "/get_void")
@@ -244,7 +189,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_raw'
 		endpoint
 			.request(Method.GET, "/get_raw")
@@ -261,7 +210,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_raw", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_raw_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_raw/pub'
 		endpoint
 			.request(Method.GET, "/get_raw/pub")
@@ -278,7 +231,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_raw_pub", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_raw_mono(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_raw/mono'
 		endpoint
 			.request(Method.GET, "/get_raw/mono")
@@ -295,7 +252,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_raw_mono", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_raw_flux(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_raw/flux'
 		endpoint
 			.request(Method.GET, "/get_raw/flux")
@@ -318,7 +279,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_raw_flux", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded'
 		endpoint
 			.request(Method.GET, "/get_encoded")
@@ -335,7 +300,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_no_produce(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/no_produce'
 		endpoint
 			.request(Method.GET, "/get_encoded/no_produce")
@@ -352,7 +321,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_no_produce", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_no_encoder(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/no_encoder'
 		endpoint
 			.request(Method.GET, "/get_encoded/no_encoder")
@@ -361,7 +334,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.INTERNAL_SERVER_ERROR, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_collection(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/collection'
 		endpoint
 			.request(Method.GET, "/get_encoded/collection")
@@ -378,7 +355,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get,encoded,collection", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_list(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/list'
 		endpoint
 			.request(Method.GET, "/get_encoded/list")
@@ -395,7 +376,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get,encoded,list", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_set(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/set'
 		endpoint
 			.request(Method.GET, "/get_encoded/set")
@@ -412,7 +397,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Set.of("get","encoded","set"), new HashSet<>(Arrays.asList(body.split(","))));
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_array(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/array'
 		endpoint
 			.request(Method.GET, "/get_encoded/array")
@@ -429,7 +418,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get,encoded,array", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pub'
 		endpoint
 			.request(Method.GET, "/get_encoded/pub")
@@ -452,7 +445,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_pub", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_mono(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/mono'
 		endpoint
 			.request(Method.GET, "/get_encoded/mono")
@@ -469,7 +466,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_mono", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_flux(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/flux'
 		endpoint
 			.request(Method.GET, "/get_encoded/flux")
@@ -494,7 +495,9 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 	}
 	
-	private void test_query_param(Endpoint endpoint) {
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam?queryParam=abc'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam?queryParam=abc")
@@ -511,7 +514,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam?queryParam=abc&queryParam=def'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam?queryParam=abc&queryParam=def")
@@ -528,7 +535,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam")
@@ -537,7 +548,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/opt?queryParam=abc'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/opt?queryParam=abc")
@@ -554,7 +569,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_opt: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {	
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/opt?queryParam=abc&queryParam=def'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/opt?queryParam=abc&queryParam=def")
@@ -571,7 +590,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_opt: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/opt")
@@ -588,7 +611,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_opt: empty", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_collection(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/collection?queryParam=abc'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/collection?queryParam=abc")
@@ -605,7 +632,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_collection: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_collection_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/collection?queryParam=abc&queryParam=def,hij'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/collection?queryParam=abc&queryParam=def,hij")
@@ -622,7 +653,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_collection: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_collection_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/collection'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/collection")
@@ -631,7 +666,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_collection_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/collection/opt?queryParam=abc'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/collection/opt?queryParam=abc")
@@ -648,7 +687,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_collection_opt: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_collection_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/collection/opt?queryParam=abc&queryParam=def,hij'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/collection/opt?queryParam=abc&queryParam=def,hij")
@@ -665,7 +708,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_collection_opt: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_collection_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/collection/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/collection/opt")
@@ -682,7 +729,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_collection_opt: ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_list(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/list?queryParam=abc'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/list?queryParam=abc")
@@ -699,7 +750,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_list: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_list_multi(Endpoint endpoint, HttpVersion testHttpVersion) {	
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/list?queryParam=abc&queryParam=def,hij'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/list?queryParam=abc&queryParam=def,hij")
@@ -716,7 +771,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_list: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_list_missing(Endpoint endpoint, HttpVersion testHttpVersion) {	
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/list'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/list")
@@ -725,7 +784,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_list_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/list/opt?queryParam=abc'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/list/opt?queryParam=abc")
@@ -742,7 +805,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_list_opt: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_list_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {	
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/list/opt?queryParam=abc&queryParam=def,hij'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/list/opt?queryParam=abc&queryParam=def,hij")
@@ -759,7 +826,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_list_opt: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_list_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {	
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/list/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/list/opt")
@@ -776,7 +847,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_list_opt: ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_set(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/set?queryParam=abc'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/set?queryParam=abc")
@@ -793,7 +868,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_set: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_set_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/set?queryParam=abc&queryParam=def,hij'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/set?queryParam=abc&queryParam=def,hij")
@@ -812,7 +891,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Set.of("abc", "def", "hij"), Arrays.stream(splitBody[1].split(",")).map(String::trim).collect(Collectors.toSet()));
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_set_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/set'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/set")
@@ -821,7 +904,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_set_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/set/opt?queryParam=abc'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/set/opt?queryParam=abc")
@@ -838,7 +925,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_set_opt: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_set_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/set/opt?queryParam=abc&queryParam=def,hij'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/set/opt?queryParam=abc&queryParam=def,hij")
@@ -857,7 +948,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Set.of("abc", "def", "hij"), Arrays.stream(splitBody[1].split(",")).map(String::trim).collect(Collectors.toSet()));
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_set_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {	
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/set/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/set/opt")
@@ -874,7 +969,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_set_opt: ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_array(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/array?queryParam=abc'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/array?queryParam=abc")
@@ -891,7 +990,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_array: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_array_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/array?queryParam=abc&queryParam=def,hij'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/array?queryParam=abc&queryParam=def,hij")
@@ -908,7 +1011,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_array: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_array_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/array'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/array")
@@ -917,7 +1024,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_array_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/array/opt?queryParam=abc'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/array/opt?queryParam=abc")
@@ -934,7 +1045,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_array_opt: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_array_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/array/opt?queryParam=abc&queryParam=def,hij'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/array/opt?queryParam=abc&queryParam=def,hij")
@@ -951,7 +1066,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_queryParam_array_opt: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_queryParam_array_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/array/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/queryParam/array/opt")
@@ -970,7 +1089,9 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 	}
 	
-	private void test_cookie_param(Endpoint endpoint) {
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam")
@@ -988,7 +1109,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam")
@@ -1006,7 +1131,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam")
@@ -1027,7 +1156,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam: abc", body);
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam")
@@ -1036,7 +1169,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/opt")
@@ -1054,7 +1191,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_opt: abc", body);
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/opt")
@@ -1072,7 +1213,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_opt: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_opt_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {	
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/opt")
@@ -1093,7 +1238,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_opt: abc", body);
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/opt")
@@ -1110,7 +1259,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_opt: empty", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_collection(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/collection'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/collection")
@@ -1128,7 +1281,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_collection: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_collection_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/collection'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/collection")
@@ -1146,7 +1303,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_collection: abc, def, hij", body);
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_collection_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/collection'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/collection")
@@ -1167,7 +1328,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_collection: abc, def, hij", body);
 			})
 			.block();
+	}
 		
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_collection_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/collection'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/collection")
@@ -1176,7 +1341,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_collection_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/collection/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/collection/opt")
@@ -1194,7 +1363,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_collection_opt: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_collection_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/collection/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/collection/opt")
@@ -1212,7 +1385,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_collection_opt: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_collection_opt_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/collection/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/collection/opt")
@@ -1233,7 +1410,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_collection_opt: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_collection_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/collection/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/collection/opt")
@@ -1250,7 +1431,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_collection_opt: ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_list(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/list'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/list")
@@ -1268,7 +1453,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_list: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_list_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/list'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/list")
@@ -1286,7 +1475,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_list: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_list_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/list'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/list")
@@ -1307,7 +1500,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_list: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_list_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/list'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/list")
@@ -1316,7 +1513,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_list_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/list/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/list/opt")
@@ -1334,7 +1535,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_list_opt: abc", body);
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_list_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/list/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/list/opt")
@@ -1352,7 +1557,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_list_opt: abc, def, ghi", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_list_opt_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/list/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/list/opt")
@@ -1373,7 +1582,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_list_opt: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_list_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/list/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/list/opt")
@@ -1390,7 +1603,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_list_opt: ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_set(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/set'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/set")
@@ -1408,7 +1625,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_set: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_set_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/set'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/set")
@@ -1428,7 +1649,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Set.of("abc", "def", "hij"), Arrays.stream(splitBody[1].split(",")).map(String::trim).collect(Collectors.toSet()));
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_set_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/set'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/set")
@@ -1451,7 +1676,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Set.of("abc", "def", "hij"), Arrays.stream(splitBody[1].split(",")).map(String::trim).collect(Collectors.toSet()));
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_set_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/set'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/set")
@@ -1460,7 +1689,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_set_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/set/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/set/opt")
@@ -1480,7 +1713,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_set_opt: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_set_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {	
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/set/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/set/opt")
@@ -1502,7 +1739,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Set.of("abc", "def", "hij"), Arrays.stream(splitBody[1].split(",")).map(String::trim).collect(Collectors.toSet()));
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_set_opt_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/set/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/set/opt")
@@ -1525,7 +1766,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Set.of("abc", "def", "hij"), Arrays.stream(splitBody[1].split(",")).map(String::trim).collect(Collectors.toSet()));
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_set_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/set/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/set/opt")
@@ -1542,7 +1787,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_set_opt: ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_array(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/array'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/array")
@@ -1562,7 +1811,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_array: abc", body);
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_array_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/array'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/array")
@@ -1582,7 +1835,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_array: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_array_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/array'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/array")
@@ -1603,7 +1860,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_array: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_array_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/array'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/array")
@@ -1612,7 +1873,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_array_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/array/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/array/opt")
@@ -1632,7 +1897,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_array_opt: abc", body);
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_array_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/array/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/array/opt")
@@ -1652,7 +1921,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_array_opt: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_array_opt_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/array/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/array/opt")
@@ -1673,7 +1946,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_cookieParam_array_opt: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_cookieParam_array_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/array/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/cookieParam/array/opt")
@@ -1692,7 +1969,9 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 	}
 	
-	private void test_header_param(Endpoint endpoint) {
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam")
@@ -1712,7 +1991,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam")
@@ -1733,7 +2016,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam")
@@ -1742,7 +2029,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/opt")
@@ -1762,7 +2053,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_opt: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/opt")
@@ -1783,7 +2078,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_opt: abc", body);
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/opt")
@@ -1800,7 +2099,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_opt: empty", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_collection(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/collection")
@@ -1820,7 +2123,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_collection: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_collection_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/collection")
@@ -1840,7 +2147,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_collection: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_collection_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/collection")
@@ -1861,7 +2172,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_collection: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_collection_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/collection")
@@ -1870,7 +2185,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_collection_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/collection/opt")
@@ -1890,7 +2209,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_collection_opt: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_collection_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/collection/opt")
@@ -1910,7 +2233,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_collection_opt: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_collection_opt_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/collection/opt")
@@ -1931,7 +2258,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_collection_opt: abc, def, hij", body);
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_collection_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/collection/opt")
@@ -1948,7 +2279,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_collection_opt: ", body);
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_list(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/list")
@@ -1968,7 +2303,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_list: abc", body);
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_list_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/list")
@@ -1988,7 +2327,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_list: abc, def, hij", body);
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_list_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/list")
@@ -2009,7 +2352,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_list: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_list_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/list'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/list")
@@ -2018,7 +2365,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_list_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/list/opt")
@@ -2038,7 +2389,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_list_opt: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_list_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/list/opt")
@@ -2058,7 +2413,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_list_opt: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_list_opt_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/list/opt")
@@ -2079,7 +2438,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_list_opt: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_list_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/list/opt")
@@ -2096,7 +2459,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_list_opt: ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_set(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/set")
@@ -2116,7 +2483,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_set: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_set_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/set")
@@ -2138,7 +2509,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Set.of("abc", "def", "hij"), Arrays.stream(splitBody[1].split(",")).map(String::trim).collect(Collectors.toSet()));
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_set_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/set")
@@ -2161,7 +2536,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Set.of("abc", "def", "hij"), Arrays.stream(splitBody[1].split(",")).map(String::trim).collect(Collectors.toSet()));
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_set_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/set'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/set")
@@ -2170,7 +2549,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_set_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/set/opt")
@@ -2190,7 +2573,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_set_opt: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_set_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/set/opt")
@@ -2212,7 +2599,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Set.of("abc", "def", "hij"), Arrays.stream(splitBody[1].split(",")).map(String::trim).collect(Collectors.toSet()));
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_set_opt_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/set/opt")
@@ -2235,7 +2626,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Set.of("abc", "def", "hij"), Arrays.stream(splitBody[1].split(",")).map(String::trim).collect(Collectors.toSet()));
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_set_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/set/opt")
@@ -2252,7 +2647,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_set_opt: ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_array(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/array")
@@ -2272,7 +2671,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_array: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_array_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/array")
@@ -2292,7 +2695,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_array: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_array_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/array")
@@ -2313,7 +2720,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_array: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_array_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/array'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/array")
@@ -2322,7 +2733,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_array_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/array/opt")
@@ -2342,7 +2757,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_array_opt: abc", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_array_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/array/opt")
@@ -2362,7 +2781,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_array_opt: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_array_opt_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/array/opt")
@@ -2383,7 +2806,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_headerParam_array_opt: abc, def, hij", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_headerParam_array_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/headerParam/array/opt")
@@ -2402,11 +2829,12 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 	}
 	
-	private void test_path_param(Endpoint endpoint) {
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c'
-		String requestTarget = URIs.uri("/get_encoded/pathParam/{param}", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c"));
 		endpoint
-			.request(Method.GET, requestTarget)
+			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
 			.send()
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
@@ -2420,7 +2848,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_pathParam: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/'
 		endpoint
 			.request(Method.GET, "/get_encoded/pathParam/")
@@ -2429,11 +2861,14 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/opt'
-		requestTarget = URIs.uri("/get_encoded/pathParam/{param}/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c"));
 		endpoint
-			.request(Method.GET, requestTarget)
+			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
 			.send()
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
@@ -2447,7 +2882,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_pathParam_opt: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/pathParam//opt")
@@ -2464,11 +2903,14 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_pathParam_opt: empty", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_collection(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/collection'
-		requestTarget = URIs.uri("/get_encoded/pathParam/{param}/collection", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c"));
 		endpoint
-			.request(Method.GET, requestTarget)
+			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/collection", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
 			.send()
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
@@ -2482,7 +2924,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_pathParam_collection: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_collection_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//collection'
 		endpoint
 			.request(Method.GET, "/get_encoded/pathParam//collection")
@@ -2491,11 +2937,14 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_collection_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/collection/opt'
-		requestTarget = URIs.uri("/get_encoded/pathParam/{param}/collection/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c"));
 		endpoint
-			.request(Method.GET, requestTarget)
+			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/collection/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
 			.send()
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
@@ -2509,7 +2958,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_pathParam_collection_opt: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_collection_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//collection/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/pathParam//collection/opt")
@@ -2526,11 +2979,14 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_pathParam_collection_opt: ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_list(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/list'
-		requestTarget = URIs.uri("/get_encoded/pathParam/{param}/list", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c"));
 		endpoint
-			.request(Method.GET, requestTarget)
+			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/list", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
 			.send()
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
@@ -2544,7 +3000,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_pathParam_list: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_list_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//list'
 		endpoint
 			.request(Method.GET, "/get_encoded/pathParam//list")
@@ -2553,11 +3013,14 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_list_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/list/opt'
-		requestTarget = URIs.uri("/get_encoded/pathParam/{param}/list/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c"));
 		endpoint
-			.request(Method.GET, requestTarget)
+			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/list/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
 			.send()
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
@@ -2571,7 +3034,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_pathParam_list_opt: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_list_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//list/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/pathParam//list/opt")
@@ -2588,11 +3055,14 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_pathParam_list_opt: ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_set(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/set'
-		requestTarget = URIs.uri("/get_encoded/pathParam/{param}/set", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c"));
 		endpoint
-			.request(Method.GET, requestTarget)
+			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/set", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
 			.send()
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
@@ -2608,7 +3078,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Set.of("a", "b", "c"), Arrays.stream(splitBody[1].split(",")).map(String::trim).collect(Collectors.toSet()));
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_set_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//set'
 		endpoint
 			.request(Method.GET, "/get_encoded/pathParam//set")
@@ -2617,11 +3091,14 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_set_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/set/opt'
-		requestTarget = URIs.uri("/get_encoded/pathParam/{param}/set/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c"));
 		endpoint
-			.request(Method.GET, requestTarget)
+			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/set/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
 			.send()
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
@@ -2637,7 +3114,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Set.of("a", "b", "c"), Arrays.stream(splitBody[1].split(",")).map(String::trim).collect(Collectors.toSet()));
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_set_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//set/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/pathParam//set/opt")
@@ -2654,11 +3135,14 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_pathParam_set_opt: ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_set_array(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/array'
-		requestTarget = URIs.uri("/get_encoded/pathParam/{param}/array", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c"));
 		endpoint
-			.request(Method.GET, requestTarget)
+			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/array", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
 			.send()
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
@@ -2672,7 +3156,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_pathParam_array: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_set_array_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//array'
 		endpoint
 			.request(Method.GET, "/get_encoded/pathParam//array")
@@ -2681,11 +3169,14 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_set_array_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/array/opt'
-		requestTarget = URIs.uri("/get_encoded/pathParam/{param}/array/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c"));
 		endpoint
-			.request(Method.GET, requestTarget)
+			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/array/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
 			.send()
 			.flatMapMany(exchange -> {
 				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
@@ -2699,7 +3190,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("get_encoded_pathParam_array_opt: a, b, c", body);
 			})
 			.block();
+	}
 
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_pathParam_set_array_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//array/opt'
 		endpoint
 			.request(Method.GET, "/get_encoded/pathParam//array/opt")
@@ -2718,7 +3213,9 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 	}
 	
-	private void test_get_encoded(Endpoint endpoint) {
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_json(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/json/dto'
 		endpoint
 			.request(Method.GET, "/get_encoded/json/dto")
@@ -2735,7 +3232,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("{\"message\":\"Hello, world!\"}", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_json_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/json/pub/dto'
 		endpoint
 			.request(Method.GET, "/get_encoded/json/pub/dto")
@@ -2757,7 +3258,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("[{\"message\":\"Hello, world!\"},{\"message\":\"Salut, monde!\"},{\"message\":\"Hallo, welt!\"}]", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_json_generic(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/json/dto/generic'
 		endpoint
 			.request(Method.GET, "/get_encoded/json/dto/generic")
@@ -2774,7 +3279,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("{\"@type\":\"string\",\"id\":1,\"message\":\"Hello, world!\"}", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_json_generic_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/json/pub/dto/generic'
 		endpoint
 			.request(Method.GET, "/get_encoded/json/pub/dto/generic")
@@ -2796,7 +3305,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("[{\"@type\":\"string\",\"id\":1,\"message\":\"Hello, world!\"},{\"@type\":\"integer\",\"id\":2,\"message\":123456}]", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_json_map(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/json/map'
 		endpoint
 			.request(Method.GET, "/get_encoded/json/map")
@@ -2818,7 +3331,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				}
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_encoded_json_map_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/json/pub/map'
 		endpoint
 			.request(Method.GET, "/get_encoded/json/pub/map")
@@ -2847,7 +3364,9 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 	}
 	
-	private void test_form_param(Endpoint endpoint) throws IOException, InterruptedException {
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam'
 		endpoint
 			.request(Method.POST, "/post/formParam")
@@ -2865,7 +3384,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam'
 		endpoint
 			.request(Method.POST, "/post/formParam")
@@ -2886,7 +3409,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam'
 		endpoint
 			.request(Method.POST, "/post/formParam")
@@ -2897,7 +3424,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/opt")
@@ -2917,7 +3448,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_opt: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/opt")
@@ -2938,7 +3473,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_opt: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/opt")
@@ -2956,7 +3495,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_opt: empty", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_collection(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/collection'
 		endpoint
 			.request(Method.POST, "/post/formParam/collection")
@@ -2976,7 +3519,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_collection: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_collection_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/collection'
 		endpoint
 			.request(Method.POST, "/post/formParam/collection")
@@ -2997,7 +3544,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_collection: a, b, c, d, e, f", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_collection_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/collection'
 		endpoint
 			.request(Method.POST, "/post/formParam/collection")
@@ -3007,7 +3558,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_collection_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/collection/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/collection/opt")
@@ -3027,7 +3582,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_collection_opt: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_collection_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/collection/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/collection/opt")
@@ -3048,7 +3607,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_collection_opt: a, b, c, d, e, f", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_collection_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/collection/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/collection/opt")
@@ -3066,7 +3629,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_collection_opt: ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_list(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/list'
 		endpoint
 			.request(Method.POST, "/post/formParam/list")
@@ -3086,7 +3653,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_list: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_list_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/list'
 		endpoint
 			.request(Method.POST, "/post/formParam/list")
@@ -3107,7 +3678,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_list: a, b, c, d, e, f", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_list_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/list'
 		endpoint
 			.request(Method.POST, "/post/formParam/list")
@@ -3117,7 +3692,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_list_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/list/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/list/opt")
@@ -3137,7 +3716,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_list_opt: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_list_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/list/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/list/opt")
@@ -3158,7 +3741,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_list_opt: a, b, c, d, e, f", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_list_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/list/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/list/opt")
@@ -3176,7 +3763,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_list_opt: ", body);
 			})
 			.block();
-
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_set(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/set'
 		endpoint
 			.request(Method.POST, "/post/formParam/set")
@@ -3196,7 +3787,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_set: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_set_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/set'
 		endpoint
 			.request(Method.POST, "/post/formParam/set")
@@ -3217,7 +3812,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_set: a, b, c, d, e, f", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_set_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/set'
 		endpoint
 			.request(Method.POST, "/post/formParam/set")
@@ -3227,7 +3826,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_set_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/set/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/set/opt")
@@ -3247,7 +3850,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_set_opt: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_set_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/set/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/set/opt")
@@ -3268,7 +3875,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_set_opt: a, b, c, d, e, f", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_set_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/set/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/set/opt")
@@ -3286,7 +3897,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_set_opt: ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_array(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/array'
 		endpoint
 			.request(Method.POST, "/post/formParam/array")
@@ -3306,7 +3921,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_array: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_array_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/array'
 		endpoint
 			.request(Method.POST, "/post/formParam/array")
@@ -3327,7 +3946,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_array: a, b, c, d, e, f", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_array_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/array'
 		endpoint
 			.request(Method.POST, "/post/formParam/array")
@@ -3337,7 +3960,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_array_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/array/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/array/opt")
@@ -3357,7 +3984,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_array_opt: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_array_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/array/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/array/opt")
@@ -3378,7 +4009,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_array_opt: a, b, c, d, e, f", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_array_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/array/opt'
 		endpoint
 			.request(Method.POST, "/post/formParam/array/opt")
@@ -3396,7 +4031,38 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_formParam_array_opt: ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_mono(Endpoint endpoint, HttpVersion testHttpVersion) {
+		//curl -i -d 'a=1&b=2&c=3&c=4' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:39901/post/formParam/mono'
+		endpoint
+			.request(Method.POST, "/post/formParam/mono")
+			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Flux.just(
+				factory.create("a", "1"),
+				factory.create("b", "2"),
+				factory.create("c", "3"),
+				factory.create("c", "4")
+			))))
+			.send()
+			.flatMapMany(exchange -> {
+				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
+				Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+
+				return exchange.response().body().string().stream();
+			})
+			.collect(Collectors.joining())
+			.doOnNext(body -> {
+				Assertions.assertEquals("post_formParam_mono: a=1", body);
+			})
+			.block();
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_formParam_flux(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a=1&b=2&c=3&c=4' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:39901/post/formParam/flux'
 		endpoint
 			.request(Method.POST, "/post/formParam/flux")
@@ -3426,7 +4092,9 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 	}
 	
-	private void test_post(Endpoint endpoint) {
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw'
 		endpoint
 			.request(Method.POST, "/post_raw")
@@ -3445,7 +4113,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_raw: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_raw_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw_raw'
 		endpoint
 			.request(Method.POST, "/post_raw_raw")
@@ -3464,7 +4136,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_raw_raw: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_raw_pub_raw(Endpoint endpoint, HttpVersion testHttpVersion) {	
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw_pub_raw'
 		endpoint
 			.request(Method.POST, "/post_raw_pub_raw")
@@ -3488,7 +4164,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_raw_pub_raw: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_raw_mono_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw_mono_raw'
 		endpoint
 			.request(Method.POST, "/post_raw_mono_raw")
@@ -3507,7 +4187,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_raw_mono_raw: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_raw_flux_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw_flux_raw'
 		endpoint
 			.request(Method.POST, "/post_raw_flux_raw")
@@ -3531,7 +4215,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_raw_flux_raw: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_raw_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw/pub'
 		endpoint
 			.request(Method.POST, "/post_raw/pub")
@@ -3550,7 +4238,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_raw_pub: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_raw_mono(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw/mono'
 		endpoint
 			.request(Method.POST, "/post_raw/mono")
@@ -3569,7 +4261,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_raw_mono: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_raw_flux(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw/flux'
 		endpoint
 			.request(Method.POST, "/post_raw/flux")
@@ -3588,7 +4284,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_raw_flux: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded'
 		endpoint
 			.request(Method.POST, "/post_encoded")
@@ -3607,7 +4307,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_encoded: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_no_consume(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: ' -X POST 'http://127.0.0.1:8080/post_encoded/no_consume'
 		endpoint
 			.request(Method.POST, "/post_encoded/no_consume")
@@ -3626,7 +4330,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_encoded_no_consume: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_no_decoder(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/no_decoder'
 		endpoint
 			.request(Method.POST, "/post_encoded/no_decoder")
@@ -3637,7 +4345,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.INTERNAL_SERVER_ERROR, exchange.response().headers().getStatus());
 			})
 			.block();
-
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_collection(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/collection'
 		endpoint
 			.request(Method.POST, "/post_encoded/collection")
@@ -3656,7 +4368,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_encoded_collection: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_list(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/list'
 		endpoint
 			.request(Method.POST, "/post_encoded/list")
@@ -3675,7 +4391,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_encoded_list: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_set(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/set'
 		endpoint
 			.request(Method.POST, "/post_encoded/set")
@@ -3694,7 +4414,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_encoded_set: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_array(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/array'
 		endpoint
 			.request(Method.POST, "/post_encoded/array")
@@ -3713,7 +4437,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_encoded_array: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/pub'
 		endpoint
 			.request(Method.POST, "/post_encoded/pub")
@@ -3732,7 +4460,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_encoded_pub: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_mono(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/mono'
 		endpoint
 			.request(Method.POST, "/post_encoded/mono")
@@ -3751,7 +4483,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_encoded_mono: a,b,c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_flux(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/flux'
 		endpoint
 			.request(Method.POST, "/post_encoded/flux")
@@ -3770,7 +4506,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_encoded_flux: a, b, c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_json(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d '{"message":"Hello, world!"}' -H 'content-type: application/json' -X POST 'http://127.0.0.1:8080/post_encoded/json/dto'
 		endpoint
 			.request(Method.POST, "/post_encoded/json/dto")
@@ -3789,7 +4529,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_encoded_json_dto: Hello, world!", body);
 			})
 			.block();
-
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_json_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d '{"message":"Hello, world!"}{"message":"Hallo, welt!"}{"message":"Salut, monde!"}' -H 'content-type: application/json' -X POST 'http://127.0.0.1:8080/post_encoded/json/pub/dto'
 		endpoint
 			.request(Method.POST, "/post_encoded/json/pub/dto")
@@ -3808,7 +4552,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_encoded_json_pub_dto: Hello, world!, Hallo, welt!, Salut, monde!, ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_json_generic(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d '{"@type":"string", "message":"Hello, world!"}' -H 'content-type: application/json' -X POST 'http://127.0.0.1:8080/post_encoded/json/dto/generic'
 		endpoint
 			.request(Method.POST, "/post_encoded/json/dto/generic")
@@ -3827,7 +4575,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_encoded_json_dto_generic: Hello, world!", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_json_generic_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d '{"@type":"string","message":"Hello, world!"}{"@type":"integer","message":123456}' -H 'content-type: application/json' -X POST 'http://127.0.0.1:8080/post_encoded/json/pub/dto/generic'
 		endpoint
 			.request(Method.POST, "/post_encoded/json/pub/dto/generic")
@@ -3846,7 +4598,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_encoded_json_pub_dto_generic: Hello, world!, 123456, ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_json_map(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d '{"a":1, "b":2, "c":3}' -H 'content-type: application/json' -X POST 'http://127.0.0.1:8080/post_encoded/json/map'
 		endpoint
 			.request(Method.POST, "/post_encoded/json/map")
@@ -3865,7 +4621,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_encoded_json_map: {a=1, b=2, c=3}", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_encoded_json_map_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d '{"a":1, "b":2, "c":3}{"d":4, "e":5, "f":6}{"g":7, "h":8, "i":9}' -H 'content-type: application/json' -X POST 'http://127.0.0.1:8080/post_encoded/json/pub/map'
 		endpoint
 			.request(Method.POST, "/post_encoded/json/pub/map")
@@ -3886,7 +4646,9 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 	}
 	
-	private void test_post_multipart(Endpoint endpoint) throws IOException {
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_multipart_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_pub'
 		endpoint
 			.request(Method.POST, "/post_multipart_pub")
@@ -3908,7 +4670,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_multipart_pub: a, b, c, ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_multipart_pub_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_pub/raw'
 		endpoint
 			.request(Method.POST, "/post_multipart_pub/raw")
@@ -3930,7 +4696,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_multipart_pub_raw: a = 1, b = 2, c = 3, ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_multipart_encoded(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_pub/encoded'
 		endpoint
 			.request(Method.POST, "/post_multipart_pub/encoded")
@@ -3952,7 +4722,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_multipart_pub_encoded: a = 1, b = 2, c = 3, ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_multipart_mono(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' -X POST 'http://127.0.0.1:8080/post_multipart_mono'
 		endpoint
 			.request(Method.POST, "/post_multipart_mono")
@@ -3972,7 +4746,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_multipart_mono: a", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_multipart_mono_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_mono'
 		endpoint
 			.request(Method.POST, "/post_multipart_mono")
@@ -3994,7 +4772,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_multipart_mono: a", body);
 			})
 			.block();
-		
+	}
+
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_multipart_mono_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' -X POST 'http://127.0.0.1:8080/post_multipart_mono/raw'
 		endpoint
 			.request(Method.POST, "/post_multipart_mono/raw")
@@ -4014,7 +4796,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_multipart_mono_raw: a = 1, ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_multipart_mono_raw_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_mono/raw'
 		endpoint
 			.request(Method.POST, "/post_multipart_mono/raw")
@@ -4036,7 +4822,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_multipart_mono_raw: a = 1, ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_multipart_mono_encoded(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_mono/encoded'
 		endpoint
 			.request(Method.POST, "/post_multipart_mono/encoded")
@@ -4058,7 +4848,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_multipart_mono_encoded: a = 1", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_multipart_flux(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_flux'
 		endpoint
 			.request(Method.POST, "/post_multipart_flux")
@@ -4080,7 +4874,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_multipart_flux: a, b, c, ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_multipart_flux_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_flux/raw'
 		endpoint
 			.request(Method.POST, "/post_multipart_flux/raw")
@@ -4102,7 +4900,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_multipart_pub_raw: a = 1, b = 2, c = 3, ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_multipart_flux_encoded(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_flux/encoded'
 		endpoint
 			.request(Method.POST, "/post_multipart_flux/encoded")
@@ -4124,7 +4926,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("post_multipart_flux_encoded: a = 1, b = 2, c = 3, ", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_multipart_fileUpload_small(Endpoint endpoint, HttpVersion testHttpVersion) throws IOException {
 		File uploadsDir = new File("target/uploads/");
 		uploadsDir.mkdirs();
 		
@@ -4149,6 +4955,13 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 		
 		Assertions.assertArrayEquals(Files.readAllBytes(Path.of("src/test/resources/post_resource_small.txt")), Files.readAllBytes(Path.of("target/uploads/post_resource_small.txt")));
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_post_multipart_fileUpload_big(Endpoint endpoint, HttpVersion testHttpVersion) throws IOException {
+		File uploadsDir = new File("target/uploads/");
+		uploadsDir.mkdirs();
 		
 		//curl -i -F 'file=@src/test/resources/post_resource_big.txt' http://127.0.0.1:8080/upload
 		new File(uploadsDir, "post_resource_big.txt").delete();
@@ -4183,7 +4996,9 @@ public class HttpClientTest extends AbstractInvernoModTest {
 		}*/
 	}
 	
-	private void test_sse(Endpoint endpoint) throws IOException, InterruptedException {
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_sse_raw(Endpoint endpoint, HttpVersion testHttpVersion) throws IOException {
 		// curl -i 'http://127.0.0.1:8080/get_sse_raw'
 		byte[] get_sse_raw_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http11.dat"));
 		byte[] get_sse_raw_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http2.dat"));
@@ -4199,14 +5014,18 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
 				switch(testHttpVersion) {
-					case HTTP_1_1: Assertions.assertArrayEquals(get_sse_raw_http11, body.getBytes(StandardCharsets.UTF_8));
+					case HTTP_1_1: Assertions.assertArrayEquals(get_sse_raw_http11, body.getBytes(Charsets.DEFAULT));
 						break;
-					case HTTP_2_0: Assertions.assertArrayEquals(get_sse_raw_http2, body.getBytes(StandardCharsets.UTF_8));
+					case HTTP_2_0: Assertions.assertArrayEquals(get_sse_raw_http2, body.getBytes(Charsets.DEFAULT));
 						break;
 				}
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_sse_encoded(Endpoint endpoint, HttpVersion testHttpVersion) throws IOException {
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded'
 		byte[] get_sse_encoded_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http11.dat"));
 		byte[] get_sse_encoded_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http2.dat"));
@@ -4222,15 +5041,19 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
 				switch(testHttpVersion) {
-					case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_http11, body.getBytes(StandardCharsets.UTF_8));
+					case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_http11, body.getBytes(Charsets.DEFAULT));
 						break;
-					case HTTP_2_0: Assertions.assertArrayEquals(get_sse_encoded_http2, body.getBytes(StandardCharsets.UTF_8));
+					case HTTP_2_0: Assertions.assertArrayEquals(get_sse_encoded_http2, body.getBytes(Charsets.DEFAULT));
 						break;
 				}
 				
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_sse_encoded_json(Endpoint endpoint, HttpVersion testHttpVersion) throws IOException {
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded/json'
 		byte[] get_sse_encoded_json_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http11.dat"));
 		byte[] get_sse_encoded_json_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http2.dat"));
@@ -4246,15 +5069,19 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
 				switch(testHttpVersion) {
-					case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_json_http11, body.getBytes(StandardCharsets.UTF_8));
+					case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_json_http11, body.getBytes(Charsets.DEFAULT));
 						break;
-					case HTTP_2_0: Assertions.assertArrayEquals(get_sse_encoded_json_http2, body.getBytes(StandardCharsets.UTF_8));
+					case HTTP_2_0: Assertions.assertArrayEquals(get_sse_encoded_json_http2, body.getBytes(Charsets.DEFAULT));
 						break;
 				}
 				
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_sse_encoded_json_map(Endpoint endpoint, HttpVersion testHttpVersion) throws IOException {
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded/json/map'
 		byte[] get_sse_encoded_json_map_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http11.dat"));
 		byte[] get_sse_encoded_json_map_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http2.dat"));
@@ -4270,16 +5097,18 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
 				switch(testHttpVersion) {
-					case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_json_map_http11, body.getBytes(StandardCharsets.UTF_8));
+					case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_json_map_http11, body.getBytes(Charsets.DEFAULT));
 						break;
-					case HTTP_2_0: Assertions.assertArrayEquals(get_sse_encoded_json_map_http2, body.getBytes(StandardCharsets.UTF_8));
+					case HTTP_2_0: Assertions.assertArrayEquals(get_sse_encoded_json_map_http2, body.getBytes(Charsets.DEFAULT));
 						break;
 				}
 			})
 			.block();
 	}
 	
-	private void test_resource(Endpoint endpoint) throws IOException, InterruptedException {
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_resource(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_resource'
 		endpoint
 			.request(Method.GET, "/get_resource")
@@ -4296,7 +5125,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("This is a test resource.", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_resource_small(Endpoint endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/get_resource_small.txt
 		endpoint
 			.request(Method.GET, "/static/get_resource_small.txt")
@@ -4313,7 +5146,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("This is a test resource.", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_resource_big(Endpoint endpoint, HttpVersion testHttpVersion) throws IOException {
 		// curl -i http://127.0.0.1:8080/static/get_resource_big.txt
 		endpoint
 			.request(Method.GET, "/static/get_resource_big.txt")
@@ -4350,7 +5187,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				}
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_resource_pc_encoded_space(Endpoint endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/some%20space.txt
 		endpoint
 			.request(Method.GET, "/static/some%20space.txt")
@@ -4367,7 +5208,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("Space in file name", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_resource_double_pc_encoded_space(Endpoint endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/some%2520space.txt
 		endpoint
 			.request(Method.GET, "/static/some%2520space.txt")
@@ -4376,7 +5221,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_resource_dir(Endpoint endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/dir/get_resource.txt
 		endpoint
 			.request(Method.GET, "/static/dir/get_resource.txt")
@@ -4393,7 +5242,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("This is a test resource.", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_resource_dir_percent_encoded_slash(Endpoint endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/dir%2Fget_resource.txt
 		endpoint
 			.request(Method.GET, "/static/dir%2Fget_resource.txt")
@@ -4410,7 +5263,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("This is a test resource.", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_resource_dir_double_percent_encoded_slash(Endpoint endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/dir%252Fget_resource.txt
 		endpoint
 			.request(Method.GET, "/static/dir%252Fget_resource.txt")
@@ -4419,7 +5276,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_resource_path_traversal_parent(Endpoint endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/../pom.xml
 		endpoint
 			.request(Method.GET, "/static/../pom.xml")
@@ -4428,7 +5289,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_resource_path_traversal_parent_percent_encoded_slash(Endpoint endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/%2E%2E%2Fpom.xml
 		endpoint
 			.request(Method.GET, "/static/%2E%2E%2Fpom.xml")
@@ -4437,7 +5302,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_resource_path_traversal_parent_double_percent_encoded_slash(Endpoint endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/%252E%252E%252Fpom.xml
 		endpoint
 			.request(Method.GET, "/static/%252E%252E%252Fpom.xml")
@@ -4446,7 +5315,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
 			})
 			.block();
-
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_resource_path_traversal_absolute(Endpoint endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static//pom.xml
 		endpoint
 			.request(Method.GET, "/static//pom.xml")
@@ -4455,7 +5328,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_resource_path_traversal_absolute_percent_encoded_slash(Endpoint endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/%2Fpom.xml
 		endpoint
 			.request(Method.GET, "/static/%2Fpom.xml")
@@ -4466,7 +5343,22 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 	}
 	
-	private void test_misc(Endpoint endpoint) throws IOException, InterruptedException {
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_resource_path_traversal_absolute_double_percent_encoded_slash(Endpoint endpoint, HttpVersion testHttpVersion) {
+		// curl -i http://127.0.0.1:8080/static/%2Fpom.xml
+		endpoint
+			.request(Method.GET, "/static/%252Fpom.xml")
+			.send()
+			.doOnNext(exchange -> {
+				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
+			})
+			.block();
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_qmark(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/qmark_1_
 		endpoint
 			.request(Method.GET, "/get_path_param/qmark_1_")
@@ -4483,7 +5375,24 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/qmark_1_", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_qmark_none(Endpoint endpoint, HttpVersion testHttpVersion) {
+		//curl -i http://127.0.0.1:8080/get_path_param/qmark__
+		endpoint
+			.request(Method.GET, "/get_path_param/qmark__")
+			.send()
+			.doOnNext(exchange -> {
+				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
+			})
+			.block();
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_qmark_many(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/qmark_12_
 		endpoint
 			.request(Method.GET, "/get_path_param/qmark_12_")
@@ -4492,24 +5401,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
 			})
 			.block();
-
-		//curl -i http://127.0.0.1:8080/get_path_param/wcard__
-		endpoint
-			.request(Method.GET, "/get_path_param/wcard__")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(23), exchange.response().headers().getContentLength());
-				
-				return exchange.response().body().string().stream();
-			})
-			.collect(Collectors.joining())
-			.doOnNext(body -> {
-				Assertions.assertEquals("/get_path_param/wcard__", body);
-			})
-			.block();
-
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_wcard(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/wcard_1_
 		endpoint
 			.request(Method.GET, "/get_path_param/wcard_1_")
@@ -4526,7 +5422,32 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/wcard_1_", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_wcard_none(Endpoint endpoint, HttpVersion testHttpVersion) {
+		//curl -i http://127.0.0.1:8080/get_path_param/wcard__
+		endpoint
+			.request(Method.GET, "/get_path_param/wcard__")
+			.send()
+			.flatMapMany(exchange -> {
+				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(23), exchange.response().headers().getContentLength());
+				
+				return exchange.response().body().string().stream();
+			})
+			.collect(Collectors.joining())
+			.doOnNext(body -> {
+				Assertions.assertEquals("/get_path_param/wcard__", body);
+			})
+			.block();
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_wcard_many(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/wcard_123456789_
 		endpoint
 			.request(Method.GET, "/get_path_param/wcard_123456789_")
@@ -4543,7 +5464,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/wcard_123456789_", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_directories(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/directories
 		endpoint
 			.request(Method.GET, "/get_path_param/directories")
@@ -4560,7 +5485,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/directories", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_directories_trailingSlash(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/directories/
 		endpoint
 			.request(Method.GET, "/get_path_param/directories/")
@@ -4577,7 +5506,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/directories/", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_directories_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/directories/a
 		endpoint
 			.request(Method.GET, "/get_path_param/directories/a")
@@ -4594,7 +5527,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/directories/a", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_directories_sub_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/directories/a/b/
 		endpoint
 			.request(Method.GET, "/get_path_param/directories/a/b")
@@ -4611,7 +5548,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/directories/a/b", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_directories_sub_sub_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/directories/a/b/c
 		endpoint
 			.request(Method.GET, "/get_path_param/directories/a/b/c")
@@ -4628,7 +5569,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/directories/a/b/c", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_regex_unmatching(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/jsp/
 		endpoint
 			.request(Method.GET, "/get_path_param/jsp")
@@ -4637,7 +5582,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_regex_matching(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/jsp/test.jsp
 		endpoint
 			.request(Method.GET, "/get_path_param/jsp/test.jsp")
@@ -4654,7 +5603,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/jsp/test.jsp - test.jsp", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_regex_matching_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/jsp/a/test.jsp
 		endpoint
 			.request(Method.GET, "/get_path_param/jsp/a/test.jsp")
@@ -4671,7 +5624,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/jsp/a/test.jsp - test.jsp", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_regex_matching_sub_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/jsp/a/b/test.jsp
 		endpoint
 			.request(Method.GET, "/get_path_param/jsp/a/b/test.jsp")
@@ -4688,7 +5645,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/jsp/a/b/test.jsp - test.jsp", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_terminal_unmatching(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/terminal
 		endpoint
 			.request(Method.GET, "/get_path_param/terminal")
@@ -4697,7 +5658,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
 			})
 			.block();
-
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_terminal_matching_trailingSlash(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/terminal/
 		endpoint
 			.request(Method.GET, "/get_path_param/terminal/")
@@ -4714,7 +5679,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/terminal/", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_terminal_matching_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/terminal/a
 		endpoint
 			.request(Method.GET, "/get_path_param/terminal/a")
@@ -4731,7 +5700,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/terminal/a", body);
 			})
 			.block();
-		
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_terminal_matching_sub_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/terminal/a/b/
 		endpoint
 			.request(Method.GET, "/get_path_param/terminal/a/b/")
@@ -4748,7 +5721,11 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals("/get_path_param/terminal/a/b/", body);
 			})
 			.block();
-
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_get_pathParam_terminal_matching_sub_sub_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/terminal/a/b/c
 		endpoint
 			.request(Method.GET, "/get_path_param/terminal/a/b/c")
@@ -4767,7 +5744,9 @@ public class HttpClientTest extends AbstractInvernoModTest {
 			.block();
 	}
 	
-	private void test_parallel(Endpoint endpoint) {
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_pool_concurrency(Endpoint endpoint, HttpVersion testHttpVersion) {
 		// By default: 
 		// - pool_max_size=2
 		// - http2_max_concurrent_streams=100
@@ -4827,6 +5806,38 @@ public class HttpClientTest extends AbstractInvernoModTest {
 				Assertions.assertEquals(100, total, 200);
 				break;
 			}
+		}
+	}
+	
+	@Test
+	public void test_h2c_tooBig() {
+		Endpoint blankH2cEndpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.build();
+		
+		File uploadsDir = new File("target/uploads/");
+		uploadsDir.mkdirs();
+		
+		// This should result in a failed connection, next request will create a new connection
+		
+		try {
+		//curl -i -F 'file=@src/test/resources/post_resource_big.txt' http://127.0.0.1:8080/upload
+		new File(uploadsDir, "post_resource_big.txt").delete();
+		blankH2cEndpoint
+			.request(Method.POST, "/upload")
+			.body(body -> body.multipart().from((factory, output) -> output.value(
+				factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_big.txt"))))
+			)))
+			.send()
+			.doOnNext(exchange -> {
+				Assertions.assertEquals(Status.PAYLOAD_TOO_LARGE, exchange.response().headers().getStatus());
+			})
+			.block();
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+			// TODO This fails some times with a broken pipe error, I couldn't figure out what's wrong because I wasn't able to reproduce it in a deterministic way
+			// the problem arise when the connection is closed and we still are trying to write on the socket, this is normally handled but for some reason the exception propagates
+			// Let's leave it for now at least we can check that the endpoint properly create a new connection on the next request
 		}
 	}
 }
