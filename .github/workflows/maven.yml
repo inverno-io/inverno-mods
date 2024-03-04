@@ -19,8 +19,8 @@ jobs:
     - name: Set up JDK
       uses: actions/setup-java@v2
       with:
-        java-version: '16'
-        distribution: 'adopt'
+        java-version: '21'
+        distribution: 'openjdk'
         cache: maven
     - name: Build and Verify with Maven
       run: mvn -B verify --file pom.xml -s .github/ci-settings.xml
@@ -35,8 +35,8 @@ jobs:
     - name: Set up JDK
       uses: actions/setup-java@v2
       with:
-        java-version: '16'
-        distribution: 'adopt'
+        java-version: '21'
+        distribution: 'openjdk'
         cache: maven
     - name: Get project version
       run: echo "PROJECT_VERSION=$(mvn org.apache.maven.plugins:maven-help-plugin:evaluate -Dexpression=project.version -B | grep -v '\[')" >> $GITHUB_ENV
