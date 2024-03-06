@@ -31,7 +31,7 @@ import java.util.function.Consumer;
  * 
  * @see TypeVariable the type of the parent builder
  * 
- * @param <A> 
+ * @param <A> the type of the parent builder
  */
 public class GenericTypeVariableBuilder<A> implements TypeVariableBuilder<A> {
 

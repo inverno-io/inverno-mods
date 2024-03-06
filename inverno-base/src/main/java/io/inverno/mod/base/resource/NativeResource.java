@@ -49,7 +49,7 @@ import java.util.Optional;
  * }</pre>
  * 
  * <p>
- * Note that native resources can only be created when running a native image (see {@link RuntimeEnvironment#IMAGE_NATIVE}).
+ * Note that native resources can only be created when running a native image (see {@link ApplicationRuntime#IMAGE_NATIVE}).
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

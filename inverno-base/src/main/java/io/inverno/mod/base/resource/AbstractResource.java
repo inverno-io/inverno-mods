@@ -30,6 +30,9 @@ import java.nio.file.Path;
  */
 public abstract class AbstractResource implements Resource {
 
+	/**
+	 * Flag indicating whether paths are Windows path (i.e. using {@code \} as path separator).
+	 */
 	protected static final boolean IS_WINDOWS_PATH = File.separatorChar == '\\';
 	
 	private static MediaTypeService defaultMediaTypeService;
@@ -63,6 +66,14 @@ public abstract class AbstractResource implements Resource {
 		return defaultMediaTypeService;
 	}
 
+	/**
+	 * <p>
+	 * Returns a sanitized path representation of the specified path by normalizing it and replacing {@code \} path separator by standard {@code /} path separator.
+	 * </p>
+	 * 
+	 * @param path the path to sanitize
+	 * @return a sanitized representation of the path
+	 */
 	protected static String pathToSanitizedString(Path path) {
 		if(IS_WINDOWS_PATH) {
 			return path.normalize().toString().replace("\\", "/");
