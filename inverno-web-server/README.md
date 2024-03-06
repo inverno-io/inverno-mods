@@ -2791,7 +2791,7 @@ module io.inverno.example.web_modular.book {
 
 These specifications can also be exposed in the Web server using the `OpenApiRoutesConfigurer` as described in the [Web server documentation](#openapi-specification).
 
-If we build and run the [modular book application](#composite-web-module) and access `http://locahost:8080/open-api` in a Web browser we should see a Swagger UI loaded with the Open API specifications of the *admin* and *book* modules:
+If we build and run the [modular book application](#composite-web-server-module) and access `http://locahost:8080/open-api` in a Web browser we should see a Swagger UI loaded with the Open API specifications of the *admin* and *book* modules:
 
 <img class="shadow mb-4" src="doc/img/swaggerUI_root.png" alt="General Swagger UI"/>
 

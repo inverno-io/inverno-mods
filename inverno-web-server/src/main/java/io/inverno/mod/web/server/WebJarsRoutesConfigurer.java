@@ -15,6 +15,7 @@
  */
 package io.inverno.mod.web.server;
 
+import io.inverno.mod.base.ApplicationRuntime;
 import io.inverno.mod.base.resource.ModuleResource;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceService;
@@ -76,7 +77,9 @@ public class WebJarsRoutesConfigurer<A extends ExchangeContext> implements WebRo
 
 	@Override
 	public void configure(WebRoutable<A, ?> routes) {
-		/* 2 possibilities:
+		/* 3 possibilities:
+		 * - native image
+		 *   - /[module_name]/webjars/* -> resource:/META-INF/resources/webjars
 		 * - modular webjar
 		 *   - /[module_name]/webjars/* -> module://[module_name]/META-INF/resources/webjars/[module_name]/[module_version]/*
 		 *   => WE HAVE TO modify the modularized webjars so that the path is correct
@@ -86,53 +89,76 @@ public class WebJarsRoutesConfigurer<A extends ExchangeContext> implements WebRo
 
 		final Set<String> webjarNames = new HashSet<>();
 
-		ModuleLayer moduleLayer = this.getClass().getModule().getLayer();
-		if(moduleLayer != null) {
-			moduleLayer.modules().stream().filter(module -> module.getName().startsWith(WEBJARS_MODULE_PREFIX) && module.getDescriptor().rawVersion().isPresent()).forEach(module -> {
-				String webjarName = module.getDescriptor().name().substring(WEBJARS_MODULE_PREFIX_LENGTH);
-				if (webjarName.startsWith(NPM_PREFIX)) {
-					// org.webjars.npm.<name>
-					webjarName = webjarName.substring(NPM_PREFIX_LENGTH);
-				} else if (webjarName.startsWith(BOWER_PREFIX)) {
-					// org.webjars.bower.<name>
-					webjarName = webjarName.substring(BOWER_PREFIX_LENGTH);
-				} else if (webjarName.startsWith(BOWERGITHUB_PREFIX)) {
-					// org.webjars.bowergithub.<org|user>.<name>
-					webjarName = webjarName.substring(BOWERGITHUB_PREFIX_LENGTH);
-					webjarName = webjarName.substring(webjarName.indexOf('.') + 1);
-				}
-				if(webjarNames.add(webjarName)) {
-					String webjarVersion = module.getDescriptor().rawVersion().get();
-					Resource baseResource = this.resourceService.getResource(URI.create(ModuleResource.SCHEME_MODULE + "://" + module.getName() + "/META-INF/resources/webjars/" + webjarName + "/" + webjarVersion + "/"));
-					String webjarRootPath = WebJarsRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
-					LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
-					routes.route()
-						.path(webjarRootPath)
-						.method(Method.GET)
-						.handler(new StaticHandler<>(baseResource));
-				}
-			});
+		if(ApplicationRuntime.getApplicationRuntime() == ApplicationRuntime.IMAGE_NATIVE) {
+			this.resourceService.getResources(URI.create("resource:/META-INF/resources/webjars"))
+				.flatMap(resource -> {
+					return this.resourceService.getResources(URI.create(resource.getURI().toString() + "/*/*"));
+				})
+				.forEach(baseResource -> {
+					String spec = baseResource.getURI().getSchemeSpecificPart();
+					int versionIndex = spec.lastIndexOf("/");
+					int webjarIndex = spec.substring(0, versionIndex).lastIndexOf("/");
+
+					String webjarName = toModuleName(spec.substring(webjarIndex + 1, versionIndex));
+					if(webjarNames.add(webjarName)) {
+						String webjarRootPath = WebJarsRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
+						LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
+						routes.route()
+							.path(webjarRootPath)
+							.method(Method.GET)
+							.handler(new StaticHandler<>(baseResource));
+					}
+				});
 		}
+		else {
+			ModuleLayer moduleLayer = this.getClass().getModule().getLayer();
+			if(moduleLayer != null) {
+				moduleLayer.modules().stream().filter(module -> module.getName().startsWith(WEBJARS_MODULE_PREFIX) && module.getDescriptor().rawVersion().isPresent()).forEach(module -> {
+					String webjarName = module.getDescriptor().name().substring(WEBJARS_MODULE_PREFIX_LENGTH);
+					if (webjarName.startsWith(NPM_PREFIX)) {
+						// org.webjars.npm.<name>
+						webjarName = webjarName.substring(NPM_PREFIX_LENGTH);
+					} else if (webjarName.startsWith(BOWER_PREFIX)) {
+						// org.webjars.bower.<name>
+						webjarName = webjarName.substring(BOWER_PREFIX_LENGTH);
+					} else if (webjarName.startsWith(BOWERGITHUB_PREFIX)) {
+						// org.webjars.bowergithub.<org|user>.<name>
+						webjarName = webjarName.substring(BOWERGITHUB_PREFIX_LENGTH);
+						webjarName = webjarName.substring(webjarName.indexOf('.') + 1);
+					}
+					if(webjarNames.add(webjarName)) {
+						String webjarVersion = module.getDescriptor().rawVersion().get();
+						Resource baseResource = this.resourceService.getResource(URI.create(ModuleResource.SCHEME_MODULE + "://" + module.getName() + "/META-INF/resources/webjars/" + webjarName + "/" + webjarVersion + "/"));
+						String webjarRootPath = WebJarsRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
+						LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
+						routes.route()
+							.path(webjarRootPath)
+							.method(Method.GET)
+							.handler(new StaticHandler<>(baseResource));
+					}
+				});
+			}
 
-		this.resourceService.getResources(URI.create("classpath:/META-INF/resources/webjars"))
-			.flatMap(resource -> {
-				return this.resourceService.getResources(URI.create(resource.getURI().toString() + "/*/*"));
-			})
-			.forEach(baseResource -> {
-				String spec = baseResource.getURI().getSchemeSpecificPart();
-				int versionIndex = spec.lastIndexOf("/");
-				int webjarIndex = spec.substring(0, versionIndex).lastIndexOf("/");
+			this.resourceService.getResources(URI.create("classpath:/META-INF/resources/webjars"))
+				.flatMap(resource -> {
+					return this.resourceService.getResources(URI.create(resource.getURI().toString() + "/*/*"));
+				})
+				.forEach(baseResource -> {
+					String spec = baseResource.getURI().getSchemeSpecificPart();
+					int versionIndex = spec.lastIndexOf("/");
+					int webjarIndex = spec.substring(0, versionIndex).lastIndexOf("/");
 
-				String webjarName = toModuleName(spec.substring(webjarIndex + 1, versionIndex));
-				if(webjarNames.add(webjarName)) {
-					String webjarRootPath = WebJarsRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
-					LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
-					routes.route()
-						.path(webjarRootPath)
-						.method(Method.GET)
-						.handler(new StaticHandler<>(baseResource));
-				}
-			});
+					String webjarName = toModuleName(spec.substring(webjarIndex + 1, versionIndex));
+					if(webjarNames.add(webjarName)) {
+						String webjarRootPath = WebJarsRoutesConfigurer.BASE_WEBJARS_PATH + "/" + webjarName + "/{path:.*}";
+						LOGGER.debug(() -> "Registered Webjar " + webjarRootPath + " -> " + baseResource.getURI());
+						routes.route()
+							.path(webjarRootPath)
+							.method(Method.GET)
+							.handler(new StaticHandler<>(baseResource));
+					}
+				});
+		}
 	}
 
 	private static final Pattern NON_ALPHANUM = Pattern.compile("[^A-Za-z0-9]");

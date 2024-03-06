@@ -36,25 +36,23 @@ import io.inverno.mod.base.resource.ZipResource;
 
 /**
  * <p>
- * {@link ResourceProvider} implementation used to resolve resources in a
- * zip file (ie. <code>zip:/path/to/zip!/path/to/resource</code>).
+ * {@link ResourceProvider} implementation used to resolve resources in a zip file (ie. <code>zip:/path/to/zip!/path/to/resource</code>).
  * </p>
- * 
+ *
  * <p>
- * This implementation supports path patterns and can then resolve multiple
- * resources matching a given URI pattern.
+ * This implementation supports path patterns and can then resolve multiple resources matching a given URI pattern.
  * </p>
- * 
+ *
  * <pre>{@code
  * ZipResourceProvider provider = new ZipResourceProvider();
- * 
+ *
  * // Returns: /path/test1/a, /path/test1/a/b, /path/test2/c...
  * Stream<ZipResource> resources = provider.getResources(URI.create("zip:/path/to/zip!/path/test?/{@literal **}/*");
  * }</pre>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see JarResource
  * @see AsyncResourceProvider
  * @see ResourceService
@@ -84,9 +82,8 @@ public class ZipResourceProvider extends AbstractResourceProvider<ZipResource> i
         if (resourcePathIndex == -1) {
         	throw new IllegalArgumentException("Missing resource path info: ...!/path/to/resource");
         }
-        String zipSpec = spec.substring(0, resourcePathIndex);
         try {
-        	zipFsURI = new URI(ZipResource.SCHEME_JAR, zipSpec, null);
+        	zipFsURI = new URI(ZipResource.SCHEME_JAR, spec.substring(0, resourcePathIndex), null);
         	pathPattern = spec.substring(resourcePathIndex + 1);
 		} 
         catch (URISyntaxException e) {

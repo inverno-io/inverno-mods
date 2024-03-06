@@ -16,6 +16,7 @@
 package io.inverno.mod.web.server;
 
 import io.inverno.mod.base.Charsets;
+import io.inverno.mod.base.ApplicationRuntime;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceService;
@@ -91,28 +92,43 @@ public class OpenApiRoutesConfigurer<A extends ExchangeContext> implements WebRo
 		this.openApiSpecs = new HashMap<>();
 		this.enableSwagger = enableSwagger;
 		
-		ModuleLayer moduleLayer = this.getClass().getModule().getLayer();
-		if(moduleLayer != null) {
-			for(Module module : moduleLayer.modules()) {
-				Resource openApiSpec = resourceService.getResource(URI.create("module://" + module.getName() + "/META-INF/inverno/web/server/" + module.getName() + "/openapi.yml"));
-				if(openApiSpec.exists().orElse(false)) {
-					LOGGER.debug(() -> "Registered OpenAPI specification " + openApiSpec.getURI() + " for module " + module.getName());
-					this.openApiSpecs.put(module.getName(), openApiSpec);
+		if(ApplicationRuntime.getApplicationRuntime() == ApplicationRuntime.IMAGE_NATIVE) {
+			resourceService.getResources(URI.create("resource:/META-INF/inverno/web/server/"))
+				.flatMap(resource -> {
+					return resourceService.getResources(URI.create(resource.getURI().toString() + "/*/openapi.yml"));
+				}).forEach(openApiSpec -> {
+					String[] splitSpec = openApiSpec.getURI().getSchemeSpecificPart().split("/");
+					final String moduleName = splitSpec[splitSpec.length - 2];
+					if(!this.openApiSpecs.containsKey(moduleName)) {
+						LOGGER.debug(() -> "Registered OpenAPI specification " + openApiSpec.getURI() + " for module " + moduleName);
+						this.openApiSpecs.put(moduleName, openApiSpec);
+					}
+				});
+		}
+		else {
+			ModuleLayer moduleLayer = this.getClass().getModule().getLayer();
+			if(moduleLayer != null) {
+				for(Module module : moduleLayer.modules()) {
+					Resource openApiSpec = resourceService.getResource(URI.create("module://" + module.getName() + "/META-INF/inverno/web/server/" + module.getName() + "/openapi.yml"));
+					if(openApiSpec.exists().orElse(false)) {
+						LOGGER.debug(() -> "Registered OpenAPI specification " + openApiSpec.getURI() + " for module " + module.getName());
+						this.openApiSpecs.put(module.getName(), openApiSpec);
+					}
 				}
 			}
+
+			resourceService.getResources(URI.create("classpath:/META-INF/inverno/web/server/"))
+				.flatMap(resource -> {
+					return resourceService.getResources(URI.create(resource.getURI().toString() + "/*/openapi.yml"));
+				}).forEach(openApiSpec -> {
+					String[] splitSpec = openApiSpec.getURI().getSchemeSpecificPart().split("/");
+					final String moduleName = splitSpec[splitSpec.length - 2];
+					if(!this.openApiSpecs.containsKey(moduleName)) {
+						LOGGER.debug(() -> "Registered OpenAPI specification " + openApiSpec.getURI() + " for module " + moduleName);
+						this.openApiSpecs.put(moduleName, openApiSpec);
+					}
+				});
 		}
-		
-		resourceService.getResources(URI.create("classpath:/META-INF/inverno/web/server/"))
-			.flatMap(resource -> {
-				return resourceService.getResources(URI.create(resource.getURI().toString() + "/*/openapi.yml"));
-			}).forEach(openApiSpec -> {
-				String[] splitSpec = openApiSpec.getURI().getSchemeSpecificPart().split("/");
-				final String moduleName = splitSpec[splitSpec.length - 2];
-				if(!this.openApiSpecs.containsKey(moduleName)) {
-					LOGGER.debug(() -> "Registered OpenAPI specification " + openApiSpec.getURI() + " for module " + moduleName);
-					this.openApiSpecs.put(moduleName, openApiSpec);
-				}
-			});
 	}
 
 	@Override

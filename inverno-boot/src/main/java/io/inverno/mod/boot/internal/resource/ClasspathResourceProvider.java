@@ -38,13 +38,12 @@ import io.inverno.mod.base.resource.ZipResource;
 
 /**
  * <p>
- * {@link ResourceProvider} implementation used to resolve resources
- * on the classpath (ie. {@code classpath:/path/to/resource}).
+ * {@link ResourceProvider} implementation used to resolve resources on the classpath (ie. {@code classpath:/path/to/resource}).
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ClasspathResource
  * @see AsyncResourceProvider
  * @see ResourceService

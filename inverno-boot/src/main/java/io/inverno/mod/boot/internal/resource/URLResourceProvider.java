@@ -31,13 +31,12 @@ import io.inverno.mod.base.resource.URLResource;
 
 /**
  * <p>
- * {@link ResourceProvider} implementation used to resolve resources at given
- * URL (eg. {@code http://...}, {@code https://...}, {@code ftp://...}).
+ * {@link ResourceProvider} implementation used to resolve resources at given URL (eg. {@code http://...}, {@code https://...}, {@code ftp://...}).
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see URLResource
  * @see AsyncResourceProvider
  * @see ResourceService

@@ -25,7 +25,6 @@ import io.inverno.mod.base.resource.ResourceException;
 import io.inverno.mod.base.resource.ResourceProvider;
 import io.inverno.mod.base.resource.ResourceService;
 import java.net.URI;
-import java.nio.file.Path;
 import java.util.Set;
 import java.util.stream.Stream;
 

@@ -38,15 +38,14 @@ import io.inverno.mod.base.resource.ResourceService;
  * <p>
  * Generic {@link ResourceService} implementation.
  * </p>
- * 
+ *
  * <p>
- * This implementation relies on multiple {@link ResourceProvider} instances to
- * resolve resources based on their kind specified in a URI scheme component.
+ * This implementation relies on multiple {@link ResourceProvider} instances to resolve resources based on their kind specified in a URI scheme component.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ResourceService
  * @see ResourceProvider
  */

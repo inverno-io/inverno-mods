@@ -35,10 +35,10 @@ import java.util.stream.Stream;
  * <p>
  * Paths are resolved using the following rules:</p>
  * <ul>
- * <li>? matches one character</p>
- * <li>* matches zero or more characters</p>
- * <li>* matches zero or more characters</p>
- * <li>** matches zero or more directories in a path</p>
+ * <li>? matches one character</li>
+ * <li>* matches zero or more characters</li>
+ * <li>* matches zero or more characters</li>
+ * <li>** matches zero or more directories in a path</li>
  * </ul>
  *
  * <p>

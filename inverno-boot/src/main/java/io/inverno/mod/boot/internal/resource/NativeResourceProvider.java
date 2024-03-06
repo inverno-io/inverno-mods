@@ -16,8 +16,6 @@
 package io.inverno.mod.boot.internal.resource;
 
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -25,15 +23,14 @@ import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.mod.base.resource.AbstractResourceProvider;
 import io.inverno.mod.base.resource.AsyncResourceProvider;
-import io.inverno.mod.base.resource.FileResource;
-import io.inverno.mod.base.resource.JarResource;
 import io.inverno.mod.base.resource.MediaTypeService;
 import io.inverno.mod.base.resource.NativeResource;
-import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceException;
 import io.inverno.mod.base.resource.ResourceProvider;
 import io.inverno.mod.base.resource.ResourceService;
-import io.inverno.mod.base.resource.ZipResource;
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -51,61 +48,30 @@ import io.inverno.mod.base.resource.ZipResource;
 @Bean(visibility = Visibility.PRIVATE)
 public class NativeResourceProvider extends AbstractResourceProvider<NativeResource> implements AsyncResourceProvider<NativeResource> {
 
+	private static final URI ROOT_RESOURCE_URI = URI.create("resource:/");
+	
 	@Override
 	public void setMediaTypeService(MediaTypeService mediaTypeService) {
 		super.setMediaTypeService(mediaTypeService);
 	}
 	
 	@Override
-	public NativeResource getResource(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
+	public NativeResource getResource(URI uri) throws NullPointerException, IllegalArgumentException, IllegalStateException, ResourceException {
 		return new NativeResource(uri, this.mediaTypeService);
 	}
 	
 	@Override
-	public Stream<Resource> getResources(URI uri) throws NullPointerException, IllegalArgumentException, ResourceException {
+	public Stream<NativeResource> getResources(URI uri) throws NullPointerException, IllegalArgumentException, IllegalStateException, ResourceException {
 		// we can't support path pattern here, if someone wants to list resources in such a way he should rely on JarResouce
-		uri = NativeResource.checkUri(uri);
-		String path = uri.isOpaque() ? uri.getRawSchemeSpecificPart() : uri.getRawPath();
-		if(path == null) {
-			return Stream.of();
+		URI resourceURI = NativeResource.checkUri(uri);
+		String pathPattern = resourceURI.getPath();
+		// We won't create the resource file system since we are using ReferenceCountedFileSystems to get the instance
+		try(FileSystem fs = this.getFileSystem(ROOT_RESOURCE_URI)) {
+			// We have to collect here because otherwise the file system is closed before the execution of the pattern resolver
+        	return PathPatternResolver.resolve(pathPattern, fs.getPath("/"), p -> new NativeResource(p.toUri(), this.mediaTypeService)).collect(Collectors.toList()).stream();
 		}
-		if(path.startsWith("/")) {
-			path = path.substring(1);
-		}
-		
-		ClassLoader classLoader;
-		try {
-			classLoader = Thread.currentThread().getContextClassLoader();
-		}
-		catch (Throwable ex) {
-			classLoader = NativeResource.class.getClassLoader();
-			if (classLoader == null) {
-				classLoader = ClassLoader.getSystemClassLoader();
-			}
-		}
-		return classLoader.resources(path).map(this::getResource);
-	}
-	
-	private Resource getResource(URL url) {
-		URI uri;
-		try {
-			uri = url.toURI();
-		} 
-		catch (URISyntaxException e) {
-			throw new ResourceException("Error resolving classpath resource: " + url, e);
-		}
-		String scheme = uri.getScheme();
-		switch(scheme) {
-			case FileResource.SCHEME_FILE:
-				return new FileResource(uri, this.mediaTypeService);
-			case JarResource.SCHEME_JAR:
-				return new JarResource(uri, this.mediaTypeService);
-			case ZipResource.SCHEME_ZIP:
-				return new ZipResource(uri, this.mediaTypeService);
-			case NativeResource.SCHEME_RESOURCE:
-				return new NativeResource(uri, this.mediaTypeService);
-			default:
-				throw new ResourceException("Unsupported resource scheme: " + scheme);
+		catch(IOException e) {
+			throw new ResourceException("Error resolving resources from pattern: " + pathPattern, e);
 		}
 	}
 	

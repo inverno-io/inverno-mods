@@ -31,22 +31,22 @@ import io.inverno.mod.base.resource.ResourceService;
 
 /**
  * <p>
- * {@link ResourceProvider} implementation used to resolve module
- * resources (ie. {@code module://module/path/to/resource}).
+ * {@link ResourceProvider} implementation used to resolve module resources (ie. {@code module://module/path/to/resource}).
  * </p>
- * 
- * <p>This implementation allows to resolve resources with the same name but in different module by specifying '*' instead of a module name in the module resource URI.</p>
- * 
+ *
+ * <p>
+ * This implementation allows to resolve resources with the same name but in different module by specifying '*' instead of a module name in the module resource URI.</p>
+ *
  * <pre>{@code
  * ModuleResourceProvider provider = new ModuleResourceProvider();
- * 
+ *
  * // Returns all resources with name /path/to/module defined in the application modules
  * Stream<ModuleResource> resources = provider.getResources(URI.create("module://{@literal *}/path/to/resource");
  * }</pre>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see ModuleResource
  * @see AsyncResourceProvider
  * @see ResourceService

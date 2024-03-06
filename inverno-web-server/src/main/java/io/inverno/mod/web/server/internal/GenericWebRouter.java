@@ -18,6 +18,8 @@ package io.inverno.mod.web.server.internal;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Init;
 import io.inverno.core.annotation.Provide;
+import io.inverno.mod.base.ApplicationRuntime;
+import static io.inverno.mod.base.ApplicationRuntime.IMAGE_NATIVE;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ResourceService;
@@ -83,8 +85,18 @@ public class GenericWebRouter extends AbstractWebRouter implements @Provide WebR
 	@SuppressWarnings("unchecked")
 	@Init
 	public void init() {
+		final URI favIconResourceURI;
+		switch(ApplicationRuntime.getApplicationRuntime()) {
+			case IMAGE_NATIVE: favIconResourceURI = URI.create("resource:/inverno_favicon.svg");
+				break;
+			case JVM_MODULE: favIconResourceURI = URI.create("module://" + this.getClass().getModule().getName() + "/inverno_favicon.svg");
+				break;
+			default: favIconResourceURI = URI.create("classpath:/inverno_favicon.svg");
+				break;
+		}
+		
 		this.route().path("/favicon.ico").handler(exchange -> {
-			try(Resource favicon = resourceService.getResource(new URI("module://" + this.getClass().getModule().getName() + "/inverno_favicon.svg"))) {
+			try(Resource favicon = resourceService.getResource(favIconResourceURI)) {
 				exchange.response().body().resource().value(favicon);
 			} 
 			catch (Exception e) {

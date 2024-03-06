@@ -35,25 +35,23 @@ import io.inverno.mod.base.resource.ResourceService;
 
 /**
  * <p>
- * {@link ResourceProvider} implementation used to resolve resources in a
- * jar file (ie. {@code jar:/path/to/jar!/path/to/resource}).
+ * {@link ResourceProvider} implementation used to resolve resources in a jar file (ie. {@code jar:/path/to/jar!/path/to/resource}).
  * </p>
- * 
+ *
  * <p>
- * This implementation supports path patterns and can then resolve multiple
- * resources matching a given URI pattern.
+ * This implementation supports path patterns and can then resolve multiple resources matching a given URI pattern.
  * </p>
- * 
+ *
  * <pre>{@code
  * JarResourceProvider provider = new JarResourceProvider();
- * 
+ *
  * // Returns: /path/test1/a, /path/test1/a/b, /path/test2/c...
  * Stream<JarResource> resources = provider.getResources(URI.create("jar:/path/to/jar!/path/test?/{@literal **}/*");
  * }</pre>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see JarResource
  * @see AsyncResourceProvider
  * @see ResourceService
@@ -83,9 +81,8 @@ public class JarResourceProvider extends AbstractResourceProvider<JarResource> i
         if (resourcePathIndex == -1) {
         	throw new IllegalArgumentException("Missing resource path info: ...!/path/to/resource");
         }
-        String jarSpec = spec.substring(0, resourcePathIndex);
         try {
-        	jarFsURI = new URI(JarResource.SCHEME_JAR, jarSpec, null);
+        	jarFsURI = new URI(JarResource.SCHEME_JAR, spec.substring(0, resourcePathIndex), null);
         	pathPattern = spec.substring(resourcePathIndex + 1);
 		} 
         catch (URISyntaxException e) {
@@ -96,7 +93,7 @@ public class JarResourceProvider extends AbstractResourceProvider<JarResource> i
         	// We have to collect here because otherwise the file system is closed before the execution of the pattern resolver
         	return PathPatternResolver.resolve(pathPattern, fs.getPath("/"), p -> new JarResource(p.toUri(), this.mediaTypeService)).collect(Collectors.toList()).stream();
         } 
-        catch (IOException e) {
+        catch(IOException e) {
         	throw new ResourceException("Error resolving resources from pattern: " + spec, e);
 		}
 	}
