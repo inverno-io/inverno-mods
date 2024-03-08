@@ -26,7 +26,7 @@ import io.inverno.mod.base.concurrent.Reactor;
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.7
+ * @since 1.8
  */
 @Bean(name = "reactor")
 public interface ReactorSocket extends Supplier<Reactor> {

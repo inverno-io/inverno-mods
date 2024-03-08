@@ -21,7 +21,7 @@ package io.inverno.mod.web.client;
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.7
+ * @since 1.8
  */
 public interface WebClient {
 

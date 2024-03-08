@@ -30,7 +30,7 @@ import io.inverno.mod.base.resource.ResourceService;
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.7
+ * @since 1.8
  */
 @Bean(name = "resourceService")
 public interface ResourceServiceSocket extends Supplier<ResourceService> {

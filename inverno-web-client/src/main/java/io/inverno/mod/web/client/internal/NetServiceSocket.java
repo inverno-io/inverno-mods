@@ -30,7 +30,7 @@ import io.inverno.mod.base.net.NetService;
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.7
+ * @since 1.8
  */
 @Bean(name = "netService")
 public interface NetServiceSocket extends Supplier<NetService> {

@@ -34,7 +34,7 @@ import io.inverno.mod.base.converter.StringConverter;
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.7
+ * @since 1.8
  */
 @Bean( name = "parameterConverter", visibility = Visibility.PRIVATE )
 @Wrapper

@@ -27,7 +27,7 @@ import io.inverno.mod.http.base.header.HeaderCodec;
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.7
+ * @since 1.8
  */
 @Bean( name = "headerCodecs" )
 public interface HeaderCodecsSocket extends Supplier<List<HeaderCodec<?>>> {}

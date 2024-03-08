@@ -19,7 +19,7 @@
  * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.7
+ * @since 1.8
  */
 @io.inverno.core.annotation.Module
 module io.inverno.mod.web.client {
