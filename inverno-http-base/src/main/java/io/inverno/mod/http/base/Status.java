@@ -303,7 +303,7 @@ public enum Status {
 		
 		/**
 		 * <p>
-		 * Returns the HTTP status corresponding to the specified HTTP status code.
+		 * Returns the HTTP category corresponding to the specified HTTP status code.
 		 * </p>
 		 *
 		 * @param statusCode an HTTP status code
@@ -323,7 +323,7 @@ public enum Status {
 		
 		/**
 		 * <p>
-		 * Returns the HTTP status corresponding to the specified HTTP status.
+		 * Returns the HTTP category corresponding to the specified HTTP status.
 		 * </p>
 		 * 
 		 * @param status an HTTP status

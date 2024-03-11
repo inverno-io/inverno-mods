@@ -111,6 +111,7 @@
 		<module>inverno-base</module>
 		<module>inverno-boot</module>
 		<module>inverno-configuration</module>
+		<module>inverno-grpc-server</module>
 		<module>inverno-http-base</module>
 		<module>inverno-http-client</module>
 		<module>inverno-http-server</module>
