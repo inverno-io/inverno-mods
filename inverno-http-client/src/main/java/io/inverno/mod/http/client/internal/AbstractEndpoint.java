@@ -20,15 +20,14 @@ import io.inverno.mod.base.net.NetClientConfiguration;
 import io.inverno.mod.base.net.NetService;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
-import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.client.Endpoint;
 import io.inverno.mod.http.client.EndpointConnectException;
 import io.inverno.mod.http.client.Exchange;
-import io.inverno.mod.http.client.HttpClient;
+import io.inverno.mod.http.client.ExchangeInterceptor;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.internal.http1x.Http1xWebSocketConnection;
-import io.inverno.mod.http.client.ws.WebSocketExchange;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -39,6 +38,8 @@ import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import io.inverno.mod.http.client.InterceptableExchange;
+import io.inverno.mod.http.client.Part;
+import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
 import java.net.SocketAddress;
 
 /**
@@ -48,8 +49,10 @@ import java.net.SocketAddress;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
+ * 
+ * @param <A> the exchange context type
  */
-public abstract class AbstractEndpoint implements Endpoint {
+public abstract class AbstractEndpoint<A extends ExchangeContext> implements Endpoint<A> {
 	
 	private static final Logger LOGGER = LogManager.getLogger(AbstractEndpoint.class);
 
@@ -63,6 +66,10 @@ public abstract class AbstractEndpoint implements Endpoint {
 	
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
+	private final MultipartEncoder<Parameter> urlEncodedBodyEncoder;
+	private final MultipartEncoder<Part<?>> multipartBodyEncoder;
+	private final Part.Factory partFactory;
+	private final ExchangeInterceptor<? super A, InterceptableExchange<A>> exchangeInterceptor;
 	
 	private final Bootstrap bootstrap;
 	private Bootstrap webSocketBootstrap;
@@ -71,16 +78,20 @@ public abstract class AbstractEndpoint implements Endpoint {
 	 * <p>
 	 * Creates a endpoint targeting the specified remote address.
 	 * </p>
-	 *
-	 * @param netService         the net service
-	 * @param sslContextProvider the SSL context provider
-	 * @param channelConfigurer  the endpoint channel configurer
-	 * @param localAddress       the local address
-	 * @param remoteAddress      the remote address
-	 * @param configuration      the HTTP client configurartion
-	 * @param netConfiguration   the net configuration
-	 * @param headerService      the header service
-	 * @param parameterConverter the parameter converter
+	 * 
+	 * @param netService            the net service
+	 * @param sslContextProvider    the SSL context provider
+	 * @param channelConfigurer     the endpoint channel configurer
+	 * @param localAddress          the local address
+	 * @param remoteAddress         the remote address
+	 * @param configuration         the HTTP client configurartion
+	 * @param netConfiguration      the net configuration
+	 * @param headerService         the header service
+	 * @param parameterConverter    the parameter converter
+	 * @param urlEncodedBodyEncoder the URL encoded body encoder
+	 * @param multipartBodyEncoder  the multipart body encoder
+	 * @param partFactory           the part factory
+	 * @param exchangeInterceptor   an optional exchange intercetptor
 	 */
 	public AbstractEndpoint(
 			NetService netService, 
@@ -91,7 +102,11 @@ public abstract class AbstractEndpoint implements Endpoint {
 			HttpClientConfiguration configuration, 
 			NetClientConfiguration netConfiguration,
 			HeaderService headerService, 
-			ObjectConverter<String> parameterConverter) {
+			ObjectConverter<String> parameterConverter,
+			MultipartEncoder<Parameter> urlEncodedBodyEncoder,
+			MultipartEncoder<Part<?>> multipartBodyEncoder, 
+			Part.Factory partFactory,
+			ExchangeInterceptor<? super A, InterceptableExchange<A>> exchangeInterceptor) {
 		this.netService = netService;
 		this.sslContextProvider = sslContextProvider;
 		this.channelConfigurer = channelConfigurer;
@@ -102,6 +117,10 @@ public abstract class AbstractEndpoint implements Endpoint {
 		
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
+		this.urlEncodedBodyEncoder = urlEncodedBodyEncoder;
+		this.multipartBodyEncoder = multipartBodyEncoder;
+		this.partFactory = partFactory;
+		this.exchangeInterceptor = exchangeInterceptor;
 		
 		if(this.configuration.client_event_loop_group_size() != null) {
 			this.bootstrap = this.netService.createClient(this.remoteAddress, netConfiguration, this.configuration.client_event_loop_group_size());
@@ -132,108 +151,13 @@ public abstract class AbstractEndpoint implements Endpoint {
 	public SocketAddress getRemoteAddress() {
 		return this.remoteAddress;
 	}
-	
-	@Override
-	public <A extends ExchangeContext> Request<A, Exchange<A>, InterceptableExchange<A>> request(Method method, String requestTarget, A context) {
-		EndpointRequest<A> request = new EndpointRequest<>(this, this.headerService, this.parameterConverter, method, requestTarget, context);
-		if(this.configuration.send_user_agent()) {
-			request.headers().set(Headers.NAME_USER_AGENT, this.configuration.user_agent());
-		}
-		return request;
-	}
 
 	@Override
-	public <A extends ExchangeContext> Mono<Exchange<A>> send(HttpClient.Request<A, Exchange<A>, InterceptableExchange<A>> request) {
-		HttpClientRequest<A> httpClientRequest;
-		try {
-			httpClientRequest = (HttpClientRequest<A>)request;
-		}
-		catch(ClassCastException e) {
-			throw new IllegalArgumentException("Not an " + HttpClientRequest.class.getCanonicalName());
-		}
-		
-		if(httpClientRequest.interceptor != null) {
-			// Create InterceptableExchange, intercept then proceed
-			return Mono.defer(() -> {
-				GenericInterceptableResponse response = new GenericInterceptableResponse(this.headerService, this.parameterConverter);
-				GenericInterceptableExchange<A, HttpClientRequest<A>> interceptableExchange = new GenericInterceptableExchange<>(httpClientRequest.context, httpClientRequest, response);
-
-				return httpClientRequest.interceptor.intercept(interceptableExchange)
-					.flatMap(interceptedExchange -> this.connection()
-						.flatMap(connection -> connection.send(
-							interceptedExchange.context(), 
-							interceptedExchange.request().getMethod(), 
-							interceptedExchange.request().getAuthority(), 
-							interceptedExchange.request().headers().getAll(), 
-							interceptedExchange.request().getPath(), 
-							httpClientRequest.requestBodyConfigurer,
-							interceptableExchange.request().body().map(interceptableBody -> ((GenericInterceptableRequestBody)interceptableBody).getTransformer()).orElse(null),
-							interceptableExchange.response().body().getTransformer()
-						))
-					)
-					.doOnNext(interceptableExchange::setExchange)
-					.switchIfEmpty(Mono.just(interceptableExchange));
-			});
-		}
-		else {
-			return this.connection()
-				.flatMap(connection -> connection.send(
-					httpClientRequest.context, 
-					httpClientRequest.method, 
-					httpClientRequest.authority, 
-					httpClientRequest.requestHeaders.getAll(), 
-					httpClientRequest.path, 
-					httpClientRequest.requestBodyConfigurer
-				));
-		}
-	}
-
-	@Override
-	public <A extends ExchangeContext> WebSocketRequest<A, WebSocketExchange<A>, InterceptableExchange<A>> webSocketRequest(String requestTarget, A context) {
-		EndpointWebSocketRequest<A> request = new EndpointWebSocketRequest<>(this, this.headerService, this.parameterConverter, requestTarget, context);
-		if(this.configuration.send_user_agent()) {
-			request.headers().set(Headers.NAME_USER_AGENT, this.configuration.user_agent());
-		}
-		return request;
-	}
-
-	@Override
-	public <A extends ExchangeContext> Mono<WebSocketExchange<A>> send(HttpClient.WebSocketRequest<A, WebSocketExchange<A>, InterceptableExchange<A>> request) {
-		HttpClientWebSocketRequest<A> httpClientWebSocketRequest;
-		try {
-			httpClientWebSocketRequest = (HttpClientWebSocketRequest<A>)request;
-		}
-		catch(ClassCastException e) {
-			throw new IllegalArgumentException("Not an " + HttpClientWebSocketRequest.class.getCanonicalName());
-		}
-		
-		if(httpClientWebSocketRequest.interceptor != null) {
-			GenericInterceptableResponse response = new GenericInterceptableResponse(this.headerService, this.parameterConverter);
-			GenericInterceptableExchange<A, HttpClientWebSocketRequest<A>> interceptableExchange = new GenericInterceptableExchange<>(httpClientWebSocketRequest.context, httpClientWebSocketRequest, response);
-
-			httpClientWebSocketRequest.interceptor.intercept(interceptableExchange);
-
-			return httpClientWebSocketRequest.interceptor.intercept(interceptableExchange)
-				.flatMap(interceptedExchange -> this.createWebSocketConnection()
-					.flatMap(connection -> connection.handshake(
-						interceptedExchange.context(), 
-						interceptedExchange.request().getAuthority(), 
-						interceptedExchange.request().headers().getAll(), 
-						interceptedExchange.request().getPath(),
-						httpClientWebSocketRequest.getSubProtocol()
-					))
-				);
-		}
-		else {
-			return this.createWebSocketConnection()
-				.flatMap(connection -> connection.handshake(
-					httpClientWebSocketRequest.context, 
-					httpClientWebSocketRequest.authority, 
-					httpClientWebSocketRequest.requestHeaders.getAll(), 
-					httpClientWebSocketRequest.path,
-					httpClientWebSocketRequest.getSubProtocol()
-				));
-		}
+	public Mono<? extends Exchange<A>> exchange(Method method, String requestTarget, A context) {
+		return Mono.fromSupplier(() -> {
+			EndpointRequest request = new EndpointRequest(this.headerService, this.parameterConverter, this.urlEncodedBodyEncoder, this.multipartBodyEncoder, this.partFactory, method, requestTarget);
+			return new EndpointExchange(this, this.headerService, this.parameterConverter, context, request, this.exchangeInterceptor);
+		});
 	}
 	
 	/**
@@ -249,6 +173,10 @@ public abstract class AbstractEndpoint implements Endpoint {
 	 */
 	public abstract Mono<HttpConnection> connection();
 	
+	public Mono<WebSocketConnection> webSocketConnection() {
+		return this.createWebSocketConnection();
+	}
+	
 	/**
 	 * <p>
 	 * Creates a new WebSocket connection.
@@ -260,7 +188,7 @@ public abstract class AbstractEndpoint implements Endpoint {
 	 * 
 	 * @return a mono emitting a new HTTP connection
 	 */
-	protected Mono<Http1xWebSocketConnection> createWebSocketConnection() {
+	protected Mono<WebSocketConnection> createWebSocketConnection() {
 		if(this.webSocketBootstrap == null) {
 			this.webSocketBootstrap = this.bootstrap
 			.handler(new EndpointWebSocketChannelInitializer(

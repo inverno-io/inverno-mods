@@ -15,12 +15,9 @@
  */
 package io.inverno.mod.http.client;
 
-import io.inverno.mod.http.client.ws.WebSocketExchange;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.base.OutboundRequestHeaders;
 import java.net.SocketAddress;
-import java.util.function.Consumer;
 import reactor.core.publisher.Mono;
 
 /**
@@ -29,13 +26,16 @@ import reactor.core.publisher.Mono;
  * </p>
  *
  * <p>
- * It is obtained from the {@link HttpClient} and it is bound to an IP Socket Address of an HTTP server. It exposes methods to send HTTP requests or open Web sockets.
+ * It is obtained from the {@link HttpClient} and it is bound to an IP Socket Address of an HTTP server. It exposes methods to create HTTP client {@link Exchange} used to create and send HTTP requests
+ * or open Web sockets.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
+ * 
+ * @param <A> the exchange context type
  */
-public interface Endpoint {
+public interface Endpoint<A extends ExchangeContext> {
 
 	/**
 	 * <p>
@@ -57,49 +57,66 @@ public interface Endpoint {
 	
 	/**
 	 * <p>
-	 * Creates an HTTP request.
+	 * Creates an HTTP exchange.
 	 * </p>
 	 * 
-	 * @param method        the HTTP method
-	 * @param requestTarget the request target path
+	 * <p>
+	 * This method is a shortcut for {@code exchange(Method.GET, "/", null)}.
+	 * </p>
 	 * 
-	 * @return a new request
+	 * @return an HTTP exchange mono
 	 */
-	default Endpoint.Request<ExchangeContext, Exchange<ExchangeContext>, InterceptableExchange<ExchangeContext>> request(Method method, String requestTarget) {
-		return this.request(method, requestTarget, null);
+	default Mono<? extends Exchange<A>> exchange() {
+		return this.exchange(Method.GET, "/", null);
 	}
 	
 	/**
 	 * <p>
-	 * Creates an HTTP request with a context.
+	 * Creates an HTTP exchange.
 	 * </p>
 	 * 
-	 * @param <A>           the exchange context type
-	 * @param method        the HTTP method
+	 * <p>
+	 * This method is a shortcut for {@code exchange(Method.GET, requestTarget, null)}.
+	 * </p>
+	 * 
 	 * @param requestTarget the request target path
-	 * @param context       the context
-	 * 
-	 * @return a new request
-	 */
-	<A extends ExchangeContext> Endpoint.Request<A, Exchange<A>, InterceptableExchange<A>> request(Method method, String requestTarget, A context);
-	
-	/**
-	 * <p>
-	 * Sends an HTTP request.
-	 * </p>
-	 * 
-	 * <p>
-	 * The request is only sent when the returned publisher is subscribed, the HTTP exchange is emitted after the begining of the HTTP response has been received (i.e. start line and headers) but
-	 * before the response body, if response payload has to be consumed its data publisher MUST BE subscribed immediately. In order to prevent locking the underlying connection will dispose the
-	 * response data as soon as the complete response has been received before leading to unsubscribed data to be discarded.
-	 * </p>
-	 * 
-	 * @param <A>     the exchange context type
-	 * @param request an HTTP request
 	 * 
 	 * @return an HTTP exchange mono
 	 */
-	<A extends ExchangeContext> Mono<Exchange<A>> send(HttpClient.Request<A, Exchange<A>, InterceptableExchange<A>> request);
+	default Mono<? extends Exchange<A>> exchange(String requestTarget) {
+		return this.exchange(Method.GET, requestTarget, null);
+	}
+	
+	/**
+	 * <p>
+	 * Creates an HTTP exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method is a shortcut for {@code exchange(method, requestTarget, null)}.
+	 * </p>
+	 * 
+	 * @param method        the HTTP method
+	 * @param requestTarget the request target path
+	 * 
+	 * @return an HTTP exchange mono
+	 */
+	default Mono<? extends Exchange<A>> exchange(Method method, String requestTarget) {
+		return this.exchange(method, requestTarget, null);
+	}
+	
+	/**
+	 * <p>
+	 * Creates an HTTP exchange with a context.
+	 * </p>
+	 * 
+	 * @param method        the HTTP method
+	 * @param requestTarget the request target path
+	 * @param context       the exchange context
+	 * 
+	 * @return an HTTP exchange mono
+	 */
+	Mono<? extends Exchange<A>> exchange(Method method, String requestTarget, A context);
 	
 	/**
 	 * <p>
@@ -109,119 +126,4 @@ public interface Endpoint {
 	 * @return a mono which completes once the endpoint is closed.
 	 */
 	Mono<Void> close();
-	
-	/**
-	 * <p>
-	 * Creates a WebSocket request.
-	 * </p>
-	 * 
-	 * @param requestTarget the request target path
-	 * 
-	 * @return a new WebSocket request
-	 */
-	default Endpoint.WebSocketRequest<ExchangeContext, WebSocketExchange<ExchangeContext>, InterceptableExchange<ExchangeContext>> webSocketRequest(String requestTarget) {
-		return this.webSocketRequest(requestTarget, null);
-	}
-	
-	/**
-	 * <p>
-	 * Creates a WebSocket request with a context.
-	 * </p>
-	 * 
-	 * @param <A>           the exchange context type
-	 * @param requestTarget the request target path
-	 * @param context       the context
-	 * 
-	 * @return a new WebSocket request
-	 */
-	<A extends ExchangeContext> Endpoint.WebSocketRequest<A, WebSocketExchange<A>, InterceptableExchange<A>> webSocketRequest(String requestTarget, A context);
-	
-	/**
-	 * <p>
-	 * Sends a WebSocket request.
-	 * </p>
-	 * 
-	 * @param <A>     the exchange context type
-	 * @param request a WebSocket request
-	 * 
-	 * @return a WebSocketExchange mono
-	 */
-	<A extends ExchangeContext> Mono<WebSocketExchange<A>> send(HttpClient.WebSocketRequest<A, WebSocketExchange<A>, InterceptableExchange<A>> request);
-	
-	/**
-	 * <p>
-	 * An HTTP client request bound to an endpoint.
-	 * </p>
-	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.6
-	 * 
-	 * @param <A> the exchange context type
-	 * @param <B> the exchange type
-	 * @param <C> the interceptable exchange type
-	 */
-	interface Request<A extends ExchangeContext, B extends Exchange<A>, C extends InterceptableExchange<A>> extends HttpClient.Request<A, B, C> {
-
-		@Override
-		public Endpoint.Request<A, B, C> body(Consumer<RequestBodyConfigurator> bodyConfigurer);
-
-		@Override
-		public Endpoint.Request<A, B, C> authority(String authority);
-
-		@Override
-		public Endpoint.Request<A, B, C> headers(Consumer<OutboundRequestHeaders> headersConfigurer);
-
-		@Override
-		public Endpoint.Request<A, B, C> intercept(ExchangeInterceptor<A, C> interceptor);
-		
-		/**
-		 * <p>
-		 * Sends the request.
-		 * </p>
-		 * 
-		 * <p>
-		 * The request is sent when the exchange publisher is subscribed, the response body MUST BE subscribed immediately after the exchange has been emitted otherwise data will be discarded when the
-		 * complete response has been received (see {@link #send(io.inverno.mod.http.client.HttpClient.Request) })
-		 * </p>
-		 * 
-		 * @return an exchange mono
-		 */
-		Mono<B> send();
-	}
-	
-	/**
-	 * <p>
-	 * A WebSocket client request bound to an endpoint.
-	 * </p>
-	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.6
-	 * 
-	 * @param <A> the exchange context type
-	 * @param <B> the WebSocket exchange type
-	 * @param <C> the interceptable exchange type
-	 */
-	interface WebSocketRequest<A extends ExchangeContext, B extends WebSocketExchange<A>, C extends InterceptableExchange<A>> extends HttpClient.WebSocketRequest<A, B, C> {
-
-		@Override
-		public Endpoint.WebSocketRequest<A, B, C> subProtocol(String subProtocol);
-
-		@Override
-		public Endpoint.WebSocketRequest<A, B, C> authority(String authority);
-
-		@Override
-		public Endpoint.WebSocketRequest<A, B, C> headers(Consumer<OutboundRequestHeaders> headersConfigurer);
-
-		@Override
-		public Endpoint.WebSocketRequest<A, B, C> intercept(ExchangeInterceptor<A, C> interceptor);
-		
-		/**
-		 * <p>
-		 * Sends the request.
-		 * </p>
-		 * 
-		 * @return a WebSocket exchange mono
-		 */
-		Mono<B> send();
-	}
 }

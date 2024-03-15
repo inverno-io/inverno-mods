@@ -135,7 +135,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 			if(host != null) {
 				headers.authority(host);
 			}
-			request.headers().forEach(header -> headers.set(header.getKey().toLowerCase(), header.getValue()));
+			request.headers().forEach(header -> headers.add(header.getKey().toLowerCase(), header.getValue()));
 			
 			boolean endStream = request.content() == null || !request.content().isReadable();
 			
@@ -149,20 +149,16 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 
 	@Override
 	public void onError(ChannelHandlerContext ctx, boolean outbound, Throwable cause) {
-		cause.printStackTrace();
 		super.onError(ctx, outbound, cause);
 	}
 
 	@Override
 	protected void onStreamError(ChannelHandlerContext ctx, boolean outbound, Throwable cause, Http2Exception.StreamException http2Ex) {
-		cause.printStackTrace();
-		http2Ex.printStackTrace();
 		super.onStreamError(ctx, outbound, cause, http2Ex); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/OverriddenMethodBody
 	}
 	
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-		cause.printStackTrace();
 		PromiseCombiner finalPromise = new PromiseCombiner(ctx.executor());
 		for(Http2Exchange exchange : this.serverStreams.values()) {
 			exchange.dispose(cause);

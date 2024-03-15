@@ -17,26 +17,25 @@ package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.http.base.InboundHeaders;
 import io.inverno.mod.http.base.InboundResponseHeaders;
-import io.inverno.mod.http.client.Response;
 import io.inverno.mod.http.client.ResponseBody;
 import io.netty.buffer.ByteBuf;
 import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * Base {@link Response} implementation.
+ * Base {@link HttpConnectionResponse} implementation.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-public abstract class AbstractResponse implements Response {
+public abstract class AbstractResponse implements HttpConnectionResponse {
 
 	private final InboundResponseHeaders responseHeaders;
 	
 	protected InboundHeaders responseTrailers;
 	
-	private GenericResponseBody body;
+	private HttpConnectionResponseBody body;
 
 	/**
 	 * <p>
@@ -57,7 +56,7 @@ public abstract class AbstractResponse implements Response {
 	@Override
 	public ResponseBody body() {
 		if(this.body == null) {
-			this.body = new GenericResponseBody();
+			this.body = new HttpConnectionResponseBody();
 		}
 		return this.body;
 	}
@@ -75,7 +74,7 @@ public abstract class AbstractResponse implements Response {
 	 * @return the payload data sink
 	 */
 	public Sinks.Many<ByteBuf> data() {
-		return ((GenericResponseBody)this.body()).dataSink;
+		return ((HttpConnectionResponseBody)this.body()).dataSink;
 	}
 	
 	/**
@@ -106,7 +105,7 @@ public abstract class AbstractResponse implements Response {
 	 * 
 	 * @param error an error or null
 	 * 
-	 * @see GenericResponseBody#dispose(java.lang.Throwable) 
+	 * @see HttpConnectionResponseBody#dispose(java.lang.Throwable) 
 	 */
 	public void dispose(Throwable error) {
 		if(this.body != null) {

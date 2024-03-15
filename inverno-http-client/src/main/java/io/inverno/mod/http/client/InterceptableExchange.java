@@ -20,7 +20,7 @@ import io.inverno.mod.http.base.ExchangeContext;
 
 /**
  * <p>
- * An iterceptable exchange is created by the endpoint before sending the request in order to implement the interception logic.
+ * An interceptable exchange is created in order to apply the exchange interception logic before sending the request.
  * </p>
  *
  * <p>
@@ -28,19 +28,19 @@ import io.inverno.mod.http.base.ExchangeContext;
  * </p>
  *
  * <p>
- * When the request is actually sent to the endpoint, the interceptable request becomes a proxy for the sent request and an {@link IllegalStateException} shall be thrown when trying to set the path,
+ * When the request is sent to the endpoint, the interceptable request becomes a proxy for the sent request and an {@link IllegalStateException} shall be thrown when trying to set the method, path,
  * the authority, headers or transform the body.
  * </p>
  *
  * <p>
  * It exposes a {@link InterceptableResponse} which allows an interceptor to provide a complete response when returning an empty exchange Mono to prevent the request from being sent. A response body
- * transformer can be specified on the {@link InterceptableResponseBody} in order to decorate the actual response body that will be received from the endpoint.
+ * transformer can be specified on the {@link InterceptableResponseBody} in order to decorate the response body that will be received from the endpoint.
  * </p>
  *
  * <p>
- * When a response is actually received from the endpoint the interceptable response becomes a proxy for the received response and an {@link IllegalStateException} shall be thrown when trying to set
- * headers or the body of the response. It might still be possible to invoke {@link InterceptableResponseBody#transform(java.util.function.Function) } in order to transform the body assuming it hasn't
- * been subscribed yet otherwise an {@link IllegalStateException} is thrown.
+ * When the response is received from the endpoint the interceptable response becomes a proxy for the received response and an {@link IllegalStateException} shall be thrown when trying to set headers
+ * or the body of the response. It might still be possible to invoke {@link InterceptableResponseBody#transform(java.util.function.Function) } in order to transform the body assuming it hasn't been
+ * subscribed yet otherwise an {@link IllegalStateException} is thrown.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -51,7 +51,7 @@ import io.inverno.mod.http.base.ExchangeContext;
  * 
  * @param <A> the type of the exchange context
  */
-public interface InterceptableExchange<A extends ExchangeContext> extends BaseExchange<A> {
+public interface InterceptableExchange<A extends ExchangeContext> extends BaseExchange<A, InterceptableRequest, InterceptableResponse> {
 
 	/**
 	 * <p>

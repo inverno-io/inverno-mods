@@ -17,9 +17,6 @@ package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
-import io.inverno.mod.http.client.ws.WebSocketExchange;
-import java.util.List;
-import java.util.Map;
 import reactor.core.publisher.Mono;
 
 /**
@@ -64,22 +61,13 @@ public interface WebSocketConnection {
 	 * <p>
 	 * Performs WebSocket handshake.
 	 * </p>
-	 * 
-	 * @param <A> the exchange context type
-	 * @param exchangeContext the context
-	 * @param authority the request authority
-	 * @param headers the list of HTTP header entries
-	 * @param path the request target path
-	 * @param subprotocol the subprotocol
-	 * 
+	 *
+	 * @param <A>              the exchange context type
+	 * @param endpointExchange the endpoint exchange
+	 *
 	 * @return a mono emitting the WebSocket exchange if the handshake was successful
 	 */
-	<A extends ExchangeContext> Mono<WebSocketExchange<A>> handshake(
-		A exchangeContext, 
-		String authority, 
-		List<Map.Entry<String, String>> headers, 
-		String path, 
-		String subprotocol);
+	<A extends ExchangeContext> Mono<WebSocketConnectionExchange<A>> handshake(EndpointExchange<A> endpointExchange, String subprotocol);
 	
 	/**
 	 * <p>

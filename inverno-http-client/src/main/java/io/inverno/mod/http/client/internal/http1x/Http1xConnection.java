@@ -18,17 +18,18 @@ package io.inverno.mod.http.client.internal.http1x;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
-import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.ConnectionResetException;
-import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.Part;
-import io.inverno.mod.http.client.RequestBodyConfigurator;
 import io.inverno.mod.http.client.RequestTimeoutException;
 import io.inverno.mod.http.client.internal.AbstractExchange;
+import io.inverno.mod.http.client.internal.EndpointExchange;
 import io.inverno.mod.http.client.internal.HttpConnection;
+import io.inverno.mod.http.client.internal.HttpConnectionExchange;
+import io.inverno.mod.http.client.internal.HttpConnectionRequest;
+import io.inverno.mod.http.client.internal.HttpConnectionResponse;
 import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -47,12 +48,7 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.ScheduledFuture;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 import reactor.core.publisher.Sinks;
@@ -377,30 +373,19 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	}
 
 	@Override
-	public <A extends ExchangeContext> Mono<Exchange<A>> send(A exchangeContext, Method method, String authority, List<Map.Entry<String, String>> headers, String path, Consumer<RequestBodyConfigurator> requestBodyConfigurer, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> requestBodyTransformer, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer) {
-		return Mono.<Exchange<ExchangeContext>>create(exchangeSink -> {
-			Http1xRequestHeaders requestHeaders = new Http1xRequestHeaders(this.headerService, this.parameterConverter, headers);
+	public <A extends ExchangeContext> Mono<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<A> endpointExchange) {
+		return Mono.<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>>create(exchangeSink -> {
+			Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, this.supportsFileRegion, this.parameterConverter, endpointExchange.request());
 			
-			Http1xRequestBody requestBody = null;
-			if(requestBodyConfigurer != null) {
-				requestBody = new Http1xRequestBody();
-				Http1xRequestBodyConfigurer bodyConfigurator = new Http1xRequestBodyConfigurer(requestHeaders, requestBody, this.parameterConverter, this.urlEncodedBodyEncoder, this.multipartBodyEncoder, this.partFactory, this.supportsFileRegion);
-				requestBodyConfigurer.accept(bodyConfigurator);
-				if(requestBodyTransformer != null) {
-					requestBody.transform(requestBodyTransformer);
-				}
-			}
-			
-			Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, this.parameterConverter, method, authority, path, requestHeaders, requestBody);
 			try {
 				// This must be thread safe as multiple threads can change the exchange queue
 				EventLoop eventLoop = this.context.channel().eventLoop();
 				if(eventLoop.inEventLoop()) {
-					this.createAndRegisterExchange(this.context, exchangeSink, exchangeContext, http1xRequest, responseBodyTransformer, this);
+					this.createAndRegisterExchange(this.context, exchangeSink, endpointExchange.context(), http1xRequest);
 				}
 				else {
 					eventLoop.submit(() -> {
-						this.createAndRegisterExchange(this.context, exchangeSink, exchangeContext, http1xRequest, responseBodyTransformer, this);
+						this.createAndRegisterExchange(this.context, exchangeSink, endpointExchange.context(), http1xRequest);
 					});
 				}
 			}
@@ -408,7 +393,38 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				exchangeSink.error(t);
 			}
 		})
-		.map(exchange -> (Exchange<A>)exchange);
+		.map(exchange -> (HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>)exchange);
+	}
+	
+	/**
+	 * <p>
+	 * Creates the HTTP/1.x exchange and registers it in the connection.
+	 * </p>
+	 *
+	 * <p>
+	 * This method is invoked when sending the request to create and register the exchange in the connection. A registered exchange is added to the HTTP/1.x connection's exchange queue, corresponding
+	 * requests are sent in sequence to the remote endpoint.
+	 * </p>
+	 *
+	 * @param context         the channel context
+	 * @param exchangeSink    the exchange sink
+	 * @param exchangeContext the exchange context
+	 * @param request         the HTTP/1.x request
+	 */
+	private void createAndRegisterExchange(ChannelHandlerContext context, MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request) {
+		Http1xExchange exchange = this.createExchange(context, exchangeSink, exchangeContext, request);
+		exchange.lastModified = System.currentTimeMillis();
+		if(this.exchangeQueue == null) {
+			this.exchangeQueue = exchange;
+			this.exchangeQueue.start(this);
+		}
+		else {
+			this.exchangeQueue.next = exchange;
+			this.exchangeQueue = exchange;
+			if(this.requestingExchange == null) {
+				this.exchangeQueue.start(this);
+			}
+		}
 	}
 	
 	/**
@@ -424,48 +440,13 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	 * @param exchangeSink            the exchange sink
 	 * @param exchangeContext         the exchange context
 	 * @param request                 the HTTP/1.x request
-	 * @param responseBodyTransformer the response body transformer
-	 * @param encoder                 the HTTP/1.x connection encoder
 	 * 
 	 * @return a new HTTP/1.x exchange
 	 */
-	protected Http1xExchange createExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) {
-		return new Http1xExchange(context, exchangeSink, exchangeContext, this.httpVersion, request, responseBodyTransformer, encoder);
+	protected Http1xExchange createExchange(ChannelHandlerContext context, MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request) {
+		return new Http1xExchange(context, exchangeSink, exchangeContext, this.httpVersion, request, this);
 	}
 
-	/**
-	 * <p>
-	 * Creates the HTTP/1.x exchange and registers it in the connection.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method is invoked when sending the request to create and register the exchange in the connection. A registered exchange is added to the HTTP/1.x connection's exchange queue, corresponding 
-	 * requests are sent in sequence to the remote endpoint.
-	 * </p>
-	 * 
-	 * @param context                 the channel context
-	 * @param exchangeSink            the exchange sink
-	 * @param exchangeContext         the exchange context
-	 * @param request                 the HTTP/1.x request
-	 * @param responseBodyTransformer the response body transformer
-	 * @param encoder                 the HTTP/1.x connection encoder
-	 */
-	private void createAndRegisterExchange(ChannelHandlerContext context, MonoSink<Exchange<ExchangeContext>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, Http1xConnectionEncoder encoder) {
-		Http1xExchange exchange = this.createExchange(context, exchangeSink, exchangeContext, request, responseBodyTransformer, encoder);
-		exchange.lastModified = System.currentTimeMillis();
-		if(this.exchangeQueue == null) {
-			this.exchangeQueue = exchange;
-			this.exchangeQueue.start(this);
-		}
-		else {
-			this.exchangeQueue.next = exchange;
-			this.exchangeQueue = exchange;
-			if(this.requestingExchange == null) {
-				this.exchangeQueue.start(this);
-			}
-		}
-	}
-	
 	/**
 	 * <p>
 	 * Starts the request timeout.
@@ -545,6 +526,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	private void cancelTimeout() {
 		if(this.timeoutFuture != null) {
 			this.timeoutFuture.cancel(false);
+			this.timeoutFuture = null;
 		}
 	}
 	

@@ -17,22 +17,18 @@ package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
-import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientException;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.Future;
 import java.util.Objects;
 import java.util.concurrent.Callable;
-import java.util.function.Function;
-import org.reactivestreams.Publisher;
 import reactor.core.Disposable;
 import reactor.core.publisher.MonoSink;
 
 /**
  * <p>
- * Base {@link Exchange} implementation.
+ * Base {@link HttpConnectionExchange} implementation.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -42,15 +38,14 @@ import reactor.core.publisher.MonoSink;
  * @param <B> the response type
  * @param <C> the exchange type
  */
-public abstract class AbstractExchange<A extends AbstractRequest, B extends AbstractResponse, C extends AbstractExchange<A, B, C>> implements Exchange<ExchangeContext> {
+public abstract class AbstractExchange<A extends AbstractRequest, B extends AbstractResponse, C extends AbstractExchange<A, B, C>> implements HttpConnectionExchange<ExchangeContext, A, B> {
 
 	protected final ChannelHandlerContext context;
 	protected final EventLoop eventLoop;
-	private final MonoSink<Exchange<ExchangeContext>> exchangeSink;
+	private final MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink;
 	private final ExchangeContext exchangeContext;
 	protected final HttpVersion protocol;
 	protected final A request;
-	protected final Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer;
 	
 	protected B response;
 	protected AbstractExchange.Handler handler;
@@ -61,27 +56,24 @@ public abstract class AbstractExchange<A extends AbstractRequest, B extends Abst
 	 * Creates a client exchange.
 	 * </p>
 	 *
-	 * @param context                 the channel handler context
-	 * @param exchangeSink            the exchange sink
-	 * @param exchangeContext         the exchange context
-	 * @param protocol                the HTTP protocol version
-	 * @param request                 the HTTP request
-	 * @param responseBodyTransformer a response body transformer
+	 * @param context         the channel handler context
+	 * @param exchangeSink    the exchange sink
+	 * @param exchangeContext the exchange context
+	 * @param protocol        the HTTP protocol version
+	 * @param request         the HTTP request
 	 */
 	public AbstractExchange(
 			ChannelHandlerContext context, 
-			MonoSink<Exchange<ExchangeContext>> exchangeSink, 
+			MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink, 
 			ExchangeContext exchangeContext,
 			HttpVersion protocol,
-			A request, 
-			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer) {
+			A request) {
 		this.context = context;
 		this.eventLoop = this.context.channel().eventLoop();
 		this.exchangeSink = exchangeSink;
 		this.exchangeContext = exchangeContext;
 		this.protocol = protocol;
 		this.request = request;
-		this.responseBodyTransformer = responseBodyTransformer;
 	}
 	
 	@Override
@@ -90,20 +82,20 @@ public abstract class AbstractExchange<A extends AbstractRequest, B extends Abst
 	}
 	
 	@Override
-	public A request() {
-		return request;
+	public ExchangeContext context() {
+		return this.exchangeContext;
 	}
-	
+
+	@Override
+	public A request() {
+		return this.request;
+	}
+
 	@Override
 	public B response() {
 		return this.response;
 	}
-	
-	@Override
-	public ExchangeContext context() {
-		return this.exchangeContext;
-	}
-	
+
 	/**
 	 * <p>
 	 * Executes the specified task in the event loop.
@@ -217,9 +209,6 @@ public abstract class AbstractExchange<A extends AbstractRequest, B extends Abst
 			throw new IllegalStateException("Response already set");
 		}
 		this.response = response;
-		if(this.responseBodyTransformer != null) {
-			this.response.body().transform(this.responseBodyTransformer);
-		}
 		if(this.exchangeSink != null) {
 			this.exchangeSink.success(this);
 		}

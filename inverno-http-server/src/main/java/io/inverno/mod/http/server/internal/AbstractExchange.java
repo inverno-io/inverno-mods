@@ -109,8 +109,8 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 */
 	public AbstractExchange(
 			ChannelHandlerContext context, 
-			ServerController<ExchangeContext, Exchange<ExchangeContext>, 
-			ErrorExchange<ExchangeContext>> controller, AbstractRequest request, 
+			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller, 
+			AbstractRequest request, 
 			AbstractResponse response
 		) {
 		this.context = context;

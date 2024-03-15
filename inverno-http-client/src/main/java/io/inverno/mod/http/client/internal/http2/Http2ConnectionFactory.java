@@ -18,14 +18,11 @@ package io.inverno.mod.http.client.internal.http2;
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.HttpVersion;
-import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.HttpClientConfiguration;
-import io.inverno.mod.http.client.Part;
 import io.inverno.mod.http.client.internal.CompressionOptionsProvider;
 import io.inverno.mod.http.client.internal.EndpointChannelConfigurer;
 import io.inverno.mod.http.client.internal.HttpConnectionFactory;
-import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
 import io.netty.handler.codec.http2.AbstractHttp2ConnectionHandlerBuilder;
 import io.netty.handler.codec.http2.CompressorHttp2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2ConnectionDecoder;
@@ -46,9 +43,6 @@ public class Http2ConnectionFactory implements HttpConnectionFactory<Http2Connec
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
-	private final MultipartEncoder<Parameter> urlEncodedBodyEncoder;
-	private final MultipartEncoder<Part<?>> multipartBodyEncoder;
-	private final Part.Factory partFactory;
 	
 	private final CompressionOptionsProvider compressionOptionsProvider;
 	
@@ -60,23 +54,14 @@ public class Http2ConnectionFactory implements HttpConnectionFactory<Http2Connec
 	 * @param compressionOptionsProvider the compression option provider
 	 * @param headerService              the header service
 	 * @param parameterConverter         the parameter converter
-	 * @param urlEncodedBodyEncoder      the URL encoded body encoder
-	 * @param multipartBodyEncoder       the multipart body encoder
-	 * @param partFactory                the part factory
 	 */
 	public Http2ConnectionFactory(
 			CompressionOptionsProvider compressionOptionsProvider,
 			HeaderService headerService, 
-			ObjectConverter<String> parameterConverter, 
-			MultipartEncoder<Parameter> urlEncodedBodyEncoder, 
-			MultipartEncoder<Part<?>> multipartBodyEncoder, 
-			Part.Factory partFactory) {
+			ObjectConverter<String> parameterConverter) {
 		this.compressionOptionsProvider = compressionOptionsProvider;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
-		this.urlEncodedBodyEncoder = urlEncodedBodyEncoder;
-		this.multipartBodyEncoder = multipartBodyEncoder;
-		this.partFactory = partFactory;
 	}
 
 	@Override
@@ -133,10 +118,7 @@ public class Http2ConnectionFactory implements HttpConnectionFactory<Http2Connec
 				encoder, 
 				initialSettings, 
 				Http2ConnectionFactory.this.headerService,
-				Http2ConnectionFactory.this.parameterConverter, 
-				Http2ConnectionFactory.this.urlEncodedBodyEncoder, 
-				Http2ConnectionFactory.this.multipartBodyEncoder, 
-				Http2ConnectionFactory.this.partFactory
+				Http2ConnectionFactory.this.parameterConverter
 			);
 			this.frameListener(connection);
 			return connection;

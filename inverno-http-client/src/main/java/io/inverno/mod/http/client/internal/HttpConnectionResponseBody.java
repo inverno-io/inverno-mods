@@ -27,13 +27,13 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * Generic {@link ResponseBody} implementation.
+ * The HTTP connection response body representing the response payload received after sending the request to the endpoint.
  * </p>
- *
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.6
+ * @since 1.8
  */
-public class GenericResponseBody implements ResponseBody {
+public class HttpConnectionResponseBody implements ResponseBody {
 
 	Sinks.Many<ByteBuf> dataSink;
 	private boolean subscribed;
@@ -41,15 +41,15 @@ public class GenericResponseBody implements ResponseBody {
 	
 	private Publisher<ByteBuf> data;
 	
-	private GenericResponseBody.RawInboundData rawData;
-	private GenericResponseBody.StringInboundData stringData;
+	private HttpConnectionResponseBody.RawInboundData rawData;
+	private HttpConnectionResponseBody.StringInboundData stringData;
 
 	/**
 	 * <p>
-	 * Creates a generic response body.
+	 * Creates an HTTP connection response body.
 	 * </p>
 	 */
-	public GenericResponseBody() {
+	public HttpConnectionResponseBody() {
 		this.dataSink = Sinks.many().unicast().onBackpressureBuffer();
 		this.data = Flux.defer(() -> {
 			if(this.disposed) {
@@ -143,7 +143,7 @@ public class GenericResponseBody implements ResponseBody {
 
 		@Override
 		public Publisher<ByteBuf> stream() {
-			return GenericResponseBody.this.data;
+			return HttpConnectionResponseBody.this.data;
 		}
 	}
 	
@@ -159,7 +159,7 @@ public class GenericResponseBody implements ResponseBody {
 
 		@Override
 		public Publisher<CharSequence> stream() {
-			return Flux.from(GenericResponseBody.this.data).map(buf -> {
+			return Flux.from(HttpConnectionResponseBody.this.data).map(buf -> {
 				try {
 					return buf.toString(Charsets.DEFAULT);
 				}

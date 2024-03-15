@@ -54,21 +54,20 @@ public class Readme {
 		HttpClient client = null;
 		String path = "/";
 		
-		Endpoint endpoint = client.endpoint("example.org", 80).build();
+		Endpoint<ExchangeContext> endpoint = client.endpoint("example.org", 80).build();
 		
 		endpoint
-			.request(Method.GET, path)
-			.send()
-			.flatMapMany(exchange -> exchange
-				.response()
-				.body()
-				.string().stream()
-			)
+			.exchange(Method.GET, path)
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> response.body().string().stream())
 			.collect(Collectors.joining())
 			.block();
 		
-		HttpClient.Request<ExchangeContext, Exchange<ExchangeContext>, InterceptableExchange<ExchangeContext>> request = client
-			.request(Method.GET, "/")
+		// For this we can imagine exposing a method on the HttpClient to create endpoint free exchanges, that must be attached to an endpoint to be "sendable"
+		// We'll see when/if we need this
+		
+		/*HttpClient.Request<ExchangeContext, Exchange<ExchangeContext>, InterceptableExchange<ExchangeContext>> request = client
+			.exchange(Method.GET, "/")
 			.headers(headers -> headers
 				.contentType(MediaTypes.APPLICATION_JSON)
 				.add("SomeHeader", "SomeValue")
@@ -78,13 +77,10 @@ public class Readme {
 			);
 		
 		Endpoint endpoint1 = null;
-		Endpoint endpoint2 = null;
-		
-		endpoint1.send(request);
-		endpoint2.send(request);
+		Endpoint endpoint2 = null;*/
 		
 		Map<String, ?> values = null;
-		endpoint.request(
+		endpoint.exchange(
 			Method.GET, 
 			URIs.uri(
 				"/some/path/{id}?p1={p1}", 
@@ -94,139 +90,148 @@ public class Readme {
 		);
 		
 		endpoint
-			.request(Method.GET, path)
-			.body(body -> body.string(). stream(Flux.just("a", "b", "c")))
-			.send();
+			.exchange(Method.POST, path)
+			.flatMap(exchange -> {
+				exchange.request().body().get().string().stream(Flux.just("a", "b", "c"));
+				return exchange.response();
+			});
 		
 		endpoint
-			.request(Method.GET, path)
-			.body(body -> body.raw().stream(
-				Flux.just(
-					Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello", Charsets.DEFAULT)),
-					Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(" world!", Charsets.DEFAULT))
-				)
-			))
-			.send();
-		
-		endpoint
-			.request(Method.GET, path)
-			.body(body -> body.resource().value(new FileResource("/path/to/resource")))
-			.send();
-		
-		
-		endpoint
-			.request(Method.GET, path)
-			.body(body -> body.urlEncoded()
-				.from((factory, data) -> data.stream(
+			.exchange(Method.POST, path)
+			.flatMap(exchange -> {
+				exchange.request().body().get().raw().stream(
 					Flux.just(
-						factory.create("param1", 1234), 
-						factory.create("param2", "abc")
+						Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello", Charsets.DEFAULT)),
+						Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(" world!", Charsets.DEFAULT))
 					)
-				))
-			)
-			.send();
+				);
+				return exchange.response();
+			});
 		
 		endpoint
-			.request(Method.POST, "/some/path")
-			.body(body -> body.multipart().from((factory, output) -> output.stream(Flux.just(
-				factory.string(part -> part
-					.name("param1")
-					.headers(headers -> headers
-						.contentType(MediaTypes.TEXT_PLAIN)
-					)
-					.value("1234")
-				),
-				factory.string(part -> part
-					.name("param2")
-					.headers(headers -> headers
-						.contentType(MediaTypes.APPLICATION_JSON)
-					)
-					.value("{\"value\":123}")
-				),
-				factory.resource(part -> part
-					.name("file")
-					.value(new FileResource("/path/to/resource"))
-				)
-			))))
-			.send();
+			.exchange(Method.POST, path)
+			.flatMap(exchange -> {
+				exchange.request().body().get().resource().value(new FileResource("/path/to/resource"));
+				return exchange.response();
+			});
 		
 		endpoint
-			.request(Method.GET, path)
-			.send()
-			.map(exchange -> {
+			.exchange(Method.POST, path)
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded()
+					.from((factory, data) -> data.stream(
+						Flux.just(
+							factory.create("param1", 1234), 
+							factory.create("param2", "abc")
+						)
+					));
+				return exchange.response();
+			});
+		
+		endpoint
+			.exchange(Method.POST, "/some/path")
+			.flatMap(exchange -> {
+				exchange.request().body().get().multipart()
+					.from((factory, output) -> output.stream(Flux.just(
+						factory.string(part -> part
+							.name("param1")
+							.headers(headers -> headers
+								.contentType(MediaTypes.TEXT_PLAIN)
+							)
+							.value("1234")
+						),
+						factory.string(part -> part
+							.name("param2")
+							.headers(headers -> headers
+								.contentType(MediaTypes.APPLICATION_JSON)
+							)
+							.value("{\"value\":123}")
+						),
+						factory.resource(part -> part
+							.name("file")
+							.value(new FileResource("/path/to/resource"))
+						)
+					)));
+				return exchange.response();
+			});
+		
+		
+		endpoint
+			.exchange(Method.GET, path)
+			.flatMap(Exchange::response)
+			.map(response -> {
 				// Returns the value of the first occurence of 'some-header' as string or returns null
-				String someHeaderValue = exchange.response().headers().get("some-header").orElse(null);
+				String someHeaderValue = response.headers().get("some-header").orElse(null);
     
 				// Returns all 'some-header' values as strings
-				List<String> someHeaderValues = exchange.response().headers().getAll("some-header");
+				List<String> someHeaderValues = response.headers().getAll("some-header");
 
 				// Returns all headers as strings
-				List<Map.Entry<String, String>> allHeadersValues = exchange.response().headers().getAll();
+				List<Map.Entry<String, String>> allHeadersValues = response.headers().getAll();
 				
-				return Mono.empty();
+				return null;
 			});
 		
 		endpoint
-			.request(Method.GET, path)
-			.send()
-			.map(exchange -> {
+			.exchange(Method.GET, path)
+			.flatMap(Exchange::response)
+			.map(response -> {
 				// Returns the value of the first occurence of 'some-header' as LocalDateTime or returns null
-				LocalDateTime someHeaderValue = exchange.response().headers().getParameter("some-header").map(Parameter::asLocalDateTime).orElse(null);
+				LocalDateTime someHeaderValue = response.headers().getParameter("some-header").map(Parameter::asLocalDateTime).orElse(null);
 
 				// Returns all 'some-header' values as LocalDateTime
-				List<LocalDateTime> someHeaderValues = exchange.response().headers().getAllParameter("some-header").stream().map(Parameter::asLocalDateTime).collect(Collectors.toList());
+				List<LocalDateTime> someHeaderValues = response.headers().getAllParameter("some-header").stream().map(Parameter::asLocalDateTime).collect(Collectors.toList());
 
 				// Returns all headers as parameters
-				List<Parameter> allHeadersParameters = exchange.response().headers().getAllParameter();
+				List<Parameter> allHeadersParameters = response.headers().getAllParameter();
 				
-				return Mono.empty();
+				return null;
 			});
 		
 		endpoint
-			.request(Method.GET, path)
-			.send()
-			.map(exchange -> {
+			.exchange(Method.GET, path)
+			.flatMap(exchange -> {
 				// Returns the decoded 'content-type' header or null
 				Headers.ContentType contenType = exchange.request().headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
 
 				String mediaType = contenType.getMediaType();
 				Charset charset = contenType.getCharset();
 
-				return Mono.empty();
+				return exchange.response();
 			});
 		
 		endpoint
-			.request(Method.GET, path)
-			.send()
-			.map(exchange -> {
-				if(exchange.response().headers().getStatus().getCode() >= 400) {
+			.exchange(Method.GET, path)
+			.flatMap(Exchange::response)
+			.map(response -> {
+				if(response.headers().getStatus().getCode() >= 400) {
 					// Report Error
 				}
 				
-				return Mono.empty();
+				return null;
 			});
 		
 		endpoint
-			.request(Method.GET, path)
-			.send()
-			.map(exchange -> {
+			.exchange(Method.GET, path)
+			.flatMap(Exchange::response)
+			.map(response -> {
 				// Returns the value of the first occurence of 'some-cookie' as LocalDateTime or returns null
-				LocalDateTime someCookieValue = exchange.response().headers().cookies().get("some-cookie").map(Parameter::asLocalDateTime).orElse(null);
+				LocalDateTime someCookieValue = response.headers().cookies().get("some-cookie").map(Parameter::asLocalDateTime).orElse(null);
 
 				// Returns all 'some-cookie' values as LocalDateTime
-				List<LocalDateTime> someCookieValues = exchange.response().headers().cookies().getAll("some-cookie").stream().map(Parameter::asLocalDateTime).collect(Collectors.toList());
+				List<LocalDateTime> someCookieValues = response.headers().cookies().getAll("some-cookie").stream().map(Parameter::asLocalDateTime).collect(Collectors.toList());
 
 				// Returns all cookies as set-cookie parameters
-				Map<String, List<SetCookieParameter>> allCookieParameters = exchange.response().headers().cookies().getAll();
+				Map<String, List<SetCookieParameter>> allCookieParameters = response.headers().cookies().getAll();
 				
-				return Mono.empty();
+				return null;
 			});
 		
 		endpoint
-			.request(Method.GET, path)
-			.send()
-			.map(exchange -> {
-				SetCookieParameter someCookie = exchange.response().headers().cookies().get("some-cookie").orElse(null);
+			.exchange(Method.GET, path)
+			.flatMap(Exchange::response)
+			.map(response -> {
+				SetCookieParameter someCookie = response.headers().cookies().get("some-cookie").orElse(null);
 				
 				ZonedDateTime expires = someCookie.getExpires();
 				int maxAge = someCookie.getMaxAge();
@@ -240,25 +245,25 @@ public class Readme {
 			});
 		
 		endpoint
-			.request(Method.GET, path)
-			.send()
-			.flatMapMany(exchange -> exchange.response().body().string().stream())
+			.exchange(Method.GET, path)
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> response.body().string().stream())
 			.subscribe((CharSequence chunk) -> {
 				
 			});
 		
 		endpoint
-			.request(Method.GET, path)
-			.send()
-			.flatMapMany(exchange -> exchange.response().body().raw().stream())
+			.exchange(Method.GET, path)
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> response.body().raw().stream())
 			.subscribe((ByteBuf chunk) -> {
 				
 			});
 
 		endpoint
-			.request(Method.GET, path)
-			.send()
-			.flatMapMany(exchange -> exchange.response().body().string().stream())
+			.exchange(Method.GET, path)
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> response.body().string().stream())
 			.collect(Collectors.joining())
 			.subscribe(
 				body -> {
@@ -268,10 +273,10 @@ public class Readme {
 			);
 		
 		endpoint
-			.request(Method.GET, path)
-			.send()
+			.exchange(Method.GET, path)
+			.flatMap(Exchange::response)
 			.retry(5)
-			.flatMapMany(exchange -> exchange.response().body().string().stream())
+			.flatMapMany(response -> response.body().string().stream())
 			.collect(Collectors.joining())
 			.subscribe(
 				body -> {
@@ -282,20 +287,24 @@ public class Readme {
 		
 		ExchangeContext context = null;
 		
-		/*endpoint
-			.request(Method.GET, path, context)
-			.intercept(exchange -> {
-				exchange.request().headers(headers -> headers
-					.add(Headers.NAME_AUTHORIZATION, "Bearer " + exchange.context().getToken())
-				);
+		endpoint = client
+			.endpoint("example.org", 80)
+			.interceptor(exchange -> {
+//				exchange.request().headers(headers -> headers
+//					.add(Headers.NAME_AUTHORIZATION, "Bearer " + exchange.context().getToken())
+//				);
 				
 				return Mono.just(exchange);
 			})
-			.send();*/
+			.build();
 		
 		endpoint
-			.request(Method.GET, path)
-			.intercept(exchange -> {
+			.exchange(Method.GET, path, context)
+			.flatMap(Exchange::response);
+		
+		endpoint = client
+			.endpoint("example.org", 80)
+			.interceptor(exchange -> {
 				final StringBuilder requestBodyBuilder = new StringBuilder();
 				exchange.request().body().ifPresent(body -> body.transform(data -> Flux.from(data)
 					.doOnNext(buf -> requestBodyBuilder.append(buf.toString(Charsets.UTF_8)))
@@ -310,38 +319,25 @@ public class Readme {
 				
 				return Mono.just(exchange);
 			})
-			.send();
+			.build();
 		
 		endpoint
-			.request(Method.POST, path)                         // Creates the request 
-			.intercept(exchange -> {
-				final StringBuilder requestBodyBuilder = new StringBuilder();
-				exchange.request().body().ifPresent(body -> body.transform(data -> Flux.from(data)
-					.doOnNext(buf -> requestBodyBuilder.append(buf.toString(Charsets.UTF_8)))
-					.doOnComplete(() -> System.out.println("Request Body: \n" + requestBodyBuilder.toString()))
-				));
+			.exchange(Method.GET, path, context)
+			.flatMap(Exchange::response);
 
-				final StringBuilder responseBodyBuilder = new StringBuilder();
-				exchange.response().body().transform(data -> Flux.from(data)
-					.doOnNext(buf -> responseBodyBuilder.append(buf.toString(Charsets.UTF_8)))
-					.doOnComplete(() -> System.out.println("Response Body: \n" + responseBodyBuilder.toString()))
-				);
-
-				return Mono.just(exchange);
+		endpoint
+			.exchange(Method.POST, path, context)                        // Creates the request 
+			.flatMap(exchange -> {
+				exchange.request().body().get().string().value("test");
+				return exchange.response();                             // Request is sent on subscribe
 			})
-			.body(body -> body.string().value("test"))
-			.send()                                            // Sends the request
-			.flatMapMany(exchange -> exchange                  // Streams the response
-				.response()
-				.body()
-				.string().stream()
-			)
-			.collect(Collectors.joining())                     // Aggregates the response
+			.flatMapMany(response -> response.body().string().stream()) // Streams the response body
+			.collect(Collectors.joining())                              // Aggregates response parts
 			.block();
-	
-		endpoint
-			.request(Method.GET, path)
-			.intercept(exchange -> {
+		
+		endpoint = client
+			.endpoint("example.org", 80)
+			.interceptor(exchange -> {
 				exchange.response()
 					.headers(headers -> headers
 						.status(Status.OK)
@@ -351,22 +347,26 @@ public class Readme {
 				
 				return Mono.empty();
 			})
-			.send();
+			.build();
 		
 		endpoint
-			.webSocketRequest("/some/path/ws")
-			.headers(headers -> headers
-				.add("some-header", "value")
-				.cookies(cookies -> cookies.addCookie("some-cookie", 123))
-			)
-			.subProtocol("xml")
-			.send()
+			.exchange(Method.GET, path)
+			.flatMap(Exchange::response);
+		
+		
+		endpoint.exchange(Method.GET, "/some/path/ws")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("some-header", "value")
+					.cookies(cookies -> cookies.addCookie("some-cookie", 123))
+				);
+				return exchange.webSocket("xml");
+			})
 			.subscribe(wsExchange -> {
 			});
 		
-		endpoint
-			.webSocketRequest("/some/path/ws")
-			.send()
+		endpoint.exchange(Method.GET, "/some/path/ws")
+			.flatMap(Exchange::webSocket)
 			.flatMapMany(wsExchange -> wsExchange.inbound().frames())
 			.subscribe(frame -> {
 				try {
@@ -377,9 +377,8 @@ public class Readme {
 				}
 			});
 		
-		endpoint
-			.webSocketRequest("/some/path/ws")
-			.send()
+		endpoint.exchange(Method.GET, "/some/path/ws")
+			.flatMap(Exchange::webSocket)
 			.flatMapMany(wsExchange -> wsExchange.inbound().messages())
 			.flatMap(message -> {
 				// The stream of frames composing the message
@@ -401,13 +400,10 @@ public class Readme {
 			});
 
 		Sinks.Many<String> framesSink = Sinks.many().unicast().onBackpressureBuffer();
-		endpoint
-			.webSocketRequest("/some/path/ws")
-			.send()
+		endpoint.exchange(Method.GET, "/some/path/ws")
+			.flatMap(Exchange::webSocket)
 			.flatMapMany(wsExchange -> {
-				wsExchange.outbound()
-					.frames(factory -> framesSink.asFlux().map(factory::text));
-
+				wsExchange.outbound().frames(factory -> framesSink.asFlux().map(factory::text));
 				return wsExchange.inbound().frames();
 			})
 			.subscribe(frame -> {
@@ -425,12 +421,10 @@ public class Readme {
 		framesSink.tryEmitComplete();
 		
 		Sinks.Many<List<String>> messagesSink = Sinks.many().unicast().onBackpressureBuffer();
-		endpoint
-			.webSocketRequest("/some/path/ws")
-			.send()
+		endpoint.exchange(Method.GET, "/some/path/ws")
+			.flatMap(Exchange::webSocket)
 			.flatMapMany(wsExchange -> {
 				wsExchange.outbound().closeOnComplete(true).messages(factory -> messagesSink.asFlux().map(Flux::fromIterable).map(factory::text));
-				
 				return wsExchange.inbound().messages();
 			})
 			.flatMap(WebSocketMessage::reducedText)
@@ -441,5 +435,20 @@ public class Readme {
 		messagesSink.tryEmitNext(List.of("One frame"));
 		messagesSink.tryEmitNext(List.of("Multiple ", "frames"));
 		messagesSink.tryEmitComplete();
+		
+		Endpoint<SecurityContext> securedEndpoint = client.<SecurityContext>endpoint("secured", 8443)
+			.interceptor(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add(Headers.NAME_AUTHORIZATION, "Bearer " + exchange.context().getToken())
+				);
+				return Mono.just(exchange);
+			})
+			.build();
+		
+	}
+	
+	public static interface SecurityContext extends ExchangeContext {
+		
+		String getToken();
 	}
 }

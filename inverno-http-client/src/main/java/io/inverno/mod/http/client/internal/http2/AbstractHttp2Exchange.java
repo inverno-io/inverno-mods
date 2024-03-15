@@ -20,12 +20,12 @@ import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.internal.AbstractExchange;
 import io.inverno.mod.http.client.internal.AbstractRequest;
-import io.netty.buffer.ByteBuf;
+import io.inverno.mod.http.client.internal.HttpConnectionExchange;
+import io.inverno.mod.http.client.internal.HttpConnectionRequest;
+import io.inverno.mod.http.client.internal.HttpConnectionResponse;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.util.concurrent.ScheduledFuture;
-import java.util.function.Function;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.MonoSink;
 
 /**
@@ -50,15 +50,13 @@ public abstract class AbstractHttp2Exchange extends AbstractExchange<AbstractReq
 	 * @param exchangeSink            the exchange sink
 	 * @param exchangeContext         the exchange context
 	 * @param request                 the HTTP request
-	 * @param responseBodyTransformer the response body transformer
 	 */
 	public AbstractHttp2Exchange(
 			ChannelHandlerContext context, 
-			MonoSink<Exchange<ExchangeContext>> exchangeSink, 
+			MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink, 
 			ExchangeContext exchangeContext, 
-			AbstractRequest request, 
-			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer) {
-		super(context, exchangeSink, exchangeContext, HttpVersion.HTTP_2_0, request, responseBodyTransformer);
+			AbstractRequest request) {
+		super(context, exchangeSink, exchangeContext, HttpVersion.HTTP_2_0, request);
 	}
 	
 	/**

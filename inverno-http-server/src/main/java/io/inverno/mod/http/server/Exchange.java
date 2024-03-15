@@ -44,13 +44,7 @@ import reactor.core.publisher.Mono;
  *
  * @param <A> the type of the exchange context
  */
-public interface Exchange<A extends ExchangeContext> extends BaseExchange<A> {
-
-	@Override
-	Request request();
-	
-	@Override
-	Response response();
+public interface Exchange<A extends ExchangeContext> extends BaseExchange<A, Request, Response> {
 	
 	/**
 	 * <p>

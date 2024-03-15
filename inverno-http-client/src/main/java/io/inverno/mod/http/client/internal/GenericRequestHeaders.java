@@ -1,12 +1,12 @@
 /*
- * Copyright 2022 Jeremy KUHN
- * 
+ * Copyright 2024 Jeremy Kuhn
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,13 +34,13 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * Generic request headers implementation.
+ * Base {@link OutboundRequestHeaders} implementation.
  * </p>
- *
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.6
+ * @since 1.8
  */
-public class GenericRequestHeaders implements InternalRequestHeaders {
+public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implements OutboundRequestHeaders {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
@@ -48,11 +48,9 @@ public class GenericRequestHeaders implements InternalRequestHeaders {
 	protected final LinkedHttpHeaders underlyingHeaders;
 	protected GenericRequestCookies requestCookies;
 	
-	private boolean written;
-	
 	/**
 	 * <p>
-	 * Creates empty generic request headers.
+	 * Creates empty request headers.
 	 * </p>
 	 * 
 	 * @param headerService      the header service
@@ -67,34 +65,24 @@ public class GenericRequestHeaders implements InternalRequestHeaders {
 	
 	/**
 	 * <p>
-	 * Creates generic request headers populated with specified header entries.
+	 * Returns the underlyinh headers.
 	 * </p>
 	 * 
-	 * @param headerService      the header service
-	 * @param parameterConverter the parameter converter
-	 * @param entries            a list of HTTP header entries
+	 * @return the underlyinh headers
 	 */
-	public GenericRequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, List<Map.Entry<String, String>> entries) {
-		this(headerService, parameterConverter);
-		if(entries != null && !entries.isEmpty()) {
-			entries.forEach(e -> this.add(e.getKey(), e.getValue()));
-		}
-	}
-	
-	@Override
-	public void setWritten(boolean written) {
-		this.written = written;
+	public LinkedHttpHeaders getUnderlyingHeaders() {
+		return this.underlyingHeaders;
 	}
 	
 	@Override
 	public boolean isWritten() {
-		return this.written;
+		return false;
 	}
 
 	@Override
-	public GenericRequestHeaders contentType(String contentType) {
+	public A contentType(String contentType) {
 		this.underlyingHeaders.set((CharSequence)Headers.NAME_CONTENT_TYPE, contentType);
-		return this;
+		return (A)this;
 	}
 
 	@Override
@@ -108,9 +96,9 @@ public class GenericRequestHeaders implements InternalRequestHeaders {
 	}
 	
 	@Override
-	public GenericRequestHeaders contentLength(long contentLength) {
+	public A contentLength(long contentLength) {
 		this.underlyingHeaders.setLong((CharSequence)Headers.NAME_CONTENT_LENGTH, contentLength);
-		return this;
+		return (A)this;
 	}
 	
 	@Override
@@ -119,14 +107,14 @@ public class GenericRequestHeaders implements InternalRequestHeaders {
 	}
 
 	@Override
-	public OutboundRequestHeaders cookies(Consumer<OutboundCookies> cookiesConfigurer) {
+	public A cookies(Consumer<OutboundCookies> cookiesConfigurer) {
 		if(this.requestCookies == null) {
 			this.requestCookies = new GenericRequestCookies(this, this.headerService, this.parameterConverter);
 		}
 		this.requestCookies.load();
 		cookiesConfigurer.accept(this.requestCookies);
 		this.requestCookies.commit();
-		return this;
+		return (A)this;
 	}
 
 	@Override
@@ -139,39 +127,39 @@ public class GenericRequestHeaders implements InternalRequestHeaders {
 	}
 	
 	@Override
-	public GenericRequestHeaders add(CharSequence name, CharSequence value) {
+	public A add(CharSequence name, CharSequence value) {
 		this.underlyingHeaders.addCharSequence(name, value);
-		return this;
+		return (A)this;
 	}
 
 	@Override
-	public GenericRequestHeaders add(Header... headers) {
+	public A add(Header... headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.addCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
-		return this;
+		return (A)this;
 	}
 
 	@Override
-	public GenericRequestHeaders set(CharSequence name, CharSequence value) {
+	public A set(CharSequence name, CharSequence value) {
 		this.underlyingHeaders.setCharSequence(name, value);
-		return this;
+		return (A)this;
 	}
 
 	@Override
-	public GenericRequestHeaders set(Header... headers) {
+	public A set(Header... headers) {
 		for(Header header : headers) {
 			this.underlyingHeaders.setCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
-		return this;
+		return (A)this;
 	}
 
 	@Override
-	public GenericRequestHeaders remove(CharSequence... names) {
+	public A remove(CharSequence... names) {
 		for(CharSequence name : names) {
 			this.underlyingHeaders.remove(name);
 		}
-		return this;
+		return (A)this;
 	}
 
 	@Override
@@ -234,17 +222,39 @@ public class GenericRequestHeaders implements InternalRequestHeaders {
 		return this.underlyingHeaders.entries().stream().map(e -> new GenericParameter(e.getKey(), e.getValue(), this.parameterConverter)).collect(Collectors.toList());
 	}
 	
-	@Override
+	/**
+	 * <p>
+	 * Returns the value of the header with the specified name as a char sequence.
+	 * </p>
+	 * 
+	 * @param name the header name
+	 * 
+	 * @return the header value or null if there's no header with the specified name
+	 */
 	public CharSequence getCharSequence(CharSequence name) {
 		return this.underlyingHeaders.getCharSequence(name);
 	}
 
-	@Override
+	/**
+	 * <p>
+	 * Returns the values of all headers with the specified name as char sequences.
+	 * </p>
+	 *
+	 * @param name a header name
+	 *
+	 * @return a list of header values or an empty list if there's no header with the specified name
+	 */
 	public List<CharSequence> getAllCharSequence(CharSequence name) {
 		return this.underlyingHeaders.getAllCharSequence(name);
 	}
 
-	@Override
+	/**
+	 * <p>
+	 * Returns all headers.
+	 * </p>
+	 *
+	 * @return a list of header entries or an empty list if there's no header
+	 */
 	public List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence() {
 		return this.underlyingHeaders.entriesCharSequence();
 	}

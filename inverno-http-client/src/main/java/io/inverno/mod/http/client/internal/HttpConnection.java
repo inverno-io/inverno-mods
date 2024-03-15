@@ -17,15 +17,6 @@ package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
-import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.client.Exchange;
-import io.inverno.mod.http.client.RequestBodyConfigurator;
-import io.netty.buffer.ByteBuf;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 /**
@@ -80,78 +71,15 @@ public interface HttpConnection {
 
 	/**
 	 * <p>
-	 * Sends an empty request to the connected endpoint.
-	 * </p>
-	 *
-	 * @param <A>             the exchange context type
-	 * @param exchangeContext the context
-	 * @param method          the HTTP method
-	 * @param authority       the request authority
-	 * @param headers         the list of HTTP header entries
-	 * @param path            the request target path
-	 *
-	 * @return a mono emitting the exchange once response headers has been received
-	 */
-	default <A extends ExchangeContext> Mono<Exchange<A>> send(
-			A exchangeContext,
-			Method method, 
-			String authority, 
-			List<Map.Entry<String, String>> headers, 
-			String path) {
-		return this.send(exchangeContext, method, authority, headers, path, null, null, null);
-	}
-	
-	/**
-	 * <p>
 	 * Sends a request to the connected endpoint.
 	 * </p>
 	 *
-	 * @param <A>                   the exchange context type
-	 * @param exchangeContext       the context
-	 * @param method                the HTTP method
-	 * @param authority             the request authority
-	 * @param headers               the list of HTTP header entries
-	 * @param path                  the request target path
-	 * @param requestBodyConfigurer a request body configurer or null to create an empty request
+	 * @param <A>              the exchange context type
+	 * @param endpointExchange the endpoint exchange
 	 *
-	 * @return a mono emitting the exchange once response headers has been received
+	 * @return a mono emitting the connected exchange once response headers has been received
 	 */
-	default <A extends ExchangeContext> Mono<Exchange<A>> send(
-			A exchangeContext,
-			Method method, 
-			String authority, 
-			List<Map.Entry<String, String>> headers, 
-			String path, 
-			Consumer<RequestBodyConfigurator> requestBodyConfigurer) {
-		return this.send(exchangeContext, method, authority, headers, path, requestBodyConfigurer, null, null);
-	}
-	
-	/**
-	 * <p>
-	 * Sends a request to the endpoint.
-	 * </p>
-	 *
-	 * @param <A>                     the exchange context type
-	 * @param exchangeContext         the context
-	 * @param method                  the HTTP method
-	 * @param authority               the request authority
-	 * @param headers                 the list of HTTP header entries
-	 * @param path                    the request target path
-	 * @param requestBodyConfigurer   a request body configurer or null to create an empty request
-	 * @param requestBodyTransformer  a request payload transformer or null
-	 * @param responseBodyTransformer a response payload transformer or null
-	 *
-	 * @return a mono emitting the exchange once response headers has been received
-	 */
-	<A extends ExchangeContext> Mono<Exchange<A>> send(
-			A exchangeContext,
-			Method method, 
-			String authority, 
-			List<Map.Entry<String, String>> headers, 
-			String path, 
-			Consumer<RequestBodyConfigurator> requestBodyConfigurer,
-			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> requestBodyTransformer,
-			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer);
+	<A extends ExchangeContext> Mono<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<A> endpointExchange);
 	
 	/**
 	 * <p>
@@ -203,7 +131,7 @@ public interface HttpConnection {
 		 * 
 		 * @param exchange the exchange
 		 */
-		void onExchangeTerminate(Exchange<?> exchange);
+		void onExchangeTerminate(HttpConnectionExchange<?, ?, ?> exchange);
 
 		/**
 		 * <p>

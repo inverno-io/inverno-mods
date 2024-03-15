@@ -18,24 +18,20 @@ package io.inverno.mod.http.client.internal.http2;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
-import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.ConnectionResetException;
-import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.HttpClientException;
-import io.inverno.mod.http.client.Part;
-import io.inverno.mod.http.client.RequestBodyConfigurator;
 import io.inverno.mod.http.client.RequestTimeoutException;
 import io.inverno.mod.http.client.internal.AbstractExchange;
 import io.inverno.mod.http.client.internal.AbstractRequest;
 import io.inverno.mod.http.client.internal.EndpointChannelConfigurer;
-import io.inverno.mod.http.client.internal.GenericRequestBody;
-import io.inverno.mod.http.client.internal.GenericRequestBodyConfigurator;
+import io.inverno.mod.http.client.internal.EndpointExchange;
 import io.inverno.mod.http.client.internal.HttpConnection;
+import io.inverno.mod.http.client.internal.HttpConnectionExchange;
+import io.inverno.mod.http.client.internal.HttpConnectionRequest;
+import io.inverno.mod.http.client.internal.HttpConnectionResponse;
 import io.inverno.mod.http.client.internal.http1x.Http1xUpgradingExchange;
-import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -56,12 +52,7 @@ import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
@@ -79,9 +70,6 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	private final HttpClientConfiguration configuration;
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
-	private final MultipartEncoder<Parameter> urlEncodedBodyEncoder;
-	private final MultipartEncoder<Part<?>> multipartBodyEncoder;
-	private final Part.Factory partFactory;
 	
 	private final IntObjectMap<AbstractHttp2Exchange> clientStreams;
 	
@@ -99,16 +87,13 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	 * <p>
 	 * Creates an HTTP/2 connection.
 	 * </p>
-	 * 
-	 * @param configuration         the HTTP client configurartion
-	 * @param decoder               the HTTP/2 connection decoder
-	 * @param encoder               the HTTP/2 connection encoder
-	 * @param initialSettings       the HTTP/2 initial settings
-	 * @param headerService         the header service
-	 * @param parameterConverter    the parameter converter
-	 * @param urlEncodedBodyEncoder the URL encoded body encoder
-	 * @param multipartBodyEncoder  the multipart body encoder
-	 * @param partFactory           the part factory
+	 *
+	 * @param configuration      the HTTP client configurartion
+	 * @param decoder            the HTTP/2 connection decoder
+	 * @param encoder            the HTTP/2 connection encoder
+	 * @param initialSettings    the HTTP/2 initial settings
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
 	 */
 	public Http2Connection(
 			HttpClientConfiguration configuration, 
@@ -116,17 +101,11 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 			Http2ConnectionEncoder encoder, 
 			Http2Settings initialSettings, 
 			HeaderService headerService, 
-			ObjectConverter<String> parameterConverter, 
-			MultipartEncoder<Parameter> urlEncodedBodyEncoder, 
-			MultipartEncoder<Part<?>> multipartBodyEncoder, 
-			Part.Factory partFactory) {
+			ObjectConverter<String> parameterConverter) {
 		super(decoder, encoder, initialSettings);
 		this.configuration = configuration;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
-		this.urlEncodedBodyEncoder = urlEncodedBodyEncoder;
-		this.multipartBodyEncoder = multipartBodyEncoder;
-		this.partFactory = partFactory;
 		
 		this.clientStreams = new IntObjectHashMap<>();
 		this.maxConcurrentStreams = this.configuration.http2_max_concurrent_streams();
@@ -165,7 +144,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	public void onHttpClientUpgrade(Http1xUpgradingExchange upgradingExchange) throws Http2Exception {
 		super.onHttpClientUpgrade();
 		Http2Stream upgradingStream = this.connection().stream(1);
-		Http2UpgradedExchange upgradedExchange = new Http2UpgradedExchange(this.context, upgradingExchange.getUpgradedExchangeSink(), upgradingExchange.context(), upgradingExchange.request(), upgradingExchange.getResponseBodyTransformer(), this.encoder(), upgradingStream);
+		Http2UpgradedExchange upgradedExchange = new Http2UpgradedExchange(this.context, upgradingExchange.getUpgradedExchangeSink(), upgradingExchange.context(), upgradingExchange.request(), this.encoder(), upgradingStream);
 		upgradedExchange.lastModified = upgradingExchange.getLastModified();
 		upgradedExchange.start(this);
 	}
@@ -250,42 +229,26 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	}
 
 	@Override
-	public <A extends ExchangeContext> Mono<Exchange<A>> send(A exchangeContext, Method method, String authority, List<Map.Entry<String, String>> headers, String path, Consumer<RequestBodyConfigurator> requestBodyConfigurer, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> requestBodyTransformer, Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer) {
-		return Mono.<Exchange<ExchangeContext>>create(exchangeSink -> {
-			Http2RequestHeaders requestHeaders = new Http2RequestHeaders(this.headerService, this.parameterConverter, headers);
-			
-			GenericRequestBody requestBody = null;
-			if(requestBodyConfigurer != null) {
-				requestBody = new GenericRequestBody();
-				GenericRequestBodyConfigurator bodyConfigurator = new GenericRequestBodyConfigurator(requestHeaders, requestBody, this.parameterConverter, this.urlEncodedBodyEncoder, this.multipartBodyEncoder, this.partFactory);
-				requestBodyConfigurer.accept(bodyConfigurator);
-				if(requestBodyTransformer != null) {
-					requestBody.transform(requestBodyTransformer);
-				}
-			}
-
-			Http2Request http2Request = new Http2Request(this.context, this.tls, this.parameterConverter, method, authority, path, requestHeaders, requestBody);
-
-			// We must sart the exchange on a new client stream
-			// We must then create a stream
-
-			Http2Exchange exchange = new Http2Exchange(this.context, exchangeSink, exchangeContext, http2Request, responseBodyTransformer, this.connection().local(), this.encoder());
+	public <A extends ExchangeContext> Mono<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<A> endpointExchange) {
+		return Mono.<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>>create(exchangeSink -> {
+			Http2Request http2Request = new Http2Request(this.context, this.tls, this.parameterConverter, this.headerService, endpointExchange.request());
+			Http2Exchange http2Exchange = new Http2Exchange(context, exchangeSink, endpointExchange.context(), http2Request, this.connection().local(), this.encoder());
 			
 			// Make sure the exchange is started on the connection event loop
 			// We can start directly it since HTTP/2 supports interleaving!
 			EventLoop eventLoop = this.context.channel().eventLoop();
 			if(eventLoop.inEventLoop()) {
-				exchange.lastModified = System.currentTimeMillis();
-				exchange.start(this);
+				http2Exchange.lastModified = System.currentTimeMillis();
+				http2Exchange.start(this);
 			}
 			else {
 				eventLoop.submit(() -> {
-					exchange.lastModified = System.currentTimeMillis();
-					exchange.start(this);
+					http2Exchange.lastModified = System.currentTimeMillis();
+					http2Exchange.start(this);
 				});
 			}
 		})
-		.map(exchange -> (Exchange<A>)exchange);
+		.map(exchange -> (HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>)exchange);
 	}
 	
 	@Override
@@ -479,6 +442,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	private void cancelTimeout(AbstractHttp2Exchange exchange) {
 		if(exchange.timeoutFuture != null) {
 			exchange.timeoutFuture.cancel(false);
+			exchange.timeoutFuture = null;
 		}
 	}
 

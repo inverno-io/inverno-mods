@@ -26,8 +26,8 @@ import java.util.function.Consumer;
  * </p>
  * 
  * <p>
- * Once the actual response is received from the endpoint, it becomes a proxy for the received response and it is no longer possible to modify it resulting in {@link IllegalStateException} to be
- * raised. It might still be possible to intercept and transform the response payload publisher if it hasn't been subscribed yet.
+ * Once a response is received from the endpoint, it becomes a proxy for the received response and it is no longer possible to modify it resulting in {@link IllegalStateException} on such operations.
+ * It might still be possible to intercept and transform the response payload publisher if it hasn't been subscribed yet.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -74,7 +74,7 @@ public interface InterceptableResponse extends BaseResponse {
 	
 	/**
 	 * <p>
-	 * Determines whether the response body has been received from the endpoint.
+	 * Determines whether the response has been received from the endpoint.
 	 * </p>
 	 * 
 	 * @return true if the response has been received, false otherwise

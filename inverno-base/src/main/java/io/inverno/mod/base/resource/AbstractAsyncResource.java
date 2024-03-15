@@ -120,6 +120,7 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 	
 	@Override
 	public Optional<Publisher<ByteBuf>> read() {
+		// TODO This is wrong since we open the channel before we subscribe to the publisher: we must only create the channel when the publisher is subscribed
 		return this.openReadableByteChannel().map(channel -> {
 			return Flux.generate(
 				() -> Long.valueOf(0),	
@@ -155,6 +156,7 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 	
 	@Override
 	public Optional<Publisher<Integer>> write(Publisher<ByteBuf> data, boolean append, boolean createParents) {
+		// TODO Same remark as for read()
 		return this.openWritableByteChannel(append, createParents)
 			.map(channel -> Flux.from(data)
 				.concatMap(chunk -> Mono.<Integer>create(sink -> {

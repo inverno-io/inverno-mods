@@ -19,12 +19,13 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientException;
 import io.inverno.mod.http.client.internal.AbstractRequest;
-import io.netty.buffer.ByteBuf;
+import io.inverno.mod.http.client.internal.HttpConnectionExchange;
+import io.inverno.mod.http.client.internal.HttpConnectionRequest;
+import io.inverno.mod.http.client.internal.HttpConnectionResponse;
+import io.inverno.mod.http.client.internal.http1x.Http1xUpgradingExchange;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http2.Http2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2Stream;
-import java.util.function.Function;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.MonoSink;
 
 /**
@@ -50,19 +51,17 @@ public class Http2UpgradedExchange extends AbstractHttp2Exchange {
 	 * @param exchangeSink            the exchane sink
 	 * @param exchangeContext         the exchange context
 	 * @param request                 the original upgrading HTTP request
-	 * @param responseBodyTransformer the response body transformer
 	 * @param encoder                 the HTTP/2 connection encoder
 	 * @param upgradingStream         the HTTP/2 upgrading stream
 	 */
 	public Http2UpgradedExchange(
 			ChannelHandlerContext context, 
-			MonoSink<Exchange<ExchangeContext>> exchangeSink, 
+			MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink, 
 			ExchangeContext exchangeContext, 
 			AbstractRequest request, 
-			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, 
 			Http2ConnectionEncoder encoder, 
 			Http2Stream upgradingStream) {
-		super(context, exchangeSink, exchangeContext, request, responseBodyTransformer);
+		super(context, exchangeSink, exchangeContext, request);
 		this.upgradingStream = upgradingStream;
 	}
 

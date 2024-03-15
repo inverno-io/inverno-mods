@@ -34,7 +34,7 @@ import io.inverno.mod.http.client.InterceptableResponseBody;
 
 /**
  * <p>
- * Generic {@link InterceptableResponse} implementation.
+ * An {@link InterceptableResponseBody} used to specify a response body or instrument the actual response body in an {@link ExchangeInterceptor}.
  * </p>
  * 
  * <p>
@@ -47,7 +47,7 @@ import io.inverno.mod.http.client.InterceptableResponseBody;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-public class GenericInterceptableResponseBody implements InterceptableResponseBody, ResponseBody {
+public class EndpointInterceptableResponseBody implements InterceptableResponseBody, ResponseBody {
 
 	private final InterceptableResponse response;
 	
@@ -58,28 +58,43 @@ public class GenericInterceptableResponseBody implements InterceptableResponseBo
 	private Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer;
 	private Publisher<ByteBuf> data;
 	
-	private ResponseBody receivedBody;
+	private ResponseBody connectedResponseBody;
 
 	/**
 	 * <p>
-	 * Creates a generic interceptable response body.
+	 * Creates an interceptable response body.
 	 * </p>
 	 * 
 	 * @param response the enclosig interceptable response
 	 */
-	public GenericInterceptableResponseBody(InterceptableResponse response) {
+	public EndpointInterceptableResponseBody(InterceptableResponse response) {
 		this.response = response;
+	}
+	/**
+	 * <p>
+	 * Validates that the actual response has not been received yet and that we can perform mutable operations.
+	 * </p>
+	 * 
+	 * @throws IllegalArgumentException if the response has been received
+	 */
+	private void checkNotConnected() throws IllegalArgumentException {
+		if(this.connectedResponseBody != null) {
+			throw new IllegalStateException("Response already received");
+		}
 	}
 	
 	/**
 	 * <p>
-	 * Injects the actual response body received from the endpoint.
+	 * Injects the actual response body either received from the endpoint or specified in the interceptor when the request was intercepted (i.e. interceptor returned an empty publisher).
 	 * </p>
 	 * 
-	 * @param receivedBody the response body received from the endpoint
+	 * @param connectedResponseBody the retained response body
 	 */
-	public void setReceivedResponseBody(ResponseBody receivedBody) {
-		this.receivedBody = receivedBody;
+	public void setConnectedResponseBody(ResponseBody connectedResponseBody) {
+		this.connectedResponseBody = connectedResponseBody;
+		if(this.transformer != null && this.connectedResponseBody != this) {
+			this.connectedResponseBody.transform(this.transformer);
+		}
 	}
 	
 	/**
@@ -97,9 +112,7 @@ public class GenericInterceptableResponseBody implements InterceptableResponseBo
 	 * @throws IllegalStateException if a body has already been received from the endpoint
 	 */
 	private void setData(Publisher<ByteBuf> data) throws IllegalStateException {
-		if(this.receivedBody != null) {
-			throw new IllegalStateException("Response already received");
-		}
+		this.checkNotConnected();
 		this.data = this.transformer != null ? this.transformer.apply(data) : data;
 	}
 	
@@ -136,11 +149,8 @@ public class GenericInterceptableResponseBody implements InterceptableResponseBo
 	}
 	
 	@Override
-	public GenericInterceptableResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
-		if(this.receivedBody != null) {
-			this.receivedBody.transform(transformer);
-			return this;
-		}
+	public EndpointInterceptableResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
+		this.checkNotConnected();
 		if(this.transformer == null) {
 			this.transformer = transformer;
 		}
@@ -162,7 +172,7 @@ public class GenericInterceptableResponseBody implements InterceptableResponseBo
 	@Override
 	public RawOutboundData raw() {
 		if(this.rawData == null) {
-			this.rawData = new GenericInterceptableResponseBody.RawOutboundData();
+			this.rawData = new EndpointInterceptableResponseBody.RawOutboundData();
 		}
 		return this.rawData;
 	}
@@ -171,7 +181,7 @@ public class GenericInterceptableResponseBody implements InterceptableResponseBo
 	@SuppressWarnings("unchecked")
 	public StringOutboundData string() {
 		if(this.stringData == null) {
-			this.stringData = new GenericInterceptableResponseBody.StringOutboundData();
+			this.stringData = new EndpointInterceptableResponseBody.StringOutboundData();
 		}
 		return this.stringData;
 	}
@@ -179,7 +189,7 @@ public class GenericInterceptableResponseBody implements InterceptableResponseBo
 	@Override
 	public InterceptableResponseBody.ResourceData resource() {
 		if(this.resourceData == null) {
-			this.resourceData = new GenericInterceptableResponseBody.ResourceData();
+			this.resourceData = new EndpointInterceptableResponseBody.ResourceData();
 		}
 		return this.resourceData;
 	}
@@ -202,15 +212,12 @@ public class GenericInterceptableResponseBody implements InterceptableResponseBo
 		@SuppressWarnings("unchecked")
 		@Override
 		public <T extends ByteBuf> void stream(Publisher<T> data) throws IllegalStateException {
-			GenericInterceptableResponseBody.this.setData((Publisher<ByteBuf>) data);
+			EndpointInterceptableResponseBody.this.setData((Publisher<ByteBuf>) data);
 		}
 
 		@Override
 		public Publisher<ByteBuf> stream() {
-			if(GenericInterceptableResponseBody.this.receivedBody != null) {
-				return GenericInterceptableResponseBody.this.receivedBody.raw().stream();
-			}
-			return GenericInterceptableResponseBody.this.getData();
+			return EndpointInterceptableResponseBody.this.getData();
 		}
 	}
 	
@@ -238,20 +245,17 @@ public class GenericInterceptableResponseBody implements InterceptableResponseBo
 			else {
 				data = Flux.from(value).map(chunk -> Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(chunk, Charsets.DEFAULT)));
 			}
-			GenericInterceptableResponseBody.this.setData(data);
+			EndpointInterceptableResponseBody.this.setData(data);
 		}
 		
 		@Override
 		public <T extends CharSequence> void value(T value) throws IllegalStateException {
-			GenericInterceptableResponseBody.this.setData(value != null ? Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value, Charsets.DEFAULT))) : Mono.empty());
+			EndpointInterceptableResponseBody.this.setData(value != null ? Mono.just(Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(value, Charsets.DEFAULT))) : Mono.empty());
 		}
 
 		@Override
 		public Publisher<CharSequence> stream() {
-			if(GenericInterceptableResponseBody.this.receivedBody != null) {
-				return GenericInterceptableResponseBody.this.receivedBody.string().stream();
-			}
-			return Flux.from(GenericInterceptableResponseBody.this.getData()).map(chunk -> chunk.toString(Charsets.DEFAULT));
+			return Flux.from(EndpointInterceptableResponseBody.this.getData()).map(chunk -> chunk.toString(Charsets.DEFAULT));
 		}
 	}
 	
@@ -274,19 +278,19 @@ public class GenericInterceptableResponseBody implements InterceptableResponseBo
 		 * @param resource the resource
 		 */
 		protected void populateHeaders(io.inverno.mod.base.resource.Resource resource) {
-			GenericInterceptableResponseBody.this.response.headers(h -> {
-				if(GenericInterceptableResponseBody.this.response.headers().getContentLength() == null) {
+			EndpointInterceptableResponseBody.this.response.headers(h -> {
+				if(EndpointInterceptableResponseBody.this.response.headers().getContentLength() == null) {
 					resource.size().ifPresent(h::contentLength);
 				}
 				
-				if(GenericInterceptableResponseBody.this.response.headers().contains(Headers.NAME_CONTENT_TYPE)) {
+				if(EndpointInterceptableResponseBody.this.response.headers().contains(Headers.NAME_CONTENT_TYPE)) {
 					String mediaType = resource.getMediaType();
 					if(mediaType != null) {
 						h.contentType(mediaType);
 					}
 				}
 				
-				if(GenericInterceptableResponseBody.this.response.headers().contains(Headers.NAME_LAST_MODIFIED)) {
+				if(EndpointInterceptableResponseBody.this.response.headers().contains(Headers.NAME_LAST_MODIFIED)) {
 					resource.lastModified().ifPresent(lastModified -> {
 						h.set(Headers.NAME_LAST_MODIFIED, Headers.FORMATTER_RFC_5322_DATE_TIME.format(lastModified.toInstant()));
 					});
@@ -302,7 +306,7 @@ public class GenericInterceptableResponseBody implements InterceptableResponseBo
 			// internal server error
 			if(resource.exists().orElse(true)) {
 				this.populateHeaders(resource);
-				GenericInterceptableResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource is not readable: " + resource.getURI())));
+				EndpointInterceptableResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource is not readable: " + resource.getURI())));
 			}
 			else {
 				throw new NotFoundException();

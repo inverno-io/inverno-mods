@@ -12,6 +12,7 @@
 [kqueue]: https://en.wikipedia.org/wiki/Kqueue
 [jdk-providers]: https://docs.oracle.com/en/java/javase/21/security/oracle-providers.html
 [alpn]: https://en.wikipedia.org/wiki/Application-Layer_Protocol_Negotiation
+[reactor-javadoc]: https://projectreactor.io/docs/core/release/api/
 
 # HTTP Client
 
@@ -23,7 +24,7 @@ It especially supports:
 - HTTP/2 over cleartext
 - WebSocket
 - HTTP Compression
-- TLS
+- TLS/mTLS
 - Interceptors
 - Strongly typed contexts
 - `application/x-www-form-urlencoded` body encoding
@@ -94,24 +95,24 @@ public class Main {
 	@Bean
 	public static class Example {
 		
-		private final Endpoint endpoint; 
+		private final Endpoint<ExchangeContext> endpoint; 
 		
 		public Example(HttpClient httpClient) {
-			this.endpoint = httpClient.endpoint("example.org", 80) // Creates the endpoint
-				.build();
+			this.endpoint = httpClient
+			    .endpoint("example.org", 80)
+				.build();                         // Create the endpoint
 		}
 		
 		public String get(String path) {
 			return this.endpoint
-				.request(Method.GET, path)                         // Creates the request 
-				.send()                                            // Sends the request
-				.flatMapMany(exchange -> exchange                  // Streams the response
-					.response()
+				.exchange(Method.GET, path)       // Create the client exchange
+				.flatMap(Exchange::response)
+				.flatMapMany(response -> response // Stream the response body
 					.body()
 					.string().stream()
 				)
-				.collect(Collectors.joining())                     // Aggregates the response
-				.block();
+				.collect(Collectors.joining())    // Aggregate the response
+				.block();                         // Send the request when the response publisher is subscribed
 		}
 	}
 
@@ -126,7 +127,7 @@ public class Main {
 }
 ```
 
-In above example, module *app_http_client* creates the `Example` bean which uses the `HttpClient` to obtain an `Endpoint` to connect to `example.org` in plain HTTP. A request to get the server root is then created from the endpoint and sent to the server, the corresponding response is finally displayed to the standard output and the module is stopped.
+In above example, module *app_http_client* creates the `Example` bean which uses the `HttpClient` to obtain an `Endpoint` to connect to `example.org` in plain HTTP. An exchange to get the server root is then created from the endpoint, the request is sent when the response publisher is subscribed and the response body eventually returned and displayed to the standard output before the module is finally stopped.
 
 ```plaintext
 13:52:32.850 [main] INFO  io.inverno.core.v1.Application - Inverno is starting...
@@ -589,7 +590,7 @@ Specific `HttpClientConfiguration` and/or an `NetClientConfiguration` can also b
 
 ```java
 HttpClient httpClient = ...
-Endpoint endpoint = httpClient.endpoint("example.org", 80) 
+Endpoint<ExchangeContext> endpoint = httpClient.endpoint("example.org", 80) 
 	.configuration(
 		HttpClientConfigurationLoader.load(baseConfiguration.http_client(), configuration -> configuration
 			.tls_enabled(true)
@@ -600,39 +601,46 @@ Endpoint endpoint = httpClient.endpoint("example.org", 80)
 	.build();
 ```
 
-An HTTP request can be created and sent fluently from the `Endpoint` instance:
+An HTTP exchange can be created and a request sent fluently from the `Endpoint` instance:
 
 ```java
-Endpoint endpoint = ...
 Flux<String> responseBody = endpoint
-	.request(Method.GET, "/")         // 1 
-	.send()                           // 2
-	.flatMapMany(exchange -> exchange // 3
-		.response()
+    .exchange()
+    .flatMap(exchange -> {
+        exchange.request()            // 1 
+            .method(Method.GET)
+            .path("/");
+        return exchange.response();   // 2
+    })
+	.flatMapMany(response -> response // 3
 		.body()
 		.string().stream()
-	);
+	)
+	.subscribe(bodyPart -> {});       // 2
 ```
 
-1. Create a `GET` request to get server's root path.
-2. Send the request to the server.
-3. When the client receives a response from the server the `Exchange` is emitted, exposing both the request and the response. 
+1. Populate the request to `GET` the server's root path.
+2. The actual request is only sent to the server when the exchange response publisher is subscribed.
+3. When the client receives a response from the server the `Response` is emitted.
 
-> HTTP client and server APIs are built on top of *http-base*  module API and as a result client and server `Exchange` API are very alike and used in a similar way.
+When the response publisher is subscribed, an HTTP connection is obtained from the Endpoint and the request eventually sent to the server. 
 
-It is also possible to create *unbound* HTTP requests from the `HttpClient` in order to send a single request to multiple endpoints:
+It is possible to specify the HTTP method and the request target directly when creating the exchange, above example could have also been written:
 
 ```java
-Endpoint endpoint1 = ...
-Endpoint endpoint2 = ...
-
-HttpClient.Request<ExchangeContext, Exchange<ExchangeContext>, InterceptableExchange<ExchangeContext>> request = client.request(Method.GET, "/");
-
-endpoint1.send(request);
-endpoint2.send(request);
+Flux<String> responseBody = endpoint
+    .exchange(Method.GET, "/")
+    .flatMap(Exchange::response)
+	.flatMapMany(response -> response
+		.body()
+		.string().stream()
+	)
+	.subscribe(bodyPart -> {});
 ```
 
-> Note that in case a body publisher is provided in the request, it will be subscribed multiple times (one per actual HTTP request). 
+> Note that when an exchange is created with no arguments it is set to send a `GET` request to the root path by default.
+
+> HTTP client and server APIs are built on top of *http-base*  module API and as a result client and server `Exchange` API are very alike and used in a similar way.
 
 ### Request
 
@@ -643,13 +651,16 @@ The `Request` allows to specify headers, cookies and the request body.
 Request headers can be added or set fluently using a configurator as follows:
 
 ```java
-Endpoint endpoint = ...
 endpoint
-	.request(Method.GET, "/")
-	.headers(headers -> headers
-		.contentType(MediaTypes.APPLICATION_JSON)
-		.add("SomeHeader", "SomeValue")
-	);
+	.exchange(Method.GET, "/")
+	.flatMap(exchange -> {
+        exchange.request().headers(headers -> headers
+            .contentType(MediaTypes.APPLICATION_JSON)
+            .add("SomeHeader", "SomeValue")
+        );
+        return exchange.response();
+	})
+	...
 ```
 
 #### Request cookies
@@ -657,14 +668,16 @@ endpoint
 Request cookies can be set fluently using a configurator as follows:
 
 ```java
-Endpoint endpoint = ...
 endpoint
-	.request(Method.GET, "/")
-	.headers(headers -> headers
+	.exchange(Method.GET, "/")
+	.flatMap(exchange -> {
+        exchange.request().headers(headers -> headers
 		.cookies(cookies -> cookies
 			.addCookie("cookie", "12345")
-		)
-	);
+		);
+		return exchange.response();
+	})
+	...
 ```
 
 #### Query parameters
@@ -672,11 +685,9 @@ endpoint
 Query parameters must be provided in the request target when creating the request, they are later exposed in the exchange as convertible parameters:
 
 ```java
-Endpoint endpoint = ...
 endpoint
-	.request(Method.GET, "/some/path/id?some-integer=123&some-string=abc")
-	.send()
-	.map(exchange -> {
+	.exchange(Method.GET, "/some/path/id?some-integer=123&some-string=abc")
+	.flatMap(exchange -> {
 		...
 		// get a specific query parameter, if there are multiple parameters with the same name, the first one is returned
 		Integer someInteger = exchange.request().queryParameters().get("some-integer").map(Parameter::asInteger).orElse(null);
@@ -687,6 +698,8 @@ endpoint
 		// get all query parameters
 		Map<String, List<Parameter>> queryParameters = exchange.request().queryParameters().getAll();
 		...
+		
+		return exchange.response();
 	})
 	...
 ```
@@ -696,7 +709,7 @@ endpoint
 > ```java
 > Map<String, ?> values = null;
 > endpoint
-> 	.request(
+> 	.exchange(
 > 		Method.GET, 
 > 		URIs.uri(
 > 			"/some/path/{id}?p1={p1}", 
@@ -711,27 +724,31 @@ endpoint
 
 The request body can also be specified fluently before sending the request. Since the HTTP client is fully reactive, the body must be specified as a publisher which is subscribed only when the request is sent to the server.
 
+> Note that the body is only made available when the request method allows it (i.e. `POST`, `PUT`, `PATCH` or `DELETE`).
+
 ##### String
 
 A simple string can be set in the request body as follows:
 
 ```java
-Endpoint endpoint = ...
 endpoint
-	.request(Method.GET, "/some/path")
-	.body(body -> body.string().value("Hello world!"))
-	.send()
+	.exchange(Method.POST, "/some/path")
+	.flatMap(exchange -> {
+	    exchange.request().body().get().string().value("Hello world!"));
+	    return exchange.response();
+	})
 	...
 ```
 
 The body can also be specified in a reactive way as a publisher of `CharSequence`:
 
 ```java
-Endpoint endpoint = ...
 endpoint
-	.request(Method.GET, "/some/path")
-	.body(body -> body.string().stream(Flux.just("Hello", " ", "world", "!")))
-	.send()
+	.exchange(Method.POST, "/some/path")
+	.flatMap(exchange -> {
+	    exchange.request().body().get().string().stream(Flux.just("Hello", " ", "world", "!"));
+	    return exchange.response();
+	})
 	...
 ```
 
@@ -742,16 +759,17 @@ Raw data (i.e. bytes) can also be sent in the request. As for the string request
 The body can be specified as a publisher of `ByteBuf`:
 
 ```java
-Endpoint endpoint = ...
 endpoint
-	.request(Method.GET, "/some/path")
-	.body(body -> body.raw().stream(
-		Flux.just(
-			Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello", Charsets.DEFAULT)),
-			Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(" world!", Charsets.DEFAULT))
-		)
-	))
-	.send()
+	.exchange(Method.POST, "/some/path")
+	.flatMap(exchange -> {
+	    exchange.request().body().get().raw().stream(
+		    Flux.just(
+			    Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello", Charsets.DEFAULT)),
+			    Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(" world!", Charsets.DEFAULT))
+		    )
+	    );
+	    return exchange.response();
+	})
 	...
 ```
 
@@ -762,11 +780,12 @@ endpoint
 A [resource](#resource-api) can be sent in a request body. When possible the client uses low-level ([zero-copy][zero-copy]) API for fast resource transfer.
 
 ```java
-Endpoint endpoint = ...
 endpoint
-	.request(Method.GET, "/some/path")
-	.body(body -> body.resource().value(new FileResource("/path/to/resource")))
-	.send()
+	.exchange(Method.GET, "/some/path")
+	.flatMap(exchange -> {
+	    exchange.request().body().get().resource().value(new FileResource("/path/to/resource"));
+	    return exchange.response();
+	})
 	...
 ```
 
@@ -779,19 +798,19 @@ The media type of the resource is resolved using a [media type service](#media-t
 HTML form data of the form of key/value pairs encoded in [application/x-www-form-urlencoded format][form-urlencoded] can be sent in the request body of a POST as follows:
 
 ```java
-Endpoint endpoint = ...
 endpoint
-	.request(Method.GET, "/some/path")
-	// param1=1234&param2=abc
-	.body(body -> body.urlEncoded()
-		.from((factory, data) -> data.stream(
-			Flux.just(
-				factory.create("param1", 1234), 
-				factory.create("param2", "abc")
-			)
-		))
-	)
-	.send()
+	.exchange(Method.POST, "/some/path")
+	.flatMap(exchange -> {
+	    // param1=1234&param2=abc
+	    exchange.request().body().get().urlEncoded()
+		    .from((factory, data) -> data.stream(
+			    Flux.just(
+				    factory.create("param1", 1234), 
+				    factory.create("param2", "abc")
+			    )
+		    ));
+	    return exchange.response();
+	})
 	...
 ```
 
@@ -803,28 +822,33 @@ When the request body must be split into multiple parts of different types or mo
 
 ```java
 endpoint
-	.request(Method.POST, "/some/path")
-	.body(body -> body.multipart().from((factory, output) -> output.stream(Flux.just(
-		factory.string(part -> part
-			.name("param1")
-			.headers(headers -> headers
-				.contentType(MediaTypes.TEXT_PLAIN)
-			)
-			.value("1234")
-		),
-		factory.string(part -> part
-			.name("param2")
-			.headers(headers -> headers
-				.contentType(MediaTypes.APPLICATION_JSON)
-			)
-			.value("{\"value\":123}")
-		),
-		factory.resource(part -> part
-			.name("file")
-			.value(new FileResource("/path/to/resource"))
-		)
-	))))
-	.send()
+	.exchange(Method.POST, "/some/path")
+	.flatMap(exchange -> {
+	    // param1=1234&param2=abc
+	    exchange.request().body().get().multipart()
+	        .from((factory, output) -> output.stream(Flux.just(
+		        factory.string(part -> part
+			        .name("param1")
+			        .headers(headers -> headers
+				        .contentType(MediaTypes.TEXT_PLAIN)
+			        )
+			        .value("1234")
+		        ),
+		        factory.string(part -> part
+			        .name("param2")
+			        .headers(headers -> headers
+				        .contentType(MediaTypes.APPLICATION_JSON)
+			        )
+			        .value("{\"value\":123}")
+		        ),
+		        factory.resource(part -> part
+			        .name("file")
+			        .value(new FileResource("/path/to/resource"))
+		        )
+	        )));
+	    return exchange.response();
+	})
+	...
 ```
 
 The media type of a resource part is resolved using a [media type service](#media-type-service) and automatically set in the part `content-type` header field. If no explicit `filename` parameter has been specified in the part, it is also automatically set to the filename of the resource.
@@ -839,40 +863,42 @@ Response headers can be obtained as string values as follows:
 
 ```java
 endpoint
-	.request(Method.GET, "/some/path")
-	.send()
-	.map(exchange -> {
+	.exchange(Method.GET, "/some/path")
+	.flatMap(Exchange::response)
+	.map(response -> {
 		// Returns the value of the first occurence of 'some-header' as string or returns null
-		String someHeaderValue = exchange.response().headers().get("some-header").orElse(null);
+		String someHeaderValue = response.headers().get("some-header").orElse(null);
 
 		// Returns all 'some-header' values as strings
-		List<String> someHeaderValues = exchange.response().headers().getAll("some-header");
+		List<String> someHeaderValues = response.headers().getAll("some-header");
 
 		// Returns all headers as strings
-		List<Map.Entry<String, String>> allHeadersValues = exchange.response().headers().getAll();
+		List<Map.Entry<String, String>> allHeadersValues = response.headers().getAll();
 		
 		...
-	});
+	})
+	...
 ```
 
 It is also possible to get headers as `Parameter` which allows to easily convert the value using a parameter converter:
 
 ```java
 endpoint
-	.request(Method.GET, "/some/path")
-	.send()
-	.map(exchange -> {
+	.exchange(Method.GET, "/some/path")
+	.flatMap(Exchange::response)
+	.map(response -> {
 		// Returns the value of the first occurence of 'some-header' as LocalDateTime or returns null
-		LocalDateTime someHeaderValue = exchange.response().headers().getParameter("some-header").map(Parameter::asLocalDateTime).orElse(null);
+		LocalDateTime someHeaderValue = response.headers().getParameter("some-header").map(Parameter::asLocalDateTime).orElse(null);
 
 		// Returns all 'some-header' values as LocalDateTime
-		List<LocalDateTime> someHeaderValues = exchange.response().headers().getAllParameter("some-header").stream().map(Parameter::asLocalDateTime).collect(Collectors.toList());
+		List<LocalDateTime> someHeaderValues = response.headers().getAllParameter("some-header").stream().map(Parameter::asLocalDateTime).collect(Collectors.toList());
 
 		// Returns all headers as parameters
-		List<Parameter> allHeadersParameters = exchange.response().headers().getAllParameter();
+		List<Parameter> allHeadersParameters = response.headers().getAllParameter();
 		
 		...
-	});
+	})
+	...
 ```
 
 The *http-client* module can also uses the [header service](#http-header-service) provided by the *http-base* module to decode HTTP headers:
@@ -880,10 +906,10 @@ The *http-client* module can also uses the [header service](#http-header-service
 ```java
 endpoint
 	.request(Method.GET, "/some/path")
-	.send()
-	.map(exchange -> {
+	.flatMap(Exchange::response)
+	.map(response -> {
 		// Returns the decoded 'content-type' header or null
-		Headers.ContentType contenType = exchange.request().headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
+		Headers.ContentType contenType = response.headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
 
 		String mediaType = contenType.getMediaType();
 		Charset charset = contenType.getCharset();
@@ -901,9 +927,9 @@ The response status is exposed as part of the headers:
 ```java
 endpoint
 	.request(Method.GET, "/some/path")
-	.send()
-	.map(exchange -> {
-		if(exchange.response().headers().getStatus().getCode() >= 400) {
+	.flatMap(Exchange::response)
+	.map(response -> {
+		if(response.headers().getStatus().getCode() >= 400) {
 			// Report Error
 			...
 		}
@@ -918,19 +944,20 @@ Response cookies can be obtained as convertible `Parameter` from the headers as 
 ```java
 endpoint
 	.request(Method.GET, "/some/path")
-	.send()
-	.map(exchange -> {
+	.flatMap(Exchange::response)
+	.map(response -> {
 		// Returns the value of the first occurence of 'some-cookie' as LocalDateTime or returns null
-		LocalDateTime someCookieValue = exchange.response().headers().cookies().get("some-cookie").map(Parameter::asLocalDateTime).orElse(null);
+		LocalDateTime someCookieValue = response.headers().cookies().get("some-cookie").map(Parameter::asLocalDateTime).orElse(null);
 
 		// Returns all 'some-cookie' values as LocalDateTime
-		List<LocalDateTime> someCookieValues = exchange.response().headers().cookies().getAll("some-cookie").stream().map(Parameter::asLocalDateTime).collect(Collectors.toList());
+		List<LocalDateTime> someCookieValues = response.headers().cookies().getAll("some-cookie").stream().map(Parameter::asLocalDateTime).collect(Collectors.toList());
 
 		// Returns all cookies as set-cookie parameters
-		Map<String, List<SetCookieParameter>> allCookieParameters = exchange.response().headers().cookies().getAll();
+		Map<String, List<SetCookieParameter>> allCookieParameters = response.headers().cookies().getAll();
 		
 		...
-	});
+	})
+	...
 ```
 
 `SetCookieParameter` extends both `SetCookie` and `Parameter` so as to also expose `set-cookie` header attributes as defined by [RFC 6265 Section 4.1][rfc-6265-section41]:
@@ -938,9 +965,9 @@ endpoint
 ```java
 endpoint
 	.request(Method.GET, "/some/path")
-	.send()
-	.map(exchange -> {
-		SetCookieParameter someCookie = exchange.response().headers().cookies().get("some-cookie").orElse(null);
+	.flatMap(Exchange::response)
+	.map(response -> {
+		SetCookieParameter someCookie = response.headers().cookies().get("some-cookie").orElse(null);
 
 		ZonedDateTime expires = someCookie.getExpires();
 		int maxAge = someCookie.getMaxAge();
@@ -967,9 +994,9 @@ The response body can be consumed as `CharSequence` as follows:
 ```java
 endpoint
 	.request(Method.GET, "/some/path")
-	.send()
-	.flatMapMany(exchange -> exchange.response().body().string().stream())
-	.subscribe(chunk -> {
+	.flatMap(Exchange::response)
+	.flatMapMany(response -> response.body().string().stream())
+	.subscribe(bodyPart -> {
 		// Do something usefull with the payload
 		...
 	});
@@ -984,8 +1011,8 @@ The response body can also be consumed as raw data as follows:
 ```java
 endpoint
 	.request(Method.GET, "/some/path")
-	.send()
-	.flatMapMany(exchange -> exchange.response().body().raw().stream())
+	.flatMap(Exchange::response)
+	.flatMapMany(response -> response.body().raw().stream())
 	.subscribe((ByteBuf chunk) -> {
 		try {
 			// Do something usefull with the payload
@@ -1001,91 +1028,109 @@ When response payload is consumed as a flow of `ByteBuf`, it is the responsabili
 
 ### Exchange interceptor
 
-The request can be intercepted using an `ExchangeInterceptor`. This can be used to preprocess a request before it is sent or the response before the exchange is emitted in the publisher returned by the `send()` method. For instance, it is then possible to add some security headers to the request, initialize some context (tracing, metrics...) or decorate the request and response bodies.
+An `ExchangeInterceptor` can be specified when building an `Endpoint`, it is applied to all exchange created with the resulting instance right before the request is sent to the server. An interceptor can be used to preprocess a request before it is sent or a response before it is emitted in the response publisher. For instance, it is possible to add some security headers to the request, initialize some context (tracing, metrics...) or decorate the request and response bodies.
 
-The `intercept()` method returns a `Mono` which makes it reactive and allows to invoke non-blocking operations before the request is actually sent.
+The `intercept()` method in the `ExchangeInterceptor` returns a `Mono` which makes it reactive and allows to invoke non-blocking operations before the request is actually sent.
 
-The following code shows how to intercept a request in order to log request and response bodies:
+The following code shows how to set an interceptor to log request and response bodies:
 
 ```java
-endpoint
-	.request(Method.POST, "/some/path")
-	.intercept(exchange -> {
+Endpoint<ExchangeContext> endpoint = httpClient
+	.endpoint("example.org", 80)
+	.interceptor(exchange -> {
 		final StringBuilder requestBodyBuilder = new StringBuilder();
 		exchange.request().body().ifPresent(body -> body.transform(data -> Flux.from(data)
 			.doOnNext(buf -> requestBodyBuilder.append(buf.toString(Charsets.UTF_8)))
-			.doOnComplete(() -> System.out.println("Request Body: \n" + requestBodyBuilder.toString()))
+			.doOnComplete(() -> LOGGER.info("Request Body: \n" + requestBodyBuilder.toString()))
 		));
 
 		final StringBuilder responseBodyBuilder = new StringBuilder();
 		exchange.response().body().transform(data -> Flux.from(data)
 			.doOnNext(buf -> responseBodyBuilder.append(buf.toString(Charsets.UTF_8)))
-			.doOnComplete(() -> System.out.println("Response Body: \n" + responseBodyBuilder.toString()))
+			.doOnComplete(() -> LOGGER.info("Response Body: \n" + responseBodyBuilder.toString()))
 		);
-
 		return Mono.just(exchange);
 	})
-	.body(body -> body.string().value("This is an example"))
-	.send()
-	...
+	.build();
+
+endpoint
+    .exchange(Method.POST, "/some/path")
+    .flatMap(exchange -> {
+        exchange.request().body().get().string().value("This is an example"));
+        return exchange.response();
+    })
+    .flatMapMany(response -> response.body().string().stream())
+    .collect(Collectors.joining())
+    .block(); // logs request and response body
 ```
 
-An interceptor also allows to abort sending the actual HTTP request by returning an empty publisher in which case the current interceptable exchange is emitted.
+An interceptor also allows to abort sending the actual HTTP request by returning an empty publisher in which case the current interceptable exchange with a locally populated response is emitted.
 
-The following example shows how to abort the HTTP request and return a response programmatically:
+The following example shows how to abort all HTTP requests to `/some/path` and return a local response:
 
 ```java
-endpoint
-	.request(Method.GET, "/some/path")
-	.intercept(exchange -> {
-		exchange.response()
-			.headers(headers -> headers
-				.status(Status.OK)
-			)
-			.body()
-				.string().value("You have been intercepted");
-		
-		return Mono.empty();
+Endpoint<ExchangeContext> endpoint = httpClient
+	.endpoint("example.org", 80)
+	.interceptor(exchange -> {
+	    if(exchange.request().getPath().equals("/some/path")) {
+	        // Abort '/some/path' requests only
+	        exchange.response()
+			    .headers(headers -> headers
+				    .status(Status.OK)
+			    )
+			    .body().string().value("You have been intercepted");
+	        return Mono.empty();
+	    }
+	    return Mono.just(exchange);
 	})
-	.send()
-	...
+	.build();
+
+endpoint
+    .exchange(Method.POST, "/some/path")
+    .flatMap(Exchange::response)
+    .flatMapMany(response -> response.body().string().stream())
+    .collect(Collectors.joining())
+    .block(); // returns "You have been intercepted"
 ```
 
 Mulitple interceptors can be chained by invoking `intercept()` method mutliple times:
 
 ```java
-endpoint
-	.request(Method.GET, "/some/path")
-	.intercept(interceptor1)
-	.intercept(interceptor2)
-	.intercept(interceptor3)
-	.send()
+Endpoint<ExchangeContext> endpoint = httpClient
+    .endpoint("example.org", 80)
+	.interceptor(interceptor1)
+	.interceptor(interceptor2)
+	.interceptor(interceptor3)
+	.build();
 	...
 ```
 
 ### Exchange context
 
-A strongly typed context is exposed in the `Exchange`, it allows to store or access data and to provide contextual operations throughout the process of the exchange. Such context can be provided when creating the request.
+A strongly typed context is exposed in the `Exchange`, it allows to store or access data and to provide contextual operations throughout the process of the exchange. Such context can be provided when creating the exchange, the actual context type is specified when creating the Endpoint.
 
 For instance, it is possible to propagate a security context from an `ExchangeInterceptor`:
 
 ```java
-SecurityContext context = ...
-endpoint
-	.request(Method.GET, path, context)
-	.intercept(exchange -> {
+Endpoint<SecurityContext> securedEndpoint = client.<SecurityContext>endpoint("secured", 8443)
+	.interceptor(exchange -> {
 		exchange.request().headers(headers -> headers
 			.add(Headers.NAME_AUTHORIZATION, "Bearer " + exchange.context().getToken())
 		);
 		return Mono.just(exchange);
 	})
-	.send()
+	.build();
+
+SecurityContext context = ...
+endpoint
+	.exchange(Method.GET, path, context)
+	.flatMap(Exchange::response)
 	...
 ```
 
-> Above code is a simple example, in an actual application interceptors would probably be defined in a separate component and applied to multiple requests.
+The advantage of using strongly types context is that the compiler can perform static type checking but also to avoid the usage of an untyped map of attributes which is less performant and provides no control over contextual data. Since the developer defines the context type, it can also embed specific logic.
 
-The advantage of using strongly types context is that the compiler can perform static type checking but also to avoid the usage of an untyped map of attributes which is less performant and provides no control over contextual data. Since the developer defines the context type, it can also expose specific logic.
+> The choice has been made to fix the context type on the endpoint following what was done in the Web server module: the exchange context is meant to be defined at application level covering all use cases as such there can only be one exchange type. We could have decided to fix the exchange type on the HttpClient itself but generics are not supported on beans, besides this gives us a little more flexibility anyway. 
 
 ### Connection pool
 
@@ -1108,13 +1153,13 @@ At any moment, the endpoint will try its best to optimize connection usage by di
 
 ### Error handling
 
-Http client errors such as connection errors, timeout errors or any Http client related errors are raised by the exchange `Mono` returned by the `send()` method, they can then be handled as for any error on a reactive stream:
+Http client errors such as connection errors, timeout errors or any Http client related errors are raised on the response publisher exposed on the exchange, they can then be handled as for any error on a reactive stream:
 
 ```java 
 endpoint
-	.request(Method.GET, "/some/path")
-	.send()
-	.flatMapMany(exchange -> exchange.response().body().string().stream())
+	.exchange(Method.GET, "/some/path")
+	.flatMap(Exchange::response)
+	.flatMapMany(response -> response.body().string().stream())
 	.collect(Collectors.joining())
 	.subscribe(
 		body -> {
@@ -1128,60 +1173,63 @@ Being reactive allows interesting constructs, such as retries on error:
 
 ```java
 endpoint
-	.request(Method.GET, "/some/path")
-	.send()
-	.retry(5)
+	.exchange(Method.GET, "/some/path")
+	.flatMap(Exchange::response)
+	.retry(5) // see 
 	...
 ```
 
+> Reactor library provides advanced retry strategies such as backoff, fixed delay, max in a row... Please refer to [Reactor API documentation][reactor-javadoc].
+
 ## WebSocket
 
-The *http-client* module allows to open WebSocket connections as defined by [RFC 6455][rfc-6455]. The `webSocketRequest()` method on the `Endpoint` is used to create a specific HTTP request sent to upgrade an HTTP/1.1 connection to the WebSocket protocol.
+The *http-client* module allows to open WebSocket connections as defined by [RFC 6455][rfc-6455]. The `webSocket()` method exposed in the `Exchange` returns a `WebSocketExchange` publisher which is used to send a specific HTTP request that upgrades a dedicated HTTP/1.1 connection to the WebSocket protocol. As for the response publisher, the WebSocket connection is only created when the WebSocket publisher is subscribed.
 
 A WebSocket connection can then be created as follows:
 
 ```java
 endpoint
-	.webSocketRequest("/some/path/ws")
-	.send()
+	.exchange("/some/path/ws")
+	.flatMap(Exchange::webSocket)
 	.subscribe(webSocketExchange -> {
 		// write to outbound and read from inbound...
 		...
 	});
 ```
 
-In case the server does not support or accept the upgrade a `WebSocketClientHandshakeException` is raised in the publisher returned in the `send()` method otherwise a `WebSocketExchange` is emitted exposing inbound and outbound frames or messages.
+In case the server does not support or accept the upgrade a `WebSocketClientHandshakeException` is raised in the `WebSocketExchange` publisher otherwise a `WebSocketExchange` is emitted exposing inbound and outbound frames or messages.
 
-> Note that a WebSocket connection lives outside of the connection pool managed by the endpoint and as such doesn't count in pool's capacity. It is closed as soon as the WebSocket is closed either by the client or the server.
+> Note that a WebSocket connection is dedicated and lives outside of the connection pool managed by the endpoint and as such doesn't count in pool's capacity. It is closed as soon as the WebSocket is closed either by the client or the server.
 
 As for a regular HTTP request, headers and cookies can be specified as follows:
 
 ```java
 endpoint
-	.webSocketRequest("/some/path/ws")
-	.headers(headers -> headers
-		.add("some-header", "value")
-		.cookies(cookies -> cookies.addCookie("some-cookie", 123))
-	)
-	.send()
+	.exchange("/some/path/ws")
+	.flatMap(exchange -> {
+	    exchange.request().headers(headers -> headers
+	        .add("some-header", "value")
+		    .cookies(cookies -> cookies.addCookie("some-cookie", 123))
+	    );
+	    return exchange.webSocket();
+	})
 	.subscribe(webSocketExchange -> {
 		...
 	});
 ```
 
-The WebSocket request can also specify the subprotocol to use by both client and server to communicate:
+The subprotocol to use by both client and server to communicate can also be specified:
 
 ```java
 endpoint
-	.webSocketRequest("/some/path/ws")
-	.subProtocol("xml")
-	.send()
+	.exchange("/some/path/ws")
+	.flatMap(exchange -> exchange.webSocket("xml"))
 	.subscribe(webSocketExchange -> {
 		...
 	});
 ```
 
-The upgrading HTTP request basically contains the requested subprotocol which must be supported by the server for the connection to be established. The WebSocket handshake eventually fails if the server doesn't support it and a `WebSocketClientHandshakeException` shall be raised.
+The upgrading HTTP request basically contains the requested subprotocol which must be supported by the server for the connection to be established. Depending on servers implementation, the WebSocket handshake might fail eventually if the server doesn't support it and a `WebSocketClientHandshakeException` shall be raised.
 
 ### WebSocket exchange
 
@@ -1231,8 +1279,8 @@ The following example shows how to logs every incoming frames:
 
 ```java
 endpoint
-	.webSocketRequest("/some/path/ws")
-	.send()
+	.exchange("/some/path/ws")
+	.flatMap(Exchange::webSocket)
 	.flatMapMany(wsExchange -> wsExchange.inbound().frames())
 	.subscribe(frame -> {
 		try {
@@ -1250,8 +1298,8 @@ The WebSocket protocol supports fragmentation as defined by [RFC 6455 Section 5.
 
 ```java
 endpoint
-	.webSocketRequest("/some/path/ws")
-	.send()
+	.exchange("/some/path/ws")
+	.flatMap(Exchange::webSocket)
 	.flatMapMany(wsExchange -> wsExchange.inbound().messages())
 	.flatMap(message -> {
 		// The stream of frames composing the message
@@ -1288,11 +1336,11 @@ In the following example, a sink is used to create the frame publisher specified
 ```java
 Sinks.Many<String> framesSink = Sinks.many().unicast().onBackpressureBuffer();
 endpoint
-	.webSocketRequest("/some/path/ws")
-	.send()
+	.exchange("/some/path/ws")
+	.flatMap(Exchange::webSocket)
 	.flatMapMany(wsExchange -> {
 		wsExchange.outbound()
-			.frames(factory -> framesSink.asFlux().map(factory::text));
+		    .frames(factory -> framesSink.asFlux().map(factory::text));
 		
 		return wsExchange.inbound().frames();
 	})
@@ -1316,11 +1364,12 @@ Likewise, a message publisher can be specfied to send messages composed of multi
 ```java
 Sinks.Many<List<String>> messagesSink = Sinks.many().unicast().onBackpressureBuffer();
 endpoint
-	.webSocketRequest("/some/path/ws")
-	.send()
+	.exchange("/some/path/ws")
+	.flatMap(Exchange::webSocket)
 	.flatMapMany(wsExchange -> {
-		wsExchange.outbound().closeOnComplete(true)
-			.messages(factory -> messagesSink.asFlux().map(Flux::fromIterable).map(factory::text));
+		wsExchange.outbound()
+		    .closeOnComplete(true)
+		    .messages(factory -> messagesSink.asFlux().map(Flux::fromIterable).map(factory::text));
 		
 		return wsExchange.inbound().messages();
 	})
@@ -1339,8 +1388,8 @@ By default, a close frame is automatically sent when the outbound publisher term
 ```java
 Sinks.Many<String> framesSink = Sinks.many().unicast().onBackpressureBuffer();
 endpoint
-	.webSocketRequest("/some/path/ws")
-	.send()
+	.exchange("/some/path/ws")
+	.flatMap(Exchange::webSocket)
 	.flatMapMany(wsExchange -> {
 		wsExchange.outbound()
 			.closeOnComplete(false)
