@@ -31,11 +31,9 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A {@link Resource} implementation that identifies resources by a URI of the
- * form <code>classpath:/path/to/resource</code> and looks up data on the
- * classpath.
+ * A {@link Resource} implementation that identifies resources by a URI of the form <code>classpath:/path/to/resource</code> and looks up data on the classpath.
  * </p>
- * 
+ *
  * <p>
  * A typical usage is:
  * </p>
@@ -71,11 +69,10 @@ public class ClasspathResource extends AbstractAsyncResource {
 	 * <p>
 	 * Creates a classpath resource with the specified URI.
 	 * </p>
-	 * 
+	 *
 	 * @param uri the resource URI
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  classpath resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a classpath resource
 	 */
 	public ClasspathResource(URI uri) throws IllegalArgumentException {
 		this(uri, (MediaTypeService)null);
@@ -83,16 +80,14 @@ public class ClasspathResource extends AbstractAsyncResource {
 	
 	/**
 	 * <p>
-	 * Creates a classpath resource with the specified URI that looks up data from
-	 * the specified class.
+	 * Creates a classpath resource with the specified URI that looks up data from the specified class.
 	 * </p>
-	 * 
+	 *
 	 * @param uri   the resource URI
 	 * @param clazz a class
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  classpath resource
-	 * 
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a classpath resource
+	 *
 	 * @see Class#getResource(String)
 	 */
 	public ClasspathResource(URI uri, Class<?> clazz) throws IllegalArgumentException {
@@ -101,32 +96,29 @@ public class ClasspathResource extends AbstractAsyncResource {
 
 	/**
 	 * <p>
-	 * Creates a classpath resource with the specified URI that looks up data from
-	 * the specified class loader.
+	 * Creates a classpath resource with the specified URI that looks up data from the specified class loader.
 	 * </p>
-	 * 
+	 *
 	 * @param uri         the resource URI
 	 * @param classLoader a class loader
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  classpath resource
-	 * 
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a classpath resource
+	 *
 	 * @see ClassLoader#getResource(String)
 	 */
 	public ClasspathResource(URI uri, ClassLoader classLoader) throws IllegalArgumentException {
 		this(uri, classLoader, null);
 	}
-	
+
 	/**
 	 * <p>
 	 * Creates a classpath resource with the specified URI and media type service.
 	 * </p>
-	 * 
+	 *
 	 * @param uri              the resource URI
 	 * @param mediaTypeService a media type service
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  classpath resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a classpath resource
 	 */
 	public ClasspathResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		this(uri, (ClassLoader)null, mediaTypeService);
@@ -134,16 +126,14 @@ public class ClasspathResource extends AbstractAsyncResource {
 	
 	/**
 	 * <p>
-	 * Creates a classpath resource with the specified URI and media type service
-	 * that looks up data from the specified class.
+	 * Creates a classpath resource with the specified URI and media type service that looks up data from the specified class.
 	 * </p>
-	 * 
+	 *
 	 * @param uri              the resource URI
 	 * @param clazz            a class
 	 * @param mediaTypeService a media type service
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  classpath resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a classpath resource
 	 */
 	public ClasspathResource(URI uri, Class<?> clazz, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
@@ -161,16 +151,14 @@ public class ClasspathResource extends AbstractAsyncResource {
 	
 	/**
 	 * <p>
-	 * Creates a classpath resource with the specified URI and media type service
-	 * that looks up data from the specified class loader.
+	 * Creates a classpath resource with the specified URI and media type service that looks up data from the specified class loader.
 	 * </p>
-	 * 
+	 *
 	 * @param uri              the resource URI
 	 * @param classLoader      a class loader
 	 * @param mediaTypeService a media type service
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  classpath resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a classpath resource
 	 */
 	public ClasspathResource(URI uri, ClassLoader classLoader, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
@@ -204,12 +192,12 @@ public class ClasspathResource extends AbstractAsyncResource {
 	 * <p>
 	 * Checks that the specified URI is a classpath resource URI.
 	 * </p>
-	 * 
+	 *
 	 * @param uri the uri to check
-	 * 
+	 *
 	 * @return the uri if it is a classpath resource URI
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  classpath resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a classpath resource
 	 */
 	public static URI checkUri(URI uri) throws IllegalArgumentException {
 		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_CLASSPATH) || uri.getAuthority() != null) {

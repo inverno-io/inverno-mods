@@ -29,11 +29,9 @@ import org.reactivestreams.Publisher;
 
 /**
  * <p>
- * A {@link Resource} implementation that identifies resources by a URI of the
- * form <code>file:/path/to/resource</code> and looks up data on the file
- * system.
+ * A {@link Resource} implementation that identifies resources by a URI of the form <code>file:/path/to/resource</code> and looks up data on the file system.
  * </p>
- * 
+ *
  * <p>
  * A typical usage is:
  * </p>
@@ -61,11 +59,10 @@ public class FileResource extends AbstractAsyncResource {
 	 * <p>
 	 * Creates a file resource with the specified URI.
 	 * </p>
-	 * 
+	 *
 	 * @param uri the resource URI
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  file resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a file resource
 	 */
 	public FileResource(URI uri) throws IllegalArgumentException {
 		this(uri, null);
@@ -108,25 +105,23 @@ public class FileResource extends AbstractAsyncResource {
 	 * <p>
 	 * Creates a file resource with the specified URI and media type service.
 	 * </p>
-	 * 
+	 *
 	 * @param uri              the resource URI
 	 * @param mediaTypeService a media type service
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  file resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a file resource
 	 */
 	public FileResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
 		this.pathResource = new PathResource(Path.of(FileResource.checkUri(uri)), mediaTypeService);
 	}
-	
+
 	/**
 	 * <p>
-	 * Creates a file resource from the specified file with the specified media type
-	 * service.
+	 * Creates a file resource from the specified file with the specified media type service.
 	 * </p>
-	 * 
-	 * @param file a file
+	 *
+	 * @param file             a file
 	 * @param mediaTypeService a media type service
 	 */
 	public FileResource(File file, MediaTypeService mediaTypeService) {
@@ -136,10 +131,9 @@ public class FileResource extends AbstractAsyncResource {
 	
 	/**
 	 * <p>
-	 * Creates a file resource from the specified path name with the specified media type
-	 * service.
+	 * Creates a file resource from the specified path name with the specified media type service.
 	 * </p>
-	 * 
+	 *
 	 * @param pathname         a path to a file
 	 * @param mediaTypeService a media type service
 	 */
@@ -149,10 +143,9 @@ public class FileResource extends AbstractAsyncResource {
 	
 	/**
 	 * <p>
-	 * Creates a file resource from the specified path with the specified media type
-	 * service.
+	 * Creates a file resource from the specified path with the specified media type service.
 	 * </p>
-	 * 
+	 *
 	 * @param path             a path to a file
 	 * @param mediaTypeService a media type service
 	 */
@@ -165,7 +158,7 @@ public class FileResource extends AbstractAsyncResource {
 	 * <p>
 	 * Creates a file resource from the specified path resource with the specified media type service.
 	 * </p>
-	 * 
+	 *
 	 * @param pathResource     a path resource
 	 * @param mediaTypeService a media type service
 	 */
@@ -178,12 +171,12 @@ public class FileResource extends AbstractAsyncResource {
 	 * <p>
 	 * Checks that the specified URI is a file resource URI.
 	 * </p>
-	 * 
+	 *
 	 * @param uri the uri to check
-	 * 
+	 *
 	 * @return the uri if it is a file resource URI
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  file resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a file resource
 	 */
 	public static URI checkUri(URI uri) throws IllegalArgumentException {
 		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_FILE)) {

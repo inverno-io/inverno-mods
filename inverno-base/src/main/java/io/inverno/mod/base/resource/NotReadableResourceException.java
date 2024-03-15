@@ -17,7 +17,7 @@ package io.inverno.mod.base.resource;
 
 /**
  * <p>
- * 
+ * Thrown when trying to read a resource that is not readable.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -25,21 +25,59 @@ package io.inverno.mod.base.resource;
  */
 public class NotReadableResourceException extends ResourceException {
 
+	private static final long serialVersionUID = 1L;
+	
+	/**
+	 * <p>
+	 * Creates a not readable resource exception.
+	 * </p>
+	 */
 	public NotReadableResourceException() {
 	}
 
+	/**
+	 * <p>
+	 * Creates a not readable resource exception with the specified message.
+	 * </p>
+	 * 
+	 * @param message the message
+	 */
 	public NotReadableResourceException(String message) {
 		super(message);
 	}
-
+	/**
+	 * <p>
+	 * Creates a not readable resource exception with the specified cause.
+	 * </p>
+	 * 
+	 * @param cause the cause
+	 */
 	public NotReadableResourceException(Throwable cause) {
 		super(cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates a not readable resource exception with the specified message and cause.
+	 * </p>
+	 *
+	 * @param message the message
+	 * @param cause   the cause
+	 */
 	public NotReadableResourceException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
+	/**
+	 * <p>
+	 * Creates a not readable resource exception with the specified message, cause, suppression enabled or disabled and writable stack trace enabled or disabled.
+	 * </p>
+	 *
+	 * @param message            the message
+	 * @param cause              the cause
+	 * @param enableSuppression  true to enable suppression, false otherwise
+	 * @param writableStackTrace true to make the stack trace writable, false otherwise
+	 */
 	public NotReadableResourceException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}

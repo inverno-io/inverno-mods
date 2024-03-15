@@ -29,10 +29,9 @@ import java.util.Optional;
 
 /**
  * <p>
- * A {@link Resource} implementation that identifies resources by a path and
- * looks up data on the file system.
+ * A {@link Resource} implementation that identifies resources by a path and looks up data on the file system.
  * </p>
- * 
+ *
  * <p>
  * A typical usage is:
  * </p>
@@ -66,7 +65,7 @@ public class PathResource extends AbstractAsyncResource {
 	 * <p>
 	 * Creates a path resource with the specified path and media type service.
 	 * </p>
-	 * 
+	 *
 	 * @param path             the resource path
 	 * @param mediaTypeService the media type service
 	 */

@@ -25,15 +25,14 @@ import java.nio.file.spi.FileTypeDetector;
  * <p>
  * A generic {@link MediaTypeService} implementation.
  * </p>
- * 
+ *
  * <p>
- * This implementation relies on the installed {@link FileTypeDetector}
- * implementation to determine the media type of a file.
+ * This implementation relies on the installed {@link FileTypeDetector} implementation to determine the media type of a file.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see Files#probeContentType(Path)
  */
 public class GenericMediaTypeService implements MediaTypeService {

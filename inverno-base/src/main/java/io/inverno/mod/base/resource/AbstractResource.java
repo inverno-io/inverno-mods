@@ -72,6 +72,7 @@ public abstract class AbstractResource implements Resource {
 	 * </p>
 	 * 
 	 * @param path the path to sanitize
+	 * 
 	 * @return a sanitized representation of the path
 	 */
 	protected static String pathToSanitizedString(Path path) {
