@@ -91,7 +91,7 @@ public class JarResource extends ZipResource {
 	}
 	
 	@Override
-	public Resource resolve(Path path) {
+	public Resource resolve(Path path) throws ResourceException {
 		try {
 			URI resolvedURI = new URI(JarResource.SCHEME_JAR, this.zipUri + "!" + pathToSanitizedString(this.resourcePath.resolve(path)), null);
 			JarResource resolvedResource = new JarResource(resolvedURI, this.getMediaTypeService());
@@ -99,7 +99,7 @@ public class JarResource extends ZipResource {
 			return resolvedResource;
 		} 
 		catch (URISyntaxException e) {
-			throw new IllegalArgumentException("Invalid path", e);
+			throw new ResourceException("Invalid path", e);
 		}
 	}
 }

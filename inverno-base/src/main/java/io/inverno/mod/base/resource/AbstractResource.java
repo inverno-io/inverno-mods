@@ -88,7 +88,7 @@ public abstract class AbstractResource implements Resource {
 	 * 
 	 * @param mediaTypeService the media type service to set
 	 */
-	public void setMediaTypeService(MediaTypeService mediaTypeService) {
+	public final void setMediaTypeService(MediaTypeService mediaTypeService) {
 		this.mediaTypeService = mediaTypeService;
 	}
 	
@@ -104,7 +104,7 @@ public abstract class AbstractResource implements Resource {
 	}
 	
 	@Override
-	public String getMediaType() {
+	public String getMediaType() throws ResourceException {
 		return this.getMediaTypeService().getForUri(this.getURI());
 	}
 }

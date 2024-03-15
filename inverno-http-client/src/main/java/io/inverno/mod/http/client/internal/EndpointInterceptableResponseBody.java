@@ -306,7 +306,7 @@ public class EndpointInterceptableResponseBody implements InterceptableResponseB
 			// internal server error
 			if(resource.exists().orElse(true)) {
 				this.populateHeaders(resource);
-				EndpointInterceptableResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource is not readable: " + resource.getURI())));
+				EndpointInterceptableResponseBody.this.setData(resource.read());
 			}
 			else {
 				throw new NotFoundException();

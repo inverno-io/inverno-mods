@@ -27,13 +27,11 @@ import org.reactivestreams.Publisher;
 
 /**
  * <p>
- * A resource represents an abstraction of an actual resource like a file, an
- * entry in a zip/jar file, a on the classpath...
+ * A resource represents an abstraction of an actual resource like a file, an entry in a zip/jar file, a on the classpath...
  * </p>
  * 
  * <p>
- * Resource data can be read using a {@link ReadableByteChannel} assuming the
- * resource is readable:
+ * Resource data can be read using a {@link ReadableByteChannel} assuming the resource is readable:
  * </p>
  * 
  * <pre>{@code
@@ -62,32 +60,27 @@ import org.reactivestreams.Publisher;
  * 
  * <pre>{@code
  * try(Resource resource = new FileResource("/path/to/resource")) {
- *     String content = resource.read()
- *         .map(data -> {
- *             return data
- *                 .map(chunk -> {
- *                     try {
- *                         return chunk.toString(Charsets.UTF_8);
- *                     }
- *                     finally {
- *                         chunk.release();
- *                     }
- *                 })
- *                 .collect(Collectors.joining())
- *                 .block();
- *             })
- *             .orElseThrow(() -> new IllegalStateException("Resource is not readable"));
+ *     String content = Flux.from(resource.read())
+ *         .map(chunk -> {
+ *             try {
+ *                 return chunk.toString(Charsets.UTF_8);
+ *             }
+ *             finally {
+ *                 chunk.release();
+ *             }
+ *         })
+ *         .collect(Collectors.joining())
+ *         .block();
  * }
  * }</pre>
  * 
  * <p>
- * Data can be written to a resource using a {@link WritableByteChannel}
- * assuming the resource is writable:
+ * Data can be written to a resource using a {@link WritableByteChannel} assuming the resource is writable:
  * </p>
  * 
  * <pre>{@code
  * try (Resource resource = new FileResource("/path/to/file")) {
- *     resource.openReadableByteChannel()
+ *     resource.openWritableByteChannel()
  *         .ifPresentOrElse(
  *             channel -> {
  *                 try {
@@ -111,13 +104,9 @@ import org.reactivestreams.Publisher;
  * 
  * <pre>{@code
  * try (Resource resource = new FileResource("/path/to/resource")) {
- *     resource.write(Flux.just(Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer("Hello world".getBytes(Charsets.UTF_8)))))
- *         .ifPresentOrElse(result -> {
- *             int nbBytes = result.collect(Collectors.summingInt(i -> i)).block();
- *             System.out.println(nbBytes + " bytes written");
- *         }, () -> {
- *             throw new IllegalStateException("Resource is not writable");
- *         });
+ *     int nbBytes = Flux.from(resource.write(Flux.just(Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer("Hello world".getBytes(Charsets.UTF_8))))))
+ *         .collect(Collectors.summingInt(i -> i)).block();
+ *     System.out.println(nbBytes + " bytes written");
  * }
  * }</pre>
  * 
@@ -125,28 +114,6 @@ import org.reactivestreams.Publisher;
  * @since 1.0
  */
 public interface Resource extends AutoCloseable {
-
-	/**
-	 * <p>
-	 * Returns the resource file name.
-	 * </p>
-	 * 
-	 * @return the resource file name
-	 * @throws ResourceException if there was an error resolving the resource file
-	 *                           name
-	 */
-	String getFilename() throws ResourceException;
-	
-	/**
-	 * <p>
-	 * Returns the resource media type.
-	 * </p>
-	 * 
-	 * @return the resource media type or null if it couldn't be determined
-	 * @throws ResourceException if there was an error resolving the resource media
-	 *                           type
-	 */
-	String getMediaType() throws ResourceException;
 	
 	/**
 	 * <p>Returns the resource URI.</p>
@@ -157,18 +124,38 @@ public interface Resource extends AutoCloseable {
 	
 	/**
 	 * <p>
+	 * Returns the resource file name.
+	 * </p>
+	 *
+	 * @return the resource file name
+	 *
+	 * @throws ResourceException if there was an error resolving the resource file name
+	 */
+	String getFilename() throws ResourceException;
+	
+	/**
+	 * <p>
+	 * Returns the resource media type.
+	 * </p>
+	 *
+	 * @return the resource media type or null if it couldn't be determined
+	 *
+	 * @throws ResourceException if there was an error resolving the resource media type
+	 */
+	String getMediaType() throws ResourceException;
+	
+	/**
+	 * <p>
 	 * Determines whether this resource represents a file.
 	 * </p>
-	 * 
+	 *
 	 * <p>
-	 * A file resource is a resource that can be accessed through a
-	 * {@link FileChannel}.
+	 * A file resource is a resource that can be accessed through a {@link FileChannel}.
 	 * </p>
-	 * 
-	 * @return an optional returning true if the resource is a file, false otherwise
-	 *         or an empty optional if it couldn't be determined
-	 * @throws ResourceException if there was an error determining whether the
-	 *                           resource is a file
+	 *
+	 * @return an optional returning true if the resource is a file, false otherwise or an empty optional if it couldn't be determined
+	 *
+	 * @throws ResourceException if there was an error determining whether the resource is a file
 	 */
 	Optional<Boolean> isFile() throws ResourceException;
 	
@@ -176,11 +163,10 @@ public interface Resource extends AutoCloseable {
 	 * <p>
 	 * Determines whether the resource exists.
 	 * </p>
-	 * 
-	 * @return an optional returning true if the resource exists, false otherwise
-	 *         or an empty optional if existence couldn't be determined
-	 * @throws ResourceException if there was an error determining resource
-	 *                           existence
+	 *
+	 * @return an optional returning true if the resource exists, false otherwise or an empty optional if existence couldn't be determined
+	 *
+	 * @throws ResourceException if there was an error determining resource existence
 	 */
 	Optional<Boolean> exists() throws ResourceException;
 
@@ -188,11 +174,10 @@ public interface Resource extends AutoCloseable {
 	 * <p>
 	 * Returns the resource last modified time stamp.
 	 * </p>
-	 * 
-	 * @return an optional returning the resource last modified time stamp or an
-	 *         empty optional if it couldn't be determined
-	 * @throws ResourceException if there was an error resolving resource last
-	 *                           modified time stamp
+	 *
+	 * @return an optional returning the resource last modified time stamp or an empty optional if it couldn't be determined
+	 *
+	 * @throws ResourceException if there was an error resolving resource last modified time stamp
 	 */
 	Optional<FileTime> lastModified() throws ResourceException;
 	
@@ -200,11 +185,10 @@ public interface Resource extends AutoCloseable {
 	 * <p>
 	 * Returns the resource content size.
 	 * </p>
-	 * 
-	 * @return an optional returning the resource content size or an empty optional
-	 *         if it couldn't be determined
-	 * @throws ResourceException if there was an error resolving resource content
-	 *                           size
+	 *
+	 * @return an optional returning the resource content size or an empty optional if it couldn't be determined
+	 *
+	 * @throws ResourceException if there was an error resolving resource content size
 	 */
 	Optional<Long> size() throws ResourceException;
 	
@@ -213,10 +197,13 @@ public interface Resource extends AutoCloseable {
 	 * Opens a readable byte channel to the resource.
 	 * </p>
 	 * 
-	 * @return an optional returning a readable byte channel or an empty optional if
-	 *         the resource is not readable
-	 * @throws ResourceException if there was an error opening the readable byte
-	 *                           channel
+	 * <p>
+	 * The caller is responsible for closing the channel to prevent resource leak.
+	 * </p>
+	 *
+	 * @return an optional returning a readable byte channel or an empty optional if the resource is not readable
+	 *
+	 * @throws ResourceException if there was an error opening the readable byte channel
 	 */
 	Optional<ReadableByteChannel> openReadableByteChannel() throws ResourceException;
 	
@@ -225,10 +212,13 @@ public interface Resource extends AutoCloseable {
 	 * Opens a writable byte channel to the resource.
 	 * </p>
 	 * 
-	 * @return an optional returning a writable byte channel or an empty optional if
-	 *         the resource is not writable
-	 * @throws ResourceException if there was an error opening the writable byte
-	 *                           channel
+	 * <p>
+	 * The caller is responsible for closing the channel to prevent resource leak.
+	 * </p>
+	 *
+	 * @return an optional returning a writable byte channel or an empty optional if the resource is not writable
+	 *
+	 * @throws ResourceException if there was an error opening the writable byte channel
 	 */
 	default Optional<WritableByteChannel> openWritableByteChannel() throws ResourceException {
 		return this.openWritableByteChannel(false);
@@ -236,16 +226,18 @@ public interface Resource extends AutoCloseable {
 	
 	/**
 	 * <p>
-	 * Opens a writable byte channel to the resource that will append or not content
-	 * to an existing resource.
+	 * Opens a writable byte channel to the resource that will append or not content to an existing resource.
 	 * </p>
 	 * 
+	 * <p>
+	 * The caller is responsible for closing the channel to prevent resource leak.
+	 * </p>
+	 *
 	 * @param append true to append content to an existing resource
-	 * 
-	 * @return an optional returning a writable byte channel or an empty optional if
-	 *         the resource is not writable
-	 * @throws ResourceException if there was an error opening the writable byte
-	 *                           channel
+	 *
+	 * @return an optional returning a writable byte channel or an empty optional if the resource is not writable
+	 *
+	 * @throws ResourceException if there was an error opening the writable byte channel
 	 */
 	default Optional<WritableByteChannel> openWritableByteChannel(boolean append) throws ResourceException {
 		return this.openWritableByteChannel(append, true);
@@ -253,17 +245,19 @@ public interface Resource extends AutoCloseable {
 	
 	/**
 	 * <p>
-	 * Opens a writable byte channel to the resource that will append or not content
-	 * to an existing resource and create or not missing parent directories.
+	 * Opens a writable byte channel to the resource that will append or not content to an existing resource and create or not missing parent directories.
 	 * </p>
 	 * 
+	 * <p>
+	 * The caller is responsible for closing the channel to prevent resource leak.
+	 * </p>
+	 *
 	 * @param append        true to append content to an existing resource
 	 * @param createParents true to create missing parent directories
-	 * 
-	 * @return an optional returning a writable byte channel or an empty optional if
-	 *         the resource is not writable
-	 * @throws ResourceException if there was an error opening the writable byte
-	 *                           channel
+	 *
+	 * @return an optional returning a writable byte channel or an empty optional if the resource is not writable
+	 *
+	 * @throws ResourceException if there was an error opening the writable byte channel
 	 */
 	Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) throws ResourceException;
 	
@@ -271,12 +265,13 @@ public interface Resource extends AutoCloseable {
 	 * <p>
 	 * Reads the resource in a reactive way.
 	 * </p>
-	 * 
-	 * @return an optional returning a stream of ByteBuf or an empty optional if the
-	 *         resource is not readable
-	 * @throws ResourceException if there was an error reading the resource
+	 *
+	 * @return a stream of ByteBuf
+	 *
+	 * @throws NotReadableResourceException if the resource is not readable
+	 * @throws ResourceException            if there was an error reading the resource
 	 */
-	Optional<Publisher<ByteBuf>> read() throws ResourceException;
+	Publisher<ByteBuf> read() throws NotReadableResourceException, ResourceException;
 	
 	/**
 	 * <p>
@@ -285,81 +280,80 @@ public interface Resource extends AutoCloseable {
 	 * 
 	 * @param data the stream of data to write
 	 * 
-	 * @return an optional returning a stream of integer emitting number of bytes
-	 *         written or an empty optional if the resource is not writable
-	 * @throws ResourceException if there was an error writing to the resource
+	 * @return a stream of integer emitting number of bytes written
+	 * 
+	 * @throws NotWritableResourceException if the resource is not writable
+	 * @throws ResourceException            if there was an error writing to the resource
 	 */
-	default Optional<Publisher<Integer>> write(Publisher<ByteBuf> data) throws ResourceException {
+	default Publisher<Integer> write(Publisher<ByteBuf> data) throws NotWritableResourceException, ResourceException {
 		return this.write(data, false);
 	}
 	
 	/**
 	 * <p>
-	 * Writes content to the resource in a reactive way appending or not content to
-	 * an existing resource.
+	 * Writes content to the resource in a reactive way appending or not content to an existing resource.
 	 * </p>
-	 * 
+	 *
 	 * @param data   the stream of data to write
 	 * @param append true to append content to an existing resource
+	 *
+	 * @return a stream of integer emitting number of bytes written
 	 * 
-	 * @return an optional returning a stream of integer emitting number of bytes
-	 *         written or an empty optional if the resource is not writable
+	 * @throws NotWritableResourceException if the resource is not writable
 	 * @throws ResourceException if there was an error writing to the resource
 	 */
-	default Optional<Publisher<Integer>> write(Publisher<ByteBuf> data, boolean append) throws ResourceException {
+	default Publisher<Integer> write(Publisher<ByteBuf> data, boolean append) throws NotWritableResourceException, ResourceException {
 		return this.write(data, append, true);
 	}
 	
 	/**
 	 * <p>
-	 * Writes content to the resource in a reactive way appending or not content to
-	 * an existing resource and create or not missing parent directories.
+	 * Writes content to the resource in a reactive way appending or not content to an existing resource and create or not missing parent directories.
 	 * </p>
-	 * 
+	 *
 	 * @param data          the stream of data to write
 	 * @param append        true to append content to an existing resource
 	 * @param createParents true to create missing parent directories
-	 * 
-	 * @return an optional returning a stream of integer emitting number of bytes
-	 *         written or an empty optional if the resource is not writable
+	 *
+	 * @return a stream of integer emitting number of bytes written
+	 *
 	 * @throws ResourceException if there was an error writing to the resource
 	 */
-	Optional<Publisher<Integer>> write(Publisher<ByteBuf> data, boolean append, boolean createParents) throws ResourceException;
+	Publisher<Integer> write(Publisher<ByteBuf> data, boolean append, boolean createParents) throws ResourceException;
 	
 	/**
 	 * <p>
 	 * Deletes the resource.
 	 * </p>
-	 * 
+	 *
 	 * @return true if the resource had been deleted, false otherwise
+	 *
 	 * @throws ResourceException if there was an error deleting to the resource
 	 */
 	boolean delete() throws ResourceException;
 	
 	/**
 	 * <p>
-	 * Resolves the specified URI against the resource URI as defined by
-	 * {@link Path#resolve(Path)}.
+	 * Resolves the specified URI against the resource URI as defined by {@link Path#resolve(Path)}.
 	 * </p>
-	 * 
+	 *
 	 * @param path the path to resolve
-	 * 
-	 * @return a new resource resulting from the resolution of the specified path
-	 *         against the resource
+	 *
+	 * @return a new resource resulting from the resolution of the specified path against the resource
+	 *
 	 * @throws ResourceException if there was an error resolving the resource
 	 */
 	Resource resolve(Path path) throws ResourceException;
 	
 	/**
 	 * <p>
-	 * Resolves the specified path against the resource URI as defined by
-	 * {@link Path#resolve(String)}.
+	 * Resolves the specified path against the resource URI as defined by {@link Path#resolve(String)}.
 	 * </p>
-	 * 
+	 *
 	 * @param path the path to resolve
-	 * 
-	 * @return a new resource resulting from the resolution of the specified path
-	 *         against the resource
+	 *
+	 * @return a new resource resulting from the resolution of the specified path against the resource
+	 *
 	 * @throws ResourceException if there was an error resolving the resource
 	 */
 	default Resource resolve(String path) throws ResourceException {

@@ -31,8 +31,7 @@ import java.util.Optional;
 
 /**
  * <p>
- * A {@link Resource} implementation that identifies resources by a URL that
- * looks up data by opening a {@link URLConnection}.
+ * A {@link Resource} implementation that identifies resources by a URL that looks up data by opening a {@link URLConnection}.
  * </p>
  * 
  * <p>
@@ -56,6 +55,8 @@ public class URLResource extends AbstractAsyncResource {
 	private URL url;
 	
 	private Optional<URLConnection> connection;
+	
+	private ResourceException resolutionError;
 	
 	/**
 	 * <p>
@@ -126,19 +127,28 @@ public class URLResource extends AbstractAsyncResource {
 	}
 
 	private Optional<URLConnection> resolve() {
+		if(this.resolutionError != null) {
+			throw this.resolutionError;
+		}
 		if(this.connection == null) {
 			try {
 				this.connection = Optional.of(this.url.openConnection());
 			}
 			catch (IOException e) {
-				throw new ResourceException(e);
+				this.resolutionError = new ResourceException(e);
+				throw this.resolutionError;
 			}
 		}
 		return this.connection;
 	}
 	
 	@Override
-	public String getFilename() {
+	public URI getURI() {
+		return this.uri;
+	}
+	
+	@Override
+	public String getFilename() throws ResourceException {
 		String path = this.uri.getPath();
 		int lastSlashIndex = path.lastIndexOf("/");
 		if(lastSlashIndex != -1) {
@@ -150,87 +160,76 @@ public class URLResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public URI getURI() {
-		return this.uri;
-	}
-
-	@Override
-	public Optional<Boolean> exists() {
+	public Optional<Boolean> exists() throws ResourceException {
 		return Optional.empty();
 	}
 	
 	@Override
-	public Optional<Boolean> isFile() {
+	public Optional<Boolean> isFile() throws ResourceException {
 		return Optional.empty();
 	}
 
 	@Override
-	public Optional<FileTime> lastModified() {
-		Optional<URLConnection> c = this.resolve();
-		if(c.isPresent()) {
-			long lastModified = c.get().getLastModified();
+	public Optional<FileTime> lastModified() throws ResourceException {
+		return this.resolve().map(c -> {
+			long lastModified = c.getLastModified();
 			if(lastModified > 0) {
-				return Optional.of(FileTime.fromMillis(lastModified));
+				return FileTime.fromMillis(lastModified);
 			}
-		}
-		return Optional.empty();
+			return null;
+		});
 	}
 	
 	@Override
-	public Optional<Long> size() {
-		Optional<URLConnection> c = this.resolve();
-		if(c.isPresent()) {
-			long contentLength = c.get().getContentLengthLong();
+	public Optional<Long> size() throws ResourceException {
+		return this.resolve().map(c -> {
+			long contentLength = c.getContentLengthLong();
 			if(contentLength >= 0) {
-				return Optional.of(contentLength);
+				return contentLength;
 			}
-		}
-		return Optional.empty();
+			return null;
+		});
 	}
 
 	@Override
-	public Optional<ReadableByteChannel> openReadableByteChannel() {
-		Optional<URLConnection> c = this.resolve();
-		if(c.isPresent()) {
+	public Optional<ReadableByteChannel> openReadableByteChannel() throws ResourceException {
+		return this.resolve().map(c -> {
 			try {
-				return Optional.of(Channels.newChannel(c.get().getInputStream()));
+				return Channels.newChannel(c.getInputStream());
 			}
 			catch (IOException e) {
-				// The URL is not readable
-				// TODO log debug
-				return Optional.empty();
-			} 
-		}
-		return Optional.empty();
+				throw new ResourceException(e);
+			}
+			finally {
+				// We must reset the connection to allow for future read since 1 connection is for 1 request
+				this.connection = null;
+			}
+		});
 	}
 
 	@Override
-	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) {
-		Optional<URLConnection> c = this.resolve();
-		if(c.isPresent()) {
+	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) throws ResourceException {
+		return this.resolve().map(c -> {
 			try {
-				return Optional.of(Channels.newChannel(c.get().getOutputStream()));
+				return Channels.newChannel(c.getOutputStream());
 			}
 			catch (IOException e) {
-				// The URL is not writable
-				// TODO log debug
-				return Optional.empty();
+				throw new ResourceException(e);
 			}
-		}
-		return Optional.empty();
+			finally {
+				// We must reset the connection to allow for future write since 1 connection is for 1 request
+				this.connection = null;
+			}
+		});
 	}
 	
 	@Override
-	public boolean delete() {
+	public boolean delete() throws ResourceException {
 		return false;
 	}
 
 	@Override
-	public void close() {
-	}
-	
-	@Override
-	public URLResource resolve(Path path) {
+	public URLResource resolve(Path path) throws ResourceException {
 		try {
 			String resolvedPath;
 			if(IS_WINDOWS_PATH && "file".equalsIgnoreCase(this.uri.getScheme())) {
@@ -252,5 +251,9 @@ public class URLResource extends AbstractAsyncResource {
 		catch (URISyntaxException e) {
 			throw new IllegalArgumentException("Invalid path", e);
 		}
+	}
+	
+	@Override
+	public void close() {
 	}
 }

@@ -73,7 +73,8 @@ public class NativeResource extends AbstractAsyncResource {
 	
 	private Optional<URL> resourceURL;
 	
-	private Optional<Boolean> exists;
+	private ResourceException resolutionError;
+	
 	
 	/**
 	 * <p>
@@ -225,18 +226,32 @@ public class NativeResource extends AbstractAsyncResource {
 		return uri.normalize();
 	}
 	
-	private Optional<URL> resolve() {
+	private Optional<URL> resolve() throws ResourceException {
+		if(this.resolutionError != null) {
+			throw this.resolutionError;
+		}
 		if(this.resourceURL == null) {
-			URL url;
-			if(this.clazz != null) {
-				url = this.clazz.getResource(this.resourceName);
+			try {
+				URL url;
+				if(this.clazz != null) {
+					url = this.clazz.getResource(this.resourceName);
+				}
+				else {
+					url = this.classLoader.getResource(this.resourceName);
+				}
+				this.resourceURL = Optional.ofNullable(url);
 			}
-			else {
-				url = this.classLoader.getResource(this.resourceName);
+			catch(Throwable t) {
+				this.resolutionError = new ResourceException(t);
+				throw this.resolutionError;
 			}
-			this.resourceURL = Optional.ofNullable(url);
 		}
 		return this.resourceURL;
+	}
+	
+	@Override
+	public URI getURI() {
+		return this.uri;
 	}
 	
 	@Override
@@ -251,21 +266,13 @@ public class NativeResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public URI getURI() {
-		return this.uri;
-	}
-
-	@Override
 	public Optional<Boolean> isFile() throws ResourceException {
 		return Optional.empty();
 	}
 
 	@Override
 	public Optional<Boolean> exists() throws ResourceException {
-		if(this.exists == null) {
-			this.exists = this.resolve().map(url -> true);
-		}
-		return this.exists;
+		return this.resolve().map(url -> true);
 	}
 
 	@Override
@@ -280,12 +287,17 @@ public class NativeResource extends AbstractAsyncResource {
 
 	@Override
 	public Optional<ReadableByteChannel> openReadableByteChannel() throws ResourceException {
-		if(this.clazz != null) {
-			return Optional.ofNullable(this.clazz.getResourceAsStream(this.resourceName)).map(Channels::newChannel);
-			
+		try {
+			if(this.clazz != null) {
+				return Optional.ofNullable(this.clazz.getResourceAsStream(this.resourceName)).map(Channels::newChannel);
+
+			}
+			else {
+				return Optional.ofNullable(this.classLoader.getResourceAsStream(this.resourceName)).map(Channels::newChannel);
+			}
 		}
-		else {
-			return Optional.ofNullable(this.classLoader.getResourceAsStream(this.resourceName)).map(Channels::newChannel);
+		catch(Throwable t) {
+			throw new ResourceException(t);
 		}
 	}
 
@@ -296,7 +308,7 @@ public class NativeResource extends AbstractAsyncResource {
 
 	@Override
 	public boolean delete() throws ResourceException {
-		return false;
+		throw new NotWritableResourceException("Can't delete a native resource");
 	}
 
 	@Override

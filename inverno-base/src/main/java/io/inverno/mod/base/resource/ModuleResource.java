@@ -74,6 +74,8 @@ public class ModuleResource extends AbstractAsyncResource {
 	
 	private Optional<Boolean> exists;
 	
+	private ResourceException resolutionError;
+	
 	/**
 	 * <p>
 	 * Creates a module resource with the specified URI.
@@ -212,27 +214,41 @@ public class ModuleResource extends AbstractAsyncResource {
 		return uri.normalize();
 	}
 	
-	private Optional<Module> resolve() {
+	private Optional<Module> resolve() throws ResourceException {
+		if(this.resolutionError != null) {
+			throw this.resolutionError;
+		}
 		if(this.module == null) {
-			if(this.moduleLayer != null && this.moduleName != null) {
-				this.module = this.moduleLayer.modules().stream().filter(module -> module.getName().equals(this.moduleName)).findFirst();
-			}
-			else {
-				// unnamed module
-				ClassLoader classLoader = null;
-				try {
-					classLoader = Thread.currentThread().getContextClassLoader();
+			try {
+				if(this.moduleLayer != null && this.moduleName != null) {
+					this.module = this.moduleLayer.modules().stream().filter(module -> module.getName().equals(this.moduleName)).findFirst();
 				}
-				catch (Throwable ex) {
-					classLoader = ClasspathResource.class.getClassLoader();
-					if (classLoader == null) {
-						classLoader = ClassLoader.getSystemClassLoader();
+				else {
+					// unnamed module
+					ClassLoader classLoader = null;
+					try {
+						classLoader = Thread.currentThread().getContextClassLoader();
 					}
+					catch (Throwable ex) {
+						classLoader = ClasspathResource.class.getClassLoader();
+						if (classLoader == null) {
+							classLoader = ClassLoader.getSystemClassLoader();
+						}
+					}
+					this.module = Optional.of(classLoader.getUnnamedModule());
 				}
-				this.module = Optional.of(classLoader.getUnnamedModule());
+			}
+			catch(Throwable t) {
+				this.resolutionError = new ResourceException(t);
+				throw this.resolutionError;
 			}
 		}
 		return this.module;
+	}
+	
+	@Override
+	public URI getURI() {
+		return this.uri;
 	}
 	
 	@Override
@@ -247,26 +263,24 @@ public class ModuleResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public URI getURI() {
-		return this.uri;
-	}
-
-	@Override
 	public Optional<Boolean> isFile() throws ResourceException {
 		return Optional.empty();
 	}
 
 	@Override
 	public Optional<Boolean> exists() throws ResourceException {
+		if(this.resolutionError != null) {
+			throw this.resolutionError;
+		}
 		if(this.exists == null) {
-			this.exists = this.resolve().map(module -> {
-				try(InputStream resourceStream = module.getResourceAsStream(this.resourceName)) {
+			this.exists = this.resolve().map(m -> {
+				try(InputStream resourceStream = m.getResourceAsStream(this.resourceName)) {
 					return resourceStream != null;
 				}
 				catch (IOException e) {
-					return false;
+					throw new ResourceException(e);
 				}
-			}).or(() -> Optional.of(false));
+			});
 		}
 		return this.exists;
 	}
@@ -286,13 +300,12 @@ public class ModuleResource extends AbstractAsyncResource {
 		return this.resolve()
 			.map(module -> {
 				try {
-					return module.getResourceAsStream(this.resourceName);
+					return Channels.newChannel(module.getResourceAsStream(this.resourceName));
 				}
 				catch (IOException e) {
-					return null;
+					throw new ResourceException(e);
 				}
-			})
-			.map(Channels::newChannel);
+			});
 	}
 
 	@Override

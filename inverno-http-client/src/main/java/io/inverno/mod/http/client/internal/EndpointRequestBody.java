@@ -267,7 +267,7 @@ public class EndpointRequestBody implements RequestBody {
 			Objects.requireNonNull(resource);
 			if(resource.exists().orElse(true)) {
 				this.populateHeaders(resource);
-				EndpointRequestBody.this.setData(resource.read().orElseThrow(() -> new IllegalArgumentException("Resource is not readable: " + resource.getURI())));
+				EndpointRequestBody.this.setData(resource.read());
 				EndpointRequestBody.this.setResource(resource);
 			}
 			else {

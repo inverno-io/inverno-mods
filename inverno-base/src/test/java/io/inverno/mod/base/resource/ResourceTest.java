@@ -33,7 +33,6 @@ public class ResourceTest {
 
 	private void writeResource(Resource resource){
 		Assertions.assertFalse(resource.exists().get());
-		Assertions.assertFalse(resource.lastModified().isPresent());
 		resource.openWritableByteChannel().ifPresent(ch -> {
 			try(ch) {
 				int bufferSize = 1024;
@@ -230,8 +229,8 @@ public class ResourceTest {
 		FileChannel out = FileChannel.open(tgtFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 		try(PathResource resource = new PathResource(srcFile)) {
 			resource.setExecutor(Executors.newFixedThreadPool(5));
-			resource.read().map(Flux::from).ifPresent(data -> {
-				data.doOnNext(chunk -> {
+			Flux.from(resource.read())
+				.doOnNext(chunk -> {
 					try {
 						out.write(chunk.nioBuffer());
 					} 
@@ -250,7 +249,6 @@ public class ResourceTest {
 					}
 				})
 				.blockLast();
-			});
 		}
 		Assertions.assertEquals(Files.size(srcFile), Files.size(tgtFile));
 		FileChannel srcChannel = FileChannel.open(srcFile, StandardOpenOption.READ);
@@ -272,8 +270,8 @@ public class ResourceTest {
 		try(PathResource srcResource = new PathResource(srcFile);
 			PathResource tgtResource = new PathResource(tgtFile)) {
 			
-			Flux<ByteBuf> srcData = srcResource.read().map(Flux::from).get();
-			tgtResource.write(srcData).map(Flux::from).get().blockLast();
+			Flux<ByteBuf> srcData = Flux.from(srcResource.read());
+			Flux.from(tgtResource.write(srcData)).blockLast();
 		}
 		Assertions.assertEquals(Files.size(srcFile), Files.size(tgtFile));
 		FileChannel srcChannel = FileChannel.open(srcFile, StandardOpenOption.READ);
@@ -291,7 +289,7 @@ public class ResourceTest {
 	@Test
 	public void testUrlRead() throws IllegalArgumentException {
 		try (Resource resource = new URLResource(new File("src/test/resources/test.txt").toURI())) {
-			String content = resource.read().map(Flux::from).get()
+			String content = Flux.from(resource.read())
 				.map(chunk -> {
 					String s = chunk.toString(Charset.defaultCharset());
 					chunk.release();
@@ -315,7 +313,7 @@ public class ResourceTest {
         fakeFtpServer.start();
         
         try (Resource resource = new URLResource(new URI(String.format("ftp://user:password@localhost:%d/test.txt", fakeFtpServer.getServerControlPort())))) {
-			int bytesWritten = resource.write(Flux.just(Unpooled.copiedBuffer("This is a write test", Charset.defaultCharset()))).map(Flux::from).get().collect(Collectors.summingInt(Integer::intValue)).block();
+			int bytesWritten = Flux.from(resource.write(Flux.just(Unpooled.copiedBuffer("This is a write test", Charset.defaultCharset())))).collect(Collectors.summingInt(Integer::intValue)).block();
 			Assertions.assertEquals(20, bytesWritten);
 			Assertions.assertTrue(fileSystem.exists("/data/test.txt"));
 			Assertions.assertEquals(20, fileSystem.getEntry("/data/test.txt").getSize());
@@ -323,61 +321,5 @@ public class ResourceTest {
 		finally {
 			fakeFtpServer.stop();
 		}
-	}
-	
-	@Test
-	public void testResolve() {
-		
-		Path absPath = new File("src/test/resources/dir").getAbsoluteFile().toPath();
-		
-		Path absPath2 = new File("src/").getAbsoluteFile().toPath();
-		
-		Path resolvedPath = absPath.resolve(absPath2);
-		
-		System.out.println(resolvedPath);
-		
-		/*try(FileResource resource = new FileResource(new File("src/test/resources/dir"))) {
-			System.out.println(resource.getURI());
-			try(Resource resolve = resource.resolve(Path.of("test.txt"))) {
-				System.out.println(resolve.getURI());
-				resolve.openReadableByteChannel().ifPresent(ch -> {
-					try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-						ch;) {
-						int bufferSize = 1024;
-						ByteBuffer buff = ByteBuffer.allocate(bufferSize);
-
-						while (ch.read(buff) > 0) {
-							out.write(buff.array(), 0, buff.position());
-							buff.clear();
-						}
-						String fileContent = new String(out.toByteArray(), StandardCharsets.UTF_8);
-						Assertions.assertEquals("This is another test", fileContent);
-					}
-					catch(IOException e) {
-						throw new RuntimeException(e);
-					}
-				});
-			}
-			
-			try(Resource resolve = resource.resolve("..\\test.txt")) {
-				resolve.openReadableByteChannel().ifPresent(ch -> {
-					try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-						ch;) {
-						int bufferSize = 1024;
-						ByteBuffer buff = ByteBuffer.allocate(bufferSize);
-
-						while (ch.read(buff) > 0) {
-							out.write(buff.array(), 0, buff.position());
-							buff.clear();
-						}
-						String fileContent = new String(out.toByteArray(), StandardCharsets.UTF_8);
-						Assertions.assertEquals("This is a test", fileContent);
-					}
-					catch(IOException e) {
-						throw new RuntimeException(e);
-					}
-				});
-			}
-		}*/
 	}
 }

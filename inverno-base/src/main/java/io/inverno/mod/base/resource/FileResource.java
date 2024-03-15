@@ -198,74 +198,74 @@ public class FileResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public String getFilename() {
-		return this.pathResource.getFilename();
-	}
-	
-	@Override
-	public String getMediaType() {
-		return this.pathResource.getMediaType();
-	}
-	
-	@Override
 	public URI getURI() {
 		return this.pathResource.getURI();
 	}
 	
 	@Override
-	public Optional<Boolean> exists() {
+	public String getFilename() throws ResourceException {
+		return this.pathResource.getFilename();
+	}
+	
+	@Override
+	public String getMediaType() throws ResourceException {
+		return this.pathResource.getMediaType();
+	}
+	
+	@Override
+	public Optional<Boolean> exists() throws ResourceException {
 		return this.pathResource.exists();
 	}
 	
 	@Override
-	public Optional<Boolean> isFile() {
+	public Optional<Boolean> isFile() throws ResourceException {
 		return this.pathResource.isFile();
 	}
 
 	@Override
-	public Optional<FileTime> lastModified() {
+	public Optional<FileTime> lastModified() throws ResourceException {
 		return this.pathResource.lastModified();
 	}
 	
 	@Override
-	public Optional<Long> size() {
+	public Optional<Long> size() throws ResourceException {
 		return this.pathResource.size();
 	}
 
 	@Override
-	public Optional<ReadableByteChannel> openReadableByteChannel() {
+	public Optional<ReadableByteChannel> openReadableByteChannel() throws ResourceException {
 		return this.pathResource.openReadableByteChannel();
 	}
 
 	@Override
-	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) {
+	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) throws ResourceException {
 		return this.pathResource.openWritableByteChannel(append, createParents);
 	}
 
 	@Override
-	public Optional<Publisher<ByteBuf>> read() {
+	public Publisher<ByteBuf> read() throws NotReadableResourceException, ResourceException {
 		return this.pathResource.read();
 	}
 	
 	@Override
-	public Optional<Publisher<Integer>> write(Publisher<ByteBuf> data, boolean append, boolean createParents) {
+	public Publisher<Integer> write(Publisher<ByteBuf> data, boolean append, boolean createParents) throws NotWritableResourceException, ResourceException {
 		return this.pathResource.write(data, append, createParents);
 	}
 	
 	@Override
-	public boolean delete() {
+	public boolean delete() throws ResourceException {
 		return this.pathResource.delete();
+	}
+	
+	@Override
+	public Resource resolve(Path path) throws ResourceException {
+		FileResource resolvedResource = new FileResource((PathResource)this.pathResource.resolve(path), this.getMediaTypeService());
+		resolvedResource.setExecutor(this.getExecutor());
+		return resolvedResource;
 	}
 	
 	@Override
 	public void close() {
 		this.pathResource.close();
-	}
-	
-	@Override
-	public Resource resolve(Path path) throws IllegalArgumentException {
-		FileResource resolvedResource = new FileResource((PathResource)this.pathResource.resolve(path), this.getMediaTypeService());
-		resolvedResource.setExecutor(this.getExecutor());
-		return resolvedResource;
 	}
 }

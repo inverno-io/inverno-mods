@@ -76,43 +76,47 @@ public class PathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public String getFilename() {
-		return this.path.getFileName().toString();
-	}
-	
-	@Override
-	public String getMediaType() {
-		return this.getMediaTypeService().getForPath(this.path);
-	}
-	
-	@Override
 	public URI getURI() {
 		return this.path.toUri();
 	}
 	
 	@Override
-	public Optional<Boolean> exists() {
+	public String getFilename() throws ResourceException {
+		return this.path.getFileName().toString();
+	}
+	
+	@Override
+	public Optional<Boolean> exists() throws ResourceException {
 		return Optional.of(Files.exists(this.path));
 	}
 	
 	@Override
-	public Optional<Boolean> isFile() {
-		return Optional.of(Files.isRegularFile(this.path));
-	}
-
-	@Override
-	public Optional<Long> size() {
+	public Optional<FileTime> lastModified() throws ResourceException {
 		try {
-			return Optional.of(Files.size(this.path));
-		} 
+			return Optional.of(Files.getLastModifiedTime(this.path));
+		}
 		catch (IOException e) {
-			// TODO log debug
-			return Optional.empty();
+			throw new ResourceException(e);
 		}
 	}
 	
 	@Override
-	public Optional<ReadableByteChannel> openReadableByteChannel() {
+	public Optional<Boolean> isFile() throws ResourceException {
+		return Optional.of(Files.isRegularFile(this.path));
+	}
+
+	@Override
+	public Optional<Long> size() throws ResourceException {
+		try {
+			return Optional.of(Files.size(this.path));
+		} 
+		catch (IOException e) {
+			throw new ResourceException(e);
+		}
+	}
+	
+	@Override
+	public Optional<ReadableByteChannel> openReadableByteChannel() throws ResourceException {
 		try {
 			if(Files.isReadable(this.path)) {
 				return Optional.of(FileChannel.open(this.path, StandardOpenOption.READ));
@@ -120,13 +124,12 @@ public class PathResource extends AbstractAsyncResource {
 			return Optional.empty();
 		}
 		catch(IOException e) {
-			// TODO log debug
-			return Optional.empty();
+			throw new ResourceException(e);
 		}
 	}
 
 	@Override
-	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) {
+	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) throws ResourceException {
 		try {
 			if(createParents) {
 				Files.createDirectories(this.path.getParent());
@@ -139,19 +142,7 @@ public class PathResource extends AbstractAsyncResource {
 			}
 		}
 		catch (IOException e) {
-			// TODO log debug
-			return Optional.empty();
-		}
-	}
-	
-	@Override
-	public Optional<FileTime> lastModified() {
-		try {
-			return Optional.of(Files.getLastModifiedTime(this.path));
-		}
-		catch (IOException e) {
-			// TODO log debug
-			return Optional.empty();
+			throw new ResourceException(e);
 		}
 	}
 	
@@ -226,25 +217,24 @@ public class PathResource extends AbstractAsyncResource {
 	}*/
 
 	@Override
-	public boolean delete() {
+	public boolean delete() throws ResourceException {
 		try {
 			return Files.deleteIfExists(this.path);
 		}
 		catch (IOException e) {
-			// TODO log debug
-			return false;
+			throw new ResourceException(e);
 		}
+	}
+	
+	@Override
+	public Resource resolve(Path path) throws ResourceException {
+		PathResource resolvedResource = new PathResource(this.path.resolve(path), this.getMediaTypeService());
+		resolvedResource.setExecutor(this.getExecutor());
+		return resolvedResource;
 	}
 	
 	@Override
 	public void close() {
 		
-	}
-	
-	@Override
-	public Resource resolve(Path path) {
-		PathResource resolvedResource = new PathResource(this.path.resolve(path), this.getMediaTypeService());
-		resolvedResource.setExecutor(this.getExecutor());
-		return resolvedResource;
 	}
 }

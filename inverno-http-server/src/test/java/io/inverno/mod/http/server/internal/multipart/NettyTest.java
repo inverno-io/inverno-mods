@@ -89,7 +89,7 @@ public class NettyTest {
 //        decoder.offer(new DefaultHttpContent(data));
         
         try(FileResource resource = new FileResource("src/test/resources/file_multipart.txt")) {
-        	for(ByteBuf data : resource.read().map(Flux::from).get().collectList().block()) {
+        	for(ByteBuf data : Flux.from(resource.read()).collectList().block()) {
         		decoder.offer(new DefaultHttpContent(data));
         	}
         }

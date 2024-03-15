@@ -27,6 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -63,6 +64,8 @@ public class ClasspathResource extends AbstractAsyncResource {
 	
 	private Class<?> clazz;
 	private ClassLoader classLoader;
+	
+	private ResourceException resolutionError;
 	
 	/**
 	 * <p>
@@ -230,69 +233,63 @@ public class ClasspathResource extends AbstractAsyncResource {
 		}
 	}
 	
-	private Optional<Resource> resolve() {
+	private Optional<Resource> resolve() throws ResourceException {
+		if(this.resolutionError != null) {
+			throw this.resolutionError;
+		}
 		if(this.resource == null) {
-			URL url;
-			if(this.clazz != null) {
-				url = this.clazz.getResource(this.resourceName);
-			}
-			else {
-				url = this.classLoader.getResource(this.resourceName);
-			}
-			if(url != null) {
-				URI uri;
-				try {
-					uri = url.toURI();
-				} 
-				catch (URISyntaxException e) {
-					throw new ResourceException("Error resolving classpath resource: " + this.uri, e);
+			try {
+				URL url;
+				if(this.clazz != null) {
+					url = this.clazz.getResource(this.resourceName);
 				}
-				String scheme = uri.getScheme();
-				Resource resolvedResource;
-				switch(scheme) {
-					case FileResource.SCHEME_FILE:
-						resolvedResource = new FileResource(uri, this.getMediaTypeService());
-						break;
-					case JarResource.SCHEME_JAR:
-						resolvedResource = new JarResource(uri, this.getMediaTypeService());
-						break;
-					case ZipResource.SCHEME_ZIP:
-						resolvedResource = new ZipResource(uri, this.getMediaTypeService());
-						break;
-					case NativeResource.SCHEME_RESOURCE:
-						resolvedResource = new NativeResource(uri, this.getMediaTypeService());
-						break;
-					default:
-						throw new ResourceException("Unsupported resource scheme: " + scheme);
+				else {
+					url = this.classLoader.getResource(this.resourceName);
 				}
-				if(resolvedResource instanceof AsyncResource) {
-					((AsyncResource) resolvedResource).setExecutor(this.getExecutor());
+				if(url != null) {
+					URI uri;
+					try {
+						uri = url.toURI();
+					} 
+					catch (URISyntaxException e) {
+						throw new ResourceException("Error resolving classpath resource: " + this.uri, e);
+					}
+					String scheme = uri.getScheme();
+					Resource resolvedResource;
+					switch(scheme) {
+						case FileResource.SCHEME_FILE:
+							resolvedResource = new FileResource(uri, this.getMediaTypeService());
+							break;
+						case JarResource.SCHEME_JAR:
+							resolvedResource = new JarResource(uri, this.getMediaTypeService());
+							break;
+						case ZipResource.SCHEME_ZIP:
+							resolvedResource = new ZipResource(uri, this.getMediaTypeService());
+							break;
+						case NativeResource.SCHEME_RESOURCE:
+							resolvedResource = new NativeResource(uri, this.getMediaTypeService());
+							break;
+						default: throw new ResourceException("Unsupported resource scheme: " + scheme);
+					}
+					if(resolvedResource instanceof AsyncResource) {
+						((AsyncResource) resolvedResource).setExecutor(this.getExecutor());
+					}
+					this.resource = Optional.of(resolvedResource);
 				}
-				this.resource = Optional.of(resolvedResource);
+				else {
+					this.resource = Optional.empty();
+				}
 			}
-			else {
-				this.resource = Optional.empty();
+			catch(ResourceException e) {
+				this.resolutionError = e;
+				throw this.resolutionError;
+			}
+			catch(Throwable t) {
+				this.resolutionError = new ResourceException(t);
+				throw this.resolutionError;
 			}
 		}
 		return this.resource;
-	}
-	
-	@Override
-	public String getFilename() {
-		Optional<Resource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().getFilename();
-		}
-		return null;
-	}
-
-	@Override
-	public String getMediaType() {
-		Optional<Resource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().getMediaType();
-		}
-		return null;
 	}
 	
 	@Override
@@ -301,89 +298,71 @@ public class ClasspathResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Optional<Boolean> exists() {
-		Optional<Resource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().exists();
-		}
-		return Optional.of(false);
-	}
-	
-	@Override
-	public Optional<Boolean> isFile() {
-		Optional<Resource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().isFile();
-		}
-		return Optional.of(false);
-	}
-	
-	@Override
-	public Optional<Long> size() {
-		Optional<Resource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().size();
-		}
-		return Optional.empty();
-	}
-	
-	@Override
-	public Optional<FileTime> lastModified() {
-		Optional<Resource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().lastModified();
-		}
-		return Optional.empty();
-	}
-	
-	@Override
-	public Optional<ReadableByteChannel> openReadableByteChannel() {
-		Optional<Resource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().openReadableByteChannel();
-		}
-		return Optional.empty();
-	}
-	
-	@Override
-	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) {
-		return Optional.empty();
-	}
-	
-	@Override
-	public Optional<Publisher<ByteBuf>> read() {
-		Optional<Resource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().read();
-		}
-		return Optional.empty();
-	}
-	
-	@Override
-	public Optional<Publisher<Integer>> write(Publisher<ByteBuf> data, boolean append, boolean createParents) {
-		return Optional.empty();
-	}
-	
-	@Override
-	public boolean delete() {
-		throw new UnsupportedOperationException("Can't delete a classpath resource");
+	public String getFilename() throws ResourceException {
+		return this.resolve()
+			.map(Resource::getFilename)
+			.orElse(null);
 	}
 
 	@Override
-	public void close() {
-		Optional<Resource> r = this.resolve();
-		if(r.isPresent()) {
-			try {
-				r.get().close();
-			} 
-			catch (Exception e) {
-				throw new ResourceException(e);
-			}
-		}
+	public String getMediaType() throws ResourceException {
+		return this.resolve()
+			.map(Resource::getMediaType)
+			.orElse(null);
 	}
 	
 	@Override
-	public Resource resolve(Path path) throws IllegalArgumentException {
+	public Optional<Boolean> exists() throws ResourceException {
+		return this.resolve().flatMap(Resource::exists);
+	}
+	
+	@Override
+	public Optional<Boolean> isFile() throws ResourceException {
+		return this.resolve().flatMap(Resource::isFile);
+	}
+	
+	@Override
+	public Optional<Long> size() throws ResourceException {
+		return this.resolve().flatMap(Resource::size);
+	}
+	
+	@Override
+	public Optional<FileTime> lastModified() throws ResourceException {
+		return this.resolve().flatMap(Resource::lastModified);
+	}
+	
+	@Override
+	public Optional<ReadableByteChannel> openReadableByteChannel() throws ResourceException {
+		return this.resolve().flatMap(Resource::openReadableByteChannel);
+	}
+	
+	@Override
+	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) throws ResourceException {
+		return Optional.empty();
+	}
+	
+	@Override
+	public Publisher<ByteBuf> read() throws NotReadableResourceException, ResourceException {
+		if(this.resolutionError != null) {
+			return Mono.error(this.resolutionError);
+		}
+		return this.resolve()
+			.map(Resource::read)
+			.orElseGet(() -> Mono.error(() -> new NotReadableResourceException(this.uri.toString() + " does not exist")));
+	}
+	
+	@Override
+	public Publisher<Integer> write(Publisher<ByteBuf> data, boolean append, boolean createParents) throws NotWritableResourceException, ResourceException {
+		return Mono.error(() -> new NotWritableResourceException("Can't write a classpath resource"));
+	}
+	
+	@Override
+	public boolean delete() throws ResourceException {
+		throw new NotWritableResourceException("Can't delete a classpath resource");
+	}
+
+	@Override
+	public Resource resolve(Path path) throws ResourceException {
 		try {
 			URI resolvedUri = new URI(ClasspathResource.SCHEME_CLASSPATH, pathToSanitizedString(Path.of(this.uri.getRawPath()).resolve(path)), null);
 			ClasspathResource resolvedResource;
@@ -397,7 +376,21 @@ public class ClasspathResource extends AbstractAsyncResource {
 			return resolvedResource;
 		} 
 		catch (URISyntaxException e) {
-			throw new IllegalArgumentException("Invalid path", e);
+			throw new ResourceException("Invalid path", e);
+		}
+	}
+	
+	@Override
+	public void close() {
+		if(this.resource != null) {
+			this.resource.ifPresent(r -> {
+				try {
+					r.close();
+				} 
+				catch (Exception e) {
+					throw new ResourceException(e);
+				}
+			});
 		}
 	}
 }

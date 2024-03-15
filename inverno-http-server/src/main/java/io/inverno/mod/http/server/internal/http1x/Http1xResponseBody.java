@@ -130,7 +130,7 @@ class Http1xResponseBody extends GenericResponseBody {
 					Http1xResponseBody.this.setData(Flux.empty());
 				}
 				else {
-					Http1xResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource is not readable: " + resource.getURI())));
+					Http1xResponseBody.this.setData(resource.read());
 				}
 			}
 			else {

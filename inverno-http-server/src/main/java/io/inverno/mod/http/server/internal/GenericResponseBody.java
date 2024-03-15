@@ -295,7 +295,7 @@ public class GenericResponseBody implements ResponseBody {
 			// internal server error
 			if(resource.exists().orElse(true)) {
 				this.populateHeaders(resource);
-				GenericResponseBody.this.setData(resource.read().orElseThrow(() -> new InternalServerErrorException("Resource is not readable: " + resource.getURI())));
+				GenericResponseBody.this.setData(resource.read());
 			}
 			else {
 				throw new NotFoundException();

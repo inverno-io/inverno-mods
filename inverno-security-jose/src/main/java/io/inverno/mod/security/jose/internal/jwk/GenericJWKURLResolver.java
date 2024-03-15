@@ -99,8 +99,8 @@ public class GenericJWKURLResolver implements @Provide JWKURLResolver {
 				}
 				return true;
 			})
-			.flatMapMany(uri -> Flux.from(this.resourceService.getResource(uri).read()
-				.orElseThrow(() -> new JWKResolveException("Unable to retrieve JWK set from URL, resource is not readable: " + uri)))
+			.flatMapMany(uri -> Flux.from(this.resourceService.getResource(uri).read())
+				.onErrorMap(e -> new JWKResolveException("Unable to retrieve JWK set from URL, resource is not readable: " + uri, e))
 				.reduceWith(() -> {
 						try {
 							return Pipe.open();
@@ -160,8 +160,8 @@ public class GenericJWKURLResolver implements @Provide JWKURLResolver {
 				}
 				return true;
 			})
-			.flatMap(uri -> Flux.from(this.resourceService.getResource(uri).read()
-				.orElseThrow(() -> new JWKResolveException("Unable to retrieve X.509 certificate chain from URL, resource is not readable: " + uri)))
+			.flatMap(uri -> Flux.from(this.resourceService.getResource(uri).read())
+				.onErrorMap(e -> new JWKResolveException("Unable to retrieve X.509 certificate chain from URL, resource is not readable: " + uri, e))
 				.reduceWith(() -> {
 						try {
 							return Pipe.open();
