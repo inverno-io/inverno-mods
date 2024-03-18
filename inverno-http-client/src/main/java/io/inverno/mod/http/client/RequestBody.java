@@ -1,12 +1,12 @@
 /*
- * Copyright 2022 Jeremy KUHN
- * 
+ * Copyright 2024 Jeremy Kuhn
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,17 +19,34 @@ import io.inverno.mod.http.base.OutboundData;
 import io.inverno.mod.http.base.Parameter;
 import io.netty.buffer.ByteBuf;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
+import org.reactivestreams.Publisher;
 
 /**
  * <p>
- * A configurator used to configure the body of the client request.
+ * Represents the request payload sent by a client to a server in a client exchange.
  * </p>
- *
+ * 
+ * <p>
+ * The request body basically provides multiple ways to specify the payload.
+ * </p>
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.6
+ * @since 1.8
  */
-public interface RequestBodyConfigurator {
-
+public interface RequestBody {
+	
+	/**
+	 * <p>
+	 * Transforms the request payload publisher.
+	 * </p>
+	 *
+	 * @param transformer a payload publisher transformer
+	 *
+	 * @return the request body
+	 */
+	RequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer);
+	
 	/**
 	 * <p>
 	 * Produces an empty payload.
@@ -40,7 +57,7 @@ public interface RequestBodyConfigurator {
 	 * </p>
 	 *
 	 * <pre>{@code
-	 * httpClientRequest.body(configurator -> configurator.empty());
+	 * exchange.request().body().ifPresent(body -> body.empty());
 	 * }</pre>
 	 */
 	void empty();
@@ -55,7 +72,7 @@ public interface RequestBodyConfigurator {
 	 * </p>
 	 * 
 	 * <pre>{@code
-	 * httpClientRequest.body(configurator -> configurator.raw().stream(
+	 * exchange.request().body().ifPresent(body -> body.raw().stream(
 	 *     Flux.just(
 	 *         Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Hello ", Charsets.DEFAULT)), 
 	 *         Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("World!", Charsets.DEFAULT))
@@ -77,7 +94,7 @@ public interface RequestBodyConfigurator {
 	 * </p>
 	 * 
 	 * <pre>{@code
-	 * httpClientRequest.body(configurator -> configurator.string().stream(
+	 * exchange.request().body().ifPresent(body -> body.string().stream(
 	 *     Flux.just(
 	 *         Unpooled.unreleasableBuffer("Hello "), 
 	 *         Unpooled.unreleasableBuffer("World!")
@@ -102,12 +119,12 @@ public interface RequestBodyConfigurator {
 	 * 
 	 * <pre>{@code
 	 * ResourceService resourceService = ... 
-	 * httpClientRequest.body(configurator -> configurator.resource().value(resourceService.get("file:/path/to/resource"));
+	 * exchange.request().body().ifPresent(body -> body.resource().value(resourceService.get("file:/path/to/resource")));
 	 * }</pre>
 	 * 
 	 * @return a resource payload producer
 	 */
-	RequestBodyConfigurator.Resource resource();
+	RequestBody.Resource resource();
 	
 	/**
 	 * <p>
@@ -119,7 +136,7 @@ public interface RequestBodyConfigurator {
 	 * </p>
 	 * 
 	 * <pre>{@code
-	 * httpClientRequest.body(body -> body.urlEncoded().from( 
+	 * exchange.request().body().ifPresent(body -> body.urlEncoded().from( 
 	 *     (factory, output) -> output.stream(Flux.just(
 	 *         factory.create("p1", "abc"), 
 	 *         factory.create("p2", List.of("a", "b", "c"))
@@ -128,7 +145,7 @@ public interface RequestBodyConfigurator {
 	 * 
 	 * @return a URL encoded data producer
 	 */
-	RequestBodyConfigurator.UrlEncoded<Parameter.Factory> urlEncoded();
+	RequestBody.UrlEncoded<Parameter.Factory> urlEncoded();
 	
 	/**
 	 * <p>
@@ -140,7 +157,7 @@ public interface RequestBodyConfigurator {
 	 * </p>
 	 * 
 	 * <pre>{@code
-	 * httpClientRequest.body(body -> body.multipart().from( 
+	 * exchange.request().body().ifPresent(body -> body.multipart().from( 
 	 *     (factory, output) -> output.stream(Flux.just(
 	 *         factory.string(part -> part.name("key").value("value")),
 	 *         factory.resource(part -> part
@@ -152,7 +169,7 @@ public interface RequestBodyConfigurator {
 	 * 
 	 * @return a Multipart form data producer
 	 */
-	RequestBodyConfigurator.Multipart<Part.Factory, Part<?>> multipart();
+	RequestBody.Multipart<Part.Factory, Part<?>> multipart();
 	
 	/**
 	 * <p>

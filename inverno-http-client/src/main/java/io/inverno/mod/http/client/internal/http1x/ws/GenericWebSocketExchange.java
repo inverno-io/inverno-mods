@@ -22,8 +22,8 @@ import io.inverno.mod.http.base.ws.WebSocketException;
 import io.inverno.mod.http.base.ws.WebSocketFrame;
 import io.inverno.mod.http.base.ws.WebSocketMessage;
 import io.inverno.mod.http.base.ws.WebSocketStatus;
-import io.inverno.mod.http.client.Request;
-import io.inverno.mod.http.client.internal.AbstractRequest;
+import io.inverno.mod.http.client.internal.HttpConnectionRequest;
+import io.inverno.mod.http.client.internal.WebSocketConnectionExchange;
 import io.inverno.mod.http.client.ws.WebSocketExchange;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -55,15 +55,15 @@ import reactor.core.publisher.Sinks;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> implements WebSocketExchange<ExchangeContext> {
+public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> implements WebSocketConnectionExchange<ExchangeContext> {
 
 	private static final Logger LOGGER = LogManager.getLogger(WebSocketExchange.class);
 	
 	private final ChannelHandlerContext context;
-	private final MonoSink<WebSocketExchange<ExchangeContext>> exchangeSink;
+	private final MonoSink<WebSocketConnectionExchange<ExchangeContext>> exchangeSink;
 	private final WebSocketClientHandshaker handshaker;
 	private final ExchangeContext exchangeContext;
-	private final Request request;
+	private final HttpConnectionRequest request;
 	private final String subProtocol;
 	private final GenericWebSocketFrame.GenericFactory frameFactory;
 	private final GenericWebSocketMessage.GenericFactory messageFactory;
@@ -109,10 +109,10 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	 */
 	public GenericWebSocketExchange(
 			ChannelHandlerContext context, 
-			MonoSink<WebSocketExchange<ExchangeContext>> exchangeSink, 
+			MonoSink<WebSocketConnectionExchange<ExchangeContext>> exchangeSink, 
 			WebSocketClientHandshaker handshaker,
 			ExchangeContext exchangeContext, 
-			AbstractRequest request, 
+			HttpConnectionRequest request, 
 			String subProtocol,
 			GenericWebSocketFrame.GenericFactory frameFactory, 
 			GenericWebSocketMessage.GenericFactory messageFactory,
@@ -359,7 +359,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	}
 	
 	@Override
-	public Request request() {
+	public HttpConnectionRequest request() {
 		return this.request;
 	}
 

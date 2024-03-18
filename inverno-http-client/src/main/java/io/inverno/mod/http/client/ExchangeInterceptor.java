@@ -29,7 +29,7 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * <p>
- * Multiple exchange interceptors can be chained on an {@link HttpClient.Request} or an {@link Endpoint.Request}
+ * Multiple exchange interceptors can be chained on an {@link HttpClient.EndpointBuilder}.
  * </p>
  * 
  * <p>

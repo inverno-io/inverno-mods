@@ -17,11 +17,9 @@ package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.URIBuilder;
-import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.QueryParameters;
 import io.inverno.mod.http.base.internal.GenericQueryParameters;
-import io.inverno.mod.http.client.Request;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.ssl.SslHandler;
 import java.net.InetSocketAddress;
@@ -34,13 +32,13 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
- * Base {@link Request} implementation.
+ * Base {@link HttpConnectionRequest} implementation.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-public abstract class AbstractRequest implements Request {
+public abstract class AbstractRequest implements HttpConnectionRequest {
 	
 	private static final Logger LOGGER = LogManager.getLogger(AbstractRequest.class);
 
@@ -50,8 +48,8 @@ public abstract class AbstractRequest implements Request {
 	private final Method method;
 	private final String path;
 	private final URIBuilder primaryPathBuilder;
-	protected final InternalRequestHeaders requestHeaders;
-	protected final Optional<GenericRequestBody> requestBody;
+	protected final HttpConnectionRequestHeaders requestHeaders;
+	protected final HttpConnectionRequestBody requestBody;
 	
 	private String scheme;
 	private String authority;
@@ -63,38 +61,33 @@ public abstract class AbstractRequest implements Request {
 	 * <p>
 	 * Creates a base request.
 	 * </p>
-	 * 
+	 *
 	 * @param context            the channel handler context
 	 * @param tls                true if the connection is TLS, false otherwise
 	 * @param parameterConverter the parameter converter
-	 * @param method             the HTTP method
-	 * @param authority          the request authority
-	 * @param path               the requested path
+	 * @param endpointRequest    the original endpoint request
 	 * @param requestHeaders     the request headers
 	 * @param requestBody        the request body
 	 */
-	protected AbstractRequest(
-			ChannelHandlerContext context, 
-			boolean tls,
-			ObjectConverter<String> parameterConverter, 
-			Method method, 
-			String authority,
-			String path, 
-			InternalRequestHeaders requestHeaders, 
-			GenericRequestBody requestBody) {
+	protected AbstractRequest(ChannelHandlerContext context, 
+			boolean tls, 
+			ObjectConverter<String> parameterConverter,
+			EndpointRequest endpointRequest,
+			HttpConnectionRequestHeaders requestHeaders,
+			HttpConnectionRequestBody requestBody) {
 		this.context = context;
 		this.tls = tls;
 		this.parameterConverter = parameterConverter;
-		this.method = method;
-		this.path = path;
-		// TODO make sure this is a path with no scheme or authority
-		this.primaryPathBuilder = URIs.uri(path, false, URIs.Option.NORMALIZED);
+		this.method = endpointRequest.getMethod();
+		this.path = endpointRequest.getPath();
+		this.primaryPathBuilder = endpointRequest.getPathBuilder();
 		this.requestHeaders = requestHeaders;
-		this.requestBody = Optional.ofNullable(requestBody);
+		this.requestBody = requestBody;
+		this.authority = endpointRequest.getAuthority();
 	}
 
 	@Override
-	public InternalRequestHeaders headers() {
+	public HttpConnectionRequestHeaders headers() {
 		return this.requestHeaders;
 	}
 	
@@ -208,9 +201,9 @@ public abstract class AbstractRequest implements Request {
 	 * Returns the request body.
 	 * </p>
 	 * 
-	 * @return an optional returning the request body, or an empty optional if the request has no payload
+	 * @return the request body or null if the request has no body (e.g. GET request)
 	 */
-	public Optional<? extends GenericRequestBody> body() {
+	public HttpConnectionRequestBody body() {
 		return this.requestBody;
 	}
 }

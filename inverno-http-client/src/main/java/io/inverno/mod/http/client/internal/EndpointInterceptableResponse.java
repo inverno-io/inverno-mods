@@ -27,38 +27,38 @@ import io.inverno.mod.http.client.InterceptableResponse;
 
 /**
  * <p>
- * Generic {@link InterceptableResponse} implementation.
+ * An {@link InterceptableResponse} used to specify a response or instrument the actual response in an {@link ExchangeInterceptor}.
  * </p>
  * 
  * <p>
  * This implementation also implements {@link Response} which allows it to act as a proxy for the actual response once it has been received from the endpoint. This allows to expose the response
- * actually received to interceptors which is required to be able to intercept the response payload for instance. The {@link #setReceivedResponse(io.inverno.mod.http.client.Response) } shall be
- * invoked to make this instance delegates to the received response. At this point the interceptable response should become immutable.
+ * actually received to interceptors which is required to be able to intercept the response payload for instance. The {@link #setConnectedResponse(io.inverno.mod.http.client.Response) } is invoked to
+ * make this instance delegates to the received response. At this point the interceptable response becomes immutable.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.6
+ * @since 1.8
  */
-public class GenericInterceptableResponse implements InterceptableResponse, Response {
+public class EndpointInterceptableResponse implements InterceptableResponse, Response {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 
-	private GenericInterceptableResponseHeaders responseHeaders;
-	private GenericInterceptableResponseTrailers responseTrailers;
-	private GenericInterceptableResponseBody responseBody;
+	private EndpointInterceptableResponseHeaders responseHeaders;
+	private EndpointInterceptableResponseTrailers responseTrailers;
+	private EndpointInterceptableResponseBody responseBody;
 	
-	private Response receivedResponse;
+	private Response connectedResponse;
 	
 	/**
 	 * <p>
-	 * Creates a generic interceptable response.
+	 * Creates an interceptable response.
 	 * </p>
 	 * 
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
 	 */
-	public GenericInterceptableResponse(HeaderService headerService, ObjectConverter<String> parameterConverter) {
+	public EndpointInterceptableResponse(HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 	}
@@ -70,74 +70,71 @@ public class GenericInterceptableResponse implements InterceptableResponse, Resp
 	 * 
 	 * @throws IllegalArgumentException if the response has been received
 	 */
-	private void checkNotReceived() throws IllegalArgumentException {
-		if(this.receivedResponse != null) {
+	private void checkNotConnected() throws IllegalArgumentException {
+		if(this.connectedResponse != null) {
 			throw new IllegalStateException("Response already received");
 		}
 	}
 	
 	/**
 	 * <p>
-	 * Injects the actual response received from the endpoint.
+	 * Injects the actual response either received from the endpoint or specified in the interceptor when the request was intercepted (i.e. interceptor returned an empty publisher).
 	 * </p>
 	 * 
-	 * @param receivedResponse the response received from the endpoint
+	 * @param connectedResponse the retained response
 	 */
-	public void setReceivedResponse(Response receivedResponse) {
-		this.receivedResponse = receivedResponse;
+	public void setConnectedResponse(Response connectedResponse) {
 		if(this.responseBody != null) {
-			this.responseBody.setReceivedResponseBody(this.receivedResponse.body());
+			this.responseBody.setConnectedResponseBody(connectedResponse.body());
 		}
+		this.connectedResponse = connectedResponse;
 	}
 	
 	@Override
 	public InboundResponseHeaders headers() {
-		if(this.receivedResponse != null) {
-			return this.receivedResponse.headers();
+		if(this.connectedResponse != null && this.connectedResponse != this) {
+			return this.connectedResponse.headers();
 		}
 		if(this.responseHeaders == null) {
-			this.responseHeaders = new GenericInterceptableResponseHeaders(headerService, parameterConverter);
+			this.responseHeaders = new EndpointInterceptableResponseHeaders(headerService, parameterConverter);
 		}
 		return this.responseHeaders;
 	}
 	
 	@Override
 	public InterceptableResponse headers(Consumer<OutboundResponseHeaders> headersConfigurer) throws IllegalStateException {
-		this.checkNotReceived();
+		this.checkNotConnected();
 		if(this.responseHeaders == null) {
-			this.responseHeaders = new GenericInterceptableResponseHeaders(headerService, parameterConverter);
+			this.responseHeaders = new EndpointInterceptableResponseHeaders(headerService, parameterConverter);
 		}
 		headersConfigurer.accept(this.responseHeaders);
 		return this;
 	}
 
 	@Override
-	public GenericInterceptableResponseBody body() {
+	public EndpointInterceptableResponseBody body() {
 		if(this.responseBody == null) {
-			this.responseBody = new GenericInterceptableResponseBody(this);
-			if(this.receivedResponse != null) {
-				this.responseBody.setReceivedResponseBody(this.receivedResponse.body());
-			}
+			this.responseBody = new EndpointInterceptableResponseBody(this);
 		}
 		return this.responseBody;
 	}
 
 	@Override
 	public InboundHeaders trailers() {
-		if(this.receivedResponse != null) {
-			return this.receivedResponse.trailers();
+		if(this.connectedResponse != null && this.connectedResponse != this) {
+			return this.connectedResponse.trailers();
 		}
 		if(this.responseTrailers == null) {
-			this.responseTrailers = new GenericInterceptableResponseTrailers(headerService, parameterConverter);
+			this.responseTrailers = new EndpointInterceptableResponseTrailers(headerService, parameterConverter);
 		}
 		return this.responseTrailers;
 	}
 
 	@Override
 	public InterceptableResponse trailers(Consumer<OutboundHeaders<?>> trailersConfigurer) throws IllegalStateException {
-		this.checkNotReceived();
+		this.checkNotConnected();
 		if(this.responseTrailers == null) {
-			this.responseTrailers = new GenericInterceptableResponseTrailers(headerService, parameterConverter);
+			this.responseTrailers = new EndpointInterceptableResponseTrailers(headerService, parameterConverter);
 		}
 		trailersConfigurer.accept(this.responseTrailers);
 		return this;
@@ -145,6 +142,6 @@ public class GenericInterceptableResponse implements InterceptableResponse, Resp
 
 	@Override
 	public boolean isReceived() {
-		return this.receivedResponse != null;
+		return this.connectedResponse != null  && this.connectedResponse != this;
 	}
 }

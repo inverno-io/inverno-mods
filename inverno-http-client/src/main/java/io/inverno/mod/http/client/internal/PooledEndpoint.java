@@ -22,30 +22,26 @@ import io.inverno.mod.base.net.NetClientConfiguration;
 import io.inverno.mod.base.net.NetService;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
-import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.ConnectionTimeoutException;
-import io.inverno.mod.http.client.Exchange;
+import io.inverno.mod.http.client.ExchangeInterceptor;
 import io.inverno.mod.http.client.HttpClientConfiguration;
-import io.inverno.mod.http.client.RequestBodyConfigurator;
-import io.netty.buffer.ByteBuf;
+import io.inverno.mod.http.client.InterceptableExchange;
+import io.inverno.mod.http.client.Part;
+import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
 import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.net.InetSocketAddress;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -76,8 +72,10 @@ import reactor.core.publisher.Sinks;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
+ *
+ * @param <A> the exchange context type
  */
-public class PooledEndpoint extends AbstractEndpoint {
+public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<A> {
 
 	private static final Logger LOGGER = LogManager.getLogger(PooledEndpoint.class);
 	
@@ -89,7 +87,7 @@ public class PooledEndpoint extends AbstractEndpoint {
 	private final long cleanPeriod;
 	private final long connectTimeout;
 	
-	private final CommandExecutor<PooledEndpoint> commandExecutor;
+	private final CommandExecutor<PooledEndpoint<A>> commandExecutor;
 	private final PooledEndpoint.PooledHttpConnection[] connections;
 	private final Deque<PooledEndpoint.PooledHttpConnection> parkedConnections;
 	private final PooledEndpoint.ConnectionRequestBuffer requestBuffer;
@@ -113,29 +111,37 @@ public class PooledEndpoint extends AbstractEndpoint {
 	 * Creates a pooled endpoint.
 	 * </p>
 	 *
-	 * @param reactor            the reactor
-	 * @param netService         the net service
-	 * @param sslContextProvider the SSL context provider
-	 * @param channelConfigurer  the endpoint channel configurer
-	 * @param localAddress       the local address
-	 * @param remoteAddress      the remote endpoint address
-	 * @param configuration      the HTTP client configuration
-	 * @param netConfiguration   the net configuration
-	 * @param headerService      the header service
-	 * @param parameterConverter the parameter converter
+	 * @param reactor               the reactor
+	 * @param netService            the net service
+	 * @param sslContextProvider    the SSL context provider
+	 * @param channelConfigurer     the endpoint channel configurer
+	 * @param localAddress          the local address
+	 * @param remoteAddress         the remote endpoint address
+	 * @param configuration         the HTTP client configuration
+	 * @param netConfiguration      the net configuration
+	 * @param headerService         the header service
+	 * @param parameterConverter    the parameter converter
+	 * @param urlEncodedBodyEncoder the URL encoded body encoder
+	 * @param multipartBodyEncoder  the multipart body encoder
+	 * @param partFactory           the part factory
+	 * @param exchangeInterceptor   an optional exchange interceptor
 	 */
 	public PooledEndpoint(
 			Reactor reactor,
 			NetService netService, 
-			SslContextProvider sslContextProvider, 
-			EndpointChannelConfigurer channelConfigurer, 
-			InetSocketAddress localAddress, 
+			SslContextProvider sslContextProvider,
+			EndpointChannelConfigurer channelConfigurer,
+			InetSocketAddress localAddress,
 			InetSocketAddress remoteAddress, 
 			HttpClientConfiguration configuration, 
-			NetClientConfiguration netConfiguration, 
+			NetClientConfiguration netConfiguration,
 			HeaderService headerService, 
-			ObjectConverter<String> parameterConverter) {
-		super(netService, sslContextProvider, channelConfigurer, localAddress, remoteAddress, configuration, netConfiguration, headerService, parameterConverter);
+			ObjectConverter<String> parameterConverter,
+			MultipartEncoder<Parameter> urlEncodedBodyEncoder,
+			MultipartEncoder<Part<?>> multipartBodyEncoder, 
+			Part.Factory partFactory,
+			ExchangeInterceptor<? super A, InterceptableExchange<A>> exchangeInterceptor) {
+		super(netService, sslContextProvider, channelConfigurer, localAddress, remoteAddress, configuration, netConfiguration, headerService, parameterConverter, urlEncodedBodyEncoder, multipartBodyEncoder, partFactory, exchangeInterceptor);
 		
 		this.maxSize = this.configuration.pool_max_size();
 		this.bufferSize = this.configuration.pool_buffer_size();
@@ -893,13 +899,17 @@ public class PooledEndpoint extends AbstractEndpoint {
 		public PooledHttpConnection(int index, HttpConnection connection) {
 			this.index = index;
 			this.connection = connection;
-			this.connection.setHandler(this);
-			
 			this.keepAliveTimeout = PooledEndpoint.this.configuration.pool_keep_alive_timeout();
 			this.expirationTime = this.keepAliveTimeout != null ? System.currentTimeMillis() + this.keepAliveTimeout : null;
 			
 			Long mcr = connection.getMaxConcurrentRequests();
 			this.capacity = mcr != null ? mcr : Long.MAX_VALUE;
+			
+			this.init();
+		}
+		
+		private void init() {
+			this.connection.setHandler(this);
 		}
 		
 		@Override
@@ -954,16 +964,8 @@ public class PooledEndpoint extends AbstractEndpoint {
 		}
 
 		@Override
-		public <A extends ExchangeContext> Mono<Exchange<A>> send(
-				A exchangeContext, 
-				Method method, 
-				String authority, 
-				List<Map.Entry<String, String>> headers, 
-				String path, 
-				Consumer<RequestBodyConfigurator> bodyConfigurer,
-				Function<Publisher<ByteBuf>, Publisher<ByteBuf>> requestBodyTransformer,
-				Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer) {
-			return this.connection.send(exchangeContext, method, authority, headers, path, bodyConfigurer, requestBodyTransformer, responseBodyTransformer);
+		public <A extends ExchangeContext> Mono<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<A> endpointExchange) {
+			return this.connection.send(endpointExchange);
 		}
 
 		@Override
@@ -994,7 +996,7 @@ public class PooledEndpoint extends AbstractEndpoint {
 		}
 
 		@Override
-		public void onExchangeTerminate(Exchange<?> exchange) {
+		public void onExchangeTerminate(HttpConnectionExchange<?, ?, ?> exchange) {
 			PooledEndpoint.this.recycle(this);
 		}
 

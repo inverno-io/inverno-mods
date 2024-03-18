@@ -29,21 +29,17 @@ import java.util.Optional;
 
 /**
  * <p>
- * A {@link Resource} implementation that identifies resources by a URI of the
- * form {@code module://[MODULE_NAME]/path/to/resource} or
- * {@code module:/path/to/resource} and looks up data from a module.
+ * A {@link Resource} implementation that identifies resources by a URI of the form {@code module://[MODULE_NAME]/path/to/resource} or {@code module:/path/to/resource} and looks up data from a module.
  * </p>
- * 
+ *
  * <p>
- * When no module name is specified in the URI, the {@code jdk.module.main}
- * module is considered.
+ * When no module name is specified in the URI, the {@code jdk.module.main} module is considered.
  * </p>
- * 
+ *
  * <p>
- * When the application runs without modules, the unnamed module is used whatever
- * the module specified in the URI.
+ * When the application runs without modules, the unnamed module is used whatever the module specified in the URI.
  * </p>
- * 
+ *
  * <p>
  * A typical usage is:
  * </p>
@@ -74,15 +70,16 @@ public class ModuleResource extends AbstractAsyncResource {
 	
 	private Optional<Boolean> exists;
 	
+	private ResourceException resolutionError;
+	
 	/**
 	 * <p>
 	 * Creates a module resource with the specified URI.
 	 * </p>
-	 * 
+	 *
 	 * @param uri the resource URI
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  module resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a module resource
 	 */
 	public ModuleResource(URI uri) throws IllegalArgumentException {
 		this(uri, (ModuleLayer)null, null);
@@ -90,17 +87,14 @@ public class ModuleResource extends AbstractAsyncResource {
 	
 	/**
 	 * <p>
-	 * Creates a module resource with the specified URI that looks up data from the
-	 * module layer that contains the module of which the specified class is a
-	 * member.
+	 * Creates a module resource with the specified URI that looks up data from the module layer that contains the module of which the specified class is a member.
 	 * </p>
-	 * 
+	 *
 	 * @param uri   the resource URI
 	 * @param clazz a class
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  module resource
-	 * 
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a module resource
+	 *
 	 * @see Class#getModule()
 	 */
 	public ModuleResource(URI uri, Class<?> clazz) throws IllegalArgumentException {
@@ -109,17 +103,14 @@ public class ModuleResource extends AbstractAsyncResource {
 	
 	/**
 	 * <p>
-	 * Creates a module resource with the specified URI and media type service that
-	 * looks up data from the module layer that contains the module of which the
-	 * specified class is a member.
+	 * Creates a module resource with the specified URI and media type service that looks up data from the module layer that contains the module of which the specified class is a member.
 	 * </p>
-	 * 
+	 *
 	 * @param uri              the resource URI
 	 * @param clazz            a class
 	 * @param mediaTypeService a media type service
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  module resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a module resource
 	 */
 	public ModuleResource(URI uri, Class<?> clazz, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		this(uri, clazz.getModule().getLayer(), mediaTypeService);
@@ -127,15 +118,13 @@ public class ModuleResource extends AbstractAsyncResource {
 	
 	/**
 	 * <p>
-	 * Creates a module resource with the specified URI that looks up data from the
-	 * specified module layer.
+	 * Creates a module resource with the specified URI that looks up data from the specified module layer.
 	 * </p>
-	 * 
-	 * @param uri   the resource URI
+	 *
+	 * @param uri         the resource URI
 	 * @param moduleLayer a module layer
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  module resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a module resource
 	 */
 	public ModuleResource(URI uri, ModuleLayer moduleLayer) throws IllegalArgumentException {
 		this(uri, moduleLayer, null);
@@ -145,12 +134,11 @@ public class ModuleResource extends AbstractAsyncResource {
 	 * <p>
 	 * Creates a module resource with the specified URI and media type service.
 	 * </p>
-	 * 
+	 *
 	 * @param uri              the resource URI
 	 * @param mediaTypeService the media type service
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  module resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a module resource
 	 */
 	public ModuleResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		this(uri, (ModuleLayer)null, mediaTypeService);
@@ -158,16 +146,14 @@ public class ModuleResource extends AbstractAsyncResource {
 	
 	/**
 	 * <p>
-	 * Creates a module resource with the specified URI and media type service that
-	 * looks up data from the specified module layer.
+	 * Creates a module resource with the specified URI and media type service that looks up data from the specified module layer.
 	 * </p>
-	 * 
+	 *
 	 * @param uri              the resource URI
 	 * @param moduleLayer      a module layer
 	 * @param mediaTypeService the media type service
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  module resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a module resource
 	 */
 	public ModuleResource(URI uri, ModuleLayer moduleLayer, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
@@ -198,12 +184,12 @@ public class ModuleResource extends AbstractAsyncResource {
 	 * <p>
 	 * Checks that the specified URI is a module resource URI.
 	 * </p>
-	 * 
+	 *
 	 * @param uri the uri to check
-	 * 
+	 *
 	 * @return the uri if it is a module resource URI
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  module resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a module resource
 	 */
 	public static URI checkUri(URI uri) throws IllegalArgumentException {
 		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_MODULE)) {
@@ -212,27 +198,41 @@ public class ModuleResource extends AbstractAsyncResource {
 		return uri.normalize();
 	}
 	
-	private Optional<Module> resolve() {
+	private Optional<Module> resolve() throws ResourceException {
+		if(this.resolutionError != null) {
+			throw this.resolutionError;
+		}
 		if(this.module == null) {
-			if(this.moduleLayer != null && this.moduleName != null) {
-				this.module = this.moduleLayer.modules().stream().filter(module -> module.getName().equals(this.moduleName)).findFirst();
-			}
-			else {
-				// unnamed module
-				ClassLoader classLoader = null;
-				try {
-					classLoader = Thread.currentThread().getContextClassLoader();
+			try {
+				if(this.moduleLayer != null && this.moduleName != null) {
+					this.module = this.moduleLayer.modules().stream().filter(module -> module.getName().equals(this.moduleName)).findFirst();
 				}
-				catch (Throwable ex) {
-					classLoader = ClasspathResource.class.getClassLoader();
-					if (classLoader == null) {
-						classLoader = ClassLoader.getSystemClassLoader();
+				else {
+					// unnamed module
+					ClassLoader classLoader = null;
+					try {
+						classLoader = Thread.currentThread().getContextClassLoader();
 					}
+					catch (Throwable ex) {
+						classLoader = ClasspathResource.class.getClassLoader();
+						if (classLoader == null) {
+							classLoader = ClassLoader.getSystemClassLoader();
+						}
+					}
+					this.module = Optional.of(classLoader.getUnnamedModule());
 				}
-				this.module = Optional.of(classLoader.getUnnamedModule());
+			}
+			catch(Throwable t) {
+				this.resolutionError = new ResourceException(t);
+				throw this.resolutionError;
 			}
 		}
 		return this.module;
+	}
+	
+	@Override
+	public URI getURI() {
+		return this.uri;
 	}
 	
 	@Override
@@ -247,26 +247,24 @@ public class ModuleResource extends AbstractAsyncResource {
 	}
 
 	@Override
-	public URI getURI() {
-		return this.uri;
-	}
-
-	@Override
 	public Optional<Boolean> isFile() throws ResourceException {
 		return Optional.empty();
 	}
 
 	@Override
 	public Optional<Boolean> exists() throws ResourceException {
+		if(this.resolutionError != null) {
+			throw this.resolutionError;
+		}
 		if(this.exists == null) {
-			this.exists = this.resolve().map(module -> {
-				try(InputStream resourceStream = module.getResourceAsStream(this.resourceName)) {
+			this.exists = this.resolve().map(m -> {
+				try(InputStream resourceStream = m.getResourceAsStream(this.resourceName)) {
 					return resourceStream != null;
 				}
 				catch (IOException e) {
-					return false;
+					throw new ResourceException(e);
 				}
-			}).or(() -> Optional.of(false));
+			});
 		}
 		return this.exists;
 	}
@@ -286,13 +284,12 @@ public class ModuleResource extends AbstractAsyncResource {
 		return this.resolve()
 			.map(module -> {
 				try {
-					return module.getResourceAsStream(this.resourceName);
+					return Channels.newChannel(module.getResourceAsStream(this.resourceName));
 				}
 				catch (IOException e) {
-					return null;
+					throw new ResourceException(e);
 				}
-			})
-			.map(Channels::newChannel);
+			});
 	}
 
 	@Override

@@ -94,7 +94,7 @@ class Http1xResponseHeaders implements InboundResponseHeaders {
 	@Override
 	public Long getContentLength() {
 		String contentLength = this.underlyingHeaders.get((CharSequence)Headers.NAME_CONTENT_LENGTH);
-		return contentLength != null ? Long.parseLong(contentLength) : null;
+		return contentLength != null ? Long.valueOf(contentLength) : null;
 	}
 
 	@Override

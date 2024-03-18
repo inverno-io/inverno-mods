@@ -1342,4 +1342,9 @@ public class WebRouteController {
 	public Mono<String> get_delay100() {
 		return Mono.just("get_delay100").delayElement(Duration.ofMillis(100));
 	}
+	
+	@WebRoute(path = "/get_timeout", method = Method.GET, produces = MediaTypes.TEXT_PLAIN)
+	public Mono<String> get_timeout() {
+		return Mono.just("get_timeout").delayElement(Duration.ofSeconds(2));
+	}
 }

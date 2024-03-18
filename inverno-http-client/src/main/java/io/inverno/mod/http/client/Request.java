@@ -16,10 +16,18 @@
 package io.inverno.mod.http.client;
 
 import io.inverno.mod.http.base.BaseRequest;
+import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * <p>
  * Represents a client request in a client exchange.
+ * </p>
+ * 
+ * <p>
+ * Once the request has been sent to the endpoint it is no longer possible to modify it resulting in {@link IllegalStateException} on such operations.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -40,10 +48,73 @@ public interface Request extends BaseRequest {
 	
 	/**
 	 * <p>
-	 * Returns the name of the scheme used to send the request (eg. http, https...).
+	 * Sets the request method.
 	 * </p>
 	 * 
-	 * @return the name of the scheme
+	 * <p>
+	 * This actually overrides the method provided when the enclosing exchange was created by the {@link Endpoint}. It defaults to {@link Method#GET} if none is specified.
+	 * </p>
+	 * 
+	 * @param method the request method
+	 * 
+	 * @return the request
+	 * 
+	 * @throws IllegalStateException if the request has already been sent to the endpoint
 	 */
-	String getScheme();
+	Request method(Method method) throws IllegalStateException;
+	
+	/**
+	 * <p>
+	 * Sets the request authority.
+	 * </p>
+	 * 
+	 * @param authority the request authority
+	 * 
+	 * @return the request
+	 * 
+	 * @throws IllegalStateException if the request has already been sent to the endpoint
+	 */
+	Request authority(String authority) throws IllegalStateException;
+	
+	/**
+	 * <p>
+	 * Sets the request path.
+	 * </p>
+	 * 
+	 * <p>
+	 * This actually overrides the request target path provided when the request was created using {@link Endpoint#exchange(io.inverno.mod.http.base.Method, java.lang.String) } or 
+	 * {@link Endpoint#exchange(io.inverno.mod.http.base.Method, java.lang.String, io.inverno.mod.http.base.ExchangeContext)}.
+	 * </p>
+	 * 
+	 * @param path the request target path
+	 * 
+	 * @return the request
+	 * 
+	 * @throws IllegalStateException if the request has already been sent to the endpoint
+	 */
+	Request path(String path) throws IllegalStateException;
+	
+	/**
+	 * <p>
+	 * Configures the HTTP headers to send in the request.
+	 * </p>
+	 *
+	 * @param headersConfigurer an outbound request headers configurer
+	 *
+	 * @return the request
+	 *
+	 * @throws IllegalStateException if the request has already been sent to the endpoint
+	 */
+	Request headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException;
+
+	/**
+	 * <p>
+	 * Returns the request body when the request method allows it.
+	 * </p>
+	 * 
+	 * @return an optional returning the request body when the method allows it (i.e. {@code POST} {@code PUT}...) or an empty optional (i.e. {@code GET}...).
+	 * 
+	 * @throws IllegalStateException if the request has already been sent to the endpoint
+	 */
+	Optional<? extends RequestBody> body() throws IllegalStateException;
 }

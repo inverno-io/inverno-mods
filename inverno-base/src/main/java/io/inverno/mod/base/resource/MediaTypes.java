@@ -114,14 +114,14 @@ public final class MediaTypes {
 	 * <p>
 	 * Normalizes the specified media type.
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * This method basically restores the missing {@code application/} prefix omitted for compactness. This reduced syntax can be used for instance in a JOSE header content type parameter or in a
 	 * Websocket subprotocol.
 	 * </p>
-	 * 
+	 *
 	 * @param mediaType a media type
-	 * 
+	 *
 	 * @return a normalized application media type
 	 */
 	public static String normalizeApplicationMediaType(String mediaType) {

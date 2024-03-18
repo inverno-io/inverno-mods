@@ -19,23 +19,21 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * <p>
- * An async resource uses an executor service to be read and written
- * asynchronously.
+ * An async resource uses an executor service to be read and written asynchronously.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see Resource
  */
 public interface AsyncResource extends Resource {
 
 	/**
 	 * <p>
-	 * Sets the executor service to use when reading or writing the resource
-	 * asynchronously.
+	 * Sets the executor service to use when reading or writing the resource asynchronously.
 	 * </p>
-	 * 
+	 *
 	 * @param executor the executor service to set
 	 */
 	void setExecutor(ExecutorService executor);

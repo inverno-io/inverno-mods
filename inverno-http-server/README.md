@@ -899,7 +899,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
             .flatMap(part -> part.getFilename()                                                                                   // 2 
                 .map(fileName -> Flux.<CharSequence, FileResource>using(                                                          // 3 
                     () -> new FileResource("uploads/" + part.getFilename().get()),                                                // 4 
-                    file -> file.write(part.raw().stream()).map(Flux::from).get()                                                 // 5 
+                    file -> Flux.from(file.write(part.raw().stream()))                                                            // 5 
                         .reduce(0, (acc, cur) -> acc + cur)
                         .map(size -> "Uploaded " + fileName + "(" + part.headers().getContentType() + "): " + size + " Bytes\n"),  
                     FileResource::close                                                                                           // 6 

@@ -50,7 +50,7 @@ public class WebRoutesConfigurer implements io.inverno.mod.web.server.WebRoutesC
 				            .flatMap(part -> part.getFilename()
 				                .map(fileName -> Flux.<ByteBuf, FileResource>using(
 				                        () -> new FileResource("target/uploads/" + part.getFilename().get()),
-				                        file -> file.write(part.raw().stream()).map(Flux::from).get()
+				                        file -> Flux.from(file.write(part.raw().stream()))
 				                            .reduce(0, (acc, cur) -> acc + cur)
 				                            .map(size -> Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Uploaded " + fileName + "(" + part.headers().getContentType() + "): " + size + " Bytes\n", Charsets.DEFAULT))), 
 				                        FileResource::close

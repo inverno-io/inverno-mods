@@ -20,6 +20,9 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.client.Exchange;
+import io.inverno.mod.http.client.internal.HttpConnectionExchange;
+import io.inverno.mod.http.client.internal.HttpConnectionRequest;
+import io.inverno.mod.http.client.internal.HttpConnectionResponse;
 import io.inverno.mod.http.client.internal.http2.Http2Connection;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -28,8 +31,6 @@ import io.netty.handler.codec.http2.Http2CodecUtil;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.collection.CharObjectMap;
-import java.util.function.Function;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.MonoSink;
 
 /**
@@ -42,7 +43,7 @@ import reactor.core.publisher.MonoSink;
  */
 public class Http1xUpgradingExchange extends Http1xExchange {
 
-	private final MonoSink<Exchange<ExchangeContext>> upgradedExchangeSink;
+	private final MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> upgradedExchangeSink;
 	private Http2Connection upgradedConnection;
 	
 	/**
@@ -60,13 +61,12 @@ public class Http1xUpgradingExchange extends Http1xExchange {
 	 */
 	public Http1xUpgradingExchange(
 			ChannelHandlerContext context, 
-			MonoSink<Exchange<ExchangeContext>> exchangeSink, 
+			MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink, 
 			ExchangeContext exchangeContext, 
 			HttpVersion protocol,
 			Http1xRequest request, 
-			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, 
 			Http1xConnectionEncoder encoder) {
-		super(context, null, exchangeContext, protocol, request, responseBodyTransformer, encoder);
+		super(context, null, exchangeContext, protocol, request, encoder);
 		this.upgradedExchangeSink = exchangeSink;
 	}
 	
@@ -79,11 +79,9 @@ public class Http1xUpgradingExchange extends Http1xExchange {
 	 */
 	public void init(Http2Connection upgradedConnection) {
 		this.upgradedConnection = upgradedConnection;
-		this.request.headers(headers -> {
-			headers.set(Headers.NAME_UPGRADE, Headers.VALUE_UPGRADE_H2C);
-			headers.set(Headers.NAME_HTTP2_SETTINGS, this.encodeSettingsHeaderValue(this.upgradedConnection.decoder().localSettings()));
-			headers.set(Headers.NAME_CONNECTION, Headers.NAME_UPGRADE + "," + Headers.NAME_HTTP2_SETTINGS);
-		});
+		this.request.headers().set(Headers.NAME_UPGRADE, Headers.VALUE_UPGRADE_H2C);
+		this.request.headers().set(Headers.NAME_HTTP2_SETTINGS, this.encodeSettingsHeaderValue(this.upgradedConnection.decoder().localSettings()));
+		this.request.headers().set(Headers.NAME_CONNECTION, Headers.NAME_UPGRADE + "," + Headers.NAME_HTTP2_SETTINGS);
 	}
 
 	@Override
@@ -94,23 +92,12 @@ public class Http1xUpgradingExchange extends Http1xExchange {
 	
 	/**
 	 * <p>
-	 * Returns the response body transformer.
-	 * </p>
-	 * 
-	 * @return the response body transformer
-	 */
-	public Function<Publisher<ByteBuf>, Publisher<ByteBuf>> getResponseBodyTransformer() {
-		return this.responseBodyTransformer;
-	}
-
-	/**
-	 * <p>
 	 * Returns the ugraded exchange sink.
 	 * </p>
 	 * 
 	 * @return the upgraded exchange sink
 	 */
-	public MonoSink<Exchange<ExchangeContext>> getUpgradedExchangeSink() {
+	public MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> getUpgradedExchangeSink() {
 		return this.upgradedExchangeSink;
 	}
 

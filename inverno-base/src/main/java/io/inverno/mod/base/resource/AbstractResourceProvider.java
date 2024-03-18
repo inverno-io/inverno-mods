@@ -60,7 +60,9 @@ public abstract class AbstractResourceProvider<A extends Resource> implements Re
 	 * </p>
 	 *
 	 * @param uri a URI a URI
+	 *
 	 * @return a file system a file system
+	 *
 	 * @throws IOException if there was error resolving the file system
 	 */
 	protected final FileSystem getFileSystem(URI uri) throws IOException {

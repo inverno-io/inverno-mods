@@ -30,9 +30,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.ssl.SslHandler;
-import java.security.cert.Certificate;
 import java.util.Optional;
-import javax.net.ssl.SSLPeerUnverifiedException;
 import reactor.core.publisher.Sinks.Many;
 
 /**

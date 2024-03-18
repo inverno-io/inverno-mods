@@ -15,10 +15,10 @@
  */
 package io.inverno.mod.http.client.ws;
 
+import io.inverno.mod.http.base.BaseRequest;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.ws.BaseWebSocketExchange;
-import io.inverno.mod.http.client.HttpClient;
-import io.inverno.mod.http.client.Request;
+import io.inverno.mod.http.client.Exchange;
 
 /**
  * <p>
@@ -30,7 +30,7 @@ import io.inverno.mod.http.client.Request;
  * </p>
  * 
  * <p>
- * A WebSocket exchange is created when a {@link HttpClient.WebSocketRequest} is sent to an endpoint.
+ * A WebSocket exchange is created when the WebSocket exchange publisher returned by {@link Exchange#webSocket() } is subscribed.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -47,5 +47,5 @@ public interface WebSocketExchange<A extends ExchangeContext> extends BaseWebSoc
 	 * 
 	 * @return the HTTP request
 	 */
-	Request request();
+	BaseRequest request();
 }

@@ -22,9 +22,7 @@ import java.util.Objects;
 
 /**
  * <p>
- * A {@link Resource} implementation that identifies resources by a URI of the
- * form <code>jar:file:/path/to/jar!/path/to/resource</code> and looks up data in a
- * jar file on the file system system.
+ * A {@link Resource} implementation that identifies resources by a URI of the form <code>jar:file:/path/to/jar!/path/to/resource</code> and looks up data in a jar file on the file system system.
  * </p>
  * 
  * <p>
@@ -47,11 +45,10 @@ public class JarResource extends ZipResource {
 	 * <p>
 	 * Creates a jar resource with the specified URI.
 	 * </p>
-	 * 
+	 *
 	 * @param uri the resource URI
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  jar resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a jar resource
 	 */
 	public JarResource(URI uri) throws IllegalArgumentException {
 		this(uri, null);
@@ -61,12 +58,11 @@ public class JarResource extends ZipResource {
 	 * <p>
 	 * Creates a jar resource with the specified URI and media type service.
 	 * </p>
-	 * 
+	 *
 	 * @param uri              the resource URI
 	 * @param mediaTypeService a media type service
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  jar resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a jar resource
 	 */
 	public JarResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(uri, SCHEME_JAR, mediaTypeService);
@@ -76,12 +72,12 @@ public class JarResource extends ZipResource {
 	 * <p>
 	 * Checks that the specified URI is a jar resource URI.
 	 * </p>
-	 * 
+	 *
 	 * @param uri the uri to check
-	 * 
+	 *
 	 * @return the uri if it is a jar resource URI
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  jar resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a jar resource
 	 */
 	public static URI checkUri(URI uri) throws IllegalArgumentException {
 		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_JAR)) {
@@ -91,7 +87,7 @@ public class JarResource extends ZipResource {
 	}
 	
 	@Override
-	public Resource resolve(Path path) {
+	public Resource resolve(Path path) throws ResourceException {
 		try {
 			URI resolvedURI = new URI(JarResource.SCHEME_JAR, this.zipUri + "!" + pathToSanitizedString(this.resourcePath.resolve(path)), null);
 			JarResource resolvedResource = new JarResource(resolvedURI, this.getMediaTypeService());
@@ -99,7 +95,7 @@ public class JarResource extends ZipResource {
 			return resolvedResource;
 		} 
 		catch (URISyntaxException e) {
-			throw new IllegalArgumentException("Invalid path", e);
+			throw new ResourceException("Invalid path", e);
 		}
 	}
 }

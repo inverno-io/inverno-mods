@@ -23,13 +23,16 @@ import io.inverno.mod.base.net.URIs;
 import io.inverno.mod.base.resource.FileResource;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.boot.Boot;
+import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.client.Client;
 import io.inverno.mod.http.client.Endpoint;
+import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfigurationLoader;
+import io.inverno.mod.http.client.RequestTimeoutException;
 import io.inverno.mod.test.AbstractInvernoModTest;
 import io.inverno.mod.test.configuration.ConfigurationInvocationHandler;
 import io.inverno.test.InvernoCompilationException;
@@ -49,6 +52,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterAll;
@@ -84,8 +88,8 @@ public class HttpClientTest {
 	private static Boot bootModule;
 	private static Client httpClientModule;
 	
-	private static Endpoint h11Endpoint;
-	private static Endpoint h2cEndpoint;
+	private static Endpoint<ExchangeContext> h11Endpoint;
+	private static Endpoint<ExchangeContext> h2cEndpoint;
 	
 	@BeforeAll
 	public static void init() throws IOException, InvernoCompilationException, ClassNotFoundException, InterruptedException {
@@ -172,17 +176,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_void(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_void(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_void'
 		endpoint
-			.request(Method.GET, "/get_void")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertNull(exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(0), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_void")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertNull(response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(0), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -193,17 +197,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_raw(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_raw'
 		endpoint
-			.request(Method.GET, "/get_raw")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertNull(exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(7), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_raw")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertNull(response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(7), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -214,17 +218,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_raw_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_raw_pub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_raw/pub'
 		endpoint
-			.request(Method.GET, "/get_raw/pub")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertNull(exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(11), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_raw/pub")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertNull(response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(11), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -235,17 +239,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_raw_mono(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_raw_mono(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_raw/mono'
 		endpoint
-			.request(Method.GET, "/get_raw/mono")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertNull(exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(12), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_raw/mono")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertNull(response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(12), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -256,23 +260,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_raw_flux(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_raw_flux(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_raw/flux'
 		endpoint
-			.request(Method.GET, "/get_raw/flux")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertNull(exchange.response().headers().getContentType());
-				Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_CONTENT_LENGTH).isEmpty());
+			.exchange(Method.GET, "/get_raw/flux")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertNull(response.headers().getContentType());
+				Assertions.assertTrue(response.headers().get(Headers.NAME_CONTENT_LENGTH).isEmpty());
 
 				switch(testHttpVersion) {
-					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, response.headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
 						break;
-					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+					case HTTP_2_0: Assertions.assertTrue(response.headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
 						break;
 				}
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -283,17 +287,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded'
 		endpoint
-			.request(Method.GET, "/get_encoded")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(11), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(11), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -304,17 +308,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_no_produce(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_no_produce(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/no_produce'
 		endpoint
-			.request(Method.GET, "/get_encoded/no_produce")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertNull(exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(22), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/no_produce")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertNull(response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(22), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -325,30 +329,30 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_no_encoder(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_no_encoder(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/no_encoder'
 		endpoint
-			.request(Method.GET, "/get_encoded/no_encoder")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.INTERNAL_SERVER_ERROR, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/no_encoder")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.INTERNAL_SERVER_ERROR, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_collection(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_collection(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/collection'
 		endpoint
-			.request(Method.GET, "/get_encoded/collection")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(22), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/collection")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(22), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -359,17 +363,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_list(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_list(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/list'
 		endpoint
-			.request(Method.GET, "/get_encoded/list")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(16), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/list")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(16), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -380,17 +384,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_set(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_set(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/set'
 		endpoint
-			.request(Method.GET, "/get_encoded/set")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(15), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/set")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(15), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -401,17 +405,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_array(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_array(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/array'
 		endpoint
-			.request(Method.GET, "/get_encoded/array")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(17), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/array")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(17), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -422,23 +426,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pub'
 		endpoint
-			.request(Method.GET, "/get_encoded/pub")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_CONTENT_LENGTH).isEmpty());
+			.exchange(Method.GET, "/get_encoded/pub")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertTrue(response.headers().get(Headers.NAME_CONTENT_LENGTH).isEmpty());
 				switch(testHttpVersion) {
-					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, response.headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
 						break;
-					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+					case HTTP_2_0: Assertions.assertTrue(response.headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
 						break;
 				}
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -449,17 +453,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_mono(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_mono(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/mono'
 		endpoint
-			.request(Method.GET, "/get_encoded/mono")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(16), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/mono")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(16), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -470,23 +474,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_flux(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_flux(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/flux'
 		endpoint
-			.request(Method.GET, "/get_encoded/flux")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_CONTENT_LENGTH).isEmpty());
+			.exchange(Method.GET, "/get_encoded/flux")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertTrue(response.headers().get(Headers.NAME_CONTENT_LENGTH).isEmpty());
 				switch(testHttpVersion) {
-					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, response.headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
 						break;
-					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+					case HTTP_2_0: Assertions.assertTrue(response.headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
 						break;
 				}
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -497,17 +501,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam?queryParam=abc'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam?queryParam=abc")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(27), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam?queryParam=abc")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(27), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -518,17 +522,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam?queryParam=abc&queryParam=def'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam?queryParam=abc&queryParam=def")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(27), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam?queryParam=abc&queryParam=def")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(27), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -539,30 +543,30 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/queryParam")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/opt?queryParam=abc'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/opt?queryParam=abc")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(31), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/opt?queryParam=abc")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(31), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -573,17 +577,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {	
+	public void test_get_encoded_queryParam_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {	
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/opt?queryParam=abc&queryParam=def'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/opt?queryParam=abc&queryParam=def")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(31), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/opt?queryParam=abc&queryParam=def")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(31), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -594,17 +598,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(33), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(33), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -615,17 +619,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_collection(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_collection(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/collection?queryParam=abc'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/collection?queryParam=abc")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(38), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/collection?queryParam=abc")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(38), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -636,17 +640,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_collection_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_collection_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/collection?queryParam=abc&queryParam=def,hij'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/collection?queryParam=abc&queryParam=def,hij")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(48), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/collection?queryParam=abc&queryParam=def,hij")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(48), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -657,30 +661,30 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_collection_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_collection_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/collection'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/collection")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/queryParam/collection")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_collection_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_collection_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/collection/opt?queryParam=abc'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/collection/opt?queryParam=abc")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(42), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/collection/opt?queryParam=abc")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(42), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -691,17 +695,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_collection_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_collection_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/collection/opt?queryParam=abc&queryParam=def,hij'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/collection/opt?queryParam=abc&queryParam=def,hij")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(52), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/collection/opt?queryParam=abc&queryParam=def,hij")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(52), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -712,17 +716,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_collection_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_collection_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/collection/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/collection/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(39), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/collection/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(39), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -733,17 +737,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_list(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_list(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/list?queryParam=abc'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/list?queryParam=abc")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/list?queryParam=abc")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -754,17 +758,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_list_multi(Endpoint endpoint, HttpVersion testHttpVersion) {	
+	public void test_get_encoded_queryParam_list_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {	
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/list?queryParam=abc&queryParam=def,hij'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/list?queryParam=abc&queryParam=def,hij")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(42), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/list?queryParam=abc&queryParam=def,hij")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(42), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -775,30 +779,30 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_list_missing(Endpoint endpoint, HttpVersion testHttpVersion) {	
+	public void test_get_encoded_queryParam_list_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {	
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/list'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/list")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/queryParam/list")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_list_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_list_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/list/opt?queryParam=abc'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/list/opt?queryParam=abc")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(36), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/list/opt?queryParam=abc")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(36), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -809,17 +813,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_list_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {	
+	public void test_get_encoded_queryParam_list_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {	
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/list/opt?queryParam=abc&queryParam=def,hij'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/list/opt?queryParam=abc&queryParam=def,hij")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(46), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/list/opt?queryParam=abc&queryParam=def,hij")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(46), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -830,17 +834,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_list_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {	
+	public void test_get_encoded_queryParam_list_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {	
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/list/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/list/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(33), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/list/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(33), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -851,17 +855,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_set(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_set(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/set?queryParam=abc'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/set?queryParam=abc")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(31), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/set?queryParam=abc")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(31), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -872,17 +876,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_set_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_set_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/set?queryParam=abc&queryParam=def,hij'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/set?queryParam=abc&queryParam=def,hij")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(41), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/set?queryParam=abc&queryParam=def,hij")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(41), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -895,30 +899,30 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_set_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_set_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/set'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/set")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/queryParam/set")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_set_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_set_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/set/opt?queryParam=abc'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/set/opt?queryParam=abc")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(35), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/set/opt?queryParam=abc")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(35), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -929,17 +933,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_set_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_set_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/set/opt?queryParam=abc&queryParam=def,hij'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/set/opt?queryParam=abc&queryParam=def,hij")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(45), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/set/opt?queryParam=abc&queryParam=def,hij")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(45), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -952,17 +956,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_set_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {	
+	public void test_get_encoded_queryParam_set_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {	
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/set/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/set/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/set/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -973,17 +977,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_array(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_array(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/array?queryParam=abc'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/array?queryParam=abc")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(33), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/array?queryParam=abc")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(33), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -994,17 +998,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_array_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_array_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/array?queryParam=abc&queryParam=def,hij'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/array?queryParam=abc&queryParam=def,hij")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(43), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/array?queryParam=abc&queryParam=def,hij")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(43), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1015,30 +1019,30 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_array_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_array_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/array'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/array")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/queryParam/array")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_array_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_array_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/array/opt?queryParam=abc'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/array/opt?queryParam=abc")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(37), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/array/opt?queryParam=abc")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(37), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1049,17 +1053,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_array_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_array_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/array/opt?queryParam=abc&queryParam=def,hij'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/array/opt?queryParam=abc&queryParam=def,hij")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(47), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/array/opt?queryParam=abc&queryParam=def,hij")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(47), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1070,17 +1074,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_queryParam_array_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_queryParam_array_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/queryParam/array/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/queryParam/array/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(34), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/queryParam/array/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(34), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1091,18 +1095,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam")
-			.headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(28), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(28), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1113,18 +1119,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam")
-			.headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(28), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(28), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1135,21 +1143,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_multi_header(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
-				.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(28), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
+					.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(28), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1160,31 +1170,33 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/cookieParam")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/opt")
-			.headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1195,18 +1207,20 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/opt")
-			.headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1217,21 +1231,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_opt_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {	
+	public void test_get_encoded_cookieParam_opt_multi_header(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {	
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/opt")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
-				.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
+					.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1242,17 +1258,17 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(34), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(34), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1263,18 +1279,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_collection(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_collection(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/collection'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/collection")
-			.headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(39), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/collection")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(39), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1285,18 +1303,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_collection_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_collection_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/collection'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/collection")
-			.headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(49), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/collection")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(49), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1307,21 +1327,23 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_collection_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_collection_multi_header(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/collection'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/collection")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
-				.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(49), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/collection")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
+					.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(49), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1332,31 +1354,33 @@ public class HttpClientTest {
 		
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_collection_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_collection_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/collection'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/collection")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/cookieParam/collection")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_collection_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_collection_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/collection/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/collection/opt")
-			.headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(43), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/collection/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(43), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1367,18 +1391,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_collection_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_collection_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/collection/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/collection/opt")
-			.headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(53), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/collection/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(53), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1389,21 +1415,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_collection_opt_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_collection_opt_multi_header(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/collection/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/collection/opt")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
-				.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(53), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/collection/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
+					.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(53), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1414,17 +1442,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_collection_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_collection_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/collection/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/collection/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(40), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/collection/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(40), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1435,18 +1463,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_list(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_list(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/list'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/list")
-			.headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(33), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/list")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(33), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1457,18 +1487,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_list_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_list_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/list'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/list")
-			.headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(43), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/list")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(43), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1479,21 +1511,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_list_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_list_multi_header(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/list'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/list")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
-				.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(43), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/list")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
+					.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(43), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1504,31 +1538,33 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_list_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_list_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/list'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/list")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/cookieParam/list")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_list_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_list_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/list/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/list/opt")
-			.headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(37), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/list/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(37), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1539,18 +1575,20 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_list_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_list_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/list/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/list/opt")
-			.headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,ghi")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(47), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/list/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,ghi")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(47), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1561,21 +1599,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_list_opt_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_list_opt_multi_header(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/list/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/list/opt")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
-				.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(47), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/list/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
+					.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(47), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1586,17 +1626,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_list_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_list_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/list/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/list/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(34), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/list/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(34), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1607,18 +1647,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_set(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_set(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/set'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/set")
-			.headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/set")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1629,18 +1671,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_set_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_set_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/set'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/set")
-			.headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(42), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/set")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(42), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1653,21 +1697,23 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_set_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_set_multi_header(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/set'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/set")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
-				.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(42), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/set")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
+					.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(42), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1680,33 +1726,33 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_set_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_set_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/set'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/set")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/cookieParam/set")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_set_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_set_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/set/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/set/opt")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(36), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/set/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(36), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1717,20 +1763,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_set_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {	
+	public void test_get_encoded_cookieParam_set_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {	
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/set/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/set/opt")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij"))
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(46), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/set/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(46), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1743,21 +1789,23 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_set_opt_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_set_opt_multi_header(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/set/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/set/opt")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
-				.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(46), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/set/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
+					.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(46), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1770,17 +1818,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_set_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_set_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/set/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/set/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(33), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/set/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(33), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1791,20 +1839,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_array(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_array(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/array'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/array")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(34), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/array")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(34), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1815,20 +1863,20 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_array_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_array_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/array'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/array")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij"))
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(44), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/array")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(44), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1839,21 +1887,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_array_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_array_multi_header(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/array'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/array")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
-				.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(44), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/array")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
+					.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(44), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1864,33 +1914,33 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_array_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_array_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/array'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/array")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/cookieParam/array")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_array_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_array_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' 'http://127.0.0.1:8080/get_encoded/cookieParam/array/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/array/opt")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(38), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/array/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(38), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1901,20 +1951,20 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_array_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_array_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc; cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/array/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/array/opt")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij"))
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(48), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/array/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc").addCookie("cookieParam", "def,hij")));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(48), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1925,21 +1975,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_array_opt_multi_header(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_array_opt_multi_header(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'cookie: cookieParam=abc' -H 'cookie: cookieParam=def,hij' 'http://127.0.0.1:8080/get_encoded/cookieParam/array/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/array/opt")
-			.headers(headers -> headers
-				.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
-				.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(48), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/array/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.cookies(cookies -> cookies.addCookie("cookieParam", "abc"))
+					.add(Headers.NAME_COOKIE, "cookieParam=def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(48), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1950,17 +2002,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_cookieParam_array_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_cookieParam_array_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/cookieParam/array/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/cookieParam/array/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(35), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/cookieParam/array/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(35), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1971,20 +2023,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(28), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(28), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -1995,21 +2049,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-				.add("headerparam", "def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(28), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+					.add("headerparam", "def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(28), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2020,33 +2076,35 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/headerParam")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/opt")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2057,21 +2115,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/opt")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-				.add("headerparam", "def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+					.add("headerparam", "def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2082,17 +2142,17 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(34), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(34), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2103,20 +2163,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_collection(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_collection(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/collection")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(39), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/collection")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(39), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2127,20 +2189,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_collection_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_collection_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/collection")
-			.headers(headers -> headers
-				.add("headerparam", "abc,def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(49), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/collection")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc,def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(49), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2151,21 +2215,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_collection_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_collection_multi_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/collection")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-				.add("headerparam", "def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(49), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/collection")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+					.add("headerparam", "def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(49), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2176,33 +2242,35 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_collection_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_collection_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/collection'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/collection")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/headerParam/collection")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_collection_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_collection_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/collection/opt")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(43), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/collection/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(43), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2213,20 +2281,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_collection_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_collection_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/collection/opt")
-			.headers(headers -> headers
-				.add("headerparam", "abc,def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(53), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/collection/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc,def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(53), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2237,21 +2307,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_collection_opt_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_collection_opt_multi_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/collection/opt")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-				.add("headerparam", "def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(53), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/collection/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+					.add("headerparam", "def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(53), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2262,17 +2334,17 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_collection_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_collection_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/collection/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/collection/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(40), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/collection/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(40), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2283,20 +2355,22 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_list(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_list(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/list")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(33), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/list")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(33), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2307,20 +2381,22 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_list_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_list_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/list")
-			.headers(headers -> headers
-				.add("headerparam", "abc,def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(43), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/list")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc,def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(43), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2331,21 +2407,23 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_list_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_list_multi_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/list")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-				.add("headerparam", "def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(43), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/list")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+					.add("headerparam", "def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(43), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2356,33 +2434,35 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_list_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_list_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/list'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/list")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/headerParam/list")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_list_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_list_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/list/opt")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(37), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/list/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(37), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2393,20 +2473,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_list_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_list_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/list/opt")
-			.headers(headers -> headers
-				.add("headerparam", "abc,def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(47), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/list/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc,def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(47), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2417,21 +2499,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_list_opt_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_list_opt_multi_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/list/opt")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-				.add("headerparam", "def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(47), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/list/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+					.add("headerparam", "def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(47), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2442,17 +2526,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_list_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_list_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/list/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/list/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(34), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/list/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(34), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2463,20 +2547,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_set(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_set(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/set")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/set")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2487,20 +2573,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_set_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_set_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/set")
-			.headers(headers -> headers
-				.add("headerparam", "abc,def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(42), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/set")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc,def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(42), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2513,21 +2601,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_set_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_set_multi_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/set")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-				.add("headerparam", "def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(42), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/set")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+					.add("headerparam", "def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(42), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2540,33 +2630,35 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_set_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_set_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/set'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/set")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/headerParam/set")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_set_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_set_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/set/opt")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(36), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/set/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(36), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2577,20 +2669,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_set_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_set_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/set/opt")
-			.headers(headers -> headers
-				.add("headerparam", "abc,def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(46), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/set/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc,def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(46), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2603,21 +2697,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_set_opt_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_set_opt_multi_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/set/opt")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-				.add("headerparam", "def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(46), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/set/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+					.add("headerparam", "def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(46), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2630,17 +2726,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_set_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_set_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/set/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/set/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(33), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/set/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(33), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2651,20 +2747,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_array(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_array(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/array")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(34), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/array")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(34), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2675,20 +2773,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_array_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_array_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/array")
-			.headers(headers -> headers
-				.add("headerparam", "abc,def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(44), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/array")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc,def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(44), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2699,21 +2799,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_array_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_array_multi_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/array")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-				.add("headerparam", "def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(44), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/array")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+					.add("headerparam", "def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(44), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2724,33 +2826,35 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_array_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_array_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/array'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/array")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/headerParam/array")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_array_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_array_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/array/opt")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(38), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/array/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(38), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2761,20 +2865,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_array_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_array_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc; headerParam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/array/opt")
-			.headers(headers -> headers
-				.add("headerparam", "abc,def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(48), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/array/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc,def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(48), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2785,21 +2891,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_array_opt_multi_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_array_opt_multi_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'headerparam:abc' -H 'headerparam:def,hij' 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/array/opt")
-			.headers(headers -> headers
-				.add("headerparam", "abc")
-				.add("headerparam", "def,hij")
-			)
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(48), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/array/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers
+					.add("headerparam", "abc")
+					.add("headerparam", "def,hij")
+				);
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(48), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2810,17 +2918,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_headerParam_array_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_headerParam_array_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/headerParam/array/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/headerParam/array/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(35), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/headerParam/array/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(35), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2831,17 +2939,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c'
 		endpoint
-			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(28), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, URIs.uri("/get_encoded/pathParam/{param}", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(28), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2852,30 +2960,30 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/'
 		endpoint
-			.request(Method.GET, "/get_encoded/pathParam/")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/pathParam/")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/opt'
 		endpoint
-			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2886,17 +2994,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/pathParam//opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/pathParam//opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2907,17 +3015,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_collection(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_collection(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/collection'
 		endpoint
-			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/collection", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(41), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/collection", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(41), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2928,30 +3036,30 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_collection_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_collection_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//collection'
 		endpoint
-			.request(Method.GET, "/get_encoded/pathParam//collection")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/pathParam//collection")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_collection_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_collection_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/collection/opt'
 		endpoint
-			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/collection/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(45), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/collection/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(45), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2962,17 +3070,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_collection_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_collection_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//collection/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/pathParam//collection/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(38), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/pathParam//collection/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(38), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -2983,17 +3091,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_list(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_list(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/list'
 		endpoint
-			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/list", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(35), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/list", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(35), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3004,30 +3112,30 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_list_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_list_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//list'
 		endpoint
-			.request(Method.GET, "/get_encoded/pathParam//list")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/pathParam//list")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_list_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_list_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/list/opt'
 		endpoint
-			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/list/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(39), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/list/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(39), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3038,17 +3146,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_list_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_list_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//list/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/pathParam//list/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/pathParam//list/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3059,17 +3167,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_set(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_set(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/set'
 		endpoint
-			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/set", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(34), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/set", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(34), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3082,30 +3190,30 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_set_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_set_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//set'
 		endpoint
-			.request(Method.GET, "/get_encoded/pathParam//set")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/pathParam//set")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_set_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_set_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/set/opt'
 		endpoint
-			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/set/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(38), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/set/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(38), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3118,17 +3226,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_set_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_set_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//set/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/pathParam//set/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(31), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/pathParam//set/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(31), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3139,17 +3247,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_set_array(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_set_array(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/array'
 		endpoint
-			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/array", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(36), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/array", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(36), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3160,30 +3268,30 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_set_array_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_set_array_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//array'
 		endpoint
-			.request(Method.GET, "/get_encoded/pathParam//array")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_encoded/pathParam//array")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_set_array_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_set_array_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam/a,b,c/array/opt'
 		endpoint
-			.request(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/array/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(40), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, URIs.uri("/get_encoded/pathParam/{param}/array/opt", URIs.Option.NORMALIZED, URIs.Option.PARAMETERIZED).buildPath(Map.of("param","a,b,c")))
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(40), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3194,17 +3302,17 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_pathParam_set_array_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_pathParam_set_array_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/pathParam//array/opt'
 		endpoint
-			.request(Method.GET, "/get_encoded/pathParam//array/opt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(33), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/pathParam//array/opt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(33), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3215,17 +3323,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_json(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_json(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/json/dto'
 		endpoint
-			.request(Method.GET, "/get_encoded/json/dto")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(27), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/json/dto")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(27), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3236,22 +3344,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_json_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_json_pub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/json/pub/dto'
 		endpoint
-			.request(Method.GET, "/get_encoded/json/pub/dto")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, exchange.response().headers().getContentType());
+			.exchange(Method.GET, "/get_encoded/json/pub/dto")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, response.headers().getContentType());
 				switch(testHttpVersion) {
-					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, response.headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
 						break;
-					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+					case HTTP_2_0: Assertions.assertTrue(response.headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
 						break;
 				}
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3262,17 +3370,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_json_generic(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_json_generic(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/json/dto/generic'
 		endpoint
-			.request(Method.GET, "/get_encoded/json/dto/generic")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(51), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/json/dto/generic")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(51), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3283,22 +3391,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_json_generic_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_json_generic_pub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/json/pub/dto/generic'
 		endpoint
-			.request(Method.GET, "/get_encoded/json/pub/dto/generic")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, exchange.response().headers().getContentType());
+			.exchange(Method.GET, "/get_encoded/json/pub/dto/generic")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, response.headers().getContentType());
 				switch(testHttpVersion) {
-					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, response.headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
 						break;
-					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+					case HTTP_2_0: Assertions.assertTrue(response.headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
 						break;
 				}
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3309,17 +3417,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_json_map(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_json_map(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/json/map'
 		endpoint
-			.request(Method.GET, "/get_encoded/json/map")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(13), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_encoded/json/map")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(13), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3335,22 +3443,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_encoded_json_map_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_encoded_json_map_pub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_encoded/json/pub/map'
 		endpoint
-			.request(Method.GET, "/get_encoded/json/pub/map")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, exchange.response().headers().getContentType());
+			.exchange(Method.GET, "/get_encoded/json/pub/map")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.APPLICATION_JSON, response.headers().getContentType());
 				switch(testHttpVersion) {
-					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, response.headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
 						break;
-					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+					case HTTP_2_0: Assertions.assertTrue(response.headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
 						break;
 				}
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3366,18 +3474,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam'
 		endpoint
-			.request(Method.POST, "/post/formParam")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Mono.just(factory.create("formParam", "a,b,c")))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(21), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+					factory.create("formParam", "a,b,c")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(21), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3388,21 +3500,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam'
 		endpoint
-			.request(Method.POST, "/post/formParam")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Flux.just(
-				factory.create("formParam", "a,b,c"), 
-				factory.create("formParam", "d,e,f")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(21), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+					factory.create("formParam", "a,b,c"),
+					factory.create("formParam", "d,e,f")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(21), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3413,35 +3527,38 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam'
 		endpoint
-			.request(Method.POST, "/post/formParam")
-//			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED))
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Mono.empty())))
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.POST, "/post/formParam")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.empty()));
+				return exchange.response();
+			})
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/opt")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Mono.just(
-				factory.create("formParam", "a,b,c")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(25), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/opt")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+					factory.create("formParam", "a,b,c")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(25), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3452,21 +3569,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/opt")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Flux.just(
-				factory.create("formParam", "a,b,c"),
-				factory.create("formParam", "d,e,f")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(25), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/opt")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+					factory.create("formParam", "a,b,c"),
+					factory.create("formParam", "d,e,f")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(25), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3477,18 +3596,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/opt")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(25), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(25), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3499,20 +3620,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_collection(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_collection(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/collection'
 		endpoint
-			.request(Method.POST, "/post/formParam/collection")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Mono.just(
-				factory.create("formParam", "a,b,c")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(34), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/collection")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+					factory.create("formParam", "a,b,c")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(34), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3523,21 +3646,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_collection_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_collection_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/collection'
 		endpoint
-			.request(Method.POST, "/post/formParam/collection")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Flux.just(
-				factory.create("formParam", "a,b,c"),
-				factory.create("formParam", "d,e,f")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(43), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/collection")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+					factory.create("formParam", "a,b,c"),
+					factory.create("formParam", "d,e,f")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(43), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3548,34 +3673,38 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_collection_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_collection_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/collection'
 		endpoint
-			.request(Method.POST, "/post/formParam/collection")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED))
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.POST, "/post/formParam/collection")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED));
+				return exchange.response();
+			})
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_collection_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_collection_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/collection/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/collection/opt")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Mono.just(
-				factory.create("formParam", "a,b,c")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(38), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/collection/opt")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+					factory.create("formParam", "a,b,c")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(38), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3586,21 +3715,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_collection_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_collection_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/collection/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/collection/opt")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Flux.just(
-				factory.create("formParam", "a,b,c"),
-				factory.create("formParam", "d,e,f")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(47), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/collection/opt")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+					factory.create("formParam", "a,b,c"),
+					factory.create("formParam", "d,e,f")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(47), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3611,18 +3742,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_collection_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_collection_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/collection/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/collection/opt")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(31), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/collection/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(31), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3633,20 +3766,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_list(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_list(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/list'
 		endpoint
-			.request(Method.POST, "/post/formParam/list")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Mono.just(
-				factory.create("formParam", "a,b,c")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(28), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/list")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+					factory.create("formParam", "a,b,c")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(28), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3657,21 +3792,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_list_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_list_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/list'
 		endpoint
-			.request(Method.POST, "/post/formParam/list")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Flux.just(
-				factory.create("formParam", "a,b,c"),
-				factory.create("formParam", "d,e,f")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(37), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/list")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+					factory.create("formParam", "a,b,c"),
+					factory.create("formParam", "d,e,f")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(37), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3682,34 +3819,38 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_list_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_list_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/list'
 		endpoint
-			.request(Method.POST, "/post/formParam/list")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED))
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.POST, "/post/formParam/list")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED));
+				return exchange.response();
+			})
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_list_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_list_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/list/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/list/opt")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Mono.just(
-				factory.create("formParam", "a,b,c")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/list/opt")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+					factory.create("formParam", "a,b,c")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3720,21 +3861,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_list_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_list_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/list/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/list/opt")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Flux.just(
-				factory.create("formParam", "a,b,c"),
+			.exchange(Method.POST, "/post/formParam/list/opt")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+					factory.create("formParam", "a,b,c"),
 					factory.create("formParam", "d,e,f")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(41), exchange.response().headers().getContentLength());
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(41), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3745,18 +3888,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_list_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_list_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/list/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/list/opt")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(25), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/list/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(25), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3767,20 +3912,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_set(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_set(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/set'
 		endpoint
-			.request(Method.POST, "/post/formParam/set")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Mono.just(
-				factory.create("formParam", "a,b,c")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(27), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/set")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+					factory.create("formParam", "a,b,c")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(27), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3791,21 +3938,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_set_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_set_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/set'
 		endpoint
-			.request(Method.POST, "/post/formParam/set")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Flux.just(
-				factory.create("formParam", "a,b,c"),
-				factory.create("formParam", "d,e,f")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(36), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/set")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+					factory.create("formParam", "a,b,c"),
+					factory.create("formParam", "d,e,f")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(36), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3816,34 +3965,38 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_set_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_set_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/set'
 		endpoint
-			.request(Method.POST, "/post/formParam/set")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED))
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.POST, "/post/formParam/set")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED));
+				return exchange.response();
+			})
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_set_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_set_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/set/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/set/opt")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Mono.just(
-				factory.create("formParam", "a,b,c")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(31), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/set/opt")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+					factory.create("formParam", "a,b,c")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(31), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3854,21 +4007,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_set_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_set_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/set/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/set/opt")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Flux.just(
-				factory.create("formParam", "a,b,c"),
-				factory.create("formParam", "d,e,f")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(40), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/set/opt")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+					factory.create("formParam", "a,b,c"),
+					factory.create("formParam", "d,e,f")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(40), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3879,18 +4034,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_set_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_set_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/set/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/set/opt")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(24), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/set/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(24), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3901,20 +4058,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_array(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_array(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/array'
 		endpoint
-			.request(Method.POST, "/post/formParam/array")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Mono.just(
-				factory.create("formParam", "a,b,c")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(29), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/array")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+					factory.create("formParam", "a,b,c")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(29), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3925,21 +4084,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_array_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_array_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/array'
 		endpoint
-			.request(Method.POST, "/post/formParam/array")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Flux.just(
-				factory.create("formParam", "a,b,c"),
-				factory.create("formParam", "d,e,f")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(38), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/array")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+					factory.create("formParam", "a,b,c"),
+					factory.create("formParam", "d,e,f")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(38), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3950,34 +4111,38 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_array_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_array_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/array'
 		endpoint
-			.request(Method.POST, "/post/formParam/array")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED))
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.POST, "/post/formParam/array")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED));
+				return exchange.response();
+			})
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_array_opt(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_array_opt(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/array/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/array/opt")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Mono.just(
-				factory.create("formParam", "a,b,c")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(33), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/array/opt")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Mono.just(
+					factory.create("formParam", "a,b,c")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(33), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -3988,21 +4153,23 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_array_opt_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_array_opt_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'formParam=a,b,c&formParam=d,e,f' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/array/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/array/opt")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Flux.just(
-				factory.create("formParam", "a,b,c"),
-				factory.create("formParam", "d,e,f")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(42), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/array/opt")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+					factory.create("formParam", "a,b,c"),
+					factory.create("formParam", "d,e,f")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(42), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4013,18 +4180,20 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_array_opt_missing(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_array_opt_missing(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:8080/post/formParam/array/opt'
 		endpoint
-			.request(Method.POST, "/post/formParam/array/opt")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(26), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post/formParam/array/opt")
+			.flatMap(exchange -> {
+				exchange.request().headers(headers -> headers.contentType(MediaTypes.APPLICATION_X_WWW_FORM_URLENCODED));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(26), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4035,23 +4204,25 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_mono(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_mono(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a=1&b=2&c=3&c=4' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:39901/post/formParam/mono'
 		endpoint
-			.request(Method.POST, "/post/formParam/mono")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Flux.just(
-				factory.create("a", "1"),
-				factory.create("b", "2"),
-				factory.create("c", "3"),
-				factory.create("c", "4")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+			.exchange(Method.POST, "/post/formParam/mono")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+					factory.create("a", "1"),
+					factory.create("b", "2"),
+					factory.create("c", "3"),
+					factory.create("c", "4")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertTrue(response.headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
 
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4062,28 +4233,30 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_formParam_flux(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_formParam_flux(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a=1&b=2&c=3&c=4' -H 'content-type: application/x-www-form-urlencoded' -X POST 'http://127.0.0.1:39901/post/formParam/flux'
 		endpoint
-			.request(Method.POST, "/post/formParam/flux")
-			.body(body -> body.urlEncoded().from((factory, data) -> data.stream(Flux.just(
-				factory.create("a", "1"),
-				factory.create("b", "2"),
-				factory.create("c", "3"),
-				factory.create("c", "4")
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
+			.exchange(Method.POST, "/post/formParam/flux")
+			.flatMap(exchange -> {
+				exchange.request().body().get().urlEncoded().from((factory, data) -> data.stream(Flux.just(
+					factory.create("a", "1"),
+					factory.create("b", "2"),
+					factory.create("c", "3"),
+					factory.create("c", "4")
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
 				switch(testHttpVersion) {
-					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, response.headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
 						break;
-					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+					case HTTP_2_0: Assertions.assertTrue(response.headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
 						break;
 				}
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4094,19 +4267,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_raw(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw'
 		endpoint
-			.request(Method.POST, "/post_raw")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(15), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_raw")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(15), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4117,19 +4293,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_raw_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_raw_raw(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw_raw'
 		endpoint
-			.request(Method.POST, "/post_raw_raw")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(19), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_raw_raw")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(19), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4140,24 +4319,27 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_raw_pub_raw(Endpoint endpoint, HttpVersion testHttpVersion) {	
+	public void test_post_raw_pub_raw(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {	
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw_pub_raw'
 		endpoint
-			.request(Method.POST, "/post_raw_pub_raw")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
+			.exchange(Method.POST, "/post_raw_pub_raw")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
 				switch(testHttpVersion) {
-					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, response.headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
 						break;
-					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+					case HTTP_2_0: Assertions.assertTrue(response.headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
 						break;
 				}
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4168,19 +4350,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_raw_mono_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_raw_mono_raw(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw_mono_raw'
 		endpoint
-			.request(Method.POST, "/post_raw_mono_raw")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(24), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_raw_mono_raw")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(24), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4191,24 +4376,27 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_raw_flux_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_raw_flux_raw(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw_flux_raw'
 		endpoint
-			.request(Method.POST, "/post_raw_flux_raw")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
+			.exchange(Method.POST, "/post_raw_flux_raw")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
 				switch(testHttpVersion) {
-					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
+					case HTTP_1_1: Assertions.assertEquals(Headers.VALUE_CHUNKED, response.headers().get(Headers.NAME_TRANSFER_ENCODING).orElse(null));
 						break;
-					case HTTP_2_0: Assertions.assertTrue(exchange.response().headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
+					case HTTP_2_0: Assertions.assertTrue(response.headers().get(Headers.NAME_TRANSFER_ENCODING).isEmpty());
 						break;
 				}
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4219,19 +4407,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_raw_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_raw_pub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw/pub'
 		endpoint
-			.request(Method.POST, "/post_raw/pub")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(19), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_raw/pub")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(19), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4242,19 +4433,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_raw_mono(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_raw_mono(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw/mono'
 		endpoint
-			.request(Method.POST, "/post_raw/mono")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(20), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_raw/mono")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(20), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4265,19 +4459,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_raw_flux(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_raw_flux(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_raw/flux'
 		endpoint
-			.request(Method.POST, "/post_raw/flux")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(20), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_raw/flux")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(20), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4288,19 +4485,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded'
 		endpoint
-			.request(Method.POST, "/post_encoded")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(19), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(19), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4311,19 +4511,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_no_consume(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_no_consume(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: ' -X POST 'http://127.0.0.1:8080/post_encoded/no_consume'
 		endpoint
-			.request(Method.POST, "/post_encoded/no_consume")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(30), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded/no_consume")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(30), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4334,34 +4537,40 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_no_decoder(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_no_decoder(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/no_decoder'
 		endpoint
-			.request(Method.POST, "/post_encoded/no_decoder")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.INTERNAL_SERVER_ERROR, exchange.response().headers().getStatus());
+			.exchange(Method.POST, "/post_encoded/no_decoder")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.INTERNAL_SERVER_ERROR, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_collection(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_collection(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/collection'
 		endpoint
-			.request(Method.POST, "/post_encoded/collection")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded/collection")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4372,19 +4581,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_list(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_list(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/list'
 		endpoint
-			.request(Method.POST, "/post_encoded/list")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(26), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded/list")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(26), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4395,19 +4607,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_set(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_set(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/set'
 		endpoint
-			.request(Method.POST, "/post_encoded/set")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(25), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded/set")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(25), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4418,19 +4633,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_array(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_array(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/array'
 		endpoint
-			.request(Method.POST, "/post_encoded/array")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(27), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded/array")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(27), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4441,19 +4659,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_pub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/pub'
 		endpoint
-			.request(Method.POST, "/post_encoded/pub")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(25), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded/pub")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(25), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4464,19 +4685,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_mono(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_mono(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/mono'
 		endpoint
-			.request(Method.POST, "/post_encoded/mono")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(24), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded/mono")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(24), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4487,19 +4711,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_flux(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_flux(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d 'a,b,c' -H 'content-type: text/plain' -X POST 'http://127.0.0.1:8080/post_encoded/flux'
 		endpoint
-			.request(Method.POST, "/post_encoded/flux")
-			.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
-			.body(body -> body.string().value("a,b,c"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(26), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded/flux")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+					.body().get().string().value("a,b,c");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(26), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4510,19 +4737,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_json(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_json(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d '{"message":"Hello, world!"}' -H 'content-type: application/json' -X POST 'http://127.0.0.1:8080/post_encoded/json/dto'
 		endpoint
-			.request(Method.POST, "/post_encoded/json/dto")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
-			.body(body -> body.string().value("{\"message\":\"Hello, world!\"}"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(36), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded/json/dto")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
+					.body().get().string().value("{\"message\":\"Hello, world!\"}");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(36), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4533,19 +4763,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_json_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_json_pub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d '{"message":"Hello, world!"}{"message":"Hallo, welt!"}{"message":"Salut, monde!"}' -H 'content-type: application/json' -X POST 'http://127.0.0.1:8080/post_encoded/json/pub/dto'
 		endpoint
-			.request(Method.POST, "/post_encoded/json/pub/dto")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
-			.body(body -> body.string().value("{\"message\":\"Hello, world!\"}{\"message\":\"Hallo, welt!\"}{\"message\":\"Salut, monde!\"}"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(71), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded/json/pub/dto")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
+					.body().get().string().value("{\"message\":\"Hello, world!\"}{\"message\":\"Hallo, welt!\"}{\"message\":\"Salut, monde!\"}");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(71), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4556,19 +4789,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_json_generic(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_json_generic(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d '{"@type":"string", "message":"Hello, world!"}' -H 'content-type: application/json' -X POST 'http://127.0.0.1:8080/post_encoded/json/dto/generic'
 		endpoint
-			.request(Method.POST, "/post_encoded/json/dto/generic")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
-			.body(body -> body.string().value("{\"@type\":\"string\", \"message\":\"Hello, world!\"}"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(44), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded/json/dto/generic")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
+					.body().get().string().value("{\"@type\":\"string\", \"message\":\"Hello, world!\"}");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(44), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4579,19 +4815,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_json_generic_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_json_generic_pub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d '{"@type":"string","message":"Hello, world!"}{"@type":"integer","message":123456}' -H 'content-type: application/json' -X POST 'http://127.0.0.1:8080/post_encoded/json/pub/dto/generic'
 		endpoint
-			.request(Method.POST, "/post_encoded/json/pub/dto/generic")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
-			.body(body -> body.string().value("{\"@type\":\"string\",\"message\":\"Hello, world!\"}{\"@type\":\"integer\",\"message\":123456}"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(58), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded/json/pub/dto/generic")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
+					.body().get().string().value("{\"@type\":\"string\",\"message\":\"Hello, world!\"}{\"@type\":\"integer\",\"message\":123456}");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(58), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4602,19 +4841,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_json_map(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_json_map(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d '{"a":1, "b":2, "c":3}' -H 'content-type: application/json' -X POST 'http://127.0.0.1:8080/post_encoded/json/map'
 		endpoint
-			.request(Method.POST, "/post_encoded/json/map")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
-			.body(body -> body.string().value("{\"a\":1, \"b\":2, \"c\":3}"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(38), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded/json/map")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
+					.body().get().string().value("{\"a\":1, \"b\":2, \"c\":3}");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(38), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4625,19 +4867,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_encoded_json_map_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_encoded_json_map_pub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i -d '{"a":1, "b":2, "c":3}{"d":4, "e":5, "f":6}{"g":7, "h":8, "i":9}' -H 'content-type: application/json' -X POST 'http://127.0.0.1:8080/post_encoded/json/pub/map'
 		endpoint
-			.request(Method.POST, "/post_encoded/json/pub/map")
-			.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
-			.body(body -> body.string().value("{\"a\":1, \"b\":2, \"c\":3}{\"d\":4, \"e\":5, \"f\":6}{\"g\":7, \"h\":8, \"i\":9}"))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(78), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_encoded/json/pub/map")
+			.flatMap(exchange -> {
+				exchange.request()
+					.headers(headers -> headers.contentType(MediaTypes.APPLICATION_JSON))
+					.body().get().string().value("{\"a\":1, \"b\":2, \"c\":3}{\"d\":4, \"e\":5, \"f\":6}{\"g\":7, \"h\":8, \"i\":9}");
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(78), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4648,22 +4893,24 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_multipart_pub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_multipart_pub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_pub'
 		endpoint
-			.request(Method.POST, "/post_multipart_pub")
-			.body(body -> body.multipart().from((factory, output) -> output.stream(Flux.just(
-				factory.string(part -> part.name("a").value("1")),
-				factory.string(part -> part.name("b").value("2")),
-				factory.string(part -> part.name("c").value("3"))
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(29), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_multipart_pub")
+			.flatMap(exchange -> {
+				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+					factory.string(part -> part.name("a").value("1")),
+					factory.string(part -> part.name("b").value("2")),
+					factory.string(part -> part.name("c").value("3"))
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(29), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4674,22 +4921,24 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_multipart_pub_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_multipart_pub_raw(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_pub/raw'
 		endpoint
-			.request(Method.POST, "/post_multipart_pub/raw")
-			.body(body -> body.multipart().from((factory, output) -> output.stream(Flux.just(
-				factory.string(part -> part.name("a").value("1")),
-				factory.string(part -> part.name("b").value("2")),
-				factory.string(part -> part.name("c").value("3"))
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(45), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_multipart_pub/raw")
+			.flatMap(exchange -> {
+				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+					factory.string(part -> part.name("a").value("1")),
+					factory.string(part -> part.name("b").value("2")),
+					factory.string(part -> part.name("c").value("3"))
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(45), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4700,22 +4949,24 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_multipart_encoded(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_multipart_encoded(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_pub/encoded'
 		endpoint
-			.request(Method.POST, "/post_multipart_pub/encoded")
-			.body(body -> body.multipart().from((factory, output) -> output.stream(Flux.just(
-				factory.string(part -> part.name("a").value("1")),
-				factory.string(part -> part.name("b").value("2")),
-				factory.string(part -> part.name("c").value("3"))
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(49), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_multipart_pub/encoded")
+			.flatMap(exchange -> {
+				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+					factory.string(part -> part.name("a").value("1")),
+					factory.string(part -> part.name("b").value("2")),
+					factory.string(part -> part.name("c").value("3"))
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(49), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4726,20 +4977,22 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_multipart_mono(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_multipart_mono(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' -X POST 'http://127.0.0.1:8080/post_multipart_mono'
 		endpoint
-			.request(Method.POST, "/post_multipart_mono")
-			.body(body -> body.multipart().from((factory, output) -> output.stream(Flux.just(
-				factory.string(part -> part.name("a").value("1"))
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(22), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_multipart_mono")
+			.flatMap(exchange -> {
+				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Mono.just(
+					factory.string(part -> part.name("a").value("1"))
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(22), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4750,22 +5003,24 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_multipart_mono_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_multipart_mono_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_mono'
 		endpoint
-			.request(Method.POST, "/post_multipart_mono")
-			.body(body -> body.multipart().from((factory, output) -> output.stream(Flux.just(
-				factory.string(part -> part.name("a").value("1")),
-				factory.string(part -> part.name("b").value("2")),
-				factory.string(part -> part.name("c").value("3"))
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(22), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_multipart_mono")
+			.flatMap(exchange -> {
+				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+					factory.string(part -> part.name("a").value("1")),
+					factory.string(part -> part.name("b").value("2")),
+					factory.string(part -> part.name("c").value("3"))
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(22), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4776,20 +5031,22 @@ public class HttpClientTest {
 
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_multipart_mono_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_multipart_mono_raw(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' -X POST 'http://127.0.0.1:8080/post_multipart_mono/raw'
 		endpoint
-			.request(Method.POST, "/post_multipart_mono/raw")
-			.body(body -> body.multipart().from((factory, output) -> output.stream(Flux.just(
-				factory.string(part -> part.name("a").value("1"))
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_multipart_mono/raw")
+			.flatMap(exchange -> {
+				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Mono.just(
+					factory.string(part -> part.name("a").value("1"))
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4800,22 +5057,24 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_multipart_mono_raw_multi(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_multipart_mono_raw_multi(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_mono/raw'
 		endpoint
-			.request(Method.POST, "/post_multipart_mono/raw")
-			.body(body -> body.multipart().from((factory, output) -> output.stream(Flux.just(
-				factory.string(part -> part.name("a").value("1")),
-				factory.string(part -> part.name("b").value("2")),
-				factory.string(part -> part.name("c").value("3"))
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_multipart_mono/raw")
+			.flatMap(exchange -> {
+				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+					factory.string(part -> part.name("a").value("1")),
+					factory.string(part -> part.name("b").value("2")),
+					factory.string(part -> part.name("c").value("3"))
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4826,22 +5085,24 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_multipart_mono_encoded(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_multipart_mono_encoded(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_mono/encoded'
 		endpoint
-			.request(Method.POST, "/post_multipart_mono/encoded")
-			.body(body -> body.multipart().from((factory, output) -> output.stream(Flux.just(
-				factory.string(part -> part.name("a").value("1")),
-				factory.string(part -> part.name("b").value("2")),
-				factory.string(part -> part.name("c").value("3"))
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(34), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_multipart_mono/encoded")
+			.flatMap(exchange -> {
+				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+					factory.string(part -> part.name("a").value("1")),
+					factory.string(part -> part.name("b").value("2")),
+					factory.string(part -> part.name("c").value("3"))
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(34), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4852,22 +5113,24 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_multipart_flux(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_multipart_flux(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_flux'
 		endpoint
-			.request(Method.POST, "/post_multipart_flux")
-			.body(body -> body.multipart().from((factory, output) -> output.stream(Flux.just(
-				factory.string(part -> part.name("a").value("1")),
-				factory.string(part -> part.name("b").value("2")),
-				factory.string(part -> part.name("c").value("3"))
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(30), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_multipart_flux")
+			.flatMap(exchange -> {
+				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+					factory.string(part -> part.name("a").value("1")),
+					factory.string(part -> part.name("b").value("2")),
+					factory.string(part -> part.name("c").value("3"))
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(30), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4878,22 +5141,24 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_multipart_flux_raw(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_multipart_flux_raw(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_flux/raw'
 		endpoint
-			.request(Method.POST, "/post_multipart_flux/raw")
-			.body(body -> body.multipart().from((factory, output) -> output.stream(Flux.just(
-				factory.string(part -> part.name("a").value("1")),
-				factory.string(part -> part.name("b").value("2")),
-				factory.string(part -> part.name("c").value("3"))
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(45), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_multipart_flux/raw")
+			.flatMap(exchange -> {
+				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+					factory.string(part -> part.name("a").value("1")),
+					factory.string(part -> part.name("b").value("2")),
+					factory.string(part -> part.name("c").value("3"))
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(45), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4904,22 +5169,24 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_multipart_flux_encoded(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_post_multipart_flux_encoded(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i --form 'a=1' --form 'b=2' --form 'c=3' -X POST 'http://127.0.0.1:8080/post_multipart_flux/encoded'
 		endpoint
-			.request(Method.POST, "/post_multipart_flux/encoded")
-			.body(body -> body.multipart().from((factory, output) -> output.stream(Flux.just(
-				factory.string(part -> part.name("a").value("1")),
-				factory.string(part -> part.name("b").value("2")),
-				factory.string(part -> part.name("c").value("3"))
-			))))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(50), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/post_multipart_flux/encoded")
+			.flatMap(exchange -> {
+				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+					factory.string(part -> part.name("a").value("1")),
+					factory.string(part -> part.name("b").value("2")),
+					factory.string(part -> part.name("c").value("3"))
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(50), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4930,23 +5197,25 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_multipart_fileUpload_small(Endpoint endpoint, HttpVersion testHttpVersion) throws IOException {
+	public void test_post_multipart_fileUpload_small(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) throws IOException {
 		File uploadsDir = new File("target/uploads/");
 		uploadsDir.mkdirs();
 		
 		//curl -i -F 'file=@src/test/resources/post_resource_small.txt' http://127.0.0.1:8080/upload
 		new File(uploadsDir, "post_resource_small.txt").delete();
 		endpoint
-			.request(Method.POST, "/upload")
-			.body(body -> body.multipart().from((factory, output) -> output.value(
-				factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_small.txt"))))
-			)))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(Long.valueOf(55), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/upload")
+			.flatMap(exchange -> {
+				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+					factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_small.txt"))))
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(Long.valueOf(55), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4959,23 +5228,25 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_post_multipart_fileUpload_big(Endpoint endpoint, HttpVersion testHttpVersion) throws IOException {
+	public void test_post_multipart_fileUpload_big(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) throws IOException {
 		File uploadsDir = new File("target/uploads/");
 		uploadsDir.mkdirs();
 		
 		//curl -i -F 'file=@src/test/resources/post_resource_big.txt' http://127.0.0.1:8080/upload
 		new File(uploadsDir, "post_resource_big.txt").delete();
 		endpoint
-			.request(Method.POST, "/upload")
-			.body(body -> body.multipart().from((factory, output) -> output.value(
-				factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_big.txt"))))
-			)))
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(Long.valueOf(58), exchange.response().headers().getContentLength());
+			.exchange(Method.POST, "/upload")
+			.flatMap(exchange -> {
+				exchange.request().body().get().multipart().from((factory, output) -> output.stream(Flux.just(
+					factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_big.txt"))))
+				)));
+				return exchange.response();
+			})
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(Long.valueOf(58), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -4998,18 +5269,18 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_sse_raw(Endpoint endpoint, HttpVersion testHttpVersion) throws IOException {
+	public void test_get_sse_raw(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) throws IOException {
 		// curl -i 'http://127.0.0.1:8080/get_sse_raw'
 		byte[] get_sse_raw_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http11.dat"));
 		byte[] get_sse_raw_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_raw_http2.dat"));
 		endpoint
-			.request(Method.GET, "/get_sse_raw")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8", exchange.response().headers().getContentType());
+			.exchange(Method.GET, "/get_sse_raw")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8", response.headers().getContentType());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5025,18 +5296,18 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_sse_encoded(Endpoint endpoint, HttpVersion testHttpVersion) throws IOException {
+	public void test_get_sse_encoded(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) throws IOException {
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded'
 		byte[] get_sse_encoded_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http11.dat"));
 		byte[] get_sse_encoded_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_http2.dat"));
 		endpoint
-			.request(Method.GET, "/get_sse_encoded")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8", exchange.response().headers().getContentType());
+			.exchange(Method.GET, "/get_sse_encoded")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8", response.headers().getContentType());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5053,18 +5324,18 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_sse_encoded_json(Endpoint endpoint, HttpVersion testHttpVersion) throws IOException {
+	public void test_get_sse_encoded_json(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) throws IOException {
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded/json'
 		byte[] get_sse_encoded_json_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http11.dat"));
 		byte[] get_sse_encoded_json_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_http2.dat"));
 		endpoint
-			.request(Method.GET, "/get_sse_encoded/json")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8", exchange.response().headers().getContentType());
+			.exchange(Method.GET, "/get_sse_encoded/json")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8", response.headers().getContentType());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5081,18 +5352,18 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_sse_encoded_json_map(Endpoint endpoint, HttpVersion testHttpVersion) throws IOException {
+	public void test_get_sse_encoded_json_map(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) throws IOException {
 		// curl -i 'http://127.0.0.1:8080/get_sse_encoded/json/map'
 		byte[] get_sse_encoded_json_map_http11 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http11.dat"));
 		byte[] get_sse_encoded_json_map_http2 = Files.readAllBytes(Path.of("src/test/resources/get_sse_encoded_json_map_http2.dat"));
 		endpoint
-			.request(Method.GET, "/get_sse_encoded/json/map")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8", exchange.response().headers().getContentType());
+			.exchange(Method.GET, "/get_sse_encoded/json/map")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8", response.headers().getContentType());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5108,17 +5379,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_resource(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_resource(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_resource'
 		endpoint
-			.request(Method.GET, "/get_resource")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(24), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_resource")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(24), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5129,17 +5400,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_resource_small(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_resource_small(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/get_resource_small.txt
 		endpoint
-			.request(Method.GET, "/static/get_resource_small.txt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(24), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/static/get_resource_small.txt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(24), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5150,17 +5421,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_resource_big(Endpoint endpoint, HttpVersion testHttpVersion) throws IOException {
+	public void test_get_resource_big(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) throws IOException {
 		// curl -i http://127.0.0.1:8080/static/get_resource_big.txt
 		endpoint
-			.request(Method.GET, "/static/get_resource_big.txt")
-			.send()
-			.flatMap(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(new File("src/test/resources/post_resource_big.txt").length(), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/static/get_resource_big.txt")
+			.flatMap(Exchange::response)
+			.flatMap(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(new File("src/test/resources/post_resource_big.txt").length(), response.headers().getContentLength());
 				
-				return Flux.from(exchange.response().body().raw().stream())
+				return Flux.from(response.body().raw().stream())
 					.reduceWith(
 						() -> new ByteArrayOutputStream(), 
 						(output, chunk) -> {
@@ -5191,17 +5462,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_resource_pc_encoded_space(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_resource_pc_encoded_space(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/some%20space.txt
 		endpoint
-			.request(Method.GET, "/static/some%20space.txt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(18), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/static/some%20space.txt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(18), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5212,30 +5483,30 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_resource_double_pc_encoded_space(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_resource_double_pc_encoded_space(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/some%2520space.txt
 		endpoint
-			.request(Method.GET, "/static/some%2520space.txt")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/static/some%2520space.txt")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.NOT_FOUND, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_resource_dir(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_resource_dir(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/dir/get_resource.txt
 		endpoint
-			.request(Method.GET, "/static/dir/get_resource.txt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(24), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/static/dir/get_resource.txt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(24), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5246,17 +5517,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_resource_dir_percent_encoded_slash(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_resource_dir_percent_encoded_slash(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/dir%2Fget_resource.txt
 		endpoint
-			.request(Method.GET, "/static/dir%2Fget_resource.txt")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(24), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/static/dir%2Fget_resource.txt")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(24), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5267,108 +5538,108 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_resource_dir_double_percent_encoded_slash(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_resource_dir_double_percent_encoded_slash(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/dir%252Fget_resource.txt
 		endpoint
-			.request(Method.GET, "/static/dir%252Fget_resource.txt")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/static/dir%252Fget_resource.txt")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.NOT_FOUND, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_resource_path_traversal_parent(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_resource_path_traversal_parent(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/../pom.xml
 		endpoint
-			.request(Method.GET, "/static/../pom.xml")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/static/../pom.xml")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.NOT_FOUND, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_resource_path_traversal_parent_percent_encoded_slash(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_resource_path_traversal_parent_percent_encoded_slash(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/%2E%2E%2Fpom.xml
 		endpoint
-			.request(Method.GET, "/static/%2E%2E%2Fpom.xml")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/static/%2E%2E%2Fpom.xml")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.NOT_FOUND, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_resource_path_traversal_parent_double_percent_encoded_slash(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_resource_path_traversal_parent_double_percent_encoded_slash(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/%252E%252E%252Fpom.xml
 		endpoint
-			.request(Method.GET, "/static/%252E%252E%252Fpom.xml")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/static/%252E%252E%252Fpom.xml")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.NOT_FOUND, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_resource_path_traversal_absolute(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_resource_path_traversal_absolute(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static//pom.xml
 		endpoint
-			.request(Method.GET, "/static//pom.xml")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/static//pom.xml")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_resource_path_traversal_absolute_percent_encoded_slash(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_resource_path_traversal_absolute_percent_encoded_slash(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/%2Fpom.xml
 		endpoint
-			.request(Method.GET, "/static/%2Fpom.xml")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.BAD_REQUEST, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/static/%2Fpom.xml")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.BAD_REQUEST, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_resource_path_traversal_absolute_double_percent_encoded_slash(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_resource_path_traversal_absolute_double_percent_encoded_slash(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		// curl -i http://127.0.0.1:8080/static/%2Fpom.xml
 		endpoint
-			.request(Method.GET, "/static/%252Fpom.xml")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/static/%252Fpom.xml")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.NOT_FOUND, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_qmark(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_qmark(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/qmark_1_
 		endpoint
-			.request(Method.GET, "/get_path_param/qmark_1_")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(24), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/qmark_1_")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(24), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5379,43 +5650,43 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_qmark_none(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_qmark_none(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/qmark__
 		endpoint
-			.request(Method.GET, "/get_path_param/qmark__")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_path_param/qmark__")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.NOT_FOUND, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_qmark_many(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_qmark_many(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/qmark_12_
 		endpoint
-			.request(Method.GET, "/get_path_param/qmark_12_")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_path_param/qmark_12_")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.NOT_FOUND, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_wcard(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_wcard(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/wcard_1_
 		endpoint
-			.request(Method.GET, "/get_path_param/wcard_1_")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(24), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/wcard_1_")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(24), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5426,17 +5697,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_wcard_none(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_wcard_none(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/wcard__
 		endpoint
-			.request(Method.GET, "/get_path_param/wcard__")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(23), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/wcard__")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(23), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5447,17 +5718,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_wcard_many(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_wcard_many(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/wcard_123456789_
 		endpoint
-			.request(Method.GET, "/get_path_param/wcard_123456789_")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(32), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/wcard_123456789_")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(32), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5468,17 +5739,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_directories(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_directories(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/directories
 		endpoint
-			.request(Method.GET, "/get_path_param/directories")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(27), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/directories")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(27), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5489,17 +5760,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_directories_trailingSlash(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_directories_trailingSlash(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/directories/
 		endpoint
-			.request(Method.GET, "/get_path_param/directories/")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(28), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/directories/")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(28), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5510,17 +5781,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_directories_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_directories_sub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/directories/a
 		endpoint
-			.request(Method.GET, "/get_path_param/directories/a")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(29), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/directories/a")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(29), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5531,17 +5802,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_directories_sub_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_directories_sub_sub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/directories/a/b/
 		endpoint
-			.request(Method.GET, "/get_path_param/directories/a/b")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(31), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/directories/a/b")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(31), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5552,17 +5823,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_directories_sub_sub_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_directories_sub_sub_sub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/directories/a/b/c
 		endpoint
-			.request(Method.GET, "/get_path_param/directories/a/b/c")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(33), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/directories/a/b/c")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(33), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5573,30 +5844,30 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_regex_unmatching(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_regex_unmatching(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/jsp/
 		endpoint
-			.request(Method.GET, "/get_path_param/jsp")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_path_param/jsp")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.NOT_FOUND, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_regex_matching(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_regex_matching(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/jsp/test.jsp
 		endpoint
-			.request(Method.GET, "/get_path_param/jsp/test.jsp")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(39), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/jsp/test.jsp")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(39), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5607,17 +5878,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_regex_matching_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_regex_matching_sub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/jsp/a/test.jsp
 		endpoint
-			.request(Method.GET, "/get_path_param/jsp/a/test.jsp")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(41), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/jsp/a/test.jsp")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(41), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5628,17 +5899,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_regex_matching_sub_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_regex_matching_sub_sub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/jsp/a/b/test.jsp
 		endpoint
-			.request(Method.GET, "/get_path_param/jsp/a/b/test.jsp")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(43), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/jsp/a/b/test.jsp")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(43), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5649,30 +5920,30 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_terminal_unmatching(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_terminal_unmatching(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/terminal
 		endpoint
-			.request(Method.GET, "/get_path_param/terminal")
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.NOT_FOUND, exchange.response().headers().getStatus());
+			.exchange(Method.GET, "/get_path_param/terminal")
+			.flatMap(Exchange::response)
+			.doOnNext(response -> {
+				Assertions.assertEquals(Status.NOT_FOUND, response.headers().getStatus());
 			})
 			.block();
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_terminal_matching_trailingSlash(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_terminal_matching_trailingSlash(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/terminal/
 		endpoint
-			.request(Method.GET, "/get_path_param/terminal/")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(25), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/terminal/")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(25), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5683,17 +5954,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_terminal_matching_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_terminal_matching_sub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/terminal/a
 		endpoint
-			.request(Method.GET, "/get_path_param/terminal/a")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(26), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/terminal/a")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(26), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5704,17 +5975,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_terminal_matching_sub_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_terminal_matching_sub_sub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/terminal/a/b/
 		endpoint
-			.request(Method.GET, "/get_path_param/terminal/a/b/")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(29), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/terminal/a/b/")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(29), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5725,17 +5996,17 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_get_pathParam_terminal_matching_sub_sub_sub(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_get_pathParam_terminal_matching_sub_sub_sub(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i http://127.0.0.1:8080/get_path_param/terminal/a/b/c
 		endpoint
-			.request(Method.GET, "/get_path_param/terminal/a/b/c")
-			.send()
-			.flatMapMany(exchange -> {
-				Assertions.assertEquals(Status.OK, exchange.response().headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, exchange.response().headers().getContentType());
-				Assertions.assertEquals(Long.valueOf(30), exchange.response().headers().getContentLength());
+			.exchange(Method.GET, "/get_path_param/terminal/a/b/c")
+			.flatMap(Exchange::response)
+			.flatMapMany(response -> {
+				Assertions.assertEquals(Status.OK, response.headers().getStatus());
+				Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+				Assertions.assertEquals(Long.valueOf(30), response.headers().getContentLength());
 				
-				return exchange.response().body().string().stream();
+				return response.body().string().stream();
 			})
 			.collect(Collectors.joining())
 			.doOnNext(body -> {
@@ -5746,7 +6017,7 @@ public class HttpClientTest {
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
-	public void test_pool_concurrency(Endpoint endpoint, HttpVersion testHttpVersion) {
+	public void test_pool_concurrency(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		// By default: 
 		// - pool_max_size=2
 		// - http2_max_concurrent_streams=100
@@ -5755,9 +6026,9 @@ public class HttpClientTest {
 		// Just make sure all pool connections are created
 		Flux.range(0, 10)
 			.flatMap(i -> endpoint
-				.request(Method.GET, "/get_delay100")
-				.send()
-				.flatMap(exchange -> Flux.from(exchange.response().body().string().stream()).collect(Collectors.joining()))
+				.exchange(Method.GET, "/get_delay100")
+				.flatMap(Exchange::response)
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
 			)
 			.blockLast();
 		
@@ -5766,9 +6037,9 @@ public class HttpClientTest {
 				long t0 = System.currentTimeMillis();
 				Flux.range(0, 50)
 					.flatMap(i -> endpoint
-						.request(Method.GET, "/get_delay100")
-						.send()
-						.flatMap(exchange -> Flux.from(exchange.response().body().string().stream()).collect(Collectors.joining()))
+						.exchange(Method.GET, "/get_delay100")
+						.flatMap(Exchange::response)
+						.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
 					)
 					.doOnNext(body -> Assertions.assertEquals("get_delay100", body))
 					.blockLast();
@@ -5788,9 +6059,9 @@ public class HttpClientTest {
 				long t0 = System.currentTimeMillis();
 				Flux.range(0, 150)
 					.flatMap(i -> endpoint
-						.request(Method.GET, "/get_delay100")
-						.send()
-						.flatMap(exchange -> Flux.from(exchange.response().body().string().stream()).collect(Collectors.joining()))
+						.exchange(Method.GET, "/get_delay100")
+						.flatMap(Exchange::response)
+						.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
 					)
 					.doOnNext(body -> Assertions.assertEquals("get_delay100", body))
 					.blockLast();
@@ -5811,33 +6082,439 @@ public class HttpClientTest {
 	
 	@Test
 	public void test_h2c_tooBig() {
-		Endpoint blankH2cEndpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
-			.build();
-		
 		File uploadsDir = new File("target/uploads/");
 		uploadsDir.mkdirs();
 		
 		// This should result in a failed connection, next request will create a new connection
-		
+		Endpoint<ExchangeContext> blankH2cEndpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.build();
 		try {
-		//curl -i -F 'file=@src/test/resources/post_resource_big.txt' http://127.0.0.1:8080/upload
-		new File(uploadsDir, "post_resource_big.txt").delete();
-		blankH2cEndpoint
-			.request(Method.POST, "/upload")
-			.body(body -> body.multipart().from((factory, output) -> output.value(
-				factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_big.txt"))))
-			)))
-			.send()
-			.doOnNext(exchange -> {
-				Assertions.assertEquals(Status.PAYLOAD_TOO_LARGE, exchange.response().headers().getStatus());
-			})
-			.block();
+			//curl -i -F 'file=@src/test/resources/post_resource_big.txt' http://127.0.0.1:8080/upload
+			new File(uploadsDir, "post_resource_big.txt").delete();
+			blankH2cEndpoint
+				.exchange(Method.POST, "/upload")
+				.flatMap(exchange -> {
+					exchange.request().body().get().multipart().from((factory, output) -> output.value(
+						factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_big.txt"))))
+					));
+					return exchange.response();
+				})
+				.doOnNext(response -> {
+					Assertions.assertEquals(Status.PAYLOAD_TOO_LARGE, response.headers().getStatus());
+				})
+				.block();
 		}
 		catch(Exception e) {
-			e.printStackTrace();
 			// TODO This fails some times with a broken pipe error, I couldn't figure out what's wrong because I wasn't able to reproduce it in a deterministic way
 			// the problem arise when the connection is closed and we still are trying to write on the socket, this is normally handled but for some reason the exception propagates
 			// Let's leave it for now at least we can check that the endpoint properly create a new connection on the next request
+			e.printStackTrace();
+		}
+		finally {
+			blankH2cEndpoint.close().block();
 		}
 	}
+	
+	@Test
+	public void test_interceptor() {
+		AtomicBoolean interceptorFlag = new AtomicBoolean(false);
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.interceptor(exchange -> {
+				interceptorFlag.set(true);
+				return Mono.just(exchange);
+			})
+			.build();
+		
+		try {
+			endpoint
+				.exchange(Method.GET, "/get_raw")
+				.flatMap(Exchange::response)
+				.flatMapMany(response -> {
+					Assertions.assertEquals(Status.OK, response.headers().getStatus());
+					Assertions.assertNull(response.headers().getContentType());
+					Assertions.assertEquals(Long.valueOf(7), response.headers().getContentLength());
+
+					return response.body().string().stream();
+				})
+				.collect(Collectors.joining())
+				.doOnNext(body -> {
+					Assertions.assertEquals("get_raw", body);
+				})
+				.block();
+			
+			Assertions.assertTrue(interceptorFlag.get());
+		}
+		finally {
+			endpoint.close().block();
+		}
+	}
+	
+	@Test
+	public void test_interceptor_cookieParam() {
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.interceptor(exchange -> {
+				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "def,hij")));
+				return Mono.just(exchange);
+			})
+			.build();
+		
+		try {
+			endpoint
+				.exchange(Method.GET, "/get_encoded/cookieParam/list")
+				.flatMap(exchange -> {
+					exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")));
+					return exchange.response();
+				})
+				.flatMapMany(response -> {
+					Assertions.assertEquals(Status.OK, response.headers().getStatus());
+					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+					Assertions.assertEquals(Long.valueOf(43), response.headers().getContentLength());
+
+					return response.body().string().stream();
+				})
+				.collect(Collectors.joining())
+				.doOnNext(body -> {
+					Assertions.assertEquals("get_encoded_cookieParam_list: abc, def, hij", body);
+				})
+				.block();
+		}
+		finally {
+			endpoint.close().block();
+		}
+	}
+	
+	@Test
+	public void test_interceptor_headerParam() {
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))))
+			.interceptor(exchange -> {
+				exchange.request().headers(headers -> headers.add("headerparam", "def,hij"));
+				return Mono.just(exchange);
+			})
+			.build();
+		
+		try {
+			// TODO there seems to be something wrong on the server side with header in the upgrading request?
+			endpoint
+				.exchange(Method.GET, "/get_encoded/headerParam/list")
+				.flatMap(exchange -> {
+					exchange.request().headers(headers -> headers
+						.add("headerparam", "abc")
+					);
+					return exchange.response();
+				})
+				.flatMapMany(response -> {
+					Assertions.assertEquals(Status.OK, response.headers().getStatus());
+					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+					Assertions.assertEquals(Long.valueOf(43), response.headers().getContentLength());
+
+					return response.body().string().stream();
+				})
+				.collect(Collectors.joining())
+				.doOnNext(body -> {
+					Assertions.assertEquals("get_encoded_headerParam_list: abc, def, hij", body);
+				})
+				.block();
+		}
+		finally {
+			endpoint.close().block();
+		}
+	}
+	
+	@Test
+	public void test_interceptor_path() {
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.interceptor(exchange -> {
+				exchange.request().path("/get_raw/pub");
+				return Mono.just(exchange);
+			})
+			.build();
+		
+		try {
+			endpoint
+				.exchange(Method.GET, "/get_raw")
+				.flatMap(Exchange::response)
+				.flatMapMany(response -> {
+					Assertions.assertEquals(Status.OK, response.headers().getStatus());
+					Assertions.assertNull(response.headers().getContentType());
+					Assertions.assertEquals(Long.valueOf(11), response.headers().getContentLength());
+
+					return response.body().string().stream();
+				})
+				.collect(Collectors.joining())
+				.doOnNext(body -> {
+					Assertions.assertEquals("get_raw_pub", body);
+				})
+				.block();
+		}
+		finally {
+			endpoint.close().block();
+		}
+	}
+	
+	@Test
+	public void test_interceptor_method() {
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.interceptor(exchange -> {
+				exchange.request().method(Method.POST);
+				return Mono.just(exchange);
+			})
+			.build();
+		
+		try {
+			endpoint
+				.exchange(Method.PUT, "/post_raw")
+				.flatMap(exchange -> {
+					exchange.request()
+						.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+						.body().get().string().value("a,b,c");
+					return exchange.response();
+				})
+				.flatMapMany(response -> {
+					Assertions.assertEquals(Status.OK, response.headers().getStatus());
+					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+					Assertions.assertEquals(Long.valueOf(15), response.headers().getContentLength());
+
+					return response.body().string().stream();
+				})
+				.collect(Collectors.joining())
+				.doOnNext(body -> {
+					Assertions.assertEquals("post_raw: a,b,c", body);
+				})
+				.block();
+		}
+		finally {
+			endpoint.close().block();
+		}
+	}
+	
+	@Test
+	public void test_interceptor_transform_bodies() {
+		final StringBuilder interceptedRequestBody = new StringBuilder();
+		final StringBuilder interceptedResponseBody = new StringBuilder();
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.interceptor(exchange -> {
+				exchange.request().body().ifPresent(body -> body.transform(data -> Flux.from(data)
+					.doOnNext(buf -> interceptedRequestBody.append(buf.toString(Charsets.UTF_8)))
+				));
+				
+				exchange.response().body().transform(data -> Flux.from(data)
+					.doOnNext(buf -> interceptedResponseBody.append(buf.toString(Charsets.UTF_8)))
+				);
+				return Mono.just(exchange);
+			})
+			.build();
+		
+		try {
+			endpoint
+				.exchange(Method.POST, "/post_raw")
+				.flatMap(exchange -> {
+					exchange.request()
+						.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN))
+						.body().get().string().value("a,b,c");
+					return exchange.response();
+				})
+				.flatMapMany(response -> {
+					Assertions.assertEquals(Status.OK, response.headers().getStatus());
+					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+					Assertions.assertEquals(Long.valueOf(15), response.headers().getContentLength());
+
+					return response.body().string().stream();
+				})
+				.collect(Collectors.joining())
+				.doOnNext(body -> {
+					Assertions.assertEquals("post_raw: a,b,c", body);
+				})
+				.block();
+			
+			Assertions.assertEquals("a,b,c", interceptedRequestBody.toString());
+			Assertions.assertEquals("post_raw: a,b,c", interceptedResponseBody.toString());
+		}
+		finally {
+			endpoint.close().block();
+		}
+	}
+	
+	@Test
+	public void test_interceptor_abort() {
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.interceptor(exchange -> {
+				return Mono.empty();
+			})
+			.build();
+		
+		try {
+			endpoint
+				.exchange(Method.GET, "/get_raw")
+				.flatMap(Exchange::response)
+				.flatMapMany(response -> {
+					Assertions.assertEquals(Status.OK, response.headers().getStatus());
+					Assertions.assertNull(response.headers().getContentType());
+					Assertions.assertNull(response.headers().getContentLength());
+
+					return response.body().string().stream();
+				})
+				.collect(Collectors.joining())
+				.doOnNext(body -> {
+					Assertions.assertEquals("", body);
+				})
+				.block();
+		}
+		finally {
+			endpoint.close().block();
+		}
+	}
+	
+	@Test
+	public void test_interceptor_abort_with_payload() {
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.interceptor(exchange -> {
+				exchange.response()
+					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN).contentLength(11))
+					.body().string().value("intercepted");
+				return Mono.empty();
+			})
+			.build();
+		
+		try {
+			endpoint
+				.exchange(Method.GET, "/get_raw")
+				.flatMap(Exchange::response)
+				.flatMapMany(response -> {
+					Assertions.assertEquals(Status.OK, response.headers().getStatus());
+					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
+					Assertions.assertEquals(Long.valueOf(11), response.headers().getContentLength());
+
+					return response.body().string().stream();
+				})
+				.collect(Collectors.joining())
+				.doOnNext(body -> {
+					Assertions.assertEquals("intercepted", body);
+				})
+				.block();
+		}
+		finally {
+			endpoint.close().block();
+		}
+	}
+	
+	public static Stream<Arguments> provideTimeoutEndpointsAndHttpVersion() {
+		Endpoint<ExchangeContext> h11TimeoutEndpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+				.pool_max_size(1)
+				.request_timeout(1000)
+			))
+			.build();
+		
+		Endpoint<ExchangeContext> h2cTimeoutEndpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.pool_max_size(1)
+				.request_timeout(1000)
+			))
+			.build();
+		
+		return Stream.of(
+			Arguments.of(h11TimeoutEndpoint, HttpVersion.HTTP_1_1),
+			Arguments.of(h2cTimeoutEndpoint, HttpVersion.HTTP_2_0)
+		);
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideTimeoutEndpointsAndHttpVersion")
+	public void test_request_timeout(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
+		try {
+			// Make sure connection is properly upgraded first
+			endpoint
+				.exchange(Method.GET, "/get_void")
+				.flatMap(Exchange::response)
+				.block();
+			
+			Assertions.assertEquals(
+				"Exceeded timeout 1000ms", 
+				Assertions.assertThrows(
+					RequestTimeoutException.class, 
+					() -> endpoint
+						.exchange(Method.GET, "/get_timeout")
+						.flatMap(Exchange::response)
+						.block()
+				).getMessage()
+			);
+		}
+		finally {
+			endpoint.close().block();
+		}
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideTimeoutEndpointsAndHttpVersion")
+	public void test_request_timeout_concurrent(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
+		try {
+			// Make sure connection is properly upgraded first
+			endpoint
+				.exchange(Method.GET, "/get_void")
+				.flatMap(Exchange::response)
+				.block();
+			
+			Mono<Object> timeoutRequest = endpoint
+				.exchange(Method.GET, "/get_timeout")
+				.flatMap(Exchange::response)
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e));
+
+			Mono<Object> noTimeoutRequest = endpoint
+				.exchange(Method.GET, "/get_delay100")
+				.flatMap(Exchange::response)
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e));
+
+			List<Object> results = Flux.merge(timeoutRequest, noTimeoutRequest)
+				.collectList()
+				.block();
+			
+			Assertions.assertEquals(2, results.size());
+			
+			switch(testHttpVersion) {
+				case HTTP_1_1: {
+					// Requests run in sequence: the whole pipeline is discarded and connection closed if the first request times out.
+					
+					// Must be a RequestTimeoutException
+					Object result = results.get(0);
+					Assertions.assertEquals(
+						"Exceeded timeout 1000ms",
+						Assertions.assertInstanceOf(RequestTimeoutException.class, result).getMessage()
+					);
+					
+					// Must be a RequestTimeoutException as well (the same actually)
+					result = results.get(1);
+					Assertions.assertEquals(
+						"Exceeded timeout 1000ms",
+						Assertions.assertInstanceOf(RequestTimeoutException.class, result).getMessage()
+					);
+					
+					break;
+				}
+				case HTTP_2_0: {
+					// Requests run in parallel using different streams: a request can time out without impacting the processing of the other requests.
+					
+					// Must be the successful response which returns first
+					Object result = results.get(0);
+					Assertions.assertEquals("get_delay100", result);
+					
+					// Must be a RequestTimeoutException
+					result = results.get(1);
+					Assertions.assertEquals(
+						"Exceeded timeout 1000ms",
+						Assertions.assertInstanceOf(RequestTimeoutException.class, result).getMessage()
+					);
+				}
+			}
+		}
+		finally {
+			endpoint.close().block();
+		}
+	}
+	
+	// TODO: test pool request buffer
 }

@@ -37,14 +37,14 @@ public interface AsyncResourceProvider<A extends AsyncResource> extends Resource
 	 * <p>
 	 * Creates an async resource with the specified URI and executor service.
 	 * </p>
-	 * 
+	 *
 	 * @param uri      a URI
 	 * @param executor an executor service
-	 * 
+	 *
 	 * @return an async resource
+	 *
 	 * @throws NullPointerException     if the specified URI is null
-	 * @throws IllegalArgumentException if the specified URI does not point to a
-	 *                                  valid async resource
+	 * @throws IllegalArgumentException if the specified URI does not point to a valid async resource
 	 * @throws ResourceException        if there was an error creating the resource
 	 */
 	default A getResource(URI uri, ExecutorService executor) throws NullPointerException, IllegalArgumentException, ResourceException {

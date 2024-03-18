@@ -21,12 +21,14 @@ import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.ws.WebSocketFrame;
 import io.inverno.mod.http.base.ws.WebSocketMessage;
 import io.inverno.mod.test.web.websocket.dto.GenericMessage;
 import io.inverno.mod.test.web.websocket.dto.Message;
 import io.inverno.mod.web.server.Web2SocketExchange;
 import io.inverno.mod.web.server.annotation.WebController;
+import io.inverno.mod.web.server.annotation.WebRoute;
 import io.inverno.mod.web.server.annotation.WebSocketRoute;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -39,6 +41,11 @@ import reactor.core.publisher.Mono;
 @Bean(visibility = Visibility.PUBLIC)
 @WebController
 public class WebSocketController {
+
+  @WebRoute(path = "/no_ws", method = Method.GET)
+	public String no_ws() {
+	  return "no_ws";
+	}
 	
 	@WebSocketRoute( path = "/ws1", messageType = WebSocketMessage.Kind.TEXT )
 	public void ws1(Web2SocketExchange<? extends ExchangeContext> exchange) {

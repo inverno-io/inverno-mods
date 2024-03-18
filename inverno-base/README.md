@@ -584,6 +584,79 @@ ResourceService resourceService = ...
 Stream<Resource> resources = resourceService.getResources(URI.create("file:/path/to/resources/**/*"));
 ```
 
+A resource content can be read using a `ReadableByteChannel` as follows:
+
+```java
+try (Resource resource = new FileResource("/path/to/file")) {
+	String content = resource.openReadableByteChannel()
+		.map(channel -> {
+			try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+				ByteBuffer buffer = ByteBuffer.allocate(256);
+				while (channel.read(buffer) > 0) {
+					out.write(buffer.array(), 0, buffer.position());
+					buffer.clear();
+				}
+				return new String(out.toByteArray(), Charsets.UTF_8);
+			}
+			finally {
+				channel.close();
+			}
+		})
+		.orElseThrow(() -> new IllegalStateException("Resource is not readable"));
+}
+```
+
+It can also be read in a reactive way:
+
+```java
+try(Resource resource = new FileResource("/path/to/resource")) {
+	String content = Flux.from(resource.read())
+		.map(chunk -> {
+			try {
+				return chunk.toString(Charsets.UTF_8);
+			}
+			finally {
+				chunk.release();
+			}
+		})
+		.collect(Collectors.joining())
+		.block();
+}
+```
+
+In a similar way, content can be written to a resource using a `WritableByteChannel` as follows:
+
+```java
+try (Resource resource = new FileResource("/path/to/file")) {
+	resource.openWritableByteChannel()
+		.ifPresentOrElse(
+			channel -> {
+				try {
+					ByteBuffer buffer = ByteBuffer.wrap("Hello world".getBytes(Charsets.UTF_8));
+					channel.write(buffer);
+				}
+				finally {
+					channel.close();
+				}
+			},
+			() -> {
+				throw new IllegalStateException("Resource is not writable");
+			}
+		);
+}
+```
+
+Data can also be written in a reactive way:
+
+```java
+try (Resource resource = new FileResource("/path/to/resource")) {
+	int nbBytes = Flux.from(resource.write(Flux.just(Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer("Hello world".getBytes(Charsets.UTF_8))))))
+		.collect(Collectors.summingInt(i -> i))
+		.block();
+	System.out.println(nbBytes + " bytes written");
+}
+```
+
 The `MediaTypeService` interface specifies a service used to determine the media type of a resource based on its extension, name, path or URI. As for the resource service, a base implementation is provided in the *boot* module.
 
 ```java

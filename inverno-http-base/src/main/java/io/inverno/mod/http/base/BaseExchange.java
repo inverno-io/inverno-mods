@@ -35,8 +35,10 @@ package io.inverno.mod.http.base;
  * @see ExchangeContext
  * 
  * @param <A> The exchange context type 
+ * @param <B> The request type
+ * @param <C> The response type
  */
-public interface BaseExchange<A extends ExchangeContext> {
+public interface BaseExchange<A extends ExchangeContext, B, C> {
 
 	/**
 	 * <p>
@@ -49,12 +51,21 @@ public interface BaseExchange<A extends ExchangeContext> {
 	
 	/**
 	 * <p>
+	 * Returns the context attached to the exchange.
+	 * </p>
+	 * 
+	 * @return the exchange context or null
+	 */
+	A context();
+	
+	/**
+	 * <p>
 	 * Returns the request part of the exchange.
 	 * </p>
 	 * 
 	 * @return the request part
 	 */
-	BaseRequest request();
+	B request();
 	
 	/**
 	 * <p>
@@ -63,15 +74,5 @@ public interface BaseExchange<A extends ExchangeContext> {
 	 * 
 	 * @return the response part
 	 */
-	BaseResponse response();
-	
-	/**
-	 * <p>
-	 * Returns the context attached to the exchange.
-	 * </p>
-	 * 
-	 * @return the exchange context or null
-	 */
-	A context();
-	
+	C response();
 }

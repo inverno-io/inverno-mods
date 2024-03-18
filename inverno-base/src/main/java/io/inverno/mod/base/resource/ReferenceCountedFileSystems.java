@@ -34,13 +34,12 @@ import java.util.Set;
  * <p>
  * Utility methods to optimally create {@link FileSystem} instances.
  * </p>
- * 
+ *
  * <p>
- * File systems returned by these methods are reference counted which means that
- * for a given file system URI the same instance is returned with an incremented
- * reference count until all consumers close the file system.
+ * File systems returned by these methods are reference counted which means that for a given file system URI the same instance is returned with an incremented reference count until all consumers close
+ * the file system.
  * </p>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
@@ -54,10 +53,11 @@ final class ReferenceCountedFileSystems {
 	 * <p>
 	 * Creates or gets the file system identified by the specified URI.
 	 * </p>
-	 * 
+	 *
 	 * @param uri the file system URI
-	 * 
+	 *
 	 * @return a file system
+	 *
 	 * @throws IOException if an I/O error occurs creating the file system
 	 */
 	public static FileSystem getFileSystem(URI uri) throws IOException {
@@ -68,11 +68,12 @@ final class ReferenceCountedFileSystems {
 	 * <p>
 	 * Creates or gets the file system identified by the specified URI.
 	 * </p>
-	 * 
+	 *
 	 * @param uri the file system URI
 	 * @param env a map of provider specific properties to configure the file system; may be empty
-	 * 
+	 *
 	 * @return a file system
+	 *
 	 * @throws IOException if an I/O error occurs creating the file system
 	 */
 	public static FileSystem getFileSystem(URI uri, Map<String,?> env) throws IOException {

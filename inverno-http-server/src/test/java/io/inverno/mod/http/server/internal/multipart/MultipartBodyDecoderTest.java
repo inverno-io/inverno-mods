@@ -35,7 +35,7 @@ public class MultipartBodyDecoderTest {
 		Headers.ContentType contentType = HEADER_SERVICE.<Headers.ContentType>decode("content-type: multipart/form-data; boundary=------------------------f490929f7758651e");
 		
 		try(FileResource resource = new FileResource("src/test/resources/file_multipart.txt")) {
-			List<ByteBuf> data = DECODER.decode(resource.read().map(Flux::from).get(), contentType)
+			List<ByteBuf> data = DECODER.decode(Flux.from(resource.read()), contentType)
 				.flatMap(part -> {
 					Assertions.assertEquals("text/plain", part.headers().getContentType());
 					Assertions.assertTrue(part.getFilename().isPresent());

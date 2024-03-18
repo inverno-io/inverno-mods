@@ -21,17 +21,21 @@ import java.util.Map;
 
 /**
  * <p>
- * Internal request headers.
+ * The HTTP connection request headers resulting from sending the request to the endpoint.
+ * </p>
+ * 
+ * <p>
+ * Implementations shall depend on the protocol version.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.6
+ * @since 1.8
  */
-public interface InternalRequestHeaders extends OutboundRequestHeaders {
+public interface HttpConnectionRequestHeaders extends OutboundRequestHeaders {
 
 	/**
 	 * <p>
-	 * Defines whether headers have been sent to the endpoint.
+	 * Sets whether headers have been sent to the endpoint.
 	 * </p>
 	 *
 	 * @param written true to indicates the headers have been written, false otherwise

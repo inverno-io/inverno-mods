@@ -24,8 +24,9 @@ import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
+import io.inverno.mod.http.client.internal.EndpointRequest;
 import io.inverno.mod.http.client.internal.GenericRequestCookies;
-import io.inverno.mod.http.client.internal.InternalRequestHeaders;
+import io.inverno.mod.http.client.internal.HttpConnectionRequestHeaders;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Headers;
 import java.util.LinkedList;
@@ -44,7 +45,7 @@ import java.util.stream.Collectors;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-class Http2RequestHeaders implements InternalRequestHeaders {
+class Http2RequestHeaders implements HttpConnectionRequestHeaders {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
@@ -61,28 +62,31 @@ class Http2RequestHeaders implements InternalRequestHeaders {
 	 *
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
+	 * @param endpointRequest the original endpoint request 
 	 */
-	public Http2RequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter) {
+	/**
+	 * 
+	 * @param headerService
+	 * @param parameterConverter
+	 * @param endpointRequest 
+	 */
+	public Http2RequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, EndpointRequest endpointRequest) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		
 		this.underlyingHeaders = new DefaultHttp2Headers();
+		endpointRequest.headers().getAll().forEach(e -> this.add(e.getKey(), e.getValue()));
 	}
 	
 	/**
 	 * <p>
-	 * Creates HTTP/2 request headers populated with specified header entries.
+	 * Returns the underlyinh headers.
 	 * </p>
 	 * 
-	 * @param headerService      the header service
-	 * @param parameterConverter the parameter converter
-	 * @param entries            a list of HTTP header entries
+	 * @return the underlyinh headers
 	 */
-	public Http2RequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, List<Map.Entry<String, String>> entries) {
-		this(headerService, parameterConverter);
-		if(entries != null && !entries.isEmpty()) {
-			entries.forEach(e -> this.add(e.getKey(), e.getValue()));
-		}
+	public Http2Headers getUnderlyingHeaders() {
+		return this.underlyingHeaders;
 	}
 	
 	@Override
@@ -267,9 +271,5 @@ class Http2RequestHeaders implements InternalRequestHeaders {
 			result.add(Map.entry(e.getKey(), e.getValue()));
 		});
 		return result;
-	}
-
-	public Http2Headers toHttp2Headers() {
-		return this.underlyingHeaders;
 	}
 }

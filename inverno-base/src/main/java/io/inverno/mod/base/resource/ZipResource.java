@@ -23,6 +23,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.Map;
@@ -30,26 +31,25 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * A {@link Resource} implementation that identifies resources by a URI of the
- * form <code>zip:file:/path/to/zip!/path/to/resource</code> and looks up data in a
- * zip file on the file system system.
+ * A {@link Resource} implementation that identifies resources by a URI of the form <code>zip:file:/path/to/zip!/path/to/resource</code> and looks up data in a zip file on the file system system.
  * </p>
- * 
+ *
  * <p>
  * A typical usage is:
  * </p>
- * 
+ *
  * <pre>{@code
  * ZipResource resource = new ZipResource(URI.create("zip:file:/path/to/zip!/path/to/resource"));
  * ...
  * }</pre>
- * 
+ *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
+ *
  * @see AsyncResource
  * @see JarResource
  */
@@ -87,15 +87,16 @@ public class ZipResource extends AbstractAsyncResource {
 	
 	private boolean closed;
 	
+	private ResourceException resolutionError;
+	
 	/**
 	 * <p>
 	 * Creates a zip resource with the specified URI.
 	 * </p>
-	 * 
+	 *
 	 * @param uri the resource URI
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  zip resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a zip resource
 	 */
 	public ZipResource(URI uri) throws IllegalArgumentException {
 		this(uri, (MediaTypeService)null);
@@ -105,12 +106,11 @@ public class ZipResource extends AbstractAsyncResource {
 	 * <p>
 	 * Creates a zip resource with the specified URI and media type service.
 	 * </p>
-	 * 
+	 *
 	 * @param uri              the resource URI
 	 * @param mediaTypeService a media type service
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  zip resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a zip resource
 	 */
 	public ZipResource(URI uri, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		this(uri, SCHEME_ZIP, mediaTypeService);
@@ -120,12 +120,11 @@ public class ZipResource extends AbstractAsyncResource {
 	 * <p>
 	 * Creates a zip-like resource with the specified URI and scheme.
 	 * </p>
-	 * 
+	 *
 	 * @param uri    the resource URI
 	 * @param scheme the visible resource scheme (ie. zip, jar...)
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  resource of the specified scheme
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a resource of the specified scheme
 	 */
 	protected ZipResource(URI uri, String scheme) throws IllegalArgumentException {
 		this(uri, scheme, null);
@@ -133,16 +132,14 @@ public class ZipResource extends AbstractAsyncResource {
 	
 	/**
 	 * <p>
-	 * Creates a zip-like resource with the specified URI, scheme and media type
-	 * service.
+	 * Creates a zip-like resource with the specified URI, scheme and media type service.
 	 * </p>
-	 * 
+	 *
 	 * @param uri              the resource URI
 	 * @param scheme           the visible resource scheme (ie. zip, jar...)
 	 * @param mediaTypeService a media type service
-	 * 
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  resource of the specified scheme
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a resource of the specified scheme
 	 */
 	protected ZipResource(URI uri, String scheme, MediaTypeService mediaTypeService) throws IllegalArgumentException {
 		super(mediaTypeService);
@@ -170,12 +167,12 @@ public class ZipResource extends AbstractAsyncResource {
 	 * <p>
 	 * Checks that the specified URI is a zip resource URI.
 	 * </p>
-	 * 
+	 *
 	 * @param uri the uri to check
-	 * 
+	 *
 	 * @return the uri if it is a zip resource URI
-	 * @throws IllegalArgumentException if the specified URI does not designate a
-	 *                                  zip resource
+	 *
+	 * @throws IllegalArgumentException if the specified URI does not designate a zip resource
 	 */
 	public static URI checkUri(URI uri) throws IllegalArgumentException {
 		if(!Objects.requireNonNull(uri).getScheme().equals(SCHEME_ZIP)) {
@@ -192,41 +189,31 @@ public class ZipResource extends AbstractAsyncResource {
 		}
 	}
 	
-	private Optional<PathResource> resolve() {
+	private Optional<PathResource> resolve() throws ResourceException {
 		if(this.closed) {
 			throw new ClosedResourceException();
 		}
+		if(this.resolutionError != null) {
+			throw this.resolutionError;
+		}
 		if(this.pathResource == null) {
 			try {
-				this.fileSystem = ReferenceCountedFileSystems.getFileSystem(this.zipFsUri, Map.of("create", "true"));
+				if(this.fileSystem == null) {
+					this.fileSystem = ReferenceCountedFileSystems.getFileSystem(this.zipFsUri, Map.of("create", "true"));
+				}
 				PathResource resolvedResource = new PathResource(this.fileSystem.getPath(this.resourcePath.toString()), this.getMediaTypeService());
 				resolvedResource.setExecutor(this.getExecutor());
 				this.pathResource = Optional.of(resolvedResource);
-			} 
-			catch (IOException e) {
-				// TODO log debug
+			}
+			catch(NoSuchFileException e) {
 				return Optional.empty();
+			}
+			catch (IOException e) {
+				this.resolutionError = new ResourceException("Error resolving ZIP resource: " + this.uri, e);
+				throw this.resolutionError;
 			}
 		}
 		return this.pathResource;
-	}
-	
-	@Override
-	public String getFilename() {
-		Optional<PathResource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().getFilename();
-		}
-		return null;
-	}
-	
-	@Override
-	public String getMediaType() {
-		Optional<PathResource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().getMediaType();
-		}
-		return null;
 	}
 	
 	@Override
@@ -235,7 +222,21 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Optional<Boolean> exists() {
+	public String getFilename() throws ResourceException {
+		return this.resolve()
+			.map(Resource::getFilename)
+			.orElse(null);
+	}
+	
+	@Override
+	public String getMediaType() throws ResourceException {
+		return this.resolve()
+			.map(Resource::getMediaType)
+			.orElse(null);
+	}
+	
+	@Override
+	public Optional<Boolean> exists() throws ResourceException {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().exists();
@@ -244,84 +245,83 @@ public class ZipResource extends AbstractAsyncResource {
 	}
 	
 	@Override
-	public Optional<Boolean> isFile() {
+	public Optional<Boolean> isFile() throws ResourceException {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().isFile();
 		}
 		return Optional.of(false);
 	}
+	
+	@Override
+	public Optional<Long> size() throws ResourceException {
+		return this.resolve().flatMap(PathResource::size);
+	}
 
 	@Override
-	public Optional<FileTime> lastModified() {
-		Optional<PathResource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().lastModified();
-		}
-		return Optional.empty();
+	public Optional<FileTime> lastModified() throws ResourceException {
+		return this.resolve().flatMap(PathResource::lastModified);
 	}
 	
 	@Override
-	public Optional<Long> size() {
-		Optional<PathResource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().size();
-		}
-		return Optional.empty();
+	public Optional<ReadableByteChannel> openReadableByteChannel() throws ResourceException {
+		return this.resolve().flatMap(Resource::openReadableByteChannel);
 	}
 
 	@Override
-	public Optional<ReadableByteChannel> openReadableByteChannel() {
-		Optional<PathResource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().openReadableByteChannel();
-		}
-		return Optional.empty();
-	}
-
-	@Override
-	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) {
+	public Optional<WritableByteChannel> openWritableByteChannel(boolean append, boolean createParents) throws ResourceException {
 		try {
+			// Create the zip file
 			if(createParents) {
 				Files.createDirectories(Path.of(this.zipUri).getParent());
 			}
-			Optional<PathResource> r = this.resolve();
-			if(r.isPresent()) {
-				return r.get().openWritableByteChannel(append, createParents);
-			}
-			return Optional.empty();
+			return this.resolve().flatMap(Resource::openWritableByteChannel);
 		} 
 		catch (IOException e) {
-			// TODO log debug
-			return Optional.empty();
+			throw new ResourceException(e);
 		}
 	}
 	
 	@Override
-	public Optional<Publisher<ByteBuf>> read() {
-		Optional<PathResource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().read();
+	public Publisher<ByteBuf> read() throws NotReadableResourceException, ResourceException {
+		if(this.resolutionError != null) {
+			return Mono.error(this.resolutionError);
 		}
-		return Optional.empty();
+		return this.resolve()
+			.map(Resource::read)
+			.orElseGet(() -> Mono.error(() -> new NotReadableResourceException(this.uri.toString())));
 	}
 	
 	@Override
-	public Optional<Publisher<Integer>> write(Publisher<ByteBuf> data, boolean append, boolean createParents) {
-		Optional<PathResource> r = this.resolve();
-		if(r.isPresent()) {
-			return r.get().write(data);
+	public Publisher<Integer> write(Publisher<ByteBuf> data, boolean append, boolean createParents) throws NotWritableResourceException, ResourceException {
+		if(this.resolutionError != null) {
+			return Mono.error(this.resolutionError);
 		}
-		return Optional.empty();
+		return this.resolve()
+			.map(r -> r.write(data, append, createParents))
+			.orElseGet(() -> Mono.error(() -> new NotWritableResourceException(this.uri.toString())));
 	}
 
 	@Override
-	public boolean delete() {
+	public boolean delete() throws ResourceException {
 		Optional<PathResource> r = this.resolve();
 		if(r.isPresent()) {
 			return r.get().delete();
 		}
 		return false;
+	}
+	
+	@Override
+	public Resource resolve(Path path) throws ResourceException {
+		try {
+			URI resolvedURI = new URI(ZipResource.SCHEME_ZIP, this.zipUri + "!" + pathToSanitizedString(this.resourcePath.resolve(path)), null);
+			ZipResource resolvedResource = new ZipResource(resolvedURI, this.getMediaTypeService());
+			resolvedResource.setExecutor(this.getExecutor());
+			return resolvedResource;
+		} 
+		catch (URISyntaxException e) {
+			throw new IllegalArgumentException("Invalid path", e);
+		}
 	}
 	
 	@Override
@@ -346,16 +346,5 @@ public class ZipResource extends AbstractAsyncResource {
 		}
 	}
 	
-	@Override
-	public Resource resolve(Path path) {
-		try {
-			URI resolvedURI = new URI(ZipResource.SCHEME_ZIP, this.zipUri + "!" + pathToSanitizedString(this.resourcePath.resolve(path)), null);
-			ZipResource resolvedResource = new ZipResource(resolvedURI, this.getMediaTypeService());
-			resolvedResource.setExecutor(this.getExecutor());
-			return resolvedResource;
-		} 
-		catch (URISyntaxException e) {
-			throw new IllegalArgumentException("Invalid path", e);
-		}
-	}
+	
 }

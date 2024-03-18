@@ -118,7 +118,7 @@ public class ResourcePart extends AbstractPart<Resource> {
 					String mediaType = resource.getMediaType();
 					this.headers.contentType(mediaType != null ? mediaType : MediaTypes.APPLICATION_OCTET_STREAM);
 				}
-				this.setData(resource.read().orElseThrow(() -> new IllegalArgumentException("Resource is not readable: " + resource.getURI())));
+				this.setData(resource.read());
 			}
 			else {
 				throw new IllegalArgumentException("Resource does not exist: " + resource.getURI());

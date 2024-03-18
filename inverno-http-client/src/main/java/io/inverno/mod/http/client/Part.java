@@ -30,7 +30,7 @@ import java.util.function.Consumer;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  *
- * @see RequestBodyConfigurator.Multipart
+ * @see RequestBody.Multipart
  * 
  * @param <A> the type of data sent in the part
  */

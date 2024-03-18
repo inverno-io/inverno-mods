@@ -18,14 +18,13 @@ package io.inverno.mod.http.client.internal.http1x;
 import io.inverno.mod.http.client.internal.http1x.ws.GenericWebSocketExchange;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.header.HeaderService;
-import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.inverno.mod.http.base.internal.ws.GenericWebSocketFrame;
 import io.inverno.mod.http.base.internal.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.client.HttpClientConfiguration;
+import io.inverno.mod.http.client.internal.EndpointExchange;
 import io.inverno.mod.http.client.internal.WebSocketConnection;
-import io.inverno.mod.http.client.ws.WebSocketExchange;
+import io.inverno.mod.http.client.internal.WebSocketConnectionExchange;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -45,8 +44,6 @@ import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.ssl.SslHandler;
 import java.net.URI;
-import java.util.List;
-import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
@@ -152,67 +149,55 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	}
 
 	@Override
-	public <A extends ExchangeContext> Mono<WebSocketExchange<A>> handshake(A exchangeContext, String authority, List<Map.Entry<String, String>> headers, String path, String subprotocol) {
-		return Mono.<WebSocketExchange<ExchangeContext>>create(exchangeSink -> {
+	public <A extends ExchangeContext> Mono<WebSocketConnectionExchange<A>> handshake(EndpointExchange<A> endpointExchange, String subprotocol) {
+		return Mono.<WebSocketConnectionExchange<ExchangeContext>>create(exchangeSink -> {
 			EventLoop eventLoop = this.context.channel().eventLoop();
 			if(eventLoop.inEventLoop()) {
-				this.sendHandshake(this.context, exchangeSink, exchangeContext, authority, headers, path, subprotocol);
+				this.sendHandshake(this.context, exchangeSink, endpointExchange, subprotocol);
 			}
 			else {
 				eventLoop.submit(() -> {
-					this.sendHandshake(this.context, exchangeSink, exchangeContext, authority, headers, path, subprotocol);
+					this.sendHandshake(this.context, exchangeSink, endpointExchange, subprotocol);
 				});
 			}
 		})
-		.map(exchange -> (WebSocketExchange<A>)exchange);
+		.map(exchange -> (WebSocketConnectionExchange<A>)exchange);
 	}
 	
 	/**
 	 * <p>
 	 * Sends the WebSocket handshake.
 	 * </p>
-	 * 
-	 * @param context         the channel context
-	 * @param exchangeSink    the WebSocket exchange sink
-	 * @param exchangeContext the exchange context
-	 * @param authority       the requested authority
-	 * @param headers         a list of HTTP header entries
-	 * @param path            the request target path
-	 * @param subprotocol     the subprotocol
+	 *
+	 * @param context          the channel context
+	 * @param exchangeSink     the WebSocket exchange sink
+	 * @param endpointExchange the original endpoint exchange
+	 * @param subprotocol      the subprotocol
 	 */
 	private void sendHandshake(
 			ChannelHandlerContext context, 
-			MonoSink<WebSocketExchange<ExchangeContext>> exchangeSink, 
-			ExchangeContext exchangeContext, 
-			String authority, 
-			List<Map.Entry<String, String>> headers, 
-			String path, 
+			MonoSink<WebSocketConnectionExchange<ExchangeContext>> exchangeSink, 
+			EndpointExchange<?> endpointExchange,
 			String subprotocol) {
 		if(this.webSocketExchange != null) {
 			throw new IllegalStateException("Handshake already sent");
 		}
 		
-		Http1xRequestHeaders requestHeaders = new Http1xRequestHeaders(this.headerService, this.parameterConverter, headers);
-		Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, this.parameterConverter, Method.GET, authority, path, requestHeaders, null);
+		Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, false, this.parameterConverter, endpointExchange.request());
 		
-		LinkedHttpHeaders httpHeaders = new LinkedHttpHeaders();
-		if(headers != null && !headers.isEmpty()) {
-			headers.forEach(e -> httpHeaders.add(e.getKey(), e.getValue()));
-		}
-
-		URI webSocketURI = URI.create((this.tls ? "wss:// ": "ws://") + http1xRequest.getAuthority() + path);
+		URI webSocketURI = URI.create((this.tls ? "wss:// ": "ws://") + http1xRequest.getAuthority() + http1xRequest.getPath());
 		WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(
 			webSocketURI, 
 			WebSocketVersion.V13, 
 			subprotocol, 
 			true, 
-			httpHeaders);
+			http1xRequest.headers().getUnderlyingHeaders());
 		
 		this.webSocketExchange = new GenericWebSocketExchange(
 			context, 
 			exchangeSink, 
 			handshaker, 
-			exchangeContext, 
+			endpointExchange.context(), 
 			http1xRequest, 
 			subprotocol, 
 			this.frameFactory, 

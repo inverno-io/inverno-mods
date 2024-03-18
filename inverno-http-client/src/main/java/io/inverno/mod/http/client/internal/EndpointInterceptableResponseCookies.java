@@ -34,13 +34,13 @@ import java.util.function.Consumer;
 
 /**
  * <p>
- * Generic {@link OutboundSetCookies} implementation.
+ * An {@link OutboundSetCookies} implementation used to specify response cookies in an {@link ExchangeInterceptor}.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.6
+ * @since 1.8
  */
-public class GenericInterceptableResponseCookies implements OutboundSetCookies {
+public class EndpointInterceptableResponseCookies implements OutboundSetCookies {
 
 	private final HeaderService headerService;
 	private final OutboundResponseHeaders responseHeaders;
@@ -57,7 +57,7 @@ public class GenericInterceptableResponseCookies implements OutboundSetCookies {
 	 * @param responseHeaders    the response headers
 	 * @param parameterConverter the parameter converter
 	 */
-	public GenericInterceptableResponseCookies(HeaderService headerService, OutboundResponseHeaders responseHeaders, ObjectConverter<String> parameterConverter) {
+	public EndpointInterceptableResponseCookies(HeaderService headerService, OutboundResponseHeaders responseHeaders, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.responseHeaders = responseHeaders;
 		this.parameterConverter = parameterConverter;
@@ -112,5 +112,4 @@ public class GenericInterceptableResponseCookies implements OutboundSetCookies {
 		}
 		return this.pairs;
 	}
-
 }

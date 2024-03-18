@@ -19,9 +19,11 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.netty.FlatFullHttpRequest;
 import io.inverno.mod.http.base.internal.netty.FlatHttpRequest;
-import io.inverno.mod.http.base.internal.netty.FlatLastHttpContent;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.internal.AbstractExchange;
+import io.inverno.mod.http.client.internal.HttpConnectionExchange;
+import io.inverno.mod.http.client.internal.HttpConnectionRequest;
+import io.inverno.mod.http.client.internal.HttpConnectionResponse;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -33,11 +35,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import java.util.List;
-import java.util.function.Function;
-import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Mono;
@@ -64,23 +62,21 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 	 * Creates an HTTP/1.x exchange.
 	 * </p>
 	 *
-	 * @param context                 the channel context
-	 * @param exchangeSink            the exchange sink
-	 * @param exchangeContext         the exchange context
-	 * @param protocol                the HTTP/1.x protocol version
-	 * @param request                 the HTTP/1.x request
-	 * @param responseBodyTransformer the response body transformer
-	 * @param encoder                 the HTTP/1.x connection encoder
+	 * @param context         the channel context
+	 * @param exchangeSink    the exchange sink
+	 * @param exchangeContext the exchange context
+	 * @param protocol        the HTTP/1.x protocol version
+	 * @param request         the HTTP/1.x request
+	 * @param encoder         the HTTP/1.x connection encoder
 	 */
 	public Http1xExchange(
 			ChannelHandlerContext context, 
-			MonoSink<Exchange<ExchangeContext>> exchangeSink, 
+			MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink, 
 			ExchangeContext exchangeContext, 
 			io.inverno.mod.http.base.HttpVersion protocol,
 			Http1xRequest request, 
-			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, 
 			Http1xConnectionEncoder encoder) {
-		super(context, exchangeSink, exchangeContext, protocol, request, responseBodyTransformer);
+		super(context, exchangeSink, exchangeContext, protocol, request);
 		this.encoder = encoder;
 		switch(protocol) {
 			case HTTP_1_0: this.httpVersion = HttpVersion.HTTP_1_0;
@@ -101,43 +97,42 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 	 * </p>
 	 */
 	// this is executed in event loop
+	@Override
 	protected void doStart() {
 		// Do send the request
 		this.handler.exchangeStart(this);
-		this.request.body().ifPresentOrElse(
-			body -> {
-				Publisher<FileRegion> fileRegionData = body.getFileRegionData();
-				if(fileRegionData == null) {
-					Http1xExchange.DataSubscriber dataSubscriber = new Http1xExchange.DataSubscriber(body.isSingle());
-					body.dataSubscribe(dataSubscriber);
-					this.disposable = dataSubscriber;
+		
+		if(this.request.body() == null) {
+			// no need to subscribe
+			Http1xRequestHeaders headers = this.request.headers();
+			ChannelPromise finalizePromise = this.context.newPromise();
+			finalizePromise.addListener(future -> {
+				if(!future.isSuccess()) {
+					this.handler.exchangeError(this, future.cause());
 				}
-				else {
-					// we can write headers
+			});
+
+			this.encoder.writeFrame(this.context, new FlatFullHttpRequest(this.httpVersion, HttpMethod.valueOf(this.request.getMethod().name()), this.request.getPath(), this.fixHeaders(headers.getUnderlyingHeaders()), Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE), finalizePromise);
+			headers.setWritten(true);
+			this.handler.requestComplete(this);
+		}
+		else {
+			this.request.body().getFileRegionData().ifPresentOrElse(
+				fileRegionData -> {
 					Http1xRequestHeaders headers = this.request.headers();
-					this.encoder.writeFrame(Http1xExchange.this.context, new FlatHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), this.fixHeaders(headers.toHttp1xHeaders()), false), Http1xExchange.this.context.voidPromise());
+					this.encoder.writeFrame(Http1xExchange.this.context, new FlatHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), this.fixHeaders(headers.getUnderlyingHeaders()), false), Http1xExchange.this.context.voidPromise());
 					headers.setWritten(true);
 
 					Http1xExchange.FileRegionDataSubscriber fileRegionSubscriber = new Http1xExchange.FileRegionDataSubscriber();
 					fileRegionData.subscribe(fileRegionSubscriber);
 					this.disposable = fileRegionSubscriber;
-				}
-			},
-			() -> {
-				// no need to subscribe
-				Http1xRequestHeaders headers = this.request.headers();
-				ChannelPromise finalizePromise = this.context.newPromise();
-				finalizePromise.addListener(future -> {
-					if(!future.isSuccess()) {
-						this.handler.exchangeError(this, future.cause());
-					}
+				}, 
+				() -> {
+					Http1xExchange.DataSubscriber dataSubscriber = new Http1xExchange.DataSubscriber(this.request.body().isSingle());
+					this.request.body().dataSubscribe(dataSubscriber);
+					this.disposable = dataSubscriber;
 				});
-
-				this.encoder.writeFrame(this.context, new FlatFullHttpRequest(this.httpVersion, HttpMethod.valueOf(this.request.getMethod().name()), this.request.getPath(), this.fixHeaders(headers.toHttp1xHeaders()), Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE), finalizePromise);
-				headers.setWritten(true);
-				this.handler.requestComplete(this);
-			}	
-		);
+		}
 	}
 
 	/**
@@ -262,12 +257,12 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 							headers.set(Headers.NAME_TRANSFER_ENCODING, Headers.VALUE_CHUNKED);
 						}
 						if(this.singleChunk != null) {
-							Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.toHttp1xHeaders()), this.singleChunk), Http1xExchange.this.context.voidPromise());
+							Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.getUnderlyingHeaders()), this.singleChunk), Http1xExchange.this.context.voidPromise());
 							Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new DefaultHttpContent(value), nextPromise);
 							this.singleChunk = null;
 						}
 						else {
-							Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.toHttp1xHeaders()), value), nextPromise);
+							Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.getUnderlyingHeaders()), value), nextPromise);
 						}
 						headers.setWritten(true);
 					}
@@ -317,7 +312,7 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 						headers.contentLength(0);
 					}
 
-					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatFullHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.toHttp1xHeaders()), Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE), finalizePromise);
+					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatFullHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.getUnderlyingHeaders()), Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE), finalizePromise);
 					headers.setWritten(true);
 
 				}
@@ -326,7 +321,7 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 					if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
 						headers.contentLength(this.transferedLength);
 					}
-					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatFullHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.toHttp1xHeaders()), this.singleChunk, EmptyHttpHeaders.INSTANCE), finalizePromise);
+					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatFullHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.getUnderlyingHeaders()), this.singleChunk, EmptyHttpHeaders.INSTANCE), finalizePromise);
 					headers.setWritten(true);
 				}
 				else {

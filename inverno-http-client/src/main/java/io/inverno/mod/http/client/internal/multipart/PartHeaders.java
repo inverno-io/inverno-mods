@@ -30,7 +30,7 @@ import java.util.Map;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-public class PartHeaders extends GenericRequestHeaders {
+public class PartHeaders extends GenericRequestHeaders<PartHeaders> {
 
 	/**
 	 * <p>
@@ -54,7 +54,10 @@ public class PartHeaders extends GenericRequestHeaders {
 	 * @param entries            a list of HTTP header entries
 	 */
 	public PartHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, List<Map.Entry<String, String>> entries) {
-		super(headerService, parameterConverter, entries);
+		super(headerService, parameterConverter);
+		if(entries != null && !entries.isEmpty()) {
+			entries.forEach(e -> this.add(e.getKey(), e.getValue()));
+		}
 	}
 	
 	/**

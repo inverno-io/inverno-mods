@@ -17,7 +17,6 @@ package io.inverno.mod.base.resource;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -119,43 +118,45 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 	}
 	
 	@Override
-	public Optional<Publisher<ByteBuf>> read() {
-		return this.openReadableByteChannel().map(channel -> {
-			return Flux.generate(
-				() -> Long.valueOf(0),	
-				(position, sink) -> {
-					sink.next(position);
-					return position + this.readBufferCapacity;
-				}
-			)
-			.map(position -> {
-				ByteBuffer data = ByteBuffer.allocate(this.readBufferCapacity);
-				try {
-					if(channel.read(data) == -1) {
-						throw new EndOfFileException();
+	public Publisher<ByteBuf> read() throws NotReadableResourceException, ResourceException {
+		return Flux.defer(() -> this.openReadableByteChannel()
+			.map(channel -> Flux.generate(
+					() -> Long.valueOf(0),
+					(position, sink) -> {
+						sink.next(position);
+						return position + this.readBufferCapacity;
 					}
-				}
-				catch (IOException e) {
-					throw Exceptions.propagate(e);
-				}
-				data.flip();
-				return Unpooled.wrappedBuffer(data);
-			})
-			.onErrorResume(EndOfFileException.class, ex -> Mono.empty())
-			.doOnTerminate(() -> {
-				try {
-					channel.close();
-				}
-				catch (IOException e) {
-				}
-			})
-			.subscribeOn(Schedulers.fromExecutor(this.getExecutor()));
-		});
+				)
+				.map(position -> {
+					ByteBuffer data = ByteBuffer.allocate(this.readBufferCapacity);
+					try {
+						if(channel.read(data) == -1) {
+							throw new EndOfFileException();
+						}
+					}
+					catch (IOException e) {
+						throw Exceptions.propagate(e);
+					}
+					data.flip();
+					return Unpooled.wrappedBuffer(data);
+				})
+				.onErrorResume(EndOfFileException.class, ex -> Mono.empty())
+				.doOnTerminate(() -> {
+					try {
+						channel.close();
+					}
+					catch (IOException e) {
+					}
+				})
+				.subscribeOn(Schedulers.fromExecutor(this.getExecutor()))
+			)
+			.orElseGet(() -> Flux.error(new NotReadableResourceException(this.getURI().toString())))
+		);
 	}
 	
 	@Override
-	public Optional<Publisher<Integer>> write(Publisher<ByteBuf> data, boolean append, boolean createParents) {
-		return this.openWritableByteChannel(append, createParents)
+	public Publisher<Integer> write(Publisher<ByteBuf> data, boolean append, boolean createParents) throws NotWritableResourceException, ResourceException {
+		return Flux.defer(() -> this.openWritableByteChannel(append, createParents)
 			.map(channel -> Flux.from(data)
 				.concatMap(chunk -> Mono.<Integer>create(sink -> {
 						try {
@@ -177,6 +178,8 @@ public abstract class AbstractAsyncResource extends AbstractResource implements 
 					catch (IOException e) {
 					}
 				})
-			);
+			)
+			.orElseGet(() -> Flux.error(new NotWritableResourceException(this.getURI().toString())))
+		);
 	}
 }

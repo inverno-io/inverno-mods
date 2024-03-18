@@ -19,6 +19,9 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientException;
+import io.inverno.mod.http.client.internal.HttpConnectionExchange;
+import io.inverno.mod.http.client.internal.HttpConnectionRequest;
+import io.inverno.mod.http.client.internal.HttpConnectionResponse;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -29,8 +32,6 @@ import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2LocalFlowController;
 import io.netty.handler.codec.http2.Http2Stream;
-import java.util.function.Function;
-import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.MonoSink;
@@ -59,19 +60,17 @@ class Http2Exchange extends AbstractHttp2Exchange {
 	 * @param exchangeSink            the exchange sink
 	 * @param exchangeContext         the exchange context
 	 * @param request                 the HTTP/2 request
-	 * @param responseBodyTransformer the response body transformer
 	 * @param localEndpoint           the local HTTP/2 endpoint
 	 * @param encoder                 the HTTP/2 connection encoder
 	 */
 	public Http2Exchange(
 			ChannelHandlerContext context, 
-			MonoSink<Exchange<ExchangeContext>> exchangeSink,
+			MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink,
 			ExchangeContext exchangeContext, 
 			Http2Request request, 
-			Function<Publisher<ByteBuf>, Publisher<ByteBuf>> responseBodyTransformer, 
 			Endpoint<Http2LocalFlowController> localEndpoint, 
 			Http2ConnectionEncoder encoder) {
-		super(context, exchangeSink, exchangeContext, request, responseBodyTransformer);
+		super(context, exchangeSink, exchangeContext, request);
 		this.localEndpoint = localEndpoint;
 		this.encoder = encoder;
 	}
@@ -105,29 +104,28 @@ class Http2Exchange extends AbstractHttp2Exchange {
 		}
 		
 		this.handler.exchangeStart(this);
-		this.request.body().ifPresentOrElse(
-			body -> {
-				Http2Exchange.DataSubscriber dataSubscriber = new Http2Exchange.DataSubscriber(body.isSingle());
-				body.dataSubscribe(dataSubscriber);
-				this.disposable = dataSubscriber;
-			},
-			() -> {
-				// no need to subscribe
-				Http2RequestHeaders headers = ((Http2Request)this.request).headers();
-				ChannelPromise finalizePromise = this.context.newPromise();
-				finalizePromise.addListener(future -> {
-					if(future.isSuccess()) {
-						this.handler.requestComplete(this);
-					}
-					else {
-						this.handler.exchangeError(this, future.cause());
-					}
-				});
-				Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.toHttp2Headers()), 0, true, finalizePromise);
-				headers.setWritten(true);
-				this.context.channel().flush();
-			}	
-		);
+		
+		if(this.request.body() == null) {
+			// no need to subscribe
+			Http2RequestHeaders headers = ((Http2Request)this.request).headers();
+			ChannelPromise finalizePromise = this.context.newPromise();
+			finalizePromise.addListener(future -> {
+				if(future.isSuccess()) {
+					this.handler.requestComplete(this);
+				}
+				else {
+					this.handler.exchangeError(this, future.cause());
+				}
+			});
+			Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.getUnderlyingHeaders()), 0, true, finalizePromise);
+			headers.setWritten(true);
+			this.context.channel().flush();
+		}
+		else {
+			Http2Exchange.DataSubscriber dataSubscriber = new Http2Exchange.DataSubscriber(this.request.body().isSingle());
+			this.request.body().dataSubscribe(dataSubscriber);
+			this.disposable = dataSubscriber;
+		}
 	}
 	
 	/**
@@ -198,7 +196,7 @@ class Http2Exchange extends AbstractHttp2Exchange {
 						}
 					});
 					if(!headers.isWritten()) {
-						Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.toHttp2Headers()), 0, false, Http2Exchange.this.context.voidPromise());
+						Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.getUnderlyingHeaders()), 0, false, Http2Exchange.this.context.voidPromise());
 						headers.setWritten(true);
 						if(this.singleChunk != null) {
 							Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), this.singleChunk, 0, false, Http2Exchange.this.context.voidPromise());
@@ -239,7 +237,7 @@ class Http2Exchange extends AbstractHttp2Exchange {
 					if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
 						headers.contentLength(0);
 					}
-					Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.toHttp2Headers()), 0, true, finalizePromise);
+					Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.getUnderlyingHeaders()), 0, true, finalizePromise);
 					headers.setWritten(true);
 				}
 				else if(this.singleChunk != null) {
@@ -247,7 +245,7 @@ class Http2Exchange extends AbstractHttp2Exchange {
 					if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
 						headers.contentLength(this.transferedLength);
 					}
-					Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.toHttp2Headers()), 0, false, Http2Exchange.this.context.voidPromise());
+					Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.getUnderlyingHeaders()), 0, false, Http2Exchange.this.context.voidPromise());
 					Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), this.singleChunk, 0, true, finalizePromise);
 					headers.setWritten(true);
 				}

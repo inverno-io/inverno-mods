@@ -25,7 +25,7 @@ package io.inverno.mod.base.resource;
  */
 public class ClosedResourceException extends ResourceException {
 	
-	private static final long serialVersionUID = 4751489058127056365L;
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * <p>

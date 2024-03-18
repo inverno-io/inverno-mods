@@ -20,7 +20,9 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.client.Client;
 import io.inverno.mod.http.client.Endpoint;
+import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfigurationLoader;
+import io.inverno.mod.http.client.HttpClientException;
 import io.inverno.mod.http.client.ws.WebSocketExchange;
 import io.inverno.mod.test.AbstractInvernoModTest;
 import io.inverno.mod.test.configuration.ConfigurationInvocationHandler;
@@ -28,6 +30,7 @@ import io.inverno.test.InvernoCompilationException;
 import io.inverno.test.InvernoModuleLoader;
 import io.inverno.test.InvernoModuleProxy;
 import io.inverno.test.InvernoTestCompiler;
+import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakeException;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Proxy;
@@ -36,6 +39,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -67,7 +71,7 @@ public class WebSocketClientTest {
 	private static Boot bootModule;
 	private static Client httpClientModule;
 	
-	private static Endpoint endpoint;
+	private static Endpoint<ExchangeContext> endpoint;
 	
 	@BeforeAll
 	public static void init() throws IOException, InvernoCompilationException, ClassNotFoundException, InterruptedException {
@@ -215,7 +219,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.of("ws1", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws1").send(), 
+				endpoint.exchange("/ws1").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"), 
 				4
 			)
@@ -227,7 +231,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.of("ws2", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws2").send(), 
+				endpoint.exchange("/ws2").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"), 
 				4
 			)
@@ -239,7 +243,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.of("{\"message\":\"ws3\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws3").subProtocol("json").send(), 
+				endpoint.exchange("/ws3").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}", "{\"message\":\"b\"}", "{\"message\":\"c\"}"),
 				4
 			)
@@ -251,7 +255,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.of("ws4", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws4").send(), 
+				endpoint.exchange("/ws4").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -263,7 +267,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.of("{\"message\":\"ws5\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws5").subProtocol("json").send(), 
+				endpoint.exchange("/ws5").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -275,7 +279,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.of("ws6a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws6").send(), 
+				endpoint.exchange("/ws6").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -286,7 +290,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.of("{\"message\":\"ws7a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws7").subProtocol("json").send(), 
+				endpoint.exchange("/ws7").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -297,7 +301,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of(), 
 			sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws8").send(), 
+				endpoint.exchange("/ws8").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -309,7 +313,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of(), 
 			sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws9").send(), 
+				endpoint.exchange("/ws9").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -321,7 +325,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of(), 
 			sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws10").subProtocol("json").send(), 
+				endpoint.exchange("/ws10").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -333,7 +337,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of(), 
 			sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws11").send(), 
+				endpoint.exchange("/ws11").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -345,7 +349,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of(), 
 			sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws12").subProtocol("json").send(), 
+				endpoint.exchange("/ws12").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -357,7 +361,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of(), 
 			sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws13").send(), 
+				endpoint.exchange("/ws13").flatMap(Exchange::webSocket),
 				List.of("a", "b","c")
 			)
 		);
@@ -369,7 +373,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of(), 
 			sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws14").subProtocol("json").send(), 
+				endpoint.exchange("/ws14").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -381,7 +385,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws15", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws15").send(), 
+				endpoint.exchange("/ws15").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -393,7 +397,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws16", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws16").send(), 
+				endpoint.exchange("/ws16").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -405,7 +409,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws17", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws17").subProtocol("json").send(), 
+				endpoint.exchange("/ws17").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -417,7 +421,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws18", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws18").send(), 
+				endpoint.exchange("/ws18").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -429,7 +433,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws19", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws19").subProtocol("json").send(), 
+				endpoint.exchange("/ws19").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -441,7 +445,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws20", "a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws20").send(), 
+				endpoint.exchange("/ws20").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -452,7 +456,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws21", "a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws21").subProtocol("json").send(), 
+				endpoint.exchange("/ws21").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -463,7 +467,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws22\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws22").subProtocol("json").send(), 
+				endpoint.exchange("/ws22").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -475,7 +479,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws23\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws23").subProtocol("json").send(), 
+				endpoint.exchange("/ws23").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -487,7 +491,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws24\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws24").subProtocol("json").send(), 
+				endpoint.exchange("/ws24").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -499,7 +503,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws25\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws25").subProtocol("json").send(), 
+				endpoint.exchange("/ws25").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -511,7 +515,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws26\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws26").subProtocol("json").send(), 
+				endpoint.exchange("/ws26").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -523,7 +527,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws27\"}", "{\"message\":\"a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws27").subProtocol("json").send(), 
+				endpoint.exchange("/ws27").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("a", "b", "c")
 			)
 		);
@@ -534,7 +538,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws28\"}", "{\"message\":\"a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws28").subProtocol("json").send(), 
+				endpoint.exchange("/ws28").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -545,7 +549,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws29", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws29").send(), 
+				endpoint.exchange("/ws29").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -557,7 +561,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws30", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws30").send(), 
+				endpoint.exchange("/ws30").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -569,7 +573,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws31", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws31").subProtocol("json").send(), 
+				endpoint.exchange("/ws31").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -581,7 +585,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws32", "a", "b", "c"), 
 				sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws32").send(), 
+				endpoint.exchange("/ws32").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -593,7 +597,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws33", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws33").subProtocol("json").send(), 
+				endpoint.exchange("/ws33").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -605,7 +609,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws34", "a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws34").send(), 
+				endpoint.exchange("/ws34").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -616,7 +620,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws35", "a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws35").subProtocol("json").send(), 
+				endpoint.exchange("/ws35").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -627,7 +631,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws36\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws36").subProtocol("json").send(), 
+				endpoint.exchange("/ws36").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -639,7 +643,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws37\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws37").subProtocol("json").send(), 
+				endpoint.exchange("/ws37").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -651,7 +655,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws38\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws38").subProtocol("json").send(), 
+				endpoint.exchange("/ws38").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -663,7 +667,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws39\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws39").subProtocol("json").send(), 
+				endpoint.exchange("/ws39").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -675,7 +679,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws40\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws40").subProtocol("json").send(), 
+				endpoint.exchange("/ws40").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -687,7 +691,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws41\"}", "{\"message\":\"a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws41").subProtocol("json").send(), 
+				endpoint.exchange("/ws41").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("a", "b", "c")
 			)
 		);
@@ -698,7 +702,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws42\"}", "{\"message\":\"a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws42").subProtocol("json").send(), 
+				endpoint.exchange("/ws42").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -709,7 +713,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws43a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws43").send(), 
+				endpoint.exchange("/ws43").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -720,7 +724,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws44a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws44").send(), 
+				endpoint.exchange("/ws44").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -731,7 +735,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws45a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws45").subProtocol("json").send(), 
+				endpoint.exchange("/ws45").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -742,7 +746,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws46a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws46").send(), 
+				endpoint.exchange("/ws46").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -753,7 +757,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws47a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws47").subProtocol("json").send(), 
+				endpoint.exchange("/ws47").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -764,7 +768,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws48a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws48").send(), 
+				endpoint.exchange("/ws48").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -776,7 +780,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws49a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws49").subProtocol("json").send(), 
+				endpoint.exchange("/ws49").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -787,7 +791,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws50a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws50").subProtocol("json").send(), 
+				endpoint.exchange("/ws50").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -798,7 +802,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws51a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws51").subProtocol("json").send(), 
+				endpoint.exchange("/ws51").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("a", "b", "c")
 			)
 		);
@@ -809,7 +813,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws52a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws52").subProtocol("json").send(), 
+				endpoint.exchange("/ws52").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -820,7 +824,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws53a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws53").subProtocol("json").send(), 
+				endpoint.exchange("/ws53").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("a", "b", "c")
 			)
 		);
@@ -831,7 +835,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws54a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws54").subProtocol("json").send(), 
+				endpoint.exchange("/ws54").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -842,7 +846,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws55a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws55").subProtocol("json").send(), 
+				endpoint.exchange("/ws55").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("a", "b", "c")
 			)
 		);
@@ -853,7 +857,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws56a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws56").subProtocol("json").send(), 
+				endpoint.exchange("/ws56").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -864,7 +868,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws57", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws57").send(), 
+				endpoint.exchange("/ws57").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -876,7 +880,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws58", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws58").send(), 
+				endpoint.exchange("/ws58").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -888,7 +892,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws59\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws59").subProtocol("json").send(), 
+				endpoint.exchange("/ws59").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -900,7 +904,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws60", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws60").send(), 
+				endpoint.exchange("/ws60").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -912,7 +916,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws61\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws61").subProtocol("json").send(), 
+				endpoint.exchange("/ws61").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -924,7 +928,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws62", "a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws62").send(), 
+				endpoint.exchange("/ws62").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -935,7 +939,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws63\"}", "{\"message\":\"a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws63").subProtocol("json").send(), 
+				endpoint.exchange("/ws63").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -946,7 +950,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws64", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws64").send(), 
+				endpoint.exchange("/ws64").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -958,7 +962,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws65", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws65").send(), 
+				endpoint.exchange("/ws65").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -970,7 +974,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws66\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws66").subProtocol("json").send(), 
+				endpoint.exchange("/ws66").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -982,7 +986,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws67", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws67").send(), 
+				endpoint.exchange("/ws67").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -994,7 +998,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws68\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws68").subProtocol("json").send(), 
+				endpoint.exchange("/ws68").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -1006,7 +1010,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws69", "a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws69").send(), 
+				endpoint.exchange("/ws69").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -1017,7 +1021,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws70\"}", "{\"message\":\"a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws70").subProtocol("json").send(), 
+				endpoint.exchange("/ws70").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -1028,7 +1032,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws71", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws71").send(), 
+				endpoint.exchange("/ws71").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -1040,7 +1044,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws72", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws72").send(), 
+				endpoint.exchange("/ws72").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -1052,7 +1056,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws73", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws73").subProtocol("json").send(), 
+				endpoint.exchange("/ws73").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -1064,7 +1068,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws74", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws74").send(), 
+				endpoint.exchange("/ws74").flatMap(Exchange::webSocket),
 				List.of( "a", "b", "c"),
 				4
 			)
@@ -1076,7 +1080,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws75", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws75").subProtocol("json").send(), 
+				endpoint.exchange("/ws75").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of( "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -1088,7 +1092,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws76", "a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws76").send(), 
+				endpoint.exchange("/ws76").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -1099,7 +1103,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws77", "a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws77").subProtocol("json").send(), 
+				endpoint.exchange("/ws77").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -1110,7 +1114,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws78\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws78").subProtocol("json").send(), 
+				endpoint.exchange("/ws78").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -1122,7 +1126,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws79\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws79").subProtocol("json").send(), 
+				endpoint.exchange("/ws79").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -1134,7 +1138,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws80\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws80").subProtocol("json").send(), 
+				endpoint.exchange("/ws80").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -1146,7 +1150,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws81\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws81").subProtocol("json").send(), 
+				endpoint.exchange("/ws81").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -1158,7 +1162,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws82\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws82").subProtocol("json").send(), 
+				endpoint.exchange("/ws82").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -1170,7 +1174,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws83\"}", "{\"message\":\"a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws83").subProtocol("json").send(), 
+				endpoint.exchange("/ws83").flatMap(wsExchange -> wsExchange.webSocket("json")),
 				List.of("a", "b", "c")
 			)
 		);
@@ -1181,7 +1185,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws84\"}", "{\"message\":\"a\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws84").subProtocol("json").send(), 
+				endpoint.exchange("/ws84").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -1193,7 +1197,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws85", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws85").send(), 
+				endpoint.exchange("/ws85").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -1205,7 +1209,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws86", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws86").send(), 
+				endpoint.exchange("/ws86").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -1217,7 +1221,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws87", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws87").subProtocol("json").send(), 
+				endpoint.exchange("/ws87").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -1229,7 +1233,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws88", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws88").send(), 
+				endpoint.exchange("/ws88").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c"),
 				4
 			)
@@ -1241,7 +1245,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws89", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws89").subProtocol("json").send(), 
+				endpoint.exchange("/ws89").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -1253,7 +1257,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws90", "a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws90").send(), 
+				endpoint.exchange("/ws90").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -1264,7 +1268,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws91", "a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws91").subProtocol("json").send(), 
+				endpoint.exchange("/ws91").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -1275,7 +1279,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws92\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws92").subProtocol("json").send(), 
+				endpoint.exchange("/ws92").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -1287,7 +1291,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws93\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws93").subProtocol("json").send(), 
+				endpoint.exchange("/ws93").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("a", "b", "c"),
 				4
 			)
@@ -1299,7 +1303,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws94\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws94").subProtocol("json").send(), 
+				endpoint.exchange("/ws94").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -1311,7 +1315,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws95\"}", "{\"message\":\"a\"}", "{\"message\":\"b\"}", "{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws95").subProtocol("json").send(), 
+				endpoint.exchange("/ws95").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("a", "b", "c"),
 				4
 			)
@@ -1323,7 +1327,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws96\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws96").subProtocol("json").send(), 
+				endpoint.exchange("/ws96").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -1335,7 +1339,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws97\"}", "{\"message\":\"a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws97").subProtocol("json").send(), 
+				endpoint.exchange("/ws97").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("a", "b", "c")
 			)
 		);
@@ -1346,7 +1350,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws98\"}", "{\"message\":\"a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws98").subProtocol("json").send(), 
+				endpoint.exchange("/ws98").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -1357,7 +1361,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws99a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws99").send(), 
+				endpoint.exchange("/ws99").flatMap(Exchange::webSocket),
 				List.of("a", "b", "c")
 			)
 		);
@@ -1368,7 +1372,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws100a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws100").send(), 
+				endpoint.exchange("/ws100").flatMap(Exchange::webSocket), 
 				List.of("a", "b", "c")
 			)
 		);
@@ -1379,7 +1383,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws101a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws101").subProtocol("json").send(), 
+				endpoint.exchange("/ws101").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -1390,7 +1394,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws102a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws102").send(), 
+				endpoint.exchange("/ws102").flatMap(Exchange::webSocket), 
 				List.of("a", "b", "c")
 			)
 		);
@@ -1401,7 +1405,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws103a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws103").subProtocol("json").send(), 
+				endpoint.exchange("/ws103").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -1412,7 +1416,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws104a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws104").send(), 
+				endpoint.exchange("/ws104").flatMap(Exchange::webSocket), 
 				List.of("a", "b", "c")
 			)
 		);
@@ -1423,7 +1427,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws105a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws105").subProtocol("json").send(), 
+				endpoint.exchange("/ws105").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -1434,7 +1438,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws106a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws106").subProtocol("json").send(), 
+				endpoint.exchange("/ws106").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -1445,7 +1449,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws107a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws107").subProtocol("json").send(), 
+				endpoint.exchange("/ws107").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("a", "b", "c")
 			)
 		);
@@ -1456,7 +1460,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws108a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws108").subProtocol("json").send(), 
+				endpoint.exchange("/ws108").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -1467,7 +1471,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws109a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws109").subProtocol("json").send(), 
+				endpoint.exchange("/ws109").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("a", "b", "c")
 			)
 		);
@@ -1478,7 +1482,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws110a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws110").subProtocol("json").send(), 
+				endpoint.exchange("/ws110").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -1489,7 +1493,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws111a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws111").subProtocol("json").send(), 
+				endpoint.exchange("/ws111").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("a", "b", "c")
 			)
 		);
@@ -1500,7 +1504,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws112a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws112").subProtocol("json").send(), 
+				endpoint.exchange("/ws112").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -1511,7 +1515,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws113", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws113").send(), 
+				endpoint.exchange("/ws113").flatMap(Exchange::webSocket), 
 				List.of("a", "b", "c"),
 				4
 			)
@@ -1523,7 +1527,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws114", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws114").send(), 
+				endpoint.exchange("/ws114").flatMap(Exchange::webSocket), 
 				List.of("a", "b", "c"),
 				4
 			)
@@ -1535,7 +1539,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws115\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws115").subProtocol("json").send(), 
+				endpoint.exchange("/ws115").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -1547,7 +1551,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws116", "a", "b", "c"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws116").send(), 
+				endpoint.exchange("/ws116").flatMap(Exchange::webSocket), 
 				List.of("a", "b", "c"),
 				4
 			)
@@ -1559,7 +1563,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws117\"}", "{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"), 
 			sendMessagesReceiveAndClose(
-				endpoint.webSocketRequest("/ws117").subProtocol("json").send(), 
+				endpoint.exchange("/ws117").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}"),
 				4
 			)
@@ -1571,7 +1575,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws118", "a"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws118").send(), 
+				endpoint.exchange("/ws118").flatMap(Exchange::webSocket), 
 				List.of("a", "b", "c")
 			)
 		);
@@ -1582,7 +1586,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"message\":\"ws119\"}", "{\"message\":\"a\"}"), 
 			sendMessagesAndReceive(
-				endpoint.webSocketRequest("/ws119").subProtocol("json").send(), 
+				endpoint.exchange("/ws119").flatMap(wsExchange -> wsExchange.webSocket("json")), 
 				List.of("{\"message\":\"a\"}","{\"message\":\"b\"}","{\"message\":\"c\"}")
 			)
 		);
@@ -1593,7 +1597,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of(), 
 			receive(
-				endpoint.webSocketRequest("/ws120").send()
+				endpoint.exchange("/ws120").flatMap(Exchange::webSocket)
 			)
 		);
 		Assertions.assertTrue(getBooleanField(testServerWebSocketController, "ws120"));
@@ -1604,7 +1608,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of(), 
 			receive(
-				endpoint.webSocketRequest("/ws121").send()
+				endpoint.exchange("/ws121").flatMap(Exchange::webSocket)
 			)
 		);
 		Assertions.assertTrue(getBooleanField(testServerWebSocketController, "ws121"));
@@ -1615,7 +1619,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of(), 
 			receive(
-				endpoint.webSocketRequest("/ws122").send()
+				endpoint.exchange("/ws122").flatMap(Exchange::webSocket)
 			)
 		);
 		Assertions.assertTrue(getBooleanField(testServerWebSocketController, "ws122"));
@@ -1626,7 +1630,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws", "123"), 
 			receive(
-				endpoint.webSocketRequest("/ws123").send()
+				endpoint.exchange("/ws123").flatMap(Exchange::webSocket)
 			)
 		);
 	}
@@ -1636,7 +1640,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws", "124"), 
 			receive(
-				endpoint.webSocketRequest("/ws124").send()
+				endpoint.exchange("/ws124").flatMap(Exchange::webSocket)
 			)
 		);
 	}
@@ -1646,7 +1650,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws125"), 
 			receive(
-				endpoint.webSocketRequest("/ws125").send()
+				endpoint.exchange("/ws125").flatMap(Exchange::webSocket)
 			)
 		);
 	}
@@ -1656,7 +1660,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws126", "ws126"), 
 			receive(
-				endpoint.webSocketRequest("/ws126").send()
+				endpoint.exchange("/ws126").flatMap(Exchange::webSocket)
 			)
 		);
 	}
@@ -1666,7 +1670,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws127", "ws127"), 
 			receive(
-				endpoint.webSocketRequest("/ws127").send()
+				endpoint.exchange("/ws127").flatMap(Exchange::webSocket)
 			)
 		);
 	}
@@ -1676,7 +1680,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws128", "ws128"), 
 			receive(
-				endpoint.webSocketRequest("/ws128").send()
+				endpoint.exchange("/ws128").flatMap(Exchange::webSocket)
 			)
 		);
 	}
@@ -1686,7 +1690,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws129", "ws129"), 
 			receive(
-				endpoint.webSocketRequest("/ws129").send()
+				endpoint.exchange("/ws129").flatMap(Exchange::webSocket)
 			)
 		);
 	}
@@ -1696,7 +1700,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws130", "ws130"), 
 			receive(
-				endpoint.webSocketRequest("/ws130").send()
+				endpoint.exchange("/ws130").flatMap(Exchange::webSocket)
 			)
 		);
 	}
@@ -1706,7 +1710,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws131", "ws131"), 
 			receive(
-				endpoint.webSocketRequest("/ws131").send()
+				endpoint.exchange("/ws131").flatMap(Exchange::webSocket)
 			)
 		);
 	}
@@ -1716,7 +1720,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws132"), 
 			receive(
-				endpoint.webSocketRequest("/ws132").send()
+				endpoint.exchange("/ws132").flatMap(Exchange::webSocket)
 			)
 		);
 	}
@@ -1726,7 +1730,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws133"), 
 			receive(
-				endpoint.webSocketRequest("/ws133").send()
+				endpoint.exchange("/ws133").flatMap(Exchange::webSocket)
 			)
 		);
 	}
@@ -1736,7 +1740,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("ws134"), 
 			receive(
-				endpoint.webSocketRequest("/ws134").send()
+				endpoint.exchange("/ws134").flatMap(Exchange::webSocket)
 			)
 		);
 	}
@@ -1746,7 +1750,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"ws\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"135\"}"), 
 			receive(
-				endpoint.webSocketRequest("/ws135").subProtocol("json").send()
+				endpoint.exchange("/ws135").flatMap(exchange -> exchange.webSocket("json"))
 			)
 		);
 	}
@@ -1756,7 +1760,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"ws\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"136\"}"), 
 			receive(
-				endpoint.webSocketRequest("/ws136").subProtocol("json").send()
+				endpoint.exchange("/ws136").flatMap(exchange -> exchange.webSocket("json"))
 			)
 		);
 	}
@@ -1766,7 +1770,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"ws137\"}"), 
 			receive(
-				endpoint.webSocketRequest("/ws137").subProtocol("json").send()
+				endpoint.exchange("/ws137").flatMap(exchange -> exchange.webSocket("json"))
 			)
 		);
 	}
@@ -1776,7 +1780,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of(), 
 				sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws138").subProtocol("json").send(),
+				endpoint.exchange("/ws138").flatMap(exchange -> exchange.webSocket("json")),
 				List.of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}")
 			)
 		);
@@ -1788,7 +1792,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of(), 
 				sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws139").subProtocol("json").send(),
+				endpoint.exchange("/ws139").flatMap(exchange -> exchange.webSocket("json")),
 				List.of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}")
 			)
 		);
@@ -1800,7 +1804,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of(), 
 				sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws140").subProtocol("json").send(),
+				endpoint.exchange("/ws140").flatMap(exchange -> exchange.webSocket("json")),
 				List.of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}")
 			)
 		);
@@ -1812,7 +1816,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"@type\":\"GenericMessage\",\"id\":0,\"message\":\"ws141\"}", "{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}"), 
 				sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws141").subProtocol("json").send(),
+				endpoint.exchange("/ws141").flatMap(exchange -> exchange.webSocket("json")),
 				List.of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}")
 			)
 		);
@@ -1823,7 +1827,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"@type\":\"GenericMessage\",\"id\":0,\"message\":\"ws142\"}", "{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}"), 
 				sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws142").subProtocol("json").send(),
+				endpoint.exchange("/ws142").flatMap(exchange -> exchange.webSocket("json")),
 				List.of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}")
 			)
 		);
@@ -1834,7 +1838,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"ws143a\"}"), 
 				sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws143").subProtocol("json").send(),
+				endpoint.exchange("/ws143").flatMap(exchange -> exchange.webSocket("json")),
 				List.of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}")
 			)
 		);
@@ -1845,7 +1849,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"@type\":\"GenericMessage\",\"id\":0,\"message\":\"ws144\"}", "{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}"), 
 				sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws144").subProtocol("json").send(),
+				endpoint.exchange("/ws144").flatMap(exchange -> exchange.webSocket("json")),
 				List.of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}")
 			)
 		);
@@ -1856,7 +1860,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"@type\":\"GenericMessage\",\"id\":0,\"message\":\"ws145\"}", "{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}"), 
 				sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws145").subProtocol("json").send(),
+				endpoint.exchange("/ws145").flatMap(exchange -> exchange.webSocket("json")),
 				List.of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}")
 			)
 		);
@@ -1867,7 +1871,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"ws146a\"}"), 
 				sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws146").subProtocol("json").send(),
+				endpoint.exchange("/ws146").flatMap(exchange -> exchange.webSocket("json")),
 				List.of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}")
 			)
 		);
@@ -1878,7 +1882,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"@type\":\"GenericMessage\",\"id\":0,\"message\":\"ws147\"}", "{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}"), 
 				sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws147").subProtocol("json").send(),
+				endpoint.exchange("/ws147").flatMap(exchange -> exchange.webSocket("json")),
 				List.of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}")
 			)
 		);
@@ -1889,7 +1893,7 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"@type\":\"GenericMessage\",\"id\":0,\"message\":\"ws148\"}", "{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}"), 
 				sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws148").subProtocol("json").send(),
+				endpoint.exchange("/ws148").flatMap(exchange -> exchange.webSocket("json")),
 				List.of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}")
 			)
 		);
@@ -1900,9 +1904,42 @@ public class WebSocketClientTest {
 		Assertions.assertEquals(
 			List.<String>of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"ws149a\"}"), 
 				sendMessagesCloseAndReceive(
-				endpoint.webSocketRequest("/ws149").subProtocol("json").send(),
+				endpoint.exchange("/ws149").flatMap(exchange -> exchange.webSocket("json")),
 				List.of("{\"@type\":\"GenericMessage\",\"id\":1,\"message\":\"a\"}", "{\"@type\":\"GenericMessage\",\"id\":2,\"message\":\"b\"}", "{\"@type\":\"GenericMessage\",\"id\":3,\"message\":\"c\"}")
 			)
 		);
+	}
+	
+	@Test
+	public void test_ws_not_a_ws_resource() {
+		Assertions.assertThrows(
+			WebSocketClientHandshakeException.class, 
+			() -> endpoint.exchange("/no_ws").flatMap(Exchange::webSocket).block()
+		);
+	}
+	
+	@Test
+	public void test_ws_interceptor_abort() {
+		AtomicBoolean interceptorFlag = new AtomicBoolean(false);
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.interceptor(exchange -> {
+				interceptorFlag.set(true);
+				return Mono.empty();
+			})
+			.build();
+		
+		try {
+			Assertions.assertEquals(
+				"Can't open WebSocket on an intercepted exchange",
+				Assertions.assertThrows(
+					HttpClientException.class, 
+					() -> endpoint.exchange("/ws120").flatMap(Exchange::webSocket).block()
+				).getMessage()
+			);
+			Assertions.assertTrue(interceptorFlag.get());
+		}
+		finally {
+			endpoint.close().block();
+		}
 	}
 }

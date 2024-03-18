@@ -25,7 +25,7 @@ package io.inverno.mod.base.resource;
  */
 public class ResourceException extends RuntimeException {
 
-	private static final long serialVersionUID = -7695700849488562907L;
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * <p>
@@ -61,7 +61,7 @@ public class ResourceException extends RuntimeException {
 	 * <p>
 	 * Creates a resource exception with the specified message and cause.
 	 * </p>
-	 * 
+	 *
 	 * @param message the message
 	 * @param cause   the cause
 	 */
@@ -71,18 +71,15 @@ public class ResourceException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a resource exception with the specified message, cause, suppression
-	 * enabled or disabled and writable stack trace enabled or disabled.
+	 * Creates a resource exception with the specified message, cause, suppression enabled or disabled and writable stack trace enabled or disabled.
 	 * </p>
-	 * 
+	 *
 	 * @param message            the message
 	 * @param cause              the cause
 	 * @param enableSuppression  true to enable suppression, false otherwise
-	 * @param writableStackTrace true to make the stack trace writable, false
-	 *                           otherwise
+	 * @param writableStackTrace true to make the stack trace writable, false otherwise
 	 */
 	public ResourceException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
-
 }

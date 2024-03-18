@@ -16,6 +16,7 @@
 package io.inverno.mod.http.client;
 
 import io.inverno.mod.http.base.BaseRequest;
+import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.OutboundRequestHeaders;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -27,7 +28,7 @@ import java.util.function.Consumer;
  * </p>
  * 
  * <p>
- * Once the actual request has been sent to the endpoint it is no longer possible to modify the interceptable request resulting in {@link IllegalStateException} to be raised. 
+ * Once the request has been sent to the endpoint it is no longer possible to modify the interceptable request resulting in {@link IllegalStateException} on such operations.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -39,16 +40,20 @@ public interface InterceptableRequest extends BaseRequest {
 
 	/**
 	 * <p>
-	 * Configures the HTTP headers to send in the request.
+	 * Sets the request method.
 	 * </p>
-	 *
-	 * @param headersConfigurer an outbound request headers configurer
-	 *
+	 * 
+	 * <p>
+	 * This actually overrides the method provided when the enclosing exchange was created by the {@link Endpoint}. It defaults to {@link Method#GET} if none is specified.
+	 * </p>
+	 * 
+	 * @param method the request method
+	 * 
 	 * @return the request
-	 *
+	 * 
 	 * @throws IllegalStateException if the request has already been sent to the endpoint
 	 */
-	InterceptableRequest headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException;
+	InterceptableRequest method(Method method) throws IllegalStateException;
 	
 	/**
 	 * <p>
@@ -69,8 +74,8 @@ public interface InterceptableRequest extends BaseRequest {
 	 * </p>
 	 * 
 	 * <p>
-	 * This actually overrides the request target path provided when the request was created using {@link Endpoint#request(io.inverno.mod.http.base.Method, java.lang.String) } or 
-	 * {@link HttpClient#request(io.inverno.mod.http.base.Method, java.lang.String) }.
+	 * This actually overrides the request target path provided when the exchange was created using {@link Endpoint#exchange(io.inverno.mod.http.base.Method, java.lang.String) } or 
+	 * {@link Endpoint#exchange(io.inverno.mod.http.base.Method, java.lang.String, io.inverno.mod.http.base.ExchangeContext)}.
 	 * </p>
 	 * 
 	 * @param path the request target path
@@ -80,6 +85,19 @@ public interface InterceptableRequest extends BaseRequest {
 	 * @throws IllegalStateException if the request has already been sent to the endpoint
 	 */
 	InterceptableRequest path(String path) throws IllegalStateException;
+	
+	/**
+	 * <p>
+	 * Configures the HTTP headers to send in the request.
+	 * </p>
+	 *
+	 * @param headersConfigurer an outbound request headers configurer
+	 *
+	 * @return the request
+	 *
+	 * @throws IllegalStateException if the request has already been sent to the endpoint
+	 */
+	InterceptableRequest headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException;
 
 	/**
 	 * <p>
