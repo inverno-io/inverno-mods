@@ -32,7 +32,6 @@ import io.inverno.mod.http.client.Client;
 import io.inverno.mod.http.client.Endpoint;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfigurationLoader;
-import io.inverno.mod.http.client.RequestTimeoutException;
 import io.inverno.mod.test.AbstractInvernoModTest;
 import io.inverno.mod.test.configuration.ConfigurationInvocationHandler;
 import io.inverno.test.InvernoCompilationException;
@@ -52,7 +51,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterAll;
@@ -6105,7 +6103,10 @@ public class HttpClientTest {
 		}
 	}
 	
-	@Test
+	// TODO this keeps failing with ConnectionTimeout error in Github, it can't be reproduced locally...
+	// I moved these to HttpClientExtraTest to see if I can isolate the issue
+	
+	/*@Test
 	public void test_interceptor() {
 		AtomicBoolean interceptorFlag = new AtomicBoolean(false);
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
@@ -6504,7 +6505,7 @@ public class HttpClientTest {
 		finally {
 			endpoint.shutdown().block();
 		}
-	}
+	}*/
 	
 	// TODO: test pool request buffer
 }
