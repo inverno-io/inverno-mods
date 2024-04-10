@@ -167,7 +167,7 @@ public class HttpClientTest {
 		}
 	}
 	
-	/*public static Stream<Arguments> provideEndpointAndHttpVersion() {
+	public static Stream<Arguments> provideEndpointAndHttpVersion() {
 		return Stream.of(
 			Arguments.of(h11Endpoint, HttpVersion.HTTP_1_1),
 			Arguments.of(h2cEndpoint, HttpVersion.HTTP_2_0)
@@ -195,7 +195,7 @@ public class HttpClientTest {
 			.block();
 	}
 	
-	@ParameterizedTest
+	/*@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
 	public void test_get_raw(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_raw'
