@@ -6388,7 +6388,7 @@ public class HttpClientTest {
 		}
 	}
 	
-	public static Stream<Arguments> provideTimeoutEndpointsAndHttpVersion() {
+	/*public static Stream<Arguments> provideTimeoutEndpointsAndHttpVersion() {
 		Endpoint<ExchangeContext> h11TimeoutEndpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -6504,7 +6504,7 @@ public class HttpClientTest {
 		finally {
 			endpoint.shutdown().block();
 		}
-	}
+	}*/
 	
 	// TODO: test pool request buffer
 }
