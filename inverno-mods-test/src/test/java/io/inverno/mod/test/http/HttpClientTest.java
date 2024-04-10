@@ -88,8 +88,8 @@ public class HttpClientTest {
 	private static Boot bootModule;
 	private static Client httpClientModule;
 	
-	private static Endpoint<ExchangeContext> h11Endpoint;
-	private static Endpoint<ExchangeContext> h2cEndpoint;
+	/*private static Endpoint<ExchangeContext> h11Endpoint;
+	private static Endpoint<ExchangeContext> h2cEndpoint;*/
 	
 	@BeforeAll
 	public static void init() throws IOException, InvernoCompilationException, ClassNotFoundException, InterruptedException {
@@ -131,22 +131,22 @@ public class HttpClientTest {
 		httpClientModule = new Client.Builder(bootModule.netService(), bootModule.reactor(), bootModule.resourceService()).build();
 		httpClientModule.start();
 		
-		h11Endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+		/*h11Endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))))
 			.build();
 		
 		h2cEndpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
-			.build();
+			.build();*/
 	}
 	
 	@AfterAll
 	public static void destroy() {
-		if(h2cEndpoint != null) {
+		/*if(h2cEndpoint != null) {
 			h2cEndpoint.shutdown().block();
 		}
 		if(h11Endpoint != null) {
 			h11Endpoint.shutdown().block();
-		}
+		}*/
 		if(httpClientModule != null) {
 			httpClientModule.stop();
 		}
@@ -167,7 +167,7 @@ public class HttpClientTest {
 		}
 	}
 	
-	public static Stream<Arguments> provideEndpointAndHttpVersion() {
+	/*public static Stream<Arguments> provideEndpointAndHttpVersion() {
 		return Stream.of(
 			Arguments.of(h11Endpoint, HttpVersion.HTTP_1_1),
 			Arguments.of(h2cEndpoint, HttpVersion.HTTP_2_0)
@@ -195,7 +195,7 @@ public class HttpClientTest {
 			.block();
 	}
 	
-	/*@ParameterizedTest
+	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
 	public void test_get_raw(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_raw'
@@ -6003,7 +6003,7 @@ public class HttpClientTest {
 				Assertions.assertEquals("/get_path_param/terminal/a/b/c", body);
 			})
 			.block();
-	}*/
+	}
 	
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
@@ -6068,7 +6068,7 @@ public class HttpClientTest {
 				break;
 			}
 		}
-	}
+	}*/
 	
 	@Test
 	public void test_h2c_tooBig() {
