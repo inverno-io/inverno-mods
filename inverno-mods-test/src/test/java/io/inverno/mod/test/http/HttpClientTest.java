@@ -195,7 +195,7 @@ public class HttpClientTest {
 			.block();
 	}
 	
-	/*@ParameterizedTest
+	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
 	public void test_get_raw(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		//curl -i 'http://127.0.0.1:8080/get_raw'
@@ -6068,7 +6068,7 @@ public class HttpClientTest {
 				break;
 			}
 		}
-	}*/
+	}
 	
 	@Test
 	public void test_h2c_tooBig() {
