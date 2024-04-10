@@ -238,11 +238,13 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 	 */
 	protected Mono<HttpConnection> createConnection() {
 		return Mono.defer(() -> {
+			System.out.println("=== CREATE CONNECTION ===");
 			Sinks.One<HttpConnection> connectionSink = Sinks.one();
 			ChannelFuture connectionFuture = this.bootstrap.connect(this.remoteAddress);
 			connectionFuture.addListener(res -> {
 				if(res.isSuccess()) {
 					connectionFuture.channel().pipeline().addLast("connectionSink", new ChannelInboundHandlerAdapter() {
+						
 						@Override
 						public void channelActive(ChannelHandlerContext ctx) throws Exception {
 							super.channelActive(ctx);

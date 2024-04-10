@@ -93,7 +93,6 @@ public class HttpClientTest {
 	
 	@BeforeAll
 	public static void init() throws IOException, InvernoCompilationException, ClassNotFoundException, InterruptedException {
-    System.out.println("=== " + Runtime.getRuntime().availableProcessors() + " ===");
 		InvernoTestCompiler invernoCompiler = InvernoTestCompiler.builder()
 			.moduleOverride(AbstractInvernoModTest.MODULE_OVERRIDE)
 			.annotationProcessorModuleOverride(AbstractInvernoModTest.ANNOTATION_PROCESSOR_MODULE_OVERRIDE)
