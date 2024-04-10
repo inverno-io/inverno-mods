@@ -19,6 +19,7 @@ import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.web.server.spi.AcceptAware;
+import io.inverno.mod.web.server.spi.ContentAware;
 import io.inverno.mod.web.server.spi.ErrorInterceptorManager;
 import io.inverno.mod.web.server.spi.PathAware;
 import java.util.List;
@@ -53,6 +54,7 @@ public interface ErrorWebInterceptorManager<A extends ExchangeContext, B extends
 	 *
 	 * @return the error router
 	 */
+	@Override
 	B interceptor(ExchangeInterceptor<? super A, ErrorWebExchange<A>> interceptor);
 
 	/**
@@ -68,7 +70,8 @@ public interface ErrorWebInterceptorManager<A extends ExchangeContext, B extends
 	 *
 	 * @return the error router
 	 */
-	B interceptors(List<ExchangeInterceptor<? super A, ErrorWebExchange<A>>> interceptors);
+	@Override
+			B interceptors(List<ExchangeInterceptor<? super A, ErrorWebExchange<A>>> interceptors);
 
 	/**
 	 * <p>
@@ -111,6 +114,19 @@ public interface ErrorWebInterceptorManager<A extends ExchangeContext, B extends
 	 */
 	ErrorWebInterceptorManager<A, B> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException;
 
+	/**
+	 * <p>
+	 * Specifies the media range defining the content types accepted by the route to intercept as defined by <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>.
+	 * </p>
+	 *
+	 * @param mediaRange a media range
+	 *
+	 * @return the web interceptor manager
+	 *
+	 * @see ContentAware
+	 */
+	ErrorWebInterceptorManager<A, B> consumes(String mediaRange);
+	
 	/**
 	 * <p>
 	 * Specifies the media range matching the content type produced by the route to intercept.

@@ -28,10 +28,12 @@ import io.inverno.mod.http.base.Parameter;
  * </p>
  * 
  * <dl>
- * <dt><b>httpServerConfiguration</b></dt>
+ * <dt><b>configuration</b></dt>
  * <dd>the HTTP server module configuration</dd>
  * <dt><b>netService (required)</b></dt>
  * <dd>the Net service used to create the HTTP server</dd>
+ * <dt><b>reactor (required)</b></dt>
+ * <dd>the Reactor</dd>
  * <dt><b>resourceService (required)</b></dt>
  * <dd>the resource service used to load resources required by the HTTP server (eg. key store...)</dd>
  * <dt><b>controller</b></dt>
@@ -47,7 +49,7 @@ import io.inverno.mod.http.base.Parameter;
  * </p>
  * 
  * <dl>
- * <dt><b>httpServerConfiguration</b></dt>
+ * <dt><b>configuration</b></dt>
  * <dd>the HTTP server module configuration</dd>
  * <dt><b>controller</b></dt>
  * <dd>the HTTP server controller</dd>
@@ -58,11 +60,12 @@ import io.inverno.mod.http.base.Parameter;
  * </p>
  *
  * <pre>{@code
- * NetService netService = ...;
- * ResourceService resourceService = ...;
+ * NetService netService = ...
+ * Reactor reactor = ...
+ * ResourceService resourceService = ...
  *
- * Application.with(new Server.Builder(netService, resourceService)
- *     .setHttpServerConfiguration(HttpServerConfigurationLoader.load(conf -> conf.server_port(8080)))
+ * Application.with(new Server.Builder(netService, reactor, resourceService)
+ *     .setConfiguration(HttpServerConfigurationLoader.load(conf -> conf.server_port(8080)))
  *     .setController(ServerController.from(
  *         exchange -> exchange
  *             .response()
@@ -72,6 +75,12 @@ import io.inverno.mod.http.base.Parameter;
  *      ))
  * ).run();
  * }</pre>
+ * 
+ * <p>
+ * Note that in above example, all requests sent to the server are processed with the same handler, the {@code io.inverno.mod.web.server} is better suited to route requests based on gRPC service and
+ * method names. It is recommended to rely on a <a href="https://protobuf.dev/reference/cpp/api-docs/google.protobuf.compiler.plugin/">protoc plugin</a> for generating a proper gRPC Web routes
+ * configurer from Protocol buffer definitions.
+ * </p>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0

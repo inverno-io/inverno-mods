@@ -228,7 +228,9 @@ public class EndpointRequest implements Request  {
 	@Override
 	public Request headers(Consumer<OutboundRequestHeaders> headersConfigurer) throws IllegalStateException {
 		this.checkNotConnected();
-		headersConfigurer.accept(this.requestHeaders);
+		if(headersConfigurer != null) {
+			headersConfigurer.accept(this.requestHeaders);
+		}
 		return this;
 	}
 	

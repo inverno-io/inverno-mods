@@ -20,6 +20,7 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.InterceptableExchange;
+import java.util.Optional;
 
 /**
  * <p>
@@ -83,4 +84,13 @@ public class EndpointInterceptableExchange<A extends ExchangeContext> implements
 		return this.interceptableResponse;
 	}
 
+	@Override
+	public void reset(long code) {
+		this.exchange.reset(code);
+	}
+
+	@Override
+	public Optional<Throwable> getCancelCause() {
+		return this.exchange.getCancelCause();
+	}
 }

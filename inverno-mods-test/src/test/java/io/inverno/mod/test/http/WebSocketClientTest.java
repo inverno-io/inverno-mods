@@ -122,7 +122,7 @@ public class WebSocketClientTest {
 	@AfterAll
 	public static void destroy() {
 		if(endpoint != null) {
-			endpoint.close().block();
+			endpoint.shutdown().block();
 		}
 		if(httpClientModule != null) {
 			httpClientModule.stop();
@@ -1939,7 +1939,7 @@ public class WebSocketClientTest {
 			Assertions.assertTrue(interceptorFlag.get());
 		}
 		finally {
-			endpoint.close().block();
+			endpoint.shutdown().block();
 		}
 	}
 }

@@ -149,7 +149,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 		this.connectTimeout = this.configuration.pool_connect_timeout();
 		
 		if(this.maxSize <= 0) {
-			throw new IllegalArgumentException("max_pool_size must be a greater than 1");
+			throw new IllegalArgumentException("pool_max_size must be a greater than 1");
 		}
 		
 		this.commandExecutor = new CommandExecutor<>(this);
@@ -275,8 +275,8 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 						if(expiredConnections == null) {
 							expiredConnections = new ArrayDeque<>();
 						}
-						expiredConnections.add(parkedConnection.close()
-							.doOnError(e -> LOGGER.warn("Error closing pooled connection", e))
+						expiredConnections.add(parkedConnection.shutdown()
+							.doOnError(e -> LOGGER.warn("Error shutting down pooled connection", e))
 							.onErrorResume(e -> true, e -> Mono.empty())
 						);
 					}
@@ -406,7 +406,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 					pool.connecting--;
 					if(pool.closing || pool.closed) {
 						request.error(new ConnectionPoolException("Pool closed"));
-						connection.close().subscribe();
+						connection.shutdown().subscribe();
 					}
 					else {
 						// we have a new connection
@@ -461,20 +461,19 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 	 */
 	private void recycle(PooledHttpConnection connection) {
 		this.commandExecutor.execute(pool -> {
-			LOGGER.debug("Recyle connection...");
-			if(pool.closing || pool.closed) {
-				return;
-			}
-			connection.touch();
-			connection.allocated--;
-			if(!connection.parked && !connection.removed) {
-				ConnectionRequest request = pool.requestBuffer.poll();
-				if(request != null) {
-					connection.allocated++;
-					request.success(connection);
-				}
-				else {
-					pool.capacity++;
+			if(!pool.closing && !pool.closed) {
+				LOGGER.debug("Recyle connection...");
+				connection.touch();
+				connection.allocated--;
+				if(!connection.parked && !connection.removed) {
+					ConnectionRequest request = pool.requestBuffer.poll();
+					if(request != null) {
+						connection.allocated++;
+						request.success(connection);
+					}
+					else {
+						pool.capacity++;
+					}
 				}
 			}
 		});
@@ -490,8 +489,8 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 	private void remove(PooledHttpConnection connection) {
 		// Remove the connection from the pool
 		this.commandExecutor.execute(pool -> {
-			LOGGER.debug("Remove connection...");
 			if(!connection.removed && !pool.closing && !pool.closed) {
+				LOGGER.debug("Remove connection...");
 				if(connection.parked) {
 					pool.parkedConnections.remove(connection);
 					connection.index = -1;
@@ -528,8 +527,8 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 	private void park(PooledHttpConnection connection) {
 		// Remove the connection from the pool and park it
 		this.commandExecutor.execute(pool -> {
-			LOGGER.debug("Park connection...");
 			if(!connection.removed && !connection.parked && !pool.closing && !pool.closed && pool.connections[connection.index] == connection) {
+				LOGGER.debug("Park connection...");
 				PooledHttpConnection last = pool.connections[--pool.size];
 				last.index = connection.index;
 				pool.connections[connection.index] = last;
@@ -576,9 +575,12 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 	}
 
 	@Override
-	public Mono<Void> close() {
+	public Mono<Void> shutdown() {
+		if(this.closing || this.closed) {
+			return Mono.empty();
+		}
 		return Mono.defer(() -> {
-			LOGGER.debug("Close pool...");
+			LOGGER.debug("Shutting down pooled endpoint...");
 			this.closing = true;
 			this.cleanFuture.cancel(false);
 			Sinks.Many<PooledEndpoint.PooledHttpConnection> sink = Sinks.many().unicast().onBackpressureBuffer();
@@ -596,11 +598,50 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 			});
 			
 			return sink.asFlux()
-				.flatMap(connection -> connection.close()
-					.doOnError(e -> LOGGER.warn("Error closing pooled connection", e))
+				.flatMap(connection -> connection.shutdown()
+					.doOnError(e -> LOGGER.warn("Error shutting down pooled connection", e))
 					.onErrorResume(e -> true, e -> Mono.empty())
 				)
-				.doOnTerminate(() -> this.closed = true)
+				.doOnTerminate(() -> {
+					this.closed = true;
+					this.closing = false;
+				})
+				.then();
+		});
+	}
+
+	@Override
+	public Mono<Void> shutdownGracefully() {
+		if(this.closing || this.closed) {
+			return Mono.empty();
+		}
+		return Mono.defer(() -> {
+			LOGGER.debug("Shutting down pooled endpoint gracefully...");
+			this.closing = true;
+			this.cleanFuture.cancel(false);
+			Sinks.Many<PooledEndpoint.PooledHttpConnection> sink = Sinks.many().unicast().onBackpressureBuffer();
+			this.commandExecutor.execute(pool -> {
+				for(int i=0;i<pool.size;i++) {
+					sink.tryEmitNext(pool.connections[i]);
+					pool.connections[i] = null;
+				}
+				pool.size = 0;
+				PooledEndpoint.PooledHttpConnection parkedConnection;
+				while( (parkedConnection = pool.parkedConnections.poll()) != null) {
+					sink.tryEmitNext(parkedConnection);
+				}
+				sink.tryEmitComplete();
+			});
+			
+			return sink.asFlux()
+				.flatMap(connection -> connection.shutdownGracefully()
+					.doOnError(e -> LOGGER.warn("Error shutting down pooled connection", e))
+					.onErrorResume(e -> true, e -> Mono.empty())
+				)
+				.doOnTerminate(() -> {
+					this.closed = true;
+					this.closing = false;
+				})
 				.then();
 		});
 	}
@@ -969,13 +1010,28 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 		}
 
 		@Override
-		public Mono<Void> close() {
-			return this.connection.close()
+		public Mono<Void> shutdown() {
+			return this.connection.shutdown()
 				.doFirst(() -> {
 					// Let's try to remove the connection from the pool first
 					// This is best effort to prevent the connection from being acquierd as this might be executed by another thread after the connection is actually closed.
 					PooledEndpoint.this.remove(this);
 				});
+		}
+
+		@Override
+		public Mono<Void> shutdownGracefully() {
+			return this.connection.shutdownGracefully()
+				.doFirst(() -> {
+					// Let's try to remove the connection from the pool first
+					// This is best effort to prevent the connection from being acquierd as this might be executed by another thread after the connection is actually closed.
+					PooledEndpoint.this.remove(this);
+				});
+		}
+
+		@Override
+		public boolean isClosed() {
+			return this.connection.isClosed();
 		}
 		
 		@Override

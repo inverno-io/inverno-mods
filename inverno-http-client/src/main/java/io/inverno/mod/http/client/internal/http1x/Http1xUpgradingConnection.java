@@ -287,7 +287,7 @@ class Http1xUpgradingConnection extends Http1xConnection {
 		super.exchangeError(exchange, t);
 		if(this.state != UpgradeState.COMPLETED) {
 			// Let's be conservative here, if there was an error in the upgrading exchange let's just close the connection even we could recover
-			this.close().subscribe();
+			this.shutdown().subscribe();
 		}
 	}
 }

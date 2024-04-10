@@ -23,8 +23,10 @@ import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.ExchangeInterceptor;
 import io.inverno.mod.http.client.HttpClientException;
 import io.inverno.mod.http.client.InterceptableExchange;
+import io.inverno.mod.http.client.ResetStreamException;
 import io.inverno.mod.http.client.Response;
 import io.inverno.mod.http.client.ws.WebSocketExchange;
+import java.util.Optional;
 import reactor.core.publisher.Mono;
 
 /**
@@ -56,6 +58,9 @@ public class EndpointExchange<A extends ExchangeContext> implements Exchange<A> 
 	
 	private HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse> connectedExchange;
 	private WebSocketConnectionExchange<A> connectectWSExchange;
+	
+	private Long resetCode;
+	private Optional<Throwable> cancelCause;
 	
 	/**
 	 * <p>
@@ -124,9 +129,11 @@ public class EndpointExchange<A extends ExchangeContext> implements Exchange<A> 
 	
 	@Override
 	public Mono<? extends Response> response() {
-		if(this.exchangeInterceptor != null) {
-			// invoke the interceptor then proceed
-			return Mono.defer(() -> {
+		return Mono.defer(() -> {
+			if(this.resetCode != null) {
+				return Mono.empty();
+			}
+			else if(this.exchangeInterceptor != null) {
 				EndpointInterceptableExchange<A> interceptableExchange = new EndpointInterceptableExchange<>(this.headerService, this.parameterConverter, this);
 				return this.exchangeInterceptor.intercept(interceptableExchange)
 					.flatMap(ign -> this.endpoint.connection()
@@ -138,23 +145,25 @@ public class EndpointExchange<A extends ExchangeContext> implements Exchange<A> 
 					)
 					.switchIfEmpty(Mono.just(interceptableExchange.response()))
 					.doOnNext(response -> interceptableExchange.response().setConnectedResponse(response));
-			});
-		}
-		else {
-			return this.endpoint.connection()
-				.flatMap(connection -> connection.send(this))
-				.map(exchange -> {
-					this.setConnectedExchange(exchange);
-					return exchange.response();
-				});
-		}
+			}
+			else {
+				return this.endpoint.connection()
+					.flatMap(connection -> connection.send(this))
+					.map(exchange -> {
+						this.setConnectedExchange(exchange);
+						return exchange.response();
+					});
+			}
+		});
 	}
 
 	@Override
 	public Mono<? extends WebSocketExchange<A>> webSocket(String subProtocol) {
-		if(this.exchangeInterceptor != null) {
-			// invoke the interceptor then proceed
-			return Mono.defer(() -> {
+		return Mono.defer(() -> {
+			if(this.resetCode != null) {
+				return Mono.empty();
+			}
+			else if(this.exchangeInterceptor != null) {
 				EndpointInterceptableExchange<A> interceptableExchange = new EndpointInterceptableExchange<>(this.headerService, this.parameterConverter, this);
 				return this.exchangeInterceptor.intercept(interceptableExchange)
 					.flatMap(ign -> this.endpoint.webSocketConnection()
@@ -166,12 +175,44 @@ public class EndpointExchange<A extends ExchangeContext> implements Exchange<A> 
 						interceptableExchange.response().setConnectedResponse(interceptableExchange.response());
 					})
 					.switchIfEmpty(Mono.error(() -> new HttpClientException("Can't open WebSocket on an intercepted exchange")));
-			});
+			}
+			else {
+				return this.endpoint.webSocketConnection()
+					.flatMap(wsConnection -> wsConnection.handshake(this, subProtocol))
+					.doOnNext(this::setConnectedExchange);
+			}
+		});
+	}
+	
+	@Override
+	public void reset(long code) {
+		if(this.connectedExchange != null) {
+			this.connectedExchange.reset(code);
+		}
+		else if(this.connectectWSExchange != null) {
+			// this is a noop a WS exchange is closed not canceled
 		}
 		else {
-			return this.endpoint.webSocketConnection()
-				.flatMap(wsConnection -> wsConnection.handshake(this, subProtocol))
-				.doOnNext(this::setConnectedExchange);
+			this.resetCode = code;
 		}
+	}
+
+	@Override
+	public Optional<Throwable> getCancelCause() {
+		if(this.cancelCause != null) {
+			return this.cancelCause;
+		}
+		
+		if(this.connectedExchange != null) {
+			return this.connectedExchange.getCancelCause();
+		}
+		else if(this.connectectWSExchange != null) {
+			return Optional.empty();
+		}
+		else if(this.resetCode != null) {
+			this.cancelCause = Optional.of(new ResetStreamException(this.resetCode));
+			return this.cancelCause;
+		}
+		return Optional.empty();
 	}
 }

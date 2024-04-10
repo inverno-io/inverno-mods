@@ -23,7 +23,9 @@ import io.inverno.mod.http.base.header.HeaderService;
  * HTTP client and server implementations.
  * </p>
  * 
- * <p>It defines the following sockets:</p>
+ * <p>
+ * It defines the following sockets:
+ * </p>
  * 
  * <dl>
  * <dt><b>headerCodecs</b></dt>

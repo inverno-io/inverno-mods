@@ -108,11 +108,7 @@ public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implement
 
 	@Override
 	public A cookies(Consumer<OutboundCookies> cookiesConfigurer) {
-		if(this.requestCookies == null) {
-			this.requestCookies = new GenericRequestCookies(this, this.headerService, this.parameterConverter);
-		}
-		this.requestCookies.load();
-		cookiesConfigurer.accept(this.requestCookies);
+		cookiesConfigurer.accept((OutboundCookies)this.cookies());
 		this.requestCookies.commit();
 		return (A)this;
 	}

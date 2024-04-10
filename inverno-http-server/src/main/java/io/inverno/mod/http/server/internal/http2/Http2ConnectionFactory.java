@@ -121,6 +121,8 @@ public class Http2ConnectionFactory implements Supplier<Http2Connection> {
 			Optional.ofNullable(Http2ConnectionFactory.this.configuration.http2_initial_window_size()).ifPresent(initialSettings::initialWindowSize);
 			Optional.ofNullable(Http2ConnectionFactory.this.configuration.http2_max_frame_size()).ifPresent(initialSettings::maxFrameSize);
 			Optional.ofNullable(Http2ConnectionFactory.this.configuration.http2_max_header_list_size()).ifPresent(initialSettings::maxHeaderListSize);
+			
+			this.gracefulShutdownTimeoutMillis(Http2ConnectionFactory.this.configuration.graceful_shutdown_timeout());
 		}
 		
 

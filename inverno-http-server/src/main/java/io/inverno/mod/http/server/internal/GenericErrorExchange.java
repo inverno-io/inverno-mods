@@ -18,8 +18,10 @@ package io.inverno.mod.http.server.internal;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.server.ErrorExchange;
+import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.Response;
+import java.util.Optional;
 import reactor.core.publisher.Mono;
 
 /**
@@ -32,52 +34,56 @@ import reactor.core.publisher.Mono;
  */
 public class GenericErrorExchange implements ErrorExchange<ExchangeContext> {
 
-	private final HttpVersion protocol;
-	private final Request request;
+	private final Exchange<ExchangeContext> exchange;
 	private final AbstractResponse response;
-	private Mono<Void> finalizer;
 	private final Throwable error;
-	private final ExchangeContext exchangeContext;
+	private Mono<Void> finalizer;
 	
 	/**
 	 * <p>
 	 * Creates an error exchange with the specified request, response and error.
 	 * </p>
-	 * 
-	 * @param protocol        the exchange HTTP version
-	 * @param request         the request
-	 * @param response        the response
-	 * @param finalizer       the exchange finalizer
-	 * @param error           the error
-	 * @param exchangeContext the exchange context attached to the failed exchange
+	 *
+	 * @param exchange              the original failed exchange 
+	 * @param response              the response
+	 * @param error                 the error
+	 * @param finalizer             the exchange finalizer
 	 */
-	public GenericErrorExchange(HttpVersion protocol, AbstractRequest request, AbstractResponse response, Mono<Void> finalizer, Throwable error, ExchangeContext exchangeContext) {
-		this.protocol = protocol;
-		this.request = request;
+	public GenericErrorExchange(Exchange<ExchangeContext> exchange, AbstractResponse response, Throwable error, Mono<Void> finalizer) {
+		this.exchange = exchange;
 		this.response = response;
-		this.finalizer = finalizer;
 		this.error = error;
-		this.exchangeContext = exchangeContext;
+		this.finalizer = finalizer;
 	}
 
 	@Override
 	public HttpVersion getProtocol() {
-		return this.protocol;
+		return this.exchange.getProtocol();
+	}
+	
+	@Override
+	public ExchangeContext context() {
+		return this.exchange.context();
 	}
 	
 	@Override
 	public Request request() {
-		return this.request;
+		return this.exchange.request();
 	}
 
 	@Override
 	public Response response() {
 		return this.response;
 	}
-	
+
 	@Override
-	public ExchangeContext context() {
-		return exchangeContext;
+	public void reset(long code) {
+		this.exchange.reset(code);
+	}
+
+	@Override
+	public Optional<Throwable> getCancelCause() {
+		return this.exchange.getCancelCause();
 	}
 	
 	@Override

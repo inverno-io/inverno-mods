@@ -20,8 +20,9 @@ import io.inverno.mod.sql.SqlResult;
 import io.inverno.mod.sql.Statement;
 import io.inverno.mod.sql.UnsafeSqlOperations;
 import io.vertx.core.Future;
+import io.vertx.pgclient.PgBuilder;
 import io.vertx.pgclient.PgConnectOptions;
-import io.vertx.pgclient.PgPool;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.PoolOptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -45,12 +46,11 @@ public class PooledClientSqlClientTest {
 	private static final PoolOptions POOL_OPTIONS = new PoolOptions().setMaxSize(1);
 	
 	private SqlClient createClient() {
-		return new PooledClientSqlClient(PgPool.client(PG_CONNECT_OPTIONS, POOL_OPTIONS));
+		return new PooledClientSqlClient(PgBuilder.client().connectingTo(PG_CONNECT_OPTIONS).with(POOL_OPTIONS).build());
 	}
 	
 	public static boolean isEnabled() throws InterruptedException, ExecutionException {
-		PgPool pool = PgPool.pool(PG_CONNECT_OPTIONS, POOL_OPTIONS);
-		
+		Pool pool = PgBuilder.pool().connectingTo(PG_CONNECT_OPTIONS).with(POOL_OPTIONS).build();
 		try {
 			return pool.getConnection().transform(ar -> {
 				if(ar.succeeded()) {

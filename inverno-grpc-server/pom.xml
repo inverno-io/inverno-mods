@@ -21,14 +21,14 @@
 	<parent>
 		<groupId>io.inverno</groupId>
 		<artifactId>inverno-mods-root</artifactId>
-		<version>1.8.0-SNAPSHOT</version>
+		<version>1.9.0-SNAPSHOT</version>
 	</parent>
 	
 	<groupId>io.inverno.mod</groupId>
 	<artifactId>inverno-grpc-server</artifactId>
 	<packaging>jar</packaging>
 	
-	<name>io.inverno.mod.web.server</name>
+	<name>io.inverno.mod.grpc.server</name>
 	<description>Inverno gRPC server module</description>
 
 	<dependencies>
@@ -36,6 +36,7 @@
 			<groupId>io.inverno</groupId>
 			<artifactId>inverno-core</artifactId>
 		</dependency>
+		
 		<dependency>
 			<groupId>io.inverno.mod</groupId>
 			<artifactId>inverno-base</artifactId>
@@ -48,31 +49,31 @@
 		</dependency>
 		<dependency>
 			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-grpc-base</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.inverno.mod</groupId>
+			<artifactId>inverno-http-base</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.inverno.mod</groupId>
 			<artifactId>inverno-http-server</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		
 		<dependency>
-			<groupId>io.grpc</groupId>
-			<artifactId>grpc-api</artifactId>
-			<version>1.62.2</version>
+			<groupId>com.google.protobuf</groupId>
+			<artifactId>protobuf-java</artifactId>
 		</dependency>
-		
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-core</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-text</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
 		</dependency>
 		
 		<dependency>
@@ -98,11 +99,6 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

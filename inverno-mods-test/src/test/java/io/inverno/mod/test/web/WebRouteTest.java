@@ -4008,8 +4008,8 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		);
 		Assertions.assertEquals(200, response.statusCode());
 		Assertions.assertEquals("text/plain", response.headers().firstValue("content-type").orElse(null));
+		Assertions.assertEquals("post_multipart_pub_raw: a = 1, b = 2, c = 3, ", response.body());		
 		Assertions.assertEquals(45, response.headers().firstValue("content-length").map(Integer::parseInt).orElse(-1));
-		Assertions.assertEquals("post_multipart_pub_raw: a = 1, b = 2, c = 3, ", response.body());
 	}
 	
 	@ParameterizedTest

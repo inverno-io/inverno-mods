@@ -22,6 +22,7 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.client.Endpoint;
 import io.inverno.mod.http.client.EndpointConnectException;
 import io.inverno.mod.http.client.Exchange;
@@ -156,6 +157,9 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 	public Mono<? extends Exchange<A>> exchange(Method method, String requestTarget, A context) {
 		return Mono.fromSupplier(() -> {
 			EndpointRequest request = new EndpointRequest(this.headerService, this.parameterConverter, this.urlEncodedBodyEncoder, this.multipartBodyEncoder, this.partFactory, method, requestTarget);
+			if(this.configuration.send_user_agent()) {
+				request.headers(headers -> headers.set(Headers.NAME_USER_AGENT, this.configuration.user_agent()));
+			}
 			return new EndpointExchange(this, this.headerService, this.parameterConverter, context, request, this.exchangeInterceptor);
 		});
 	}
@@ -238,32 +242,23 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 			ChannelFuture connectionFuture = this.bootstrap.connect(this.remoteAddress);
 			connectionFuture.addListener(res -> {
 				if(res.isSuccess()) {
-					// if connection is already in the pipeline we can proceed otherwise we add this in case of protocol nego for instance
-					HttpConnection connection = (HttpConnection)connectionFuture.channel().pipeline().get("connection");
-					if(connection != null) {
-						LOGGER.info("HTTP/{}.{} Client ({}) connected to {}", connection.getProtocol().getMajor(), connection.getProtocol().getMinor(), AbstractEndpoint.this.netService.getTransportType().toString().toLowerCase(), (connection.isTls() ? "https://" : "http://") + AbstractEndpoint.this.remoteAddress.getHostString() + ":" + AbstractEndpoint.this.remoteAddress.getPort());
-						connectionSink.tryEmitValue(connection);
-					}
-					else {
-						// Protocol nego
-						connectionFuture.channel().pipeline().addLast("connectionSink", new ChannelInboundHandlerAdapter() {
-							@Override
-							public void channelActive(ChannelHandlerContext ctx) throws Exception {
-								super.channelActive(ctx);
-								HttpConnection connection = (HttpConnection)ctx.channel().pipeline().get("connection");
+					connectionFuture.channel().pipeline().addLast("connectionSink", new ChannelInboundHandlerAdapter() {
+						@Override
+						public void channelActive(ChannelHandlerContext ctx) throws Exception {
+							super.channelActive(ctx);
+							HttpConnection connection = (HttpConnection)ctx.channel().pipeline().get("connection");
 
-								LOGGER.info("HTTP/{}.{} Client ({}) connected to {}", connection.getProtocol().getMajor(), connection.getProtocol().getMinor(), AbstractEndpoint.this.netService.getTransportType().toString().toLowerCase(), (connection.isTls() ? "https://" : "http://") + AbstractEndpoint.this.remoteAddress.getHostString() + ":" + AbstractEndpoint.this.remoteAddress.getPort());
-								connectionSink.tryEmitValue(connection);
-								ctx.pipeline().remove(this);
-							}
+							LOGGER.info("HTTP/{}.{} Client ({}) connected to {}", connection.getProtocol().getMajor(), connection.getProtocol().getMinor(), AbstractEndpoint.this.netService.getTransportType().toString().toLowerCase(), (connection.isTls() ? "https://" : "http://") + AbstractEndpoint.this.remoteAddress.getHostString() + ":" + AbstractEndpoint.this.remoteAddress.getPort());
+							connectionSink.tryEmitValue(connection);
+							ctx.pipeline().remove(this);
+						}
 
-							@Override
-							public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-								connectionSink.tryEmitError(new EndpointConnectException("Failed to connect to " + (AbstractEndpoint.this.configuration.tls_enabled() ? "https://" : "http://") + AbstractEndpoint.this.remoteAddress.getHostString() + ":" + AbstractEndpoint.this.remoteAddress.getPort(), cause));
-								ctx.pipeline().remove(this);
-							}
-						});
-					}
+						@Override
+						public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+							connectionSink.tryEmitError(new EndpointConnectException("Failed to connect to " + (AbstractEndpoint.this.configuration.tls_enabled() ? "https://" : "http://") + AbstractEndpoint.this.remoteAddress.getHostString() + ":" + AbstractEndpoint.this.remoteAddress.getPort(), cause));
+							ctx.pipeline().remove(this);
+						}
+					});
 				}
 				else {
 					connectionSink.tryEmitError(new EndpointConnectException("Failed to connect to " + (this.configuration.tls_enabled() ? "https://" : "http://") + this.remoteAddress.getHostString() + ":" + this.remoteAddress.getPort(), res.cause()));

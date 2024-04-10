@@ -49,6 +49,8 @@ class Http2ResponseHeaders implements InboundResponseHeaders {
 	private final Http2Headers underlyingHeaders;
 	private InboundSetCookies responseCookies;
 	
+	private Status status;
+	
 	/**
 	 * <p>
 	 * Creates HTTP/2 respone headers.
@@ -79,8 +81,11 @@ class Http2ResponseHeaders implements InboundResponseHeaders {
 	}
 	
 	@Override
-	public Status getStatus() {
-		return Status.valueOf(this.getStatusCode());
+	public Status getStatus() throws IllegalArgumentException {
+		if(this.status == null) {
+			this.status = Status.valueOf(this.getStatusCode());
+		}
+		return this.status;
 	}
 
 	@Override

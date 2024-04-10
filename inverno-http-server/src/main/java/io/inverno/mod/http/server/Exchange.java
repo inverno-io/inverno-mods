@@ -64,7 +64,7 @@ public interface Exchange<A extends ExchangeContext> extends BaseExchange<A, Req
 	
 	/**
 	 * <p>
-	 * Specifies a finalizer which completes once the exchange is fully processed.
+	 * Specifies a finalizer which is subscribed once the exchange is fully processed.
 	 * </p>
 	 *
 	 * <p>
@@ -72,7 +72,8 @@ public interface Exchange<A extends ExchangeContext> extends BaseExchange<A, Req
 	 * </p>
 	 *
 	 * <p>
-	 * Note that using a finalizer actually impacts HTTP pipelining since the server wait for the response to be fully sent to the client before processing subsequent requests.
+	 * Note that using a finalizer actually impacts HTTP pipelining since the server has to wait for the response to be fully sent and for the finalizer to complete before processing subsequent 
+	 * requests.
 	 * </p>
 	 * 
 	 * <p>

@@ -23,6 +23,7 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
@@ -348,6 +349,11 @@ public class ObjectDecoder implements SplittablePrimitiveDecoder<Object> {
 	@Override
 	public InetAddress decodeInetAddress(Object value) throws ConverterException {
 		return this.decode(value, InetAddress.class);
+	}
+
+	@Override
+	public InetSocketAddress decodeInetSocketAddress(Object value) throws ConverterException {
+		return this.decode(value, InetSocketAddress.class);
 	}
 
 	@Override

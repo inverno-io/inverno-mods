@@ -33,7 +33,7 @@ import javax.net.ssl.TrustManagerFactory;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-@Configuration
+@Configuration(name = "configuration")
 public interface HttpClientConfiguration {
 	
 	/**
@@ -160,6 +160,21 @@ public interface HttpClientConfiguration {
 	 */
 	default long request_timeout() {
 		return 60000l;
+	}
+	
+	/**
+	 * <p>
+	 * The graceful shutdown timeout in milliseconds after which a connection is closed even if there are still active exchanges.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 30000}.
+	 * </p>
+	 * 
+	 * @return the graceful shutdown timeout
+	 */
+	default long graceful_shutdown_timeout() {
+		return 30000l;
 	}
 	
 	/**

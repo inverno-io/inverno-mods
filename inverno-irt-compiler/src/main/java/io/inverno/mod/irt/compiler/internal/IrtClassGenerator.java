@@ -645,7 +645,10 @@ public class IrtClassGenerator implements TemplateSetInfoVisitor<StringBuilder, 
 			info.getArguments().ifPresentOrElse(
 				targetArgs -> result.append(Arrays.stream(targetArgs).map(targetArgInfo -> this.visit(targetArgInfo, context)).collect(context.joining(", "))),
 				() -> {
-					if(context.getApplyInfo().getValue().isPresent()) {
+					if(context.getApplyInfo().getTargetParameters().length > 0) {
+						result.append(Arrays.stream(context.getApplyInfo().getTargetParameters()).map(targetParameterInfo -> this.visit(targetParameterInfo, context)).collect(context.joining(", ")));
+					}
+					else if(context.getApplyInfo().getValue().isPresent()) {
 						result.append("_").append(context.getApplyInfo().hashCode());
 					}
 				}

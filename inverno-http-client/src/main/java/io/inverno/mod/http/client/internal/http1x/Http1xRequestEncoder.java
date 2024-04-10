@@ -80,11 +80,6 @@ public class Http1xRequestEncoder extends HttpRequestEncoder {
 		this.context = new ChannelHandlerContextProxy(ctx);
 		super.handlerAdded(ctx);
 	}
-
-	@Override
-	protected boolean isContentAlwaysEmpty(HttpRequest msg) {
-		return (msg instanceof FlatHttpRequest && ((FlatHttpRequest) msg).isEmpty()) || super.isContentAlwaysEmpty(msg);
-	}
 	
 	/**
 	 * <p>

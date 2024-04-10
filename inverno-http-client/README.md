@@ -117,12 +117,14 @@ public class Main {
 	}
 
 	public static void main(String[] args) {
-		Http_client http_client = Application.with(new Http_client.Builder()).run();
-		
-		String response = http_client.example().get("/");
-		System.out.println(response);
-		
-		http_client.stop();
+		App_http_client app_http_client = Application.with(new App_http_client.Builder()).run();
+		try {
+			String response = app_http_client.example().get("/");
+			System.out.println(response);
+		}
+		finally {
+			app_http_client.stop();
+		}
 	}
 }
 ```
@@ -150,7 +152,7 @@ In above example, module *app_http_client* creates the `Example` bean which uses
      ║ Java home           : /home/jkuhn/Devel/jdk/jdk-21.0.1                                     ║
      ║                                                                                            ║
      ║ Application module  : io.inverno.example.app_http_client                                   ║
-     ║ Application version : 1.6.0-SNAPSHOT                                                       ║
+     ║ Application version : 1.0.0-SNAPSHOT                                                       ║
      ║ Application class   : io.inverno.example.app_http_client.Main                              ║
      ║                                                                                            ║
      ║ Modules             :                                                                      ║
@@ -256,7 +258,7 @@ public interface App_http_clientConfiguration {
 }
 ```
 
-This should be enough for exposing a configuration in the *app_http_client* module that let us setup the client:
+This should be enough for exposing a configuration bean in the *app_http_client* module that let us setup the client:
 
 ```java
 package io.inverno.example.app_http_client;
@@ -295,7 +297,7 @@ public class Main {
 }
 ```
 
-In the above code, we have set: 
+In above code, we have set: 
 
 - the client to connect using HTTP/1.1 protocol only (default includes both HTTP/1.1 and HTTP/2 which is used first when the server supports it)
 - the connection pool max size to 3 for the Endpoint (endpoints will use up to 3 connections to send requests to the HTTP server)
@@ -415,7 +417,6 @@ or
 >     </build>
 > </project>
 > ```
-
 
 ### HTTP protocol versions
 

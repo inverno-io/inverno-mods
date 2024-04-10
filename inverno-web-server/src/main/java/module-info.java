@@ -42,6 +42,8 @@ import io.inverno.mod.http.base.Parameter;
  * <dd>the web server module configuration</dd>
  * <dt>netService (required)</dt>
  * <dd>the net service used to create the HTTP server</dd>
+ * <dt>reactor (required)</dt>
+ * <dd>the reactor</dd>
  * <dt>resourceService (required)</dt>
  * <dd>the resource service used to load resources.</dd>
  * <dt>mediaTypeConverters (required)</dt>
@@ -75,11 +77,12 @@ import io.inverno.mod.http.base.Parameter;
  * </p>
  * 
  * <pre>{@code
- * NetService netService = ...;
- * ResourceService resourceService = ...;
- * List<MediaTypeConverter<ByteBuf>> mediaTypeConverters = ...;
+ * NetService netService = ...
+ * Reactor reactor = ...
+ * ResourceService resourceService = ...
+ * List<MediaTypeConverter<ByteBuf>> mediaTypeConverters = ...
  *
- * Application.with(new Web.Builder(netService, resourceService, mediaTypeConverters)
+ * Application.with(new Web.Builder(mediaTypeConverters, netService, reactor, resourceService)
  *     .setConfiguration(WebServerConfigurationLoader.load(conf -> conf.web(http_conf -> http_conf.server_port(8080))))
  *     .setWebRouterConfigurer(router -> router
  *         .route()

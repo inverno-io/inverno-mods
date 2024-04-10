@@ -127,7 +127,7 @@ class Http2Exchange extends AbstractExchange {
 	
 	@Override
 	protected ErrorExchange<ExchangeContext> createErrorExchange(Throwable error) {
-		return new GenericErrorExchange(this.getProtocol(), this.request, new Http2Response(this.context, this.stream, this.encoder, this.headerService, this.parameterConverter), this.finalizer, error, this.exchangeContext);
+		return new GenericErrorExchange(this, new Http2Response(this.context, this.stream, this.encoder, this.headerService, this.parameterConverter), error, this.finalizer);
 	}
 	
 	@Override
@@ -242,5 +242,11 @@ class Http2Exchange extends AbstractExchange {
 			this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
 		}
 		this.context.channel().flush();
+	}
+
+	@Override
+	protected void onReset(long code) {
+		// We must reset the stream
+		this.handler.exchangeReset(this.context, code);
 	}
 }

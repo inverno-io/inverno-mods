@@ -27,8 +27,6 @@ import io.inverno.mod.http.base.MethodNotAllowedException;
 import io.inverno.mod.http.base.NotAcceptableException;
 import io.inverno.mod.http.base.ServiceUnavailableException;
 import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.base.internal.header.AcceptLanguageCodec;
-import io.inverno.mod.http.base.internal.header.ContentTypeCodec;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.ExchangeHandler;
 import io.inverno.mod.web.server.ErrorWebExchange;
@@ -76,15 +74,13 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 		this.dataConversionService = dataConversionService;
 		this.parameterConverter = parameterConverter;
 		
-		ContentTypeCodec contentTypeCodec = new ContentTypeCodec();
-		AcceptLanguageCodec acceptLanguageCodec = new AcceptLanguageCodec(false);
-		
 		this.firstLink = new ThrowableRoutingLink<>();
 		this.firstLink
 			.connect(new PathRoutingLink<>())
 			.connect(new PathPatternRoutingLink<>())
-			.connect(new ProducesRoutingLink<>(contentTypeCodec))
-			.connect(new LanguageRoutingLink<>(acceptLanguageCodec))
+			.connect(new ConsumesRoutingLink<>(ACCEPT_CODEC))
+			.connect(new ProducesRoutingLink<>(CONTENT_TYPE_CODEC))
+			.connect(new LanguageRoutingLink<>(ACCEPT_LANGUAGE_CODEC))
 			.connect(new HandlerRoutingLink<>());
 	}
 	
@@ -152,7 +148,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 		if(exchange.response().isHeadersWritten()) {
 			throw new IllegalStateException("Headers already written", exchange.getError());
 		}
-		return this.firstLink.defer(new GenericErrorWebExchange(exchange, new GenericWebRequest(exchange.request(), this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService), exchange.getError(), exchange.context(), exchange::finalizer));
+		return this.firstLink.defer(new GenericErrorWebExchange(exchange, new GenericWebRequest(exchange.request(), this.parameterConverter), new GenericWebResponse(exchange.response(), this.dataConversionService)));
 	}
 	
 	/**
@@ -184,12 +180,6 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 				});
 			}
 			
-			// does the client accept text/plain?
-			
-			Headers.Accept accept = Headers.Accept
-				.merge(exchange.request().headers().<Headers.Accept>getAllHeader(Headers.NAME_ACCEPT))
-				.orElse(Headers.Accept.ALL);
-			
 			exchange.response()
 				.headers(h -> h.status(error.getStatusCode()))
 				.body().empty();
@@ -214,12 +204,6 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 					exchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(Headers.FORMATTER_RFC_5322_DATE_TIME)));
 				});
 			}
-			
-			// does the client accept text/plain?
-			
-			Headers.Accept accept = Headers.Accept
-				.merge(exchange.request().headers().<Headers.Accept>getAllHeader(Headers.NAME_ACCEPT))
-				.orElse(Headers.Accept.ALL);
 			
 			exchange.response()
 				.headers(h -> h.status(error.getStatusCode()).contentType(MediaTypes.TEXT_PLAIN))

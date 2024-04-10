@@ -29,6 +29,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.Future;
 import java.net.InetSocketAddress;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.logging.log4j.LogManager;
@@ -39,6 +40,7 @@ import org.apache.logging.log4j.message.MultiformatMessage;
 import org.apache.logging.log4j.util.Strings;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.SignalType;
 
@@ -64,24 +66,28 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	private static final Marker MARKER_ERROR = MarkerManager.getMarker("HTTP_ERROR");
 	private static final Marker MARKER_ACCESS = MarkerManager.getMarker("HTTP_ACCESS");
 	
+	protected static final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> LAST_RESORT_ERROR_CONTROLLER = exchange -> {};
+	
 	protected final ChannelHandlerContext context;
 	protected final EventExecutor contextExecutor;
 	
 	protected final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
-	
-	protected final AbstractRequest request;
-	protected AbstractResponse response;
 	protected final ExchangeContext exchangeContext;
-	
-	protected Mono<Void> finalizer;
-	
-	protected Handler handler;
-	
-	protected int transferedLength;
+	protected final AbstractRequest request;
 
+	private ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> currentController;
+	protected AbstractResponse response;
+	protected Mono<Void> finalizer;
+	private boolean finalizing;
+	private boolean finalized;
+	
+	protected AbstractExchange.Handler handler;
+	protected int transferedLength;
+	private boolean reset;
 	protected boolean single;
 	protected boolean many;
 	private ByteBuf singleChunk;
+	private Throwable disposeError;
 	
 	/**
 	 * the current subscriber:
@@ -94,8 +100,6 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * </ul>
 	 */
 	protected BaseSubscriber<?> subscriber;
-	
-	protected static final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> LAST_RESORT_ERROR_CONTROLLER = exchange -> {};
 	
 	/**
 	 * <p>
@@ -115,7 +119,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		) {
 		this.context = context;
 		this.contextExecutor = this.context.executor();
-		this.controller = controller;
+		this.currentController = this.controller = controller;
 		this.request = request;
 		this.response = response;
 		this.exchangeContext = controller.createContext();
@@ -166,27 +170,53 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * @return the promise
 	 */
 	public ChannelFuture finalizeExchange(ChannelPromise finalPromise, Runnable postFinalize) {
+		if(this.finalizing || this.finalized) {
+			return this.context.newFailedFuture(new IllegalStateException("Exchange already finalized"));
+		}
+		this.finalizing = true;
+		ChannelPromise promise = this.context.newPromise();
 		if(this.finalizer != null) {
 			finalPromise.addListener(future -> {
 				Mono<Void> actualFinalizer = this.finalizer;
+				
 				if(postFinalize != null) {
-					actualFinalizer.doOnTerminate(postFinalize);
+					actualFinalizer = Flux.concatDelayError(actualFinalizer, Mono.fromRunnable(postFinalize)).then();
 				}
-				actualFinalizer.doOnSuccess(ign -> LOGGER.trace(() -> "Exchange finalized")).subscribe();
+				
+				actualFinalizer
+					.doOnError(promise::tryFailure)
+					.doOnSuccess(ign -> promise.trySuccess())
+					.doOnCancel(() -> promise.tryFailure(new IllegalStateException("Finalizer was cancel")))
+					.doFinally(ign -> {
+//						LOGGER.debug(() -> "Exchange finalized");
+						this.finalized = true;
+						this.finalizing = false;
+					})
+					.subscribe();
 			});
 		}
-		else if(postFinalize != null){
-			postFinalize.run();
+		else if(postFinalize != null) {
+			try {
+				postFinalize.run();
+				promise.trySuccess();
+			}
+			catch(Throwable t) {
+				promise.tryFailure(t);
+			}
+			finally {
+				this.finalized = true;
+				this.finalizing = false;
+			}
 		}
-		return finalPromise;
+		return promise;
 	}
 	
 	/**
 	 * <p>
-	 * Returns the controller.
+	 * Returns the server controller.
 	 * </p>
 	 * 
-	 * @return the root handler
+	 * @return the server handler
 	 */
 	public ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> getController() {
 		return this.controller;
@@ -235,13 +265,14 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * @see AbstractRequest#dispose(java.lang.Throwable) 
 	 */
 	public void dispose(Throwable error) {
+		this.disposeError = error;
+		this.request.dispose(error);
 		if(this.subscriber == this) {
 			super.dispose();
 		}
 		else if(this.subscriber != null) {
 			this.subscriber.dispose();
 		}
-		this.request.dispose();
 	}
 	
 	@Override
@@ -257,7 +288,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 		return true;
 	}
-	
+
 	/**
 	 * <p>
 	 * Starts the processing of the exchange with the specified callback handler.
@@ -275,29 +306,15 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 		this.handler = handler;
 		this.handler.exchangeStart(this.context, this);
-		Mono<Void> deferHandle;
 		try {
-			deferHandle = this.controller.defer(this);
+			Mono<Void> deferHandle = this.currentController.defer(this);
+			ServerControllerSubscriber exchangeSubscriber = this.createServerControllerSubscriber();
+			this.subscriber = exchangeSubscriber;
+			deferHandle.subscribe(exchangeSubscriber);
 		}
-		catch(Throwable throwable) {
-			this.logError("Exchange handler error", throwable);
-			// We need to create a new error exchange each time we try to handle the error in order to have a fresh response 
-			ErrorExchange<ExchangeContext> errorExchange = this.createErrorExchange(throwable);
-			this.response = (AbstractResponse) errorExchange.response();
-			try {
-				deferHandle = this.controller.defer(errorExchange);
-			} 
-			catch (Throwable t) {
-				this.logError("ErrorExchange handler error", t);
-				errorExchange = this.createErrorExchange(throwable);
-				this.response = (AbstractResponse) errorExchange.response();
-				// TODO This may fail as well what do we do in such situations?
-				deferHandle = LAST_RESORT_ERROR_CONTROLLER.defer(errorExchange);
-			}
+		catch(Throwable exchangeError) {
+			this.hookOnError(exchangeError);
 		}
-		ServerControllerSubscriber subscriber = this.createServerControllerSubscriber();
-		this.subscriber = subscriber;
-		deferHandle.subscribe(subscriber);
 	}
 	
 	/**
@@ -358,8 +375,8 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 			try {
 				return this.contextExecutor.newSucceededFuture(callable.call());
 			}
-			catch(Throwable e) {
-				return this.contextExecutor.newFailedFuture(e);
+			catch(Throwable t) {
+				return this.contextExecutor.newFailedFuture(t);
 			}
 		}
 		else {
@@ -396,7 +413,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 */
 	protected void onStart(Subscription subscription) {
 		subscription.request(1);
-		LOGGER.debug(() -> "Exchange started");
+//		LOGGER.debug(() -> "Exchange started");
 	}
 	
 	@Override
@@ -456,7 +473,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * </p>
 	 */
 	@Override
-	protected final void hookOnError(Throwable throwable) {
+	protected final void hookOnError(Throwable exchangeError) {
 		// if headers are already written => close the connection nothing we can do
 		// if headers are not already written => we should invoke the error handler
 		// what we need is to continue processing
@@ -465,40 +482,46 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		// - invoke the error handler (potentially the fallback error handler) with a new ErrorExchange 
 		if(this.response.isHeadersWritten()) {
 			this.executeInEventLoop(() -> { 
-				this.onCompleteWithError(throwable);
-				this.logError("Exchange processing error", throwable);
+				this.onCompleteWithError(exchangeError);
+				this.logError("Fatal exchange processing error", exchangeError);
 			});
 		}
 		else {
 			this.transferedLength = 0;
-			ErrorExchange<ExchangeContext> errorExchange = this.createErrorExchange(throwable);
+			ErrorExchange<ExchangeContext> errorExchange = this.createErrorExchange(exchangeError);
 			this.response = (AbstractResponse) errorExchange.response();
 			try {
-				Mono<Void> deferHandle = this.controller.defer(errorExchange);
+				Mono<Void> deferHandle = this.currentController.defer(errorExchange);
 				this.executeInEventLoop(() -> {
-					ErrorHandlerSubscriber subscriber = new ErrorHandlerSubscriber(throwable);
-					this.subscriber = subscriber;
-					deferHandle.subscribe(subscriber);
+					ErrorHandlerSubscriber errorSubscriber = new ErrorHandlerSubscriber(exchangeError);
+					this.subscriber = errorSubscriber;
+					deferHandle.subscribe(errorSubscriber);
 				});
 			} 
-			catch (Throwable t) {
-				this.logError("ErrorExchange handler error", t);
-				errorExchange = this.createErrorExchange(throwable);
-				this.response = (AbstractResponse) errorExchange.response();
-				// TODO This may fail as well what do we do in such situations?
-				Mono<Void> deferHandle = LAST_RESORT_ERROR_CONTROLLER.defer(errorExchange);
-				this.executeInEventLoop(() -> {
-					ErrorHandlerSubscriber subscriber = new ErrorHandlerSubscriber(throwable);
-					this.subscriber = subscriber;
-					deferHandle.subscribe(subscriber);
-				});
+			catch (Throwable errorHandlerError) {
+				this.logError("Error handler error", errorHandlerError);
+				if(this.currentController != LAST_RESORT_ERROR_CONTROLLER) {
+					this.currentController = LAST_RESORT_ERROR_CONTROLLER;
+					this.hookOnError(exchangeError);
+				}
+				else {
+					// the last resort error controller failed, there's nothing we can do anymore
+					this.executeInEventLoop(() -> { 
+						this.onCompleteWithError(exchangeError);
+						this.logError("Fatal exchange processing error", exchangeError);
+					});
+				}
 			}
 		}
 	}
 	
 	/**
 	 * <p>
-	 * Invokes when the response data stream completes with error.
+	 * Invokes on errors when there's nothing left to be done to handle the error.
+	 * </p>
+	 * 
+	 * <p>
+	 * This bascially means that there was an unrecoverable error, for instance response headers were sent but there was an error processing the response body. 
 	 * </p>
 	 * 
 	 * @param throwable the error
@@ -540,7 +563,58 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 				this.logAccess();
 			});
 		}
-		LOGGER.debug(() -> "Exchange completed");
+//		LOGGER.debug(() -> "Exchange completed");
+	}
+	
+	/**
+	 * <p>
+	 * Invoked when the response data publisher completes with no data.
+	 * </p>
+	 */
+	protected abstract void onCompleteEmpty();
+	
+	/**
+	 * <p>
+	 * Invoked when the response data publisher completes with a single data.
+	 * </p>
+	 * 
+	 * @param value the single byte buffer
+	 */
+	protected abstract void onCompleteSingle(ByteBuf value);
+	
+	/**
+	 * <p>
+	 * Invoked when the response data publisher completes with many data.
+	 * </p>
+	 */
+	protected abstract void onCompleteMany();
+	
+	@Override
+	public void reset(long code) {
+		this.executeInEventLoop(() -> {
+			if(!this.reset) {
+				this.reset = true;
+				if(this.singleChunk != null) {
+					this.singleChunk.release();
+					this.singleChunk = null;
+				}
+				this.onReset(code);
+				this.logAccess();
+//				LOGGER.debug(() -> "Exchange reset");
+			}
+		});
+	}
+	
+	/**
+	 * <p>
+	 * Invoked when the exchange has been reset leading to the response data publisher subscription being canceled.
+	 * </p>
+	 */
+	protected abstract void onReset(long code);
+
+	@Override
+	public Optional<Throwable> getCancelCause() {
+		return Optional.ofNullable(this.disposeError);
 	}
 
 	/**
@@ -678,29 +752,6 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 	}
 	
-	/**
-	 * <p>
-	 * Invoked when the response data publisher completes with no data.
-	 * </p>
-	 */
-	protected abstract void onCompleteEmpty();
-	
-	/**
-	 * <p>
-	 * Invoked when the response data publisher completes with a single data.
-	 * </p>
-	 * 
-	 * @param value the single byte buffer
-	 */
-	protected abstract void onCompleteSingle(ByteBuf value);
-	
-	/**
-	 * <p>
-	 * Invoked when the response data publisher completes with many data.
-	 * </p>
-	 */
-	protected abstract void onCompleteMany();
-
 	@Override
 	protected void hookFinally(SignalType type) {
 		this.request.dispose();
@@ -773,6 +824,23 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		default void exchangeComplete(ChannelHandlerContext ctx) {
 			
 		}
+		
+		/**
+		 * <p>
+		 * Notifies that the exchange has been reset.
+		 * </p>
+		 * 
+		 * <p>
+		 * This means the request might not be fully consumed and/or the response not fully sent or that indefinite response stream must be terminated leading to either the connection being closed
+		 * (HTTP/1.x) or the stream to be reset (HTTP/2).
+		 * </p>
+		 * 
+		 * @param ctx  the channel handler context
+		 * @param code a code
+		 */
+		default void exchangeReset(ChannelHandlerContext ctx, long code) {
+
+		}
 	}
 	
 	/**
@@ -785,10 +853,10 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 */
 	private final class ErrorSubscriber extends BaseSubscriber<ByteBuf> {
 		
-		private final Throwable originalError;
+		private final Throwable exchangeError;
 		
-		public ErrorSubscriber(Throwable originalError) {
-			this.originalError = originalError;
+		public ErrorSubscriber(Throwable exchangeError) {
+			this.exchangeError = exchangeError;
 		}
 
 		@Override
@@ -797,18 +865,26 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 		}
 		
 		@Override
-		protected void hookOnError(Throwable throwable) {
-			// If we get there it means we can no longer process anything
-			AbstractExchange.this.onCompleteWithError(this.originalError);
-			AbstractExchange.this.logError("Exchange processing error", this.originalError);
-			AbstractExchange.this.logError("ErrorExchange processing error", throwable);
+		protected void hookOnError(Throwable errorHandlerError) {
+			AbstractExchange.this.logError("Error handler error", errorHandlerError);
+			if(AbstractExchange.this.currentController != LAST_RESORT_ERROR_CONTROLLER) {
+				AbstractExchange.this.currentController = LAST_RESORT_ERROR_CONTROLLER;
+				// We should log intermediate errors but propagate the original error all the way.
+				AbstractExchange.this.hookOnError(this.exchangeError);
+			}
+			else {
+				AbstractExchange.this.executeInEventLoop(() -> { 
+					AbstractExchange.this.onCompleteWithError(this.exchangeError);
+					AbstractExchange.this.logError("Fatal exchange processing error", this.exchangeError);
+				});
+			}
 		}
 		
 		@Override
 		protected void hookOnComplete() {
 			AbstractExchange.this.hookOnComplete();
-			AbstractExchange.this.logError("Exchange processing error", this.originalError);
-			AbstractExchange.this.logAccess();
+			AbstractExchange.this.logError("Exchange processing error", this.exchangeError);
+			
 		}
 	}
 	
@@ -824,25 +900,29 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 
 		@Override
 		protected void hookOnError(Throwable t) {
-			AbstractExchange.this.hookOnError(t);
+			if(!AbstractExchange.this.reset) {
+				AbstractExchange.this.hookOnError(t);
+			}
 		}
 
 		@Override
 		protected void hookOnComplete() {
-			if(AbstractExchange.this.request.getMethod().equals(Method.HEAD)) {
-				AbstractExchange.this.executeInEventLoop(AbstractExchange.this::onCompleteEmpty);
-			}
-			else {
-				AbstractExchange.this.single = AbstractExchange.this.response.isSingle();
-				AbstractExchange.this.subscriber = AbstractExchange.this;
-				AbstractExchange.this.response.dataSubscribe(AbstractExchange.this);
+			if(!AbstractExchange.this.reset) {
+				if(AbstractExchange.this.request.getMethod().equals(Method.HEAD)) {
+					AbstractExchange.this.executeInEventLoop(AbstractExchange.this::onCompleteEmpty);
+				}
+				else {
+					AbstractExchange.this.single = AbstractExchange.this.response.isSingle();
+					AbstractExchange.this.subscriber = AbstractExchange.this;
+					AbstractExchange.this.response.dataSubscribe(AbstractExchange.this);
+				}
 			}
 		}
 	}
 	
 	/**
 	 * <p>
-	 * An subscriber to consume the error exchange deferred handle Mono supplied by {@link ErrorExchangeHandler#defer(Exchange)}. On complete it uses the {@link AbstractExchange#errorSubscriber} to
+	 * A subscriber to consume the error exchange deferred handle Mono supplied by {@link ErrorExchangeHandler#defer(Exchange)}. On complete it uses the {@link AbstractExchange#ErrorSubscriber} to
 	 * subscribe to the error exchange response data publisher.
 	 * </p>
 	 *
@@ -851,23 +931,35 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 */
 	private final class ErrorHandlerSubscriber extends BaseSubscriber<Void> {
 
-		private final Throwable originalError;
+		private final Throwable exchangeError;
 		
-		public ErrorHandlerSubscriber(Throwable originalError) {
-			this.originalError = originalError;
+		public ErrorHandlerSubscriber(Throwable exchangeError) {
+			this.exchangeError = exchangeError;
 		}
 		
 		@Override
-		protected void hookOnError(Throwable t) {
-			AbstractExchange.this.hookOnError(t);
+		protected void hookOnError(Throwable errorHandlerError) {
+			AbstractExchange.this.logError("Error handler error", errorHandlerError);
+			if(AbstractExchange.this.currentController != LAST_RESORT_ERROR_CONTROLLER) {
+				AbstractExchange.this.currentController = LAST_RESORT_ERROR_CONTROLLER;
+				AbstractExchange.this.hookOnError(this.exchangeError);
+			}
+			else {
+				AbstractExchange.this.executeInEventLoop(() -> { 
+					AbstractExchange.this.onCompleteWithError(this.exchangeError);
+					AbstractExchange.this.logError("Fatal exchange processing error", this.exchangeError);
+				});
+			}
 		}
 
 		@Override
 		protected void hookOnComplete() {
-			AbstractExchange.this.single = AbstractExchange.this.response.isSingle();
-			ErrorSubscriber subscriber = new ErrorSubscriber(this.originalError);
-			AbstractExchange.this.subscriber = subscriber;
-			AbstractExchange.this.response.dataSubscribe(subscriber);
+			if(!AbstractExchange.this.reset) {
+				AbstractExchange.this.single = AbstractExchange.this.response.isSingle();
+				ErrorSubscriber subscriber = new ErrorSubscriber(this.exchangeError);
+				AbstractExchange.this.subscriber = subscriber;
+				AbstractExchange.this.response.dataSubscribe(subscriber);
+			}
 		}
 	}
 }

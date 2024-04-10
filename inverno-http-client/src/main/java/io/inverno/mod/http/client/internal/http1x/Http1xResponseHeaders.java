@@ -69,7 +69,7 @@ class Http1xResponseHeaders implements InboundResponseHeaders {
 	}
 	
 	@Override
-	public Status getStatus() {
+	public Status getStatus() throws IllegalArgumentException {
 		if(this.status == null) {
 			this.status = Status.valueOf(this.statusCode);
 		}

@@ -26,8 +26,8 @@ package io.inverno.mod.http.base;
  * </p>
  *
  * <p>
- * Considering a client exchange, where the response is received by the client from the server, implementation shall only provide methods to access HTTP response content. Considering a server
- * exchange, where the response is provided and sent from the server to the client, implementation shall only provide methods to set HTTP response content.
+ * Considering a client exchange, where the response is received by the client from the server, implementation shall provide methods to access HTTP response content. Considering a server exchange,
+ * where the response is provided and sent from the server to the client, implementation shall provide methods to set HTTP response content.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -49,7 +49,11 @@ public interface BaseResponse {
 	 * Returns the HTTP response trailer headers.
 	 * </p>
 	 * 
-	 * @return the response trailer headers
+	 * <p>
+	 * Note that in a client exchange trailers are only received after the response body as a result this method shall return {@code null} when invoked before the response data publisher completes.
+	 * </p>
+	 * 
+	 * @return the response trailer headers or null
 	 */
 	InboundHeaders trailers();
 }

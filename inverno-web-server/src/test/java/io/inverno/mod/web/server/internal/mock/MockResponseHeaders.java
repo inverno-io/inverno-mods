@@ -145,7 +145,7 @@ public class MockResponseHeaders implements OutboundResponseHeaders {
 	}
 
 	@Override
-	public Status getStatus() {
+	public Status getStatus() throws IllegalArgumentException {
 		return Status.valueOf(this.statusCode);
 	}
 	

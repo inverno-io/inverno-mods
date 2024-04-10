@@ -17,7 +17,6 @@ package io.inverno.mod.http.server.internal;
 
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.resource.MediaTypes;
-import io.inverno.mod.http.base.InternalServerErrorException;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.base.OutboundData;
 import io.inverno.mod.http.base.header.Headers;

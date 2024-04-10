@@ -1,3 +1,4 @@
+[inverno-javadoc]: https://inverno.io/docs/release/api/index.html
 [inverno-tools-root]: https://github.com/inverno-io/inverno-tools
 
 [webjars]: https://www.webjars.org/
@@ -1149,6 +1150,10 @@ public class Main {
     }
 }
 ```
+
+Please refer to the [API documentation][inverno-javadoc] to have an exhaustive description of the different configuration properties.
+
+> You can also refer to the [configuration module documentation](#configuration-1) to get more details on how configuration works and more especially how you can from here define the server configuration in command line arguments, property files...
 
 ### Configuring the Web server controller
 

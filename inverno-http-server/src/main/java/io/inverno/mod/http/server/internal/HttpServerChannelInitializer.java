@@ -20,6 +20,10 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.util.concurrent.GlobalEventExecutor;
+import java.util.Set;
 
 /**
  * <p>
@@ -35,19 +39,30 @@ public class HttpServerChannelInitializer extends ChannelInitializer<SocketChann
 
 	private final HttpServerChannelConfigurer channelConfigurer;
 	
+	private final HttpConnectionGroup connectionGroup;
+	
 	/**
 	 * <p>
 	 * Creates a HTTP channel initializer.
 	 * </p>
 	 * 
 	 * @param channelConfigurer the channel configurer
+	 * @param connectionGroup   the connection group to track active connection
 	 */
-	public HttpServerChannelInitializer(HttpServerChannelConfigurer channelConfigurer) {
+	public HttpServerChannelInitializer(HttpServerChannelConfigurer channelConfigurer, HttpConnectionGroup connectionGroup) {
 		this.channelConfigurer = channelConfigurer;
+		this.connectionGroup = connectionGroup;
 	}
 	
 	@Override
 	protected void initChannel(SocketChannel ch) throws Exception {
-		this.channelConfigurer.configure(ch.pipeline());
+		if(!this.connectionGroup.isShuttingDown() && !this.connectionGroup.isClosed()) {
+			this.channelConfigurer.configure(ch.pipeline());
+			this.connectionGroup.register(ch);
+		}
+		else {
+			// When the server is shutting down we must reject new connections
+			ch.close();
+		}
 	}
 }

@@ -40,8 +40,6 @@ public class FlatHttpResponse implements HttpResponse, HttpContent {
 	protected final ByteBuf content;
 	
 	protected DecoderResult result = DecoderResult.SUCCESS;
-	
-	private boolean empty;
 
 	/**
 	 * <p>
@@ -51,11 +49,9 @@ public class FlatHttpResponse implements HttpResponse, HttpContent {
 	 * @param version the HTTP version
 	 * @param status  the HTTP response status
 	 * @param headers the HTTP headers
-	 * @param empty   true to create an empty response, false otherwise
 	 */
-	public FlatHttpResponse(HttpVersion version, HttpResponseStatus status, HttpHeaders headers, boolean empty) {
+	public FlatHttpResponse(HttpVersion version, HttpResponseStatus status, HttpHeaders headers) {
 		this(version, status, headers, Unpooled.EMPTY_BUFFER);
-		this.empty = empty;
 	}
 
 	/**
@@ -73,18 +69,6 @@ public class FlatHttpResponse implements HttpResponse, HttpContent {
 		this.version = version;
 		this.headers = headers;
 		this.content = content;
-		this.empty = content.readableBytes() == 0;
-	}
-
-	/**
-	 * <p>
-	 * Determines whether the reponse is empty.
-	 * </p>
-	 * 
-	 * @return true if the response has no content, false otherwise
-	 */
-	public boolean isEmpty() {
-		return empty;
 	}
 	
 	@Override

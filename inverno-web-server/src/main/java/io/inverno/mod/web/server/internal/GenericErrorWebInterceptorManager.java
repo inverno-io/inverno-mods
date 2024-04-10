@@ -98,24 +98,36 @@ class GenericErrorWebInterceptorManager extends AbstractErrorWebManager<GenericE
 				languagesCommitter.accept(routeInterceptor);
 			}
 		};
+		
+		Consumer<GenericErrorWebRouteInterceptor> consumesCommitter = routeInterceptor -> {
+			if(this.consumes != null && !this.consumes.isEmpty()) {
+				for(String consume : this.consumes) {
+					routeInterceptor.setConsume(consume);
+					producesCommitter.accept(routeInterceptor);
+				}
+			}
+			else {
+				producesCommitter.accept(routeInterceptor);
+			}
+		};
 
 		Consumer<GenericErrorWebRouteInterceptor> pathCommitter = routeInterceptor -> {
 			if(this.paths != null && !this.paths.isEmpty() || this.pathPatterns != null && !this.pathPatterns.isEmpty()) {
 				if(this.paths != null) {
 					for(String path : this.paths) {
 						routeInterceptor.setPath(path);
-						producesCommitter.accept(routeInterceptor);
+						consumesCommitter.accept(routeInterceptor);
 					}
 				}
 				if(this.pathPatterns != null) {
 					for(URIPattern pathPattern : this.pathPatterns) {
 						routeInterceptor.setPathPattern(pathPattern);
-						producesCommitter.accept(routeInterceptor);
+						consumesCommitter.accept(routeInterceptor);
 					}
 				}
 			}
 			else {
-				producesCommitter.accept(routeInterceptor);
+				consumesCommitter.accept(routeInterceptor);
 			}
 		};
 

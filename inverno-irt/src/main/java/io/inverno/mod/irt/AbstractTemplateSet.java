@@ -233,7 +233,7 @@ public abstract class AbstractTemplateSet implements TemplateSet {
 					future.thenCompose(ign -> renderer.apply(arg));
 				}
 			}
-			return future;
+			return future != null ? future : TemplateSet.COMPLETED_FUTURE;
 		}
 
 		@Override
@@ -249,7 +249,7 @@ public abstract class AbstractTemplateSet implements TemplateSet {
 					future.thenCompose(ign -> renderer.apply(index, arg));
 				}
 			}
-			return future;
+			return future != null ? future : TemplateSet.COMPLETED_FUTURE;
 		}
 	}
 	
@@ -284,14 +284,14 @@ public abstract class AbstractTemplateSet implements TemplateSet {
 
 		@Override
 		public CompletableFuture<Void> render(Function<T, CompletableFuture<Void>> renderer) {
-			CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
+			CompletableFuture<Void> future = TemplateSet.COMPLETED_FUTURE;
 			this.stream.forEach(arg -> future.thenCompose(ign -> renderer.apply(arg)));
 			return future;
 		}
 
 		@Override
 		public CompletableFuture<Void> render(BiFunction<Long, T, CompletableFuture<Void>> renderer) {
-			CompletableFuture<Void> future = CompletableFuture.completedFuture(null);
+			CompletableFuture<Void> future = TemplateSet.COMPLETED_FUTURE;
 			final AtomicLong index = new AtomicLong(0);
 			this.stream.forEach(arg -> future.thenCompose(ign -> renderer.apply(index.getAndIncrement(), arg)));
 			return future;

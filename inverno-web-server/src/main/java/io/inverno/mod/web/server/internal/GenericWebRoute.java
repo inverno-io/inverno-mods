@@ -45,9 +45,9 @@ class GenericWebRoute implements WebRoute<ExchangeContext> {
 	
 	private Method method;
 	
-	private String produce;
-	
 	private String consume;
+	
+	private String produce;
 	
 	private String language;
 	

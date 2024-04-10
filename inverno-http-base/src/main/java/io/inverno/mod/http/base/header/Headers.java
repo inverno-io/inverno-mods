@@ -296,6 +296,22 @@ public final class Headers {
 	
 	/**
 	 * <p>
+	 * MArker interface for simple key/value header.
+	 * </p>
+	 * 
+	 * <p>
+	 * The {@link HeaderService} shall return {@code SimpleHeader} instances when requested to decode headers with no associated {@link HeaderCodec}.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.9
+	 */
+	public static interface SimpleHeader extends Header {
+		
+	}
+	
+	/**
+	 * <p>
 	 * Content-type HTTP header as defined by <a href="https://tools.ietf.org/html/rfc7231#section-3.1.1.5">RFC 7231 Section 3.1.1.5</a>.
 	 * </p>
 	 * 

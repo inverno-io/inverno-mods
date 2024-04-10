@@ -99,6 +99,7 @@ public class Http2ConnectionFactory implements HttpConnectionFactory<Http2Connec
 			Optional.ofNullable(this.configuration.http2_max_frame_size()).ifPresent(initialSettings::maxFrameSize);
 			Optional.ofNullable(this.configuration.http2_max_header_list_size()).ifPresent(initialSettings::maxHeaderListSize);
 			
+			this.gracefulShutdownTimeoutMillis(this.configuration.graceful_shutdown_timeout());
 			this.server(false);
 		}
 

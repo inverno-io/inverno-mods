@@ -15,6 +15,10 @@
  */
 package io.inverno.mod.http.base;
 
+import io.netty.handler.codec.http2.Http2Error;
+import java.util.Optional;
+import reactor.core.publisher.Flux;
+
 /**
  * <p>
  * Base HTTP exchange (request/response) for representing server or client exchanges.
@@ -75,4 +79,51 @@ public interface BaseExchange<A extends ExchangeContext, B, C> {
 	 * @return the response part
 	 */
 	C response();
+	
+	/**
+	 * <p>
+	 * Resets the exchange with a {@code CANCEL(0x8)} code.
+	 * </p>
+	 * 
+	 * @see #reset(int) 
+	 */
+	default void reset() {
+		this.reset(Http2Error.CANCEL.code());
+	}
+	
+	/**
+	 * <p>
+	 * Resets the exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method is typically invoked to cancel the exchange (i.e. stop processing) by immediately cancelling active subscription to the response data publisher.
+	 * </p>
+	 * 
+	 * <p>
+	 * Behaviour depends on the HTTP protocol version, an HTTP/1.x connection might be closed right away if is in an incomplete state when the request and/or the response were partially received
+	 * and/or sent whereas with HTTP/2 connection this will just reset the stream bound to the exchange with the specified code as defined by
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc7540#section-7">RFC 7540 Section 7</a>.
+	 * </p>
+	 * 
+	 * @param code a code
+	 */
+	void reset(long code);
+	
+	/**
+	 * <p>
+	 * Returns the error that caused the cancellation of the exchange.
+	 * </p>
+	 *
+	 * <p>
+	 * Exchange disposal resulting or not from an error is usually catched in the request data publisher which can be bound to the response data publisher in which case, errors can be catched by
+	 * defining {@link Flux#doOnError(java.util.function.Consumer) } on the response data publisher. When the request data publisher is not consumed, terminated or not bound to the response data
+	 * publisher, the response data publisher can be disposed without error, this method gives access to the error when intercepting the exchange disposal by defining 
+	 * {@link Flux#doOnCancel(java.lang.Runnable) } on the response data publisher.
+	 * </p>
+	 *
+	 * @return an optional returning the cancel error or an empty optional if the exchange hasn't been disposed or if it completed successfully (i.e. when both request and response data publishers
+	 *         completed successfully)
+	 */
+	Optional<Throwable> getCancelCause();
 }

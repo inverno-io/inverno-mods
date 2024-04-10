@@ -72,7 +72,7 @@ class Http1xResponse extends AbstractResponse {
 	
 	@Override
 	public Http1xResponseHeaders headers() {
-		return (Http1xResponseHeaders)this.responseHeaders;
+		return (Http1xResponseHeaders)super.headers();
 	}
 
 	@Override
@@ -82,7 +82,7 @@ class Http1xResponse extends AbstractResponse {
 	
 	@Override
 	public Http1xResponseTrailers trailers() {
-		return (Http1xResponseTrailers)this.responseTrailers;
+		return (Http1xResponseTrailers)super.trailers();
 	}
 
 	@Override

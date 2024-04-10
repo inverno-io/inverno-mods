@@ -15,8 +15,10 @@
  */
 package io.inverno.mod.web.server.internal;
 
+import io.inverno.mod.base.net.URIBuilderException;
 import io.inverno.mod.base.net.URIMatcher;
 import io.inverno.mod.base.net.URIPattern;
+import io.inverno.mod.http.base.BadRequestException;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.web.server.PathParameters;
@@ -154,7 +156,14 @@ class PathPatternRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C
 		} 
 		else {
 			// Path in the request headers is normalized as per API specification
-			String normalizedPath = exchange.request().getPathAbsolute();
+			String normalizedPath;
+			try {
+				normalizedPath = exchange.request().getPathAbsolute();
+			}
+			catch(URIBuilderException e) {
+				// Path can be invalid in which case this is a client error
+				throw new BadRequestException(e);
+			}
 
 			URIMatcher bestMatchMatcher = null;
 			RoutingLink<A, B, ?, C> bestMatchHandler = null;

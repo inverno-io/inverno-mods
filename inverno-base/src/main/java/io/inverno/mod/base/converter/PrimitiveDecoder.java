@@ -19,6 +19,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
@@ -307,6 +308,18 @@ public interface PrimitiveDecoder<From> extends Decoder<From, Object> {
 	 * @throws ConverterException if there was an error decoding the value
 	 */
 	InetAddress decodeInetAddress(From value) throws ConverterException;
+	
+	/**
+	 * <p>
+	 * Decodes to inet socket address.
+	 * </p>
+	 * 
+	 * @param value the encoded value to decode
+	 * 
+	 * @return a decoded value
+	 * @throws ConverterException if there was an error decoding the value
+	 */
+	InetSocketAddress decodeInetSocketAddress(From value) throws ConverterException;
 
 	/**
 	 * <p>

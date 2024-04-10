@@ -30,6 +30,11 @@ public class HttpException extends RuntimeException {
 	private static final long serialVersionUID = 2847460450871488615L;
 
 	/**
+	 * The HTTP status.
+	 */
+	private Status status;
+	
+	/**
 	 * The HTTP status code.
 	 */
 	private int statusCode;
@@ -94,7 +99,7 @@ public class HttpException extends RuntimeException {
 	 * 
 	 * @param statusCode an HTTP status code
 	 * 
-	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
+	 * @throws IllegalArgumentException if the specified status code is invalid
 	 */
 	public HttpException(int statusCode) throws IllegalArgumentException {
 		this.setStatusCode(statusCode);
@@ -108,7 +113,7 @@ public class HttpException extends RuntimeException {
 	 * @param statusCode an HTTP status code
 	 * @param message    a message
 	 *
-	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
+	 * @throws IllegalArgumentException if the specified status code is invalid
 	 */
 	public HttpException(int statusCode, String message) throws IllegalArgumentException {
 		super(message);
@@ -123,7 +128,7 @@ public class HttpException extends RuntimeException {
 	 * @param statusCode an HTTP status code
 	 * @param cause      a cause
 	 *
-	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
+	 * @throws IllegalArgumentException if the specified status code is invalid
 	 */
 	public HttpException(int statusCode, Throwable cause) throws IllegalArgumentException {
 		super(cause);
@@ -139,7 +144,7 @@ public class HttpException extends RuntimeException {
 	 * @param message    a message
 	 * @param cause      a cause
 	 *
-	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
+	 * @throws IllegalArgumentException if the specified status code is invalid
 	 */
 	public HttpException(int statusCode, String message, Throwable cause) throws IllegalArgumentException {
 		super(message, cause);
@@ -197,15 +202,21 @@ public class HttpException extends RuntimeException {
 		this.setStatus(status);
 	}
 	
-	private void setStatus(Status status) {
-		this.statusCode = status.getCode();
-		this.statusReasonPhrase = status.getReasonPhrase();
-		this.statusCategory = status.getCategory();
-	}
-	
-	private void setStatusCode(int statusCode) {
+	/**
+	 * <p>
+	 * Sets the HTTP status and code.
+	 * </p>
+	 * 
+	 * @param statusCode an HTTP status code 
+	 * 
+	 * @Throws IllegalArgumentException if the specified status code is invalid
+	 */
+	private void setStatusCode(int statusCode) throws IllegalArgumentException {
+		if(statusCode < 0 || statusCode > 999) {
+			throw new IllegalArgumentException("Invalid status code: " + statusCode);
+		}
 		try {
-			Status status = Status.valueOf(statusCode);
+			this.status = Status.valueOf(statusCode);
 			this.statusCode = status.getCode();
 			this.statusReasonPhrase = status.getReasonPhrase();
 		}
@@ -213,6 +224,31 @@ public class HttpException extends RuntimeException {
 			this.statusCode = statusCode;
 			this.statusCategory = Status.Category.valueOf(statusCode);
 		}
+	}
+	
+	/**
+	 * <p>
+	 * Sets the HTTP status and code.
+	 * </p>
+	 * 
+	 * @param status an HTTP status
+	 */
+	private void setStatus(Status status) {
+		this.status = status;
+		this.statusCode = status.getCode();
+		this.statusReasonPhrase = status.getReasonPhrase();
+		this.statusCategory = status.getCategory();
+	}
+
+	/**
+	 * <p>
+	 * Returns the HTTP status.
+	 * </p>
+	 * 
+	 * @return an HTTP status or null if the code specified does correspond to any known status
+	 */
+	public Status getStatus() {
+		return status;
 	}
 	
 	/**

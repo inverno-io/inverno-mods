@@ -30,9 +30,10 @@ import io.inverno.mod.web.server.ErrorWebRoute;
  * @param <A> the type of the exchange context
  */
 interface ErrorWebRouteExtractor<A extends ExchangeContext> extends
-	PathAwareRouteExtractor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteExtractor<A>>,
-	AcceptAwareRouteExtractor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteExtractor<A>>,
 	ErrorAwareRouteExtractor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteExtractor<A>>, 
+	PathAwareRouteExtractor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteExtractor<A>>,
+	ContentAwareRouteExtractor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteExtractor<A>>,
+	AcceptAwareRouteExtractor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteExtractor<A>>,
 	InterceptableRouteExtractor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteExtractor<A>> {
 
 }

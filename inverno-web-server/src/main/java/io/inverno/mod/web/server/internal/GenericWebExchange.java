@@ -72,6 +72,11 @@ class GenericWebExchange implements WebExchange<ExchangeContext> {
 	public HttpVersion getProtocol() {
 		return this.exchange.getProtocol();
 	}
+	
+	@Override
+	public ExchangeContext context() {
+		return this.exchange.context();
+	}
 
 	@Override
 	public GenericWebRequest request() {
@@ -89,8 +94,13 @@ class GenericWebExchange implements WebExchange<ExchangeContext> {
 	}
 	
 	@Override
-	public ExchangeContext context() {
-		return this.exchange.context();
+	public void reset(long code) {
+		this.exchange.reset(code);
+	}
+
+	@Override
+	public Optional<Throwable> getCancelCause() {
+		return this.exchange.getCancelCause();
 	}
 	
 	@Override

@@ -108,7 +108,7 @@ class Http2ResponseHeaders implements InternalResponseHeaders {
 	}
 	
 	@Override
-	public Status getStatus() {
+	public Status getStatus() throws IllegalArgumentException {
 		return Status.valueOf(this.getStatusCode());
 	}
 	
@@ -151,10 +151,9 @@ class Http2ResponseHeaders implements InternalResponseHeaders {
 
 	@Override
 	public OutboundResponseHeaders cookies(Consumer<OutboundSetCookies> cookiesConfigurer) {
-		if(this.responseCookies == null) {
-			this.responseCookies = new GenericResponseCookies(this.headerService, this, this.parameterConverter);
+		if(cookiesConfigurer != null) {
+			cookiesConfigurer.accept((OutboundSetCookies)this.cookies());
 		}
-		cookiesConfigurer.accept(this.responseCookies);
 		return this;
 	}
 

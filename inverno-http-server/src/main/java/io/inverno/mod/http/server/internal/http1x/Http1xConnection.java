@@ -24,9 +24,11 @@ import io.inverno.mod.http.base.internal.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.HttpServerConfiguration;
+import io.inverno.mod.http.server.HttpServerException;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.internal.AbstractExchange;
+import io.inverno.mod.http.server.internal.HttpConnection;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
@@ -44,7 +46,12 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.websocketx.CorruptedWebSocketFrameException;
 import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * <p>
@@ -58,7 +65,9 @@ import reactor.core.publisher.Sinks;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class Http1xConnection extends ChannelDuplexHandler implements Http1xConnectionEncoder, AbstractExchange.Handler {
+public class Http1xConnection extends ChannelDuplexHandler implements HttpConnection, Http1xConnectionEncoder, AbstractExchange.Handler {
+	
+//	private static final Logger LOGGER = LogManager.getLogger(Http1xConnection.class);
 
 	private final HttpServerConfiguration configuration;
 	private final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
@@ -70,6 +79,9 @@ public class Http1xConnection extends ChannelDuplexHandler implements Http1xConn
 	private final GenericWebSocketFrame.GenericFactory webSocketFrameFactory;
 	private final GenericWebSocketMessage.GenericFactory webSocketMessageFactory;
 	
+	protected ChannelHandlerContext context;
+	protected boolean tls;
+	
 	private Http1xExchange requestingExchange;
 	private Http1xExchange respondingExchange;
 	
@@ -77,6 +89,10 @@ public class Http1xConnection extends ChannelDuplexHandler implements Http1xConn
 	
 	private boolean read;
 	private boolean flush;
+	
+	private Runnable gracefulShutdownNotifier;
+	private boolean closing;
+	private boolean closed;
 	
 	/**
 	 * <p>
@@ -111,6 +127,117 @@ public class Http1xConnection extends ChannelDuplexHandler implements Http1xConn
 		this.webSocketFrameFactory = webSocketFrameFactory;
 		this.webSocketMessageFactory = webSocketMessageFactory;
 	}
+
+	@Override
+	public boolean isTls() {
+		return this.tls;
+	}
+
+	@Override
+	public io.inverno.mod.http.base.HttpVersion getProtocol() {
+		return io.inverno.mod.http.base.HttpVersion.HTTP_1_1;
+	}
+
+	@Override
+	public Mono<Void> shutdown() {
+		if(this.closing || this.closed) {
+			return Mono.fromRunnable(this::tryNotifyGracefulShutdown);
+		}
+		return Mono.<Void>create(sink -> {
+			if(!this.closed && !this.closing) {
+//				LOGGER.debug("Shutdown");
+				this.closing = true;
+				ChannelFuture closeFuture;
+				if(this.context.channel().isActive()) {
+					closeFuture = this.context.writeAndFlush(Unpooled.EMPTY_BUFFER)
+						.addListener(ChannelFutureListener.CLOSE);
+				}
+				else {
+					closeFuture = this.context.close();
+				}
+				closeFuture.addListener(future -> {
+					if(future.isSuccess()) {
+						sink.success();
+					}
+					else {
+						sink.error(future.cause());
+					}
+				});
+			}
+			else {
+				sink.success();
+			}
+		})
+		.subscribeOn(Schedulers.fromExecutor(this.context.executor()));
+	}
+
+	@Override
+	public Mono<Void> shutdownGracefully() {
+		if(this.closing || this.closed) {
+			return Mono.empty();
+		}
+		return Mono.<Void>create(sink -> {
+			if(!this.closed && !this.closing) {
+//				LOGGER.debug("Shutdown gracefully");
+				this.closing = true;
+
+				ChannelPromise closePromise = this.context.newPromise().addListener(future -> {
+					if(future.isSuccess()) {
+						sink.success();
+					}
+					else {
+						sink.error(future.cause());
+					}
+				});
+				if(this.exchangeQueue == null && this.respondingExchange == null) {
+					if(this.context.channel().isActive()) {
+						this.context.writeAndFlush(Unpooled.EMPTY_BUFFER)
+							.addListener(future -> this.context.close(closePromise));
+					}
+					else {
+						this.context.close(closePromise);
+					}
+				}
+				else {
+					// wait up to timeout for the exchange queue to be empty
+					ScheduledFuture<?> gracefulTimeout = this.context.executor()
+						.schedule(() -> {
+							this.context.close(closePromise);
+						}, this.configuration.graceful_shutdown_timeout(), TimeUnit.MILLISECONDS);
+					this.gracefulShutdownNotifier = () -> {
+						if(gracefulTimeout != null) {
+							gracefulTimeout.cancel(false);
+						}
+						this.context.writeAndFlush(Unpooled.EMPTY_BUFFER)
+							.addListener(future -> this.context.close(closePromise));
+					};
+				}
+			}
+			else {
+				sink.success();
+			}
+		})
+		.subscribeOn(Schedulers.fromExecutor(this.context.executor()));
+	}
+	
+	private void tryNotifyGracefulShutdown() {
+		if(this.gracefulShutdownNotifier != null && this.exchangeQueue == null && this.respondingExchange == null) {
+			this.gracefulShutdownNotifier.run();
+		}
+	}
+
+	@Override
+	public boolean isClosed() {
+		return this.closed;
+	}
+
+	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+//		LOGGER.debug("Channel active");
+		this.context = ctx;
+		this.tls = this.context.pipeline().get(SslHandler.class) != null;
+		super.channelActive(ctx);
+	}
 	
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -118,7 +245,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements Http1xConn
 			this.read = true;
 			if(msg instanceof HttpRequest) {
 				HttpRequest httpRequest = (HttpRequest)msg;
-				if(this.validateHttpObject(ctx, httpRequest.protocolVersion(), httpRequest)) {
+				if(this.closing || this.closed || this.validateHttpObject(ctx, httpRequest.protocolVersion(), httpRequest)) {
 					return;
 				}
 				this.requestingExchange = new Http1xExchange(
@@ -228,6 +355,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements Http1xConn
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+//		LOGGER.debug("Exception caught", cause);
 		if(cause instanceof WebSocketHandshakeException || cause instanceof CorruptedWebSocketFrameException) {
 			// Delegate this to the WebSocket protocol handler
 			super.exceptionCaught(ctx, cause);
@@ -235,30 +363,29 @@ public class Http1xConnection extends ChannelDuplexHandler implements Http1xConn
 		else {
 			if(this.respondingExchange != null) {
 				this.respondingExchange.dispose(cause, true);
-				ChannelPromise errorPromise = ctx.newPromise();
-				this.respondingExchange.finalizeExchange(errorPromise, () -> ctx.close());
-				errorPromise.tryFailure(cause);
 			}
-			else {
-				ctx.close();
-			}
+			this.shutdown().subscribe();
 		}
 	}
 	
 	@Override
-	public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-		ctx.close();
-	}
-	
-	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+//		LOGGER.debug("Channel inactive");
 		// TODO this created DB connections not returned to pool
 		// If the purpose is to clean resources, I think we should see why this happens before the responding exchange response publisher did not finish
 		// one explanation could be that response events are not published on the channel event loop: the connection might be closed/end while the onComplete events hasn't been processed
 		// In any case this is disturbing and not easy to troubleshoot, we'll see in the future if this is a real issue or not
-		/*if(this.respondingExchange != null) {
-			this.respondingExchange.dispose();
-		}*/
+		if(this.respondingExchange != null) {
+			Throwable cause = new HttpServerException("Connection was closed");
+			this.respondingExchange.dispose(cause, true);
+			while(this.respondingExchange != null) {
+				this.respondingExchange.dispose(cause, false);
+				ChannelPromise errorPromise = ctx.newPromise();
+				this.respondingExchange.finalizeExchange(errorPromise, null);
+				errorPromise.tryFailure(cause);
+				this.respondingExchange = this.respondingExchange.next;
+			}
+		}
 		
 		if(this.exchangeQueue != null) {
 			this.exchangeQueue.next = null;
@@ -278,11 +405,13 @@ public class Http1xConnection extends ChannelDuplexHandler implements Http1xConn
 	
 	@Override
 	public void exchangeStart(ChannelHandlerContext ctx, AbstractExchange exchange) {
+//		LOGGER.debug("Exchange start");
 		this.respondingExchange = (Http1xExchange)exchange;
 	}
 	
 	@Override
 	public void exchangeError(ChannelHandlerContext ctx, Throwable t) {
+//		LOGGER.debug("Exchange error", t);
 		// If we get there it means we weren't able to properly handle the error before
 		if(this.flush) {
 			ctx.flush();
@@ -290,11 +419,12 @@ public class Http1xConnection extends ChannelDuplexHandler implements Http1xConn
 		// We have to release data...
 		this.respondingExchange.dispose(t, true);
 		// ...and close the connection
-		ctx.close();
+		this.shutdown().subscribe();
 	}
 	
 	@Override
 	public void exchangeComplete(ChannelHandlerContext ctx) {
+//		LOGGER.debug("Exchange complete");
 		this.respondingExchange.dispose();
 		if(this.respondingExchange.keepAlive) {
 			if(this.respondingExchange.next != null) {
@@ -303,13 +433,20 @@ public class Http1xConnection extends ChannelDuplexHandler implements Http1xConn
 			else {
 				this.exchangeQueue = null;
 				this.respondingExchange = null;
+				this.tryNotifyGracefulShutdown();
 			}
 		}
 		else {
 			if(this.respondingExchange.next != null) {
 				this.respondingExchange.next.dispose(true);
 			}
-			ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+			this.shutdown().subscribe();
 		}
+	}
+
+	@Override
+	public void exchangeReset(ChannelHandlerContext ctx, long code) {
+//		LOGGER.debug("Exchange reset: code={}", code);
+		this.exchangeError(ctx, new HttpServerException("Exchange has been reset: " + code));
 	}
 }

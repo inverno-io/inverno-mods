@@ -21,7 +21,7 @@
 	<parent>
 		<groupId>io.inverno</groupId>
 		<artifactId>inverno-oss-parent</artifactId>
-		<version>10</version>
+		<version>11-SNAPSHOT</version>
 	</parent>
 	<artifactId>inverno-mods-root</artifactId>
 	<version>1.9.0-SNAPSHOT</version>
@@ -111,6 +111,8 @@
 		<module>inverno-base</module>
 		<module>inverno-boot</module>
 		<module>inverno-configuration</module>
+		<module>inverno-grpc-base</module>
+		<module>inverno-grpc-client</module>
 		<module>inverno-grpc-server</module>
 		<module>inverno-http-base</module>
 		<module>inverno-http-client</module>

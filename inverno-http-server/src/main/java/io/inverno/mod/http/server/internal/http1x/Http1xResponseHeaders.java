@@ -88,6 +88,21 @@ class Http1xResponseHeaders implements InternalResponseHeaders {
 		return this.underlyingHeaders;
 	}
 	
+	/**
+	 * <p>
+	 * Determines whether the response is chunked;
+	 * </p>
+	 * 
+	 * @return true if the response is chunked, false otherwise
+	 */
+	boolean isChunkedTransferEncoding() {
+		for(String transferEncodingValue : this.getAll(Headers.NAME_TRANSFER_ENCODING)) {
+			if(transferEncodingValue.endsWith(Headers.VALUE_CHUNKED)) {
+				return true;
+			}
+		}
+		return false;
+	}
 	
 	@Override
 	public void setWritten(boolean written) {
@@ -111,7 +126,7 @@ class Http1xResponseHeaders implements InternalResponseHeaders {
 	}
 	
 	@Override
-	public Status getStatus() {
+	public Status getStatus() throws IllegalArgumentException {
 		return Status.valueOf(this.statusCode);
 	}
 	

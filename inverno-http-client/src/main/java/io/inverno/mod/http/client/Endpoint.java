@@ -76,6 +76,23 @@ public interface Endpoint<A extends ExchangeContext> {
 	 * </p>
 	 * 
 	 * <p>
+	 * This method is a shortcut for {@code exchange(Method.GET, "/", context)}.
+	 * </p>
+	 * 
+	 * @param context the exchange context
+	 * 
+	 * @return an HTTP exchange mono
+	 */
+	default Mono<? extends Exchange<A>> exchange(A context) {
+		return this.exchange(Method.GET, "/", null);
+	}
+	
+	/**
+	 * <p>
+	 * Creates an HTTP exchange.
+	 * </p>
+	 * 
+	 * <p>
 	 * This method is a shortcut for {@code exchange(Method.GET, requestTarget, null)}.
 	 * </p>
 	 * 
@@ -120,10 +137,37 @@ public interface Endpoint<A extends ExchangeContext> {
 	
 	/**
 	 * <p>
-	 * Closes the endpoint.
+	 * Shutdowns the endpoint right away.
 	 * </p>
 	 * 
-	 * @return a mono which completes once the endpoint is closed.
+	 * <p>
+	 * This is a hard shutdown that closes all active connections right away.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that <i>detached</i> connections (e.g. WebSocket) are not considered here and must be closed individually.
+	 * </p>
+	 * 
+	 * @return a mono which completes once the endpoint is shutdown
 	 */
-	Mono<Void> close();
+	Mono<Void> shutdown();
+	
+	/**
+	 * <p>
+	 * Gracefully shutdowns the endpoint.
+	 * </p>
+	 * 
+	 * <p>
+	 * This is a graceful shutdown that waits for all active exchanges to complete before shutting down the connections.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that <i>detached</i> connections (e.g. WebSocket) are not considered here and must be closed individually.
+	 * </p>
+	 * 
+	 * @return a mono which completes once the endpoint is shutdown
+	 * 
+	 * @see HttpClientConfiguration#graceful_shutdown_timeout() 
+	 */
+	Mono<Void> shutdownGracefully();
 }

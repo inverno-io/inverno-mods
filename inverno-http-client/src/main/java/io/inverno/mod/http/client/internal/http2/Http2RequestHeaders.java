@@ -128,12 +128,10 @@ class Http2RequestHeaders implements HttpConnectionRequestHeaders {
 
 	@Override
 	public OutboundRequestHeaders cookies(Consumer<OutboundCookies> cookiesConfigurer) {
-		if(this.requestCookies == null) {
-			this.requestCookies = new GenericRequestCookies(this, this.headerService, this.parameterConverter);
+		if(cookiesConfigurer != null) {
+			cookiesConfigurer.accept((OutboundCookies)this.cookies());
+			this.requestCookies.commit();
 		}
-		this.requestCookies.load();
-		cookiesConfigurer.accept(this.requestCookies);
-		this.requestCookies.commit();
 		return this;
 	}
 

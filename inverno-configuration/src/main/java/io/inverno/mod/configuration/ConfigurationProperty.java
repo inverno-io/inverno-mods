@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import io.inverno.mod.configuration.source.CompositeConfigurationSource;
+import java.net.InetSocketAddress;
 
 /**
  * <p>
@@ -396,6 +397,15 @@ public interface ConfigurationProperty {
 	 */
 	Optional<InetAddress> asInetAddress();
 
+	/**
+	 * <p>
+	 * Converts the property value to an inet socket address.
+	 * </p>
+	 *
+	 * @return an optional returning the converted value or an empty optional if the property is empty
+	 */
+	Optional<InetSocketAddress> asInetSocketAddress();
+	
 	/**
 	 * <p>
 	 * Converts the property value to a class.

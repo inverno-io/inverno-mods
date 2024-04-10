@@ -23,6 +23,7 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -408,7 +409,12 @@ public class StringConverter implements ObjectConverter<String> {
 
 	@Override
 	public String encode(InetAddress value) throws ConverterException {
-		return value != null ? value.getCanonicalHostName() : null;
+		return value != null ? value.getHostName() : null;
+	}
+
+	@Override
+	public String encode(InetSocketAddress value) throws ConverterException {
+		return value != null ? value.getHostName() + ":" + value.getPort() : null;
 	}
 
 	@Override
@@ -496,6 +502,9 @@ public class StringConverter implements ObjectConverter<String> {
 		} 
 		if(InetAddress.class.isAssignableFrom(type)) {
 			return (T) this.decodeInetAddress(value);
+		}
+		if(InetSocketAddress.class.isAssignableFrom(type)) {
+			return (T) this.decodeInetSocketAddress(value);
 		}
 		throw new ConverterException("Can't decode " + String.class.getCanonicalName() + " to " + type.getCanonicalName());
 	}
@@ -799,6 +808,27 @@ public class StringConverter implements ObjectConverter<String> {
 		}
 	}
 
+	@Override
+	public InetSocketAddress decodeInetSocketAddress(String value) throws ConverterException {
+		try {
+			if(value != null) {
+				int colonIndex = value.lastIndexOf(":");
+				if(colonIndex == -1) {
+					// port
+					return new InetSocketAddress(Integer.parseInt(value));
+				}
+				else {
+					// host:port
+					return new InetSocketAddress(value.substring(0, colonIndex), Integer.parseInt(value.substring(colonIndex + 1)));
+				}
+			}
+			return null;
+		} 
+		catch (IllegalArgumentException e) {
+			throw new ConverterException(value + " can't be decoded to the requested type", e);
+		}
+	}
+	
 	@Override
 	public Class<?> decodeClass(String value) throws ConverterException {
 		try {

@@ -35,6 +35,7 @@ import io.inverno.core.annotation.Destroy;
 import io.inverno.core.annotation.Init;
 import io.inverno.mod.base.net.NetService;
 import io.inverno.mod.http.server.HttpServerConfiguration;
+import io.inverno.mod.http.server.HttpServerException;
 
 /**
  * <p>
@@ -47,13 +48,12 @@ import io.inverno.mod.http.server.HttpServerConfiguration;
 @Bean(visibility = Visibility.PRIVATE)
 public class HttpServer {
 
-	private Logger logger = LogManager.getLogger(this.getClass());
+	private static final Logger LOGGER = LogManager.getLogger(HttpServer.class);
 	
-	private NetService netService;
-	
-	private HttpServerConfiguration configuration;
-	
-	private ChannelInitializer<SocketChannel> channelInitializer;
+	private final NetService netService;
+	private final HttpServerConfiguration configuration;
+	private final ChannelInitializer<SocketChannel> channelInitializer;
+	private final HttpConnectionGroup connectionGroup;
 
 	private ChannelFuture serverChannelFuture;
 	
@@ -65,11 +65,13 @@ public class HttpServer {
 	 * @param configuration      the HTTP server configuration
 	 * @param netService         the Net service
 	 * @param channelInitializer the channel initializer
+	 * @param connectionGroup    the connection group tracking active connection
 	 */
-	public HttpServer(HttpServerConfiguration configuration, NetService netService, ChannelInitializer<SocketChannel> channelInitializer) {
+	public HttpServer(HttpServerConfiguration configuration, NetService netService, ChannelInitializer<SocketChannel> channelInitializer, HttpConnectionGroup connectionGroup) {
 		this.configuration = configuration;
 		this.netService = netService;
 		this.channelInitializer = channelInitializer;
+		this.connectionGroup = connectionGroup;
 	}
 	
 	/**
@@ -77,15 +79,11 @@ public class HttpServer {
 	 * Starts the HTTP server.
 	 * </p>
 	 * 
-	 * @throws CertificateException
 	 * @throws InterruptedException
-	 * @throws IOException
-	 * @throws KeyStoreException
-	 * @throws NoSuchAlgorithmException
-	 * @throws UnrecoverableKeyException
+	 * @throws HttpServerException
 	 */
 	@Init
-	public void start() throws CertificateException, InterruptedException, IOException, KeyStoreException, NoSuchAlgorithmException, UnrecoverableKeyException {
+	public void start() throws HttpServerException, InterruptedException {
 		InetSocketAddress serverAddress = new InetSocketAddress(this.configuration.server_host(), this.configuration.server_port());
 		
 		ServerBootstrap serverBootstrap;
@@ -102,15 +100,22 @@ public class HttpServer {
 		
 		String scheme = this.configuration.tls_enabled() ? "https://" : "http://";
 		if (this.serverChannelFuture.isSuccess()) {
-			this.logger.info("HTTP Server ({}) listening on {}", this.netService.getTransportType().toString().toLowerCase(), scheme + serverAddress.getHostString() + ":" + serverAddress.getPort());
+			LOGGER.info("HTTP Server ({}) listening on {}", this.netService.getTransportType().toString().toLowerCase(), scheme + serverAddress.getHostString() + ":" + serverAddress.getPort());
 		}
 		else {
-			throw new RuntimeException("Can't start Web server on " + scheme + serverAddress.getHostString() + ":" + serverAddress.getPort(), this.serverChannelFuture.cause());
+			throw new HttpServerException("Can't start Web server on " + scheme + serverAddress.getHostString() + ":" + serverAddress.getPort(), this.serverChannelFuture.cause());
 		}
 	}
 
 	@Destroy
 	public void stop() throws InterruptedException {
+		if(this.configuration.graceful_shutdown()) {
+			this.connectionGroup.shutdownGracefully().block();
+		}
+		else {
+			this.connectionGroup.shutdown().block();
+		}
 		this.serverChannelFuture.channel().close();
+		LOGGER.info("HTTP Server stopped");
 	}
 }

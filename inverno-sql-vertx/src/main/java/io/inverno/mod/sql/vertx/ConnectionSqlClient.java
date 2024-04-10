@@ -16,10 +16,6 @@
 package io.inverno.mod.sql.vertx;
 
 import io.inverno.mod.sql.PreparedStatement;
-import java.util.function.Function;
-
-import org.reactivestreams.Publisher;
-
 import io.inverno.mod.sql.SqlOperations;
 import io.inverno.mod.sql.TransactionalSqlOperations;
 import io.inverno.mod.sql.vertx.internal.AbstractSqlClient;
@@ -27,8 +23,11 @@ import io.inverno.mod.sql.vertx.internal.ConnectionPreparedStatement;
 import io.inverno.mod.sql.vertx.internal.TransactionalSqlConnection;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.TransactionRollbackException;
+import java.util.function.Function;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 /**
  * <p>
@@ -44,6 +43,10 @@ import reactor.core.publisher.Mono;
  */
 public class ConnectionSqlClient extends AbstractSqlClient {
 
+	private final Mono<Void> onClose;
+	
+	private Throwable connectionError;
+	
 	/**
 	 * <p>
 	 * Creates a SQL client with the specified Vert.x SQL connection.
@@ -53,6 +56,18 @@ public class ConnectionSqlClient extends AbstractSqlClient {
 	 */
 	public ConnectionSqlClient(SqlConnection connection) {
 		super(connection);
+		
+		Sinks.One<Void> onCloseSink = Sinks.one();
+		connection.exceptionHandler(error -> this.connectionError = error);
+		connection.closeHandler(ign -> {
+			if(this.connectionError != null) {
+				onCloseSink.tryEmitError(this.connectionError);
+			}
+			else {
+				onCloseSink.tryEmitEmpty();
+			}
+		});
+		this.onClose = onCloseSink.asMono();
 	}
 
 	@Override
@@ -87,12 +102,22 @@ public class ConnectionSqlClient extends AbstractSqlClient {
 
 	/**
 	 * <p>
-	 * Executes the specified function in the scope of the connection but does not
-	 * close the connection when the returned publisher terminates.
+	 * Executes the specified function in the scope of the connection but does not close the connection when the returned publisher terminates.
 	 * </p>
 	 */
 	@Override
 	public <T> Publisher<T> connection(Function<SqlOperations, Publisher<T>> function) {
 		return function.apply(this);
+	}
+	
+	/**
+	 * <p>
+	 * Notifies when the SQL client connection is closed.
+	 * </p>
+	 * 
+	 * @return a mono completing empty when the connection has been closed without errors, or failing when the connection was closed with error.
+	 */
+	public Mono<Void> onClose() {
+		return this.onClose;
 	}
 }

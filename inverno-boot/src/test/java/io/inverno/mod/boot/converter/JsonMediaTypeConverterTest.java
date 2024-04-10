@@ -15,21 +15,16 @@
  */
 package io.inverno.mod.boot.converter;
 
-import io.inverno.mod.boot.converter.JsonByteBufMediaTypeConverter;
-import io.inverno.mod.boot.converter.JacksonByteBufConverter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.inverno.mod.base.resource.MediaTypes;
+import io.inverno.mod.boot.Person;
+import io.netty.buffer.ByteBuf;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.netty.buffer.ByteBuf;
-import io.inverno.mod.base.resource.MediaTypes;
-import io.inverno.mod.boot.Person;
 import reactor.core.publisher.Flux;
 
 /**

@@ -184,7 +184,7 @@ public class HttpServerChannelConfigurer {
 	 */
 	private Http1xConnection handleHttp1x(ChannelPipeline pipeline) {
 		Http1xConnection handler = this.http1xConnectionFactory.get();
-		pipeline.addLast("http1xHandler", handler);
+		pipeline.addLast("connection", handler);
 		return handler;
 	}
 	
@@ -212,7 +212,7 @@ public class HttpServerChannelConfigurer {
 	 */
 	private Http2Connection handleHttp2(ChannelPipeline pipeline) {
 		Http2Connection handler = this.http2ConnectionFactory.get();
-		pipeline.addLast("http2Handler", handler);
+		pipeline.addLast("connection", handler);
 		return handler;
 	}
 	
@@ -241,7 +241,7 @@ public class HttpServerChannelConfigurer {
 	 */
 	private HttpServerUpgradeHandler.UpgradeCodec createH2cUpgradeCodec(CharSequence protocol) {
 		if(AsciiString.contentEquals(Http2CodecUtil.HTTP_UPGRADE_PROTOCOL_NAME, protocol)) {
-			return new Http2ServerUpgradeCodec(this.http2ConnectionFactory.get());
+			return new Http2ServerUpgradeCodec("connection", this.http2ConnectionFactory.get());
 		}
 		else {
 			return null;
@@ -285,7 +285,7 @@ public class HttpServerChannelConfigurer {
 		if (HttpServerChannelConfigurer.this.configuration.compression_enabled()) {
 			pipeline.remove("http1xCompressor");
 		}
-		pipeline.remove("http1xHandler");
+		pipeline.remove("connection");
 	}
 	
 	/**
@@ -312,7 +312,7 @@ public class HttpServerChannelConfigurer {
 		if (this.configuration.compression_enabled()) {
 			pipeline.remove("http1xCompressor");
 		}
-		pipeline.remove("http1xHandler");
+		pipeline.remove("connection");
 		return this.handleHttp2(pipeline);
 	}
 	

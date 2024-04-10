@@ -311,6 +311,12 @@ class GenericErrorWebInterceptedRouter extends AbstractErrorWebRouter implements
 			}
 
 			@Override
+			public ErrorWebRouteManager<ExchangeContext, ErrorWebRouter<ExchangeContext>> consumes(String mediaRange) {
+				this.routeManager.consumes(mediaRange);
+				return this;
+			}
+			
+			@Override
 			public ErrorWebRouteManager<ExchangeContext, ErrorWebRouter<ExchangeContext>> produces(String mediaType) {
 				this.routeManager.produces(mediaType);
 				return this;

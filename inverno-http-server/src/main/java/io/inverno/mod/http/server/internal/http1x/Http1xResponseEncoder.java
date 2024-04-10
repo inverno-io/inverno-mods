@@ -86,11 +86,6 @@ public class Http1xResponseEncoder extends HttpResponseEncoder {
 		super.handlerAdded(ctx);
 	}
 
-	@Override
-	protected boolean isContentAlwaysEmpty(HttpResponse msg) {
-		return (msg instanceof FlatHttpResponse && ((FlatHttpResponse) msg).isEmpty()) || super.isContentAlwaysEmpty(msg);
-	}
-
 	private final class ChannelHandlerContextProxy implements ChannelHandlerContext {
 
 		private final ChannelHandlerContext context;

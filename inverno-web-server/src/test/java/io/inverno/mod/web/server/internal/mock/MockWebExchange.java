@@ -56,6 +56,11 @@ public class MockWebExchange implements WebExchange<ExchangeContext> {
 	}
 	
 	@Override
+	public ExchangeContext context() {
+		return this.context;
+	}
+	
+	@Override
 	public MockWebRequest request() {
 		return this.mockRequest;
 	}
@@ -69,10 +74,14 @@ public class MockWebExchange implements WebExchange<ExchangeContext> {
 	public Optional<? extends WebSocket<ExchangeContext, Web2SocketExchange<ExchangeContext>>> webSocket(String... subProtocols) {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
-	
+
 	@Override
-	public ExchangeContext context() {
-		return this.context;
+	public void reset(long code) {
+	}
+
+	@Override
+	public Optional<Throwable> getCancelCause() {
+		return Optional.empty();
 	}
 	
 	@Override

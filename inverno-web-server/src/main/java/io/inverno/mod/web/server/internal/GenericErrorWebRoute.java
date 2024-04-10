@@ -45,6 +45,8 @@ class GenericErrorWebRoute implements ErrorWebRoute<ExchangeContext> {
 	private String path;
 	private URIPattern pathPattern;
 	
+	private String consume;
+	
 	private String produce;
 	
 	private String language;
@@ -165,6 +167,22 @@ class GenericErrorWebRoute implements ErrorWebRoute<ExchangeContext> {
 	}
 	
 	@Override
+	public String getConsume() {
+		return this.consume;
+	}
+	
+	/**
+	 * <p>
+	 * Sets the route consumed media range as defined by {@link ErrorWebRoute#getConsume()}.
+	 * </p>
+	 * 
+	 * @param mediaRange a media range
+	 */
+	public void setConsume(String mediaRange) {
+		this.consume = mediaRange;
+	}
+	
+	@Override
 	public String getProduce() {
 		return this.produce;
 	}
@@ -229,6 +247,7 @@ class GenericErrorWebRoute implements ErrorWebRoute<ExchangeContext> {
 		routeStringBuilder.append("{");
 		routeStringBuilder.append("\"error\":\"").append(this.error != null ? this.error : null).append("\",");
 		routeStringBuilder.append("\"path\":\"").append(this.path != null ? this.path : this.pathPattern).append("\",");
+		routeStringBuilder.append("\"consume\":\"").append(this.consume).append("\",");
 		routeStringBuilder.append("\"produce\":\"").append(this.produce).append("\",");
 		routeStringBuilder.append("\"language\":\"").append(this.language);
 		routeStringBuilder.append("}");
@@ -243,6 +262,7 @@ class GenericErrorWebRoute implements ErrorWebRoute<ExchangeContext> {
 		result = prime * result + ((error == null) ? 0 : error.hashCode());
 		result = prime * result + ((path == null) ? 0 : path.hashCode());
 		result = prime * result + ((pathPattern == null) ? 0 : pathPattern.hashCode());
+		result = prime * result + ((consume == null) ? 0 : consume.hashCode());
 		result = prime * result + ((produce == null) ? 0 : produce.hashCode());
 		result = prime * result + ((language == null) ? 0 : language.hashCode());
 		return result;
@@ -271,6 +291,11 @@ class GenericErrorWebRoute implements ErrorWebRoute<ExchangeContext> {
 			if (other.pathPattern != null)
 				return false;
 		} else if (!pathPattern.equals(other.pathPattern))
+			return false;
+		if (consume == null) {
+			if (other.consume != null)
+				return false;
+		} else if (!consume.equals(other.consume))
 			return false;
 		if (produce == null) {
 			if (other.produce != null)

@@ -68,7 +68,7 @@ public class DirectH2cUpgradeHandler extends ByteToMessageDecoder {
 			// following network traffic
 			this.sourceCodec.upgradeFrom(ctx);
 
-			ctx.pipeline().addAfter(ctx.name(), "http2Handler", this.http2ConnectionFactory.get());
+			ctx.pipeline().addAfter(ctx.name(), "connection", this.http2ConnectionFactory.get());
 			ctx.pipeline().remove(this);
 		}
 	}

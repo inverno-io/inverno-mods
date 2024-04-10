@@ -15,8 +15,6 @@
  */
 package io.inverno.mod.boot.converter;
 
-import io.inverno.mod.boot.converter.NdJsonByteBufMediaTypeConverter;
-import io.inverno.mod.boot.converter.JacksonByteBufConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.boot.Person;

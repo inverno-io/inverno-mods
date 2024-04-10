@@ -19,6 +19,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -110,6 +111,9 @@ public class StringConverterTest {
 		
 		InetAddress inetAddress_value = InetAddress.getLocalHost();
 		Assertions.assertEquals(inetAddress_value, converter.decodeInetAddress(converter.encode(inetAddress_value)));
+		
+		InetSocketAddress inetSocketAddress_value = new InetSocketAddress("1.2.3.4", 1234);
+		Assertions.assertEquals(inetSocketAddress_value, converter.decodeInetSocketAddress(converter.encode(inetSocketAddress_value)));
 		
 		Class<?> class_value = List.class;
 		Assertions.assertEquals(class_value, converter.decodeClass(converter.encode(class_value)));

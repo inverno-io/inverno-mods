@@ -110,6 +110,11 @@ class GenericErrorWebInterceptedRouteManager extends AbstractErrorWebManager<Gen
 					return false;
 				}
 			}
+			if(this.consumes != null && !this.consumes.isEmpty()) {
+				if(route.getConsume() == null || !this.consumes.contains(route.getConsume())) {
+					return false;
+				}
+			}
 			if(this.produces != null && !this.produces.isEmpty()) {
 				if(route.getProduce() == null || !this.produces.contains(route.getProduce())) {
 					return false;
@@ -156,23 +161,34 @@ class GenericErrorWebInterceptedRouteManager extends AbstractErrorWebManager<Gen
 				languagesCommitter.accept(route);
 			}
 		};
+		
+		Consumer<GenericErrorWebRoute> consumesCommitter = route -> {
+			if (this.consumes != null && !this.consumes.isEmpty()) {
+				for (String consume : this.consumes) {
+					route.setConsume(consume);
+					producesCommitter.accept(route);
+				}
+			} else {
+				producesCommitter.accept(route);
+			}
+		};
 
 		Consumer<GenericErrorWebRoute> pathCommitter = route -> {
 			if (this.paths != null && !this.paths.isEmpty() || this.pathPatterns != null && !this.pathPatterns.isEmpty()) {
 				if (this.paths != null) {
 					for (String path : this.paths) {
 						route.setPath(path);
-						producesCommitter.accept(route);
+						consumesCommitter.accept(route);
 					}
 				}
 				if (this.pathPatterns != null) {
 					for (URIPattern pathPattern : this.pathPatterns) {
 						route.setPathPattern(pathPattern);
-						producesCommitter.accept(route);
+						consumesCommitter.accept(route);
 					}
 				}
 			} else {
-				producesCommitter.accept(route);
+				consumesCommitter.accept(route);
 			}
 		};
 

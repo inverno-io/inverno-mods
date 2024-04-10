@@ -18,6 +18,7 @@ package io.inverno.mod.web.server;
 import io.inverno.mod.base.net.URIPattern;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.web.server.spi.AcceptAware;
+import io.inverno.mod.web.server.spi.ContentAware;
 import io.inverno.mod.web.server.spi.ErrorAware;
 import io.inverno.mod.web.server.spi.InterceptableRoute;
 import io.inverno.mod.web.server.spi.PathAware;
@@ -46,7 +47,7 @@ import io.inverno.mod.web.server.spi.PathAware;
  *
  * @param <A> the type of the exchange context
  */
-public interface ErrorWebRoute<A extends ExchangeContext> extends InterceptableRoute<A, ErrorWebExchange<A>>, ErrorAware, PathAware, AcceptAware {
+public interface ErrorWebRoute<A extends ExchangeContext> extends InterceptableRoute<A, ErrorWebExchange<A>>, ErrorAware, PathAware, ContentAware, AcceptAware {
 
 	/**
 	 * <p>
@@ -80,6 +81,19 @@ public interface ErrorWebRoute<A extends ExchangeContext> extends InterceptableR
 	@Override
 	URIPattern getPathPattern();
 
+	/**
+	 * <p>
+	 * Returns the media range defining the content types accepted by the resource served by the route as defined by
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>.
+	 * </p>
+	 *
+	 * <p>
+	 * This criteria should match the request {@code content-type} header field.
+	 * </p>
+	 */
+	@Override
+	String getConsume();
+	
 	/**
 	 * <p>
 	 * Returns the media type of the resource served by the route.

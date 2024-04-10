@@ -44,29 +44,33 @@ import io.inverno.mod.http.base.Parameter;
  * </p>
  * 
  * <dl>
- * <dt><b>httpClientConfiguration</b></dt>
+ * <dt><b>configuration</b></dt>
  * <dd>the HTTP client module configuration</dd>
  * <dt><b>httpClient</b></dt>
  * <dd>the HTTP client</dd>
  * </dl>
  * 
  * <p>
- * A simple HTTP client using the default configuration can be started as follows:
+ * A simple HTTP client using the default configuration and sending a GET request can be created as follows:
  * </p>
  * 
  * <pre>{@code
- * NetService netService = ...;
- * Reactor reactor = ...;
+ * NetService netService = null;
+ * Reactor reactor = null;
+ * ResourceService resourceService = null;
  * 
- * Client client = Application.with(new Client.Builder(netService, reactor)).run();
+ * Client client = Application.with(new Client.Builder(netService, reactor, resourceService)
+ *	.configuration(HttpClientConfigurationLoader.load(conf -> conf.http_protocol_versions(Set.of(HttpVersion.HTTP_2_0))))
+ * ).run();
  * 
- * Endpoint endpoint = client.httpClient().endpoint("example.com". 80).build();
+ * Endpoint<ExchangeContext> endpoint = client.httpClient().endpoint("example.org", 80).build();
  * 
- * String response = endpoint.request(Method.GET, "/")
- *	.send()
- *	.flatMapMany(exchange -> exchange.response().body().string().stream())
- *	.reduceWith(() -> new StringBuilder(), (acc, chunk) -> acc.append(chunk))
- *	.map(StringBuilder::toString).block();
+ * String responseBody = endpoint
+ * 	.exchange(Method.GET, "/")
+ * 	.flatMap(Exchange::response)
+ * 	.flatMapMany(response -> response.body().string().stream())
+ * 	.reduceWith(() -> new StringBuilder(), (acc, chunk) -> acc.append(chunk))
+ * 	.map(StringBuilder::toString).block();
  * }</pre>
  * 
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

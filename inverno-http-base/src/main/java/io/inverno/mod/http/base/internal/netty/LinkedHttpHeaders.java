@@ -345,7 +345,7 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	 * @param name   the name of the header
 	 * @param values an iterable providing the values
 	 * 
-	 * @return 
+	 * @return the HTTP headers
 	 */
 	public HttpHeaders addCharSequence(CharSequence name, Iterable<CharSequence> values) {
 		int hashCode = AsciiString.hashCode(name);

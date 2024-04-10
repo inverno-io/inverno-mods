@@ -105,7 +105,16 @@ public interface ErrorExchange<A extends ExchangeContext> extends Exchange<A> {
 			public Throwable getError() {
 				return errorMapper.apply(thisExchange.getError());
 			}
-			
+
+			@Override
+			public void reset(long code) {
+				thisExchange.reset(code);
+			}
+
+			@Override
+			public Optional<Throwable> getCancelCause() {
+				return thisExchange.getCancelCause();
+			}
 		};
 	}
 }

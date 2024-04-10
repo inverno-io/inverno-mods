@@ -19,6 +19,7 @@ package io.inverno.mod.web.server;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.server.ErrorExchange;
+import java.util.Optional;
 import java.util.function.Function;
 import reactor.core.publisher.Mono;
 
@@ -59,6 +60,11 @@ public interface ErrorWebExchange<A extends ExchangeContext> extends ErrorExchan
 			}
 
 			@Override
+			public A context() {
+				return thisExchange.context();
+			}
+			
+			@Override
 			public WebRequest request() {
 				return thisExchange.request();
 			}
@@ -69,18 +75,23 @@ public interface ErrorWebExchange<A extends ExchangeContext> extends ErrorExchan
 			}
 			
 			@Override
-			public A context() {
-				return thisExchange.context();
+			public void reset(long code) {
+				thisExchange.reset(code);
+			}
+
+			@Override
+			public Optional<Throwable> getCancelCause() {
+				return thisExchange.getCancelCause();
+			}
+			
+			@Override
+			public Throwable getError() {
+				return errorMapper.apply(thisExchange.getError());
 			}
 			
 			@Override
 			public void finalizer(Mono<Void> finalizer) {
 				thisExchange.finalizer(finalizer);
-			}
-
-			@Override
-			public Throwable getError() {
-				return errorMapper.apply(thisExchange.getError());
 			}
 		};
 	}

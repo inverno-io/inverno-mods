@@ -22,6 +22,7 @@ import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.ConnectionResetException;
 import io.inverno.mod.http.client.HttpClientConfiguration;
+import io.inverno.mod.http.client.HttpClientException;
 import io.inverno.mod.http.client.Part;
 import io.inverno.mod.http.client.RequestTimeoutException;
 import io.inverno.mod.http.client.internal.AbstractExchange;
@@ -63,6 +64,8 @@ import reactor.core.scheduler.Schedulers;
  * @since 1.6
  */
 public class Http1xConnection extends ChannelDuplexHandler implements HttpConnection, Http1xConnectionEncoder, AbstractExchange.Handler<Http1xRequest, Http1xResponse, Http1xExchange> {
+	
+//	private static final Logger LOGGER = LogManager.getLogger(Http1xConnection.class);
 
 	protected final HttpClientConfiguration configuration;
 	protected final HttpVersion httpVersion;
@@ -83,7 +86,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	private boolean read;
 	private boolean flush;
 
-	private Mono<Void> close;
+	private Runnable gracefulShutdownNotifier;
 	private boolean closing;
 	private boolean closed;
 	
@@ -158,16 +161,48 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
 		this.tls = ctx.pipeline().get(SslHandler.class) != null;
 		this.supportsFileRegion = !this.tls && ctx.pipeline().get(HttpContentCompressor.class) == null;
-		this.close = Mono.<Void>create(sink -> {
+		this.closed = false;
+		this.context = ctx;
+		super.handlerAdded(ctx);
+	}
+
+	@Override
+	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+//		LOGGER.debug("Channel inactive");
+		// we must notify all pending exchanges that the connection was reset
+		// this includes:
+		// - the responding exchange: 
+		//   - if response was set tryEmitError() on the response data publisher 
+		//   - if response was not set tryEmitError() on the response sink
+		//   - all this should be done in the dispose() method since the exchange knows its state
+		// - the requesting exchange
+		//   - dispose the request data publisher, this is also done in the dispose() method
+		// - the rest of the queue: dispose()
+		if(this.handler != null) {
+			this.handler.onClose();
+		}
+		if(this.respondingExchange != null) {
+			this.respondingExchange.dispose(new ConnectionResetException(this.closing || this.closed ? "Connection closed" : "Connection reset by peer"), true);
+		}
+		this.closed = true;
+	}
+
+	@Override
+	public Mono<Void> shutdown() {
+		if(this.closing || this.closed) {
+			return Mono.fromRunnable(this::tryNotifyGracefulShutdown);
+		}
+		return Mono.<Void>create(sink -> {
 			if(!this.closed && !this.closing) {
+//				LOGGER.debug("Shutdown");
 				this.closing = true;
 				ChannelFuture closeFuture;
-				if(ctx.channel().isActive()) {
-					closeFuture = ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
+				if(this.context.channel().isActive()) {
+					closeFuture = this.context.writeAndFlush(Unpooled.EMPTY_BUFFER)
 						.addListener(ChannelFutureListener.CLOSE);
 				}
 				else {
-					closeFuture = ctx.close();
+					closeFuture = this.context.close();
 				}
 				closeFuture.addListener(future -> {
 					if(future.isSuccess()) {
@@ -182,46 +217,69 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				sink.success();
 			}
 		})
-		.subscribeOn(Schedulers.fromExecutor(ctx.executor()));
-		this.closed = false;
-		this.context = ctx;
-		super.handlerAdded(ctx);
+		.subscribeOn(Schedulers.fromExecutor(this.context.executor()));
 	}
 
 	@Override
-	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-		// we must notify all pending exchanges that the connection was reset
-		// this includes:
-		// - the responding exchange: 
-		//   - if response was set tryEmitError() on the response data publisher 
-		//   - if response was not set tryEmitError() on the response sink
-		//   - all this should be done in the dispose() method since the exchange knows its state
-		// - the requesting exchange
-		//   - dispose the request data publisher, this is also done in the dispose() method
-		// - the rest of the queue: dispose()
-		this.closed = true;
-		if(this.handler != null) {
-			this.handler.onClose();
-		}
-		if(this.respondingExchange != null) {
-			this.respondingExchange.dispose(new ConnectionResetException("Connection reset by peer"), true);
-		}
-	}
-
-	@Override
-	public Mono<Void> close() {
+	public Mono<Void> shutdownGracefully() {
 		if(this.closing || this.closed) {
 			return Mono.empty();
 		}
-		else {
-			return this.close;
+		return Mono.<Void>create(sink -> {
+			if(!this.closed && !this.closing) {
+//				LOGGER.debug("Shutdown gracefully");
+				this.closing = true;
+
+				ChannelPromise closePromise = this.context.newPromise().addListener(future -> {
+					if(future.isSuccess()) {
+						sink.success();
+					}
+					else {
+						sink.error(future.cause());
+					}
+				});
+				if(this.exchangeQueue == null && this.respondingExchange == null) {
+					if(this.context.channel().isActive()) {
+						this.context.writeAndFlush(Unpooled.EMPTY_BUFFER)
+							.addListener(future -> this.context.close(closePromise));
+					}
+					else {
+						this.context.close(closePromise);
+					}
+				}
+				else {
+					// wait up to timeout for the exchange queue to be empty
+					ScheduledFuture<?> gracefulTimeout = this.context.executor()
+						.schedule(() -> {
+							this.context.close(closePromise);
+						}, this.configuration.graceful_shutdown_timeout(), TimeUnit.MILLISECONDS);
+					this.gracefulShutdownNotifier = () -> {
+						if(gracefulTimeout != null) {
+							gracefulTimeout.cancel(false);
+						}
+						this.context.writeAndFlush(Unpooled.EMPTY_BUFFER)
+							.addListener(future -> this.context.close(closePromise));
+					};
+				}
+			}
+			else {
+				sink.success();
+			}
+		})
+		.subscribeOn(Schedulers.fromExecutor(this.context.executor()));
+	}
+	
+	private void tryNotifyGracefulShutdown() {
+		if(this.gracefulShutdownNotifier != null && this.exchangeQueue == null && this.respondingExchange == null) {
+			this.gracefulShutdownNotifier.run();
 		}
-		// Inflight exchanges are disposed in #channelInactive()
-		
-		// TODO if we have a pool it must be notified so that the connection can be recycled
-		// we should basically remove it from the pool as soon as the close is in motion
 	}
 
+	@Override
+	public boolean isClosed() {
+		return this.closed;
+	}
+	
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		try {
@@ -328,21 +386,24 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+//		LOGGER.debug("Exception caught", cause);
 		// In any case only network related error should get here anything else must be handled upstream
 		this.cancelTimeout();
 		// Evict the faulty connection
 		if(this.handler != null) {
 			this.handler.onError(cause);
 		}
-		// close the faulty connection
-		this.close().subscribe();
 
 		// Dispose all pending exchanges including inflight exchanges
 		if(this.respondingExchange != null) {
 			this.respondingExchange.dispose(cause, true);
 		}
+		this.exchangeQueue = null;
 		this.requestingExchange = null;
 		this.respondingExchange = null;
+		
+		// close the faulty connection
+		this.shutdown().subscribe();
 	}
 	
 	@Override
@@ -354,26 +415,14 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		else {
 			return ctx.writeAndFlush(msg, promise);
 		}
-
 		// Servers might not send response chunk while the request is being received (missing flush) this might be an issue for timeouts but also in general
-		/*try {
-			if(this.read) {
-				this.flush = true;
-				return ctx.write(msg, promise);
-			}
-			else {
-				return ctx.writeAndFlush(msg, promise);
-			}
-		}
-		finally {
-			if(this.requestTimeout != null) {
-				this.requestingExchange.lastModified = System.currentTimeMillis();
-			}
-		}*/
 	}
 
 	@Override
 	public <A extends ExchangeContext> Mono<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<A> endpointExchange) {
+		if(this.closed || this.closing) {
+			return Mono.error(new HttpClientException("Connection closed"));
+		}
 		return Mono.<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>>create(exchangeSink -> {
 			Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, this.supportsFileRegion, this.parameterConverter, endpointExchange.request());
 			
@@ -476,15 +525,15 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 						if(this.handler != null) {
 							this.handler.onError(timeoutError);
 						}
-						// close the faulty connection
-						Http1xConnection.this.close().subscribe();
-
 						// Dispose all pending exchanges including inflight exchanges
 						if(this.respondingExchange != null) {
 							this.respondingExchange.dispose(timeoutError, true);
 						}
 						this.requestingExchange = null;
 						this.respondingExchange = null;
+						
+						// close the faulty connection
+						Http1xConnection.this.shutdown().subscribe();
 
 						// Do not start the timeout since connection is closed
 						return;
@@ -532,6 +581,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	
 	@Override
 	public void exchangeStart(Http1xExchange exchange) {
+//		LOGGER.debug("Exchange start");
 		// This method MUST be invoked once for a given exchange
 		this.requestingExchange = exchange;
 		if(System.currentTimeMillis() - exchange.lastModified > this.requestTimeout) {
@@ -545,22 +595,24 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	
 	@Override
 	public void requestComplete(Http1xExchange exchange) {
-		// either we call requestcomplete twice for the same exchange or we set requestingExchange to null somewhere else
-		// my guess: we call it twice
-		// This method MUST be invoked once for a given exchange
-		this.lastRequestedExchange = this.requestingExchange;
-		this.requestingExchange = null;
-		if(this.lastRequestedExchange.next != null) {
-			this.lastRequestedExchange.next.start(this);
+//		LOGGER.debug("Exchange request complete");
+		if(exchange == this.requestingExchange) {
+			this.lastRequestedExchange = this.requestingExchange;
+			this.requestingExchange = null;
+			this.requestingExchange = null;
+			if(this.lastRequestedExchange.next != null) {
+				this.lastRequestedExchange.next.start(this);
+			}
 		}
 	}
 	
 	@Override
 	public void exchangeError(Http1xExchange exchange, Throwable t) {
-		// we have only one requesting exchange at a given time
-		// checking that it matches the exchange protects against multiple invocations
-		if(this.requestingExchange == exchange) {
+//		LOGGER.debug("Exchange error", t);
+		if(exchange == this.requestingExchange) {
+			// The faulty exchange is the current requesting exchange
 			if(this.requestingExchange.request().isHeadersWritten()) {
+				// We have sent a partial request, we can't know the connection state
 				try {
 					this.exceptionCaught(this.context, t);
 				}
@@ -569,67 +621,75 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				}
 			}
 			else {
-				// we just need to ignore the faulty exchange and start the next one since nothing was written
-				// the faulty exchange must be removed from the queue
-				
-				// Since we haven't written anything there is no need to reset the connection but we should dispose the exchange
-				this.requestingExchange.dispose(t, false);
-				if(exchange.isClose()) {
-					// Connection should already have been removed from the pool, make sure connection is closed
-					this.close().subscribe();
-				}
-				else {
-					// we can recycle the connection since a request has been processed
-					if(this.handler != null) {
-						this.handler.onExchangeTerminate(this.requestingExchange);
-					}
+				// We don't have initiated anything on the server so we can just ignore the exchange
+				this.requestingExchange.dispose(t);
+				// we can recycle the connection since the exchange has been processed
+				if(this.handler != null) {
+					this.handler.onExchangeTerminate(this.requestingExchange);
 				}
 				
-				if(this.requestingExchange == this.respondingExchange) {
+				if(exchange == this.respondingExchange) {
 					this.cancelTimeout();
 					this.respondingExchange = null;
 				}
 				if(this.lastRequestedExchange != null) {
-					this.lastRequestedExchange.next = this.requestingExchange.next;
+					this.lastRequestedExchange = this.requestingExchange.next;
 				}
-				
-				if(this.requestingExchange.next != null) {
-					this.requestingExchange.next.start(this);
-				}
+
+				Http1xExchange nextRequestingExchange = this.requestingExchange.next;
 				this.requestingExchange = null;
+				if(nextRequestingExchange != null) {
+					nextRequestingExchange.start(this);
+				}
 			}
+		}
+		else if(exchange == this.respondingExchange) {
+			// The faulty exchange is the current responding exchange
+			// just try to dispose it with the error, exchangeComplete() should be invoked eventually
+			this.respondingExchange.dispose(t);
 		}
 	}
 
 	@Override
 	public void exchangeComplete(Http1xExchange exchange) {
+//		LOGGER.debug("Exchange complete");
 		// we have only one responding exchange at a given time
 		// checking that it matches the exchange protects against multiple invocations
 		if(this.respondingExchange == exchange) {
 			this.cancelTimeout();
-			// We must dispose the exchange in order to free the response data publisher if it wasn't subscribed
-			// We received the complete response we can dispose the exchange
-			this.respondingExchange.dispose();
+			
 			// we can recycle the connection since a request has been processed
-			if(exchange.isClose()) {
+			if(this.respondingExchange.isClose()) {
+				// We must close the connection
+				this.respondingExchange.dispose(true);
 				// Connection should already have been removed from the pool, make sure connection is closed
-				this.close().subscribe();
+				this.shutdown().subscribe();
 			}
 			else {
+				// We must dispose the exchange in order to free the response data publisher if it wasn't subscribed
+				// We received the complete response we can dispose the exchange
+				this.respondingExchange.dispose();
 				// we can recycle the connection since a request has been processed
 				if(this.handler != null) {
-					this.handler.onExchangeTerminate(this.requestingExchange);
+					this.handler.onExchangeTerminate(this.respondingExchange);
+				}
+				
+				if(this.respondingExchange.next != null) {
+					this.respondingExchange = respondingExchange.next;
+					this.startTimeout();
+				}
+				else {
+					this.respondingExchange = null;
+					this.exchangeQueue = null;
+					this.tryNotifyGracefulShutdown();
 				}
 			}
-			
-			if(this.respondingExchange.next != null) {
-				this.respondingExchange = respondingExchange.next;
-				this.startTimeout();
-			}
-			else {
-				this.respondingExchange = null;
-				this.exchangeQueue = null;
-			}
 		}
+	}
+
+	@Override
+	public void exchangeReset(Http1xExchange exchange, long code) {
+//		LOGGER.debug("Exchange reset: code={}", code);
+		this.exchangeError(exchange, new HttpClientException("Exchange has been reset: " + code));
 	}
 }

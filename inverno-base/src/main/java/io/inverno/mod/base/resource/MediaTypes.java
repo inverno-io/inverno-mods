@@ -31,6 +31,21 @@ public final class MediaTypes {
 	private static final String TYPE_APPLICATION = "application";
 	
 	/**
+	 * {@code application/grpc}
+	 */
+	public static final String APPLICATION_GRPC = "application/grpc";
+	
+	/**
+	 * {@code application/grpc+json}
+	 */
+	public static final String APPLICATION_GRPC_JSON = "application/grpc+json";
+	
+	/**
+	 * {@code application/grpc+proto}
+	 */
+	public static final String APPLICATION_GRPC_PROTO = "application/grpc+proto";
+	
+	/**
 	 * {@code application/jose}
 	 */
 	public static final String APPLICATION_JOSE = "application/jose";

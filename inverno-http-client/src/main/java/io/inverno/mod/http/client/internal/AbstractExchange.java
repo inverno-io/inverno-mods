@@ -22,6 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.Future;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import reactor.core.Disposable;
 import reactor.core.publisher.MonoSink;
@@ -50,6 +51,8 @@ public abstract class AbstractExchange<A extends AbstractRequest, B extends Abst
 	protected B response;
 	protected AbstractExchange.Handler handler;
 	protected Disposable disposable;
+	
+	private Throwable disposeError;
 
 	/**
 	 * <p>
@@ -264,6 +267,7 @@ public abstract class AbstractExchange<A extends AbstractRequest, B extends Abst
 	 * @see AbstractResponse#dispose(java.lang.Throwable) 
 	 */
 	public void dispose(Throwable error) {
+		this.disposeError = error;
 		// dispose the subscription: data or file
 		if(this.disposable != null) {
 			this.disposable.dispose();
@@ -276,6 +280,16 @@ public abstract class AbstractExchange<A extends AbstractRequest, B extends Abst
 		else if(this.exchangeSink != null) {
 			this.exchangeSink.error(error != null ? error : new HttpClientException("Exchange disposed"));
 		}
+	}
+
+	@Override
+	public void reset(long code) {
+		this.handler.exchangeReset(this, code);
+	}
+
+	@Override
+	public Optional<Throwable> getCancelCause() {
+		return Optional.ofNullable(this.disposeError);
 	}
 	
 	/**
@@ -344,6 +358,21 @@ public abstract class AbstractExchange<A extends AbstractRequest, B extends Abst
 		 */
 		default void exchangeError(C exchange, Throwable t) {
 			this.exchangeComplete(exchange);
+		}
+		
+		/**
+		 * <p>
+		 * Notifies that the exchange has been reset.
+		 * </p>
+		 * 
+		 * <p>
+		 * This means that the request and might be partially sent and/or the response partially received. This can lead to the connection being closed (HTTP/1.x) or the stream reset (HTTP/2).
+		 * </p>
+		 * 
+		 * @param exchange the exchange
+		 */
+		default void exchangeReset(C exchange, long code) {
+			
 		}
 	}
 }

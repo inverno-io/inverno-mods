@@ -419,8 +419,10 @@ public final class URIs {
 	 * @param charset   a charset
 	 *
 	 * @return a decoded component
+	 * 
+	 * @throws URIBuilderException if there was an error decoding the component
 	 */
-	static String decodeURIComponent(String component, Charset charset) {
+	static String decodeURIComponent(String component, Charset charset) throws URIBuilderException {
 		Objects.requireNonNull(charset, "charset");
 		boolean needToChange = false;
 		int numChars = component.length();
@@ -459,8 +461,7 @@ public final class URIs {
 					}
 					result.append(new String(bytes, 0, pos, charset));
 				} catch (NumberFormatException e) {
-					throw new IllegalArgumentException(
-							"URLDecoder: Illegal hex characters in escape (%) pattern - " + e.getMessage());
+					throw new URIBuilderException("Illegal hex characters in escape (%) pattern - " + e.getMessage());
 				}
 				needToChange = true;
 			} else {
@@ -481,9 +482,9 @@ public final class URIs {
 	 * @param escapedCharacters an escaped characters pedicate
 	 * @param charset           a charset
 	 *
-	 * @return an encoded URI component
+	 * @return an encoded URI component if there was an error endoding the component
 	 */
-	static String encodeURIComponent(String component, Predicate<Integer> escapedCharacters, Charset charset) {
+	static String encodeURIComponent(String component, Predicate<Integer> escapedCharacters, Charset charset) throws URIBuilderException {
 		if (escapedCharacters == null) {
 			return component;
 		}
@@ -577,7 +578,7 @@ public final class URIs {
 
 	/**
 	 * <p>
-	 * checks that the specified component is valid against the specified allowed characters predicate.
+	 * Checks that the specified component is valid against the specified allowed characters predicate.
 	 * </p>
 	 *
 	 * @param component         the component to check
@@ -585,8 +586,10 @@ public final class URIs {
 	 * @param charset           a charset
 	 *
 	 * @return the component if it is valid
+	 * 
+	 * @throws URIBuilderException if the component is invalid
 	 */
-	static String checkURIComponent(String component, Predicate<Integer> allowedCharacters, Charset charset) {
+	static String checkURIComponent(String component, Predicate<Integer> allowedCharacters, Charset charset) throws URIBuilderException {
 		if (allowedCharacters == null) {
 			return component;
 		}

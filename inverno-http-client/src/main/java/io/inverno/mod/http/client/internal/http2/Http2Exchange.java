@@ -77,7 +77,46 @@ class Http2Exchange extends AbstractHttp2Exchange {
 
 	@Override
 	public Http2Stream getStream() {
-		return stream;
+		return this.stream;
+	}
+	
+	/**
+	 * <p>
+	 * Returns or creates the exchange stream which also notify exchange start.
+	 * </p>
+	 * 
+	 * <p>
+	 * HTTP/2 requires streams to be created in sequence and a server will reject frames from a stream with id {@code x} if it already opened stream {@code y} with {@code x<y} as a result we must 
+	 * create stream right before sending the header frame.
+	 * </p>
+	 * 
+	 * <p>
+	 * The connection is notified that the exchange has started when the stream is created.
+	 * </p>
+	 * 
+	 * @return the exchange stream or the newly created stream
+	 */
+	private Http2Stream getOrStartStream() {
+		if(this.stream == null) {
+			// Create the stream
+			try {
+				int streamId = this.localEndpoint.lastStreamCreated();
+				if(streamId == 0) {
+					streamId = 1;
+				}
+				else {
+					streamId += 2;
+				}
+				this.stream = this.localEndpoint.createStream(streamId, false);
+			}
+			catch(Http2Exception e) {
+				throw new HttpClientException(e);
+			}
+			finally {
+				this.handler.exchangeStart(this);
+			}
+		}
+		return this.stream;
 	}
 
 	@Override
@@ -88,23 +127,6 @@ class Http2Exchange extends AbstractHttp2Exchange {
 	// this is executed in event loop
 	@Override
 	protected void doStart() throws HttpClientException {
-		// Create the stream
-		try {
-			int streamId = this.localEndpoint.lastStreamCreated();
-			if(streamId == 0) {
-				streamId = 1;
-			}
-			else {
-				streamId += 2;
-			}
-			this.stream = this.localEndpoint.createStream(streamId, false);
-		}
-		catch(Http2Exception e) {
-			throw new HttpClientException(e);
-		}
-		
-		this.handler.exchangeStart(this);
-		
 		if(this.request.body() == null) {
 			// no need to subscribe
 			Http2RequestHeaders headers = ((Http2Request)this.request).headers();
@@ -116,8 +138,10 @@ class Http2Exchange extends AbstractHttp2Exchange {
 				else {
 					this.handler.exchangeError(this, future.cause());
 				}
-			});
-			Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.getUnderlyingHeaders()), 0, true, finalizePromise);
+			}); 
+			// The stream must be created right before sending the headers otherwise we might break the stream id sequence (e.g. send stream 3 before stream 1)
+			Http2Stream http2Stream = this.getOrStartStream();
+			Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, http2Stream.id(), Http2Exchange.this.fixHeaders(headers.getUnderlyingHeaders()), 0, true, finalizePromise);
 			headers.setWritten(true);
 			this.context.channel().flush();
 		}
@@ -195,19 +219,23 @@ class Http2Exchange extends AbstractHttp2Exchange {
 							this.hookOnError(future.cause());
 						}
 					});
+					// The stream must be created right before sending the headers otherwise we might break the stream id sequence (e.g. send stream 3 before stream 1)
+					Http2Stream http2Stream = Http2Exchange.this.getOrStartStream();
 					if(!headers.isWritten()) {
-						Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.getUnderlyingHeaders()), 0, false, Http2Exchange.this.context.voidPromise());
+						Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, http2Stream.id(), Http2Exchange.this.fixHeaders(headers.getUnderlyingHeaders()), 0, false, Http2Exchange.this.context.voidPromise());
 						headers.setWritten(true);
 						if(this.singleChunk != null) {
-							Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), this.singleChunk, 0, false, Http2Exchange.this.context.voidPromise());
+							Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, http2Stream.id(), this.singleChunk, 0, false, Http2Exchange.this.context.voidPromise());
 							this.singleChunk = null;
 						}
-						Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), value, 0, false, nextPromise);
+						Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, http2Stream.id(), value, 0, false, nextPromise);
+						Http2Exchange.this.context.channel().flush();
 					}
 					else {
-						Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), value, 0, false, nextPromise);
+						Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, http2Stream.id(), value, 0, false, nextPromise);
+						Http2Exchange.this.context.channel().flush();
 					}
-					Http2Exchange.this.context.channel().flush();
+					
 				}
 			})
 			.addListener(future -> {
@@ -232,34 +260,40 @@ class Http2Exchange extends AbstractHttp2Exchange {
 						Http2Exchange.this.handler.exchangeError(Http2Exchange.this, future.cause());
 					}
 				});
+				// The stream must be created right before sending the headers otherwise we might break the stream id sequence (e.g. send stream 3 before stream 1)
+				Http2Stream http2Stream = Http2Exchange.this.getOrStartStream();
 				if(this.transferedLength == 0) {
 					// empty response
 					if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
 						headers.contentLength(0);
 					}
-					Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.getUnderlyingHeaders()), 0, true, finalizePromise);
+					Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, http2Stream.id(), Http2Exchange.this.fixHeaders(headers.getUnderlyingHeaders()), 0, true, finalizePromise);
 					headers.setWritten(true);
+					Http2Exchange.this.context.channel().flush();
 				}
 				else if(this.singleChunk != null) {
 					// single
 					if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
 						headers.contentLength(this.transferedLength);
 					}
-					Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Http2Exchange.this.fixHeaders(headers.getUnderlyingHeaders()), 0, false, Http2Exchange.this.context.voidPromise());
-					Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), this.singleChunk, 0, true, finalizePromise);
+					Http2Exchange.this.encoder.writeHeaders(Http2Exchange.this.context, http2Stream.id(), Http2Exchange.this.fixHeaders(headers.getUnderlyingHeaders()), 0, false, Http2Exchange.this.context.voidPromise());
 					headers.setWritten(true);
+					Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, http2Stream.id(), this.singleChunk, 0, true, finalizePromise);
+					Http2Exchange.this.context.channel().flush();
 				}
 				else {
 					// many
-					Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, Http2Exchange.this.stream.id(), Unpooled.EMPTY_BUFFER, 0, true, finalizePromise);
+					Http2Exchange.this.encoder.writeData(Http2Exchange.this.context, http2Stream.id(), Unpooled.EMPTY_BUFFER, 0, true, finalizePromise);
+					Http2Exchange.this.context.channel().flush();
 				}
-				Http2Exchange.this.context.channel().flush();
 			});
 		}
 
 		@Override
 		protected void hookOnError(Throwable throwable) {
 			Http2Exchange.this.executeInEventLoop(() -> {
+				// Make sure we have a stream and that exchange has been started
+				Http2Exchange.this.getOrStartStream();
 				Http2Exchange.this.handler.exchangeError(Http2Exchange.this, throwable);
 			});
 		}

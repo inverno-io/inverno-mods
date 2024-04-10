@@ -17,11 +17,12 @@ package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
+import io.inverno.mod.http.client.HttpClientConfiguration;
 import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * Represents an HTTP connection to an endpoint.
+ * Represents an HTTP client connection.
  * </p>
  * 
  * <p>
@@ -83,14 +84,36 @@ public interface HttpConnection {
 	
 	/**
 	 * <p>
-	 * Closes the connection.
+	 * Shutdowns the connection right away.
 	 * </p>
 	 * 
 	 * @return a mono that completes when the connection is closed
 	 */
-	Mono<Void> close();
+	Mono<Void> shutdown();
 	
-	// TODO shutdown gracefully
+	/**
+	 * <p>
+	 * Gracefully shutdown the connection.
+	 * </p>
+	 * 
+	 * <p>
+	 * This basically waits for the inflight exchange to complete before closing the connection.
+	 * </p>
+	 * 
+	 * @return a mono that completes when the connection is closed
+	 * 
+	 * @see HttpClientConfiguration#graceful_shutdown_timeout() 
+	 */
+	Mono<Void> shutdownGracefully();
+	
+	/**
+	 * <p>
+	 * Determines whether the connection is closed.
+	 * </p>
+	 * 
+	 * @return true if the connection is closed, false otherwise
+	 */
+	boolean isClosed();
 	
 	/**
 	 * <p>

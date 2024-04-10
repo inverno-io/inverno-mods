@@ -15,6 +15,8 @@
  */
 package io.inverno.mod.web.server.internal;
 
+import io.inverno.mod.base.net.URIBuilderException;
+import io.inverno.mod.http.base.BadRequestException;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.web.server.spi.PathAware;
@@ -153,7 +155,15 @@ class PathRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extend
 		} 
 		else {
 			// Path in the request headers is normalized as per API specification
-			RoutingLink<A, B, ?, C> handler = this.handlers.get(exchange.request().getPathAbsolute());
+			RoutingLink<A, B, ?, C> handler;
+			try {
+				handler = this.handlers.get(exchange.request().getPathAbsolute());
+			}
+			catch(URIBuilderException e) {
+				// Path can be invalid in which case this is a client error
+				throw new BadRequestException(e);
+			}
+			
 			if (handler == null) {
 				handler = this.nextLink;
 			}

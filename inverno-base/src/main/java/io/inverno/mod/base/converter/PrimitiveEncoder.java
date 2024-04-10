@@ -19,6 +19,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
@@ -263,6 +264,16 @@ public interface PrimitiveEncoder<To> extends Encoder<Object, To> {
 	 * @throws ConverterException if there was an error encoding the value
 	 */
 	To encode(InetAddress value) throws ConverterException;
+	
+	/**
+	 * <p>Encodes inet socket address.</p>
+	 * 
+	 * @param value the value to encode
+	 * 
+	 * @return an encoded value
+	 * @throws ConverterException if there was an error encoding the value
+	 */
+	To encode(InetSocketAddress value) throws ConverterException;
 
 	/**
 	 * <p>Encodes class.</p>

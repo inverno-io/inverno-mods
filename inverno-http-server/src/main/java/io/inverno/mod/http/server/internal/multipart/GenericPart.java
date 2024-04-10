@@ -136,8 +136,11 @@ class GenericPart implements Part {
 				}
 			);
 		}
+		else if(error != null) {
+			this.dataSink.tryEmitError(error);
+		}
 		else {
-			this.dataSink.tryEmitError(error != null ? error : new IllegalStateException("Part was disposed") );
+			this.dataSink.tryEmitComplete();
 		}
 		this.disposed = true;
 	}

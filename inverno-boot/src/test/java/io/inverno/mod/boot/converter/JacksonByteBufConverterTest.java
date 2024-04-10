@@ -15,7 +15,11 @@
  */
 package io.inverno.mod.boot.converter;
 
-import io.inverno.mod.boot.converter.JacksonByteBufConverter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.inverno.mod.base.converter.ConverterException;
+import io.inverno.mod.boot.Person;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
@@ -24,17 +28,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.inverno.mod.base.converter.ConverterException;
-import io.inverno.mod.boot.Person;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

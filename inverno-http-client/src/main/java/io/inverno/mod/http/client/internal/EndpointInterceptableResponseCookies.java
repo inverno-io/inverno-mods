@@ -65,12 +65,14 @@ public class EndpointInterceptableResponseCookies implements OutboundSetCookies 
 
 	@Override
 	public OutboundSetCookies addCookie(Consumer<SetCookie.Configurator> configurer) {
-		SetCookieCodec.SetCookie setCookie = new SetCookieCodec.SetCookie();
-		configurer.accept(setCookie);
-		setCookie.setHeaderValue(this.headerService.encodeValue(setCookie));
-		this.responseHeaders.add(setCookie);
-		if(this.pairs != null) {
-			this.pairs.computeIfAbsent(setCookie.getName(), ign -> new ArrayList<>()).add(new GenericSetCookieParameter(setCookie, this.parameterConverter));
+		if(configurer != null) {
+			SetCookieCodec.SetCookie setCookie = new SetCookieCodec.SetCookie();
+			configurer.accept(setCookie);
+			setCookie.setHeaderValue(this.headerService.encodeValue(setCookie));
+			this.responseHeaders.add(setCookie);
+			if(this.pairs != null) {
+				this.pairs.computeIfAbsent(setCookie.getName(), ign -> new ArrayList<>()).add(new GenericSetCookieParameter(setCookie, this.parameterConverter));
+			}
 		}
 		return this;
 	}

@@ -27,7 +27,7 @@ import java.util.function.Consumer;
  * </p>
  * 
  * <p>
- * An inbound response is received by a client in a client exchange.
+ * An outbound request is sent by a client in a client exchange.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

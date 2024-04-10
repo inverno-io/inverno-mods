@@ -52,11 +52,11 @@ class GenericWebRouteInterceptor implements Cloneable, WebRouteInterceptor<Excha
 	
 	private Method method;
 	
-	private String produce;
-	private Headers.Accept.MediaRange produceMediaRange;
-	
 	private String consume;
 	private Headers.Accept.MediaRange consumeMediaRange;
+	
+	private String produce;
+	private Headers.Accept.MediaRange produceMediaRange;
 	
 	private String language;
 	private Headers.AcceptLanguage.LanguageRange languageRange;

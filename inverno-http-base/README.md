@@ -42,12 +42,13 @@ compile 'io.inverno.mod:inverno-http-base:${VERSION_INVERNO_MODS}'
 ...
 ```
 
-The *http-base* module is usually provided as a transitive dependency by other HTTP modules, the *http-server* module or the *web* module in particular, so this might not be necessary.
+The *http-base* module is usually provided as a transitive dependency by other HTTP modules, the *http-client*, *http-server* or the *web* modules in particular, so it might not be necessary to include it explicitly.
 
 ## HTTP base API
 
-The base HTTP API defines common classes and interfaces for implementing applications or modules using HTTP/1.x or HTTP/2 protocols. This includes:
+The base HTTP base API defines common classes and interfaces for implementing applications or modules using HTTP/1.x or HTTP/2 protocols. This includes:
 
+- common HTTP exchange API
 - HTTP methods and status enumerations
 - Exception bindings for HTTP errors: `BadRequestException`, `InternalServerErrorException`...
 - basic building blocks such as `Parameter` which defines the base interface for any HTTP component that can be represented as a key/value pair (eg. query parameter, header, cookie...)
@@ -66,7 +67,8 @@ The `HeaderService` interface defines method to decode/encode `Header` object fr
 For instance, a `content-type` header can be parsed as follows:
 
 ```java
-HeaderService headerService = ...
+Base httpBase = ...
+HeaderService headerService = httpBase.headerService();
 
 Headers.ContentType contentType = headerService.<Headers.ContentType>decode("content-type", "application/xml;charset=utf-8");
 

@@ -46,6 +46,7 @@ import org.reactivestreams.Publisher;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.inverno.mod.base.Charsets;
+import java.net.InetSocketAddress;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -497,6 +498,14 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 		}
 		return this.stringConverter.decodeInetAddress(value.toString(this.charset));
 	}
+	
+	@Override
+	public InetSocketAddress decodeInetSocketAddress(ByteBuf value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return this.stringConverter.decodeInetSocketAddress(value.toString(this.charset));
+	}
 
 	@Override
 	public Class<?> decodeClass(ByteBuf value) throws ConverterException {
@@ -858,6 +867,14 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 	}
 
 	@Override
+	public ByteBuf encode(InetSocketAddress value) throws ConverterException {
+		if(value == null) {
+			return null;
+		}
+		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
+	}
+	
+	@Override
 	public ByteBuf encode(Class<?> value) throws ConverterException {
 		if(value == null) {
 			return null;
@@ -865,7 +882,7 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 		return Unpooled.unreleasableBuffer(Unpooled.copiedBuffer(this.stringConverter.encode(value), this.charset));
 	}
 
-	private class ObjectScanner<T> {
+	/*private class ObjectScanner<T> {
 		
 		private Type type;
 		
@@ -957,6 +974,65 @@ public class ByteBufConverter implements ReactiveConverter<ByteBuf, Object>, Obj
 				this.inputBuffer.release();
 				this.inputBuffer = null;
 			}
+		}
+	}*/
+	
+	private class ObjectScanner<T> {
+		
+		private final Type type;
+		
+		private ByteBuf inputBuffer;
+		
+		private boolean endOfInput;
+		
+		@SuppressWarnings("unused")
+		public ObjectScanner(Class<T> type) {
+			this((Type)type);
+		}
+		
+		public ObjectScanner(Type type) {
+			this.type = type;
+		}
+		
+		public void feedInput(ByteBuf chunk) {
+			if(this.inputBuffer != null) {
+				this.inputBuffer = Unpooled.wrappedBuffer(this.inputBuffer, chunk);
+			}
+			else {
+				this.inputBuffer = chunk;
+			}
+		}
+		
+		public void endOfInput() {
+			this.endOfInput = true;
+		}
+		
+		public T nextObject() {
+			if(this.inputBuffer == null) {
+				return null;
+			}
+			
+			for(int i=this.inputBuffer.readerIndex();i<this.inputBuffer.writerIndex();i++) {
+				byte nextByte = this.inputBuffer.getByte(i);
+				if(nextByte == ByteBufConverter.this.arrayListSeparator) {
+					T object = ByteBufConverter.this.decode(this.inputBuffer.readRetainedSlice(i - this.inputBuffer.readerIndex()), this.type);
+					this.inputBuffer.readerIndex(i + 1);
+					return object;
+				}
+			}
+			
+			if(this.inputBuffer.isReadable()) {
+				if(this.endOfInput) {
+					T object = ByteBufConverter.this.decode(this.inputBuffer, this.type);
+					this.inputBuffer = null;
+					return object;
+				}
+			}
+			else {
+				this.inputBuffer.release();
+				this.inputBuffer = null;
+			}
+			return null;
 		}
 	}
 }

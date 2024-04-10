@@ -44,8 +44,6 @@ public class FlatHttpRequest implements HttpRequest, HttpContent {
 	
 	protected DecoderResult result = DecoderResult.SUCCESS;
 	
-	private boolean empty;
-
 	/**
 	 * <p>
 	 * Creates a flat HTTP request.
@@ -66,11 +64,9 @@ public class FlatHttpRequest implements HttpRequest, HttpContent {
 	 * @param method  the HTTP method
 	 * @param uri     the request URI
 	 * @param headers the HTTP headers
-	 * @param empty   true to create an empty request, false otherwise
 	 */
-	public FlatHttpRequest(HttpVersion version, HttpMethod method, String uri, HttpHeaders headers, boolean empty) {
+	public FlatHttpRequest(HttpVersion version, HttpMethod method, String uri, HttpHeaders headers) {
 		this(version, method, uri, headers, Unpooled.EMPTY_BUFFER);
-		this.empty = empty;
 	}
 
 	/**
@@ -90,18 +86,6 @@ public class FlatHttpRequest implements HttpRequest, HttpContent {
 		this.version = version;
 		this.headers = headers;
 		this.content = content;
-		this.empty = content.readableBytes() == 0;
-	}
-	
-	/**
-	 * <p>
-	 * Determines whether the request is empty.
-	 * </p>
-	 * 
-	 * @return true if the request has no content, false otherwise
-	 */
-	public boolean isEmpty() {
-		return empty;
 	}
 	
 	@Override

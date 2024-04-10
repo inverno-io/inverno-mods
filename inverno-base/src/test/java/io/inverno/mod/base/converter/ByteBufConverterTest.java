@@ -22,6 +22,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -43,6 +44,7 @@ import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -210,6 +212,9 @@ public class ByteBufConverterTest {
 		InetAddress inetAddress_value = InetAddress.getLocalHost();
 		Assertions.assertEquals(inetAddress_value, CONVERTER.decode(CONVERTER.encode(inetAddress_value), InetAddress.class));
 		
+		InetSocketAddress inetSocketAddress_value = new InetSocketAddress("1.2.3.4", 1234);
+		Assertions.assertEquals(inetSocketAddress_value, CONVERTER.decode(CONVERTER.encode(inetSocketAddress_value), InetSocketAddress.class));
+		
 		Class<?> class_value = List.class;
 		Assertions.assertEquals(class_value, CONVERTER.decode(CONVERTER.encode(class_value), Class.class));
 	}
@@ -247,21 +252,21 @@ public class ByteBufConverterTest {
 		
 		Publisher<Integer> out = CONVERTER.decodeOne(in, Integer.class);
 		
-		Assertions.assertEquals(123456789, Mono.from(out).block());
+		Assertions.assertEquals(Integer.valueOf(123456789), Mono.from(out).block());
 	}
 	
 	@Test
 	public void testDecodeMany() {
-		Flux<ByteBuf> in = Flux.just(Unpooled.copiedBuffer("12,3", Charsets.DEFAULT), Unpooled.copiedBuffer("4,56,", Charsets.DEFAULT), Unpooled.copiedBuffer("78,9", Charsets.DEFAULT));
+		Flux<ByteBuf> in1 = Flux.just("12,3","4,56,","78,9").map(s -> Unpooled.copiedBuffer(s, Charsets.DEFAULT));
+		Publisher<Integer> out1 = CONVERTER.decodeMany(in1, Integer.class);
+		Assertions.assertEquals(List.of(12, 34, 56,78, 9), Flux.from(out1).collectList().block());
+				
+		Flux<ByteBuf> in2 = Flux.just("a,b,","c,","d,").map(s -> Unpooled.copiedBuffer(s, Charsets.DEFAULT));
+		Publisher<String> out2 = CONVERTER.decodeMany(in2, String.class);
+		Assertions.assertEquals(List.of("a", "b", "c", "d"), Flux.from(out2).collectList().block());
 		
-		Publisher<Integer> out = CONVERTER.decodeMany(in, Integer.class);
-		
-		List<Integer> outList = Flux.from(out).collectList().block();
-		
-		Assertions.assertEquals(12, outList.get(0));
-		Assertions.assertEquals(34, outList.get(1));
-		Assertions.assertEquals(56, outList.get(2));
-		Assertions.assertEquals(78, outList.get(3));
-		Assertions.assertEquals(9, outList.get(4));
+		Flux<ByteBuf> in3 = Flux.just("ab","c","d").map(s -> Unpooled.copiedBuffer(s, Charsets.DEFAULT));
+		Publisher<String> out3 = CONVERTER.decodeMany(in3, String.class);
+		Assertions.assertEquals(List.of("abcd"), Flux.from(out3).collectList().block());
 	}
 }

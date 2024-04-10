@@ -35,7 +35,7 @@ import reactor.core.publisher.Sinks;
  */
 public class HttpConnectionResponseBody implements ResponseBody {
 
-	Sinks.Many<ByteBuf> dataSink;
+	final Sinks.Many<ByteBuf> dataSink;
 	private boolean subscribed;
 	private boolean disposed;
 	
@@ -90,20 +90,25 @@ public class HttpConnectionResponseBody implements ResponseBody {
 	 * @param error an error or null
 	 */
 	void dispose(Throwable error) {
-		if(!this.subscribed) {
-			// Try to drain and release buffered data 
-			// when the datasink was already subscribed data are released in doOnDiscard
-			this.dataSink.asFlux().subscribe(
-				chunk -> chunk.release(), 
-				ex -> {
-					// TODO Should be ignored but can be logged as debug or trace log
-				}
-			);
+		if(!this.disposed) {
+			if(!this.subscribed) {
+				// Try to drain and release buffered data 
+				// when the datasink was already subscribed data are released in doOnDiscard
+				this.dataSink.asFlux().subscribe(
+					chunk -> chunk.release(), 
+					ex -> {
+						// TODO Should be ignored but can be logged as debug or trace log
+					}
+				);
+			}
+			else if(error != null) {
+				this.dataSink.tryEmitError(error);
+			}
+			else {
+				this.dataSink.tryEmitComplete();
+			}
+			this.disposed = true;
 		}
-		else {
-			this.dataSink.tryEmitError(error != null ? error : new IllegalStateException("Response was disposed") );
-		}
-		this.disposed = true;
 	}
 	
 	@Override

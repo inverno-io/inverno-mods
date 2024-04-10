@@ -80,7 +80,7 @@ public class GenericHeaderService implements HeaderService {
 		this.setHeaderCodecs(codecs);
 		this.defaultCodec = this.codecs.get("*");
 		if(this.defaultCodec == null) {
-			this.defaultCodec = new GenericHeaderCodec<>(GenericHeader.Builder::new, Set.of("*"));
+			this.defaultCodec = new GenericHeaderCodec<>(GenericHeader.SimpleHeaderBuilder::new, Set.of("*"));
 		}
 	}
 	
@@ -93,7 +93,7 @@ public class GenericHeaderService implements HeaderService {
 	 *
 	 * @throws IllegalArgumentException if multiple codecs supporting the same header name have been specified.
 	 */
-	public void setHeaderCodecs(List<HeaderCodec<?>> codecs) {
+	public final void setHeaderCodecs(List<HeaderCodec<?>> codecs) {
 		this.codecs = new HashMap<>();
 		if(codecs != null) {
 			for(HeaderCodec<?> codec : codecs) {
@@ -214,7 +214,7 @@ public class GenericHeaderService implements HeaderService {
 			 
 			if(nextByte == ':') {
 				endIndex = buffer.readerIndex() - 1;
-				if(startIndex == endIndex) {
+				if(startIndex.equals(endIndex)) {
 					buffer.readerIndex(readerIndex);
 					throw new MalformedHeaderException("Malformed Header: empty name");
 				}
@@ -250,7 +250,7 @@ public class GenericHeaderService implements HeaderService {
 			
 			if(nextChar == ':') {
 				endIndex = i;
-				if(startIndex == endIndex) {
+				if(startIndex.equals(endIndex)) {
 					throw new MalformedHeaderException("Malformed Header: empty name");
 				}
 				return new String[] {header.substring(startIndex, endIndex).toLowerCase(), header.substring(i+1)};

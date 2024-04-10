@@ -38,6 +38,8 @@ abstract class AbstractErrorWebManager<A extends AbstractErrorWebManager<A>> {
 	protected Set<String> paths;
 	protected Set<URIPattern> pathPatterns;
 
+	protected Set<String> consumes;
+	
 	protected Set<String> produces;
 
 	protected Set<String> languages;
@@ -86,6 +88,16 @@ abstract class AbstractErrorWebManager<A extends AbstractErrorWebManager<A>> {
 		return (A)this;
 	}
 
+	@SuppressWarnings("unchecked")
+	public A consumes(String mediaRange) {
+		Objects.requireNonNull(mediaRange);
+		if (this.consumes == null) {
+			this.consumes = new LinkedHashSet<>();
+		}
+		this.consumes.add(mediaRange);
+		return (A)this;
+	}
+	
 	@SuppressWarnings("unchecked")
 	public A produces(String mediaType) {
 		if(this.produces == null) {

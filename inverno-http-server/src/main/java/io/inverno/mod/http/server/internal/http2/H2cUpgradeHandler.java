@@ -80,7 +80,7 @@ public class H2cUpgradeHandler extends ChannelInboundHandlerAdapter {
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		this.upgrading |= msg instanceof HttpRequest && ((HttpRequest) msg).headers().contains(Headers.NAME_UPGRADE, Headers.VALUE_UPGRADE_H2C, true);
 		if(!this.upgrading) {
-			// Not an H2C upgrade request: forward to http1xHandler
+			// Not an H2C upgrade request: forward to http1x connection
 			ctx.fireChannelRead(msg);
 			return;
 		}

@@ -21,7 +21,7 @@ import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.web.server.ErrorWebExchange;
 import io.inverno.mod.web.server.WebRequest;
 import io.inverno.mod.web.server.WebResponse;
-import java.util.function.Consumer;
+import java.util.Optional;
 import reactor.core.publisher.Mono;
 
 /**
@@ -37,29 +37,23 @@ import reactor.core.publisher.Mono;
 class GenericErrorWebExchange implements ErrorWebExchange<ExchangeContext> {
 
 	private final ErrorExchange<ExchangeContext> errorExchange;
-	
 	private final GenericWebRequest request;
-	
 	private final GenericWebResponse response;
 	
-	private final Throwable error;
-	
-	private final ExchangeContext context;
-	
-	private final Consumer<Mono<Void>> finalizerConsumer;
-	
-	public GenericErrorWebExchange(ErrorExchange<ExchangeContext> errorExchange, GenericWebRequest request, GenericWebResponse response, Throwable error, ExchangeContext context, Consumer<Mono<Void>> finalizerConsumer) {
+	public GenericErrorWebExchange(ErrorExchange<ExchangeContext> errorExchange, GenericWebRequest request, GenericWebResponse response) {
 		this.errorExchange = errorExchange;
 		this.request = request;
 		this.response = response;
-		this.error = error;
-		this.context = context;
-		this.finalizerConsumer = finalizerConsumer;
 	}
 
 	@Override
 	public HttpVersion getProtocol() {
 		return this.errorExchange.getProtocol();
+	}
+	
+	@Override
+	public ExchangeContext context() {
+		return this.errorExchange.context();
 	}
 	
 	@Override
@@ -71,19 +65,24 @@ class GenericErrorWebExchange implements ErrorWebExchange<ExchangeContext> {
 	public WebResponse response() {
 		return this.response;
 	}
-	
+
 	@Override
-	public Throwable getError() {
-		return this.error;
+	public void reset(long code) {
+		this.errorExchange.reset(code);
+	}
+
+	@Override
+	public Optional<Throwable> getCancelCause() {
+		return this.errorExchange.getCancelCause();
 	}
 	
 	@Override
-	public ExchangeContext context() {
-		return this.context;
+	public Throwable getError() {
+		return this.errorExchange.getError();
 	}
 	
 	@Override
 	public void finalizer(Mono<Void> finalizer) {
-		this.finalizerConsumer.accept(finalizer);
+		this.errorExchange.finalizer(finalizer);
 	}
 }

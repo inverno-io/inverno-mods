@@ -22,6 +22,7 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
@@ -295,6 +296,11 @@ public class StringCompositeConverter extends CompositeConverter<String> impleme
 	}
 
 	@Override
+	public InetSocketAddress decodeInetSocketAddress(String value) throws ConverterException {
+		return super.decode(value, InetSocketAddress.class);
+	}
+
+	@Override
 	public Class<?> decodeClass(String value) throws ConverterException {
 		return super.decode(value, Class.class);
 	}
@@ -476,6 +482,11 @@ public class StringCompositeConverter extends CompositeConverter<String> impleme
 		return super.encode(value);
 	}
 
+	@Override
+	public String encode(InetSocketAddress value) throws ConverterException {
+		return super.encode(value);
+	}
+	
 	@Override
 	public String encode(Class<?> value) throws ConverterException {
 		return super.encode(value);

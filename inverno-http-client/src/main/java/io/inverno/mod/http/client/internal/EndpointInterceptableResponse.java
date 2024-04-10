@@ -104,10 +104,9 @@ public class EndpointInterceptableResponse implements InterceptableResponse, Res
 	@Override
 	public InterceptableResponse headers(Consumer<OutboundResponseHeaders> headersConfigurer) throws IllegalStateException {
 		this.checkNotConnected();
-		if(this.responseHeaders == null) {
-			this.responseHeaders = new EndpointInterceptableResponseHeaders(headerService, parameterConverter);
+		if(headersConfigurer != null) {
+			headersConfigurer.accept((OutboundResponseHeaders)this.headers());
 		}
-		headersConfigurer.accept(this.responseHeaders);
 		return this;
 	}
 
@@ -133,10 +132,9 @@ public class EndpointInterceptableResponse implements InterceptableResponse, Res
 	@Override
 	public InterceptableResponse trailers(Consumer<OutboundHeaders<?>> trailersConfigurer) throws IllegalStateException {
 		this.checkNotConnected();
-		if(this.responseTrailers == null) {
-			this.responseTrailers = new EndpointInterceptableResponseTrailers(headerService, parameterConverter);
+		if(trailersConfigurer != null) {
+			trailersConfigurer.accept((OutboundHeaders<?>)this.trailers());
 		}
-		trailersConfigurer.accept(this.responseTrailers);
 		return this;
 	}
 

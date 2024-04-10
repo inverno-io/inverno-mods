@@ -85,7 +85,9 @@ public abstract class AbstractPart<A> implements Part<A> {
 
 	@Override
 	public AbstractPart<A> headers(Consumer<OutboundRequestHeaders> headersConfigurer) {
-		headersConfigurer.accept(this.headers);
+		if(headersConfigurer != null) {
+			headersConfigurer.accept(this.headers);
+		}
 		return this;
 	}
 	

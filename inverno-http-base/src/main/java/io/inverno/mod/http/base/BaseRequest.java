@@ -33,7 +33,7 @@ import java.util.Optional;
  *
  * <p>
  * Considering a client exchange, where the request is created and sent from the client to the server, implementation shall provide methods to set HTTP request content. Considering a server exchange,
- * where the request is received by the server from the client, implementation shall only provide methods to access HTTP request content.
+ * where the request is received by the server from the client, implementation shall provide methods to access HTTP request content.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>

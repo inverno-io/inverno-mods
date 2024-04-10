@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 import io.inverno.mod.configuration.AbstractConfigurationSource;
 import io.inverno.mod.configuration.ConfigurationKey;
 import io.inverno.mod.configuration.ConfigurationProperty;
+import java.net.InetSocketAddress;
 
 /**
  * <p>
@@ -263,6 +264,11 @@ public class GenericConfigurationProperty<A extends ConfigurationKey, B extends 
 	@Override
 	public Optional<InetAddress> asInetAddress() {
 		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeInetAddress(this.value) : null);
+	}
+	
+	@Override
+	public Optional<InetSocketAddress> asInetSocketAddress() {
+		return Optional.ofNullable(this.value != null ? this.source.getDecoder().decodeInetSocketAddress(this.value) : null);
 	}
 
 	@Override

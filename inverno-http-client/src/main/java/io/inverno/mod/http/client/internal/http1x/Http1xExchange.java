@@ -120,7 +120,7 @@ class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Htt
 			this.request.body().getFileRegionData().ifPresentOrElse(
 				fileRegionData -> {
 					Http1xRequestHeaders headers = this.request.headers();
-					this.encoder.writeFrame(Http1xExchange.this.context, new FlatHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), this.fixHeaders(headers.getUnderlyingHeaders()), false), Http1xExchange.this.context.voidPromise());
+					this.encoder.writeFrame(Http1xExchange.this.context, new FlatHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), this.fixHeaders(headers.getUnderlyingHeaders())), Http1xExchange.this.context.voidPromise());
 					headers.setWritten(true);
 
 					Http1xExchange.FileRegionDataSubscriber fileRegionSubscriber = new Http1xExchange.FileRegionDataSubscriber();

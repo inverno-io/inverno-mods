@@ -17,18 +17,22 @@ package io.inverno.mod.http.server.internal.http2;
 
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.HttpServerConfiguration;
+import io.inverno.mod.http.server.HttpServerException;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.internal.AbstractExchange;
+import io.inverno.mod.http.server.ResetStreamException;
+import io.inverno.mod.http.server.internal.HttpConnection;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -46,10 +50,12 @@ import io.netty.handler.codec.http2.Http2FrameListener;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
-import io.netty.util.concurrent.PromiseCombiner;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks.EmitResult;
+import reactor.core.scheduler.Schedulers;
 
 /**
  * <p>
@@ -63,7 +69,9 @@ import reactor.core.publisher.Sinks.EmitResult;
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class Http2Connection extends Http2ConnectionHandler implements Http2FrameListener, io.netty.handler.codec.http2.Http2Connection.Listener {
+public class Http2Connection extends Http2ConnectionHandler implements HttpConnection, Http2FrameListener, io.netty.handler.codec.http2.Http2Connection.Listener {
+	
+//	private static final Logger LOGGER = LogManager.getLogger(Http2Connection.class);
 
 	private final HttpServerConfiguration configuration; 
 	private final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
@@ -74,6 +82,12 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	private final Http2ContentEncodingResolver contentEncodingResolver;
 
 	private final IntObjectMap<Http2Exchange> serverStreams;
+	
+	protected ChannelHandlerContext context;
+	protected boolean tls;
+	
+	private boolean closing;
+	private boolean closed;
 
 	/**
 	 * <p>
@@ -117,8 +131,90 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	}
 
 	@Override
+	public boolean isTls() {
+		return this.tls;
+	}
+
+	@Override
+	public HttpVersion getProtocol() {
+		return HttpVersion.HTTP_2_0;
+	}
+
+	@Override
+	public Mono<Void> shutdown() {
+		if(this.closing || this.closed) {
+			return Mono.empty();
+		}
+		return Mono.<Void>create(sink -> {
+			if(!this.closed && !this.closing) {
+//				LOGGER.debug("Shutdown");
+				this.closing = true;
+
+				this.goAway(this.context, this.connection().remote().lastStreamCreated(), Http2Error.NO_ERROR.code(), Unpooled.EMPTY_BUFFER, this.context.voidPromise());
+				this.flush(context);
+
+				this.context.close()
+					.addListener(future -> {
+						if(future.isSuccess()) {
+							sink.success();
+						}
+						else {
+							sink.error(future.cause());
+						}
+					});
+			}
+			else {
+				sink.success();
+			}
+		})
+		.subscribeOn(Schedulers.fromExecutor(this.context.executor()));
+	}
+
+	@Override
+	public Mono<Void> shutdownGracefully() {
+		if(this.closing || this.closed) {
+			return Mono.empty();
+		}
+		return Mono.<Void>create(sink -> {
+			if(!this.closed && !this.closing) {
+//				LOGGER.debug("Shutdown gracefully");
+				this.closing = true;
+
+				ChannelPromise closePromise = this.context.newPromise()
+					.addListener(future -> {
+						if(future.isSuccess()) {
+							sink.success();
+						}
+						else {
+							sink.error(future.cause());
+						}
+					});
+
+				try {
+					// shutdown gracefully
+					this.close(this.context, closePromise);
+				} 
+				catch(Exception e) {
+					// I don't see when this actually happen but let's assume the connection is closed then
+					sink.error(e);
+				}
+			}
+			else {
+				sink.success();
+			}
+		})
+		.subscribeOn(Schedulers.fromExecutor(this.context.executor()));
+	}
+
+	@Override
+	public boolean isClosed() {
+		return this.closed;
+	}
+
+	@Override
 	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
 		if(evt instanceof HttpServerUpgradeHandler.UpgradeEvent) {
+//			LOGGER.debug("HTTP/2 upgrade");
 			HttpServerUpgradeHandler.UpgradeEvent upgradeEvent = (HttpServerUpgradeHandler.UpgradeEvent) evt;
 
 			FullHttpRequest request = upgradeEvent.upgradeRequest();
@@ -148,26 +244,35 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	}
 
 	@Override
+	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+		this.context = ctx;
+		this.tls = this.context.pipeline().get(SslHandler.class) != null;
+		super.handlerAdded(ctx);
+	}
+
+	@Override
 	public void onError(ChannelHandlerContext ctx, boolean outbound, Throwable cause) {
+//		LOGGER.debug("Error", cause);
 		super.onError(ctx, outbound, cause);
 	}
 
 	@Override
 	protected void onStreamError(ChannelHandlerContext ctx, boolean outbound, Throwable cause, Http2Exception.StreamException http2Ex) {
-		super.onStreamError(ctx, outbound, cause, http2Ex); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/OverriddenMethodBody
+//		LOGGER.debug(() -> "Stream error: id=" + http2Ex.streamId(), http2Ex);
+		super.onStreamError(ctx, outbound, cause, http2Ex);
+	}
+
+	@Override
+	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+//		LOGGER.debug("Channel inactive");
+		super.channelInactive(ctx);
+		// each stream should be closed individually so disposal whould be handled in #onStreamClosed()
 	}
 	
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-		PromiseCombiner finalPromise = new PromiseCombiner(ctx.executor());
-		for(Http2Exchange exchange : this.serverStreams.values()) {
-			exchange.dispose(cause);
-			ChannelPromise errorPromise = ctx.newPromise();
-			exchange.finalizeExchange(errorPromise, null);
-			errorPromise.tryFailure(cause);
-			finalPromise.add((ChannelFuture)errorPromise);
-		}
-		finalPromise.finish(ctx.newPromise().addListener(ChannelFutureListener.CLOSE));
+//		LOGGER.debug("Exception caught", cause);
+		this.shutdown().subscribe();
 	}
 	
 	@Override
@@ -215,14 +320,30 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 			}
 			streamExchange.start(new AbstractExchange.Handler() {
 				@Override
+				public void exchangeStart(ChannelHandlerContext ctx, AbstractExchange exchange) {
+//					LOGGER.debug("Exchange start");
+				}
+				
+				@Override
 				public void exchangeError(ChannelHandlerContext ctx, Throwable t) {
+//					LOGGER.debug("Exchange error", t);
 					streamExchange.dispose(t);
 					Http2Connection.this.resetStream(ctx, streamId, Http2Error.INTERNAL_ERROR.code(), ctx.voidPromise());
+					Http2Connection.this.flush(ctx);
 				}
 
 				@Override
 				public void exchangeComplete(ChannelHandlerContext ctx) {
+//					LOGGER.debug("Exchange complete");
 					streamExchange.dispose();
+				}
+
+				@Override
+				public void exchangeReset(ChannelHandlerContext ctx, long code) {
+//					LOGGER.debug("Exchange reset: code={}", code);
+					streamExchange.dispose();
+					Http2Connection.this.resetStream(ctx, streamId, code, ctx.voidPromise());
+					Http2Connection.this.flush(ctx);
 				}
 			});
 		}
@@ -242,16 +363,18 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	}
 
 	@Override
+	public ChannelFuture resetStream(ChannelHandlerContext ctx, int streamId, long errorCode, ChannelPromise promise) {
+//		LOGGER.debug("Send reset stream: id={}, code={}", streamId, errorCode);
+		return super.resetStream(ctx, streamId, errorCode, promise);
+	}
+	
+	@Override
 	public void onRstStreamRead(ChannelHandlerContext ctx, int streamId, long errorCode) throws Http2Exception {
+//		LOGGER.debug("Reset stream read: id={}, code={}", streamId, errorCode);
 		Http2Exchange serverStream = this.serverStreams.remove(streamId);
 		if (serverStream != null) {
-			serverStream.dispose(new IllegalStateException("Stream " + streamId +" was reset (" + errorCode + ")"));
+			serverStream.dispose(new ResetStreamException(errorCode, "Stream " + streamId +" was reset (" + errorCode + ")"));
 		} 
-		else {
-			// TODO this should never happen?
-//			System.err.println("Unable to reset unmanaged stream " + streamId);
-//    		throw new IllegalStateException("Unable to reset unmanaged stream " + streamId);
-		}
 	}
 
 	@Override
@@ -306,28 +429,30 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 
 	@Override
 	public void onStreamClosed(Http2Stream stream) {
-		// TODO same issue as for Http1xChannelHandler#channelInactive
-		// Canceling subscriptions here might raise other issues so we prefer to let things crash when one will try to read or write to a closed stream
-		/*Http2Exchange serverStream = this.serverStreams.remove(stream.id());
-		if (serverStream != null) {
-			serverStream.dispose();
-		} 
-		else {
-			// TODO this should never happen?
-//			System.err.println("Unable to reset unmanaged stream " + stream.id());
-//    		throw new IllegalStateException("Unable to reset unmanaged stream " + stream.id());
-		}*/
+//		LOGGER.debug(() -> "Stream closed: id=" + stream.id());
+		Http2Exchange serverStream = this.serverStreams.remove(stream.id());
+		if(serverStream != null) {
+			Throwable cause = new HttpServerException("Stream " + stream.id() + " was closed");
+			serverStream.dispose(cause);
+			ChannelPromise errorPromise = this.context.newPromise();
+			serverStream.finalizeExchange(errorPromise, null);
+			errorPromise.tryFailure(cause);
+		}
 	}
 
 	@Override
 	public void onStreamRemoved(Http2Stream stream) {
+//		LOGGER.debug(() -> "Stream removed: id=" + stream.id());
 	}
 
 	@Override
 	public void onGoAwaySent(int lastStreamId, long errorCode, ByteBuf debugData) {
+//		LOGGER.debug("Go away sent: lastStreamId={}, code={}", lastStreamId, errorCode);
 	}
 
 	@Override
 	public void onGoAwayReceived(int lastStreamId, long errorCode, ByteBuf debugData) {
+//		LOGGER.debug("Go away received: lastStreamId={}, code={}", lastStreamId, errorCode);
+		this.shutdownGracefully().subscribe();
 	}
 }

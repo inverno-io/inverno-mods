@@ -96,7 +96,9 @@ public abstract class AbstractResponse implements Response {
 		if(this.responseHeaders.isWritten()) {
 			throw new IllegalStateException("Headers already written");
 		}
-		headersConfigurer.accept(this.responseHeaders);
+		if(headersConfigurer != null) {
+			headersConfigurer.accept(this.responseHeaders);
+		}
 		return this;
 	}
 	
@@ -114,16 +116,16 @@ public abstract class AbstractResponse implements Response {
 
 	@Override
 	public InboundHeaders trailers() {
+		if(this.responseTrailers == null) {
+			this.responseTrailers = this.createTrailers();
+		}
 		return this.responseTrailers;
 	}
 
 	@Override
 	public Response trailers(Consumer<OutboundHeaders<?>> trailersConfigurer) {
 		if(trailersConfigurer != null) {
-			if(this.responseTrailers == null) {
-				this.responseTrailers = this.createTrailers();
-			}
-			trailersConfigurer.accept(this.responseTrailers);
+			trailersConfigurer.accept((OutboundHeaders<?>)this.trailers());
 		}
 		return this;
 	}

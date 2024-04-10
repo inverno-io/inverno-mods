@@ -23,6 +23,7 @@ import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ExchangeInterceptor;
 import io.inverno.mod.web.server.ErrorWebExchange;
 import io.inverno.mod.web.server.spi.AcceptAware;
+import io.inverno.mod.web.server.spi.ContentAware;
 import io.inverno.mod.web.server.spi.ErrorAware;
 import io.inverno.mod.web.server.spi.PathAware;
 import java.util.List;
@@ -47,6 +48,9 @@ class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRouteInterce
 
 	private String path;
 	private URIPattern pathPattern;
+	
+	private String consume;
+	private Headers.Accept.MediaRange consumeMediaRange;
 
 	private String produce;
 	private Headers.Accept.MediaRange produceMediaRange;
@@ -91,6 +95,11 @@ class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRouteInterce
 		this.path = null;
 	}
 
+	public void setConsume(String mediaRange) {
+		this.consume = mediaRange;
+		this.consumeMediaRange = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, mediaRange).toMediaRange();
+	}
+	
 	public void setProduce(String mediaRange) {
 		this.produce = mediaRange;
 		this.produceMediaRange = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, mediaRange).toMediaRange();
@@ -183,6 +192,115 @@ class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRouteInterce
 	}
 
 	@Override
+	public ErrorWebRouteInterceptor<ExchangeContext> matches(ContentAware contentAware) {
+		if(this.consume != null) {
+			if(contentAware.getConsume() != null) {
+				// interceptor: consume is a media range: A/B
+				// route: consume is a media range: C/D
+				Headers.Accept.MediaRange routeMediaRange = this.contentTypeCodec.decode(Headers.NAME_CONTENT_TYPE, contentAware.getConsume()).toMediaRange();
+				
+				// if parameters do not match there's no match
+				if(this.consumeMediaRange.getParameters().isEmpty() || this.consumeMediaRange.getParameters().equals(routeMediaRange.getParameters())) {
+					// from there we have to compare types and subtypes to determine what to do
+					
+					String interceptorType = this.consumeMediaRange.getType();
+					String interceptorSubType = this.consumeMediaRange.getSubType();
+					String routeType = routeMediaRange.getType();
+					String routeSubType = routeMediaRange.getSubType();
+				
+					if(interceptorType.equals("*")) {
+						if(interceptorSubType.equals("*")) {
+							// interceptor */*
+							// route ?/? => B/A == {}
+							return this;
+						}
+						else {
+							// interceptor */x
+							if(routeType.equals("*")) {
+								if(routeSubType.equals("*")) {
+									// route */* => B/A != {} && B/A != A
+									return this.withInterceptor(new GenericErrorWebRouteInterceptor.FilteredContentExchangeInterceptorWrapper());
+								}
+								else {
+									// route */x
+									if(interceptorSubType.equals(routeSubType)) {
+										return this;
+									}
+									return null;
+								}
+							}
+							else {
+								if(routeSubType.equals("*")) {
+									// route x/* => B/A != {} && B/A != A
+									return this.withInterceptor(new GenericErrorWebRouteInterceptor.FilteredContentExchangeInterceptorWrapper());
+								}
+								else {
+									// route x/x
+									if(interceptorSubType.equals(routeSubType)) {
+										return this;
+									}
+									return null;
+								}
+							}
+						}
+					}
+					else {
+						if(interceptorSubType.equals("*")) {
+							// interceptor x/*
+							if(routeType.equals("*")) {
+								// route */? => B/A != {}
+								return this.withInterceptor(new GenericErrorWebRouteInterceptor.FilteredContentExchangeInterceptorWrapper());
+							}
+							else {
+								// route x/?
+								if(interceptorType.equals(routeType)) {
+									return this;
+								}
+								return null;
+							}
+						}
+						else {
+							// interceptor x/x
+							if(routeType.equals("*")) {
+								if(routeSubType.equals("*") || interceptorSubType.equals(routeSubType)) {
+									// route */*|*/x => B/A != {}
+									return this.withInterceptor(new GenericErrorWebRouteInterceptor.FilteredContentExchangeInterceptorWrapper());
+								}
+								return null;
+							}
+							else {
+								if(interceptorType.equals(routeType)) {
+									if(routeSubType.equals("*")) {
+										// route x/* => B/A != {}
+										return this.withInterceptor(new GenericErrorWebRouteInterceptor.FilteredContentExchangeInterceptorWrapper());
+									}
+									else {
+										// route x/x 
+										if(interceptorSubType.equals(routeSubType)) {
+											return this;
+										}
+										return null;
+									}
+								}
+								return null;
+							}
+						}
+					}
+				}
+				return null;
+			}
+			else {
+				// B\A != {}
+				return this.withInterceptor(new GenericErrorWebRouteInterceptor.FilteredContentExchangeInterceptorWrapper());
+			}
+		}
+		else {
+			// No retrictions
+			return this;
+		}
+	}
+	
+	@Override
 	public ErrorWebRouteInterceptor<ExchangeContext> matchesContentType(AcceptAware acceptAware) {
 		String routeMediaType = acceptAware.getProduce();
 		if(this.produce != null) {
@@ -266,6 +384,7 @@ class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRouteInterce
 		routeStringBuilder.append("{");
 		routeStringBuilder.append("\"error\":\"").append(this.error).append("\",");
 		routeStringBuilder.append("\"path\":\"").append(this.path != null ? this.path : this.pathPattern).append("\",");
+		routeStringBuilder.append("\"consume\":\"").append(this.consume).append("\",");
 		routeStringBuilder.append("\"produce\":\"").append(this.produce).append("\",");
 		routeStringBuilder.append("\"language\":\"").append(this.language);
 		routeStringBuilder.append("}");
@@ -280,6 +399,7 @@ class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRouteInterce
 		result = prime * result + ((error == null) ? 0 : error.hashCode());
 		result = prime * result + ((path == null) ? 0 : path.hashCode());
 		result = prime * result + ((pathPattern == null) ? 0 : pathPattern.hashCode());
+		result = prime * result + ((consume == null) ? 0 : consume.hashCode());
 		result = prime * result + ((produce == null) ? 0 : produce.hashCode());
 		result = prime * result + ((language == null) ? 0 : language.hashCode());
 		return result;
@@ -308,6 +428,11 @@ class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRouteInterce
 			if (other.pathPattern != null)
 				return false;
 		} else if (!pathPattern.equals(other.pathPattern))
+			return false;
+		if (consume == null) {
+			if (other.consume != null)
+				return false;
+		} else if (!consume.equals(other.consume))
 			return false;
 		if (produce == null) {
 			if (other.produce != null)
@@ -369,6 +494,23 @@ class GenericErrorWebRouteInterceptor implements Cloneable, ErrorWebRouteInterce
 				// This should never happen
 				throw new IllegalStateException("Filtered path interceptor has no defined path");
 			}
+		}
+	}
+	
+	private class FilteredContentExchangeInterceptorWrapper extends ExchangeInterceptorWrapper<ExchangeContext, ErrorWebExchange<ExchangeContext>> {
+
+		public FilteredContentExchangeInterceptorWrapper() {
+			super(GenericErrorWebRouteInterceptor.this.interceptor);
+		}
+		
+		@Override
+		public Mono<? extends ErrorWebExchange<ExchangeContext>> intercept(ErrorWebExchange<ExchangeContext> exchange) {
+			if(exchange.request().headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).map(GenericErrorWebRouteInterceptor.this.consumeMediaRange::matches).orElse(false)) {
+				// Interceptor consume media range matches request content type: the exchange must be intercepted
+				return GenericErrorWebRouteInterceptor.this.interceptor.intercept(exchange);
+			}
+			// Interceptor consume media range does not match request content type: the exchange must not be intercepted
+			return Mono.just(exchange);
 		}
 	}
 }

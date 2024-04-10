@@ -71,7 +71,7 @@ public class EndpointInterceptableResponseHeaders implements OutboundResponseHea
 	}
 	
 	@Override
-	public Status getStatus() {
+	public Status getStatus() throws IllegalArgumentException {
 		return Status.valueOf(this.statusCode);
 	}
 	
@@ -120,10 +120,9 @@ public class EndpointInterceptableResponseHeaders implements OutboundResponseHea
 
 	@Override
 	public OutboundResponseHeaders cookies(Consumer<OutboundSetCookies> cookiesConfigurer) {
-		if(this.responseCookies == null) {
-			this.responseCookies = new EndpointInterceptableResponseCookies(this.headerService, this, this.parameterConverter);
+		if(cookiesConfigurer != null) {
+			cookiesConfigurer.accept((OutboundSetCookies)this.cookies());
 		}
-		cookiesConfigurer.accept(this.responseCookies);
 		return this;
 	}
 

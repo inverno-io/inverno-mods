@@ -142,10 +142,10 @@ public class HttpClientTest {
 	@AfterAll
 	public static void destroy() {
 		if(h2cEndpoint != null) {
-			h2cEndpoint.close().block();
+			h2cEndpoint.shutdown().block();
 		}
 		if(h11Endpoint != null) {
-			h11Endpoint.close().block();
+			h11Endpoint.shutdown().block();
 		}
 		if(httpClientModule != null) {
 			httpClientModule.stop();
@@ -6111,7 +6111,7 @@ public class HttpClientTest {
 			e.printStackTrace();
 		}
 		finally {
-			blankH2cEndpoint.close().block();
+			blankH2cEndpoint.shutdown().block();
 		}
 	}
 	
@@ -6145,7 +6145,7 @@ public class HttpClientTest {
 			Assertions.assertTrue(interceptorFlag.get());
 		}
 		finally {
-			endpoint.close().block();
+			endpoint.shutdown().block();
 		}
 	}
 	
@@ -6179,7 +6179,7 @@ public class HttpClientTest {
 				.block();
 		}
 		finally {
-			endpoint.close().block();
+			endpoint.shutdown().block();
 		}
 	}
 	
@@ -6217,7 +6217,7 @@ public class HttpClientTest {
 				.block();
 		}
 		finally {
-			endpoint.close().block();
+			endpoint.shutdown().block();
 		}
 	}
 	
@@ -6248,7 +6248,7 @@ public class HttpClientTest {
 				.block();
 		}
 		finally {
-			endpoint.close().block();
+			endpoint.shutdown().block();
 		}
 	}
 	
@@ -6284,7 +6284,7 @@ public class HttpClientTest {
 				.block();
 		}
 		finally {
-			endpoint.close().block();
+			endpoint.shutdown().block();
 		}
 	}
 	
@@ -6331,7 +6331,7 @@ public class HttpClientTest {
 			Assertions.assertEquals("post_raw: a,b,c", interceptedResponseBody.toString());
 		}
 		finally {
-			endpoint.close().block();
+			endpoint.shutdown().block();
 		}
 	}
 	
@@ -6361,7 +6361,7 @@ public class HttpClientTest {
 				.block();
 		}
 		finally {
-			endpoint.close().block();
+			endpoint.shutdown().block();
 		}
 	}
 	
@@ -6394,7 +6394,7 @@ public class HttpClientTest {
 				.block();
 		}
 		finally {
-			endpoint.close().block();
+			endpoint.shutdown().block();
 		}
 	}
 	
@@ -6442,7 +6442,7 @@ public class HttpClientTest {
 			);
 		}
 		finally {
-			endpoint.close().block();
+			endpoint.shutdown().block();
 		}
 	}
 	
@@ -6512,7 +6512,7 @@ public class HttpClientTest {
 			}
 		}
 		finally {
-			endpoint.close().block();
+			endpoint.shutdown().block();
 		}
 	}
 	

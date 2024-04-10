@@ -18,6 +18,7 @@ package io.inverno.mod.web.server;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.web.server.spi.AcceptAware;
+import io.inverno.mod.web.server.spi.ContentAware;
 import io.inverno.mod.web.server.spi.ErrorRouteManager;
 import io.inverno.mod.web.server.spi.PathAware;
 
@@ -80,6 +81,20 @@ public interface ErrorWebRouteManager<A extends ExchangeContext, B extends Error
 	 */
 	ErrorWebRouteManager<A, B> path(String path, boolean matchTrailingSlash) throws IllegalArgumentException;
 
+	/**
+	 * <p>
+	 * Specifies the media range defining the content types accepted by the resource served by the web route as defined by
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-5.3.2">RFC 7231 Section 5.3.2</a>.
+	 * </p>
+	 *
+	 * @param mediaRange a media range
+	 *
+	 * @return the web route manager
+	 *
+	 * @see ContentAware
+	 */
+	ErrorWebRouteManager<A, B> consumes(String mediaRange);
+	
 	/**
 	 * <p>
 	 * Specifies the media type of the resource served by the error web route.

@@ -41,8 +41,10 @@ public interface InboundResponseHeaders extends InboundHeaders {
 	 * </p>
 	 * 
 	 * @return the response status
+	 * 
+	 * @throws IllegalArgumentException if the status code specified in the headers is not a known HTTP status
 	 */
-	Status getStatus();
+	Status getStatus() throws IllegalArgumentException;
 
 	/**
 	 * <p>

@@ -99,6 +99,40 @@ public interface HttpServerConfiguration {
 
 	/**
 	 * <p>
+	 * Tries to gracefully shutdown active connections when stopping the server.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note that a connection is always gracefully shutdown when receiving a {@code GO_AWAY} HTTP/2 frame.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code false}.
+	 * </p>
+	 * 
+	 * @return true to try to gracefully shutdown the server, false otherwise
+	 */
+	default boolean graceful_shutdown() {
+		return false;
+	}
+	
+	/**
+	 * <p>
+	 * The graceful shutdown timeout in milliseconds after which a connection is closed even if there are still active exchanges.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 30000}.
+	 * </p>
+	 * 
+	 * @return the graceful shutdown timeout
+	 */
+	default long graceful_shutdown_timeout() {
+		return 30000l;
+	}
+	
+	/**
+	 * <p>
 	 * Enables/Disables HTTP compression.
 	 * </p>
 	 * 

@@ -33,7 +33,7 @@ public class GenericHeader implements Header {
 
 	/**
 	 * <p>
-	 * Generic HTTP {@link HeaderBuilder} implementation.
+	 * HTTP {@link HeaderBuilder} implementation that builds {@link SimpleHeader}.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -41,11 +41,11 @@ public class GenericHeader implements Header {
 	 * 
 	 * @see AbstractHeaderBuilder
 	 */
-	public static class Builder extends AbstractHeaderBuilder<GenericHeader, Builder> {
+	public static class SimpleHeaderBuilder extends AbstractHeaderBuilder<Header, SimpleHeaderBuilder> {
 
 		@Override
-		public GenericHeader build() {
-			return new GenericHeader(this.headerName, this.headerValue);
+		public Header build() {
+			return new GenericHeader.SimpleHeader(this.headerName, this.headerValue);
 		}
 	}
 	
@@ -124,5 +124,12 @@ public class GenericHeader implements Header {
 		} else if (!headerValue.equals(other.headerValue))
 			return false;
 		return true;
+	}
+	
+	private static final class SimpleHeader extends GenericHeader {
+	
+		public SimpleHeader(String headerName, String headerValue) {
+			super(headerName, headerValue);
+		}
 	}
 }

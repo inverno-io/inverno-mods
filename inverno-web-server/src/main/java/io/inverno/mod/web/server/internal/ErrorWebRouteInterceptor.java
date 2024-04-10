@@ -47,6 +47,7 @@ import io.inverno.mod.web.server.spi.PathAware;
 interface ErrorWebRouteInterceptor<A extends ExchangeContext> extends
 	ErrorAwareRouteInterceptor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteInterceptor<A>>,
 	PathAwareRouteInterceptor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteInterceptor<A>>,
+	ContentAwareRouteInterceptor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteInterceptor<A>>,
 	AcceptAwareRouteInterceptor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteInterceptor<A>>,
 	RouteInterceptor<A, ErrorWebExchange<A>, ErrorWebRoute<A>, ErrorWebRouteInterceptor<A>> {
 

@@ -85,6 +85,12 @@ class GenericErrorWebRoutableFacade<A extends ErrorWebRoutable<ExchangeContext, 
 		}
 
 		@Override
+		public ErrorWebRouteManager<ExchangeContext, GenericErrorWebRoutableFacade<A>> consumes(String mediaRange) {
+			this.routeManager.consumes(mediaRange);
+			return this;
+		}
+		
+		@Override
 		public ErrorWebRouteManager<ExchangeContext, GenericErrorWebRoutableFacade<A>> produces(String mediaType) {
 			this.routeManager.produces(mediaType);
 			return this;

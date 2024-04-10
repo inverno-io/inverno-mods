@@ -1,6 +1,7 @@
 [inverno-io]: https://www.inverno.io
 [inverno-dist-root]: https://github.com/inverno-io/inverno-dist
 [inverno-core-root]: https://github.com/inverno-io/inverno-core
+[inverno-tools-root]: https://github.com/inverno-io/inverno-tools
 [inverno-core-root-doc]: https://github.com/inverno-io/inverno-core/tree/master/doc/reference-guide.md
 [inverno-mods-root-doc]: https://github.com/inverno-io/inverno-mods/tree/master/doc/reference-guide.md
 [inverno-examples-root]: https://github.com/inverno-io/inverno-examples
@@ -10,6 +11,10 @@
 [vertx-sql-client]: https://github.com/eclipse-vertx/vertx-sql-client
 [apache-license]: https://www.apache.org/licenses/LICENSE-2.0
 [ldap]: https://en.wikipedia.org/wiki/Lightweight_Directory_Access_Protocol
+[grpc]: https://grpc.io/
+[grpc-over-http2]: https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
+[grpc-core-concepts]: https://grpc.io/docs/what-is-grpc/core-concepts/
+[protobuf]: https://protobuf.dev/
 
 [rfc7515]: https://datatracker.ietf.org/doc/html/rfc7515
 [rfc7516]: https://datatracker.ietf.org/doc/html/rfc7516
@@ -120,6 +125,36 @@ In addition, it also provides implementations for multiple configuration sources
 - an application configuration source used to load the system configuration of an application from a set of common configuration sources in a specific order, for instance: command line, system properties, system environment, local `configuration.cprops` file and `configuration.cprops` file resource in the application module
 
 Configurations are defined as simple interfaces in a module which are processed by the Inverno compiler to generate configuration loaders and beans to make them available in an application with no further effort.
+
+### inverno-grpc-base
+
+The Inverno gRPC base module provides the foundational API as well as common services for developing [gRPC][grpc] clients and servers, such as message compressors (e.g. `gzip`, `deflate`, `snappy`...).
+
+### inverno-grpc-client
+
+The Inverno gRPC client module provides a service to convert HTTP client exchange into gRPC client exchanges supporting the [gRPC protocol over HTTP/2][grpc-over-http2].
+
+It supports the following features:
+
+- unary, client streaming, server streaming and bidirectional streaming service methods as defined in [gRPC core concepts][]
+- metadata encoding and decoding
+- RPC cancellation
+- message compression (`gzip`, `deflate`, `snappy`)
+
+[Inverno tools][inverno-tools-root] provide a gRPC [Protocol buffer][protobuf] compiler plugin for generating client stubs for each service definition.
+
+### inverno-grpc-server
+
+The Inverno gRPC server module provides a service to convert gRPC server exchange handlers supporting the [gRPC protocol over HTTP/2][grpc-over-http2] into HTTP server exchange handlers that can be injected in the HTTP server controller or Web routes to expose gRPC endpoints.
+
+It supports the following features:
+
+- unary, client streaming, server streaming and bidirectional streaming service methods as defined in [gRPC core concepts][]
+- metadata encoding and decoding
+- RPC cancellation
+- message compression (`gzip`, `deflate`, `snappy`)
+
+[Inverno tools][inverno-tools-root] provide a gRPC [Protocol buffer][protobuf] compiler plugin for generating Web routes configurers for each service definition.
 
 ### inverno-http-base
 

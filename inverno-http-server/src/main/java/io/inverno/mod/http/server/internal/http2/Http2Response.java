@@ -75,7 +75,7 @@ class Http2Response extends AbstractResponse {
 	
 	@Override
 	public Http2ResponseTrailers trailers() {
-		return (Http2ResponseTrailers)this.responseTrailers;
+		return (Http2ResponseTrailers)super.trailers();
 	}
 
 	@Override

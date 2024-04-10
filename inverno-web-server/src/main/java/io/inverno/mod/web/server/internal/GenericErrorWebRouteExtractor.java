@@ -51,6 +51,8 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor<ExchangeCo
 	private String path;
 	private URIPattern pathPattern;
 	
+	private String consume;
+	
 	private String produce;
 	
 	private String language;
@@ -117,6 +119,16 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor<ExchangeCo
 		return null;
 	}
 	
+	private String getConsume() {
+		if(this.consume != null) {
+			return this.consume;
+		}
+		else if(parent != null) {
+			return this.parent.getConsume();
+		}
+		return null;
+	}
+	
 	private String getProduce() {
 		if(this.produce != null) {
 			return this.produce;
@@ -179,6 +191,13 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor<ExchangeCo
 		childExtractor.pathPattern = pathPattern;
 		return childExtractor;
 	}
+
+	@Override
+	public ErrorWebRouteExtractor<ExchangeContext> consumes(String mediaRange) {
+		GenericErrorWebRouteExtractor childExtractor = new GenericErrorWebRouteExtractor(this);
+		childExtractor.consume = mediaRange;
+		return childExtractor;
+	}
 	
 	@Override
 	public GenericErrorWebRouteExtractor produces(String mediaType) {
@@ -222,6 +241,7 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor<ExchangeCo
 			Class<? extends Throwable> routeError = this.getError();
 			String routePath = this.getPath();
 			URIPattern routePathPattern = this.getPathPattern();
+			String routeConsume = this.getConsume();
 			String routeProduce = this.getProduce();
 			String routeLanguage = this.getLanguage();
 			
@@ -233,6 +253,9 @@ class GenericErrorWebRouteExtractor implements ErrorWebRouteExtractor<ExchangeCo
 			}
 			if(routePathPattern != null) {
 				route.setPathPattern(routePathPattern);
+			}
+			if(routeConsume != null) {
+				route.setConsume(routeConsume);
 			}
 			if(routeProduce != null) {
 				route.setProduce(routeProduce);

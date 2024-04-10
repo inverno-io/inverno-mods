@@ -127,6 +127,7 @@ public class EndpointChannelConfigurer {
 		else {
 			if(httpVersions.contains(HttpVersion.HTTP_2_0)) {
 				if(httpVersions.size() == 1) {
+					// We must send preface
 					this.configureHttp2(pipeline, configuration);
 				}
 				else {

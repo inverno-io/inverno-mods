@@ -26,7 +26,7 @@ package io.inverno.mod.http.base;
 public enum Status {
 
 	/**
-	 *  <a href="https://tools.ietf.org/html/rfc7231#section-6.2.1">RFC 7231 Section 6.2.1</a>
+	 * <a href="https://tools.ietf.org/html/rfc7231#section-6.2.1">RFC 7231 Section 6.2.1</a>
 	 */
 	CONTINUE(100, "Continue", Category.INFORMATIONAL),
 	/**
@@ -166,6 +166,10 @@ public enum Status {
 	 */
 	UPGRADE_REQUIRED(426, "Upgrade Required", Category.CLIENT_ERROR),
 	/**
+	 * <a href="https://datatracker.ietf.org/doc/html/rfc6585#section-4">RFC 6585 Section 4</a>
+	 */
+	TOO_MANY_REQUESTS(429, "Too Many Request", Category.CLIENT_ERROR),
+	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-6.6.1">RFC 7231 Section 6.6.1</a>
 	 */
 	INTERNAL_SERVER_ERROR(500, "Internal Server Error", Category.SERVER_ERROR), 
@@ -242,7 +246,8 @@ public enum Status {
 	 *
 	 * @param code an HTTP code
 	 *
-	 * @return a HTTP status
+	 * @return an HTTP status
+	 * 
 	 * @throws IllegalArgumentException if the specified status doesn't correspond to a known HTTP status
 	 */
 	public static Status valueOf(int code) {

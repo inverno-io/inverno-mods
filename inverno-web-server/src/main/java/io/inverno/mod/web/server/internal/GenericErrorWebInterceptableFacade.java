@@ -103,6 +103,12 @@ class GenericErrorWebInterceptableFacade implements ErrorWebInterceptable<Exchan
 		}
 
 		@Override
+		public ErrorWebInterceptorManager<ExchangeContext, GenericErrorWebInterceptableFacade> consumes(String mediaRange) {
+			this.interceptorManager.consumes(mediaRange);
+			return this;
+		}
+		
+		@Override
 		public ErrorWebInterceptorManager<ExchangeContext, GenericErrorWebInterceptableFacade> produces(String mediaRange) {
 			this.interceptorManager.produces(mediaRange);
 			return this;
