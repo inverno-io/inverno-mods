@@ -130,6 +130,7 @@ public class EndpointExchange<A extends ExchangeContext> implements Exchange<A> 
 	@Override
 	public Mono<? extends Response> response() {
 		return Mono.defer(() -> {
+			System.out.println("=== EndpointExchange#response() ===");
 			if(this.resetCode != null) {
 				return Mono.empty();
 			}

@@ -238,6 +238,7 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 	 */
 	protected Mono<HttpConnection> createConnection() {
 		return Mono.defer(() -> {
+			System.out.println("=== AbstractEndpoint#createConnection() ===");
 			Sinks.One<HttpConnection> connectionSink = Sinks.one();
 			ChannelFuture connectionFuture = this.bootstrap.connect(this.remoteAddress);
 			connectionFuture.addListener(res -> {
@@ -246,6 +247,7 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 						
 						@Override
 						public void channelActive(ChannelHandlerContext ctx) throws Exception {
+							System.out.println("=== AbstractEndpoint#createConnection(): connected ===");
 							super.channelActive(ctx);
 							HttpConnection connection = (HttpConnection)ctx.channel().pipeline().get("connection");
 
@@ -256,12 +258,14 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 
 						@Override
 						public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+							System.out.println("=== AbstractEndpoint#createConnection(): error ===");
 							connectionSink.tryEmitError(new EndpointConnectException("Failed to connect to " + (AbstractEndpoint.this.configuration.tls_enabled() ? "https://" : "http://") + AbstractEndpoint.this.remoteAddress.getHostString() + ":" + AbstractEndpoint.this.remoteAddress.getPort(), cause));
 							ctx.pipeline().remove(this);
 						}
 					});
 				}
 				else {
+					System.out.println("=== AbstractEndpoint#createConnection(): !success ===");
 					connectionSink.tryEmitError(new EndpointConnectException("Failed to connect to " + (this.configuration.tls_enabled() ? "https://" : "http://") + this.remoteAddress.getHostString() + ":" + this.remoteAddress.getPort(), res.cause()));
 				}
 			});

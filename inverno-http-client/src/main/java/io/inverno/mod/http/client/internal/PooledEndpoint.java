@@ -165,6 +165,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 	@Override
 	public Mono<HttpConnection> connection() {
 		return Mono.defer(() -> {
+			System.out.println("=== PooledEndpoint#connection() ===");
 			if(this.closing || this.closed) {
 				return Mono.error(new ConnectionPoolException("Pool closed"));
 			}
@@ -337,6 +338,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 	 */
 	private void acquire(PooledEndpoint.ConnectionRequest request) {
 		this.commandExecutor.execute(pool -> {
+			System.out.println("=== PooledEndpoint#acquire() ===");
 			if(pool.closing || pool.closed) {
 				request.error(new ConnectionPoolException("Pool closed"));
 			}
@@ -344,22 +346,26 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 			// 1. Select a connection
 			PooledHttpConnection connection = pool.selectConnection();
 			if(connection != null) {
+				System.out.println("=== PooledEndpoint#acquire(): select connection ===");
 				connection.allocated++;
 				pool.capacity--;
 				request.success(connection);
 			}
 			else if(pool.connecting + pool.size < pool.maxSize) {
+				System.out.println("=== PooledEndpoint#acquire(): connect ===");
 				// 2. Create a connection or recover a parked connection
 				// the caller is waiting until the connection is available
 				pool.connecting++;
 				pool.connect(request);
 			}
 			else if(pool.bufferSize == null || pool.bufferSize < 0 || pool.requestBuffer.size() + pool.connecting < pool.bufferSize) {
+				System.out.println("=== PooledEndpoint#acquire(): buffer ===");
 				// 3. Buffer the request
 				pool.requestBuffer.addFirst(request);
 				request.startTimeout();
 			}
 			else {
+				System.out.println("=== PooledEndpoint#acquire(): fail ===");
 				// 4. Fail
 				request.error(new ConnectionPoolException("Maximum pending connections exceeded"));
 			}
@@ -378,6 +384,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 	 * @param request a connection request
 	 */
 	private void connect(PooledEndpoint.ConnectionRequest request) {
+		System.out.println("=== PooledEndpoint#connect() ===");
 		// Try to recover a parked connection
 		if(!this.parkedConnections.isEmpty()) {
 			for(Iterator<PooledEndpoint.PooledHttpConnection> iterator = this.parkedConnections.iterator();iterator.hasNext();) {
@@ -392,6 +399,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 					this.capacity += (parkedConnection.capacity - parkedConnection.allocated);
 					parkedConnection.parked = false;
 					iterator.remove();
+					System.out.println("=== PooledEndpoint#connect(): park ===");
 					request.success(parkedConnection);
 					return;
 				}
@@ -402,6 +410,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 		// Create a new connection
 		this.createConnection().subscribe(
 			connection -> {
+				System.out.println("=== PooledEndpoint#connect(): connection! ===");
 				this.commandExecutor.execute(pool -> {
 					pool.connecting--;
 					if(pool.closing || pool.closed) {
@@ -422,12 +431,15 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 				});
 			},
 			e -> {
+				System.out.println("=== PooledEndpoint#connect(): error ===");
+				e.printStackTrace();
 				this.commandExecutor.execute(pool -> {
 					pool.connecting--;
 					request.error(e);
 				});
 			},
 			() -> {
+				System.out.println("=== PooledEndpoint#connect(): complete ===");
 			}
 		);
 	}
