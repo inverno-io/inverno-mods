@@ -242,7 +242,7 @@ public class ModuleResource extends AbstractAsyncResource {
 			return this.resourceName.substring(lastSlashIndex + 1);
 		}
 		else {
-			return null;
+			return this.resourceName;
 		}
 	}
 

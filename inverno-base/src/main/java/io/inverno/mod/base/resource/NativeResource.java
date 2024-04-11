@@ -261,7 +261,7 @@ public class NativeResource extends AbstractAsyncResource {
 			return this.resourceName.substring(lastSlashIndex + 1);
 		}
 		else {
-			return null;
+			return this.resourceName;
 		}
 	}
 
