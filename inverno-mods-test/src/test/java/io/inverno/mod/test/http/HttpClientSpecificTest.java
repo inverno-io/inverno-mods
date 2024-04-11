@@ -15,7 +15,6 @@
  */
 package io.inverno.mod.test.http;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.boot.Boot;
@@ -149,6 +148,9 @@ public class HttpClientSpecificTest {
 		System.out.println("= Enter test_interceptor =");
 		AtomicBoolean interceptorFlag = new AtomicBoolean(false);
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+			))
 			.interceptor(exchange -> {
 				interceptorFlag.set(true);
 				return Mono.just(exchange);
@@ -184,6 +186,9 @@ public class HttpClientSpecificTest {
 	public void test_interceptor_cookieParam() {
 		System.out.println("= Enter test_interceptor_cookieParam =");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+			))
 			.interceptor(exchange -> {
 				exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "def,hij")));
 				return Mono.just(exchange);
@@ -220,7 +225,9 @@ public class HttpClientSpecificTest {
 	public void test_interceptor_headerParam() {
 		System.out.println("= Enter test_interceptor_headerParam =");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
-			.configuration(HttpClientConfigurationLoader.load(conf -> conf.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))))
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+			))
 			.interceptor(exchange -> {
 				exchange.request().headers(headers -> headers.add("headerparam", "def,hij"));
 				return Mono.just(exchange);
@@ -260,6 +267,9 @@ public class HttpClientSpecificTest {
 	public void test_interceptor_path() {
 		System.out.println("= Enter test_interceptor_path =");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+			))
 			.interceptor(exchange -> {
 				exchange.request().path("/get_raw/pub");
 				return Mono.just(exchange);
@@ -293,6 +303,9 @@ public class HttpClientSpecificTest {
 	public void test_interceptor_method() {
 		System.out.println("= Enter test_interceptor_method =");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+			))
 			.interceptor(exchange -> {
 				exchange.request().method(Method.POST);
 				return Mono.just(exchange);
@@ -333,6 +346,9 @@ public class HttpClientSpecificTest {
 		final StringBuilder interceptedRequestBody = new StringBuilder();
 		final StringBuilder interceptedResponseBody = new StringBuilder();
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+			))
 			.interceptor(exchange -> {
 				exchange.request().body().ifPresent(body -> body.transform(data -> Flux.from(data)
 					.doOnNext(buf -> interceptedRequestBody.append(buf.toString(Charsets.UTF_8)))
@@ -380,6 +396,9 @@ public class HttpClientSpecificTest {
 	public void test_interceptor_abort() {
 		System.out.println("= Enter test_interceptor_abort =");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+			))
 			.interceptor(exchange -> {
 				return Mono.empty();
 			})
@@ -412,6 +431,9 @@ public class HttpClientSpecificTest {
 	public void test_interceptor_abort_with_payload() {
 		System.out.println("= Enter test_interceptor_abort_with_payload =");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+			))
 			.interceptor(exchange -> {
 				exchange.response()
 					.headers(headers -> headers.contentType(MediaTypes.TEXT_PLAIN).contentLength(11))
@@ -540,6 +562,7 @@ public class HttpClientSpecificTest {
 		
 		Endpoint<ExchangeContext> h2cTimeoutEndpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_2_0))
 				.pool_max_size(1)
 				.request_timeout(1000)
 			))

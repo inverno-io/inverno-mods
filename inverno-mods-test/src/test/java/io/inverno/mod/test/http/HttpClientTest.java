@@ -88,7 +88,7 @@ public class HttpClientTest {
 	private static Client httpClientModule;
 	
 	private static Endpoint<ExchangeContext> h11Endpoint;
-	private static Endpoint<ExchangeContext> h2cEndpoint;
+	private static Endpoint<ExchangeContext> h2Endpoint;
 	
 	@BeforeAll
 	public static void init() throws IOException, InvernoCompilationException, ClassNotFoundException, InterruptedException {
@@ -134,14 +134,43 @@ public class HttpClientTest {
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))))
 			.build();
 		
-		h2cEndpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+		try {
+			h11Endpoint
+				.exchange(Method.GET, "/get_void")
+				.flatMap(Exchange::response)
+				.flatMapMany(response -> {
+					return response.body().string().stream();
+				})
+				.blockLast();
+		}
+		catch(Throwable t) {
+			System.out.println("!!! First HTTP/1.1 connection timeout !!!");
+			t.printStackTrace();
+		}
+		
+		h2Endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf.http_protocol_versions(Set.of(HttpVersion.HTTP_2_0))))
 			.build();
+		
+		try {
+			h2Endpoint
+				.exchange(Method.GET, "/get_void")
+				.flatMap(Exchange::response)
+				.flatMapMany(response -> {
+					return response.body().string().stream();
+				})
+				.blockLast();
+		}
+		catch(Throwable t) {
+			System.out.println("!!! First HTTP/2.0 connection timeout !!!");
+			t.printStackTrace();
+		}
 	}
 	
 	@AfterAll
 	public static void destroy() {
-		if(h2cEndpoint != null) {
-			h2cEndpoint.shutdown().block();
+		if(h2Endpoint != null) {
+			h2Endpoint.shutdown().block();
 		}
 		if(h11Endpoint != null) {
 			h11Endpoint.shutdown().block();
@@ -169,7 +198,7 @@ public class HttpClientTest {
 	public static Stream<Arguments> provideEndpointAndHttpVersion() {
 		return Stream.of(
 			Arguments.of(h11Endpoint, HttpVersion.HTTP_1_1),
-			Arguments.of(h2cEndpoint, HttpVersion.HTTP_2_0)
+			Arguments.of(h2Endpoint, HttpVersion.HTTP_2_0)
 		);
 	}
 	

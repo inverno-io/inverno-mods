@@ -255,7 +255,7 @@ public class GreeterController extends GreeterGrpcRouteConfigurer<ExchangeContex
 
 > Note that the `GreeterController` class must be created as a `@Bean` in order for the service routes to be registered the Web server.
 
-## Configuration
+## Configuration
 
 The *grpc-server* module operates on top of the *http-server* or *web-server* modules, as a result network configuration and server specific configuration are inherited from the [HTTP server](#http-server) or [Web server][#web-server] configuration. The *grpc-server* specific configuration basically conveys the *grpc-base* module configuration which configures the built-in message compressors. A specific configuration can be created in the application module to easily override the default configurations:
 

@@ -253,7 +253,7 @@ public class Main {
 
 > Note that in this example the endpoint is directly created by the `GreeterGrpcClient` and automatically closed at the end of the try-with-resources statement, it uses the `HttpClient` bean which must then be configured to connect with HTTP/2. It is also possible to create the endpoint instance and pass it to the stub instead.
 
-## Configuration
+## Configuration
 
 The *grpc-client* module operates on top of the *http-client* module, as a result network configuration and client specific configuration are inherited from the [HTTP client](#http-client) configuration. The *grpc-client* specific configuration basically conveys the *grpc-base* module configuration which configures the built-in message compressors. A specific configuration can be created in the application module to easily override the default configurations:
 
