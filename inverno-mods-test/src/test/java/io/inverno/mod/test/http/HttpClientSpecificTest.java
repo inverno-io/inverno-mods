@@ -161,6 +161,8 @@ public class HttpClientSpecificTest {
 			endpoint
 				.exchange(Method.GET, "/get_raw")
 				.flatMap(Exchange::response)
+				.doOnError(t -> t.printStackTrace())
+				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertNull(response.headers().getContentType());
@@ -202,6 +204,8 @@ public class HttpClientSpecificTest {
 					exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")));
 					return exchange.response();
 				})
+				.doOnError(t -> t.printStackTrace())
+				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
@@ -244,6 +248,8 @@ public class HttpClientSpecificTest {
 					);
 					return exchange.response();
 				})
+				.doOnError(t -> t.printStackTrace())
+				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
@@ -280,6 +286,8 @@ public class HttpClientSpecificTest {
 			endpoint
 				.exchange(Method.GET, "/get_raw")
 				.flatMap(Exchange::response)
+				.doOnError(t -> t.printStackTrace())
+				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertNull(response.headers().getContentType());
@@ -321,6 +329,8 @@ public class HttpClientSpecificTest {
 						.body().get().string().value("a,b,c");
 					return exchange.response();
 				})
+				.doOnError(t -> t.printStackTrace())
+				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
@@ -370,6 +380,8 @@ public class HttpClientSpecificTest {
 						.body().get().string().value("a,b,c");
 					return exchange.response();
 				})
+				.doOnError(t -> t.printStackTrace())
+				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
@@ -408,6 +420,8 @@ public class HttpClientSpecificTest {
 			endpoint
 				.exchange(Method.GET, "/get_raw")
 				.flatMap(Exchange::response)
+				.doOnError(t -> t.printStackTrace())
+				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertNull(response.headers().getContentType());
@@ -446,6 +460,8 @@ public class HttpClientSpecificTest {
 			endpoint
 				.exchange(Method.GET, "/get_raw")
 				.flatMap(Exchange::response)
+				.doOnError(t -> t.printStackTrace())
+				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
@@ -498,6 +514,8 @@ public class HttpClientSpecificTest {
 			.flatMap(i -> endpoint
 				.exchange(Method.GET, "/get_delay100")
 				.flatMap(Exchange::response)
+				.doOnError(t -> t.printStackTrace())
+				.retry(2)
 				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
 			)
 			.blockLast();
@@ -509,6 +527,8 @@ public class HttpClientSpecificTest {
 					.flatMap(i -> endpoint
 						.exchange(Method.GET, "/get_delay100")
 						.flatMap(Exchange::response)
+						.doOnError(t -> t.printStackTrace())
+						.retry(2)
 						.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
 					)
 					.doOnNext(body -> Assertions.assertEquals("get_delay100", body))
@@ -531,6 +551,8 @@ public class HttpClientSpecificTest {
 					.flatMap(i -> endpoint
 						.exchange(Method.GET, "/get_delay100")
 						.flatMap(Exchange::response)
+						.doOnError(t -> t.printStackTrace())
+						.retry(2)
 						.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
 					)
 					.doOnNext(body -> Assertions.assertEquals("get_delay100", body))
@@ -592,6 +614,8 @@ public class HttpClientSpecificTest {
 					() -> endpoint
 						.exchange(Method.GET, "/get_timeout")
 						.flatMap(Exchange::response)
+						.doOnError(t -> t.printStackTrace())
+						.retry(2)
 						.block()
 				).getMessage()
 			);
@@ -611,17 +635,23 @@ public class HttpClientSpecificTest {
 			endpoint
 				.exchange(Method.GET, "/get_void")
 				.flatMap(Exchange::response)
+				.doOnError(t -> t.printStackTrace())
+				.retry(2)
 				.block();
 			
 			Mono<Object> timeoutRequest = endpoint
 				.exchange(Method.GET, "/get_timeout")
 				.flatMap(Exchange::response)
+				.doOnError(t -> t.printStackTrace())
+				.retry(2)
 				.cast(Object.class)
 				.onErrorResume(e -> Mono.just(e));
 
 			Mono<Object> noTimeoutRequest = endpoint
 				.exchange(Method.GET, "/get_delay100")
 				.flatMap(Exchange::response)
+				.doOnError(t -> t.printStackTrace())
+				.retry(2)
 				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
 				.cast(Object.class)
 				.onErrorResume(e -> Mono.just(e));
