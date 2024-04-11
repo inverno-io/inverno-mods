@@ -167,6 +167,11 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	}
 
 	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+		super.channelActive(ctx);
+	}
+	
+	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 //		LOGGER.debug("Channel inactive");
 		// we must notify all pending exchanges that the connection was reset

@@ -94,10 +94,8 @@ public class CommandExecutor<A> {
 	 * @param command the command to execute
 	 */
 	public void execute(Consumer<A> command) {
-		System.out.println("=== CommandExecutor#execute(): " + command.hashCode() + " ===");
 		this.commands.add(command);
 		if(!this.semaphore.tryAcquire()) {
-			System.out.println("=== CommandExecutor#execute(): park " + command.hashCode() + " ===");
 			return;
 		}
 		
@@ -105,7 +103,6 @@ public class CommandExecutor<A> {
 			try {
 				Consumer<A> currentCommand;
 				while( (currentCommand = this.commands.poll()) != null) {
-					System.out.println("=== CommandExecutor#execute(): accept " + currentCommand.hashCode() + " ===");
 					currentCommand.accept(this.target);
 				}
 			}

@@ -145,7 +145,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_interceptor() {
-		System.out.println("= Enter test_interceptor =");
 		AtomicBoolean interceptorFlag = new AtomicBoolean(false);
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
@@ -161,8 +160,6 @@ public class HttpClientSpecificTest {
 			endpoint
 				.exchange(Method.GET, "/get_raw")
 				.flatMap(Exchange::response)
-				.doOnError(t -> t.printStackTrace())
-				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertNull(response.headers().getContentType());
@@ -181,12 +178,10 @@ public class HttpClientSpecificTest {
 		finally {
 			endpoint.shutdown().block();
 		}
-		System.out.println("= Exit test_interceptor =");
 	}
 	
 	@Test
 	public void test_interceptor_cookieParam() {
-		System.out.println("= Enter test_interceptor_cookieParam =");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -204,8 +199,6 @@ public class HttpClientSpecificTest {
 					exchange.request().headers(headers -> headers.cookies(cookies -> cookies.addCookie("cookieParam", "abc")));
 					return exchange.response();
 				})
-				.doOnError(t -> t.printStackTrace())
-				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
@@ -222,12 +215,10 @@ public class HttpClientSpecificTest {
 		finally {
 			endpoint.shutdown().block();
 		}
-		System.out.println("= Exit test_interceptor_cookieParam =");
 	}
 	
 	@Test
 	public void test_interceptor_headerParam() {
-		System.out.println("= Enter test_interceptor_headerParam =");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -248,8 +239,6 @@ public class HttpClientSpecificTest {
 					);
 					return exchange.response();
 				})
-				.doOnError(t -> t.printStackTrace())
-				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
@@ -266,12 +255,10 @@ public class HttpClientSpecificTest {
 		finally {
 			endpoint.shutdown().block();
 		}
-		System.out.println("= Exit test_interceptor_headerParam =");
 	}
 	
 	@Test
 	public void test_interceptor_path() {
-		System.out.println("= Enter test_interceptor_path =");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -286,8 +273,6 @@ public class HttpClientSpecificTest {
 			endpoint
 				.exchange(Method.GET, "/get_raw")
 				.flatMap(Exchange::response)
-				.doOnError(t -> t.printStackTrace())
-				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertNull(response.headers().getContentType());
@@ -304,12 +289,10 @@ public class HttpClientSpecificTest {
 		finally {
 			endpoint.shutdown().block();
 		}
-		System.out.println("= Exit test_interceptor_path =");
 	}
 	
 	@Test
 	public void test_interceptor_method() {
-		System.out.println("= Enter test_interceptor_method =");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -329,8 +312,6 @@ public class HttpClientSpecificTest {
 						.body().get().string().value("a,b,c");
 					return exchange.response();
 				})
-				.doOnError(t -> t.printStackTrace())
-				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
@@ -347,12 +328,10 @@ public class HttpClientSpecificTest {
 		finally {
 			endpoint.shutdown().block();
 		}
-		System.out.println("= Exit test_interceptor_method =");
 	}
 	
 	@Test
 	public void test_interceptor_transform_bodies() {
-		System.out.println("= Enter test_interceptor_transform_bodies =");
 		final StringBuilder interceptedRequestBody = new StringBuilder();
 		final StringBuilder interceptedResponseBody = new StringBuilder();
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
@@ -380,8 +359,6 @@ public class HttpClientSpecificTest {
 						.body().get().string().value("a,b,c");
 					return exchange.response();
 				})
-				.doOnError(t -> t.printStackTrace())
-				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
@@ -401,12 +378,10 @@ public class HttpClientSpecificTest {
 		finally {
 			endpoint.shutdown().block();
 		}
-		System.out.println("= Exit test_interceptor_transform_bodies =");
 	}
 	
 	@Test
 	public void test_interceptor_abort() {
-		System.out.println("= Enter test_interceptor_abort =");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -420,8 +395,6 @@ public class HttpClientSpecificTest {
 			endpoint
 				.exchange(Method.GET, "/get_raw")
 				.flatMap(Exchange::response)
-				.doOnError(t -> t.printStackTrace())
-				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertNull(response.headers().getContentType());
@@ -438,12 +411,10 @@ public class HttpClientSpecificTest {
 		finally {
 			endpoint.shutdown().block();
 		}
-		System.out.println("= Exit test_interceptor_abort =");
 	}
 	
 	@Test
 	public void test_interceptor_abort_with_payload() {
-		System.out.println("= Enter test_interceptor_abort_with_payload =");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -460,8 +431,6 @@ public class HttpClientSpecificTest {
 			endpoint
 				.exchange(Method.GET, "/get_raw")
 				.flatMap(Exchange::response)
-				.doOnError(t -> t.printStackTrace())
-				.retry(2)
 				.flatMapMany(response -> {
 					Assertions.assertEquals(Status.OK, response.headers().getStatus());
 					Assertions.assertEquals(MediaTypes.TEXT_PLAIN, response.headers().getContentType());
@@ -478,7 +447,6 @@ public class HttpClientSpecificTest {
 		finally {
 			endpoint.shutdown().block();
 		}
-		System.out.println("= Exit test_interceptor_abort_with_payload =");
 	}
 	
 	public static Stream<Arguments> provideEndpointAndHttpVersion() {
@@ -503,7 +471,6 @@ public class HttpClientSpecificTest {
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
 	public void test_pool_concurrency(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
-		System.out.println("= Enter test_pool_concurrency =");
 		// By default: 
 		// - pool_max_size=2
 		// - http2_max_concurrent_streams=100
@@ -514,8 +481,6 @@ public class HttpClientSpecificTest {
 			.flatMap(i -> endpoint
 				.exchange(Method.GET, "/get_delay100")
 				.flatMap(Exchange::response)
-				.doOnError(t -> t.printStackTrace())
-				.retry(2)
 				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
 			)
 			.blockLast();
@@ -527,8 +492,6 @@ public class HttpClientSpecificTest {
 					.flatMap(i -> endpoint
 						.exchange(Method.GET, "/get_delay100")
 						.flatMap(Exchange::response)
-						.doOnError(t -> t.printStackTrace())
-						.retry(2)
 						.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
 					)
 					.doOnNext(body -> Assertions.assertEquals("get_delay100", body))
@@ -551,8 +514,6 @@ public class HttpClientSpecificTest {
 					.flatMap(i -> endpoint
 						.exchange(Method.GET, "/get_delay100")
 						.flatMap(Exchange::response)
-						.doOnError(t -> t.printStackTrace())
-						.retry(2)
 						.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
 					)
 					.doOnNext(body -> Assertions.assertEquals("get_delay100", body))
@@ -570,7 +531,6 @@ public class HttpClientSpecificTest {
 				break;
 			}
 		}
-		System.out.println("= Exit test_pool_concurrency =");
 	}
 	
 	public static Stream<Arguments> provideTimeoutEndpointsAndHttpVersion() {
@@ -599,7 +559,6 @@ public class HttpClientSpecificTest {
 	@ParameterizedTest
 	@MethodSource("provideTimeoutEndpointsAndHttpVersion")
 	public void test_request_timeout(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
-		System.out.println("= Enter test_request_timeout =");
 		try {
 			// Make sure connection is properly upgraded first
 			endpoint
@@ -614,8 +573,6 @@ public class HttpClientSpecificTest {
 					() -> endpoint
 						.exchange(Method.GET, "/get_timeout")
 						.flatMap(Exchange::response)
-						.doOnError(t -> t.printStackTrace())
-						.retry(2)
 						.block()
 				).getMessage()
 			);
@@ -623,35 +580,27 @@ public class HttpClientSpecificTest {
 		finally {
 			endpoint.shutdown().block();
 		}
-		System.out.println("= Exit test_request_timeout =");
 	}
 	
 	@ParameterizedTest
 	@MethodSource("provideTimeoutEndpointsAndHttpVersion")
 	public void test_request_timeout_concurrent(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
-		System.out.println("= Enter test_request_timeout_concurrent =");
 		try {
 			// Make sure connection is properly upgraded first
 			endpoint
 				.exchange(Method.GET, "/get_void")
 				.flatMap(Exchange::response)
-				.doOnError(t -> t.printStackTrace())
-				.retry(2)
 				.block();
 			
 			Mono<Object> timeoutRequest = endpoint
 				.exchange(Method.GET, "/get_timeout")
 				.flatMap(Exchange::response)
-				.doOnError(t -> t.printStackTrace())
-				.retry(2)
 				.cast(Object.class)
 				.onErrorResume(e -> Mono.just(e));
 
 			Mono<Object> noTimeoutRequest = endpoint
 				.exchange(Method.GET, "/get_delay100")
 				.flatMap(Exchange::response)
-				.doOnError(t -> t.printStackTrace())
-				.retry(2)
 				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
 				.cast(Object.class)
 				.onErrorResume(e -> Mono.just(e));
@@ -701,6 +650,5 @@ public class HttpClientSpecificTest {
 		finally {
 			endpoint.shutdown().block();
 		}
-		System.out.println("= Exit test_request_timeout_concurrent =");
 	}
 }

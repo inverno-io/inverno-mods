@@ -163,6 +163,11 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	}
 
 	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+		super.channelActive(ctx);
+	}
+
+	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 //		LOGGER.debug("Channel inactive");
 		this.closed = true;

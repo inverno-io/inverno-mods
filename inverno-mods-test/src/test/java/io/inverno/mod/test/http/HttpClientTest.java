@@ -134,37 +134,9 @@ public class HttpClientTest {
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))))
 			.build();
 		
-		try {
-			h11Endpoint
-				.exchange(Method.GET, "/get_void")
-				.flatMap(Exchange::response)
-				.flatMapMany(response -> {
-					return response.body().string().stream();
-				})
-				.blockLast();
-		}
-		catch(Throwable t) {
-			System.out.println("!!! First HTTP/1.1 connection timeout !!!");
-			t.printStackTrace();
-		}
-		
 		h2Endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf.http_protocol_versions(Set.of(HttpVersion.HTTP_2_0))))
 			.build();
-		
-		try {
-			h2Endpoint
-				.exchange(Method.GET, "/get_void")
-				.flatMap(Exchange::response)
-				.flatMapMany(response -> {
-					return response.body().string().stream();
-				})
-				.blockLast();
-		}
-		catch(Throwable t) {
-			System.out.println("!!! First HTTP/2.0 connection timeout !!!");
-			t.printStackTrace();
-		}
 	}
 	
 	@AfterAll

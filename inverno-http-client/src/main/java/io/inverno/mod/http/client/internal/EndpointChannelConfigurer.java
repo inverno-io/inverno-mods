@@ -26,6 +26,8 @@ import io.inverno.mod.http.client.internal.http1x.Http1xUpgradingExchange;
 import io.inverno.mod.http.client.internal.http1x.Http1xWebSocketConnection;
 import io.inverno.mod.http.client.internal.http2.Http2Connection;
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpContentDecompressor;
@@ -37,6 +39,8 @@ import io.netty.handler.codec.http.websocketx.extensions.compression.DeflateFram
 import io.netty.handler.codec.http.websocketx.extensions.compression.PerMessageDeflateClientExtensionHandshaker;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.ssl.SslContext;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.Promise;
 import java.net.InetSocketAddress;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -53,6 +57,10 @@ import java.util.Set;
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )
 public class EndpointChannelConfigurer {
+	
+	private static final String CONNECTION_HANDLER_NAME = "connection";
+	private static final String CONNECTION_SINK_HANDLER_NAME = "connectionSink";
+	private static final String WS_CONNECTION_HANDLER_NAME = "wsConnection";
 	
 	private final CompressionOptionsProvider compressionOptionsProvider;
 	private final HttpConnectionFactory<Http1xConnection> http1xConnectionFactory;
@@ -143,6 +151,7 @@ public class EndpointChannelConfigurer {
 				this.configureHttp1x(pipeline, HttpVersion.HTTP_1_0, configuration);
 			}
 		}
+		pipeline.addLast("connectionSink", new ConnectionSinkHandler());
 	}
 	
 	/**
@@ -190,7 +199,7 @@ public class EndpointChannelConfigurer {
 		}
 		
 		Http1xWebSocketConnection connection = this.http1xWebSocketConnectionFactory.create(configuration, HttpVersion.HTTP_1_1);
-		pipeline.addLast("connection", connection);
+		pipeline.addLast(WS_CONNECTION_HANDLER_NAME, connection);
 		
 		return connection;
 	}
@@ -217,7 +226,7 @@ public class EndpointChannelConfigurer {
 			pipeline.addLast("http1xCompressor", new HttpContentCompressor(configuration.compression_contentSizeThreshold(), this.compressionOptionsProvider.get(configuration)));
 		}
 		Http1xConnection connection = this.http1xConnectionFactory.create(configuration, httpVersion, this);
-		pipeline.addLast("connection", connection);
+		pipeline.addLast(CONNECTION_HANDLER_NAME, connection);
 		
 		return connection;
 	}
@@ -234,7 +243,7 @@ public class EndpointChannelConfigurer {
 	 */
 	Http2Connection configureHttp2(ChannelPipeline pipeline, HttpClientConfiguration configuration) {
 		Http2Connection connection = this.http2ConnectionFactory.create(configuration, HttpVersion.HTTP_2_0, this);
-		pipeline.addLast("connection", connection);
+		pipeline.addLast(CONNECTION_HANDLER_NAME, connection);
 		
 		return connection;
 	}
@@ -276,12 +285,12 @@ public class EndpointChannelConfigurer {
 				pipeline.remove("http1xCompressor");
 			}
 			// 2. Remove the HTTP/1.x upgrading connection
-			pipeline.remove("connection");
+//			pipeline.remove(CONNECTION_HANDLER_NAME);
 			
-			// 3. Add the HTTP/2 connection handler
+			// 3. Replace the HTTP/1.x upgrading connection by the HTTP/2 connection handler
 			// This sends the preface (which is why we removed the HTTP/1.x encoder before)
 			Http2Connection connection = upgradingExchange.getUpgradedConnection();
-			pipeline.addLast("connection", connection);
+			pipeline.replace(CONNECTION_HANDLER_NAME, CONNECTION_HANDLER_NAME, connection);
 			
 			// 4. Upgrade
 			// This reserves stream 1 and sets the initial upgraded exchange in the connection
@@ -305,6 +314,77 @@ public class EndpointChannelConfigurer {
 		catch(Http2Exception e) {
 			// We must make sure this never happens
 			throw new IllegalStateException(e);
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Completes the HTTP connection.
+	 * </p>
+	 * 
+	 * @param pipeline the pipeline to configure
+	 * 
+	 * @return a future that succeeds once the connection is active (i.e. channelActive() has been invoked) or fails when an exception was caught.
+	 */
+	public Future<HttpConnection> completeConnection(ChannelPipeline pipeline) {
+		EndpointChannelConfigurer.ConnectionSinkHandler connectionSinkHandler = (EndpointChannelConfigurer.ConnectionSinkHandler)pipeline.get(CONNECTION_SINK_HANDLER_NAME);
+		return connectionSinkHandler.getConnection()
+			.addListener(ign -> {
+				pipeline.remove(connectionSinkHandler);
+			});
+	}
+	
+	/**
+	 * <p>
+	 * Completes the WebSocket connection.
+	 * </p>
+	 * 
+	 * @param pipeline the pipeline to configure
+	 * 
+	 * @return a future that succeeds once the connection is active (i.e. channelActive() has been invoked) or fails when an exception was caught.
+	 */
+	public Future<Http1xWebSocketConnection> completeWsConnection(ChannelPipeline pipeline) {
+		return pipeline.channel().eventLoop().newSucceededFuture((Http1xWebSocketConnection)pipeline.get(WS_CONNECTION_HANDLER_NAME));
+	}
+	
+	/**
+	 * <p>
+	 * A channel handler to be added at the end of the pipeline to be able to notify when a connection is active (i.e. channelActive() has been invoked).
+	 * </p>
+	 * 
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @version 1.9
+	 */
+	private static class ConnectionSinkHandler extends ChannelInboundHandlerAdapter {
+		
+		private Promise<HttpConnection> connectionFuture;
+		
+		/**
+		 * <p>
+		 * Returns the HTTP connection future.
+		 * </p>
+		 * 
+		 * @return a future that succeeds once the connection is active (i.e. channelActive() has been invoked) or fails when an exception was caught.
+		 */
+		public Future<HttpConnection> getConnection() {
+			return this.connectionFuture;
+		}
+
+		@Override
+		public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+			this.connectionFuture = ctx.executor().newPromise();
+		}
+		
+		@Override
+		public void channelActive(ChannelHandlerContext ctx) throws Exception {
+			super.channelActive(ctx);
+			this.connectionFuture.trySuccess((HttpConnection)ctx.pipeline().get(CONNECTION_HANDLER_NAME));
+		}
+
+		@Override
+		public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+			this.connectionFuture.tryFailure(cause);
 		}
 	}
 }
