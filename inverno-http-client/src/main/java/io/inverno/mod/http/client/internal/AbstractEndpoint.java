@@ -242,7 +242,15 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 			Sinks.One<HttpConnection> connectionSink = Sinks.one();
 			ChannelFuture connectionFuture = this.bootstrap.connect(this.remoteAddress);
 			connectionFuture.addListener(res -> {
+				System.out.println("=== AbstractEndpoint#createConnection(): res ===");
 				if(res.isSuccess()) {
+					// Is it possible to have the connection here?
+					HttpConnection connection = (HttpConnection)connectionFuture.channel().pipeline().get("connection");
+					if(connection != null) {
+						System.out.println("=== AbstractEndpoint#createConnection(): WE HAVE A CONNECTION!!! ===");
+						// Is it active?
+					}
+					
 					connectionFuture.channel().pipeline().addLast("connectionSink", new ChannelInboundHandlerAdapter() {
 						
 						@Override

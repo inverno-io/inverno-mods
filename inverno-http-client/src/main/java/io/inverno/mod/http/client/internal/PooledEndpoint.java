@@ -165,7 +165,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 	@Override
 	public Mono<HttpConnection> connection() {
 		return Mono.defer(() -> {
-			System.out.println("=== PooledEndpoint#connection() ===");
+			System.out.println("=== " + this.hashCode() + " - PooledEndpoint#connection() ===");
 			if(this.closing || this.closed) {
 				return Mono.error(new ConnectionPoolException("Pool closed"));
 			}
@@ -266,7 +266,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 				return;
 			}
 			try {
-				System.out.println("Clean: size=" + pool.size + ", capacity=" + pool.capacity + ", totalCapacity=" + pool.totalCapacity + ", parked=" + pool.parkedConnections.size() + ", buffered=" + pool.requestBuffer.size + ", connecting=" + pool.connecting);
+				System.out.println(pool.hashCode() + " - " + "Clean: size=" + pool.size + ", capacity=" + pool.capacity + ", totalCapacity=" + pool.totalCapacity + ", parked=" + pool.parkedConnections.size() + ", buffered=" + pool.requestBuffer.size + ", connecting=" + pool.connecting);
 				LOGGER.debug("Clean: size=" + pool.size + ", capacity=" + pool.capacity + ", totalCapacity=" + pool.totalCapacity + ", parked=" + pool.parkedConnections.size() + ", buffered=" + pool.requestBuffer.size + ", connecting=" + pool.connecting);
 				// We can just close expired connections from the parked list
 				Deque<Mono<Void>> expiredConnections = null;
