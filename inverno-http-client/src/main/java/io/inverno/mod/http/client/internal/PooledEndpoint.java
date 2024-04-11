@@ -266,6 +266,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 				return;
 			}
 			try {
+				System.out.println("Clean: size=" + pool.size + ", capacity=" + pool.capacity + ", totalCapacity=" + pool.totalCapacity + ", parked=" + pool.parkedConnections.size() + ", buffered=" + pool.requestBuffer.size + ", connecting=" + pool.connecting);
 				LOGGER.debug("Clean: size=" + pool.size + ", capacity=" + pool.capacity + ", totalCapacity=" + pool.totalCapacity + ", parked=" + pool.parkedConnections.size() + ", buffered=" + pool.requestBuffer.size + ", connecting=" + pool.connecting);
 				// We can just close expired connections from the parked list
 				Deque<Mono<Void>> expiredConnections = null;
