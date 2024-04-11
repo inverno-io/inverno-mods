@@ -580,7 +580,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 			return Mono.empty();
 		}
 		return Mono.defer(() -> {
-			LOGGER.debug("Shutting down pooled endpoint...");
+			LOGGER.debug("Shutting down: size=" + this.size + ", capacity=" + this.capacity + ", totalCapacity=" + this.totalCapacity + ", parked=" + this.parkedConnections.size() + ", buffered=" + this.requestBuffer.size + ", connecting=" + this.connecting);
 			this.closing = true;
 			this.cleanFuture.cancel(false);
 			Sinks.Many<PooledEndpoint.PooledHttpConnection> sink = Sinks.many().unicast().onBackpressureBuffer();
@@ -616,7 +616,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 			return Mono.empty();
 		}
 		return Mono.defer(() -> {
-			LOGGER.debug("Shutting down pooled endpoint gracefully...");
+			LOGGER.debug("Shutting down gracefully: size=" + this.size + ", capacity=" + this.capacity + ", totalCapacity=" + this.totalCapacity + ", parked=" + this.parkedConnections.size() + ", buffered=" + this.requestBuffer.size + ", connecting=" + this.connecting);
 			this.closing = true;
 			this.cleanFuture.cancel(false);
 			Sinks.Many<PooledEndpoint.PooledHttpConnection> sink = Sinks.many().unicast().onBackpressureBuffer();

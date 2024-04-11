@@ -427,6 +427,90 @@ public class HttpClientSpecificTest {
 		}
 	}
 	
+	public static Stream<Arguments> provideEndpointAndHttpVersion() {
+		Endpoint<ExchangeContext> h11Endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+			))
+			.build();
+		
+		Endpoint<ExchangeContext> h2Endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_2_0))
+			))
+			.build();
+		
+		return Stream.of(
+			Arguments.of(h11Endpoint, HttpVersion.HTTP_1_1),
+			Arguments.of(h2Endpoint, HttpVersion.HTTP_2_0)
+		);
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_pool_concurrency(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
+		// By default: 
+		// - pool_max_size=2
+		// - http2_max_concurrent_streams=100
+		// - http1_max_concurrent_requests=10
+		
+		// Just make sure all pool connections are created
+		Flux.range(0, 10)
+			.flatMap(i -> endpoint
+				.exchange(Method.GET, "/get_delay100")
+				.flatMap(Exchange::response)
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+			)
+			.blockLast();
+		
+		switch(testHttpVersion) {
+			case HTTP_1_1: {
+				long t0 = System.currentTimeMillis();
+				Flux.range(0, 50)
+					.flatMap(i -> endpoint
+						.exchange(Method.GET, "/get_delay100")
+						.flatMap(Exchange::response)
+						.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+					)
+					.doOnNext(body -> Assertions.assertEquals("get_delay100", body))
+					.blockLast();
+				long total = System.currentTimeMillis() - t0;
+				
+				// We should take 100 * 50 / 2 = 2500ms in theory
+				// In practice:
+				// - ...
+				
+				// Let's be protective here and use a 2500ms delta
+				// as long as we are not taking more than 5 seconds we know the pool is doing its job
+				// Running a clean test the batch completes in 2552ms
+				Assertions.assertEquals(2500, total, 2500); 
+				break;
+			}
+			case HTTP_2_0: {
+				long t0 = System.currentTimeMillis();
+				Flux.range(0, 150)
+					.flatMap(i -> endpoint
+						.exchange(Method.GET, "/get_delay100")
+						.flatMap(Exchange::response)
+						.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+					)
+					.doOnNext(body -> Assertions.assertEquals("get_delay100", body))
+					.blockLast();
+				long total = System.currentTimeMillis() - t0;
+				// Each connection will process 75 requests since we allow up to 100 concurrent streams all requests should be processed in parallel, we should take around 100ms in theory
+				// In practice:
+				// - the event loop group is processing the request, we have 2*cores thread available (so all requests won't be processed in parallel)
+				// - ...
+				
+				// Let's be protective here and use a 150ms delta
+				// In theory with one connection we should process 100 requests and then 50 leading to 200ms
+				// Running a clean test the batch should completes in 163ms
+				Assertions.assertEquals(100, total, 200);
+				break;
+			}
+		}
+	}
+	
 	public static Stream<Arguments> provideTimeoutEndpointsAndHttpVersion() {
 		Endpoint<ExchangeContext> h11TimeoutEndpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf

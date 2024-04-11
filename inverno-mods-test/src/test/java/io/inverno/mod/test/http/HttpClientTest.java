@@ -6004,7 +6004,51 @@ public class HttpClientTest {
 			.block();
 	}
 	
-	@ParameterizedTest
+	@Test
+	public void test_h2c_tooBig() {
+		File uploadsDir = new File("target/uploads/");
+		uploadsDir.mkdirs();
+		
+		// This should result in a failed connection, next request will create a new connection
+		Endpoint<ExchangeContext> blankH2cEndpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.build();
+		try {
+			//curl -i -F 'file=@src/test/resources/post_resource_big.txt' http://127.0.0.1:8080/upload
+			new File(uploadsDir, "post_resource_big.txt").delete();
+			blankH2cEndpoint
+				.exchange(Method.POST, "/upload")
+				.flatMap(exchange -> {
+					exchange.request().body().get().multipart().from((factory, output) -> output.value(
+						factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_big.txt"))))
+					));
+					return exchange.response();
+				})
+				.doOnNext(response -> {
+					Assertions.assertEquals(Status.PAYLOAD_TOO_LARGE, response.headers().getStatus());
+				})
+				.block();
+		}
+		catch(Exception e) {
+			// TODO This fails some times with a broken pipe error, I couldn't figure out what's wrong because I wasn't able to reproduce it in a deterministic way
+			// the problem arise when the connection is closed and we still are trying to write on the socket, this is normally handled but for some reason the exception propagates
+			// Let's leave it for now at least we can check that the endpoint properly create a new connection on the next request
+			e.printStackTrace();
+		}
+		finally {
+			blankH2cEndpoint.shutdown().block();
+		}
+	}
+	
+	// TODO this keeps failing with ConnectionTimeout error in Github, it can't be reproduced locally...
+	// I moved these to HttpClientExtraTest to see if I can isolate the issue
+	// - I saw it once locally:
+	//   - the first test got stuck waiting on a connection
+	//   - I send a request to the test web server using curl during at that time and it responded properly
+	//	   - the server is not faulty here
+	//     - the client works as expected, it tries to connect and this fails after connection timeout
+	//   - so it might indicate that the server is not fully started or at least not ready to accept connections at the time but this doesn't really match to what we see in GitHub...
+	
+	/*@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
 	public void test_pool_concurrency(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
 		// By default: 
@@ -6070,44 +6114,6 @@ public class HttpClientTest {
 	}
 	
 	@Test
-	public void test_h2c_tooBig() {
-		File uploadsDir = new File("target/uploads/");
-		uploadsDir.mkdirs();
-		
-		// This should result in a failed connection, next request will create a new connection
-		Endpoint<ExchangeContext> blankH2cEndpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
-			.build();
-		try {
-			//curl -i -F 'file=@src/test/resources/post_resource_big.txt' http://127.0.0.1:8080/upload
-			new File(uploadsDir, "post_resource_big.txt").delete();
-			blankH2cEndpoint
-				.exchange(Method.POST, "/upload")
-				.flatMap(exchange -> {
-					exchange.request().body().get().multipart().from((factory, output) -> output.value(
-						factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_big.txt"))))
-					));
-					return exchange.response();
-				})
-				.doOnNext(response -> {
-					Assertions.assertEquals(Status.PAYLOAD_TOO_LARGE, response.headers().getStatus());
-				})
-				.block();
-		}
-		catch(Exception e) {
-			// TODO This fails some times with a broken pipe error, I couldn't figure out what's wrong because I wasn't able to reproduce it in a deterministic way
-			// the problem arise when the connection is closed and we still are trying to write on the socket, this is normally handled but for some reason the exception propagates
-			// Let's leave it for now at least we can check that the endpoint properly create a new connection on the next request
-			e.printStackTrace();
-		}
-		finally {
-			blankH2cEndpoint.shutdown().block();
-		}
-	}
-	
-	// TODO this keeps failing with ConnectionTimeout error in Github, it can't be reproduced locally...
-	// I moved these to HttpClientExtraTest to see if I can isolate the issue
-	
-	/*@Test
 	public void test_interceptor() {
 		AtomicBoolean interceptorFlag = new AtomicBoolean(false);
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
