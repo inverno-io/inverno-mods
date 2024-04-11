@@ -53,7 +53,7 @@ public class FileResource extends AbstractAsyncResource {
 	 */
 	public static final String SCHEME_FILE = "file";
 	
-	private PathResource pathResource;
+	private final PathResource pathResource;
 	
 	/**
 	 * <p>

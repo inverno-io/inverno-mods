@@ -85,6 +85,7 @@ public class ResourceTest {
 		URI uri = file.toURI();
 		try {
 			try (Resource resource = new FileResource(pathname)) {
+				Assertions.assertEquals("text/plain", resource.getMediaType());
 				this.writeResource(resource);
 			}
 			
@@ -113,6 +114,7 @@ public class ResourceTest {
 		URI uri = new URI("zip:" + zipFile.toURI() +"!/ign/test.txt");
 		try  {
 			try (Resource resource = new ZipResource(uri)) {
+				Assertions.assertEquals("text/plain", resource.getMediaType());
 				this.writeResource(resource);
 			}
 			
@@ -141,6 +143,7 @@ public class ResourceTest {
 		URI uri = new URI("jar:" + jarFile.toURI() +"!/ign/test.txt");
 		try  {
 			try (Resource resource = new JarResource(uri)) {
+				Assertions.assertEquals("text/plain", resource.getMediaType());
 				this.writeResource(resource);
 			}
 			
@@ -164,11 +167,13 @@ public class ResourceTest {
 	}
 	
 	@Test
-	public void testClasspath() throws URISyntaxException, MalformedURLException {
+	public void testClasspath_withClassLoader() throws URISyntaxException, MalformedURLException {
+		// Classloader
 		File testJar = new File("src/test/resources/test.jar");
 		ClassLoader cl = new URLClassLoader(new URL[] {testJar.toURI().toURL()});
-		URI uri = new URI("classpath:/ign/test.txt");
+		URI uri = URI.create("classpath:/ign/test.txt");
 		try (Resource resource = new ClasspathResource(uri, cl)) {
+			Assertions.assertEquals("text/plain", resource.getMediaType());
 			Assertions.assertTrue(resource.exists().get());
 			Assertions.assertNotNull(resource.lastModified());
 			resource.openReadableByteChannel().ifPresent(ch -> {
@@ -196,8 +201,41 @@ public class ResourceTest {
 	}
 	
 	@Test
+	public void testClasspath_withClass() throws URISyntaxException, MalformedURLException {
+		// Class
+		URI uri = URI.create("classpath:/test.txt");
+		try (Resource resource = new ClasspathResource(uri, ResourceTest.class)) {
+			Assertions.assertEquals("text/plain", resource.getMediaType());
+			Assertions.assertTrue(resource.exists().get());
+			Assertions.assertNotNull(resource.lastModified());
+			resource.openReadableByteChannel().ifPresent(ch -> {
+				try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+					ch;) {
+					int bufferSize = 1024;
+			        ByteBuffer buff = ByteBuffer.allocate(bufferSize);
+			        
+			        while (ch.read(buff) > 0) {
+			            out.write(buff.array(), 0, buff.position());
+			            buff.clear();
+			        }
+			        String fileContent = new String(out.toByteArray(), StandardCharsets.UTF_8);
+			        Assertions.assertEquals("This is a test", fileContent);
+				}
+				catch(IOException e) {
+					throw new RuntimeException(e);
+				}
+			});
+			
+			try (Resource resolvedResource = resource.resolve("../dir/test.txt");) {
+				Assertions.assertEquals(URI.create("classpath:/dir/test.txt"), resolvedResource.getURI());
+			}
+		}
+	}
+	
+	@Test
 	public void testUrl() throws URISyntaxException {
 		try (Resource resource = new URLResource(new File("src/test/resources/test.txt").toURI())) {
+			Assertions.assertEquals("text/plain", resource.getMediaType());
 			resource.openReadableByteChannel().ifPresent(ch -> {
 				try (ByteArrayOutputStream out = new ByteArrayOutputStream();
 					ch;) {

@@ -65,22 +65,22 @@ public class ZipResource extends AbstractAsyncResource {
 	 */
 	public static final String SCHEME_JAR = "jar";
 	
-	private URI uri;
+	private final URI uri;
 	
 	/**
 	 * The URI of the ZIP file.
 	 */
-	protected URI zipUri;
+	protected final URI zipUri;
 	
 	/**
 	 * The URI of the ZIP file system.
 	 */
-	protected URI zipFsUri;
+	protected final URI zipFsUri;
 	
 	/**
 	 * The path to the resource in the ZIP file.
 	 */
-	protected Path resourcePath;
+	protected final Path resourcePath;
 	
 	private FileSystem fileSystem;
 	private Optional<PathResource> pathResource;
@@ -230,9 +230,7 @@ public class ZipResource extends AbstractAsyncResource {
 	
 	@Override
 	public String getMediaType() throws ResourceException {
-		return this.resolve()
-			.map(Resource::getMediaType)
-			.orElse(null);
+		return this.getMediaTypeService().getForPath(this.resourcePath);
 	}
 	
 	@Override

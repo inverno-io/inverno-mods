@@ -64,7 +64,7 @@ import reactor.core.publisher.Mono;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.9
  */
-public class HttpClientExtraTest {
+public class HttpClientSpecificTest {
 
 	static {
 		System.setProperty("log4j2.simplelogLevel", "INFO");

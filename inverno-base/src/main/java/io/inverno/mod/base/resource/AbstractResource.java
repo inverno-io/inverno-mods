@@ -37,6 +37,9 @@ public abstract class AbstractResource implements Resource {
 	
 	private static MediaTypeService defaultMediaTypeService;
 	
+	/**
+	 * The media type service.
+	 */
 	private MediaTypeService mediaTypeService;
 	
 	/**
@@ -106,6 +109,6 @@ public abstract class AbstractResource implements Resource {
 	
 	@Override
 	public String getMediaType() throws ResourceException {
-		return this.getMediaTypeService().getForUri(this.getURI());
+		return this.getMediaTypeService().getForFilename(this.getFilename());
 	}
 }

@@ -55,13 +55,13 @@ public class ClasspathResource extends AbstractAsyncResource {
 	 */
 	public static final String SCHEME_CLASSPATH = "classpath";
 	
-	private Optional<Resource> resource;
-	
-	private URI uri;
-	private String resourceName;
+	private final URI uri;
+	private final String resourceName;
 	
 	private Class<?> clazz;
 	private ClassLoader classLoader;
+	
+	private Optional<Resource> resource;
 	
 	private ResourceException resolutionError;
 	
@@ -140,13 +140,14 @@ public class ClasspathResource extends AbstractAsyncResource {
 		this.uri = ClasspathResource.checkUri(uri);
 		this.clazz = Objects.requireNonNull(clazz);
 		
-		this.resourceName = this.uri.getRawPath();
-		if(this.resourceName == null || this.resourceName.isEmpty()) {
+		String tmpResourceName = this.uri.getRawPath();
+		if(tmpResourceName == null || tmpResourceName.isEmpty()) {
 			throw new IllegalArgumentException("No resource name specified in uri: " + SCHEME_CLASSPATH + ":/[RESOURCE_NAME]");
 		}
-		if(!this.resourceName.startsWith("/")) {
-			this.resourceName = "/" + this.resourceName;
+		if(!tmpResourceName.startsWith("/")) {
+			tmpResourceName = "/" + tmpResourceName;
 		}
+		this.resourceName = tmpResourceName;
 	}
 	
 	/**
@@ -164,13 +165,14 @@ public class ClasspathResource extends AbstractAsyncResource {
 		super(mediaTypeService);
 		this.uri = ClasspathResource.checkUri(uri);
 		
-		this.resourceName = this.uri.getRawPath();
-		if(this.resourceName == null || this.resourceName.isEmpty()) {
+		String tmpResourceName = this.uri.getRawPath();
+		if(tmpResourceName == null || tmpResourceName.isEmpty()) {
 			throw new IllegalArgumentException("No resource name specified in uri: " + SCHEME_CLASSPATH + ":/[RESOURCE_NAME]");
 		}
-		if(this.resourceName.startsWith("/")) {
-			this.resourceName = this.resourceName.substring(1);
+		if(tmpResourceName.startsWith("/")) {
+			tmpResourceName = tmpResourceName.substring(1);
 		}
+		this.resourceName = tmpResourceName;
 		
 		if(classLoader == null) {
 			try {

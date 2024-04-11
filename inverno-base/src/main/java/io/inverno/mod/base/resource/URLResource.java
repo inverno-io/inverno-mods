@@ -50,9 +50,11 @@ import java.util.Optional;
  */
 public class URLResource extends AbstractAsyncResource {
 
-	private URI uri;
+	private final URI uri;
 	
-	private URL url;
+	private final URL url;
+	
+	private String filename;
 	
 	private Optional<URLConnection> connection;
 	
@@ -149,14 +151,14 @@ public class URLResource extends AbstractAsyncResource {
 	
 	@Override
 	public String getFilename() throws ResourceException {
-		String path = this.uri.getPath();
-		int lastSlashIndex = path.lastIndexOf("/");
-		if(lastSlashIndex != -1) {
-			return path.substring(lastSlashIndex + 1);
+		if(this.filename == null) {
+			String path = this.uri.getPath();
+			int lastSlashIndex = path.lastIndexOf("/");
+			if(lastSlashIndex != -1) {
+				this.filename = path.substring(lastSlashIndex + 1);
+			}
 		}
-		else {
-			return null;
-		}
+		return this.filename;
 	}
 	
 	@Override

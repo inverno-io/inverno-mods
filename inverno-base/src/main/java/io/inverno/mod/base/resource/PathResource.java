@@ -48,7 +48,7 @@ import java.util.Optional;
  */
 public class PathResource extends AbstractAsyncResource {
 	
-	private Path path;
+	private final Path path;
 	
 	/**
 	 * <p>
@@ -82,6 +82,11 @@ public class PathResource extends AbstractAsyncResource {
 	@Override
 	public String getFilename() throws ResourceException {
 		return this.path.getFileName().toString();
+	}
+
+	@Override
+	public String getMediaType() throws ResourceException {
+		return this.getMediaTypeService().getForPath(this.path);
 	}
 	
 	@Override
