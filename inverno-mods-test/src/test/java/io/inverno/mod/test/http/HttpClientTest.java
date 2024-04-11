@@ -71,6 +71,7 @@ public class HttpClientTest {
 
 	static {
 		System.setProperty("log4j2.simplelogLevel", "INFO");
+		System.setProperty("log4j2.simplelog.io.inverno.mod.http.client.internal.PooledEndpoint.level", "TRACE");
 		System.setProperty("log4j2.simplelogLogFile", "system.out");
 //		System.setProperty("io.netty.leakDetection.level", "PARANOID");
 //		System.setProperty("io.netty.leakDetection.targetRecords", "20");
