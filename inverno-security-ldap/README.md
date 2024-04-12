@@ -55,7 +55,7 @@ The following example shows how to configure a security manager to authenticate 
 ```java
 // Provided by the ldap module
 LDAPClient ldapClient = null;
-		
+
 SecurityManager<LoginCredentials, LDAPIdentity, RoleBasedAccessController> securityManager = SecurityManager.of(
     new LDAPAuthenticator(ldapClient, "dc=inverno,dc=io"),
     new LDAPIdentityResolver(ldapClient),
@@ -88,7 +88,7 @@ The `LDAPAuthentication` returned by the `LDAPAuthenticator` is a specific princ
 
 The `ActiveDirectoryAuthenticator` is a similar implementation used to authenticate `LoginCredentials` against an [Active Directory][active_directory] server and returning `LDAPAuthentication`.
 
-Although Active Directory can be accessed using LDAP, the internal semantic is quite different than standard LDAP server like [OpenLDAP][openldap] which is why we needed a specific implementation. 
+Although Active Directory can be accessed using LDAP, the internal semantic is quite different than standard LDAP server like [OpenLDAP][openldap] which is why we needed a specific implementation.
 
 Unlike the `LDAPAuthenticator`, authentication using password comparison is not supported and therefore it can only authenticate credentials specified with raw passwords using a bind operation. User groups are resolved from the `memberOf` attribute of the user entry which is resolved using a search user filter set to `(&(objectClass=user)(userPrincipalName={0}))` by default.
 

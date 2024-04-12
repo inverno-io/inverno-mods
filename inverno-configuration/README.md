@@ -12,7 +12,7 @@ Configuration is one of the most important aspect of an application and sadly on
 
 In its most basic form, a configuration is not more than a set of properties associating a value to a key. It would be naive to think that this would be enough to build an agile and customizable application, but in the end, the property should always be considered as the basic building block for configurations.
 
-Now, the first thing to notice is that any part of an application can potentially be configurable, from a server IP address to a color of a button in a user interface, there are multiple forms of configuration with different expectations that must coexist in an application. For instance, some parts of the configuration are purely static and do not change during the operation of an application, this is the case of a bootstrap configuration which mostly relates to the operating environment (eg. a server port). Some other parts, on the other hand, are more dynamic and can change during the operation of an application, this is the case of tenant specific configuration or even user preferences. 
+Now, the first thing to notice is that any part of an application can potentially be configurable, from a server IP address to a color of a button in a user interface, there are multiple forms of configuration with different expectations that must coexist in an application. For instance, some parts of the configuration are purely static and do not change during the operation of an application, this is the case of a bootstrap configuration which mostly relates to the operating environment (eg. a server port). Some other parts, on the other hand, are more dynamic and can change during the operation of an application, this is the case of tenant specific configuration or even user preferences.
 
 Following this, we can see that a configuration greatly depends on the context in which it is loaded. The definition of a configuration, which is basically a list of property names, is dictated by the application, so when the application is running, this definition should be fixed but the context is not. For instance, the bootstrap configuration is different from one operating environment to another, user preferences are not the same from one user to another...
 
@@ -21,7 +21,7 @@ We can summarize this as follows:
 - a configuration is a set of configuration properties.
 - the configuration of an application is actually composed of multiple configurations with their own specificities.
 - the definition of a configuration is bound to the application as a result the only way to change it is to change the application.
-- a configuration depends on a particular context which must be considered when setting or getting configuration properties. 
+- a configuration depends on a particular context which must be considered when setting or getting configuration properties.
 
 The configuration API has been created to address previous points, giving a maximum flexibility to precisely design how an application should be configured.
 
@@ -123,13 +123,13 @@ source
     .collectMap(queryResult -> queryResult.getQueryKey().getName(), queryResult -> queryResult.getResult())
     .map(properties -> {
         ApplicationConfiguration config = new ApplicationConfiguration();
-        
+
         properties.get("server.port").flatMap(property -> property.asInteger()).ifPresent(config::setServerPort);
         properties.get("db.url").flatMap(property -> property.asURL()).ifPresent(config::setDbURL);
         properties.get("db.user").flatMap(property -> property.asString()).ifPresent(config::setDbUser);
         String dbPassword = properties.get("db.password").flatMap(property -> property.asString()).ifPresent(config::setDbPassword);
         String dbSchema = properties.get("db.schema").flatMap(property -> property.asString()).ifPresent(config::setDbSchema);
-        
+
         return config;
     })
     .subscribe(config -> {
@@ -166,7 +166,7 @@ SplittablePrimitiveDecoder<String> customDecoder = ...
 PropertyFileConfigurationSource source = new PropertyFileConfigurationSource(new ClasspathResource(URI.create("classpath:/path/to/configuration.properties")), customDecoder)
 ```
 
-The regular and most efficient way to query a configuration source is to target specific configuration properties identified by a name and a set of parameters, however there are some cases that actually require to list all values defined for a particular property name and matching a particular set of parameters. 
+The regular and most efficient way to query a configuration source is to target specific configuration properties identified by a name and a set of parameters, however there are some cases that actually require to list all values defined for a particular property name and matching a particular set of parameters.
 
 for instance, this is typically the case when configuring log levels, since we can hardly know the name of each and every loggers used in an application, it is easier, safer and more efficient in that case to list all the configuration properties defined for a `logging.level` property and apply the configuration to the loggers based on the parameters of the returned properties.
 
@@ -184,15 +184,15 @@ These configuration properties can then be listed in the application as follows:
 ```java
 // Returns all logging.level properties defined in the configuration source
 List<ConfigurationProperty> result = source.list("logging.level")
-	.executeAll()
-	.collectList()
-	.block();
+    .executeAll()
+    .collectList()
+    .block();
 
 // Apply logging configuration
 for(ConfigurationProperty p : result) {
     Optional<String> loggerName = p.getKey().getParameter("logger");
     Level level = p.as(Level.class).get();
-	// Configure logger...
+    // Configure logger...
 }
 ```
 
@@ -210,10 +210,10 @@ The following list query will return all values that are defined with a `logger`
 ```java
 // Returns logging.level[environment="dev", logger="logger1"], logging.level[environment="prod", logger="logger2"] and logging.level[logger="logger3"]=error which are all defined with parameter logger
 List<ConfigurationProperty> result = source.list("logging.level")
-	.withParameters(Parameter.wildcard("logger"))
-	.executeAll()
-	.collectList()
-	.block();
+    .withParameters(Parameter.wildcard("logger"))
+    .executeAll()
+    .collectList()
+    .block();
 ```
 
 On the other hand, the `execute()` method is exact and returns all the properties defined in the configuration source for a particular property name and which parameters exactly match the set of parameters defined in the query, excluding those that are defined with extra parameters:
@@ -221,10 +221,10 @@ On the other hand, the `execute()` method is exact and returns all the propertie
 ```java
 // Returns logging.level[logger="logger3"]=error which exactly defines parameter logger
 List<ConfigurationProperty> result = source.list("logging.level")
-	.withParameters(Parameter.wildcard("logger"))
-	.execute()
-	.collectList()
-	.block();
+    .withParameters(Parameter.wildcard("logger"))
+    .execute()
+    .collectList()
+    .block();
 ```
 
 ### Configurable configuration source
@@ -291,7 +291,7 @@ The noOp strategy is used to return exact results. This is the default behaviour
 
 #### lookup defaulting strategy
 
-The lookup strategy prioritizes query parameters from left to right and is used to return the best matching property as the one matching the most continuous parameters from left to right. 
+The lookup strategy prioritizes query parameters from left to right and is used to return the best matching property as the one matching the most continuous parameters from left to right.
 
 If we consider query key `property[p1=v1,...pn=vn]`, it supersedes key `property[p1=v1,...pn-1=vn-1]` which supersedes key `property[p1=v1,...pn-2=vn-2]}`... which supersedes key `property[]`. It basically tells the source to lookup by successively removing the rightmost parameter if no exact result exists for a particular query.
 
@@ -432,7 +432,7 @@ The `.properties` file configuration source exposes configuration properties spe
 Configuration properties can be specified in a property file using a syntax similar to the command line configuration source for the property key. Some characters must be escaped with respect to the `.properties` file format. Property values don't need to follow Java's notation for strings since they are considered as strings by design.
 
 ```properties
-web.server_port=8080 
+web.server_port=8080
 web.server_port[profile\="ssl"]=8443
 db.url[env\="dev"]=jdbc:oracle:thin:@dev.db.server:1521:sid
 db.url[env\="prod",zone\="eu"]=jdbc:oracle:thin:@prod_eu.db.server:1521:sid
@@ -481,15 +481,15 @@ application.greeting.message="""
     db.url=jdbc:oracle:thin:@production:1521:sid
     db.user=user_production
     db.password=password_production
-    
+
     [ zone="US" ] {
         db.url=jdbc:oracle:thin:@production.us:1521:sid
     }
-    
+
     [ zone="EU" ] {
         db.url=jdbc:oracle:thin:@production.eu:1521:sid
     }
-    
+
     [ zone="EU", node="node1" ] {
         log.level=DEBUG
     }
@@ -543,7 +543,7 @@ source
     .set("db.url", "jdbc:oracle:thin:@prod_us.db.server:1521:sid").withParameters("environment", "prod", "zone", "us")
     .execute()
     .blockLast();
-    
+
 // Activate working revision globally
 source.activate().block();
 
@@ -569,7 +569,7 @@ This implementation is [defaultable](#defaultable-configuration-source).
 
 The composite configuration source is a configuration source implementation that allows to compose multiple configuration sources into one configuration source.
 
-The property returned for a configuration query key then depends on the order in which configuration sources were defined in the composite configuration source, from the highest priority to the lowest. 
+The property returned for a configuration query key then depends on the order in which configuration sources were defined in the composite configuration source, from the highest priority to the lowest.
 
 The `CompositeConfigurationSource` resolves a configuration property by querying its sources in sequence from the highest priority to the lowest. It relies on a `CompositeConfigurationStrategy` to determine at each round which queries to execute and retain the best matching property from the results. The best matching property is the property whose key is the closest to the original configuration query key according to a `DefaultingStrategy`. The algorithm stops when an exact match is found or when there's no more configuration source to query.
 
@@ -654,7 +654,7 @@ CompositeConfigurationSource source = new CompositeConfigurationSource(List.of(s
 source                                       // 1
     .list("logging.level")
     .withParameters(
-        Parameter.of("environment", "prod"), 
+        Parameter.of("environment", "prod"),
         Parameter.wildcard("name")
     )
     .execute()
@@ -663,7 +663,7 @@ source                                       // 1
 source                                       // 2
     .list("logging.level")
     .withParameters(
-        Parameter.of("environment", "dev"), 
+        Parameter.of("environment", "dev"),
         Parameter.wildcard("name")
     )
     .executeAll()
@@ -672,13 +672,13 @@ source                                       // 2
 
 In the example above:
 
-1. `execute()` is exact and returns properties defined with parameters `environment` and `name`, with parameter `environment` only and with no parameter following defaulting rules implemented in the default strategy. As a result the following properties are returned: 
+1. `execute()` is exact and returns properties defined with parameters `environment` and `name`, with parameter `environment` only and with no parameter following defaulting rules implemented in the default strategy. As a result the following properties are returned:
     - `logging.level[environment="prod",name="test1"]=info` defined in `source1` and overriding the property defined in `source2`
     - `logging.level[environment="prod",name="test2"]=error` defined in `source2`
     - `logging.level[environment="prod",name="test3"]=info` defined in `source2`
     - `logging.level[environment="prod",name="test4"]=error` defined in `source1`
     - `logging.level[environment="prod",name="test5"]=info` defined in `source1`
-2. `executeAll()` returns all properties defined with parameters `environment`, `name` and any other parameter, with parameter `environment` only and with no parameter following defaulting rules implemented in the default strategy. As a result the following properties are returned: 
+2. `executeAll()` returns all properties defined with parameters `environment`, `name` and any other parameter, with parameter `environment` only and with no parameter following defaulting rules implemented in the default strategy. As a result the following properties are returned:
     - `logging.level[environment="dev"]=info` defined in `source1` which is the property that would be returned when querying the source with an unspecified name (eg. `logging.level[environment="dev",name="unspecifiedLogger"]`)
     - `logging.level[environment="dev",name="test1"]=info` defined in `source1` and overriding the property defined in `source2`
     - `logging.level[environment="dev",name="test2"]=debug` defined in `source2`
@@ -706,7 +706,7 @@ public class Application {
 
     public static void main(String[] args) {
         BootstrapConfigurationSource source = new BootstrapConfigurationSource(Application.class.getModule(), args);
-        
+
         // Load configuration
         ApplicationConfiguration configuration = ConfigurationLoader
             .withConfiguration(ApplicationConfiguration.class)
@@ -728,7 +728,7 @@ The `ConfigurationLoader` interface is the main entry point for loading configur
 
 ### Dynamic loader
 
-A dynamic loader can be created by invoking static method `ConfigurationLoader#withConfiguration()` which accepts a single `Class` argument specifying the type of the configuration that must be loaded. 
+A dynamic loader can be created by invoking static method `ConfigurationLoader#withConfiguration()` which accepts a single `Class` argument specifying the type of the configuration that must be loaded.
 
 A valid configuration type must be an interface defining configuration properties as non-void no-argument methods whose names correspond to the configuration properties to retrieve and to map to the resulting configuration object, default values can be specified in default methods.
 
@@ -770,7 +770,7 @@ public interface ServerConfiguration {
 
     // query property 'server_host'
     String server_host();
-    
+
     // query property 'server_port'
     default int server_port() {
         return 8080;
@@ -780,7 +780,7 @@ public interface ServerConfiguration {
 
 ```java
 public interface AppConfiguration {
-    
+
     // Prefix child property names with 'server_configuration'
     ServerConfiguration server_configuration();
 }
@@ -788,7 +788,7 @@ public interface AppConfiguration {
 
 In the above example, the configuration source is queried for properties `server_configuration.server_host[environment="production"]` and `server_configuration.server_port[environment="production"]`.
 
-It is also possible to load a configuration by invoking static method `ConfigurationLoader#withConfigurator()` which allows to load any type of configuration (not only interface) by relying on a configurator and a mapping function. 
+It is also possible to load a configuration by invoking static method `ConfigurationLoader#withConfigurator()` which allows to load any type of configuration (not only interface) by relying on a configurator and a mapping function.
 
 A configurator defines configuration properties as void single argument methods whose names correspond to the configuration properties to retrieve and inject into a configurator instance using a dynamic configurer `Consumer<Configurator>`. The mapping function is finally applied to that configurer to actually create the resulting configuration object.
 
@@ -796,24 +796,24 @@ For instance, previous example could have been implemented as follows:
 
 ```java
 public class AppConfiguration {
-    
+
     private String server_host;
     private String server_port = 8080;
-    
+
     // query property 'server_host'
     public void server_host(String server_host) {
         this.server_host = server_host;
     }
-    
+
     // query property 'server_port'
     public void server_port(int server_port) {
         this.server_port = server_port;
     }
-    
+
     public String server_host() {
         return server_host;
     }
-    
+
     public int server_port() {
         return server_port;
     }
@@ -892,7 +892,7 @@ public interface AppConfiguration {
 }
 ```
 
-Finally, nested beans can be specified in a configuration which is convenient when a module is composing multiple modules and we wish to aggregate all configurations into one single representation in the composite module. 
+Finally, nested beans can be specified in a configuration which is convenient when a module is composing multiple modules and we wish to aggregate all configurations into one single representation in the composite module.
 
 For instance, we can have the following configuration defined in a component module:
 

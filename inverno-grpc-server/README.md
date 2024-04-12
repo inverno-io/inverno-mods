@@ -90,33 +90,33 @@ import io.inverno.mod.web.server.WebRoutesConfigurer;
 @Bean( visibility = Visibility.PRIVATE )
 public class GreeterRouteConfigurer implements WebRoutesConfigurer<ExchangeContext> {
 
-	private final GrpcServer grpcServer;
+    private final GrpcServer grpcServer;
 
-	public GreeterRouteConfigurer(GrpcServer grpcServer) {
-		this.grpcServer = grpcServer;
-	}
-	
-	@Override
-	public void configure(WebRoutable<ExchangeContext, ?> routes) {
-		routes
-			.route()
-				.path(GrpcServiceName.of("helloworld", "Greeter").methodPath("SayHello"))             // /helloworld.Greeter/SayHello
-				.method(Method.POST)
-				.consumes(MediaTypes.APPLICATION_GRPC)
-				.consumes(MediaTypes.APPLICATION_GRPC_PROTO)
-				.handler(this.grpcServer.unary(                                                       // Create a unary exchange handler
-					HelloRequest.getDefaultInstance(), 
-					HelloReply.getDefaultInstance(), 
-					(GrpcExchange.Unary<ExchangeContext, HelloRequest, HelloReply> grpcExchange) -> { // Handle the gRPC exchange
-						grpcExchange.response().value(grpcExchange.request().value()
-							.map(helloRequest -> HelloReply.newBuilder()
-								.setMessage("Hello " + helloRequest.getName())
-								.build()
-							)
-						);
-					}
-				));
-	}
+    public GreeterRouteConfigurer(GrpcServer grpcServer) {
+        this.grpcServer = grpcServer;
+    }
+
+    @Override
+    public void configure(WebRoutable<ExchangeContext, ?> routes) {
+        routes
+            .route()
+                .path(GrpcServiceName.of("helloworld", "Greeter").methodPath("SayHello"))             // /helloworld.Greeter/SayHello
+                .method(Method.POST)
+                .consumes(MediaTypes.APPLICATION_GRPC)
+                .consumes(MediaTypes.APPLICATION_GRPC_PROTO)
+                .handler(this.grpcServer.unary(                                                       // Create a unary exchange handler
+                    HelloRequest.getDefaultInstance(),
+                    HelloReply.getDefaultInstance(),
+                    (GrpcExchange.Unary<ExchangeContext, HelloRequest, HelloReply> grpcExchange) -> { // Handle the gRPC exchange
+                        grpcExchange.response().value(grpcExchange.request().value()
+                            .map(helloRequest -> HelloReply.newBuilder()
+                                .setMessage("Hello " + helloRequest.getName())
+                                .build()
+                            )
+                        );
+                    }
+                ));
+    }
 }
 ```
 
@@ -209,14 +209,14 @@ import reactor.core.publisher.Mono;
 @Bean( visibility = Visibility.PRIVATE )
 public class GreeterController extends GreeterGrpcRouteConfigurer<ExchangeContext> {
 
-	public GreeterController(GrpcServer grpcServer) {
-		super(grpcServer);
-	}
+    public GreeterController(GrpcServer grpcServer) {
+        super(grpcServer);
+    }
 
-	@Override
-	public Mono<HelloReply> sayHello(HelloRequest request) {
-		return Mono.just(HelloReply.newBuilder().setMessage("Hello " + request.getName()).build());
-	}
+    @Override
+    public Mono<HelloReply> sayHello(HelloRequest request) {
+        return Mono.just(HelloReply.newBuilder().setMessage("Hello " + request.getName()).build());
+    }
 }
 ```
 
@@ -237,19 +237,19 @@ import java.util.Optional;
 @Bean( visibility = Visibility.PRIVATE )
 public class GreeterController extends GreeterGrpcRouteConfigurer<ExchangeContext> {
 
-	public GreeterController(GrpcServer grpcServer) {
-		super(grpcServer);
-	}
-	
-	@Override
-	public void sayHello(GrpcExchange.Unary<ExchangeContext, examples.HelloRequest, examples.HelloReply> grpcExchange) {
-		Optional<String> requestMetadata = grpcExchange.request().metadata().get("SomeRequestMetadata");
-		grpcExchange.response()
-			.metadata(metadata -> metadata.set("SomeResponseMetadata", "someValue"))
-			.value(grpcExchange.request().value()
-				.map(helloRequest -> HelloReply.newBuilder().setMessage("Hello " + helloRequest.getName()).build())
-			);
-	}
+    public GreeterController(GrpcServer grpcServer) {
+        super(grpcServer);
+    }
+
+    @Override
+    public void sayHello(GrpcExchange.Unary<ExchangeContext, examples.HelloRequest, examples.HelloReply> grpcExchange) {
+        Optional<String> requestMetadata = grpcExchange.request().metadata().get("SomeRequestMetadata");
+        grpcExchange.response()
+            .metadata(metadata -> metadata.set("SomeResponseMetadata", "someValue"))
+            .value(grpcExchange.request().value()
+                .map(helloRequest -> HelloReply.newBuilder().setMessage("Hello " + helloRequest.getName()).build())
+            );
+    }
 }
 ```
 
@@ -270,11 +270,11 @@ import io.inverno.mod.web.server.WebServerConfiguration;
 @Configuration
 public interface App_grpc_serverConfiguration {
 
-	@NestedBean
-	GrpcServerConfiguration grpc_server();
-	
-	@NestedBean
-	WebServerConfiguration web_server();
+    @NestedBean
+    GrpcServerConfiguration grpc_server();
+
+    @NestedBean
+    WebServerConfiguration web_server();
 }
 ```
 
@@ -287,22 +287,22 @@ import io.inverno.core.v1.Application;
 import io.inverno.mod.configuration.source.BootstrapConfigurationSource;
 
 public class Main {
-	
-	public static void main(String[] args) throws IOException {
-		Application.run(new App_grpc_server.Builder()
-			.setApp_grpc_serverConfiguration(App_grpc_serverConfigurationLoader.load(configuration -> configuration
-				.grpc_server(grpcServer -> grpcServer
-					.base(base -> base.compression_gzip_compressionLevel(6))
-				)
-				.web_server(webServer -> webServer
-					.http_server(httpServer -> httpServer
-						.server_port(8081)
-						.h2c_enabled(true)
-					)
-				)
-			))
-		);
-	}
+
+    public static void main(String[] args) throws IOException {
+        Application.run(new App_grpc_server.Builder()
+            .setApp_grpc_serverConfiguration(App_grpc_serverConfigurationLoader.load(configuration -> configuration
+                .grpc_server(grpcServer -> grpcServer
+                    .base(base -> base.compression_gzip_compressionLevel(6))
+                )
+                .web_server(webServer -> webServer
+                    .http_server(httpServer -> httpServer
+                        .server_port(8081)
+                        .h2c_enabled(true)
+                    )
+                )
+            ))
+        );
+    }
 }
 ```
 
@@ -326,14 +326,14 @@ The service name and the request method can be obtained as follows:
 
 ```java
 (GrpcExchange.Unary<ExchangeContext, HelloRequest, HelloReply> grpcExchange) -> {
-	// <package>.<service>
-	GrpcServiceName serviceName = grpcExchange.request().getServiceName();
-	// <method>
-	String methodName = grpcExchange.request().getMethodName();
-	// <package>.<service>/<method>
-	String fullMethodName = grpcExchange.request().getFullMethodName();
-	
-	...
+    // <package>.<service>
+    GrpcServiceName serviceName = grpcExchange.request().getServiceName();
+    // <method>
+    String methodName = grpcExchange.request().getMethodName();
+    // <package>.<service>/<method>
+    String fullMethodName = grpcExchange.request().getFullMethodName();
+
+    ...
 }
 ```
 
@@ -341,14 +341,14 @@ Standard or custom request metadata including protocol buffer binary data encode
 
 ```java
 (GrpcExchange.Unary<ExchangeContext, HelloRequest, HelloReply> grpcExchange) -> {
-	GrpcInboundRequestMetadata metadata = grpcExchange.request().metadata();
-	List<String> acceptMessageEncodings = metadata.getAcceptMessageEncoding();
-	Optional<String> messageEncoding = metadata.getMessageEncoding();
-	Optional<Duration> timeout = grpcExchange.request().metadata().getTimeout();
-	Optional<String> customValue = metadata.get("custom");
-	Optional<SomeMessage> customBinaryValue = metadata.getBinary("customBinary", SomeMessage.getDefaultInstance()); // -bin suffix is automatically added
-	
-	...
+    GrpcInboundRequestMetadata metadata = grpcExchange.request().metadata();
+    List<String> acceptMessageEncodings = metadata.getAcceptMessageEncoding();
+    Optional<String> messageEncoding = metadata.getMessageEncoding();
+    Optional<Duration> timeout = grpcExchange.request().metadata().getTimeout();
+    Optional<String> customValue = metadata.get("custom");
+    Optional<SomeMessage> customBinaryValue = metadata.getBinary("customBinary", SomeMessage.getDefaultInstance()); // -bin suffix is automatically added
+
+    ...
 }
 ```
 
@@ -356,13 +356,13 @@ When considering a unary or a server streaming exchange, the request message is 
 
 ```java
 (GrpcExchange.Unary<ExchangeContext, HelloRequest, HelloReply> grpcExchange) -> {
-	Mono<HelloRequest> value = grpcExchange.request().value(); // single request message
-	...
+    Mono<HelloRequest> value = grpcExchange.request().value(); // single request message
+    ...
 }
 
 (GrpcExchange.ServerStreaming<ExchangeContext, HelloRequest, HelloReply> grpcExchange) -> {
-	Mono<HelloRequest> value = grpcExchange.request().value(); // single request message
-	...
+    Mono<HelloRequest> value = grpcExchange.request().value(); // single request message
+    ...
 }
 ```
 
@@ -370,13 +370,13 @@ When considering a client streaming or a bidirectional streaming exchange, the r
 
 ```java
 (GrpcExchange.ClientStreaming<ExchangeContext, HelloRequest, HelloReply> grpcExchange) -> {
-	Publisher<HelloRequest> stream = grpcExchange.request().stream(); // multiple request message
-	...
+    Publisher<HelloRequest> stream = grpcExchange.request().stream(); // multiple request message
+    ...
 }
 
 (GrpcExchange.BidirectionalStreaming<ExchangeContext, HelloRequest, HelloReply> grpcExchange) -> {
-	Publisher<HelloRequest> stream = grpcExchange.request().stream(); // multiple request message
-	...
+    Publisher<HelloRequest> stream = grpcExchange.request().stream(); // multiple request message
+    ...
 }
 ```
 
@@ -398,21 +398,21 @@ The following example shows how to expose a unary service method:
 ...
 @Override
 public final void configure(WebRoutable<ExchangeContext, ?> routes) {
-	routes
-		.route()
-			.path(SERVICE_NAME.methodPath("SayHello"))
-			.method(Method.POST)
-			.consumes(MediaTypes.APPLICATION_GRPC)
-			.consumes(MediaTypes.APPLICATION_GRPC_PROTO)
-			.handler(this.grpcServer.unary(
-				SingleHelloRequest.getDefaultInstance(), 
-				SingleHelloReply.getDefaultInstance(), 
-				(GrpcExchange.Unary<ExchangeContext, SingleHelloRequest, SingleHelloReply> grpcExchange) -> {
-					grpcExchange.response().value(grpcExchange.request().value()
-						.map(request -> SingleHelloReply.newBuilder().setMessage("Hello " + request.getName()).build())
-					);
-				}
-			));
+    routes
+        .route()
+            .path(SERVICE_NAME.methodPath("SayHello"))
+            .method(Method.POST)
+            .consumes(MediaTypes.APPLICATION_GRPC)
+            .consumes(MediaTypes.APPLICATION_GRPC_PROTO)
+            .handler(this.grpcServer.unary(
+                SingleHelloRequest.getDefaultInstance(),
+                SingleHelloReply.getDefaultInstance(),
+                (GrpcExchange.Unary<ExchangeContext, SingleHelloRequest, SingleHelloReply> grpcExchange) -> {
+                    grpcExchange.response().value(grpcExchange.request().value()
+                        .map(request -> SingleHelloReply.newBuilder().setMessage("Hello " + request.getName()).build())
+                    );
+                }
+            ));
 }
 ...
 ```
@@ -429,23 +429,23 @@ The following example shows how to expose a client streaming service method:
 ...
 @Override
 public final void configure(WebRoutable<ExchangeContext, ?> routes) {
-	routes
-		.route()
-			.path(SERVICE_NAME.methodPath("SayHelloToEverybody"))
-			.method(Method.POST)
-			.consumes(MediaTypes.APPLICATION_GRPC)
-			.consumes(MediaTypes.APPLICATION_GRPC_PROTO)
-			.handler(this.grpcServer.clientStreaming(
-				SingleHelloRequest.getDefaultInstance(), 
-				GroupHelloReply.getDefaultInstance(), 
-				(GrpcExchange.ClientStreaming<ExchangeContext, SingleHelloRequest, GroupHelloReply> grpcExchange) -> {
-					grpcExchange.response().value(Flux.from(grpcExchange.request().stream())
-						.map(SingleHelloRequest::getName)
-						.collectList()
-						.map(names -> GroupHelloReply.newBuilder().setMessage("Hello ").addAllNames(names).build())
-					);
-				}
-			));
+    routes
+        .route()
+            .path(SERVICE_NAME.methodPath("SayHelloToEverybody"))
+            .method(Method.POST)
+            .consumes(MediaTypes.APPLICATION_GRPC)
+            .consumes(MediaTypes.APPLICATION_GRPC_PROTO)
+            .handler(this.grpcServer.clientStreaming(
+                SingleHelloRequest.getDefaultInstance(),
+                GroupHelloReply.getDefaultInstance(),
+                (GrpcExchange.ClientStreaming<ExchangeContext, SingleHelloRequest, GroupHelloReply> grpcExchange) -> {
+                    grpcExchange.response().value(Flux.from(grpcExchange.request().stream())
+                        .map(SingleHelloRequest::getName)
+                        .collectList()
+                        .map(names -> GroupHelloReply.newBuilder().setMessage("Hello ").addAllNames(names).build())
+                    );
+                }
+            ));
 }
 ...
 ```
@@ -460,25 +460,25 @@ For instance, above example could be rewritten using a reduction operation like 
 ...
 @Override
 public final void configure(WebRoutable<ExchangeContext, ?> routes) {
-	routes
-		.route()
-			.path(SERVICE_NAME.methodPath("SayHelloToEverybody"))
-			.method(Method.POST)
-			.consumes(MediaTypes.APPLICATION_GRPC)
-			.consumes(MediaTypes.APPLICATION_GRPC_PROTO)
-			.handler(this.grpcServer.clientStreaming(
-				SingleHelloRequest.getDefaultInstance(), 
-				GroupHelloReply.getDefaultInstance(), 
-				(GrpcExchange.ClientStreaming<ExchangeContext, SingleHelloRequest, GroupHelloReply> grpcExchange) -> {
-					grpcExchange.response().value(Flux.from(grpcExchange.request().stream())
-						.reduceWith(
-							() -> GroupHelloReply.newBuilder().setMessage("Hello "), 
-							(reply, request) -> reply.addNames(request.getName())
-						)
-						.map(GroupHelloReply.Builder::build)
-					);
-				}
-			));
+    routes
+        .route()
+            .path(SERVICE_NAME.methodPath("SayHelloToEverybody"))
+            .method(Method.POST)
+            .consumes(MediaTypes.APPLICATION_GRPC)
+            .consumes(MediaTypes.APPLICATION_GRPC_PROTO)
+            .handler(this.grpcServer.clientStreaming(
+                SingleHelloRequest.getDefaultInstance(),
+                GroupHelloReply.getDefaultInstance(),
+                (GrpcExchange.ClientStreaming<ExchangeContext, SingleHelloRequest, GroupHelloReply> grpcExchange) -> {
+                    grpcExchange.response().value(Flux.from(grpcExchange.request().stream())
+                        .reduceWith(
+                            () -> GroupHelloReply.newBuilder().setMessage("Hello "),
+                            (reply, request) -> reply.addNames(request.getName())
+                        )
+                        .map(GroupHelloReply.Builder::build)
+                    );
+                }
+            ));
 }
 ...
 ```
@@ -493,28 +493,28 @@ The following example shows how to expose a server streaming service method:
 ...
 @Override
 public final void configure(WebRoutable<ExchangeContext, ?> routes) {
-	routes
-		.route()
-			.path(SERVICE_NAME.methodPath("SayHelloToEveryoneInTheGroup"))
-			.method(Method.POST)
-			.consumes(MediaTypes.APPLICATION_GRPC)
-			.consumes(MediaTypes.APPLICATION_GRPC_PROTO)
-			.handler(this.grpcServer.serverStreaming(
-				GroupHelloRequest.getDefaultInstance(), 
-				SingleHelloReply.getDefaultInstance(), 
-				(GrpcExchange.ServerStreaming<ExchangeContext, GroupHelloRequest, SingleHelloReply> grpcExchange) -> {
-					grpcExchange.response().stream(grpcExchange.request().value()
-						.flatMapMany(request -> Flux.fromIterable(request.getNamesList())
-							.map(name -> SingleHelloReply.newBuilder().setMessage("Hello " + name).build())
-						)
-					);
-				}
-			));
+    routes
+        .route()
+            .path(SERVICE_NAME.methodPath("SayHelloToEveryoneInTheGroup"))
+            .method(Method.POST)
+            .consumes(MediaTypes.APPLICATION_GRPC)
+            .consumes(MediaTypes.APPLICATION_GRPC_PROTO)
+            .handler(this.grpcServer.serverStreaming(
+                GroupHelloRequest.getDefaultInstance(),
+                SingleHelloReply.getDefaultInstance(),
+                (GrpcExchange.ServerStreaming<ExchangeContext, GroupHelloRequest, SingleHelloReply> grpcExchange) -> {
+                    grpcExchange.response().stream(grpcExchange.request().value()
+                        .flatMapMany(request -> Flux.fromIterable(request.getNamesList())
+                            .map(name -> SingleHelloReply.newBuilder().setMessage("Hello " + name).build())
+                        )
+                    );
+                }
+            ));
 }
 ...
 ```
 
-The server receives one `GroupHelloRequest` message and sends multiple `SingleHelloReply` message in response. 
+The server receives one `GroupHelloRequest` message and sends multiple `SingleHelloReply` message in response.
 
 In such use case, the server sends response messages that the client can either process as soon as they are available or aggregate to process them all at once at the end of the call.
 
@@ -528,23 +528,23 @@ The following example shows how to expose a bidirectional streaming service meth
 ...
 @Override
 public final void configure(WebRoutable<ExchangeContext, ?> routes) {
-	routes
-		.route()
-			.path(SERVICE_NAME.methodPath("SayHelloToEveryoneInTheGroups"))
-			.method(Method.POST)
-			.consumes(MediaTypes.APPLICATION_GRPC)
-			.consumes(MediaTypes.APPLICATION_GRPC_PROTO)
-			.handler(this.grpcServer.bidirectionalStreaming(
-				GroupHelloRequest.getDefaultInstance(), 
-				SingleHelloReply.getDefaultInstance(), 
-				(GrpcExchange.BidirectionalStreaming<ExchangeContext, GroupHelloRequest, SingleHelloReply> grpcExchange) -> {
-					grpcExchange.response().stream(Flux.from(grpcExchange.request().stream())
-						.map(GroupHelloRequest::getNamesList)
-						.flatMap(Flux::fromIterable)
-						.map(name -> SingleHelloReply.newBuilder().setMessage("Hello " + name).build())
-					);
-				}
-			));
+    routes
+        .route()
+            .path(SERVICE_NAME.methodPath("SayHelloToEveryoneInTheGroups"))
+            .method(Method.POST)
+            .consumes(MediaTypes.APPLICATION_GRPC)
+            .consumes(MediaTypes.APPLICATION_GRPC_PROTO)
+            .handler(this.grpcServer.bidirectionalStreaming(
+                GroupHelloRequest.getDefaultInstance(),
+                SingleHelloReply.getDefaultInstance(),
+                (GrpcExchange.BidirectionalStreaming<ExchangeContext, GroupHelloRequest, SingleHelloReply> grpcExchange) -> {
+                    grpcExchange.response().stream(Flux.from(grpcExchange.request().stream())
+                        .map(GroupHelloRequest::getNamesList)
+                        .flatMap(Flux::fromIterable)
+                        .map(name -> SingleHelloReply.newBuilder().setMessage("Hello " + name).build())
+                    );
+                }
+            ));
 }
 ...
 ```
@@ -561,12 +561,12 @@ Considering a server streaming exchange, [gRPC request timeout][grpc-timeout] ca
 
 ```java
 (GrpcExchange.ServerStreaming<A, GroupHelloRequest, SingleHelloReply> grpcExchange) -> {
-	Duration timeout = grpcExchange.request().metadata().getTimeout().orElse(Duration.ofSeconds(20)); // Get the grpc-timeout, defaults to 20 seconds when missing
-	grpcExchange.response().stream(Flux.interval(Duration.ofSeconds(1))                               // A long running stream that will eventually time out
-		.map(index -> SingleHelloReply.newBuilder().setMessage("Hello " + index).build())
-		.doOnCancel(() -> grpcExchange.cancel())                                                      // Cancel the exchange on cancel subscription 
-		.take(timeout)                                                                                // Cancel subscription when the request timeout is exceeded
-	);
+    Duration timeout = grpcExchange.request().metadata().getTimeout().orElse(Duration.ofSeconds(20)); // Get the grpc-timeout, defaults to 20 seconds when missing
+    grpcExchange.response().stream(Flux.interval(Duration.ofSeconds(1))                               // A long running stream that will eventually time out
+        .map(index -> SingleHelloReply.newBuilder().setMessage("Hello " + index).build())
+        .doOnCancel(() -> grpcExchange.cancel())                                                      // Cancel the exchange on cancel subscription
+        .take(timeout)                                                                                // Cancel subscription when the request timeout is exceeded
+    );
 }
 ...
 ```
@@ -583,7 +583,7 @@ In a gRPC exchange the expected HTTP code returned by a server should always be 
 
 The gRPC error handler must be used to circumvent that issue, it can be injected in the HTTP server controller or in an error web route.
 
-```java 
+```java
 package io.inverno.example.app_grpc_server;
 
 import io.inverno.core.annotation.Bean;
@@ -596,22 +596,22 @@ import io.inverno.mod.web.server.ErrorWebRoutesConfigurer;
 
 @Bean(visibility = Visibility.PRIVATE)
 public class App_grpc_serverErrorWebRoutesConfigurer implements ErrorWebRoutesConfigurer<ExchangeContext> {
-	
-	private final GrpcServer grpcServer;
-	
-	public App_grpc_serverErrorWebRoutesConfigurer(GrpcServer grpcServer) {
-		this.grpcServer = grpcServer;
-	}
-	
-	@Override
-	public void configure(ErrorWebRoutable<ExchangeContext, ?> errorRoutes) {
-		errorRoutes
-			.route()
-			.consumes(MediaTypes.APPLICATION_GRPC)
-			.consumes(MediaTypes.APPLICATION_GRPC_JSON)
-			.consumes(MediaTypes.APPLICATION_GRPC_PROTO)
-			.handler(this.grpcServer.errorHandler());
-	}
+
+    private final GrpcServer grpcServer;
+
+    public App_grpc_serverErrorWebRoutesConfigurer(GrpcServer grpcServer) {
+        this.grpcServer = grpcServer;
+    }
+
+    @Override
+    public void configure(ErrorWebRoutable<ExchangeContext, ?> errorRoutes) {
+        errorRoutes
+            .route()
+            .consumes(MediaTypes.APPLICATION_GRPC)
+            .consumes(MediaTypes.APPLICATION_GRPC_JSON)
+            .consumes(MediaTypes.APPLICATION_GRPC_PROTO)
+            .handler(this.grpcServer.errorHandler());
+    }
 }
 ```
 

@@ -49,7 +49,7 @@ compile 'io.inverno.mod:inverno-redis-vertx:${VERSION_INVERNO_MODS}'
 
 ## Redis Client API
 
-The Redis client API defines the `RedisClient` and `RedisTransactionalClient` interfaces which provide reactive methods to create and execute [Redis commands][redis_commands]. 
+The Redis client API defines the `RedisClient` and `RedisTransactionalClient` interfaces which provide reactive methods to create and execute [Redis commands][redis_commands].
 
 The `RedisTransactionalClient` interface extends the `RedisClient` interface with Redis transactional support (ie. `MULTI`, `DISCARD`, `EXEC`...).
 
@@ -111,7 +111,7 @@ Multiple commands can be executed on a single connection as follows:
 ```java
 RedisClient<String, String> client = ...
 
-Flux<String> results = Flux.from(client.connection(operations -> 
+Flux<String> results = Flux.from(client.connection(operations ->
     Flux.concat(
         operations.get("key1"),
         operations.get("key2"),
@@ -132,7 +132,7 @@ A batch of commands can be executed as follows:
 ```java
 RedisClient<String, String> client = ...
 
-Flux<String> results = Flux.from(client.batch(operations -> 
+Flux<String> results = Flux.from(client.batch(operations ->
     Flux.just(
         operations.get("key1"),
         operations.get("key2"),
@@ -156,9 +156,9 @@ In the following example, two `SET` commands are executed within a transaction, 
 RedisClient<String, String> client = ...
 
 Mono<RedisTransactionResult> transaction = client
-    .multi(operations -> 
+    .multi(operations ->
         Flux.just(
-            operations.set("key_1", "value_1"), 
+            operations.set("key_1", "value_1"),
             operations.set("key_2", "value_2")
         )
     );
@@ -207,10 +207,10 @@ RedisClient<String, String> client = ...
 Mono<RedisTransactionResult> transaction = client
     .multi("key_3") // watch 'key_3'
     // let's change the value of 'key_3' using another connection to get the transaction discarded
-    .doOnNext(ign -> client.set("key_3", "value_3").block()) 
+    .doOnNext(ign -> client.set("key_3", "value_3").block())
     .flatMap(operations -> {
         operations.set("key_3", "value_3").subscribe();
-        
+
         return operations.exec();
     });
 

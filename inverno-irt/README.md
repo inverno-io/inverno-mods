@@ -57,7 +57,7 @@ Dependencies to `io.netty.common` and `io.netty.buffer` are also required when u
 module io.inverno.example.app {
     ...
     requires io.netty.common;
-	requires transitive io.netty.buffer;
+    requires transitive io.netty.buffer;
     ...
 }
 ```
@@ -163,7 +163,7 @@ include io.inverno.example.app_irt.templates.Misc;
 
 ### Options
 
-Rendering options are specified after that using the `option` keyword. You can for instance declare the charset to use for rendering which defaults to `utf-8` if not specified: 
+Rendering options are specified after that using the `option` keyword. You can for instance declare the charset to use for rendering which defaults to `utf-8` if not specified:
 
 ```plaintext
 option charset = "utf-8";
@@ -248,7 +248,7 @@ Outside the body of a template, comments are regular Java comments:
 /*
  * This a comment to explain that the following import is commented
  */
-// import java.util.List; 
+// import java.util.List;
 ```
 
 Inside the body of a template, comments are statements starting with `{%` and ending with `}`:
@@ -309,7 +309,7 @@ An if statement can be used to render different contents based on one or more co
 
 ### Apply template
 
-Templates can be applied on data using an apply template statement starting with `{` and ending with `}`. The template to apply is selected among the ones available in the template set based on the type of data to render following Java's rules for function overloading. 
+Templates can be applied on data using an apply template statement starting with `{` and ending with `}`. The template to apply is selected among the ones available in the template set based on the type of data to render following Java's rules for function overloading.
 
 As for the value of statement, it is possible to use a syntactic sugar notation or a raw Java expression between `(` and `)` to select the data on which a template should be applied. A template set provides a default template for object which simply renders the `toString()` representation of the input. Considering previous examples, the content of a message object can then also be rendered as follows:
 
@@ -491,7 +491,7 @@ The message is: {@message.message|((String content) -> content.toUpperCase())}
 Lambdas are handy when there's a need for very specific pipes, however the recommended way to create pipes is to define them in Java as static methods returning the `Pipe` implementation in order to keep the template readable. Above pipe can be defined in a Java class as follows:
 
 ```java
-package io.inverno.example.app_irt.pipes; 
+package io.inverno.example.app_irt.pipes;
 
 import io.inverno.mod.irt.Pipe;
 

@@ -77,7 +77,7 @@ The *security-jose* module is an Inverno module which exposes four services:
 
 It also provides JOSE object media type converters (e.g. `application/jose`, `application/jose+json`, `application/jwk+json`...) which can be used to decode (parse, verify, decrypt) JWS, JWE or JWK.
 
-It can be easily composed in another Inverno module, as shown above, to get these services injected where they are needed but it can also be used in any other application which requires JOSE support. Media type converters might however be required to automatically convert payloads inside JWS or JWE token based on the content type, they can be provided explicitly when creating the module. 
+It can be easily composed in another Inverno module, as shown above, to get these services injected where they are needed but it can also be used in any other application which requires JOSE support. Media type converters might however be required to automatically convert payloads inside JWS or JWE token based on the content type, they can be provided explicitly when creating the module.
 
 > Explicit encoders and decoders can also be used to convert payloads, it is then completely possible to run the module without specifying media type converters.
 
@@ -131,7 +131,7 @@ JWKService jwkService = ...
  *   "kty":"oct",
  *   "kid":"octKey"
  * }
- */ 
+ */
 Mono<? extends OCTJWK> octKey = jwkService.oct().generator()
     .keyId("octKey")
     .algorithm(OCTAlgorithm.HS512.getAlgorithm())
@@ -141,7 +141,7 @@ Mono<? extends OCTJWK> octKey = jwkService.oct().generator()
 
 The API is fully reactive, subscribing multiple times to the `Mono` returned by the key generator would result in multiple keys being generated which is why `cache()` was used to make sure one single key is generated and returned. The key thus obtained can then be used to sign or verify JWS tokens.
 
-A JSON Web Signature token (JWS) is composed of a header, a payload and a payload signature. The header basically specifies the information needed to verify the payload signature. A JWS token then provides integrity protection since although it is possible to read the content of the payload, it is not possible to modify it without breaking the signature. 
+A JSON Web Signature token (JWS) is composed of a header, a payload and a payload signature. The header basically specifies the information needed to verify the payload signature. A JWS token then provides integrity protection since although it is possible to read the content of the payload, it is not possible to modify it without breaking the signature.
 
 The following example shows how to create a JWS token with a simple text payload using previous symmetric key:
 
@@ -149,7 +149,7 @@ The following example shows how to create a JWS token with a simple text payload
 // Injected or obtained from a 'Jose' instance
 JWSService jwsService = ...
 
-/* 
+/*
  * {
  *   "header":{
  *     "alg":"HS512",
@@ -185,7 +185,7 @@ Mono<JWS<String>> jws = jwsService.reader(String.class, octKey)
 jws.block().getPayload();
 ```
 
-A JSON Web Encryption token (JWE) provides privacy in addition to integrity by encrypting the payload. Is is composed of a header which specifies how to decrypt and verify the cipher text, an encrypted key (used for digital signature and encryption), an initilization vector, the cipher text and an authentication tag. 
+A JSON Web Encryption token (JWE) provides privacy in addition to integrity by encrypting the payload. Is is composed of a header which specifies how to decrypt and verify the cipher text, an encrypted key (used for digital signature and encryption), an initilization vector, the cipher text and an authentication tag.
 
 The following example shows how to load an RSA key pair into a JWK, use it to create a JWE token and read its compact representation:
 
@@ -301,7 +301,7 @@ String jwtCompact = jwt.block().toCompact();
 Mono<JWS<JWTClaimsSet>> jwt = jwtService.jwsReader(octKey)
     .read(compactJWT);
 
-// Throw a JWSReadException if the signature is invalid or an InvalidJWTException if the JWT Claims set is invalid (e.g. expired, inactive...) 
+// Throw a JWSReadException if the signature is invalid or an InvalidJWTException if the JWT Claims set is invalid (e.g. expired, inactive...)
 jwt.block().getPayload().ifInvalidThrow();
 ```
 
@@ -359,7 +359,7 @@ OCTJWK octJWK = jwkService.oct().generator()
 // Throw a JWKProcessingException since HS256 algorithm is requested which is not consistent with HS512 algorithm specified in the JWK
 octJWK.signer(OCTAlgorithm.HS256.getAlgorithm());
 
-// Return a signer using HS512 algorithm 
+// Return a signer using HS512 algorithm
 octJWK.signer();
 ```
 
@@ -380,10 +380,10 @@ Standard built-in factories are directly exposed on the `JWKService` in order to
 ```java
 // Return the ECJWKFactory
 jwkService.ec()...
-		
+
 // Return the RSAJWKFactory
 jwkService.rsa()...
-		
+
 // Return the OCTJWKFactory
 jwkService.oct()...
 
@@ -477,7 +477,7 @@ RSAJWK rsaKey = jwkService.rsa().builder()
     .block();
 ```
 
-If we assumed that `rsaKey` is not stored in the module's `JWKStore` and that public and private keys are also not stored in the module's Java Key Store, the resulting `RSAKey` is therefore untrusted since the provided information could not be authenticated. 
+If we assumed that `rsaKey` is not stored in the module's `JWKStore` and that public and private keys are also not stored in the module's Java Key Store, the resulting `RSAKey` is therefore untrusted since the provided information could not be authenticated.
 
 An untrusted `JWK` cannot be used to digitally sign, encrypt or derive keys. If we know by external means that the provided information can be trusted after all, we can explicitly trust the `JWK` as follows:
 
@@ -552,7 +552,7 @@ RSAJWK rsaKey = jwkService.rsa().read(rsaJwkJSON).block();
 
 The *security-jose* module uses a `JWKStore` to store and load frequently used keys. By default the module uses a no-op implementation but more effective implementations can be injected when creating the module.
 
-The purpose of the `JWKStore` is optimize key resolution when loading keys while creating or reading JWS or JWE. As soon as a key is matched by a key id, an X.509 SHA-1 or X.509 SHA-256 thumbprint, the key shall be returned and no further processing performed, including consistency checks. 
+The purpose of the `JWKStore` is optimize key resolution when loading keys while creating or reading JWS or JWE. As soon as a key is matched by a key id, an X.509 SHA-1 or X.509 SHA-256 thumbprint, the key shall be returned and no further processing performed, including consistency checks.
 
 > Note that this actually goes a bit against [RFC 7517][rfc7517] for which inconsistent JWK must be rejected but this is a fair optimization as the returned `JWK` shall always be consistent.
 
@@ -693,7 +693,7 @@ io.inverno.example.app_jose.appConfiguration {
 
 The *security-jose* module fully supports algorithms specified in [RFC 7518 JSON Web Algorithm (JWA)][rfc7518], [RFC 8037][rfc8037] and [RFC 8812][rfc8812] and used to sign/verify, encrypt/decrypt and derive content encryption keys. They are grouped into categories with associated `JWK` implementations and `JWAAlgorithm` enum listing the algorithms and defining the parameters required to create corresponding `JWASigner`, `JWACipher` and `JWAKeyManager`.
 
-The `JWA` interface is the base type extended by all JWA algorithms including `JWASigner` for digital signature algorithms, `JWACipher` for encryption algorithms and `JWAKeyManager` for key management algorithms. 
+The `JWA` interface is the base type extended by all JWA algorithms including `JWASigner` for digital signature algorithms, `JWACipher` for encryption algorithms and `JWAKeyManager` for key management algorithms.
 
 The `JWASigner` interface exposes methods `sign()` and `verify()` used to respectively sign and verify some arbitrary data.
 
@@ -872,7 +872,7 @@ The JWS service is used to build or read JWS represented using the compact or th
 
 The `JWSService` bean is used to create `JWSBuilder` or `JsonJWSBuilder` instances to build JWS using the compact or the JSON notation and `JWSReader` or `JsonJWSReader` instances to read JWS serialized using the compact or JSON notation.
 
-A JWS allows to communicate integrity protected content using digital signatures or message authentication codes (MACs). It is composed of three parts: 
+A JWS allows to communicate integrity protected content using digital signatures or message authentication codes (MACs). It is composed of three parts:
 
 - a JOSE header which specifies how to understand (i.e. type, content type...), sign or verify the JWS.
 - a payload which is digitally signed in the JWS.
@@ -883,7 +883,7 @@ A `JWS` is obtained from a `JWSBuilder` or a `JWSReader`, the `JWS` interface ex
 ```java
 JWS<?> jws = ...
 
-// <header>.<payload>.<signature> 
+// <header>.<payload>.<signature>
 // e.g. eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ.dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
 String jwsCompact = jws.toCompact();
 ```
@@ -893,9 +893,9 @@ A `JsonJWS` is obtained from a `JsonJWSBuilder` or a `JsonJWSReader`, the `JsonJ
 ```java
 JsonJWS<?, ?> jsonJWS = ...
 
-/* 
+/*
  * RFC 7515 Appendix A.6
- * 
+ *
  * {
  *   "payload": "eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ",
  *   "signatures": [
@@ -930,7 +930,7 @@ The detached compact representation as specified by [RFC 7797][rfc7797] is also 
 ```java
 JWS<?> jws = ...
 
-// <header>..<signature> 
+// <header>..<signature>
 // e.g. eyJhbGciOiJFUzUxMiJ9..AdwMgeerwtHoh-l192l60hp9wAHZFVJbLfD_UxMi70cwnZOYaRI1bKPWROc-mZZqwqT2SI-KGDKB34XO0aw_7XdtAG8GaSwFKdCAPZgoXD2YBJZCPEX3xKpRwcdOO8KpEHwJjyqOgzDO7iKvU8vcnwNrmxYbSW9ERBXukOXolLzeO_Jn
 String jwsDetachedCompact = jws.toDetachedCompact();
 ```
@@ -951,7 +951,7 @@ A `JWSbuilder` uses media type converters injected in the module to encode the J
 
 The digital signature is computed by applying a signature algorithm to the JWS signing input composed of the JWS header and the serialized payload.
 
-The following example shows how to build a `JWS` with a generated `JWK` and a payload serialized as `application/json` using corresponding media type converter: 
+The following example shows how to build a `JWS` with a generated `JWK` and a payload serialized as `application/json` using corresponding media type converter:
 
 ```java
 // Injected or obtained from a 'Jose' instance
@@ -1165,10 +1165,10 @@ String jwsJson = "{"
     + "    }"
     + "  ],"
     + "  \"payload\": \"TGluZGEgPiBTaGFsbCB3ZSBiZWdpbj8\""
-    + "}";   
+    + "}";
 
 JsonJWS<Message, ReadSignature<Message>> jsonJWS = jwsService.jsonReader(Message.class)
-    .read(jwsJson, p -> 
+    .read(jwsJson, p ->
         Mono.fromSupplier(() -> {
             int separatorIndex = p.indexOf(">");
             return new Message(p.substring(0, separatorIndex - 1), p.substring(separatorIndex + 2));
@@ -1231,7 +1231,7 @@ The JWE service is used to build or read JWE represented using the compact or th
 
 The `JWEService` bean is used to create `JWEBuilder` or `JsonJWEBuilder` instances to build JWE using the compact or the JSON notation and `JWEReader` or `JsonJWEReader` instances to read JWE serialized using the compact or JSON notation.
 
-A JWE allows to communicate encrypted content using cryptographic algorithms that guarantees both integrity and confidentiality. It is composed of five parts: 
+A JWE allows to communicate encrypted content using cryptographic algorithms that guarantees both integrity and confidentiality. It is composed of five parts:
 
 - a JOSE header which specifies how to understand (i.e. type, content type...), encrypt or decrypt the JWE content.
 - an encrypted key which corresponds to the content encryption key used to encrypt the JWE content.
@@ -1254,7 +1254,7 @@ A `JsonJWE` is obtained from a `JsonJWEBuilder` or a `JsonJWEReader`, the `JsonJ
 ```java
 JsonJWE<?, ?> jsonJWE = ...
 
-/* 
+/*
  * RFC 7516 Appendix A.4
  *
  * {
@@ -1295,8 +1295,8 @@ String jweJson = jsonJWE.toJson();
 
 A JWE offers integrity and confidentiality of its content using authenticated encryption, it requires two algorithms:
 
-- the algorithm (`alg`) used to encrypt/decrypt, wrap/unwrap or derive a content encryption key (CEK) 
-- the encryption algorithm used to actually encrypt/decrypt the content using the CEK. 
+- the algorithm (`alg`) used to encrypt/decrypt, wrap/unwrap or derive a content encryption key (CEK)
+- the encryption algorithm used to actually encrypt/decrypt the content using the CEK.
 
 The CEK is either generated or derived when building a JWE and resolved when reading a JWE using a key management algorithm. As a result, building or reading a JWE requires a `JWK` supporting key management algorithms.
 
@@ -1312,7 +1312,7 @@ A `JWEbuilder` uses media type converters injected in the module to encode the J
 
 The JWE content are encrypted using a generated content encryption key (CEK) or directly using the provided or resolved `JWK` in case of direct encryption (i.e. `alg=dir`). The CEK (if any) is encrypted, wrapped or derived using the provided or resolved `JWK` and included in the resulting JWE with the initialization vector that was generated and used during the authenticated encryption and the resulting authentication tag so that a recipient has all the information required to decrypt the CEK and eventually verify and decrypt the JWE.
 
-The following example shows how to build a `JWE` with a generated `JWK` and a payload serialized as `application/json` using corresponding media type converter: 
+The following example shows how to build a `JWE` with a generated `JWK` and a payload serialized as `application/json` using corresponding media type converter:
 
 ```java
 // Injected or obtained from a 'Jose' instance
@@ -1354,7 +1354,7 @@ The JWE JSON representation as defined by [RFC 7516 Section 7.2][rfc7516] is a J
 
 A `JsonJWEBuilder` is used to create `JsonJWE` with multiple recipients following the JSON representation specification, it is obtained by invoking one of the `jsonBuilder()` methods on the `JWEService` bean. Since a `JsonJWE` might have multiple recipients with different encrypted content using different keys and algorithms, only the payload type can be specified when creating the builder, keys will be provided or resolved later in the process.
 
-A `JsonJWE` is created from common protected and unprotected headers, one payload and multiple recipients with unportected headers used to encrypt the JWE using different keys. Unlike unprotected headers, the common protected header is included in the additional authentication data used during the authenticated encryption of the JWE. Common headers and per recipient header must be disjoint and content related parameters such as the type (`typ`) or the content type (`cty`) must be consistent across all recipient headers. A `JWEBuildException` shall be thrown in case of invalid or inconsistent recipient headers. The encryption algorithm parameter (`enc`) must also be consistent across all recipients since the cipher text, the initilization vector, the authentication tag and the content encryption key used to encrypt the JWE are common to all recipients (the JWE is actually encrypted once), it is however encrypted, wrapped or derived per recipient using different keys explicitly provided or automatically resolved for each recipient. In case of a direct encryption or direct key agreement algorithm, the algorithm paremeter (`alg`) must also be consistent across all recipients. 
+A `JsonJWE` is created from common protected and unprotected headers, one payload and multiple recipients with unportected headers used to encrypt the JWE using different keys. Unlike unprotected headers, the common protected header is included in the additional authentication data used during the authenticated encryption of the JWE. Common headers and per recipient header must be disjoint and content related parameters such as the type (`typ`) or the content type (`cty`) must be consistent across all recipient headers. A `JWEBuildException` shall be thrown in case of invalid or inconsistent recipient headers. The encryption algorithm parameter (`enc`) must also be consistent across all recipients since the cipher text, the initilization vector, the authentication tag and the content encryption key used to encrypt the JWE are common to all recipients (the JWE is actually encrypted once), it is however encrypted, wrapped or derived per recipient using different keys explicitly provided or automatically resolved for each recipient. In case of a direct encryption or direct key agreement algorithm, the algorithm paremeter (`alg`) must also be consistent across all recipients.
 
 > In the particular case of a direct encryption, a `JsonJWE` is really not different than a regular JWE since all recipients have then to share the same encryption key.
 
@@ -1536,7 +1536,7 @@ String jweJson = "{"
     + "}";
 
 JsonJWE<Message, ReadRecipient<Message>> readJsonJWE = jweService.jsonReader(Message.class)
-    .read(jweJson, payload -> 
+    .read(jweJson, payload ->
         Mono.fromSupplier(() -> {
             int separatorIndex = payload.indexOf(">");
             return new Message(payload.substring(0, separatorIndex - 1), payload.substring(separatorIndex + 2));
@@ -1569,7 +1569,7 @@ Mono<? extends OCTJWK> key = jwkService.oct().builder()
     .build()
     .cache();
 
-/* 
+/*
 * {
 *   "header": {
 *     "enc": "A128CBC-HS256",
@@ -1613,7 +1613,7 @@ The `JWTService` bean is used to create specific `JWSBuilder` or `JWEBuilder` in
 
 A JWT claims set represents a JSON object whose members are the claims conveyed by the JWT as defined by [RFC 7519][rfc7519] which also specifies registered claim names. For instance, the issuer (`iss`) claim identifies the principal that issued the JWT, the expiration time claim (`exp`) identifies the expiration time on or after which the JWT must not be accepted for processing... A JWT is therefore validated by first verifying or decrypting the enclosing JWS or JWE and then by validating the JWT claims set, a JWT must be rejected if for instance the expiration time has passed.
 
-The `JWTClaimsSet` interface is used to represent the JWT payload in a JWS or a JWE, it exposes the registered claims and allows to specify custom claims. 
+The `JWTClaimsSet` interface is used to represent the JWT payload in a JWS or a JWE, it exposes the registered claims and allows to specify custom claims.
 
 The following example shows how to create a `JWTClaimsSet` with an issuer and a custom claim and which expires in a day:
 
@@ -1627,7 +1627,7 @@ A `JWTClaimsSet` can be validated in multiple ways:
 
 ```java
 if(jwtClaimsSet.isValid()) {
-			
+
 }
 
 // Run an action only if the JWT claims set is valid
@@ -1640,7 +1640,7 @@ jwtClaimsSet.ifValidOrElse(
     () -> {
         // Valid
         ...
-    }, 
+    },
     () -> {
         // Invalid
         ...

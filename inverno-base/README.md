@@ -3,7 +3,7 @@
 
 # Base
 
-The Inverno *base* module defines the foundational APIs used across all modules, it can be seen as an extension to the *java.base* module. 
+The Inverno *base* module defines the foundational APIs used across all modules, it can be seen as an extension to the *java.base* module.
 
 In order to use the Inverno *base* module, we need to declare a dependency in the module descriptor:
 
@@ -56,11 +56,11 @@ For instance, let's say we want to use different instances of a `Warehouse` bean
 public class WarehouseKeyScope extends KeyScope<Warehouse> {
 
     private final Supplier<Warehouse> storePrototype;
-    
+
     public WarehouseKeyScope(@Lazy Supplier<Warehouse> storePrototype) {
         this.storePrototype = storePrototype;
     }
-    
+
     @Override
     protected Warehouse create() {
         return this.storePrototype.get();
@@ -79,7 +79,7 @@ public class WarehouseService {
     public WarehouseService(KeyScope<Warehouse> warehouse) {
         this.warehouse = warehouse;
     }
-    
+
     public void store(Product product, String region) {
         Warehouse warehouse = this.warehouse.get(region);
         ...
@@ -103,35 +103,35 @@ A basic decoder is used to decode an object of a source type to an object of a t
 
 ```java
 public class StringToIntegerDecoder {
-    
+
     @Override
     public <T extends Integer> T decode(String value, Class<T> type) throws ConverterException {
         return (T)Integer.valueOf(value);
     }
-    
+
     @Override
     public <T extends Integer> T decode(String value, Type type) throws ConverterException {
         return (T)Integer.valueOf(value);
     }
 }
-Decoder<String, Integer> 
+Decoder<String, Integer>
 ```
 
 A basic encoder is used to encode an object of a source type to an object of a target type. For instance, we can create a simple integer to string encoder as follows:
 
 ```java
 public class IntegerToStringEncoder implements Encoder<Integer, String> {
-    
+
     @Override
     public <T extends Integer> String encode(T value) throws ConverterException {
         return value.toString();
     }
-    
+
     @Override
     public <T extends Integer> String encode(T value, Class<T> type) throws ConverterException {
         return value.toString();
     }
-    
+
     @Override
     public <T extends Integer> String encode(T value, Type type) throws ConverterException {
         return value.toString();
@@ -147,39 +147,39 @@ A more realistic example would then be a JSON string to object converter:
 
 ```java
 public class JsonToObjectConverter implements Converter<String, Object> {
-    
+
     private ObjectMapper mapper = new ObjectMapper();
-    
+
     @Override
     public <T> T decode(String value, Class<T> type) throws ConverterException {
         try {
             return this.mapper.readValue(value, type);
-        } 
+        }
         catch (JsonProcessingException e) {
             throw new ConverterException(e);
         }
     }
-    
+
     @Override
     public <T> T decode(String value, Type type) throws ConverterException {
         ...
     }
-    
+
     @Override
     public <T> String encode(T value) throws ConverterException {
         try {
             return this.mapper.writeValueAsString(value);
-        } 
+        }
         catch (JsonProcessingException e) {
             throw new ConverterException(e);
         }
     }
-    
+
     @Override
     public <T> String encode(T value, Class<T> type) throws ConverterException {
         ...
     }
-    
+
     @Override
     public <T> String encode(T value, Type type) throws ConverterException {
         ...
@@ -201,7 +201,7 @@ The `StringConverter` is a typical implementation that can decode or encode mult
 StringConverter converter = new StringConverter();
 
 // List.of(1, 2, 3)
-List<Integer> l = converter.decodeToList("1,2,3", Integer.class); 
+List<Integer> l = converter.decodeToList("1,2,3", Integer.class);
 // "1,2,3"
 String s = converter.encodeList(List.of(1, 2, 3));
 ```
@@ -243,7 +243,7 @@ ByteBufConverter converter = new ByteBufConverter(new StringConverter());
 Publisher<ByteBuf> dataStream = ... // comes from a request or resource
 
 // On subscription, chunk of data accumulates until a complete response can be emitted
-Mono<ZonedDateTime> dateTimeMono = converter.decodeOne(dataStream, ZonedDateTime.class); 
+Mono<ZonedDateTime> dateTimeMono = converter.decodeOne(dataStream, ZonedDateTime.class);
 
 // On subscription, a stream of integer is mapped to a publisher of ByteBuf
 Publisher<ByteBuf> integerStream = converter.encodeMany(Flux.just(1,2,3,4));
@@ -283,18 +283,18 @@ public static class MessageDecoder implements CompoundDecoder<String, Message> {
     public <T extends Message> T decode(String value, Class<T> type) throws ConverterException {
         return (T) new Message(value);
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public <T extends Message> T decode(String value, Type type) throws ConverterException {
         return (T) new Message(value);
     }
-    
+
     @Override
     public <T extends Message> boolean canDecode(Class<T> type) {
         return Message.class.equals(type);
     }
-    
+
     @Override
     public boolean canDecode(Type type) {
         return Message.class.equals(type);
@@ -304,27 +304,27 @@ public static class MessageDecoder implements CompoundDecoder<String, Message> {
 
 ```java
 public static class MessageEncoder implements CompoundEncoder<Message, String> {
-    
+
     @Override
     public <T extends Message> String encode(T value) throws ConverterException {
         return value.getMessage();
     }
-    
+
     @Override
     public <T extends Message> String encode(T value, Class<T> type) throws ConverterException {
         return value.getMessage();
     }
-    
+
     @Override
     public <T extends Message> String encode(T value, Type type) throws ConverterException {
         return value.getMessage();
     }
-    
+
     @Override
     public <T extends Message> boolean canEncode(Class<T> type) {
         return Message.class.equals(type);
     }
-    
+
     @Override
     public boolean canEncode(Type type) {
         return Message.class.equals(type);
@@ -588,21 +588,21 @@ A resource content can be read using a `ReadableByteChannel` as follows:
 
 ```java
 try (Resource resource = new FileResource("/path/to/file")) {
-	String content = resource.openReadableByteChannel()
-		.map(channel -> {
-			try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-				ByteBuffer buffer = ByteBuffer.allocate(256);
-				while (channel.read(buffer) > 0) {
-					out.write(buffer.array(), 0, buffer.position());
-					buffer.clear();
-				}
-				return new String(out.toByteArray(), Charsets.UTF_8);
-			}
-			finally {
-				channel.close();
-			}
-		})
-		.orElseThrow(() -> new IllegalStateException("Resource is not readable"));
+    String content = resource.openReadableByteChannel()
+        .map(channel -> {
+            try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                ByteBuffer buffer = ByteBuffer.allocate(256);
+                while (channel.read(buffer) > 0) {
+                    out.write(buffer.array(), 0, buffer.position());
+                    buffer.clear();
+                }
+                return new String(out.toByteArray(), Charsets.UTF_8);
+            }
+            finally {
+                channel.close();
+            }
+        })
+        .orElseThrow(() -> new IllegalStateException("Resource is not readable"));
 }
 ```
 
@@ -610,17 +610,17 @@ It can also be read in a reactive way:
 
 ```java
 try(Resource resource = new FileResource("/path/to/resource")) {
-	String content = Flux.from(resource.read())
-		.map(chunk -> {
-			try {
-				return chunk.toString(Charsets.UTF_8);
-			}
-			finally {
-				chunk.release();
-			}
-		})
-		.collect(Collectors.joining())
-		.block();
+    String content = Flux.from(resource.read())
+        .map(chunk -> {
+            try {
+                return chunk.toString(Charsets.UTF_8);
+            }
+            finally {
+                chunk.release();
+            }
+        })
+        .collect(Collectors.joining())
+        .block();
 }
 ```
 
@@ -628,21 +628,21 @@ In a similar way, content can be written to a resource using a `WritableByteChan
 
 ```java
 try (Resource resource = new FileResource("/path/to/file")) {
-	resource.openWritableByteChannel()
-		.ifPresentOrElse(
-			channel -> {
-				try {
-					ByteBuffer buffer = ByteBuffer.wrap("Hello world".getBytes(Charsets.UTF_8));
-					channel.write(buffer);
-				}
-				finally {
-					channel.close();
-				}
-			},
-			() -> {
-				throw new IllegalStateException("Resource is not writable");
-			}
-		);
+    resource.openWritableByteChannel()
+        .ifPresentOrElse(
+            channel -> {
+                try {
+                    ByteBuffer buffer = ByteBuffer.wrap("Hello world".getBytes(Charsets.UTF_8));
+                    channel.write(buffer);
+                }
+                finally {
+                    channel.close();
+                }
+            },
+            () -> {
+                throw new IllegalStateException("Resource is not writable");
+            }
+        );
 }
 ```
 
@@ -650,10 +650,10 @@ Data can also be written in a reactive way:
 
 ```java
 try (Resource resource = new FileResource("/path/to/resource")) {
-	int nbBytes = Flux.from(resource.write(Flux.just(Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer("Hello world".getBytes(Charsets.UTF_8))))))
-		.collect(Collectors.summingInt(i -> i))
-		.block();
-	System.out.println(nbBytes + " bytes written");
+    int nbBytes = Flux.from(resource.write(Flux.just(Unpooled.unreleasableBuffer(Unpooled.wrappedBuffer("Hello world".getBytes(Charsets.UTF_8))))))
+        .collect(Collectors.summingInt(i -> i))
+        .block();
+    System.out.println(nbBytes + " bytes written");
 }
 ```
 

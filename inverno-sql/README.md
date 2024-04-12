@@ -74,8 +74,8 @@ A row mapping function can be specified directly in the query as well
 
 ```java
 Publisher<Person> results = client.query(
-    "SELECT * FROM person WHERE name = $1", 
-    row -> new Person(row.getString("firstname"), row.getString("name"), row.getLocalDate("birthdate")), 
+    "SELECT * FROM person WHERE name = $1",
+    row -> new Person(row.getString("firstname"), row.getString("name"), row.getLocalDate("birthdate")),
     "Smith"
 );
 ```
@@ -84,7 +84,7 @@ A single result can also be queried as follows:
 
 ```java
 Mono<Person> person = client.queryForObject( // only consider the first row in the results
-    "SELECT * FROM person WHERE name = $1", 
+    "SELECT * FROM person WHERE name = $1",
     row -> new Person(row.getString("firstname"), row.getString("name"), row.getLocalDate("birthdate")),
     "Smith"
 );
@@ -96,7 +96,7 @@ The database can be updated as follows:
 
 ```java
 client.update(
-    "UPDATE person SET birthdate = $1 WHERE id = $2", 
+    "UPDATE person SET birthdate = $1 WHERE id = $2",
     LocalDate.of(1970, 1, 1), 123
 );
 ```
@@ -105,7 +105,7 @@ It can also be updated in a batch as follows:
 
 ```java
 client.batchUpdate(
-    "UPDATE person SET birthdate = $1 WHERE id = $2", 
+    "UPDATE person SET birthdate = $1 WHERE id = $2",
     List.of(
         new Object[]{ LocalDate.of(1970, 1, 1), 123 },
         new Object[]{ LocalDate.of(1980, 1, 1), 456 },
@@ -201,7 +201,7 @@ final float debit = 42.00f;
 final int accountId = 1;
 
 Mono<Integer> affectedRows = Mono.usingWhen(
-    client.transaction(), 
+    client.transaction(),
     tops -> tops
         .queryForObject("SELECT balance FROM account WHERE id = $1", row -> row.getFloat(0), accountId)
         .flatMap(balance -> ops
@@ -216,19 +216,19 @@ Mono<Integer> affectedRows = Mono.usingWhen(
     tops -> {                                // Complete
         // extra processing before commit
         // ...
-        
+
         return tops.commit();
     },
     (tops, ex) -> {                          // Error
         // extra processing before roll back
         // ...
-        
+
         return tops.rollback();
-    }, 
+    },
     tops -> {                                // Cancel
         // extra processing before commit
         // ...
-        
+
         return tops.rollback();
     }
 );

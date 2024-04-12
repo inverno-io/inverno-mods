@@ -65,7 +65,7 @@ db_uri="postgres://user:password@localhost:5432/sample_db"
 
 > If you want to connect to a particular RDBMS, don't forget to add a dependency to the corresponding Vert.x SQL client implementation. Vert.x currently supports DB2, MSSQL, MySQL, PostgreSQL and Oracle.
 
-The connection pool can be configured as well: 
+The connection pool can be configured as well:
 
 ```plaintext
 pool_maxSize=20

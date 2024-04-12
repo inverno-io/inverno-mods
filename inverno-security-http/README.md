@@ -76,7 +76,7 @@ import io.inverno.mod.web.server.annotation.WebRoute;
 @Bean
 @WebController
 public class Main {
-    
+
     @WebRoute( path = "/hello", method = Method.GET)
     public String hello() {
         return "Hello world!";
@@ -179,31 +179,31 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
     public void configure(WebInterceptable<InterceptingSecurityContext<Identity, AccessController>, ?> interceptors) {
         interceptors
             .intercept()
-                .interceptors(List.of(SecurityInterceptor.of(                            // 1 
-                        new BasicCredentialsExtractor(),                                 // 2 
-                        new UserAuthenticator<>(                                         // 3 
+                .interceptors(List.of(SecurityInterceptor.of(                            // 1
+                        new BasicCredentialsExtractor(),                                 // 2
+                        new UserAuthenticator<>(                                         // 3
                             InMemoryUserRepository
                                 .of(List.of(
                                     User.of("jsmith")
                                         .password(new RawPassword("password"))
                                         .build()
                                 ))
-                                .build(), 
+                                .build(),
                             new LoginCredentialsMatcher<>()
                         )
                     ),
-                    AccessControlInterceptor.authenticated()                             // 4 
+                    AccessControlInterceptor.authenticated()                             // 4
                 ));
     }
-    
+
     @Override
     public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
         errorRouter
             .intercept()
                 .error(UnauthorizedException.class)
-                .interceptor(new BasicAuthenticationErrorInterceptor<>("inverno-basic")) // 5 
+                .interceptor(new BasicAuthenticationErrorInterceptor<>("inverno-basic")) // 5
             // We must apply interceptors to intercept white labels error routes
-            .applyInterceptors();                                                        // 6 
+            .applyInterceptors();                                                        // 6
     }
 }
 ```
@@ -215,7 +215,7 @@ In above code, there are several things that deserve further explanation:
 1. The `SecurityInterceptor` is the Web counterpart of the `SecurityManager`, it is used to authenticate credentials provided in HTTP requests and create the security context which is then exposed in the exchange context and accessible to exchange interceptors and handlers.
 2. In addition to the authenticator and optional identity and access controller resolvers, it requires a credentials extractor used to extract `Credentials` from the request. The `BasicCredentialsExtractor` basically extracts `LoginCredentials` (username/password) from the `authorization` HTTP header of the request.
 3. The security interceptor can then use any authenticator that is able to authenticate login credentials such as the `UserAuthenticator`.
-4. An access control interceptor is added next in order to limit the access to authenticated users. Just like the security manager, the security interceptor authenticates credentials and creates the security context. But that does not mean authentication was successful, the resulting security context can be anonymous, denied or authenticated. 
+4. An access control interceptor is added next in order to limit the access to authenticated users. Just like the security manager, the security interceptor authenticates credentials and creates the security context. But that does not mean authentication was successful, the resulting security context can be anonymous, denied or authenticated.
 5. The `BasicAuthenticationErrorInterceptor` intercepts unauthorized (401) errors and set the basic authentication scheme challenge in the `www-authenticate` HTTP header of the response with the `inverno-basic` realm.
 6. The Web server provides white labels error routes by default which must be explicitly intercepted since they have been created before on an unintercepted router.
 
@@ -287,7 +287,7 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
                                         .identity(new PersonIdentity("jsmith", "John", "Smith", "jsmith@inverno.io"))
                                         .build()
                                 ))
-                                .build(), 
+                                .build(),
                             new LoginCredentialsMatcher<>()
                         ),
                         new UserIdentityResolver<>()
@@ -295,7 +295,7 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
                     AccessControlInterceptor.authenticated()
                 ));
     }
-    
+
     @Override
     public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
         errorRouter
@@ -327,7 +327,7 @@ import io.inverno.mod.web.server.annotation.WebRoute;
 @Bean
 @WebController
 public class Main {
-    
+
     @WebRoute( path = "/hello", method = Method.GET)
     public String hello(SecurityContext<? extends PersonIdentity, ? extends AccessController> securityContext) {
         return "Hello " + securityContext.getIdentity().map(PersonIdentity::getFirstName).orElse("whoever you are") + "!";
@@ -369,7 +369,7 @@ import reactor.core.publisher.Mono;
 @Bean
 @WebController
 public class Main {
-    
+
     ...
     @WebRoute( path = "/vip/hello", method = Method.GET)
     public Mono<String> hello_vip(SecurityContext<? extends PersonIdentity, ? extends RoleBasedAccessController> securityContext) {
@@ -439,7 +439,7 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
                                         .identity(new PersonIdentity("adoe", "Alice", "Doe", "adoe@inverno.io"))
                                         .build()
                                 ))
-                                .build(), 
+                                .build(),
                             new LoginCredentialsMatcher<>()
                         ),
                         new UserIdentityResolver<>(),
@@ -546,7 +546,7 @@ import io.inverno.mod.web.server.annotation.WebRoute;
 @Bean
 @WebController
 public class Main {
-    
+
     ...
     @WebRoute( path = "/vip/hello", method = Method.GET)
     public String hello_vip(SecurityContext<? extends PersonIdentity, ? extends RoleBasedAccessController> securityContext) {
@@ -597,18 +597,18 @@ import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 
 public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>> {
 
-	@Override
-	public void configure(WebInterceptable<InterceptingSecurityContext<PersonIdentity, AccessController>, ?> interceptors) {
+    @Override
+    public void configure(WebInterceptable<InterceptingSecurityContext<PersonIdentity, AccessController>, ?> interceptors) {
         CredentialsExtractor<Credentials> credentialsExtractor = ...
         Authenticator<Credentials, Authentication> authenticator = ...
         IdentityResolver<Authentication, Identity> identityResolver = ...
         AccessControllerResolver<Authentication, AccessController> accessControllerResolver = ...
 
-		interceptors
-			.intercept()
+        interceptors
+            .intercept()
                 .path("/vip/**")
-				.interceptor(SecurityInterceptor.of(credentialsExtractor, authenticator, identityResolver, accessControllerResolver));
-	}
+                .interceptor(SecurityInterceptor.of(credentialsExtractor, authenticator, identityResolver, accessControllerResolver));
+    }
 }
 ```
 
@@ -686,21 +686,21 @@ import java.util.List;
 
 public class SecurityConfigurer implements WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>> {
 
-	@Override
-	public void configure(WebInterceptable<InterceptingSecurityContext<PersonIdentity, AccessController>, ?> interceptors) {
+    @Override
+    public void configure(WebInterceptable<InterceptingSecurityContext<PersonIdentity, AccessController>, ?> interceptors) {
         CredentialsExtractor<Credentials> credentialsExtractor = ...
         Authenticator<Credentials, Authentication> authenticator = ...
         IdentityResolver<Authentication, Identity> identityResolver = ...
         AccessControllerResolver<Authentication, AccessController> accessControllerResolver = ...
 
-		interceptors
-			.intercept()
+        interceptors
+            .intercept()
                 .path("/vip/**")
-				.interceptors(List.of(
+                .interceptors(List.of(
                     SecurityInterceptor.of(credentialsExtractor, authenticator, identityResolver, accessControllerResolver),
                     AccessControlInterceptor.authenticated()
                 ));
-	}
+    }
 }
 ```
 
@@ -780,7 +780,7 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
                             LoginCredentials.of("john", new MessageDigestPassword.Encoder().encode("password")),
                             LoginCredentials.of("alice", new MessageDigestPassword.Encoder().encode("password")),
                             LoginCredentials.of("bob", new MessageDigestPassword.Encoder().encode("password"))
-                        )), 
+                        )),
                         new LoginCredentialsMatcher<LoginCredentials, LoginCredentials>()
                     )
                 ));
@@ -808,7 +808,7 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
                 .error(UnauthorizedException.class)
                 .path("/basic/**")
                 .interceptor(new BasicAuthenticationErrorInterceptor<>("inverno-basic"))
-                 // We must apply interceptors to intercept white labels error routes which are already defined 
+                 // We must apply interceptors to intercept white labels error routes which are already defined
                 .applyInterceptors();
     }
 }
@@ -862,7 +862,7 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
                                     .password(new RawPassword("password"))
                                     .build()
                             ))
-                            .build(), 
+                            .build(),
                         new DigestCredentialsMatcher<>("secret")
                     )
                 ));
@@ -892,7 +892,7 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
                 .error(UnauthorizedException.class)
                 .path("/digest/**")
                 .interceptor(new DigestAuthenticationErrorInterceptor<>("inverno-digest", "secret"))
-                 // We must apply interceptors to intercept white labels error routes which are already defined 
+                 // We must apply interceptors to intercept white labels error routes which are already defined
                 .applyInterceptors();
     }
 }
@@ -912,7 +912,7 @@ content-length: 0
 
 ### Token based authentication
 
-Token based authentication is a simple authentiation method based on the authentication of a token which was usually previously issued to the client by the server. 
+Token based authentication is a simple authentiation method based on the authentication of a token which was usually previously issued to the client by the server.
 
 A token must be ideally difficult to forge and easy to validate which is why cryptographic methods are often used to generate secured token but solution based on random numbers stored in a trusted data store (like a session store) can also be considered.
 
@@ -932,16 +932,16 @@ public class SecurityConfigurer implements WebInterceptorsConfigurer<Interceptin
     public void configure(WebInterceptable<InterceptingSecurityContext<Identity, AccessController>, ?> interceptors) {
         interceptors
             .intercept()
-				.path("/token/**")
-				.interceptor(SecurityInterceptor.of(
-					new CookieTokenCredentialsExtractor(),
-					credentials -> Mono.fromSupplier(() -> {
-						if(Set.of("token1", "token2", "token3").contains(credentials.getToken())) {
-							return Authentication.granted();
-						}
-						return Authentication.denied();
-					})
-				));
+                .path("/token/**")
+                .interceptor(SecurityInterceptor.of(
+                    new CookieTokenCredentialsExtractor(),
+                    credentials -> Mono.fromSupplier(() -> {
+                        if(Set.of("token1", "token2", "token3").contains(credentials.getToken())) {
+                            return Authentication.granted();
+                        }
+                        return Authentication.denied();
+                    })
+                ));
     }
 }
 ```
@@ -958,7 +958,7 @@ The login flow is started when a user tries to access a protected resource (1) i
 
 Form based login then requires two authentication methods: one to authenticate credentials provided by the user to a login action which should generate the actual credentials that are authenticated by the second method to grant access to protected resources.
 
-Let's start by configuring Web routes to the login page and the login action. 
+Let's start by configuring Web routes to the login page and the login action.
 
 The API provides the `FormLoginPageHandler` which renders a white label login page containing the login form using an Inverno reactive template. The actual login action URI can be configured when creating the handler (defaults to `/login`). The login form sends three parameters: `username`, `password` and `redirect_uri`.
 
@@ -969,15 +969,15 @@ package io.inverno.example.app_web_security;
 
 public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<Identity, AccessController>> {
 
-	@Override
-	public void configure(WebRoutable<SecurityContext<Identity, AccessController>, ?> routes) {
-		routes
-			.route()
-				.method(Method.GET)
-				.path("/login")
-				.produces(MediaTypes.TEXT_HTML)
-				.handler(new FormLoginPageHandler<>("/login"));
-	}
+    @Override
+    public void configure(WebRoutable<SecurityContext<Identity, AccessController>, ?> routes) {
+        routes
+            .route()
+                .method(Method.GET)
+                .path("/login")
+                .produces(MediaTypes.TEXT_HTML)
+                .handler(new FormLoginPageHandler<>("/login"));
+    }
 }
 ```
 
@@ -998,7 +998,7 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
 
     private final Mono<? extends OCTJWK> jwsKey;
     private final JWSService jwsService;
-    
+
     public SecurityConfigurer(JWKService jwkService, JWSService jwsService) {
         this.jwsKey = jwkService.oct().generator()
             .algorithm(OCTAlgorithm.HS256.getAlgorithm())
@@ -1006,7 +1006,7 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
             .cache();
         this.jwsService = jwsService;
     }
-    
+
     @Override
     public void configure(WebRoutable<SecurityContext<Identity, AccessController>, ?> routes) {
         routes
@@ -1014,18 +1014,18 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
             .route()
                 .method(Method.POST)
                 .path("/login")
-                .handler(new LoginActionHandler<>(                                                                 // 1 
-                    new FormCredentialsExtractor(),                                                                // 2 
-                    new PrincipalAuthenticator<>(                                                                  // 3 
+                .handler(new LoginActionHandler<>(                                                                 // 1
+                    new FormCredentialsExtractor(),                                                                // 2
+                    new PrincipalAuthenticator<>(                                                                  // 3
                         new InMemoryLoginCredentialsResolver(List.of(
                             LoginCredentials.of("john", new MessageDigestPassword.Encoder().encode("password")),
                             LoginCredentials.of("alice", new MessageDigestPassword.Encoder().encode("password")),
                             LoginCredentials.of("bob", new MessageDigestPassword.Encoder().encode("password"))
-                        )), 
+                        )),
                         new LoginCredentialsMatcher<LoginCredentials, LoginCredentials>()
                     )
-                    .failOnDenied()                                                                                // 4 
-                    .flatMap(authentication -> this.jwsService.builder(PrincipalAuthentication.class, this.jwsKey) // 5 
+                    .failOnDenied()                                                                                // 4
+                    .flatMap(authentication -> this.jwsService.builder(PrincipalAuthentication.class, this.jwsKey) // 5
                         .header(header -> header
                             .algorithm(OCTAlgorithm.HS256.getAlgorithm())
                         )
@@ -1034,8 +1034,8 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
                         .map(JWSAuthentication::new)
                     ),
                     LoginSuccessHandler.of(
-                        new CookieTokenLoginSuccessHandler<>("/form"),                                             // 6 
-                        new RedirectLoginSuccessHandler<>()                                                        // 7 
+                        new CookieTokenLoginSuccessHandler<>("/form"),                                             // 6
+                        new RedirectLoginSuccessHandler<>()                                                        // 7
                     ),
                     new RedirectLoginFailureHandler<>("/login")                                                    // 8
                 ));
@@ -1049,7 +1049,7 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
 4. The authentication shall fail if the principal authenticator returns a denied authentication.
 5. The resulting `PrincipalAuthentication` is then wrapped into a `JWSAuthentication`. We don't have to check whether the authentication is authenticated before creating the JWS token since we used `failOnDenied()`.
 6. The `CookieTokenLoginSuccessHandler` is used to set the compact representation of the JWS token in a response cookie. The cookie name and the cookie path can be set when creating the login success handler (defaults to `AUTH-TOKEN` and `/`).
-7. The `RedirectLoginSuccessHandler` is then chained to redirect the user to the the page initially requested. 
+7. The `RedirectLoginSuccessHandler` is then chained to redirect the user to the the page initially requested.
 8. The `RedirectLoginFailureHandler` is used to redirect the user to the login page in case of failed authentication, the actual authentication error is specified in a query parameter (defaults to `error`) so it can be displayed in the login form.
 
 The login page and the login action handler are all set, we can now move on and configure a token based authentication to secure `/form/**` routes and restrict access to authenticated users. Since the login action handler sets a JWS token in a cookie we need to use a `CookieTokenCredentialsExtractor` to extract the `TokenCredentials` and a `JWSAuthenticator` to validate the JWS. The JWS actually wraps the original `PrincipalAuthentication` we can then unwrap it in order to restore the original authentication.
@@ -1069,7 +1069,7 @@ public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<I
                 .path("/form/**")
                 .interceptors(List.of(
                     SecurityInterceptor.of(
-                        new CookieTokenCredentialsExtractor(), 
+                        new CookieTokenCredentialsExtractor(),
                         new JWSAuthenticator<>(this.jwsService, PrincipalAuthentication.class, this.jwsKey)
                             .failOnDenied()
                             .map(jwsAuthentication -> jwsAuthentication.getJws().getPayload())
@@ -1093,17 +1093,17 @@ package io.inverno.example.app_web_security;
 
 public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<Identity, AccessController>>, WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>>, ErrorWebRouterConfigurer<ExchangeContext> {
 
-	...
-	@Override
-	public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
-		errorRouter
-			.intercept()
-				.error(UnauthorizedException.class)
-				.path("/form/**")
-				.interceptor(new FormAuthenticationErrorInterceptor<>("/login"))
-			// We must apply interceptors to intercept white labels error routes which are already defined 
-			.applyInterceptors(); 
-	}
+    ...
+    @Override
+    public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
+        errorRouter
+            .intercept()
+                .error(UnauthorizedException.class)
+                .path("/form/**")
+                .interceptor(new FormAuthenticationErrorInterceptor<>("/login"))
+            // We must apply interceptors to intercept white labels error routes which are already defined
+            .applyInterceptors();
+    }
 }
 ```
 
@@ -1189,91 +1189,91 @@ import reactor.core.publisher.Mono;
 @Bean( visibility = Bean.Visibility.PRIVATE )
 public class SecurityConfigurer implements WebRoutesConfigurer<SecurityContext<Identity, AccessController>>, WebInterceptorsConfigurer<InterceptingSecurityContext<Identity, AccessController>>, ErrorWebRouterConfigurer<ExchangeContext> {
 
-	private final Mono<? extends OCTJWK> jwsKey;
-	private final JWSService jwsService;
-	
-	public SecurityConfigurer(JWKService jwkService, JWSService jwsService) {
-		this.jwsKey = jwkService.oct().generator()
-			.algorithm(OCTAlgorithm.HS256.getAlgorithm())
-			.generate()
-			.cache();
-		this.jwsService = jwsService;
-	}
-	
-	@Override
-	public void configure(WebRoutable<SecurityContext<Identity, AccessController>, ?> routes) {
-		routes
-			.route()
-				.method(Method.GET)
-				.path("/login")
-				.produces(MediaTypes.TEXT_HTML)
-				.handler(new FormLoginPageHandler<>("/login"))
-			.route()
-				.method(Method.POST)
-				.path("/login")
-				.handler(new LoginActionHandler<>(
-					new FormCredentialsExtractor(), 
-					new PrincipalAuthenticator<>(
+    private final Mono<? extends OCTJWK> jwsKey;
+    private final JWSService jwsService;
+
+    public SecurityConfigurer(JWKService jwkService, JWSService jwsService) {
+        this.jwsKey = jwkService.oct().generator()
+            .algorithm(OCTAlgorithm.HS256.getAlgorithm())
+            .generate()
+            .cache();
+        this.jwsService = jwsService;
+    }
+
+    @Override
+    public void configure(WebRoutable<SecurityContext<Identity, AccessController>, ?> routes) {
+        routes
+            .route()
+                .method(Method.GET)
+                .path("/login")
+                .produces(MediaTypes.TEXT_HTML)
+                .handler(new FormLoginPageHandler<>("/login"))
+            .route()
+                .method(Method.POST)
+                .path("/login")
+                .handler(new LoginActionHandler<>(
+                    new FormCredentialsExtractor(),
+                    new PrincipalAuthenticator<>(
                         new InMemoryLoginCredentialsResolver(List.of(
                             LoginCredentials.of("john", new MessageDigestPassword.Encoder().encode("password")),
                             LoginCredentials.of("alice", new MessageDigestPassword.Encoder().encode("password")),
                             LoginCredentials.of("bob", new MessageDigestPassword.Encoder().encode("password"))
-                        )), 
+                        )),
                         new LoginCredentialsMatcher<LoginCredentials, LoginCredentials>()
                     )
-					.failOnDenied()
-					.flatMap(authentication -> this.jwsService.builder(PrincipalAuthentication.class, this.jwsKey)
-						.header(header -> header
-							.algorithm(OCTAlgorithm.HS256.getAlgorithm())
-						)
-						.payload(authentication)
-						.build(MediaTypes.APPLICATION_JSON)
-						.map(JWSAuthentication::new)
-					),
-					LoginSuccessHandler.of(
-						new CookieTokenLoginSuccessHandler<>("/form"),
-						new RedirectLoginSuccessHandler<>()
-					),
-					new RedirectLoginFailureHandler<>("/login")
-				))
-			.route()
-				.method(Method.GET)
-				.path("/form/logout")
-				.handler(new LogoutActionHandler<>(
-					authentication -> Mono.empty(),
-					LogoutSuccessHandler.of(
-						new CookieTokenLogoutSuccessHandler<>("/form"),
-						new RedirectLogoutSuccessHandler<>()
-					)
-				));
-	}
+                    .failOnDenied()
+                    .flatMap(authentication -> this.jwsService.builder(PrincipalAuthentication.class, this.jwsKey)
+                        .header(header -> header
+                            .algorithm(OCTAlgorithm.HS256.getAlgorithm())
+                        )
+                        .payload(authentication)
+                        .build(MediaTypes.APPLICATION_JSON)
+                        .map(JWSAuthentication::new)
+                    ),
+                    LoginSuccessHandler.of(
+                        new CookieTokenLoginSuccessHandler<>("/form"),
+                        new RedirectLoginSuccessHandler<>()
+                    ),
+                    new RedirectLoginFailureHandler<>("/login")
+                ))
+            .route()
+                .method(Method.GET)
+                .path("/form/logout")
+                .handler(new LogoutActionHandler<>(
+                    authentication -> Mono.empty(),
+                    LogoutSuccessHandler.of(
+                        new CookieTokenLogoutSuccessHandler<>("/form"),
+                        new RedirectLogoutSuccessHandler<>()
+                    )
+                ));
+    }
 
-	@Override
-	public void configure(WebInterceptable<InterceptingSecurityContext<Identity, AccessController>, ?> interceptors) {
-		interceptors
-			.intercept()
-				.path("/form/**")
-				.interceptors(List.of(
-					SecurityInterceptor.of(
-						new CookieTokenCredentialsExtractor(), 
-						new JWSAuthenticator<>(this.jwsService, PrincipalAuthentication.class, this.jwsKey)
-							.failOnDenied()
-							.map(jwsAuthentication -> jwsAuthentication.getJws().getPayload())
-					),
-					AccessControlInterceptor.authenticated()
-				));
-	}
+    @Override
+    public void configure(WebInterceptable<InterceptingSecurityContext<Identity, AccessController>, ?> interceptors) {
+        interceptors
+            .intercept()
+                .path("/form/**")
+                .interceptors(List.of(
+                    SecurityInterceptor.of(
+                        new CookieTokenCredentialsExtractor(),
+                        new JWSAuthenticator<>(this.jwsService, PrincipalAuthentication.class, this.jwsKey)
+                            .failOnDenied()
+                            .map(jwsAuthentication -> jwsAuthentication.getJws().getPayload())
+                    ),
+                    AccessControlInterceptor.authenticated()
+                ));
+    }
 
-	@Override
-	public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
-		errorRouter
-			.intercept()
-				.error(UnauthorizedException.class)
-				.path("/form/**")
-				.interceptor(new FormAuthenticationErrorInterceptor<>("/login"))
-			// We must apply interceptors to intercept white labels error routes which are already defined 
-			.applyInterceptors(); 
-	}
+    @Override
+    public void configure(ErrorWebRouter<ExchangeContext> errorRouter) {
+        errorRouter
+            .intercept()
+                .error(UnauthorizedException.class)
+                .path("/form/**")
+                .interceptor(new FormAuthenticationErrorInterceptor<>("/login"))
+            // We must apply interceptors to intercept white labels error routes which are already defined
+            .applyInterceptors();
+    }
 }
 ```
 
@@ -1336,12 +1336,12 @@ import io.inverno.mod.web.server.WebInterceptorsConfigurer;
 
 public class SecurityConfigurer implements WebInterceptorsConfigurer<ExchangeContext> {
 
-	@Override
-	public void configure(WebInterceptable<ExchangeContext, ?> interceptors) {
-		interceptors
-			.intercept()
-				.interceptor(CSRFDoubleSubmitCookieInterceptor.builder().httpOnly(false).build());;
-	}
+    @Override
+    public void configure(WebInterceptable<ExchangeContext, ?> interceptors) {
+        interceptors
+            .intercept()
+                .interceptor(CSRFDoubleSubmitCookieInterceptor.builder().httpOnly(false).build());;
+    }
 }
 ```
 

@@ -87,54 +87,54 @@ import java.util.Set;
 
 public class Main {
 
-	@Bean
-	public static class Greeter {
-		
-		private final Endpoint<ExchangeContext> endpoint;
-		
-		private final GrpcClient grpcClient;
+    @Bean
+    public static class Greeter {
 
-		public Greeter(GrpcClient grpcClient, HttpClient httpClient) {
-			this.grpcClient = grpcClient;
-			this.endpoint = httpClient
-			    .endpoint("localhost", 8080)
-				.configuration(HttpClientConfigurationLoader.load(configuration -> 
-					configuration.http_protocol_versions(Set.of(HttpVersion.HTTP_2_0))                                 // enable direct HTTP/2
-				))
-				.build();                                                                                              // Create the endpoint
-		}
-		
-		public HelloReply sayHello(HelloRequest request) {
-			return this.endpoint
-				.exchange()                                                                                            // Create the HTTP client exchange
-				.<GrpcExchange.Unary<ExchangeContext, HelloRequest, HelloReply>>map(exchange -> this.grpcClient.unary( // Convert to a unary gRPC exchange
-					exchange, 
-					GrpcServiceName.of("helloworld", "Greeter"),                                                       // service name
-					"SayHello",                                                                                        // method name
-					HelloRequest.getDefaultInstance(),                                                                 // request message type
-					HelloReply.getDefaultInstance()                                                                    // response message type
-				))
-				.flatMap(grpcExchange -> {
-					grpcExchange.request().value(request);                                                             // Set the request
-					return grpcExchange.response().flatMap(GrpcResponse.Unary::value);                                 // Get the response
-				})
-				.block();                                                                                              // Get a connection, send the request and receive the response
-		}
-	}
-	
-	public static void main(String[] args) {
-		App_grpc_client app_grpc_client = Application.run(new App_grpc_client.Builder());
-		try {
-			HelloReply response = app_grpc_client.greeter().sayHello(HelloRequest.newBuilder()
-				.setName("Bob")
-				.build()
-			);
-			System.out.println("Received: " + response.getMessage());
-		}
-		finally {
-			app_grpc_client.stop();
-		}
-	}
+        private final Endpoint<ExchangeContext> endpoint;
+
+        private final GrpcClient grpcClient;
+
+        public Greeter(GrpcClient grpcClient, HttpClient httpClient) {
+            this.grpcClient = grpcClient;
+            this.endpoint = httpClient
+                .endpoint("localhost", 8080)
+                .configuration(HttpClientConfigurationLoader.load(configuration ->
+                    configuration.http_protocol_versions(Set.of(HttpVersion.HTTP_2_0))                                 // enable direct HTTP/2
+                ))
+                .build();                                                                                              // Create the endpoint
+        }
+
+        public HelloReply sayHello(HelloRequest request) {
+            return this.endpoint
+                .exchange()                                                                                            // Create the HTTP client exchange
+                .<GrpcExchange.Unary<ExchangeContext, HelloRequest, HelloReply>>map(exchange -> this.grpcClient.unary( // Convert to a unary gRPC exchange
+                    exchange,
+                    GrpcServiceName.of("helloworld", "Greeter"),                                                       // service name
+                    "SayHello",                                                                                        // method name
+                    HelloRequest.getDefaultInstance(),                                                                 // request message type
+                    HelloReply.getDefaultInstance()                                                                    // response message type
+                ))
+                .flatMap(grpcExchange -> {
+                    grpcExchange.request().value(request);                                                             // Set the request
+                    return grpcExchange.response().flatMap(GrpcResponse.Unary::value);                                 // Get the response
+                })
+                .block();                                                                                              // Get a connection, send the request and receive the response
+        }
+    }
+
+    public static void main(String[] args) {
+        App_grpc_client app_grpc_client = Application.run(new App_grpc_client.Builder());
+        try {
+            HelloReply response = app_grpc_client.greeter().sayHello(HelloRequest.newBuilder()
+                .setName("Bob")
+                .build()
+            );
+            System.out.println("Received: " + response.getMessage());
+        }
+        finally {
+            app_grpc_client.stop();
+        }
+    }
 }
 ```
 
@@ -231,23 +231,23 @@ import java.util.Set;
 
 public class Main {
 
-	public static void main(String[] args) {
-		App_grpc_client app_grpc_client = Application.run(new App_grpc_client.Builder());
-		try {
-			try(GreeterGrpcClient.Stub<ExchangeContext> stub = app.greeterGrpcClient().createStub("localhost", 8080)) {
-				HelloReply response = stub
-					.sayHello(HelloRequest.newBuilder()
-						.setName("Bob")
-						.build()
-					)
-					.block();
-				System.out.println("Received: " + response.getMessage());
-			}
-		}
-		finally {
-			app_grpc_client.stop();
-		}
-	}
+    public static void main(String[] args) {
+        App_grpc_client app_grpc_client = Application.run(new App_grpc_client.Builder());
+        try {
+            try(GreeterGrpcClient.Stub<ExchangeContext> stub = app.greeterGrpcClient().createStub("localhost", 8080)) {
+                HelloReply response = stub
+                    .sayHello(HelloRequest.newBuilder()
+                        .setName("Bob")
+                        .build()
+                    )
+                    .block();
+                System.out.println("Received: " + response.getMessage());
+            }
+        }
+        finally {
+            app_grpc_client.stop();
+        }
+    }
 }
 ```
 
@@ -268,11 +268,11 @@ import io.inverno.mod.http.client.HttpClientConfiguration;
 @Configuration
 public interface App_grpc_clientConfiguration {
 
-	@NestedBean
-	GrpcClientConfiguration grpc_client();
-	
-	@NestedBean
-	HttpClientConfiguration http_client();
+    @NestedBean
+    GrpcClientConfiguration grpc_client();
+
+    @NestedBean
+    HttpClientConfiguration http_client();
 }
 ```
 
@@ -297,26 +297,26 @@ import java.util.Set;
 
 public class Main {
 
-	public static void main(String[] args) throws IOException {
-		App_grpc_client app = Application.run(new App_grpc_client.Builder()
-			.setApp_grpc_clientConfiguration(
-				App_grpc_clientConfigurationLoader.load(configuration -> configuration
-					.grpc_client(grpcClient -> grpcClient
-						.base(base -> base.compression_gzip_compressionLevel(6))
-					)
-					.http_client(httpClient -> httpClient
-						.http_protocol_versions(Set.of(HttpVersion.HTTP_2_0))
-						.request_timeout(600000l)
-					)
-				)
-			)
-		);
-		...
-	}
+    public static void main(String[] args) throws IOException {
+        App_grpc_client app = Application.run(new App_grpc_client.Builder()
+            .setApp_grpc_clientConfiguration(
+                App_grpc_clientConfigurationLoader.load(configuration -> configuration
+                    .grpc_client(grpcClient -> grpcClient
+                        .base(base -> base.compression_gzip_compressionLevel(6))
+                    )
+                    .http_client(httpClient -> httpClient
+                        .http_protocol_versions(Set.of(HttpVersion.HTTP_2_0))
+                        .request_timeout(600000l)
+                    )
+                )
+            )
+        );
+        ...
+    }
 }
 ```
 
-In above code, we have set: 
+In above code, we have set:
 
 - the gzip message compression level to 6
 - the client to connect using HTTP/2 protocol only (required by gRPC protocol)
@@ -344,70 +344,70 @@ The service name and the request method can be obtained as follows:
 
 ```java
 endpoint.exchange()
-	.map(exhange -> grpcClient...) // converts HTTP exchange to gRPC exchange
-	.flatMap(grpcExchange -> {
-		// <package>.<service>
-		GrpcServiceName serviceName = grpcExchange.request().getServiceName();
-		// <method>
-		String methodName = grpcExchange.request().getMethodName();
-		// <package>.<service>/<method>
-		String fullMethodName = grpcExchange.request().getFullMethodName();
-		
-		return grpcExchange.response();
-	})
-	...
+    .map(exhange -> grpcClient...) // converts HTTP exchange to gRPC exchange
+    .flatMap(grpcExchange -> {
+        // <package>.<service>
+        GrpcServiceName serviceName = grpcExchange.request().getServiceName();
+        // <method>
+        String methodName = grpcExchange.request().getMethodName();
+        // <package>.<service>/<method>
+        String fullMethodName = grpcExchange.request().getFullMethodName();
+
+        return grpcExchange.response();
+    })
+    ...
 ```
 
 Standard or custom request metadata including protocol buffer binary data endoded in Base64 can be provided as follows:
 
 ```java
 endpoint.exchange()
-	.map(exhange -> grpcClient...) // converts HTTP exchange to gRPC exchange
-	.flatMap(grpcExchange -> {
-		grpcExchange.request()
-			.metadata(metadata -> metadata
-				.acceptMessageEncoding(List.of(GrpcHeaders.VALUE_GZIP, GrpcHeaders.VALUE_IDENTITY))
-				.messageEncoding(GrpcHeaders.VALUE_GZIP)
-				.timeout(Duration.ofSeconds(5))
-				.set("custom", "someValue")
-				.setBinary("customBinary", SomeMessage.newBuilder().setValue("abc").build()) // -bin suffix is automatically added
-			);
-		
-		return grpcExchange.response();
-	})
+    .map(exhange -> grpcClient...) // converts HTTP exchange to gRPC exchange
+    .flatMap(grpcExchange -> {
+        grpcExchange.request()
+            .metadata(metadata -> metadata
+                .acceptMessageEncoding(List.of(GrpcHeaders.VALUE_GZIP, GrpcHeaders.VALUE_IDENTITY))
+                .messageEncoding(GrpcHeaders.VALUE_GZIP)
+                .timeout(Duration.ofSeconds(5))
+                .set("custom", "someValue")
+                .setBinary("customBinary", SomeMessage.newBuilder().setValue("abc").build()) // -bin suffix is automatically added
+            );
+
+        return grpcExchange.response();
+    })
 ```
 
 When considering a unary or server streaming exchange, the request message can be set either synchronously or in a reactive way:
 
 ```java
 endpoint.exchange()
-	.map(exhange -> grpcClient...) // converts HTTP exchange to a unary or server streaming gRPC exchange
-	.flatMap(grpcExchange -> {
-		// set the request message
-		grpcExchange.request().value(SingleHelloRequest.newBuilder().setName("Bob").build());
-		
-		// set the request message in a reactive way
-		grpcExchange.request().value(Mono.fromSupplier(() -> SingleHelloRequest.newBuilder().setName("Bob").build()));
-		
-		return grpcExchange.response();
-	})
-	...
+    .map(exhange -> grpcClient...) // converts HTTP exchange to a unary or server streaming gRPC exchange
+    .flatMap(grpcExchange -> {
+        // set the request message
+        grpcExchange.request().value(SingleHelloRequest.newBuilder().setName("Bob").build());
+
+        // set the request message in a reactive way
+        grpcExchange.request().value(Mono.fromSupplier(() -> SingleHelloRequest.newBuilder().setName("Bob").build()));
+
+        return grpcExchange.response();
+    })
+    ...
 ```
 
 When considering a client streaming or bidirectional streaming exchange, the request messages publisher can be set as follows:
 
 ```java
 endpoint.exchange()
-	.map(exhange -> grpcClient...) // converts HTTP exchange to a client streaming or bidirectional streaming gRPC exchange
-	.flatMap(grpcExchange -> {
-		grpcExchange.request().stream(
-			Flux.just("Bob", "Bill", "Jane")
-				.map(name -> SingleHelloRequest.newBuilder().setName(name).build())
-		);
-		
-		return grpcExchange.response();
-	})
-	...
+    .map(exhange -> grpcClient...) // converts HTTP exchange to a client streaming or bidirectional streaming gRPC exchange
+    .flatMap(grpcExchange -> {
+        grpcExchange.request().stream(
+            Flux.just("Bob", "Bill", "Jane")
+                .map(name -> SingleHelloRequest.newBuilder().setName(name).build())
+        );
+
+        return grpcExchange.response();
+    })
+    ...
 ```
 
 ### gRPC response
@@ -418,39 +418,39 @@ Standard or custom response metadata including protocol buffer binary data encod
 
 ```java
 endpoint.exchange()
-	.map(exhange -> grpcClient...) // converts HTTP exchange to gRPC exchange
-	.flatMap(grpcExchange -> 
-		// set the request
-		...
-		return grpcExchange.response();
-	})
-	.map(response -> {
-		GrpcInboundResponseMetadata metadata = grpcExchange.response().metadata();
-		List<String> acceptMessageEncodings = metadata.getAcceptMessageEncoding();
-		Optional<String> messageEncoding = metadata.getMessageEncoding();
-		Optional<String> customValue = metadata.get("custom");
-		Optional<SomeMessage> customBinaryValue = metadata.getBinary("customBinary", SomeMessage.getDefaultInstance()); // -bin suffix is automatically added
-		
-		return response;
-	})
-	...
+    .map(exhange -> grpcClient...) // converts HTTP exchange to gRPC exchange
+    .flatMap(grpcExchange ->
+        // set the request
+        ...
+        return grpcExchange.response();
+    })
+    .map(response -> {
+        GrpcInboundResponseMetadata metadata = grpcExchange.response().metadata();
+        List<String> acceptMessageEncodings = metadata.getAcceptMessageEncoding();
+        Optional<String> messageEncoding = metadata.getMessageEncoding();
+        Optional<String> customValue = metadata.get("custom");
+        Optional<SomeMessage> customBinaryValue = metadata.getBinary("customBinary", SomeMessage.getDefaultInstance()); // -bin suffix is automatically added
+
+        return response;
+    })
+    ...
 ```
 
 Response trailers metadata are available after the complete response have been received and exposes the final gRPC stratus and message:
 
 ```java
 endpoint.exchange()
-	.map(exhange -> grpcClient...) // converts HTTP exchange to a unary or client streaming gRPC exchange
-	.flatMap(grpcExchange -> 
-		// set the request
-		...
-		return grpcExchange.response();
-	})
-	.flatMap(response -> {
-		return response.value()
-			.doOnTerminate(() -> System.out.println("gRPC status: " + response.trailersMetadata().getStatus()));
-	})
-	.block();
+    .map(exhange -> grpcClient...) // converts HTTP exchange to a unary or client streaming gRPC exchange
+    .flatMap(grpcExchange ->
+        // set the request
+        ...
+        return grpcExchange.response();
+    })
+    .flatMap(response -> {
+        return response.value()
+            .doOnTerminate(() -> System.out.println("gRPC status: " + response.trailersMetadata().getStatus()));
+    })
+    .block();
 ```
 
 > Note that before the response message publisher completes, there are no trailers and `null` shall be returned.
@@ -459,29 +459,29 @@ When considering a unary or a client streaming exchange, the response message is
 
 ```java
 Reply reply = endpoint.exchange()
-	.map(exhange -> grpcClient...) // converts HTTP exchange to a unary or client streaming gRPC exchange
-	.flatMap(grpcExchange -> {
-		// set the request
-		...
-		return grpcExchange.response();
-	})
-	.flatMap(response -> response.value()) // single response message
-	.block();
+    .map(exhange -> grpcClient...) // converts HTTP exchange to a unary or client streaming gRPC exchange
+    .flatMap(grpcExchange -> {
+        // set the request
+        ...
+        return grpcExchange.response();
+    })
+    .flatMap(response -> response.value()) // single response message
+    .block();
 ```
 
 When considering a unary or a client streaming exchange, the response messages are exposed in a publisher:
 
 ```java
 List<Reply> replies = endpoint.exchange()
-	.map(exhange -> grpcClient...) // converts HTTP exchange to a server streaming or bidirectional streaming gRPC exchange
-	.flatMap(grpcExchange -> {
-		// set the request
-		...
-		return grpcExchange.response();
-	})
-	.flatMapMany(response -> response.stream()) // multiple response messages
-	.collect(Collectors.toList())
-	.block();
+    .map(exhange -> grpcClient...) // converts HTTP exchange to a server streaming or bidirectional streaming gRPC exchange
+    .flatMap(grpcExchange -> {
+        // set the request
+        ...
+        return grpcExchange.response();
+    })
+    .flatMapMany(response -> response.stream()) // multiple response messages
+    .collect(Collectors.toList())
+    .block();
 ```
 
 ### gRPC Exchange interceptor
@@ -501,19 +501,19 @@ The following example shows how to invoke a unary service method:
 ```java
 Endpoint<ExchangeContext> endpoint = ...
 SingleHelloReply reply = endpoint.exchange()
-	.<GrpcExchange.Unary<ExchangeContext, SingleHelloRequest, SingleHelloReply>>map(exhange -> grpcClient.unary(
-		exhange,
-		GrpcServiceName.of("examples", "HelloService"),
-		"SayHello",
-		SingleHelloRequest.getDefaultInstance(),
-		SingleHelloReply.getDefaultInstance()
-	))
-	.flatMap(grpcExchange -> {
-		grpcExchange.request().value(SingleHelloRequest.newBuilder().setName("Bob").build());
-		return grpcExchange.response();
-	})
-	.flatMap(GrpcResponse.Unary::value)
-	.block();
+    .<GrpcExchange.Unary<ExchangeContext, SingleHelloRequest, SingleHelloReply>>map(exhange -> grpcClient.unary(
+        exhange,
+        GrpcServiceName.of("examples", "HelloService"),
+        "SayHello",
+        SingleHelloRequest.getDefaultInstance(),
+        SingleHelloReply.getDefaultInstance()
+    ))
+    .flatMap(grpcExchange -> {
+        grpcExchange.request().value(SingleHelloRequest.newBuilder().setName("Bob").build());
+        return grpcExchange.response();
+    })
+    .flatMap(GrpcResponse.Unary::value)
+    .block();
 ```
 
 The client sends one `SingleHelloRequest` message and the server sends one `SingleHelloReply` message in response.
@@ -527,21 +527,21 @@ The following example shows how to invoke a client streaming service method:
 ```java
 Endpoint<ExchangeContext> endpoint = ...
 GroupHelloReply reply = endpoint.exchange()
-	.<GrpcExchange.ClientStreaming<ExchangeContext, SingleHelloRequest, GroupHelloReply>>map(exhange -> grpcClient.clientStreaming(
-		exhange,
-		GrpcServiceName.of("examples", "HelloService"),
-		"SayHelloToEverybody",
-		SingleHelloRequest.getDefaultInstance(),
-		GroupHelloReply.getDefaultInstance()
-	))
-	.flatMap(grpcExchange -> {
-		grpcExchange.request().stream(Flux.just("Bob", "Bill", "Jane")
-			.map(name -> SingleHelloRequest.newBuilder().setName(name).build())
-		);
-		return grpcExchange.response();
-	})
-	.flatMap(GrpcResponse.Unary::value)
-	.block();
+    .<GrpcExchange.ClientStreaming<ExchangeContext, SingleHelloRequest, GroupHelloReply>>map(exhange -> grpcClient.clientStreaming(
+        exhange,
+        GrpcServiceName.of("examples", "HelloService"),
+        "SayHelloToEverybody",
+        SingleHelloRequest.getDefaultInstance(),
+        GroupHelloReply.getDefaultInstance()
+    ))
+    .flatMap(grpcExchange -> {
+        grpcExchange.request().stream(Flux.just("Bob", "Bill", "Jane")
+            .map(name -> SingleHelloRequest.newBuilder().setName(name).build())
+        );
+        return grpcExchange.response();
+    })
+    .flatMap(GrpcResponse.Unary::value)
+    .block();
 ```
 
 The client sends multiple `SingleHelloRequest` messages and the server sends one `GroupHelloReply` message in response.
@@ -557,23 +557,23 @@ The following example shows how to invoke a server streaming service method:
 ```java
 Endpoint<ExchangeContext> endpoint = ...
 List<SingleHelloReply> replies = endpoint.exchange()
-	.<GrpcExchange.ServerStreaming<ExchangeContext, GroupHelloRequest, SingleHelloReply>>map(exhange -> grpcClient.serverStreaming(
-		exhange,
-		GrpcServiceName.of("examples", "HelloService"),
-		"SayHelloToEveryoneInTheGroup",
-		GroupHelloRequest.getDefaultInstance(),
-		SingleHelloReply.getDefaultInstance()
-	))
-	.flatMap(grpcExchange -> {
-		grpcExchange.request().value(GroupHelloRequest.newBuilder().addAllNames(List.of("Bob", "Bill", "Jane")).build());
-		return grpcExchange.response();
-	})
-	.flatMapMany(GrpcResponse.Streaming::stream)
-	.collect(Collectors.toList())
-	.block();
+    .<GrpcExchange.ServerStreaming<ExchangeContext, GroupHelloRequest, SingleHelloReply>>map(exhange -> grpcClient.serverStreaming(
+        exhange,
+        GrpcServiceName.of("examples", "HelloService"),
+        "SayHelloToEveryoneInTheGroup",
+        GroupHelloRequest.getDefaultInstance(),
+        SingleHelloReply.getDefaultInstance()
+    ))
+    .flatMap(grpcExchange -> {
+        grpcExchange.request().value(GroupHelloRequest.newBuilder().addAllNames(List.of("Bob", "Bill", "Jane")).build());
+        return grpcExchange.response();
+    })
+    .flatMapMany(GrpcResponse.Streaming::stream)
+    .collect(Collectors.toList())
+    .block();
 ```
 
-The client sends one `GroupHelloRequest` message and the server sends multiple `SingleHelloReply` message in response. 
+The client sends one `GroupHelloRequest` message and the server sends multiple `SingleHelloReply` message in response.
 
 In such use case, the server sends response messages that the client can either process as soon as they are available or aggregate to process them all at once at the end of the call.
 
@@ -586,22 +586,22 @@ The following example shows how to invoke a bidirectional streaming service meth
 ```java
 Endpoint<ExchangeContext> endpoint = ...
 List<SingleHelloReply> REPLIES = endpoint.exchange()
-	.<GrpcExchange.BidirectionalStreaming<ExchangeContext, SingleHelloRequest, SingleHelloReply>>map(exhange -> grpcClient.bidirectionalStreaming(
-		exhange,
-		GrpcServiceName.of("examples", "HelloService"),
-		"sayHelloToEveryone",
-		SingleHelloRequest.getDefaultInstance(),
-		SingleHelloReply.getDefaultInstance()
-	))
-	.flatMap(grpcExchange -> {
-		grpcExchange.request().stream(Flux.just("Bob", "Bill", "Jane")
-			.map(name -> SingleHelloRequest.newBuilder().setName(name).build())
-		);
-		return grpcExchange.response();
-	})
-	.flatMapMany(GrpcResponse.Streaming::stream)
-	.collect(Collectors.toList())
-	.block();
+    .<GrpcExchange.BidirectionalStreaming<ExchangeContext, SingleHelloRequest, SingleHelloReply>>map(exhange -> grpcClient.bidirectionalStreaming(
+        exhange,
+        GrpcServiceName.of("examples", "HelloService"),
+        "sayHelloToEveryone",
+        SingleHelloRequest.getDefaultInstance(),
+        SingleHelloReply.getDefaultInstance()
+    ))
+    .flatMap(grpcExchange -> {
+        grpcExchange.request().stream(Flux.just("Bob", "Bill", "Jane")
+            .map(name -> SingleHelloRequest.newBuilder().setName(name).build())
+        );
+        return grpcExchange.response();
+    })
+    .flatMapMany(GrpcResponse.Streaming::stream)
+    .collect(Collectors.toList())
+    .block();
 ```
 
 In above example, the client sends multiple `SingleHelloRequest` messages and the server sends multiple `SingleHelloReply` messages in response.
@@ -614,19 +614,19 @@ A client can decide to cancel a gRPC when it is no longer interested in the resu
 
 ```java
 endpoint.exchange()
-	.map(exhange -> grpcClient...) // converts HTTP exchange to a server streaming or bidirectional streaming gRPC exchange
-	.flatMapMany(grpcExchange -> {
-		// set the request
-		...
-		return grpcExchange.response()
-			.flatMapMany(response -> response.stream())
-			.doOnNext(message -> {
-				if(...) { // Check cancellation conditions then cancel
-					exchange.cancel();
-				}
-			});
-	})
-	.subscribe(...);
+    .map(exhange -> grpcClient...) // converts HTTP exchange to a server streaming or bidirectional streaming gRPC exchange
+    .flatMapMany(grpcExchange -> {
+        // set the request
+        ...
+        return grpcExchange.response()
+            .flatMapMany(response -> response.stream())
+            .doOnNext(message -> {
+                if(...) { // Check cancellation conditions then cancel
+                    exchange.cancel();
+                }
+            });
+    })
+    .subscribe(...);
 ```
 
 Cancelling the exchange basically cancels subscriptions to the request and response message publishers and sends a `RST_STREAM` frame to the server with code `CANCEL (0x8)`. When receiving this signal, the server is expected to do the same and also propagate the cancellation to any outgoing gRPC calls.
@@ -635,14 +635,14 @@ A gRPC client exchange is also canceled when a `GrpcException` with a `CANCELLED
 
 ```java
 Disposable disposable = endpoint.exchange()
-	.map(exhange -> grpcClient...) // converts HTTP exchange to a server streaming or bidirectional streaming gRPC exchange
-	.flatMapMany(grpcExchange -> {
-		// set the request
-		...
-		return grpcExchange.response();
-	})
-	.flatMapMany(GrpcResponse.Streaming::stream)
-	.subscribe(...);
+    .map(exhange -> grpcClient...) // converts HTTP exchange to a server streaming or bidirectional streaming gRPC exchange
+    .flatMapMany(grpcExchange -> {
+        // set the request
+        ...
+        return grpcExchange.response();
+    })
+    .flatMapMany(GrpcResponse.Streaming::stream)
+    .subscribe(...);
 
 disposable.cancel();
 ```

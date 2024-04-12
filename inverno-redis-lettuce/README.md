@@ -59,7 +59,7 @@ For instance, the following configuration can be used to connect to a remote Red
 uri="redis://remoteRedis"
 ```
 
-The connection pool can be configured as well: 
+The connection pool can be configured as well:
 
 ```plaintext
 pool_max_active=8
@@ -85,10 +85,10 @@ The `PoolRedisClient` implementation wraps a Lettuce `AsyncPool<StatefulRedisCon
 
 ```java
 BoundedAsyncPool<StatefulRedisConnection<byte[], byte[]>> pool = AsyncConnectionPoolSupport.createBoundedObjectPool(
-        () -> this.client.connectAsync(ByteArrayCodec.INSTANCE, RedisURI.create("redis://localhost"), 
+        () -> this.client.connectAsync(ByteArrayCodec.INSTANCE, RedisURI.create("redis://localhost"),
         BoundedPoolConfig.create()
     );
-	RedisClient<byte[], byte[]> byteArrayClient = new PoolRedisClient<>(pool, byte[].class, byte[].class);
+    RedisClient<byte[], byte[]> byteArrayClient = new PoolRedisClient<>(pool, byte[].class, byte[].class);
 ```
 
 The `PoolRedisClusterClient` implementation should be used to connect to a Redis cluster, it wraps a Lettuce `AsyncPool<StatefulRedisClusterConnection<K, V>>`

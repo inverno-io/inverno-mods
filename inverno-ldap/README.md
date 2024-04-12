@@ -73,7 +73,7 @@ String userDN = "cn=jsmith,ou=users,dc=inverno,dc=io";
 User user = Mono.from(client.bind(
         "cn={0},ou=users,dc=inverno,dc=io",
         new Object[] {uid},
-        "password", 
+        "password",
         ops -> ops.search(userDN, new String[] {"uid"}, "(&(objectClass=inetOrgPerson)(uid={0}))", uid)
             .flatMap(userEntry -> ops.search("dc=inverno,dc=io", new String[]{ "cn" }, "(&(objectClass=groupOfNames)(member={0}))", userEntry.getDN())
                 .map(groupEntry -> groupEntry.getAttribute("cn").map(LDAPAttribute::asString).get())
@@ -122,7 +122,7 @@ Object mail = jsmithEntry.get("mail").orElse(null);
 // Gets all values for attribute 'mail' or an empty list
 List<Object> allMail = jsmithEntry.getAll("mail");
 
-// Get all attributes 
+// Get all attributes
 List<Map.Entry<String, Object>> all = jsmithEntry.getAll();
 ```
 

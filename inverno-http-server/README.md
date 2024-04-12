@@ -152,7 +152,7 @@ The HTTP server uses a **server controller** to handle client request. The modul
 
 ## Configuration
 
-The first thing we might want to do is to create a configuration in the *app_http* module for easy *http-server* module setup. The HTTP server configuration is actually done in the `BootConfiguration` defined in the *boot* module for low level network configuration and in `HttpServerConfiguration` defined in the *http-server* module for the HTTP server itself. 
+The first thing we might want to do is to create a configuration in the *app_http* module for easy *http-server* module setup. The HTTP server configuration is actually done in the `BootConfiguration` defined in the *boot* module for low level network configuration and in `HttpServerConfiguration` defined in the *http-server* module for the HTTP server itself.
 
 The following configuration can then be created in the *app_http* module:
 
@@ -175,7 +175,7 @@ public interface App_httpConfiguration {
 }
 ```
 
-This should be enough for exposing a configuration in the *app_http* module that let us setup the server: 
+This should be enough for exposing a configuration in the *app_http* module that let us setup the server:
 
 ```java
 package io.inverno.example.app_http;
@@ -216,7 +216,7 @@ The HTTP server can log access and error events at `INFO` and `ERROR` level resp
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration xmlns="http://logging.apache.org/log4j/2.0/config"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://logging.apache.org/log4j/2.0/config https://raw.githubusercontent.com/apache/logging-log4j2/rel/2.14.0/log4j-core/src/main/resources/Log4j-config.xsd" 
+    xsi:schemaLocation="http://logging.apache.org/log4j/2.0/config https://raw.githubusercontent.com/apache/logging-log4j2/rel/2.14.0/log4j-core/src/main/resources/Log4j-config.xsd"
     status="WARN" shutdownHook="disable">
 
     <Appenders>
@@ -318,7 +318,7 @@ By default, the HTTP server uses the Java NIO transport, but it is possible to u
 </project>
 ```
 
-or 
+or
 
 ```xml
 <project>
@@ -337,8 +337,8 @@ or
 ```
 
 > When these dependencies are declared on the JVM module path, the corresponding Java modules must be added explicitly when running the application. This is typically the case when the application is run or packaged as an application image using the Inverno Maven plugin.
->
-> This can be done by defining the corresponding dependencies in the module descriptor: 
+> 
+> This can be done by defining the corresponding dependencies in the module descriptor:
 > 
 > ```java
 > @io.inverno.core.annotation.Module
@@ -349,15 +349,15 @@ or
 >     requires io.netty.transport.epoll.linux.x86_64;
 > }
 > ```
->
+> 
 > This approach is fine as long as we are sure the application will run on Linux, but in order to create a properly portable application, we should prefer adding the modules explicitly when running the application:
->
+> 
 > ```plaintext
 > $ java --add-modules io.netty.transport.unix.common,io.netty.transport.classes.epoll,io.netty.transport.epoll.linux.x86_64 ...
 > ```
 > 
 > When building an application image, this can be specified in the Inverno Maven plugin configuration:
->
+> 
 > ```xml
 > <project>
 >     <build>
@@ -417,12 +417,12 @@ Hello
 
 ```xml
 <dependency>
-	<groupId>com.aayushatharva.brotli4j</groupId>
-	<artifactId>brotli4j</artifactId>
+    <groupId>com.aayushatharva.brotli4j</groupId>
+    <artifactId>brotli4j</artifactId>
 </dependency>
 <dependency>
-	<groupId>com.aayushatharva.brotli4j</groupId>
-	<artifactId>native-linux-x86_64</artifactId>
+    <groupId>com.aayushatharva.brotli4j</groupId>
+    <artifactId>native-linux-x86_64</artifactId>
 </dependency>
 ```
 
@@ -473,9 +473,9 @@ public class Main {
                         .tls_enabled(true)
                         .tls_key_store(URI.create("module://io.inverno.example.app_http/keystore.jks"))
                         .tls_key_store_password("password")
-						.tls_client_auth(HttpServerConfiguration.ClientAuth.REQUESTED)
-						.tls_trust_store(URI.create("module://io.inverno.example.app_http/truststore.jks"))
-						.tls_trust_store_password("password")
+                        .tls_client_auth(HttpServerConfiguration.ClientAuth.REQUESTED)
+                        .tls_trust_store(URI.create("module://io.inverno.example.app_http/truststore.jks"))
+                        .tls_trust_store_password("password")
                     )
                 )
             )
@@ -508,7 +508,7 @@ public class Main {
 
 ## Server Controller
 
-The server controller specifies how exchanges and errors are handled by the server. It also provides the exchange context created and attached to the exchange by the server. 
+The server controller specifies how exchanges and errors are handled by the server. It also provides the exchange context created and attached to the exchange by the server.
 
 The `ServerController` interface bascially defines the following methods:
 
@@ -518,7 +518,7 @@ The `ServerController` interface bascially defines the following methods:
 
 > Methods `void handle(Exchange<ExchangeContext> exchange)` and `void handle(ErrorExchange<ExchangeContext> errorExchange)` are also defined, they can be more convenient when the handling logic does not have to be reactive. Note that the server will always invoke `defer()` methods which must then be properly implemented.
 
-As stated before, the *http-server* module provides a default `ServerController` implementation which returns `Hello` when a request is made to the root path `/` and (404) not found error otherwise. By default no context is created and `exchange.context()` returns `null`. 
+As stated before, the *http-server* module provides a default `ServerController` implementation which returns `Hello` when a request is made to the root path `/` and (404) not found error otherwise. By default no context is created and `exchange.context()` returns `null`.
 
 A custom server controller can be injected when creating the *app_http* module. In the following code, a socket bean is defined to inject the custom server controller and starts an HTTP server which responds with `Hello from app_http module!` to any request:
 
@@ -536,7 +536,7 @@ import java.util.function.Supplier;
 public class Main {
 
     @Bean
-	public static interface Controller extends Supplier<ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>>> {}
+    public static interface Controller extends Supplier<ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>>> {}
 
     public static void main(String[] args) {
         Application.with(new App_http.Builder()
@@ -564,7 +564,7 @@ import java.util.function.Supplier;
 public class Main {
 
     @Bean
-	public static interface Controller extends Supplier<ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>>> {}
+    public static interface Controller extends Supplier<ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>>> {}
 
     public static void main(String[] args) {
         Application.with(new App_http.Builder()
@@ -610,7 +610,7 @@ public class App_httpServerController implements ServerController<App_httpServer
     public CustomContext createContext() {
         return new CustomContext();
     }
-	
+
     public static class CustomContext implements ExchangeContext {
 
         private String name = "anonymous";
@@ -626,7 +626,7 @@ public class App_httpServerController implements ServerController<App_httpServer
 }
 ```
 
-This bean is automatically wired to the server controller socket defined by the *http-server* module overriding the default server controller. 
+This bean is automatically wired to the server controller socket defined by the *http-server* module overriding the default server controller.
 
 > Note that above implementation still uses the default error handler.
 
@@ -704,7 +704,7 @@ As we just saw, a `ServerController` must be provided to handle `Exchange` and `
 
 ### Exchange handler
 
-An exchange handler is defined in a server controller and used to handle client-server exchanges. The `ReactiveExchangeHandler` is a functional interface defining method `Mono<Void> defer(Exchange<ExchangeContext> exchange)` which is used to handle server exchanges in a reactive way. It is for instance possible to execute non-blocking operations before actually handling the exchange. 
+An exchange handler is defined in a server controller and used to handle client-server exchanges. The `ReactiveExchangeHandler` is a functional interface defining method `Mono<Void> defer(Exchange<ExchangeContext> exchange)` which is used to handle server exchanges in a reactive way. It is for instance possible to execute non-blocking operations before actually handling the exchange.
 
 > Authentication is a typical example of a non-blocking operation that might be executed before handling the request.
 
@@ -774,7 +774,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
 };
 ```
 
-The media type of the resource is resolved using a [media type service](#media-type-service) and automatically set in the response `content-type` header field. 
+The media type of the resource is resolved using a [media type service](#media-type-service) and automatically set in the response `content-type` header field.
 
 > If a specific resource is created as in above example the media type service used is the one defined when creating the resource or a default implementation if none was specified. If the resource is obtained with the resource service provided in the *boot* module the media type service used is the one provided in the *boot* module.
 
@@ -895,22 +895,22 @@ Multipart form data is most commonly used for uploading files over HTTP. Such ha
 ```java
 ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     exchange.response().body().string().stream(
-        Flux.from(exchange.request().body().get().multipart().stream())                                                           // 1 
-            .flatMap(part -> part.getFilename()                                                                                   // 2 
-                .map(fileName -> Flux.<CharSequence, FileResource>using(                                                          // 3 
-                    () -> new FileResource("uploads/" + part.getFilename().get()),                                                // 4 
-                    file -> Flux.from(file.write(part.raw().stream()))                                                            // 5 
+        Flux.from(exchange.request().body().get().multipart().stream())                                                           // 1
+            .flatMap(part -> part.getFilename()                                                                                   // 2
+                .map(fileName -> Flux.<CharSequence, FileResource>using(                                                          // 3
+                    () -> new FileResource("uploads/" + part.getFilename().get()),                                                // 4
+                    file -> Flux.from(file.write(part.raw().stream()))                                                            // 5
                         .reduce(0, (acc, cur) -> acc + cur)
-                        .map(size -> "Uploaded " + fileName + "(" + part.headers().getContentType() + "): " + size + " Bytes\n"),  
-                    FileResource::close                                                                                           // 6 
+                        .map(size -> "Uploaded " + fileName + "(" + part.headers().getContentType() + "): " + size + " Bytes\n"),
+                    FileResource::close                                                                                           // 6
                 ))
-                .orElseThrow(() -> new BadRequestException("Not a file part"))                                                    // 7 
+                .orElseThrow(() -> new BadRequestException("Not a file part"))                                                    // 7
             )
     );
 };
 ```
 
-The above code uses multiple elements and deserves a detailed explanation: 
+The above code uses multiple elements and deserves a detailed explanation:
 
 1. get the stream of parts
 2. map the part to the response stream by starting to determine whether the part is a file part
@@ -928,7 +928,7 @@ The `Flux.using()` construct is the reactive counterpart of a try-with-resource 
 
 ### Error exchange handler
 
-An error exchange handler is defined in a server controller and used to handle errors raised during the normal processing of an exchange in the exchange handler. 
+An error exchange handler is defined in a server controller and used to handle errors raised during the normal processing of an exchange in the exchange handler.
 
 It is basically an `ExchangeHandler` of `ErrorExchange`. An error exchange exposes the original error, it is then possible to implement different behaviours based on the type of error:
 
@@ -989,7 +989,7 @@ handler.intercept(interceptor1).intercept(interceptor2).intercept(interceptor3);
 
 ### Exchange context
 
-A strongly typed context is exposed in the `Exchange`, it allows to store or access data and to provide contextual operations throughout the process of the exchange. The server creates the context along with the exchange using the server controller. It is then possible to *customize* the exchange with a specific strongly types context. 
+A strongly typed context is exposed in the `Exchange`, it allows to store or access data and to provide contextual operations throughout the process of the exchange. The server creates the context along with the exchange using the server controller. It is then possible to *customize* the exchange with a specific strongly types context.
 
 The advantage of this approach is that the compiler can perform static type checking but also to avoid the usage of an untyped map of attributes which is less performant and provides no control over contextual data. Since the developer defines the context type, he can also implement logic inside.
 
@@ -1030,10 +1030,10 @@ Request headers can be obtained as string values as follows:
 handler = exchange -> {
     // Returns the value of the first occurence of 'some-header' as string or returns null
     String someHeaderValue = exchange.request().headers().get("some-header").orElse(null);
-    
+
     // Returns all 'some-header' values as strings
     List<String> someHeaderValues = exchange.request().headers().getAll("some-header");
-    
+
     // Returns all headers as strings
     List<Map.Entry<String, String>> allHeadersValues = exchange.request().headers().getAll();
 };
@@ -1045,10 +1045,10 @@ It is also possible to get headers as `Parameter` which allows to easily convert
 handler = exchange -> {
     // Returns the value of the first occurence of 'some-header' as LocalDateTime or returns null
     LocalDateTime someHeaderValue = exchange.request().headers().getParameter("some-header").map(Parameter::asLocalDateTime).orElse(null);
-    
+
     // Returns all 'some-header' values as LocalDateTime
     List<LocalDateTime> someHeaderValues = exchange.request().headers().getAllParameter("some-header").stream().map(Parameter::asLocalDateTime).collect(Collectors.toList());
-    
+
     // Returns all headers as parameters
     List<Parameter> allHeadersParameters = exchange.request().headers().getAllParameter();
 };
@@ -1060,7 +1060,7 @@ The *http-server* module can also uses the [header service](#http-header-service
 ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -> {
     // Returns the decoded 'content-type' header or null
     Headers.ContentType contenType = exchange.request().headers().<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
-    
+
     String mediaType = contenType.getMediaType();
     Charset charset = contenType.getCharset();
     ...
@@ -1236,7 +1236,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
 
 An HTTP exchange can be upgraded to a WebSocket exchange as defined by [RFC 6455][rfc-6455].
 
-The `webSocket()` method exposed on the `Exchange` allows to upgrade to the WebSocket protocol, it returns an optional `WebSocket` which might be empty if the original exchange does not support the upgrade. This is especially the case when using HTTP/2 for which Websocket upgrade is not supported or if the state of the exchange prevents the upgrade (e.g. error exchange). 
+The `webSocket()` method exposed on the `Exchange` allows to upgrade to the WebSocket protocol, it returns an optional `WebSocket` which might be empty if the original exchange does not support the upgrade. This is especially the case when using HTTP/2 for which Websocket upgrade is not supported or if the state of the exchange prevents the upgrade (e.g. error exchange).
 
 The resulting `WebSocket` allows specifying a `WebSocketExchangeHandler` and a default action in case the WebSocket opening handshake fails (e.g. the client did not provide the correct headers for the upgrade...). A WebSocket exchange handler is used to handle the resulting `WebSocketExchange` which exposes WebSocket inbound and outbound data.
 
@@ -1269,7 +1269,7 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
 
 The `WebSocketExchange` also exposes:
 
-- the original HTTP request, 
+- the original HTTP request,
 
 ```java
 webSocketExchange.request();
@@ -1340,19 +1340,19 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
             Flux.from(webSocketExchange.inbound().messages()).subscribe(message -> {
                 // The stream of frames composing the message
                 Publisher<WebSocketFrame> frames = message.frames();
-            
+
                 // The message data as stream of ByteBuf
                 Publisher<ByteBuf> binary = message.binary();
-                
+
                 // The message data as stream of String
                 Publisher<String> text = message.text();
-                
+
                 // Aggregate all fragments into a single ByteBuf
                 Mono<ByteBuf> reducedBinary = message.reducedBinary();
-                
+
                 // Aggregate all fragments into a single String
                 Mono<String> reducedText = message.reducedText();
-                
+
                 ...
             });
         });
@@ -1440,7 +1440,7 @@ public class ChatServerController implements ServerController<ExchangeContext, E
 
     @Init
     public void init() {
-        this.chatSink = Sinks.many().multicast().onBackpressureBuffer(16, false);                                                  // 0 
+        this.chatSink = Sinks.many().multicast().onBackpressureBuffer(16, false);                                                  // 0
     }
 
     @Destroy
@@ -1453,16 +1453,16 @@ public class ChatServerController implements ServerController<ExchangeContext, E
         exchange.webSocket().ifPresentOrElse(
             websocket -> websocket
                 .handler(webSocketExchange -> {
-                    Flux.from(webSocketExchange.inbound().frames())                                                                // 1 
-                        .subscribe(frame -> {                                                                                      // 2 
+                    Flux.from(webSocketExchange.inbound().frames())                                                                // 1
+                        .subscribe(frame -> {                                                                                      // 2
                             try {
-                                this.chatSink.tryEmitNext(frame);                                                                  // 3 
+                                this.chatSink.tryEmitNext(frame);                                                                  // 3
                             }
                             finally {
-                                frame.release();                                                                                   // 4 
+                                frame.release();                                                                                   // 4
                             }
                         });
-                    webSocketExchange.outbound().frames(factory -> this.chatSink.asFlux().map(WebSocketFrame::retainedDuplicate)); // 5 
+                    webSocketExchange.outbound().frames(factory -> this.chatSink.asFlux().map(WebSocketFrame::retainedDuplicate)); // 5
                 })
                 .or(() -> exchange.response()
                     .body().string().value("Web socket handshake failed")
@@ -1555,7 +1555,7 @@ public class Main {
 
 ```plaintext
 $ curl -i --insecure https://localhost:8443/
-HTTP/2 200 
+HTTP/2 200
 content-length: 16
 
 Hello from main!
