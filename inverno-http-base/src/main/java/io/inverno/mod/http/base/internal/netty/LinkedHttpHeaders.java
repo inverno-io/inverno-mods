@@ -16,6 +16,7 @@
 package io.inverno.mod.http.base.internal.netty;
 
 import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.handler.codec.http.HttpConstants;
@@ -52,6 +53,8 @@ import java.util.TreeSet;
  */
 public class LinkedHttpHeaders extends HttpHeaders {
 
+	private final HeadersValidator validator;
+	
 	private HeaderNode head;
 	
 	private HeaderNode tail;
@@ -60,11 +63,39 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	
 	/**
 	 * <p>
-	 * Creates linked HTTP headers.
+	 * Creates linked HTTP headers with no headers validation.
 	 * </p>
 	 */
 	public LinkedHttpHeaders() {
+		this(null);
+	}
+	
+	/**
+	 * <p>
+	 * Creates linked HTTP headers with the specified headers validator.
+	 * </p>
+	 * 
+	 * @param validator a headers validator
+	 */
+	public LinkedHttpHeaders(HeadersValidator validator) {
+		this.validator = validator;
 		this.head = this.tail = new HeaderNode();
+	}
+	
+	/**
+	 * <p>
+	 * Validates headers with specified validator.
+	 * </p>
+	 * 
+	 * @param validator a headers validator
+	 */
+	public void validate(HeadersValidator validator) {
+		if(validator != null) {
+			for(Iterator<Entry<CharSequence, CharSequence>> iterator = this.iteratorCharSequence();iterator.hasNext();) {
+				Entry<CharSequence, CharSequence> current = iterator.next();
+				validator.accept(current.getKey(), current.getValue());
+			}
+		}
 	}
 	
 	/**
@@ -280,6 +311,9 @@ public class LinkedHttpHeaders extends HttpHeaders {
 	 * @param bucketIndex the index of the bucket
 	 */
 	private void add0(CharSequence name, CharSequence value, int hashCode, int bucketIndex) {
+		if(this.validator != null) {
+			this.validator.accept(name, value);
+		}
 		HeaderNode bucketHead = buckets[bucketIndex];
 		HeaderNode newNode;
 		buckets[bucketIndex] = newNode = new HeaderNode(hashCode, name, value);

@@ -343,7 +343,7 @@ public interface HttpServerConfiguration {
 	
 	/**
 	 * <p>
-	 * Zstandard compression max encode size (in bytes).
+	 * Zstandard compression max encode size in bytes.
 	 * </p>
 	 * 
 	 * <p>
@@ -515,7 +515,86 @@ public interface HttpServerConfiguration {
 	 * @return a list of ciphers
 	 */
 	String[] tls_ciphers_excludes();
-
+	
+	/**
+	 * <p>
+	 * HTTP/1.x initial buffer size in bytes used when parsing the lines of the HTTP headers.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 128}.
+	 * </p>
+	 * 
+	 * @return the initial buffer size
+	 */
+	default int http1x_initial_buffer_size() {
+		return 128;
+	}
+	
+	/**
+	 * <p>
+	 * HTTP/1.x max length in bytes of the first line of the HTTP headers.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 4096}.
+	 * </p>
+	 * 
+	 * @return the max initial line length
+	 */
+	default int http1x_max_initial_line_length() {
+		return 4096;
+	}
+	
+	/**
+	 * <p>
+	 * HTTP/1.x max chunk size in bytes.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 8192}.
+	 * </p>
+	 * 
+	 * @return the max chunk size
+	 */
+	default int http1x_max_chunk_size() {
+		return 8192;
+	}
+	
+	/**
+	 * <p>
+	 * HTTP/1.x max header line size in bytes.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code 8192}.
+	 * </p>
+	 * 
+	 * @return the max header line size 
+	 */
+	default int http1x_max_header_size() {
+		return 8192;
+	}
+	
+	/**
+	 * <p>
+	 * Enables/Disables HTTP/1.x header validation.
+	 * </p>
+	 * 
+	 * <p>
+	 * It is recommended to always validate headers in order to prevent <a href="https://en.wikipedia.org/wiki/HTTP_response_splitting">request/response splitting attack</a>.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code true}.
+	 * </p>
+	 * 
+	 * @return true to validate headers, false otherwise
+	 */
+	default boolean http1x_validate_headers() {
+		return true;
+	}
+	
 	/**
 	 * <p>
 	 * Enables/Disables H2C.
@@ -643,6 +722,21 @@ public interface HttpServerConfiguration {
 	 */
 	default Integer http2_max_header_list_size() {
 		return Integer.MAX_VALUE;
+	}
+	
+	/**
+	 * <p>
+	 * Enables/Disables HTTP/2.0 header validation as defined by <a href="https://datatracker.ietf.org/doc/html/rfc7540#section-8.1.2.6">RFC 7540 Section 8.1.2.6</a>.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code true}.
+	 * </p>
+	 * 
+	 * @return true to validate headers, false otherwise
+	 */
+	default boolean http2_validate_headers() {
+		return true;
 	}
 	
 	/**

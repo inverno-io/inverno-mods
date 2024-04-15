@@ -19,6 +19,7 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.base.internal.ws.GenericWebSocketFrame;
 import io.inverno.mod.http.base.internal.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.server.ErrorExchange;
@@ -78,6 +79,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	
 	private final GenericWebSocketFrame.GenericFactory webSocketFrameFactory;
 	private final GenericWebSocketMessage.GenericFactory webSocketMessageFactory;
+	private final HeadersValidator headersValidator;
 	
 	protected ChannelHandlerContext context;
 	protected boolean tls;
@@ -107,6 +109,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	 * @param multipartBodyDecoder    the multipart/form-data body decoder
 	 * @param webSocketFrameFactory   the WebSocket frame factory
 	 * @param webSocketMessageFactory the WebSocket message factory
+	 * @param headersValidator        a headers validator or null
 	 */
 	public Http1xConnection(
 			HttpServerConfiguration configuration,
@@ -116,7 +119,8 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder,
 			GenericWebSocketFrame.GenericFactory webSocketFrameFactory,
-			GenericWebSocketMessage.GenericFactory webSocketMessageFactory) {
+			GenericWebSocketMessage.GenericFactory webSocketMessageFactory,
+			HeadersValidator headersValidator) {
 		this.configuration = configuration;
 		this.controller = controller;
 		this.headerService = headerService;
@@ -126,6 +130,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		
 		this.webSocketFrameFactory = webSocketFrameFactory;
 		this.webSocketMessageFactory = webSocketMessageFactory;
+		this.headersValidator = headersValidator;
 	}
 
 	@Override
@@ -260,7 +265,8 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 					this.multipartBodyDecoder, 
 					this.controller,
 					this.webSocketFrameFactory,
-					this.webSocketMessageFactory
+					this.webSocketMessageFactory,
+					this.headersValidator
 				);
 				if(this.exchangeQueue == null) {
 					this.exchangeQueue = this.requestingExchange;

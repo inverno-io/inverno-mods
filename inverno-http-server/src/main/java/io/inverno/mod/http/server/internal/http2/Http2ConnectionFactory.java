@@ -123,9 +123,9 @@ public class Http2ConnectionFactory implements Supplier<Http2Connection> {
 			Optional.ofNullable(Http2ConnectionFactory.this.configuration.http2_max_header_list_size()).ifPresent(initialSettings::maxHeaderListSize);
 			
 			this.gracefulShutdownTimeoutMillis(Http2ConnectionFactory.this.configuration.graceful_shutdown_timeout());
+			this.validateHeaders(Http2ConnectionFactory.this.configuration.http2_validate_headers());
 		}
 		
-
 		@Override
 		protected Http2Connection build(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings) throws Exception {
 			Http2ContentEncodingResolver contentEncodingResolver = null;

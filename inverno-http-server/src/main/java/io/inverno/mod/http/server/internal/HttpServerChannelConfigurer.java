@@ -20,9 +20,9 @@ import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.core.annotation.Lazy;
 import io.inverno.mod.base.net.NetService;
+import io.inverno.mod.http.base.internal.netty.ValidatingHttpHeadersFactory;
 import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.internal.http1x.Http1xConnection;
-import io.inverno.mod.http.server.internal.http1x.Http1xRequestDecoder;
 import io.inverno.mod.http.server.internal.http1x.Http1xResponseEncoder;
 import io.inverno.mod.http.server.internal.http2.DirectH2cUpgradeHandler;
 import io.inverno.mod.http.server.internal.http2.Http2Connection;
@@ -35,6 +35,8 @@ import io.netty.handler.codec.compression.StandardCompressionOptions;
 import io.netty.handler.codec.compression.Zstd;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import io.netty.handler.codec.http.HttpDecoderConfig;
+import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler;
 import io.netty.handler.codec.http2.Http2CodecUtil;
 import io.netty.handler.codec.http2.Http2ServerUpgradeCodec;
@@ -66,6 +68,8 @@ public class HttpServerChannelConfigurer {
 	private final Supplier<Http2Connection> http2ConnectionFactory;
 	
 	private final CompressionOptions[] compressionOptions;
+	
+	private final HttpDecoderConfig httpDecoderConfig;
 	
 	/**
 	 * <p>
@@ -108,6 +112,13 @@ public class HttpServerChannelConfigurer {
 		}
 		
 		this.compressionOptions = compressionOptionsList.stream().toArray(CompressionOptions[]::new);
+		
+		this.httpDecoderConfig = new HttpDecoderConfig()
+			.setInitialBufferSize(configuration.http1x_initial_buffer_size())
+			.setMaxInitialLineLength(configuration.http1x_max_initial_line_length())
+			.setMaxChunkSize(configuration.http1x_max_chunk_size())
+			.setMaxHeaderSize(configuration.http1x_max_header_size())
+			.setHeadersFactory(configuration.http1x_validate_headers() ? ValidatingHttpHeadersFactory.VALIDATING_HEADERS_FACTORY : ValidatingHttpHeadersFactory.NON_VALIDATING_HEADERS_FACTORY);
 	}
 	
 	/**
@@ -163,7 +174,7 @@ public class HttpServerChannelConfigurer {
 	 */
 	private void initHttp1x(ChannelPipeline pipeline) {
 		// TODO add prior knowledge first to be able to do cleartext h2 right away after reading the preface
-		pipeline.addLast("http1xDecoder", new Http1xRequestDecoder());
+		pipeline.addLast("http1xDecoder", new HttpRequestDecoder(this.httpDecoderConfig));
 		pipeline.addLast("http1xEncoder", new Http1xResponseEncoder(this.directAllocator));
 		if (this.configuration.decompression_enabled()) {
 			pipeline.addLast("http1xDecompressor", new HttpContentDecompressor(false));

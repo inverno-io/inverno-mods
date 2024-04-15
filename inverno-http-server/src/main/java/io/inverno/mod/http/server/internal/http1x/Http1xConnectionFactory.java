@@ -21,6 +21,7 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.base.internal.ws.GenericWebSocketFrame;
 import io.inverno.mod.http.base.internal.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.server.ErrorExchange;
@@ -51,6 +52,7 @@ public class Http1xConnectionFactory implements Supplier<Http1xConnection> {
 	
 	private final GenericWebSocketFrame.GenericFactory webSocketFrameFactory;
 	private final GenericWebSocketMessage.GenericFactory webSocketMessageFactory;
+	private final HeadersValidator headersValidator;
 	
 	/**
 	 * <p>
@@ -81,10 +83,22 @@ public class Http1xConnectionFactory implements Supplier<Http1xConnection> {
 		
 		this.webSocketFrameFactory = new GenericWebSocketFrame.GenericFactory(configuration.ws_max_frame_size());
 		this.webSocketMessageFactory = new GenericWebSocketMessage.GenericFactory(configuration.ws_max_frame_size());
+		
+		this.headersValidator = configuration.http2_validate_headers() ? HeadersValidator.DEFAULT_HTTP1X_HEADERS_VALIDATOR : null;
 	}
 
 	@Override
 	public Http1xConnection get() {
-		return new Http1xConnection(this.configuration, this.controller, this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.webSocketFrameFactory, this.webSocketMessageFactory);
+		return new Http1xConnection(
+			this.configuration, 
+			this.controller, 
+			this.headerService, 
+			this.parameterConverter, 
+			this.urlEncodedBodyDecoder, 
+			this.multipartBodyDecoder, 
+			this.webSocketFrameFactory, 
+			this.webSocketMessageFactory, 
+			this.headersValidator
+		);
 	}
 }

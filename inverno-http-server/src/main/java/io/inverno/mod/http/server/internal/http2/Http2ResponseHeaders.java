@@ -64,14 +64,15 @@ class Http2ResponseHeaders implements InternalResponseHeaders {
 	 * Creates HTTP/2 response headers.
 	 * </p>
 	 * 
-	 * @param headerService the header service
-	 * @param parameterConverter a string object converter 
+	 * @param headerService      the header service
+	 * @param parameterConverter a string object converter
+	 * @param validate           true to validate headers, false otherwise
 	 */
-	public Http2ResponseHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter) {
+	public Http2ResponseHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, boolean validate) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		
-		this.underlyingHeaders = new DefaultHttp2Headers();
+		this.underlyingHeaders = new DefaultHttp2Headers(validate);
 		this.underlyingHeaders.set(PseudoHeaderName.STATUS.value(), "200");
 	}
 	

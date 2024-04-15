@@ -23,6 +23,7 @@ import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.internal.AbstractExchange;
@@ -65,18 +66,20 @@ class Http2Exchange extends AbstractExchange {
 	 * Creates a HTTP/2 server exchange.
 	 * </p>
 	 * 
+	 * @param configuration         the server configuration
 	 * @param context               the channel handler context
 	 * @param stream                the underlying HTTP/2 stream
 	 * @param httpHeaders           the underlying HTTP/2 request headers
 	 * @param encoder               the HTTP/2 connection encoder
 	 * @param headerService         the header service
 	 * @param parameterConverter    a string object converter
-	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body
-	 *                              decoder
+	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 * @param controller            the server controller
+	 * @param validateHeaders       true to validate headers, false otherwise
 	 */
 	public Http2Exchange(
+			HttpServerConfiguration configuration,
 			ChannelHandlerContext context, 
 			Http2Stream stream, 
 			Http2Headers httpHeaders, 
@@ -85,9 +88,10 @@ class Http2Exchange extends AbstractExchange {
 			ObjectConverter<String> parameterConverter,
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder,
-			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller
+			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller,
+			boolean validateHeaders
 		) {
-		super(context, controller, new Http2Request(context, new Http2RequestHeaders(httpHeaders, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http2Response(context, stream, encoder, headerService, parameterConverter));
+		super(configuration, context, controller, new Http2Request(context, new Http2RequestHeaders(httpHeaders, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http2Response(context, stream, encoder, headerService, parameterConverter, validateHeaders));
 		this.stream = stream;
 		this.encoder = encoder;
 		this.headerService = headerService;
@@ -127,7 +131,7 @@ class Http2Exchange extends AbstractExchange {
 	
 	@Override
 	protected ErrorExchange<ExchangeContext> createErrorExchange(Throwable error) {
-		return new GenericErrorExchange(this, new Http2Response(this.context, this.stream, this.encoder, this.headerService, this.parameterConverter), error, this.finalizer);
+		return new GenericErrorExchange(this, new Http2Response(this.context, this.stream, this.encoder, this.headerService, this.parameterConverter, this.configuration.http2_validate_headers()), error, this.finalizer);
 	}
 	
 	@Override

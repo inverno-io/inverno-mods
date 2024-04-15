@@ -24,6 +24,7 @@ import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.base.internal.netty.FlatFullHttpResponse;
 import io.inverno.mod.http.base.internal.netty.FlatHttpResponse;
 import io.inverno.mod.http.base.internal.netty.FlatLastHttpContent;
@@ -77,13 +78,13 @@ import reactor.core.publisher.BaseSubscriber;
  */
 class Http1xExchange extends AbstractExchange {
 
-	private final HttpServerConfiguration configuration;
 	private final Http1xConnectionEncoder encoder;
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	
 	private final GenericWebSocketFrame.GenericFactory webSocketFrameFactory;
 	private final GenericWebSocketMessage.GenericFactory webSocketMessageFactory;
+	private final HeadersValidator headersValidator;
 	
 	private boolean manageChunked;
 	private Charset charset;
@@ -110,6 +111,7 @@ class Http1xExchange extends AbstractExchange {
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 * @param controller            the server controller
+	 * @param headersValidator      a headers validator or null
 	 */
 	public Http1xExchange(
 			HttpServerConfiguration configuration,
@@ -123,9 +125,9 @@ class Http1xExchange extends AbstractExchange {
 			MultipartDecoder<Part> multipartBodyDecoder,
 			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller,
 			GenericWebSocketFrame.GenericFactory webSocketFrameFactory,
-			GenericWebSocketMessage.GenericFactory webSocketMessageFactory) {
-		super(context, controller, new Http1xRequest(context, httpRequest, new Http1xRequestHeaders(httpRequest, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http1xResponse(version, context, headerService, parameterConverter));
-		this.configuration = configuration;
+			GenericWebSocketMessage.GenericFactory webSocketMessageFactory,
+			HeadersValidator headersValidator) {
+		super(configuration, context, controller, new Http1xRequest(context, httpRequest, new Http1xRequestHeaders(httpRequest, headerService, parameterConverter), parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder), new Http1xResponse(version, context, headerService, parameterConverter, headersValidator));
 		this.encoder = encoder;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
@@ -141,6 +143,7 @@ class Http1xExchange extends AbstractExchange {
 		
 		this.webSocketFrameFactory = webSocketFrameFactory;
 		this.webSocketMessageFactory = webSocketMessageFactory;
+		this.headersValidator = headersValidator;
 	}
 
 	@Override
@@ -172,7 +175,7 @@ class Http1xExchange extends AbstractExchange {
 	
 	@Override
 	protected ErrorExchange<ExchangeContext> createErrorExchange(Throwable error) {
-		return new GenericErrorExchange(this, new Http1xResponse(this.version, this.context, this.headerService, this.parameterConverter), error, this.finalizer);
+		return new GenericErrorExchange(this, new Http1xResponse(this.version, this.context, this.headerService, this.parameterConverter, this.headersValidator), error, this.finalizer);
 	}
 	
 	private Charset getCharset() {

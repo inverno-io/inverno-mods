@@ -53,14 +53,15 @@ class Http2ResponseTrailers implements OutboundHeaders<Http2ResponseTrailers> {
 	 * Creates HTTP/2 response trailers.
 	 * </p>
 	 * 
-	 * @param headerService the header service
-	 * @param parameterConverter a string object converter 
+	 * @param headerService      the header service
+	 * @param parameterConverter a string object converter
+	 * @param validate           true to validate trailers, false otherwise
 	 */
-	public Http2ResponseTrailers(HeaderService headerService, ObjectConverter<String> parameterConverter) {
+	public Http2ResponseTrailers(HeaderService headerService, ObjectConverter<String> parameterConverter, boolean validate) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		
-		this.underlyingTrailers = new DefaultHttp2Headers();
+		this.underlyingTrailers = new DefaultHttp2Headers(validate);
 	}
 
 	/**

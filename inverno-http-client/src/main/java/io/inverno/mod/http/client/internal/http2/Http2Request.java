@@ -43,9 +43,10 @@ class Http2Request extends AbstractRequest {
 	 * @param parameterConverter the parameter converter
 	 * @param headerService      the header service
 	 * @param endpointRequest    the original endpoint request
+	 * @param validateHeaders    true to validate headers, false otherwise
 	 */
-	public Http2Request(ChannelHandlerContext context, boolean tls, ObjectConverter<String> parameterConverter, HeaderService headerService, EndpointRequest endpointRequest) {
-		super(context, tls, parameterConverter, endpointRequest, new Http2RequestHeaders(headerService, parameterConverter, endpointRequest), endpointRequest.getBody() != null ? new Http2RequestBody(endpointRequest.getBody()) : null);
+	public Http2Request(ChannelHandlerContext context, boolean tls, ObjectConverter<String> parameterConverter, HeaderService headerService, EndpointRequest endpointRequest, boolean validateHeaders) {
+		super(context, tls, parameterConverter, endpointRequest, new Http2RequestHeaders(headerService, parameterConverter, endpointRequest, validateHeaders), endpointRequest.getBody() != null ? new Http2RequestBody(endpointRequest.getBody()) : null);
 	}
 
 	@Override

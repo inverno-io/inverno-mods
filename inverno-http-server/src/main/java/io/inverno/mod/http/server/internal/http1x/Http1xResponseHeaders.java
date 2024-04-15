@@ -25,6 +25,7 @@ import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
+import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.inverno.mod.http.server.internal.GenericResponseCookies;
 import io.inverno.mod.http.server.internal.InternalResponseHeaders;
@@ -69,12 +70,13 @@ class Http1xResponseHeaders implements InternalResponseHeaders {
 	 * 
 	 * @param headerService      the header service
 	 * @param parameterConverter a string object converter
+	 * @param headersValidator   a headers validator or null
 	 */
-	public Http1xResponseHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter) {
+	public Http1xResponseHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, HeadersValidator headersValidator) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		
-		this.underlyingHeaders = new LinkedHttpHeaders();
+		this.underlyingHeaders = new LinkedHttpHeaders(headersValidator);
 	}
 	
 	/**

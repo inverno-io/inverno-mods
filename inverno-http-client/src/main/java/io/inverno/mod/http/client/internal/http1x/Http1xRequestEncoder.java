@@ -15,7 +15,6 @@
  */
 package io.inverno.mod.http.client.internal.http1x;
 
-import io.inverno.mod.http.base.internal.netty.FlatHttpRequest;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
@@ -27,7 +26,6 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelProgressivePromise;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpRequestEncoder;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;

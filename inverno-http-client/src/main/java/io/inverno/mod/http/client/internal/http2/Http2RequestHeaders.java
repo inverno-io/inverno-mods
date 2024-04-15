@@ -62,19 +62,14 @@ class Http2RequestHeaders implements HttpConnectionRequestHeaders {
 	 *
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
-	 * @param endpointRequest the original endpoint request 
+	 * @param endpointRequest    the original endpoint request 
+	 * @param validateHeaders    true to validate headers, false otherwise
 	 */
-	/**
-	 * 
-	 * @param headerService
-	 * @param parameterConverter
-	 * @param endpointRequest 
-	 */
-	public Http2RequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, EndpointRequest endpointRequest) {
+	public Http2RequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, EndpointRequest endpointRequest, boolean validateHeaders) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		
-		this.underlyingHeaders = new DefaultHttp2Headers();
+		this.underlyingHeaders = new DefaultHttp2Headers(validateHeaders);
 		endpointRequest.headers().getAll().forEach(e -> this.add(e.getKey(), e.getValue()));
 	}
 	

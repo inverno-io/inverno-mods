@@ -21,6 +21,7 @@ import io.inverno.mod.http.base.OutboundRequestHeaders;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.inverno.mod.http.client.internal.EndpointRequestHeaders;
 import io.inverno.mod.http.client.internal.HttpConnectionRequestHeaders;
@@ -49,9 +50,11 @@ class Http1xRequestHeaders implements HttpConnectionRequestHeaders {
 	 * Creates blank HTTP/1.x request headers.
 	 * </p>
 	 *
-	 * @param endpointHeaders the original endpoint headers
+	 * @param endpointHeaders  the original endpoint headers
+	 * @param headersValidator a headers validator or null
 	 */
-	public Http1xRequestHeaders(EndpointRequestHeaders endpointHeaders) {
+	public Http1xRequestHeaders(EndpointRequestHeaders endpointHeaders, HeadersValidator headersValidator) {
+		endpointHeaders.getUnderlyingHeaders().validate(headersValidator);
 		this.endpointHeaders = endpointHeaders;
 	}
 

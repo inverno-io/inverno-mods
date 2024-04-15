@@ -16,6 +16,7 @@
 package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.client.Request;
 import io.inverno.mod.http.client.internal.AbstractRequest;
 import io.inverno.mod.http.client.internal.EndpointRequest;
@@ -41,9 +42,10 @@ class Http1xRequest extends AbstractRequest {
 	 * @param supportsFileRegion true if the connection supports file region, false otherwise
 	 * @param parameterConverter the parameter converter
 	 * @param endpointRequest    the original endpoint request
+	 * @param headersValidator   a headers validator or null
 	 */
-	public Http1xRequest(ChannelHandlerContext context, boolean tls, boolean supportsFileRegion, ObjectConverter<String> parameterConverter, EndpointRequest endpointRequest) {
-		super(context, tls, parameterConverter, endpointRequest, new Http1xRequestHeaders(endpointRequest.getHeaders()), endpointRequest.getBody() != null ? new Http1xRequestBody(endpointRequest.getBody(), supportsFileRegion) : null);
+	public Http1xRequest(ChannelHandlerContext context, boolean tls, boolean supportsFileRegion, ObjectConverter<String> parameterConverter, EndpointRequest endpointRequest, HeadersValidator headersValidator) {
+		super(context, tls, parameterConverter, endpointRequest, new Http1xRequestHeaders(endpointRequest.getHeaders(), headersValidator), endpointRequest.getBody() != null ? new Http1xRequestBody(endpointRequest.getBody(), supportsFileRegion) : null);
 	}
 
 	@Override

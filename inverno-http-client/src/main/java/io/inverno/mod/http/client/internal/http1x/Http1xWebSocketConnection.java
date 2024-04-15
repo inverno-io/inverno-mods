@@ -18,7 +18,7 @@ package io.inverno.mod.http.client.internal.http1x;
 import io.inverno.mod.http.client.internal.http1x.ws.GenericWebSocketExchange;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.base.internal.ws.GenericWebSocketFrame;
 import io.inverno.mod.http.base.internal.ws.GenericWebSocketMessage;
 import io.inverno.mod.http.client.HttpClientConfiguration;
@@ -62,13 +62,15 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 
 	private static final Logger LOGGER = LogManager.getLogger(Http1xWebSocketConnection.class);
 	
-	private final HeaderService headerService;
+	private final HttpClientConfiguration configuration;
 	private final ObjectConverter<String> parameterConverter;
+	
 	private final GenericWebSocketFrame.GenericFactory frameFactory;
 	private final GenericWebSocketMessage.GenericFactory messageFactory;
 	
 	private final boolean closeOnOutboundComplete;
 	private final long inboundCloseFrameTimeout;
+	private final HeadersValidator headersValidator;
 	
 	private ChannelHandlerContext context;
 	private boolean tls;
@@ -85,20 +87,20 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	 * </p>
 	 * 
 	 * @param configuration      the HTTP client configurartion
-	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
 	 */
 	public Http1xWebSocketConnection(
 			HttpClientConfiguration configuration, 
-			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter) {
-		this.headerService = headerService;
+		this.configuration = configuration;
 		this.parameterConverter = parameterConverter;
 		
 		this.frameFactory = new GenericWebSocketFrame.GenericFactory(configuration.ws_max_frame_size());
 		this.messageFactory = new GenericWebSocketMessage.GenericFactory(configuration.ws_max_frame_size());
+		
 		this.closeOnOutboundComplete = configuration.ws_close_on_outbound_complete();
 		this.inboundCloseFrameTimeout = configuration.ws_inbound_close_frame_timeout();
+		this.headersValidator = configuration.http1x_validate_headers() ? HeadersValidator.DEFAULT_HTTP1X_HEADERS_VALIDATOR : null;
 	}
 	
 	@Override
@@ -183,7 +185,7 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 			throw new IllegalStateException("Handshake already sent");
 		}
 		
-		Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, false, this.parameterConverter, endpointExchange.request());
+		Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, false, this.parameterConverter, endpointExchange.request(), this.headersValidator);
 		
 		URI webSocketURI = URI.create((this.tls ? "wss:// ": "ws://") + http1xRequest.getAuthority() + http1xRequest.getPath());
 		WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(

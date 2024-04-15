@@ -277,7 +277,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 			return Mono.error(new HttpClientException("Connection closed"));
 		}
 		return Mono.<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>>create(exchangeSink -> {
-			Http2Request http2Request = new Http2Request(this.context, this.tls, this.parameterConverter, this.headerService, endpointExchange.request());
+			Http2Request http2Request = new Http2Request(this.context, this.tls, this.parameterConverter, this.headerService, endpointExchange.request(), this.configuration.http2_validate_headers());
 			Http2Exchange http2Exchange = new Http2Exchange(context, exchangeSink, endpointExchange.context(), http2Request, this.connection().local(), this.encoder());
 			
 			// Make sure the exchange is started on the connection event loop

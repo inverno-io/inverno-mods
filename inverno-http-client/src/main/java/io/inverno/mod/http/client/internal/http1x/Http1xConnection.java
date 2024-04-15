@@ -20,6 +20,7 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.client.ConnectionResetException;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.HttpClientException;
@@ -74,6 +75,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	protected final MultipartEncoder<Parameter> urlEncodedBodyEncoder;
 	protected final MultipartEncoder<Part<?>> multipartBodyEncoder;
 	protected final Part.Factory partFactory;
+	protected final HeadersValidator headersValidator;
 	
 	protected ChannelHandlerContext context;
 	protected boolean tls;
@@ -132,6 +134,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		this.urlEncodedBodyEncoder = urlEncodedBodyEncoder;
 		this.multipartBodyEncoder = multipartBodyEncoder;
 		this.partFactory = partFactory;
+		this.headersValidator = configuration.http1x_validate_headers() ? HeadersValidator.DEFAULT_HTTP1X_HEADERS_VALIDATOR : null;
 		
 		this.maxConcurrentRequests = this.configuration.http1_max_concurrent_requests();
 		this.requestTimeout = this.configuration.request_timeout();
@@ -424,7 +427,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 			return Mono.error(new HttpClientException("Connection closed"));
 		}
 		return Mono.<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>>create(exchangeSink -> {
-			Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, this.supportsFileRegion, this.parameterConverter, endpointExchange.request());
+			Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, this.supportsFileRegion, this.parameterConverter, endpointExchange.request(), this.headersValidator);
 			
 			try {
 				// This must be thread safe as multiple threads can change the exchange queue

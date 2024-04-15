@@ -82,6 +82,7 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 	private final Http2ContentEncodingResolver contentEncodingResolver;
 
 	private final IntObjectMap<Http2Exchange> serverStreams;
+	private final boolean validateHeaders;
 	
 	protected ChannelHandlerContext context;
 	protected boolean tls;
@@ -127,6 +128,7 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 		this.contentEncodingResolver = contentEncodingResolver;
 		
 		this.serverStreams = new IntObjectHashMap<>();
+		this.validateHeaders = configuration.http2_validate_headers();
 		this.connection().addListener(this);
 	}
 
@@ -307,7 +309,19 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 	public void onHeadersRead(ChannelHandlerContext ctx, int streamId, Http2Headers headers, int padding, boolean endOfStream) throws Http2Exception {
 		Http2Exchange exchange = this.serverStreams.get(streamId);
 		if (exchange == null) {
-			Http2Exchange streamExchange = new Http2Exchange(ctx, this.connection().stream(streamId), headers, this.encoder(), this.headerService, this.parameterConverter, this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.controller);
+			Http2Exchange streamExchange = new Http2Exchange(
+				this.configuration, 
+				ctx, 
+				this.connection().stream(streamId), 
+				headers, 
+				this.encoder(), 
+				this.headerService, 
+				this.parameterConverter, 
+				this.urlEncodedBodyDecoder, 
+				this.multipartBodyDecoder, 
+				this.controller, 
+				this.validateHeaders
+			);
 			if(this.configuration.compression_enabled()) {
 				String acceptEncoding = headers.get(HttpHeaderNames.ACCEPT_ENCODING) != null ? headers.get(HttpHeaderNames.ACCEPT_ENCODING).toString() : null;
 				if(acceptEncoding != null) {

@@ -18,7 +18,6 @@ package io.inverno.mod.http.client.internal.http1x;
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.HttpVersion;
-import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.internal.WebSocketConnectionFactory;
 
@@ -33,7 +32,6 @@ import io.inverno.mod.http.client.internal.WebSocketConnectionFactory;
 @Bean( visibility = Bean.Visibility.PRIVATE )
 public class Http1xWebSocketConnectionFactory implements WebSocketConnectionFactory<Http1xWebSocketConnection> {
 
-	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 
 	/**
@@ -41,16 +39,14 @@ public class Http1xWebSocketConnectionFactory implements WebSocketConnectionFact
 	 * Creates an HTTP/1.x WebSocket connection factory.
 	 * </p>
 	 * 
-	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
 	 */
-	public Http1xWebSocketConnectionFactory(HeaderService headerService, ObjectConverter<String> parameterConverter) {
-		this.headerService = headerService;
+	public Http1xWebSocketConnectionFactory(ObjectConverter<String> parameterConverter) {
 		this.parameterConverter = parameterConverter;
 	}
 	
 	@Override
 	public Http1xWebSocketConnection create(HttpClientConfiguration configuration, HttpVersion httpVersion) {
-		return new Http1xWebSocketConnection(configuration, this.headerService, this.parameterConverter);
+		return new Http1xWebSocketConnection(configuration, this.parameterConverter);
 	}
 }

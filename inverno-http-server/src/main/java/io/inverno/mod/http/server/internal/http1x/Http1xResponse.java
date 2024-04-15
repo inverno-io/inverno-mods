@@ -18,6 +18,7 @@ package io.inverno.mod.http.server.internal.http1x;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.OutboundHeaders;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.server.Response;
 import io.inverno.mod.http.server.internal.AbstractResponse;
 import io.netty.channel.ChannelHandlerContext;
@@ -42,6 +43,8 @@ class Http1xResponse extends AbstractResponse {
 	private final HttpVersion version;
 	
 	private final ObjectConverter<String> parameterConverter;
+	
+	private final HeadersValidator headersValidator;
 
 	/**
 	 * <p>
@@ -51,11 +54,13 @@ class Http1xResponse extends AbstractResponse {
 	 * @param context            the channel handler context
 	 * @param headerService      the header service
 	 * @param parameterConverter a string object converter
+	 * @param headersValidator   a headers validator or null
 	 */
-	public Http1xResponse(HttpVersion version, ChannelHandlerContext context, HeaderService headerService, ObjectConverter<String> parameterConverter) {
-		super(context, headerService, new Http1xResponseHeaders(headerService, parameterConverter));
+	public Http1xResponse(HttpVersion version, ChannelHandlerContext context, HeaderService headerService, ObjectConverter<String> parameterConverter, HeadersValidator headersValidator) {
+		super(context, headerService, new Http1xResponseHeaders(headerService, parameterConverter, headersValidator));
 		this.version = version;
 		this.parameterConverter = parameterConverter;
+		this.headersValidator = headersValidator;
 		this.responseBody = new Http1xResponseBody(this);
 	}
 	
@@ -77,7 +82,7 @@ class Http1xResponse extends AbstractResponse {
 
 	@Override
 	protected OutboundHeaders<?> createTrailers() {
-		return new Http1xResponseTrailers(this.headerService, this.parameterConverter);
+		return new Http1xResponseTrailers(this.headerService, this.parameterConverter, this.headersValidator);
 	}
 	
 	@Override

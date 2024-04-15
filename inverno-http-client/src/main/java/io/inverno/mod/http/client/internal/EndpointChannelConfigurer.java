@@ -18,6 +18,7 @@ package io.inverno.mod.http.client.internal;
 import io.inverno.core.annotation.Bean;
 import io.inverno.mod.base.net.NetService;
 import io.inverno.mod.http.base.HttpVersion;
+import io.inverno.mod.http.base.internal.netty.ValidatingHttpHeadersFactory;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.HttpClientUpgradeException;
 import io.inverno.mod.http.client.internal.http1x.Http1xConnection;
@@ -31,6 +32,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import io.netty.handler.codec.http.HttpDecoderConfig;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpResponseDecoder;
 import io.netty.handler.codec.http.websocketx.extensions.WebSocketClientExtensionHandler;
@@ -176,7 +178,7 @@ public class EndpointChannelConfigurer {
 			}
 		}
 		
-		pipeline.addLast("http1xDecoder", new HttpResponseDecoder());
+		pipeline.addLast("http1xDecoder", new HttpResponseDecoder(createHttpDecoderConfig(configuration)));
 		pipeline.addLast("http1xEncoder", new Http1xRequestEncoder(this.directAllocator));
 		pipeline.addLast("http1xAggregator", new HttpObjectAggregator(8192));
 		
@@ -217,7 +219,7 @@ public class EndpointChannelConfigurer {
 	 */
 	Http1xConnection configureHttp1x(ChannelPipeline pipeline, HttpVersion httpVersion, HttpClientConfiguration configuration) {
 		// add HTTP decoder, in case of upgrade we must make sure clean stuff if needed
-		pipeline.addLast("http1xDecoder", new HttpResponseDecoder());
+		pipeline.addLast("http1xDecoder", new HttpResponseDecoder(createHttpDecoderConfig(configuration)));
 		pipeline.addLast("http1xEncoder", new Http1xRequestEncoder(this.directAllocator));
 		if(configuration.decompression_enabled()) {
 			pipeline.addLast("http1xDecompressor", new HttpContentDecompressor(false));
@@ -229,6 +231,25 @@ public class EndpointChannelConfigurer {
 		pipeline.addLast(CONNECTION_HANDLER_NAME, connection);
 		
 		return connection;
+	}
+	
+	/**
+	 * <p>
+	 * Returns a new HTTP decoder configuration from the HTTP client configuration.
+	 * </p>
+	 * 
+	 * @param configuration an HTTP client configuration
+	 * 
+	 * @return an HTTP decoder configuration
+	 */
+	private static HttpDecoderConfig createHttpDecoderConfig(HttpClientConfiguration configuration) {
+		return new HttpDecoderConfig()
+			.setInitialBufferSize(configuration.http1x_initial_buffer_size())
+			.setMaxInitialLineLength(configuration.http1x_max_initial_line_length())
+			.setMaxChunkSize(configuration.http1x_max_chunk_size())
+			.setMaxHeaderSize(configuration.http1x_max_header_size())
+			.setHeadersFactory(configuration.http1x_validate_headers() ? ValidatingHttpHeadersFactory.VALIDATING_HEADERS_FACTORY : ValidatingHttpHeadersFactory.NON_VALIDATING_HEADERS_FACTORY)
+			.setTrailersFactory(configuration.http1x_validate_headers() ? ValidatingHttpHeadersFactory.VALIDATING_HEADERS_FACTORY : ValidatingHttpHeadersFactory.NON_VALIDATING_HEADERS_FACTORY);
 	}
 	
 	/**

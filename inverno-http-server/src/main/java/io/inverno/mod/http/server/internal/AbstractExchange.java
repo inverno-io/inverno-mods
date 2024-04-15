@@ -21,6 +21,7 @@ import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
+import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.ServerController;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
@@ -68,6 +69,7 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	
 	protected static final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> LAST_RESORT_ERROR_CONTROLLER = exchange -> {};
 	
+	protected final HttpServerConfiguration configuration;
 	protected final ChannelHandlerContext context;
 	protected final EventExecutor contextExecutor;
 	
@@ -106,17 +108,20 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * Creates a server exchange with the specified channel handler context, root exchange handler, error exchange handler, request and response.
 	 * </p>
 	 *
-	 * @param context    the channel handler context
-	 * @param controller the server controller
-	 * @param request    the exchange request
-	 * @param response   the exchange response
+	 * @param configuration the server configuration
+	 * @param context       the channel handler context
+	 * @param controller    the server controller
+	 * @param request       the exchange request
+	 * @param response      the exchange response
 	 */
 	public AbstractExchange(
+			HttpServerConfiguration configuration,
 			ChannelHandlerContext context, 
 			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller, 
 			AbstractRequest request, 
 			AbstractResponse response
 		) {
+		this.configuration = configuration;
 		this.context = context;
 		this.contextExecutor = this.context.executor();
 		this.currentController = this.controller = controller;

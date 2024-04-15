@@ -44,6 +44,8 @@ class Http2Response extends AbstractResponse {
 	
 	private final ObjectConverter<String> parameterConverter;
 	
+	private final boolean validateHeaders;
+	
 	/**
 	 * <p>
 	 * Creates a HTTP/2 server response.
@@ -54,12 +56,14 @@ class Http2Response extends AbstractResponse {
 	 * @param encoder            the HTTP/2 connection encoder
 	 * @param headerService      the header service
 	 * @param parameterConverter a string object converter
+	 * @param validateHeaders    true to validate headers, false otherwise
 	 */
-	public Http2Response(ChannelHandlerContext context, Http2Stream stream, Http2ConnectionEncoder encoder, HeaderService headerService, ObjectConverter<String> parameterConverter) {
-		super(context, headerService, new Http2ResponseHeaders(headerService, parameterConverter));
+	public Http2Response(ChannelHandlerContext context, Http2Stream stream, Http2ConnectionEncoder encoder, HeaderService headerService, ObjectConverter<String> parameterConverter, boolean validateHeaders) {
+		super(context, headerService, new Http2ResponseHeaders(headerService, parameterConverter, validateHeaders));
 		this.stream = stream;
 		this.encoder = encoder;
 		this.parameterConverter = parameterConverter;
+		this.validateHeaders = validateHeaders;
 		this.responseBody = new GenericResponseBody(this);
 	}
 
@@ -70,7 +74,7 @@ class Http2Response extends AbstractResponse {
 
 	@Override
 	protected OutboundHeaders<?> createTrailers() {
-		return new Http2ResponseTrailers(this.headerService, this.parameterConverter);
+		return new Http2ResponseTrailers(this.headerService, this.parameterConverter, this.validateHeaders);
 	}
 	
 	@Override

@@ -21,6 +21,7 @@ import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.internal.GenericParameter;
+import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import java.util.List;
@@ -58,12 +59,13 @@ class Http1xResponseTrailers implements OutboundHeaders<Http1xResponseTrailers> 
 	 * @param httpRequest        the underlying HTTP request
 	 * @param headerService      the header service
 	 * @param parameterConverter a string object converter
+	 * @param headersValidator   a headers validator or null
 	 */
-	public Http1xResponseTrailers(HeaderService headerService, ObjectConverter<String> parameterConverter) {
+	public Http1xResponseTrailers(HeaderService headerService, ObjectConverter<String> parameterConverter, HeadersValidator headersValidator) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		
-		this.underlyingTrailers = new LinkedHttpHeaders();
+		this.underlyingTrailers = new LinkedHttpHeaders(headersValidator);
 	}
 
 	@Override
