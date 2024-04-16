@@ -110,6 +110,24 @@ public interface Endpoint<A extends ExchangeContext> {
 	 * </p>
 	 * 
 	 * <p>
+	 * This method is a shortcut for {@code exchange(Method.GET, requestTarget, context)}.
+	 * </p>
+	 * 
+	 * @param requestTarget the request target path
+	 * @param context       the exchange context
+	 * 
+	 * @return an HTTP exchange mono
+	 */
+	default Mono<? extends Exchange<A>> exchange(String requestTarget, A context) {
+		return this.exchange(Method.GET, requestTarget, context);
+	}
+	
+	/**
+	 * <p>
+	 * Creates an HTTP exchange.
+	 * </p>
+	 * 
+	 * <p>
 	 * This method is a shortcut for {@code exchange(method, requestTarget, null)}.
 	 * </p>
 	 * 

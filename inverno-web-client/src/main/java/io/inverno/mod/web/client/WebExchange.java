@@ -16,11 +16,7 @@
 package io.inverno.mod.web.client;
 
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.Method;
-import java.net.URI;
-import java.util.List;
-import java.util.concurrent.Callable;
-import reactor.core.publisher.Mono;
+import io.inverno.mod.http.client.Exchange;
 
 /**
  * <p>
@@ -28,32 +24,8 @@ import reactor.core.publisher.Mono;
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.8
+ * @since 1.9
  */
-public interface WebClient {
+public interface WebExchange<A extends ExchangeContext> extends Exchange<A> {
 
-	<A extends ExchangeContext> Mono<WebExchange<A>> exchange(URI uri);
-	
-	<A extends ExchangeContext> Mono<WebExchange<A>> exchange(Method method, URI uri);
-	
-	<A extends ExchangeContext> Mono<WebExchange<A>> exchange(Method method, URI uri, A context);
-	
-	
-	default <A extends Runnable & Callable<String>> void test() {
-		Ctx c = null;
-		
-		List<Ctx> l0 = null;
-		
-		foo(c);
-
-		List<? extends SubCtx> l1 = l0;
-		
-		
-	}
-	
-	<A extends Runnable & Callable<String>> void foo(A too);
-	
-	interface Ctx extends SubCtx, Callable<String> {}
-	
-	interface SubCtx extends Runnable {}
 }
