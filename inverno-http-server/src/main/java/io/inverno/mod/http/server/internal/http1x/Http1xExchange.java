@@ -88,11 +88,11 @@ class Http1xExchange extends AbstractExchange {
 	
 	private boolean manageChunked;
 	private Charset charset;
-
+	private Boolean acceptTrailers;
+	
 	final HttpVersion version;	
 	Http1xExchange next;
 	boolean keepAlive;
-	boolean acceptTrailers;
 	
 	private Http1xWebSocket webSocket;
 	
@@ -131,15 +131,11 @@ class Http1xExchange extends AbstractExchange {
 		this.encoder = encoder;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
-		
 		this.version = version;
 
 		HttpHeaders headers = httpRequest.headers();
 		this.keepAlive = !headers.containsValue(Headers.NAME_CONNECTION, Headers.VALUE_CLOSE, true) && 
 			(this.version.isKeepAliveDefault() || headers.containsValue(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE, true));
-
-		String te = httpRequest.headers().get(Headers.NAME_TE);
-		this.acceptTrailers = te != null && te.contains(Headers.VALUE_TRAILERS);
 		
 		this.webSocketFrameFactory = webSocketFrameFactory;
 		this.webSocketMessageFactory = webSocketMessageFactory;
@@ -188,10 +184,18 @@ class Http1xExchange extends AbstractExchange {
 		return this.charset;
 	}
 	
+	private boolean acceptTrailers() {
+		if(this.acceptTrailers == null) {
+			this.acceptTrailers = this.request.headers().get(Headers.NAME_TE).map(te -> te.contains(Headers.VALUE_TRAILERS)).orElse(false);
+		}
+		return this.acceptTrailers;
+	}
+	
 	private void preProcessResponseInternals(Http1xResponseHeaders headers, Http1xResponseTrailers trailers) {
 		if(!this.keepAlive) {
 			headers.set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
 		}
+		
 		if(headers.getStatusCode() == Status.NOT_MODIFIED.getCode()) {
 			headers.remove(HttpHeaderNames.TRANSFER_ENCODING);
 			headers.remove(HttpHeaderNames.CONTENT_LENGTH);
@@ -214,7 +218,8 @@ class Http1xExchange extends AbstractExchange {
 				this.acceptTrailers = false;
 			}
 		}
-		if(this.acceptTrailers && trailers != null) {
+		
+		if(trailers != null && this.acceptTrailers()) {
 			headers.set(Headers.NAME_TRAILER, trailers.getNames().stream().collect(Collectors.joining(", ")));
 		}
 	}
@@ -229,12 +234,11 @@ class Http1xExchange extends AbstractExchange {
 	private HttpResponse createFullHttpResponse(Http1xResponseHeaders headers, ByteBuf content, Http1xResponseTrailers trailers) {
 		this.preProcessResponseInternals(headers, trailers);
 		HttpResponseStatus status = HttpResponseStatus.valueOf(headers.getStatusCode());
-		HttpHeaders httpHeaders = headers.getUnderlyingHeaders();
-		if(this.acceptTrailers && trailers != null) {
-			return new FlatFullHttpResponse(this.version, status, httpHeaders, content, trailers.getUnderlyingTrailers());
+		if(trailers != null && this.acceptTrailers()) {
+			return new FlatFullHttpResponse(this.version, status, headers.getUnderlyingHeaders(), content, trailers.getUnderlyingTrailers());
 		}
 		else {
-			return new FlatFullHttpResponse(this.version, status, httpHeaders, content, EmptyHttpHeaders.INSTANCE);
+			return new FlatFullHttpResponse(this.version, status, headers.getUnderlyingHeaders(), content, EmptyHttpHeaders.INSTANCE);
 		}
 	}
 	
@@ -280,7 +284,7 @@ class Http1xExchange extends AbstractExchange {
 			ChannelPromise finalizePromise = this.context.newPromise();
 			this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0), (Http1xResponseTrailers)this.response.trailers()), finalizePromise);
 			headers.setWritten(true);
-			this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
+			this.finalizeExchange(finalizePromise).addListener(future -> this.handler.exchangeComplete(this.context));
 		}
 		else {
 			// empty response or file region
@@ -291,7 +295,7 @@ class Http1xExchange extends AbstractExchange {
 				ChannelPromise finalizePromise = this.context.newPromise();
 				this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0), (Http1xResponseTrailers)this.response.trailers()), finalizePromise);
 				headers.setWritten(true);
-				this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
+				this.finalizeExchange(finalizePromise).addListener(future -> this.handler.exchangeComplete(this.context));
 			}
 			else {
 				// Headers are not written here since we have an empty response
@@ -313,21 +317,21 @@ class Http1xExchange extends AbstractExchange {
 		this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, value, (Http1xResponseTrailers)this.response.trailers()), finalizePromise);
 		headers.setWritten(true);
 		this.handler.exchangeNext(this.context, value);
-		this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
+		this.finalizeExchange(finalizePromise).addListener(future -> this.handler.exchangeComplete(this.context));
 	}
 	
 	@Override
 	protected void onCompleteMany() {
 		Http1xResponseTrailers responseTrailers = (Http1xResponseTrailers)this.response.trailers();
 		ChannelPromise finalizePromise = this.context.newPromise();
-		if(this.acceptTrailers && responseTrailers != null) {
+		if(responseTrailers != null && this.acceptTrailers()) {
 			this.encoder.writeFrame(this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, responseTrailers.getUnderlyingTrailers()), finalizePromise);
 			responseTrailers.setWritten(true);
 		}
 		else {
 			this.encoder.writeFrame(this.context, LastHttpContent.EMPTY_LAST_CONTENT, finalizePromise);
 		}
-		this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
+		this.finalizeExchange(finalizePromise).addListener(future -> this.handler.exchangeComplete(this.context));
 	}
 
 	@Override
@@ -344,7 +348,7 @@ class Http1xExchange extends AbstractExchange {
 			ChannelPromise finalizePromise = this.context.newPromise();
 			this.encoder.writeFrame(this.context, this.createFullHttpResponse(headers, Unpooled.buffer(0), (Http1xResponseTrailers)this.response.trailers()), finalizePromise);
 			headers.setWritten(true);
-			this.finalizeExchange(finalizePromise, () -> this.handler.exchangeComplete(this.context));
+			this.finalizeExchange(finalizePromise).addListener(future -> this.handler.exchangeComplete(this.context));
 		}
 	}
 	
@@ -387,13 +391,13 @@ class Http1xExchange extends AbstractExchange {
 			Http1xExchange.this.executeInEventLoop(() -> {
 				Http1xResponseTrailers responseTrailers = (Http1xResponseTrailers)Http1xExchange.this.response.trailers();
 				ChannelPromise finalizePromise = Http1xExchange.this.context.newPromise();
-				if(Http1xExchange.this.acceptTrailers && responseTrailers != null) {
+				if(responseTrailers != null && Http1xExchange.this.acceptTrailers()) {
 					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, responseTrailers.getUnderlyingTrailers()), finalizePromise);
 				}
 				else {
 					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, finalizePromise);
 				}
-				Http1xExchange.this.finalizeExchange(finalizePromise, () -> Http1xExchange.this.handler.exchangeComplete(Http1xExchange.this.context));
+				Http1xExchange.this.finalizeExchange(finalizePromise).addListener(future -> Http1xExchange.this.handler.exchangeComplete(Http1xExchange.this.context));
 			});
 		}
 	}

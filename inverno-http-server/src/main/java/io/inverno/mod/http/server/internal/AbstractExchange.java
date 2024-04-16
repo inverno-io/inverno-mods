@@ -170,49 +170,32 @@ public abstract class AbstractExchange extends BaseSubscriber<ByteBuf> implement
 	 * </p>
 	 *
 	 * @param finalPromise a promise that completes with the final exchange operation
-	 * @param postFinalize a post finalize operation or null
 	 *
-	 * @return the promise
+	 * @return the finalized future
 	 */
-	public ChannelFuture finalizeExchange(ChannelPromise finalPromise, Runnable postFinalize) {
+	public ChannelFuture finalizeExchange(ChannelPromise finalPromise) {
+		if(this.finalizer == null) {
+			this.finalized = true;
+			return this.context.newSucceededFuture();
+		}
+		
 		if(this.finalizing || this.finalized) {
 			return this.context.newFailedFuture(new IllegalStateException("Exchange already finalized"));
 		}
 		this.finalizing = true;
 		ChannelPromise promise = this.context.newPromise();
-		if(this.finalizer != null) {
-			finalPromise.addListener(future -> {
-				Mono<Void> actualFinalizer = this.finalizer;
-				
-				if(postFinalize != null) {
-					actualFinalizer = Flux.concatDelayError(actualFinalizer, Mono.fromRunnable(postFinalize)).then();
-				}
-				
-				actualFinalizer
-					.doOnError(promise::tryFailure)
-					.doOnSuccess(ign -> promise.trySuccess())
-					.doOnCancel(() -> promise.tryFailure(new IllegalStateException("Finalizer was cancel")))
-					.doFinally(ign -> {
+		finalPromise.addListener(future -> {
+			this.finalizer
+				.doOnError(promise::tryFailure)
+				.doOnSuccess(ign -> promise.trySuccess())
+				.doOnCancel(() -> promise.tryFailure(new IllegalStateException("Finalizer was cancel")))
+				.doFinally(ign -> {
 //						LOGGER.debug(() -> "Exchange finalized");
-						this.finalized = true;
-						this.finalizing = false;
-					})
-					.subscribe();
-			});
-		}
-		else if(postFinalize != null) {
-			try {
-				postFinalize.run();
-				promise.trySuccess();
-			}
-			catch(Throwable t) {
-				promise.tryFailure(t);
-			}
-			finally {
-				this.finalized = true;
-				this.finalizing = false;
-			}
-		}
+					this.finalized = true;
+					this.finalizing = false;
+				})
+				.subscribe();
+		});
 		return promise;
 	}
 	

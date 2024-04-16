@@ -449,7 +449,7 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 			Throwable cause = new HttpServerException("Stream " + stream.id() + " was closed");
 			serverStream.dispose(cause);
 			ChannelPromise errorPromise = this.context.newPromise();
-			serverStream.finalizeExchange(errorPromise, null);
+			serverStream.finalizeExchange(errorPromise);
 			errorPromise.tryFailure(cause);
 		}
 	}

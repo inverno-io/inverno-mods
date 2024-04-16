@@ -387,7 +387,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 			while(this.respondingExchange != null) {
 				this.respondingExchange.dispose(cause, false);
 				ChannelPromise errorPromise = ctx.newPromise();
-				this.respondingExchange.finalizeExchange(errorPromise, null);
+				this.respondingExchange.finalizeExchange(errorPromise);
 				errorPromise.tryFailure(cause);
 				this.respondingExchange = this.respondingExchange.next;
 			}

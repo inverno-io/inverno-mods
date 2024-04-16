@@ -84,7 +84,7 @@ public class Http1xConnectionFactory implements Supplier<Http1xConnection> {
 		this.webSocketFrameFactory = new GenericWebSocketFrame.GenericFactory(configuration.ws_max_frame_size());
 		this.webSocketMessageFactory = new GenericWebSocketMessage.GenericFactory(configuration.ws_max_frame_size());
 		
-		this.headersValidator = configuration.http2_validate_headers() ? HeadersValidator.DEFAULT_HTTP1X_HEADERS_VALIDATOR : null;
+		this.headersValidator = configuration.http1x_validate_headers() ? HeadersValidator.DEFAULT_HTTP1X_HEADERS_VALIDATOR : null;
 	}
 
 	@Override
