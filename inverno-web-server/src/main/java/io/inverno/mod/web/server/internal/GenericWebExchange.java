@@ -24,8 +24,6 @@ import io.inverno.mod.web.server.WebExchange;
 import io.inverno.mod.web.server.WebRequest;
 import io.inverno.mod.web.server.WebResponse;
 import java.util.Optional;
-import java.util.function.Consumer;
-import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -46,8 +44,6 @@ class GenericWebExchange implements WebExchange<ExchangeContext> {
 	
 	private final GenericWebResponse response;
 	
-	private final Consumer<Mono<Void>> finalizerConsumer;
-	
 	private final DataConversionService dataConversionService;
 	
 	/**
@@ -55,16 +51,15 @@ class GenericWebExchange implements WebExchange<ExchangeContext> {
 	 * Creates a generic web exchange with the specified request and response.
 	 * </p>
 	 * 
-	 * @param exchange          the original exchange
-	 * @param request           a web request
-	 * @param response          a web response
-	 * @param finalizerSupplier the deferred exchange finalizer
+	 * @param exchange              the original exchange
+	 * @param request               a web request
+	 * @param response              a web response
+	 * @param dataConversionService the data conversion server
 	 */
-	public GenericWebExchange(Exchange<ExchangeContext> exchange, GenericWebRequest request, GenericWebResponse response, Consumer<Mono<Void>> finalizerConsumer, DataConversionService dataConversionService) {
+	public GenericWebExchange(Exchange<ExchangeContext> exchange, GenericWebRequest request, GenericWebResponse response, DataConversionService dataConversionService) {
 		this.exchange = exchange;
 		this.request = request;
 		this.response = response;
-		this.finalizerConsumer = finalizerConsumer;
 		this.dataConversionService = dataConversionService;
 	}
 
@@ -101,10 +96,5 @@ class GenericWebExchange implements WebExchange<ExchangeContext> {
 	@Override
 	public Optional<Throwable> getCancelCause() {
 		return this.exchange.getCancelCause();
-	}
-	
-	@Override
-	public void finalizer(Mono<Void> finalizer) {
-		this.finalizerConsumer.accept(finalizer);
 	}
 }

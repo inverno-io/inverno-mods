@@ -94,7 +94,7 @@ public class HttpClientSpecificTest {
 		testServerPort = getFreePort();
 		
 		Class<?> httpConfigClass = moduleLoader.loadClass(MODULE_WEBROUTE, "io.inverno.mod.http.server.HttpServerConfiguration");
-		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", testServerPort, "h2c_enabled", true));
+		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", testServerPort, "h2_enabled", true));
 		Object httpConfig = Proxy.newProxyInstance(httpConfigClass.getClassLoader(),
 			new Class<?>[] { httpConfigClass },
 			httpConfigHandler);

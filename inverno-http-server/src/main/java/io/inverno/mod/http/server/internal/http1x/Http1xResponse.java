@@ -15,89 +15,428 @@
  */
 package io.inverno.mod.http.server.internal.http1x;
 
+import io.inverno.mod.base.Charsets;
 import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.http.base.OutboundHeaders;
+import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.header.HeadersValidator;
+import io.inverno.mod.http.base.internal.netty.FlatFullHttpResponse;
+import io.inverno.mod.http.base.internal.netty.FlatHttpResponse;
+import io.inverno.mod.http.base.internal.netty.FlatLastHttpContent;
+import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.inverno.mod.http.server.Response;
 import io.inverno.mod.http.server.internal.AbstractResponse;
-import io.netty.channel.ChannelHandlerContext;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.FileRegion;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.HttpContentCompressor;
+import io.netty.handler.codec.http.DefaultHttpContent;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
-import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.codec.http.LastHttpContent;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.reactivestreams.Subscription;
+import reactor.core.Disposable;
+import reactor.core.publisher.BaseSubscriber;
+import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * HTTP1.x {@link Response} implementation.
+ * Http/1.x {@link Response} implementation.
  * </p>
  * 
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
- * 
- * @see AbstractResponse
+ * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.10
  */
-class Http1xResponse extends AbstractResponse {
-
-	private final HttpVersion version;
-	
-	private final ObjectConverter<String> parameterConverter;
+class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xResponseBody, Http1xResponseTrailers, Http1xResponse> {
 	
 	private final HeadersValidator headersValidator;
+	private final Http1xConnection connection;
+	private final HttpVersion version;
+	private final Http1xResponseBody body;
+	
+	private Http1xResponseTrailers trailers;
+	
+	private Disposable disposable;
 
 	/**
 	 * <p>
-	 * Creates a HTTP1.x server response.
+	 * Creates an Http/1.x response.
 	 * </p>
-	 * 
-	 * @param context            the channel handler context
+	 *
 	 * @param headerService      the header service
-	 * @param parameterConverter a string object converter
-	 * @param headersValidator   a headers validator or null
+	 * @param parameterConverter the parameter converter
+	 * @param headersValidator   the headers validator
+	 * @param connection         the Http/1.x connection
+	 * @param version            the Http version
+	 * @param head               true to indicate a {@code HEAD} request, false otherwise
+	 * @param keepAlive          true to indicate the connection is keepAlive, false otherwise
 	 */
-	public Http1xResponse(HttpVersion version, ChannelHandlerContext context, HeaderService headerService, ObjectConverter<String> parameterConverter, HeadersValidator headersValidator) {
-		super(context, headerService, new Http1xResponseHeaders(headerService, parameterConverter, headersValidator));
-		this.version = version;
-		this.parameterConverter = parameterConverter;
+	public Http1xResponse(
+			HeaderService headerService, 
+			ObjectConverter<String> parameterConverter, 
+			HeadersValidator headersValidator, 
+			Http1xConnection connection, 
+			HttpVersion version, 
+			boolean head, 
+			boolean keepAlive
+		) {
+		super(headerService, parameterConverter, head, new Http1xResponseHeaders(headerService, parameterConverter, headersValidator));
 		this.headersValidator = headersValidator;
-		this.responseBody = new Http1xResponseBody(this);
+		this.connection = connection;
+		this.version = version;
+		
+		if(version == io.netty.handler.codec.http.HttpVersion.HTTP_1_0) {
+			if(keepAlive) {
+				this.headers.set((CharSequence)Headers.NAME_CONNECTION, (CharSequence)Headers.VALUE_KEEP_ALIVE);
+			}
+		}
+		else if(!keepAlive) {
+			this.headers.set((CharSequence)Headers.NAME_CONNECTION, (CharSequence)Headers.VALUE_CLOSE);
+		}
+		this.body = new Http1xResponseBody(this.headers, connection.supportsFileRegion());
 	}
 	
 	/**
 	 * <p>
-	 * Determines whether file region is supported.
+	 * Sends the response.
 	 * </p>
 	 * 
-	 * @return true if the file region is supported, false otherwise
+	 * <p>
+	 * This method executes on the connection event loop, it subscribes to the first non-null publisher between the response body file region publisher and response body data publisher in that order
+	 * in order to generate and send the response body. In case of an {@code HEAD} request, an empty response with headers only is sent.
+	 * </p>
 	 */
-	protected boolean supportsFileRegion() {
-		return this.context.pipeline().get(SslHandler.class) == null && this.context.pipeline().get(HttpContentCompressor.class) == null;
+	@Override
+	public void send() {
+		if(this.connection.executor().inEventLoop()) {
+			if(!this.head) {
+				if(this.body.getFileRegionData() == null) {
+					this.body.getData().subscribe(this.body.getData() instanceof Mono ? new MonoBodyDataSubscriber() : new BodyDataSubscriber());
+				}
+				else {
+					this.body.getFileRegionData().subscribe(new FileRegionBodyDataSubscriber());
+				}
+			}
+			else {
+				this.headers.remove((CharSequence)Headers.NAME_TRANSFER_ENCODING);
+
+				final HttpResponseStatus httpStatus = HttpResponseStatus.valueOf(this.headers.getStatusCode());
+				final LinkedHttpHeaders httpTrailers;
+				if(httpStatus == HttpResponseStatus.NOT_MODIFIED || httpStatus == HttpResponseStatus.NO_CONTENT) {
+					httpTrailers = null;
+				}
+				else {
+					httpTrailers = this.trailers != null ? this.trailers.unwrap() : null;
+					if(httpTrailers != null) {
+						this.headers.set(Headers.NAME_TRAILER, httpTrailers.names().stream().collect(Collectors.joining(", ")));
+					}
+				}
+
+				this.connection.writeHttpObject(new FlatFullHttpResponse(this.version, httpStatus, this.headers.unwrap(), Unpooled.EMPTY_BUFFER, httpTrailers));
+				if(httpTrailers != null) {
+					this.trailers.setWritten();
+				}
+				this.connection.onExchangeComplete();
+			}
+		}
+		else {
+			this.connection.executor().execute(this::send);
+		}
 	}
 	
 	@Override
-	public Http1xResponseHeaders headers() {
-		return (Http1xResponseHeaders)super.headers();
-	}
-
-	@Override
-	protected OutboundHeaders<?> createTrailers() {
-		return new Http1xResponseTrailers(this.headerService, this.parameterConverter, this.headersValidator);
+	public void dispose(Throwable cause) {
+		if(this.disposable != null) {
+			this.disposable.dispose();
+		}
 	}
 	
 	@Override
 	public Http1xResponseTrailers trailers() {
-		return (Http1xResponseTrailers)super.trailers();
+		if(this.trailers == null) {
+			this.trailers = new Http1xResponseTrailers(this.headerService, this.parameterConverter, this.headersValidator);
+		}
+		return this.trailers;
 	}
 
 	@Override
-	public Response sendContinue() {
-		this.context.writeAndFlush(new DefaultFullHttpResponse(this.version, HttpResponseStatus.CONTINUE));
+	public Http1xResponse sendContinue() {
+		this.connection.writeHttpObject(new DefaultFullHttpResponse(this.version, HttpResponseStatus.CONTINUE));
 		return this;
 	}
-	
+
 	@Override
 	public Http1xResponseBody body() {
-		return (Http1xResponseBody)super.body();
+		return this.body;
+	}
+	
+	/**
+	 * <p>
+	 * The response body data publisher optimized for {@link Mono} publisher that writes response objects to the connection.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.10
+	 */
+	private class MonoBodyDataSubscriber extends BaseSubscriber<ByteBuf> {
+		
+		private ByteBuf data;
+		
+		@Override
+		protected void hookOnSubscribe(Subscription subscription) {
+			Http1xResponse.this.disposable = this;
+			subscription.request(1);
+		}
+		
+		@Override
+		protected void hookOnNext(ByteBuf value) {
+			Http1xResponse.this.transferedLength += value.readableBytes();
+			this.data = value;
+		}
+
+		@Override
+		protected void hookOnComplete() {
+			final HttpResponseStatus httpStatus = HttpResponseStatus.valueOf(Http1xResponse.this.headers.getStatusCode());
+			final LinkedHttpHeaders httpTrailers;
+			if(httpStatus == HttpResponseStatus.NOT_MODIFIED || httpStatus == HttpResponseStatus.NO_CONTENT) {
+				Http1xResponse.this.headers.remove((CharSequence)Headers.NAME_TRANSFER_ENCODING);
+				httpTrailers = null;
+			}
+			else {
+				if(!Http1xResponse.this.headers.contains((CharSequence)Headers.NAME_CONTENT_LENGTH)) {
+					Http1xResponse.this.headers.set((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + Http1xResponse.this.transferedLength);
+				}
+				
+				httpTrailers = Http1xResponse.this.trailers != null ? Http1xResponse.this.trailers.unwrap() : null;
+				if(httpTrailers != null) {
+					Http1xResponse.this.headers.set(Headers.NAME_TRAILER, httpTrailers.names().stream().collect(Collectors.joining(", ")));
+				}
+			}
+			
+			if(this.data != null) {
+				Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, httpStatus, Http1xResponse.this.headers.unwrap(), this.data, httpTrailers));
+			}
+			else {
+				Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, httpStatus, Http1xResponse.this.headers.unwrap(), Unpooled.EMPTY_BUFFER, httpTrailers));
+			}
+			Http1xResponse.this.headers.setWritten();
+			if(httpTrailers != null) {
+				Http1xResponse.this.trailers.setWritten();
+			}
+			
+			// we need this to start the next exchange
+			Http1xResponse.this.connection.onExchangeComplete();
+		}
+
+		@Override
+		protected void hookOnError(Throwable throwable) {
+			Http1xResponse.this.connection.onExchangeError(throwable);
+		}
+	}
+	
+	/**
+	 * <p>
+	 * The response body data subscriber that writes response objects to the connection.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.10
+	 */
+	private class BodyDataSubscriber extends BaseSubscriber<ByteBuf> {
+		
+		private HttpResponseStatus httpStatus;
+		private LinkedHttpHeaders httpTrailers;
+		
+		private ByteBuf singleChunk;
+		private boolean many;
+		private boolean sse;
+		private Charset charset;
+		
+		private void sanitizeResponse() {
+			this.httpStatus = HttpResponseStatus.valueOf(Http1xResponse.this.headers.getStatusCode());
+			if(this.httpStatus == HttpResponseStatus.NOT_MODIFIED || this.httpStatus == HttpResponseStatus.NO_CONTENT) {
+				Http1xResponse.this.headers.remove((CharSequence)Headers.NAME_TRANSFER_ENCODING);
+				this.httpTrailers = null;
+			}
+			else {
+				if(!Http1xResponse.this.headers.contains((CharSequence)Headers.NAME_CONTENT_LENGTH)) {
+					List<String> transferEncodings = Http1xResponse.this.headers.getAll((CharSequence)Headers.NAME_TRANSFER_ENCODING);
+					
+					if(!this.many && (transferEncodings.isEmpty() || !transferEncodings.getLast().endsWith(Headers.VALUE_CHUNKED))) {
+						Http1xResponse.this.headers.set((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + Http1xResponse.this.transferedLength);
+					}
+					else {
+						if(transferEncodings.isEmpty()) {
+							Http1xResponse.this.headers.add((CharSequence)Headers.NAME_TRANSFER_ENCODING, (CharSequence)Headers.VALUE_CHUNKED);
+						}
+						Http1xResponse.this.headers.get((CharSequence)Headers.NAME_CONTENT_TYPE)
+							.ifPresent(contentType -> this.sse = contentType.regionMatches(true, 0, MediaTypes.TEXT_EVENT_STREAM, 0, MediaTypes.TEXT_EVENT_STREAM.length()));
+					}
+				}
+				
+				this.httpTrailers = Http1xResponse.this.trailers != null ? Http1xResponse.this.trailers.unwrap() : null;
+				if(this.httpTrailers != null) {
+					Http1xResponse.this.headers().set(Headers.NAME_TRAILER, this.httpTrailers.names().stream().collect(Collectors.joining(", ")));
+				}
+			}
+		}
+		
+		private Charset getCharset() {
+			if(Http1xResponse.this.isHeadersWritten()) {
+				this.charset = Http1xResponse.this.headers.<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
+			}
+			if(this.charset == null) {
+				return Http1xResponse.this.headers.<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).map(Headers.ContentType::getCharset).orElse(Charsets.DEFAULT);
+			}
+			return this.charset;
+		}
+		
+		@Override
+		protected void hookOnSubscribe(Subscription subscription) {
+			Http1xResponse.this.disposable = this;
+			subscription.request(Long.MAX_VALUE);
+		}
+		
+		@Override
+		protected void hookOnNext(ByteBuf value) {
+			Http1xResponse.this.transferedLength += value.readableBytes();
+			if(!this.many && this.singleChunk == null) {
+				this.singleChunk = value;
+			}
+			else {
+				this.many = true;
+				if(!Http1xResponse.this.headers.isWritten()) {
+					this.sanitizeResponse();
+					if(this.sse) {
+						ByteBuf chunked_header = Unpooled.copiedBuffer(Integer.toHexString(this.singleChunk.readableBytes()) + "\r\n", Charsets.orDefault(this.getCharset()));
+						ByteBuf chunked_trailer = Unpooled.copiedBuffer("\r\n", Charsets.orDefault(this.getCharset()));
+						Http1xResponse.this.connection.writeHttpObject(new FlatHttpResponse(Http1xResponse.this.version, this.httpStatus, Http1xResponse.this.headers.unwrap(), Unpooled.wrappedBuffer(chunked_header, this.singleChunk, chunked_trailer)));
+						this.singleChunk = null;
+					}
+					else {
+						Http1xResponse.this.connection.writeHttpObject(new FlatHttpResponse(Http1xResponse.this.version, this.httpStatus, Http1xResponse.this.headers.unwrap(), this.singleChunk));
+					}
+					Http1xResponse.this.headers.setWritten();
+				}
+				
+				if(this.sse) {
+					ByteBuf chunked_header = Unpooled.copiedBuffer(Integer.toHexString(value.readableBytes()) + "\r\n", Charsets.orDefault(this.getCharset()));
+					ByteBuf chunked_trailer = Unpooled.copiedBuffer("\r\n", Charsets.orDefault(this.getCharset()));
+					Http1xResponse.this.connection.writeHttpObject(new DefaultHttpContent(Unpooled.wrappedBuffer(chunked_header, value, chunked_trailer)));
+				}
+				else {
+					Http1xResponse.this.connection.writeHttpObject(new DefaultHttpContent(value));
+				}
+			}
+		}
+		
+		@Override
+		protected void hookOnComplete() {
+			if(this.many) {
+				if(this.httpTrailers != null) {
+					Http1xResponse.this.connection.writeHttpObject(new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, this.httpTrailers));
+					Http1xResponse.this.trailers.setWritten();
+				}
+				else {
+					Http1xResponse.this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
+				}
+			}
+			else {
+				this.sanitizeResponse();
+				if(this.singleChunk != null) {
+					Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, this.httpStatus, Http1xResponse.this.headers.unwrap(), this.singleChunk, this.httpTrailers));
+					this.singleChunk = null;
+				}
+				else {
+					Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, this.httpStatus, Http1xResponse.this.headers.unwrap(), Unpooled.EMPTY_BUFFER, this.httpTrailers));
+				}
+				Http1xResponse.this.headers.setWritten();
+				if(this.httpTrailers != null) {
+					Http1xResponse.this.trailers.setWritten();
+				}
+			}
+			
+			Http1xResponse.this.connection.onExchangeComplete();
+		}
+
+		@Override
+		protected void hookOnCancel() {
+			if(this.singleChunk != null) {
+				this.singleChunk.release();
+			}
+		}
+
+		@Override
+		protected void hookOnError(Throwable throwable) {
+			Http1xResponse.this.connection.onExchangeError(throwable);
+		}
+	}
+	
+	/**
+	 * <p>
+	 * The file region response body data publisher that writes response file regions to the connection.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.10
+	 */
+	private class FileRegionBodyDataSubscriber extends BaseSubscriber<FileRegion> {
+		
+		private LinkedHttpHeaders httpTrailers;
+		
+		@Override
+		protected void hookOnSubscribe(Subscription subscription) {
+			final HttpResponseStatus httpStatus = HttpResponseStatus.valueOf(Http1xResponse.this.headers.getStatusCode());			
+			if(httpStatus == HttpResponseStatus.NOT_MODIFIED || httpStatus == HttpResponseStatus.NO_CONTENT) {
+				Http1xResponse.this.headers.remove((CharSequence)Headers.NAME_TRANSFER_ENCODING);
+				this.httpTrailers = null;
+			}
+			else {
+				this.httpTrailers = Http1xResponse.this.trailers != null ? Http1xResponse.this.trailers.unwrap() : null;
+				if(this.httpTrailers != null) {
+					Http1xResponse.this.headers.set(Headers.NAME_TRAILER, this.httpTrailers.names().stream().collect(Collectors.joining(", ")));
+				}
+			}
+			
+			Http1xResponse.this.connection.writeHttpObject(new FlatHttpResponse(Http1xResponse.this.version, httpStatus, Http1xResponse.this.headers.unwrap(), Unpooled.EMPTY_BUFFER));
+			Http1xResponse.this.headers.setWritten();
+			subscription.request(1);
+		}
+
+		@Override
+		protected void hookOnNext(FileRegion value) {
+			Http1xResponse.this.transferedLength += value.count();
+			Http1xResponse.this.connection.writeFileRegion(value, Http1xResponse.this.connection.newPromise().addListener(future -> {
+				if(future.isSuccess()) {
+					this.request(1);
+				}
+				else {
+					Http1xResponse.this.connection.onExchangeError(future.cause());
+					// this should result in the connection to be shutdown since we have sent headers with a partial body
+				}
+			}));
+		}
+		
+		@Override
+		protected void hookOnComplete() {
+			if(this.httpTrailers != null) {
+				Http1xResponse.this.connection.writeHttpObject(new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, this.httpTrailers));
+				Http1xResponse.this.trailers.setWritten();
+			}
+			else {
+				Http1xResponse.this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
+			}
+			
+			Http1xResponse.this.connection.onExchangeComplete();
+		}
+
+		@Override
+		protected void hookOnError(Throwable throwable) {
+			Http1xResponse.this.connection.onExchangeError(throwable);
+		}
 	}
 }

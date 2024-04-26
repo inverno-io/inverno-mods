@@ -16,87 +16,61 @@
 package io.inverno.mod.http.server.internal.http2;
 
 import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.http.base.InboundSetCookies;
 import io.inverno.mod.http.base.OutboundResponseHeaders;
-import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
-import io.inverno.mod.http.server.internal.GenericResponseCookies;
-import io.inverno.mod.http.server.internal.InternalResponseHeaders;
+import io.inverno.mod.http.server.internal.AbstractResponseHeaders;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Headers;
-import io.netty.handler.codec.http2.Http2Headers.PseudoHeaderName;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
  * <p>
- * HTTP/2 {@link InternalResponseHeaders} implementation.
+ * Http/2 {@link OutboundResponseHeaders} implementation.
  * </p>
  * 
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
- * @see InternalResponseHeaders
  */
-class Http2ResponseHeaders implements InternalResponseHeaders {
+class Http2ResponseHeaders extends AbstractResponseHeaders<Http2ResponseHeaders> {
 
-	private final HeaderService headerService;
-	private final ObjectConverter<String> parameterConverter;
-	
-	private final Http2Headers underlyingHeaders;
-	private GenericResponseCookies responseCookies;
-	
-	private boolean written;
+	private final Http2Headers headers;
 	
 	/**
 	 * <p>
-	 * Creates HTTP/2 response headers.
+	 * Creates Http/2 headers.
 	 * </p>
 	 * 
 	 * @param headerService      the header service
-	 * @param parameterConverter a string object converter
-	 * @param validate           true to validate headers, false otherwise
+	 * @param parameterConverter the parameter converter
+	 * @param validate           true to validate the headers, false otherwise
 	 */
 	public Http2ResponseHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, boolean validate) {
-		this.headerService = headerService;
-		this.parameterConverter = parameterConverter;
-		
-		this.underlyingHeaders = new DefaultHttp2Headers(validate);
-		this.underlyingHeaders.set(PseudoHeaderName.STATUS.value(), "200");
+		super(headerService, parameterConverter);
+		this.headers = new DefaultHttp2Headers(validate, validate, 16);
+		this.headers.set(Http2Headers.PseudoHeaderName.STATUS.value(), "200");
 	}
 	
 	/**
 	 * <p>
-	 * Returns the underlying headers.
+	 * Returns the headers to send as part of the Http response.
 	 * </p>
 	 * 
-	 * @return the underlying headers
+	 * @return the wrapped headers
 	 */
-	Http2Headers getUnderlyingHeaders() {
-		return this.underlyingHeaders;
+	Http2Headers unwrap() {
+		return this.headers;
 	}
 	
-	@Override
-	public void setWritten(boolean written) {
-		this.written = written;
-	}
-	
-	@Override
-	public boolean isWritten() {
-		return this.written;
-	}
-
 	@Override
 	public Http2ResponseHeaders status(Status status) {
 		return this.status(status.getCode());
@@ -104,7 +78,7 @@ class Http2ResponseHeaders implements InternalResponseHeaders {
 
 	@Override
 	public Http2ResponseHeaders status(int status) {
-		this.underlyingHeaders.setInt(PseudoHeaderName.STATUS.value(), status);
+		this.headers.setInt(Http2Headers.PseudoHeaderName.STATUS.value(), status);
 		return this;
 	}
 	
@@ -112,21 +86,21 @@ class Http2ResponseHeaders implements InternalResponseHeaders {
 	public Status getStatus() throws IllegalArgumentException {
 		return Status.valueOf(this.getStatusCode());
 	}
-	
+
 	@Override
 	public int getStatusCode() {
-		return this.underlyingHeaders.getInt(PseudoHeaderName.STATUS.value());
+		return this.headers.getInt(Http2Headers.PseudoHeaderName.STATUS.value());
 	}
 
 	@Override
 	public Http2ResponseHeaders contentType(String contentType) {
-		this.underlyingHeaders.set(Headers.NAME_CONTENT_TYPE, contentType);
+		this.headers.set(Headers.NAME_CONTENT_TYPE, contentType);
 		return this;
 	}
 	
 	@Override
 	public String getContentType() {
-		return this.underlyingHeaders.get(Headers.NAME_CONTENT_TYPE).toString();
+		return this.headers.get(Headers.NAME_CONTENT_TYPE).toString();
 	}
 
 	@Override
@@ -135,103 +109,101 @@ class Http2ResponseHeaders implements InternalResponseHeaders {
 	}
 
 	@Override
-	public CharSequence getContentTypeCharSequence() {
-		return this.underlyingHeaders.get(Headers.NAME_CONTENT_TYPE);
-	}
-
-	@Override
 	public Http2ResponseHeaders contentLength(long contentLength) {
-		this.underlyingHeaders.setLong(Headers.NAME_CONTENT_LENGTH, contentLength);
+		this.headers.setLong(Headers.NAME_CONTENT_LENGTH, contentLength);
 		return this;
 	}
 	
 	@Override
 	public Long getContentLength() {
-		return this.underlyingHeaders.getLong(Headers.NAME_CONTENT_LENGTH);
+		return this.headers.getLong(Headers.NAME_CONTENT_LENGTH);
 	}
 
-	@Override
-	public OutboundResponseHeaders cookies(Consumer<OutboundSetCookies> cookiesConfigurer) {
-		if(cookiesConfigurer != null) {
-			cookiesConfigurer.accept((OutboundSetCookies)this.cookies());
-		}
-		return this;
-	}
-
-	@Override
-	public InboundSetCookies cookies() {
-		if(this.responseCookies == null) {
-			this.responseCookies = new GenericResponseCookies(this.headerService, this, this.parameterConverter);
-		}
-		return this.responseCookies;
-	}
-	
 	@Override
 	public Http2ResponseHeaders add(CharSequence name, CharSequence value) {
-		this.underlyingHeaders.add(name, value);
+		this.headers.add(name, value);
 		return this;
 	}
 
 	@Override
 	public Http2ResponseHeaders add(Header... headers) {
 		for(Header header : headers) {
-			this.underlyingHeaders.add(header.getHeaderName(), this.headerService.encodeValue(header));
+			this.headers.add(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
 		return this;
 	}
 
 	@Override
 	public Http2ResponseHeaders set(CharSequence name, CharSequence value) {
-		this.underlyingHeaders.set(name, value);
+		this.headers.set(name, value);
 		return this;
 	}
-	
+
 	@Override
 	public Http2ResponseHeaders set(Header... headers) {
 		for(Header header : headers) {
-			this.underlyingHeaders.set(header.getHeaderName(), this.headerService.encodeValue(header));
+			this.headers.set(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
 		return this;
 	}
-	
+
 	@Override
 	public Http2ResponseHeaders remove(CharSequence... names) {
 		for(CharSequence name : names) {
-			this.underlyingHeaders.remove(name);
+			this.headers.remove(name);
 		}
 		return this;
 	}
 	
 	@Override
 	public boolean contains(CharSequence name) {
-		return this.underlyingHeaders.contains(name);
+		return this.headers.contains(name);
 	}
-	
+
 	@Override
 	public boolean contains(CharSequence name, CharSequence value) {
-		return this.underlyingHeaders.contains(name, value, true);
+		return this.headers.contains(name, value, true);
 	}
-	
+
 	@Override
 	public Set<String> getNames() {
-		return this.underlyingHeaders.names().stream().map(CharSequence::toString).collect(Collectors.toSet());
+		return this.headers.names().stream().map(CharSequence::toString).collect(Collectors.toSet());
 	}
 
 	@Override
 	public Optional<String> get(CharSequence name) {
-		return Optional.ofNullable(this.underlyingHeaders.get(name)).map(Object::toString);
+		return Optional.ofNullable(this.headers.get(name)).map(Object::toString);
 	}
-	
+
 	@Override
 	public List<String> getAll(CharSequence name) {
-		return this.underlyingHeaders.getAll(name).stream().map(CharSequence::toString).collect(Collectors.toList());
+		return this.headers.getAll(name).stream().map(CharSequence::toString).collect(Collectors.toList());
 	}
-	
+
 	@Override
-	public List<Entry<String, String>> getAll() {
-		List<Entry<String, String>> result = new LinkedList<>();
-		this.underlyingHeaders.forEach(e -> {
+	public List<Map.Entry<String, String>> getAll() {
+		List<Map.Entry<String, String>> result = new LinkedList<>();
+		this.headers.forEach(e -> {
 			result.add(Map.entry(e.getKey().toString(), e.getValue().toString()));
+		});
+		return result;
+	}
+
+	@Override
+	public Optional<Parameter> getParameter(CharSequence name) {
+		return this.get(name).map(value -> new GenericParameter(name.toString(), value, this.parameterConverter));
+	}
+
+	@Override
+	public List<Parameter> getAllParameter(CharSequence name) {
+		return this.headers.getAll(name).stream().map(value -> new GenericParameter(name.toString(), value.toString(), this.parameterConverter)).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<Parameter> getAllParameter() {
+		List<Parameter> result = new LinkedList<>();
+		this.headers.forEach(e -> {
+			result.add(new GenericParameter(e.getKey().toString(), e.getValue().toString(), this.parameterConverter));
 		});
 		return result;
 	}
@@ -240,55 +212,17 @@ class Http2ResponseHeaders implements InternalResponseHeaders {
 	public <T extends Header> Optional<T> getHeader(CharSequence name) {
 		return this.get(name).map(value -> this.headerService.decode(name.toString(), value));
 	}
-	
+
 	@Override
 	public <T extends Header> List<T> getAllHeader(CharSequence name) {
-		return this.underlyingHeaders.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value.toString())).collect(Collectors.toList());
+		return this.headers.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value.toString())).collect(Collectors.toList());
 	}
 
 	@Override
 	public List<Header> getAllHeader() {
 		List<Header> result = new LinkedList<>();
-		this.underlyingHeaders.forEach(e -> {
+		this.headers.forEach(e -> {
 			result.add(this.headerService.<Header>decode(e.getKey().toString(), e.getValue().toString()));
-		});
-		return result;
-	}
-	
-	@Override
-	public Optional<Parameter> getParameter(CharSequence name) {
-		return this.get(name).map(value -> new GenericParameter(name.toString(), value, this.parameterConverter));
-	}
-	
-	@Override
-	public List<Parameter> getAllParameter(CharSequence name) {
-		return this.underlyingHeaders.getAll(name).stream().map(value -> new GenericParameter(name.toString(), value.toString(), this.parameterConverter)).collect(Collectors.toList());
-	}
-	
-	@Override
-	public List<Parameter> getAllParameter() {
-		List<Parameter> result = new LinkedList<>();
-		this.underlyingHeaders.forEach(e -> {
-			result.add(new GenericParameter(e.getKey().toString(), e.getValue().toString(), this.parameterConverter));
-		});
-		return result;
-	}
-	
-	@Override
-	public CharSequence getCharSequence(CharSequence name) {
-		return this.underlyingHeaders.get(name);
-	}
-	
-	@Override
-	public List<CharSequence> getAllCharSequence(CharSequence name) {
-		return this.underlyingHeaders.getAll(name);
-	}
-	
-	@Override
-	public List<Entry<CharSequence, CharSequence>> getAllCharSequence() {
-		List<Entry<CharSequence, CharSequence>> result = new LinkedList<>();
-		this.underlyingHeaders.forEach(e -> {
-			result.add(Map.entry(e.getKey(), e.getValue()));
 		});
 		return result;
 	}

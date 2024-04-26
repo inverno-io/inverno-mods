@@ -26,7 +26,7 @@ import io.netty.handler.codec.http.HttpContentCompressor;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.2
  */
-public class Http2ContentEncodingResolver extends HttpContentCompressor {
+class Http2ContentEncodingResolver extends HttpContentCompressor {
 
 	public Http2ContentEncodingResolver(CompressionOptions... compressionOptions) {
 		super(compressionOptions);

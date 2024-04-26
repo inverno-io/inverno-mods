@@ -104,7 +104,7 @@ public class HttpClientTest {
 		testServerPort = getFreePort();
 		
 		Class<?> httpConfigClass = moduleLoader.loadClass(MODULE_WEBROUTE, "io.inverno.mod.http.server.HttpServerConfiguration");
-		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", testServerPort, "h2c_enabled", true));
+		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", testServerPort, "h2_enabled", true));
 		Object httpConfig = Proxy.newProxyInstance(httpConfigClass.getClassLoader(),
 			new Class<?>[] { httpConfigClass },
 			httpConfigHandler);
@@ -5268,7 +5268,7 @@ public class HttpClientTest {
 			.flatMap(Exchange::response)
 			.flatMapMany(response -> {
 				Assertions.assertEquals(Status.OK, response.headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8", response.headers().getContentType());
+				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=UTF-8", response.headers().getContentType());
 				
 				return response.body().string().stream();
 			})
@@ -5295,7 +5295,7 @@ public class HttpClientTest {
 			.flatMap(Exchange::response)
 			.flatMapMany(response -> {
 				Assertions.assertEquals(Status.OK, response.headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8", response.headers().getContentType());
+				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=UTF-8", response.headers().getContentType());
 				
 				return response.body().string().stream();
 			})
@@ -5323,7 +5323,7 @@ public class HttpClientTest {
 			.flatMap(Exchange::response)
 			.flatMapMany(response -> {
 				Assertions.assertEquals(Status.OK, response.headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8", response.headers().getContentType());
+				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=UTF-8", response.headers().getContentType());
 				
 				return response.body().string().stream();
 			})
@@ -5351,7 +5351,7 @@ public class HttpClientTest {
 			.flatMap(Exchange::response)
 			.flatMapMany(response -> {
 				Assertions.assertEquals(Status.OK, response.headers().getStatus());
-				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=utf-8", response.headers().getContentType());
+				Assertions.assertEquals(MediaTypes.TEXT_EVENT_STREAM + ";charset=UTF-8", response.headers().getContentType());
 				
 				return response.body().string().stream();
 			})

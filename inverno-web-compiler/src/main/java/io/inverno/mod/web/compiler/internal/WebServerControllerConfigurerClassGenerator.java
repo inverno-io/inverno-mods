@@ -947,10 +947,10 @@ class WebServerControllerConfigurerClassGenerator implements WebServerController
 	@Override
 	public StringBuilder visit(WebCookieParameterInfo cookieParameterInfo, WebServerControllerConfigurerClassGenerationContext context) {
 		if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_ONE) {
-			return new StringBuilder("exchange.request().cookies().get(\"").append(cookieParameterInfo.getQualifiedName().getParameterName()).append("\")");
+			return new StringBuilder("exchange.request().headers().cookies().get(\"").append(cookieParameterInfo.getQualifiedName().getParameterName()).append("\")");
 		}
 		else if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_MANY) {
-			return new StringBuilder("exchange.request().cookies().getAll(\"").append(cookieParameterInfo.getQualifiedName().getParameterName()).append("\")");
+			return new StringBuilder("exchange.request().headers().cookies().getAll(\"").append(cookieParameterInfo.getQualifiedName().getParameterName()).append("\")");
 		}
 		else if(context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_CLASS || context.getMode() == GenerationMode.ROUTE_PARAMETER_REFERENCE_TYPE) {
 			return this.visit((WebBasicParameterInfo)cookieParameterInfo, context);

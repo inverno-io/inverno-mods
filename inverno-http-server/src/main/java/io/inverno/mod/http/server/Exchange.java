@@ -20,7 +20,6 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ws.WebSocket;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
 import java.util.Optional;
-import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -61,26 +60,4 @@ public interface Exchange<A extends ExchangeContext> extends BaseExchange<A, Req
 	 * @return an optional returning the WebSocket or an empty optional if the upgrade is not possible
 	 */
 	Optional<? extends WebSocket<A, ? extends WebSocketExchange<A>>> webSocket(String... subProtocols);
-	
-	/**
-	 * <p>
-	 * Specifies a finalizer which is subscribed once the exchange is fully processed.
-	 * </p>
-	 *
-	 * <p>
-	 * An exchange is considered fully processed when the last chunk of the response has been fully sent to the client or following a terminal error.
-	 * </p>
-	 *
-	 * <p>
-	 * Note that using a finalizer actually impacts HTTP pipelining since the server has to wait for the response to be fully sent and for the finalizer to complete before processing subsequent 
-	 * requests.
-	 * </p>
-	 * 
-	 * <p>
-	 * When invoked multiple time this method chains the finalizer one after the other.
-	 * </p>
-	 *
-	 * @param finalizer a finalizer
-	 */
-	void finalizer(Mono<Void> finalizer);
 }

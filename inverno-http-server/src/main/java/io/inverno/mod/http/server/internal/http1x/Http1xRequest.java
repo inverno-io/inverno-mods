@@ -16,94 +16,106 @@
 package io.inverno.mod.http.server.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.base.net.URIBuilder;
-import io.inverno.mod.base.net.URIs;
-import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.internal.AbstractRequest;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.ssl.SslHandler;
+import java.net.SocketAddress;
+import java.security.cert.Certificate;
 import java.util.Optional;
-import reactor.core.publisher.Sinks.Many;
 
 /**
  * <p>
- * HTTP1.x {@link Request} implementation.
+ * Http/1.x {@link Request} implementation.
  * </p>
  * 
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.10
  */
-class Http1xRequest extends AbstractRequest {
+class Http1xRequest extends AbstractRequest<Http1xRequestHeaders, Http1xRequestBody> {
 
-	private final HttpRequest underlyingRequest;
+	private final Http1xConnection connection;
+	private final HttpRequest request;
 	
-	private URIBuilder pathBuilder;
-	
-	private Method method;
 	private String scheme;
+	private Method method;
 	private String authority;
+
+	/**
+	 * <p>
+	 * Creates an Http/1.x request.
+	 * </p>
+	 *
+	 * @param headerService         the header service
+	 * @param parameterConverter    the parameter converter
+	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
+	 * @param multipartBodyDecoder  the multipart/form-data body decoder
+	 * @param connection            the Http/1.x connection
+	 * @param request               the originating Http request
+	 */
+	public Http1xRequest(
+			HeaderService headerService,
+			ObjectConverter<String> parameterConverter, 
+			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
+			MultipartDecoder<Part> multipartBodyDecoder,
+			Http1xConnection connection,
+			HttpRequest request
+		) {
+		super(parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder, new Http1xRequestHeaders(headerService, parameterConverter, (LinkedHttpHeaders)request.headers()));
+		this.connection = connection;
+		this.request = request;
+	}
 	
 	/**
 	 * <p>
-	 * Creates a HTTP1.x server request.
+	 * Returns the originating request.
 	 * </p>
-	 *
-	 * @param context               the channel handler context
-	 * @param httpRequest           the underlying HTTP request
-	 * @param requestHeaders        the HTTP1.x request headers
-	 * @param parameterConverter    a string object converter
-	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
-	 * @param multipartBodyDecoder  the multipart/form-data body decoder
+	 * 
+	 * @return the originating request
 	 */
-	public Http1xRequest(ChannelHandlerContext context, HttpRequest httpRequest, InboundRequestHeaders requestHeaders, ObjectConverter<String> parameterConverter, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
-		super(context, requestHeaders, parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder);
-		this.underlyingRequest = httpRequest;
-	}
-
-	HttpRequest getUnderlyingRequest() {
-		return underlyingRequest;
-	}
-	
-	@Override
-	protected URIBuilder getPrimaryPathBuilder() {
-		if(this.pathBuilder == null) {
-			this.pathBuilder = URIs.uri(this.underlyingRequest.uri(), false, URIs.Option.NORMALIZED);
-		}
-		return this.pathBuilder;
-	}
-	
-	@Override
-	public Optional<Many<ByteBuf>> data() {
-		// In order to support pipelining we must always create the data sink even if
-		// it might not be consumed by the exchange handler
-		// This comes from the fact that the exchange is only started after the previous
-		// exchange has completed, which means we can receive data before we actually
-		// invoke the exchange handler which is supposed to create the body
-		this.body();
-		return super.data();
+	HttpRequest unwrap() {
+		return this.request;
 	}
 	
 	@Override
 	public String getScheme() {
 		if(this.scheme == null) {
-			this.scheme = this.context.pipeline().get(SslHandler.class) != null ? "https" : "http";
+			this.scheme = this.connection.isTls() ? "https" : "http";
 		}
 		return this.scheme;
 	}
+	
+	@Override
+	public SocketAddress getLocalAddress() {
+		return this.connection.getLocalAddress();
+	}
 
+	@Override
+	public Optional<Certificate[]> getLocalCertificates() {
+		return this.connection.getLocalCertificates();
+	}
+
+	@Override
+	public SocketAddress getRemoteAddress() {
+		return this.connection.getRemoteAddress();
+	}
+
+	@Override
+	public Optional<Certificate[]> getRemoteCertificates() {
+		return this.connection.getRemoteCertificates();
+	}
+	
 	@Override
 	public Method getMethod() {
 		if(this.method == null) {
 			try {
-				this.method = Method.valueOf(this.underlyingRequest.method().name());
+				this.method = Method.valueOf(this.request.method().name());
 			}
 			catch (IllegalArgumentException e) {
 				this.method = Method.UNKNOWN;
@@ -111,17 +123,33 @@ class Http1xRequest extends AbstractRequest {
 		}
 		return method;
 	}
+
+	@Override
+	public String getPath() {
+		return this.request.uri();
+	}
 	
 	@Override
 	public String getAuthority() {
 		if(this.authority == null) {
-			this.authority = this.requestHeaders.get((CharSequence)Headers.NAME_HOST).orElse(null);
+			this.authority = this.request.headers().get((CharSequence)Headers.NAME_HOST);
 		}
 		return this.authority;
 	}
 	
 	@Override
-	public String getPath() {
-		return this.underlyingRequest.uri();
+	public Optional<Http1xRequestBody> body() {
+		if(this.body == null) {
+			switch(this.getMethod()) {
+				case POST:
+				case PUT:
+				case PATCH:
+				case DELETE: {
+					this.body = new Http1xRequestBody(this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.headers);
+					break;
+				}
+			}
+		}
+		return Optional.ofNullable(this.body);
 	}
 }

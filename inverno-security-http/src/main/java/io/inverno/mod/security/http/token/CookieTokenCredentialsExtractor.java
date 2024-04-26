@@ -78,7 +78,7 @@ public class CookieTokenCredentialsExtractor implements CredentialsExtractor<Tok
 	
 	@Override
 	public Mono<TokenCredentials> extract(Exchange<?> exchange) throws MalformedCredentialsException {
-		return Mono.fromSupplier(() -> exchange.request().cookies()
+		return Mono.fromSupplier(() -> exchange.request().headers().cookies()
 			.get(this.tokenCookie)
 			.map(cookie -> new TokenCredentials(cookie.asString()))
 			.orElse(null)

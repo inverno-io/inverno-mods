@@ -85,7 +85,7 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		testServerPort = getFreePort();
 		
 		Class<?> httpConfigClass = moduleLoader.loadClass(MODULE_WEBROUTE, "io.inverno.mod.http.server.HttpServerConfiguration");
-		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", testServerPort, "h2c_enabled", true));
+		ConfigurationInvocationHandler httpConfigHandler = new ConfigurationInvocationHandler(httpConfigClass, Map.of("server_port", testServerPort, "h2_enabled", true));
 		Object httpConfig = Proxy.newProxyInstance(httpConfigClass.getClassLoader(),
 			new Class<?>[] { httpConfigClass },
 			httpConfigHandler);
@@ -4309,7 +4309,7 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		);
 		
 		Assertions.assertEquals(200, response.statusCode());
-		Assertions.assertEquals("text/event-stream;charset=utf-8", response.headers().firstValue("content-type").orElse(null));
+		Assertions.assertEquals("text/event-stream;charset=UTF-8", response.headers().firstValue("content-type").orElse(null));
 //		Files.write(Path.of("src/test/resources/get_sse_raw.dat"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 		switch(version) {
 			case HTTP_1_1: Assertions.assertArrayEquals(get_sse_raw_http11, response.body().getBytes(StandardCharsets.UTF_8));
@@ -4335,7 +4335,7 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		);
 		
 		Assertions.assertEquals(200, response.statusCode());
-		Assertions.assertEquals("text/event-stream;charset=utf-8", response.headers().firstValue("content-type").orElse(null));
+		Assertions.assertEquals("text/event-stream;charset=UTF-8", response.headers().firstValue("content-type").orElse(null));
 //		Files.write(Path.of("src/test/resources/get_sse_encoded.dat"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 		switch(version) {
 			case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_http11, response.body().getBytes(StandardCharsets.UTF_8));
@@ -4361,7 +4361,7 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		);
 		
 		Assertions.assertEquals(200, response.statusCode());
-		Assertions.assertEquals("text/event-stream;charset=utf-8", response.headers().firstValue("content-type").orElse(null));
+		Assertions.assertEquals("text/event-stream;charset=UTF-8", response.headers().firstValue("content-type").orElse(null));
 //		Files.write(Path.of("src/test/resources/get_sse_encoded_json.dat"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 		switch(version) {
 			case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_json_http11, response.body().getBytes(StandardCharsets.UTF_8));
@@ -4387,7 +4387,7 @@ public class WebRouteTest extends AbstractInvernoModTest {
 		);
 		
 		Assertions.assertEquals(200, response.statusCode());
-		Assertions.assertEquals("text/event-stream;charset=utf-8", response.headers().firstValue("content-type").orElse(null));
+		Assertions.assertEquals("text/event-stream;charset=UTF-8", response.headers().firstValue("content-type").orElse(null));
 //		Files.write(Path.of("src/test/resources/get_sse_encoded_json_map.dat"), response.body().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 		switch(version) {
 			case HTTP_1_1: Assertions.assertArrayEquals(get_sse_encoded_json_map_http11, response.body().getBytes(StandardCharsets.UTF_8));

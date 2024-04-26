@@ -19,7 +19,6 @@ import io.inverno.mod.http.base.InboundHeaders;
 import io.inverno.mod.http.base.InboundResponseHeaders;
 import io.inverno.mod.http.base.OutboundHeaders;
 import io.inverno.mod.http.base.OutboundResponseHeaders;
-import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.server.Response;
 import io.inverno.mod.web.server.WebResponse;
 import io.inverno.mod.web.server.WebResponseBody;
@@ -60,6 +59,11 @@ class GenericWebResponse implements WebResponse {
 	}
 
 	@Override
+	public int getTransferedLength() {
+		return this.response.getTransferedLength();
+	}
+
+	@Override
 	public InboundResponseHeaders headers() {
 		return this.response.headers();
 	}
@@ -78,13 +82,6 @@ class GenericWebResponse implements WebResponse {
 	@Override
 	public WebResponse trailers(Consumer<OutboundHeaders<?>> trailersConfigurer) {
 		this.response.trailers(trailersConfigurer);
-		return this;
-	}
-
-	@Override
-	@Deprecated
-	public WebResponse cookies(Consumer<OutboundSetCookies> cookiesConfigurer) throws IllegalStateException {
-		this.response.cookies(cookiesConfigurer);
 		return this;
 	}
 

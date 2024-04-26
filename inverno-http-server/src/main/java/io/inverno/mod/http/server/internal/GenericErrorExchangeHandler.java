@@ -48,19 +48,26 @@ public class GenericErrorExchangeHandler implements ExchangeHandler<ExchangeCont
 			throw new IllegalStateException("Headers already written", errorExchange.getError());
 		}
 		if(errorExchange.getError() instanceof HttpException) {
-			HttpException webError = (HttpException)errorExchange.getError();
-			if(webError instanceof MethodNotAllowedException) {
-				errorExchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)webError).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
+			HttpException httpError = (HttpException)errorExchange.getError();
+			if(httpError instanceof MethodNotAllowedException) {
+				errorExchange.response().headers(headers -> headers.add(Headers.NAME_ALLOW, ((MethodNotAllowedException)httpError).getAllowedMethods().stream().map(Method::toString).collect(Collectors.joining(", "))));
 			}
 			else if(errorExchange.getError() instanceof ServiceUnavailableException) {
-				((ServiceUnavailableException)webError).getRetryAfter().ifPresent(retryAfter -> {
+				((ServiceUnavailableException)httpError).getRetryAfter().ifPresent(retryAfter -> {
 					errorExchange.response().headers(headers -> headers.add(Headers.NAME_RETRY_AFTER, retryAfter.format(Headers.FORMATTER_RFC_5322_DATE_TIME)));
 				});
 			}
-			errorExchange.response().headers(h -> h.status(webError.getStatusCode())).body().empty();
+			errorExchange.response().headers(headers -> headers.status(httpError.getStatusCode())).body().empty();
 		}
 		else {
-			errorExchange.response().headers(h -> h.status(Status.INTERNAL_SERVER_ERROR)).body().empty();
+			Status errorStatus;
+			if(errorExchange.getError() instanceof IllegalArgumentException) {
+				errorStatus = Status.BAD_REQUEST;
+			}
+			else {
+				errorStatus = Status.INTERNAL_SERVER_ERROR;
+			}
+			errorExchange.response().headers(headers -> headers.status(errorStatus)).body().empty();
 		}
 	}
 }

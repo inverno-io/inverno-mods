@@ -197,7 +197,7 @@ public class Readme {
 		
 		handler = exchange -> {
 			exchange.response()
-				.cookies(cookies -> cookies
+				.headers(headers -> headers.cookies(cookies -> cookies
 					.addCookie(cookie -> cookie.name("cookie1")
 						.httpOnly(true)
 						.secure(true)
@@ -210,7 +210,7 @@ public class Readme {
 						.maxAge(3600)
 						.value("def")
 					)
-				)
+				))
 				.body().empty();
 		};
 		

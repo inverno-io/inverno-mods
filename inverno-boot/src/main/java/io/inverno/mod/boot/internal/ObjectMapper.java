@@ -17,7 +17,9 @@ package io.inverno.mod.boot.internal;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import io.inverno.core.annotation.Bean;
 import io.inverno.core.annotation.Overridable;
 import io.inverno.core.annotation.Wrapper;
@@ -41,10 +43,11 @@ public class ObjectMapper implements Supplier<com.fasterxml.jackson.databind.Obj
 	@Override
 	public com.fasterxml.jackson.databind.ObjectMapper get() {
 		if(this.instance == null) {
-			this.instance = new com.fasterxml.jackson.databind.ObjectMapper();
-			this.instance.enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION);
-			this.instance.registerModule(new JavaTimeModule());
-			this.instance.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+			this.instance = JsonMapper.builder()
+				.enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+				.addModules(new JavaTimeModule(), new AfterburnerModule())
+				.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+				.build();
 		}
 		return this.instance;
 	}

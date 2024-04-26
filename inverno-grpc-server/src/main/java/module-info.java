@@ -53,7 +53,7 @@
  * ResourceService resourceService = ...
  * 		
  * Application.with(new Server.Builder(netService, resourceService)
- *     .setConfiguration(HttpServerConfigurationLoader.load(conf -> conf.server_port(8080).h2c_enabled(true)))
+ *     .setConfiguration(HttpServerConfigurationLoader.load(conf -> conf.server_port(8080).h2_enabled(true)))
  *     .setController(ServerController.from(
  *         grpcServer.unary(
  *             HelloRequest.getDefaultInstance(), 

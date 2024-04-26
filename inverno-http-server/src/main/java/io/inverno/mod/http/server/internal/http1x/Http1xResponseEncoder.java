@@ -48,9 +48,9 @@ import java.util.List;
  */
 public class Http1xResponseEncoder extends HttpResponseEncoder {
 
-	private ChannelHandlerContext context;
-	
 	private final ByteBufAllocator byteBufAllocator;
+	
+	private ChannelHandlerContext context;
 	
 	/**
 	 * <p>

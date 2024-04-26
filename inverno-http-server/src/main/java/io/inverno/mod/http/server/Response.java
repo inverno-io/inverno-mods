@@ -18,7 +18,6 @@ package io.inverno.mod.http.server;
 import io.inverno.mod.http.base.BaseResponse;
 import io.inverno.mod.http.base.OutboundHeaders;
 import io.inverno.mod.http.base.OutboundResponseHeaders;
-import io.inverno.mod.http.base.OutboundSetCookies;
 import java.util.function.Consumer;
 
 /**
@@ -48,6 +47,15 @@ public interface Response extends BaseResponse {
 	
 	/**
 	 * <p>
+	 * Returns the number of bytes transfered as part of the response body.
+	 * </p>
+	 * 
+	 * @return the transfered length
+	 */
+	int getTransferedLength();
+	
+	/**
+	 * <p>
 	 * Configures the HTTP headers to send in the response.
 	 * </p>
 	 *
@@ -69,22 +77,6 @@ public interface Response extends BaseResponse {
 	 * @return the response
 	 */
 	Response trailers(Consumer<OutboundHeaders<?>> trailersConfigurer);
-	
-	/**
-	 * <p>
-	 * Configures the cookies to set in the response headers.
-	 * </p>
-	 *
-	 * @param cookiesConfigurer a response cookies configurer
-	 *
-	 * @return the response
-	 *
-	 * @throws IllegalStateException if response headers have already been sent to the client
-	 * 
-	 * @deprecated use {@link #headers(java.util.function.Consumer) } and {@link OutboundResponseHeaders#cookies(java.util.function.Consumer) }
-	 */
-	@Deprecated
-	Response cookies(Consumer<OutboundSetCookies> cookiesConfigurer) throws IllegalStateException;
 	
 	/**
 	 * <p>

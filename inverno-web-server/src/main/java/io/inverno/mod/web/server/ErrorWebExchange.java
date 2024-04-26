@@ -21,7 +21,6 @@ import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.server.ErrorExchange;
 import java.util.Optional;
 import java.util.function.Function;
-import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -87,11 +86,6 @@ public interface ErrorWebExchange<A extends ExchangeContext> extends ErrorExchan
 			@Override
 			public Throwable getError() {
 				return errorMapper.apply(thisExchange.getError());
-			}
-			
-			@Override
-			public void finalizer(Mono<Void> finalizer) {
-				thisExchange.finalizer(finalizer);
 			}
 		};
 	}

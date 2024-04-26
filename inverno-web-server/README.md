@@ -1140,7 +1140,7 @@ public class Main {
                         .web(web -> web
                             .http_server(server -> server
                                 .server_port(8081)
-                                .h2c_enabled(true)
+                                .h2_enabled(true)
                                 .server_event_loop_group_size(4)
                             )
                         )

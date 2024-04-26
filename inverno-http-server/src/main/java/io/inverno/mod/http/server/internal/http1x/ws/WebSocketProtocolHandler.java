@@ -22,8 +22,6 @@ import io.inverno.mod.http.base.ws.WebSocketException;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.ws.WebSocket;
-import io.inverno.mod.http.server.ws.WebSocketExchange;
-import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
@@ -52,7 +50,6 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 
 	private static final Logger LOGGER = LogManager.getLogger(WebSocket.class);
 	
-	private final WebSocketExchangeHandler<ExchangeContext, WebSocketExchange<ExchangeContext>> handler;
 	private final Exchange<ExchangeContext> exchange;
 	private final GenericWebSocketFrame.GenericFactory frameFactory;
 	private final GenericWebSocketMessage.GenericFactory messageFactory;
@@ -60,7 +57,7 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 	private final boolean closeOnOutboundComplete;
 	private final long inboundCloseFrameTimeout;
 	
-	private final Sinks.One<Void> handshake;
+	private final Sinks.One<GenericWebSocketExchange> handshake;
 	
 	private GenericWebSocketExchange webSocketExchange;
 	
@@ -71,7 +68,6 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 	 *
 	 * @param configuration  the HTTP server configurartion
 	 * @param protocolConfig the WebServer protocol configuration
-	 * @param handler        the WebSocket exchange handler
 	 * @param exchange       the original HTTP/1.x exchange
 	 * @param frameFactory   the WebSocket frame factory
 	 * @param messageFactory the WebSocket message factory
@@ -79,12 +75,11 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 	public WebSocketProtocolHandler(
 			HttpServerConfiguration configuration,
 			WebSocketServerProtocolConfig protocolConfig, 
-			WebSocketExchangeHandler<ExchangeContext, WebSocketExchange<ExchangeContext>> handler, 
 			Exchange<ExchangeContext> exchange, 
 			GenericWebSocketFrame.GenericFactory frameFactory, 
-			GenericWebSocketMessage.GenericFactory messageFactory) {
+			GenericWebSocketMessage.GenericFactory messageFactory
+		) {
 		super(protocolConfig);
-		this.handler = handler;
 		this.exchange = exchange;
 		this.frameFactory = frameFactory;
 		this.messageFactory = messageFactory;
@@ -96,13 +91,13 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 
 	/**
 	 * <p>
-	 * Returns the handshake mono which completes or fails with the opening handshake.
+	 * Returns a mono which emits the resulting WebSocket exchange on success or fails on handshake failure.
 	 * </p>
 	 * 
 	 * @return the opening handshake mono
 	 */
-	public Mono<Void> getHandshake() {
-		return handshake.asMono();
+	public Mono<GenericWebSocketExchange> getWebSocketExchange() {
+		return this.handshake.asMono();
 	}
 	
 	@Override
@@ -113,14 +108,12 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 				ctx, 
 				this.exchange, 
 				handshakeComplete.selectedSubprotocol(), 
-				this.handler, 
 				this.frameFactory, 
 				this.messageFactory, 
 				this.closeOnOutboundComplete, 
 				this.inboundCloseFrameTimeout
 			);
-			this.handshake.tryEmitEmpty();
-			this.webSocketExchange.start();
+			this.handshake.tryEmitValue(this.webSocketExchange);
 		}
 		else if(evt == WebSocketServerProtocolHandler.ServerHandshakeStateEvent.HANDSHAKE_TIMEOUT) {
 			this.handshake.tryEmitError(new WebSocketException("Handshake timeout"));

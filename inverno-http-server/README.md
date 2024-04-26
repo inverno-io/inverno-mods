@@ -190,7 +190,7 @@ public class Main {
                 App_httpConfigurationLoader.load(configuration -> configuration
                     .http_server(server -> server
                         .server_port(8081)
-                        .h2c_enabled(true)
+                        .h2_enabled(true)
                     )
                     .boot(boot -> boot
                         .reactor_event_loop_group_size(4)
@@ -204,13 +204,17 @@ public class Main {
 
 In the above code, we have set the server port to 8081, enabled HTTP/2 over cleartext and set the number of thread allocated to the reactor core IO event loop group to 4.
 
+> `h2_enabled` property defaults to `true` when TLS is configured and to `false` otherwise, in order to activate HTTP/2 over cleartext, it must be set to true explicitly.
+
 Please refer to the [API documentation][inverno-javadoc] to have an exhaustive description of the different configuration properties. We can for instance configure low level network settings like TCP keep alive or TCP no delay as well as HTTP related settings like compression or TLS.
 
 > You can also refer to the [configuration module documentation](#configuration-1) to get more details on how configuration works and more especially how you can from here define the HTTP server configuration in command line arguments, property files...
 
 ### Logging
 
-The HTTP server can log access and error events at `INFO` and `ERROR` level respectively. They can be disabled by configuring `io.inverno.mod.http.server.Exchange` logger as follows:
+The HTTP server logs error events at ERROR` level with the `io.inverno.mod.http.server.ErrorExchange` logger and access events at `INFO` level with the `io.inverno.mod.http.server.Exchange` logger when the `HttpAccessLogsInterceptor` has been registered to the server controller exchange handlers (see [HTTP access logs interceptor](#http-access-logs-interceptor)).
+
+These loggers can be configured as follows:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -227,6 +231,7 @@ The HTTP server can log access and error events at `INFO` and `ERROR` level resp
     <Loggers>
         <!-- Disable HTTP server access and error logs -->
         <Logger name="io.inverno.mod.http.server.Exchange" additivity="false" level="off"  />
+        <Logger name="io.inverno.mod.http.server.ErrorExchange" additivity="false" level="off"  />
 
         <Root level="info">
             <AppenderRef ref="LogToConsole"/>
@@ -244,28 +249,10 @@ We can also create a more *production-like* logging configuration for a standard
         <Console name="Console" target="SYSTEM_OUT">
              <PatternLayout pattern="%d{DEFAULT} %highlight{%-5level} [%t] %c{1.} - %msg%n%ex"/>
         </Console>
-        <!-- Error log -->
-        <RollingRandomAccessFile name="ErrorRollingFile" fileName="logs/error.log" filePattern="logs/error-%d{yyyy-MM-dd}-%i.log.gz">
-            <JsonTemplateLayout/>
-            <NoMarkerFilter onMatch="ACCEPT" onMismatch="DENY"/>
-            <Policies>
-                <TimeBasedTriggeringPolicy />
-                <SizeBasedTriggeringPolicy size="10 MB"/>
-            </Policies>
-            <DefaultRolloverStrategy>
-                <Delete basePath="logs" maxDepth="2">
-                    <IfFileName glob="error-*.log.gz" />
-                    <IfLastModified age="10d" />
-                </Delete>
-            </DefaultRolloverStrategy>
-        </RollingRandomAccessFile>
-        <Async name="AsyncErrorRollingFile">
-            <AppenderRef ref="ErrorRollingFile"/>
-        </Async>
+
         <!-- Access log -->
         <RollingRandomAccessFile name="AccessRollingFile" fileName="logs/access.log" filePattern="logs/access-%d{yyyy-MM-dd}-%i.log.gz">
             <JsonTemplateLayout/>
-            <MarkerFilter marker="HTTP_ACCESS" onMatch="ACCEPT" onMismatch="DENY"/>
             <Policies>
                 <TimeBasedTriggeringPolicy />
                 <SizeBasedTriggeringPolicy size="10 MB"/>
@@ -280,11 +267,32 @@ We can also create a more *production-like* logging configuration for a standard
         <Async name="AsyncAccessRollingFile">
             <AppenderRef ref="AccessRollingFile"/>
         </Async>
+
+        <!-- Error log -->
+        <RollingRandomAccessFile name="ErrorRollingFile" fileName="logs/error.log" filePattern="logs/error-%d{yyyy-MM-dd}-%i.log.gz">
+            <JsonTemplateLayout/>
+            <Policies>
+                <TimeBasedTriggeringPolicy />
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy>
+                <Delete basePath="logs" maxDepth="2">
+                    <IfFileName glob="error-*.log.gz" />
+                    <IfLastModified age="10d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingRandomAccessFile>
+        <Async name="AsyncErrorRollingFile">
+            <AppenderRef ref="ErrorRollingFile"/>
+        </Async>
     </Appenders>
 
     <Loggers>
         <Logger name="io.inverno.mod.http.server.Exchange" additivity="false" level="info">
             <AppenderRef ref="AsyncAccessRollingFile" level="info"/>
+        </Logger>
+
+        <Logger name="io.inverno.mod.http.server.ErrorExchange" additivity="false" level="error">
             <AppenderRef ref="AsyncErrorRollingFile" level="error"/>
         </Logger>
 
@@ -295,8 +303,6 @@ We can also create a more *production-like* logging configuration for a standard
     </Loggers>
 </Configuration>
 ```
-
-> Note that access and error events are logged by the same logger, they are differentiated by markers, `HTTP_ACCESS` and `HTTP_ERROR` respectively.
 
 ### Transport
 
@@ -987,6 +993,28 @@ Mulitple interceptors can be chained by invoking `intercept()` method mutliple t
 handler.intercept(interceptor1).intercept(interceptor2).intercept(interceptor3);
 ```
 
+#### HTTP access logs interceptor
+
+The `HttpAccessLogsInterceptor` is used to log Http access when the processing of an exchange completes and a response is sent to the client. It must be registered to the server controller's exchange and error exchange handlers.
+
+```java
+ServerController.<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>>from(
+    ((ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>>)(exchange -> {
+        ...
+    })).intercept(new HttpAccessLogsInterceptor<>()),
+    ((ExchangeHandler<ExchangeContext, ErrorExchange<ExchangeContext>>)(errorExchange -> {
+        ...
+    })).intercept(new HttpAccessLogsInterceptor<>())
+)
+```
+
+Assuming logging is properly configured, `io.inverno.mod.http.server.Exchange` logger should output an access log for each processed request:
+
+```plaintext
+2024-04-25 11:32:56,123 INFO  [inverno-io-epoll-1-1] i.i.m.h.s.Exchange - 127.0.0.1 "GET /plaintext" 200 12 "" "curl/7.88.1"
+2024-04-25 11:32:57,285 INFO  [inverno-io-epoll-1-1] i.i.m.h.s.Exchange - 127.0.0.1 "GET /plaintext" 500 16 "" "curl/7.88.1"
+```
+
 ### Exchange context
 
 A strongly typed context is exposed in the `Exchange`, it allows to store or access data and to provide contextual operations throughout the process of the exchange. The server creates the context along with the exchange using the server controller. It is then possible to *customize* the exchange with a specific strongly types context.
@@ -1237,6 +1265,8 @@ ExchangeHandler<ExchangeContext, Exchange<ExchangeContext>> handler = exchange -
 An HTTP exchange can be upgraded to a WebSocket exchange as defined by [RFC 6455][rfc-6455].
 
 The `webSocket()` method exposed on the `Exchange` allows to upgrade to the WebSocket protocol, it returns an optional `WebSocket` which might be empty if the original exchange does not support the upgrade. This is especially the case when using HTTP/2 for which Websocket upgrade is not supported or if the state of the exchange prevents the upgrade (e.g. error exchange).
+
+> Note that HTTP/2 over cleartext must be disabled for the Web Socket upgrade to be successful.
 
 The resulting `WebSocket` allows specifying a `WebSocketExchangeHandler` and a default action in case the WebSocket opening handshake fails (e.g. the client did not provide the correct headers for the upgrade...). A WebSocket exchange handler is used to handle the resulting `WebSocketExchange` which exposes WebSocket inbound and outbound data.
 

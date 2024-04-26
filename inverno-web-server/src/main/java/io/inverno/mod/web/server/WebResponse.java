@@ -17,7 +17,6 @@ package io.inverno.mod.web.server;
 
 import io.inverno.mod.http.base.OutboundHeaders;
 import io.inverno.mod.http.base.OutboundResponseHeaders;
-import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.server.Response;
 import java.util.function.Consumer;
 
@@ -41,8 +40,4 @@ public interface WebResponse extends Response {
 
 	@Override
 	public WebResponse trailers(Consumer<OutboundHeaders<?>> trailersConfigurer);
-
-	@Override
-	@Deprecated
-	public WebResponse cookies(Consumer<OutboundSetCookies> cookiesConfigurer) throws IllegalStateException;
 }

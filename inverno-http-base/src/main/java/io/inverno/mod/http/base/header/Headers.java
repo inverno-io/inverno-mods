@@ -272,6 +272,10 @@ public final class Headers {
 	 */
 	public static final String VALUE_GZIP = "gzip";
 	/**
+	 * <a href="https://tools.ietf.org/html/rfc7230#section-6.3">RFC 7230 Section 6.3</a>.
+	 */
+	public static final String VALUE_KEEP_ALIVE = "keep-alive";
+	/**
 	 * <a href="https://tools.ietf.org/html/rfc7230#section-4.3">RFC 7230 Section 4.3</a>.
 	 */
 	public static final String VALUE_TRAILERS = "trailers";
