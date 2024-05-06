@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 import org.reactivestreams.Subscription;
 import reactor.core.Disposable;
 import reactor.core.publisher.BaseSubscriber;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -106,8 +107,8 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 	 * </p>
 	 * 
 	 * <p>
-	 * This method executes on the connection event loop, it subscribes to the first non-null publisher between the response body file region publisher and response body data publisher in that order
-	 * in order to generate and send the response body. In case of an {@code HEAD} request, an empty response with headers only is sent.
+	 * This method executes on the connection event loop, it subscribes to the response body file region publisher when present and to the response body data publisher otherwise in order to generate 
+	 * and send the response body. In case of an {@code HEAD} request, an empty response with headers only is sent.
 	 * </p>
 	 */
 	@Override
@@ -118,7 +119,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 					this.body.getData().subscribe(this.body.getData() instanceof Mono ? new MonoBodyDataSubscriber() : new BodyDataSubscriber());
 				}
 				else {
-					this.body.getFileRegionData().subscribe(new FileRegionBodyDataSubscriber());
+					Flux.concat(this.body.getFileRegionData(), Flux.from(this.body.getData()).cast(FileRegion.class)).subscribe(new FileRegionBodyDataSubscriber());
 				}
 			}
 			else {

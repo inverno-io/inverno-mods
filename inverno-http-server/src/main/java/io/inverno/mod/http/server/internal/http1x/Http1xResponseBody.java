@@ -20,6 +20,7 @@ import io.inverno.mod.http.base.InternalServerErrorException;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.server.ResponseBody;
 import io.inverno.mod.http.server.internal.AbstractResponseBody;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.FileRegion;
 import java.io.IOException;
@@ -72,6 +73,12 @@ class Http1xResponseBody extends AbstractResponseBody<Http1xResponseHeaders, Htt
 	public Publisher<FileRegion> getFileRegionData() {
 		return this.fileRegionData;
 	}
+	
+	@Override
+	protected void setData(Publisher<ByteBuf> data) throws IllegalStateException {
+		super.setData(data);
+		this.fileRegionData = null;
+	}
 
 	@Override
 	public ResponseBody.Resource resource() {
@@ -103,6 +110,8 @@ class Http1xResponseBody extends AbstractResponseBody<Http1xResponseHeaders, Htt
 				// Only regular file resources supports zero-copy
 				// It seems FileRegion does not support Zip files, I saw different behavior between JDK<15 and above
 				if(Http1xResponseBody.this.supportsFileRegion && resource.isFile().orElse(false) && !(resource instanceof ZipResource)) {
+					Http1xResponseBody.this.setData(Flux.empty());
+					
 					// We need to create the file region and then send an empty response
 					// The Http1xServerExchange should then complete and check whether there is a file region or not
 					FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource is not readable: " + resource.getURI()));
@@ -128,7 +137,6 @@ class Http1xResponseBody extends AbstractResponseBody<Http1xResponseHeaders, Htt
 								throw Exceptions.propagate(e);
 							}
 						});
-					Http1xResponseBody.this.setData(Flux.empty());
 				}
 				else {
 					Http1xResponseBody.this.setData(resource.read());

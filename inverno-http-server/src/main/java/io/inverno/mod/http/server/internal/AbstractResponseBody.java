@@ -107,7 +107,7 @@ public abstract class AbstractResponseBody<A extends AbstractResponseHeaders<?>,
 	 * 
 	 * @throws IllegalStateException if response data have already been set
 	 */
-	protected final void setData(Publisher<ByteBuf> data) throws IllegalStateException {
+	protected void setData(Publisher<ByteBuf> data) throws IllegalStateException {
 		if(this.subscribed && this.dataSet) {
 			throw new IllegalStateException("Response data already sent");
 		}
