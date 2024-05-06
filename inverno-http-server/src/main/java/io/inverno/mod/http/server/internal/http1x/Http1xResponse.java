@@ -32,6 +32,8 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.FileRegion;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpContent;
+import io.netty.handler.codec.http.EmptyHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
@@ -202,7 +204,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 		@Override
 		protected void hookOnComplete() {
 			final HttpResponseStatus httpStatus = HttpResponseStatus.valueOf(Http1xResponse.this.headers.getStatusCode());
-			final LinkedHttpHeaders httpTrailers;
+			final HttpHeaders httpTrailers;
 			if(httpStatus == HttpResponseStatus.NOT_MODIFIED || httpStatus == HttpResponseStatus.NO_CONTENT) {
 				Http1xResponse.this.headers.remove((CharSequence)Headers.NAME_TRANSFER_ENCODING);
 				httpTrailers = null;
@@ -212,8 +214,11 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 					Http1xResponse.this.headers.set((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + Http1xResponse.this.transferedLength);
 				}
 				
-				httpTrailers = Http1xResponse.this.trailers != null ? Http1xResponse.this.trailers.unwrap() : null;
-				if(httpTrailers != null) {
+				if(Http1xResponse.this.trailers == null) {
+					httpTrailers = EmptyHttpHeaders.INSTANCE;
+				}
+				else {
+					httpTrailers = Http1xResponse.this.trailers.unwrap();
 					Http1xResponse.this.headers.set(Headers.NAME_TRAILER, httpTrailers.names().stream().collect(Collectors.joining(", ")));
 				}
 			}
@@ -225,7 +230,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 				Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, httpStatus, Http1xResponse.this.headers.unwrap(), Unpooled.EMPTY_BUFFER, httpTrailers));
 			}
 			Http1xResponse.this.headers.setWritten();
-			if(httpTrailers != null) {
+			if(Http1xResponse.this.trailers != null) {
 				Http1xResponse.this.trailers.setWritten();
 			}
 			
@@ -250,7 +255,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 	private class BodyDataSubscriber extends BaseSubscriber<ByteBuf> {
 		
 		private HttpResponseStatus httpStatus;
-		private LinkedHttpHeaders httpTrailers;
+		private HttpHeaders httpTrailers;
 		
 		private ByteBuf singleChunk;
 		private boolean many;
@@ -279,8 +284,11 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 					}
 				}
 				
-				this.httpTrailers = Http1xResponse.this.trailers != null ? Http1xResponse.this.trailers.unwrap() : null;
-				if(this.httpTrailers != null) {
+				if(Http1xResponse.this.trailers == null) {
+					this.httpTrailers = EmptyHttpHeaders.INSTANCE;
+				}
+				else {
+					this.httpTrailers = Http1xResponse.this.trailers.unwrap();
 					Http1xResponse.this.headers().set(Headers.NAME_TRAILER, this.httpTrailers.names().stream().collect(Collectors.joining(", ")));
 				}
 			}
@@ -338,12 +346,12 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 		@Override
 		protected void hookOnComplete() {
 			if(this.many) {
-				if(this.httpTrailers != null) {
-					Http1xResponse.this.connection.writeHttpObject(new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, this.httpTrailers));
-					Http1xResponse.this.trailers.setWritten();
+				if(Http1xResponse.this.trailers == null) {
+					Http1xResponse.this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
 				}
 				else {
-					Http1xResponse.this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
+					Http1xResponse.this.connection.writeHttpObject(new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, this.httpTrailers));
+					Http1xResponse.this.trailers.setWritten();
 				}
 			}
 			else {
@@ -356,7 +364,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 					Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, this.httpStatus, Http1xResponse.this.headers.unwrap(), Unpooled.EMPTY_BUFFER, this.httpTrailers));
 				}
 				Http1xResponse.this.headers.setWritten();
-				if(this.httpTrailers != null) {
+				if(Http1xResponse.this.trailers != null) {
 					Http1xResponse.this.trailers.setWritten();
 				}
 			}
@@ -387,7 +395,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 	 */
 	private class FileRegionBodyDataSubscriber extends BaseSubscriber<FileRegion> {
 		
-		private LinkedHttpHeaders httpTrailers;
+		private HttpHeaders httpTrailers;
 		
 		@Override
 		protected void hookOnSubscribe(Subscription subscription) {
@@ -396,11 +404,12 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 				Http1xResponse.this.headers.remove((CharSequence)Headers.NAME_TRANSFER_ENCODING);
 				this.httpTrailers = null;
 			}
+			else if(Http1xResponse.this.trailers == null) {
+				this.httpTrailers = EmptyHttpHeaders.INSTANCE;
+			}
 			else {
-				this.httpTrailers = Http1xResponse.this.trailers != null ? Http1xResponse.this.trailers.unwrap() : null;
-				if(this.httpTrailers != null) {
-					Http1xResponse.this.headers.set(Headers.NAME_TRAILER, this.httpTrailers.names().stream().collect(Collectors.joining(", ")));
-				}
+				this.httpTrailers = Http1xResponse.this.trailers.unwrap();
+				Http1xResponse.this.headers.set(Headers.NAME_TRAILER, this.httpTrailers.names().stream().collect(Collectors.joining(", ")));
 			}
 			
 			Http1xResponse.this.connection.writeHttpObject(new FlatHttpResponse(Http1xResponse.this.version, httpStatus, Http1xResponse.this.headers.unwrap(), Unpooled.EMPTY_BUFFER));
@@ -424,12 +433,12 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 		
 		@Override
 		protected void hookOnComplete() {
-			if(this.httpTrailers != null) {
-				Http1xResponse.this.connection.writeHttpObject(new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, this.httpTrailers));
-				Http1xResponse.this.trailers.setWritten();
+			if(Http1xResponse.this.trailers == null) {
+				Http1xResponse.this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
 			}
 			else {
-				Http1xResponse.this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
+				Http1xResponse.this.connection.writeHttpObject(new FlatLastHttpContent(Unpooled.EMPTY_BUFFER, this.httpTrailers));
+				Http1xResponse.this.trailers.setWritten();
 			}
 			
 			Http1xResponse.this.connection.onExchangeComplete();
