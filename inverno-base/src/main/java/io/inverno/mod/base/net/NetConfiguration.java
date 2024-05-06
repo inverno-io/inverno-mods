@@ -47,13 +47,13 @@ public interface NetConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to true.
+	 * Defaults to {@code false}.
 	 * </p>
 	 * 
 	 * @return true if the option is enabled, false otherwise
 	 */
 	default boolean reuse_port() {
-		return true;
+		return false;
 	}
 
 	/**

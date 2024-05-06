@@ -15,12 +15,7 @@
  */
 package io.inverno.mod.http.server.internal;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
