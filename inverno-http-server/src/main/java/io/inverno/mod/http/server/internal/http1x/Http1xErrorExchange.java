@@ -16,8 +16,11 @@
 package io.inverno.mod.http.server.internal.http1x;
 
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.HttpException;
+import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.internal.GenericErrorExchangeHandler;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.reactivestreams.Subscription;
@@ -82,7 +85,11 @@ class Http1xErrorExchange extends AbstractHttp1xExchange implements ErrorExchang
 				handlerSubscriber.hookOnComplete();
 			}
 			else {
-				LOGGER.error("Exchange processing error", this.error);
+				LOGGER.log(
+					this.error instanceof HttpException && ((HttpException)this.error).getStatusCategory() != Status.Category.SERVER_ERROR ? Level.WARN : Level.ERROR, 
+					"Exchange processing error", 
+					this.error
+				);
 				this.controller.defer(this).subscribe(handlerSubscriber);
 			}
 		}
