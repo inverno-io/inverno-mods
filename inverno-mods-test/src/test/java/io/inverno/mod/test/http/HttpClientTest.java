@@ -6005,7 +6005,7 @@ public class HttpClientTest {
 			.block();
 	}
 	
-	/*@Test
+	@Test
 	public void test_h2c_tooBig() {
 		File uploadsDir = new File("target/uploads/");
 		uploadsDir.mkdirs();
@@ -6038,7 +6038,7 @@ public class HttpClientTest {
 		finally {
 			blankH2cEndpoint.shutdown().block();
 		}
-	}*/
+	}
 	
 	// TODO this keeps failing with ConnectionTimeout error in Github, it can't be reproduced locally...
 	// I moved these to HttpClientExtraTest to see if I can isolate the issue
