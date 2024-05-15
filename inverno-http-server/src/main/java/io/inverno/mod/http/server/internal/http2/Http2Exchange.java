@@ -65,7 +65,6 @@ class Http2Exchange extends AbstractHttp2Exchange {
 	 * @param parameterConverter    the parameter converter
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
-	 * @param validateHeaders       true to validate headers, false otherwise
 	 * @param connectionStream      the connection stream
 	 * @param headers               the originating headers
 	 */
@@ -76,21 +75,20 @@ class Http2Exchange extends AbstractHttp2Exchange {
 			ObjectConverter<String> parameterConverter, 
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
 			MultipartDecoder<Part> multipartBodyDecoder,
-			boolean validateHeaders,
 			Http2ConnectionStream connectionStream,
 			Http2Headers headers
 		) {
 		super(configuration, controller, connectionStream, headers);
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
-		this.validateHeaders = validateHeaders;
+		this.validateHeaders = configuration.http2_validate_headers();
 		
 		this.context = controller.createContext();
 		if(this.context != null) {
 			this.context.init();
 		}
 		this.request = new Http2Request(headerService, parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder, connectionStream, headers);
-		this.response = new Http2Response(headerService, parameterConverter, validateHeaders, connectionStream, this.head);
+		this.response = new Http2Response(headerService, parameterConverter, this.validateHeaders, connectionStream, this.head);
 	}
 	
 	@Override

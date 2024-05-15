@@ -82,7 +82,6 @@ abstract class AbstractHttp2Exchange extends AbstractExchange<Http2Request, Http
 	@Override
 	protected final void doReset(long code) {
 		// reseting the stream will dispose the stream
-		this.reset = true;
 		this.connectionStream.resetStream(code);
 	}
 }

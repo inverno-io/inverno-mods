@@ -100,7 +100,8 @@ class Http2ResponseHeaders extends AbstractResponseHeaders<Http2ResponseHeaders>
 	
 	@Override
 	public String getContentType() {
-		return this.headers.get(Headers.NAME_CONTENT_TYPE).toString();
+		CharSequence value = this.headers.get(Headers.NAME_CONTENT_TYPE);
+		return value != null ? value.toString() : null;
 	}
 
 	@Override

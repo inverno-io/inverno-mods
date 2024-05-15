@@ -97,14 +97,6 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 	}
 
 	@Override
-	public Http2ResponseTrailers trailers() {
-		if(this.trailers == null) {
-			this.trailers = new Http2ResponseTrailers(this.headerService, this.parameterConverter, this.validateHeaders);
-		}
-		return this.trailers;
-	}
-
-	@Override
 	public Http2Response sendContinue() {
 		if(this.isHeadersWritten()) {
 			throw new IllegalStateException("Headers already written");
@@ -123,6 +115,14 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 	@Override
 	public Http2ResponseBody body() {
 		return this.body;
+	}
+	
+	@Override
+	public Http2ResponseTrailers trailers() {
+		if(this.trailers == null) {
+			this.trailers = new Http2ResponseTrailers(this.headerService, this.parameterConverter, this.validateHeaders);
+		}
+		return this.trailers;
 	}
 
 	/**
@@ -151,6 +151,10 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 
 		@Override
 		protected void hookOnComplete() {
+			if(!Http2Response.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
+				Http2Response.this.headers.contentLength(Http2Response.this.transferedLength);
+			}
+			
 			if(this.data == null) {
 				if(Http2Response.this.trailers == null) {
 					Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, true);
@@ -164,10 +168,6 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 				}
 			}
 			else {
-				if(!Http2Response.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
-					Http2Response.this.headers.contentLength(Http2Response.this.transferedLength);
-				}
-				
 				if(Http2Response.this.trailers == null) {
 					Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
 					Http2Response.this.headers.setWritten();
@@ -181,6 +181,7 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 					Http2Response.this.trailers.setWritten();
 				}
 			}
+			Http2Response.this.connectionStream.onExchangeComplete();
 		}
 
 		@Override
@@ -279,6 +280,7 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 					}
 				}
 			}
+			Http2Response.this.connectionStream.onExchangeComplete();
 		}
 
 		@Override

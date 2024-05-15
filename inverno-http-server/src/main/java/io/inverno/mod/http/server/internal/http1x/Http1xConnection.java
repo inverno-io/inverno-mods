@@ -110,8 +110,6 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	
 	private static final Logger LOGGER = LogManager.getLogger(HttpConnection.class);
 
-	private static final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> LAST_RESORT_ERROR_CONTROLLER = exchange -> {};
-	
 	private final HttpServerConfiguration configuration;
 	private final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
 	private final HeaderService headerService;
@@ -280,7 +278,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 						this.gracefulShutdownTimeout = null;
 						this.closing = false;
 					}
-					if(!this.closing || this.gracefulShutdownTimeout != null) {
+					if(!this.closing) {
 						this.closing = true;
 						ChannelPromise closePromise = this.channelContext.newPromise().addListener(future -> {
 							this.closed = true;
@@ -396,10 +394,15 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	 * @param throwable an error or null if disposal does not result from an error (e.g. shutdown)
 	 */
 	private void dispose(Throwable throwable) {
-		while(this.respondingExchange != null) {
-			this.respondingExchange.dispose(throwable);
-			this.respondingExchange = this.respondingExchange.next;
+		AbstractHttp1xExchange current = this.respondingExchange;
+		while(current != null) {
+			AbstractHttp1xExchange next = current.next;
+			current.next = null;
+			current.dispose(throwable);
+			current = next;
 		}
+		this.respondingExchange = null;
+		this.requestingExchange = null;
 	}
 	
 	@Override

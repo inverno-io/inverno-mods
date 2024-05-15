@@ -38,7 +38,7 @@ public abstract class AbstractRequestHeaders implements InboundRequestHeaders {
 	 */
 	protected final ObjectConverter<String> parameterConverter;
 	
-	private GenericRequestCookies requestCookies;
+	private GenericRequestCookies cookies;
 
 	/**
 	 * <p>
@@ -55,9 +55,9 @@ public abstract class AbstractRequestHeaders implements InboundRequestHeaders {
 	
 	@Override
 	public final GenericRequestCookies cookies() {
-		if(this.requestCookies == null) {
-			this.requestCookies = new GenericRequestCookies(this, this.parameterConverter);
+		if(this.cookies == null) {
+			this.cookies = new GenericRequestCookies(this, this.parameterConverter);
 		}
-		return this.requestCookies;
+		return this.cookies;
 	}
 }

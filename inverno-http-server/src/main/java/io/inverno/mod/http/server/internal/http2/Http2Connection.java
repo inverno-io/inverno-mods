@@ -85,7 +85,7 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
 	private final MultipartDecoder<Part> multipartBodyDecoder;
 	private final Http2ContentEncodingResolver contentEncodingResolver;
-	private final boolean validateHeaders;
+	
 	private final IntObjectMap<Http2ConnectionStream> serverStreams;
 	
 	private ChannelHandlerContext channelContext;
@@ -140,7 +140,6 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 		this.multipartBodyDecoder = multipartBodyDecoder;
 		this.contentEncodingResolver = contentEncodingResolver;
 		
-		this.validateHeaders = configuration.http2_validate_headers();
 		this.serverStreams = new IntObjectHashMap<>();
 	}
 
@@ -298,11 +297,13 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 	@Override
 	public void onError(ChannelHandlerContext ctx, boolean outbound, Throwable cause) {
 		super.onError(ctx, outbound, cause);
+		LOGGER.debug("onError", cause);
 	}
 
 	@Override
 	protected void onStreamError(ChannelHandlerContext ctx, boolean outbound, Throwable cause, Http2Exception.StreamException http2Ex) {
 		super.onStreamError(ctx, outbound, cause, http2Ex);
+		LOGGER.debug("onStreamError", cause);
 	}
 
 	@Override
@@ -330,31 +331,6 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 	}
 	
 	@Override
-	public int onDataRead(ChannelHandlerContext ctx, int streamId, ByteBuf data, int padding, boolean endOfStream) throws Http2Exception {
-		// TODO flow control?
-		int processed = data.readableBytes() + padding;
-		
-		Http2ConnectionStream serverStream = this.serverStreams.get(streamId);
-		if(serverStream != null) {
-			Http2RequestBody requestBody = serverStream.exchange.request().getBody();
-			if(requestBody != null) {
-				data.retain();
-				if(requestBody.getDataSink().tryEmitNext(data) != Sinks.EmitResult.OK) {
-					data.release();
-				}
-				if (endOfStream) {
-					requestBody.getDataSink().tryEmitComplete();
-				}
-			}
-		}
-		else {
-			// TODO this should never happen?
-			throw new IllegalStateException("Unable to push data to unmanaged stream " + streamId);
-		}
-		return processed;
-	}
-
-	@Override
 	public void onHeadersRead(ChannelHandlerContext ctx, int streamId, Http2Headers headers, int padding, boolean endOfStream) throws Http2Exception {
 		Http2ConnectionStream serverStream = this.serverStreams.get(streamId);
 		if (serverStream == null) {
@@ -367,7 +343,6 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 				this.parameterConverter, 
 				this.urlEncodedBodyDecoder, 
 				this.multipartBodyDecoder, 
-				this.validateHeaders,
 				serverStream,
 				headers
 			);
@@ -393,6 +368,31 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 		this.onHeadersRead(ctx, streamId, headers, padding, endOfStream);
 	}
 
+	@Override
+	public int onDataRead(ChannelHandlerContext ctx, int streamId, ByteBuf data, int padding, boolean endOfStream) throws Http2Exception {
+		// TODO flow control?
+		int processed = data.readableBytes() + padding;
+		
+		Http2ConnectionStream serverStream = this.serverStreams.get(streamId);
+		if(serverStream != null) {
+			Http2RequestBody requestBody = serverStream.exchange.request().getBody();
+			if(requestBody != null) {
+				data.retain();
+				if(requestBody.getDataSink().tryEmitNext(data) != Sinks.EmitResult.OK) {
+					data.release();
+				}
+				if (endOfStream) {
+					requestBody.getDataSink().tryEmitComplete();
+				}
+			}
+		}
+		else {
+			// TODO this should never happen?
+			throw new IllegalStateException("Unable to push data to unmanaged stream " + streamId);
+		}
+		return processed;
+	}
+	
 	@Override
 	public void onPriorityRead(ChannelHandlerContext ctx, int streamId, int streamDependency, short weight, boolean exclusive) throws Http2Exception {
 	}

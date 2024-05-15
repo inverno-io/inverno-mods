@@ -18,6 +18,7 @@ package io.inverno.mod.http.server.internal;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.http.base.InboundData;
 import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.server.HttpServerException;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.RequestBody;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
@@ -65,6 +66,8 @@ public abstract class AbstractRequestBody<A extends AbstractRequestHeaders> impl
 	 * The multipart/form-data body data.
 	 */
 	protected RequestBody.Multipart<Part> multipartData;
+	
+	private Throwable cancelCause;
 
 	/**
 	 * <p>
@@ -81,9 +84,14 @@ public abstract class AbstractRequestBody<A extends AbstractRequestHeaders> impl
 		this.headers = headers;
 		
 		this.dataSink = Sinks.many().unicast().onBackpressureBuffer();
-		this.data = this.dataSink.asFlux()
-			.doOnSubscribe(ign -> this.subscribed = true)
-			.doOnDiscard(ByteBuf.class, ByteBuf::release);
+		this.data = Flux.defer(() -> {
+			if(this.cancelCause != null) {
+				return Mono.error(this.cancelCause);
+			}
+			return this.dataSink.asFlux()
+				.doOnSubscribe(ign -> this.subscribed = true)
+				.doOnDiscard(ByteBuf.class, ByteBuf::release);
+		});
 	}
 
 	/**
@@ -98,7 +106,7 @@ public abstract class AbstractRequestBody<A extends AbstractRequestHeaders> impl
 	 * @return the request body data sink
 	 */
 	public final Sinks.Many<ByteBuf> getDataSink() {
-		return dataSink;
+		return this.dataSink;
 	}
 	
 	/**
@@ -113,24 +121,28 @@ public abstract class AbstractRequestBody<A extends AbstractRequestHeaders> impl
 	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
 	 */
 	public final void dispose(Throwable cause) {
-		if(cause != null) {
-			this.dataSink.tryEmitError(cause);
-		}
-		else {
-			this.dataSink.tryEmitComplete();
-		}
-		if(!this.subscribed) {
-			try {
-				this.data.subscribe(
-					ByteBuf::release,
-					ex -> {
-						// TODO Should be ignored but can be logged as debug or trace log
-					}
-				);
+		if(this.cancelCause == null) {
+			if(cause != null) {
+				this.cancelCause = cause;
+				this.dataSink.tryEmitError(cause);
 			}
-			catch(Throwable throwable) {
-				// this could mean data have already been subscribed OR the publisher terminated with an error 
-				// in any case data should have been released
+			else {
+				this.cancelCause = new HttpServerException("Response was disposed");
+				this.dataSink.tryEmitComplete();
+			}
+			if(!this.subscribed) {
+				try {
+					this.data.subscribe(
+						ByteBuf::release,
+						ex -> {
+							// TODO Should be ignored but can be logged as debug or trace log
+						}
+					);
+				}
+				catch(Throwable throwable) {
+					// this could mean data have already been subscribed OR the publisher terminated with an error 
+					// in any case data should have been released
+				}
 			}
 		}
 	}

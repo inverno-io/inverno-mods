@@ -173,8 +173,10 @@ public abstract class AbstractExchange<A extends Request, B extends Response, C 
 	
 	@Override
 	public final void reset(long code) {
-		this.reset = true;
-		this.doReset(code);
+		if(!this.reset) {
+			this.reset = true;
+			this.doReset(code);
+		}
 	}
 	
 	/**

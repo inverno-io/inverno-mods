@@ -159,14 +159,6 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 	}
 	
 	@Override
-	public Http1xResponseTrailers trailers() {
-		if(this.trailers == null) {
-			this.trailers = new Http1xResponseTrailers(this.headerService, this.parameterConverter, this.headersValidator);
-		}
-		return this.trailers;
-	}
-
-	@Override
 	public Http1xResponse sendContinue() {
 		this.connection.writeHttpObject(new DefaultFullHttpResponse(this.version, HttpResponseStatus.CONTINUE));
 		return this;
@@ -177,9 +169,17 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 		return this.body;
 	}
 	
+	@Override
+	public Http1xResponseTrailers trailers() {
+		if(this.trailers == null) {
+			this.trailers = new Http1xResponseTrailers(this.headerService, this.parameterConverter, this.headersValidator);
+		}
+		return this.trailers;
+	}
+	
 	/**
 	 * <p>
-	 * The response body data publisher optimized for {@link Mono} publisher that writes response objects to the connection.
+	 * The response body data publisher optimized for {@link Mono} publisher that writes a single response object to the connection.
 	 * </p>
 	 * 
 	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -223,11 +223,11 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 				}
 			}
 			
-			if(this.data != null) {
-				Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, httpStatus, Http1xResponse.this.headers.unwrap(), this.data, httpTrailers));
+			if(this.data == null) {
+				Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, httpStatus, Http1xResponse.this.headers.unwrap(), Unpooled.EMPTY_BUFFER, httpTrailers));
 			}
 			else {
-				Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, httpStatus, Http1xResponse.this.headers.unwrap(), Unpooled.EMPTY_BUFFER, httpTrailers));
+				Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, httpStatus, Http1xResponse.this.headers.unwrap(), this.data, httpTrailers));
 			}
 			Http1xResponse.this.headers.setWritten();
 			if(Http1xResponse.this.trailers != null) {
@@ -271,7 +271,6 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 			else {
 				if(!Http1xResponse.this.headers.contains((CharSequence)Headers.NAME_CONTENT_LENGTH)) {
 					List<String> transferEncodings = Http1xResponse.this.headers.getAll((CharSequence)Headers.NAME_TRANSFER_ENCODING);
-					
 					if(!this.many && (transferEncodings.isEmpty() || !transferEncodings.getLast().endsWith(Headers.VALUE_CHUNKED))) {
 						Http1xResponse.this.headers.set((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + Http1xResponse.this.transferedLength);
 					}
@@ -324,11 +323,11 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 						ByteBuf chunked_header = Unpooled.copiedBuffer(Integer.toHexString(this.singleChunk.readableBytes()) + "\r\n", Charsets.orDefault(this.getCharset()));
 						ByteBuf chunked_trailer = Unpooled.copiedBuffer("\r\n", Charsets.orDefault(this.getCharset()));
 						Http1xResponse.this.connection.writeHttpObject(new FlatHttpResponse(Http1xResponse.this.version, this.httpStatus, Http1xResponse.this.headers.unwrap(), Unpooled.wrappedBuffer(chunked_header, this.singleChunk, chunked_trailer)));
-						this.singleChunk = null;
 					}
 					else {
 						Http1xResponse.this.connection.writeHttpObject(new FlatHttpResponse(Http1xResponse.this.version, this.httpStatus, Http1xResponse.this.headers.unwrap(), this.singleChunk));
 					}
+					this.singleChunk = null;
 					Http1xResponse.this.headers.setWritten();
 				}
 				
@@ -356,12 +355,12 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 			}
 			else {
 				this.sanitizeResponse();
-				if(this.singleChunk != null) {
-					Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, this.httpStatus, Http1xResponse.this.headers.unwrap(), this.singleChunk, this.httpTrailers));
-					this.singleChunk = null;
+				if(this.singleChunk == null) {
+					Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, this.httpStatus, Http1xResponse.this.headers.unwrap(), Unpooled.EMPTY_BUFFER, this.httpTrailers));
 				}
 				else {
-					Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, this.httpStatus, Http1xResponse.this.headers.unwrap(), Unpooled.EMPTY_BUFFER, this.httpTrailers));
+					Http1xResponse.this.connection.writeHttpObject(new FlatFullHttpResponse(Http1xResponse.this.version, this.httpStatus, Http1xResponse.this.headers.unwrap(), this.singleChunk, this.httpTrailers));
+					this.singleChunk = null;
 				}
 				Http1xResponse.this.headers.setWritten();
 				if(Http1xResponse.this.trailers != null) {
