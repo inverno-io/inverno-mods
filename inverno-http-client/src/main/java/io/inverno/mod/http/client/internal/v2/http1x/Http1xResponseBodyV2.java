@@ -85,14 +85,6 @@ class Http1xResponseBodyV2 implements ResponseBody {
 	 */
 	public final void dispose(Throwable cause) {
 		if(this.cancelCause == null) {
-			if(cause != null) {
-				this.cancelCause = cause;
-				this.dataSink.tryEmitError(cause);
-			}
-			else {
-				this.cancelCause = new HttpClientException("Response was disposed");
-				this.dataSink.tryEmitComplete();
-			}
 			if(!this.subscribed) {
 				try {
 					this.dataSink.asFlux().subscribe(
@@ -106,6 +98,14 @@ class Http1xResponseBodyV2 implements ResponseBody {
 					// this could mean data have already been subscribed OR the publisher terminated with an error 
 					// in any case data should have been released
 				}
+			}
+			if(cause != null) {
+				this.dataSink.tryEmitError(cause);
+				this.cancelCause = cause;
+			}
+			else {
+				this.dataSink.tryEmitComplete();
+				this.cancelCause = new HttpClientException("Response was disposed");
 			}
 		}
 	}
