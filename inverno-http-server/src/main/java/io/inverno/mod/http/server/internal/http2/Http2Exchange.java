@@ -66,7 +66,7 @@ class Http2Exchange extends AbstractHttp2Exchange {
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 * @param connectionStream      the connection stream
-	 * @param headers               the originating Http headers
+	 * @param headers               the originating headers
 	 */
 	public Http2Exchange(
 			HttpServerConfiguration configuration, 

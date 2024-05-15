@@ -1,12 +1,12 @@
 /*
- * Copyright 2022 Jeremy Kuhn
- *
+ * Copyright 2022 Jeremy KUHN
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,8 @@ import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
-import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.inverno.mod.http.client.internal.GenericResponseCookies;
+import io.netty.handler.codec.http.HttpHeaders;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,29 +44,30 @@ class Http1xResponseHeaders implements InboundResponseHeaders {
 	
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
-	private final LinkedHttpHeaders headers;
-	private final int statusCode;
 	
+	private final HttpHeaders underlyingHeaders;
+	private InboundSetCookies responseCookies;
+	
+	private final int statusCode;
 	private Status status;
-	private GenericResponseCookies cookies;
 
 	/**
 	 * <p>
 	 * Creates HTTP/1.x response headers.
 	 * </p>
 	 * 
+	 * @param headers            the underlying HTTP headers
+	 * @param statusCode         the response status code
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
-	 * @param headers            the originating Http headers
-	 * @param statusCode         the response status code
 	 */
-	public Http1xResponseHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, LinkedHttpHeaders headers, int statusCode) {
+	public Http1xResponseHeaders(HttpHeaders headers, int statusCode, HeaderService headerService, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
-		this.headers = headers;
+		this.underlyingHeaders = headers;
 		this.statusCode = statusCode;
 	}
-
+	
 	@Override
 	public Status getStatus() throws IllegalArgumentException {
 		if(this.status == null) {
@@ -79,10 +80,10 @@ class Http1xResponseHeaders implements InboundResponseHeaders {
 	public int getStatusCode() {
 		return this.statusCode;
 	}
-
+	
 	@Override
 	public String getContentType() {
-		return this.headers.get((CharSequence)Headers.NAME_CONTENT_TYPE);
+		return this.underlyingHeaders.get((CharSequence)Headers.NAME_CONTENT_TYPE);
 	}
 
 	@Override
@@ -92,45 +93,61 @@ class Http1xResponseHeaders implements InboundResponseHeaders {
 
 	@Override
 	public Long getContentLength() {
-		return this.headers.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
+		String contentLength = this.underlyingHeaders.get((CharSequence)Headers.NAME_CONTENT_LENGTH);
+		return contentLength != null ? Long.valueOf(contentLength) : null;
 	}
 
 	@Override
 	public InboundSetCookies cookies() {
-		if(this.cookies == null) {
-			this.cookies = new GenericResponseCookies(this, this.parameterConverter);
+		if(this.responseCookies == null) {
+			this.responseCookies = new GenericResponseCookies(this, this.parameterConverter);
 		}
-		return this.cookies;
+		return this.responseCookies;
 	}
-
+	
 	@Override
 	public boolean contains(CharSequence name) {
-		return this.headers.contains(name);
+		return this.underlyingHeaders.contains(name);
 	}
-
+	
 	@Override
 	public boolean contains(CharSequence name, CharSequence value) {
-		return this.headers.contains(name, value, true);
+		return this.underlyingHeaders.contains(name, value, true);
 	}
-
+	
 	@Override
 	public Set<String> getNames() {
-		return this.headers.names();
+		return this.underlyingHeaders.names();
 	}
 
 	@Override
 	public Optional<String> get(CharSequence name) {
-		return Optional.ofNullable(this.headers.get(name));
+		return Optional.ofNullable(this.underlyingHeaders.get(name));
 	}
-
+	
 	@Override
 	public List<String> getAll(CharSequence name) {
-		return this.headers.getAll(name);
+		return this.underlyingHeaders.getAll(name);
+	}
+	
+	@Override
+	public List<Map.Entry<String, String>> getAll() {
+		return this.underlyingHeaders.entries();
+	}
+	
+	@Override
+	public <T extends Header> Optional<T> getHeader(CharSequence name) {
+		return this.get(name).map(value -> this.headerService.decode(name.toString(), value));
 	}
 
 	@Override
-	public List<Map.Entry<String, String>> getAll() {
-		return this.headers.entries();
+	public <T extends Header> List<T> getAllHeader(CharSequence name) {
+		return this.underlyingHeaders.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value)).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<Header> getAllHeader() {
+		return this.underlyingHeaders.entries().stream().map(e -> this.headerService.<Header>decode(e.getKey(), e.getValue())).collect(Collectors.toList());
 	}
 	
 	@Override
@@ -140,26 +157,11 @@ class Http1xResponseHeaders implements InboundResponseHeaders {
 	
 	@Override
 	public List<Parameter> getAllParameter(CharSequence name) {
-		return this.headers.getAll(name).stream().map(value -> new GenericParameter(name.toString(), value, this.parameterConverter)).collect(Collectors.toList());
+		return this.underlyingHeaders.getAll(name).stream().map(value -> new GenericParameter(name.toString(), value, this.parameterConverter)).collect(Collectors.toList());
 	}
 	
 	@Override
 	public List<Parameter> getAllParameter() {
-		return this.headers.entries().stream().map(e -> new GenericParameter(e.getKey(), e.getValue(), this.parameterConverter)).collect(Collectors.toList());
-	}
-
-	@Override
-	public <T extends Header> Optional<T> getHeader(CharSequence name) {
-		return this.get(name).map(value -> this.headerService.<T>decode(name.toString(), value));
-	}
-
-	@Override
-	public <T extends Header> List<T> getAllHeader(CharSequence name) {
-		return this.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value)).collect(Collectors.toList());
-	}
-
-	@Override
-	public List<Header> getAllHeader() {
-		return this.getAll().stream().map(e -> this.headerService.<Header>decode(e.getKey(), e.getValue())).collect(Collectors.toList());
+		return this.underlyingHeaders.entries().stream().map(e -> new GenericParameter(e.getKey(), e.getValue(), this.parameterConverter)).collect(Collectors.toList());
 	}
 }

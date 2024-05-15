@@ -25,6 +25,7 @@ import io.inverno.mod.http.base.ws.WebSocketStatus;
 import io.inverno.mod.http.client.internal.HttpConnectionRequest;
 import io.inverno.mod.http.client.internal.WebSocketConnectionExchange;
 import io.inverno.mod.http.client.ws.WebSocketExchange;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -42,6 +43,7 @@ import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscription;
 import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.core.publisher.MonoSink;
 import reactor.core.publisher.Sinks;
 
@@ -83,6 +85,8 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	private boolean outboundFramesSet;
 	private boolean inboundSubscribed;
 	
+	private Mono<Void> finalizer;
+	
 	private boolean inClosed;
 	private boolean outClosed;
 	private ScheduledFuture<?> inboundCloseMessageTimeoutFuture;
@@ -96,7 +100,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	 * @param exchangeSink             the WebSocket exchange sink
 	 * @param handshaker               the WebSocket handshaker
 	 * @param exchangeContext          the exchange context
-	 * @param request                  the originating Http request
+	 * @param request                  the originating HTTP request
 	 * @param subProtocol              the subprotocol
 	 * @param frameFactory             the WebSocket frame factory
 	 * @param messageFactory           the WebSocket message factory
@@ -316,6 +320,25 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	
 	/**
 	 * <p>
+	 * Finalizes the exchange by completing the inbound sink (if present) and by subscribing to the finalizer (if present). 
+	 * </p>
+	 * 
+	 * @param finalPromise a promise that completes with the final exchange operation 
+	 * 
+	 * @return the promise
+	 */
+	public ChannelFuture finalizeExchange(ChannelPromise finalPromise) {
+		finalPromise.addListener(future -> {
+			this.inboundFrames.ifPresent(Sinks.Many::tryEmitComplete);
+			if(this.finalizer != null) {
+				this.finalizer.subscribe();
+			}
+		});
+		return finalPromise;
+	}
+	
+	/**
+	 * <p>
 	 * Sets the outboind frame publisher.
 	 * </p>
 	 * 
@@ -398,6 +421,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 								ChannelPromise closePromise = this.context.newPromise();
 								this.context.close(closePromise);
 								closePromise.addListener(ign -> LOGGER.debug("WebSocket closed ({}): {}", code, reason));
+								this.finalizeExchange(closePromise);
 							},
 							this.inboundCloseFrameTimeout, 
 							TimeUnit.MILLISECONDS
@@ -437,6 +461,13 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 		ChannelPromise closePromise = this.context.newPromise();
 		this.context.close(closePromise);
 		closePromise.addListener(ign -> LOGGER.debug("WebSocket closed ({}): {}", code, reason));
+		this.finalizeExchange(closePromise);
+	}
+	
+	@Override
+	public WebSocketExchange<ExchangeContext> finalizer(Mono<Void> finalizer) {
+		this.finalizer = finalizer;
+		return this;
 	}
 	
 	/**

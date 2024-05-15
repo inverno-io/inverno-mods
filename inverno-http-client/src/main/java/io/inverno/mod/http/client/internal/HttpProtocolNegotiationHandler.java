@@ -74,10 +74,10 @@ public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiati
 	protected void configurePipeline(ChannelHandlerContext ctx, String protocol) throws Exception {
 		ChannelPipeline pipeline = ctx.pipeline();
 		if(ApplicationProtocolNames.HTTP_2.equals(protocol) && this.supportedProtocols.contains(HttpVersion.HTTP_2_0)) {
-			this.channelConfigurer.configureHttp2(pipeline, this.configuration);
+			this.channelConfigurer.configureHttp2V2(pipeline, this.configuration);
         }
 		else if(ApplicationProtocolNames.HTTP_1_1.equals(protocol) && this.supportedProtocols.contains(HttpVersion.HTTP_1_1)) {
-			this.channelConfigurer.configureHttp1x(pipeline, HttpVersion.HTTP_1_1, this.configuration);
+			this.channelConfigurer.configureHttp1xV2(pipeline, HttpVersion.HTTP_1_1, this.configuration);
         }
 		else {
 			throw new EndpointConnectException("Unsupported protocol: " + protocol);

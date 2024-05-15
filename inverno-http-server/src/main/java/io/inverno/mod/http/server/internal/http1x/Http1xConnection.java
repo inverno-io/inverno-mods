@@ -735,7 +735,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	
 	/**
 	 * <p>
-	 * Callback method invoked when the processing of the current responding exchange completes.
+	 * Callback method that must be invoked when the processing of the current responding exchange completes.
 	 * </p>
 	 * 
 	 * <p>
@@ -772,7 +772,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	
 	/**
 	 * <p>
-	 * Callback method invoked when an error is raised during the processing of the current responding exchange.
+	 * Callback method that must be invoked when an error is raised during the processing of the current responding exchange.
 	 * </p>
 	 * 
 	 * <p>

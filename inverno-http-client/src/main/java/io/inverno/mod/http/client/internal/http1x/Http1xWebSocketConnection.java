@@ -43,11 +43,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.ssl.SslHandler;
-import java.net.SocketAddress;
 import java.net.URI;
-import java.security.cert.Certificate;
-import java.util.Optional;
-import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
@@ -76,7 +72,7 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	private final long inboundCloseFrameTimeout;
 	private final HeadersValidator headersValidator;
 	
-	private ChannelHandlerContext channelContext;
+	private ChannelHandlerContext context;
 	private boolean tls;
 	
 	private Mono<Void> close;
@@ -112,37 +108,6 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 		return this.tls;
 	}
 	
-	//	@Override
-	public SocketAddress getLocalAddress() {
-		return this.channelContext.channel().localAddress();
-	}
-
-//	@Override
-	public Optional<Certificate[]> getLocalCertificates() {
-		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
-			.map(handler -> handler.engine().getSession().getLocalCertificates())
-			.filter(certificates -> certificates.length > 0);
-	}
-
-//	@Override
-	public SocketAddress getRemoteAddress() {
-		return this.channelContext.channel().remoteAddress();
-	}
-
-//	@Override
-	public Optional<Certificate[]> getRemoteCertificates() {
-		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
-			.map(handler -> {
-				try {
-					return handler.engine().getSession().getPeerCertificates();
-				} 
-				catch(SSLPeerUnverifiedException e) {
-					return null;
-				}
-			})
-			.filter(certificates -> certificates.length > 0);
-	}
-	
 	@Override
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
 		this.tls = ctx.pipeline().get(SslHandler.class) != null;
@@ -167,7 +132,7 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 			}
 		})
 		.subscribeOn(Schedulers.fromExecutor(ctx.executor()));
-		this.channelContext = ctx;
+		this.context = ctx;
 	}
 
 	@Override
@@ -188,13 +153,13 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	@Override
 	public <A extends ExchangeContext> Mono<WebSocketConnectionExchange<A>> handshake(EndpointExchange<A> endpointExchange, String subprotocol) {
 		return Mono.<WebSocketConnectionExchange<ExchangeContext>>create(exchangeSink -> {
-			EventLoop eventLoop = this.channelContext.channel().eventLoop();
+			EventLoop eventLoop = this.context.channel().eventLoop();
 			if(eventLoop.inEventLoop()) {
-				this.sendHandshake(this.channelContext, exchangeSink, endpointExchange, subprotocol);
+				this.sendHandshake(this.context, exchangeSink, endpointExchange, subprotocol);
 			}
 			else {
 				eventLoop.submit(() -> {
-					this.sendHandshake(this.channelContext, exchangeSink, endpointExchange, subprotocol);
+					this.sendHandshake(this.context, exchangeSink, endpointExchange, subprotocol);
 				});
 			}
 		})
@@ -220,23 +185,22 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 			throw new IllegalStateException("Handshake already sent");
 		}
 		
-		endpointExchange.request().getHeaders().getUnderlyingHeaders().setValidator(this.headersValidator);
-		Http1xWebSocketRequest http1xWebSocketRequest = new Http1xWebSocketRequest(this.parameterConverter, this, endpointExchange.request());
+		Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, false, this.parameterConverter, endpointExchange.request(), this.headersValidator);
 		
-		URI webSocketURI = URI.create((this.tls ? "wss:// ": "ws://") + http1xWebSocketRequest.getAuthority() + http1xWebSocketRequest.getPath());
+		URI webSocketURI = URI.create((this.tls ? "wss:// ": "ws://") + http1xRequest.getAuthority() + http1xRequest.getPath());
 		WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(
 			webSocketURI, 
 			WebSocketVersion.V13, 
 			subprotocol, 
 			true, 
-			http1xWebSocketRequest.headers().unwrap());
+			http1xRequest.headers().getUnderlyingHeaders());
 		
 		this.webSocketExchange = new GenericWebSocketExchange(
 			context, 
 			exchangeSink, 
 			handshaker, 
 			endpointExchange.context(), 
-			http1xWebSocketRequest, 
+			http1xRequest, 
 			subprotocol, 
 			this.frameFactory, 
 			this.messageFactory, 
@@ -264,8 +228,9 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 			else {
 				LOGGER.error("WebSocket procotol error", cause);
 				this.webSocketExchange.dispose(cause);
-				ChannelPromise closePromise = this.channelContext.newPromise();
-				this.channelContext.close(closePromise);
+				ChannelPromise closePromise = this.context.newPromise();
+				this.context.close(closePromise);
+				this.webSocketExchange.finalizeExchange(closePromise);
 			}
 		}
 	}

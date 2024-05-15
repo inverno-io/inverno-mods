@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.client.internal.http2;
+package io.inverno.mod.http.client.internal.v2.http2;
 
 import io.inverno.mod.http.client.HttpClientException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import io.netty.handler.codec.http2.Http2Connection;
 import io.netty.handler.codec.http2.Http2Error;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Flags;
@@ -32,78 +33,36 @@ import java.util.Optional;
 
 /**
  * <p>
- * An Http/2 connection stream.
- * </p>
  * 
- * <p>
- * This is used as a proxy between the exchange and the connection and abstracts the stream to the exchange.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.11
+ * @since 1.9
  */
-public class Http2ConnectionStream {
+public class Http2ConnectionStreamV2 {
 	
-	private final Http2Connection connection;
+	private final Http2ConnectionV2 connection;
 	private final ChannelHandlerContext channelContext;
-	private final io.netty.handler.codec.http2.Http2Connection.Endpoint<Http2LocalFlowController> localEndpoint;
+	private final Http2Connection.Endpoint<Http2LocalFlowController> localEndpoint;
 	
 	private Http2Stream stream;
 	
 	/**
 	 * The exchange associated to the stream which can be replaced by an {@link Http2ErrorExchange} in case of error while processing the exchange.
 	 */
-	AbstractHttp2Exchange<?, ?> exchange;
+	AbstractHttp2ExchangeV2<?, ?> exchange;
 
-	/**
-	 * <p>
-	 * Creates an Http/2 connection stream that delays the creation of the stream.
-	 * </p>
-	 * 
-	 * <p>
-	 * The stream is created when the first write operation is invoked, this prevents situation when a stream with id {@code x} is used before stream with id {@code y} where {@code x > y} which would
-	 * lead to server errors.
-	 * </p>
-	 * 
-	 * @param connection     the Http/2 connection
-	 * @param channelContext the channel handler context
-	 * @param localEndpoint  the local endpoint
-	 */
-	public Http2ConnectionStream(Http2Connection connection, ChannelHandlerContext channelContext, io.netty.handler.codec.http2.Http2Connection.Endpoint<Http2LocalFlowController> localEndpoint) {
+	public Http2ConnectionStreamV2(Http2ConnectionV2 connection, ChannelHandlerContext channelContext, Http2Connection.Endpoint<Http2LocalFlowController> localEndpoint) {
 		this.connection = connection;
 		this.channelContext = channelContext;
 		this.localEndpoint = localEndpoint;
 	}
 	
-	/**
-	 * <p>
-	 * Creates an Http/2 connection stream wrapping the specified stream.
-	 * </p>
-	 * 
-	 * <p>
-	 * This is used when a stream is already available, typically when upgrading an Http/1.1 connection to Http/2.
-	 * </p>
-	 * 
-	 * @param connection     the Http/2 connection
-	 * @param channelContext the channel handler context
-	 * @param stream         the Http/2 stream
-	 */
-	public Http2ConnectionStream(Http2Connection connection, ChannelHandlerContext channelContext, Http2Stream stream) {
+	public Http2ConnectionStreamV2(Http2ConnectionV2 connection, ChannelHandlerContext channelContext, Http2Stream stream) {
 		this.connection = connection;
 		this.channelContext = channelContext;
 		this.localEndpoint = null;
 		this.stream = stream;
-	}
-	
-	/**
-	 * <p>
-	 * Returns the Http/2 stream.
-	 * </p>
-	 * 
-	 * @return the stream or null
-	 */
-	Http2Stream getStream() {
-		return this.stream;
 	}
 	
 	/**
@@ -118,7 +77,7 @@ public class Http2ConnectionStream {
 	 * 
 	 * @return the exchange stream or the newly created stream
 	 */
-	private Http2Stream getOrCreateStream() {
+	Http2Stream getOrCreateStream() {
 		if(this.stream == null) {
 			// Create the stream
 			try {
@@ -596,7 +555,7 @@ public class Http2ConnectionStream {
 	
 	/**
 	 * <p>
-	 * Flushes the channel when it can be flushed.
+	 * Flushed the channel when it can be flushed.
 	 * </p>
 	 */
 	private void flush() {
@@ -605,17 +564,6 @@ public class Http2ConnectionStream {
 		}
 	}
 	
-	/**
-	 * <p>
-	 * Callback method invoked when an error is raised while sending the exchange request to the server.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method executes on the connection event loop, it disposes the exchange and reset the stream with code {@code INTERNAL_ERROR(2)}.
-	 * </p>
-	 * 
-	 * @param throwable the error
-	 */
 	public void onRequestError(Throwable throwable) {
 		if(this.channelContext.executor().inEventLoop()) {
 			// dispose + reset
@@ -627,15 +575,6 @@ public class Http2ConnectionStream {
 		}
 	}
 	
-	/**
-	 * <p>
-	 * Callback method invoked when the exchange response has been fully received.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method executes on the connection event loop, it disposes the exchange.
-	 * </p>
-	 */
 	public void onResponseComplete() {
 		if(this.channelContext.executor().inEventLoop()) {
 			this.exchange.dispose(null);

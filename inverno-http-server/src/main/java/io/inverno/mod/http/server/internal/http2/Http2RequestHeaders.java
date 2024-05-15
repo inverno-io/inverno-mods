@@ -50,7 +50,7 @@ class Http2RequestHeaders extends AbstractRequestHeaders {
 	 *
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
-	 * @param headers            the originating Http headers
+	 * @param headers            the originating headers
 	 */
 	public Http2RequestHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, Http2Headers headers) {
 		super(headerService, parameterConverter);
@@ -59,7 +59,7 @@ class Http2RequestHeaders extends AbstractRequestHeaders {
 	
 	/**
 	 * <p>
-	 * Returns the originating Http headers.
+	 * Returns the originating headers.
 	 * </p>
 	 * 
 	 * @return the wrapped headers

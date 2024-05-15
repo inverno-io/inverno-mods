@@ -195,6 +195,17 @@ public interface BaseWebSocketExchange<A extends ExchangeContext> {
 	
 	/**
 	 * <p>
+	 * Specifies a finalizer to the WebSocket exchange which completes once the exchange is closed.
+	 * </p>
+	 * 
+	 * @param finalizer a finalizer
+	 * 
+	 * @return the WebSocket exchange
+	 */
+	BaseWebSocketExchange<A> finalizer(Mono<Void> finalizer);
+	
+	/**
+	 * <p>
 	 * Represents the inbound part of a WebSocket exchange.
 	 * </p>
 	 * 

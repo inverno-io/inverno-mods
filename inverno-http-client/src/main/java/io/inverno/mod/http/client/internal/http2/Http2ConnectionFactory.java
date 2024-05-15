@@ -1,12 +1,12 @@
 /*
- * Copyright 2022 Jeremy Kuhn
- *
+ * Copyright 2022 Jeremy KUHN
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,20 +43,32 @@ public class Http2ConnectionFactory implements HttpConnectionFactory<Http2Connec
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
+	
 	private final CompressionOptionsProvider compressionOptionsProvider;
-
-	public Http2ConnectionFactory(HeaderService headerService, ObjectConverter<String> parameterConverter, CompressionOptionsProvider compressionOptionsProvider) {
+	
+	/**
+	 * <p>
+	 * Creates an HTTP/2 connection factory.
+	 * </p>
+	 * 
+	 * @param compressionOptionsProvider the compression option provider
+	 * @param headerService              the header service
+	 * @param parameterConverter         the parameter converter
+	 */
+	public Http2ConnectionFactory(
+			CompressionOptionsProvider compressionOptionsProvider,
+			HeaderService headerService, 
+			ObjectConverter<String> parameterConverter) {
+		this.compressionOptionsProvider = compressionOptionsProvider;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
-		this.compressionOptionsProvider = compressionOptionsProvider;
 	}
-	
-	
+
 	@Override
 	public Http2Connection create(HttpClientConfiguration configuration, HttpVersion httpVersion, EndpointChannelConfigurer configurer) {
 		return new Http2ConnectionFactory.Http2ChannelHandlerBuilder(configuration).build();
 	}
-
+	
 	/**
 	 * <p>
 	 * HTTP/2 channel handler builder.
@@ -103,10 +115,10 @@ public class Http2ConnectionFactory implements HttpConnectionFactory<Http2Connec
 			}
 			
 			Http2Connection connection = new Http2Connection(
+				this.configuration, 
 				decoder, 
 				encoder, 
 				initialSettings, 
-				this.configuration, 
 				Http2ConnectionFactory.this.headerService,
 				Http2ConnectionFactory.this.parameterConverter
 			);

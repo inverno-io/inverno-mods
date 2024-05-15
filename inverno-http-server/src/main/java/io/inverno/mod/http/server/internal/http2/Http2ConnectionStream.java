@@ -56,7 +56,7 @@ class Http2ConnectionStream {
 	 *
 	 * @param connection     the Http/2 connection
 	 * @param channelContext the channel handler context
-	 * @param stream         the Http/2 stream
+	 * @param stream         the originating stream
 	 */
 	public Http2ConnectionStream(Http2Connection connection, ChannelHandlerContext channelContext, Http2Stream stream) {
 		this.connection = connection;
@@ -508,7 +508,7 @@ class Http2ConnectionStream {
 	
 	/**
 	 * <p>
-	 * Flushes the channel when it can be flushed.
+	 * Flushed the channel when it can be flushed.
 	 * </p>
 	 */
 	private void flush() {
@@ -519,7 +519,7 @@ class Http2ConnectionStream {
 	
 	/**
 	 * <p>
-	 * Callback method invoked when the processing of the current responding exchange completes.
+	 * Callback method that must be invoked when the processing of the current responding exchange completes.
 	 * </p>
 	 */
 	public void onExchangeComplete() {
@@ -534,7 +534,7 @@ class Http2ConnectionStream {
 	
 	/**
 	 * <p>
-	 * Callback method invoked when an error is raised during the processing of the current responding exchange.
+	 * Callback method that must be invoked when an error is raised during the processing of the current responding exchange.
 	 * </p>
 	 * 
 	 * <p>

@@ -57,7 +57,7 @@ public abstract class AbstractResponseTrailers<A extends AbstractResponseTrailer
 	
 	/**
 	 * <p>
-	 * Flags the trailers to have been written.
+	 * Flags the headers to have been written.
 	 * </p>
 	 */
 	public final void setWritten() {

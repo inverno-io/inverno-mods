@@ -43,6 +43,9 @@ public interface Web2SocketExchange<A extends ExchangeContext> extends WebSocket
 	public WebRequest request();
 
 	@Override
+	Web2SocketExchange<A> finalizer(Mono<Void> finalizer);
+
+	@Override
 	public Web2SocketExchange.Inbound inbound();
 
 	@Override

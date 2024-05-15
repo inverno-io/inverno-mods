@@ -49,6 +49,7 @@ public abstract class AbstractRequest implements HttpConnectionRequest {
 	private final String path;
 	private final URIBuilder primaryPathBuilder;
 	protected final HttpConnectionRequestHeaders requestHeaders;
+	protected final HttpConnectionRequestBody requestBody;
 	
 	private String scheme;
 	private String authority;
@@ -66,12 +67,14 @@ public abstract class AbstractRequest implements HttpConnectionRequest {
 	 * @param parameterConverter the parameter converter
 	 * @param endpointRequest    the original endpoint request
 	 * @param requestHeaders     the request headers
+	 * @param requestBody        the request body
 	 */
 	protected AbstractRequest(ChannelHandlerContext context, 
 			boolean tls, 
 			ObjectConverter<String> parameterConverter,
 			EndpointRequest endpointRequest,
-			HttpConnectionRequestHeaders requestHeaders) {
+			HttpConnectionRequestHeaders requestHeaders,
+			HttpConnectionRequestBody requestBody) {
 		this.context = context;
 		this.tls = tls;
 		this.parameterConverter = parameterConverter;
@@ -79,6 +82,7 @@ public abstract class AbstractRequest implements HttpConnectionRequest {
 		this.path = endpointRequest.getPath();
 		this.primaryPathBuilder = endpointRequest.getPathBuilder();
 		this.requestHeaders = requestHeaders;
+		this.requestBody = requestBody;
 		this.authority = endpointRequest.getAuthority();
 	}
 
@@ -190,5 +194,10 @@ public abstract class AbstractRequest implements HttpConnectionRequest {
 			this.queryParameters = new GenericQueryParameters(this.primaryPathBuilder.getQueryParameters(), this.parameterConverter);
 		}
 		return this.queryParameters;
+	}
+	
+	@Override
+	public HttpConnectionRequestBody body() {
+		return this.requestBody;
 	}
 }
