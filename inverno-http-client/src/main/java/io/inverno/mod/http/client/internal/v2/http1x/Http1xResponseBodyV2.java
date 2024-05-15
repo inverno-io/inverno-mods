@@ -48,11 +48,11 @@ class Http1xResponseBodyV2 implements ResponseBody {
 	public Http1xResponseBodyV2() {
 		this.dataSink = Sinks.many().unicast().onBackpressureBuffer();
 		this.data = Flux.defer(() -> {
+			this.subscribed = true;
 			if(this.cancelCause != null) {
 				return Mono.error(this.cancelCause);
 			}
 			return this.dataSink.asFlux()
-				.doOnSubscribe(ign -> this.subscribed = true)
 				.doOnDiscard(ByteBuf.class, ByteBuf::release);
 		});
 	}
