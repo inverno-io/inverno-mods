@@ -27,7 +27,6 @@ import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
 import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
@@ -78,8 +77,6 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	private boolean started;
 	private boolean outboundFramesSet;
 	private boolean inboundSubscribed;
-	
-	private Mono<Void> finalizer;
 	
 	private boolean inClosed;
 	private boolean outClosed;
@@ -324,25 +321,6 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 		this.outboundFramesSet = true;
 	}
 	
-	/**
-	 * <p>
-	 * Finalizes the exchange by completing the inbound sink (if present) and by subscribing to the finalizer (if present). 
-	 * </p>
-	 * 
-	 * @param finalPromise a promise that completes with the final exchange operation 
-	 * 
-	 * @return the promise
-	 */
-	public ChannelFuture finalizeExchange(ChannelPromise finalPromise) {
-		finalPromise.addListener(future -> {
-			this.inboundFrames.ifPresent(Sinks.Many::tryEmitComplete);
-			if(this.finalizer != null) {
-				this.finalizer.subscribe();
-			}
-		});
-		return finalPromise;
-	}
-
 	@Override
 	public Request request() {
 		return this.exchange.request();
@@ -406,7 +384,6 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 								ChannelPromise closePromise = this.context.newPromise();
 								this.context.close(closePromise);
 								closePromise.addListener(ign -> LOGGER.debug("WebSocket closed ({}): {}", code, reason));
-								this.finalizeExchange(closePromise);
 							},
 							this.inboundCloseFrameTimeout, 
 							TimeUnit.MILLISECONDS
@@ -446,13 +423,6 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 		ChannelPromise closePromise = this.context.newPromise();
 		this.context.close(closePromise);
 		closePromise.addListener(ign -> LOGGER.debug("WebSocket closed ({}): {}", code, reason));
-		this.finalizeExchange(closePromise);
-	}
-
-	@Override
-	public WebSocketExchange<ExchangeContext> finalizer(Mono<Void> finalizer) {
-		this.finalizer = finalizer;
-		return this;
 	}
 	
 	/**

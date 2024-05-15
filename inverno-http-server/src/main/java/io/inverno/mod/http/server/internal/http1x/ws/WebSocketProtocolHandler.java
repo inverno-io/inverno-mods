@@ -158,7 +158,6 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 				this.webSocketExchange.dispose(cause);
 				ChannelPromise closePromise = ctx.newPromise();
 				ctx.close(closePromise);
-				this.webSocketExchange.finalizeExchange(closePromise);
 			}
 		}
 		

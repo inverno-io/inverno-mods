@@ -16,7 +16,8 @@
 package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.mod.http.client.internal.EndpointRequestBody;
-import io.inverno.mod.http.client.internal.HttpConnectionRequestBody;
+import io.netty.buffer.ByteBuf;
+import org.reactivestreams.Publisher;
 
 /**
  * <p>
@@ -26,9 +27,33 @@ import io.inverno.mod.http.client.internal.HttpConnectionRequestBody;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.8
  */
-public class Http2RequestBody extends HttpConnectionRequestBody {
+public class Http2RequestBody {
+	
+	private final Publisher<ByteBuf> data;
 
+	/**
+	 * <p>
+	 * Creates an Http/2 request body.
+	 * </p>
+	 * 
+	 * @param endpointRequestBody the original endpoint request body
+	 */
 	public Http2RequestBody(EndpointRequestBody endpointRequestBody) {
-		super(endpointRequestBody.getData());
+		this.data = endpointRequestBody.getData();
+	}
+
+	/**
+	 * <p>
+	 * Returns the response body data publisher.
+	 * </p>
+	 * 
+	 * <p>
+	 * The data publisher MUST be subscribed to produce a request body.
+	 * </p>
+	 * 
+	 * @return the response body data publisher
+	 */
+	public Publisher<ByteBuf> getData() {
+		return data;
 	}
 }

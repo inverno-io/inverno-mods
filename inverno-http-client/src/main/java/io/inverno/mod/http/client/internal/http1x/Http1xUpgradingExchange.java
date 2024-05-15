@@ -1,12 +1,12 @@
 /*
- * Copyright 2022 Jeremy KUHN
- * 
+ * Copyright 2022 Jeremy Kuhn
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,22 +16,23 @@
 package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.base.Charsets;
+import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.HttpVersion;
+import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.client.Exchange;
+import io.inverno.mod.http.client.HttpClientConfiguration;
+import io.inverno.mod.http.client.internal.EndpointRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionExchange;
 import io.inverno.mod.http.client.internal.HttpConnectionRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionResponse;
 import io.inverno.mod.http.client.internal.http2.Http2Connection;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.base64.Base64;
 import io.netty.handler.codec.http2.Http2CodecUtil;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.collection.CharObjectMap;
-import reactor.core.publisher.MonoSink;
+import reactor.core.publisher.Sinks;
 
 /**
  * <p>
@@ -41,86 +42,34 @@ import reactor.core.publisher.MonoSink;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-public class Http1xUpgradingExchange extends Http1xExchange {
+public class Http1xUpgradingExchange<A extends ExchangeContext> extends Http1xExchange<A> {
 
-	private final MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> upgradedExchangeSink;
+	private final Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> upgradedSink;
 	private Http2Connection upgradedConnection;
 	
 	/**
 	 * <p>
 	 * Creates an HTTP/1.x upgrading exchange.
 	 * </p>
-	 * 
-	 * @param context                 the channel context
-	 * @param exchangeSink            the upgraded exchange sink
-	 * @param exchangeContext         the exchange context
-	 * @param protocol                the HTTP/1.x protocol version
-	 * @param request                 the HTTP/1.x request
-	 * @param responseBodyTransformer the response body transformer
-	 * @param encoder                 the HTTP/1.x connection encoder
+	 *
+	 * @param configuration      the HTTP client configurartion
+	 * @param sink               the exchange sink
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param context            the exchange context
+	 * @param connection         the Http/1.x connection
+	 * @param endpointRequest    the endpoint request
 	 */
 	public Http1xUpgradingExchange(
-			ChannelHandlerContext context, 
-			MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink, 
-			ExchangeContext exchangeContext, 
-			HttpVersion protocol,
-			Http1xRequest request, 
-			Http1xConnectionEncoder encoder) {
-		super(context, null, exchangeContext, protocol, request, encoder);
-		this.upgradedExchangeSink = exchangeSink;
-	}
-	
-	/**
-	 * <p>
-	 * Initializes the H2C upgrade process.
-	 * </p>
-	 * 
-	 * @param upgradedConnection the HTTP/2 upgraded connection
-	 */
-	public void init(Http2Connection upgradedConnection) {
-		this.upgradedConnection = upgradedConnection;
-		this.request.headers().set(Headers.NAME_UPGRADE, Headers.VALUE_UPGRADE_H2C);
-		this.request.headers().set(Headers.NAME_HTTP2_SETTINGS, this.encodeSettingsHeaderValue(this.upgradedConnection.decoder().localSettings()));
-		this.request.headers().set(Headers.NAME_CONNECTION, Headers.NAME_UPGRADE + "," + Headers.NAME_HTTP2_SETTINGS);
-	}
-
-	@Override
-	public void dispose(Throwable error) {
-		this.upgradedExchangeSink.error(error);
-		super.dispose(error);
-	}
-	
-	/**
-	 * <p>
-	 * Returns the ugraded exchange sink.
-	 * </p>
-	 * 
-	 * @return the upgraded exchange sink
-	 */
-	public MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> getUpgradedExchangeSink() {
-		return this.upgradedExchangeSink;
-	}
-
-	/**
-	 * <p>
-	 * Returns the HTTP/2 upgraded connection.
-	 * </p>
-	 * 
-	 * @return the HTTP/2 uprgaded connection
-	 */
-	public Http2Connection getUpgradedConnection() {
-		return upgradedConnection;
-	}
-
-	/**
-	 * <p>
-	 * Returne the exchange's last modified.
-	 * </p>
-	 * 
-	 * @return the last modified
-	 */
-	public long getLastModified() {
-		return lastModified;
+			HttpClientConfiguration configuration, 
+			Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink,
+			HeaderService headerService, 
+			ObjectConverter parameterConverter, 
+			A context, 
+			Http1xConnection connection,
+			EndpointRequest endpointRequest) {
+		super(configuration, null, headerService, parameterConverter, context, connection, endpointRequest);
+		this.upgradedSink = sink;
 	}
 	
 	/**
@@ -138,7 +87,7 @@ public class Http1xUpgradingExchange extends Http1xExchange {
 		try {
 			// Serialize the payload of the SETTINGS frame.
 			int payloadLength = Http2CodecUtil.SETTING_ENTRY_LENGTH * settings.size();
-			buf = this.context.alloc().buffer(payloadLength);
+			buf = this.connection.alloc().buffer(payloadLength);
 			for (CharObjectMap.PrimitiveEntry<Long> entry : settings.entries()) {
 				buf.writeChar(entry.key());
 				buf.writeInt(entry.value().intValue());
@@ -153,4 +102,40 @@ public class Http1xUpgradingExchange extends Http1xExchange {
 			ReferenceCountUtil.release(encodedBuf);
 		}
     }
+	
+	/**
+	 * <p>
+	 * Initializes the H2C upgrade process.
+	 * </p>
+	 * 
+	 * @param upgradedConnection the HTTP/2 upgraded connection
+	 */
+	public void init(Http2Connection upgradedConnection) {
+		this.upgradedConnection = upgradedConnection;
+		this.request().headers().set(Headers.NAME_UPGRADE, Headers.VALUE_UPGRADE_H2C);
+		this.request().headers().set(Headers.NAME_HTTP2_SETTINGS, this.encodeSettingsHeaderValue(this.upgradedConnection.decoder().localSettings()));
+		this.request().headers().set(Headers.NAME_CONNECTION, Headers.NAME_UPGRADE + "," + Headers.NAME_HTTP2_SETTINGS);
+	}
+	
+	/**
+	 * <p>
+	 * Returns the ugraded exchange sink.
+	 * </p>
+	 * 
+	 * @return the upgraded exchange sink
+	 */
+	public Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> getUpgradedSink() {
+		return this.upgradedSink;
+	}
+
+	/**
+	 * <p>
+	 * Returns the HTTP/2 upgraded connection.
+	 * </p>
+	 * 
+	 * @return the HTTP/2 uprgaded connection
+	 */
+	public Http2Connection getUpgradedConnection() {
+		return upgradedConnection;
+	}
 }

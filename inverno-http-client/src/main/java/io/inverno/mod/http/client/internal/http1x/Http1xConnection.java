@@ -1,12 +1,12 @@
 /*
- * Copyright 2022 Jeremy KUHN
- * 
+ * Copyright 2022 Jeremy Kuhn
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,28 +20,27 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.header.HeadersValidator;
+import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.inverno.mod.http.client.ConnectionResetException;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.HttpClientException;
 import io.inverno.mod.http.client.Part;
-import io.inverno.mod.http.client.RequestTimeoutException;
-import io.inverno.mod.http.client.internal.AbstractExchange;
 import io.inverno.mod.http.client.internal.EndpointExchange;
 import io.inverno.mod.http.client.internal.HttpConnection;
 import io.inverno.mod.http.client.internal.HttpConnectionExchange;
 import io.inverno.mod.http.client.internal.HttpConnectionRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionResponse;
 import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
-import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.channel.EventLoop;
-import io.netty.handler.codec.DecoderResult;
+import io.netty.channel.FileRegion;
+import io.netty.handler.codec.http.DefaultHttpContent;
+import io.netty.handler.codec.http.DefaultHttpResponse;
 import io.netty.handler.codec.http.HttpContent;
 import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -49,11 +48,19 @@ import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.util.ReferenceCounted;
+import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.ScheduledFuture;
+import java.net.SocketAddress;
+import java.security.cert.Certificate;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.MonoSink;
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 /**
@@ -64,53 +71,52 @@ import reactor.core.scheduler.Schedulers;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-public class Http1xConnection extends ChannelDuplexHandler implements HttpConnection, Http1xConnectionEncoder, AbstractExchange.Handler<Http1xRequest, Http1xResponse, Http1xExchange> {
+public class Http1xConnection extends ChannelDuplexHandler implements HttpConnection {
 	
-//	private static final Logger LOGGER = LogManager.getLogger(Http1xConnection.class);
+	private static final Logger LOGGER = LogManager.getLogger(HttpConnection.class);
 
 	protected final HttpClientConfiguration configuration;
-	protected final HttpVersion httpVersion;
+	protected final HttpVersion protocol;
 	protected final HeaderService headerService;
 	protected final ObjectConverter<String> parameterConverter;
 	protected final MultipartEncoder<Parameter> urlEncodedBodyEncoder;
 	protected final MultipartEncoder<Part<?>> multipartBodyEncoder;
 	protected final Part.Factory partFactory;
-	protected final HeadersValidator headersValidator;
-	
-	protected ChannelHandlerContext context;
-	protected boolean tls;
-	protected boolean supportsFileRegion;
-	protected HttpConnection.Handler handler;
-	
+
+	private final io.netty.handler.codec.http.HttpVersion version;
+	private final HeadersValidator headersValidator;
 	private final Long maxConcurrentRequests;
-	private final long requestTimeout;
 	
+	protected ChannelHandlerContext channelContext;
+	private Scheduler scheduler;
+	private boolean tls;
+	private boolean supportsFileRegion;
+	protected HttpConnection.Handler handler;
+
+	private Http1xExchange<?> requestedExchange;
+	private Http1xExchange<?> requestingExchange;
+	private Http1xExchange<?> respondingExchange;
+	
+	private Throwable requestError;
 	private boolean read;
 	private boolean flush;
-
-	private Runnable gracefulShutdownNotifier;
+	
+	private Sinks.One<Void> shutdownSink;
+	private Mono<Void> shutdown;
+	
+	private Sinks.One<Void> gracefulShutdownSink;
+	private Mono<Void> gracefulShutdown;
+	private ScheduledFuture<?> gracefulShutdownTimeout;
+	private ChannelPromise gracefulShutdownClosePromise;
+	
 	private boolean closing;
 	private boolean closed;
-	
-	private ScheduledFuture<?> timeoutFuture;
-	
-	// Corresponds to the current request being responded (the tail of the queue)
-	private Http1xExchange respondingExchange;
-	
-	// The last requested exchange
-	private Http1xExchange lastRequestedExchange;
-	
-	// Corresponds to the current request being requested
-	private Http1xExchange requestingExchange;
-	
-	// New request should be chain to the head
-	private Http1xExchange exchangeQueue;
 	
 	/**
 	 * <p>
 	 * Creates an HTTP/1.x connection.
 	 * </p>
-	 *
+	 * 
 	 * @param configuration         the HTTP client configurartion
 	 * @param httpVersion           the HTTP/1.x protocol version
 	 * @param headerService         the header service
@@ -121,23 +127,75 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	 */
 	public Http1xConnection(
 			HttpClientConfiguration configuration, 
-			HttpVersion httpVersion, 
+			HttpVersion protocol, 
 			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter, 
 			MultipartEncoder<Parameter> urlEncodedBodyEncoder, 
 			MultipartEncoder<Part<?>> multipartBodyEncoder, 
-			Part.Factory partFactory) {
+			Part.Factory partFactory
+		) {
 		this.configuration = configuration;
-		this.httpVersion = httpVersion;
+		this.protocol = protocol;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyEncoder = urlEncodedBodyEncoder;
 		this.multipartBodyEncoder = multipartBodyEncoder;
 		this.partFactory = partFactory;
-		this.headersValidator = configuration.http1x_validate_headers() ? HeadersValidator.DEFAULT_HTTP1X_HEADERS_VALIDATOR : null;
 		
+		switch(protocol) {
+			case HTTP_1_0: this.version = io.netty.handler.codec.http.HttpVersion.HTTP_1_0;
+				break;
+			case HTTP_1_1: this.version = io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+				break;
+			default: throw new IllegalStateException("Invalid protocol version: " + protocol);
+		}
+		
+		this.headersValidator = configuration.http1x_validate_headers() ? HeadersValidator.DEFAULT_HTTP1X_HEADERS_VALIDATOR : null;
 		this.maxConcurrentRequests = this.configuration.http1_max_concurrent_requests();
-		this.requestTimeout = this.configuration.request_timeout();
+	}
+	
+	/**
+	 * <p>
+	 * Return the {@link ByteBufAllocator} assigned to the channel.
+	 * </p>
+	 * 
+	 * @return the ByteBuf allocator
+	 */
+	public ByteBufAllocator alloc() {
+		return this.channelContext.alloc();
+	}
+	
+	/**
+	 * <p>
+	 * Returns the event loop associated to the connection.
+	 * </p>
+	 * 
+	 * @return the connection event loop
+	 */
+	public EventExecutor executor() {
+		return this.channelContext.executor();
+	}
+	
+	/**
+	 * <p>
+	 * Returns a new channel promise.
+	 * </p>
+	 * 
+	 * @return a new channel promise
+	 */
+	public ChannelPromise newPromise() {
+		return this.channelContext.newPromise();
+	}
+	
+	/**
+	 * <p>
+	 * Returns the void promise.
+	 * </p>
+	 * 
+	 * @return the void promise
+	 */
+	public ChannelPromise voidPromise() {
+		return this.channelContext.voidPromise();
 	}
 	
 	@Override
@@ -145,9 +203,62 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		return this.tls;
 	}
 
+	/**
+	 * <p>
+	 * Indicates whether the connection supports file region.
+	 * </p>
+	 * 
+	 * @return true if file region is supported, false otherwise
+	 */
+	public boolean supportsFileRegion() {
+		return this.supportsFileRegion;
+	}
+	
 	@Override
 	public HttpVersion getProtocol() {
-		return this.httpVersion;
+		return this.protocol;
+	}
+	
+	/**
+	 * <p>
+	 * Returns Netty's Http protocol version.
+	 * </p>
+	 * 
+	 * @return the http version
+	 */
+	public io.netty.handler.codec.http.HttpVersion getVersion() {
+		return this.version;
+	}
+	
+//	@Override
+	public SocketAddress getLocalAddress() {
+		return this.channelContext.channel().localAddress();
+	}
+
+//	@Override
+	public Optional<Certificate[]> getLocalCertificates() {
+		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
+			.map(handler -> handler.engine().getSession().getLocalCertificates())
+			.filter(certificates -> certificates.length > 0);
+	}
+
+//	@Override
+	public SocketAddress getRemoteAddress() {
+		return this.channelContext.channel().remoteAddress();
+	}
+
+//	@Override
+	public Optional<Certificate[]> getRemoteCertificates() {
+		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
+			.map(handler -> {
+				try {
+					return handler.engine().getSession().getPeerCertificates();
+				} 
+				catch(SSLPeerUnverifiedException e) {
+					return null;
+				}
+			})
+			.filter(certificates -> certificates.length > 0);
 	}
 
 	@Override
@@ -159,122 +270,155 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	public void setHandler(HttpConnection.Handler handler) {
 		this.handler = handler;
 	}
+	
+	/**
+	 * <p>
+	 * Registers the exchange in the connection.
+	 * </p>
+	 * 
+	 * <p>
+	 * A registered exchange is added to the Http/1.x connection's exchange queue, exchanges are started and corresponding requests sent in sequence to the remote endpoint.
+	 * </p>
+	 * 
+	 * @param exchange the exchange to register
+	 */
+	private void registerExchange(Http1xExchange exchange) {
+		if(this.requestedExchange == null) {
+			this.requestedExchange = exchange;
+		}
+		else {
+			this.requestedExchange.next = exchange;
+			this.requestedExchange = exchange;
+		}
 
-	@Override
-	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-		this.tls = ctx.pipeline().get(SslHandler.class) != null;
-		this.supportsFileRegion = !this.tls && ctx.pipeline().get(HttpContentCompressor.class) == null;
-		this.closed = false;
-		this.context = ctx;
-		super.handlerAdded(ctx);
+		if(this.requestingExchange == null) {
+			this.requestingExchange = exchange;
+			if(this.respondingExchange == null) {
+				this.respondingExchange = exchange;
+			}
+			this.requestingExchange.start();
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Creates the Http/1.x exchange
+	 * </p>
+	 * 
+	 * @param <A> the type of the exchange context
+	 * @param sink the exchange sink
+	 * @param endpointExchange the endpoint exchange
+	 * 
+	 * @return a new Http/1.x exchange
+	 */
+	protected <A extends ExchangeContext> Http1xExchange createExchange(Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, EndpointExchange<A> endpointExchange) {
+		return new Http1xExchange<>(this.configuration, sink, this.headerService, this.parameterConverter, endpointExchange.context(), this, endpointExchange.request());
 	}
 
 	@Override
-	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-//		LOGGER.debug("Channel inactive");
-		// we must notify all pending exchanges that the connection was reset
-		// this includes:
-		// - the responding exchange: 
-		//   - if response was set tryEmitError() on the response data publisher 
-		//   - if response was not set tryEmitError() on the response sink
-		//   - all this should be done in the dispose() method since the exchange knows its state
-		// - the requesting exchange
-		//   - dispose the request data publisher, this is also done in the dispose() method
-		// - the rest of the queue: dispose()
-		if(this.handler != null) {
-			this.handler.onClose();
+	public <A extends ExchangeContext> Mono<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<A> endpointExchange) {
+		if(this.closed || this.closing || this.requestError != null) {
+			return Mono.error(new HttpClientException("Connection was closed"));
 		}
-		if(this.respondingExchange != null) {
-			this.respondingExchange.dispose(new ConnectionResetException(this.closing || this.closed ? "Connection closed" : "Connection reset by peer"), true);
-		}
-		this.closed = true;
+		
+		endpointExchange.request().getHeaders().getUnderlyingHeaders().setValidator(this.headersValidator);
+		
+		Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink = Sinks.one();
+		Http1xExchange exchange = this.createExchange(sink, endpointExchange);
+		return sink.asMono()
+			.doOnSubscribe(ign -> this.registerExchange(exchange))
+			.subscribeOn(this.scheduler);
 	}
 
 	@Override
 	public Mono<Void> shutdown() {
-		if(this.closing || this.closed) {
-			return Mono.fromRunnable(this::tryNotifyGracefulShutdown);
+		if(this.shutdownSink == null) {
+			this.shutdownSink = Sinks.one();
+			this.shutdown = this.shutdownSink.asMono()
+				.doOnSubscribe(ign -> {
+					if(this.gracefulShutdownTimeout != null) {
+						this.gracefulShutdownTimeout.cancel(false);
+						this.gracefulShutdownTimeout = null;
+						this.closing = false;
+					}
+					if(!this.closing) {
+						if(this.handler != null) {
+							this.handler.close();
+						}
+						this.closing = true;
+						ChannelPromise closePromise = this.channelContext.newPromise().addListener(future -> {
+							this.closed = true;
+							if(future.isSuccess()) {
+								this.shutdownSink.tryEmitEmpty();
+								if(this.gracefulShutdownSink != null) {
+									this.gracefulShutdownSink.tryEmitEmpty();
+								}
+							}
+							else {
+								this.shutdownSink.tryEmitError(future.cause());
+								if(this.gracefulShutdownSink != null) {
+									this.gracefulShutdownSink.tryEmitError(future.cause());
+								}
+							}
+						});
+						this.close(this.channelContext, closePromise);
+					}
+				})
+				.subscribeOn(this.scheduler);
 		}
-		return Mono.<Void>create(sink -> {
-			if(!this.closed && !this.closing) {
-//				LOGGER.debug("Shutdown");
-				this.closing = true;
-				ChannelFuture closeFuture;
-				if(this.context.channel().isActive()) {
-					closeFuture = this.context.writeAndFlush(Unpooled.EMPTY_BUFFER)
-						.addListener(ChannelFutureListener.CLOSE);
-				}
-				else {
-					closeFuture = this.context.close();
-				}
-				closeFuture.addListener(future -> {
-					if(future.isSuccess()) {
-						sink.success();
-					}
-					else {
-						sink.error(future.cause());
-					}
-				});
-			}
-			else {
-				sink.success();
-			}
-		})
-		.subscribeOn(Schedulers.fromExecutor(this.context.executor()));
+		return this.shutdown;
 	}
 
 	@Override
 	public Mono<Void> shutdownGracefully() {
-		if(this.closing || this.closed) {
-			return Mono.empty();
-		}
-		return Mono.<Void>create(sink -> {
-			if(!this.closed && !this.closing) {
-//				LOGGER.debug("Shutdown gracefully");
-				this.closing = true;
-
-				ChannelPromise closePromise = this.context.newPromise().addListener(future -> {
-					if(future.isSuccess()) {
-						sink.success();
-					}
-					else {
-						sink.error(future.cause());
-					}
-				});
-				if(this.exchangeQueue == null && this.respondingExchange == null) {
-					if(this.context.channel().isActive()) {
-						this.context.writeAndFlush(Unpooled.EMPTY_BUFFER)
-							.addListener(future -> this.context.close(closePromise));
-					}
-					else {
-						this.context.close(closePromise);
-					}
-				}
-				else {
-					// wait up to timeout for the exchange queue to be empty
-					ScheduledFuture<?> gracefulTimeout = this.context.executor()
-						.schedule(() -> {
-							this.context.close(closePromise);
-						}, this.configuration.graceful_shutdown_timeout(), TimeUnit.MILLISECONDS);
-					this.gracefulShutdownNotifier = () -> {
-						if(gracefulTimeout != null) {
-							gracefulTimeout.cancel(false);
+		if(this.gracefulShutdownSink == null) {
+			this.gracefulShutdownSink = Sinks.one();
+			this.gracefulShutdown = this.gracefulShutdownSink.asMono()
+				.doOnSubscribe(ign -> {
+					if(!this.closing) {
+						if(this.handler != null) {
+							this.handler.close();
 						}
-						this.context.writeAndFlush(Unpooled.EMPTY_BUFFER)
-							.addListener(future -> this.context.close(closePromise));
-					};
-				}
-			}
-			else {
-				sink.success();
-			}
-		})
-		.subscribeOn(Schedulers.fromExecutor(this.context.executor()));
+						this.closing = true;
+						this.gracefulShutdownClosePromise = this.channelContext.newPromise().addListener(future -> {
+							this.closed = true;
+							if(future.isSuccess()) {
+								this.gracefulShutdownSink.tryEmitEmpty();
+							}
+							else {
+								this.gracefulShutdownSink.tryEmitError(future.cause());
+							}
+						});
+						
+						if(this.requestedExchange == null && this.respondingExchange == null) {
+							this.close(this.channelContext, this.gracefulShutdownClosePromise);
+						}
+						else {
+							this.gracefulShutdownTimeout = this.channelContext.executor()
+								.schedule(() -> {
+									this.close(this.channelContext, this.gracefulShutdownClosePromise);
+								}, this.configuration.graceful_shutdown_timeout(), TimeUnit.MILLISECONDS);
+						}
+					}
+				})
+				.subscribeOn(this.scheduler);
+		}
+		return this.gracefulShutdown;
 	}
 	
-	private void tryNotifyGracefulShutdown() {
-		if(this.gracefulShutdownNotifier != null && this.exchangeQueue == null && this.respondingExchange == null) {
-			this.gracefulShutdownNotifier.run();
+	/**
+	 * <p>
+	 * Tries to shutdown the connection if a graceful shutdown is under way.
+	 * </p>
+	 * 
+	 * <p>
+	 * This is invoked everytime an exchange completes, the connection is shutdown when there's no more inflight exchanges.
+	 * </p>
+	 */
+	private void tryShutdown() {
+		if(this.gracefulShutdownTimeout != null && this.requestedExchange == null && this.respondingExchange == null) {
+			this.gracefulShutdownTimeout.cancel(false);
+			this.close(this.channelContext, this.gracefulShutdownClosePromise);
 		}
 	}
 
@@ -284,96 +428,132 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	}
 	
 	@Override
-	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-		try {
-			if(msg instanceof HttpObject) {
-				this.read = true;
-				if(msg instanceof HttpResponse) {
-					HttpResponse httpResponse = (HttpResponse)msg;
-					if(!this.validateHttpObject(ctx, httpResponse)) {
-						return;
-					}
-					this.respondingExchange.setResponse(new Http1xResponse(httpResponse, this.headerService, this.parameterConverter));
-					// Remove the to-be-closed connection as soon as we know
-					if(this.respondingExchange.isClose()) {
-						if(this.handler != null) {
-							this.handler.onClose();
-						}
-					}
-				}
-				else {
-					Sinks.Many<ByteBuf> responseData = this.respondingExchange.response().data();
-
-					if(msg == LastHttpContent.EMPTY_LAST_CONTENT) {
-						if(responseData != null) {
-							responseData.tryEmitComplete();
-							this.respondingExchange.notifyComplete();
-						}
-					}
-					else {
-						HttpContent httpContent = (HttpContent)msg;
-						if(!this.validateHttpObject(ctx, httpContent)) {
-							return;
-						}
-
-						if(responseData != null) {
-							if(responseData.tryEmitNext(httpContent.content()) != Sinks.EmitResult.OK) {
-								// TODO we must make sure that after data are drained the next exchange is actually started
-								httpContent.release();
-							}
-
-							if(httpContent instanceof LastHttpContent) {
-								HttpHeaders trailingHeaders = ((LastHttpContent)httpContent).trailingHeaders();
-								if(trailingHeaders != null) {
-									this.respondingExchange.response().setResponseTrailers(new Http1xResponseTrailers(trailingHeaders, this.headerService, this.parameterConverter));
-								}
-								responseData.tryEmitComplete();
-								this.respondingExchange.notifyComplete();
-							}
-						}
-						else {
-							httpContent.release();
-						}
-					}
-				}
-			}
-			else {
-				// WebSocket
-				super.channelRead(ctx, msg);
-			}
+	public void close(ChannelHandlerContext ctx, ChannelPromise promise) {
+		if(this.channelContext.channel().isActive()) {
+			ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
+				.addListener(future -> ctx.close(promise));
 		}
-		finally {
-			if(this.respondingExchange != null) {
-				this.respondingExchange.lastModified = System.currentTimeMillis();
-			}
+		else {
+			ctx.close(promise);
 		}
+	}
+	
+	@Override
+	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+		this.channelContext = ctx;
+		this.scheduler = Schedulers.fromExecutor(ctx.executor());
+		super.handlerAdded(ctx);
+	}
+	
+	@Override
+	public void channelActive(ChannelHandlerContext ctx) throws Exception {
+		this.tls = ctx.pipeline().get(SslHandler.class) != null;
+		this.supportsFileRegion = !this.tls && ctx.pipeline().get(HttpContentCompressor.class) == null;
+		super.channelActive(ctx);
+		this.closed = false;
 	}
 	
 	/**
 	 * <p>
-	 * Validates the HTTP object.
+	 * Disposes pending exchanges.
 	 * </p>
 	 * 
-	 * @param ctx the channel context
-	 * @param httpObject the HTTP object to validate
+	 * <p>
+	 * The is typically invoked right before the connection is shutdown OR when the connection becomes inactive (i.e. reset by peer) in order to stop processing and free resources.
+	 * </p>
 	 * 
-	 * @return true if the object is valid, false otherwise
-	 * @throws Exception if {@link #exceptionCaught(io.netty.channel.ChannelHandlerContext, java.lang.Throwable)} throws an exception
+	 * @param throwable an error or null if disposal does not result from an error (e.g. shutdown)
 	 */
-	private boolean validateHttpObject(ChannelHandlerContext ctx, HttpObject httpObject) throws Exception {
-		DecoderResult result = httpObject.decoderResult();
-		if(result.isFailure()) {
-			this.exceptionCaught(ctx, result.cause());
-			return false;
+	private void dispose(Throwable throwable) {
+		Http1xExchange<?> current = this.respondingExchange;
+		while(current != null) {
+			Http1xExchange<?> next = current.next;
+			current.next = null;
+			current.dispose(throwable);
+			current = next;
 		}
-		else if(httpObject instanceof HttpResponse) {
-			io.netty.handler.codec.http.HttpVersion version = ((HttpResponse) httpObject).protocolVersion();
-			if (version != io.netty.handler.codec.http.HttpVersion.HTTP_1_0 && version != io.netty.handler.codec.http.HttpVersion.HTTP_1_1) {
-				this.exceptionCaught(ctx, new IllegalStateException("Unsupported protocol: " + version));
-				return false;
+		this.respondingExchange = this.requestingExchange = this.requestedExchange = null;
+	}
+
+	@Override
+	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+		if(this.handler != null) {
+			this.handler.close();
+		}
+		this.dispose(new ConnectionResetException(this.closing || this.closed ? "Connection was closed" : "Connection reset by peer"));
+		this.closed = true;
+	}
+
+	@Override
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+		if(this.handler != null) {
+			this.handler.close();
+		}
+		this.dispose(cause);
+		this.shutdown().subscribe();
+		LOGGER.error("Connection error", cause);
+	}
+	
+	/**
+	 * <p>
+	 * Callback method invoked when a decoder error is raised while reading the channel.
+	 * </p>
+	 * 
+	 * @param cause the decoder error
+	 */
+	public void decoderError(Throwable cause) {
+		this.dispose(cause);
+		this.shutdown().subscribe();
+		LOGGER.warn("Invalid object received", cause);
+	}
+
+	@Override
+	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+		if(this.respondingExchange == null) {
+			if(msg instanceof ReferenceCounted) {
+				((ReferenceCounted)msg).release();
+			}
+			return;
+		}
+		
+		if(msg == LastHttpContent.EMPTY_LAST_CONTENT) {
+			this.respondingExchange.response().body().getDataSink().tryEmitComplete();
+			this.onResponseComplete();
+		}
+		else if(msg instanceof DefaultHttpResponse) {
+			this.read = true;
+			HttpResponse httpResponse = (HttpResponse)msg;
+			if(httpResponse.decoderResult().isFailure()) {
+				this.decoderError(httpResponse.decoderResult().cause());
+			}
+			else {
+				this.respondingExchange.emitResponse(httpResponse);
 			}
 		}
-		return true;
+		else if(msg instanceof DefaultHttpContent || msg instanceof HttpContent) {
+			this.read = true;
+			HttpContent content = (HttpContent)msg;
+			if(content.decoderResult().isFailure()) {
+				content.release();
+				this.decoderError(content.decoderResult().cause());
+				return;
+			}
+			
+			if(this.respondingExchange.response().body().getDataSink().tryEmitNext(content.content()) != Sinks.EmitResult.OK) {
+				content.release();
+			}
+			if(content instanceof LastHttpContent) {
+				HttpHeaders trailingHeaders = ((LastHttpContent)content).trailingHeaders();
+				if(trailingHeaders != null) {
+					this.respondingExchange.response().setTrailers((LinkedHttpHeaders)trailingHeaders);
+				}
+				this.respondingExchange.response().body().getDataSink().tryEmitComplete();
+				this.onResponseComplete();
+			}
+		}
+		else {
+			super.channelRead(ctx, msg);
+		}
 	}
 
 	@Override
@@ -385,314 +565,208 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				this.flush = false;
 			}
 		}
+		super.channelReadComplete(ctx);
 	}
-	
-	@Override
-	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-//		LOGGER.debug("Exception caught", cause);
-		// In any case only network related error should get here anything else must be handled upstream
-		this.cancelTimeout();
-		// Evict the faulty connection
-		if(this.handler != null) {
-			this.handler.onError(cause);
-		}
 
-		// Dispose all pending exchanges including inflight exchanges
-		if(this.respondingExchange != null) {
-			this.respondingExchange.dispose(cause, true);
-		}
-		this.exchangeQueue = null;
-		this.requestingExchange = null;
-		this.respondingExchange = null;
-		
-		// close the faulty connection
-		this.shutdown().subscribe();
+	/**
+	 * <p>
+	 * Requests to write an Http object.
+	 * </p>
+	 * 
+	 * <p>
+	 * The operation is always executed on the connection event loop.
+	 * </p>
+	 * 
+	 * @param object the object to write
+	 */
+	public void writeHttpObject(HttpObject object) {
+		this.writeHttpObject(object, this.channelContext.voidPromise());
 	}
 	
-	@Override
-	public ChannelFuture writeFrame(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
-		if(this.read) {
-			this.flush = true;
-			return ctx.write(msg, promise);
+	/**
+	 * <p>
+	 * Requests to write an Http object.
+	 * </p>
+	 * 
+	 * <p>
+	 * The operation is always executed on the connection event loop.
+	 * </p>
+	 * 
+	 * @param object  the object to write
+	 * @param promise a promise
+	 */
+	public void writeHttpObject(HttpObject object, ChannelPromise promise) {
+		if(this.channelContext.executor().inEventLoop()) {
+			if(this.read) {
+				this.flush = true;
+				this.channelContext.write(object, promise);
+			}
+			else {
+				this.channelContext.writeAndFlush(object, promise);
+			}
 		}
 		else {
-			return ctx.writeAndFlush(msg, promise);
+			this.channelContext.executor().execute(() -> writeHttpObject(object, promise));
 		}
-		// Servers might not send response chunk while the request is being received (missing flush) this might be an issue for timeouts but also in general
 	}
-
-	@Override
-	public <A extends ExchangeContext> Mono<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> send(EndpointExchange<A> endpointExchange) {
-		if(this.closed || this.closing) {
-			return Mono.error(new HttpClientException("Connection closed"));
+	
+	/**
+	 * <p>
+	 * Requests to write a file region.
+	 * </p>
+	 * 
+	 * <p>
+	 * The operation is always executed on the connection event loop.
+	 * </p>
+	 * 
+	 * @param fileRegion the file region to write
+	 */
+	public void writeFileRegion(FileRegion fileRegion) {
+		this.writeFileRegion(fileRegion, this.channelContext.voidPromise());
+	}
+	
+	/**
+	 * <p>
+	 * Requests to write a file region.
+	 * </p>
+	 * 
+	 * <p>
+	 * The operation is always executed on the connection event loop.
+	 * </p>
+	 * 
+	 * @param fileRegion the file region to write
+	 * @param promise    a promise
+	 */
+	public void writeFileRegion(FileRegion fileRegion, ChannelPromise promise) {
+		if(this.channelContext.executor().inEventLoop()) {
+			if(this.read) {
+				this.flush = true;
+				this.channelContext.write(fileRegion, promise);
+			}
+			else {
+				this.channelContext.writeAndFlush(fileRegion, promise);
+			}
 		}
-		return Mono.<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>>create(exchangeSink -> {
-			Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, this.supportsFileRegion, this.parameterConverter, endpointExchange.request(), this.headersValidator);
-			
-			try {
-				// This must be thread safe as multiple threads can change the exchange queue
-				EventLoop eventLoop = this.context.channel().eventLoop();
-				if(eventLoop.inEventLoop()) {
-					this.createAndRegisterExchange(this.context, exchangeSink, endpointExchange.context(), http1xRequest);
+		else {
+			this.channelContext.executor().execute(() -> writeFileRegion(fileRegion, promise));
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Callback method invoked when the requesting exchange request has been sent to the server.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method executes on the connection event loop, it starts the next pending exchange if any.
+	 * </p>
+	 */
+	public void onRequestSent() {
+		if(this.channelContext.executor().inEventLoop()) {
+			this.requestingExchange = this.requestingExchange.next;
+			if(this.requestingExchange != null) {
+				this.requestingExchange.start();
+			}
+		}
+		else {
+			this.channelContext.executor().execute(this::onRequestSent);
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Callback method invoked when an error is raised while sending the requesting exchange request to the server.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method executes on the connection event loop, if nothing was sent to the server, the connection is recylced and the requesting exchange is disposed and the next pending exchange, if any,
+	 * is started, otherwise the connection is shutdown after all inflight exchanges have completed.
+	 * </p>
+	 * 
+	 * @param throwable the error
+	 */
+	public void onRequestError(Throwable throwable) {
+		if(this.channelContext.executor().inEventLoop()) {
+			if(this.requestingExchange.request().isHeadersWritten()) {
+				// make sure no new exchange are submitted
+				if(this.handler != null) {
+					this.handler.close();
+				}
+				
+				if(this.respondingExchange == this.requestingExchange) {
+					this.dispose(throwable);
+					this.shutdown().subscribe();
 				}
 				else {
-					eventLoop.submit(() -> {
-						this.createAndRegisterExchange(this.context, exchangeSink, endpointExchange.context(), http1xRequest);
-					});
-				}
-			}
-			catch(Throwable t) {
-				exchangeSink.error(t);
-			}
-		})
-		.map(exchange -> (HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>)exchange);
-	}
-	
-	/**
-	 * <p>
-	 * Creates the HTTP/1.x exchange and registers it in the connection.
-	 * </p>
-	 *
-	 * <p>
-	 * This method is invoked when sending the request to create and register the exchange in the connection. A registered exchange is added to the HTTP/1.x connection's exchange queue, corresponding
-	 * requests are sent in sequence to the remote endpoint.
-	 * </p>
-	 *
-	 * @param context         the channel context
-	 * @param exchangeSink    the exchange sink
-	 * @param exchangeContext the exchange context
-	 * @param request         the HTTP/1.x request
-	 */
-	private void createAndRegisterExchange(ChannelHandlerContext context, MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request) {
-		Http1xExchange exchange = this.createExchange(context, exchangeSink, exchangeContext, request);
-		exchange.lastModified = System.currentTimeMillis();
-		if(this.exchangeQueue == null) {
-			this.exchangeQueue = exchange;
-			this.exchangeQueue.start(this);
-		}
-		else {
-			this.exchangeQueue.next = exchange;
-			this.exchangeQueue = exchange;
-			if(this.requestingExchange == null) {
-				this.exchangeQueue.start(this);
-			}
-		}
-	}
-	
-	/**
-	 * <p>
-	 * Creates the HTTP/1.x exchange.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method shall be overridden to provide specific exchange implementation for protocol upgrade.
-	 * </p>
-	 * 
-	 * @param context                 the channel context
-	 * @param exchangeSink            the exchange sink
-	 * @param exchangeContext         the exchange context
-	 * @param request                 the HTTP/1.x request
-	 * 
-	 * @return a new HTTP/1.x exchange
-	 */
-	protected Http1xExchange createExchange(ChannelHandlerContext context, MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request) {
-		return new Http1xExchange(context, exchangeSink, exchangeContext, this.httpVersion, request, this);
-	}
-
-	/**
-	 * <p>
-	 * Starts the request timeout.
-	 * </p>
-	 */
-	private void startTimeout() {
-		if(this.timeoutFuture != null) {
-			return;
-		}
-		long nextTimeout = -1;
-		if(this.respondingExchange != null) {
-			long currentTimestamp = System.currentTimeMillis();
-			Http1xExchange previous = null;
-			Http1xExchange current = this.respondingExchange;
-			do {
-				long currentTimeout = this.requestTimeout - (currentTimestamp - current.lastModified);
-				if(currentTimeout <= 0) {
-					// if the exchange request has not been sent we can simply remove it otherwise we can already kill the connection
-					// can this happen here?
-					// not when this is invoked in exchangeStart
-					// when invoked in exchangeComplete it might, well no: because we always consider the nearest timeout timestamp so it should have already been triggered
-					// nonetheless we can have overlap so let's blow properly
-					RequestTimeoutException timeoutError = new RequestTimeoutException("Exceeded timeout " + this.requestTimeout + "ms");
-					if(current.request().isHeadersWritten()) {
-						// We have an inflight request that has timed out we must report the error and close the whole connection 
-						// Evict the faulty connection
-						if(this.handler != null) {
-							this.handler.onError(timeoutError);
-						}
-						// Dispose all pending exchanges including inflight exchanges
-						if(this.respondingExchange != null) {
-							this.respondingExchange.dispose(timeoutError, true);
-						}
-						this.requestingExchange = null;
-						this.respondingExchange = null;
-						
-						// close the faulty connection
-						Http1xConnection.this.shutdown().subscribe();
-
-						// Do not start the timeout since connection is closed
-						return;
+					this.requestError = throwable;
+					// we must wait for previous exchanges to complete to close the connection
+					Http1xExchange<?> current = this.requestingExchange;
+					while(current != null) {
+						Http1xExchange<?> next = current.next;
+						current.next = null;
+						current.dispose(throwable);
+						current = next;
 					}
-					else if(previous != null) {
-						// Remove the timed out exchange which is not inflight
-						current.dispose(timeoutError, false);
-						// we can recycle the connection since a request has been processed
-						if(this.handler != null) {
-							this.handler.onExchangeTerminate(current);
-						}
-						previous.next = current.next;
-					}
-					else {
-						// The timed out exchange is the responding exchange which has not been requested yet (i.e. it is also the requesting exchange)
-						// This can only happen when invoked in exchangeStart() in case the second System.currentTyimeMillis() is after the time out
-						throw timeoutError;
-					}
-				}
-				nextTimeout = nextTimeout == -1 ? currentTimeout : Math.min(currentTimeout, nextTimeout);
-				current = current.next;
-			} while(current != null);
-		}
-		
-		if(nextTimeout >= 0) {
-			this.timeoutFuture = this.context.channel().eventLoop().schedule(
-				() -> {
-					this.timeoutFuture = null;
-					this.startTimeout();
-				}, nextTimeout, TimeUnit.MILLISECONDS);
-		}
-	}
-	
-	/**
-	 * <p>
-	 * Cancels the request timeout.
-	 * </p>
-	 */
-	private void cancelTimeout() {
-		if(this.timeoutFuture != null) {
-			this.timeoutFuture.cancel(false);
-			this.timeoutFuture = null;
-		}
-	}
-	
-	@Override
-	public void exchangeStart(Http1xExchange exchange) {
-//		LOGGER.debug("Exchange start");
-		// This method MUST be invoked once for a given exchange
-		this.requestingExchange = exchange;
-		if(System.currentTimeMillis() - exchange.lastModified > this.requestTimeout) {
-			throw new RequestTimeoutException("Exceeded timeout " + this.requestTimeout + "ms");
-		}
-		if(this.respondingExchange == null) {
-			this.respondingExchange = exchange;
-			this.startTimeout();
-		}
-	}
-	
-	@Override
-	public void requestComplete(Http1xExchange exchange) {
-//		LOGGER.debug("Exchange request complete");
-		if(exchange == this.requestingExchange) {
-			this.lastRequestedExchange = this.requestingExchange;
-			this.requestingExchange = null;
-			this.requestingExchange = null;
-			if(this.lastRequestedExchange.next != null) {
-				this.lastRequestedExchange.next.start(this);
-			}
-		}
-	}
-	
-	@Override
-	public void exchangeError(Http1xExchange exchange, Throwable t) {
-//		LOGGER.debug("Exchange error", t);
-		if(exchange == this.requestingExchange) {
-			// The faulty exchange is the current requesting exchange
-			if(this.requestingExchange.request().isHeadersWritten()) {
-				// We have sent a partial request, we can't know the connection state
-				try {
-					this.exceptionCaught(this.context, t);
-				}
-				catch(Exception e) {
-					this.context.fireExceptionCaught(e);
+					this.requestingExchange = this.requestedExchange = null;
 				}
 			}
 			else {
-				// We don't have initiated anything on the server so we can just ignore the exchange
-				this.requestingExchange.dispose(t);
-				// we can recycle the connection since the exchange has been processed
+				// We haven't sent anything: just dispose the exchange and start the next one
+				this.requestingExchange.dispose(throwable);
 				if(this.handler != null) {
-					this.handler.onExchangeTerminate(this.requestingExchange);
+					this.handler.recycle();
 				}
-				
-				if(exchange == this.respondingExchange) {
-					this.cancelTimeout();
-					this.respondingExchange = null;
+				if(this.requestingExchange.next != null) {
+					if(this.respondingExchange == this.requestingExchange) {
+						this.respondingExchange = this.requestingExchange.next;
+					}
+					this.requestingExchange = this.requestingExchange.next;
+					this.requestingExchange.start();
 				}
-				if(this.lastRequestedExchange != null) {
-					this.lastRequestedExchange = this.requestingExchange.next;
-				}
-
-				Http1xExchange nextRequestingExchange = this.requestingExchange.next;
-				this.requestingExchange = null;
-				if(nextRequestingExchange != null) {
-					nextRequestingExchange.start(this);
+				else {
+					this.respondingExchange = this.requestingExchange = this.requestedExchange = null;
 				}
 			}
 		}
-		else if(exchange == this.respondingExchange) {
-			// The faulty exchange is the current responding exchange
-			// just try to dispose it with the error, exchangeComplete() should be invoked eventually
-			this.respondingExchange.dispose(t);
+		else {
+			this.channelContext.executor().execute(() -> this.onRequestError(throwable));
 		}
 	}
-
-	@Override
-	public void exchangeComplete(Http1xExchange exchange) {
-//		LOGGER.debug("Exchange complete");
-		// we have only one responding exchange at a given time
-		// checking that it matches the exchange protects against multiple invocations
-		if(this.respondingExchange == exchange) {
-			this.cancelTimeout();
-			
-			// we can recycle the connection since a request has been processed
-			if(this.respondingExchange.isClose()) {
-				// We must close the connection
-				this.respondingExchange.dispose(true);
-				// Connection should already have been removed from the pool, make sure connection is closed
+	
+	/**
+	 * <p>
+	 * Callback method invoked when the responding exchange response has been fully received.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method executes on the connection event loop, it shutdowns the connection when the server responded with {@code connection: close} header, otherwise responding exchange is disposed and the
+	 * connection recycled.
+	 * </p>
+	 */
+	public void onResponseComplete() {
+		if(this.channelContext.executor().inEventLoop()) {
+			if(this.respondingExchange.response().headers().contains(Headers.NAME_CONNECTION, Headers.VALUE_CLOSE)) {
 				this.shutdown().subscribe();
 			}
 			else {
-				// We must dispose the exchange in order to free the response data publisher if it wasn't subscribed
-				// We received the complete response we can dispose the exchange
-				this.respondingExchange.dispose();
-				// we can recycle the connection since a request has been processed
+				this.respondingExchange.dispose(null);
 				if(this.handler != null) {
-					this.handler.onExchangeTerminate(this.respondingExchange);
+					this.handler.recycle();
 				}
 				
-				if(this.respondingExchange.next != null) {
-					this.respondingExchange = respondingExchange.next;
-					this.startTimeout();
+				this.respondingExchange = this.respondingExchange.next;
+				if(this.respondingExchange == null) {
+					this.respondingExchange = this.requestingExchange = this.requestedExchange = null;
+					this.tryShutdown();
 				}
-				else {
-					this.respondingExchange = null;
-					this.exchangeQueue = null;
-					this.tryNotifyGracefulShutdown();
+				else if(this.requestError != null && this.respondingExchange.next == null) {
+					this.respondingExchange = this.requestingExchange = this.requestedExchange = null;
+					this.shutdown().subscribe();
 				}
 			}
 		}
-	}
-
-	@Override
-	public void exchangeReset(Http1xExchange exchange, long code) {
-//		LOGGER.debug("Exchange reset: code={}", code);
-		this.exchangeError(exchange, new HttpClientException("Exchange has been reset: " + code));
+		else {
+			this.channelContext.executor().execute(this::onResponseComplete);
+		}
 	}
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.client.internal.v2.http2;
+package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.http.base.InboundData;
@@ -28,24 +28,29 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * 
+ * HTTP/1.x {@link ResponseBody} implementation.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.11
  */
-public class Http2ResponseBodyV2 implements ResponseBody {
+class Http1xResponseBody implements ResponseBody {
 	
 	private final Sinks.Many<ByteBuf> dataSink;
 	private Flux<ByteBuf> data;
 	private boolean subscribed;
 	
-	private Http2ResponseBodyV2.RawInboundData rawData;
-	private Http2ResponseBodyV2.StringInboundData stringData;
+	private Http1xResponseBody.RawInboundData rawData;
+	private Http1xResponseBody.StringInboundData stringData;
 	
 	private Throwable cancelCause;
 
-	public Http2ResponseBodyV2() {
+	/**
+	 * <p>
+	 * Creates an Http/1.x response body.
+	 * </p>
+	 */
+	public Http1xResponseBody() {
 		this.dataSink = Sinks.many().unicast().onBackpressureBuffer();
 		this.data = Flux.defer(() -> {
 			this.subscribed = true;
@@ -63,7 +68,7 @@ public class Http2ResponseBodyV2 implements ResponseBody {
 	 * </p>
 	 * 
 	 * <p>
-	 * This is used by an {@link Http2ConnectionV2} to emit response data.
+	 * This is used by an {@link Http1xConnection} to emit response data.
 	 * </p>
 	 * 
 	 * @return the response body data sink
@@ -122,7 +127,7 @@ public class Http2ResponseBodyV2 implements ResponseBody {
 	@Override
 	public InboundData<ByteBuf> raw() {
 		if(this.rawData == null) {
-			this.rawData = new Http2ResponseBodyV2.RawInboundData();
+			this.rawData = new Http1xResponseBody.RawInboundData();
 		}
 		return this.rawData;
 	}
@@ -130,24 +135,24 @@ public class Http2ResponseBodyV2 implements ResponseBody {
 	@Override
 	public InboundData<CharSequence> string() throws IllegalStateException {
 		if(this.stringData == null) {
-			this.stringData = new Http2ResponseBodyV2.StringInboundData();
+			this.stringData = new Http1xResponseBody.StringInboundData();
 		}
 		return this.stringData;
 	}
-
+	
 	/**
 	 * <p>
 	 * Generic raw {@link InboundData} implementation.
 	 * </p>
 	 *
 	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.6
+	 * @since 1.11
 	 */
 	private class RawInboundData implements InboundData<ByteBuf> {
 
 		@Override
 		public Publisher<ByteBuf> stream() {
-			return Http2ResponseBodyV2.this.data;
+			return Http1xResponseBody.this.data;
 		}
 	}
 	
@@ -157,13 +162,13 @@ public class Http2ResponseBodyV2 implements ResponseBody {
 	 * </p>
 	 *
 	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.6
+	 * @since 1.11
 	 */
 	private class StringInboundData implements InboundData<CharSequence> {
 
 		@Override
 		public Publisher<CharSequence> stream() {
-			return Flux.from(Http2ResponseBodyV2.this.data)
+			return Flux.from(Http1xResponseBody.this.data)
 				.map(buf -> {
 					try {
 						return buf.toString(Charsets.DEFAULT);
