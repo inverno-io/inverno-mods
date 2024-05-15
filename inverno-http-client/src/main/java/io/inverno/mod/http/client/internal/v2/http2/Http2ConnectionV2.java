@@ -217,7 +217,8 @@ public class Http2ConnectionV2 extends Http2ConnectionHandler implements Http2Fr
 			else {
 				this.executor().execute(clientStream.exchange::start);
 			}
-		});
+		})
+		.subscribeOn(Schedulers.fromExecutor(this.channelContext.executor()));
 	}
 
 	@Override
