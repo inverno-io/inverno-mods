@@ -56,6 +56,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 /**
@@ -77,6 +78,7 @@ public class Http2ConnectionV2 extends Http2ConnectionHandler implements Http2Fr
 	final IntObjectMap<Http2ConnectionStreamV2> clientStreams;
 	
 	private ChannelHandlerContext channelContext;
+	private Scheduler scheduler;
 	private boolean tls;
 	private Long maxConcurrentStreams;
 	private HttpConnection.Handler handler;
@@ -210,15 +212,11 @@ public class Http2ConnectionV2 extends Http2ConnectionHandler implements Http2Fr
 			endpointExchange.request()
 		);
 		
-		return sink.asMono().doOnSubscribe(ign -> {
-			if(this.executor().inEventLoop()) {
+		return sink.asMono()
+			.doOnSubscribe(ign -> {
 				clientStream.exchange.start();
-			}
-			else {
-				this.executor().execute(clientStream.exchange::start);
-			}
-		})
-		.subscribeOn(Schedulers.fromExecutor(this.channelContext.executor()));
+			})
+			.subscribeOn(this.scheduler);
 	}
 
 	@Override
@@ -243,7 +241,7 @@ public class Http2ConnectionV2 extends Http2ConnectionHandler implements Http2Fr
 							});
 					}
 				})
-				.subscribeOn(Schedulers.fromExecutor(this.channelContext.executor()));
+				.subscribeOn(this.scheduler);
 		}
 		return this.shutdown;
 	}
@@ -277,7 +275,7 @@ public class Http2ConnectionV2 extends Http2ConnectionHandler implements Http2Fr
 						this.gracefulShutdownSink.tryEmitError(e);
 					}
 				})
-				.subscribeOn(Schedulers.fromExecutor(this.channelContext.executor()));
+				.subscribeOn(this.scheduler);
 		}
 		return this.gracefulShutdown;
 	}
@@ -291,6 +289,7 @@ public class Http2ConnectionV2 extends Http2ConnectionHandler implements Http2Fr
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
 		this.connection().addListener(this);
 		this.channelContext = ctx;
+		this.scheduler = Schedulers.fromExecutor(ctx.executor());
 		super.handlerAdded(ctx);
 	}
 	

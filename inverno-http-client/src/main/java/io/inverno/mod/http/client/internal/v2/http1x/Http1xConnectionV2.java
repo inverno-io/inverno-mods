@@ -60,6 +60,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 /**
@@ -87,6 +88,7 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 	private final Long maxConcurrentRequests;
 	
 	protected ChannelHandlerContext channelContext;
+	private Scheduler scheduler;
 	private boolean tls;
 	private boolean supportsFileRegion;
 	protected HttpConnection.Handler handler;
@@ -257,25 +259,20 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 	}
 	
 	private void registerExchange(Http1xExchangeV2 exchange) {
-		if(this.channelContext.executor().inEventLoop()) {
-			if(this.requestedExchange == null) {
-				this.requestedExchange = exchange;
-			}
-			else {
-				this.requestedExchange.next = exchange;
-				this.requestedExchange = exchange;
-			}
-			
-			if(this.requestingExchange == null) {
-				this.requestingExchange = exchange;
-				if(this.respondingExchange == null) {
-					this.respondingExchange = exchange;
-				}
-				this.requestingExchange.start();
-			}
+		if(this.requestedExchange == null) {
+			this.requestedExchange = exchange;
 		}
 		else {
-			this.channelContext.executor().execute(() -> registerExchange(exchange));
+			this.requestedExchange.next = exchange;
+			this.requestedExchange = exchange;
+		}
+
+		if(this.requestingExchange == null) {
+			this.requestingExchange = exchange;
+			if(this.respondingExchange == null) {
+				this.respondingExchange = exchange;
+			}
+			this.requestingExchange.start();
 		}
 	}
 	
@@ -293,7 +290,9 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 		
 		Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink = Sinks.one();
 		Http1xExchangeV2 exchange = this.createExchange(sink, endpointExchange);
-		return sink.asMono().doOnSubscribe(ign -> this.registerExchange(exchange));
+		return sink.asMono()
+			.doOnSubscribe(ign -> this.registerExchange(exchange))
+			.subscribeOn(this.scheduler);
 	}
 
 	@Override
@@ -330,7 +329,7 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 						this.close(this.channelContext, closePromise);
 					}
 				})
-				.subscribeOn(Schedulers.fromExecutor(this.channelContext.executor()));
+				.subscribeOn(this.scheduler);
 		}
 		return this.shutdown;
 	}
@@ -367,7 +366,7 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 						}
 					}
 				})
-				.subscribeOn(Schedulers.fromExecutor(this.channelContext.executor()));
+				.subscribeOn(this.scheduler);
 		}
 		return this.gracefulShutdown;
 	}
@@ -407,6 +406,7 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 	@Override
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
 		this.channelContext = ctx;
+		this.scheduler = Schedulers.fromExecutor(ctx.executor());
 		super.handlerAdded(ctx);
 	}
 	
