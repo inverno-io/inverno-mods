@@ -196,13 +196,7 @@ public abstract class AbstractRequest implements HttpConnectionRequest {
 		return this.queryParameters;
 	}
 	
-	/**
-	 * <p>
-	 * Returns the request body.
-	 * </p>
-	 * 
-	 * @return the request body or null if the request has no body (e.g. GET request)
-	 */
+	@Override
 	public HttpConnectionRequestBody body() {
 		return this.requestBody;
 	}

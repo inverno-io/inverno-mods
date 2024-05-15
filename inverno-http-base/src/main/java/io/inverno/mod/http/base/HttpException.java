@@ -217,8 +217,8 @@ public class HttpException extends RuntimeException {
 		}
 		try {
 			this.status = Status.valueOf(statusCode);
-			this.statusCode = status.getCode();
-			this.statusReasonPhrase = status.getReasonPhrase();
+			this.statusCode = this.status.getCode();
+			this.statusReasonPhrase = this.status.getReasonPhrase();
 		}
 		catch(IllegalArgumentException e) {
 			this.statusCode = statusCode;

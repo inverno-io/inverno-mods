@@ -53,4 +53,9 @@ class Http2Request extends AbstractRequest {
 	public Http2RequestHeaders headers() {
 		return (Http2RequestHeaders)this.requestHeaders;
 	}
+
+	@Override
+	public Http2RequestBody body() {
+		return (Http2RequestBody)super.body(); 
+	}
 }

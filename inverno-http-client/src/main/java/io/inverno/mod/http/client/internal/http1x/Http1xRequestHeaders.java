@@ -54,7 +54,7 @@ class Http1xRequestHeaders implements HttpConnectionRequestHeaders {
 	 * @param headersValidator a headers validator or null
 	 */
 	public Http1xRequestHeaders(EndpointRequestHeaders endpointHeaders, HeadersValidator headersValidator) {
-		endpointHeaders.getUnderlyingHeaders().validate(headersValidator);
+		endpointHeaders.getUnderlyingHeaders().setValidator(headersValidator);
 		this.endpointHeaders = endpointHeaders;
 	}
 

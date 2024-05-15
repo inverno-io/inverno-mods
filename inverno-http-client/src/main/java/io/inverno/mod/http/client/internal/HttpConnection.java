@@ -171,5 +171,9 @@ public interface HttpConnection {
 		 * </p>
 		 */
 		void onClose();
+		
+		void recycle();
+		
+		void close();
 	}
 }

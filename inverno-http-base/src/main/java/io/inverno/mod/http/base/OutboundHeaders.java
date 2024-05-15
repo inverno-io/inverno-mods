@@ -34,6 +34,10 @@ public interface OutboundHeaders<A extends OutboundHeaders<A>> extends InboundHe
 	 * Determines whether the headers have been sent to the recipient.
 	 * </p>
 	 * 
+	 * <p>
+	 * Any attempts to specify new headers once headers haven been sent, will result in an {@link IllegalStateException} being thrown.
+	 * </p>
+	 * 
 	 * @return true if the headers have been sent, false otherwise
 	 */
 	boolean isWritten();

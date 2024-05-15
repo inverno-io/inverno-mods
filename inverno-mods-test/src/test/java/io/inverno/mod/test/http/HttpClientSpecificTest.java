@@ -20,11 +20,10 @@ import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.boot.Boot;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
-import static io.inverno.mod.http.base.HttpVersion.HTTP_1_1;
-import static io.inverno.mod.http.base.HttpVersion.HTTP_2_0;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.client.Client;
+import io.inverno.mod.http.client.ConnectionResetException;
 import io.inverno.mod.http.client.Endpoint;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfigurationLoader;
@@ -39,6 +38,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Proxy;
 import java.net.ServerSocket;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -603,7 +603,8 @@ public class HttpClientSpecificTest {
 				.flatMap(Exchange::response)
 				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
 				.cast(Object.class)
-				.onErrorResume(e -> Mono.just(e));
+				.onErrorResume(e -> Mono.just(e))
+				.delaySubscription(Duration.ofMillis(200));
 
 			List<Object> results = Flux.merge(timeoutRequest, noTimeoutRequest)
 				.collectList()
@@ -625,8 +626,8 @@ public class HttpClientSpecificTest {
 					// Must be a RequestTimeoutException as well (the same actually)
 					result = results.get(1);
 					Assertions.assertEquals(
-						"Exceeded timeout 1000ms",
-						Assertions.assertInstanceOf(RequestTimeoutException.class, result).getMessage()
+						"Connection was closed",
+						Assertions.assertInstanceOf(ConnectionResetException.class, result).getMessage()
 					);
 					
 					break;

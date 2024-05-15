@@ -49,9 +49,9 @@ public interface ResponseBody {
 	 *
 	 * @return the response body
 	 * 
-	 * @throws IllegalArgumentException if the response payload publisher has already been subscribed
+	 * @throws IllegalStateException if the response payload publisher has already been subscribed
 	 */
-	ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) throws IllegalArgumentException;
+	ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) throws IllegalStateException;
 	
 	/**
 	 * <p>

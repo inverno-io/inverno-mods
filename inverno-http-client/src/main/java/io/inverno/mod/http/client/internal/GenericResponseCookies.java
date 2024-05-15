@@ -48,7 +48,7 @@ public class GenericResponseCookies implements InboundSetCookies {
 	 * @param responseHeaders    the response headers
 	 * @param parameterConverter the parameter converter
 	 */
-	public GenericResponseCookies(InboundResponseHeaders responseHeaders, ObjectConverter<String> parameterConverter) {
+	public GenericResponseCookies(InboundResponseHeaders responseHeaders, ObjectConverter<String> parameterConverter) { // TODO change parameter order
 		this.pairs = responseHeaders.<Headers.SetCookie>getAllHeader(Headers.NAME_SET_COOKIE)
 			.stream()
 			.map(setCookie -> new GenericSetCookieParameter(setCookie, parameterConverter))

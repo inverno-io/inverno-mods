@@ -153,7 +153,11 @@ public interface HttpClientConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to {@code 60000}.
+	 * A request times out after it has been sent and no response has been received within that period.
+	 * </p>
+	 * 
+	 * <p>
+	 * Set to {@code 0} to disable, defaults to {@code 60000}. 
 	 * </p>
 	 * 
 	 * @return the connection timeout

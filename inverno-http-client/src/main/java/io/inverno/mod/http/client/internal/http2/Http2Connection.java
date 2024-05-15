@@ -385,7 +385,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 					this.handler.onExchangeTerminate(clientStream);
 				}
 			}
-		} 
+		}
 	}
 	
 	@Override
@@ -460,7 +460,6 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 				}
 			}
 		}
-		
 	}
 
 	@Override

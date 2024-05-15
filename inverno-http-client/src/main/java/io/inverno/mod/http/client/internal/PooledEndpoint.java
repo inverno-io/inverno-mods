@@ -1036,8 +1036,25 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 		}
 		
 		@Override
+		public void onUpgrade(HttpConnection upgradedConnection) {
+			this.connection = upgradedConnection;
+			this.connection.setHandler(this);
+			PooledEndpoint.this.setCapacity(this, upgradedConnection.getMaxConcurrentRequests());
+		}
+		
+		@Override
 		public void onSettingsChange(long maxConcurrentRequests) {
 			PooledEndpoint.this.setCapacity(this, maxConcurrentRequests);
+		}
+
+		@Override
+		public void recycle() {
+			PooledEndpoint.this.recycle(this);
+		}
+		
+		@Override
+		public void close() {
+			PooledEndpoint.this.remove(this);
 		}
 		
 		@Override
@@ -1055,13 +1072,6 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 		@Override
 		public void onExchangeTerminate(HttpConnectionExchange<?, ?, ?> exchange) {
 			PooledEndpoint.this.recycle(this);
-		}
-
-		@Override
-		public void onUpgrade(HttpConnection upgradedConnection) {
-			this.connection = upgradedConnection;
-			this.connection.setHandler(this);
-			PooledEndpoint.this.setCapacity(this, upgradedConnection.getMaxConcurrentRequests());
 		}
 	}
 }
