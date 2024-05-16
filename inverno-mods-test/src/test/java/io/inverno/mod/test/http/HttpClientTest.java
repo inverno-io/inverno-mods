@@ -6007,7 +6007,6 @@ public class HttpClientTest {
 	
 	@Test
 	public void test_h2c_tooBig() {
-		System.out.println("test_h2c_tooBig");
 		File uploadsDir = new File("target/uploads/");
 		uploadsDir.mkdirs();
 		
@@ -6039,8 +6038,6 @@ public class HttpClientTest {
 		finally {
 			blankH2cEndpoint.shutdown().block();
 		}
-		
-		System.out.println("/test_h2c_tooBig");
 	}
 	
 	// TODO this keeps failing with ConnectionTimeout error in Github, it can't be reproduced locally...

@@ -21,6 +21,7 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.client.HttpClientConfiguration;
+import io.inverno.mod.http.client.HttpClientException;
 import io.inverno.mod.http.client.internal.EndpointRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionExchange;
 import io.inverno.mod.http.client.internal.HttpConnectionRequest;
@@ -115,6 +116,12 @@ public class Http1xUpgradingExchangeV2<A extends ExchangeContext> extends Http1x
 		this.request().headers().set(Headers.NAME_UPGRADE, Headers.VALUE_UPGRADE_H2C);
 		this.request().headers().set(Headers.NAME_HTTP2_SETTINGS, this.encodeSettingsHeaderValue(this.upgradedConnection.decoder().localSettings()));
 		this.request().headers().set(Headers.NAME_CONNECTION, Headers.NAME_UPGRADE + "," + Headers.NAME_HTTP2_SETTINGS);
+	}
+
+	@Override
+	void dispose(Throwable cause) {
+		this.upgradedSink.tryEmitError(cause != null ? null : new HttpClientException("Exchange was disposed"));
+		super.dispose(cause);
 	}
 	
 	/**
