@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.client.internal.v2.http1x;
+package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.URIBuilder;
@@ -35,15 +35,15 @@ import java.util.Optional;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.1
  */
-class Http1xWebSocketRequestV2 implements HttpConnectionRequest {
+class Http1xWebSocketRequest implements HttpConnectionRequest {
 
 	private final ObjectConverter<String> parameterConverter;
-	private final Http1xWebSocketConnectionV2 connection;
+	private final Http1xWebSocketConnection connection;
 	
 	private final Method method;
 	private final String path;
 	private final URIBuilder pathBuilder;
-	private final Http1xRequestHeadersV2 headers;
+	private final Http1xRequestHeaders headers;
 	
 	private String scheme;
 	private String pathAbsolute;
@@ -60,7 +60,7 @@ class Http1xWebSocketRequestV2 implements HttpConnectionRequest {
 	 * @param connection         the WebSocket connection
 	 * @param endpointRequest    the endpoint request
 	 */
-	public Http1xWebSocketRequestV2(ObjectConverter<String> parameterConverter, Http1xWebSocketConnectionV2 connection, EndpointRequest endpointRequest) {
+	public Http1xWebSocketRequest(ObjectConverter<String> parameterConverter, Http1xWebSocketConnection connection, EndpointRequest endpointRequest) {
 		this.parameterConverter = parameterConverter;
 		this.connection = connection;
 		
@@ -89,7 +89,7 @@ class Http1xWebSocketRequestV2 implements HttpConnectionRequest {
 			this.authority = endpointRequest.getAuthority();
 		}
 		
-		this.headers = new Http1xRequestHeadersV2(endpointRequest.getHeaders());
+		this.headers = new Http1xRequestHeaders(endpointRequest.getHeaders());
 	}
 	
 	@Override
@@ -98,7 +98,7 @@ class Http1xWebSocketRequestV2 implements HttpConnectionRequest {
 	}
 
 	@Override
-	public Http1xRequestHeadersV2 headers() {
+	public Http1xRequestHeaders headers() {
 		return this.headers;
 	}
 

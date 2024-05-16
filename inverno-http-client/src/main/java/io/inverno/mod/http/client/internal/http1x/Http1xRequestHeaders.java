@@ -1,12 +1,12 @@
 /*
- * Copyright 2022 Jeremy KUHN
- * 
+ * Copyright 2022 Jeremy Kuhn
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,11 +17,9 @@ package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.http.base.InboundCookies;
 import io.inverno.mod.http.base.OutboundCookies;
-import io.inverno.mod.http.base.OutboundRequestHeaders;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
 import io.inverno.mod.http.client.internal.EndpointRequestHeaders;
 import io.inverno.mod.http.client.internal.HttpConnectionRequestHeaders;
@@ -33,7 +31,7 @@ import java.util.function.Consumer;
 
 /**
  * <p>
- * HTTP/1.x {@link OutboundRequestHeaders} implementation.
+ * Http/1.x {@link OutboundRequestHeaders} implementation.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -44,71 +42,42 @@ class Http1xRequestHeaders implements HttpConnectionRequestHeaders {
 	private final EndpointRequestHeaders endpointHeaders;
 	
 	private boolean written;
+
+	/**
+	 * <p>
+	 * Creates Http/1.x request headers.
+	 * </p>
+	 *
+	 * @param endpointHeaders the endpoint request headers
+	 */
+	public Http1xRequestHeaders(EndpointRequestHeaders endpointHeaders) {
+		this.endpointHeaders = endpointHeaders;
+	}
 	
 	/**
 	 * <p>
-	 * Creates blank HTTP/1.x request headers.
-	 * </p>
-	 *
-	 * @param endpointHeaders  the original endpoint headers
-	 * @param headersValidator a headers validator or null
-	 */
-	public Http1xRequestHeaders(EndpointRequestHeaders endpointHeaders, HeadersValidator headersValidator) {
-		endpointHeaders.getUnderlyingHeaders().setValidator(headersValidator);
-		this.endpointHeaders = endpointHeaders;
-	}
-
-	/**
-	 * <p>
-	 * Returns the underlyinh headers.
+	 * Returns the headers to send as part of the Http request.
 	 * </p>
 	 * 
-	 * @return the underlyinh headers
+	 * @return the wrapped headers
 	 */
-	public LinkedHttpHeaders getUnderlyingHeaders() {
+	LinkedHttpHeaders unwrap() {
 		return this.endpointHeaders.getUnderlyingHeaders();
 	}
-
+	
 	@Override
 	public void setWritten(boolean written) {
 		this.written = written;
 	}
 	
 	@Override
-	public boolean isWritten() {
+	public final boolean isWritten() {
 		return this.written;
 	}
-
-	@Override
-	public CharSequence getCharSequence(CharSequence name) {
-		return this.endpointHeaders.getCharSequence(name);
-	}
-
-	@Override
-	public List<CharSequence> getAllCharSequence(CharSequence name) {
-		return this.endpointHeaders.getAllCharSequence(name);
-	}
-
-	@Override
-	public List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence() {
-		return this.endpointHeaders.getAllCharSequence();
-	}
-
+	
 	@Override
 	public Http1xRequestHeaders contentType(String contentType) {
 		this.endpointHeaders.contentType(contentType);
-		return this;
-	}
-
-	@Override
-	public Http1xRequestHeaders contentLength(long contentLength) {
-		this.endpointHeaders.contentLength(contentLength);
-		return this;
-	}
-
-	@Override
-	public Http1xRequestHeaders cookies(Consumer<OutboundCookies> cookiesConfigurer) {
-		this.endpointHeaders.cookies(cookiesConfigurer);
 		return this;
 	}
 
@@ -123,8 +92,20 @@ class Http1xRequestHeaders implements HttpConnectionRequestHeaders {
 	}
 
 	@Override
+	public Http1xRequestHeaders contentLength(long contentLength) {
+		this.endpointHeaders.contentLength(contentLength);
+		return this;
+	}
+	
+	@Override
 	public Long getContentLength() {
 		return this.endpointHeaders.getContentLength();
+	}
+	
+	@Override
+	public Http1xRequestHeaders cookies(Consumer<OutboundCookies> cookiesConfigurer) {
+		this.endpointHeaders.cookies(cookiesConfigurer);
+		return this;
 	}
 
 	@Override
@@ -132,6 +113,36 @@ class Http1xRequestHeaders implements HttpConnectionRequestHeaders {
 		return this.endpointHeaders.cookies();
 	}
 
+	@Override
+	public Http1xRequestHeaders add(CharSequence name, CharSequence value) {
+		this.endpointHeaders.add(name, value);
+		return this;
+	}
+
+	@Override
+	public Http1xRequestHeaders add(Header... headers) {
+		this.endpointHeaders.add(headers);
+		return this;
+	}
+
+	@Override
+	public Http1xRequestHeaders set(CharSequence name, CharSequence value) {
+		this.endpointHeaders.set(name, value);
+		return this;
+	}
+
+	@Override
+	public Http1xRequestHeaders set(Header... headers) {
+		this.endpointHeaders.set(headers);
+		return this;
+	}
+
+	@Override
+	public Http1xRequestHeaders remove(CharSequence... names) {
+		this.endpointHeaders.remove(names);
+		return this;
+	}
+	
 	@Override
 	public boolean contains(CharSequence name) {
 		return this.endpointHeaders.contains(name);
@@ -163,21 +174,6 @@ class Http1xRequestHeaders implements HttpConnectionRequestHeaders {
 	}
 
 	@Override
-	public <T extends Header> Optional<T> getHeader(CharSequence name) {
-		return this.endpointHeaders.getHeader(name);
-	}
-
-	@Override
-	public <T extends Header> List<T> getAllHeader(CharSequence name) {
-		return this.endpointHeaders.getAllHeader(name);
-	}
-
-	@Override
-	public List<Header> getAllHeader() {
-		return this.endpointHeaders.getAllHeader();
-	}
-
-	@Override
 	public Optional<Parameter> getParameter(CharSequence name) {
 		return this.endpointHeaders.getParameter(name);
 	}
@@ -193,32 +189,35 @@ class Http1xRequestHeaders implements HttpConnectionRequestHeaders {
 	}
 
 	@Override
-	public Http1xRequestHeaders add(CharSequence name, CharSequence value) {
-		this.endpointHeaders.add(name, value);
-		return this;
+	public <T extends Header> Optional<T> getHeader(CharSequence name) {
+		return this.endpointHeaders.getHeader(name);
 	}
 
 	@Override
-	public Http1xRequestHeaders add(Header... headers) {
-		this.endpointHeaders.add(headers);
-		return this;
+	public <T extends Header> List<T> getAllHeader(CharSequence name) {
+		return this.endpointHeaders.getAllHeader(name);
 	}
 
 	@Override
-	public Http1xRequestHeaders set(CharSequence name, CharSequence value) {
-		this.endpointHeaders.set(name, value);
-		return this;
+	public List<Header> getAllHeader() {
+		return this.endpointHeaders.getAllHeader();
+	}
+	
+	// TODO remove
+	@Override
+	public CharSequence getCharSequence(CharSequence name) {
+		return this.endpointHeaders.getCharSequence(name);
 	}
 
+	// TODO remove
 	@Override
-	public Http1xRequestHeaders set(Header... headers) {
-		this.endpointHeaders.set(headers);
-		return this;
+	public List<CharSequence> getAllCharSequence(CharSequence name) {
+		return this.endpointHeaders.getAllCharSequence(name);
 	}
 
+	// TODO remove
 	@Override
-	public Http1xRequestHeaders remove(CharSequence... names) {
-		this.endpointHeaders.remove(names);
-		return this;
+	public List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence() {
+		return this.endpointHeaders.getAllCharSequence();
 	}
 }

@@ -37,8 +37,8 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import io.inverno.mod.http.client.InterceptableExchange;
 import io.inverno.mod.http.client.Part;
+import io.inverno.mod.http.client.internal.http1x.Http1xWebSocketConnection;
 import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
-import io.inverno.mod.http.client.internal.v2.http1x.Http1xWebSocketConnectionV2;
 import java.net.SocketAddress;
 
 /**
@@ -202,7 +202,7 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 		}
 		
 		return Mono.defer(() -> {
-			Sinks.One<Http1xWebSocketConnectionV2> connectionSink = Sinks.one();
+			Sinks.One<Http1xWebSocketConnection> connectionSink = Sinks.one();
 			ChannelFuture connectionFuture = this.bootstrap.connect(this.remoteAddress);
 			connectionFuture.addListener(res -> {
 				if(res.isSuccess()) {
@@ -210,7 +210,7 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 					AbstractEndpoint.this.channelConfigurer.completeWsConnection(connectionFuture.channel().pipeline())
 						.addListener(connectionActive -> {
 							if(connectionActive.isSuccess()) {
-								Http1xWebSocketConnectionV2 connection = (Http1xWebSocketConnectionV2)connectionActive.getNow();
+								Http1xWebSocketConnection connection = (Http1xWebSocketConnection)connectionActive.getNow();
 								LOGGER.info("WebSocket HTTP/1.1 Client ({}) connected to {}", AbstractEndpoint.this.netService.getTransportType().toString().toLowerCase(), (connection.isTls() ? "wss://" : "ws://") + AbstractEndpoint.this.remoteAddress.getHostString() + ":" + AbstractEndpoint.this.remoteAddress.getPort());
 								connectionSink.tryEmitValue(connection);
 							}

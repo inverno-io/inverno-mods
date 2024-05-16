@@ -1,12 +1,12 @@
 /*
- * Copyright 2022 Jeremy KUHN
- * 
+ * Copyright 2022 Jeremy Kuhn
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.HttpClientUpgradeException;
 import io.inverno.mod.http.client.Part;
 import io.inverno.mod.http.client.internal.EndpointChannelConfigurer;
-import io.inverno.mod.http.client.internal.HttpConnection;
+import io.inverno.mod.http.client.internal.EndpointExchange;
 import io.inverno.mod.http.client.internal.HttpConnectionExchange;
 import io.inverno.mod.http.client.internal.HttpConnectionRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionResponse;
@@ -42,18 +42,18 @@ import io.netty.util.AsciiString;
 import io.netty.util.ReferenceCountUtil;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import reactor.core.publisher.MonoSink;
+import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * HTTP/1.x {@link HttpConnection} supporting H2C upgrade.
+ * Http/1.x {@link HttpConnection} supporting H2C upgrade.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-class Http1xUpgradingConnection extends Http1xConnection {
-
+public class Http1xUpgradingConnection extends Http1xConnection {
+	
 	private static final int MAX_MESSAGE_BUFFER_SIZE = 65536;
 	
 	/**
@@ -64,7 +64,7 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
 	 * @since 1.6
 	 */
-	private enum UpgradeState {
+	private static enum UpgradeState {
 		STARTED,
 		RECEIVED,
 		FULLY_RECEIVED,
@@ -81,7 +81,7 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	
 	private Deque<Object> messageBuffer;
 	private int messageBufferSize;
-	
+
 	/**
 	 * <p>
 	 * Creates an HTTP/1.x upgrading connection.
@@ -168,7 +168,7 @@ class Http1xUpgradingConnection extends Http1xConnection {
 				// we must buffer until we have sent the request body
 				if(this.requestComplete) {
 					this.acceptUpgrade();
-					this.context.fireChannelRead(msg);
+					this.channelContext.fireChannelRead(msg);
 				}
 				else {
 					this.bufferMessage(msg);
@@ -189,7 +189,6 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	@Override
 	public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
 		super.handlerRemoved(ctx);
-		
 		if(this.messageBuffer != null) {
 			Object current;
 			while( (current = this.messageBuffer.poll()) != null) {
@@ -230,7 +229,7 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	 * </p>
 	 */
 	private void rejectUpgrade() {
-		this.upgradingExchange.getUpgradedExchangeSink().success(this.upgradingExchange);
+		this.upgradingExchange.getUpgradedSink().tryEmitValue(this.upgradingExchange);
 		this.state = UpgradeState.COMPLETED;
 		// Make sure the capacity is updated
 		if(this.handler != null) {
@@ -246,7 +245,8 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	 */
 	private void acceptUpgrade() {
 		this.state = UpgradeState.PREPARED;
-//		this.configurer.completeHttp2Upgrade(this.context.pipeline(), configuration, this.upgradingExchange, this.messageBuffer);
+		this.configurer.completeHttp2Upgrade(this.channelContext.pipeline(), configuration, this.upgradingExchange, this.messageBuffer);
+		this.upgradingExchange.dispose(null);
 		this.messageBuffer = null;
 		this.messageBufferSize = 0;
 		this.state = UpgradeState.COMPLETED;
@@ -257,34 +257,36 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	}
 
 	@Override
-	protected Http1xExchange createExchange(ChannelHandlerContext context, MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink, ExchangeContext exchangeContext, Http1xRequest request) {
+	protected <A extends ExchangeContext> Http1xExchange createExchange(Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, EndpointExchange<A> endpointExchange) {
 		if(this.state == UpgradeState.COMPLETED) {
-			return super.createExchange(context, exchangeSink, exchangeContext, request);
+			return super.createExchange(sink, endpointExchange);
 		}
 		else if(this.upgradingExchange == null) {
 			this.state = UpgradeState.STARTED;
-			this.upgradingExchange = new Http1xUpgradingExchange(context, exchangeSink, exchangeContext, this.httpVersion, request, this);
-//			this.configurer.startHttp2Upgrade(context.pipeline(), this.configuration, this.upgradingExchange);
+
+			Http1xUpgradingExchange<A> exchange = new Http1xUpgradingExchange<>(this.configuration, sink, this.headerService, this.parameterConverter, endpointExchange.context(), this, endpointExchange.request());
+			this.configurer.startHttp2Upgrade(this.channelContext.pipeline(), this.configuration, exchange);
+			this.upgradingExchange = exchange;
 			
-			return this.upgradingExchange;
+			return exchange;
 		}
 		else {
 			throw new HttpClientUpgradeException("HTTP/2 upgrade already in progress");
 		}
 	}
-	
+
 	@Override
-	public void requestComplete(Http1xExchange exchange) {
-		super.requestComplete(exchange);
+	public void onRequestSent() {
+		super.onRequestSent();
 		this.requestComplete = true;
 		if(this.state == UpgradeState.FULLY_RECEIVED) {
 			this.acceptUpgrade();
 		}
 	}
-	
+
 	@Override
-	public void exchangeError(Http1xExchange exchange, Throwable t) {
-		super.exchangeError(exchange, t);
+	public void onRequestError(Throwable throwable) {
+		super.onRequestError(throwable);
 		if(this.state != UpgradeState.COMPLETED) {
 			// Let's be conservative here, if there was an error in the upgrading exchange let's just close the connection even we could recover
 			this.shutdown().subscribe();

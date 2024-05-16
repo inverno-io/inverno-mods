@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.client.internal.v2.http2;
+package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.mod.http.client.HttpClientException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.http2.Http2Connection;
 import io.netty.handler.codec.http2.Http2Error;
 import io.netty.handler.codec.http2.Http2Exception;
 import io.netty.handler.codec.http2.Http2Flags;
@@ -43,18 +42,18 @@ import java.util.Optional;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.11
  */
-public class Http2ConnectionStreamV2 {
+public class Http2ConnectionStream {
 	
-	private final Http2ConnectionV2 connection;
+	private final Http2Connection connection;
 	private final ChannelHandlerContext channelContext;
-	private final Http2Connection.Endpoint<Http2LocalFlowController> localEndpoint;
+	private final io.netty.handler.codec.http2.Http2Connection.Endpoint<Http2LocalFlowController> localEndpoint;
 	
 	private Http2Stream stream;
 	
 	/**
 	 * The exchange associated to the stream which can be replaced by an {@link Http2ErrorExchange} in case of error while processing the exchange.
 	 */
-	AbstractHttp2ExchangeV2<?, ?> exchange;
+	AbstractHttp2Exchange<?, ?> exchange;
 
 	/**
 	 * <p>
@@ -70,7 +69,7 @@ public class Http2ConnectionStreamV2 {
 	 * @param channelContext the channel handler context
 	 * @param localEndpoint  the local endpoint
 	 */
-	public Http2ConnectionStreamV2(Http2ConnectionV2 connection, ChannelHandlerContext channelContext, Http2Connection.Endpoint<Http2LocalFlowController> localEndpoint) {
+	public Http2ConnectionStream(Http2Connection connection, ChannelHandlerContext channelContext, io.netty.handler.codec.http2.Http2Connection.Endpoint<Http2LocalFlowController> localEndpoint) {
 		this.connection = connection;
 		this.channelContext = channelContext;
 		this.localEndpoint = localEndpoint;
@@ -89,7 +88,7 @@ public class Http2ConnectionStreamV2 {
 	 * @param channelContext the channel handler context
 	 * @param stream         the Http/2 stream
 	 */
-	public Http2ConnectionStreamV2(Http2ConnectionV2 connection, ChannelHandlerContext channelContext, Http2Stream stream) {
+	public Http2ConnectionStream(Http2Connection connection, ChannelHandlerContext channelContext, Http2Stream stream) {
 		this.connection = connection;
 		this.channelContext = channelContext;
 		this.localEndpoint = null;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.inverno.mod.http.client.internal.v2.http2;
+package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.http.base.InboundData;
@@ -34,14 +34,14 @@ import reactor.core.publisher.Sinks;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.11
  */
-public class Http2ResponseBodyV2 implements ResponseBody {
+public class Http2ResponseBody implements ResponseBody {
 	
 	private final Sinks.Many<ByteBuf> dataSink;
 	private Flux<ByteBuf> data;
 	private boolean subscribed;
 	
-	private Http2ResponseBodyV2.RawInboundData rawData;
-	private Http2ResponseBodyV2.StringInboundData stringData;
+	private Http2ResponseBody.RawInboundData rawData;
+	private Http2ResponseBody.StringInboundData stringData;
 	
 	private Throwable cancelCause;
 
@@ -50,7 +50,7 @@ public class Http2ResponseBodyV2 implements ResponseBody {
 	 * Creates an Http/2 response body.
 	 * </p>
 	 */
-	public Http2ResponseBodyV2() {
+	public Http2ResponseBody() {
 		this.dataSink = Sinks.many().unicast().onBackpressureBuffer();
 		this.data = Flux.defer(() -> {
 			this.subscribed = true;
@@ -68,7 +68,7 @@ public class Http2ResponseBodyV2 implements ResponseBody {
 	 * </p>
 	 * 
 	 * <p>
-	 * This is used by an {@link Http2ConnectionV2} to emit response data.
+	 * This is used by an {@link Http2Connection} to emit response data.
 	 * </p>
 	 * 
 	 * @return the response body data sink
@@ -127,7 +127,7 @@ public class Http2ResponseBodyV2 implements ResponseBody {
 	@Override
 	public InboundData<ByteBuf> raw() {
 		if(this.rawData == null) {
-			this.rawData = new Http2ResponseBodyV2.RawInboundData();
+			this.rawData = new Http2ResponseBody.RawInboundData();
 		}
 		return this.rawData;
 	}
@@ -135,7 +135,7 @@ public class Http2ResponseBodyV2 implements ResponseBody {
 	@Override
 	public InboundData<CharSequence> string() throws IllegalStateException {
 		if(this.stringData == null) {
-			this.stringData = new Http2ResponseBodyV2.StringInboundData();
+			this.stringData = new Http2ResponseBody.StringInboundData();
 		}
 		return this.stringData;
 	}
@@ -152,7 +152,7 @@ public class Http2ResponseBodyV2 implements ResponseBody {
 
 		@Override
 		public Publisher<ByteBuf> stream() {
-			return Http2ResponseBodyV2.this.data;
+			return Http2ResponseBody.this.data;
 		}
 	}
 	
@@ -168,7 +168,7 @@ public class Http2ResponseBodyV2 implements ResponseBody {
 
 		@Override
 		public Publisher<CharSequence> stream() {
-			return Flux.from(Http2ResponseBodyV2.this.data)
+			return Flux.from(Http2ResponseBody.this.data)
 				.map(buf -> {
 					try {
 						return buf.toString(Charsets.DEFAULT);
