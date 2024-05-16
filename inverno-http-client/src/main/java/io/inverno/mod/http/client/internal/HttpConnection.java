@@ -149,31 +149,16 @@ public interface HttpConnection {
 		
 		/**
 		 * <p>
-		 * Notifies when an exchange terminates.
+		 * Notifies when the connection can be recycled.
 		 * </p>
-		 * 
-		 * @param exchange the exchange
 		 */
-		void onExchangeTerminate(HttpConnectionExchange<?, ?, ?> exchange);
-
-		/**
-		 * <p>
-		 * Notifies when a connection error occurs.
-		 * </p>
-		 * 
-		 * @param t the error
-		 */
-		void onError(Throwable t);
-
+		void recycle();
+		
 		/**
 		 * <p>
 		 * Notifies when the connection is closed.
 		 * </p>
 		 */
-		void onClose();
-		
-		void recycle();
-		
 		void close();
 	}
 }

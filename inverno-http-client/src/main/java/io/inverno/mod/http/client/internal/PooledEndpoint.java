@@ -1056,22 +1056,5 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 		public void close() {
 			PooledEndpoint.this.remove(this);
 		}
-		
-		@Override
-		public void onClose() {
-			// Make sure the connection is removed
-			PooledEndpoint.this.remove(this);
-		}
-
-		@Override
-		public void onError(Throwable t) {
-			// Don't wait for the connection to be closed and remove the connection from the pool
-			PooledEndpoint.this.remove(this);
-		}
-
-		@Override
-		public void onExchangeTerminate(HttpConnectionExchange<?, ?, ?> exchange) {
-			PooledEndpoint.this.recycle(this);
-		}
 	}
 }
