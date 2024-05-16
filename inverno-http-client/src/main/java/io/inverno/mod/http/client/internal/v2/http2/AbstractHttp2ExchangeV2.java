@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,11 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * 
+ * Base Http/2 {@link Exchange} implementation.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 abstract class AbstractHttp2ExchangeV2<A extends ExchangeContext, B extends HttpConnectionRequest> implements HttpConnectionExchange<A, B, Http2ResponseV2> {
 
@@ -57,6 +57,19 @@ abstract class AbstractHttp2ExchangeV2<A extends ExchangeContext, B extends Http
 	
 	private Throwable cancelCause;
 
+	/**
+	 * <p>
+	 * Creates an Http/2 exchane.
+	 * </p>
+	 * 
+	 * @param configuration      the HTTP client configurartion
+	 * @param sink               the exchange sink
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param context            the exchange context
+	 * @param connectionStream   the Http/2 connection stream
+	 * @param request            the Http/2 request
+	 */
 	public AbstractHttp2ExchangeV2(
 			HttpClientConfiguration configuration, 
 			Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, 
@@ -75,6 +88,11 @@ abstract class AbstractHttp2ExchangeV2<A extends ExchangeContext, B extends Http
 		this.request = request;
 	}
 	
+	/**
+	 * <p>
+	 * Starts the request timeout task.
+	 * </p>
+	 */
 	private void startTimeout() {
 		if(this.configuration.request_timeout() > 0) {
 			this.timeoutFuture = this.connectionStream.executor().schedule(
@@ -89,6 +107,11 @@ abstract class AbstractHttp2ExchangeV2<A extends ExchangeContext, B extends Http
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Cancels the request timeout task.
+	 * </p>
+	 */
 	private void cancelTimeout() {
 		if(this.timeoutFuture != null) {
 			this.timeoutFuture.cancel(false);
@@ -96,13 +119,44 @@ abstract class AbstractHttp2ExchangeV2<A extends ExchangeContext, B extends Http
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Starts the processing of the exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method invokes the start logic implementd in {@link #doStart()} and starts the request timeout task.
+	 * </p>
+	 * 
+	 * @see #doStart() 
+	 */
 	final void start() {
 		this.doStart();
 		this.startTimeout();
 	}
 	
+	/**
+	 * <p>
+	 * Starts the exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method shall implement the specific exchange start logic, typically send the request.
+	 * </p>
+	 */
 	protected abstract void doStart();
 	
+	/**
+	 * <p>
+	 * Emits the response.
+	 * </p>
+	 * 
+	 * <p>
+	 * This is invoked by the connection when the exchange response is received, the request timeout is cancelled and the exchange is emitted on the exchange sink to make the response available.
+	 * </p>
+	 * 
+	 * @param response the Http response received on the connection
+	 */
 	final void emitResponse(Http2Headers headers) {
 		this.cancelTimeout();
 		this.response = new Http2ResponseV2(this.headerService, this.parameterConverter, headers);
@@ -124,6 +178,19 @@ abstract class AbstractHttp2ExchangeV2<A extends ExchangeContext, B extends Http
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Disposes the exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method cancels the request timeout and sets the cancel cause and makes sure the exchange disposal logic implemented in {@link #doDispose(java.lang.Throwable) } is invoked once.
+	 * </p>
+	 * 
+	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
+	 * 
+	 * @see #doDispose(java.lang.Throwable) 
+	 */
 	final void dispose(Throwable cause) {
 		this.cancelTimeout();
 		if(this.cancelCause == null) {
@@ -132,6 +199,17 @@ abstract class AbstractHttp2ExchangeV2<A extends ExchangeContext, B extends Http
 		this.doDispose(cause);
 	}
 	
+	/**
+	 * <p>
+	 * Disposes the exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method shall implement the specific exchange disposal logic.
+	 * </p>
+	 * 
+	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
+	 */
 	protected abstract void doDispose(Throwable cause);
 
 	@Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,11 @@ import reactor.core.publisher.Mono;
 
 /**
  * <p>
- * 
+ * Http/2 {@link Request} implementation
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 public class Http2RequestV2 implements HttpConnectionRequest {
 	
@@ -62,6 +62,18 @@ public class Http2RequestV2 implements HttpConnectionRequest {
 	private int transferedLength;
 	private Disposable disposable;
 	
+	
+	/**
+	 * <p>
+	 * Creates an Http/2 request.
+	 * </p>
+	 * 
+	 * @param headerService the header service
+	 * @param parameterConverter the parameter converter
+	 * @param connectionStream the Http/2 connection stream
+	 * @param endpointRequest the endpoint request
+	 * @param validateHeaders true to validate headers, false otherwise
+	 */
 	public Http2RequestV2(HeaderService headerService, ObjectConverter<String> parameterConverter, Http2ConnectionStreamV2 connectionStream, EndpointRequest endpointRequest, boolean validateHeaders) {
 		this.parameterConverter = parameterConverter;
 		this.connectionStream = connectionStream;
@@ -100,6 +112,15 @@ public class Http2RequestV2 implements HttpConnectionRequest {
 		this.body = endpointRequest.getBody() != null ? new Http2RequestBodyV2(endpointRequest.getBody()) : null;
 	}
 
+	/**
+	 * <p>
+	 * Sends the request.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method executes on the connection event loop, it subscribes to the request body data publisher in order to generate and send the request body.
+	 * </p>
+	 */
 	public void send() {
 		if(this.connectionStream.executor().inEventLoop()) {
 			if(this.body != null) {
@@ -115,6 +136,17 @@ public class Http2RequestV2 implements HttpConnectionRequest {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Disposes the request.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method simply cancels any active subscription.
+	 * </p>
+	 * 
+	 * @param cause 
+	 */
 	final void dispose(Throwable cause) {
 		if(this.disposable != null) {
 			this.disposable.dispose();
@@ -214,7 +246,7 @@ public class Http2RequestV2 implements HttpConnectionRequest {
 	 * </p>
 	 * 
 	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.10
+	 * @since 1.11
 	 */
 	private class MonoBodyDataSubscriber extends BaseSubscriber<ByteBuf> {
 		private ByteBuf data;
@@ -254,6 +286,14 @@ public class Http2RequestV2 implements HttpConnectionRequest {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The request body data subscriber that writes request objects to the connection.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.11
+	 */
 	private class BodyDataSubscriber extends BaseSubscriber<ByteBuf> {
 		
 		private ByteBuf singleChunk;
@@ -290,9 +330,6 @@ public class Http2RequestV2 implements HttpConnectionRequest {
 				Http2RequestV2.this.connectionStream.writeData(value, 0, false, Http2RequestV2.this.connectionStream.newPromise().addListener(future -> {
 					if(future.isSuccess()) {
 						this.request(1);
-					}
-					else {
-						Http2RequestV2.this.connectionStream.onRequestError(future.cause());
 					}
 				}));
 			}

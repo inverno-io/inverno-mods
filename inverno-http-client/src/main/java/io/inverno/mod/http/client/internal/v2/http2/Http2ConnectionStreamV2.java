@@ -33,11 +33,15 @@ import java.util.Optional;
 
 /**
  * <p>
+ * An Http/2 connection stream.
+ * </p>
  * 
+ * <p>
+ * This is used as a proxy between the exchange and the connection and abstracts the stream to the exchange.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.11
  */
 public class Http2ConnectionStreamV2 {
 	
@@ -52,12 +56,39 @@ public class Http2ConnectionStreamV2 {
 	 */
 	AbstractHttp2ExchangeV2<?, ?> exchange;
 
+	/**
+	 * <p>
+	 * Creates an Http/2 connection stream that delays the creation of the stream.
+	 * </p>
+	 * 
+	 * <p>
+	 * The stream is created when the first write operation is invoked, this prevents situation when a stream with id {@code x} is used before stream with id {@code y} where {@code x > y} which would
+	 * lead to server errors.
+	 * </p>
+	 * 
+	 * @param connection     the Http/2 connection
+	 * @param channelContext the channel handler context
+	 * @param localEndpoint  the local endpoint
+	 */
 	public Http2ConnectionStreamV2(Http2ConnectionV2 connection, ChannelHandlerContext channelContext, Http2Connection.Endpoint<Http2LocalFlowController> localEndpoint) {
 		this.connection = connection;
 		this.channelContext = channelContext;
 		this.localEndpoint = localEndpoint;
 	}
 	
+	/**
+	 * <p>
+	 * Creates an Http/2 connection stream wrapping the specified stream.
+	 * </p>
+	 * 
+	 * <p>
+	 * This is used when a stream is already available, typically when upgrading an Http/1.1 connection to Http/2.
+	 * </p>
+	 * 
+	 * @param connection     the Http/2 connection
+	 * @param channelContext the channel handler context
+	 * @param stream         the Http/2 stream
+	 */
 	public Http2ConnectionStreamV2(Http2ConnectionV2 connection, ChannelHandlerContext channelContext, Http2Stream stream) {
 		this.connection = connection;
 		this.channelContext = channelContext;
@@ -555,7 +586,7 @@ public class Http2ConnectionStreamV2 {
 	
 	/**
 	 * <p>
-	 * Flushed the channel when it can be flushed.
+	 * Flushes the channel when it can be flushed.
 	 * </p>
 	 */
 	private void flush() {
@@ -564,6 +595,17 @@ public class Http2ConnectionStreamV2 {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Callback method invoked when an error is raised while sending the exchange request to the server.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method executes on the connection event loop, it disposes the exchange and reset the stream with code {@code INTERNAL_ERROR(2)}.
+	 * </p>
+	 * 
+	 * @param throwable the error
+	 */
 	public void onRequestError(Throwable throwable) {
 		if(this.channelContext.executor().inEventLoop()) {
 			// dispose + reset
@@ -575,6 +617,15 @@ public class Http2ConnectionStreamV2 {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Callback method invoked when the exchange response has been fully received.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method executes on the connection event loop, it disposes the exchange.
+	 * </p>
+	 */
 	public void onResponseComplete() {
 		if(this.channelContext.executor().inEventLoop()) {
 			this.exchange.dispose(null);

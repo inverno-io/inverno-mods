@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,11 @@ import reactor.core.publisher.Flux;
 
 /**
  * <p>
- * 
+ * Http/1.x request body with support for {@link FileRegion} data.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 class Http1xRequestBodyV2 extends HttpConnectionRequestBody { // TODO remove extends
 	
@@ -50,7 +50,7 @@ class Http1xRequestBodyV2 extends HttpConnectionRequestBody { // TODO remove ext
 	 * Creates an Http1x request body.
 	 * </p>
 	 *
-	 * @param endpointRequestBody the original endpoint request body
+	 * @param endpointRequestBody the originating endpoint request body
 	 * @param supportsFileRegion  true if the connection supports file region, false otherwise
 	 */
 	public Http1xRequestBodyV2(EndpointRequestBody endpointRequestBody, boolean supportsFileRegion) {
@@ -101,16 +101,31 @@ class Http1xRequestBodyV2 extends HttpConnectionRequestBody { // TODO remove ext
 		}
 	}
 
+	/**
+	 * <p>
+	 * Returns the response body data publisher.
+	 * </p>
+	 * 
+	 * <p>
+	 * The data publisher MUST be subscribed to produce a request body.
+	 * </p>
+	 * 
+	 * @return the response body data publisher
+	 */
 	public Publisher<ByteBuf> getData() {
 		return data;
 	}
 	
 	/**
 	 * <p>
-	 * Returns the request body file region data publisher.
+	 * Returns the file region data publisher.
 	 * </p>
 	 * 
-	 * @return a publisher of file region data or null if the body is not made of file region data.
+	 * <p>
+	 * The file region data publisher has priority over the request body data publisher and shall be subscribed first when present to produce the request body.
+	 * </p>
+	 * 
+	 * @return the file region data publisher or null
 	 */
 	public Publisher<FileRegion> getFileRegionData() {
 		return this.fileRegionData;

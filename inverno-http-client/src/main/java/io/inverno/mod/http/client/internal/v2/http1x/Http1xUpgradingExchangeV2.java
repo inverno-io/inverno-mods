@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,17 +36,30 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * 
+ * Http/1.x {@link Exchange} implementation supporting H2C upgrade.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 public class Http1xUpgradingExchangeV2<A extends ExchangeContext> extends Http1xExchangeV2<A> {
 
 	private final Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> upgradedSink;
 	private Http2ConnectionV2 upgradedConnection;
 	
+	/**
+	 * <p>
+	 * Creates an HTTP/1.x upgrading exchange.
+	 * </p>
+	 *
+	 * @param configuration      the HTTP client configurartion
+	 * @param sink               the exchange sink
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param context            the exchange context
+	 * @param connection         the Http/1.x connection
+	 * @param endpointRequest    the endpoint request
+	 */
 	public Http1xUpgradingExchangeV2(
 			HttpClientConfiguration configuration, 
 			Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink,

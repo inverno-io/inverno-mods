@@ -28,11 +28,11 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * 
+ * Http/1.x {@link ResponseBody} implementation.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.11
  */
 class Http1xResponseBodyV2 implements ResponseBody {
 	
@@ -45,6 +45,11 @@ class Http1xResponseBodyV2 implements ResponseBody {
 	
 	private Throwable cancelCause;
 
+	/**
+	 * <p>
+	 * Creates an Http/1.x response body.
+	 * </p>
+	 */
 	public Http1xResponseBodyV2() {
 		this.dataSink = Sinks.many().unicast().onBackpressureBuffer();
 		this.data = Flux.defer(() -> {
@@ -63,7 +68,7 @@ class Http1xResponseBodyV2 implements ResponseBody {
 	 * </p>
 	 * 
 	 * <p>
-	 * This is used by an {@link Http1xConnectionV2} to emit response data.
+	 * This is used by an {@link Http1xConnection} to emit response data.
 	 * </p>
 	 * 
 	 * @return the response body data sink
@@ -141,7 +146,7 @@ class Http1xResponseBodyV2 implements ResponseBody {
 	 * </p>
 	 *
 	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.6
+	 * @since 1.11
 	 */
 	private class RawInboundData implements InboundData<ByteBuf> {
 
@@ -157,7 +162,7 @@ class Http1xResponseBodyV2 implements ResponseBody {
 	 * </p>
 	 *
 	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.6
+	 * @since 1.11
 	 */
 	private class StringInboundData implements InboundData<CharSequence> {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package io.inverno.mod.http.client.internal.v2.http1x;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.base.QueryParameters;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericQueryParameters;
 import io.inverno.mod.http.base.internal.netty.FlatFullHttpRequest;
@@ -43,13 +42,14 @@ import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+
 /**
  * <p>
- * 
+ * Http/1.x {@link Request} implementation
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 class Http1xRequestV2 implements HttpConnectionRequest {
 	
@@ -71,6 +71,15 @@ class Http1xRequestV2 implements HttpConnectionRequest {
 	private int transferedLength;
 	private Disposable disposable;
 
+	/**
+	 * <p>
+	 * Creates an Http/1.x request.
+	 * </p>
+	 *
+	 * @param parameterConverter the parameter converter
+	 * @param connection         the Http/1.x connection
+	 * @param endpointRequest    the endpoint request
+	 */
 	public Http1xRequestV2(ObjectConverter<String> parameterConverter, Http1xConnectionV2 connection, EndpointRequest endpointRequest) {
 		this.parameterConverter = parameterConverter;
 		this.connection = connection;
@@ -105,6 +114,16 @@ class Http1xRequestV2 implements HttpConnectionRequest {
 		this.body = endpointRequest.getBody() != null ? new Http1xRequestBodyV2(endpointRequest.getBody(), connection.supportsFileRegion()) : null;
 	}
 	
+	/**
+	 * <p>
+	 * Sends the request.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method executes on the connection event loop, it subscribes to the request body file region publisher when present and to the request body data publisher otherwise in order to generate 
+	 * and send the request body.
+	 * </p>
+	 */
 	public void send() {
 		if(this.connection.executor().inEventLoop()) {
 			if(this.body != null) {
@@ -126,6 +145,17 @@ class Http1xRequestV2 implements HttpConnectionRequest {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Disposes the request.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method simply cancels any active subscription.
+	 * </p>
+	 * 
+	 * @param cause 
+	 */
 	final void dispose(Throwable cause) {
 		if(this.disposable != null) {
 			this.disposable.dispose();
@@ -225,7 +255,7 @@ class Http1xRequestV2 implements HttpConnectionRequest {
 	 * </p>
 	 * 
 	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.10
+	 * @since 1.11
 	 */
 	private class MonoBodyDataSubscriber extends BaseSubscriber<ByteBuf> {
 		
@@ -268,6 +298,14 @@ class Http1xRequestV2 implements HttpConnectionRequest {
 		}
 	}
 	
+	/**
+	 * <p>
+	 * The request body data subscriber that writes request objects to the connection.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.11
+	 */
 	private class BodyDataSubscriber extends BaseSubscriber<ByteBuf> {
 		
 		private ByteBuf singleChunk;
@@ -317,9 +355,6 @@ class Http1xRequestV2 implements HttpConnectionRequest {
 				Http1xRequestV2.this.connection.writeHttpObject(new DefaultHttpContent(value), Http1xRequestV2.this.connection.newPromise().addListener(future -> {
 					if(future.isSuccess()) {
 						this.request(1);
-					}
-					else {
-						Http1xRequestV2.this.connection.onRequestError(future.cause());
 					}
 				}));
 			}

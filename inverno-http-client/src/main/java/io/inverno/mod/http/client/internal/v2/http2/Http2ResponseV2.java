@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,17 @@
 package io.inverno.mod.http.client.internal.v2.http2;
 
 import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.http.base.InboundHeaders;
-import io.inverno.mod.http.base.InboundResponseHeaders;
 import io.inverno.mod.http.base.header.HeaderService;
-import io.inverno.mod.http.client.ResponseBody;
 import io.inverno.mod.http.client.internal.HttpConnectionResponse;
 import io.netty.handler.codec.http2.Http2Headers;
 
 /**
  * <p>
- * 
+ * Http/2 {@link Response} implementation.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 public class Http2ResponseV2 implements HttpConnectionResponse {
 	
@@ -41,6 +38,15 @@ public class Http2ResponseV2 implements HttpConnectionResponse {
 	
 	private Http2ResponseTrailersV2 trailers;
 
+	/**
+	 * <p>
+	 * Creates an HTTP/2 response.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param headers            the originating headers
+	 */
 	public Http2ResponseV2(HeaderService headerService, ObjectConverter<String> parameterConverter, Http2Headers headers) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
@@ -49,6 +55,17 @@ public class Http2ResponseV2 implements HttpConnectionResponse {
 		this.body = new Http2ResponseBodyV2();
 	}
 	
+	/**
+	 * <p>
+	 * Disposes the response.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method disposes the response body.
+	 * </p>
+	 * 
+	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
+	 */
 	final void dispose(Throwable cause) {
 		this.body.dispose(cause);
 	}
@@ -68,6 +85,17 @@ public class Http2ResponseV2 implements HttpConnectionResponse {
 		return this.trailers;
 	}
 
+	/**
+	 * <p>
+	 * Sets the response trailers.
+	 * </p>
+	 * 
+	 * <p>
+	 * This is invoked by the connection when response trailers are received.
+	 * </p>
+	 * 
+	 * @param trailers the originating trailers
+	 */
 	void setTrailers(Http2Headers trailers) {
 		this.trailers = new Http2ResponseTrailersV2(this.headerService, this.parameterConverter, trailers);
 	}

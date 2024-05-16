@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,11 @@ import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
 
 /**
  * <p>
- * HTTP/1.x {@link HttpConnectionFactory} implementation.
+ * Http/1.x {@link HttpConnectionFactory} implementation.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )
 public class Http1xConnectionFactoryV2 implements HttpConnectionFactory<Http1xConnectionV2> {
@@ -45,7 +45,7 @@ public class Http1xConnectionFactoryV2 implements HttpConnectionFactory<Http1xCo
 	
 	/**
 	 * <p>
-	 * Creates an HTTP/1.x connection factory.
+	 * Creates an Http/1.x connection factory.
 	 * </p>
 	 *
 	 * @param headerService         the header service

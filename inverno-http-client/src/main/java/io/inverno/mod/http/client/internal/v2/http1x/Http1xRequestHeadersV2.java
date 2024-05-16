@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,11 @@ import java.util.function.Consumer;
 
 /**
  * <p>
- * 
+ * Http/1.x {@link OutboundRequestHeaders} implementation.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 class Http1xRequestHeadersV2 implements HttpConnectionRequestHeaders {
 
@@ -43,13 +43,20 @@ class Http1xRequestHeadersV2 implements HttpConnectionRequestHeaders {
 	
 	private boolean written;
 
+	/**
+	 * <p>
+	 * Creates Http/1.x request headers.
+	 * </p>
+	 *
+	 * @param endpointHeaders the endpoint request headers
+	 */
 	public Http1xRequestHeadersV2(EndpointRequestHeaders endpointHeaders) {
 		this.endpointHeaders = endpointHeaders;
 	}
 	
 	/**
 	 * <p>
-	 * Returns the headers to send as part of the Http response.
+	 * Returns the headers to send as part of the Http request.
 	 * </p>
 	 * 
 	 * @return the wrapped headers

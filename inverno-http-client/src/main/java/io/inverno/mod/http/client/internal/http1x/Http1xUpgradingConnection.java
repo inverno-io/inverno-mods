@@ -246,7 +246,7 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	 */
 	private void acceptUpgrade() {
 		this.state = UpgradeState.PREPARED;
-		this.configurer.completeHttp2Upgrade(this.context.pipeline(), configuration, this.upgradingExchange, this.messageBuffer);
+//		this.configurer.completeHttp2Upgrade(this.context.pipeline(), configuration, this.upgradingExchange, this.messageBuffer);
 		this.messageBuffer = null;
 		this.messageBufferSize = 0;
 		this.state = UpgradeState.COMPLETED;
@@ -264,7 +264,7 @@ class Http1xUpgradingConnection extends Http1xConnection {
 		else if(this.upgradingExchange == null) {
 			this.state = UpgradeState.STARTED;
 			this.upgradingExchange = new Http1xUpgradingExchange(context, exchangeSink, exchangeContext, this.httpVersion, request, this);
-			this.configurer.startHttp2Upgrade(context.pipeline(), this.configuration, this.upgradingExchange);
+//			this.configurer.startHttp2Upgrade(context.pipeline(), this.configuration, this.upgradingExchange);
 			
 			return this.upgradingExchange;
 		}

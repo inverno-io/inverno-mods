@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,11 +34,11 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * 
+ * Http/1.x {@link InboundResponseHeaders} implementation.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 class Http1xResponseHeadersV2 implements InboundResponseHeaders {
 	
@@ -50,6 +50,16 @@ class Http1xResponseHeadersV2 implements InboundResponseHeaders {
 	private Status status;
 	private GenericResponseCookies cookies;
 
+	/**
+	 * <p>
+	 * Creates Http/1.x response headers.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param headers            the originating Http headers
+	 * @param statusCode         the response status code
+	 */
 	public Http1xResponseHeadersV2(HeaderService headerService, ObjectConverter<String> parameterConverter, LinkedHttpHeaders headers, int statusCode) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;

@@ -23,21 +23,39 @@ import reactor.core.publisher.Flux;
 
 /**
  * <p>
- * 
+ * Http/2 request body.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.8
  */
 public class Http2RequestBodyV2 extends HttpConnectionRequestBody { // TODO remove extends
 	
 	private final Publisher<ByteBuf> data;
 
+	/**
+	 * <p>
+	 * Creates an Http/2 request body.
+	 * </p>
+	 * 
+	 * @param endpointRequestBody the original endpoint request body
+	 */
 	public Http2RequestBodyV2(EndpointRequestBody endpointRequestBody) {
 		super(Flux.empty()); // TODO remove
 		this.data = endpointRequestBody.getData();
 	}
 
+	/**
+	 * <p>
+	 * Returns the response body data publisher.
+	 * </p>
+	 * 
+	 * <p>
+	 * The data publisher MUST be subscribed to produce a request body.
+	 * </p>
+	 * 
+	 * @return the response body data publisher
+	 */
 	public Publisher<ByteBuf> getData() {
 		return data;
 	}

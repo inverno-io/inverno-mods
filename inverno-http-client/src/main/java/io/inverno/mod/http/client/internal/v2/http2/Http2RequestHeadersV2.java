@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,11 +37,11 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * 
+ * Http/2 {@link OutboundRequestHeaders} implementation.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 public class Http2RequestHeadersV2 implements HttpConnectionRequestHeaders {
 	
@@ -52,6 +52,16 @@ public class Http2RequestHeadersV2 implements HttpConnectionRequestHeaders {
 	private GenericRequestCookies cookies;
 	private boolean written;
 
+	/**
+	 * <p>
+	 * Creates Http/2 request headers.
+	 * </p>
+	 * 
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param endpointHeaders    the original endpoint request
+	 * @param validateHeaders    true to validate headers, false otherwise
+	 */
 	public Http2RequestHeadersV2(HeaderService headerService, ObjectConverter<String> parameterConverter, EndpointRequestHeaders endpointHeaders, boolean validateHeaders) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
@@ -60,6 +70,13 @@ public class Http2RequestHeadersV2 implements HttpConnectionRequestHeaders {
 		endpointHeaders.getAll().forEach(e -> this.add(e.getKey(), e.getValue()));
 	}
 	
+	/**
+	 * <p>
+	 * Returns the headers to send as part of the Http response.
+	 * </p>
+	 * 
+	 * @return the wrapped headers
+	 */
 	Http2Headers unwrap() {
 		return this.headers;
 	}

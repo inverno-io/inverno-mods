@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,11 @@ import io.netty.handler.codec.http.HttpResponse;
 
 /**
  * <p>
- * 
+ * Http/1.x {@link Response} implementation.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 class Http1xResponseV2 implements HttpConnectionResponse {
 
@@ -39,6 +39,15 @@ class Http1xResponseV2 implements HttpConnectionResponse {
 	
 	private Http1xResponseTrailersV2 trailers;
 	
+	/**
+	 * <p>
+	 * Creates an Http/1.x response.
+	 * </p>
+	 *
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param response           the originating Http response
+	 */
 	public Http1xResponseV2(
 			HeaderService headerService, 
 			ObjectConverter<String> parameterConverter,
@@ -51,6 +60,17 @@ class Http1xResponseV2 implements HttpConnectionResponse {
 		this.body = new Http1xResponseBodyV2();
 	}
 	
+	/**
+	 * <p>
+	 * Disposes the response.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method disposes the response body.
+	 * </p>
+	 * 
+	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
+	 */
 	final void dispose(Throwable cause) {
 		this.body.dispose(cause);
 	}
@@ -70,6 +90,17 @@ class Http1xResponseV2 implements HttpConnectionResponse {
 		return this.trailers;
 	}
 
+	/**
+	 * <p>
+	 * Sets the response trailers.
+	 * </p>
+	 * 
+	 * <p>
+	 * This is invoked by the connection when response trailers are received.
+	 * </p>
+	 * 
+	 * @param trailers the originating trailers
+	 */
 	void setTrailers(LinkedHttpHeaders trailers) {
 		this.trailers = new Http1xResponseTrailersV2(this.headerService, this.parameterConverter, trailers);
 	}

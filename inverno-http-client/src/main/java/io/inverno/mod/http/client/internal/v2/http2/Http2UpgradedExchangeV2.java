@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,31 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * 
+ * HTTP/2 {@link Exchange} implementation representing an upgraded H2C exchange.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
+ * 
+ * @see Http1xUpgradingExchange
+ * 
+ * @param <A> The exchange context type
  */
 public class Http2UpgradedExchangeV2<A extends ExchangeContext> extends AbstractHttp2ExchangeV2<A, HttpConnectionRequest> {
 
+	/**
+	 * <p>
+	 * Creates an upgraded HTTP/2 exchange.
+	 * </p>
+	 * 
+	 * @param configuration      the HTTP client configurartion
+	 * @param sink               the exchange sink
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param context            the exchange context
+	 * @param connectionStream   the Http/2 connection stream
+	 * @param request            the Http/2 request
+	 */
 	public Http2UpgradedExchangeV2(
 			HttpClientConfiguration configuration, 
 			Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, 
@@ -49,7 +66,7 @@ public class Http2UpgradedExchangeV2<A extends ExchangeContext> extends Abstract
 
 	@Override
 	protected void doStart() {
-		// Do nothing as the request has already been sent
+		// Does nothing since the request has already been sent
 	}
 
 	@Override

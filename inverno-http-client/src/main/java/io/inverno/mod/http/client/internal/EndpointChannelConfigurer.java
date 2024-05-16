@@ -21,13 +21,10 @@ import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.internal.netty.ValidatingHttpHeadersFactory;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.HttpClientUpgradeException;
-import io.inverno.mod.http.client.internal.http1x.Http1xConnection;
 import io.inverno.mod.http.client.internal.http1x.Http1xRequestEncoder;
-import io.inverno.mod.http.client.internal.http1x.Http1xUpgradingExchange;
-import io.inverno.mod.http.client.internal.http1x.Http1xWebSocketConnection;
-import io.inverno.mod.http.client.internal.http2.Http2Connection;
 import io.inverno.mod.http.client.internal.v2.http1x.Http1xConnectionV2;
 import io.inverno.mod.http.client.internal.v2.http1x.Http1xUpgradingExchangeV2;
+import io.inverno.mod.http.client.internal.v2.http1x.Http1xWebSocketConnectionV2;
 import io.inverno.mod.http.client.internal.v2.http2.Http2ConnectionV2;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelHandlerContext;
@@ -68,11 +65,9 @@ public class EndpointChannelConfigurer {
 	private static final String WS_CONNECTION_HANDLER_NAME = "wsConnection";
 	
 	private final CompressionOptionsProvider compressionOptionsProvider;
-	private final HttpConnectionFactory<Http1xConnection> http1xConnectionFactory;
-	private final WebSocketConnectionFactory<Http1xWebSocketConnection> http1xWebSocketConnectionFactory;
-	private final HttpConnectionFactory<Http2Connection> http2ConnectionFactory;
 	
 	private final HttpConnectionFactory<Http1xConnectionV2> http1xConnectionFactoryV2;
+	private final WebSocketConnectionFactory<Http1xWebSocketConnectionV2> http1xWebSocketConnectionFactoryV2;
 	private final HttpConnectionFactory<Http2ConnectionV2> http2ConnectionFactoryV2;
 	
 	private final ByteBufAllocator allocator;
@@ -92,18 +87,13 @@ public class EndpointChannelConfigurer {
 	public EndpointChannelConfigurer(
 			NetService netService, 
 			CompressionOptionsProvider compressionOptionsProvider,
-			HttpConnectionFactory<Http1xConnection> http1xConnectionFactory,
-			WebSocketConnectionFactory<Http1xWebSocketConnection> http1xWebSocketConnectionFactory,
-			HttpConnectionFactory<Http2Connection> http2ConnectionFactory,
 			HttpConnectionFactory<Http1xConnectionV2> http1xConnectionFactoryV2,
+			WebSocketConnectionFactory<Http1xWebSocketConnectionV2> http1xWebSocketConnectionFactoryV2,
 			HttpConnectionFactory<Http2ConnectionV2> http2ConnectionFactoryV2
 		) {
 		this.compressionOptionsProvider = compressionOptionsProvider;
-		this.http1xConnectionFactory = http1xConnectionFactory;
-		this.http1xWebSocketConnectionFactory = http1xWebSocketConnectionFactory;
-		this.http2ConnectionFactory = http2ConnectionFactory;
-		
 		this.http1xConnectionFactoryV2 = http1xConnectionFactoryV2;
+		this.http1xWebSocketConnectionFactoryV2 = http1xWebSocketConnectionFactoryV2;
 		this.http2ConnectionFactoryV2 = http2ConnectionFactoryV2;
 		
 		this.allocator = netService.getByteBufAllocator();
@@ -122,52 +112,6 @@ public class EndpointChannelConfigurer {
 	 */
 	void configure(ChannelPipeline pipeline, HttpClientConfiguration configuration, SslContext sslContext, InetSocketAddress serverAddress) {
 		// TODO connection timeout
-		/*Set<HttpVersion> httpVersions = configuration.http_protocol_versions();
-		if(httpVersions == null || httpVersions.isEmpty()) {
-			httpVersions = HttpClientConfiguration.DEFAULT_HTTP_PROTOCOL_VERSIONS;
-		}
-		
-		if(sslContext != null) {
-			if(configuration.tls_send_sni()) {
-				pipeline.addLast("sslHandler", sslContext.newHandler(this.allocator, serverAddress.getHostName(), serverAddress.getPort()));
-			}
-			else {
-				pipeline.addLast("sslHandler", sslContext.newHandler(this.allocator));
-			}
-
-			if(!sslContext.applicationProtocolNegotiator().protocols().isEmpty()) {
-				// alpn
-				pipeline.addLast("protocolNegotiationHandler", new HttpProtocolNegotiationHandler(this, configuration));
-			}
-			else if(httpVersions.contains(HttpVersion.HTTP_1_1)) {
-				this.configureHttp1x(pipeline, HttpVersion.HTTP_1_1, configuration);
-			}
-			else {
-				this.configureHttp1x(pipeline, HttpVersion.HTTP_1_0, configuration);
-			}
-		}
-		else {
-			if(httpVersions.contains(HttpVersion.HTTP_2_0)) {
-				if(httpVersions.size() == 1) {
-					// We must send preface
-					this.configureHttp2(pipeline, configuration);
-				}
-				else {
-					// H2C
-					this.configureHttp1x(pipeline, HttpVersion.HTTP_2_0, configuration);
-				}
-			}
-			else if(httpVersions.contains(HttpVersion.HTTP_1_1)) {
-				// HTTP/1.x
-				this.configureHttp1x(pipeline, HttpVersion.HTTP_1_1, configuration);
-			}
-			else {
-				this.configureHttp1x(pipeline, HttpVersion.HTTP_1_0, configuration);
-			}
-		}
-		pipeline.addLast("connectionSink", new ConnectionSinkHandler());*/
-		
-		
 		Set<HttpVersion> httpVersions = configuration.http_protocol_versions();
 		if(httpVersions == null || httpVersions.isEmpty()) {
 			httpVersions = HttpClientConfiguration.DEFAULT_HTTP_PROTOCOL_VERSIONS;
@@ -197,7 +141,6 @@ public class EndpointChannelConfigurer {
 				if(httpVersions.size() == 1) {
 					// We must send preface
 					this.configureHttp2V2(pipeline, configuration);
-//					this.configureHttp2(pipeline, configuration);
 				}
 				else {
 					// H2C
@@ -227,7 +170,7 @@ public class EndpointChannelConfigurer {
 	 * 
 	 * @return a WebSocket connection
 	 */
-	Http1xWebSocketConnection configureWebSocket(ChannelPipeline pipeline, HttpClientConfiguration configuration, SslContext sslContext, InetSocketAddress serverAddress) {
+	Http1xWebSocketConnectionV2 configureWebSocketV2(ChannelPipeline pipeline, HttpClientConfiguration configuration, SslContext sslContext, InetSocketAddress serverAddress) {
 		if(sslContext != null) {
 			if(configuration.tls_send_sni()) {
 				pipeline.addLast("sslHandler", sslContext.newHandler(this.allocator, serverAddress.getHostName(), serverAddress.getPort()));
@@ -259,7 +202,7 @@ public class EndpointChannelConfigurer {
 			pipeline.addLast(new WebSocketClientExtensionHandler(extensionHandshakers.toArray(WebSocketClientExtensionHandshaker[]::new)));
 		}
 		
-		Http1xWebSocketConnection connection = this.http1xWebSocketConnectionFactory.create(configuration, HttpVersion.HTTP_1_1);
+		Http1xWebSocketConnectionV2 connection = this.http1xWebSocketConnectionFactoryV2.create(configuration, HttpVersion.HTTP_1_1);
 		pipeline.addLast(WS_CONNECTION_HANDLER_NAME, connection);
 		
 		return connection;
@@ -276,22 +219,6 @@ public class EndpointChannelConfigurer {
 	 * 
 	 * @return an HTTP/1.x connection
 	 */
-	Http1xConnection configureHttp1x(ChannelPipeline pipeline, HttpVersion httpVersion, HttpClientConfiguration configuration) {
-		// add HTTP decoder, in case of upgrade we must make sure clean stuff if needed
-		pipeline.addLast("http1xDecoder", new HttpResponseDecoder(createHttpDecoderConfig(configuration)));
-		pipeline.addLast("http1xEncoder", new Http1xRequestEncoder(this.directAllocator));
-		if(configuration.decompression_enabled()) {
-			pipeline.addLast("http1xDecompressor", new HttpContentDecompressor(false));
-		}
-		if(configuration.compression_enabled()) {
-			pipeline.addLast("http1xCompressor", new HttpContentCompressor(configuration.compression_contentSizeThreshold(), this.compressionOptionsProvider.get(configuration)));
-		}
-		Http1xConnection connection = this.http1xConnectionFactory.create(configuration, httpVersion, this);
-		pipeline.addLast(CONNECTION_HANDLER_NAME, connection);
-		
-		return connection;
-	}
-	
 	Http1xConnectionV2 configureHttp1xV2(ChannelPipeline pipeline, HttpVersion httpVersion, HttpClientConfiguration configuration) {
 		// add HTTP decoder, in case of upgrade we must make sure clean stuff if needed
 		pipeline.addLast("http1xDecoder", new HttpResponseDecoder(createHttpDecoderConfig(configuration)));
@@ -337,97 +264,11 @@ public class EndpointChannelConfigurer {
 	 * 
 	 * @return an HTTP/2 connection
 	 */
-	Http2Connection configureHttp2(ChannelPipeline pipeline, HttpClientConfiguration configuration) {
-		Http2Connection connection = this.http2ConnectionFactory.create(configuration, HttpVersion.HTTP_2_0, this);
-		pipeline.addLast(CONNECTION_HANDLER_NAME, connection);
-		
-		return connection;
-	}
-	
-	/**
-	 * <p>
-	 * Configures the specified channel pipeline for HTTP/2 communication.
-	 * </p>
-	 * 
-	 * @param pipeline      the pipeline to configure
-	 * @param configuration an HTTP client configuration
-	 * 
-	 * @return an HTTP/2 connection
-	 */
 	Http2ConnectionV2 configureHttp2V2(ChannelPipeline pipeline, HttpClientConfiguration configuration) {
 		Http2ConnectionV2 connection = this.http2ConnectionFactoryV2.create(configuration, HttpVersion.HTTP_2_0, this);
 		pipeline.addLast(CONNECTION_HANDLER_NAME, connection);
 		
 		return connection;
-	}
-	
-	/**
-	 * <p>
-	 * Configures the specified pipeline to start an H2C upgrade negotiation.
-	 * <p>
-	 * 
-	 * @param pipeline          the pipeline to configure
-	 * @param configuration     an HTTP client configuration
-	 * @param upgradingExchange the HTTP/1.x upgrading exchange
-	 *
-	 * @return the future HTTP/2 connection that will be used in case negotiation succeeds
-	 */
-	public Http2Connection startHttp2Upgrade(ChannelPipeline pipeline, HttpClientConfiguration configuration, Http1xUpgradingExchange upgradingExchange) {
-		Http2Connection connection = this.http2ConnectionFactory.create(configuration, HttpVersion.HTTP_2_0, this);
-		upgradingExchange.init(connection);
-		return connection;
-	}
-	
-	/**
-	 * <p>
-	 * Configures the specified pipeline to completes the H2C upgrade after a successful negotiation to establish an HTTP/2 communication.
-	 * </p>
-	 * 
-	 * @param pipeline          the pipeline to configure
-	 * @param configuration     an HTTP client configuration
-	 * @param upgradingExchange the HTTP/1.x upgrading exchange
-	 * @param messageBuffer     the current message buffer
-	 * 
-	 * @throws HttpClientUpgradeException if there was an error during the upgrade
-	 */
-	public void completeHttp2Upgrade(ChannelPipeline pipeline, HttpClientConfiguration configuration, Http1xUpgradingExchange upgradingExchange, Deque<Object> messageBuffer) throws HttpClientUpgradeException {
-		try {
-			// 1. Remove the HTTP/1.x encoder
-			pipeline.remove("http1xEncoder");
-			if(configuration.compression_enabled()) {
-				pipeline.remove("http1xCompressor");
-			}
-			// 2. Remove the HTTP/1.x upgrading connection
-//			pipeline.remove(CONNECTION_HANDLER_NAME);
-			
-			// 3. Replace the HTTP/1.x upgrading connection by the HTTP/2 connection handler
-			// This sends the preface (which is why we removed the HTTP/1.x encoder before)
-			Http2Connection connection = upgradingExchange.getUpgradedConnection();
-			pipeline.replace(CONNECTION_HANDLER_NAME, CONNECTION_HANDLER_NAME, connection);
-			
-			// 4. Upgrade
-			// This reserves stream 1 and sets the initial upgraded exchange in the connection
-			connection.onHttpClientUpgrade(upgradingExchange);
-			
-			// 5. Propagate buffered messages to the HTTP/2 connection handler
-			if(messageBuffer != null) {
-				Object current;
-				while( (current = messageBuffer.poll()) != null) {
-					pipeline.fireChannelRead(current);
-				}
-			}
-			
-			// 6. Remove the HTTP/1.x decoder
-			// This propagates any buffered messages
-			pipeline.remove("http1xDecoder");
-			if(configuration.decompression_enabled()) {
-				pipeline.remove("http1xDecompressor");
-			}
-		}
-		catch(Http2Exception e) {
-			// We must make sure this never happens
-			throw new IllegalStateException(e);
-		}
 	}
 	
 	/**
@@ -525,8 +366,8 @@ public class EndpointChannelConfigurer {
 	 * 
 	 * @return a future that succeeds once the connection is active (i.e. channelActive() has been invoked) or fails when an exception was caught.
 	 */
-	public Future<Http1xWebSocketConnection> completeWsConnection(ChannelPipeline pipeline) {
-		return pipeline.channel().eventLoop().newSucceededFuture((Http1xWebSocketConnection)pipeline.get(WS_CONNECTION_HANDLER_NAME));
+	public Future<Http1xWebSocketConnectionV2> completeWsConnection(ChannelPipeline pipeline) {
+		return pipeline.channel().eventLoop().newSucceededFuture((Http1xWebSocketConnectionV2)pipeline.get(WS_CONNECTION_HANDLER_NAME));
 	}
 	
 	/**

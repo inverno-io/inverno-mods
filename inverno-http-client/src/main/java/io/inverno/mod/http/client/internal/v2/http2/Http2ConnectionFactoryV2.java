@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.internal.CompressionOptionsProvider;
 import io.inverno.mod.http.client.internal.EndpointChannelConfigurer;
 import io.inverno.mod.http.client.internal.HttpConnectionFactory;
-import io.inverno.mod.http.client.internal.http2.Http2Connection;
-import io.inverno.mod.http.client.internal.http2.Http2ConnectionFactory;
 import io.netty.handler.codec.http2.AbstractHttp2ConnectionHandlerBuilder;
 import io.netty.handler.codec.http2.CompressorHttp2ConnectionEncoder;
 import io.netty.handler.codec.http2.Http2ConnectionDecoder;
@@ -34,11 +32,11 @@ import java.util.Optional;
 
 /**
  * <p>
- * 
+ * Http/2 {@link HttpConnectionFactory} implementation.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 @Bean( visibility = Bean.Visibility.PRIVATE )
 public class Http2ConnectionFactoryV2 implements HttpConnectionFactory<Http2ConnectionV2> {
@@ -47,12 +45,20 @@ public class Http2ConnectionFactoryV2 implements HttpConnectionFactory<Http2Conn
 	private final ObjectConverter<String> parameterConverter;
 	private final CompressionOptionsProvider compressionOptionsProvider;
 
+	/**
+	 * <p>
+	 * Creates an Http/2 connection factory.
+	 * </p>
+	 * 
+	 * @param headerService              the header service
+	 * @param parameterConverter         the parameter converter
+	 * @param compressionOptionsProvider the compression option provider
+	 */
 	public Http2ConnectionFactoryV2(HeaderService headerService, ObjectConverter<String> parameterConverter, CompressionOptionsProvider compressionOptionsProvider) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		this.compressionOptionsProvider = compressionOptionsProvider;
 	}
-	
 	
 	@Override
 	public Http2ConnectionV2 create(HttpClientConfiguration configuration, HttpVersion httpVersion, EndpointChannelConfigurer configurer) {

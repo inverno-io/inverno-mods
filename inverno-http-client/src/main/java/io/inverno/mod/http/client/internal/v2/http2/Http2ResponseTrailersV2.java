@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,11 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * 
+ * Http/2 {@link InboundHeaders} implementation to represent Http trailers.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 public class Http2ResponseTrailersV2 implements InboundHeaders {
 	
@@ -43,6 +43,15 @@ public class Http2ResponseTrailersV2 implements InboundHeaders {
 	private final ObjectConverter<String> parameterConverter;
 	private final Http2Headers trailers;
 
+	/**
+	 * <p>
+	 * Creates Http/2 response trailers.
+	 * </p>
+	 *
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param trailers           the originating Http trailers
+	 */
 	public Http2ResponseTrailersV2(HeaderService headerService, ObjectConverter<String> parameterConverter, Http2Headers trailers) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;

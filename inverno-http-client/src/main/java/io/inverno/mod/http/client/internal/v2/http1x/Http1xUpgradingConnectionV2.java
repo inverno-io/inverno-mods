@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,11 +46,11 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * 
+ * Http/1.x {@link HttpConnection} supporting H2C upgrade.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 public class Http1xUpgradingConnectionV2 extends Http1xConnectionV2 {
 	
@@ -82,6 +82,20 @@ public class Http1xUpgradingConnectionV2 extends Http1xConnectionV2 {
 	private Deque<Object> messageBuffer;
 	private int messageBufferSize;
 
+	/**
+	 * <p>
+	 * Creates an HTTP/1.x upgrading connection.
+	 * </p>
+	 * 
+	 * @param configuration         the HTTP client configurartion
+	 * @param httpVersion           the HTTP/1.x protocol version
+	 * @param headerService         the header service
+	 * @param parameterConverter    the parameter converter
+	 * @param urlEncodedBodyEncoder the URL encoded body encoder
+	 * @param multipartBodyEncoder  the multipart body encoder
+	 * @param partFactory           the part factory
+	 * @param configurer            the endpoint channel configurer
+	 */
 	public Http1xUpgradingConnectionV2(
 			HttpClientConfiguration configuration, 
 			HttpVersion httpVersion, 

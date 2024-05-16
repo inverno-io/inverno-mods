@@ -28,11 +28,11 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * 
+ * Http/2 {@link ResponseBody} implementation.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.11
  */
 public class Http2ResponseBodyV2 implements ResponseBody {
 	
@@ -45,6 +45,11 @@ public class Http2ResponseBodyV2 implements ResponseBody {
 	
 	private Throwable cancelCause;
 
+	/**
+	 * <p>
+	 * Creates an Http/2 response body.
+	 * </p>
+	 */
 	public Http2ResponseBodyV2() {
 		this.dataSink = Sinks.many().unicast().onBackpressureBuffer();
 		this.data = Flux.defer(() -> {
@@ -141,7 +146,7 @@ public class Http2ResponseBodyV2 implements ResponseBody {
 	 * </p>
 	 *
 	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.6
+	 * @since 1.11
 	 */
 	private class RawInboundData implements InboundData<ByteBuf> {
 
@@ -157,7 +162,7 @@ public class Http2ResponseBodyV2 implements ResponseBody {
 	 * </p>
 	 *
 	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.6
+	 * @since 1.11
 	 */
 	private class StringInboundData implements InboundData<CharSequence> {
 

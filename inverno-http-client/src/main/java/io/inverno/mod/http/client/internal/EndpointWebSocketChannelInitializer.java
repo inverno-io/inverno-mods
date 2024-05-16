@@ -45,6 +45,6 @@ public class EndpointWebSocketChannelInitializer extends EndpointChannelInitiali
 
 	@Override
 	protected void initChannel(SocketChannel ch) throws Exception {
-		this.channelConfigurer.configureWebSocket(ch.pipeline(), this.configuration, this.sslContext, this.serverAddress);
+		this.channelConfigurer.configureWebSocketV2(ch.pipeline(), this.configuration, this.sslContext, this.serverAddress);
 	}
 }

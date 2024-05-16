@@ -562,7 +562,7 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 	 */
 	private void setCapacity(PooledHttpConnection connection, long capacity) {
 		this.commandExecutor.execute(pool -> {
-			LOGGER.debug("Set connection capacity...");
+			LOGGER.debug("Set connection capacity... ");
 			if(!connection.removed) {
 				long oldCapacity = connection.capacity;
 				connection.capacity = capacity;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,11 +65,11 @@ import reactor.core.scheduler.Schedulers;
 
 /**
  * <p>
- * 
+ * Http/1.x {@link HttpConnection} implementation.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConnection {
 	
@@ -112,6 +112,19 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 	private boolean closing;
 	private boolean closed;
 	
+	/**
+	 * <p>
+	 * Creates an Http/1.x connection.
+	 * </p>
+	 * 
+	 * @param configuration         the HTTP client configurartion
+	 * @param httpVersion           the HTTP/1.x protocol version
+	 * @param headerService         the header service
+	 * @param parameterConverter    the parameter converter
+	 * @param urlEncodedBodyEncoder the URL encoded body encoder
+	 * @param multipartBodyEncoder  the multipart body encoder
+	 * @param partFactory           the part factory
+	 */
 	public Http1xConnectionV2(
 			HttpClientConfiguration configuration, 
 			HttpVersion protocol, 
@@ -258,7 +271,22 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 		this.handler = handler;
 	}
 	
+	/**
+	 * <p>
+	 * Registers the exchange in the connection.
+	 * </p>
+	 * 
+	 * <p>
+	 * A registered exchange is added to the Http/1.x connection's exchange queue, exchanges are started and corresponding requests sent in sequence to the remote endpoint.
+	 * </p>
+	 * 
+	 * @param exchange the exchange to register
+	 */
 	private void registerExchange(Http1xExchangeV2 exchange) {
+		if(this.closed || this.closing || this.requestError != null) {
+			throw new HttpClientException("Connection was closed");
+		}
+		
 		if(this.requestedExchange == null) {
 			this.requestedExchange = exchange;
 		}
@@ -276,6 +304,17 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Creates the Http/1.x exchange
+	 * </p>
+	 * 
+	 * @param <A> the type of the exchange context
+	 * @param sink the exchange sink
+	 * @param endpointExchange the endpoint exchange
+	 * 
+	 * @return a new Http/1.x exchange
+	 */
 	protected <A extends ExchangeContext> Http1xExchangeV2 createExchange(Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, EndpointExchange<A> endpointExchange) {
 		return new Http1xExchangeV2<>(this.configuration, sink, this.headerService, this.parameterConverter, endpointExchange.context(), this, endpointExchange.request());
 	}
@@ -377,7 +416,7 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 	 * </p>
 	 * 
 	 * <p>
-	 * This should be invoked when an exchange completes, the connection is shutdown when there's no more pending exchanges.
+	 * This is invoked everytime an exchange completes, the connection is shutdown when there's no more inflight exchanges.
 	 * </p>
 	 */
 	private void tryShutdown() {
@@ -418,6 +457,17 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 		this.closed = false;
 	}
 	
+	/**
+	 * <p>
+	 * Disposes pending exchanges.
+	 * </p>
+	 * 
+	 * <p>
+	 * The is typically invoked right before the connection is shutdown OR when the connection becomes inactive (i.e. reset by peer) in order to stop processing and free resources.
+	 * </p>
+	 * 
+	 * @param throwable an error or null if disposal does not result from an error (e.g. shutdown)
+	 */
 	private void dispose(Throwable throwable) {
 		Http1xExchangeV2<?> current = this.respondingExchange;
 		while(current != null) {
@@ -448,6 +498,13 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 		LOGGER.error("Connection error", cause);
 	}
 	
+	/**
+	 * <p>
+	 * Callback method invoked when a decoder error is raised while reading the channel.
+	 * </p>
+	 * 
+	 * @param cause the decoder error
+	 */
 	public void decoderError(Throwable cause) {
 		this.dispose(cause);
 		this.shutdown().subscribe();
@@ -599,6 +656,15 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Callback method invoked when the requesting exchange request has been sent to the server.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method executes on the connection event loop, it starts the next pending exchange if any.
+	 * </p>
+	 */
 	public void onRequestSent() {
 		if(this.channelContext.executor().inEventLoop()) {
 			this.requestingExchange = this.requestingExchange.next;
@@ -611,6 +677,18 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Callback method invoked when an error is raised while sending the requesting exchange request to the server.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method executes on the connection event loop, if nothing was sent to the server, the connection is recylced and the requesting exchange is disposed and the next pending exchange, if any,
+	 * is started, otherwise the connection is shutdown after all inflight exchanges have completed.
+	 * </p>
+	 * 
+	 * @param throwable the error
+	 */
 	public void onRequestError(Throwable throwable) {
 		if(this.channelContext.executor().inEventLoop()) {
 			if(this.requestingExchange.request().isHeadersWritten()) {
@@ -659,6 +737,16 @@ public class Http1xConnectionV2 extends ChannelDuplexHandler implements HttpConn
 		}
 	}
 	
+	/**
+	 * <p>
+	 * Callback method invoked when the responding exchange response has been fully received.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method executes on the connection event loop, it shutdowns the connection when the server responded with {@code connection: close} header, otherwise responding exchange is disposed and the
+	 * connection recycled.
+	 * </p>
+	 */
 	public void onResponseComplete() {
 		if(this.channelContext.executor().inEventLoop()) {
 			if(this.respondingExchange.response().headers().contains(Headers.NAME_CONNECTION, Headers.VALUE_CLOSE)) {

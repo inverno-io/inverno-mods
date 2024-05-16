@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,11 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
- * 
+ * Http/2 {@link InboundResponseHeaders} implementation.
  * </p>
- * 
+ *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 public class Http2ResponseHeadersV2 implements InboundResponseHeaders {
 
@@ -49,6 +49,15 @@ public class Http2ResponseHeadersV2 implements InboundResponseHeaders {
 	
 	private GenericResponseCookies cookies;
 
+	/**
+	 * <p>
+	 * Creates Http/2 respone headers.
+	 * </p>
+	 * 
+	 * @param headerService the header service
+	 * @param parameterConverter the parameter converter
+	 * @param headers the originating Http headers
+	 */
 	public Http2ResponseHeadersV2(HeaderService headerService, ObjectConverter<String> parameterConverter, Http2Headers headers) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;

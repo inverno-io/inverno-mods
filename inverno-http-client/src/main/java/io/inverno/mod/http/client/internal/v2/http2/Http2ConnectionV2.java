@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Jeremy Kuhn
+ * Copyright 2022 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,11 +61,11 @@ import reactor.core.scheduler.Schedulers;
 
 /**
  * <p>
- * 
+ * Http/2 {@link HttpConnection} implementation.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
+ * @since 1.6
  */
 public class Http2ConnectionV2 extends Http2ConnectionHandler implements Http2FrameListener, io.netty.handler.codec.http2.Http2Connection.Listener, HttpConnection {
 
@@ -94,6 +94,18 @@ public class Http2ConnectionV2 extends Http2ConnectionHandler implements Http2Fr
 	private boolean closing;
 	private boolean closed;
 	
+	/**
+	 * <p>
+	 * Creates an Http/2 connection.
+	 * </p>
+	 * 
+	 * @param decoder            the HTTP/2 connection decoder
+	 * @param encoder            the HTTP/2 connection encoder
+	 * @param initialSettings    the HTTP/2 initial settings
+	 * @param configuration      the HTTP client configurartion
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 */
 	public Http2ConnectionV2(
 			Http2ConnectionDecoder decoder, 
 			Http2ConnectionEncoder encoder, 
