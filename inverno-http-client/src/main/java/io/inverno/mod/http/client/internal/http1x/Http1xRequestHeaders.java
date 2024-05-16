@@ -17,6 +17,7 @@ package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.http.base.InboundCookies;
 import io.inverno.mod.http.base.OutboundCookies;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.Headers;
@@ -66,8 +67,8 @@ class Http1xRequestHeaders implements HttpConnectionRequestHeaders {
 	}
 	
 	@Override
-	public void setWritten(boolean written) {
-		this.written = written;
+	public void setWritten() {
+		this.written = true;
 	}
 	
 	@Override
@@ -201,23 +202,5 @@ class Http1xRequestHeaders implements HttpConnectionRequestHeaders {
 	@Override
 	public List<Header> getAllHeader() {
 		return this.endpointHeaders.getAllHeader();
-	}
-	
-	// TODO remove
-	@Override
-	public CharSequence getCharSequence(CharSequence name) {
-		return this.endpointHeaders.getCharSequence(name);
-	}
-
-	// TODO remove
-	@Override
-	public List<CharSequence> getAllCharSequence(CharSequence name) {
-		return this.endpointHeaders.getAllCharSequence(name);
-	}
-
-	// TODO remove
-	@Override
-	public List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence() {
-		return this.endpointHeaders.getAllCharSequence();
 	}
 }

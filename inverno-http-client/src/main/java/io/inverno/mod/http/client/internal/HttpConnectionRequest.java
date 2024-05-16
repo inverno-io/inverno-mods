@@ -42,13 +42,4 @@ public interface HttpConnectionRequest extends BaseRequest {
 
 	@Override
 	HttpConnectionRequestHeaders headers();
-	
-	/**
-	 * <p>
-	 * Returns the request body.
-	 * </p>
-	 * 
-	 * @return the request body or null if the request has no body (e.g. GET request)
-	 */
-	HttpConnectionRequestBody body();
 }

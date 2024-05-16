@@ -79,8 +79,6 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	private boolean outboundFramesSet;
 	private boolean inboundSubscribed;
 	
-	private Mono<Void> finalizer;
-	
 	private boolean inClosed;
 	private boolean outClosed;
 	private ScheduledFuture<?> inboundCloseMessageTimeoutFuture;
@@ -326,7 +324,7 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	
 	/**
 	 * <p>
-	 * Finalizes the exchange by completing the inbound sink (if present) and by subscribing to the finalizer (if present). 
+	 * Finalizes the exchange by completing the inbound sink (if present).
 	 * </p>
 	 * 
 	 * @param finalPromise a promise that completes with the final exchange operation 
@@ -336,9 +334,6 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 	public ChannelFuture finalizeExchange(ChannelPromise finalPromise) {
 		finalPromise.addListener(future -> {
 			this.inboundFrames.ifPresent(Sinks.Many::tryEmitComplete);
-			if(this.finalizer != null) {
-				this.finalizer.subscribe();
-			}
 		});
 		return finalPromise;
 	}
@@ -404,9 +399,9 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 								
 								// Then close the channel
 								ChannelPromise closePromise = this.context.newPromise();
-								this.context.close(closePromise);
 								closePromise.addListener(ign -> LOGGER.debug("WebSocket closed ({}): {}", code, reason));
 								this.finalizeExchange(closePromise);
+								this.context.close(closePromise);
 							},
 							this.inboundCloseFrameTimeout, 
 							TimeUnit.MILLISECONDS
@@ -444,15 +439,9 @@ public class GenericWebSocketExchange extends BaseSubscriber<WebSocketFrame> imp
 		
 		// Then close the channel
 		ChannelPromise closePromise = this.context.newPromise();
-		this.context.close(closePromise);
 		closePromise.addListener(ign -> LOGGER.debug("WebSocket closed ({}): {}", code, reason));
 		this.finalizeExchange(closePromise);
-	}
-
-	@Override
-	public WebSocketExchange<ExchangeContext> finalizer(Mono<Void> finalizer) {
-		this.finalizer = finalizer;
-		return this;
+		this.context.close(closePromise);
 	}
 	
 	/**

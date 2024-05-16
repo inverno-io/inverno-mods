@@ -128,7 +128,7 @@ public class Http2Request implements HttpConnectionRequest {
 			}
 			else {
 				this.connectionStream.writeHeaders(this.headers.unwrap(), 0, true);
-				this.headers.setWritten(true);
+				this.headers.setWritten();
 			}
 		}
 		else {
@@ -235,11 +235,6 @@ public class Http2Request implements HttpConnectionRequest {
 		return this.queryParameters;
 	}
 	
-	@Override
-	public Http2RequestBody body() {
-		return this.body;
-	}
-	
 	/**
 	 * <p>
 	 * The request body data publisher optimized for {@link Mono} publisher that writes a single request object to the connection.
@@ -271,11 +266,11 @@ public class Http2Request implements HttpConnectionRequest {
 
 			if(this.data == null) {
 				Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, true);
-				Http2Request.this.headers.setWritten(true);
+				Http2Request.this.headers.setWritten();
 			}
 			else {
 				Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, false);
-				Http2Request.this.headers.setWritten(true);
+				Http2Request.this.headers.setWritten();
 				Http2Request.this.connectionStream.writeData(this.data, 0, true);
 			}
 		}
@@ -316,7 +311,7 @@ public class Http2Request implements HttpConnectionRequest {
 				this.many = true;
 				if(!Http2Request.this.headers.isWritten()) {
 					Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, false);
-					Http2Request.this.headers.setWritten(true);
+					Http2Request.this.headers.setWritten();
 					Http2Request.this.connectionStream.writeData(this.singleChunk, 0, false);
 					this.singleChunk = null;
 				}
@@ -346,11 +341,11 @@ public class Http2Request implements HttpConnectionRequest {
 				}
 				if(this.singleChunk == null) {
 					Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, true);
-					Http2Request.this.headers.setWritten(true);
+					Http2Request.this.headers.setWritten();
 				}
 				else {
 					Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, false);
-					Http2Request.this.headers.setWritten(true);
+					Http2Request.this.headers.setWritten();
 					Http2Request.this.connectionStream.writeData(this.singleChunk, 0, true);
 					this.singleChunk = null;
 				}

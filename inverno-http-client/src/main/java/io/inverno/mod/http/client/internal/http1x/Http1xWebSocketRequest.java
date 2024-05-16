@@ -21,7 +21,6 @@ import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.internal.GenericQueryParameters;
 import io.inverno.mod.http.client.internal.EndpointRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionRequest;
-import io.inverno.mod.http.client.internal.HttpConnectionRequestBody;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.cert.Certificate;
@@ -172,10 +171,5 @@ class Http1xWebSocketRequest implements HttpConnectionRequest {
 			this.queryParameters = new GenericQueryParameters(this.pathBuilder.getQueryParameters(), this.parameterConverter);
 		}
 		return this.queryParameters;
-	}
-
-	@Override
-	public HttpConnectionRequestBody body() {
-		throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
 	}
 }

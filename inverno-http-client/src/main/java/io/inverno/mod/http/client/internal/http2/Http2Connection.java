@@ -370,7 +370,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	public void onHeadersRead(ChannelHandlerContext ctx, int streamId, Http2Headers headers, int padding, boolean endOfStream) throws Http2Exception {
 		Http2ConnectionStream clientStream = this.clientStreams.get(streamId);
 		if(clientStream != null) {
-			if(!clientStream.getOrCreateStream().isTrailersReceived()) { // TODO test trailers
+			if(!clientStream.getStream().isTrailersReceived()) {
 				clientStream.exchange.emitResponse(headers);
 				if(endOfStream) {
 					// empty response

@@ -18,7 +18,6 @@ package io.inverno.mod.http.client.internal.http1x;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ZipResource;
 import io.inverno.mod.http.client.internal.EndpointRequestBody;
-import io.inverno.mod.http.client.internal.HttpConnectionRequestBody;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.FileRegion;
@@ -36,7 +35,7 @@ import reactor.core.publisher.Flux;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-class Http1xRequestBody extends HttpConnectionRequestBody { // TODO remove extends
+class Http1xRequestBody {
 	
 	private static final int MAX_FILE_REGION_SIZE = 1024 * 1024;
 	
@@ -54,7 +53,6 @@ class Http1xRequestBody extends HttpConnectionRequestBody { // TODO remove exten
 	 * @param supportsFileRegion  true if the connection supports file region, false otherwise
 	 */
 	public Http1xRequestBody(EndpointRequestBody endpointRequestBody, boolean supportsFileRegion) {
-		super(Flux.empty()); // TODO remove
 		this.supportsFileRegion = supportsFileRegion;
 		
 		if(this.supportsFileRegion && endpointRequestBody.getResource() != null) {

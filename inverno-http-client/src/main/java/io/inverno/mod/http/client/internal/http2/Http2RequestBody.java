@@ -16,10 +16,8 @@
 package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.mod.http.client.internal.EndpointRequestBody;
-import io.inverno.mod.http.client.internal.HttpConnectionRequestBody;
 import io.netty.buffer.ByteBuf;
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.Flux;
 
 /**
  * <p>
@@ -29,7 +27,7 @@ import reactor.core.publisher.Flux;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.8
  */
-public class Http2RequestBody extends HttpConnectionRequestBody { // TODO remove extends
+public class Http2RequestBody {
 	
 	private final Publisher<ByteBuf> data;
 
@@ -41,7 +39,6 @@ public class Http2RequestBody extends HttpConnectionRequestBody { // TODO remove
 	 * @param endpointRequestBody the original endpoint request body
 	 */
 	public Http2RequestBody(EndpointRequestBody endpointRequestBody) {
-		super(Flux.empty()); // TODO remove
 		this.data = endpointRequestBody.getData();
 	}
 

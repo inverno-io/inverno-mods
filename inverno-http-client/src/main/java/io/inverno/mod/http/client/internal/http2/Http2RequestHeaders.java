@@ -17,6 +17,7 @@ package io.inverno.mod.http.client.internal.http2;
 
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.OutboundCookies;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
@@ -82,8 +83,8 @@ public class Http2RequestHeaders implements HttpConnectionRequestHeaders {
 	}
 	
 	@Override
-	public void setWritten(boolean written) {
-		this.written = written;
+	public void setWritten() {
+		this.written = true;
 	}
 	
 	@Override
@@ -238,28 +239,6 @@ public class Http2RequestHeaders implements HttpConnectionRequestHeaders {
 		List<Header> result = new LinkedList<>();
 		this.headers.forEach(e -> {
 			result.add(this.headerService.<Header>decode(e.getKey().toString(), e.getValue().toString()));
-		});
-		return result;
-	}
-	
-	// TODO remove
-	@Override
-	public CharSequence getCharSequence(CharSequence name) {
-		return this.headers.get(name);
-	}
-
-	// TODO remove
-	@Override
-	public List<CharSequence> getAllCharSequence(CharSequence name) {
-		return this.headers.getAll(name);
-	}
-
-	// TODO remove
-	@Override
-	public List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence() {
-		List<Map.Entry<CharSequence, CharSequence>> result = new LinkedList<>();
-		this.headers.forEach(e -> {
-			result.add(Map.entry(e.getKey(), e.getValue()));
 		});
 		return result;
 	}

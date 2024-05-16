@@ -136,7 +136,7 @@ class Http1xRequest implements HttpConnectionRequest {
 			}
 			else {
 				this.connection.writeHttpObject(new FlatFullHttpRequest(this.connection.getVersion(), HttpMethod.valueOf(this.method.name()), this.path, this.headers.unwrap(), Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE));
-				this.headers.setWritten(true);
+				this.headers.setWritten();
 				this.connection.onRequestSent();
 			}
 		}
@@ -244,11 +244,6 @@ class Http1xRequest implements HttpConnectionRequest {
 		return this.queryParameters;
 	}
 
-	@Override
-	public Http1xRequestBody body() {
-		return this.body;
-	}
-	
 	/**
 	 * <p>
 	 * The request body data publisher optimized for {@link Mono} publisher that writes a single request object to the connection.
@@ -288,7 +283,7 @@ class Http1xRequest implements HttpConnectionRequest {
 			else {
 				Http1xRequest.this.connection.writeHttpObject(new FlatFullHttpRequest(Http1xRequest.this.connection.getVersion(), HttpMethod.valueOf(Http1xRequest.this.method.name()), Http1xRequest.this.path, Http1xRequest.this.headers.unwrap(), Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE));
 			}
-			Http1xRequest.this.headers.setWritten(true);
+			Http1xRequest.this.headers.setWritten();
 			Http1xRequest.this.connection.onRequestSent();
 		}
 		
@@ -342,7 +337,7 @@ class Http1xRequest implements HttpConnectionRequest {
 				if(!Http1xRequest.this.headers.isWritten()) {
 					this.sanitizeResponse();
 					Http1xRequest.this.connection.writeHttpObject(new FlatHttpRequest(Http1xRequest.this.connection.getVersion(), HttpMethod.valueOf(Http1xRequest.this.method.name()), Http1xRequest.this.path, Http1xRequest.this.headers.unwrap(), this.singleChunk));
-					Http1xRequest.this.headers.setWritten(true);
+					Http1xRequest.this.headers.setWritten();
 					this.singleChunk = null;
 				}
 				
@@ -374,7 +369,7 @@ class Http1xRequest implements HttpConnectionRequest {
 					Http1xRequest.this.connection.writeHttpObject(new FlatFullHttpRequest(Http1xRequest.this.connection.getVersion(), HttpMethod.valueOf(Http1xRequest.this.method.name()), Http1xRequest.this.path, Http1xRequest.this.headers.unwrap(), this.singleChunk, EmptyHttpHeaders.INSTANCE));
 					this.singleChunk = null;
 				}
-				Http1xRequest.this.headers.setWritten(true);
+				Http1xRequest.this.headers.setWritten();
 			}
 			Http1xRequest.this.connection.onRequestSent();
 		}
@@ -390,7 +385,7 @@ class Http1xRequest implements HttpConnectionRequest {
 		@Override
 		protected void hookOnSubscribe(Subscription subscription) {
 			Http1xRequest.this.connection.writeHttpObject(new FlatHttpRequest(Http1xRequest.this.connection.getVersion(), HttpMethod.valueOf(Http1xRequest.this.method.name()), Http1xRequest.this.path, Http1xRequest.this.headers.unwrap()));
-			Http1xRequest.this.headers.setWritten(true);
+			Http1xRequest.this.headers.setWritten();
 			subscription.request(1);
 		}
 

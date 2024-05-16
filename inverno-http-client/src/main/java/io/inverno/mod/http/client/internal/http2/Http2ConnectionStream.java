@@ -97,6 +97,17 @@ public class Http2ConnectionStream {
 	
 	/**
 	 * <p>
+	 * Returns the Http/2 stream.
+	 * </p>
+	 * 
+	 * @return the stream or null
+	 */
+	Http2Stream getStream() {
+		return this.stream;
+	}
+	
+	/**
+	 * <p>
 	 * Returns or creates the exchange stream which also notify exchange start.
 	 * </p>
 	 * 
@@ -107,7 +118,7 @@ public class Http2ConnectionStream {
 	 * 
 	 * @return the exchange stream or the newly created stream
 	 */
-	Http2Stream getOrCreateStream() {
+	private Http2Stream getOrCreateStream() {
 		if(this.stream == null) {
 			// Create the stream
 			try {

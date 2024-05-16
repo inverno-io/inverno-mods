@@ -753,6 +753,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				this.shutdown().subscribe();
 			}
 			else {
+				this.respondingExchange.dispose(null);
 				if(this.handler != null) {
 					this.handler.recycle();
 				}
