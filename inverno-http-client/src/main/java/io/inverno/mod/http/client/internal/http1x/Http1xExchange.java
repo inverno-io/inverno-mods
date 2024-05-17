@@ -57,7 +57,6 @@ class Http1xExchange<A extends ExchangeContext> implements HttpConnectionExchang
 
 	Http1xExchange<?> next;
 	
-	private final long creationTime;
 	private ScheduledFuture<?> timeoutFuture;
 	
 	private Throwable cancelCause;
@@ -98,7 +97,6 @@ class Http1xExchange<A extends ExchangeContext> implements HttpConnectionExchang
 		
 		this.request = new Http1xRequest(parameterConverter, connection, endpointRequest);
 		
-		this.creationTime = System.currentTimeMillis();
 		this.startTimeout();
 	}
 	
