@@ -18,11 +18,12 @@ package io.inverno.mod.http.client.internal.http2;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfiguration;
-import io.inverno.mod.http.client.HttpClientException;
 import io.inverno.mod.http.client.internal.HttpConnectionExchange;
 import io.inverno.mod.http.client.internal.HttpConnectionRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionResponse;
+import io.inverno.mod.http.client.internal.http1x.Http1xUpgradingExchange;
 import reactor.core.publisher.Sinks;
 
 /**

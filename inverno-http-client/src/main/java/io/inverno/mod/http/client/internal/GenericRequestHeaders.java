@@ -116,7 +116,7 @@ public class GenericRequestHeaders<A extends GenericRequestHeaders<A>> implement
 	@Override
 	public GenericRequestCookies cookies() {
 		if(this.requestCookies == null) {
-			this.requestCookies = new GenericRequestCookies(this, this.headerService, this.parameterConverter);
+			this.requestCookies = new GenericRequestCookies(this.headerService, this.parameterConverter, this);
 		}
 		this.requestCookies.load();
 		return this.requestCookies;

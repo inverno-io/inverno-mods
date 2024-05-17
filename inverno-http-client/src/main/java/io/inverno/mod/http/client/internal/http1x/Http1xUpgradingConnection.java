@@ -257,7 +257,7 @@ public class Http1xUpgradingConnection extends Http1xConnection {
 	}
 
 	@Override
-	protected <A extends ExchangeContext> Http1xExchange createExchange(Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, EndpointExchange<A> endpointExchange) {
+	<A extends ExchangeContext> Http1xExchange createExchange(Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, EndpointExchange<A> endpointExchange) {
 		if(this.state == UpgradeState.COMPLETED) {
 			return super.createExchange(sink, endpointExchange);
 		}

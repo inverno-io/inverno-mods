@@ -33,6 +33,8 @@ import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
 import io.netty.channel.EventLoop;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.security.cert.Certificate;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
@@ -962,6 +964,26 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 		@Override
 		public HttpVersion getProtocol() {
 			return this.connection.getProtocol();
+		}
+
+		@Override
+		public SocketAddress getLocalAddress() {
+			return this.connection.getLocalAddress();
+		}
+
+		@Override
+		public Optional<Certificate[]> getLocalCertificates() {
+			return this.connection.getLocalCertificates();
+		}
+
+		@Override
+		public SocketAddress getRemoteAddress() {
+			return this.connection.getRemoteAddress();
+		}
+
+		@Override
+		public Optional<Certificate[]> getRemoteCertificates() {
+			return this.connection.getRemoteCertificates();
 		}
 
 		@Override

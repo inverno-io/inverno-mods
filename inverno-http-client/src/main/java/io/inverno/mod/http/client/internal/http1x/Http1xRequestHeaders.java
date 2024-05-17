@@ -22,8 +22,8 @@ import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
+import io.inverno.mod.http.client.internal.AbstractRequestHeaders;
 import io.inverno.mod.http.client.internal.EndpointRequestHeaders;
-import io.inverno.mod.http.client.internal.HttpConnectionRequestHeaders;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,7 +38,7 @@ import java.util.function.Consumer;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-class Http1xRequestHeaders implements HttpConnectionRequestHeaders {
+class Http1xRequestHeaders extends AbstractRequestHeaders<LinkedHttpHeaders> {
 
 	private final EndpointRequestHeaders endpointHeaders;
 	
@@ -55,25 +55,9 @@ class Http1xRequestHeaders implements HttpConnectionRequestHeaders {
 		this.endpointHeaders = endpointHeaders;
 	}
 	
-	/**
-	 * <p>
-	 * Returns the headers to send as part of the Http request.
-	 * </p>
-	 * 
-	 * @return the wrapped headers
-	 */
-	LinkedHttpHeaders unwrap() {
+	@Override
+	protected LinkedHttpHeaders unwrap() {
 		return this.endpointHeaders.getUnderlyingHeaders();
-	}
-	
-	@Override
-	public void setWritten() {
-		this.written = true;
-	}
-	
-	@Override
-	public final boolean isWritten() {
-		return this.written;
 	}
 	
 	@Override

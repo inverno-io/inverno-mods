@@ -17,9 +17,6 @@ package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.http.base.InboundHeaders;
 import io.inverno.mod.http.base.InboundResponseHeaders;
-import io.inverno.mod.http.client.ResponseBody;
-import io.netty.buffer.ByteBuf;
-import reactor.core.publisher.Sinks;
 
 /**
  * <p>
@@ -28,53 +25,33 @@ import reactor.core.publisher.Sinks;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
+ * 
+ * @param <A> the Http response headers type
+ * @param <B> the Http response body type
+ * @param <A> the Http response trailers type
+ * @param <D> the originating response trailers type
  */
-public abstract class AbstractResponse implements HttpConnectionResponse {
+public abstract class AbstractResponse<A extends InboundResponseHeaders, B extends AbstractResponseBody, C extends InboundHeaders, D> implements HttpConnectionResponse {
 
-	private final InboundResponseHeaders responseHeaders;
+	private final A headers;
+	/**
+	 * The response body.
+	 */
+	protected final B body;
 	
-	protected InboundHeaders responseTrailers;
-	
-	private HttpConnectionResponseBody body;
+	private C trailers;
 
 	/**
 	 * <p>
 	 * Creates a base response.
 	 * </p>
-	 * 
-	 * @param responseHeaders the response headers
+	 *
+	 * @param headers the response headers
+	 * @param body    the response body
 	 */
-	protected AbstractResponse(InboundResponseHeaders responseHeaders) {
-		this.responseHeaders = responseHeaders;
-	}
-	
-	@Override
-	public InboundResponseHeaders headers() {
-		return this.responseHeaders;
-	}
-	
-	@Override
-	public ResponseBody body() {
-		if(this.body == null) {
-			this.body = new HttpConnectionResponseBody();
-		}
-		return this.body;
-	}
-
-	@Override
-	public InboundHeaders trailers() {
-		return this.responseTrailers;
-	}
-	
-	/**
-	 * <p>
-	 * Returns the response payload data sink.
-	 * </p>
-	 * 
-	 * @return the payload data sink
-	 */
-	public Sinks.Many<ByteBuf> data() {
-		return ((HttpConnectionResponseBody)this.body()).dataSink;
+	protected AbstractResponse(A headers, B body) {
+		this.headers = headers;
+		this.body = body;
 	}
 	
 	/**
@@ -83,33 +60,53 @@ public abstract class AbstractResponse implements HttpConnectionResponse {
 	 * </p>
 	 * 
 	 * <p>
-	 * This method delegates to {@link #dispose(java.lang.Throwable) } with a null error.
+	 * This method disposes the response body.
 	 * </p>
+	 * 
+	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
 	 */
-	public void dispose() {
-		this.dispose(null);
+	public final void dispose(Throwable cause) {
+		this.body.dispose(cause);
+	}
+	
+	@Override
+	public A headers() {
+		return this.headers;
+	}
+	
+	@Override
+	public B body() {
+		return this.body;
+	}
+
+	@Override
+	public C trailers() {
+		return this.trailers;
 	}
 	
 	/**
 	 * <p>
-	 * Disposes the response with the specified error.
+	 * Sets the response trailers.
 	 * </p>
 	 * 
 	 * <p>
-	 * This method cleans up response outstanding resources, it especially drains received data if needed.
+	 * This is invoked by the connection when response trailers are received.
 	 * </p>
 	 * 
-	 * <p>
-	 * A non-null error indicates that the enclosing exchange did not complete successfully and that the error should be emitted when possible (e.g. in the response data publisher).
-	 * </p>
-	 * 
-	 * @param error an error or null
-	 * 
-	 * @see HttpConnectionResponseBody#dispose(java.lang.Throwable) 
+	 * @param trailers the originating trailers
 	 */
-	public void dispose(Throwable error) {
-		if(this.body != null) {
-			this.body.dispose(error);
-		}
+	public final void setTrailers(D trailers) {
+		this.trailers = this.createTrailers(trailers);
 	}
+	
+	/**
+	 * <p>
+	 * Creates the Http response trailers from the originating trailers.
+	 * </p>
+	 * 
+	 * @param trailers the originating trailers
+	 * 
+	 * @return the Http response trailers
+	 */
+	protected abstract C createTrailers(D trailers);
 }

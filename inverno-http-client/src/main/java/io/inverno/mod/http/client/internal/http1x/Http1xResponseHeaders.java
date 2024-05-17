@@ -17,7 +17,6 @@ package io.inverno.mod.http.client.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.InboundResponseHeaders;
-import io.inverno.mod.http.base.InboundSetCookies;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Header;
@@ -25,7 +24,7 @@ import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
-import io.inverno.mod.http.client.internal.GenericResponseCookies;
+import io.inverno.mod.http.client.internal.AbstractResponseHeaders;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,15 +39,13 @@ import java.util.stream.Collectors;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-class Http1xResponseHeaders implements InboundResponseHeaders {
+class Http1xResponseHeaders extends AbstractResponseHeaders {
 	
 	private final HeaderService headerService;
-	private final ObjectConverter<String> parameterConverter;
 	private final LinkedHttpHeaders headers;
 	private final int statusCode;
 	
 	private Status status;
-	private GenericResponseCookies cookies;
 
 	/**
 	 * <p>
@@ -61,8 +58,8 @@ class Http1xResponseHeaders implements InboundResponseHeaders {
 	 * @param statusCode         the response status code
 	 */
 	public Http1xResponseHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, LinkedHttpHeaders headers, int statusCode) {
+		super(parameterConverter);
 		this.headerService = headerService;
-		this.parameterConverter = parameterConverter;
 		this.headers = headers;
 		this.statusCode = statusCode;
 	}
@@ -94,15 +91,7 @@ class Http1xResponseHeaders implements InboundResponseHeaders {
 	public Long getContentLength() {
 		return this.headers.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
 	}
-
-	@Override
-	public InboundSetCookies cookies() {
-		if(this.cookies == null) {
-			this.cookies = new GenericResponseCookies(this, this.parameterConverter);
-		}
-		return this.cookies;
-	}
-
+	
 	@Override
 	public boolean contains(CharSequence name) {
 		return this.headers.contains(name);

@@ -231,29 +231,29 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		return this.version;
 	}
 	
-//	@Override
+	@Override
 	public SocketAddress getLocalAddress() {
 		return this.channelContext.channel().localAddress();
 	}
 
-//	@Override
+	@Override
 	public Optional<Certificate[]> getLocalCertificates() {
 		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
-			.map(handler -> handler.engine().getSession().getLocalCertificates())
+			.map(sslHandler -> sslHandler.engine().getSession().getLocalCertificates())
 			.filter(certificates -> certificates.length > 0);
 	}
 
-//	@Override
+	@Override
 	public SocketAddress getRemoteAddress() {
 		return this.channelContext.channel().remoteAddress();
 	}
 
-//	@Override
+	@Override
 	public Optional<Certificate[]> getRemoteCertificates() {
 		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
-			.map(handler -> {
+			.map(sslHandler -> {
 				try {
-					return handler.engine().getSession().getPeerCertificates();
+					return sslHandler.engine().getSession().getPeerCertificates();
 				} 
 				catch(SSLPeerUnverifiedException e) {
 					LOGGER.debug("Could not verify identity of the client", e);
@@ -317,7 +317,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	 * 
 	 * @return a new Http/1.x exchange
 	 */
-	protected <A extends ExchangeContext> Http1xExchange createExchange(Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, EndpointExchange<A> endpointExchange) {
+	<A extends ExchangeContext> Http1xExchange createExchange(Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, EndpointExchange<A> endpointExchange) {
 		return new Http1xExchange<>(this.configuration, sink, this.headerService, this.parameterConverter, endpointExchange.context(), this, endpointExchange.request());
 	}
 

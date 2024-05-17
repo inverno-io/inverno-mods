@@ -18,6 +18,7 @@ package io.inverno.mod.http.client.internal;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.http.base.Method;
+import io.inverno.mod.http.base.OutboundRequestHeaders;
 import io.inverno.mod.http.base.internal.GenericQueryParameters;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -29,8 +30,10 @@ import java.net.SocketAddress;
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
+ * 
+ * @param <A> the Http request headers type
  */
-public abstract class AbstractRequest<A extends HttpConnectionRequestHeaders> implements HttpConnectionRequest {
+public abstract class AbstractRequest<A extends OutboundRequestHeaders> implements HttpConnectionRequest {
 	
 	private final ObjectConverter<String> parameterConverter;
 	

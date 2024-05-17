@@ -23,9 +23,9 @@ import io.inverno.mod.http.base.header.Header;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
+import io.inverno.mod.http.client.internal.AbstractRequestHeaders;
 import io.inverno.mod.http.client.internal.EndpointRequestHeaders;
 import io.inverno.mod.http.client.internal.GenericRequestCookies;
-import io.inverno.mod.http.client.internal.HttpConnectionRequestHeaders;
 import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import io.netty.handler.codec.http2.Http2Headers;
 import java.util.LinkedList;
@@ -44,14 +44,13 @@ import java.util.stream.Collectors;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-public class Http2RequestHeaders implements HttpConnectionRequestHeaders {
+public class Http2RequestHeaders extends AbstractRequestHeaders<Http2Headers> {
 	
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
 	private final Http2Headers headers;
 	
 	private GenericRequestCookies cookies;
-	private boolean written;
 
 	/**
 	 * <p>
@@ -71,25 +70,9 @@ public class Http2RequestHeaders implements HttpConnectionRequestHeaders {
 		endpointHeaders.getAll().forEach(e -> this.add(e.getKey(), e.getValue()));
 	}
 	
-	/**
-	 * <p>
-	 * Returns the headers to send as part of the Http response.
-	 * </p>
-	 * 
-	 * @return the wrapped headers
-	 */
-	Http2Headers unwrap() {
+	@Override
+	protected Http2Headers unwrap() {
 		return this.headers;
-	}
-	
-	@Override
-	public void setWritten() {
-		this.written = true;
-	}
-	
-	@Override
-	public boolean isWritten() {
-		return this.written;
 	}
 	
 	@Override
@@ -130,7 +113,7 @@ public class Http2RequestHeaders implements HttpConnectionRequestHeaders {
 	@Override
 	public GenericRequestCookies cookies() {
 		if(this.cookies == null) {
-			this.cookies = new GenericRequestCookies(this, this.headerService, this.parameterConverter); // TODO rearrange parameter order
+			this.cookies = new GenericRequestCookies(this.headerService, this.parameterConverter, this);
 		}
 		return this.cookies;
 	}

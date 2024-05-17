@@ -18,7 +18,8 @@ package io.inverno.mod.http.client.internal.http1x;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
-import io.inverno.mod.http.client.internal.HttpConnectionResponse;
+import io.inverno.mod.http.client.Response;
+import io.inverno.mod.http.client.internal.AbstractResponse;
 import io.netty.handler.codec.http.HttpResponse;
 
 /**
@@ -29,15 +30,10 @@ import io.netty.handler.codec.http.HttpResponse;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-class Http1xResponse implements HttpConnectionResponse {
+class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xResponseBody, Http1xResponseTrailers, LinkedHttpHeaders> {
 
 	private final HeaderService headerService;
 	private final ObjectConverter<String> parameterConverter;
-	
-	private final Http1xResponseHeaders headers;
-	private final Http1xResponseBody body;
-	
-	private Http1xResponseTrailers trailers;
 	
 	/**
 	 * <p>
@@ -53,55 +49,14 @@ class Http1xResponse implements HttpConnectionResponse {
 			ObjectConverter<String> parameterConverter,
 			HttpResponse response
 		) {
+		super(new Http1xResponseHeaders(headerService, parameterConverter, (LinkedHttpHeaders)response.headers(), response.status().code()), new Http1xResponseBody());
+		
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
-		
-		this.headers = new Http1xResponseHeaders(headerService, parameterConverter, (LinkedHttpHeaders)response.headers(), response.status().code());
-		this.body = new Http1xResponseBody();
-	}
-	
-	/**
-	 * <p>
-	 * Disposes the response.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method disposes the response body.
-	 * </p>
-	 * 
-	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
-	 */
-	final void dispose(Throwable cause) {
-		this.body.dispose(cause);
 	}
 
 	@Override
-	public Http1xResponseHeaders headers() {
-		return this.headers;
-	}
-	
-	@Override
-	public Http1xResponseBody body() {
-		return this.body;
-	}
-
-	@Override
-	public Http1xResponseTrailers trailers() {
-		return this.trailers;
-	}
-
-	/**
-	 * <p>
-	 * Sets the response trailers.
-	 * </p>
-	 * 
-	 * <p>
-	 * This is invoked by the connection when response trailers are received.
-	 * </p>
-	 * 
-	 * @param trailers the originating trailers
-	 */
-	void setTrailers(LinkedHttpHeaders trailers) {
-		this.trailers = new Http1xResponseTrailers(this.headerService, this.parameterConverter, trailers);
+	protected Http1xResponseTrailers createTrailers(LinkedHttpHeaders trailers) {
+		return new Http1xResponseTrailers(this.headerService, this.parameterConverter, trailers);
 	}
 }

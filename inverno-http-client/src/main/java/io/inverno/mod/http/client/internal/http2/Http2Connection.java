@@ -166,24 +166,24 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 		return HttpVersion.HTTP_2_0;
 	}
 	
-//	@Override
+	@Override
 	public SocketAddress getLocalAddress() {
 		return this.channelContext.channel().localAddress();
 	}
 
-//	@Override
+	@Override
 	public Optional<Certificate[]> getLocalCertificates() {
 		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
 			.map(handler -> handler.engine().getSession().getLocalCertificates())
 			.filter(certificates -> certificates.length > 0);
 	}
 
-//	@Override
+	@Override
 	public SocketAddress getRemoteAddress() {
 		return this.channelContext.channel().remoteAddress();
 	}
 
-//	@Override
+	@Override
 	public Optional<Certificate[]> getRemoteCertificates() {
 		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
 			.map(handler -> {

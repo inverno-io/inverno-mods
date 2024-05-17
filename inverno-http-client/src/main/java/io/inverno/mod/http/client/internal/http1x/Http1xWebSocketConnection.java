@@ -112,24 +112,24 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 		return this.tls;
 	}
 	
-	//	@Override
+	@Override
 	public SocketAddress getLocalAddress() {
 		return this.channelContext.channel().localAddress();
 	}
 
-//	@Override
+	@Override
 	public Optional<Certificate[]> getLocalCertificates() {
 		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
 			.map(handler -> handler.engine().getSession().getLocalCertificates())
 			.filter(certificates -> certificates.length > 0);
 	}
 
-//	@Override
+	@Override
 	public SocketAddress getRemoteAddress() {
 		return this.channelContext.channel().remoteAddress();
 	}
 
-//	@Override
+	@Override
 	public Optional<Certificate[]> getRemoteCertificates() {
 		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
 			.map(handler -> {
