@@ -19,6 +19,7 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.netty.FlatFullHttpRequest;
 import io.inverno.mod.http.base.internal.netty.FlatHttpRequest;
+import io.inverno.mod.http.base.internal.netty.FlatLastHttpContent;
 import io.inverno.mod.http.client.Request;
 import io.inverno.mod.http.client.internal.AbstractRequest;
 import io.inverno.mod.http.client.internal.EndpointRequest;
@@ -26,6 +27,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.FileRegion;
 import io.netty.handler.codec.http.DefaultHttpContent;
+import io.netty.handler.codec.http.DefaultLastHttpContent;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.LastHttpContent;
@@ -90,11 +92,12 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 	public void send() {
 		if(this.connection.executor().inEventLoop()) {
 			if(this.body != null) {
-				if(this.body.getFileRegionData() == null) {
-					this.body.getData().subscribe(this.body.getData() instanceof Mono ? new MonoBodyDataSubscriber() : new BodyDataSubscriber());
+				if(this.headers.contains(Headers.NAME_EXPECT, Headers.VALUE_100_CONTINUE)) {
+					this.connection.writeHttpObject(new FlatHttpRequest(this.connection.getVersion(), HttpMethod.valueOf(this.method.name()), this.path, this.headers.unwrap()));
+					this.headers.setWritten();
 				}
 				else {
-					Flux.concat(this.body.getFileRegionData(), Flux.from(this.body.getData()).cast(FileRegion.class)).subscribe(new FileRegionBodyDataSubscriber());
+					this.sendBody();
 				}
 			}
 			else {
@@ -105,6 +108,20 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 		}
 		else {
 			this.connection.executor().execute(this::send);
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Sends the request body.
+	 * </p>
+	 */
+	void sendBody() {
+		if(this.body.getFileRegionData() == null) {
+			this.body.getData().subscribe(this.body.getData() instanceof Mono ? new MonoBodyDataSubscriber() : new BodyDataSubscriber());
+		}
+		else {
+			Flux.concat(this.body.getFileRegionData(), Flux.from(this.body.getData()).cast(FileRegion.class)).subscribe(new FileRegionBodyDataSubscriber());
 		}
 	}
 	
@@ -179,20 +196,30 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 
 		@Override
 		protected void hookOnComplete() {
-			if(!Http1xRequest.this.headers.contains((CharSequence)Headers.NAME_CONTENT_LENGTH)) {
-				List<String> transferEncodings = Http1xRequest.this.headers.getAll((CharSequence)Headers.NAME_TRANSFER_ENCODING);
-				if(transferEncodings.isEmpty() || !transferEncodings.getLast().endsWith(Headers.VALUE_CHUNKED)) {
-					// set content length
-					Http1xRequest.this.headers.add((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + Http1xRequest.this.transferedLength);
+			if(Http1xRequest.this.headers.isWritten()) {
+				if(this.data != null) {
+					Http1xRequest.this.connection.writeHttpObject(new DefaultLastHttpContent(this.data));
+				}
+				else {
+					Http1xRequest.this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
 				}
 			}
-			if(this.data != null) {
-				Http1xRequest.this.connection.writeHttpObject(new FlatFullHttpRequest(Http1xRequest.this.connection.getVersion(), HttpMethod.valueOf(Http1xRequest.this.method.name()), Http1xRequest.this.path, Http1xRequest.this.headers.unwrap(), this.data, EmptyHttpHeaders.INSTANCE));
-			}
 			else {
-				Http1xRequest.this.connection.writeHttpObject(new FlatFullHttpRequest(Http1xRequest.this.connection.getVersion(), HttpMethod.valueOf(Http1xRequest.this.method.name()), Http1xRequest.this.path, Http1xRequest.this.headers.unwrap(), Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE));
+				if(!Http1xRequest.this.headers.contains((CharSequence)Headers.NAME_CONTENT_LENGTH)) {
+					List<String> transferEncodings = Http1xRequest.this.headers.getAll((CharSequence)Headers.NAME_TRANSFER_ENCODING);
+					if(transferEncodings.isEmpty() || !transferEncodings.getLast().endsWith(Headers.VALUE_CHUNKED)) {
+						// set content length
+						Http1xRequest.this.headers.add((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + Http1xRequest.this.transferedLength);
+					}
+				}
+				if(this.data != null) {
+					Http1xRequest.this.connection.writeHttpObject(new FlatFullHttpRequest(Http1xRequest.this.connection.getVersion(), HttpMethod.valueOf(Http1xRequest.this.method.name()), Http1xRequest.this.path, Http1xRequest.this.headers.unwrap(), this.data, EmptyHttpHeaders.INSTANCE));
+				}
+				else {
+					Http1xRequest.this.connection.writeHttpObject(new FlatFullHttpRequest(Http1xRequest.this.connection.getVersion(), HttpMethod.valueOf(Http1xRequest.this.method.name()), Http1xRequest.this.path, Http1xRequest.this.headers.unwrap(), Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE));
+				}
+				Http1xRequest.this.headers.setWritten();
 			}
-			Http1xRequest.this.headers.setWritten();
 			Http1xRequest.this.connection.onRequestSent();
 		}
 		
@@ -270,15 +297,25 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 				Http1xRequest.this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
 			}
 			else {
-				this.sanitizeResponse();
-				if(this.singleChunk == null) {
-					Http1xRequest.this.connection.writeHttpObject(new FlatFullHttpRequest(Http1xRequest.this.connection.getVersion(), HttpMethod.valueOf(Http1xRequest.this.method.name()), Http1xRequest.this.path, Http1xRequest.this.headers.unwrap(), Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE));
+				if(Http1xRequest.this.headers.isWritten()) {
+					if(this.singleChunk == null) {
+						Http1xRequest.this.connection.writeHttpObject(new DefaultLastHttpContent(this.singleChunk));
+					}
+					else {
+						Http1xRequest.this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
+					}
 				}
 				else {
-					Http1xRequest.this.connection.writeHttpObject(new FlatFullHttpRequest(Http1xRequest.this.connection.getVersion(), HttpMethod.valueOf(Http1xRequest.this.method.name()), Http1xRequest.this.path, Http1xRequest.this.headers.unwrap(), this.singleChunk, EmptyHttpHeaders.INSTANCE));
-					this.singleChunk = null;
+					this.sanitizeResponse();
+					if(this.singleChunk == null) {
+						Http1xRequest.this.connection.writeHttpObject(new FlatFullHttpRequest(Http1xRequest.this.connection.getVersion(), HttpMethod.valueOf(Http1xRequest.this.method.name()), Http1xRequest.this.path, Http1xRequest.this.headers.unwrap(), Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE));
+					}
+					else {
+						Http1xRequest.this.connection.writeHttpObject(new FlatFullHttpRequest(Http1xRequest.this.connection.getVersion(), HttpMethod.valueOf(Http1xRequest.this.method.name()), Http1xRequest.this.path, Http1xRequest.this.headers.unwrap(), this.singleChunk, EmptyHttpHeaders.INSTANCE));
+						this.singleChunk = null;
+					}
+					Http1xRequest.this.headers.setWritten();
 				}
-				Http1xRequest.this.headers.setWritten();
 			}
 			Http1xRequest.this.connection.onRequestSent();
 		}
@@ -301,8 +338,10 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 
 		@Override
 		protected void hookOnSubscribe(Subscription subscription) {
-			Http1xRequest.this.connection.writeHttpObject(new FlatHttpRequest(Http1xRequest.this.connection.getVersion(), HttpMethod.valueOf(Http1xRequest.this.method.name()), Http1xRequest.this.path, Http1xRequest.this.headers.unwrap()));
-			Http1xRequest.this.headers.setWritten();
+			if(!Http1xRequest.this.headers.isWritten()) {
+				Http1xRequest.this.connection.writeHttpObject(new FlatHttpRequest(Http1xRequest.this.connection.getVersion(), HttpMethod.valueOf(Http1xRequest.this.method.name()), Http1xRequest.this.path, Http1xRequest.this.headers.unwrap()));
+				Http1xRequest.this.headers.setWritten();
+			}
 			subscription.request(1);
 		}
 

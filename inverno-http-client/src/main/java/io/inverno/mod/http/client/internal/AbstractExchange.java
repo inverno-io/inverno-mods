@@ -142,10 +142,12 @@ public abstract class AbstractExchange<A extends ExchangeContext, B extends Http
 	 * @param response the Http response received on the connection
 	 */
 	public final void emitResponse(D originatingResponse) {
-		this.cancelTimeout();
 		this.response = this.createResponse(originatingResponse);
-		if(this.sink != null) {
-			this.sink.tryEmitValue(this);
+		if(this.response != null) {
+			this.cancelTimeout();
+			if(this.sink != null) {
+				this.sink.tryEmitValue(this);
+			}
 		}
 	}
 	

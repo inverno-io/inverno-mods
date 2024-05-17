@@ -538,8 +538,10 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		}
 		
 		if(msg == LastHttpContent.EMPTY_LAST_CONTENT) {
-			this.respondingExchange.response().body().getDataSink().tryEmitComplete();
-			this.onResponseComplete();
+			if(this.respondingExchange.response() != null) {
+				this.respondingExchange.response().body().getDataSink().tryEmitComplete();
+				this.onResponseComplete();
+			}
 		}
 		else if(msg instanceof DefaultHttpResponse) {
 			this.read = true;

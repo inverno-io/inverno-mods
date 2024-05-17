@@ -29,6 +29,7 @@ import io.inverno.mod.http.client.internal.HttpConnectionExchange;
 import io.inverno.mod.http.client.internal.HttpConnectionRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionResponse;
 import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import reactor.core.publisher.Sinks;
@@ -121,6 +122,10 @@ class Http1xExchange<A extends ExchangeContext> extends AbstractExchange<A, Http
 	
 	@Override
 	protected final Http1xResponse createResponse(HttpResponse response) {
+		if(response.status() == HttpResponseStatus.CONTINUE) {
+			this.request.sendBody();
+			return null;
+		}
 		return new Http1xResponse(this.headerService, this.parameterConverter, response);
 	}
 	
