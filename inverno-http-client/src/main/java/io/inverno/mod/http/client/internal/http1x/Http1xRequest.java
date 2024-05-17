@@ -19,7 +19,6 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.netty.FlatFullHttpRequest;
 import io.inverno.mod.http.base.internal.netty.FlatHttpRequest;
-import io.inverno.mod.http.base.internal.netty.FlatLastHttpContent;
 import io.inverno.mod.http.client.Request;
 import io.inverno.mod.http.client.internal.AbstractRequest;
 import io.inverno.mod.http.client.internal.EndpointRequest;

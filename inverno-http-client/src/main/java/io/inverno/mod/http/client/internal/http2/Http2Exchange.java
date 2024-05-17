@@ -24,6 +24,7 @@ import io.inverno.mod.http.client.internal.EndpointRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionExchange;
 import io.inverno.mod.http.client.internal.HttpConnectionRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionResponse;
+import io.netty.handler.codec.http2.Http2Headers;
 import reactor.core.publisher.Sinks;
 
 /**
@@ -65,6 +66,15 @@ public class Http2Exchange<A extends ExchangeContext> extends AbstractHttp2Excha
 	@Override
 	public void start() {
 		this.request.send();
+	}
+
+	@Override
+	protected Http2Response createResponse(Http2Headers headers) {
+		if(headers.getInt(Http2Headers.PseudoHeaderName.STATUS.value()) == 100) {
+			this.request.sendBody();
+			return null;
+		}
+		return super.createResponse(headers);
 	}
 	
 	@Override

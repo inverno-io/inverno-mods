@@ -81,7 +81,13 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 	public void send() {
 		if(this.connectionStream.executor().inEventLoop()) {
 			if(this.body != null) {
-				this.body.getData().subscribe(this.body.getData() instanceof Mono ? new Http2Request.MonoBodyDataSubscriber() : new Http2Request.BodyDataSubscriber());
+				if(this.headers.contains(Headers.NAME_EXPECT, Headers.VALUE_100_CONTINUE)) {
+					this.connectionStream.writeHeaders(this.headers.unwrap(), 0, false);
+					this.headers.setWritten();
+				}
+				else {
+					this.sendBody();
+				}
 			}
 			else {
 				this.connectionStream.writeHeaders(this.headers.unwrap(), 0, true);
@@ -91,6 +97,15 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 		else {
 			this.connectionStream.executor().execute(this::send);
 		}
+	}
+	
+	/**
+	 * <p>
+	 * Sends the request body.
+	 * </p>
+	 */
+	void sendBody() {
+		this.body.getData().subscribe(this.body.getData() instanceof Mono ? new Http2Request.MonoBodyDataSubscriber() : new Http2Request.BodyDataSubscriber());
 	}
 	
 	/**
@@ -163,18 +178,28 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 
 		@Override
 		protected void hookOnComplete() {
-			if(!Http2Request.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
-				Http2Request.this.headers.contentLength(Http2Request.this.transferedLength);
-			}
-
-			if(this.data == null) {
-				Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, true);
-				Http2Request.this.headers.setWritten();
+			if(Http2Request.this.headers.isWritten()) {
+				if(this.data == null) {
+					Http2Request.this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
+				}
+				else {
+					Http2Request.this.connectionStream.writeData(this.data, 0, true);
+				}
 			}
 			else {
-				Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, false);
-				Http2Request.this.headers.setWritten();
-				Http2Request.this.connectionStream.writeData(this.data, 0, true);
+				if(!Http2Request.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
+					Http2Request.this.headers.contentLength(Http2Request.this.transferedLength);
+				}
+
+				if(this.data == null) {
+					Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, true);
+					Http2Request.this.headers.setWritten();
+				}
+				else {
+					Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, false);
+					Http2Request.this.headers.setWritten();
+					Http2Request.this.connectionStream.writeData(this.data, 0, true);
+				}
 			}
 		}
 		
@@ -239,18 +264,28 @@ public class Http2Request extends AbstractRequest<Http2RequestHeaders> {
 				Http2Request.this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
 			}
 			else {
-				if(!Http2Request.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
-					Http2Request.this.headers.contentLength(Http2Request.this.transferedLength);
-				}
-				if(this.singleChunk == null) {
-					Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, true);
-					Http2Request.this.headers.setWritten();
+				if(Http2Request.this.headers.isWritten()) {
+					if(this.singleChunk == null) {
+						Http2Request.this.connectionStream.writeData(this.singleChunk, 0, true);
+					}
+					else {
+						Http2Request.this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
+					}
 				}
 				else {
-					Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, false);
-					Http2Request.this.headers.setWritten();
-					Http2Request.this.connectionStream.writeData(this.singleChunk, 0, true);
-					this.singleChunk = null;
+					if(!Http2Request.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
+						Http2Request.this.headers.contentLength(Http2Request.this.transferedLength);
+					}
+					if(this.singleChunk == null) {
+						Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, true);
+						Http2Request.this.headers.setWritten();
+					}
+					else {
+						Http2Request.this.connectionStream.writeHeaders(Http2Request.this.headers.unwrap(), 0, false);
+						Http2Request.this.headers.setWritten();
+						Http2Request.this.connectionStream.writeData(this.singleChunk, 0, true);
+						this.singleChunk = null;
+					}
 				}
 			}
 		}

@@ -107,12 +107,11 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 	}
 
 	@Override
-	public Http2Response sendContinue() {
+	public Http2Response sendContinue() throws IllegalStateException {
 		if(this.isHeadersWritten()) {
 			throw new IllegalStateException("Headers already written");
 		}
-		
-		if(!this.connectionStream.executor().inEventLoop()) {
+		if(this.connectionStream.executor().inEventLoop()) {
 			// we might have an issue here if this run outside the event loop
 			this.connectionStream.writeHeaders(new DefaultHttp2Headers().status("100"), 0, false);
 		}

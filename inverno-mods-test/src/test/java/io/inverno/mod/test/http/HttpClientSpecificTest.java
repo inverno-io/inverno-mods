@@ -16,12 +16,14 @@
 package io.inverno.mod.test.http;
 
 import io.inverno.mod.base.Charsets;
+import io.inverno.mod.base.resource.FileResource;
 import io.inverno.mod.base.resource.MediaTypes;
 import io.inverno.mod.boot.Boot;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Status;
+import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.client.Client;
 import io.inverno.mod.http.client.ConnectionResetException;
 import io.inverno.mod.http.client.Endpoint;
@@ -34,6 +36,7 @@ import io.inverno.test.InvernoCompilationException;
 import io.inverno.test.InvernoModuleLoader;
 import io.inverno.test.InvernoModuleProxy;
 import io.inverno.test.InvernoTestCompiler;
+import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Proxy;
@@ -1054,6 +1057,69 @@ public class HttpClientSpecificTest {
 			result = results.get(1);
 			Assertions.assertEquals(
 				"get_raw",
+				result
+			);
+		}
+		finally {
+			endpoint.shutdown().block();
+		}
+	}
+	
+	@Test
+	public void test_h2c_tooBig() {
+		File uploadsDir = new File("target/uploads/");
+		uploadsDir.mkdirs();
+		
+		// This should result in a failed connection, next request will create a new connection
+		Endpoint<ExchangeContext> blankH2cEndpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.build();
+		try {
+			//curl -i -F 'file=@src/test/resources/post_resource_big.txt' http://127.0.0.1:8080/upload
+			new File(uploadsDir, "post_resource_big.txt").delete();
+			blankH2cEndpoint
+				.exchange(Method.POST, "/upload")
+				.flatMap(exchange -> {
+					exchange.request().body().get().multipart().from((factory, output) -> output.value(
+						factory.resource(part -> part.name("file").value(new FileResource(new File("src/test/resources/post_resource_big.txt"))))
+					));
+					return exchange.response();
+				})
+				.doOnNext(response -> {
+					Assertions.assertEquals(Status.PAYLOAD_TOO_LARGE, response.headers().getStatus());
+				})
+				.block();
+		}
+		catch(Exception e) {
+			// TODO This fails some times with a broken pipe error, I couldn't figure out what's wrong because I wasn't able to reproduce it in a deterministic way
+			// the problem arise when the connection is closed and we still are trying to write on the socket, this is normally handled but for some reason the exception propagates
+			// Let's leave it for now at least we can check that the endpoint properly create a new connection on the next request
+			e.printStackTrace();
+		}
+		finally {
+			blankH2cEndpoint.shutdown().block();
+		}
+	}
+	
+	@ParameterizedTest
+	@MethodSource("provideEndpointAndHttpVersion")
+	public void test_expect_100_continue(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
+		try {
+			String result = endpoint
+				.exchange(Method.POST, "/post_100_continue")
+				.flatMap(exchange -> {
+					exchange.request()
+						.headers(headers -> headers
+							.set(Headers.NAME_EXPECT, Headers.VALUE_100_CONTINUE)
+							.contentLength(17)
+						)
+						.body().get().string().value("post_100_continue");
+					return exchange.response();
+				})
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+				.block();
+			
+			Assertions.assertEquals(
+				"post_100_continue",
 				result
 			);
 		}

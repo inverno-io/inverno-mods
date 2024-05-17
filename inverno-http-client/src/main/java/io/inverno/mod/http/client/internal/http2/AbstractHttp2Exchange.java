@@ -98,9 +98,9 @@ abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpCo
 	}
 	
 	@Override
-	protected final Http2Response createResponse(Http2Headers headers) {
-		Http2Response response = new Http2Response(this.headerService, this.parameterConverter, headers);
-		response.body().transform(data -> {
+	protected Http2Response createResponse(Http2Headers headers) {
+		Http2Response newResponse = new Http2Response(this.headerService, this.parameterConverter, headers);
+		newResponse.body().transform(data -> {
 			if(data instanceof Mono) {
 				return Mono.from(data)
 					.doOnCancel(() -> this.reset(Http2Error.CANCEL.code()))
@@ -112,7 +112,7 @@ abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpCo
 					.doOnComplete(() -> this.dispose(null));
 			}
 		});
-		return response;
+		return newResponse;
 	}
 	
 	@Override

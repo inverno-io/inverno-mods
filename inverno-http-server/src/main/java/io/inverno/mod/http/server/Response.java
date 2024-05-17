@@ -88,8 +88,10 @@ public interface Response extends BaseResponse {
 	 * </p>
 	 *
 	 * @return the response
+	 * 
+	 * @throws IllegalStateException if response headers have already been sent to the client
 	 */
-	Response sendContinue();
+	Response sendContinue() throws IllegalStateException;
 	
 	/**
 	 * <p>
