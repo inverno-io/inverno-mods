@@ -106,7 +106,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
 	 */
-	public Http2Connection(
+	Http2Connection(
 			Http2ConnectionDecoder decoder, 
 			Http2ConnectionEncoder encoder, 
 			Http2Settings initialSettings,

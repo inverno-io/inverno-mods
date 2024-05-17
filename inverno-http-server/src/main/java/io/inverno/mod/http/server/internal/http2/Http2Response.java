@@ -89,8 +89,18 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 		}
 	}
 
-	@Override
-	public void dispose(Throwable cause) {
+	/**
+	 * <p>
+	 * Disposes the response.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method cancels any active subscription.
+	 * </p>
+	 * 
+	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
+	 */
+	final void dispose(Throwable cause) {
 		if(this.disposable != null) {
 			this.disposable.dispose();
 		}

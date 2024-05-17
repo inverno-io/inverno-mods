@@ -42,7 +42,7 @@ import java.util.Optional;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.11
  */
-public class Http2ConnectionStream {
+class Http2ConnectionStream {
 	
 	private final Http2Connection connection;
 	private final ChannelHandlerContext channelContext;

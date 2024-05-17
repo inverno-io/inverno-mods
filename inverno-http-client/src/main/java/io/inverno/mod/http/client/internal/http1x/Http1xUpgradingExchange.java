@@ -61,7 +61,7 @@ public class Http1xUpgradingExchange<A extends ExchangeContext> extends Http1xEx
 	 * @param connection         the Http/1.x connection
 	 * @param endpointRequest    the endpoint request
 	 */
-	public Http1xUpgradingExchange(
+	Http1xUpgradingExchange(
 			HttpClientConfiguration configuration, 
 			Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink,
 			HeaderService headerService, 

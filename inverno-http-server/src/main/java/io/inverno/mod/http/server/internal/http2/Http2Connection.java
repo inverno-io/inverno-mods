@@ -118,7 +118,7 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 	 * @param multipartBodyDecoder    the multipart/form-data body decoder
 	 * @param contentEncodingResolver a content encoding resolver
 	 */
-	public Http2Connection(
+	Http2Connection(
 			Http2ConnectionDecoder decoder, 
 			Http2ConnectionEncoder encoder, 
 			Http2Settings initialSettings, 

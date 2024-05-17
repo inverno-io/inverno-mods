@@ -160,7 +160,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	 * @param webSocketMessageFactory the WebSocket message factory
 	 * @param headersValidator        the header validator
 	 */
-	public Http1xConnection(
+	Http1xConnection(
 			HttpServerConfiguration configuration, 
 			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller, 
 			HeaderService headerService, 
@@ -735,7 +735,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	
 	/**
 	 * <p>
-	 * Callback method that must be invoked when the processing of the current responding exchange completes.
+	 * Callback method invoked when the processing of the current responding exchange completes.
 	 * </p>
 	 * 
 	 * <p>
@@ -772,7 +772,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	
 	/**
 	 * <p>
-	 * Callback method that must be invoked when an error is raised during the processing of the current responding exchange.
+	 * Callback method invoked when an error is raised during the processing of the current responding exchange.
 	 * </p>
 	 * 
 	 * <p>

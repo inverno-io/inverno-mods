@@ -88,19 +88,6 @@ public abstract class AbstractResponse<A extends AbstractResponseHeaders<?>, B e
 	 */
 	public abstract void send();
 	
-	/**
-	 * <p>
-	 * Disposes the response.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method shall simply cancel any active subscription.
-	 * </p>
-	 * 
-	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
-	 */
-	public abstract void dispose(Throwable cause);
-	
 	@Override
 	public boolean isHeadersWritten() {
 		return this.headers.isWritten();

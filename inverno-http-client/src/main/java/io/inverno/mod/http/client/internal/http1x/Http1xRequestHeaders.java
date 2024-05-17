@@ -42,8 +42,6 @@ class Http1xRequestHeaders extends AbstractRequestHeaders<LinkedHttpHeaders> {
 
 	private final EndpointRequestHeaders endpointHeaders;
 	
-	private boolean written;
-
 	/**
 	 * <p>
 	 * Creates Http/1.x request headers.

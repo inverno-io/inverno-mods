@@ -52,7 +52,7 @@ import reactor.core.publisher.Sinks;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-public class Http1xUpgradingConnection extends Http1xConnection {
+class Http1xUpgradingConnection extends Http1xConnection {
 	
 	private static final int MAX_MESSAGE_BUFFER_SIZE = 65536;
 	
@@ -96,7 +96,7 @@ public class Http1xUpgradingConnection extends Http1xConnection {
 	 * @param partFactory           the part factory
 	 * @param configurer            the endpoint channel configurer
 	 */
-	public Http1xUpgradingConnection(
+	Http1xUpgradingConnection(
 			HttpClientConfiguration configuration, 
 			HttpVersion httpVersion, 
 			HeaderService headerService, 

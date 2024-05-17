@@ -93,7 +93,7 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	 * @param configuration      the HTTP client configurartion
 	 * @param parameterConverter the parameter converter
 	 */
-	public Http1xWebSocketConnection(
+	Http1xWebSocketConnection(
 			HttpClientConfiguration configuration, 
 			ObjectConverter<String> parameterConverter) {
 		this.configuration = configuration;

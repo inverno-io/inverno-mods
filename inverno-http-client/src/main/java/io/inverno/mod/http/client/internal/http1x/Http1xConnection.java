@@ -126,7 +126,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	 * @param multipartBodyEncoder  the multipart body encoder
 	 * @param partFactory           the part factory
 	 */
-	public Http1xConnection(
+	Http1xConnection(
 			HttpClientConfiguration configuration, 
 			HttpVersion protocol, 
 			HeaderService headerService, 

@@ -123,7 +123,6 @@ abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpCo
 	@Override
 	public void doReset(long code) {
 		// reseting the stream should dispose the stream
-//		this.dispose(new HttpClientException("Exchange has been reset: " + code));
 		this.connectionStream.resetStream(code);
 	}
 }
