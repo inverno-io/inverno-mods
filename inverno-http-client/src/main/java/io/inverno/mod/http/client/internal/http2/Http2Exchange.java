@@ -63,7 +63,7 @@ public class Http2Exchange<A extends ExchangeContext> extends AbstractHttp2Excha
 	}
 	
 	@Override
-	protected void doStart() {
+	protected void start() {
 		this.request.send();
 	}
 	

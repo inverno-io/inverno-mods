@@ -99,6 +99,7 @@ class Http1xExchange<A extends ExchangeContext> implements HttpConnectionExchang
 		this.request = new Http1xRequest(parameterConverter, connection, endpointRequest);
 		
 		this.creationTime = System.currentTimeMillis();
+		this.startTimeout();
 	}
 	
 	/**
@@ -108,23 +109,15 @@ class Http1xExchange<A extends ExchangeContext> implements HttpConnectionExchang
 	 */
 	private void startTimeout() {
 		if(this.configuration.request_timeout() > 0) {
-			long requestTimeout = this.configuration.request_timeout() - (System.currentTimeMillis() - this.creationTime);
-			if(requestTimeout > 0) {
-				this.timeoutFuture = this.connection.executor().schedule(
-					() -> {
-						this.timeoutFuture = null;
-						// we are supposed to have sent the request so we can close the connection
-						this.dispose(new RequestTimeoutException("Exceeded timeout " + this.configuration.request_timeout() + "ms"));
-						this.connection.shutdown().subscribe();
-					}, 
-					requestTimeout, 
-					TimeUnit.MILLISECONDS
-				);
-			}
-			else {
-				this.dispose(new RequestTimeoutException("Exceeded timeout " + this.configuration.request_timeout() + "ms"));
-				this.connection.shutdown().subscribe();
-			}
+			this.timeoutFuture = this.connection.executor().schedule(
+				() -> {
+					this.timeoutFuture = null;
+					// we are supposed to have sent the request so we can close the connection
+					this.connection.onRequestError(new RequestTimeoutException("Exceeded timeout " + this.configuration.request_timeout() + "ms"));
+				}, 
+				this.configuration.request_timeout(), 
+				TimeUnit.MILLISECONDS
+			);
 		}
 	}
 	
@@ -154,7 +147,6 @@ class Http1xExchange<A extends ExchangeContext> implements HttpConnectionExchang
 		// That would mean: previous exchange took time to send request body
 		// maybe we should start the timeout when creating the exchange i.e. when it's registered, then we'll have to handle the headers not written case
 		this.request.send();
-		this.startTimeout();
 	}
 	
 	/**

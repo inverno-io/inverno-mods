@@ -86,6 +86,8 @@ abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpCo
 		this.context = context;
 		this.connectionStream = connectionStream;
 		this.request = request;
+		
+		this.startTimeout();
 	}
 	
 	/**
@@ -125,26 +127,10 @@ abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpCo
 	 * </p>
 	 * 
 	 * <p>
-	 * This method invokes the start logic implementd in {@link #doStart()} and starts the request timeout task.
-	 * </p>
-	 * 
-	 * @see #doStart() 
-	 */
-	final void start() {
-		this.doStart();
-		this.startTimeout();
-	}
-	
-	/**
-	 * <p>
-	 * Starts the exchange.
-	 * </p>
-	 * 
-	 * <p>
 	 * This method shall implement the specific exchange start logic, typically send the request.
 	 * </p>
 	 */
-	protected abstract void doStart();
+	protected abstract void start();
 	
 	/**
 	 * <p>

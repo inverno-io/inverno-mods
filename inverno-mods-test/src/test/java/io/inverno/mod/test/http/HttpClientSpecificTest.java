@@ -623,10 +623,10 @@ public class HttpClientSpecificTest {
 						Assertions.assertInstanceOf(RequestTimeoutException.class, result).getMessage()
 					);
 					
-					// Must be a RequestTimeoutException as well (the same actually)
+					// Must be a ConnectionResetException
 					result = results.get(1);
 					Assertions.assertEquals(
-						"Connection was closed",
+						"Connection closed after previous request timed out",
 						Assertions.assertInstanceOf(ConnectionResetException.class, result).getMessage()
 					);
 					
@@ -647,6 +647,415 @@ public class HttpClientSpecificTest {
 					);
 				}
 			}
+		}
+		finally {
+			endpoint.shutdown().block();
+		}
+	}
+	
+	@Test
+	public void test_http1x_responding_requesting_headers_written_request_timeout() {
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+				.pool_max_size(1)
+				.request_timeout(1000)
+			))
+			.build();
+		
+		try {
+			Mono<Object> timeoutRequest = endpoint
+				.exchange(Method.POST, "/post_timeout")
+				.flatMap(exchange -> {
+					exchange.request()
+						.headers(headers -> headers.contentType("text/plain"))
+						.body().get().string().stream(Flux.concat(Flux.just("a", "b"), Mono.just("timeout").delayElement(Duration.ofSeconds(2))));
+					return exchange.response();
+				})
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e));
+			
+			Mono<Object> noTimeoutRequest = endpoint
+				.exchange(Method.GET, "/get_delay100")
+				.flatMap(Exchange::response)
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e))
+				.delaySubscription(Duration.ofMillis(200));
+			
+			List<Object> results = Flux.merge(timeoutRequest, noTimeoutRequest)
+				.collectList()
+				.block();
+			
+			Assertions.assertEquals(2, results.size());
+			
+			Object result = results.get(0);
+			Assertions.assertEquals(
+				"Exceeded timeout 1000ms",
+				Assertions.assertInstanceOf(RequestTimeoutException.class, result).getMessage()
+			);
+
+			result = results.get(1);
+			Assertions.assertEquals(
+				"Connection closed after previous request timed out",
+				Assertions.assertInstanceOf(ConnectionResetException.class, result).getMessage()
+			);
+		}
+		finally {
+			endpoint.shutdown().block();
+		}
+	}
+	
+	@Test
+	public void test_http1x_responding_requesting_headers_not_written_request_timeout() {
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+				.pool_max_size(1)
+				.request_timeout(1000)
+			))
+			.build();
+		
+		try {
+			Mono<Object> timeoutRequest = endpoint
+				.exchange(Method.POST, "/post_timeout")
+				.flatMap(exchange -> {
+					exchange.request().body().get().string().stream(Mono.just("timeout").delayElement(Duration.ofSeconds(2)));
+					return exchange.response();
+				})
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e));
+			
+			Mono<Object> noTimeoutRequest = endpoint
+				.exchange(Method.GET, "/get_delay100")
+				.flatMap(Exchange::response)
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e))
+				.delaySubscription(Duration.ofMillis(200));
+			
+			
+			List<Object> results = Flux.merge(timeoutRequest, noTimeoutRequest)
+				.collectList()
+				.block();
+			
+			Assertions.assertEquals(2, results.size());
+			
+			Object result = results.get(0);
+			Assertions.assertEquals(
+				"Exceeded timeout 1000ms",
+				Assertions.assertInstanceOf(RequestTimeoutException.class, result).getMessage()
+			);
+
+			// Must be a RequestTimeoutException as well (the same actually)
+			result = results.get(1);
+			Assertions.assertEquals(
+				"get_delay100",
+				result
+			);
+		}
+		finally {
+			endpoint.shutdown().block();
+		}
+	}
+	
+	@Test
+	public void test_http1x_responding_not_requesting_request_timeout() {
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+				.pool_max_size(1)
+				.request_timeout(1000)
+			))
+			.build();
+		
+		try {
+			Mono<Object> timeoutRequest = endpoint
+				.exchange(Method.GET, "/get_timeout")
+				.flatMap(Exchange::response)
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e));
+
+			Mono<Object> noTimeoutRequest = endpoint
+				.exchange(Method.GET, "/get_delay100")
+				.flatMap(Exchange::response)
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e))
+				.delaySubscription(Duration.ofMillis(200));
+
+			List<Object> results = Flux.merge(timeoutRequest, noTimeoutRequest)
+				.collectList()
+				.block();
+
+			Assertions.assertEquals(2, results.size());
+
+			Object result = results.get(0);
+			Assertions.assertEquals(
+				"Exceeded timeout 1000ms",
+				Assertions.assertInstanceOf(RequestTimeoutException.class, result).getMessage()
+			);
+
+			// Must be a ConnectionResetException
+			result = results.get(1);
+			Assertions.assertEquals(
+				"Connection closed after previous request timed out",
+				Assertions.assertInstanceOf(ConnectionResetException.class, result).getMessage()
+			);
+		}
+		finally {
+			endpoint.shutdown().block();
+		}
+	}
+	
+	@Test
+	public void test_http1x_not_responding_requesting_headers_written_request_timeout() {
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+				.pool_max_size(1)
+				.request_timeout(1000)
+			))
+			.build();
+		
+		try {
+			Mono<Object> longRequestWithResponse = endpoint
+				.exchange(Method.GET, "/get_timeout_with_response")
+				.flatMap(Exchange::response)
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e));
+
+			Mono<Object> timeoutRequest = endpoint
+				.exchange(Method.POST, "/post_timeout")
+				.flatMap(exchange -> {
+					exchange.request()
+						.headers(headers -> headers.contentType("text/plain"))
+						.body().get().string().stream(Flux.concat(Flux.just("a", "b"), Mono.just("timeout").delayElement(Duration.ofSeconds(2))));
+					return exchange.response();
+				})
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e))
+				.delaySubscription(Duration.ofMillis(200));
+			
+			Mono<Object> getRaw = endpoint
+				.exchange(Method.GET, "/get_raw")
+				.flatMap(Exchange::response)
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e))
+				.delaySubscription(Duration.ofMillis(1200));
+
+			List<Object> results = Flux.mergeSequential(longRequestWithResponse, timeoutRequest, getRaw)
+				.collectList()
+				.block();
+
+			Assertions.assertEquals(3, results.size());
+
+			Object result = results.get(0);
+			Assertions.assertEquals(
+				"abget_timeout_with_response",
+				result
+			);
+
+			// Must be a RequestTimeoutException
+			result = results.get(1);
+			Assertions.assertEquals(
+				"Exceeded timeout 1000ms",
+				Assertions.assertInstanceOf(RequestTimeoutException.class, result).getMessage()
+			);
+			
+			result = results.get(2);
+			Assertions.assertEquals(
+				"Connection closed after previous request timed out",
+				Assertions.assertInstanceOf(ConnectionResetException.class, result).getMessage()
+			);
+		}
+		finally {
+			endpoint.shutdown().block();
+		}
+	}
+	
+	@Test
+	public void test_http1x_not_responding_requesting_headers_not_written_request_timeout() {
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+				.pool_max_size(1)
+				.request_timeout(1000)
+			))
+			.build();
+		
+		try {
+			Mono<Object> longRequestWithResponse = endpoint
+				.exchange(Method.GET, "/get_timeout_with_response")
+				.flatMap(Exchange::response)
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e));
+
+			Mono<Object> timeoutRequest = endpoint
+				.exchange(Method.POST, "/post_timeout")
+				.flatMap(exchange -> {
+					exchange.request()
+						.headers(headers -> headers.contentType("text/plain"))
+						.body().get().string().stream(Mono.just("timeout").delayElement(Duration.ofSeconds(2)));
+					return exchange.response();
+				})
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e))
+				.delaySubscription(Duration.ofMillis(500));
+			
+			Mono<Object> getRaw = endpoint
+				.exchange(Method.GET, "/get_raw")
+				.flatMap(Exchange::response)
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e))
+				.delaySubscription(Duration.ofMillis(1300));
+
+			List<Object> results = Flux.mergeSequential(longRequestWithResponse, timeoutRequest, getRaw)
+				.collectList()
+				.block();
+
+			Assertions.assertEquals(3, results.size());
+
+			Object result = results.get(0);
+			Assertions.assertEquals(
+				"abget_timeout_with_response",
+				result
+			);
+
+			// Must be a RequestTimeoutException
+			result = results.get(1);
+			Assertions.assertEquals(
+				"Exceeded timeout 1000ms",
+				Assertions.assertInstanceOf(RequestTimeoutException.class, result).getMessage()
+			);
+			
+			result = results.get(2);
+			Assertions.assertEquals(
+				"get_raw",
+				result
+			);
+		}
+		finally {
+			endpoint.shutdown().block();
+		}
+	}
+	
+	@Test
+	public void test_http1x_not_responding_not_requesting_request_timeout() {
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+				.pool_max_size(1)
+				.request_timeout(1000)
+			))
+			.build();
+		
+		try {
+			Mono<Object> longRequestWithResponse = endpoint
+				.exchange(Method.GET, "/get_timeout_with_response")
+				.flatMap(Exchange::response)
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e));
+
+			Mono<Object> timeoutRequest = endpoint
+				.exchange(Method.GET, "/get_delay100")
+				.flatMap(Exchange::response)
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e))
+				.delaySubscription(Duration.ofMillis(200));
+			
+			Mono<Object> getRaw = endpoint
+				.exchange(Method.GET, "/get_raw")
+				.flatMap(Exchange::response)
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e))
+				.delaySubscription(Duration.ofMillis(1200));
+
+			List<Object> results = Flux.mergeSequential(longRequestWithResponse, timeoutRequest, getRaw)
+				.collectList()
+				.block();
+
+			Assertions.assertEquals(3, results.size());
+
+			Object result = results.get(0);
+			Assertions.assertEquals(
+				"abget_timeout_with_response",
+				result
+			);
+
+			// Must be a RequestTimeoutException
+			result = results.get(1);
+			Assertions.assertEquals(
+				"Exceeded timeout 1000ms",
+				Assertions.assertInstanceOf(RequestTimeoutException.class, result).getMessage()
+			);
+			
+			result = results.get(2);
+			Assertions.assertEquals(
+				"Connection closed after previous request timed out",
+				Assertions.assertInstanceOf(ConnectionResetException.class, result).getMessage()
+			);
+		}
+		finally {
+			endpoint.shutdown().block();
+		}
+	}
+	
+	@Test
+	public void test_http1x_interupted_request() {
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+				.pool_max_size(1)
+				.request_timeout(10000)
+			))
+			.build();
+		
+		try {
+			Mono<Object> interuptedRequest = endpoint
+				.exchange(Method.POST, "/post_ignore_body")
+				.flatMap(exchange -> {
+					exchange.request()
+						.headers(headers -> headers.contentType("text/plain"))
+						.body().get().string().stream(Flux.concat(Flux.just("a", "b"), Mono.just("timeout").delayElement(Duration.ofSeconds(2))).delaySubscription(Duration.ofMillis(200)));
+					return exchange.response();
+				})
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e));
+			
+			Mono<Object> getRaw = endpoint
+				.exchange(Method.GET, "/get_raw")
+				.flatMap(Exchange::response)
+				.flatMap(response -> Flux.from(response.body().string().stream()).collect(Collectors.joining()))
+				.cast(Object.class)
+				.onErrorResume(e -> Mono.just(e))
+				.delaySubscription(Duration.ofMillis(100));
+
+			List<Object> results = Flux.mergeSequential(interuptedRequest, getRaw)
+				.collectList()
+				.block();
+
+			Assertions.assertEquals(2, results.size());
+
+			Object result = results.get(0);
+			Assertions.assertEquals(
+				"get_timeout_with_response",
+				result
+			);
+
+			// Must be a RequestTimeoutException
+			result = results.get(1);
+			Assertions.assertEquals(
+				"get_raw",
+				result
+			);
 		}
 		finally {
 			endpoint.shutdown().block();

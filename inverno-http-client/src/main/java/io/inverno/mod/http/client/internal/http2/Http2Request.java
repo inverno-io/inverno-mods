@@ -356,5 +356,13 @@ public class Http2Request implements HttpConnectionRequest {
 		protected void hookOnError(Throwable throwable) {
 			Http2Request.this.connectionStream.onRequestError(throwable);
 		}
+
+		@Override
+		protected void hookOnCancel() {
+			// Make sure the Http protocol flow is correct
+			if(this.many) {
+				Http2Request.this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
+			}
+		}
 	}
 }

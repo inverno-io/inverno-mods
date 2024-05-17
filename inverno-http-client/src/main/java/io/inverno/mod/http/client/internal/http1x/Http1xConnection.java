@@ -27,6 +27,7 @@ import io.inverno.mod.http.client.ConnectionResetException;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.HttpClientException;
 import io.inverno.mod.http.client.Part;
+import io.inverno.mod.http.client.RequestTimeoutException;
 import io.inverno.mod.http.client.internal.EndpointExchange;
 import io.inverno.mod.http.client.internal.HttpConnection;
 import io.inverno.mod.http.client.internal.HttpConnectionExchange;
@@ -93,9 +94,9 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	private boolean supportsFileRegion;
 	protected HttpConnection.Handler handler;
 
-	private Http1xExchange<?> requestedExchange;
-	private Http1xExchange<?> requestingExchange;
 	private Http1xExchange<?> respondingExchange;
+	private Http1xExchange<?> requestingExchange;
+	private Http1xExchange<?> queuedExchange;
 	
 	private Throwable requestError;
 	private boolean read;
@@ -287,12 +288,12 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 			throw new HttpClientException("Connection was closed");
 		}
 		
-		if(this.requestedExchange == null) {
-			this.requestedExchange = exchange;
+		if(this.queuedExchange == null) {
+			this.queuedExchange = exchange;
 		}
 		else {
-			this.requestedExchange.next = exchange;
-			this.requestedExchange = exchange;
+			this.queuedExchange.next = exchange;
+			this.queuedExchange = exchange;
 		}
 
 		if(this.requestingExchange == null) {
@@ -394,7 +395,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 							}
 						});
 						
-						if(this.requestedExchange == null && this.respondingExchange == null) {
+						if(this.queuedExchange == null && this.respondingExchange == null) {
 							this.close(this.channelContext, this.gracefulShutdownClosePromise);
 						}
 						else {
@@ -420,7 +421,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	 * </p>
 	 */
 	private void tryShutdown() {
-		if(this.gracefulShutdownTimeout != null && this.requestedExchange == null && this.respondingExchange == null) {
+		if(this.gracefulShutdownTimeout != null && this.queuedExchange == null && this.respondingExchange == null) {
 			this.gracefulShutdownTimeout.cancel(false);
 			this.close(this.channelContext, this.gracefulShutdownClosePromise);
 		}
@@ -459,7 +460,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	
 	/**
 	 * <p>
-	 * Disposes pending exchanges.
+	 * Disposes all queued exchanges.
 	 * </p>
 	 * 
 	 * <p>
@@ -476,7 +477,23 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 			current.dispose(throwable);
 			current = next;
 		}
-		this.respondingExchange = this.requestingExchange = this.requestedExchange = null;
+		this.respondingExchange = this.requestingExchange = this.queuedExchange = null;
+	}
+	
+	/**
+	 * <p>
+	 * Disposes all queued exchanges and shutdown the connection.
+	 * </p>
+	 * 
+	 * <p>
+	 * This is typically invoked after an error which put the connection in an illegal state (e.g. partial request has been sent).
+	 * </p>
+	 * 
+	 * @param throwable an error or null if disposal does not result from an error (e.g. shutdown)
+	 */
+	private void disposeAndShutdown(Throwable throwable) {
+		this.dispose(throwable);
+		this.shutdown().subscribe();
 	}
 
 	@Override
@@ -493,8 +510,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		if(this.handler != null) {
 			this.handler.close();
 		}
-		this.dispose(cause);
-		this.shutdown().subscribe();
+		this.disposeAndShutdown(cause);
 		LOGGER.error("Connection error", cause);
 	}
 	
@@ -506,8 +522,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	 * @param cause the decoder error
 	 */
 	public void decoderError(Throwable cause) {
-		this.dispose(cause);
-		this.shutdown().subscribe();
+		this.disposeAndShutdown(cause);
 		LOGGER.warn("Invalid object received", cause);
 	}
 
@@ -679,18 +694,123 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	
 	/**
 	 * <p>
-	 * Callback method invoked when an error is raised while sending the requesting exchange request to the server.
+	 * Callback method invoked when an error is raised while sending the requesting exchange request to the server or when the request times out.
 	 * </p>
 	 * 
 	 * <p>
-	 * This method executes on the connection event loop, if nothing was sent to the server, the connection is recylced and the requesting exchange is disposed and the next pending exchange, if any,
-	 * is started, otherwise the connection is shutdown after all inflight exchanges have completed.
+	 * This method executes on the connection event loop, when an error is raised while sending a request, the connection is shutdown after all inflight exchanges have completed if the request was
+	 * partially sent to the server (i.e. headers were written), otherwise the connection is recycled, the faulty exchange removed from the queue and the next exchange, if any, is started.
 	 * </p>
+	 * 
+	 * <p>
+	 * It also handles request timeout errors. Unlike above request errors, timeout errors are not specific to the requesting exchange and any request can time out.
+	 * </p>
+	 * 
+	 * <p>
+	 * In general we should look at the exchange queue as follows and consider its properties:
+	 * </p>
+	 * 
+	 * <pre>{@code
+	 * 
+	 *          [respondingExchange] -----(requestedExchange*)-----> [requestingExchange] -----[...]-----> [queuedExchange]}</pre>
+	 * 
+	 * <ul>
+	 * <li>Since the request timeout is constant exchanges time out in sequence as a result we have {@code timedOutExchange == respondingExchange.next}.</li>
+	 * </ul>
+	 * 
+	 * <p>
+	 * The following actions are taken when any of above exchange times out:
+	 * </p>
+	 * 
+	 * <ul>
+	 *   <li>{@link #respondingExchange}</li>
+	 *   <ul>
+	 *     <li>Before headers have been sent:</li>
+	 *     <ul>
+	 *       <li>This happens when a request took too much time to be sent in which case we have {@code timedOutExchange == respondingExchange == requestingExchange}.</li>
+	 *       <li>The responding exchange is disposed to stop the processing and the next exchange, if any, is started.</li>
+	 *     </ul>
+	 *     <li>After headers have been sent:</li>
+	 *     <ul>
+	 *       <li>This happens when the request has been sent but the server took too much time to respond.</li>
+	 *       <li>The connection is shutdown right away.</li>
+	 *     </ul>
+	 *   </ul>
+	 *   <li>{@code requestedExchange}</li>
+	 *   <ul>
+	 *     <li>This happens when the request has been sent but the responding exchange is taking too much time to complete in which case we have {@code timedOutExchange == respondingExchange.next} as 
+	 * per above properties.</li>
+	 *     <li>The requested exchange is disposed as well as following exchanges and the connection is shutdown after the responding exchange completes.</li>
+	 *   </ul>
+	 *   <li>{@link #requestingExchange}</li>
+	 *   <ul>
+	 *     <li>Before headers have been sent:</li>
+	 *       <li>This happens when a request took too much time to be sent in which case we have {@code timedOutExchange == requestingExchange == respondingExchange.next} as per above properties.</li>
+	 *       <li>The requesting exchange is disposed, the next exchange, if any, is started </li>
+	 *     <li>After headers have been sent:</li>
+	 *       <li>This happens when the request has been partially sent and no response and no response was received because the responding exchange is taking too much time to complete, we are 
+	 * considering {@code timedOutExchange == requestingExchange == respondingExchange.next} as per above properties, see above for {@code respondingExchange == requestingExchange} case.</li>
+	 *       <li>The requested exchange is disposed as well as following exchanges and the connection is shutdown after the responding exchange completes.</li>
+	 *   </ul>
+	 *   <li>{@link #queuedExchange}</li>
+	 *   <ul>
+	 *     <li>This happens when the responding exchange request hasn't been fully sent, a response has been but the exchange is not complete in which case we have 
+	 * {@code respondingExchange == requestingExchange} and {@code timedOutExchange == respondingExchange.next} as per above properties.</li>
+	 *     <li>The first queued exchange is disposed and removed from the queue</li>
+	 *   </ul>
+	 * </ul>
 	 * 
 	 * @param throwable the error
 	 */
 	public void onRequestError(Throwable throwable) {
 		if(this.channelContext.executor().inEventLoop()) {
+			Throwable adjustedThrowable = throwable;
+			if(throwable instanceof RequestTimeoutException) {
+				adjustedThrowable = new ConnectionResetException("Connection closed after previous request timed out", throwable);
+				// either the responding exchange or the next one
+				Http1xExchange<?> timedOutExchange;
+				if(this.respondingExchange.response() == null) {
+					timedOutExchange = this.respondingExchange;
+				}
+				else {
+					timedOutExchange = this.respondingExchange.next;
+				}
+				
+				timedOutExchange.dispose(throwable);
+				if(timedOutExchange != this.requestingExchange) {
+					if(timedOutExchange.request().isHeadersWritten()) {
+						if(this.handler != null) {
+							this.handler.close();
+						}
+						
+						adjustedThrowable = new ConnectionResetException("Connection closed after previous request timed out", throwable);
+						if(timedOutExchange == this.respondingExchange) {
+							this.disposeAndShutdown(adjustedThrowable);
+						}
+						else {
+							this.requestError = throwable;
+							// we must wait for the responding exchange to complete before closing the connection
+							Http1xExchange<?> current = timedOutExchange.next;
+							while(current != null) {
+								Http1xExchange<?> next = current.next;
+								current.next = null;
+								current.dispose(adjustedThrowable);
+								current = next;
+							}
+							this.requestingExchange = this.queuedExchange = null;
+						}
+					}
+					else {
+						// Queued exchange
+						if(this.handler != null) {
+							this.handler.recycle();
+						}
+						this.respondingExchange.next = timedOutExchange.next;
+					}
+					return;
+				}
+			}
+			
 			if(this.requestingExchange.request().isHeadersWritten()) {
 				// make sure no new exchange are submitted
 				if(this.handler != null) {
@@ -698,37 +818,54 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				}
 				
 				if(this.respondingExchange == this.requestingExchange) {
-					this.dispose(throwable);
-					this.shutdown().subscribe();
+					this.disposeAndShutdown(adjustedThrowable);
 				}
 				else {
-					this.requestError = throwable;
-					// we must wait for previous exchanges to complete to close the connection
+					this.requestError = adjustedThrowable;
+					// we must wait for previous exchanges to complete before closing the connection
 					Http1xExchange<?> current = this.requestingExchange;
 					while(current != null) {
 						Http1xExchange<?> next = current.next;
 						current.next = null;
-						current.dispose(throwable);
+						current.dispose(adjustedThrowable);
 						current = next;
 					}
-					this.requestingExchange = this.requestedExchange = null;
+					this.requestingExchange = this.queuedExchange = null;
 				}
 			}
 			else {
 				// We haven't sent anything: just dispose the exchange and start the next one
-				this.requestingExchange.dispose(throwable);
+				this.requestingExchange.dispose(adjustedThrowable);
 				if(this.handler != null) {
 					this.handler.recycle();
 				}
 				if(this.requestingExchange.next != null) {
-					if(this.respondingExchange == this.requestingExchange) {
+					if(this.requestingExchange == this.respondingExchange) {
 						this.respondingExchange = this.requestingExchange.next;
+					}
+					else {
+						Http1xExchange<?> lastRequestedExchange = this.respondingExchange;
+						while(lastRequestedExchange.next != this.requestingExchange) {
+							lastRequestedExchange = lastRequestedExchange.next;
+						}
+						lastRequestedExchange.next = this.requestingExchange.next;
 					}
 					this.requestingExchange = this.requestingExchange.next;
 					this.requestingExchange.start();
 				}
 				else {
-					this.respondingExchange = this.requestingExchange = this.requestedExchange = null;
+					if(this.requestingExchange == this.respondingExchange) {
+						this.respondingExchange = this.requestingExchange = this.queuedExchange = null;
+					}
+					else {
+						Http1xExchange<?> lastRequestedExchange = this.respondingExchange;
+						while(lastRequestedExchange.next != this.requestingExchange) {
+							lastRequestedExchange = lastRequestedExchange.next;
+						}
+						
+						lastRequestedExchange.next = this.requestingExchange = null;
+						this.queuedExchange = lastRequestedExchange;
+					}
 				}
 			}
 		}
@@ -758,14 +895,19 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 					this.handler.recycle();
 				}
 				
+				Http1xExchange<?> completedExchange = this.respondingExchange;
 				this.respondingExchange = this.respondingExchange.next;
 				if(this.respondingExchange == null) {
-					this.respondingExchange = this.requestingExchange = this.requestedExchange = null;
+					this.respondingExchange = this.requestingExchange = this.queuedExchange = null;
 					this.tryShutdown();
 				}
 				else if(this.requestError != null && this.respondingExchange.next == null) {
-					this.respondingExchange = this.requestingExchange = this.requestedExchange = null;
+					this.respondingExchange = this.requestingExchange = this.queuedExchange = null;
 					this.shutdown().subscribe();
+				}
+				else if(completedExchange == this.requestingExchange) {
+					this.requestingExchange = this.respondingExchange;
+					this.requestingExchange.start();
 				}
 			}
 		}

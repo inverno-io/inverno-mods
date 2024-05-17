@@ -65,7 +65,7 @@ public class Http2UpgradedExchange<A extends ExchangeContext> extends AbstractHt
 	}
 
 	@Override
-	protected void doStart() {
+	protected void start() {
 		// Does nothing since the request has already been sent
 	}
 

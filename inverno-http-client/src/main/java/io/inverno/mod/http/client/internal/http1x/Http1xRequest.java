@@ -378,6 +378,14 @@ class Http1xRequest implements HttpConnectionRequest {
 		protected void hookOnError(Throwable throwable) {
 			Http1xRequest.this.connection.onRequestError(throwable);
 		}
+
+		@Override
+		protected void hookOnCancel() {
+			// Make sure the Http protocol flow is correct
+			if(this.many) {
+				Http1xRequest.this.connection.writeHttpObject(LastHttpContent.EMPTY_LAST_CONTENT);
+			}
+		}
 	}
 	
 	private class FileRegionBodyDataSubscriber extends BaseSubscriber<FileRegion> {
