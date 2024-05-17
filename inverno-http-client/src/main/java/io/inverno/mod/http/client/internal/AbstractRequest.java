@@ -18,17 +18,9 @@ package io.inverno.mod.http.client.internal;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.http.base.Method;
-import io.inverno.mod.http.base.QueryParameters;
 import io.inverno.mod.http.base.internal.GenericQueryParameters;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.ssl.SslHandler;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.security.cert.Certificate;
-import java.util.Optional;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -38,98 +30,92 @@ import org.apache.logging.log4j.Logger;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-public abstract class AbstractRequest implements HttpConnectionRequest {
+public abstract class AbstractRequest<A extends HttpConnectionRequestHeaders> implements HttpConnectionRequest {
 	
-	private static final Logger LOGGER = LogManager.getLogger(AbstractRequest.class);
-
-	private final ChannelHandlerContext context;
-	private final boolean tls;
 	private final ObjectConverter<String> parameterConverter;
-	private final Method method;
-	private final String path;
-	private final URIBuilder primaryPathBuilder;
-	protected final HttpConnectionRequestHeaders requestHeaders;
 	
-	private String scheme;
-	private String authority;
+	protected final Method method;
+	protected final String path;
+	private final URIBuilder pathBuilder;
 	private String pathAbsolute;
 	private String queryString;
 	private GenericQueryParameters queryParameters;
+	protected final String authority;
+	protected final A headers;
 	
+	protected int transferedLength;
+
 	/**
 	 * <p>
-	 * Creates a base request.
+	 * Create an Http request.
 	 * </p>
 	 *
-	 * @param context            the channel handler context
-	 * @param tls                true if the connection is TLS, false otherwise
 	 * @param parameterConverter the parameter converter
-	 * @param endpointRequest    the original endpoint request
-	 * @param requestHeaders     the request headers
+	 * @param endpointRequest    the endpoint request
+	 * @param headers            the Http headers
+	 * @param authority          the request authority
 	 */
-	protected AbstractRequest(ChannelHandlerContext context, 
-			boolean tls, 
-			ObjectConverter<String> parameterConverter,
-			EndpointRequest endpointRequest,
-			HttpConnectionRequestHeaders requestHeaders) {
-		this.context = context;
-		this.tls = tls;
+	public AbstractRequest(
+			ObjectConverter<String> parameterConverter, 
+			EndpointRequest endpointRequest, 
+			A headers, 
+			String authority
+		) {
 		this.parameterConverter = parameterConverter;
 		this.method = endpointRequest.getMethod();
 		this.path = endpointRequest.getPath();
-		this.primaryPathBuilder = endpointRequest.getPathBuilder();
-		this.requestHeaders = requestHeaders;
-		this.authority = endpointRequest.getAuthority();
+		this.pathBuilder = endpointRequest.getPathBuilder();
+		this.headers = headers;
+		this.authority = authority;
 	}
-
-	@Override
-	public HttpConnectionRequestHeaders headers() {
-		return this.requestHeaders;
+	
+	/**
+	 * <p>
+	 * Resolves the request authority.
+	 * </p>
+	 * 
+	 * @param remoteAddress the remote address
+	 * @param tls true if the connection is secured, false otherwise
+	 * 
+	 * @return the authority
+	 */
+	protected static final String resolveAuthority(SocketAddress remoteAddress, boolean tls) {
+		if(remoteAddress == null) {
+			throw new IllegalStateException("Can't resolve authority");
+		}
+		else if(remoteAddress instanceof InetSocketAddress) {
+			int port = ((InetSocketAddress)remoteAddress).getPort();
+			if((tls && port != 443) || (!tls && port != 80)) {
+				return ((InetSocketAddress)remoteAddress).getHostString() + ":" + port;
+			}
+			else {
+				return ((InetSocketAddress)remoteAddress).getHostString();
+			}
+		}
+		else {
+			return remoteAddress.toString();
+		}
 	}
+	
+	/**
+	 * <p>
+	 * Sends the request.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method must execute on the connection event loop and subscribe to the request body data publisher in order to generate and send the request body.
+	 * </p>
+	 */
+	protected abstract void send();
 	
 	@Override
 	public boolean isHeadersWritten() {
-		return this.requestHeaders.isWritten();
+		return this.headers.isWritten();
 	}
 
 	@Override
-	public String getScheme() {
-		if(this.scheme == null) {
-			this.scheme = this.tls ? "https" : "http";
-		}
-		return this.scheme;
-	}
-
-	@Override
-	public SocketAddress getLocalAddress() {
-		return this.context.channel().localAddress();
-	}
-
-	@Override
-	public Optional<Certificate[]> getLocalCertificates() {
-		return Optional.ofNullable(this.context.pipeline().get(SslHandler.class))
-			.map(handler -> handler.engine().getSession().getLocalCertificates())
-			.filter(certificates -> certificates.length > 0);
-	}
-	
-	@Override
-	public SocketAddress getRemoteAddress() {
-		return this.context.channel().remoteAddress();
-	}
-
-	@Override
-	public Optional<Certificate[]> getRemoteCertificates() {
-		return Optional.ofNullable(this.context.pipeline().get(SslHandler.class))
-			.map(handler -> {
-				try {
-					return handler.engine().getSession().getPeerCertificates();
-				} 
-				catch(SSLPeerUnverifiedException e) {
-					LOGGER.debug("Could not verify identity of the client", e);
-					return null;
-				}
-			})
-			.filter(certificates -> certificates.length > 0);
+	public A headers() {
+		return this.headers;
 	}
 	
 	@Override
@@ -139,25 +125,9 @@ public abstract class AbstractRequest implements HttpConnectionRequest {
 
 	@Override
 	public String getAuthority() {
-		if(this.authority == null) {
-			SocketAddress remoteAddress = this.getRemoteAddress();
-			if(remoteAddress == null) {
-				throw new IllegalStateException("Can't resolve Authority");
-			}
-			else if(remoteAddress instanceof InetSocketAddress) {
-				this.authority = ((InetSocketAddress)remoteAddress).getHostString();
-				int port = ((InetSocketAddress)remoteAddress).getPort();
-				if((this.tls && port != 443) || (!this.tls && port != 80)) {
-					this.authority += ":" + port;
-				}
-			}
-			else {
-				this.authority = remoteAddress.toString();
-			}
-		}
 		return this.authority;
 	}
-	
+
 	@Override
 	public String getPath() {
 		return this.path;
@@ -166,28 +136,28 @@ public abstract class AbstractRequest implements HttpConnectionRequest {
 	@Override
 	public String getPathAbsolute() {
 		if(this.pathAbsolute == null) {
-			this.pathAbsolute = this.primaryPathBuilder.buildRawString();
+			this.pathAbsolute = this.pathBuilder.buildRawPath();
 		}
 		return this.pathAbsolute;
 	}
 
 	@Override
 	public URIBuilder getPathBuilder() {
-		return this.primaryPathBuilder.clone();
+		return this.pathBuilder.clone();
 	}
 
 	@Override
 	public String getQuery() {
 		if(this.queryString == null) {
-			this.queryString = this.primaryPathBuilder.buildRawQuery();
+			this.queryString = this.pathBuilder.buildRawQuery();
 		}
 		return this.queryString;
 	}
 
 	@Override
-	public QueryParameters queryParameters() {
+	public GenericQueryParameters queryParameters() {
 		if(this.queryParameters == null) {
-			this.queryParameters = new GenericQueryParameters(this.primaryPathBuilder.getQueryParameters(), this.parameterConverter);
+			this.queryParameters = new GenericQueryParameters(this.pathBuilder.getQueryParameters(), this.parameterConverter);
 		}
 		return this.queryParameters;
 	}

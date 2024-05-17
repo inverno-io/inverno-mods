@@ -19,15 +19,16 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.RequestTimeoutException;
+import io.inverno.mod.http.client.internal.AbstractExchange;
 import io.inverno.mod.http.client.internal.HttpConnectionExchange;
 import io.inverno.mod.http.client.internal.HttpConnectionRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionResponse;
 import io.netty.handler.codec.http2.Http2Error;
 import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.util.concurrent.ScheduledFuture;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -41,21 +42,11 @@ import reactor.core.publisher.Sinks;
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpConnectionRequest> implements HttpConnectionExchange<A, B, Http2Response> {
+abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpConnectionRequest> extends AbstractExchange<A, B, Http2Response, Http2Headers> {
 
-	protected final HttpClientConfiguration configuration;
-	protected final Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink;
-	protected final HeaderService headerService;
-	protected final ObjectConverter<String> parameterConverter;
-	protected final A context;
 	protected final Http2ConnectionStream connectionStream;
 	
-	protected final B request;
-	protected Http2Response response;
-	
 	private ScheduledFuture<?> timeoutFuture;
-	
-	private Throwable cancelCause;
 
 	/**
 	 * <p>
@@ -79,23 +70,12 @@ abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpCo
 			Http2ConnectionStream connectionStream, 
 			B request
 		) {
-		this.configuration = configuration;
-		this.sink = sink;
-		this.headerService = headerService;
-		this.parameterConverter = parameterConverter;
-		this.context = context;
+		super(configuration, sink, headerService, parameterConverter, context, request);
 		this.connectionStream = connectionStream;
-		this.request = request;
-		
-		this.startTimeout();
 	}
 	
-	/**
-	 * <p>
-	 * Starts the request timeout task.
-	 * </p>
-	 */
-	private void startTimeout() {
+	@Override
+	protected final void startTimeout() {
 		if(this.configuration.request_timeout() > 0) {
 			this.timeoutFuture = this.connectionStream.executor().schedule(
 				() -> {
@@ -109,44 +89,18 @@ abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpCo
 		}
 	}
 	
-	/**
-	 * <p>
-	 * Cancels the request timeout task.
-	 * </p>
-	 */
-	private void cancelTimeout() {
+	@Override
+	protected final void cancelTimeout() {
 		if(this.timeoutFuture != null) {
 			this.timeoutFuture.cancel(false);
 			this.timeoutFuture = null;
 		}
 	}
 	
-	/**
-	 * <p>
-	 * Starts the processing of the exchange.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method shall implement the specific exchange start logic, typically send the request.
-	 * </p>
-	 */
-	protected abstract void start();
-	
-	/**
-	 * <p>
-	 * Emits the response.
-	 * </p>
-	 * 
-	 * <p>
-	 * This is invoked by the connection when the exchange response is received, the request timeout is cancelled and the exchange is emitted on the exchange sink to make the response available.
-	 * </p>
-	 * 
-	 * @param response the Http response received on the connection
-	 */
-	final void emitResponse(Http2Headers headers) {
-		this.cancelTimeout();
-		this.response = new Http2Response(this.headerService, this.parameterConverter, headers);
-		this.response.body().transform(data -> {
+	@Override
+	protected final Http2Response createResponse(Http2Headers headers) {
+		Http2Response response = new Http2Response(this.headerService, this.parameterConverter, headers);
+		response.body().transform(data -> {
 			if(data instanceof Mono) {
 				return Mono.from(data)
 					.doOnCancel(() -> this.reset(Http2Error.CANCEL.code()))
@@ -158,75 +112,18 @@ abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpCo
 					.doOnComplete(() -> this.dispose(null));
 			}
 		});
-		
-		if(this.sink != null) {
-			this.sink.tryEmitValue(this);
-		}
+		return response;
 	}
 	
-	/**
-	 * <p>
-	 * Disposes the exchange.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method cancels the request timeout and sets the cancel cause and makes sure the exchange disposal logic implemented in {@link #doDispose(java.lang.Throwable) } is invoked once.
-	 * </p>
-	 * 
-	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
-	 * 
-	 * @see #doDispose(java.lang.Throwable) 
-	 */
-	final void dispose(Throwable cause) {
-		this.cancelTimeout();
-		if(this.cancelCause == null) {
-			this.cancelCause = cause;
-		}
-		this.doDispose(cause);
-	}
-	
-	/**
-	 * <p>
-	 * Disposes the exchange.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method shall implement the specific exchange disposal logic.
-	 * </p>
-	 * 
-	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
-	 */
-	protected abstract void doDispose(Throwable cause);
-
 	@Override
 	public HttpVersion getProtocol() {
 		return HttpVersion.HTTP_2_0;
 	}
-
-	@Override
-	public A context() {
-		return this.context;
-	}
-
-	@Override
-	public B request() {
-		return this.request;
-	}
-
-	@Override
-	public Http2Response response() {
-		return this.response;
-	}
 	
 	@Override
-	public void reset(long code) {
+	public void doReset(long code) {
 		// reseting the stream should dispose the stream
 //		this.dispose(new HttpClientException("Exchange has been reset: " + code));
 		this.connectionStream.resetStream(code);
-	}
-
-	@Override
-	public Optional<Throwable> getCancelCause() {
-		return Optional.ofNullable(this.cancelCause);
 	}
 }

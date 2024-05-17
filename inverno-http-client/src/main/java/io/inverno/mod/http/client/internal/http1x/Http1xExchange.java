@@ -23,13 +23,13 @@ import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.HttpClientException;
 import io.inverno.mod.http.client.RequestTimeoutException;
+import io.inverno.mod.http.client.internal.AbstractExchange;
 import io.inverno.mod.http.client.internal.EndpointRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionExchange;
 import io.inverno.mod.http.client.internal.HttpConnectionRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionResponse;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.util.concurrent.ScheduledFuture;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import reactor.core.publisher.Sinks;
 
@@ -43,23 +43,13 @@ import reactor.core.publisher.Sinks;
  * 
  * @param <A> The exchange context type
  */
-class Http1xExchange<A extends ExchangeContext> implements HttpConnectionExchange<A, Http1xRequest, Http1xResponse> {
+class Http1xExchange<A extends ExchangeContext> extends AbstractExchange<A, Http1xRequest, Http1xResponse, HttpResponse> {
 	
-	private final HttpClientConfiguration configuration;
-	private final Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink;
-	private final HeaderService headerService;
-	private final ObjectConverter<String> parameterConverter;
-	private final A context;
 	protected final Http1xConnection connection;
-	
-	private final Http1xRequest request;
-	private Http1xResponse response;
 
-	Http1xExchange<?> next;
-	
 	private ScheduledFuture<?> timeoutFuture;
 	
-	private Throwable cancelCause;
+	Http1xExchange<?> next;
 	
 	/**
 	 * Flag indicating whether the exchange was reset.
@@ -88,24 +78,12 @@ class Http1xExchange<A extends ExchangeContext> implements HttpConnectionExchang
 			Http1xConnection connection, 
 			EndpointRequest endpointRequest
 		) {
-		this.configuration = configuration;
-		this.sink = sink;
-		this.headerService = headerService;
-		this.parameterConverter = parameterConverter;
-		this.context = context;
+		super(configuration, sink, headerService, parameterConverter, context, new Http1xRequest(parameterConverter, connection, endpointRequest));
 		this.connection = connection;
-		
-		this.request = new Http1xRequest(parameterConverter, connection, endpointRequest);
-		
-		this.startTimeout();
 	}
 	
-	/**
-	 * <p>
-	 * Starts the request timeout task.
-	 * </p>
-	 */
-	private void startTimeout() {
+	@Override
+	protected void startTimeout() {
 		if(this.configuration.request_timeout() > 0) {
 			this.timeoutFuture = this.connection.executor().schedule(
 				() -> {
@@ -119,12 +97,8 @@ class Http1xExchange<A extends ExchangeContext> implements HttpConnectionExchang
 		}
 	}
 	
-	/**
-	 * <p>
-	 * Cancels the request timeout task.
-	 * </p>
-	 */
-	private void cancelTimeout() {
+	@Override
+	protected void cancelTimeout() {
 		if(this.timeoutFuture != null) {
 			this.timeoutFuture.cancel(false);
 			this.timeoutFuture = null;
@@ -140,55 +114,21 @@ class Http1xExchange<A extends ExchangeContext> implements HttpConnectionExchang
 	 * This method sends the request and start the request timeout task.
 	 * </p>
 	 */
-	void start() {
-		// TODO we can have a timeout before sending the request, in which case we can timeout right away and maybe save the connection
-		// That would mean: previous exchange took time to send request body
-		// maybe we should start the timeout when creating the exchange i.e. when it's registered, then we'll have to handle the headers not written case
+	@Override
+	public void start() {
 		this.request.send();
 	}
 	
-	/**
-	 * <p>
-	 * Emits the response.
-	 * </p>
-	 * 
-	 * <p>
-	 * This is invoked by the connection when the exchange response is received, the request timeout is cancelled and the exchange is emitted on the exchange sink to make the response available.
-	 * </p>
-	 * 
-	 * @param response the Http response received on the connection
-	 */
-	void emitResponse(HttpResponse response) {
-		this.cancelTimeout();
-		this.response = new Http1xResponse(this.headerService, this.parameterConverter, response);
-		if(this.sink != null) {
-			this.sink.tryEmitValue(this);
-		}
+	@Override
+	protected final Http1xResponse createResponse(HttpResponse response) {
+		return new Http1xResponse(this.headerService, this.parameterConverter, response);
 	}
 	
-	/**
-	 * <p>
-	 * Disposes the exchange.
-	 * </p>
-	 * 
-	 * <p>
-	 * This methods cancels the request timeout, sets the cancel cause and release exchange resources.
-	 * </p>
-	 * 
-	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
-	 */
-	void dispose(Throwable cause) {
-		this.cancelTimeout();
-		if(this.cancelCause == null) {
-			this.cancelCause = cause;
-		}
-		
+	@Override
+	protected void doDispose(Throwable cause) {
 		this.request.dispose(cause);
 		if(this.response != null) {
 			this.response.dispose(cause);
-		}
-		else if(this.sink != null) {
-			this.sink.tryEmitError(cause != null ? cause : new HttpClientException("Exchange was disposed"));
 		}
 	}
 
@@ -196,24 +136,9 @@ class Http1xExchange<A extends ExchangeContext> implements HttpConnectionExchang
 	public HttpVersion getProtocol() {
 		return this.connection.getProtocol();
 	}
-
-	@Override
-	public A context() {
-		return this.context;
-	}
-
-	@Override
-	public Http1xRequest request() {
-		return this.request;
-	}
-
-	@Override
-	public Http1xResponse response() {
-		return this.response;
-	}
 	
 	@Override
-	public void reset(long code) {
+	protected final void doReset(long code) {
 		// exchange has to be the responding exchange because the exchange is only emitted when the response is received
 		this.reset = true;
 		if(this.connection.executor().inEventLoop()) {
@@ -223,10 +148,5 @@ class Http1xExchange<A extends ExchangeContext> implements HttpConnectionExchang
 		else {
 			this.connection.executor().execute(() -> this.reset(code));
 		}
-	}
-
-	@Override
-	public Optional<Throwable> getCancelCause() {
-		return Optional.ofNullable(this.cancelCause);
 	}
 }

@@ -256,6 +256,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 					return handler.engine().getSession().getPeerCertificates();
 				} 
 				catch(SSLPeerUnverifiedException e) {
+					LOGGER.debug("Could not verify identity of the client", e);
 					return null;
 				}
 			})
@@ -330,6 +331,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		
 		Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink = Sinks.one();
 		Http1xExchange exchange = this.createExchange(sink, endpointExchange);
+		exchange.init();
 		return sink.asMono()
 			.doOnSubscribe(ign -> this.registerExchange(exchange))
 			.subscribeOn(this.scheduler);

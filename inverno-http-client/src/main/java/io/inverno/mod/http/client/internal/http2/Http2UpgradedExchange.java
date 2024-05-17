@@ -65,7 +65,7 @@ public class Http2UpgradedExchange<A extends ExchangeContext> extends AbstractHt
 	}
 
 	@Override
-	protected void start() {
+	public void start() {
 		// Does nothing since the request has already been sent
 	}
 
@@ -73,9 +73,6 @@ public class Http2UpgradedExchange<A extends ExchangeContext> extends AbstractHt
 	protected void doDispose(Throwable cause) {
 		if(this.response != null) {
 			this.response.dispose(cause);
-		}
-		else if(this.sink != null) {
-			this.sink.tryEmitError(cause != null ? cause : new HttpClientException("Exchange was disposed"));
 		}
 	}
 }

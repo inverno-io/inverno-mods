@@ -191,6 +191,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 					return handler.engine().getSession().getPeerCertificates();
 				} 
 				catch(SSLPeerUnverifiedException e) {
+					LOGGER.debug("Could not verify identity of the client", e);
 					return null;
 				}
 			})
@@ -223,6 +224,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 			clientStream,
 			endpointExchange.request()
 		);
+		clientStream.exchange.init();
 		
 		return sink.asMono()
 			.doOnSubscribe(ign -> {

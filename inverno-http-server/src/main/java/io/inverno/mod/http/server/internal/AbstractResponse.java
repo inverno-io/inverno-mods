@@ -82,7 +82,7 @@ public abstract class AbstractResponse<A extends AbstractResponseHeaders<?>, B e
 	 * </p>
 	 *
 	 * <p>
-	 * This method must execute on the connection event loop and subscribes to the response body data publisher to generate and send the response body. In case of an {@code HEAD} request, an empty
+	 * This method must execute on the connection event loop and subscribe to the response body data publisher to generate and send the response body. In case of an {@code HEAD} request, an empty
 	 * response with headers only shall be sent.
 	 * </p>
 	 */

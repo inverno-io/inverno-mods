@@ -119,7 +119,7 @@ public class Http1xUpgradingExchange<A extends ExchangeContext> extends Http1xEx
 	}
 
 	@Override
-	void dispose(Throwable cause) {
+	protected void doDispose(Throwable cause) {
 		this.upgradedSink.tryEmitError(cause != null ? cause : new HttpClientException("Exchange was disposed"));
 		super.dispose(cause);
 	}

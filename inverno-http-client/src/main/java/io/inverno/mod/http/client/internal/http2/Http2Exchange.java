@@ -18,8 +18,8 @@ package io.inverno.mod.http.client.internal.http2;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfiguration;
-import io.inverno.mod.http.client.HttpClientException;
 import io.inverno.mod.http.client.internal.EndpointRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionExchange;
 import io.inverno.mod.http.client.internal.HttpConnectionRequest;
@@ -63,7 +63,7 @@ public class Http2Exchange<A extends ExchangeContext> extends AbstractHttp2Excha
 	}
 	
 	@Override
-	protected void start() {
+	public void start() {
 		this.request.send();
 	}
 	
@@ -72,9 +72,6 @@ public class Http2Exchange<A extends ExchangeContext> extends AbstractHttp2Excha
 		this.request.dispose(cause);
 		if(this.response != null) {
 			this.response.dispose(cause);
-		}
-		else if(this.sink != null) {
-			this.sink.tryEmitError(cause != null ? cause : new HttpClientException("Exchange was disposed"));
 		}
 	}
 }

@@ -15,17 +15,13 @@
  */
 package io.inverno.mod.http.client.internal;
 
+import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.HttpVersion;
+import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.HttpClientException;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.EventLoop;
-import io.netty.util.concurrent.Future;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Callable;
-import reactor.core.Disposable;
-import reactor.core.publisher.MonoSink;
+import reactor.core.publisher.Sinks;
 
 /**
  * <p>
@@ -38,203 +34,131 @@ import reactor.core.publisher.MonoSink;
  * @param <A> the request type
  * @param <B> the response type
  * @param <C> the exchange type
+ * @param <D> the originating response type
  */
-public abstract class AbstractExchange<A extends AbstractRequest, B extends AbstractResponse, C extends AbstractExchange<A, B, C>> implements HttpConnectionExchange<ExchangeContext, A, B> {
-
-	protected final ChannelHandlerContext context;
-	protected final EventLoop eventLoop;
-	private final MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink;
-	private final ExchangeContext exchangeContext;
-	protected final HttpVersion protocol;
-	protected final A request;
-	
-	protected B response;
-	protected AbstractExchange.Handler handler;
-	protected Disposable disposable;
-	
-	private Throwable disposeError;
+public abstract class AbstractExchange<A extends ExchangeContext, B extends HttpConnectionRequest, C extends HttpConnectionResponse, D> implements HttpConnectionExchange<A, B, C> {
 
 	/**
+	 * The Http client configuration.
+	 */
+	protected final HttpClientConfiguration configuration;
+	private final Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink;
+	/**
+	 * The header service.
+	 */
+	protected final HeaderService headerService;
+	/**
+	 * The parameter converter.
+	 */
+	protected final ObjectConverter<String> parameterConverter;
+	private final A context;
+	
+	/**
+	 * The Http request.
+	 */
+	protected final B request;
+	/**
+	 * The Http response.
+	 */
+	protected C response;
+	
+	private Throwable cancelCause;
+	private boolean reset;
+	
+	/**
 	 * <p>
-	 * Creates a client exchange.
+	 * Creates a base exchange.
 	 * </p>
-	 *
-	 * @param context         the channel handler context
-	 * @param exchangeSink    the exchange sink
-	 * @param exchangeContext the exchange context
-	 * @param protocol        the HTTP protocol version
-	 * @param request         the HTTP request
+	 * 
+	 * @param configuration      the Http client configuration
+	 * @param sink               the exchange sink
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param context            the exchange context
+	 * @param request            the Http request
 	 */
 	public AbstractExchange(
-			ChannelHandlerContext context, 
-			MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink, 
-			ExchangeContext exchangeContext,
-			HttpVersion protocol,
-			A request) {
+			HttpClientConfiguration configuration, 
+			Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink, 
+			HeaderService headerService, 
+			ObjectConverter<String> parameterConverter, 
+			A context,
+			B request) {
+		this.configuration = configuration;
+		this.sink = sink;
+		this.headerService = headerService;
+		this.parameterConverter = parameterConverter;
 		this.context = context;
-		this.eventLoop = this.context.channel().eventLoop();
-		this.exchangeSink = exchangeSink;
-		this.exchangeContext = exchangeContext;
-		this.protocol = protocol;
 		this.request = request;
 	}
 	
-	@Override
-	public HttpVersion getProtocol() {
-		return this.protocol;
-	}
-	
-	@Override
-	public ExchangeContext context() {
-		return this.exchangeContext;
-	}
-
-	@Override
-	public A request() {
-		return this.request;
-	}
-
-	@Override
-	public B response() {
-		return this.response;
-	}
+	/**
+	 * <p>
+	 * Starts the request timeout.
+	 * </p>
+	 */
+	protected abstract void startTimeout();
 
 	/**
 	 * <p>
-	 * Executes the specified task in the event loop.
+	 * Cancels the request timeout.
 	 * </p>
-	 *
-	 * <p>
-	 * The tasks is executed immediately when the current thread is in the event loop, otherwise it is scheduled in the event loop.
-	 * </p>
-	 *
-	 * @param runnable the task to execute
-	 * 
-	 * @return a future which completes once the task completes
 	 */
-	protected Future<?> executeInEventLoop(Runnable runnable) {
-		if(this.eventLoop.inEventLoop()) {
-			try {
-				runnable.run();
-				return this.eventLoop.newSucceededFuture(null);
-			}
-			catch(Throwable e) {
-				return this.eventLoop.newFailedFuture(e);
-			}
-		}
-		else {
-			return this.eventLoop.submit(runnable);
+	protected abstract void cancelTimeout();
+	
+	/**
+	 * <p>
+	 * Initializes the exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * This basically starts the request timeout.
+	 * </p>
+	 */
+	public final void init() {
+		this.startTimeout();
+	}
+	
+	/**
+	 * <p>
+	 * Starts the processing of the exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method shall sends the request in order to start the exchange.
+	 * </p>
+	 */
+	public abstract void start();
+	
+	/**
+	 * <p>
+	 * Emits the response.
+	 * </p>
+	 * 
+	 * <p>
+	 * This is invoked by the connection when the exchange response is received, the request timeout is cancelled and the exchange is emitted on the exchange sink to subsequently emit the response.
+	 * </p>
+	 * 
+	 * @param response the Http response received on the connection
+	 */
+	public final void emitResponse(D originatingResponse) {
+		this.cancelTimeout();
+		this.response = this.createResponse(originatingResponse);
+		if(this.sink != null) {
+			this.sink.tryEmitValue(this);
 		}
 	}
 	
 	/**
 	 * <p>
-	 * Executes the specified task in the event loop.
+	 * Creates the Http response from the originating response.
 	 * </p>
-	 *
-	 * <p>
-	 * The tasks is executed immediately when the current thread is in the event loop, otherwise it is scheduled in the event loop.
-	 * </p>
-	 *
-	 * @param <T> that task result type
-	 * @param callable the task to execute
 	 * 
-	 * @return a future which completes once the task completes and returns the task result
+	 * @param originatingResponse the originatig response
+	 * 
+	 * @return the Http response
 	 */
-	protected <T> Future<T> executeInEventLoop(Callable<T> callable) {
-		if(this.eventLoop.inEventLoop()) {
-			try {
-				return this.eventLoop.newSucceededFuture(callable.call());
-			}
-			catch(Throwable e) {
-				return this.eventLoop.newFailedFuture(e);
-			}
-		}
-		else {
-			return this.eventLoop.submit(callable);
-		}
-	}
-	
-	/**
-	 * <p>
-	 * Starts the processing of the exchange with the specified callback handler.
-	 * </p>
-	 * 
-	 * <p>
-	 * This methods basically delegates the sending of the request to {@link #doStart() }.
-	 * </p>
-	 * 
-	 * @param handler an exchange callback handler
-	 * 
-	 * @throws IllegalStateException if the exchange was already started
-	 */
-	public void start(AbstractExchange.Handler<A, B, C> handler) throws IllegalStateException {
-		if(this.handler != null) {
-			throw new IllegalStateException("Exchange already started");
-		}
-		this.handler = Objects.requireNonNull(handler);
-		Future<?> startFuture = this.executeInEventLoop(() -> {
-			this.doStart();
-		});
-		if(this.exchangeSink != null) {
-			startFuture.addListener(future -> {
-				if(!future.isSuccess()) {
-					this.handler.exchangeError(this, future.cause());
-				}
-			});
-		}
-	}
-	
-	/**
-	 * <p>
-	 * Starts the processing of the exchange by sending the request to the server.
-	 * </p>
-	 * 
-	 * @throws HttpClientException if there was a error starting the exchange.
-	 */
-	protected abstract void doStart() throws HttpClientException;
-
-	/**
-	 * <p>
-	 * Sets the response in the exchange.
-	 * </p>
-	 * 
-	 * <p>
-	 * This basically notifies the exchange sink (i.e. the exchange is ready to be processed)
-	 * </p>
-	 * 
-	 * @param response the response
-	 * 
-	 * @throws IllegalStateException if the response was already set
-	 */
-	public final void setResponse(B response) throws IllegalStateException {
-		if(this.response != null) {
-			throw new IllegalStateException("Response already set");
-		}
-		this.response = response;
-		if(this.exchangeSink != null) {
-			this.exchangeSink.success(this);
-		}
-	}
-	
-	/**
-	 * <p>
-	 * Notifies that the exchange is complete.
-	 * </p>
-	 * 
-	 * <p>
-	 * This basically means that the last content of the response has been received.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method in turn notifies the handler that the exchange is complete, resulting in the exchange to get disposed and the underlying connection being recycled (and that's the important part we
-	 * must free the connection as soon as it is not needed anymore). It is important for the response data publisher to be subscribed before otherwise data gets drained and can no longer be consumed.
-	 * The response data publisher must then be susbscribed when the exchange is emitted as this would be executed in the event loop so we are sure this notification is received after.
-	 * </p>
-	 */
-	public void notifyComplete() {
-		this.handler.exchangeComplete(this);
-	}
+	protected abstract C createResponse(D originatingResponse);
 	
 	/**
 	 * <p>
@@ -242,137 +166,76 @@ public abstract class AbstractExchange<A extends AbstractRequest, B extends Abst
 	 * </p>
 	 * 
 	 * <p>
-	 * This method delegates to {@link #dispose(java.lang.Throwable) } with a null error.
+	 * This method cancels the request timeout, sets the cancel cause, invokes the exchange disposal logic implemented in {@link #doDispose(java.lang.Throwable) } and finally emits an error on the 
+	 * exchange sink in case the response is not present.
 	 * </p>
+	 * 
+	 * <p>
+	 * It also makes sure the exchange disposal logic implemented in {@link #doDispose(java.lang.Throwable) } is invoked once in case of error.
+	 * </p>
+	 * 
+	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
+	 * 
+	 * @see #doDispose(java.lang.Throwable) 
 	 */
-	public void dispose() {
-		this.dispose(null);
+	public final void dispose(Throwable cause) {
+		this.cancelTimeout();
+		if(this.cancelCause == null) {
+			this.cancelCause = cause;
+			this.doDispose(cause);
+			if(this.response == null && this.sink != null) {
+				this.sink.tryEmitError(cause != null ? cause : new HttpClientException("Exchange was disposed"));
+			}
+		}
+	}
+
+	/**
+	 * <p>
+	 * Disposes the exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method shall implement the specific exchange disposal logic.
+	 * </p>
+	 * 
+	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
+	 */
+	protected abstract void doDispose(Throwable cause);
+	
+	@Override
+	public A context() {
+		return this.context;
+	}
+
+	@Override
+	public B request() {
+		return this.request;
+	}
+
+	@Override
+	public C response() {
+		return this.response;
+	}
+	
+	@Override
+	public final Optional<Throwable> getCancelCause() {
+		return Optional.ofNullable(this.cancelCause);
+	}
+	
+	@Override
+	public final void reset(long code) {
+		if(!this.reset) {
+			this.reset = true;
+			this.doReset(code);
+		}
 	}
 	
 	/**
 	 * <p>
-	 * Disposes the exchange with the specified error.
+	 * Resets the exchange with the specified code.
 	 * </p>
 	 * 
-	 * <p>
-	 * This method cleans up exchange outstanding resources, it especially disposes the response which in turns drains received data if needed.
-	 * </p>
-	 * 
-	 * <p>
-	 * A non-null error indicates that the exchange did not complete successfully and that the error should be emitted when possible (e.g. in the response data publisher).
-	 * </p>
-	 * 
-	 * @param error an error or null
-	 * 
-	 * @see AbstractResponse#dispose(java.lang.Throwable) 
+	 * @param code a code
 	 */
-	public void dispose(Throwable error) {
-		this.disposeError = error;
-		// dispose the subscription: data or file
-		if(this.disposable != null) {
-			this.disposable.dispose();
-		}
-		
-		// We must dispose the response in order to drain the data publisher if it wasn't subscribed.
-		if(this.response != null) {
-			this.response.dispose(error);
-		}
-		else if(this.exchangeSink != null) {
-			this.exchangeSink.error(error != null ? error : new HttpClientException("Exchange disposed"));
-		}
-	}
-
-	@Override
-	public void reset(long code) {
-		this.handler.exchangeReset(this, code);
-	}
-
-	@Override
-	public Optional<Throwable> getCancelCause() {
-		return Optional.ofNullable(this.disposeError);
-	}
-	
-	/**
-	 * <p>
-	 * Exchange callbacks handler.
-	 * </p>
-	 * 
-	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.6
-	 * 
-	 * @param <A>
-	 * @param <B>
-	 * @param <C> 
-	 */
-	public static interface Handler<A extends AbstractRequest, B extends AbstractResponse, C extends AbstractExchange<A, B, C>> {
-		
-		/**
-		 * The default handler.
-		 */
-		static Handler DEFAULT = new Handler() {};
-
-		/**
-		 * <p>
-		 * Notifies that the exchange has started.
-		 * <p>
-		 * 
-		 * @param exchange the exchange
-		 */
-		default void exchangeStart(C exchange) {
-			
-		}
-
-		/**
-		 * <p>
-		 * Notifies that the request has been fully sent.
-		 * </p>
-		 * 
-		 * @param exchange the exchange
-		 */
-		default void requestComplete(C exchange) {
-			
-		}
-
-		/**
-		 * <p>
-		 * Notifies that the exchange has completed.
-		 * </p>
-		 * 
-		 * <p>
-		 * This means that the response has been fully received.
-		 * </p>
-		 * 
-		 * @param exchange the exchange
-		 */
-		default void exchangeComplete(C exchange) {
-			
-		}
-		
-		/**
-		 * <p>
-		 * Notifies that an error was raised during the processing of the exchange.
-		 * </p>
-		 * 
-		 * @param exchange the exchange
-		 * @param t        an error
-		 */
-		default void exchangeError(C exchange, Throwable t) {
-			this.exchangeComplete(exchange);
-		}
-		
-		/**
-		 * <p>
-		 * Notifies that the exchange has been reset.
-		 * </p>
-		 * 
-		 * <p>
-		 * This means that the request and might be partially sent and/or the response partially received. This can lead to the connection being closed (HTTP/1.x) or the stream reset (HTTP/2).
-		 * </p>
-		 * 
-		 * @param exchange the exchange
-		 */
-		default void exchangeReset(C exchange, long code) {
-			
-		}
-	}
+	protected abstract void doReset(long code);
 }
