@@ -185,7 +185,7 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 	}
 	
 	@Override
-	public Mono<Void> shutdown() {
+	public synchronized Mono<Void> shutdown() {
 		if(this.shutdownSink == null) {
 			this.shutdownSink = Sinks.one();
 			this.shutdown = this.shutdownSink.asMono()
@@ -212,7 +212,7 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 	}
 
 	@Override
-	public Mono<Void> shutdownGracefully() {
+	public synchronized Mono<Void> shutdownGracefully() {
 		if(this.gracefulShutdownSink == null) {
 			this.gracefulShutdownSink = Sinks.one();
 			this.gracefulShutdown = this.gracefulShutdownSink.asMono()
