@@ -48,6 +48,26 @@ public interface HttpClientConfiguration {
 	
 	/**
 	 * <p>
+	 * Designates a proxy protocol.
+	 * </p>
+	 */
+	public enum ProxyProtocol {
+		/**
+		 * Http proxy protocol.
+		 */
+		HTTP,
+		/**
+		 * <a href="https://www.openssh.com/txt/socks4.protocol">Socks V4</a> proxy protocol.
+		 */
+		SOCKS_V4,
+		/**
+		 * <a href="https://datatracker.ietf.org/doc/html/rfc1928">Socks V5</a> proxy protocol.
+		 */
+		SOCKS_V5
+	}
+	
+	/**
+	 * <p>
 	 * The number of event loops to allocate to the client.
 	 * </p>
 	 * 
@@ -969,5 +989,72 @@ public interface HttpClientConfiguration {
 	 */
 	default long ws_inbound_close_frame_timeout() {
 		return 60000l;
+	}
+	
+	/**
+	 * <p>
+	 * The poxy server host.
+	 * </p>
+	 * 
+	 * <p>
+	 * Default to {@code null}.
+	 * </p>
+	 * 
+	 * @return the proxy host or null if no proxy shall be used
+	 */
+	String proxy_host();
+	
+	/**
+	 * <p>
+	 * The proxy server port.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code null}.
+	 * </p>
+	 * 
+	 * @return the proxy port or null if no proxy shall be used
+	 */
+	Integer proxy_port();
+	
+	/**
+	 * <p>
+	 * The username to use to authenticate to the proxy server.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code null}.
+	 * </p>
+	 * 
+	 * @return the proxy username or null
+	 */
+	String proxy_username();
+	
+	/**
+	 * <p>
+	 * The password to use to authenticate to the proxy server.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code null}.
+	 * </p>
+	 * 
+	 * @return the proxy password or null
+	 */
+	String proxy_password();
+	
+	/**
+	 * <p>
+	 * The proxy protocol.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@link ProxyProtocol#HTTP}.
+	 * </p>
+	 * 
+	 * @return the proxy protocol
+	 */
+	default ProxyProtocol proxy_protocol() {
+		return ProxyProtocol.HTTP;
 	}
 }

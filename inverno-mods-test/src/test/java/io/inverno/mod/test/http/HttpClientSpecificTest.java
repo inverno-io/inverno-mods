@@ -59,12 +59,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * <p>
- * 
- * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.9
  */
 public class HttpClientSpecificTest {
 	
@@ -1124,6 +1120,41 @@ public class HttpClientSpecificTest {
 			);
 		}
 		finally {
+			endpoint.shutdown().block();
+		}
+	}
+	
+	@Test
+	public void test_http1x_proxy() {
+		int proxyPort = getFreePort();
+		
+		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
+			.configuration(HttpClientConfigurationLoader.load(conf -> conf
+				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
+				.pool_max_size(1)
+				.request_timeout(10000)
+				.proxy_host("127.0.0.1")
+				.proxy_port(proxyPort)
+			))
+			.build();
+		
+		DummyHttpProxyServer dummyProxyServer = new DummyHttpProxyServer(proxyPort);
+		dummyProxyServer.start();
+		
+		try {
+			String result = endpoint
+				.exchange(Method.GET, "/get_raw")
+				.flatMap(Exchange::response)
+				.flatMapMany(response -> response.body().string().stream())
+				.collect(Collectors.joining())
+				.block();
+			
+			Assertions.assertEquals("get_raw", result);
+			Assertions.assertTrue(dummyProxyServer.isClientConnected());
+			
+		}
+		finally {
+			dummyProxyServer.stop();
 			endpoint.shutdown().block();
 		}
 	}

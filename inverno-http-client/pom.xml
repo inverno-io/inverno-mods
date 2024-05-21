@@ -70,6 +70,10 @@
 			<groupId>io.netty</groupId>
 			<artifactId>netty-resolver-dns</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-handler-proxy</artifactId>
+		</dependency>
 		
 		<dependency>
 			<groupId>io.projectreactor</groupId>
