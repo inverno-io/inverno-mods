@@ -118,6 +118,12 @@ public class Http1xUpgradingExchange<A extends ExchangeContext> extends Http1xEx
 		this.request().headers().set(Headers.NAME_CONNECTION, Headers.NAME_UPGRADE + "," + Headers.NAME_HTTP2_SETTINGS);
 	}
 	
+	@Override
+	protected void doDispose(Throwable cause) {
+		super.doDispose(cause);
+		this.upgradedSink.tryEmitError(cause != null ? cause : new HttpClientException("Exchange was disposed"));
+	}
+	
 	/**
 	 * <p>
 	 * Returns the ugraded exchange sink.
