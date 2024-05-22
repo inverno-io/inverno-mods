@@ -74,7 +74,7 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	
 	private final EndpointChannelConfigurer configurer;
 	
-	private Http1xUpgradingExchange upgradingExchange;
+	private Http1xUpgradingExchange<?> upgradingExchange;
 	
 	private UpgradeState state;
 	private boolean requestComplete;
@@ -229,7 +229,7 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	 * </p>
 	 */
 	private void rejectUpgrade() {
-		this.upgradingExchange.getUpgradedSink().tryEmitValue(this.upgradingExchange);
+		this.upgradingExchange.getUpgradedSink().tryEmitValue((Http1xUpgradingExchange)this.upgradingExchange);
 		this.state = UpgradeState.COMPLETED;
 		// Make sure the capacity is updated
 		if(this.handler != null) {
@@ -246,7 +246,7 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	private void acceptUpgrade() {
 		this.state = UpgradeState.PREPARED;
 		this.configurer.completeHttp2Upgrade(this.channelContext.pipeline(), configuration, this.upgradingExchange, this.messageBuffer);
-		this.upgradingExchange.dispose(null);
+		this.upgradingExchange.request().dispose(null);
 		this.messageBuffer = null;
 		this.messageBufferSize = 0;
 		this.state = UpgradeState.COMPLETED;
