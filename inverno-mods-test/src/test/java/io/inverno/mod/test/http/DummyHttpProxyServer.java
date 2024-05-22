@@ -128,7 +128,6 @@ public class DummyHttpProxyServer {
 				}
 			}
 			catch(Exception e) {
-				e.printStackTrace();
 			}
 			finally {
 				DummyHttpProxyServer.this.stop();
@@ -150,7 +149,6 @@ public class DummyHttpProxyServer {
 				}
 			}
 			catch(Exception e) {
-				e.printStackTrace();
 			}
 			finally {
 				DummyHttpProxyServer.this.stop();
