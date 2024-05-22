@@ -144,7 +144,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_interceptor() {
-		System.out.println("===== test_interceptor()");
 		AtomicBoolean interceptorFlag = new AtomicBoolean(false);
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
@@ -182,7 +181,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_interceptor_cookieParam() {
-		System.out.println("===== test_interceptor_cookieParam()");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -220,7 +218,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_interceptor_headerParam() {
-		System.out.println("===== test_interceptor_headerParam()");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -261,7 +258,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_interceptor_path() {
-		System.out.println("===== test_interceptor_path()");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -296,7 +292,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_interceptor_method() {
-		System.out.println("===== test_interceptor_method()");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -336,7 +331,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_interceptor_transform_bodies() {
-		System.out.println("===== test_interceptor_transform_bodies()");
 		final StringBuilder interceptedRequestBody = new StringBuilder();
 		final StringBuilder interceptedResponseBody = new StringBuilder();
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
@@ -387,7 +381,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_interceptor_abort() {
-		System.out.println("===== test_interceptor_abort()");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -421,7 +414,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_interceptor_abort_with_payload() {
-		System.out.println("===== test_interceptor_abort_with_payload()");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -478,7 +470,6 @@ public class HttpClientSpecificTest {
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
 	public void test_pool_concurrency(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
-		System.out.println("===== test_pool_concurrency()");
 		// By default: 
 		// - pool_max_size=2
 		// - http2_max_concurrent_streams=100
@@ -567,7 +558,6 @@ public class HttpClientSpecificTest {
 	@ParameterizedTest
 	@MethodSource("provideTimeoutEndpointsAndHttpVersion")
 	public void test_request_timeout(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
-		System.out.println("===== test_request_timeout()");
 		try {
 			// Make sure connection is properly upgraded first
 			endpoint
@@ -594,7 +584,6 @@ public class HttpClientSpecificTest {
 	@ParameterizedTest
 	@MethodSource("provideTimeoutEndpointsAndHttpVersion")
 	public void test_request_timeout_concurrent(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
-		System.out.println("===== test_request_timeout_concurrent()");
 		try {
 			// Make sure connection is properly upgraded first
 			endpoint
@@ -665,7 +654,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_http1x_responding_requesting_headers_written_request_timeout() {
-		System.out.println("===== test_http1x_responding_requesting_headers_written_request_timeout()");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -719,7 +707,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_http1x_responding_requesting_headers_not_written_request_timeout() {
-		System.out.println("===== test_http1x_responding_requesting_headers_not_written_request_timeout()");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -773,7 +760,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_http1x_responding_not_requesting_request_timeout() {
-		System.out.println("===== test_http1x_responding_not_requesting_request_timeout()");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -823,7 +809,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_http1x_not_responding_requesting_headers_written_request_timeout() {
-		System.out.println("===== test_http1x_not_responding_requesting_headers_written_request_timeout()");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -892,7 +877,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_http1x_not_responding_requesting_headers_not_written_request_timeout() {
-		System.out.println("===== test_http1x_not_responding_requesting_headers_not_written_request_timeout()");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -961,7 +945,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_http1x_not_responding_not_requesting_request_timeout() {
-		System.out.println("===== test_http1x_not_responding_not_requesting_request_timeout()");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -1025,7 +1008,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_http1x_interupted_request() {
-		System.out.println("===== test_http1x_interupted_request()");
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
 			.configuration(HttpClientConfigurationLoader.load(conf -> conf
 				.http_protocol_versions(Set.of(HttpVersion.HTTP_1_1))
@@ -1081,7 +1063,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_h2c_tooBig() {
-		System.out.println("===== test_h2c_tooBig()");
 		File uploadsDir = new File("target/uploads/");
 		uploadsDir.mkdirs();
 		
@@ -1118,7 +1099,6 @@ public class HttpClientSpecificTest {
 	@ParameterizedTest
 	@MethodSource("provideEndpointAndHttpVersion")
 	public void test_expect_100_continue(Endpoint<ExchangeContext> endpoint, HttpVersion testHttpVersion) {
-		System.out.println("===== test_expect_100_continue()");
 		try {
 			String result = endpoint
 				.exchange(Method.POST, "/post_100_continue")
@@ -1146,7 +1126,6 @@ public class HttpClientSpecificTest {
 	
 	@Test
 	public void test_http1x_proxy() {
-		System.out.println("===== test_http1x_proxy()");
 		int proxyPort = getFreePort();
 		
 		Endpoint<ExchangeContext> endpoint = httpClientModule.httpClient().endpoint("127.0.0.1", testServerPort)
