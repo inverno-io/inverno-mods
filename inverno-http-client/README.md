@@ -576,6 +576,27 @@ this.endpoint = httpClient.endpoint("example.org", 80) // Creates the endpoint
 > </project>
 > ```
 
+### Proxy
+
+The client and subsequently an endpoint can be configured to connect through a proxy using HTTP, SOCKS V4 or SOCKS V5 protocols with or without basic authentication credentials.
+
+```java
+this.endpoint = httpClient.endpoint("example.org", 80) // Creates the endpoint
+    .configuration(
+        HttpClientConfigurationLoader.load(baseConfiguration.http_client(), configuration -> configuration
+            .proxy_host("some.proxy.server")
+            .proxy_port(8080)
+            .proxy_protocol(ProxyProtocol.HTTP)
+            .proxy_username("proxy_user")
+            .proxy_password("proxy_password")
+        )
+    )
+    .build();
+)
+```
+
+> Note that both host and port must be specified in the configuration to initiate a proxy connection.
+
 ## Endpoint
 
 The `Endpoint` represents the terminal end in an HTTP communication from a client to a server. From the client perspective this is basically a bridge to an HTTP server. It is responsible to establish and manage the connections to a single HTTP server on which HTTP requests are sent by the application.

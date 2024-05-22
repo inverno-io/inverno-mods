@@ -39,6 +39,7 @@ import io.inverno.mod.http.client.InterceptableExchange;
 import io.inverno.mod.http.client.Part;
 import io.inverno.mod.http.client.internal.http1x.Http1xWebSocketConnection;
 import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
+import io.netty.resolver.NoopAddressResolverGroup;
 import java.net.SocketAddress;
 
 /**
@@ -131,6 +132,11 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 		if(this.localAddress != null) {
 			this.bootstrap.localAddress(this.localAddress);
 		}
+		
+		// TODO the server address and the proxy address should resolved using service discovery (most likely DNS resolver)
+		if(this.configuration.proxy_host() != null && this.configuration.proxy_password() != null) {
+			this.bootstrap.resolver(NoopAddressResolverGroup.INSTANCE);
+		}
 
 		this.bootstrap
 			.handler(new EndpointChannelInitializer(
@@ -193,20 +199,20 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 	protected Mono<WebSocketConnection> createWebSocketConnection() {
 		if(this.webSocketBootstrap == null) {
 			this.webSocketBootstrap = this.bootstrap
-			.handler(new EndpointWebSocketChannelInitializer(
-				this.sslContextProvider, 
-				this.channelConfigurer, 
-				this.remoteAddress, 
-				this.configuration
-			));
+				.clone()
+				.handler(new EndpointWebSocketChannelInitializer(
+					this.sslContextProvider, 
+					this.channelConfigurer, 
+					this.remoteAddress, 
+					this.configuration
+				));
 		}
 		
 		return Mono.defer(() -> {
 			Sinks.One<Http1xWebSocketConnection> connectionSink = Sinks.one();
-			ChannelFuture connectionFuture = this.bootstrap.connect(this.remoteAddress);
+			ChannelFuture connectionFuture = this.webSocketBootstrap.connect(this.remoteAddress);
 			connectionFuture.addListener(res -> {
 				if(res.isSuccess()) {
-					// if connection is already in the pipeline we can proceed otherwise we add this in case of protocol nego for instance
 					AbstractEndpoint.this.channelConfigurer.completeWsConnection(connectionFuture.channel().pipeline())
 						.addListener(connectionActive -> {
 							if(connectionActive.isSuccess()) {
