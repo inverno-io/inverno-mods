@@ -142,8 +142,8 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 			.handler(new EndpointChannelInitializer(
 				this.sslContextProvider, 
 				this.channelConfigurer, 
-				this.remoteAddress, 
-				this.configuration
+				this.configuration,
+				this.remoteAddress
 			));
 	}
 
@@ -203,8 +203,8 @@ public abstract class AbstractEndpoint<A extends ExchangeContext> implements End
 				.handler(new EndpointWebSocketChannelInitializer(
 					this.sslContextProvider, 
 					this.channelConfigurer, 
-					this.remoteAddress, 
-					this.configuration
+					this.configuration,
+					this.remoteAddress
 				));
 		}
 		

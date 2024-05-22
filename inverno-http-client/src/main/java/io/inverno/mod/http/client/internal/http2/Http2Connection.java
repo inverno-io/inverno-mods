@@ -19,6 +19,7 @@ import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.header.HeaderService;
+import io.inverno.mod.http.client.ConnectionTimeoutException;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.HttpClientException;
 import io.inverno.mod.http.client.ResetStreamException;
@@ -45,6 +46,7 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
 import io.netty.util.concurrent.EventExecutor;
@@ -313,17 +315,29 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 		super.channelActive(ctx);
 		this.closed = false;
 	}
+
+	@Override
+	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+		try {
+			super.userEventTriggered(ctx, evt);
+		}
+		finally {
+			if(evt instanceof IdleStateEvent && this.connection().numActiveStreams() > 0) {
+				this.exceptionCaught(ctx, new ConnectionTimeoutException("Idle timeout: " + ((IdleStateEvent)evt).state()));
+			}
+		}
+	}
 	
 	@Override
 	public void onError(ChannelHandlerContext ctx, boolean outbound, Throwable cause) {
 		super.onError(ctx, outbound, cause);
-		LOGGER.debug("onError", cause);
+		LOGGER.debug("Error", cause);
 	}
 
 	@Override
 	protected void onStreamError(ChannelHandlerContext ctx, boolean outbound, Throwable cause, Http2Exception.StreamException http2Ex) {
 		super.onStreamError(ctx, outbound, cause, http2Ex);
-		LOGGER.debug("onStreamError", cause);
+		LOGGER.debug("Stream error", cause);
 	}
 
 	@Override

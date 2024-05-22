@@ -31,7 +31,7 @@ import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.internal.HttpConnection;
 import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketExchange;
-import io.inverno.mod.http.server.internal.http1x.ws.WebSocketProtocolHandler;
+import io.inverno.mod.http.server.internal.http1x.ws.WebSocketConnection;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
@@ -59,6 +59,7 @@ import io.netty.handler.codec.http.websocketx.extensions.WebSocketServerExtensio
 import io.netty.handler.codec.http.websocketx.extensions.compression.DeflateFrameServerExtensionHandshaker;
 import io.netty.handler.codec.http.websocketx.extensions.compression.PerMessageDeflateServerExtensionHandshaker;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.ReferenceCounted;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.ScheduledFuture;
@@ -381,14 +382,26 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		this.supportsFileRegion = !this.tls && ctx.pipeline().get(HttpContentCompressor.class) == null;
 		super.channelActive(ctx);
 	}
+
+	@Override
+	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+		try {
+			super.userEventTriggered(ctx, evt);
+		}
+		finally {
+			if(evt instanceof IdleStateEvent) {
+				this.exceptionCaught(ctx, new HttpServerException("Idle timeout: " + ((IdleStateEvent)evt).state()));
+			}
+		}
+	}
 	
 	/**
 	 * <p>
-	 * Disposes pending exchanges.
+	 * Disposes all queued exchanges.
 	 * </p>
 	 * 
 	 * <p>
-	 * The is typically invoked right before the connection is shutdown OR when the connection becomes inactive (i.e. reset by peer) in order to stop processing and free resources.
+	 * This is typically invoked right before the connection is shutdown OR when the connection becomes inactive (i.e. reset by peer) in order to stop processing and free resources.
 	 * </p>
 	 * 
 	 * @param throwable an error or null if disposal does not result from an error (e.g. shutdown)
@@ -405,6 +418,22 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 		this.requestingExchange = null;
 	}
 	
+	/**
+	 * <p>
+	 * Disposes all queued exchanges and shutdown the connection.
+	 * </p>
+	 * 
+	 * <p>
+	 * This is typically invoked after an error which put the connection in an illegal state (e.g. partial request has been sent).
+	 * </p>
+	 * 
+	 * @param throwable an error or null if disposal does not result from an error (e.g. shutdown)
+	 */
+	private void disposeAndShutdown(Throwable throwable) {
+		this.dispose(throwable);
+		this.shutdown().subscribe();
+	}
+	
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
 		// This shall dispose all pending exchanges
@@ -419,8 +448,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 			super.exceptionCaught(ctx, cause);
 		}
 		else {
-			this.dispose(cause);
-			this.shutdown().subscribe();
+			this.disposeAndShutdown(cause);
 			LOGGER.error("Connection error", cause);
 		}
 	}
@@ -434,8 +462,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	 */
 	public void decoderError(Throwable cause) {
 		if(this.requestingExchange == null) {
-			this.dispose(cause);
-			this.shutdown().subscribe();
+			this.disposeAndShutdown(cause);
 			LOGGER.warn("Invalid object received", cause);
 		}
 		else if(this.requestingExchange == this.respondingExchange.unwrap()) {
@@ -452,8 +479,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				}
 				this.channelContext.write(new DefaultFullHttpResponse(this.respondingExchange.version, status));
 			}
-			this.dispose(cause);
-			this.shutdown().subscribe();
+			this.disposeAndShutdown(cause);
 			LOGGER.warn("Invalid object received", cause);
 		}
 		else {
@@ -671,7 +697,7 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				webSocketConfigBuilder.handshakeTimeoutMillis(configuration.ws_handshake_timeout());
 			}
 
-			WebSocketProtocolHandler webSocketProtocolHandler = new WebSocketProtocolHandler(
+			WebSocketConnection webSocketConnection = new WebSocketConnection(
 				this.configuration, 
 				webSocketConfigBuilder.build(), 
 				this.respondingExchange, 
@@ -698,11 +724,11 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 			if(!extensionHandshakers.isEmpty()) {
 				pipeline.addLast(new WebSocketServerExtensionHandler(extensionHandshakers.toArray(WebSocketServerExtensionHandshaker[]::new)));
 			}
-			pipeline.addLast(webSocketProtocolHandler);
+			pipeline.addLast(webSocketConnection);
 
 			this.channelContext.fireChannelRead(this.respondingExchange.request().unwrap());
 		
-			return webSocketProtocolHandler.getWebSocketExchange()
+			return webSocketConnection.getWebSocketExchange()
 				.doOnError(t -> {
 					for(String currentHandlerName : pipeline.toMap().keySet()) {
 						if(!initialChannelHandlers.containsKey(currentHandlerName)) {

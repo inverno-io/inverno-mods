@@ -107,6 +107,7 @@ module io.inverno.mod.boot {
 	requires transitive org.reactivestreams;
 	requires transitive io.netty.buffer;
 	requires io.netty.common;
+	requires io.netty.handler;
 	requires transitive io.netty.transport;
 	requires static io.netty.transport.unix.common;
 	requires static io.netty.transport.classes.epoll;

@@ -36,11 +36,15 @@ public class EndpointWebSocketChannelInitializer extends EndpointChannelInitiali
 	 * 
 	 * @param sslContextProvider the SSL context provider
 	 * @param channelConfigurer  the endpoint channel configurer
-	 * @param serverAddress      the address of the endpoint
 	 * @param configuration      an HTTP client configuration
+	 * @param serverAddress      the address of the endpoint
 	 */
-	public EndpointWebSocketChannelInitializer(SslContextProvider sslContextProvider, EndpointChannelConfigurer channelConfigurer, InetSocketAddress serverAddress, HttpClientConfiguration configuration) {
-		super(sslContextProvider, channelConfigurer, serverAddress, configuration);
+	public EndpointWebSocketChannelInitializer(SslContextProvider sslContextProvider, 
+			EndpointChannelConfigurer channelConfigurer, 
+			HttpClientConfiguration configuration,
+			InetSocketAddress serverAddress
+		) {
+		super(sslContextProvider, channelConfigurer, configuration, serverAddress);
 	}
 
 	@Override

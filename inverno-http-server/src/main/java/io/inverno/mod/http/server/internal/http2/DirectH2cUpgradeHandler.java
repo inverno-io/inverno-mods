@@ -22,6 +22,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.http.HttpServerUpgradeHandler;
 import io.netty.handler.codec.http2.Http2CodecUtil;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -59,8 +61,7 @@ public class DirectH2cUpgradeHandler extends ByteToMessageDecoder {
 		int prefaceLength = CONNECTION_PREFACE.readableBytes();
 		int bytesRead = Math.min(in.readableBytes(), prefaceLength);
 
-		if(!ByteBufUtil.equals(CONNECTION_PREFACE, CONNECTION_PREFACE.readerIndex(),
-				in, in.readerIndex(), bytesRead)) {
+		if(!ByteBufUtil.equals(CONNECTION_PREFACE, CONNECTION_PREFACE.readerIndex(), in, in.readerIndex(), bytesRead)) {
 			ctx.pipeline().remove(this);
 		} 
 		else if(bytesRead == prefaceLength) {
@@ -70,6 +71,13 @@ public class DirectH2cUpgradeHandler extends ByteToMessageDecoder {
 
 			ctx.pipeline().addAfter(ctx.name(), "connection", this.http2ConnectionFactory.get());
 			ctx.pipeline().remove(this);
+		}
+	}
+	
+	@Override
+	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+		if (evt instanceof IdleStateEvent && ((IdleStateEvent) evt).state() == IdleState.ALL_IDLE) {
+			ctx.close();
 		}
 	}
 }

@@ -151,4 +151,43 @@ public interface NetConfiguration {
 	 * @return the IP type of service
 	 */
 	Integer ip_tos();
+	
+	/**
+	 * <p>
+	 * The socket idle timeout in milliseconds.
+	 * </p>
+	 * 
+	 * <p>
+	 * {@code null} or {@code <= 0} means no timeout.
+	 * </p>
+	 * 
+	 * @return the idle timeout
+	 */
+	Long idle_timeout();
+	
+	/**
+	 * <p>
+	 * The socket read idle timeout in milliseconds.
+	 * </p>
+	 * 
+	 * <p>
+	 * {@code null} or {@code <= 0} means no timeout.
+	 * </p>
+	 * 
+	 * @return the read idle timeout
+	 */
+	Long idle_read_timeout();
+	
+	/**
+	 * <p>
+	 * The socket write idle timeout in milliseconds.
+	 * </p>
+	 * 
+	 * <p>
+	 * {@code null} or {@code <= 0} means no timeout.
+	 * </p>
+	 * 
+	 * @return the write idle timeout
+	 */
+	Long idle_write_timeout();
 }

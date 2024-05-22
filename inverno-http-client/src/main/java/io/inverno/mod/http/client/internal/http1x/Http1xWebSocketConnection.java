@@ -21,6 +21,7 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.base.internal.ws.GenericWebSocketFrame;
 import io.inverno.mod.http.base.internal.ws.GenericWebSocketMessage;
+import io.inverno.mod.http.client.ConnectionTimeoutException;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.internal.EndpointExchange;
 import io.inverno.mod.http.client.internal.WebSocketConnection;
@@ -28,7 +29,6 @@ import io.inverno.mod.http.client.internal.WebSocketConnectionExchange;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoop;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -43,6 +43,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.IdleStateEvent;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.security.cert.Certificate;
@@ -247,6 +248,18 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	}
 
 	@Override
+	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+		try {
+			super.userEventTriggered(ctx, evt);
+		}
+		finally {
+			if(evt instanceof IdleStateEvent) {
+				this.exceptionCaught(ctx, new ConnectionTimeoutException("Idle timeout: " + ((IdleStateEvent)evt).state()));
+			}
+		}
+	}
+
+	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		if(this.webSocketExchange != null) {
 			if(cause instanceof WebSocketHandshakeException) {
@@ -262,10 +275,9 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 				this.webSocketExchange.dispose(cause);
 			}
 			else {
-				LOGGER.error("WebSocket procotol error", cause);
+				LOGGER.error("WebSocket connection error", cause);
 				this.webSocketExchange.dispose(cause);
-				ChannelPromise closePromise = this.channelContext.newPromise();
-				this.channelContext.close(closePromise);
+				this.channelContext.close();
 			}
 		}
 	}

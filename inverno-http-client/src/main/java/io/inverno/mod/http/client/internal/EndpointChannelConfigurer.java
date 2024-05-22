@@ -20,9 +20,6 @@ import io.inverno.mod.base.net.NetService;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.internal.netty.ValidatingHttpHeadersFactory;
 import io.inverno.mod.http.client.HttpClientConfiguration;
-import static io.inverno.mod.http.client.HttpClientConfiguration.ProxyProtocol.HTTP;
-import static io.inverno.mod.http.client.HttpClientConfiguration.ProxyProtocol.SOCKS_V4;
-import static io.inverno.mod.http.client.HttpClientConfiguration.ProxyProtocol.SOCKS_V5;
 import io.inverno.mod.http.client.HttpClientUpgradeException;
 import io.inverno.mod.http.client.internal.http1x.Http1xRequestEncoder;
 import io.inverno.mod.http.client.internal.http1x.Http1xConnection;
@@ -116,10 +113,10 @@ public class EndpointChannelConfigurer {
 	 * Configures the specified channel pipeline.
 	 * </p>
 	 *
-	 * @param pipeline      the pipeline to configure
-	 * @param configuration an HTTP client configuration
-	 * @param sslContext    the SSL context
-	 * @param serverAddress the address of the endpoint
+	 * @param pipeline         the pipeline to configure
+	 * @param configuration    an HTTP client configuration
+	 * @param sslContext       the SSL context
+	 * @param serverAddress    the address of the endpoint
 	 */
 	void configure(ChannelPipeline pipeline, HttpClientConfiguration configuration, SslContext sslContext, InetSocketAddress serverAddress) {
 		ConnectionSinkHandler<HttpConnection> connectionSinkHandler = new EndpointChannelConfigurer.ConnectionSinkHandler<HttpConnection>(CONNECTION_HANDLER_NAME);

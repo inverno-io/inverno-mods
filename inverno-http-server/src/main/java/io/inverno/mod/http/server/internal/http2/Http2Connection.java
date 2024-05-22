@@ -50,6 +50,7 @@ import io.netty.handler.codec.http2.Http2Headers;
 import io.netty.handler.codec.http2.Http2Settings;
 import io.netty.handler.codec.http2.Http2Stream;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
 import java.net.SocketAddress;
@@ -291,7 +292,14 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 				this.onDataRead(ctx, 1, request.content(), 0, true); 
 			}
 		}
-		super.userEventTriggered(ctx, evt);
+		try {
+			super.userEventTriggered(ctx, evt);
+		}
+		finally {
+			if(evt instanceof IdleStateEvent) {
+				this.exceptionCaught(ctx, new HttpServerException("Idle timeout: " + ((IdleStateEvent)evt).state()));
+			}
+		}
 	}
 
 	@Override

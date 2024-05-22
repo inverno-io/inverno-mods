@@ -40,13 +40,13 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * The WebSocket protocol channel handler used to perform the WebSocket upgrade.
+ * The WebSocket protocol connection used to perform the WebSocket upgrade.
  * </p>
  *
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.5
  */
-public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
+public class WebSocketConnection extends WebSocketServerProtocolHandler {
 
 	private static final Logger LOGGER = LogManager.getLogger(WebSocket.class);
 	
@@ -72,7 +72,7 @@ public class WebSocketProtocolHandler extends WebSocketServerProtocolHandler {
 	 * @param frameFactory   the WebSocket frame factory
 	 * @param messageFactory the WebSocket message factory
 	 */
-	public WebSocketProtocolHandler(
+	public WebSocketConnection(
 			HttpServerConfiguration configuration,
 			WebSocketServerProtocolConfig protocolConfig, 
 			Exchange<ExchangeContext> exchange, 

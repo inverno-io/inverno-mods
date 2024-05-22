@@ -16,12 +16,14 @@
 package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.http.base.HttpVersion;
+import io.inverno.mod.http.client.ConnectionTimeoutException;
 import io.inverno.mod.http.client.EndpointConnectException;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
+import io.netty.handler.timeout.IdleStateEvent;
 import java.util.Set;
 
 /**
@@ -63,11 +65,19 @@ public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiati
 	@Override
 	protected void handshakeFailure(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		ctx.fireExceptionCaught(cause);
+		super.handshakeFailure(ctx, cause);
 	}
 	
 	@Override
-	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-		// wait for after the pipeline is configured
+	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+		try {
+			super.userEventTriggered(ctx, evt);
+		}
+		finally {
+			if(evt instanceof IdleStateEvent) {
+				this.handshakeFailure(ctx, new ConnectionTimeoutException("Idle timeout: " + ((IdleStateEvent)evt).state()));
+			}
+		}
 	}
 	
 	@Override

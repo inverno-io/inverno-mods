@@ -29,6 +29,8 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.UnpooledByteBufAllocator;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.epoll.EpollChannelOption;
@@ -43,10 +45,12 @@ import io.netty.channel.kqueue.KQueueSocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.channel.unix.DomainSocketAddress;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.incubator.channel.uring.IOUringChannelOption;
 import io.netty.incubator.channel.uring.IOUringServerSocketChannel;
 import io.netty.incubator.channel.uring.IOUringSocketChannel;
 import java.net.SocketAddress;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -58,6 +62,8 @@ import java.net.SocketAddress;
  */
 @Bean(name = "netService")
 public class GenericNetService implements @Provide NetService {
+	
+	private static final String IDLE_HANDLER_NAME = "idle";
 	
 	private final BootConfiguration configuration;
 	private final Reactor reactor;
@@ -114,7 +120,39 @@ public class GenericNetService implements @Provide NetService {
 		if(clientConfiguration == null) {
 			clientConfiguration = this.configuration.net_client();
 		}
-		Bootstrap bootstrap = new Bootstrap();
+		
+		long idleTimeout = clientConfiguration.idle_timeout() != null ? clientConfiguration.idle_timeout() : 0;
+		long idleReadTimeout = clientConfiguration.idle_read_timeout() != null ? clientConfiguration.idle_read_timeout() : 0;
+		long idleWriteTimeout = clientConfiguration.idle_write_timeout() != null ? clientConfiguration.idle_write_timeout() : 0;
+		
+		Bootstrap bootstrap = new Bootstrap() {
+			@Override
+			public Bootstrap handler(ChannelHandler handler) {
+				if(idleTimeout > 0 || idleReadTimeout > 0 || idleWriteTimeout > 0) {
+					return super.handler(new ChannelHandler() {
+
+						@Override
+						public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+							ctx.pipeline().addLast(IDLE_HANDLER_NAME, new IdleStateHandler(idleReadTimeout, idleWriteTimeout, idleTimeout, TimeUnit.MILLISECONDS));
+							ctx.pipeline().addLast(handler);
+							ctx.pipeline().remove(this);
+						}
+
+						@Override
+						public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+						}
+
+						@Override
+						@Deprecated
+						public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+							ctx.close();
+						}
+					});
+				}
+				return super.handler(handler);
+			}
+		};
+		
 		bootstrap.group(this.reactor.createIoEventLoopGroup(nThreads));
 		boolean isDomain = socketAddress instanceof DomainSocketAddress;
 		switch(this.transportType) {
@@ -197,7 +235,39 @@ public class GenericNetService implements @Provide NetService {
 		if(serverConfiguration == null) {
 			serverConfiguration = this.configuration.net_server();
 		}
-		ServerBootstrap bootstrap = new ServerBootstrap();
+		
+		long idleTimeout = serverConfiguration.idle_timeout() != null ? serverConfiguration.idle_timeout() : 0;
+		long idleReadTimeout = serverConfiguration.idle_read_timeout() != null ? serverConfiguration.idle_read_timeout() : 0;
+		long idleWriteTimeout = serverConfiguration.idle_write_timeout() != null ? serverConfiguration.idle_write_timeout() : 0;
+		
+		ServerBootstrap bootstrap = new ServerBootstrap() {
+			@Override
+			public ServerBootstrap childHandler(ChannelHandler childHandler) {
+				if(idleTimeout > 0 || idleReadTimeout > 0 || idleWriteTimeout > 0) {
+					return super.childHandler(new ChannelHandler() {
+
+						@Override
+						public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+							ctx.pipeline().addLast(IDLE_HANDLER_NAME, new IdleStateHandler(idleReadTimeout, idleWriteTimeout, idleTimeout, TimeUnit.MILLISECONDS));
+							ctx.pipeline().addLast(childHandler);
+							ctx.pipeline().remove(this);
+						}
+
+						@Override
+						public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+						}
+
+						@Override
+						@Deprecated
+						public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+							ctx.close();
+						}
+					});
+				}
+				return super.childHandler(childHandler);
+			}
+		};
+		
 		bootstrap.group(this.reactor.getAcceptorEventLoopGroup(), this.reactor.createIoEventLoopGroup(nThreads));
 		boolean isDomain = socketAddress instanceof DomainSocketAddress;
 		switch(this.transportType) {
