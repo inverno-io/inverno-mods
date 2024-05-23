@@ -154,7 +154,7 @@ public interface NetConfiguration {
 	
 	/**
 	 * <p>
-	 * The socket idle timeout in milliseconds.
+	 * The channel idle timeout in milliseconds.
 	 * </p>
 	 * 
 	 * <p>
@@ -167,7 +167,7 @@ public interface NetConfiguration {
 	
 	/**
 	 * <p>
-	 * The socket read idle timeout in milliseconds.
+	 * The channel read idle timeout in milliseconds.
 	 * </p>
 	 * 
 	 * <p>
@@ -180,7 +180,7 @@ public interface NetConfiguration {
 	
 	/**
 	 * <p>
-	 * The socket write idle timeout in milliseconds.
+	 * The channel write idle timeout in milliseconds.
 	 * </p>
 	 * 
 	 * <p>
