@@ -246,7 +246,6 @@ class Http1xUpgradingConnection extends Http1xConnection {
 	private void acceptUpgrade() {
 		this.state = UpgradeState.PREPARED;
 		this.configurer.completeHttp2Upgrade(this.channelContext.pipeline(), configuration, this.upgradingExchange, this.messageBuffer);
-		this.upgradingExchange.request().dispose(null);
 		this.messageBuffer = null;
 		this.messageBufferSize = 0;
 		this.state = UpgradeState.COMPLETED;
