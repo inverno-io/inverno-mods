@@ -32,8 +32,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.Marker;
-import org.apache.logging.log4j.MarkerManager;
 
 /**
  * <p>
@@ -51,8 +49,7 @@ import org.apache.logging.log4j.MarkerManager;
  */
 public class GenericGrpcExchange<A extends ExchangeContext, B extends Message, C extends Message, D extends GrpcRequest<B>, E extends GrpcResponse<C>> implements GrpcExchange<A, B, C, D, E> {
 	
-	private static final Logger LOGGER = LogManager.getLogger(GrpcExchange.class);
-	private static final Marker MARKER_GRPC_ERROR = MarkerManager.getMarker("GRPC_ERROR");
+	public static final Logger LOGGER = LogManager.getLogger(GrpcExchange.class);
 
 	/**
 	 * The underlying HTTP server exchange.
@@ -139,27 +136,6 @@ public class GenericGrpcExchange<A extends ExchangeContext, B extends Message, C
 			});
 		}
 		return this.cancelCause;
-	}
-	
-	/**
-	 * <p>
-	 * Logs the specified error.
-	 * </p>
-	 * 
-	 * <p>
-	 * It uses the GRPC_ERROR marker when the specified error is a {@link GrpcException}.
-	 * </p>
-	 * 
-	 * @param message the error message
-	 * @param error   the error
-	 */
-	public static void logError(String message, Throwable error) {
-		if(error instanceof GrpcException) {
-			LOGGER.error(MARKER_GRPC_ERROR, message, error);
-		}
-		else {
-			LOGGER.error(message, error);
-		}
 	}
 	
 	/**

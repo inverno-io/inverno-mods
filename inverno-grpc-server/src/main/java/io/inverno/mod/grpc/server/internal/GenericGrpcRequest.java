@@ -138,6 +138,7 @@ public class GenericGrpcRequest<A extends Message> implements GrpcRequest.Unary<
 					return new GrpcException(status, e);
 				}
 				return e;
-			});
+			})
+			.doOnError(t -> GenericGrpcExchange.LOGGER.error("gRPC request processing error", t));
 	}
 }

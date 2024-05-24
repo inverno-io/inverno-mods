@@ -23,6 +23,7 @@ import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.Part;
+import io.inverno.mod.http.server.ResetStreamException;
 import io.inverno.mod.http.server.ServerController;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.inverno.mod.http.server.ws.WebSocket;
@@ -123,6 +124,10 @@ class Http2Exchange extends AbstractHttp2Exchange {
 		if(this.disposable != null) {
 			this.disposable.dispose();
 		}
+		if(cause instanceof ResetStreamException && this.connectionStream.getStream().isResetSent()) {
+			// We sent the reset
+			cause = null;
+		}
 		this.request.dispose(cause);
 		this.response.dispose(cause);
 	}
@@ -165,14 +170,14 @@ class Http2Exchange extends AbstractHttp2Exchange {
 
 		@Override
 		protected void hookOnComplete() {
-			if(!Http2Exchange.this.reset) {
+			if(!Http2Exchange.this.connectionStream.isReset()) {
 				Http2Exchange.this.response.send();
 			}
 		}
 
 		@Override
 		protected void hookOnError(Throwable throwable) {
-			if(!Http2Exchange.this.reset) {
+			if(!Http2Exchange.this.connectionStream.isReset()) {
 				Http2Exchange.this.connectionStream.onExchangeError(throwable);
 			}
 		}

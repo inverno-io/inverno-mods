@@ -42,6 +42,8 @@ import reactor.core.publisher.Sinks;
  */
 public abstract class AbstractRequestBody<A extends AbstractRequestHeaders> implements RequestBody {
 
+	private static final HttpServerException REQUEST_DISPOSED_ERROR = new StacklessHttpServerException("Request was disposed");
+	
 	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
 	private final MultipartDecoder<Part> multipartBodyDecoder;
 	private final A headers;
@@ -127,7 +129,7 @@ public abstract class AbstractRequestBody<A extends AbstractRequestHeaders> impl
 				this.dataSink.tryEmitError(cause);
 			}
 			else {
-				this.cancelCause = new HttpServerException("Response was disposed");
+				this.cancelCause = REQUEST_DISPOSED_ERROR;
 				this.dataSink.tryEmitComplete();
 			}
 			if(!this.subscribed) {

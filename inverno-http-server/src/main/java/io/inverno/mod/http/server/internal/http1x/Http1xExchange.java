@@ -144,7 +144,7 @@ class Http1xExchange extends AbstractHttp1xExchange {
 			}
 		}
 		else {
-			this.connection.executor().execute(this::start);
+			this.connection.executor().execute(() -> this.handleWebSocketHandshakeError(throwable, fallback));
 		}
 	}
 	

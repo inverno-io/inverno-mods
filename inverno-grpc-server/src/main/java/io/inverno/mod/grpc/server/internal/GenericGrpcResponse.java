@@ -28,10 +28,12 @@ import java.util.function.Consumer;
 import org.reactivestreams.Publisher;
 import io.inverno.mod.grpc.base.GrpcOutboundResponseTrailersMetadata;
 import io.inverno.mod.grpc.base.GrpcStatus;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.util.function.Supplier;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.SignalType;
 
 /**
  * <p>
@@ -142,8 +144,8 @@ public class GenericGrpcResponse<A extends Message> implements GrpcResponse.Unar
 		this.response.body().raw().stream(Flux.concat(
 			Mono.just(Unpooled.EMPTY_BUFFER),
 			Flux.from(value).transformDeferred(data -> this.messageWriterSupplier.get().apply((Publisher<A>)data))
-				.doOnError(t -> {
-					GenericGrpcExchange.logError("gRPC exchange processing error", t);
+				.onErrorResume(t -> {
+					GenericGrpcExchange.LOGGER.error("gRPC response processing error", t);
 					GrpcStatus status;
 					if(t instanceof GrpcException) {
 						status = ((GrpcException)t).getStatus();
@@ -160,10 +162,12 @@ public class GenericGrpcResponse<A extends Message> implements GrpcResponse.Unar
 					});
 					
 					if(status == GrpcStatus.CANCELLED) {
-						this.cancelExchange.run();
+						return Mono.<ByteBuf>empty().doFinally(sig -> {
+							if(sig == SignalType.ON_COMPLETE) {
+								this.cancelExchange.run();
+							}
+						});
 					}
-				})
-				.onErrorResume(e -> {
 					return Mono.empty();
 				})
 		));

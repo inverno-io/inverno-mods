@@ -189,12 +189,11 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	@Override
 	public <A extends ExchangeContext> Mono<WebSocketConnectionExchange<A>> handshake(EndpointExchange<A> endpointExchange, String subprotocol) {
 		return Mono.<WebSocketConnectionExchange<ExchangeContext>>create(exchangeSink -> {
-			EventLoop eventLoop = this.channelContext.channel().eventLoop();
-			if(eventLoop.inEventLoop()) {
+			if(this.channelContext.channel().eventLoop().inEventLoop()) {
 				this.sendHandshake(this.channelContext, exchangeSink, endpointExchange, subprotocol);
 			}
 			else {
-				eventLoop.submit(() -> {
+				this.channelContext.channel().eventLoop().execute(() -> {
 					this.sendHandshake(this.channelContext, exchangeSink, endpointExchange, subprotocol);
 				});
 			}

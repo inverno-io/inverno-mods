@@ -36,6 +36,8 @@ import reactor.core.publisher.Sinks;
  */
 public abstract class AbstractResponseBody implements ResponseBody {
 
+	private static final HttpClientException RESPONSE_DISPOSED_ERROR = new StacklessHttpClientException("Response was disposed");
+	
 	private final Sinks.Many<ByteBuf> dataSink;
 	private Flux<ByteBuf> data;
 	private boolean subscribed;
@@ -110,7 +112,7 @@ public abstract class AbstractResponseBody implements ResponseBody {
 			}
 			else {
 				this.dataSink.tryEmitComplete();
-				this.cancelCause = new HttpClientException("Response was disposed");
+				this.cancelCause = RESPONSE_DISPOSED_ERROR;
 			}
 		}
 	}

@@ -138,6 +138,7 @@ class Http1xRequest extends AbstractRequest<Http1xRequestHeaders> {
 	final void dispose(Throwable cause) {
 		if(this.disposable != null) {
 			this.disposable.dispose();
+			this.disposable = null;
 		}
 	}
 

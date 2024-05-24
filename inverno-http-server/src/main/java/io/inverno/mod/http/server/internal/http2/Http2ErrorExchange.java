@@ -162,14 +162,14 @@ class Http2ErrorExchange extends AbstractHttp2Exchange implements ErrorExchange<
 
 		@Override
 		protected void hookOnComplete() {
-			if(!Http2ErrorExchange.this.reset) {
+			if(!Http2ErrorExchange.this.connectionStream.isReset()) {
 				Http2ErrorExchange.this.response.send();
 			}
 		}
 
 		@Override
 		protected void hookOnError(Throwable throwable) {
-			if(!Http2ErrorExchange.this.reset) {
+			if(!Http2ErrorExchange.this.connectionStream.isReset()) {
 				Http2ErrorExchange.this.connectionStream.onExchangeError(throwable);
 			}
 		}

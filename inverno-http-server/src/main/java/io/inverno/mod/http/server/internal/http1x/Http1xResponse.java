@@ -37,7 +37,6 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
-import io.netty.handler.codec.http2.DefaultHttp2Headers;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -166,6 +165,7 @@ class Http1xResponse extends AbstractResponse<Http1xResponseHeaders, Http1xRespo
 	final void dispose(Throwable cause) {
 		if(this.disposable != null) {
 			this.disposable.dispose();
+			this.disposable = null;
 		}
 	}
 	

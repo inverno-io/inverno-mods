@@ -20,6 +20,7 @@ import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.server.ErrorExchange;
 import io.inverno.mod.http.server.Exchange;
 import io.inverno.mod.http.server.HttpServerConfiguration;
+import io.inverno.mod.http.server.HttpServerException;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.Response;
 import io.inverno.mod.http.server.ServerController;
@@ -39,6 +40,8 @@ import java.util.Optional;
  */
 public abstract class AbstractExchange<A extends Request, B extends Response, C extends ErrorExchange<ExchangeContext>> implements Exchange<ExchangeContext> {
 	
+	private static final HttpServerException EXCHANGE_DISPOSED_ERROR = new StacklessHttpServerException("Exchange was disposed");
+	
 	/**
 	 * The server configuration.
 	 */
@@ -53,10 +56,6 @@ public abstract class AbstractExchange<A extends Request, B extends Response, C 
 	protected final boolean head;
 	
 	private Throwable cancelCause;
-	/**
-	 * Flag indicating whether the exchange was reset.
-	 */
-	protected boolean reset;
 
 	/**
 	 * <p>
@@ -88,7 +87,6 @@ public abstract class AbstractExchange<A extends Request, B extends Response, C 
 		this.configuration = parentExchange.configuration;
 		this.controller = parentExchange.controller;
 		this.head = parentExchange.head;
-		this.reset = parentExchange.reset;
 	}
 	
 	/**
@@ -142,7 +140,7 @@ public abstract class AbstractExchange<A extends Request, B extends Response, C 
 	public final void dispose(Throwable cause) {
 		// prevent dispose from being invoked multiple times
 		if(this.cancelCause == null) {
-			this.cancelCause = cause;
+			this.cancelCause = cause != null ? cause : EXCHANGE_DISPOSED_ERROR;
 			this.doDispose(cause);
 		}
 	}
@@ -170,21 +168,4 @@ public abstract class AbstractExchange<A extends Request, B extends Response, C 
 	public Optional<Throwable> getCancelCause() {
 		return Optional.ofNullable(this.cancelCause);
 	}
-	
-	@Override
-	public final void reset(long code) {
-		if(!this.reset) {
-			this.reset = true;
-			this.doReset(code);
-		}
-	}
-	
-	/**
-	 * <p>
-	 * Resets the exchange with the specified code.
-	 * </p>
-	 * 
-	 * @param code a code
-	 */
-	protected abstract void doReset(long code);
 }

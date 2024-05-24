@@ -409,6 +409,7 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 	public void onRstStreamRead(ChannelHandlerContext ctx, int streamId, long errorCode) throws Http2Exception {
 		Http2ConnectionStream serverStream = this.serverStreams.remove(streamId);
 		if(serverStream != null) {
+			serverStream.setErrorCode(errorCode);
 			serverStream.exchange.dispose(new ResetStreamException(errorCode, "Stream " + streamId +" was reset (" + errorCode + ")"));
 		}
 	}
@@ -467,7 +468,14 @@ public class Http2Connection extends Http2ConnectionHandler implements HttpConne
 	public void onStreamClosed(Http2Stream stream) {
 		Http2ConnectionStream serverStream = this.serverStreams.remove(stream.id());
 		if(serverStream != null) {
-			Throwable cause = new HttpServerException("Stream " + stream.id() + " was closed");
+			Throwable cause;
+			if(serverStream.isReset()) {
+				cause = new ResetStreamException(serverStream.getErrorCode(), "Stream " + stream.id() +" was reset (" + serverStream.getErrorCode() + ")");
+			}
+			else {
+				cause = new HttpServerException("Stream " + stream.id() + " was closed");
+				serverStream.setErrorCode(Http2Error.STREAM_CLOSED.code());
+			}
 			serverStream.exchange.dispose(cause);
 		}
 	}

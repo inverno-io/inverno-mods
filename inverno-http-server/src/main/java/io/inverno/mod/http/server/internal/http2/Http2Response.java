@@ -103,6 +103,7 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 	final void dispose(Throwable cause) {
 		if(this.disposable != null) {
 			this.disposable.dispose();
+			this.disposable = null;
 		}
 	}
 
@@ -160,34 +161,36 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 
 		@Override
 		protected void hookOnComplete() {
-			if(!Http2Response.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
-				Http2Response.this.headers.contentLength(Http2Response.this.transferedLength);
-			}
-			
-			if(this.data == null) {
-				if(Http2Response.this.trailers == null) {
-					Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, true);
-					Http2Response.this.headers.setWritten();
+			if(!Http2Response.this.connectionStream.isReset()) {
+				if(!Http2Response.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
+					Http2Response.this.headers.contentLength(Http2Response.this.transferedLength);
+				}
+
+				if(this.data == null) {
+					if(Http2Response.this.trailers == null) {
+						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, true);
+						Http2Response.this.headers.setWritten();
+					}
+					else {
+						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
+						Http2Response.this.headers.setWritten();
+						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.trailers.unwrap(), 0, true);
+						Http2Response.this.trailers.setWritten();
+					}
 				}
 				else {
-					Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
-					Http2Response.this.headers.setWritten();
-					Http2Response.this.connectionStream.writeHeaders(Http2Response.this.trailers.unwrap(), 0, true);
-					Http2Response.this.trailers.setWritten();
-				}
-			}
-			else {
-				if(Http2Response.this.trailers == null) {
-					Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
-					Http2Response.this.headers.setWritten();
-					Http2Response.this.connectionStream.writeData(this.data, 0, true);
-				}
-				else {
-					Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
-					Http2Response.this.headers.setWritten();
-					Http2Response.this.connectionStream.writeData(this.data, 0, false);
-					Http2Response.this.connectionStream.writeHeaders(Http2Response.this.trailers.unwrap(), 0, true);
-					Http2Response.this.trailers.setWritten();
+					if(Http2Response.this.trailers == null) {
+						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
+						Http2Response.this.headers.setWritten();
+						Http2Response.this.connectionStream.writeData(this.data, 0, true);
+					}
+					else {
+						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
+						Http2Response.this.headers.setWritten();
+						Http2Response.this.connectionStream.writeData(this.data, 0, false);
+						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.trailers.unwrap(), 0, true);
+						Http2Response.this.trailers.setWritten();
+					}
 				}
 			}
 			Http2Response.this.connectionStream.onExchangeComplete();
@@ -195,7 +198,9 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 
 		@Override
 		protected void hookOnError(Throwable throwable) {
-			Http2Response.this.connectionStream.onExchangeError(throwable);
+			if(!Http2Response.this.connectionStream.isReset()) {
+				Http2Response.this.connectionStream.onExchangeError(throwable);
+			}
 		}
 	}
 
@@ -220,19 +225,21 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 
 		@Override
 		protected void hookOnNext(ByteBuf value) {
-			Http2Response.this.transferedLength += value.readableBytes();
-			if(!this.many && this.singleChunk == null) {
-				this.singleChunk = value;
-			}
-			else {
-				this.many = true;
-				if (Http2Response.this.headers.isWritten()) {
-					Http2Response.this.connectionStream.writeData(value, 0, false);
-				} else {
-					Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
-					Http2Response.this.headers.setWritten();
-					Http2Response.this.connectionStream.writeData(Unpooled.wrappedBuffer(this.singleChunk, value), 0, false);
-					this.singleChunk = null;
+			if(!Http2Response.this.connectionStream.isReset()) {
+				Http2Response.this.transferedLength += value.readableBytes();
+				if(!this.many && this.singleChunk == null) {
+					this.singleChunk = value;
+				}
+				else {
+					this.many = true;
+					if (Http2Response.this.headers.isWritten()) {
+						Http2Response.this.connectionStream.writeData(value, 0, false);
+					} else {
+						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
+						Http2Response.this.headers.setWritten();
+						Http2Response.this.connectionStream.writeData(Unpooled.wrappedBuffer(this.singleChunk, value), 0, false);
+						this.singleChunk = null;
+					}
 				}
 			}
 			
@@ -248,44 +255,46 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 
 		@Override
 		protected void hookOnComplete() {
-			if (this.many) {
-				if(Http2Response.this.trailers == null) {
-					Http2Response.this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
-				}
-				else {
-					Http2Response.this.connectionStream.writeHeaders(Http2Response.this.trailers.unwrap(), 0, true);
-					Http2Response.this.trailers.setWritten();
-				}
-			}
-			else {
-				if(!Http2Response.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
-					Http2Response.this.headers.contentLength(Http2Response.this.transferedLength);
-				}
-				
-				if(this.singleChunk == null) {
+			if(!Http2Response.this.connectionStream.isReset()) {
+				if (this.many) {
 					if(Http2Response.this.trailers == null) {
-						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, true);
-						Http2Response.this.headers.setWritten();
+						Http2Response.this.connectionStream.writeData(Unpooled.EMPTY_BUFFER, 0, true);
 					}
 					else {
-						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
-						Http2Response.this.headers.setWritten();
 						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.trailers.unwrap(), 0, true);
 						Http2Response.this.trailers.setWritten();
 					}
 				}
 				else {
-					if(Http2Response.this.trailers == null) {
-						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
-						Http2Response.this.headers.setWritten();
-						Http2Response.this.connectionStream.writeData(this.singleChunk, 0, true);
+					if(!Http2Response.this.headers.contains(Headers.NAME_CONTENT_LENGTH)) {
+						Http2Response.this.headers.contentLength(Http2Response.this.transferedLength);
+					}
+
+					if(this.singleChunk == null) {
+						if(Http2Response.this.trailers == null) {
+							Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, true);
+							Http2Response.this.headers.setWritten();
+						}
+						else {
+							Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
+							Http2Response.this.headers.setWritten();
+							Http2Response.this.connectionStream.writeHeaders(Http2Response.this.trailers.unwrap(), 0, true);
+							Http2Response.this.trailers.setWritten();
+						}
 					}
 					else {
-						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
-						Http2Response.this.headers.setWritten();
-						Http2Response.this.connectionStream.writeData(this.singleChunk, 0, false);
-						Http2Response.this.connectionStream.writeHeaders(Http2Response.this.trailers.unwrap(), 0, true);
-						Http2Response.this.trailers.setWritten();
+						if(Http2Response.this.trailers == null) {
+							Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
+							Http2Response.this.headers.setWritten();
+							Http2Response.this.connectionStream.writeData(this.singleChunk, 0, true);
+						}
+						else {
+							Http2Response.this.connectionStream.writeHeaders(Http2Response.this.headers.unwrap(), 0, false);
+							Http2Response.this.headers.setWritten();
+							Http2Response.this.connectionStream.writeData(this.singleChunk, 0, false);
+							Http2Response.this.connectionStream.writeHeaders(Http2Response.this.trailers.unwrap(), 0, true);
+							Http2Response.this.trailers.setWritten();
+						}
 					}
 				}
 			}
@@ -294,7 +303,9 @@ class Http2Response extends AbstractResponse<Http2ResponseHeaders, Http2Response
 
 		@Override
 		protected void hookOnError(Throwable throwable) {
-			Http2Response.this.connectionStream.onExchangeError(throwable);
+			if(!Http2Response.this.connectionStream.isReset()) {
+				Http2Response.this.connectionStream.onExchangeError(throwable);
+			}
 		}
 	}
 }

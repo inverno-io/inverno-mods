@@ -83,7 +83,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	private Scheduler scheduler;
 	private boolean tls;
 	private Long maxConcurrentStreams;
-	private HttpConnection.Handler handler;
+	HttpConnection.Handler handler;
 	
 	boolean read;
 	
@@ -176,7 +176,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	@Override
 	public Optional<Certificate[]> getLocalCertificates() {
 		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
-			.map(handler -> handler.engine().getSession().getLocalCertificates())
+			.map(sslHandler -> sslHandler.engine().getSession().getLocalCertificates())
 			.filter(certificates -> certificates.length > 0);
 	}
 
@@ -188,9 +188,9 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 	@Override
 	public Optional<Certificate[]> getRemoteCertificates() {
 		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
-			.map(handler -> {
+			.map(sslHandler -> {
 				try {
-					return handler.engine().getSession().getPeerCertificates();
+					return sslHandler.engine().getSession().getPeerCertificates();
 				} 
 				catch(SSLPeerUnverifiedException e) {
 					LOGGER.debug("Could not verify identity of the client", e);
@@ -443,6 +443,7 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 		Http2ConnectionStream clientStream = this.clientStreams.remove(streamId);
 		if(clientStream != null) {
 			try {
+				clientStream.setErrorCode(errorCode);
 				clientStream.exchange.dispose(new ResetStreamException(errorCode, "Stream " + streamId +" was reset (" + errorCode + ")"));
 			}
 			finally {
@@ -516,7 +517,15 @@ public class Http2Connection extends Http2ConnectionHandler implements Http2Fram
 		Http2ConnectionStream clientStream = this.clientStreams.remove(stream.id());
 		if(clientStream != null) {
 			try {
-				clientStream.exchange.dispose(new HttpClientException("Stream was closed"));
+				Throwable cause;
+				if(clientStream.isReset()) {
+					cause = new ResetStreamException(clientStream.getErrorCode(), "Stream " + stream.id() +" was reset (" + clientStream.getErrorCode() + ")");
+				}
+				else {
+					cause = new HttpClientException("Stream " + stream.id() + " was closed");
+					clientStream.setErrorCode(Http2Error.STREAM_CLOSED.code());
+				}
+				clientStream.exchange.dispose(cause);
 			}
 			finally {
 				if(this.handler != null) {

@@ -65,6 +65,8 @@ abstract class AbstractHttp1xExchange extends AbstractExchange<Http1xRequest, Ht
 	 * The next exchange to process in the request pipeline.
 	 */
 	Http1xExchange next;
+	
+	protected boolean reset;
 
 	/**
 	 * <p>
@@ -89,16 +91,6 @@ abstract class AbstractHttp1xExchange extends AbstractExchange<Http1xRequest, Ht
 			(this.version == io.netty.handler.codec.http.HttpVersion.HTTP_1_0 && request.headers().contains(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE, true));
 	}
 
-
-	/**
-	 * <p>
-	 * Returns the originating exchange or this exchange if this is the originating exchange (i.e. {@link Http1xExchange}).
-	 * </p>
-	 * 
-	 * @return the originating exchange
-	 */
-	abstract Http1xExchange unwrap();
-	
 	/**
 	 * <p>
 	 * Creates an Http/1.x exchange from the specified parent exchange.
@@ -116,7 +108,17 @@ abstract class AbstractHttp1xExchange extends AbstractExchange<Http1xRequest, Ht
 		this.version = parentExchange.version;
 		this.keepAlive = parentExchange.keepAlive;
 		this.next = parentExchange.next;
+		this.reset = parentExchange.reset;
 	}
+	
+	/**
+	 * <p>
+	 * Returns the originating exchange or this exchange if this is the originating exchange (i.e. {@link Http1xExchange}).
+	 * </p>
+	 * 
+	 * @return the originating exchange
+	 */
+	abstract Http1xExchange unwrap();
 	
 	@Override
 	public final HttpVersion getProtocol() {
@@ -124,26 +126,29 @@ abstract class AbstractHttp1xExchange extends AbstractExchange<Http1xRequest, Ht
 	}
 
 	@Override
-	protected final void doReset(long code) {
+	public final void reset(long code) {
 		if(this.connection.executor().inEventLoop()) {
-			this.dispose(new HttpServerException("Cancelled exchange: " + code));
-			if(this.response().headers().isWritten()) {
-				this.connection.shutdown().subscribe();
-			}
-			else {
-				LinkedHttpHeaders httpHeaders = new LinkedHttpHeaders();
-				if(this.version == io.netty.handler.codec.http.HttpVersion.HTTP_1_0) {
-					if(this.keepAlive) {
-						httpHeaders.set((CharSequence)Headers.NAME_CONNECTION, (CharSequence)Headers.VALUE_KEEP_ALIVE);
+			if(!this.reset) {
+				this.reset = true;
+				this.dispose(new HttpServerException("Exchange was reset: " + code));
+				if(this.response().headers().isWritten()) {
+					this.connection.shutdown().subscribe();
+				}
+				else {
+					LinkedHttpHeaders httpHeaders = new LinkedHttpHeaders();
+					if(this.version == io.netty.handler.codec.http.HttpVersion.HTTP_1_0) {
+						if(this.keepAlive) {
+							httpHeaders.set((CharSequence)Headers.NAME_CONNECTION, (CharSequence)Headers.VALUE_KEEP_ALIVE);
+						}
 					}
+					else if(!this.keepAlive) {
+						httpHeaders.set((CharSequence)Headers.NAME_CONNECTION, (CharSequence)Headers.VALUE_CLOSE);
+					}
+					httpHeaders.set((CharSequence)Headers.NAME_CONTENT_LENGTH, (CharSequence)"0");
+					this.connection.writeHttpObject(new FlatFullHttpResponse(this.version , HttpResponseStatus.valueOf(Status.CANCELLED_REQUEST.getCode()), httpHeaders, Unpooled.EMPTY_BUFFER, null));
+
+					this.connection.onExchangeComplete();
 				}
-				else if(!this.keepAlive) {
-					httpHeaders.set((CharSequence)Headers.NAME_CONNECTION, (CharSequence)Headers.VALUE_CLOSE);
-				}
-				httpHeaders.set((CharSequence)Headers.NAME_CONTENT_LENGTH, (CharSequence)"0");
-				this.connection.writeHttpObject(new FlatFullHttpResponse(this.version , HttpResponseStatus.valueOf(Status.CANCELLED_REQUEST.getCode()), httpHeaders, Unpooled.EMPTY_BUFFER, null));
-				
-				this.connection.onExchangeComplete();
 			}
 		}
 		else {

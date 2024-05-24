@@ -52,11 +52,8 @@ class Http1xExchange<A extends ExchangeContext> extends AbstractExchange<A, Http
 	
 	Http1xExchange<?> next;
 	
-	/**
-	 * Flag indicating whether the exchange was reset.
-	 */
-	protected boolean reset;
-
+	private boolean reset;
+	
 	/**
 	 * <p>
 	 * Creates an Http/1.x exchange.
@@ -82,7 +79,7 @@ class Http1xExchange<A extends ExchangeContext> extends AbstractExchange<A, Http
 		super(configuration, sink, headerService, parameterConverter, context, new Http1xRequest(parameterConverter, connection, endpointRequest));
 		this.connection = connection;
 	}
-	
+
 	@Override
 	protected void startTimeout() {
 		if(this.configuration.request_timeout() > 0) {
@@ -143,12 +140,14 @@ class Http1xExchange<A extends ExchangeContext> extends AbstractExchange<A, Http
 	}
 	
 	@Override
-	protected final void doReset(long code) {
-		// exchange has to be the responding exchange because the exchange is only emitted when the response is received
-		this.reset = true;
+	public final void reset(long code) {
 		if(this.connection.executor().inEventLoop()) {
-			this.dispose(new HttpClientException("Exchange has been reset: " + code));
-			this.connection.shutdown().subscribe();
+			if(!this.reset) {
+				this.reset = true;
+				// exchange has to be the responding exchange because the exchange is only emitted when the response is received
+				this.dispose(new HttpClientException("Exchange has been reset: " + code));
+				this.connection.shutdown().subscribe();
+			}
 		}
 		else {
 			this.connection.executor().execute(() -> this.reset(code));

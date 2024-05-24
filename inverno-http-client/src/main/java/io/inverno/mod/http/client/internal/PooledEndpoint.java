@@ -424,7 +424,6 @@ public class PooledEndpoint<A extends ExchangeContext> extends AbstractEndpoint<
 				});
 			},
 			e -> {
-				e.printStackTrace();
 				this.commandExecutor.execute(pool -> {
 					pool.connecting--;
 					request.error(e);

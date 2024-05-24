@@ -30,6 +30,8 @@ import io.inverno.mod.http.client.ResetStreamException;
 import io.netty.handler.codec.http2.Http2Error;
 import java.util.Optional;
 import java.util.function.Supplier;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 
 /**
@@ -42,6 +44,8 @@ import reactor.core.publisher.Mono;
  */
 public class GenericGrpcExchange<A extends ExchangeContext, B extends Message, C extends Message, D extends GrpcRequest<B>, E extends GrpcResponse<C>> implements GrpcExchange<A, B, C, D, E> {
 
+	public static final Logger LOGGER = LogManager.getLogger(GrpcExchange.class);
+	
 	/**
 	 * The underlying client HTTP exchange.
 	 */

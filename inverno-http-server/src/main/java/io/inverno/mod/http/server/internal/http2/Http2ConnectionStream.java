@@ -48,7 +48,12 @@ class Http2ConnectionStream {
 	 * The exchange associated to the stream which can be replaced by an {@link Http2ErrorExchange} in case of error while processing the exchange.
 	 */
 	AbstractHttp2Exchange exchange;
-
+	
+	/**
+	 * The error code that was received or sent in a RST_STREAM frame or null if the stream was not reset.
+	 */
+	private Long errorCode;
+	
 	/**
 	 * <p>
 	 * Creates an Http/2 connection stream.
@@ -62,6 +67,52 @@ class Http2ConnectionStream {
 		this.connection = connection;
 		this.channelContext = channelContext;
 		this.stream = stream;
+	}
+	
+	/**
+	 * <p>
+	 * Returns the Http/2 stream.
+	 * </p>
+	 * 
+	 * @return the stream or null
+	 */
+	Http2Stream getStream() {
+		return stream;
+	}
+
+	/**
+	 * <p>
+	 * Determines whether this stream was reset remotely (i.e. reset was received) or locally (i.e. exchange reset).
+	 * </p>
+	 * 
+	 * @return true if the stream was reset or is about to be reset
+	 */
+	boolean isReset() {
+		return this.errorCode != null;
+	}
+
+	/**
+	 * <p>
+	 * Returns the error code that was received or sent in a RST_FRAME.
+	 * </p>
+	 * 
+	 * @return the error code or null if the stream was not reset
+	 */
+	Long getErrorCode() {
+		return errorCode;
+	}
+
+	/**
+	 * <p>
+	 * Sets the error code if it wasn't already set.
+	 * </p>
+	 * 
+	 * @param errorCode the error code
+	 */
+	void setErrorCode(long errorCode) {
+		if(this.errorCode == null) {
+			this.errorCode = errorCode;
+		}
 	}
 	
 	/**
@@ -170,6 +221,7 @@ class Http2ConnectionStream {
 	 */
     public void resetStream(long errorCode, ChannelPromise promise) {
 		if(this.channelContext.executor().inEventLoop()) {
+			this.setErrorCode(errorCode);
 			this.connection.resetStream(this.channelContext, this.stream.id(), errorCode, promise);
 			this.flush();
 		}

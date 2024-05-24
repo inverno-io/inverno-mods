@@ -101,6 +101,8 @@ abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpCo
 	protected Http2Response createResponse(Http2Headers headers) {
 		Http2Response newResponse = new Http2Response(this.headerService, this.parameterConverter, headers);
 		newResponse.body().transform(data -> {
+			// We can't catch downstream errors which is why we reset the stream with a cancel code here
+			// in order to reset with a specific code, a doOnError() invoking reset() must be placed downstream
 			if(data instanceof Mono) {
 				return Mono.from(data)
 					.doOnCancel(() -> this.reset(Http2Error.CANCEL.code()))
@@ -121,8 +123,15 @@ abstract class AbstractHttp2Exchange<A extends ExchangeContext, B extends HttpCo
 	}
 	
 	@Override
-	public void doReset(long code) {
-		// reseting the stream should dispose the stream
-		this.connectionStream.resetStream(code);
+	public void reset(long code) {
+		if(this.connectionStream.executor().inEventLoop()) {
+			if(!this.connectionStream.isReset()) {
+				// Exchange is eventually disposed when the stream is closed
+				this.connectionStream.resetStream(code);
+			}
+		}
+		else {
+			this.connectionStream.executor().execute(() -> this.reset(code));
+		}
 	}
 }

@@ -138,9 +138,10 @@ public class GenericGrpcRequest<A extends Message> implements GrpcRequest.Unary<
 				Mono.just(Unpooled.EMPTY_BUFFER), // Make sure we have a flux here (client buffer first chunk to be able to provide a content-length in case of single publisher)
 				Flux.from(value).transformDeferred(data -> this.messageWriterSupplier.get().apply((Publisher<A>)data))
 			)
-			.doOnError(Throwable.class, error -> {
-				if(error instanceof GrpcException) {
-					GrpcException grpcError = (GrpcException)error;
+			.doOnError(Throwable.class, t -> {
+				GenericGrpcExchange.LOGGER.error("gRPC request processing error", t);
+				if(t instanceof GrpcException) {
+					GrpcException grpcError = (GrpcException)t;
 					if(grpcError.getStatusCode() == GrpcStatus.CANCELLED.getCode()) {
 						this.cancelExchange.run();
 					}

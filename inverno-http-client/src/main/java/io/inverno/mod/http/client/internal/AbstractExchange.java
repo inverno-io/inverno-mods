@@ -38,6 +38,8 @@ import reactor.core.publisher.Sinks;
  */
 public abstract class AbstractExchange<A extends ExchangeContext, B extends HttpConnectionRequest, C extends HttpConnectionResponse, D> implements HttpConnectionExchange<A, B, C> {
 
+	private static final HttpClientException EXCHANGE_DISPOSED_ERROR = new StacklessHttpClientException("Exchange was disposed");
+	
 	/**
 	 * The Http client configuration.
 	 */
@@ -63,7 +65,6 @@ public abstract class AbstractExchange<A extends ExchangeContext, B extends Http
 	protected C response;
 	
 	private Throwable cancelCause;
-	private boolean reset;
 	
 	/**
 	 * <p>
@@ -183,10 +184,10 @@ public abstract class AbstractExchange<A extends ExchangeContext, B extends Http
 	public final void dispose(Throwable cause) {
 		this.cancelTimeout();
 		if(this.cancelCause == null) {
-			this.cancelCause = cause;
+			this.cancelCause = cause != null ? cause : EXCHANGE_DISPOSED_ERROR;
 			this.doDispose(cause);
 			if(this.response == null && this.sink != null) {
-				this.sink.tryEmitError(cause != null ? cause : new HttpClientException("Exchange was disposed"));
+				this.sink.tryEmitError(this.cancelCause);
 			}
 		}
 	}
@@ -223,21 +224,4 @@ public abstract class AbstractExchange<A extends ExchangeContext, B extends Http
 	public final Optional<Throwable> getCancelCause() {
 		return Optional.ofNullable(this.cancelCause);
 	}
-	
-	@Override
-	public final void reset(long code) {
-		if(!this.reset) {
-			this.reset = true;
-			this.doReset(code);
-		}
-	}
-	
-	/**
-	 * <p>
-	 * Resets the exchange with the specified code.
-	 * </p>
-	 * 
-	 * @param code a code
-	 */
-	protected abstract void doReset(long code);
 }

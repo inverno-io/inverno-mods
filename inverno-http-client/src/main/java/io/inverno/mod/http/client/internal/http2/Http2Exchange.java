@@ -20,6 +20,7 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.Exchange;
 import io.inverno.mod.http.client.HttpClientConfiguration;
+import io.inverno.mod.http.client.ResetStreamException;
 import io.inverno.mod.http.client.internal.EndpointRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionExchange;
 import io.inverno.mod.http.client.internal.HttpConnectionRequest;
@@ -79,6 +80,10 @@ public class Http2Exchange<A extends ExchangeContext> extends AbstractHttp2Excha
 	
 	@Override
 	protected void doDispose(Throwable cause) {
+		if(cause instanceof ResetStreamException && this.connectionStream.getStream().isResetSent()) {
+			// We sent the reset
+			cause = null;
+		}
 		this.request.dispose(cause);
 		if(this.response != null) {
 			this.response.dispose(cause);
