@@ -16,8 +16,6 @@
 package io.inverno.mod.http.server;
 
 import io.inverno.mod.http.base.BaseRequest;
-import io.inverno.mod.http.base.InboundCookies;
-import io.inverno.mod.http.base.InboundRequestHeaders;
 import java.util.Optional;
 
 /**
@@ -31,18 +29,6 @@ import java.util.Optional;
  * @see Exchange
  */
 public interface Request extends BaseRequest {
-
-	/**
-	 * <p>
-	 * Returns the cookies sent in the request.
-	 * </p>
-	 * 
-	 * @return the cookies
-	 * 
-	 * @deprecated use {@link InboundRequestHeaders#cookies()}
-	 */
-	@Deprecated
-	InboundCookies cookies();
 	
 	/**
 	 * <p>

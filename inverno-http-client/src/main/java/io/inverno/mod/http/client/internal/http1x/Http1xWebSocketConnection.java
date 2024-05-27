@@ -21,6 +21,7 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.base.internal.ws.GenericWebSocketFrame;
 import io.inverno.mod.http.base.internal.ws.GenericWebSocketMessage;
+import io.inverno.mod.http.client.ConnectionTimeoutException;
 import io.inverno.mod.http.client.HttpClientConfiguration;
 import io.inverno.mod.http.client.internal.EndpointExchange;
 import io.inverno.mod.http.client.internal.WebSocketConnection;
@@ -28,7 +29,6 @@ import io.inverno.mod.http.client.internal.WebSocketConnectionExchange;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoop;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpResponse;
@@ -43,7 +43,12 @@ import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.IdleStateEvent;
+import java.net.SocketAddress;
 import java.net.URI;
+import java.security.cert.Certificate;
+import java.util.Optional;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
@@ -60,7 +65,7 @@ import reactor.core.scheduler.Schedulers;
  */
 public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Object> implements WebSocketConnection {
 
-	private static final Logger LOGGER = LogManager.getLogger(Http1xWebSocketConnection.class);
+	private static final Logger LOGGER = LogManager.getLogger(WebSocketConnection.class);
 	
 	private final HttpClientConfiguration configuration;
 	private final ObjectConverter<String> parameterConverter;
@@ -72,7 +77,7 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	private final long inboundCloseFrameTimeout;
 	private final HeadersValidator headersValidator;
 	
-	private ChannelHandlerContext context;
+	private ChannelHandlerContext channelContext;
 	private boolean tls;
 	
 	private Mono<Void> close;
@@ -89,7 +94,7 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	 * @param configuration      the HTTP client configurartion
 	 * @param parameterConverter the parameter converter
 	 */
-	public Http1xWebSocketConnection(
+	Http1xWebSocketConnection(
 			HttpClientConfiguration configuration, 
 			ObjectConverter<String> parameterConverter) {
 		this.configuration = configuration;
@@ -106,6 +111,37 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	@Override
 	public boolean isTls() {
 		return this.tls;
+	}
+	
+	@Override
+	public SocketAddress getLocalAddress() {
+		return this.channelContext.channel().localAddress();
+	}
+
+	@Override
+	public Optional<Certificate[]> getLocalCertificates() {
+		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
+			.map(handler -> handler.engine().getSession().getLocalCertificates())
+			.filter(certificates -> certificates.length > 0);
+	}
+
+	@Override
+	public SocketAddress getRemoteAddress() {
+		return this.channelContext.channel().remoteAddress();
+	}
+
+	@Override
+	public Optional<Certificate[]> getRemoteCertificates() {
+		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
+			.map(handler -> {
+				try {
+					return handler.engine().getSession().getPeerCertificates();
+				} 
+				catch(SSLPeerUnverifiedException e) {
+					return null;
+				}
+			})
+			.filter(certificates -> certificates.length > 0);
 	}
 	
 	@Override
@@ -132,7 +168,7 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 			}
 		})
 		.subscribeOn(Schedulers.fromExecutor(ctx.executor()));
-		this.context = ctx;
+		this.channelContext = ctx;
 	}
 
 	@Override
@@ -153,13 +189,12 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	@Override
 	public <A extends ExchangeContext> Mono<WebSocketConnectionExchange<A>> handshake(EndpointExchange<A> endpointExchange, String subprotocol) {
 		return Mono.<WebSocketConnectionExchange<ExchangeContext>>create(exchangeSink -> {
-			EventLoop eventLoop = this.context.channel().eventLoop();
-			if(eventLoop.inEventLoop()) {
-				this.sendHandshake(this.context, exchangeSink, endpointExchange, subprotocol);
+			if(this.channelContext.channel().eventLoop().inEventLoop()) {
+				this.sendHandshake(this.channelContext, exchangeSink, endpointExchange, subprotocol);
 			}
 			else {
-				eventLoop.submit(() -> {
-					this.sendHandshake(this.context, exchangeSink, endpointExchange, subprotocol);
+				this.channelContext.channel().eventLoop().execute(() -> {
+					this.sendHandshake(this.channelContext, exchangeSink, endpointExchange, subprotocol);
 				});
 			}
 		})
@@ -173,7 +208,7 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 	 *
 	 * @param context          the channel context
 	 * @param exchangeSink     the WebSocket exchange sink
-	 * @param endpointExchange the original endpoint exchange
+	 * @param endpointExchange the originating endpoint exchange
 	 * @param subprotocol      the subprotocol
 	 */
 	private void sendHandshake(
@@ -185,22 +220,23 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 			throw new IllegalStateException("Handshake already sent");
 		}
 		
-		Http1xRequest http1xRequest = new Http1xRequest(this.context, this.tls, false, this.parameterConverter, endpointExchange.request(), this.headersValidator);
+		endpointExchange.request().getHeaders().getUnderlyingHeaders().setValidator(this.headersValidator);
+		Http1xWebSocketRequest handshakeRequest = new Http1xWebSocketRequest(this.parameterConverter, this, endpointExchange.request());
 		
-		URI webSocketURI = URI.create((this.tls ? "wss:// ": "ws://") + http1xRequest.getAuthority() + http1xRequest.getPath());
+		URI webSocketURI = URI.create((this.tls ? "wss:// ": "ws://") + handshakeRequest.getAuthority() + handshakeRequest.getPath());
 		WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(
 			webSocketURI, 
 			WebSocketVersion.V13, 
 			subprotocol, 
 			true, 
-			http1xRequest.headers().getUnderlyingHeaders());
+			handshakeRequest.headers().unwrap());
 		
 		this.webSocketExchange = new GenericWebSocketExchange(
 			context, 
 			exchangeSink, 
 			handshaker, 
 			endpointExchange.context(), 
-			http1xRequest, 
+			handshakeRequest, 
 			subprotocol, 
 			this.frameFactory, 
 			this.messageFactory, 
@@ -208,6 +244,18 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 			this.inboundCloseFrameTimeout
 		);
 		this.webSocketExchange.start();
+	}
+
+	@Override
+	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+		try {
+			super.userEventTriggered(ctx, evt);
+		}
+		finally {
+			if(evt instanceof IdleStateEvent) {
+				this.exceptionCaught(ctx, new ConnectionTimeoutException("Idle timeout: " + ((IdleStateEvent)evt).state()));
+			}
+		}
 	}
 
 	@Override
@@ -226,11 +274,9 @@ public class Http1xWebSocketConnection extends SimpleChannelInboundHandler<Objec
 				this.webSocketExchange.dispose(cause);
 			}
 			else {
-				LOGGER.error("WebSocket procotol error", cause);
+				LOGGER.error("WebSocket connection error", cause);
 				this.webSocketExchange.dispose(cause);
-				ChannelPromise closePromise = this.context.newPromise();
-				this.context.close(closePromise);
-				this.webSocketExchange.finalizeExchange(closePromise);
+				this.channelContext.close();
 			}
 		}
 	}

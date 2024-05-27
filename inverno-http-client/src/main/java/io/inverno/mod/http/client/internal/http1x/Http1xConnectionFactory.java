@@ -1,12 +1,12 @@
 /*
- * Copyright 2022 Jeremy KUHN
- * 
+ * Copyright 2022 Jeremy Kuhn
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,9 +28,9 @@ import io.inverno.mod.http.client.internal.multipart.MultipartEncoder;
 
 /**
  * <p>
- * HTTP/1.x {@link HttpConnectionFactory} implementation.
+ * Http/1.x {@link HttpConnectionFactory} implementation.
  * </p>
- *
+ * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
@@ -42,10 +42,10 @@ public class Http1xConnectionFactory implements HttpConnectionFactory<Http1xConn
 	private final MultipartEncoder<Parameter> urlEncodedBodyEncoder;
 	private final MultipartEncoder<Part<?>> multipartBodyEncoder;
 	private final Part.Factory partFactory;
-
+	
 	/**
 	 * <p>
-	 * Creates an HTTP/1.x connection factory.
+	 * Creates an Http/1.x connection factory.
 	 * </p>
 	 *
 	 * @param headerService         the header service
@@ -61,7 +61,7 @@ public class Http1xConnectionFactory implements HttpConnectionFactory<Http1xConn
 		this.multipartBodyEncoder = multipartBodyEncoder;
 		this.partFactory = partFactory;
 	}
-
+	
 	@Override
 	public Http1xConnection create(HttpClientConfiguration configuration, HttpVersion httpVersion, EndpointChannelConfigurer configurer) {
 		if(HttpVersion.HTTP_2_0.equals(httpVersion)) {

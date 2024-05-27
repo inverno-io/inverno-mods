@@ -70,7 +70,7 @@ public class CSRFDoubleSubmitCookieInterceptorTest {
 		// POST
 		Mockito.when(mockExchange.request().getMethod()).thenReturn(Method.POST);
 		Assertions.assertEquals("Missing CSRF token cookie", Assertions.assertThrows(ForbiddenException.class, () -> interceptor.intercept(mockExchange).block()).getMessage());
-		Mockito.verify(mockExchange.response(), Mockito.times(0)).cookies(Mockito.any());
+		Mockito.verify((OutboundResponseHeaders)mockExchange.response().headers(), Mockito.times(0)).cookies(Mockito.any());
 		
 		Mockito.clearInvocations(mockExchange.response(), mockExchange.response().headers(), mockCookieConfigurator);
 		
@@ -164,7 +164,6 @@ public class CSRFDoubleSubmitCookieInterceptorTest {
 		InboundRequestHeaders mockRequestHeaders = Mockito.mock(InboundRequestHeaders.class);
 		Mockito.when(mockRequest.headers()).thenReturn(mockRequestHeaders);
 		InboundCookies mockRequestCookies = Mockito.mock(InboundCookies.class);
-		Mockito.when(mockRequest.cookies()).thenReturn(mockRequestCookies);
 		Mockito.when(mockRequestHeaders.cookies()).thenReturn(mockRequestCookies);
 		QueryParameters mockQueryParameters = Mockito.mock(QueryParameters.class);
 		Mockito.when(mockRequest.queryParameters()).thenReturn(mockQueryParameters);

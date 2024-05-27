@@ -96,6 +96,8 @@ module io.inverno.mod.http.client {
 	requires io.netty.codec.http;
 	requires io.netty.codec.http2;
 	requires io.netty.handler;
+	requires io.netty.handler.proxy;
+	requires io.netty.resolver;
 	
 	requires static com.aayushatharva.brotli4j;
 	

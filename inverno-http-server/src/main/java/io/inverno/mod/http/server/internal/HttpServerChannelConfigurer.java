@@ -83,11 +83,12 @@ public class HttpServerChannelConfigurer {
 	 * @param http2ChannelHandlerFactory         a HTTP/2 channel handler factory
 	 */
 	public HttpServerChannelConfigurer(
-		HttpServerConfiguration configuration,
-		NetService netService,
-		@Lazy Supplier<SslContext> sslContextSupplier, 
-		Supplier<Http1xConnection> http1xChannelHandlerFactory,
-		Supplier<Http2Connection> http2ChannelHandlerFactory) {
+			HttpServerConfiguration configuration,
+			NetService netService,
+			@Lazy Supplier<SslContext> sslContextSupplier, 
+			Supplier<Http1xConnection> http1xChannelHandlerFactory,
+			Supplier<Http2Connection> http2ChannelHandlerFactory
+		) {
 		this.configuration = configuration;
 		this.allocator = netService.getByteBufAllocator();
 		this.directAllocator = netService.getDirectByteBufAllocator();
@@ -141,11 +142,11 @@ public class HttpServerChannelConfigurer {
 			}
 		}
 		else {
-			if(this.configuration.h2c_enabled()) {
+			if(this.configuration.h2_enabled()) {
 				this.configureH2C(pipeline);
 			}
 			else {
-				this.configureHttp1x(pipeline);				
+				this.configureHttp1x(pipeline);
 			}
 		}
 	}

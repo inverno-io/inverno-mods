@@ -52,7 +52,7 @@ public interface ResponseBody {
 	 *
 	 * @return the request body
 	 * 
-	 * @throws IllegalArgumentException if data were already sent to the recipient
+	 * @throws IllegalArgumentException if data were already sent to the client
 	 */
 	ResponseBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) throws IllegalArgumentException;
 

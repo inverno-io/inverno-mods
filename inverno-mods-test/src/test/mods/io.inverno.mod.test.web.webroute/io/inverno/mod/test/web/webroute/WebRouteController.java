@@ -1347,4 +1347,19 @@ public class WebRouteController {
 	public Mono<String> get_timeout() {
 		return Mono.just("get_timeout").delayElement(Duration.ofSeconds(2));
 	}
+
+  @WebRoute(path = "/post_timeout", method = Method.POST, produces = MediaTypes.TEXT_PLAIN)
+	public Mono<String> post_timeout(@Body Mono<String> data) {
+		return Mono.just("post_timeout").delayElement(Duration.ofSeconds(2));
+	}
+
+	@WebRoute(path = "/get_timeout_with_response", method = Method.GET, produces = MediaTypes.TEXT_PLAIN)
+	public Flux<String> get_timeout_with_response() {
+		return Flux.concat(Flux.just("a", "b"), Mono.just("get_timeout_with_response").delayElement(Duration.ofSeconds(2)));
+	}
+
+	@WebRoute(path = "/post_ignore_body", method = Method.POST, produces = MediaTypes.TEXT_PLAIN)
+	public String post_ignore_body() {
+		return "get_timeout_with_response";
+	}
 }

@@ -15,10 +15,12 @@
  */
 package io.inverno.mod.http.server.internal;
 
+import io.inverno.mod.http.server.HttpServerException;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.ApplicationProtocolNegotiationHandler;
+import io.netty.handler.timeout.IdleStateEvent;
 
 /**
  * <p>
@@ -42,6 +44,18 @@ public class HttpProtocolNegotiationHandler extends ApplicationProtocolNegotiati
 	public HttpProtocolNegotiationHandler(HttpServerChannelConfigurer channelConfigurer) {
 		super(ApplicationProtocolNames.HTTP_1_1);
 		this.channelConfigurer = channelConfigurer;
+	}
+
+	@Override
+	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+		try {
+			super.userEventTriggered(ctx, evt);
+		}
+		finally {
+			if(evt instanceof IdleStateEvent) {
+				this.handshakeFailure(ctx, new HttpServerException("Idle timeout: " + ((IdleStateEvent)evt).state()));
+			}
+		}
 	}
 
 	@Override

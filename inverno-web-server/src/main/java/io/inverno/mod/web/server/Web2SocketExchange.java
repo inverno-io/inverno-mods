@@ -20,7 +20,6 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
 import java.lang.reflect.Type;
 import org.reactivestreams.Publisher;
-import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -41,9 +40,6 @@ public interface Web2SocketExchange<A extends ExchangeContext> extends WebSocket
 
 	@Override
 	public WebRequest request();
-
-	@Override
-	Web2SocketExchange<A> finalizer(Mono<Void> finalizer);
 
 	@Override
 	public Web2SocketExchange.Inbound inbound();

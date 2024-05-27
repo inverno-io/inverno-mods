@@ -52,8 +52,10 @@ public interface RequestBody {
 	 * @param transformer a request payload publisher transformer
 	 *
 	 * @return the request body
+	 * 
+	 * @throws IllegalStateException if the request body data publisher has been subscribed
 	 */
-	RequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer);
+	RequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) throws IllegalStateException;
 
 	/**
 	 * <p>

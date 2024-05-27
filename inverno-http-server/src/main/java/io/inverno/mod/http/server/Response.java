@@ -18,7 +18,6 @@ package io.inverno.mod.http.server;
 import io.inverno.mod.http.base.BaseResponse;
 import io.inverno.mod.http.base.OutboundHeaders;
 import io.inverno.mod.http.base.OutboundResponseHeaders;
-import io.inverno.mod.http.base.OutboundSetCookies;
 import java.util.function.Consumer;
 
 /**
@@ -39,12 +38,21 @@ public interface Response extends BaseResponse {
 	 * </p>
 	 *
 	 * <p>
-	 * Any attempts to specify new headers in the response, once headers haven been sent to the client, will result in an {@link IllegalStateException} being thrown.
+	 * Any attempts to specify new headers in the response, once headers have been sent to the client, will result in an {@link IllegalStateException} being thrown.
 	 * </p>
 	 *
 	 * @return true if headers have been sent, false otherwise
 	 */
 	boolean isHeadersWritten();
+	
+	/**
+	 * <p>
+	 * Returns the number of bytes transfered as part of the response body.
+	 * </p>
+	 * 
+	 * @return the transfered length
+	 */
+	int getTransferedLength();
 	
 	/**
 	 * <p>
@@ -72,22 +80,6 @@ public interface Response extends BaseResponse {
 	
 	/**
 	 * <p>
-	 * Configures the cookies to set in the response headers.
-	 * </p>
-	 *
-	 * @param cookiesConfigurer a response cookies configurer
-	 *
-	 * @return the response
-	 *
-	 * @throws IllegalStateException if response headers have already been sent to the client
-	 * 
-	 * @deprecated use {@link #headers(java.util.function.Consumer) } and {@link OutboundResponseHeaders#cookies(java.util.function.Consumer) }
-	 */
-	@Deprecated
-	Response cookies(Consumer<OutboundSetCookies> cookiesConfigurer) throws IllegalStateException;
-	
-	/**
-	 * <p>
 	 * Sends an interim 100 continue response to the client so it can send the rest of the request.
 	 * </p>
 	 *
@@ -96,8 +88,10 @@ public interface Response extends BaseResponse {
 	 * </p>
 	 *
 	 * @return the response
+	 * 
+	 * @throws IllegalStateException if response headers have already been sent to the client
 	 */
-	Response sendContinue();
+	Response sendContinue() throws IllegalStateException;
 	
 	/**
 	 * <p>

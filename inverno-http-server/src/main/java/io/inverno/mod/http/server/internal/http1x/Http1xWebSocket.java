@@ -16,27 +16,16 @@
 package io.inverno.mod.http.server.internal.http1x;
 
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.internal.ws.GenericWebSocketFrame;
-import io.inverno.mod.http.base.internal.ws.GenericWebSocketMessage;
+import io.inverno.mod.http.base.Status;
+import io.inverno.mod.http.base.ws.WebSocketStatus;
 import io.inverno.mod.http.server.HttpServerConfiguration;
-import io.inverno.mod.http.server.internal.http1x.ws.WebSocketProtocolHandler;
+import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketExchange;
 import io.inverno.mod.http.server.ws.WebSocket;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
 import io.inverno.mod.http.server.ws.WebSocketExchangeHandler;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPipeline;
-import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig;
-import io.netty.handler.codec.http.websocketx.extensions.WebSocketServerExtensionHandler;
-import io.netty.handler.codec.http.websocketx.extensions.WebSocketServerExtensionHandshaker;
-import io.netty.handler.codec.http.websocketx.extensions.compression.DeflateFrameServerExtensionHandshaker;
-import io.netty.handler.codec.http.websocketx.extensions.compression.PerMessageDeflateServerExtensionHandshaker;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import org.reactivestreams.Subscription;
+import reactor.core.Disposable;
+import reactor.core.publisher.BaseSubscriber;
 import reactor.core.publisher.Mono;
 
 /**
@@ -53,18 +42,16 @@ import reactor.core.publisher.Mono;
  */
 class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<ExchangeContext>> {
 	
-	private final HttpServerConfiguration configuration;
-	private final ChannelHandlerContext context;
+	private final Http1xConnection connection;
 	private final Http1xExchange exchange;
-	private final GenericWebSocketFrame.GenericFactory frameFactory;
-	private final GenericWebSocketMessage.GenericFactory messageFactory;
-	
-	private final WebSocketServerProtocolConfig protocolConfig;
+	private final String[] subProtocols;
 	
 	private WebSocketExchangeHandler<? super ExchangeContext, WebSocketExchange<ExchangeContext>> handler;
 	private Mono<Void> fallback;
-
-	private Map<String, ChannelHandler> initialChannelHandlers;
+	
+	private Disposable disposable;
+	
+	private GenericWebSocketExchange webSocketExchange;
 	
 	/**
 	 * <p>
@@ -72,122 +59,56 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 	 * </p>
 	 *
 	 * @param configuration  the server configuration
-	 * @param context        the channel handler context
 	 * @param request        the original HTTP/1.x exchange
-	 * @param frameFactory   the WebSocket frame factory
-	 * @param messageFactory the WebSocket message factory
+	 * @param connection     the HTTP/1.x connection
+	 * @param request        the original HTTP/1.x exchange
 	 * @param subProtocols   the list of supported subprotocols
 	 */
-	public Http1xWebSocket(HttpServerConfiguration configuration, ChannelHandlerContext context, Http1xExchange exchange, GenericWebSocketFrame.GenericFactory frameFactory, GenericWebSocketMessage.GenericFactory messageFactory, String[] subProtocols) {
-		this.configuration = configuration;
-		this.context = context;
+	public Http1xWebSocket(HttpServerConfiguration configuration, Http1xConnection connection, Http1xExchange exchange, String[] subProtocols) {
+		this.connection = connection;
 		this.exchange = exchange;
-		this.frameFactory = frameFactory;
-		this.messageFactory = messageFactory;
-		
-		WebSocketServerProtocolConfig.Builder webSocketConfigBuilder = WebSocketServerProtocolConfig.newBuilder()
-			.websocketPath(exchange.request().getPath())
-			.subprotocols(subProtocols != null && subProtocols.length > 0 ? Arrays.stream(subProtocols).collect(Collectors.joining(",")) : null)
-			.checkStartsWith(false)
-			.handleCloseFrames(false)
-			.dropPongFrames(true)
-			.expectMaskedFrames(true)
-			.closeOnProtocolViolation(false)
-			.allowMaskMismatch(configuration.ws_allow_mask_mismatch())
-			.forceCloseTimeoutMillis(configuration.ws_close_timeout())
-			.maxFramePayloadLength(configuration.ws_max_frame_size())
-			.allowExtensions(configuration.ws_frame_compression_enabled() || configuration.ws_message_compression_enabled());
-		
-		if(configuration.ws_handshake_timeout() > 0) {
-			webSocketConfigBuilder.handshakeTimeoutMillis(configuration.ws_handshake_timeout());
-		}
-		
-		this.protocolConfig = webSocketConfigBuilder.build();
+		this.subProtocols = subProtocols;
 	}
 	
 	/**
 	 * <p>
-	 * Setups the channel pipeline to handle the WebSocket upgrade and opening handshake.
+	 * Tries to upgrade the Http connection to a WebSocket connection.
 	 * </p>
-	 *
+	 * 
 	 * <p>
-	 * The resulting mono completes once the opening handshake is completed or fails if the handshake failed. It is used to notify the original {@link Http1xExchange} which restores the pipeline (see 
-	 * {@link #restorePipeline() }) in case the upgrade fails.
+	 * This method executes on the connection event loop.
 	 * </p>
-	 *
-	 * @return a Mono that completes or fails with the opening handshake
 	 */
-	Mono<Void> handshake() {
-		return Mono.defer(() -> {
-			WebSocketProtocolHandler webSocketProtocolHandler = new WebSocketProtocolHandler(
-				this.configuration, 
-				this.protocolConfig, 
-				this.handler, 
-				this.exchange, 
-				this.frameFactory, 
-				this.messageFactory
-			);
-		
-			ChannelPipeline pipeline = this.context.pipeline();
-			this.initialChannelHandlers = pipeline.toMap();
-			
-			List<WebSocketServerExtensionHandshaker> extensionHandshakers = new LinkedList<>();
-			if(this.configuration.ws_frame_compression_enabled()) {
-				extensionHandshakers.add(new DeflateFrameServerExtensionHandshaker(this.configuration.ws_frame_compression_level()));
-			}
-			if(this.configuration.ws_message_compression_enabled()) {
-				extensionHandshakers.add(new PerMessageDeflateServerExtensionHandshaker(
-					this.configuration.ws_message_compression_level(),
-					this.configuration.ws_message_allow_server_window_size(),
-					this.configuration.ws_message_prefered_client_window_size(),
-					this.configuration.ws_message_allow_server_no_context(),
-					this.configuration.ws_message_preferred_client_no_context()
-				));
-			}
-			if(!extensionHandshakers.isEmpty()) {
-				pipeline.addLast(new WebSocketServerExtensionHandler(extensionHandshakers.toArray(WebSocketServerExtensionHandshaker[]::new)));
-			}
-			pipeline.addLast(webSocketProtocolHandler);
-
-			this.context.fireChannelRead(((Http1xRequest)exchange.request()).getUnderlyingRequest());
-			
-			return webSocketProtocolHandler.getHandshake();
-		});
+	void connect() {
+		if(this.connection.executor().inEventLoop()) {
+			this.connection.writeWebSocketHandshake(this.subProtocols).subscribe(new Http1xWebSocket.WebSocketHandshakeSubscriber());
+		}
+		else {
+			this.connection.executor().execute(this::connect);
+		}
 	}
-
+	
 	/**
 	 * <p>
-	 * Restores the pipeline to its original state typically after a failed upgrade in order to continue process HTTP requests on that channel.
+	 * Disposes the WebSocket connection.
 	 * </p>
+	 * 
+	 * <p>
+	 * This method dispose the connection upgrade disposal if any and close the WebSocket exchange if any.
+	 * </p>
+	 * 
+	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
 	 */
-	public void restorePipeline() {
-		if(this.initialChannelHandlers != null) {
-			ChannelPipeline pipeline = this.context.pipeline();
-			
-			for(String currentHandlerName : pipeline.toMap().keySet()) {
-				if(!this.initialChannelHandlers.containsKey(currentHandlerName)) {
-					pipeline.remove(currentHandlerName);
-				}
+	void dispose(Throwable cause) {
+		if(this.disposable != null) {
+			this.disposable.dispose();
+		}
+		if(this.webSocketExchange != null) {
+			if(cause == null) {
+				this.webSocketExchange.close();
 			}
-			
-			Map<String, ChannelHandler> currentChannelHandlers = pipeline.toMap();
-			if(currentChannelHandlers.size() != this.initialChannelHandlers.size()) {
-				// We may have missing handlers
-				Iterator<String> currentHandlerNamesIterator = currentChannelHandlers.keySet().iterator();
-				if(currentHandlerNamesIterator.hasNext()) {
-					String currentHandlerName = currentHandlerNamesIterator.next();
-					for(Map.Entry<String, ChannelHandler> currentInitialHandler : this.initialChannelHandlers.entrySet()) {
-						if(!currentInitialHandler.getKey().equals(currentHandlerName)) {
-							pipeline.addBefore(currentHandlerName, currentInitialHandler.getKey(), currentInitialHandler.getValue());
-						}
-						else {
-							if(!currentHandlerNamesIterator.hasNext()) {
-								break;
-							}
-							currentHandlerName = currentHandlerNamesIterator.next();
-						}
-					}
-				}
+			else {
+				this.webSocketExchange.close(WebSocketStatus.INTERNAL_SERVER_ERROR, cause.getMessage());
 			}
 		}
 	}
@@ -213,5 +134,43 @@ class Http1xWebSocket implements WebSocket<ExchangeContext, WebSocketExchange<Ex
 	public WebSocket<ExchangeContext, WebSocketExchange<ExchangeContext>> or(Mono<Void> fallback) {
 		this.fallback = fallback;
 		return this;
+	}
+	
+	/**
+	 * <p>
+	 * The WebSocket handshake subscriber that start the WebSocket exchange on complete.
+	 * </p>
+	 * 
+	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.10
+	 */
+	private class WebSocketHandshakeSubscriber extends BaseSubscriber<GenericWebSocketExchange> {
+		
+		@Override
+		protected void hookOnSubscribe(Subscription subscription) {
+			Http1xWebSocket.this.disposable = this;
+			subscription.request(1);
+		}
+
+		@Override
+		protected void hookOnNext(GenericWebSocketExchange value) {
+			Http1xWebSocket.this.webSocketExchange = value;
+		}
+		
+		@Override
+		protected void hookOnComplete() {
+			// We finished the upgrade, we can log the result
+			Http1xWebSocket.this.exchange.response().headers(headers -> headers.status(Status.SWITCHING_PROTOCOLS));
+			Http1xWebSocket.this.disposable = null;
+			Http1xWebSocket.this.exchange.request().dispose(null);
+			Http1xWebSocket.this.exchange.response().dispose(null);
+			Http1xWebSocket.this.webSocketExchange.start(Http1xWebSocket.this.handler);
+			// TODO log + dispose next exchanges if any
+		}
+
+		@Override
+		protected void hookOnError(Throwable throwable) {
+			Http1xWebSocket.this.exchange.handleWebSocketHandshakeError(throwable, Http1xWebSocket.this.fallback);
+		}
 	}
 }

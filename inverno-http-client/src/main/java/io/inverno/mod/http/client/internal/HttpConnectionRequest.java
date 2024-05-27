@@ -39,7 +39,4 @@ public interface HttpConnectionRequest extends BaseRequest {
 	 * @return true if headers have been sent, false otherwise
 	 */
 	boolean isHeadersWritten();
-
-	@Override
-	HttpConnectionRequestHeaders headers();
 }

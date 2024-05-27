@@ -16,9 +16,7 @@
 package io.inverno.mod.http.server.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.http.base.InboundSetCookies;
 import io.inverno.mod.http.base.OutboundResponseHeaders;
-import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.Status;
 import io.inverno.mod.http.base.header.Header;
@@ -27,95 +25,57 @@ import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.base.internal.GenericParameter;
 import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
-import io.inverno.mod.http.server.internal.GenericResponseCookies;
-import io.inverno.mod.http.server.internal.InternalResponseHeaders;
+import io.inverno.mod.http.server.internal.AbstractResponseHeaders;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
  * <p>
- * HTTP1.x {@link InternalResponseHeaders} implementation.
+ * Http/1.x {@link OutboundResponseHeaders} implementation.
  * </p>
- *
+ * 
  * <p>
  * This implementation uses {@link LinkedHttpHeaders} instead of Netty's {@link DefaultHttpHeaders} as internal headers in order to increase performances.
  * </p>
- *
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * 
+ * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- *
- * @see InternalResponseHeaders
  */
-class Http1xResponseHeaders implements InternalResponseHeaders {
+class Http1xResponseHeaders extends AbstractResponseHeaders<Http1xResponseHeaders> {
 
-	private final HeaderService headerService;
-	private final ObjectConverter<String> parameterConverter;
-	
-	private final LinkedHttpHeaders underlyingHeaders;
-	private GenericResponseCookies responseCookies;
-	
+	private final LinkedHttpHeaders headers;
+
 	private int statusCode = 200;
 	
-	private boolean written;
-	
 	/**
 	 * <p>
-	 * Creates HTTP1.x server response headers.
+	 * Creates Http/1.x response headers.
 	 * </p>
-	 * 
+	 *
 	 * @param headerService      the header service
-	 * @param parameterConverter a string object converter
-	 * @param headersValidator   a headers validator or null
+	 * @param parameterConverter the parameter converter
+	 * @param headersValidator   the headers validator or null
 	 */
 	public Http1xResponseHeaders(HeaderService headerService, ObjectConverter<String> parameterConverter, HeadersValidator headersValidator) {
-		this.headerService = headerService;
-		this.parameterConverter = parameterConverter;
-		
-		this.underlyingHeaders = new LinkedHttpHeaders(headersValidator);
-	}
-	
-	/**
-	 * <p>
-	 * Returns the underlying headers.
-	 * </p>
-	 * 
-	 * @return the underlying headers
-	 */
-	LinkedHttpHeaders getUnderlyingHeaders() {
-		return this.underlyingHeaders;
-	}
-	
-	/**
-	 * <p>
-	 * Determines whether the response is chunked;
-	 * </p>
-	 * 
-	 * @return true if the response is chunked, false otherwise
-	 */
-	boolean isChunkedTransferEncoding() {
-		for(String transferEncodingValue : this.getAll(Headers.NAME_TRANSFER_ENCODING)) {
-			if(transferEncodingValue.endsWith(Headers.VALUE_CHUNKED)) {
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	@Override
-	public void setWritten(boolean written) {
-		this.written = written;
-	}
-	
-	@Override
-	public boolean isWritten() {
-		return this.written;
+		super(headerService, parameterConverter);
+		this.headers = new LinkedHttpHeaders(headersValidator);
 	}
 
+	/**
+	 * <p>
+	 * Returns the headers to send as part of the Http response.
+	 * </p>
+	 * 
+	 * @return the wrapped headers
+	 */
+	LinkedHttpHeaders unwrap() {
+		return this.headers;
+	}
+	
 	@Override
 	public Http1xResponseHeaders status(Status status) {
 		return this.status(status.getCode());
@@ -131,7 +91,7 @@ class Http1xResponseHeaders implements InternalResponseHeaders {
 	public Status getStatus() throws IllegalArgumentException {
 		return Status.valueOf(this.statusCode);
 	}
-	
+
 	@Override
 	public int getStatusCode() {
 		return this.statusCode;
@@ -139,132 +99,95 @@ class Http1xResponseHeaders implements InternalResponseHeaders {
 
 	@Override
 	public Http1xResponseHeaders contentType(String contentType) {
-		this.underlyingHeaders.set((CharSequence)Headers.NAME_CONTENT_TYPE, contentType);
+		this.headers.set((CharSequence)Headers.NAME_CONTENT_TYPE, contentType);
 		return this;
 	}
 	
 	@Override
 	public String getContentType() {
-		return this.underlyingHeaders.get((CharSequence)Headers.NAME_CONTENT_TYPE);
+		return this.headers.get((CharSequence)Headers.NAME_CONTENT_TYPE);
 	}
-
+	
 	@Override
 	public Headers.ContentType getContentTypeHeader() {
 		return this.<Headers.ContentType>getHeader(Headers.NAME_CONTENT_TYPE).orElse(null);
 	}
 
 	@Override
-	public CharSequence getContentTypeCharSequence() {
-		return this.underlyingHeaders.getCharSequence((CharSequence)Headers.NAME_CONTENT_TYPE);
-	}
-	
-	@Override
 	public Http1xResponseHeaders contentLength(long contentLength) {
-		this.underlyingHeaders.setLong((CharSequence)Headers.NAME_CONTENT_LENGTH, contentLength);
+		this.headers.set((CharSequence)Headers.NAME_CONTENT_LENGTH, "" + contentLength);
 		return this;
 	}
 	
 	@Override
 	public Long getContentLength() {
-		return this.underlyingHeaders.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
-	}
-	
-	@Override
-	public OutboundResponseHeaders cookies(Consumer<OutboundSetCookies> cookiesConfigurer) {
-		if(this.responseCookies == null) {
-			this.responseCookies = new GenericResponseCookies(this.headerService, this, this.parameterConverter);
-		}
-		cookiesConfigurer.accept(this.responseCookies);
-		return this;
-	}
-	
-	@Override
-	public InboundSetCookies cookies() {
-		if(this.responseCookies == null) {
-			this.responseCookies = new GenericResponseCookies(this.headerService, this, this.parameterConverter);
-		}
-		return this.responseCookies;
+		return this.headers.getLong((CharSequence)Headers.NAME_CONTENT_LENGTH);
 	}
 	
 	@Override
 	public Http1xResponseHeaders add(CharSequence name, CharSequence value) {
-		this.underlyingHeaders.addCharSequence(name, value);
+		this.headers.addCharSequence(name, value);
 		return this;
 	}
 
 	@Override
 	public Http1xResponseHeaders add(Header... headers) {
 		for(Header header : headers) {
-			this.underlyingHeaders.addCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
+			this.headers.addCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
 		return this;
 	}
-	
+
 	@Override
 	public Http1xResponseHeaders set(CharSequence name, CharSequence value) {
-		this.underlyingHeaders.setCharSequence(name, value);
+		this.headers.setCharSequence(name, value);
 		return this;
 	}
-	
+
 	@Override
 	public Http1xResponseHeaders set(Header... headers) {
 		for(Header header : headers) {
-			this.underlyingHeaders.setCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
+			this.headers.setCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
 		return this;
 	}
-	
+
 	@Override
 	public Http1xResponseHeaders remove(CharSequence... names) {
 		for(CharSequence name : names) {
-			this.underlyingHeaders.remove(name);
+			this.headers.remove(name);
 		}
 		return this;
 	}
-	
+
 	@Override
 	public boolean contains(CharSequence name) {
-		return this.underlyingHeaders.contains(name);
+		return this.headers.contains(name);
 	}
-	
+
 	@Override
 	public boolean contains(CharSequence name, CharSequence value) {
-		return this.underlyingHeaders.contains(name, value, true);
+		return this.headers.contains(name, value, true);
 	}
-	
+
 	@Override
 	public Set<String> getNames() {
-		return this.underlyingHeaders.names();
+		return this.headers.names();
 	}
 
 	@Override
 	public Optional<String> get(CharSequence name) {
-		return Optional.ofNullable(this.underlyingHeaders.get(name));
+		return Optional.ofNullable(this.headers.get(name));
 	}
-	
+
 	@Override
 	public List<String> getAll(CharSequence name) {
-		return this.underlyingHeaders.getAll(name);
+		return this.headers.getAll(name);
 	}
 
 	@Override
 	public List<Map.Entry<String, String>> getAll() {
-		return this.underlyingHeaders.entries();
-	}
-	
-	@Override
-	public <T extends Header> Optional<T> getHeader(CharSequence name) {
-		return this.get(name).map(value -> this.headerService.<T>decode(name.toString(), value));
-	}
-	
-	@Override
-	public <T extends Header> List<T> getAllHeader(CharSequence name) {
-		return this.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value)).collect(Collectors.toList());
-	}
-	
-	@Override
-	public List<Header> getAllHeader() {
-		return this.getAll().stream().map(e -> this.headerService.<Header>decode(e.getKey(), e.getValue())).collect(Collectors.toList());
+		return this.headers.entries();
 	}
 	
 	@Override
@@ -274,26 +197,26 @@ class Http1xResponseHeaders implements InternalResponseHeaders {
 	
 	@Override
 	public List<Parameter> getAllParameter(CharSequence name) {
-		return this.underlyingHeaders.getAll(name).stream().map(value -> new GenericParameter(name.toString(), value, this.parameterConverter)).collect(Collectors.toList());
+		return this.headers.getAll(name).stream().map(value -> new GenericParameter(name.toString(), value, this.parameterConverter)).collect(Collectors.toList());
 	}
 	
 	@Override
 	public List<Parameter> getAllParameter() {
-		return this.underlyingHeaders.entries().stream().map(e -> new GenericParameter(e.getKey(), e.getValue(), this.parameterConverter)).collect(Collectors.toList());
-	}
-	
-	@Override
-	public CharSequence getCharSequence(CharSequence name) {
-		return this.underlyingHeaders.getCharSequence(name);
+		return this.headers.entries().stream().map(e -> new GenericParameter(e.getKey(), e.getValue(), this.parameterConverter)).collect(Collectors.toList());
 	}
 
 	@Override
-	public List<CharSequence> getAllCharSequence(CharSequence name) {
-		return this.underlyingHeaders.getAllCharSequence(name);
+	public <T extends Header> Optional<T> getHeader(CharSequence name) {
+		return this.get(name).map(value -> this.headerService.<T>decode(name.toString(), value));
 	}
 
 	@Override
-	public List<Map.Entry<CharSequence, CharSequence>> getAllCharSequence() {
-		return this.underlyingHeaders.entriesCharSequence();
+	public <T extends Header> List<T> getAllHeader(CharSequence name) {
+		return this.getAll(name).stream().map(value -> this.headerService.<T>decode(name.toString(), value)).collect(Collectors.toList());
+	}
+
+	@Override
+	public List<Header> getAllHeader() {
+		return this.getAll().stream().map(e -> this.headerService.<Header>decode(e.getKey(), e.getValue())).collect(Collectors.toList());
 	}
 }

@@ -236,7 +236,7 @@ public class GenericGrpcServer implements GrpcServer {
 	 * @param error    the error
 	 */
 	public <A extends ExchangeContext, B extends Exchange<A>> void handleError(B exchange, Throwable error) {
-		GenericGrpcExchange.logError("gRPC exchange processing error", error);
+		GenericGrpcExchange.LOGGER.error("gRPC exchange processing error", error);
 		exchange.response()
 			.headers(headers -> headers.status(Status.OK)) // just make sure we have 200... https://github.com/grpc/grpc/blob/master/doc/statuscodes.md
 			.trailers(trailers -> {

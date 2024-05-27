@@ -297,7 +297,7 @@ public class Main {
                 .web_server(webServer -> webServer
                     .http_server(httpServer -> httpServer
                         .server_port(8081)
-                        .h2c_enabled(true)
+                        .h2_enabled(true)
                     )
                 )
             ))

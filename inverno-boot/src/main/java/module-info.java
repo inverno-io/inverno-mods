@@ -101,11 +101,13 @@ module io.inverno.mod.boot {
 	requires transitive io.inverno.mod.configuration;
 	
 	requires transitive com.fasterxml.jackson.databind;
-	requires transitive com.fasterxml.jackson.datatype.jsr310;
+	requires com.fasterxml.jackson.datatype.jsr310;
+	requires com.fasterxml.jackson.module.afterburner;
 	requires org.apache.logging.log4j;
 	requires transitive org.reactivestreams;
 	requires transitive io.netty.buffer;
 	requires io.netty.common;
+	requires io.netty.handler;
 	requires transitive io.netty.transport;
 	requires static io.netty.transport.unix.common;
 	requires static io.netty.transport.classes.epoll;

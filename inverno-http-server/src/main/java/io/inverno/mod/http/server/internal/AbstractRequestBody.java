@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Jeremy KUHN
+ * Copyright 2024 Jeremy Kuhn
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,12 @@ package io.inverno.mod.http.server.internal;
 import io.inverno.mod.base.Charsets;
 import io.inverno.mod.http.base.InboundData;
 import io.inverno.mod.http.base.Parameter;
-import io.inverno.mod.http.base.header.Headers;
+import io.inverno.mod.http.server.HttpServerException;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.RequestBody;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.ByteBuf;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -33,53 +32,83 @@ import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * Generic {@link RequestBody} implementation.
+ * Base {@link RequestBody} implementation.
  * </p>
  * 
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.10
+ * 
+ * @param <A> the request headers type
  */
-public class GenericRequestBody implements RequestBody {
+public abstract class AbstractRequestBody<A extends AbstractRequestHeaders> implements RequestBody {
+
+	private static final HttpServerException REQUEST_DISPOSED_ERROR = new StacklessHttpServerException("Request was disposed");
 	
-	private final Optional<Headers.ContentType> contentType;
 	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder;
 	private final MultipartDecoder<Part> multipartBodyDecoder;
-
-	Sinks.Many<ByteBuf> dataSink;
-	private boolean subscribed;
-	private boolean disposed;
+	private final A headers;
 	
+	private final Sinks.Many<ByteBuf> dataSink;
 	private Flux<ByteBuf> data;
-	private InboundData<ByteBuf> rawData;
-	private InboundData<CharSequence> stringData;
-	private RequestBody.UrlEncoded urlEncodedData;
-	private RequestBody.Multipart<Part> multipartData;
+	private boolean subscribed;
+
+	/**
+	 * The raw inbound data.
+	 */
+	protected InboundData<ByteBuf> rawData;
+	/**
+	 * The string inbound data.
+	 */
+	protected InboundData<CharSequence> stringData;
+	/**
+	 * The application/x-www-form-urlencoded data.
+	 */
+	protected RequestBody.UrlEncoded urlEncodedData;
+	/**
+	 * The multipart/form-data body data.
+	 */
+	protected RequestBody.Multipart<Part> multipartData;
+	
+	private Throwable cancelCause;
 
 	/**
 	 * <p>
-	 * Creates a request body with the specified content type, url encoded body decoder, multipart body decoder and payload data publisher.
+	 * Creates a base request body.
 	 * </p>
 	 *
-	 * @param contentType           the request content type
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
+	 * @param headers               the request headers
 	 */
-	public GenericRequestBody(Optional<Headers.ContentType> contentType, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
-		this.contentType = contentType;
+	public AbstractRequestBody(MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder, A headers) {
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
+		this.headers = headers;
 		
-		// TODO deal with backpressure using a custom queue: if the queue reach a given threshold we should suspend the read on the channel: this.context.channel().config().setAutoRead(false)
-		// and resume when this flux is actually consumed (doOnRequest? this might impact performance)
 		this.dataSink = Sinks.many().unicast().onBackpressureBuffer();
 		this.data = Flux.defer(() -> {
-			if(this.disposed) {
-				return Mono.error(new IllegalStateException("Request was disposed"));
+			if(this.cancelCause != null) {
+				return Mono.error(this.cancelCause);
 			}
 			return this.dataSink.asFlux()
 				.doOnSubscribe(ign -> this.subscribed = true)
 				.doOnDiscard(ByteBuf.class, ByteBuf::release);
 		});
+	}
+
+	/**
+	 * <p>
+	 * Returns the request body data sink.
+	 * </p>
+	 * 
+	 * <p>
+	 * This is used by an {@link HttpConnection} to emit request data.
+	 * </p>
+	 * 
+	 * @return the request body data sink
+	 */
+	public final Sinks.Many<ByteBuf> getDataSink() {
+		return this.dataSink;
 	}
 	
 	/**
@@ -88,52 +117,40 @@ public class GenericRequestBody implements RequestBody {
 	 * </p>
 	 * 
 	 * <p>
-	 * This method delegates to {@link #dispose(java.lang.Throwable) } with a null error.
+	 * This methods tries to terminate the data sink with or without an error. If the data publisher was not subscribed, it is subscribed in order to release data.
 	 * </p>
+	 * 
+	 * @param cause an error or null if disposal does not result from an error (e.g. shutdown) 
 	 */
-	void dispose() {
-		this.dispose(null);
-	}
-
-	/**
-	 * <p>
-	 * Disposes the request body with the specified error.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method drains received data if the request body data publisher hasn't been subscribed.
-	 * </p>
-	 * 
-	 * <p>
-	 * A non-null error indicates that the enclosing exchange did not complete successfully and that the error should be emitted by the request data publisher.
-	 * </p>
-	 * 
-	 * @param error an error or null
-	 */
-	void dispose(Throwable error) {
-		if(!this.disposed) {
-			if(!this.subscribed) {
-				// Try to drain and release buffered data 
-				// when the datasink was already subscribed data are released in doOnDiscard
-				this.dataSink.asFlux().subscribe(
-					chunk -> chunk.release(), 
-					ex -> {
-						// TODO Should be ignored but can be logged as debug or trace log
-					}
-				);
-			}
-			else if(error != null) {
-				this.dataSink.tryEmitError(error);
+	public final void dispose(Throwable cause) {
+		if(this.cancelCause == null) {
+			if(cause != null) {
+				this.cancelCause = cause;
+				this.dataSink.tryEmitError(cause);
 			}
 			else {
+				this.cancelCause = REQUEST_DISPOSED_ERROR;
 				this.dataSink.tryEmitComplete();
 			}
-			this.disposed = true;
+			if(!this.subscribed) {
+				try {
+					this.data.subscribe(
+						ByteBuf::release,
+						ex -> {
+							// TODO Should be ignored but can be logged as debug or trace log
+						}
+					);
+				}
+				catch(Throwable throwable) {
+					// this could mean data have already been subscribed OR the publisher terminated with an error 
+					// in any case data should have been released
+				}
+			}
 		}
 	}
 
 	@Override
-	public RequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) {
+	public final RequestBody transform(Function<Publisher<ByteBuf>, Publisher<ByteBuf>> transformer) throws IllegalStateException {
 		if(this.subscribed) {
 			throw new IllegalStateException("Request data already consumed");
 		}
@@ -142,14 +159,14 @@ public class GenericRequestBody implements RequestBody {
 	}
 
 	@Override
-	public InboundData<ByteBuf> raw() {
+	public InboundData<ByteBuf> raw() throws IllegalStateException {
 		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
 		if(this.rawData == null) {
 			this.rawData = new RawInboundData();
 		}
 		return this.rawData;
 	}
-	
+
 	@Override
 	public InboundData<CharSequence> string() throws IllegalStateException {
 		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
@@ -158,21 +175,21 @@ public class GenericRequestBody implements RequestBody {
 		}
 		return this.stringData;
 	}
-	
+
 	@Override
-	public RequestBody.UrlEncoded urlEncoded() {
+	public UrlEncoded urlEncoded() throws IllegalStateException {
 		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
 		if(this.urlEncodedData == null) {
-			this.urlEncodedData = new UrlEncodedInboundData(this.urlEncodedBodyDecoder.decode(this.data, this.contentType.orElse(null)));
+			this.urlEncodedData = new UrlEncodedInboundData(this.urlEncodedBodyDecoder.decode(this.data, this.headers.getContentTypeHeader()));
 		}
 		return this.urlEncodedData;
 	}
 	
 	@Override
-	public RequestBody.Multipart<Part> multipart() {
+	public Multipart<? extends Part> multipart() throws IllegalStateException {
 		// We don't need to check whether another data method has been invoke since the data Flux is a unicast Flux, an IllegalStateSxception will be thrown if multiple subscriptions are made
 		if(this.multipartData == null) {
-			this.multipartData = new MultipartInboundData(this.multipartBodyDecoder.decode(this.data, this.contentType.orElse(null)));
+			this.multipartData = new MultipartInboundData(this.multipartBodyDecoder.decode(this.data, this.headers.getContentTypeHeader()));
 		}
 		return this.multipartData;
 	}
@@ -183,13 +200,13 @@ public class GenericRequestBody implements RequestBody {
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
+	 * @since 1.10
 	 */
-	private class RawInboundData implements InboundData<ByteBuf> {
+	protected class RawInboundData implements InboundData<ByteBuf> {
 
 		@Override
 		public Publisher<ByteBuf> stream() {
-			return GenericRequestBody.this.data;
+			return AbstractRequestBody.this.data;
 		}
 	}
 	
@@ -199,13 +216,13 @@ public class GenericRequestBody implements RequestBody {
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
+	 * @since 1.10
 	 */
-	private class StringInboundData implements InboundData<CharSequence> {
+	protected class StringInboundData implements InboundData<CharSequence> {
 
 		@Override
 		public Publisher<CharSequence> stream() {
-			return GenericRequestBody.this.data.map(buf -> {
+			return AbstractRequestBody.this.data.map(buf -> {
 				try {
 					return buf.toString(Charsets.DEFAULT);
 				}
@@ -215,16 +232,16 @@ public class GenericRequestBody implements RequestBody {
 			});
 		}
 	}
-
+	
 	/**
 	 * <p>
 	 * Generic {@link RequestBody.UrlEncoded} implementation.
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
+	 * @since 1.10
 	 */
-	private class UrlEncodedInboundData implements RequestBody.UrlEncoded {
+	protected class UrlEncodedInboundData implements RequestBody.UrlEncoded {
 
 		private final Publisher<Parameter> parameters;
 		
@@ -262,9 +279,9 @@ public class GenericRequestBody implements RequestBody {
 	 * </p>
 	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
+	 * @since 1.10
 	 */
-	private class MultipartInboundData implements RequestBody.Multipart<Part> {
+	protected class MultipartInboundData implements RequestBody.Multipart<Part> {
 
 		private final Publisher<Part> parts;
 		

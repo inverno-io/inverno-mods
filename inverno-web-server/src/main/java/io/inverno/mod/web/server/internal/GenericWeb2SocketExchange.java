@@ -19,7 +19,6 @@ import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
 import io.inverno.mod.web.server.Web2SocketExchange;
 import io.inverno.mod.web.server.WebRequest;
-import reactor.core.publisher.Mono;
 		
 /**
  * <p>
@@ -62,12 +61,6 @@ public class GenericWeb2SocketExchange implements Web2SocketExchange<ExchangeCon
 		return webSocketExchange.context();
 	}
 	
-	@Override
-	public Web2SocketExchange<ExchangeContext> finalizer(Mono<Void> finalizer) {
-		this.webSocketExchange.finalizer(finalizer);
-		return this;
-	}
-
 	@Override
 	public Web2SocketExchange.Inbound inbound() {
 		return this.dataConversionService.createWebSocketDecodedInbound(this.webSocketExchange.inbound(), this.webSocketExchange.getSubProtocol());

@@ -192,7 +192,12 @@ public enum Status {
 	/**
 	 * <a href="https://tools.ietf.org/html/rfc7231#section-6.6.6">RFC 7231 Section 6.6.6</a>
 	 */
-	HTTP_VERSION_NOT_SUPPORTED(505, "HTTP Version Not Supported", Category.SERVER_ERROR);
+	HTTP_VERSION_NOT_SUPPORTED(505, "HTTP Version Not Supported", Category.SERVER_ERROR),
+	
+	/**
+	 * Indicates that a request was cancelled during processing by the server.
+	 */
+	CANCELLED_REQUEST(566, "Request Cancelled", Category.SERVER_ERROR);
 	
 	private final int code;
 	

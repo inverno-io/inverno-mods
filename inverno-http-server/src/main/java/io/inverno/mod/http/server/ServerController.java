@@ -123,6 +123,46 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 	
 	/**
 	 * <p>
+	 * Returns a server controller that delegates to the specified reactive exchange handler.
+	 * </p>
+	 *
+	 * @param <U>          the type of the exchange context
+	 * @param <V>          the type of exchange handled by the controller
+	 * @param <W>          the type of error exchange handled by the controller
+	 * @param handler      a reactive exchange handler
+	 *
+	 * @return a server controller
+	 */
+	static <U extends ExchangeContext, V extends Exchange<U>, W extends ErrorExchange<U>> ServerController<U, V, W> from(ReactiveExchangeHandler<U, V> handler) {
+		Objects.requireNonNull(handler);
+		return new ServerController<U, V, W>() {
+
+			@Override
+			public Mono<Void> defer(V exchange) throws HttpException {
+				return handler.defer(exchange);
+			}
+
+			@Override
+			public void handle(V exchange) throws HttpException {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			@SuppressWarnings("unchecked")
+			public Mono<Void> defer(W errorExchange) throws HttpException {
+				return GenericErrorExchangeHandler.INSTANCE.defer((ErrorExchange<ExchangeContext>) errorExchange);
+			}
+
+			@Override
+			@SuppressWarnings("unchecked")
+			public void handle(W errorExchange) throws HttpException {
+				GenericErrorExchangeHandler.INSTANCE.handle((ErrorExchange<ExchangeContext>) errorExchange);
+			}
+		};
+	}
+	
+	/**
+	 * <p>
 	 * Returns a server controller that delegates to the specified exchange handler.
 	 * </p>
 	 *
@@ -157,6 +197,46 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 			@SuppressWarnings("unchecked")
 			public void handle(W errorExchange) throws HttpException {
 				GenericErrorExchangeHandler.INSTANCE.handle((ErrorExchange<ExchangeContext>) errorExchange);
+			}
+		};
+	}
+	
+	/**
+	 * <p>
+	 * Returns a server controller that delegates to the specified reactive exchange handler and error exchange handler.
+	 * </p>
+	 *
+	 * @param <U>          the type of the exchange context
+	 * @param <V>          the type of exchange handled by the controller
+	 * @param <W>          the type of error exchange handled by the controller
+	 * @param handler      a reactive exchange handler
+	 * @param errorHandler a reactive error exchange handler
+	 *
+	 * @return a server controller
+	 */
+	static <U extends ExchangeContext, V extends Exchange<U>, W extends ErrorExchange<U>> ServerController<U, V, W> from(ReactiveExchangeHandler<U, V> handler, ReactiveExchangeHandler<U, W> errorHandler) {
+		Objects.requireNonNull(handler);
+		Objects.requireNonNull(errorHandler);
+		return new ServerController<U, V, W>() {
+
+			@Override
+			public Mono<Void> defer(V exchange) throws HttpException {
+				return handler.defer(exchange);
+			}
+
+			@Override
+			public void handle(V exchange) throws HttpException {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Mono<Void> defer(W errorExchange) throws HttpException {
+				return errorHandler.defer(errorExchange);
+			}
+
+			@Override
+			public void handle(W errorExchange) throws HttpException {
+				throw new UnsupportedOperationException();
 			}
 		};
 	}
@@ -197,6 +277,53 @@ public interface ServerController<A extends ExchangeContext, B extends Exchange<
 			@Override
 			public void handle(W errorExchange) throws HttpException {
 				errorHandler.handle(errorExchange);
+			}
+		};
+	}
+	
+	/**
+	 * <p>
+	 * Returns a server controller that delegates to the specified reactive exchange handler and error exchange handler and uses the specified context supplier to create exchange contexts.
+	 * </p>
+	 *
+	 * @param <U>             the type of the exchange context
+	 * @param <V>             the type of exchange handled by the controller
+	 * @param <W>             the type of error exchange handled by the controller
+	 * @param handler         an exchange handler
+	 * @param errorHandler    a reactive error exchange handler
+	 * @param contextSupplier a reactive exchange context supplier
+	 *
+	 * @return a server controller
+	 */
+	static <U extends ExchangeContext, V extends Exchange<U>, W extends ErrorExchange<U>> ServerController<U, V, W> from(ReactiveExchangeHandler<U, V> handler, ReactiveExchangeHandler<U, W> errorHandler, Supplier<U> contextSupplier) {
+		Objects.requireNonNull(handler);
+		Objects.requireNonNull(errorHandler);
+		Objects.requireNonNull(contextSupplier);
+		return new ServerController<U, V, W>() {
+
+			@Override
+			public Mono<Void> defer(V exchange) throws HttpException {
+				return handler.defer(exchange);
+			}
+
+			@Override
+			public void handle(V exchange) throws HttpException {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public Mono<Void> defer(W errorExchange) throws HttpException {
+				return errorHandler.defer(errorExchange);
+			}
+
+			@Override
+			public void handle(W errorExchange) throws HttpException {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public U createContext() {
+				return contextSupplier.get();
 			}
 		};
 	}

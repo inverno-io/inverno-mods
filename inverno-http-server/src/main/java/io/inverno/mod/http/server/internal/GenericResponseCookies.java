@@ -16,6 +16,7 @@
 package io.inverno.mod.http.server.internal;
 
 import io.inverno.mod.base.converter.ObjectConverter;
+import io.inverno.mod.http.base.OutboundResponseHeaders;
 import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
@@ -42,7 +43,7 @@ import java.util.function.Consumer;
 public class GenericResponseCookies implements OutboundSetCookies {
 
 	private final HeaderService headerService;
-	private final InternalResponseHeaders responseHeaders;
+	private final OutboundResponseHeaders responseHeaders;
 	private final ObjectConverter<String> parameterConverter;
 	
 	private Map<String, List<SetCookieParameter>> pairs;
@@ -55,7 +56,7 @@ public class GenericResponseCookies implements OutboundSetCookies {
 	 * @param headerService   the header service
 	 * @param responseHeaders the response headers
 	 */
-	public GenericResponseCookies(HeaderService headerService, InternalResponseHeaders responseHeaders, ObjectConverter<String> parameterConverter) {
+	public GenericResponseCookies(HeaderService headerService, OutboundResponseHeaders responseHeaders, ObjectConverter<String> parameterConverter) {
 		this.headerService = headerService;
 		this.responseHeaders = responseHeaders;
 		this.parameterConverter = parameterConverter;

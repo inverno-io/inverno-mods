@@ -1,12 +1,12 @@
 /*
- * Copyright 2022 Jeremy KUHN
- * 
+ * Copyright 2022 Jeremy Kuhn
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,407 +15,142 @@
  */
 package io.inverno.mod.http.client.internal.http1x;
 
+import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
-import io.inverno.mod.http.base.header.Headers;
-import io.inverno.mod.http.base.internal.netty.FlatFullHttpRequest;
-import io.inverno.mod.http.base.internal.netty.FlatHttpRequest;
+import io.inverno.mod.http.base.HttpVersion;
+import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.client.Exchange;
+import io.inverno.mod.http.client.HttpClientConfiguration;
+import io.inverno.mod.http.client.HttpClientException;
+import io.inverno.mod.http.client.RequestTimeoutException;
 import io.inverno.mod.http.client.internal.AbstractExchange;
+import io.inverno.mod.http.client.internal.EndpointRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionExchange;
 import io.inverno.mod.http.client.internal.HttpConnectionRequest;
 import io.inverno.mod.http.client.internal.HttpConnectionResponse;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.FileRegion;
-import io.netty.handler.codec.http.DefaultHttpContent;
-import io.netty.handler.codec.http.EmptyHttpHeaders;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpVersion;
-import io.netty.handler.codec.http.LastHttpContent;
-import java.util.List;
-import org.reactivestreams.Subscription;
-import reactor.core.publisher.BaseSubscriber;
-import reactor.core.publisher.Mono;
-import reactor.core.publisher.MonoSink;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import reactor.core.publisher.Sinks;
 
 /**
  * <p>
- * HTTP/1.x {@link Exchange} implementation.
+ * Http/1.x {@link Exchange} implementation.
  * </p>
  * 
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
+ * 
+ * @param <A> The exchange context type
  */
-class Http1xExchange extends AbstractExchange<Http1xRequest, Http1xResponse, Http1xExchange> {
-
-	private final Http1xConnectionEncoder encoder;
-	private final HttpVersion httpVersion;
+class Http1xExchange<A extends ExchangeContext> extends AbstractExchange<A, Http1xRequest, Http1xResponse, HttpResponse> {
 	
-	long lastModified;
-	Http1xExchange next;
+	protected final Http1xConnection connection;
+
+	private ScheduledFuture<?> timeoutFuture;
+	
+	Http1xExchange<?> next;
+	
+	private boolean reset;
 	
 	/**
 	 * <p>
-	 * Creates an HTTP/1.x exchange.
+	 * Creates an Http/1.x exchange.
 	 * </p>
-	 *
-	 * @param context         the channel context
-	 * @param exchangeSink    the exchange sink
-	 * @param exchangeContext the exchange context
-	 * @param protocol        the HTTP/1.x protocol version
-	 * @param request         the HTTP/1.x request
-	 * @param encoder         the HTTP/1.x connection encoder
+	 * 
+	 * @param configuration      the HTTP client configurartion
+	 * @param sink               the exchange sink
+	 * @param headerService      the header service
+	 * @param parameterConverter the parameter converter
+	 * @param context            the exchange context
+	 * @param connection         the Http/1.x connection
+	 * @param endpointRequest    the endpoint request
 	 */
 	public Http1xExchange(
-			ChannelHandlerContext context, 
-			MonoSink<HttpConnectionExchange<ExchangeContext, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> exchangeSink, 
-			ExchangeContext exchangeContext, 
-			io.inverno.mod.http.base.HttpVersion protocol,
-			Http1xRequest request, 
-			Http1xConnectionEncoder encoder) {
-		super(context, exchangeSink, exchangeContext, protocol, request);
-		this.encoder = encoder;
-		switch(protocol) {
-			case HTTP_1_0: this.httpVersion = HttpVersion.HTTP_1_0;
-				break;
-			case HTTP_1_1: this.httpVersion = HttpVersion.HTTP_1_1;
-				break;
-			default: throw new IllegalStateException("Invalid protocol version: " + protocol);
+			HttpClientConfiguration configuration,
+			Sinks.One<HttpConnectionExchange<A, ? extends HttpConnectionRequest, ? extends HttpConnectionResponse>> sink,
+			HeaderService headerService,
+			ObjectConverter<String> parameterConverter, 
+			A context, 
+			Http1xConnection connection, 
+			EndpointRequest endpointRequest
+		) {
+		super(configuration, sink, headerService, parameterConverter, context, new Http1xRequest(parameterConverter, connection, endpointRequest));
+		this.connection = connection;
+	}
+
+	@Override
+	protected void startTimeout() {
+		if(this.configuration.request_timeout() > 0) {
+			this.timeoutFuture = this.connection.executor().schedule(
+				() -> {
+					this.timeoutFuture = null;
+					// we are supposed to have sent the request so we can close the connection
+					this.connection.onRequestError(new RequestTimeoutException("Exceeded timeout " + this.configuration.request_timeout() + "ms"));
+				}, 
+				this.configuration.request_timeout(), 
+				TimeUnit.MILLISECONDS
+			);
+		}
+	}
+	
+	@Override
+	protected void cancelTimeout() {
+		if(this.timeoutFuture != null) {
+			this.timeoutFuture.cancel(false);
+			this.timeoutFuture = null;
 		}
 	}
 	
 	/**
 	 * <p>
-	 * Starts the exchange.
+	 * Starts the processing of the exchange.
 	 * </p>
 	 * 
 	 * <p>
-	 * This basically sends the request to the remote endpoint.
+	 * This method sends the request and start the request timeout task.
 	 * </p>
 	 */
-	// this is executed in event loop
 	@Override
-	protected void doStart() {
-		// Do send the request
-		this.handler.exchangeStart(this);
-		
-		if(this.request.body() == null) {
-			// no need to subscribe
-			Http1xRequestHeaders headers = this.request.headers();
-			ChannelPromise finalizePromise = this.context.newPromise();
-			finalizePromise.addListener(future -> {
-				if(!future.isSuccess()) {
-					this.handler.exchangeError(this, future.cause());
-				}
-			});
+	public void start() {
+		this.request.send();
+	}
+	
+	@Override
+	protected final Http1xResponse createResponse(HttpResponse response) {
+		if(response.status() == HttpResponseStatus.CONTINUE) {
+			this.request.sendBody();
+			return null;
+		}
+		return new Http1xResponse(this.headerService, this.parameterConverter, response);
+	}
+	
+	@Override
+	protected void doDispose(Throwable cause) {
+		this.request.dispose(cause);
+		if(this.response != null) {
+			this.response.dispose(cause);
+		}
+	}
 
-			this.encoder.writeFrame(this.context, new FlatFullHttpRequest(this.httpVersion, HttpMethod.valueOf(this.request.getMethod().name()), this.request.getPath(), this.fixHeaders(headers.getUnderlyingHeaders()), Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE), finalizePromise);
-			headers.setWritten(true);
-			this.handler.requestComplete(this);
+	@Override
+	public HttpVersion getProtocol() {
+		return this.connection.getProtocol();
+	}
+	
+	@Override
+	public final void reset(long code) {
+		if(this.connection.executor().inEventLoop()) {
+			if(!this.reset) {
+				this.reset = true;
+				// exchange has to be the responding exchange because the exchange is only emitted when the response is received
+				this.dispose(new HttpClientException("Exchange has been reset: " + code));
+				this.connection.shutdown().subscribe();
+			}
 		}
 		else {
-			this.request.body().getFileRegionData().ifPresentOrElse(
-				fileRegionData -> {
-					Http1xRequestHeaders headers = this.request.headers();
-					this.encoder.writeFrame(Http1xExchange.this.context, new FlatHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), this.fixHeaders(headers.getUnderlyingHeaders())), Http1xExchange.this.context.voidPromise());
-					headers.setWritten(true);
-
-					Http1xExchange.FileRegionDataSubscriber fileRegionSubscriber = new Http1xExchange.FileRegionDataSubscriber();
-					fileRegionData.subscribe(fileRegionSubscriber);
-					this.disposable = fileRegionSubscriber;
-				}, 
-				() -> {
-					Http1xExchange.DataSubscriber dataSubscriber = new Http1xExchange.DataSubscriber(this.request.body().isSingle());
-					this.request.body().dataSubscribe(dataSubscriber);
-					this.disposable = dataSubscriber;
-				});
-		}
-	}
-
-	/**
-	 * <p>
-	 * Determines whether the connection will be closed uppon response (i.e. {@code connection: close}).
-	 * </p>
-	 * 
-	 * @return true if the connection will be closed, false otherwise
-	 */
-	boolean isClose() {
-		return this.response != null && this.response.headers().contains(Headers.NAME_CONNECTION, Headers.VALUE_CLOSE);
-	}
-	
-	/**
-	 * <p>
-	 * Sets required headers (e.g. {@code host}...)
-	 * </p>
-	 * 
-	 * @param headers the request HTTP headers
-	 * 
-	 * @return the HTTP headers
-	 */
-	private HttpHeaders fixHeaders(HttpHeaders headers) {
-		return headers.set(Headers.NAME_HOST, this.request.getAuthority());
-	}
-
-	/**
-	 * <p>
-	 * Disposes the exchange.
-	 * </p>
-	 * 
-	 * @param deep true to also dispose subsequent exchanges, false otherwise.
-	 */
-	public void dispose(boolean deep) {
-		this.dispose(null, deep);
-	}
-	
-	/**
-	 * <p>
-	 * Disposes the exchange with the following error.
-	 * </p>
-	 * 
-	 * @param error the error
-	 * @param deep true to also dispose subsequent exchanges, false otherwise.
-	 */
-	public void dispose(Throwable error, boolean deep) {
-		this.dispose(error);
-		
-		if(deep && this.next != null) {
-			this.next.dispose(error, deep);
-		}
-	}
-	
-	/**
-	 * <p>
-	 * A data subscriber used to consume request body publisher and send HTTP frames to the remote endpoint.
-	 * </p>
-	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.6
-	 */
-	private class DataSubscriber extends BaseSubscriber<ByteBuf> {
-		
-		private final boolean single;
-		
-		private ByteBuf singleChunk;
-		private boolean many;
-		private long transferedLength;
-		
-		/**
-		 * <p>
-		 * Creates a data subscriber.
-		 * </p>
-		 * 
-		 * @param single true if the data publisher to consume is a single publisher (i.e. {@link Mono}), false otherwise or if it couldn't be determined.
-		 */
-		public DataSubscriber(boolean single) {
-			this.single = single;
-		}
-
-		/**
-		 * <p>
-		 * Returns the number of bytes that were transfered to the remote endpoint.
-		 * </p>
-		 * 
-		 * @return the number of bytes transfered
-		 */
-		public long getTransferedLength() {
-			return transferedLength;
-		}
-
-		@Override
-		protected void hookOnSubscribe(Subscription subscription) {
-			subscription.request(1);
-		}
-		
-		@Override
-		protected void hookOnNext(ByteBuf value) {
-			Http1xExchange.this.executeInEventLoop(() -> {
-				this.transferedLength += value.readableBytes();
-				Http1xRequestHeaders headers = Http1xExchange.this.request.headers();
-
-				if( (this.single || !this.many) && this.singleChunk == null) {
-					this.singleChunk = value;
-					this.request(1);
-				}
-				else {
-					this.many = true;
-					ChannelPromise nextPromise = Http1xExchange.this.context.newPromise().addListener(future -> {
-						if(future.isSuccess()) {
-							this.request(1);
-						}
-						else if(!this.isDisposed()) {
-							this.cancel();
-							this.hookOnError(future.cause());
-						}
-					});
-
-					if(!headers.isWritten()) {
-						List<String> transferEncodings = headers.getAll(Headers.NAME_TRANSFER_ENCODING);
-						if(headers.getContentLength() == null && !transferEncodings.contains(Headers.VALUE_CHUNKED)) {
-							headers.set(Headers.NAME_TRANSFER_ENCODING, Headers.VALUE_CHUNKED);
-						}
-						if(this.singleChunk != null) {
-							Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.getUnderlyingHeaders()), this.singleChunk), Http1xExchange.this.context.voidPromise());
-							Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new DefaultHttpContent(value), nextPromise);
-							this.singleChunk = null;
-						}
-						else {
-							Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.getUnderlyingHeaders()), value), nextPromise);
-						}
-						headers.setWritten(true);
-					}
-					else {
-						Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new DefaultHttpContent(value), nextPromise);
-					}
-				}
-			})
-			.addListener(future -> {
-				if(!future.isSuccess() && !this.isDisposed()) {
-					this.cancel();
-					this.hookOnError(future.cause());
-				}
-			});
-		}
-
-		/**
-		 * <p>
-		 * This can happens when the exchange is disposed before the request has been fully sent, typically when the server send a complete response before in which case we must try to send a last 
-		 * http content to restore the flow.
-		 * </p>
-		 */
-		@Override
-		protected void hookOnCancel() {
-			Http1xExchange.this.executeInEventLoop(() -> {
-				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.voidPromise());
-			});
-		}
-		
-		@Override
-		protected void hookOnComplete() {
-			Http1xExchange.this.executeInEventLoop(() -> {
-				// trailers if any should be send here in the last content
-				Http1xRequestHeaders headers = Http1xExchange.this.request.headers();
-				ChannelPromise finalizePromise = Http1xExchange.this.context.newPromise();
-				finalizePromise.addListener(future -> {
-					if(future.isSuccess()) {
-						Http1xExchange.this.handler.requestComplete(Http1xExchange.this);
-					}
-					else {
-						Http1xExchange.this.handler.exchangeError(Http1xExchange.this, future.cause());
-					}
-				});
-				if(this.transferedLength == 0) {
-					// empty response
-					if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
-						headers.contentLength(0);
-					}
-
-					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatFullHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.getUnderlyingHeaders()), Unpooled.EMPTY_BUFFER, EmptyHttpHeaders.INSTANCE), finalizePromise);
-					headers.setWritten(true);
-
-				}
-				else if(this.singleChunk != null) {
-					// single
-					if(headers.getCharSequence(Headers.NAME_CONTENT_LENGTH) == null) {
-						headers.contentLength(this.transferedLength);
-					}
-					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, new FlatFullHttpRequest(Http1xExchange.this.httpVersion, HttpMethod.valueOf(Http1xExchange.this.request.getMethod().name()), Http1xExchange.this.request.getPath(), Http1xExchange.this.fixHeaders(headers.getUnderlyingHeaders()), this.singleChunk, EmptyHttpHeaders.INSTANCE), finalizePromise);
-					headers.setWritten(true);
-				}
-				else {
-					// many
-					Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, finalizePromise);
-				}
-			});
-		}
-
-		@Override
-		protected void hookOnError(Throwable throwable) {
-			Http1xExchange.this.executeInEventLoop(() -> {
-				Http1xExchange.this.handler.exchangeError(Http1xExchange.this, throwable);
-			});
-		}
-	}
-	
-	/**
-	 * <p>
-	 * A specific data subscriber used to consume request body resource and send {@link FileRegion} to the remote endpoint.
-	 * </p>
-	 * 
-	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.6
-	 */
-	private class FileRegionDataSubscriber extends BaseSubscriber<FileRegion> {
-
-		private long transferedLength;
-
-		/**
-		 * <p>
-		 * Returns the number of bytes that were transfered to the remote endpoint.
-		 * </p>
-		 * 
-		 * @return the number of bytes transfered
-		 */
-		public long getTransferedLength() {
-			return transferedLength;
-		}
-		
-		@Override
-		protected void hookOnSubscribe(Subscription subscription) {
-			this.request(1);
-		}
-
-		@Override
-		protected void hookOnNext(FileRegion fileRegion) {
-			Http1xExchange.this.executeInEventLoop(() -> {
-				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, fileRegion, Http1xExchange.this.context.newPromise().addListener(future -> {
-					if(future.isSuccess()) {
-						this.transferedLength += fileRegion.count();
-						this.request(1);
-					}
-					else {
-						Http1xExchange.this.handler.exchangeError(Http1xExchange.this, future.cause());
-						this.cancel();
-					}
-				}));
-			});
-		}
-		
-		/**
-		 * <p>
-		 * This can happens when the exchange is disposed before the request has been fully sent, typically when the server send a complete response before in which case we must try to send a last 
-		 * http content to restore the flow.
-		 * </p>
-		 */
-		@Override
-		protected void hookOnCancel() {
-			Http1xExchange.this.executeInEventLoop(() -> {
-				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.voidPromise());
-			});
-		}
-		
-		@Override
-		protected void hookOnComplete() {
-			// trailers if any should be send here in the last content
-			Http1xExchange.this.executeInEventLoop(() -> {
-				Http1xExchange.this.encoder.writeFrame(Http1xExchange.this.context, LastHttpContent.EMPTY_LAST_CONTENT, Http1xExchange.this.context.newPromise().addListener(future -> {
-					if(future.isSuccess()) {
-						Http1xExchange.this.handler.requestComplete(Http1xExchange.this);
-					}
-					else {
-						Http1xExchange.this.handler.exchangeError(Http1xExchange.this, future.cause());
-					}
-				}));
-			});
-		}
-
-		@Override
-		protected void hookOnError(Throwable throwable) {
-			Http1xExchange.this.executeInEventLoop(() -> {
-				Http1xExchange.this.handler.exchangeError(Http1xExchange.this, throwable);
-			});
+			this.connection.executor().execute(() -> this.reset(code));
 		}
 	}
 }

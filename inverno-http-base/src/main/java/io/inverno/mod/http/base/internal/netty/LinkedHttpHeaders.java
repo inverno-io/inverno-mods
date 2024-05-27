@@ -53,7 +53,7 @@ import java.util.TreeSet;
  */
 public class LinkedHttpHeaders extends HttpHeaders {
 
-	private final HeadersValidator validator;
+	private HeadersValidator validator;
 	
 	private HeaderNode head;
 	
@@ -81,16 +81,21 @@ public class LinkedHttpHeaders extends HttpHeaders {
 		this.validator = validator;
 		this.head = this.tail = new HeaderNode();
 	}
-	
+
 	/**
 	 * <p>
-	 * Validates headers with specified validator.
+	 * Sets a headers validator.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method applies the specified validator to all existing headers.
 	 * </p>
 	 * 
 	 * @param validator a headers validator
 	 */
-	public void validate(HeadersValidator validator) {
-		if(validator != null) {
+	public void setValidator(HeadersValidator validator) {
+		this.validator = validator;
+		if(this.validator != null) {
 			for(Iterator<Entry<CharSequence, CharSequence>> iterator = this.iteratorCharSequence();iterator.hasNext();) {
 				Entry<CharSequence, CharSequence> current = iterator.next();
 				validator.accept(current.getKey(), current.getValue());

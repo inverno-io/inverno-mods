@@ -15,94 +15,103 @@
  */
 package io.inverno.mod.http.server.internal.http1x;
 
-import java.io.IOException;
-import java.nio.channels.FileChannel;
-
-import org.reactivestreams.Publisher;
-
-import io.netty.channel.DefaultFileRegion;
-import io.netty.channel.FileRegion;
 import io.inverno.mod.base.resource.ZipResource;
 import io.inverno.mod.http.base.InternalServerErrorException;
 import io.inverno.mod.http.base.NotFoundException;
 import io.inverno.mod.http.server.ResponseBody;
-import io.inverno.mod.http.server.internal.GenericResponseBody;
+import io.inverno.mod.http.server.internal.AbstractResponseBody;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.DefaultFileRegion;
+import io.netty.channel.FileRegion;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.util.Objects;
+import org.reactivestreams.Publisher;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 
 /**
  * <p>
- * HTTP1.x {@link ResponseBody} implementation.
+ * Http/1.x {@link ResponseBody} implementation.
  * </p>
  * 
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
- * 
- * @see GenericResponseBody
  */
-class Http1xResponseBody extends GenericResponseBody {
-
+class Http1xResponseBody extends AbstractResponseBody<Http1xResponseHeaders, Http1xResponseBody> {
+	
 	private static final int MAX_FILE_REGION_SIZE = 1024 * 1024;
 	
-	private Publisher<FileRegion> fileRegionData;
+	private final boolean supportsFileRegion;
 	
+	private Publisher<FileRegion> fileRegionData;
+
 	/**
 	 * <p>
-	 * Creates a HTTP1.x server response body for the specified response.
+	 * Creates an Http/1.x response body.
 	 * </p>
-	 * 
-	 * @param response the HTTP1.x response
+	 *
+	 * @param headers            the response headers
+	 * @param supportsFileRegion true if file region is supported, false otherwise
 	 */
-	public Http1xResponseBody(Http1xResponse response) {
-		super(response);
+	public Http1xResponseBody(Http1xResponseHeaders headers, boolean supportsFileRegion) {
+		super(headers);
+		this.supportsFileRegion = supportsFileRegion;
 	}
 	
 	/**
 	 * <p>
-	 * Returns the file region data publisher to send when present instead of the regular payload data publisher.
+	 * Returns the file region data publisher.
 	 * </p>
-	 *
-	 * @return an optional returning a file region publisher or an empty optional if no file region has been set in the response
+	 * 
+	 * <p>
+	 * The file region data publisher has priority over the response body data publisher and shall be subscribed first when present to produce the response body.
+	 * </p>
+	 * 
+	 * @return the file region data publisher or null
 	 */
 	public Publisher<FileRegion> getFileRegionData() {
 		return this.fileRegionData;
 	}
 	
 	@Override
-	public Resource resource() {
-		// fileregion is supported when we are not using ssl and we do not compress content
-		if(((Http1xResponse)this.response).supportsFileRegion()) {
-			if(this.resourceData == null) {
-				this.resourceData = new Http1xResponseBodyResourceData();
-			}
-			return this.resourceData;
+	protected void setData(Publisher<ByteBuf> data) throws IllegalStateException {
+		super.setData(data);
+		this.fileRegionData = null;
+	}
+
+	@Override
+	public ResponseBody.Resource resource() {
+		if(this.resourceData == null) {
+			this.resourceData = new Http1xResponseBody.FileRegionResourceOutboundData();
 		}
-		return super.resource();
+		return this.resourceData;
 	}
 
 	/**
 	 * <p>
-	 * {@link ResponseBody.Resource} implementation that uses file region when available.
+	 * Generic {@link ResponseBody.Resource} implementation.
 	 * </p>
-	 *
+	 * 
 	 * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
-	 * @since 1.0
-	 *
-	 * @see FileRegion
+	 * @since 1.10
 	 */
-	private class Http1xResponseBodyResourceData extends GenericResponseBody.GenericResponseBodyResourceData {
+	protected class FileRegionResourceOutboundData extends Http1xResponseBody.ResourceOutboundData {
 
 		@Override
 		public void value(io.inverno.mod.base.resource.Resource resource) {
+			Objects.requireNonNull(resource);
 			// In case of file resources we should always be able to determine existence
 			// For other resources with a null exists we can still try, worst case scenario: 
 			// internal server error
 			if(resource.exists().orElse(true)) {
 				this.populateHeaders(resource);
-
+				
 				// Only regular file resources supports zero-copy
 				// It seems FileRegion does not support Zip files, I saw different behavior between JDK<15 and above
-				if(resource.isFile().orElse(false) && !(resource instanceof ZipResource)) {
+				if(Http1xResponseBody.this.supportsFileRegion && resource.isFile().orElse(false) && !(resource instanceof ZipResource)) {
+					Http1xResponseBody.this.setData(Flux.empty());
+					
 					// We need to create the file region and then send an empty response
 					// The Http1xServerExchange should then complete and check whether there is a file region or not
 					FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new InternalServerErrorException("Resource is not readable: " + resource.getURI()));
@@ -119,6 +128,7 @@ class Http1xResponseBody extends GenericResponseBody {
 							region.retain();
 							return region;
 						})
+						.doOnDiscard(FileRegion.class, FileRegion::release)
 						.doFinally(sgn -> {
 							try {
 								fileChannel.close();
@@ -127,7 +137,6 @@ class Http1xResponseBody extends GenericResponseBody {
 								throw Exceptions.propagate(e);
 							}
 						});
-					Http1xResponseBody.this.setData(Flux.empty());
 				}
 				else {
 					Http1xResponseBody.this.setData(resource.read());

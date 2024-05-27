@@ -46,22 +46,40 @@ import reactor.core.publisher.Mono;
 class ProducesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C extends AcceptAware & Route<A, B>> extends RoutingLink<A, B, ProducesRoutingLink<A, B, C>, C> {
 
 	private final HeaderCodec<? extends Headers.ContentType> contentTypeCodec;
+	private final boolean strict;
 
 	private Map<Headers.ContentType, RoutingLink<A, B, ?, C>> handlers;
 	private Map<Headers.ContentType, RoutingLink<A, B, ?, C>> enabledHandlers;
 	
 	/**
 	 * <p>
-	 * Creates a produces routing link.
+	 * Creates a strict produces routing link.
 	 * </p>
 	 * 
 	 * @param contentTypeCodec a content type header codec
 	 */
 	public ProducesRoutingLink(HeaderCodec<? extends Headers.ContentType> contentTypeCodec) {
-		super(() -> new ProducesRoutingLink<>(contentTypeCodec));
+		this(contentTypeCodec, true);
+	}
+	
+	/**
+	 * <p>
+	 * Creates a produces routing link.
+	 * </p>
+	 * 
+	 * <p>
+	 * A strict procuces routing link throws a {@link NotAcceptableException} if it can't resolve a handler matching the request accepted content type, otherwise it delegates to the next link.
+	 * </p>
+	 * 
+	 * @param contentTypeCodec a content type header codec
+	 * @param strict true to fail with a 406 code when no matching routes could be resolved, false to delegate to the next link
+	 */
+	public ProducesRoutingLink(HeaderCodec<? extends Headers.ContentType> contentTypeCodec, boolean strict) {
+		super(() -> new ProducesRoutingLink<>(contentTypeCodec, strict));
 		this.contentTypeCodec = contentTypeCodec;
 		this.handlers = new LinkedHashMap<>();
 		this.enabledHandlers = Map.of();
+		this.strict = strict;
 	}
 
 	private void updateEnabledHandlers() {
@@ -213,6 +231,11 @@ class ProducesRoutingLink<A extends ExchangeContext, B extends Exchange<A>, C ex
 					}
 				}
 			}
+			
+			if(!this.strict && !nextLinkInvoked) {
+				return this.nextLink.defer(exchange);
+			}
+			
 			// We haven't found any route that can handle the request
 			throw new NotAcceptableException(this.handlers.keySet().stream()
 					.map(Headers.ContentType::getMediaType)

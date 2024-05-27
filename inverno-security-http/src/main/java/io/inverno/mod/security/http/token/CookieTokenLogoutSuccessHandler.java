@@ -106,13 +106,13 @@ public class CookieTokenLogoutSuccessHandler<A extends Authentication, B extends
 
 	@Override
 	public Mono<Void> handleLogoutSuccess(E exchange, A authentication) {
-		return Mono.fromRunnable(() -> exchange.response().cookies(cookies -> cookies
+		return Mono.fromRunnable(() -> exchange.response().headers(headers-> headers.cookies(cookies -> cookies
 			.addCookie(cookie -> cookie
 				.path(this.path)
 				.name(this.tokenCookie)
 				.value("")
 				.maxAge(0)
 			)
-		));
+		)));
 	}
 }

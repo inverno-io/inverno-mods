@@ -17,6 +17,7 @@ package io.inverno.mod.http.server.internal.http1x;
 
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.base.Parameter;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.internal.header.HeadersValidator;
@@ -28,47 +29,87 @@ import io.inverno.mod.http.server.HttpServerConfiguration;
 import io.inverno.mod.http.server.HttpServerException;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.ServerController;
-import io.inverno.mod.http.server.internal.AbstractExchange;
 import io.inverno.mod.http.server.internal.HttpConnection;
+import io.inverno.mod.http.server.internal.http1x.ws.GenericWebSocketExchange;
+import io.inverno.mod.http.server.internal.http1x.ws.WebSocketConnection;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.TooLongFrameException;
+import io.netty.channel.FileRegion;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpContent;
+import io.netty.handler.codec.http.DefaultHttpRequest;
 import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpContentCompressor;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
+import io.netty.handler.codec.http.TooLongHttpHeaderException;
+import io.netty.handler.codec.http.TooLongHttpLineException;
 import io.netty.handler.codec.http.websocketx.CorruptedWebSocketFrameException;
 import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig;
+import io.netty.handler.codec.http.websocketx.extensions.WebSocketServerExtensionHandler;
+import io.netty.handler.codec.http.websocketx.extensions.WebSocketServerExtensionHandshaker;
+import io.netty.handler.codec.http.websocketx.extensions.compression.DeflateFrameServerExtensionHandshaker;
+import io.netty.handler.codec.http.websocketx.extensions.compression.PerMessageDeflateServerExtensionHandshaker;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.util.ReferenceCounted;
+import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.ScheduledFuture;
+import java.net.SocketAddress;
+import java.security.cert.Certificate;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 
 /**
  * <p>
- * HTTP/1.x connection.
+ * Http/1.x connection.
  * </p>
- *
+ * 
  * <p>
- * This is the entry point of a HTTP client connection to the HTTP server using version 1.x of the HTTP protocol.
+ * Http pipelining is implemented by linking {@link Http1xExchange} one after the other. At any point in time there is at most one {@link #requestingExchange} and one {@link #respondingExchange} that
+ * can be the same as the requesting exchange.
  * </p>
- *
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * 
+ * <p>
+ * When receiving a request, a requesting exchange is created and started right away to become the responding exchange when there's no responding exchange, otherwise it is chained to the existing
+ * requesting exchange.
+ * </p>
+ * 
+ * <p>
+ * When the responding exchange completes, the connection starts the next exchange if any which becomes the responding exchange, otherwise there's no more pending request and both the requesting and
+ * responding exchanges which should then be the same are set to {@code null}.
+ * </p>
+ * 
+ * <p>
+ * The connection is shutdown on decoder error after any pending non-faulty requests have been processed.
+ * </p>
+ * 
+ * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-public class Http1xConnection extends ChannelDuplexHandler implements HttpConnection, Http1xConnectionEncoder, AbstractExchange.Handler {
+public class Http1xConnection extends ChannelDuplexHandler implements HttpConnection {
 	
-//	private static final Logger LOGGER = LogManager.getLogger(Http1xConnection.class);
+	private static final Logger LOGGER = LogManager.getLogger(HttpConnection.class);
 
 	private final HttpServerConfiguration configuration;
 	private final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
@@ -76,158 +117,240 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	private final ObjectConverter<String> parameterConverter;
 	private final MultipartDecoder<Parameter> urlEncodedBodyDecoder; 
 	private final MultipartDecoder<Part> multipartBodyDecoder;
-	
 	private final GenericWebSocketFrame.GenericFactory webSocketFrameFactory;
 	private final GenericWebSocketMessage.GenericFactory webSocketMessageFactory;
 	private final HeadersValidator headersValidator;
 	
-	protected ChannelHandlerContext context;
-	protected boolean tls;
+	private ChannelHandlerContext channelContext;
+	private boolean tls;
+	private boolean supportsFileRegion;
 	
 	private Http1xExchange requestingExchange;
-	private Http1xExchange respondingExchange;
+	/**
+	 * The responding exchange which can be replaced by an {@link Http1xErrorExchange} in case of error while processing the exchange.
+	 */
+	AbstractHttp1xExchange respondingExchange;
 	
-	private Http1xExchange exchangeQueue;
-	
+	private Throwable decoderError;
 	private boolean read;
 	private boolean flush;
 	
-	private Runnable gracefulShutdownNotifier;
+	private Sinks.One<Void> shutdownSink;
+	private Mono<Void> shutdown;
+	
+	private Sinks.One<Void> gracefulShutdownSink;
+	private Mono<Void> gracefulShutdown;
+	private ScheduledFuture<?> gracefulShutdownTimeout;
+	private ChannelPromise gracefulShutdownClosePromise;
+	
 	private boolean closing;
 	private boolean closed;
 	
 	/**
 	 * <p>
-	 * Creates a HTTP1.x connection.
+	 * Creates an Http/1.x connection.
 	 * </p>
 	 *
 	 * @param configuration           the server configuration
 	 * @param controller              the server controller
 	 * @param headerService           the header service
-	 * @param parameterConverter      a string object converter
+	 * @param parameterConverter      the parameter converter
 	 * @param urlEncodedBodyDecoder   the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder    the multipart/form-data body decoder
 	 * @param webSocketFrameFactory   the WebSocket frame factory
 	 * @param webSocketMessageFactory the WebSocket message factory
-	 * @param headersValidator        a headers validator or null
+	 * @param headersValidator        the header validator
 	 */
-	public Http1xConnection(
-			HttpServerConfiguration configuration,
-			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller,
+	Http1xConnection(
+			HttpServerConfiguration configuration, 
+			ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller, 
 			HeaderService headerService, 
-			ObjectConverter<String> parameterConverter,
+			ObjectConverter<String> parameterConverter, 
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
-			MultipartDecoder<Part> multipartBodyDecoder,
-			GenericWebSocketFrame.GenericFactory webSocketFrameFactory,
-			GenericWebSocketMessage.GenericFactory webSocketMessageFactory,
-			HeadersValidator headersValidator) {
+			MultipartDecoder<Part> multipartBodyDecoder, 
+			GenericWebSocketFrame.GenericFactory webSocketFrameFactory, 
+			GenericWebSocketMessage.GenericFactory webSocketMessageFactory, 
+			HeadersValidator headersValidator
+		) {
 		this.configuration = configuration;
 		this.controller = controller;
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
-		
 		this.webSocketFrameFactory = webSocketFrameFactory;
 		this.webSocketMessageFactory = webSocketMessageFactory;
 		this.headersValidator = headersValidator;
 	}
-
+	
+	/**
+	 * <p>
+	 * Returns the event loop associated to the connection.
+	 * </p>
+	 * 
+	 * @return the connection event loop
+	 */
+	public EventExecutor executor() {
+		return this.channelContext.executor();
+	}
+	
+	/**
+	 * <p>
+	 * Returns a new channel promise.
+	 * </p>
+	 * 
+	 * @return a new channel promise
+	 */
+	public ChannelPromise newPromise() {
+		return this.channelContext.newPromise();
+	}
+	
+	/**
+	 * <p>
+	 * Returns the void promise.
+	 * </p>
+	 * 
+	 * @return the void promise
+	 */
+	public ChannelPromise voidPromise() {
+		return this.channelContext.voidPromise();
+	}
+	
 	@Override
 	public boolean isTls() {
 		return this.tls;
 	}
+	
+	/**
+	 * <p>
+	 * Indicates whether the connection supports file region.
+	 * </p>
+	 * 
+	 * @return true if file region is supported, false otherwise
+	 */
+	public boolean supportsFileRegion() {
+		return this.supportsFileRegion;
+	}
 
 	@Override
-	public io.inverno.mod.http.base.HttpVersion getProtocol() {
+	public HttpVersion getProtocol() {
 		return io.inverno.mod.http.base.HttpVersion.HTTP_1_1;
 	}
-
+	
 	@Override
-	public Mono<Void> shutdown() {
-		if(this.closing || this.closed) {
-			return Mono.fromRunnable(this::tryNotifyGracefulShutdown);
-		}
-		return Mono.<Void>create(sink -> {
-			if(!this.closed && !this.closing) {
-//				LOGGER.debug("Shutdown");
-				this.closing = true;
-				ChannelFuture closeFuture;
-				if(this.context.channel().isActive()) {
-					closeFuture = this.context.writeAndFlush(Unpooled.EMPTY_BUFFER)
-						.addListener(ChannelFutureListener.CLOSE);
-				}
-				else {
-					closeFuture = this.context.close();
-				}
-				closeFuture.addListener(future -> {
-					if(future.isSuccess()) {
-						sink.success();
-					}
-					else {
-						sink.error(future.cause());
-					}
-				});
-			}
-			else {
-				sink.success();
-			}
-		})
-		.subscribeOn(Schedulers.fromExecutor(this.context.executor()));
+	public SocketAddress getLocalAddress() {
+		return this.channelContext.channel().localAddress();
 	}
 
 	@Override
-	public Mono<Void> shutdownGracefully() {
-		if(this.closing || this.closed) {
-			return Mono.empty();
-		}
-		return Mono.<Void>create(sink -> {
-			if(!this.closed && !this.closing) {
-//				LOGGER.debug("Shutdown gracefully");
-				this.closing = true;
+	public Optional<Certificate[]> getLocalCertificates() {
+		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
+			.map(handler -> handler.engine().getSession().getLocalCertificates())
+			.filter(certificates -> certificates.length > 0);
+	}
 
-				ChannelPromise closePromise = this.context.newPromise().addListener(future -> {
-					if(future.isSuccess()) {
-						sink.success();
-					}
-					else {
-						sink.error(future.cause());
-					}
-				});
-				if(this.exchangeQueue == null && this.respondingExchange == null) {
-					if(this.context.channel().isActive()) {
-						this.context.writeAndFlush(Unpooled.EMPTY_BUFFER)
-							.addListener(future -> this.context.close(closePromise));
-					}
-					else {
-						this.context.close(closePromise);
-					}
+	@Override
+	public SocketAddress getRemoteAddress() {
+		return this.channelContext.channel().remoteAddress();
+	}
+
+	@Override
+	public Optional<Certificate[]> getRemoteCertificates() {
+		return Optional.ofNullable(this.channelContext.pipeline().get(SslHandler.class))
+			.map(handler -> {
+				try {
+					return handler.engine().getSession().getPeerCertificates();
+				} 
+				catch(SSLPeerUnverifiedException e) {
+					return null;
 				}
-				else {
-					// wait up to timeout for the exchange queue to be empty
-					ScheduledFuture<?> gracefulTimeout = this.context.executor()
-						.schedule(() -> {
-							this.context.close(closePromise);
-						}, this.configuration.graceful_shutdown_timeout(), TimeUnit.MILLISECONDS);
-					this.gracefulShutdownNotifier = () -> {
-						if(gracefulTimeout != null) {
-							gracefulTimeout.cancel(false);
-						}
-						this.context.writeAndFlush(Unpooled.EMPTY_BUFFER)
-							.addListener(future -> this.context.close(closePromise));
-					};
-				}
-			}
-			else {
-				sink.success();
-			}
-		})
-		.subscribeOn(Schedulers.fromExecutor(this.context.executor()));
+			})
+			.filter(certificates -> certificates.length > 0);
+	}
+
+	@Override
+	public synchronized Mono<Void> shutdown() {
+		if(this.shutdownSink == null) {
+			this.shutdownSink = Sinks.one();
+			this.shutdown = this.shutdownSink.asMono()
+				.doOnSubscribe(ign -> {
+					if(this.gracefulShutdownTimeout != null) {
+						this.gracefulShutdownTimeout.cancel(false);
+						this.gracefulShutdownTimeout = null;
+						this.closing = false;
+					}
+					if(!this.closing) {
+						this.closing = true;
+						ChannelPromise closePromise = this.channelContext.newPromise().addListener(future -> {
+							this.closed = true;
+							if(future.isSuccess()) {
+								this.shutdownSink.tryEmitEmpty();
+								if(this.gracefulShutdownSink != null) {
+									this.gracefulShutdownSink.tryEmitEmpty();
+								}
+							}
+							else {
+								this.shutdownSink.tryEmitError(future.cause());
+								if(this.gracefulShutdownSink != null) {
+									this.gracefulShutdownSink.tryEmitError(future.cause());
+								}
+							}
+						});
+						this.close(this.channelContext, closePromise);
+					}
+				})
+				.subscribeOn(Schedulers.fromExecutor(this.channelContext.executor()));
+		}
+		return this.shutdown;
 	}
 	
-	private void tryNotifyGracefulShutdown() {
-		if(this.gracefulShutdownNotifier != null && this.exchangeQueue == null && this.respondingExchange == null) {
-			this.gracefulShutdownNotifier.run();
+	@Override
+	public synchronized Mono<Void> shutdownGracefully() {
+		if(this.gracefulShutdownSink == null) {
+			this.gracefulShutdownSink = Sinks.one();
+			this.gracefulShutdown = this.gracefulShutdownSink.asMono()
+				.doOnSubscribe(ign -> {
+					if(!this.closing) {
+						this.closing = true;
+						this.gracefulShutdownClosePromise = this.channelContext.newPromise().addListener(future -> {
+							this.closed = true;
+							if(future.isSuccess()) {
+								this.gracefulShutdownSink.tryEmitEmpty();
+							}
+							else {
+								this.gracefulShutdownSink.tryEmitError(future.cause());
+							}
+						});
+						
+						if(this.respondingExchange == null) {
+							this.close(this.channelContext, this.gracefulShutdownClosePromise);
+						}
+						else {
+							this.gracefulShutdownTimeout = this.channelContext.executor()
+								.schedule(() -> {
+									this.close(this.channelContext, this.gracefulShutdownClosePromise);
+								}, this.configuration.graceful_shutdown_timeout(), TimeUnit.MILLISECONDS);
+						}
+					}
+				})
+				.subscribeOn(Schedulers.fromExecutor(this.channelContext.executor()));
+		}
+		return this.gracefulShutdown;
+	}
+	
+	/**
+	 * <p>
+	 * Tries to shutdown the connection if a graceful shutdown is under way.
+	 * </p>
+	 * 
+	 * <p>
+	 * This should be invoked when an exchange completes, the connection is shutdown when there's no more pending exchanges.
+	 * </p>
+	 */
+	private void tryShutdown() {
+		if(this.gracefulShutdownTimeout != null && this.respondingExchange == null) {
+			this.gracefulShutdownTimeout.cancel(false);
+			this.close(this.channelContext, this.gracefulShutdownClosePromise);
 		}
 	}
 
@@ -235,76 +358,210 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 	public boolean isClosed() {
 		return this.closed;
 	}
+	
+	@Override
+	public void close(ChannelHandlerContext ctx, ChannelPromise promise) {
+		if(this.channelContext.channel().isActive()) {
+			ctx.writeAndFlush(Unpooled.EMPTY_BUFFER)
+				.addListener(future -> ctx.close(promise));
+		}
+		else {
+			ctx.close(promise);
+		}
+	}
 
 	@Override
+	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+		this.channelContext = ctx;
+		super.handlerAdded(ctx);
+	}
+	
+	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-//		LOGGER.debug("Channel active");
-		this.context = ctx;
-		this.tls = this.context.pipeline().get(SslHandler.class) != null;
+		this.tls = ctx.pipeline().get(SslHandler.class) != null;
+		this.supportsFileRegion = !this.tls && ctx.pipeline().get(HttpContentCompressor.class) == null;
 		super.channelActive(ctx);
+	}
+
+	@Override
+	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+		try {
+			super.userEventTriggered(ctx, evt);
+		}
+		finally {
+			if(evt instanceof IdleStateEvent) {
+				this.exceptionCaught(ctx, new HttpServerException("Idle timeout: " + ((IdleStateEvent)evt).state()));
+			}
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Disposes all queued exchanges.
+	 * </p>
+	 * 
+	 * <p>
+	 * This is typically invoked right before the connection is shutdown OR when the connection becomes inactive (i.e. reset by peer) in order to stop processing and free resources.
+	 * </p>
+	 * 
+	 * @param throwable an error or null if disposal does not result from an error (e.g. shutdown)
+	 */
+	private void dispose(Throwable throwable) {
+		AbstractHttp1xExchange current = this.respondingExchange;
+		while(current != null) {
+			AbstractHttp1xExchange next = current.next;
+			current.next = null;
+			current.dispose(throwable);
+			current = next;
+		}
+		this.respondingExchange = null;
+		this.requestingExchange = null;
+	}
+	
+	/**
+	 * <p>
+	 * Disposes all queued exchanges and shutdown the connection.
+	 * </p>
+	 * 
+	 * <p>
+	 * This is typically invoked after an error which put the connection in an illegal state (e.g. partial request has been sent).
+	 * </p>
+	 * 
+	 * @param throwable an error or null if disposal does not result from an error (e.g. shutdown)
+	 */
+	private void disposeAndShutdown(Throwable throwable) {
+		this.dispose(throwable);
+		this.shutdown().subscribe();
+	}
+	
+	@Override
+	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+		// This shall dispose all pending exchanges
+		// dispose the exchange queue
+		this.dispose(new HttpServerException("Connection was closed"));
+	}
+	
+	@Override
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+		if(cause instanceof WebSocketHandshakeException || cause instanceof CorruptedWebSocketFrameException) {
+			// Delegate this to the WebSocket protocol handler
+			super.exceptionCaught(ctx, cause);
+		}
+		else {
+			this.disposeAndShutdown(cause);
+			LOGGER.error("Connection error", cause);
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Callback method invoked when a decoder error is raised while reading the channel.
+	 * </p>
+	 * 
+	 * @param cause the decoder error
+	 */
+	public void decoderError(Throwable cause) {
+		if(this.requestingExchange == null) {
+			this.disposeAndShutdown(cause);
+			LOGGER.warn("Invalid object received", cause);
+		}
+		else if(this.requestingExchange == this.respondingExchange.unwrap()) {
+			if(!this.respondingExchange.response().headers().isWritten()) {
+				HttpResponseStatus status;
+				if(cause instanceof TooLongHttpLineException) {
+					status = HttpResponseStatus.REQUEST_URI_TOO_LONG;
+				}
+				else if(cause instanceof TooLongHttpHeaderException) {
+					status = HttpResponseStatus.REQUEST_HEADER_FIELDS_TOO_LARGE;
+				} 
+				else {
+					status = HttpResponseStatus.BAD_REQUEST;
+				}
+				this.channelContext.write(new DefaultFullHttpResponse(this.respondingExchange.version, status));
+			}
+			this.disposeAndShutdown(cause);
+			LOGGER.warn("Invalid object received", cause);
+		}
+		else {
+			this.decoderError = cause;
+		}
 	}
 	
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-		if(msg instanceof HttpObject) {
+		if(this.closing || this.decoderError != null) {
+			if(msg instanceof ReferenceCounted) {
+				((ReferenceCounted)msg).release();
+			}
+			return;
+		}
+		
+		if(msg == LastHttpContent.EMPTY_LAST_CONTENT) {
+			if(this.requestingExchange != null && this.requestingExchange.request().getBody() != null) {
+				this.requestingExchange.request().getBody().getDataSink().tryEmitComplete();
+			}
+		}
+		else if(msg instanceof DefaultHttpRequest) {
 			this.read = true;
-			if(msg instanceof HttpRequest) {
-				HttpRequest httpRequest = (HttpRequest)msg;
-				if(this.closing || this.closed || this.validateHttpObject(ctx, httpRequest.protocolVersion(), httpRequest)) {
+
+			HttpRequest httpRequest = (HttpRequest)msg;
+			Http1xExchange exchange = new Http1xExchange(
+				this.configuration, 
+				this.controller, 
+				this.headerService, 
+				this.parameterConverter, 
+				this.urlEncodedBodyDecoder, 
+				this.multipartBodyDecoder, 
+				this.headersValidator, 
+				this, 
+				httpRequest
+			);
+			
+			if(msg instanceof LastHttpContent) {
+				exchange.request().body().ifPresent(body -> body.getDataSink().tryEmitComplete());
+			}
+
+			if(this.requestingExchange == null) {
+				this.respondingExchange = this.requestingExchange = exchange;
+				if(httpRequest.decoderResult().isFailure()) {
+					this.decoderError(httpRequest.decoderResult().cause());
 					return;
 				}
-				this.requestingExchange = new Http1xExchange(
-					this.configuration,
-					ctx, 
-					httpRequest.protocolVersion(), 
-					httpRequest, 
-					this,
-					this.headerService, 
-					this.parameterConverter, 
-					this.urlEncodedBodyDecoder, 
-					this.multipartBodyDecoder, 
-					this.controller,
-					this.webSocketFrameFactory,
-					this.webSocketMessageFactory,
-					this.headersValidator
-				);
-				if(this.exchangeQueue == null) {
-					this.exchangeQueue = this.requestingExchange;
-					this.requestingExchange.start(this);
-				}
-				else {
-					this.exchangeQueue.next = this.requestingExchange;
-					this.exchangeQueue = this.requestingExchange;
+				this.respondingExchange.start();
+			}
+			else {
+				this.requestingExchange = this.requestingExchange.next = exchange;
+				if(httpRequest.decoderResult().isFailure()) {
+					this.decoderError(httpRequest.decoderResult().cause());
 				}
 			}
-			else if(this.requestingExchange != null && !this.requestingExchange.isDisposed()) {
-				HttpVersion version = this.requestingExchange.version;
-				if(msg == LastHttpContent.EMPTY_LAST_CONTENT) {
-					this.requestingExchange.request().data().ifPresent(sink -> sink.tryEmitComplete());
+		}
+		else if(msg instanceof DefaultHttpContent || msg instanceof HttpContent) {
+			this.read = true;
+			HttpContent content = (HttpContent)msg;
+			if(content.decoderResult().isFailure()) {
+				content.release();
+				this.decoderError(content.decoderResult().cause());
+				return;
+			}
+			
+			if(this.requestingExchange != null) {
+				Http1xRequestBody body = this.requestingExchange.request().getBody();
+				if(body != null) {
+					if(body.getDataSink().tryEmitNext(content.content()) != Sinks.EmitResult.OK) {
+						content.release();
+					}
+
+					if(content instanceof LastHttpContent) {
+						body.getDataSink().tryEmitComplete();
+					}
 				}
 				else {
-					HttpContent httpContent = (HttpContent)msg;
-					if(this.validateHttpObject(ctx, version, httpContent)) {
-						return;
-					}
-					this.requestingExchange.request().data().ifPresentOrElse(
-						sink -> {
-							if(sink.tryEmitNext(httpContent.content()) != Sinks.EmitResult.OK) {
-								httpContent.release();
-							}
-						}, 
-						() -> httpContent.release()
-					);
-					if(httpContent instanceof LastHttpContent) {
-						this.requestingExchange.request().data().ifPresent(sink -> sink.tryEmitComplete());
-					}
+					content.release();
 				}
 			}
 			else {
-				// This can happen when an exchange has been disposed before we actually
-				// received all the data in that case we have to dismiss the content and wait
-				// for the next request
-				((HttpContent)msg).release();
+				content.release();
 			}
 		}
 		else {
@@ -322,137 +579,240 @@ public class Http1xConnection extends ChannelDuplexHandler implements HttpConnec
 				this.flush = false;
 			}
 		}
+		super.channelReadComplete(ctx);
 	}
-
-	private boolean validateHttpObject(ChannelHandlerContext ctx, HttpVersion version, HttpObject httpObject) throws Exception {
-		if(!httpObject.decoderResult().isFailure()) {
-			return false;
-		}
-		Throwable cause = httpObject.decoderResult().cause();
-		if (cause instanceof TooLongFrameException) {
-			String causeMsg = cause.getMessage();
-			HttpResponseStatus status;
-			if(causeMsg.startsWith("An HTTP line is larger than")) {
-				status = HttpResponseStatus.REQUEST_URI_TOO_LONG;
-			} 
-			else if(causeMsg.startsWith("HTTP header is larger than")) {
-				status = HttpResponseStatus.REQUEST_HEADER_FIELDS_TOO_LARGE;
-			} 
+	
+	/**
+	 * <p>
+	 * Requests to write an Http object.
+	 * </p>
+	 * 
+	 * <p>
+	 * The operation is always executed on the connection event loop.
+	 * </p>
+	 * 
+	 * @param object the object to write
+	 */
+	public void writeHttpObject(HttpObject object) {
+		this.writeHttpObject(object, this.channelContext.voidPromise());
+	}
+	
+	/**
+	 * <p>
+	 * Requests to write an Http object.
+	 * </p>
+	 * 
+	 * <p>
+	 * The operation is always executed on the connection event loop.
+	 * </p>
+	 * 
+	 * @param object  the object to write
+	 * @param promise a promise
+	 */
+	public void writeHttpObject(HttpObject object, ChannelPromise promise) {
+		if(this.channelContext.executor().inEventLoop()) {
+			if(this.read) {
+				this.flush = true;
+				this.channelContext.write(object, promise);
+			}
 			else {
-				status = HttpResponseStatus.BAD_REQUEST;
+				this.channelContext.writeAndFlush(object, promise);
 			}
-			ChannelPromise writePromise = ctx.newPromise();
-			ctx.write(new DefaultFullHttpResponse(version, status), writePromise);
-			writePromise.addListener(res -> {
-				this.exceptionCaught(ctx, cause);
-			});
-		} 
-		else {
-			this.exceptionCaught(ctx, cause);
 		}
-		return true;
+		else {
+			this.channelContext.executor().execute(() -> writeHttpObject(object, promise));
+		}
 	}
 	
-	@Override
-	public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-		// TODO idle
-		ctx.fireUserEventTriggered(evt);
+	/**
+	 * <p>
+	 * Requests to write a file region.
+	 * </p>
+	 * 
+	 * <p>
+	 * The operation is always executed on the connection event loop.
+	 * </p>
+	 * 
+	 * @param fileRegion the file region to write
+	 */
+	public void writeFileRegion(FileRegion fileRegion) {
+		this.writeFileRegion(fileRegion, this.channelContext.voidPromise());
 	}
+	
+	/**
+	 * <p>
+	 * Requests to write a file region.
+	 * </p>
+	 * 
+	 * <p>
+	 * The operation is always executed on the connection event loop.
+	 * </p>
+	 * 
+	 * @param fileRegion the file region to write
+	 * @param promise    a promise
+	 */
+	public void writeFileRegion(FileRegion fileRegion, ChannelPromise promise) {
+		if(this.channelContext.executor().inEventLoop()) {
+			if(this.read) {
+				this.flush = true;
+				this.channelContext.write(fileRegion, promise);
+			}
+			else {
+				this.channelContext.writeAndFlush(fileRegion, promise);
+			}
+		}
+		else {
+			this.channelContext.executor().execute(() -> writeFileRegion(fileRegion, promise));
+		}
+	}
+	
+	/**
+	 * <p>
+	 * Setups the channel pipeline to handle WebSocket and sends opening handshake.
+	 * </p>
+	 *
+	 * <p>
+	 * The resulting mono completes successfully and emits the resulting WebSocket exchange when the opening handshake succeeds or with an error when it fails in which case the channel pipeline is
+	 * restored to its original state.
+	 * </p>
+	 * 
+	 * @return a Mono emitting the WebSocket exchange on successful the opening handshake
+	 */
+	public Mono<GenericWebSocketExchange> writeWebSocketHandshake(String[] subProtocols) {
+		return Mono.defer(() -> {
+			WebSocketServerProtocolConfig.Builder webSocketConfigBuilder = WebSocketServerProtocolConfig.newBuilder()
+				.websocketPath(this.respondingExchange.request().getPath())
+				.subprotocols(subProtocols != null && subProtocols.length > 0 ? Arrays.stream(subProtocols).collect(Collectors.joining(",")) : null)
+				.checkStartsWith(false)
+				.handleCloseFrames(false)
+				.dropPongFrames(true)
+				.expectMaskedFrames(true)
+				.closeOnProtocolViolation(false)
+				.allowMaskMismatch(this.configuration.ws_allow_mask_mismatch())
+				.forceCloseTimeoutMillis(this.configuration.ws_close_timeout())
+				.maxFramePayloadLength(this.configuration.ws_max_frame_size())
+				.allowExtensions(this.configuration.ws_frame_compression_enabled() || this.configuration.ws_message_compression_enabled());
 
-	@Override
-	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-//		LOGGER.debug("Exception caught", cause);
-		if(cause instanceof WebSocketHandshakeException || cause instanceof CorruptedWebSocketFrameException) {
-			// Delegate this to the WebSocket protocol handler
-			super.exceptionCaught(ctx, cause);
-		}
-		else {
-			if(this.respondingExchange != null) {
-				this.respondingExchange.dispose(cause, true);
+			if(configuration.ws_handshake_timeout() > 0) {
+				webSocketConfigBuilder.handshakeTimeoutMillis(configuration.ws_handshake_timeout());
 			}
-			this.shutdown().subscribe();
-		}
-	}
-	
-	@Override
-	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-//		LOGGER.debug("Channel inactive");
-		// TODO this created DB connections not returned to pool
-		// If the purpose is to clean resources, I think we should see why this happens before the responding exchange response publisher did not finish
-		// one explanation could be that response events are not published on the channel event loop: the connection might be closed/end while the onComplete events hasn't been processed
-		// In any case this is disturbing and not easy to troubleshoot, we'll see in the future if this is a real issue or not
-		if(this.respondingExchange != null) {
-			Throwable cause = new HttpServerException("Connection was closed");
-			this.respondingExchange.dispose(cause, true);
-			while(this.respondingExchange != null) {
-				this.respondingExchange.dispose(cause, false);
-				ChannelPromise errorPromise = ctx.newPromise();
-				this.respondingExchange.finalizeExchange(errorPromise, null);
-				errorPromise.tryFailure(cause);
-				this.respondingExchange = this.respondingExchange.next;
+
+			WebSocketConnection webSocketConnection = new WebSocketConnection(
+				this.configuration, 
+				webSocketConfigBuilder.build(), 
+				this.respondingExchange, 
+				this.webSocketFrameFactory, 
+				this.webSocketMessageFactory
+			);
+			
+			ChannelPipeline pipeline = this.channelContext.pipeline();
+			Map<String, ChannelHandler> initialChannelHandlers = pipeline.toMap();
+
+			List<WebSocketServerExtensionHandshaker> extensionHandshakers = new LinkedList<>();
+			if(this.configuration.ws_frame_compression_enabled()) {
+				extensionHandshakers.add(new DeflateFrameServerExtensionHandshaker(this.configuration.ws_frame_compression_level()));
 			}
-		}
+			if(this.configuration.ws_message_compression_enabled()) {
+				extensionHandshakers.add(new PerMessageDeflateServerExtensionHandshaker(
+					this.configuration.ws_message_compression_level(),
+					this.configuration.ws_message_allow_server_window_size(),
+					this.configuration.ws_message_prefered_client_window_size(),
+					this.configuration.ws_message_allow_server_no_context(),
+					this.configuration.ws_message_preferred_client_no_context()
+				));
+			}
+			if(!extensionHandshakers.isEmpty()) {
+				pipeline.addLast(new WebSocketServerExtensionHandler(extensionHandshakers.toArray(WebSocketServerExtensionHandshaker[]::new)));
+			}
+			pipeline.addLast(webSocketConnection);
+
+			this.channelContext.fireChannelRead(this.respondingExchange.request().unwrap());
 		
-		if(this.exchangeQueue != null) {
-			this.exchangeQueue.next = null;
-		}
+			return webSocketConnection.getWebSocketExchange()
+				.doOnError(t -> {
+					for(String currentHandlerName : pipeline.toMap().keySet()) {
+						if(!initialChannelHandlers.containsKey(currentHandlerName)) {
+							pipeline.remove(currentHandlerName);
+						}
+					}
+
+					Map<String, ChannelHandler> currentChannelHandlers = pipeline.toMap();
+					if(currentChannelHandlers.size() != initialChannelHandlers.size()) {
+						// We may have missing handlers
+						Iterator<String> currentHandlerNamesIterator = currentChannelHandlers.keySet().iterator();
+						if(currentHandlerNamesIterator.hasNext()) {
+							String currentHandlerName = currentHandlerNamesIterator.next();
+							for(Map.Entry<String, ChannelHandler> currentInitialHandler : initialChannelHandlers.entrySet()) {
+								if(!currentInitialHandler.getKey().equals(currentHandlerName)) {
+									pipeline.addBefore(currentHandlerName, currentInitialHandler.getKey(), currentInitialHandler.getValue());
+								}
+								else {
+									if(!currentHandlerNamesIterator.hasNext()) {
+										break;
+									}
+									currentHandlerName = currentHandlerNamesIterator.next();
+								}
+							}
+						}
+					}
+				});
+		});
 	}
 	
-	@Override
-	public ChannelFuture writeFrame(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
-		if(this.read) {
-			this.flush = true;
-			return ctx.write(msg, promise);
-		}
-		else {
-			return ctx.writeAndFlush(msg, promise);
-		}
-	}
-	
-	@Override
-	public void exchangeStart(ChannelHandlerContext ctx, AbstractExchange exchange) {
-//		LOGGER.debug("Exchange start");
-		this.respondingExchange = (Http1xExchange)exchange;
-	}
-	
-	@Override
-	public void exchangeError(ChannelHandlerContext ctx, Throwable t) {
-//		LOGGER.debug("Exchange error", t);
-		// If we get there it means we weren't able to properly handle the error before
-		if(this.flush) {
-			ctx.flush();
-		}
-		// We have to release data...
-		this.respondingExchange.dispose(t, true);
-		// ...and close the connection
-		this.shutdown().subscribe();
-	}
-	
-	@Override
-	public void exchangeComplete(ChannelHandlerContext ctx) {
-//		LOGGER.debug("Exchange complete");
-		this.respondingExchange.dispose();
-		if(this.respondingExchange.keepAlive) {
-			if(this.respondingExchange.next != null) {
-				this.respondingExchange.next.start(this);
+	/**
+	 * <p>
+	 * Callback method invoked when the processing of the current responding exchange completes.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method executes on the connection event loop, it shutdowns the connection if the keepAlive flag is false, otherwise it starts the next exchange in the chain if any.
+	 * </p>
+	 */
+	public void onExchangeComplete() {
+		if(this.channelContext.executor().inEventLoop()) {
+			if(!this.respondingExchange.keepAlive) {
+				this.shutdown().subscribe();
 			}
 			else {
-				this.exchangeQueue = null;
-				this.respondingExchange = null;
-				this.tryNotifyGracefulShutdown();
+				// This is required if the request body publisher hasn't been consumed in order to free resources
+				this.respondingExchange.dispose(null);
+				this.respondingExchange = this.respondingExchange.next;
+				if(this.respondingExchange != null) {
+					if(this.respondingExchange.next != null || this.decoderError == null) {
+						this.respondingExchange.start();
+					}
+					else {
+						this.decoderError(this.decoderError);
+					}
+				}
+				else {
+					this.requestingExchange = null;
+					this.tryShutdown();
+				}
 			}
 		}
 		else {
-			if(this.respondingExchange.next != null) {
-				this.respondingExchange.next.dispose(true);
-			}
-			this.shutdown().subscribe();
+			this.channelContext.executor().execute(this::onExchangeComplete);
 		}
 	}
-
-	@Override
-	public void exchangeReset(ChannelHandlerContext ctx, long code) {
-//		LOGGER.debug("Exchange reset: code={}", code);
-		this.exchangeError(ctx, new HttpServerException("Exchange has been reset: " + code));
+	
+	/**
+	 * <p>
+	 * Callback method invoked when an error is raised during the processing of the current responding exchange.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method executes on the connection event loop and delegates the error handling to the responding exchange (see {@link AbstractHttp1xExchange#handleError(java.lang.Throwable) }).
+	 * </p>
+	 * 
+	 * @param throwable the error
+	 */
+	public void onExchangeError(Throwable throwable) {
+		if(this.channelContext.executor().inEventLoop()) {
+			this.respondingExchange.handleError(throwable);
+		}
+		else {
+			this.channelContext.executor().execute(() -> this.onExchangeError(throwable));
+		}
 	}
 }

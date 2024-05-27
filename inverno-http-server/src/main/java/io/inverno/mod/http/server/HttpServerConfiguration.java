@@ -597,21 +597,27 @@ public interface HttpServerConfiguration {
 	
 	/**
 	 * <p>
-	 * Enables/Disables H2C.
+	 * Enables/Disables HTTP/2.
 	 * </p>
 	 *
 	 * <p>
-	 * This only applies when SSL is disabled, otherwise {@link #h2_enabled()} is considered.
+	 * When SSL is disabled, the property enables/disables Http/2 over cleartext (H2C) protocol as decribed by <a href="https://datatracker.ietf.org/doc/html/rfc7540#section-3.2">RFC 7540 Section
+	 * 3.2</a>.
 	 * </p>
 	 *
 	 * <p>
-	 * Defaults to {@code false}.
+	 * Defaults to {@code true} when TLS is enabled, false otherwise.
 	 * </p>
 	 *
 	 * @return true if the option is enabled, false otherwise
 	 */
-	default boolean h2c_enabled() {
-		return false;
+	default boolean h2_enabled() {
+		if(this.tls_enabled()) {
+			return true;
+		}
+		else {
+			return false;
+		}
 	}
 	
 	/**
@@ -627,26 +633,6 @@ public interface HttpServerConfiguration {
 	 */
 	default int h2c_max_content_length() {
 		return 8192;
-	}
-	
-	/**
-	 * <p>
-	 * Enables/Disables HTTP/2.
-	 * </p>
-	 * 
-	 * <p>
-	 * This only applies when SSL is enabled, otherwise {@link #h2c_enabled()} is
-	 * considered.
-	 * </p>
-	 * 
-	 * <p>
-	 * Defaults to {@code true}.
-	 * </p>
-	 * 
-	 * @return true if the option is enabled, false otherwise
-	 */
-	default boolean h2_enabled() {
-		return true;
 	}
 	
 	/**
@@ -736,6 +722,21 @@ public interface HttpServerConfiguration {
 	 * @return true to validate headers, false otherwise
 	 */
 	default boolean http2_validate_headers() {
+		return true;
+	}
+	
+	/**
+	 * <p>
+	 * Enables/Disables WebSocket support.
+	 * </p>
+	 * 
+	 * <p>
+	 * Defaults to {@code true}.
+	 * </p>
+	 * 
+	 * @return true to enable WebSocket support, false otherwise
+	 */
+	default boolean ws_enabled() {
 		return true;
 	}
 	

@@ -37,7 +37,7 @@ public class HttpClientException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP client exception.
+	 * Creates an HTTP client exception.
 	 * </p>
 	 * 
 	 * @param message the message
@@ -48,7 +48,7 @@ public class HttpClientException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP client exception.
+	 * Creates an HTTP client exception.
 	 * </p>
 	 * 
 	 * @param message the message
@@ -60,7 +60,7 @@ public class HttpClientException extends RuntimeException {
 
 	/**
 	 * <p>
-	 * Creates a HTTP client exception.
+	 * Creates an HTTP client exception.
 	 * </p>
 	 * 
 	 * @param cause the cause

@@ -22,6 +22,7 @@ import io.inverno.mod.base.resource.FileResource;
 import io.inverno.mod.http.base.BadRequestException;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.ExchangeContext;
+import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.web.server.StaticHandler;
 import io.inverno.mod.web.server.WebRoutable;
 import io.netty.buffer.ByteBuf;
@@ -41,6 +42,16 @@ public class WebRoutesConfigurer implements io.inverno.mod.web.server.WebRoutesC
 				.path("/static/{path:.*}", true)
 				.method(Method.GET)
 				.handler(new StaticHandler<>(new FileResource("web-root/")))
+			.route()
+				.path("/post_100_continue")
+				.method(Method.POST)
+				.handler(exchange -> {
+					if(exchange.request().headers().contains(Headers.NAME_EXPECT, Headers.VALUE_100_CONTINUE)) {
+						exchange.response().sendContinue();
+					}
+					exchange.response()
+				        .body().raw().stream(exchange.request().body().get().raw().stream());
+				})
 			.route()
 				.path("/upload")
 				.method(Method.POST)

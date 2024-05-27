@@ -47,13 +47,13 @@ public interface NetConfiguration {
 	 * </p>
 	 * 
 	 * <p>
-	 * Defaults to true.
+	 * Defaults to {@code false}.
 	 * </p>
 	 * 
 	 * @return true if the option is enabled, false otherwise
 	 */
 	default boolean reuse_port() {
-		return true;
+		return false;
 	}
 
 	/**
@@ -151,4 +151,43 @@ public interface NetConfiguration {
 	 * @return the IP type of service
 	 */
 	Integer ip_tos();
+	
+	/**
+	 * <p>
+	 * The channel idle timeout in milliseconds.
+	 * </p>
+	 * 
+	 * <p>
+	 * {@code null} or {@code <= 0} means no timeout.
+	 * </p>
+	 * 
+	 * @return the idle timeout
+	 */
+	Long idle_timeout();
+	
+	/**
+	 * <p>
+	 * The channel read idle timeout in milliseconds.
+	 * </p>
+	 * 
+	 * <p>
+	 * {@code null} or {@code <= 0} means no timeout.
+	 * </p>
+	 * 
+	 * @return the read idle timeout
+	 */
+	Long idle_read_timeout();
+	
+	/**
+	 * <p>
+	 * The channel write idle timeout in milliseconds.
+	 * </p>
+	 * 
+	 * <p>
+	 * {@code null} or {@code <= 0} means no timeout.
+	 * </p>
+	 * 
+	 * @return the write idle timeout
+	 */
+	Long idle_write_timeout();
 }

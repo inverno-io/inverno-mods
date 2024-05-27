@@ -22,7 +22,6 @@ import io.inverno.mod.http.server.ws.WebSocket;
 import io.inverno.mod.web.server.Web2SocketExchange;
 import io.inverno.mod.web.server.WebExchange;
 import java.util.Optional;
-import reactor.core.publisher.Mono;
 
 /**
  * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
@@ -82,9 +81,5 @@ public class MockWebExchange implements WebExchange<ExchangeContext> {
 	@Override
 	public Optional<Throwable> getCancelCause() {
 		return Optional.empty();
-	}
-	
-	@Override
-	public void finalizer(Mono<Void> finalizer) {
 	}
 }

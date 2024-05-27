@@ -79,7 +79,7 @@ public class GenericErrorWebRouter extends AbstractErrorWebRouter implements @Pr
 			.connect(new PathRoutingLink<>())
 			.connect(new PathPatternRoutingLink<>())
 			.connect(new ConsumesRoutingLink<>(ACCEPT_CODEC))
-			.connect(new ProducesRoutingLink<>(CONTENT_TYPE_CODEC))
+			.connect(new ProducesRoutingLink<>(CONTENT_TYPE_CODEC, false))
 			.connect(new LanguageRoutingLink<>(ACCEPT_LANGUAGE_CODEC))
 			.connect(new HandlerRoutingLink<>());
 	}

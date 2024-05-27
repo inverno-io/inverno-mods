@@ -1,12 +1,12 @@
 /*
- * Copyright 2022 Jeremy KUHN
- * 
+ * Copyright 2022 Jeremy Kuhn
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,66 +18,51 @@ package io.inverno.mod.http.client.internal.http1x;
 import io.inverno.mod.base.resource.Resource;
 import io.inverno.mod.base.resource.ZipResource;
 import io.inverno.mod.http.client.internal.EndpointRequestBody;
-import io.inverno.mod.http.client.internal.HttpConnectionRequestBody;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.FileRegion;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.util.Optional;
 import org.reactivestreams.Publisher;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 
 /**
  * <p>
- * HTTP/1.x request body with support for {@link FileRegion} data.
+ * Http/1.x request body with support for {@link FileRegion} data.
  * </p>
  *
  * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.6
  */
-public class Http1xRequestBody extends HttpConnectionRequestBody {
+class Http1xRequestBody {
 	
 	private static final int MAX_FILE_REGION_SIZE = 1024 * 1024;
-
-	private final EndpointRequestBody endpointRequestBody;
+	
 	private final boolean supportsFileRegion;
 	
-	private Optional<Publisher<FileRegion>> fileRegionData;
+	private final Publisher<ByteBuf> data;
+	private final Publisher<FileRegion> fileRegionData;
 
 	/**
 	 * <p>
 	 * Creates an Http1x request body.
 	 * </p>
 	 *
-	 * @param endpointRequestBody the original endpoint request body
+	 * @param endpointRequestBody the originating endpoint request body
 	 * @param supportsFileRegion  true if the connection supports file region, false otherwise
 	 */
 	public Http1xRequestBody(EndpointRequestBody endpointRequestBody, boolean supportsFileRegion) {
-		super(endpointRequestBody.getData());
-		this.endpointRequestBody = endpointRequestBody;
 		this.supportsFileRegion = supportsFileRegion;
-	}
-	
-	/**
-	 * <p>
-	 * Returns the request body file region data publisher.
-	 * </p>
-	 * 
-	 * @return a publisher of file region data or null if the body is not made of file region data.
-	 */
-	public Optional<Publisher<FileRegion>> getFileRegionData() {
-		if(!this.supportsFileRegion || this.endpointRequestBody.getResource() == null) {
-			return Optional.empty();
-		}
 		
-		if(this.fileRegionData == null) {
-			Resource resource = this.endpointRequestBody.getResource();
-		
+		if(this.supportsFileRegion && endpointRequestBody.getResource() != null) {
+			Resource resource = endpointRequestBody.getResource();
+			
 			// We know resource exists, this has been checked in EndpointRequestBody
 			// Only regular file resources supports zero-copy
 			// It seems FileRegion does not support Zip files, I saw different behavior between JDK<15 and above
 			if(resource.isFile().orElse(false) && !(resource instanceof ZipResource)) {
+				this.data = Flux.empty();
 				// We need to create the file region and then send an empty response
 				// The Http1xServerExchange should then complete and check whether there is a file region or not
 				FileChannel fileChannel = (FileChannel)resource.openReadableByteChannel().orElseThrow(() -> new IllegalArgumentException("Resource is not readable: " + resource.getURI()));
@@ -86,8 +71,7 @@ public class Http1xRequestBody extends HttpConnectionRequestBody {
 				int count = (int)Math.ceil((float)size / (float)MAX_FILE_REGION_SIZE);
 
 				// We need to add an extra element in order to control when the flux terminates so we can properly close the file channel
-
-				this.fileRegionData = Optional.of(Flux.range(0, count + 1) 
+				this.fileRegionData = Flux.range(0, count + 1) 
 					.filter(index -> index < count)
 					.map(index -> {
 						long position = index * MAX_FILE_REGION_SIZE;
@@ -102,12 +86,46 @@ public class Http1xRequestBody extends HttpConnectionRequestBody {
 						catch (IOException e) {
 							throw Exceptions.propagate(e);
 						}
-					}));
+					});
 			}
 			else {
-				this.fileRegionData = Optional.empty();
+				this.data = endpointRequestBody.getData();
+				this.fileRegionData = null;
 			}
 		}
+		else {
+			this.data = endpointRequestBody.getData();
+			this.fileRegionData = null;
+		}
+	}
+
+	/**
+	 * <p>
+	 * Returns the response body data publisher.
+	 * </p>
+	 * 
+	 * <p>
+	 * The data publisher MUST be subscribed to produce a request body.
+	 * </p>
+	 * 
+	 * @return the response body data publisher
+	 */
+	public Publisher<ByteBuf> getData() {
+		return data;
+	}
+	
+	/**
+	 * <p>
+	 * Returns the file region data publisher.
+	 * </p>
+	 * 
+	 * <p>
+	 * The file region data publisher has priority over the request body data publisher and shall be subscribed first when present to produce the request body.
+	 * </p>
+	 * 
+	 * @return the file region data publisher or null
+	 */
+	public Publisher<FileRegion> getFileRegionData() {
 		return this.fileRegionData;
 	}
 }

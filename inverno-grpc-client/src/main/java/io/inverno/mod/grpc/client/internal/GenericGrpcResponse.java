@@ -106,6 +106,9 @@ public class GenericGrpcResponse<A extends Message> implements GrpcResponse.Unar
 					return new GrpcException(status, e);
 				}
 				return e;
+			})
+			.doOnError(t -> {
+				GenericGrpcExchange.LOGGER.error("gRPC response processing error", t);
 			});
 	}
 }

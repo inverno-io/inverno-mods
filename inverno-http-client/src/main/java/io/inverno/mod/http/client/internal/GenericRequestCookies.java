@@ -51,14 +51,14 @@ public class GenericRequestCookies implements OutboundCookies {
 	 * Creates generic request cookies.
 	 * </p>
 	 *
-	 * @param requestHeaders     the request headers
 	 * @param headerService      the header service
 	 * @param parameterConverter the parameter converter
+	 * @param requestHeaders     the request headers
 	 */
-	public GenericRequestCookies(OutboundRequestHeaders requestHeaders, HeaderService headerService, ObjectConverter<String> parameterConverter) {
-		this.requestHeaders = requestHeaders;
+	public GenericRequestCookies(HeaderService headerService, ObjectConverter<String> parameterConverter, OutboundRequestHeaders requestHeaders) {
 		this.headerService = headerService;
 		this.parameterConverter = parameterConverter;
+		this.requestHeaders = requestHeaders;
 		
 		this.pairs = new HashMap<>();
 	}

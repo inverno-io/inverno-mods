@@ -17,7 +17,6 @@ package io.inverno.mod.web.server.internal.mock;
 
 import io.inverno.mod.http.base.OutboundHeaders;
 import io.inverno.mod.http.base.OutboundResponseHeaders;
-import io.inverno.mod.http.base.OutboundSetCookies;
 import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.server.Response;
 import io.inverno.mod.web.server.WebResponse;
@@ -49,6 +48,11 @@ public class MockWebResponse implements WebResponse {
 		return false;
 	}
 
+	@Override
+	public int getTransferedLength() {
+		return 0;
+	}
+	
 	@Override
 	public MockResponseHeaders headers() {
 		return this.headers;
@@ -82,13 +86,6 @@ public class MockWebResponse implements WebResponse {
 	@Override
 	public WebResponse trailers(Consumer<OutboundHeaders<?>> trailersConfigurer) {
 		trailersConfigurer.accept(this.trailers);
-		return this;
-	}
-
-	@Override
-	@Deprecated
-	public WebResponse cookies(Consumer<OutboundSetCookies> cookiesConfigurer) throws IllegalStateException {
-		cookiesConfigurer.accept(this.cookies);
 		return this;
 	}
 }

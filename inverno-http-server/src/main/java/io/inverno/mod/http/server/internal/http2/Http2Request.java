@@ -16,64 +16,92 @@
 package io.inverno.mod.http.server.internal.http2;
 
 import io.inverno.mod.base.converter.ObjectConverter;
-import io.inverno.mod.base.net.URIBuilder;
-import io.inverno.mod.base.net.URIs;
-import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.Parameter;
+import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.header.Headers;
 import io.inverno.mod.http.server.Part;
 import io.inverno.mod.http.server.Request;
 import io.inverno.mod.http.server.internal.AbstractRequest;
 import io.inverno.mod.http.server.internal.multipart.MultipartDecoder;
-import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http2.Http2Headers;
+import java.net.SocketAddress;
+import java.security.cert.Certificate;
+import java.util.Optional;
 
 /**
  * <p>
- * HTTP/2 {@link Request} implementation.
+ * Http/2 {@link Request} implementation.
  * </p>
  * 
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
- * @since 1.0
+ * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * @since 1.10
  */
-class Http2Request extends AbstractRequest {
+class Http2Request extends AbstractRequest<Http2RequestHeaders, Http2RequestBody> {
 
-	private URIBuilder pathBuilder;
+	private final Http2ConnectionStream connectionStream;
 	
-	private Method method;
 	private String scheme;
-	private String authority;
+	private Method method;
 	private String path;
+	private String authority;
 	
 	/**
 	 * <p>
-	 * Creates a HTTP/2 server request.
+	 * Creates an Http/2 request.
 	 * </p>
 	 * 
-	 * @param context
-	 * @param requestHeaders
-	 * @param parameterConverter
-	 * @param urlEncodedBodyDecoder
-	 * @param multipartBodyDecoder
+	 * @param headerService         the header service
+	 * @param parameterConverter    the parameter converter
+	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
+	 * @param multipartBodyDecoder  the multipart/form-data body decoder
+	 * @param connectionStream      the connection stream
+	 * @param headers               the originating Http headers
 	 */
-	public Http2Request(ChannelHandlerContext context, InboundRequestHeaders requestHeaders, ObjectConverter<String> parameterConverter, MultipartDecoder<Parameter> urlEncodedBodyDecoder, MultipartDecoder<Part> multipartBodyDecoder) {
-		super(context, requestHeaders, parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder);
+	public Http2Request(
+			HeaderService headerService,
+			ObjectConverter<String> parameterConverter, 
+			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
+			MultipartDecoder<Part> multipartBodyDecoder,
+			Http2ConnectionStream connectionStream, 
+			Http2Headers headers
+		) {
+		super(parameterConverter, urlEncodedBodyDecoder, multipartBodyDecoder, new Http2RequestHeaders(headerService, parameterConverter, headers));
+		this.connectionStream = connectionStream;
 	}
 	
 	@Override
-	protected URIBuilder getPrimaryPathBuilder() {
-		if(this.pathBuilder == null) {
-			this.pathBuilder = this.requestHeaders.get(Headers.NAME_PSEUDO_PATH)
-				.map(path -> URIs.uri(path, false, URIs.Option.NORMALIZED))
-				.orElseThrow(() -> new IllegalStateException("Request has no :path"));
+	public String getScheme() {
+		if(this.scheme == null) {
+			this.scheme = this.headers.get(Headers.NAME_PSEUDO_SCHEME).orElse(null);
 		}
-		return this.pathBuilder;
+		return this.scheme;
+	}
+
+	@Override
+	public SocketAddress getLocalAddress() {
+		return this.connectionStream.getLocalAddress();
+	}
+
+	@Override
+	public Optional<Certificate[]> getLocalCertificates() {
+		return this.connectionStream.getLocalCertificates();
+	}
+
+	@Override
+	public SocketAddress getRemoteAddress() {
+		return this.connectionStream.getRemoteAddress();
+	}
+
+	@Override
+	public Optional<Certificate[]> getRemoteCertificates() {
+		return this.connectionStream.getRemoteCertificates();
 	}
 	
 	@Override
 	public Method getMethod() {
 		if(this.method == null) {
-			this.method = this.requestHeaders.get(Headers.NAME_PSEUDO_METHOD)
+			this.method = this.headers.get(Headers.NAME_PSEUDO_METHOD)
 				.map(methodString -> {
 					try {
 						return Method.valueOf(methodString);
@@ -88,26 +116,34 @@ class Http2Request extends AbstractRequest {
 	}
 	
 	@Override
-	public String getScheme() {
-		if(this.scheme == null) {
-			this.scheme = this.requestHeaders.get(Headers.NAME_PSEUDO_SCHEME).orElse(null);
+	public String getPath() {
+		if(this.path == null) {
+			this.path = this.headers.get(Headers.NAME_PSEUDO_PATH).orElse(null);
 		}
-		return this.scheme;
+		return this.path;
 	}
 	
 	@Override
 	public String getAuthority() {
 		if(this.authority == null) {
-			this.authority = this.requestHeaders.get(Headers.NAME_PSEUDO_AUTHORITY).orElse(null);
+			this.authority = this.headers.get(Headers.NAME_PSEUDO_AUTHORITY).orElse(null);
 		}
 		return this.authority;
 	}
-	
+
 	@Override
-	public String getPath() {
-		if(this.path == null) {
-			this.path = this.requestHeaders.get(Headers.NAME_PSEUDO_PATH).orElse(null);
+	public Optional<Http2RequestBody> body() {
+		if(this.body == null) {
+			switch(this.getMethod()) {
+				case POST:
+				case PUT:
+				case PATCH:
+				case DELETE: {
+					this.body = new Http2RequestBody(this.urlEncodedBodyDecoder, this.multipartBodyDecoder, this.headers);
+					break;
+				}
+			}
 		}
-		return this.path;
+		return Optional.ofNullable(this.body);
 	}
 }

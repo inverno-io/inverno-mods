@@ -47,13 +47,19 @@ public class EndpointChannelInitializer extends ChannelInitializer<SocketChannel
 	 * 
 	 * @param sslContextProvider the SSL context provider
 	 * @param channelConfigurer  the endpoint channel configurer
-	 * @param serverAddress      the address of the endpoint
 	 * @param configuration      an HTTP client configuration
+	 * @param serverAddress      the address of the endpoint
 	 */
-	public EndpointChannelInitializer(SslContextProvider sslContextProvider, EndpointChannelConfigurer channelConfigurer, InetSocketAddress serverAddress, HttpClientConfiguration configuration) {
+	public EndpointChannelInitializer(
+			SslContextProvider sslContextProvider, 
+			EndpointChannelConfigurer channelConfigurer, 
+			HttpClientConfiguration configuration,
+			InetSocketAddress serverAddress
+		) {
 		this.channelConfigurer = channelConfigurer;
-		this.serverAddress = serverAddress;
 		this.configuration = configuration;
+		this.serverAddress = serverAddress;
+		
 		this.sslContext = configuration.tls_enabled() ? sslContextProvider.create(configuration) : null;
 	}
 	

@@ -17,7 +17,6 @@ package io.inverno.mod.web.server.internal;
 
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.base.net.URIBuilder;
-import io.inverno.mod.http.base.InboundCookies;
 import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.http.base.QueryParameters;
@@ -99,12 +98,6 @@ class GenericWebRequest implements WebRequest {
 		return this.pathParameters;
 	}
 
-	@Override
-	@Deprecated
-	public InboundCookies cookies() {
-		return this.request.cookies();
-	}
-	
 	@Override
 	public Method getMethod() {
 		return this.request.getMethod();

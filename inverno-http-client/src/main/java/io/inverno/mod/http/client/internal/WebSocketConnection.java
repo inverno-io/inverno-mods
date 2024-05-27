@@ -17,6 +17,9 @@ package io.inverno.mod.http.client.internal;
 
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
+import java.net.SocketAddress;
+import java.security.cert.Certificate;
+import java.util.Optional;
 import reactor.core.publisher.Mono;
 
 /**
@@ -56,6 +59,42 @@ public interface WebSocketConnection {
 	default HttpVersion getProtocol() {
 		return HttpVersion.HTTP_1_1;
 	}
+	
+	/**
+	 * <p>
+	 * Returns the local socket address of the connection.
+	 * </p>
+	 * 
+	 * @return a socket address
+	 */
+	SocketAddress getLocalAddress();
+
+	/**
+	 * <p>
+	 * Returns the certificates that were sent to the remote peer during handshaking.
+	 * </p>
+	 * 
+	 * @return an optional returning the list of local certificates or an empty optional if no certificates were sent.
+	 */
+	Optional<Certificate[]> getLocalCertificates();
+
+	/**
+	 * <p>
+	 * Returns the remote socket address of the client or last proxy that opened the connection.
+	 * </p>
+	 * 
+	 * @return a socket address
+	 */
+	SocketAddress getRemoteAddress();
+
+	/**
+	 * <p>
+	 * Returns the certificates that were received from the remote peer during handshaking.
+	 * </p>
+	 * 
+	 * @return an optional returning the list of remote certificates or an empty optional if no certificates were received.
+	 */
+	Optional<Certificate[]> getRemoteCertificates();
 	
 	/**
 	 * <p>

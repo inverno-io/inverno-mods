@@ -100,6 +100,41 @@ public interface InboundHeaders {
 	
 	/**
 	 * <p>
+	 * Returns the header with the specified name as a parameter.
+	 * </p>
+	 *
+	 * <p>
+	 * If there are multiple headers with the same name, the first one is returned.
+	 * </p>
+	 *
+	 * @param name a header name
+	 *
+	 * @return an optional returning the parameter or an empty optional if there's no header with the specified name
+	 */
+	Optional<Parameter> getParameter(CharSequence name);
+	
+	/**
+	 * <p>
+	 * Returns all headers with the specified name as parameters.
+	 * </p>
+	 *
+	 * @param name a header name
+	 *
+	 * @return a list of parameters or an empty list if there's no header with the specified name
+	 */
+	List<Parameter> getAllParameter(CharSequence name);
+	
+	/**
+	 * <p>
+	 * Returns all headers specified in the HTTP message as parameters.
+	 * </p>
+	 * 
+	 * @return a list of parameters or an empty list if there's no header
+	 */
+	List<Parameter> getAllParameter();
+	
+	/**
+	 * <p>
 	 * Decodes and returns the header with the specified name.
 	 * </p>
 	 *
@@ -134,39 +169,4 @@ public interface InboundHeaders {
 	 * @return a list of headers or an empty list if there's no header
 	 */
 	List<Header> getAllHeader();
-	
-	/**
-	 * <p>
-	 * Returns the header with the specified name as a parameter.
-	 * </p>
-	 *
-	 * <p>
-	 * If there are multiple headers with the same name, the first one is returned.
-	 * </p>
-	 *
-	 * @param name a header name
-	 *
-	 * @return an optional returning the parameter or an empty optional if there's no header with the specified name
-	 */
-	Optional<Parameter> getParameter(CharSequence name);
-	
-	/**
-	 * <p>
-	 * Returns all headers with the specified name as parameters.
-	 * </p>
-	 *
-	 * @param name a header name
-	 *
-	 * @return a list of parameters or an empty list if there's no header with the specified name
-	 */
-	List<Parameter> getAllParameter(CharSequence name);
-	
-	/**
-	 * <p>
-	 * Returns all headers specified in the HTTP message as parameters.
-	 * </p>
-	 * 
-	 * @return a list of parameters or an empty list if there's no header
-	 */
-	List<Parameter> getAllParameter();
 }

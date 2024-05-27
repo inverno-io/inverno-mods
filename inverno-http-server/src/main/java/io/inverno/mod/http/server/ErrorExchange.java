@@ -21,7 +21,6 @@ import io.inverno.mod.http.server.ws.WebSocket;
 import io.inverno.mod.http.server.ws.WebSocketExchange;
 import java.util.Optional;
 import java.util.function.Function;
-import reactor.core.publisher.Mono;
 
 /**
  * <p>
@@ -94,11 +93,6 @@ public interface ErrorExchange<A extends ExchangeContext> extends Exchange<A> {
 			@Override
 			public A context() {
 				return thisExchange.context();
-			}
-			
-			@Override
-			public void finalizer(Mono<Void> finalizer) {
-				thisExchange.finalizer(finalizer);
 			}
 
 			@Override

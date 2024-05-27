@@ -119,7 +119,7 @@ public class CookieTokenLoginSuccessHandler<A extends TokenAuthentication, B ext
 	
 	@Override
 	public Mono<Void> handleLoginSuccess(C exchange, A authentication) {
-		return Mono.fromRunnable(() -> exchange.response().cookies(cookies -> cookies
+		return Mono.fromRunnable(() -> exchange.response().headers(headers -> headers.cookies(cookies -> cookies
 			.addCookie(cookie -> cookie
 				// TODO should be secured when we are in https...
 				// We can determine this: exchange.request().getScheme()
@@ -129,6 +129,6 @@ public class CookieTokenLoginSuccessHandler<A extends TokenAuthentication, B ext
 				.httpOnly(true)
 				.name(this.tokenCookie)
 				.value(authentication.getToken())
-			)));
+			))));
 	}
 }

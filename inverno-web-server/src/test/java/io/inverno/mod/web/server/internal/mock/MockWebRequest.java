@@ -17,7 +17,6 @@ package io.inverno.mod.web.server.internal.mock;
 
 import io.inverno.mod.base.net.URIBuilder;
 import io.inverno.mod.base.net.URIs;
-import io.inverno.mod.http.base.InboundCookies;
 import io.inverno.mod.http.base.InboundRequestHeaders;
 import io.inverno.mod.http.base.Method;
 import io.inverno.mod.web.server.WebRequest;
@@ -70,12 +69,6 @@ public class MockWebRequest implements WebRequest {
 	@Override
 	public MockQueryParameters queryParameters() {
 		return this.queryParameters;
-	}
-
-	@Override
-	@Deprecated
-	public InboundCookies cookies() {
-		return this.headers.cookies();
 	}
 
 	@Override

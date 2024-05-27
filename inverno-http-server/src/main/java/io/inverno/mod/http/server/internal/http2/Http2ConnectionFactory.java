@@ -17,7 +17,6 @@ package io.inverno.mod.http.server.internal.http2;
 
 import com.aayushatharva.brotli4j.encoder.Encoder;
 import io.inverno.core.annotation.Bean;
-import io.inverno.core.annotation.Bean.Visibility;
 import io.inverno.mod.base.converter.ObjectConverter;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.Parameter;
@@ -44,15 +43,15 @@ import java.util.function.Supplier;
 
 /**
  * <p>
- * A factory to create {@link Http2Connection} when a HTTP2 channel is initialized.
+ * A factory to create {@link Http2Connection} when a Http/2 channel is initialized.
  * </p>
- *
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * 
+ * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-@Bean(visibility = Visibility.PRIVATE)
+@Bean(visibility = Bean.Visibility.PRIVATE)
 public class Http2ConnectionFactory implements Supplier<Http2Connection> {
-
+	
 	private final HttpServerConfiguration configuration;
 	private final ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>> controller;
 	private final HeaderService headerService;
@@ -61,27 +60,27 @@ public class Http2ConnectionFactory implements Supplier<Http2Connection> {
 	private final MultipartDecoder<Part> multipartBodyDecoder;
 	
 	private final CompressionOptions[] compressionOptions;
-	
+	private final Http2ContentEncodingResolver contentEncodingResolver;
+
 	/**
 	 * <p>
-	 * Creates a HTTP/2 connection factory.
-	 * <p>
+	 * Creates an Http/2 connection factory.
+	 * </p>
 	 * 
-	 * @param configuration         the HTTP server configuration
-	 * @param controller            the controller server
+	 * @param configuration         the server configuration
+	 * @param controller            the server controller
 	 * @param headerService         the header service
-	 * @param parameterConverter    a string object converter
+	 * @param parameterConverter    the parameter converter
 	 * @param urlEncodedBodyDecoder the application/x-www-form-urlencoded body decoder
 	 * @param multipartBodyDecoder  the multipart/form-data body decoder
 	 */
-	@SuppressWarnings({ "unchecked" })
 	public Http2ConnectionFactory(
-			HttpServerConfiguration configuration, 
-			ServerController<?, ? extends Exchange<?>, ? extends ErrorExchange<?>> controller,
+			HttpServerConfiguration configuration, ServerController<?, ? extends Exchange<?>, ? extends ErrorExchange<?>> controller, 
 			HeaderService headerService, 
-			ObjectConverter<String> parameterConverter,
+			ObjectConverter<String> parameterConverter, 
 			MultipartDecoder<Parameter> urlEncodedBodyDecoder, 
-			MultipartDecoder<Part> multipartBodyDecoder) {
+			MultipartDecoder<Part> multipartBodyDecoder
+		) {
 		this.configuration = configuration;
 		this.controller = (ServerController<ExchangeContext, Exchange<ExchangeContext>, ErrorExchange<ExchangeContext>>)controller;
 		this.headerService = headerService;
@@ -89,28 +88,48 @@ public class Http2ConnectionFactory implements Supplier<Http2Connection> {
 		this.urlEncodedBodyDecoder = urlEncodedBodyDecoder;
 		this.multipartBodyDecoder = multipartBodyDecoder;
 		
-		List<CompressionOptions> compressionOptionsList = new ArrayList<>();
+		if(Http2ConnectionFactory.this.configuration.compression_enabled()) {
+			List<CompressionOptions> compressionOptionsList = new ArrayList<>();
 
-		compressionOptionsList.add(StandardCompressionOptions.deflate(this.configuration.compression_deflate_compressionLevel(), this.configuration.compression_deflate_windowBits(), this.configuration.compression_deflate_memLevel()));
-		compressionOptionsList.add(StandardCompressionOptions.gzip(this.configuration.compression_gzip_compressionLevel(), this.configuration.compression_gzip_windowBits(), this.configuration.compression_gzip_memLevel()));
-		if(Zstd.isAvailable()) {
-			compressionOptionsList.add(StandardCompressionOptions.zstd(this.configuration.compression_zstd_compressionLevel(), this.configuration.compression_zstd_blockSize(), this.configuration.compression_zstd_maxEncodeSize()));
+			compressionOptionsList.add(StandardCompressionOptions.deflate(this.configuration.compression_deflate_compressionLevel(), this.configuration.compression_deflate_windowBits(), this.configuration.compression_deflate_memLevel()));
+			compressionOptionsList.add(StandardCompressionOptions.gzip(this.configuration.compression_gzip_compressionLevel(), this.configuration.compression_gzip_windowBits(), this.configuration.compression_gzip_memLevel()));
+			if(Zstd.isAvailable()) {
+				compressionOptionsList.add(StandardCompressionOptions.zstd(this.configuration.compression_zstd_compressionLevel(), this.configuration.compression_zstd_blockSize(), this.configuration.compression_zstd_maxEncodeSize()));
+			}
+
+			if(Brotli.isAvailable()) {
+				compressionOptionsList.add(StandardCompressionOptions.brotli(new Encoder.Parameters().setQuality(this.configuration.compression_brotli_quality()).setMode(Encoder.Mode.of(this.configuration.compression_brotli_mode())).setWindow(this.configuration.compression_brotli_window())));
+			}
+
+			this.compressionOptions = compressionOptionsList.stream().toArray(CompressionOptions[]::new);
+			this.contentEncodingResolver = new Http2ContentEncodingResolver(Http2ConnectionFactory.this.compressionOptions);
 		}
-		
-		if(Brotli.isAvailable()) {
-			compressionOptionsList.add(StandardCompressionOptions.brotli(new Encoder.Parameters().setQuality(this.configuration.compression_brotli_quality()).setMode(Encoder.Mode.of(this.configuration.compression_brotli_mode())).setWindow(this.configuration.compression_brotli_window())));
+		else {
+			this.compressionOptions = null;
+			this.contentEncodingResolver = null;
 		}
-		
-		this.compressionOptions = compressionOptionsList.stream().toArray(CompressionOptions[]::new);
 	}
-
+	
 	@Override
 	public Http2Connection get() {
 		return new Http2ChannelHandlerBuilder().build();
 	}
 
+	/**
+	 * <p>
+	 * Http/2 connection builder.
+	 * </p>
+	 * 
+	 * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+	 * @since 1.10
+	 */
 	private class Http2ChannelHandlerBuilder extends AbstractHttp2ConnectionHandlerBuilder<Http2Connection, Http2ChannelHandlerBuilder> {
 		
+		/**
+		 * <p>
+		 * Creates and Http/2 connection builder.
+		 * </p>
+		 */
 		public Http2ChannelHandlerBuilder() {
 			//this.frameLogger(new Http2FrameLogger(LogLevel.INFO, Http2ConnectionAndFrameHandler.class));
 			
@@ -128,29 +147,27 @@ public class Http2ConnectionFactory implements Supplier<Http2Connection> {
 		
 		@Override
 		protected Http2Connection build(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings) throws Exception {
-			Http2ContentEncodingResolver contentEncodingResolver = null;
 			if (Http2ConnectionFactory.this.configuration.compression_enabled()) {
 				encoder = new CompressorHttp2ConnectionEncoder(
 					encoder,
 					Http2ConnectionFactory.this.compressionOptions
 				);
-				contentEncodingResolver = new Http2ContentEncodingResolver(Http2ConnectionFactory.this.compressionOptions);
 			}
 			
-			Http2Connection handler = new Http2Connection(
-				Http2ConnectionFactory.this.configuration,
+			Http2Connection connection = new Http2Connection(
 				decoder, 
 				encoder, 
 				initialSettings,
+				Http2ConnectionFactory.this.configuration,
 				Http2ConnectionFactory.this.controller, 
 				Http2ConnectionFactory.this.headerService,
 				Http2ConnectionFactory.this.parameterConverter,
 				Http2ConnectionFactory.this.urlEncodedBodyDecoder,
 				Http2ConnectionFactory.this.multipartBodyDecoder,
-				contentEncodingResolver
+				Http2ConnectionFactory.this.contentEncodingResolver
 			);
-			this.frameListener(handler);
-			return handler;
+			this.frameListener(connection);
+			return connection;
 		}
 		
 		@Override

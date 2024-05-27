@@ -18,6 +18,9 @@ package io.inverno.mod.http.client.internal;
 import io.inverno.mod.http.base.ExchangeContext;
 import io.inverno.mod.http.base.HttpVersion;
 import io.inverno.mod.http.client.HttpClientConfiguration;
+import java.net.SocketAddress;
+import java.security.cert.Certificate;
+import java.util.Optional;
 import reactor.core.publisher.Mono;
 
 /**
@@ -51,6 +54,42 @@ public interface HttpConnection {
 	 * @return the HTTP protocol version
 	 */
 	HttpVersion getProtocol();
+	
+	/**
+	 * <p>
+	 * Returns the local socket address of the connection.
+	 * </p>
+	 * 
+	 * @return a socket address
+	 */
+	SocketAddress getLocalAddress();
+
+	/**
+	 * <p>
+	 * Returns the certificates that were sent to the remote peer during handshaking.
+	 * </p>
+	 * 
+	 * @return an optional returning the list of local certificates or an empty optional if no certificates were sent.
+	 */
+	Optional<Certificate[]> getLocalCertificates();
+
+	/**
+	 * <p>
+	 * Returns the remote socket address of the client or last proxy that opened the connection.
+	 * </p>
+	 * 
+	 * @return a socket address
+	 */
+	SocketAddress getRemoteAddress();
+
+	/**
+	 * <p>
+	 * Returns the certificates that were received from the remote peer during handshaking.
+	 * </p>
+	 * 
+	 * @return an optional returning the list of remote certificates or an empty optional if no certificates were received.
+	 */
+	Optional<Certificate[]> getRemoteCertificates();
 	
 	/**
 	 * <p>
@@ -149,27 +188,16 @@ public interface HttpConnection {
 		
 		/**
 		 * <p>
-		 * Notifies when an exchange terminates.
+		 * Notifies when the connection can be recycled.
 		 * </p>
-		 * 
-		 * @param exchange the exchange
 		 */
-		void onExchangeTerminate(HttpConnectionExchange<?, ?, ?> exchange);
-
-		/**
-		 * <p>
-		 * Notifies when a connection error occurs.
-		 * </p>
-		 * 
-		 * @param t the error
-		 */
-		void onError(Throwable t);
-
+		void recycle();
+		
 		/**
 		 * <p>
 		 * Notifies when the connection is closed.
 		 * </p>
 		 */
-		void onClose();
+		void close();
 	}
 }

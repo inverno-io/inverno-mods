@@ -23,95 +23,78 @@ import io.inverno.mod.http.base.header.HeaderService;
 import io.inverno.mod.http.base.internal.GenericParameter;
 import io.inverno.mod.http.base.internal.header.HeadersValidator;
 import io.inverno.mod.http.base.internal.netty.LinkedHttpHeaders;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.inverno.mod.http.server.internal.AbstractResponseTrailers;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * <p>
- * HTTP1.x response trailers implementation.
+ * Http/1.x {@link OutboundHeaders} implementation representing Http trailers.
  * </p>
- *
+ * 
  * <p>
  * This implementation uses {@link LinkedHttpHeaders} instead of Netty's {@link DefaultHttpHeaders} as internal headers in order to increase performances.
  * </p>
- *
- * @author <a href="mailto:jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
+ * 
+ * @author <a href="jeremy.kuhn@inverno.io">Jeremy Kuhn</a>
  * @since 1.0
  */
-class Http1xResponseTrailers implements OutboundHeaders<Http1xResponseTrailers> {
+class Http1xResponseTrailers extends AbstractResponseTrailers<Http1xResponseTrailers> {
 
-	private final HeaderService headerService;
-	private final ObjectConverter<String> parameterConverter;
-	
-	private final LinkedHttpHeaders underlyingTrailers;
-	
-	private boolean written;
-	
+	private final LinkedHttpHeaders trailers;
+
 	/**
 	 * <p>
-	 * Creates HTTP1.x server response trailers.
+	 * Creates Http/1.x trailers.
 	 * </p>
 	 * 
-	 * @param httpRequest        the underlying HTTP request
 	 * @param headerService      the header service
-	 * @param parameterConverter a string object converter
-	 * @param headersValidator   a headers validator or null
+	 * @param parameterConverter the parameter converter
+	 * @param headersValidator   the headers validator
 	 */
 	public Http1xResponseTrailers(HeaderService headerService, ObjectConverter<String> parameterConverter, HeadersValidator headersValidator) {
-		this.headerService = headerService;
-		this.parameterConverter = parameterConverter;
-		
-		this.underlyingTrailers = new LinkedHttpHeaders(headersValidator);
+		super(headerService, parameterConverter);
+		this.trailers = new LinkedHttpHeaders(headersValidator);
 	}
 
-	@Override
-	public boolean isWritten() {
-		return this.written;
-	}
-
-	public void setWritten(boolean written) {
-		this.written = written;
-	}
-	
 	/**
 	 * <p>
-	 * Returns the underlying trailers.
+	 * Returns the trailers to send as part of the Http response.
 	 * </p>
 	 * 
-	 * @return the underlying trailers
+	 * @return the wrapped trailers
 	 */
-	LinkedHttpHeaders getUnderlyingTrailers() {
-		return this.underlyingTrailers;
+	LinkedHttpHeaders unwrap() {
+		return trailers;
 	}
-	
+
 	@Override
 	public Http1xResponseTrailers add(CharSequence name, CharSequence value) {
-		this.underlyingTrailers.addCharSequence(name, value);
+		this.trailers.addCharSequence(name, value);
 		return this;
 	}
 
 	@Override
-	public Http1xResponseTrailers add(Header... trailers) {
-		for(Header trailer : trailers) {
-			this.underlyingTrailers.addCharSequence(trailer.getHeaderName(), trailer.getHeaderValue());
+	public Http1xResponseTrailers add(Header... headers) {
+		for(Header header : headers) {
+			this.trailers.addCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
 		return this;
 	}
 
 	@Override
 	public Http1xResponseTrailers set(CharSequence name, CharSequence value) {
-		this.underlyingTrailers.setCharSequence(name, value);
+		this.trailers.setCharSequence(name, value);
 		return this;
 	}
 
 	@Override
-	public Http1xResponseTrailers set(Header... trailers) {
-		for(Header trailer : trailers) {
-			this.underlyingTrailers.setCharSequence(trailer.getHeaderName(), trailer.getHeaderValue());
+	public Http1xResponseTrailers set(Header... headers) {
+		for(Header header : headers) {
+			this.trailers.setCharSequence(header.getHeaderName(), this.headerService.encodeValue(header));
 		}
 		return this;
 	}
@@ -119,39 +102,54 @@ class Http1xResponseTrailers implements OutboundHeaders<Http1xResponseTrailers> 
 	@Override
 	public Http1xResponseTrailers remove(CharSequence... names) {
 		for(CharSequence name : names) {
-			this.underlyingTrailers.remove(name);
+			this.trailers.remove(name);
 		}
 		return this;
 	}
-	
+
 	@Override
 	public boolean contains(CharSequence name) {
-		return this.underlyingTrailers.contains(name);
+		return this.trailers.contains(name);
 	}
-	
+
 	@Override
 	public boolean contains(CharSequence name, CharSequence value) {
-		return this.underlyingTrailers.contains(name, value, true);
+		return this.trailers.contains(name, value, true);
 	}
 
 	@Override
 	public Set<String> getNames() {
-		return this.underlyingTrailers.names();
+		return this.trailers.names();
 	}
 
 	@Override
 	public Optional<String> get(CharSequence name) {
-		return Optional.ofNullable(this.underlyingTrailers.get((CharSequence)name));
+		return Optional.ofNullable(this.trailers.get(name));
 	}
 
 	@Override
 	public List<String> getAll(CharSequence name) {
-		return this.underlyingTrailers.getAll(name);
+		return this.trailers.getAll(name);
 	}
 
 	@Override
-	public List<Entry<String, String>> getAll() {
-		return this.underlyingTrailers.entries();
+	public List<Map.Entry<String, String>> getAll() {
+		return this.trailers.entries();
+	}
+	
+	@Override
+	public Optional<Parameter> getParameter(CharSequence name) {
+		return this.get(name).map(value -> new GenericParameter(name.toString(), value, this.parameterConverter));
+	}
+	
+	@Override
+	public List<Parameter> getAllParameter(CharSequence name) {
+		return this.trailers.getAll(name).stream().map(value -> new GenericParameter(name.toString(), value, this.parameterConverter)).collect(Collectors.toList());
+	}
+	
+	@Override
+	public List<Parameter> getAllParameter() {
+		return this.trailers.entries().stream().map(e -> new GenericParameter(e.getKey(), e.getValue(), this.parameterConverter)).collect(Collectors.toList());
 	}
 
 	@Override
@@ -167,20 +165,5 @@ class Http1xResponseTrailers implements OutboundHeaders<Http1xResponseTrailers> 
 	@Override
 	public List<Header> getAllHeader() {
 		return this.getAll().stream().map(e -> this.headerService.<Header>decode(e.getKey(), e.getValue())).collect(Collectors.toList());
-	}
-
-	@Override
-	public Optional<Parameter> getParameter(CharSequence name) {
-		return this.get(name).map(value -> new GenericParameter(name.toString(), value, this.parameterConverter));
-	}
-	
-	@Override
-	public List<Parameter> getAllParameter(CharSequence name) {
-		return this.getAll(name).stream().map(value -> new GenericParameter(name.toString(), value, this.parameterConverter)).collect(Collectors.toList());
-	}
-	
-	@Override
-	public List<Parameter> getAllParameter() {
-		return this.getAll().stream().map(e -> new GenericParameter(e.getKey(), e.getValue(), this.parameterConverter)).collect(Collectors.toList());
 	}
 }
